@@ -16,6 +16,27 @@ if [ -n "$FIREBASE_CREDENTIALS_JSON" ]; then
 fi
 
 cd "$APP_DIR"
+
+if [ ! -f .env ]; then
+  if [ -f .env.docker ]; then
+    cp .env.docker .env
+  elif [ -f .env.example ]; then
+    cp .env.example .env
+  fi
+fi
+
+if [ ! -f vendor/autoload.php ]; then
+  composer install --no-interaction --prefer-dist
+fi
+
+if [ ! -d node_modules/.bin ]; then
+  npm install
+fi
+
+if grep -q "^APP_KEY=$" .env 2>/dev/null; then
+  php artisan key:generate --force >/dev/null 2>&1 || true
+fi
+
 php artisan config:clear >/dev/null 2>&1 || true
 php artisan cache:clear >/dev/null 2>&1 || true
 

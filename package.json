@@ -1,6 +1,7 @@
 {
   "name": "fullstack-apsara",
   "private": true,
+  "packageManager": "pnpm@11.3.0",
   "scripts": {
     "dev:frontend": "pnpm --filter apsara-home-frontend dev",
     "dev:backend": "pnpm --filter apsara-home-backend dev",
@@ -9,6 +10,10 @@
     "mobile:android": "pnpm --filter apsara-mobile-application android",
     "mobile:ios": "pnpm --filter apsara-mobile-application ios",
     "mobile:web": "pnpm --filter apsara-mobile-application web",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint"
   }

@@ -1,0 +1,85 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    container_name: afhome-backend
+    restart: unless-stopped
+    working_dir: /app
+    env_file:
+      - ./apps/apsara-home-backend/.env.docker
+    environment:
+      APP_URL: http://localhost:8000
+      FRONTEND_URL: http://localhost:3000
+      REDIS_HOST: redis
+      REDIS_PASSWORD: local_redis_password
+      REDIS_PORT: 6379
+    ports:
+      - "8000:8000"
+      - "5173:5173"
+    volumes:
+      - ./apps/apsara-home-backend:/app
+      - backend_vendor:/app/vendor
+      - backend_node_modules:/app/node_modules
+    depends_on:
+      - redis
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/next.Dockerfile
+    container_name: afhome-frontend
+    restart: unless-stopped
+    working_dir: /workspace
+    command: pnpm --filter apsara-home-frontend dev --hostname 0.0.0.0
+    env_file:
+      - ./apps/apsara-home-frontend/.env.docker
+    environment:
+      NEXT_TELEMETRY_DISABLED: "1"
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/workspace
+      - root_node_modules:/workspace/node_modules
+      - frontend_node_modules:/workspace/apps/apsara-home-frontend/node_modules
+      - frontend_next:/workspace/apps/apsara-home-frontend/.next_build
+    depends_on:
+      - backend
+
+  dreambuild:
+    build:
+      context: .
+      dockerfile: docker/next.Dockerfile
+    container_name: dreambuild-landing
+    restart: unless-stopped
+    working_dir: /workspace
+    command: pnpm --filter dreambuild dev --hostname 0.0.0.0
+    env_file:
+      - ./apps/Dreambuild-Landing-Page/.env.docker
+    environment:
+      NEXT_TELEMETRY_DISABLED: "1"
+    ports:
+      - "3001:3000"
+    volumes:
+      - .:/workspace
+      - root_node_modules:/workspace/node_modules
+      - dreambuild_node_modules:/workspace/apps/Dreambuild-Landing-Page/node_modules
+      - dreambuild_next:/workspace/apps/Dreambuild-Landing-Page/.next
+
+  redis:
+    image: redis:7-alpine
+    container_name: afhome-redis
+    restart: unless-stopped
+    command: redis-server --requirepass "local_redis_password" --appendonly yes
+    volumes:
+      - redis_data:/data
+
+volumes:
+  backend_vendor:
+  backend_node_modules:
+  root_node_modules:
+  frontend_node_modules:
+  dreambuild_node_modules:
+  frontend_next:
+  dreambuild_next:
+  redis_data:
