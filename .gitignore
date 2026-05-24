@@ -2,6 +2,7 @@
 node_modules/
 vendor/
 package-lock.json
+.pnpm-store/
 
 # Build output
 .next/

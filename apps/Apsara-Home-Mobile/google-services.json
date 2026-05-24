@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "49224817766",
+    "project_id": "af-home-notif",
+    "storage_bucket": "af-home-notif.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:49224817766:android:e49d6ba4a387508591e1a7",
+        "android_client_info": {
+          "package_name": "com.afhome.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB47Hojmph1vQ4xv0FJ9CSKMHo7gmDZ35Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

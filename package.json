@@ -4,7 +4,11 @@
   "scripts": {
     "dev:frontend": "pnpm --filter apsara-home-frontend dev",
     "dev:backend": "pnpm --filter apsara-home-backend dev",
-    "dev:dreambuild": "pnpm --filter dreambuild-landing dev",
+    "dev:dreambuild": "pnpm --filter dreambuild dev",
+    "dev:mobile": "pnpm --filter apsara-mobile-application start",
+    "mobile:android": "pnpm --filter apsara-mobile-application android",
+    "mobile:ios": "pnpm --filter apsara-mobile-application ios",
+    "mobile:web": "pnpm --filter apsara-mobile-application web",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint"
   }

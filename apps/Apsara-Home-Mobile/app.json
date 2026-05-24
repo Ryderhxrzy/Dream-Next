@@ -1,0 +1,69 @@
+{
+  "expo": {
+    "name": "AF Home",
+    "slug": "afhomeph",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icons.png",
+    "userInterfaceStyle": "light",
+    "scheme": "apsarahome",
+    "deeplinks": {
+      "urls": [
+        "https://www.afhome.ph/*",
+        "https://afhome.ph/*",
+        "apsarahome://product/*",
+        "apsarahome://products/*",
+        "apsarahome://payment/success",
+        "apsarahome://payment/cancel",
+        "purchases://*",
+        "wallet://*",
+        "profile://*",
+        "referral://*"
+      ]
+    },
+    "associatedDomains": [
+      "applinks:www.afhome.ph",
+      "applinks:afhome.ph",
+      "webcredentials:www.afhome.ph",
+      "webcredentials:afhome.ph"
+    ],
+    "splash": {
+      "image": "./assets/splash-icon1.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.afhome.mobile"
+    },
+    "android": {
+      "package": "com.afhome.mobile",
+      "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon3.png",
+        "backgroundColor": "#13a1d4"
+      },
+      "notification": {
+        "icon": "./assets/af_home_logo.png",
+        "color": "#13a1d4"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-video",
+      "expo-font",
+      "expo-secure-store",
+      "expo-web-browser",
+      "@react-native-google-signin/google-signin"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "778fba47-8b53-41eb-a97f-4a5ed0b3b366"
+      }
+    },
+    "owner": "afhomeph"
+  }
+}
