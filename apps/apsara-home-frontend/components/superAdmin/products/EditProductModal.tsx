@@ -1,0 +1,3212 @@
+'use client'
+
+import { useEffect, useMemo, useRef, useState } from 'react'
+import Image from 'next/image'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useSession } from 'next-auth/react'
+import { useGetAdminMeQuery } from '@/store/api/authApi'
+import { Product, ProductVariant, useUpdateProductMutation, CreateProductPayload, normalizeProduct } from '@/store/api/productsApi'
+import { useGetCategoriesQuery } from '@/store/api/categoriesApi'
+import { useGetProductBrandsQuery } from '@/store/api/productBrandsApi'
+import { showErrorToast, showSuccessToast } from '@/libs/toast'
+import RichTextEditor from '@/components/ui/RichTextEditor'
+import ProductDescriptionGenerator from '@/components/superAdmin/products/ProductDescriptionGenerator'
+import ImagePositionEditorModal from '@/components/superAdmin/products/ImagePositionEditorModal'
+import { colorNameToHex, hexToColorName } from '@/libs/colorUtils'
+import { extractVariantOptionLabels, mergeVariantOptionLabelsMeta } from '@/libs/productVariantOptions'
+import { ROOM_OPTIONS, inferRoomTypeFromCategory } from '@/libs/roomConfig'
+import { Button } from '@heroui/react/button'
+import { Card } from '@heroui/react/card'
+import { ListBox } from '@heroui/react/list-box'
+import { ListBoxItem } from '@heroui/react/list-box-item'
+import { Select } from '@heroui/react/select'
+
+/* ─── types ──────────────────────────────────────────────── */
+
+interface EditProductModalProps {
+  product: Product | null
+  onClose: () => void
+  onSaved?: (updatedProduct?: Product) => void
+}
+
+interface FormState {
+  pd_name: string
+  pd_catid: string
+  pd_room_type: string
+  pd_brand_type: string
+  pd_description: string
+  pd_specifications: string
+  pd_price_srp: string
+  pd_price_dp: string
+  pd_price_member: string
+  pd_primary_option_label: string
+  pd_secondary_option_label: string
+  pd_pricing_tier: string
+  pd_reversed_pv_multiplier: string
+  pd_prodpv: string
+  pd_qty: string
+  pd_weight: string
+  pd_psweight: string
+  pd_pswidth: string
+  pd_pslenght: string
+  pd_psheight: string
+  pd_material: string
+  pd_warranty: string
+  pd_assembly_required: boolean
+  pd_parent_sku: string
+  pd_type: string
+  pd_musthave: boolean
+  pd_bestseller: boolean
+  pd_salespromo: boolean
+  pd_verified: boolean
+  pd_status: string
+}
+
+interface VariantColor {
+  name: string
+  hex: string
+}
+
+interface VariantFormState {
+  id?: number
+  pv_name: string
+  pv_sku: string
+  pv_colors: VariantColor[]
+  pv_size: string
+  pv_style: string
+  pv_extra_styles: string[]
+  pv_width: string
+  pv_dimension: string
+  pv_height: string
+  pv_price_srp: string
+  pv_price_dp: string
+  pv_price_member: string
+  pv_reversed_pv_multiplier: string
+  pv_prodpv: string
+  pv_qty: string
+  pv_status: string
+  pv_images: string[]
+}
+
+interface EditProductDraft {
+  version: 1
+  productId: number
+  form: FormState
+  variants: VariantFormState[]
+  globalColors?: VariantColor[]
+  globalPrimaryValues?: string[]
+  globalSizeValues?: string[]
+  imageUrls: string[]
+  roomTouched: boolean
+}
+
+type Errors = Partial<Record<keyof FormState, string>>
+
+/* ─── constants ──────────────────────────────────────────── */
+
+const FLAG_CARDS: {
+  key: 'pd_musthave' | 'pd_bestseller' | 'pd_salespromo' | 'pd_verified'
+  label: string
+  desc: string
+  activeCard: string
+  activeIcon: string
+  icon: React.ReactNode
+}[] = [
+  {
+    key: 'pd_musthave', label: 'Must Have', desc: 'Mark as an essential pick',
+    activeCard: 'border-amber-300 bg-amber-50 ring-2 ring-amber-200',
+    activeIcon: 'bg-amber-100 text-amber-600',
+    icon: <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>,
+  },
+  {
+    key: 'pd_bestseller', label: 'Bestseller', desc: 'Mark as top-selling',
+    activeCard: 'border-purple-300 bg-purple-50 ring-2 ring-purple-200',
+    activeIcon: 'bg-purple-100 text-purple-600',
+    icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>,
+  },
+  {
+    key: 'pd_salespromo', label: 'On Sale', desc: 'Show as a promotion',
+    activeCard: 'border-rose-300 bg-rose-50 ring-2 ring-rose-200',
+    activeIcon: 'bg-rose-100 text-rose-600',
+    icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>,
+  },
+  {
+    key: 'pd_verified', label: 'Verified', desc: 'Mark as verified product',
+    activeCard: 'border-emerald-300 bg-emerald-50 ring-2 ring-emerald-200',
+    activeIcon: 'bg-emerald-100 text-emerald-600',
+    icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>,
+  },
+]
+
+const WARRANTY_OPTIONS = [
+  'No Warranty',
+  '15 Days Warranty',
+  '1 Month Warranty',
+  '2 Months Warranty',
+  '3 Months Warranty',
+  '6 Months Warranty',
+  '9 Months Warranty',
+  '1 Year Warranty',
+] as const
+
+const PRICING_TIER_OPTIONS = [
+  { value: 'low_end', label: 'Low-End' },
+  { value: 'high_end', label: 'High-End' },
+] as const
+
+const getEditProductDraftKey = (productId: number) => `afhome:edit-product-draft:${productId}`
+const PERSONAL_CASHBACK_RATE = 0.04
+const UNILEVEL_POOL_RATE = 0.06
+const DIRECT_EDGE_POINTS_RATE = 0.029
+const GLOBAL_PURCHASE_BONUS_RATE = 0.01
+const PRODUCT_PURCHASE_POINTS_RATE =
+  1 -
+  PERSONAL_CASHBACK_RATE -
+  UNILEVEL_POOL_RATE -
+  DIRECT_EDGE_POINTS_RATE -
+  GLOBAL_PURCHASE_BONUS_RATE
+const VAT_RATE = 0.12
+
+type PricingSummary = {
+  pricingTier: string
+  effectiveMemberPrice: number
+  transferPrice: number
+  formulaPv: number
+  computedPv: number
+  retailProfit: number
+  reversedMultiplier: number
+  personalCashback: number
+  unilevelPool: number
+  directEdgePoints: number
+  globalPurchaseBonus: number
+  productPurchasePoints: number
+  totalAllocation: number
+  vatOnMemberPrice: number
+  dealerDiscount: number
+  dealerDiscountRate: number
+  memberDiscount: number
+  memberDiscountRate: number
+}
+
+const toSafeNumber = (value: string | number | null | undefined) => {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+const roundTo = (value: number, digits = 6) => {
+  const factor = 10 ** digits
+  return Math.round(value * factor) / factor
+}
+
+const formatDecimalInput = (value: number, digits = 6) => {
+  const rounded = roundTo(value, digits)
+  return rounded.toFixed(digits).replace(/\.?0+$/, '')
+}
+
+const deriveComputedPv = ({
+  transfer,
+  multiplier,
+}: {
+  transfer: string | number | null | undefined
+  multiplier: string | number | null | undefined
+}) => {
+  const transferValue = Math.max(toSafeNumber(transfer), 0)
+  const multiplierValue = Math.max(toSafeNumber(multiplier), 0)
+  return roundTo(transferValue * multiplierValue, 2)
+}
+
+const deriveMultiplierFromPv = ({
+  transfer,
+  pv,
+}: {
+  transfer: string | number | null | undefined
+  pv: string | number | null | undefined
+}) => {
+  const transferValue = Math.max(toSafeNumber(transfer), 0)
+  const pvValue = Math.max(toSafeNumber(pv), 0)
+  if (transferValue <= 0 || pvValue <= 0) return ''
+  return formatDecimalInput(pvValue / transferValue)
+}
+
+const getComputedPvDisplay = ({
+  transfer,
+  multiplier,
+}: {
+  transfer: string | number | null | undefined
+  multiplier: string | number | null | undefined
+}) => {
+  const computed = deriveComputedPv({ transfer, multiplier })
+  return computed > 0 ? formatDecimalInput(computed, 2) : ''
+}
+
+const buildPricingSummary = ({
+  pricingTier,
+  srp,
+  dealer,
+  member,
+  pv,
+  multiplier,
+}: {
+  pricingTier?: string | null | undefined
+  srp: string | number | null | undefined
+  dealer: string | number | null | undefined
+  member: string | number | null | undefined
+  pv?: string | number | null | undefined
+  multiplier: string | number | null | undefined
+}): PricingSummary => {
+  const srpValue = Math.max(toSafeNumber(srp), 0)
+  const dealerValue = Math.max(toSafeNumber(dealer), 0)
+  const memberValue = Math.max(toSafeNumber(member), 0)
+  const inputPvValue = Math.max(toSafeNumber(pv), 0)
+  const multiplierValue = Math.max(toSafeNumber(multiplier), 0)
+  const formulaPv = deriveComputedPv({ transfer: dealerValue, multiplier: multiplierValue })
+  const pvValue = inputPvValue > 0 ? inputPvValue : formulaPv
+  const effectiveMemberPrice = memberValue
+  const retailProfit = srpValue > 0 || memberValue > 0 ? srpValue - memberValue : 0
+
+  return {
+    pricingTier: pricingTier === 'high_end' ? 'high_end' : 'low_end',
+    effectiveMemberPrice,
+    transferPrice: dealerValue,
+    formulaPv,
+    computedPv: pvValue,
+    retailProfit,
+    reversedMultiplier: multiplierValue,
+    personalCashback: pvValue * PERSONAL_CASHBACK_RATE,
+    unilevelPool: pvValue * UNILEVEL_POOL_RATE,
+    directEdgePoints: pvValue * DIRECT_EDGE_POINTS_RATE,
+    globalPurchaseBonus: pvValue * GLOBAL_PURCHASE_BONUS_RATE,
+    productPurchasePoints: pvValue * PRODUCT_PURCHASE_POINTS_RATE,
+    totalAllocation: pvValue,
+    vatOnMemberPrice: effectiveMemberPrice * VAT_RATE,
+    dealerDiscount: srpValue > 0 && dealerValue > 0 ? srpValue - dealerValue : 0,
+    dealerDiscountRate: srpValue > 0 && dealerValue > 0 ? ((srpValue - dealerValue) / srpValue) * 100 : 0,
+    memberDiscount: srpValue > 0 && effectiveMemberPrice > 0 ? srpValue - effectiveMemberPrice : 0,
+    memberDiscountRate: srpValue > 0 && effectiveMemberPrice > 0 ? ((srpValue - effectiveMemberPrice) / srpValue) * 100 : 0,
+  }
+}
+
+function CalcRow({
+  label, a, op, b, result, resultAccent, badge,
+}: {
+  label: string
+  a: string
+  op: '×' | '−' | '+'
+  b: string
+  result: string
+  resultAccent?: 'teal' | 'emerald' | 'rose' | 'blue'
+  badge?: string
+}) {
+  const rc = resultAccent === 'teal' ? 'text-teal-600' : resultAccent === 'emerald' ? 'text-emerald-600' : resultAccent === 'rose' ? 'text-rose-500' : resultAccent === 'blue' ? 'text-blue-600' : 'text-slate-800'
+  return (
+    <div className="flex items-center justify-between px-3 py-2.5 gap-2">
+      <div className="min-w-0">
+        <div className="flex items-center gap-1 flex-wrap">
+          {badge && <span className="shrink-0 rounded-full bg-blue-50 px-1.5 py-0.5 text-[9px] md:text-[11px] font-bold text-blue-500">{badge}</span>}
+          <span className="text-[11px] md:text-sm font-semibold text-slate-500">{label}</span>
+        </div>
+        <div className="flex items-center gap-1 mt-0.5 font-mono text-[11px] md:text-xs text-slate-400 flex-wrap">
+          <span>{a}</span>
+          <span className="text-slate-300">{op}</span>
+          <span>{b}</span>
+          <span className="text-slate-300">=</span>
+          <span className={`font-bold ${rc}`}>{result}</span>
+        </div>
+      </div>
+      <span className={`shrink-0 text-sm md:text-base font-bold tabular-nums ${rc}`}>{result}</span>
+    </div>
+  )
+}
+
+function PricingSummaryPanel({
+  summary,
+  title = 'PV Summary',
+  memberFallbackToSrp = false,
+}: {
+  summary: PricingSummary
+  title?: string
+  memberFallbackToSrp?: boolean
+}) {
+  const fmt = (v: number) => v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const fmtPv = (v: number) => v.toLocaleString(undefined, { maximumFractionDigits: 4 })
+  const pvStr = fmtPv(summary.computedPv)
+  const formulaPvStr = fmtPv(summary.formulaPv)
+  const mp = fmt(summary.effectiveMemberPrice)
+  const transfer = fmt(summary.transferPrice)
+  const mult = summary.reversedMultiplier.toFixed(4)
+
+  const pricingTierLabel = summary.pricingTier === 'high_end' ? 'High-End' : 'Low-End'
+  const allocationRows: { label: string; rate: string; value: number; unit: 'currency' | 'points'; note: string }[] = [
+    { label: 'Cashback / e-GC', rate: '4%', value: summary.personalCashback, unit: 'currency', note: 'Credited from delivered personal purchase PV.' },
+    { label: 'Unilevel Pool', rate: '6%', value: summary.unilevelPool, unit: 'currency', note: 'Total pool split across 10 levels at 0.6% per level.' },
+    { label: '50K Points Reward', rate: '2.9%', value: summary.directEdgePoints, unit: 'points', note: 'Direct-edge progress allocation toward the 50,000 points reward.' },
+    { label: 'Global Purchase Bonus', rate: '1%', value: summary.globalPurchaseBonus, unit: 'points', note: 'Year-end global pool allocation.' },
+    { label: 'Product Purchase Points', rate: '86.1%', value: summary.productPurchasePoints, unit: 'points', note: 'Remaining product points after bonus allocations.' },
+  ]
+  const formatAllocationValue = (value: number, unit: 'currency' | 'points') =>
+    unit === 'currency' ? `₱ ${fmt(value)}` : `${fmt(value)} pts`
+  return (
+    <div className="rounded-2xl border border-blue-100 overflow-hidden shadow-sm">
+      {/* ── Header ── */}
+      <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-500">
+        <div className="flex items-center gap-2">
+          <svg className="w-3.5 h-3.5 text-white/80 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+          <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-white">{title}</span>
+          <span className="text-[10px] md:text-xs text-blue-200">— live computation</span>
+        </div>
+        <div className="text-right shrink-0">
+          <p className="text-[9px] md:text-[11px] font-semibold uppercase tracking-wide text-blue-200">Member Price</p>
+          <p className="text-sm md:text-base font-bold text-white leading-none mt-0.5">
+            {summary.effectiveMemberPrice > 0 ? `₱ ${mp}` : <span className="text-blue-300 text-xs italic">—</span>}
+          </p>
+        </div>
+      </div>
+
+      <div className="bg-gradient-to-br from-slate-50 to-blue-50/60 divide-y divide-slate-100 dark:divide-slate-800/70">
+
+        {/* ── Section 1: PV Computation (hero) ── */}
+        <div className="px-4 py-3">
+          <p className="text-[9px] md:text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-2">PV Computation</p>
+          <div className="rounded-xl bg-white border border-teal-100 px-3 py-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[10px] md:text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Transfer Price × Reversed PV Multiplier = PV Product</p>
+                <div className="flex items-center gap-2 font-mono text-sm md:text-base flex-wrap">
+                  <span className="font-semibold text-slate-700">{transfer}</span>
+                  <span className="text-slate-300 text-base md:text-lg">×</span>
+                  <span className="font-semibold text-slate-700">{mult}</span>
+                  <span className="text-slate-300 text-base md:text-lg">=</span>
+                  <span className="font-bold text-teal-600 text-base md:text-lg">{formulaPvStr} PV</span>
+                </div>
+                <p className="text-[10px] md:text-xs text-slate-400 mt-2">Encoded PV Product used in summary: <span className="font-semibold text-slate-600">{pvStr} PV</span></p>
+              </div>
+              <div className="shrink-0 text-right bg-teal-50 rounded-lg px-3 py-2 border border-teal-100">
+                <p className="text-[9px] md:text-[11px] font-semibold text-teal-500 uppercase tracking-wide">Auto PV</p>
+                <p className="text-lg md:text-2xl font-bold text-teal-700 leading-none mt-0.5">{pvStr}</p>
+                <p className="text-[9px] md:text-[11px] text-teal-400">PV units</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Section 2: Price breakdown ── */}
+        <div className="px-4 py-3">
+          <p className="text-[9px] md:text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-2">Low-End Price Breakdown</p>
+          <div className="rounded-xl bg-white border border-slate-100 overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/70 dark:divide-slate-800/70">
+            <CalcRow
+              label="Retail Profit (SRP - Member Price)"
+              a={`SRP ₱${fmt(summary.retailProfit + summary.effectiveMemberPrice)}`}
+              op="−"
+              b={`MP ₱${mp}`}
+              result={`₱ ${fmt(summary.retailProfit)}`}
+              resultAccent={summary.retailProfit >= 0 ? 'emerald' : 'rose'}
+            />
+            <CalcRow
+              label="VAT (12% of Member Price)"
+              a={`₱${mp}`}
+              op="×"
+              b="12%"
+              result={`₱ ${fmt(summary.vatOnMemberPrice)}`}
+            />
+          </div>
+        </div>
+
+        {/* ── Section 3: Bonus distribution ── */}
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[9px] md:text-[11px] font-bold uppercase tracking-widest text-slate-400">PV Allocation Preview</p>
+            <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[9px] md:text-[11px] font-bold text-white">100% of PV</span>
+          </div>
+          <div className="rounded-xl bg-white border border-slate-100 overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/70 dark:divide-slate-800/70">
+            {allocationRows.map(({ label, rate, value, unit, note }) => (
+              <div key={label} className="flex items-center justify-between px-3 py-2 gap-2">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="shrink-0 rounded-full bg-blue-50 px-1.5 py-0.5 text-[9px] md:text-[11px] font-bold text-blue-500">{rate}</span>
+                    <span className="text-[11px] md:text-sm font-semibold text-slate-600 truncate">{label}</span>
+                  </div>
+                  <p className="font-mono text-[11px] md:text-xs text-slate-400 mt-0.5">
+                    {pvStr} PV <span className="text-slate-300">×</span> {rate} <span className="text-slate-300">=</span> <span className="font-semibold text-slate-600">{formatAllocationValue(value, unit)}</span>
+                  </p>
+                  <p className="text-[10px] md:text-[11px] text-slate-400 mt-1">{note}</p>
+                </div>
+                <span className="shrink-0 text-sm md:text-base font-bold text-slate-800 tabular-nums">{formatAllocationValue(value, unit)}</span>
+              </div>
+            ))}
+            <div className="flex items-center justify-between px-3 py-2.5 bg-blue-600">
+              <div className="flex items-center gap-2">
+                <span className="shrink-0 rounded-full bg-white/20 px-1.5 py-0.5 text-[9px] md:text-[11px] font-bold text-white">100%</span>
+                <div>
+                  <p className="text-[11px] md:text-sm font-semibold text-white">Total PV Allocation</p>
+                  <p className="font-mono text-[10px] md:text-xs text-blue-200">All rows are derived from {pvStr} PV</p>
+                </div>
+              </div>
+              <span className="text-base md:text-lg font-bold text-white tabular-nums">{fmtPv(summary.totalAllocation)} PV</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-4 py-3">
+          <p className="text-[10px] md:text-xs text-blue-700 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
+            {pricingTierLabel} pricing is shown here for costing reference only. Actual bonus payout still depends on qualification rules.
+          </p>
+        </div>
+
+        {memberFallbackToSrp && (
+          <div className="px-4 py-3">
+            <p className="text-[10px] md:text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+              Enter a Member Price to compute Low-End retail profit and VAT.
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/* ─── helpers ────────────────────────────────────────────── */
+
+const emptyVariant = (): VariantFormState => ({
+  pv_name: '', pv_sku: '', pv_colors: [], pv_size: '', pv_style: '', pv_extra_styles: [], pv_width: '', pv_dimension: '', pv_height: '',
+  pv_price_srp: '', pv_price_dp: '', pv_price_member: '', pv_reversed_pv_multiplier: '', pv_prodpv: '', pv_qty: '',
+  pv_status: '1', pv_images: [],
+})
+
+const toOptionalPositiveNumber = (value: string | number | null | undefined) => {
+  if (value == null) return undefined
+  const trimmed = String(value).trim()
+  if (!trimmed) return undefined
+  const parsed = Number(trimmed)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined
+}
+
+const mapVariantToForm = (variant: ProductVariant): VariantFormState => ({
+  id: variant.id,
+  pv_name: variant.name ?? '',
+  pv_sku: variant.sku ?? '',
+  pv_colors: variant.colorHex
+    ? [{ name: variant.color ?? variant.colorHex, hex: variant.colorHex }]
+    : variant.color
+      ? [{ name: variant.color, hex: '#94a3b8' }]
+      : [],
+  pv_size: variant.size ?? '',
+  pv_style: variant.style ?? '',
+  pv_extra_styles: [],
+  pv_width: toOptionalPositiveNumber(variant.width)?.toString() ?? '',
+  pv_dimension: toOptionalPositiveNumber(variant.dimension)?.toString() ?? '',
+  pv_height: toOptionalPositiveNumber(variant.height)?.toString() ?? '',
+  pv_price_srp: toOptionalPositiveNumber(variant.priceSrp)?.toString() ?? '',
+  pv_price_dp:  toOptionalPositiveNumber(variant.priceDp)?.toString() ?? '',
+  pv_price_member: toOptionalPositiveNumber(variant.priceMember)?.toString() ?? '',
+  pv_reversed_pv_multiplier: deriveMultiplierFromPv({ transfer: variant.priceDp, pv: variant.prodpv }),
+  pv_prodpv:   toOptionalPositiveNumber(variant.prodpv)?.toString() ?? '',
+  pv_qty:       variant.qty      != null ? String(variant.qty)      : '',
+  pv_status: String(variant.status ?? 1),
+  pv_images: Array.isArray(variant.images) ? variant.images.filter(Boolean) : [],
+})
+
+const getNormalizedColorSignature = (color?: string, colorHex?: string) => {
+  const normalizedName = normalizeVariantLabel(color ?? '').toLowerCase()
+  const normalizedHex = (colorHex ?? '').trim().toLowerCase()
+  return `${normalizedName}|${normalizedHex}`
+}
+
+const generateSkuFromName = (name: string, productId?: number) => {
+  const letters = name.toUpperCase().replace(/[^A-Z]/g, '')
+  if (!letters) return ''
+  const vowels = new Set(['A', 'E', 'I', 'O', 'U'])
+  const consonants = letters.split('').filter(ch => !vowels.has(ch))
+  const vowelChars = letters.split('').filter(ch => vowels.has(ch))
+  const prefix = [
+    consonants[0] ?? letters[0] ?? 'P',
+    consonants[1] ?? letters[1] ?? 'R',
+    consonants[2] ?? letters[2] ?? 'D',
+    vowelChars[0] ?? letters[3] ?? 'X',
+  ].join('')
+  const suffix = productId
+    ? String(productId).padStart(5, '0').slice(-5)
+    : Date.now().toString().slice(-5)
+  return `${prefix}-${suffix}`
+}
+
+const buildVariantSku = (baseSku: string, index: number) => {
+  const base = baseSku.trim()
+  const seq  = String(index + 1).padStart(2, '0')
+  return base ? `${base}-V${seq}` : `VAR-V${seq}`
+}
+
+const normalizeSkuSegment = (value: string) => {
+  const cleaned = value
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+  return cleaned || 'COLOR'
+}
+
+const buildVariantColorSku = (baseSku: string, colorName: string, colorIndex: number, totalColors: number) => {
+  if (totalColors <= 1) return baseSku
+  return `${baseSku}-${normalizeSkuSegment(colorName || `COLOR-${colorIndex + 1}`)}`
+}
+
+const stripVariantColorSuffix = (sku: string | undefined, colorName: string | undefined) => {
+  const normalizedSku = (sku ?? '').trim()
+  const normalizedColorSegment = normalizeSkuSegment(colorName ?? '')
+
+  if (!normalizedSku || !normalizedColorSegment) {
+    return normalizedSku
+  }
+
+  const suffix = `-${normalizedColorSegment}`
+  return normalizedSku.toUpperCase().endsWith(suffix)
+    ? normalizedSku.slice(0, -suffix.length)
+    : normalizedSku
+}
+
+const normalizeNumberField = (value: string) => {
+  const trimmed = value.trim()
+  return trimmed ? Number(trimmed) : null
+}
+
+const normalizeTextField = (value: string) => {
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
+const normalizeVariantLabel = (value: string) => value.trim().replace(/\s+/g, ' ')
+
+const getVariantColorKey = (color: VariantColor) =>
+  `${normalizeVariantLabel(color.name).toLowerCase()}|${color.hex.trim().toLowerCase()}`
+
+const dedupeVariantColors = (colors: VariantColor[]) => {
+  const seen = new Set<string>()
+
+  return colors.filter((color) => {
+    const key = getVariantColorKey(color)
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
+const collectVariantColors = (variants: VariantFormState[]) =>
+  dedupeVariantColors(variants.flatMap((variant) => variant.pv_colors))
+
+const dedupeVariantValues = (values: string[]) => {
+  const seen = new Set<string>()
+
+  return values
+    .map((value) => normalizeVariantLabel(value))
+    .filter((value) => {
+      if (!value) return false
+      const key = value.toLowerCase()
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+}
+
+const dedupeImageUrls = (urls: string[]) => {
+  const seen = new Set<string>()
+
+  return urls
+    .map((url) => url.trim())
+    .filter((url) => {
+      if (!url) return false
+      const key = url.toLowerCase()
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+}
+
+type ProductImageItem =
+  | { id: string; kind: 'existing'; url: string }
+  | { id: string; kind: 'new'; file: File; preview: string }
+
+const makeExistingImageItem = (url: string): ProductImageItem => ({
+  id: `existing:${url}`,
+  kind: 'existing',
+  url,
+})
+
+const makeNewImageItem = (file: File): ProductImageItem => ({
+  id: `new:${Date.now()}:${Math.random().toString(36).slice(2)}`,
+  kind: 'new',
+  file,
+  preview: URL.createObjectURL(file),
+})
+
+const getAllVariantStyles = (variant: Pick<VariantFormState, 'pv_style' | 'pv_extra_styles'>) =>
+  dedupeVariantValues([variant.pv_style, ...(Array.isArray(variant.pv_extra_styles) ? variant.pv_extra_styles : [])])
+
+const getVariantCombinationKey = (variant: Pick<VariantFormState, 'pv_name' | 'pv_style' | 'pv_size'>) =>
+  [
+    normalizeVariantLabel(variant.pv_name).toLowerCase(),
+    normalizeVariantLabel(variant.pv_style).toLowerCase(),
+    normalizeVariantLabel(variant.pv_size).toLowerCase(),
+  ].join('::')
+
+const buildGeneratedVariantRows = (
+  existingVariants: VariantFormState[],
+  globalPrimaryValues: string[],
+  globalSizeValues: string[],
+  globalColors: VariantColor[],
+) => {
+  const primaryValues = globalPrimaryValues.length > 0 ? globalPrimaryValues : ['']
+  const sizeValues = globalSizeValues.length > 0 ? globalSizeValues : ['']
+  const comboKeys = new Set<string>()
+  const generatedRows = primaryValues.flatMap((value) =>
+    sizeValues.map((sizeValue) => {
+      const combo = { pv_name: value, pv_style: '', pv_size: sizeValue }
+      const comboKey = getVariantCombinationKey(combo)
+      comboKeys.add(comboKey)
+      const existing = existingVariants.find((variant) => getVariantCombinationKey(variant) === comboKey)
+
+      return {
+        ...(existing ?? emptyVariant()),
+        pv_name: value,
+        pv_style: existing?.pv_style ?? '',
+        pv_size: sizeValue,
+        pv_colors: dedupeVariantColors([...(existing?.pv_colors ?? []), ...globalColors.map((color) => ({ ...color }))]),
+      }
+    }),
+  )
+
+  const manualRows = existingVariants.filter((variant) => !comboKeys.has(getVariantCombinationKey(variant)))
+  return [...generatedRows, ...manualRows]
+}
+
+const collectVariantNames = (variants: VariantFormState[]) =>
+  dedupeVariantValues(variants.map((variant) => variant.pv_name))
+
+const collectVariantSizes = (variants: VariantFormState[]) =>
+  dedupeVariantValues(variants.map((variant) => variant.pv_size))
+
+const isAutoGeneratedVariantSku = (value: string) => {
+  const trimmed = value.trim().toUpperCase()
+  if (!trimmed) return false
+
+  return /-V\d{2}(?:-[A-Z0-9-]+)?$/.test(trimmed)
+}
+
+const normalizeComparableNumber = (value: string | number | null | undefined) => {
+  const trimmed = String(value ?? '').trim()
+  if (!trimmed) return ''
+  const parsed = Number(trimmed)
+  return Number.isFinite(parsed) ? String(parsed) : trimmed
+}
+
+const isGeneratedGlobalVariant = (
+  variant: VariantFormState,
+  baseDefaults?: {
+    srp?: string
+    dealer?: string
+    member?: string
+    multiplier?: string
+  },
+) => {
+  const hasCustomSku = Boolean(variant.pv_sku.trim()) && !isAutoGeneratedVariantSku(variant.pv_sku)
+  const hasCustomPricing = Boolean(
+    (variant.pv_price_srp.trim() && normalizeComparableNumber(variant.pv_price_srp) !== normalizeComparableNumber(baseDefaults?.srp)) ||
+    (variant.pv_price_dp.trim() && normalizeComparableNumber(variant.pv_price_dp) !== normalizeComparableNumber(baseDefaults?.dealer)) ||
+    (variant.pv_price_member.trim() && normalizeComparableNumber(variant.pv_price_member) !== normalizeComparableNumber(baseDefaults?.member)) ||
+    (variant.pv_reversed_pv_multiplier.trim() && normalizeComparableNumber(variant.pv_reversed_pv_multiplier) !== normalizeComparableNumber(baseDefaults?.multiplier))
+  )
+  const hasCustomVariantData = Boolean(
+    variant.pv_style.trim() ||
+    variant.pv_extra_styles.length > 0 ||
+    variant.pv_width.trim() ||
+    variant.pv_dimension.trim() ||
+    variant.pv_height.trim() ||
+    hasCustomSku ||
+    hasCustomPricing ||
+    variant.pv_prodpv.trim() ||
+    variant.pv_qty.trim() ||
+    variant.pv_status.trim() && variant.pv_status.trim() !== '1' ||
+    variant.pv_images.length > 0,
+  )
+
+  return !hasCustomVariantData && Boolean(variant.pv_name.trim() || variant.pv_style.trim() || variant.pv_size.trim() || variant.pv_colors.length > 0)
+}
+
+const collapseGeneratedGlobalVariants = (
+  variants: VariantFormState[],
+  baseDefaults?: {
+    srp?: string
+    dealer?: string
+    member?: string
+    multiplier?: string
+  },
+) => {
+  if (!variants.length) {
+    return {
+      visibleVariants: variants,
+      globalColors: [] as VariantColor[],
+      globalPrimaryValues: [] as string[],
+      globalSizeValues: [] as string[],
+    }
+  }
+
+  const allGenerated = variants.every((variant) => isGeneratedGlobalVariant(variant, baseDefaults))
+  if (!allGenerated) {
+      return {
+        visibleVariants: variants,
+        globalColors: collectVariantColors(variants),
+        globalPrimaryValues: collectVariantNames(variants),
+        globalSizeValues: collectVariantSizes(variants),
+      }
+    }
+
+    return {
+      visibleVariants: [] as VariantFormState[],
+      globalColors: collectVariantColors(variants),
+      globalPrimaryValues: collectVariantNames(variants),
+      globalSizeValues: collectVariantSizes(variants),
+    }
+}
+
+const getVariantFormKey = (variant: VariantFormState) => {
+  const normalizedColors = variant.pv_colors
+    .map((color) => `${normalizeVariantLabel(color.name).toLowerCase()}|${color.hex.trim().toLowerCase()}`)
+    .sort()
+    .join(',')
+
+  return [
+    variant.id ?? '',
+    variant.pv_sku.trim().toLowerCase(),
+    normalizeVariantLabel(variant.pv_name).toLowerCase(),
+    normalizeVariantLabel(variant.pv_style).toLowerCase(),
+    dedupeVariantValues(variant.pv_extra_styles).join('|').toLowerCase(),
+    normalizeVariantLabel(variant.pv_size).toLowerCase(),
+    variant.pv_width.trim(),
+    variant.pv_dimension.trim(),
+    variant.pv_height.trim(),
+    normalizedColors,
+    variant.pv_price_srp.trim(),
+    variant.pv_price_dp.trim(),
+    variant.pv_price_member.trim(),
+    variant.pv_reversed_pv_multiplier.trim(),
+    variant.pv_qty.trim(),
+    variant.pv_status.trim(),
+    variant.pv_images.filter(Boolean).join('|'),
+  ].join('::')
+}
+
+const getVariantCoreGroupKey = (variant: ProductVariant) => {
+  const images = Array.isArray(variant.images) ? variant.images.filter(Boolean).join('|') : ''
+
+  return [
+    normalizeVariantLabel(variant.name ?? '').toLowerCase(),
+    normalizeVariantLabel(variant.size ?? '').toLowerCase(),
+    variant.width ?? '',
+    variant.dimension ?? '',
+    variant.height ?? '',
+    variant.priceSrp ?? '',
+    variant.priceDp ?? '',
+    variant.priceMember ?? '',
+    variant.prodpv ?? '',
+    variant.qty ?? '',
+    variant.status ?? 1,
+    images,
+  ].join('::')
+}
+
+const mapProductVariantsToFormStates = (productVariants: ProductVariant[]) => {
+  const groupedSkuCounts = productVariants.reduce((map, variant) => {
+    const groupKey = `${getVariantCoreGroupKey(variant)}::${stripVariantColorSuffix(variant.sku, variant.color)}`
+    map.set(groupKey, (map.get(groupKey) ?? 0) + 1)
+    return map
+  }, new Map<string, number>())
+
+  const groupedVariants = productVariants.reduce((map, variant) => {
+    const coreKey = getVariantCoreGroupKey(variant)
+    const strippedSku = stripVariantColorSuffix(variant.sku, variant.color)
+    const candidateKey = `${coreKey}::${strippedSku}`
+    const resolvedSku = (groupedSkuCounts.get(candidateKey) ?? 0) > 1
+      ? strippedSku
+      : (variant.sku ?? '').trim()
+    const groupKey = `${coreKey}::${resolvedSku}`
+
+    const current = map.get(groupKey)
+    const nextColor =
+      variant.colorHex || variant.color
+        ? [{
+            name: variant.color ?? variant.colorHex ?? '',
+            hex: variant.colorHex || colorNameToHex(variant.color ?? '') || '#94a3b8',
+          }]
+        : []
+
+    if (!current) {
+      map.set(groupKey, {
+        ...mapVariantToForm(variant),
+        pv_sku: resolvedSku,
+        pv_colors: nextColor,
+      })
+      return map
+    }
+
+    const mergedImages = Array.from(new Set([...current.pv_images, ...(Array.isArray(variant.images) ? variant.images.filter(Boolean) : [])]))
+    const mergedColors = [...current.pv_colors]
+    const mergedStyles = dedupeVariantValues([current.pv_style, ...current.pv_extra_styles, variant.style ?? ''])
+    const [primaryStyle = '', ...extraStyles] = mergedStyles
+
+    nextColor.forEach((color) => {
+      const signature = getNormalizedColorSignature(color.name, color.hex)
+      const alreadyExists = mergedColors.some((existingColor) => getNormalizedColorSignature(existingColor.name, existingColor.hex) === signature)
+      if (!alreadyExists) {
+        mergedColors.push(color)
+      }
+    })
+
+    map.set(groupKey, {
+      ...current,
+      pv_style: primaryStyle,
+      pv_extra_styles: extraStyles,
+      pv_images: mergedImages,
+      pv_colors: mergedColors,
+    })
+    return map
+  }, new Map<string, VariantFormState>())
+
+  return Array.from(groupedVariants.values())
+}
+
+const dedupeVariantFormStates = (variants: VariantFormState[]) =>
+  Array.from(
+    variants.reduce((map, variant) => {
+      const key = getVariantFormKey(variant)
+      if (!map.has(key)) {
+        map.set(key, variant)
+      }
+      return map
+    }, new Map<string, VariantFormState>()).values(),
+  )
+
+const moveItem = <T,>(items: T[], fromIndex: number, toIndex: number) => {
+  if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= items.length || toIndex >= items.length) {
+    return items
+  }
+
+  const next = [...items]
+  const [moved] = next.splice(fromIndex, 1)
+  next.splice(toIndex, 0, moved)
+  return next
+}
+
+const getRequestErrorMessage = (err: unknown, fallback: string) => {
+  if (err instanceof TypeError) {
+    return 'Unable to reach the admin upload/product service. Check if the frontend server, backend API, or Cloudinary upload route is available.'
+  }
+
+  const data = (err as { data?: { message?: string; errors?: Record<string, string[] | string> } })?.data
+  const firstFieldErrors = data?.errors
+    ? Object.values(data.errors)
+        .flatMap((value) => Array.isArray(value) ? value : [value])
+        .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+    : []
+
+  return firstFieldErrors[0] ?? data?.message ?? fallback
+}
+
+const getUploadErrorMessage = (err: unknown, fallback: string) => {
+  if (err instanceof TypeError) {
+    return 'Upload service is unreachable right now. Check the frontend server and Cloudinary configuration, then try again.'
+  }
+
+  return (err as Error)?.message ?? fallback
+}
+
+const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024
+
+const hasEditDraftContent = (
+  currentForm: FormState,
+  initialForm: FormState | null,
+  currentVariants: VariantFormState[],
+  initialVariants: VariantFormState[],
+  currentImageUrls: string[],
+  initialImageUrls: string[],
+  roomTouched: boolean,
+) => {
+  const formChanged =
+    initialForm !== null &&
+    JSON.stringify(normalizeFormForComparison(currentForm)) !== JSON.stringify(normalizeFormForComparison(initialForm))
+  const variantsChanged =
+    JSON.stringify(normalizeVariantsForComparison(currentVariants)) !== JSON.stringify(normalizeVariantsForComparison(initialVariants))
+  const imageUrlsChanged =
+    currentImageUrls.length !== initialImageUrls.length ||
+    currentImageUrls.some((url, index) => url !== initialImageUrls[index])
+
+  return formChanged || variantsChanged || imageUrlsChanged || roomTouched
+}
+
+const normalizeFormForComparison = (form: FormState) => ({
+  pd_name: form.pd_name.trim(),
+  pd_catid: Number(form.pd_catid),
+  pd_room_type: form.pd_room_type.trim() ? Number(form.pd_room_type) : null,
+  pd_brand_type: form.pd_brand_type.trim() ? Number(form.pd_brand_type) : null,
+  pd_description: normalizeTextField(form.pd_description),
+  pd_specifications: normalizeTextField(form.pd_specifications),
+  pd_price_srp: Number(form.pd_price_srp),
+  pd_price_dp: normalizeNumberField(form.pd_price_dp),
+  pd_price_member: normalizeNumberField(form.pd_price_member),
+  pd_primary_option_label: normalizeTextField(form.pd_primary_option_label),
+  pd_secondary_option_label: normalizeTextField(form.pd_secondary_option_label),
+  pd_reversed_pv_multiplier: normalizeNumberField(form.pd_reversed_pv_multiplier),
+  pd_prodpv: deriveComputedPv({ transfer: form.pd_price_dp, multiplier: form.pd_reversed_pv_multiplier }),
+  pd_qty: normalizeNumberField(form.pd_qty),
+  pd_weight: normalizeNumberField(form.pd_weight),
+  pd_psweight: normalizeNumberField(form.pd_psweight),
+  pd_pswidth: normalizeNumberField(form.pd_pswidth),
+  pd_pslenght: normalizeNumberField(form.pd_pslenght),
+  pd_psheight: normalizeNumberField(form.pd_psheight),
+  pd_material: normalizeTextField(form.pd_material),
+  pd_warranty: normalizeTextField(form.pd_warranty),
+  pd_assembly_required: form.pd_assembly_required,
+  pd_parent_sku: normalizeTextField(form.pd_parent_sku),
+  pd_type: Number(form.pd_type),
+  pd_musthave: form.pd_musthave,
+  pd_bestseller: form.pd_bestseller,
+  pd_salespromo: form.pd_salespromo,
+  pd_verified: form.pd_verified,
+  pd_status: Number(form.pd_status),
+})
+
+const normalizeVariantsForComparison = (variants: VariantFormState[]) =>
+  variants.map((variant) => ({
+    id: variant.id ?? null,
+    pv_name: variant.pv_name.trim(),
+    pv_sku: variant.pv_sku.trim(),
+    pv_colors: variant.pv_colors.map((color) => ({
+      name: color.name.trim(),
+      hex: color.hex.trim().toLowerCase(),
+    })),
+    pv_style: variant.pv_style.trim(),
+    pv_extra_styles: dedupeVariantValues(variant.pv_extra_styles),
+    pv_size: variant.pv_size.trim(),
+    pv_width: normalizeNumberField(variant.pv_width),
+    pv_dimension: normalizeNumberField(variant.pv_dimension),
+    pv_height: normalizeNumberField(variant.pv_height),
+    pv_price_srp: normalizeNumberField(variant.pv_price_srp),
+    pv_price_dp: normalizeNumberField(variant.pv_price_dp),
+    pv_price_member: normalizeNumberField(variant.pv_price_member),
+    pv_reversed_pv_multiplier: normalizeNumberField(variant.pv_reversed_pv_multiplier),
+    pv_prodpv: deriveComputedPv({ transfer: variant.pv_price_dp, multiplier: variant.pv_reversed_pv_multiplier }),
+    pv_qty: normalizeNumberField(variant.pv_qty),
+    pv_status: Number(variant.pv_status),
+    pv_images: variant.pv_images.filter(Boolean),
+  }))
+
+const mapExpandedVariantToProductVariant = (
+  variant: NonNullable<CreateProductPayload['pd_variants']>[number],
+): ProductVariant => ({
+  sku: variant.pv_sku,
+  name: variant.pv_name,
+  color: variant.pv_color,
+  colorHex: variant.pv_color_hex,
+  style: variant.pv_style,
+  size: variant.pv_size,
+  width: variant.pv_width,
+  dimension: variant.pv_dimension,
+  height: variant.pv_height,
+  priceSrp: variant.pv_price_srp,
+  priceDp: variant.pv_price_dp,
+  priceMember: variant.pv_price_member,
+  prodpv: variant.pv_prodpv,
+  qty: variant.pv_qty,
+  status: variant.pv_status,
+  images: variant.pv_images,
+})
+
+/* ─── small components ───────────────────────────────────── */
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-2.5 pt-2">
+      <div className="h-4 w-0.5 shrink-0 rounded-full bg-blue-400" />
+      <span className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
+        {children}
+      </span>
+      <div className="h-px flex-1 bg-gradient-to-r from-slate-200 via-slate-100 to-transparent" />
+    </div>
+  )
+}
+
+function Field({
+  label, required, error, children,
+}: {
+  label: string; required?: boolean; error?: string; children: React.ReactNode
+}) {
+  return (
+    <div className="space-y-2" data-error-field={error ? 'true' : undefined}>
+      <label className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+        {label}{required && <span className="text-red-400 ml-0.5">*</span>}
+      </label>
+      {children}
+      {error && (
+        <p className="text-xs text-red-500 flex items-center gap-1">
+          <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
+          </svg>
+          {error}
+        </p>
+      )}
+    </div>
+  )
+}
+
+const sectionCardCls = 'overflow-hidden rounded-[28px] border border-slate-200/80 bg-white/95 shadow-[0_22px_60px_-36px_rgba(15,23,42,0.35)] dark:border-slate-800 dark:bg-slate-900/95 dark:shadow-black/30'
+const sectionCardBodyCls = 'px-4 py-4 sm:px-5 sm:py-5'
+
+function ModalSelectField({
+  ariaLabel,
+  value,
+  options,
+  isDisabled,
+  hasError,
+  searchable = false,
+  searchPlaceholder = 'Search options...',
+  onChange,
+}: {
+  ariaLabel: string
+  value: string
+  options: Array<{ value: string; label: string }>
+  isDisabled?: boolean
+  hasError?: boolean
+  searchable?: boolean
+  searchPlaceholder?: string
+  onChange: (value: string) => void
+}) {
+  const [search, setSearch] = useState('')
+  const selectedLabel = options.find((option) => option.value === value)?.label ?? options[0]?.label ?? 'Select'
+  const normalizedSearch = search.trim().toLowerCase()
+  const visibleOptions = useMemo(() => {
+    if (!searchable || !normalizedSearch) return options
+
+    return options.filter((option) => option.label.toLowerCase().includes(normalizedSearch))
+  }, [normalizedSearch, options, searchable])
+
+  return (
+    <Select
+      aria-label={ariaLabel}
+      selectedKey={value}
+      onSelectionChange={(key) => onChange(key == null ? '' : String(key))}
+      isDisabled={isDisabled}
+      className="w-full"
+    >
+      <Select.Trigger
+        className={[
+          'flex min-h-[50px] w-full items-center justify-between rounded-2xl border bg-slate-50/85 px-4 text-left text-sm text-slate-700 shadow-sm transition-all duration-200 dark:bg-slate-950/70 dark:text-slate-100',
+          hasError
+            ? 'border-red-300 bg-red-50/60 focus:border-red-400 dark:border-red-900/60 dark:bg-red-950/30'
+            : 'border-slate-200 hover:border-slate-300 focus:border-teal-400 focus:bg-white dark:border-slate-700 dark:hover:border-slate-600 dark:focus:border-blue-400 dark:focus:bg-slate-950',
+          isDisabled ? 'cursor-not-allowed opacity-60' : '',
+        ].join(' ')}
+      >
+        <span className="truncate">{selectedLabel}</span>
+        <Select.Indicator className="h-4 w-4 text-slate-400" />
+      </Select.Trigger>
+      <Select.Popover className="min-w-[var(--trigger-width)] rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+        {searchable ? (
+          <div className="border-b border-slate-100 dark:border-slate-800 p-2">
+            <div className="flex min-h-10 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 transition-all duration-200 focus-within:border-teal-300 focus-within:bg-white dark:border-slate-700 dark:bg-slate-950 dark:focus-within:border-blue-400">
+              <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35m1.6-5.15a6.75 6.75 0 11-13.5 0 6.75 6.75 0 0113.5 0z" />
+              </svg>
+              <input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  onKeyDown={(event) => event.stopPropagation()}
+                  onKeyUp={(event) => event.stopPropagation()}
+                  onClick={(event) => event.stopPropagation()}
+                  onMouseDown={(event) => event.stopPropagation()}
+                  autoFocus
+                  placeholder={searchPlaceholder}
+                  className="flex-1 border-none bg-transparent p-0 text-sm text-slate-700 outline-none placeholder:text-slate-400 dark:text-slate-100"
+              />
+              {search ? (
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    setSearch('')
+                  }}
+                  className="text-slate-400 transition hover:text-slate-600"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+        <ListBox className="p-1 text-slate-700 dark:text-slate-100">
+          {visibleOptions.length > 0 ? (
+            visibleOptions.map((option) => (
+              <ListBoxItem id={option.value} key={`${option.value}-${option.label}`}>
+                {option.label}
+              </ListBoxItem>
+            ))
+          ) : (
+            <ListBoxItem id="no-results" className="text-slate-400" isDisabled>
+              No results found
+            </ListBoxItem>
+          )}
+        </ListBox>
+      </Select.Popover>
+    </Select>
+  )
+}
+
+const inputCls = (hasError = false) => [
+  'w-full rounded-2xl border bg-slate-50/85 px-4 py-3 text-sm text-slate-700 placeholder-slate-400 shadow-sm dark:bg-slate-950/70 dark:text-slate-100 dark:placeholder:text-slate-500',
+  'focus:outline-none focus:ring-2 transition-all duration-200',
+  hasError
+    ? 'border-red-300 bg-red-50/60 focus:border-red-400 focus:ring-red-500/20 dark:border-red-900/60 dark:bg-red-950/30'
+    : 'border-slate-200 focus:border-blue-400 focus:bg-white focus:ring-blue-500/20 hover:border-slate-300 dark:border-slate-700 dark:focus:border-blue-400 dark:focus:bg-slate-950 dark:hover:border-slate-600',
+].join(' ')
+
+const variantInputCls = 'w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5 text-xs text-slate-700 placeholder-slate-400 shadow-sm transition-all duration-200 hover:border-slate-300 focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-400/20 dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-100 dark:placeholder:text-slate-500 dark:hover:border-slate-600 dark:focus:bg-slate-950'
+
+const scrollToFirstErrorField = (container: HTMLElement | null) => {
+  if (!container) return
+
+  requestAnimationFrame(() => {
+    const firstErrorField =
+      container.querySelector<HTMLElement>('[data-error-field="true"]') ??
+      container.querySelector<HTMLElement>('.border-red-300') ??
+      container.querySelector<HTMLElement>('.text-red-500')
+
+    if (!firstErrorField) return
+
+    firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' })
+    const focusTarget = firstErrorField.querySelector<HTMLElement>('input, select, textarea, [contenteditable="true"], button')
+    focusTarget?.focus?.({ preventScroll: true })
+  })
+}
+
+/* ─── main component ─────────────────────────────────────── */
+
+export default function EditProductModal({ product, onClose, onSaved }: EditProductModalProps) {
+  const isOpen = product !== null
+
+  const [form, setForm] = useState<FormState>({
+      pd_name: '', pd_catid: '', pd_room_type: '', pd_brand_type: '', pd_description: '', pd_specifications: '', pd_price_srp: '',
+      pd_price_dp: '', pd_price_member: '', pd_primary_option_label: '', pd_secondary_option_label: '', pd_pricing_tier: 'low_end', pd_reversed_pv_multiplier: '', pd_prodpv: '', pd_qty: '', pd_weight: '', pd_psweight: '',
+    pd_pswidth: '', pd_pslenght: '', pd_psheight: '',
+    pd_material: '', pd_warranty: '', pd_assembly_required: false,
+    pd_parent_sku: '', pd_type: '0',
+    pd_musthave: false, pd_bestseller: false, pd_salespromo: false, pd_verified: true, pd_status: '0',
+  })
+  const [errors,             setErrors]             = useState<Errors>({})
+  const [serverError,        setServerError]        = useState('')
+  const [imageItems,         setImageItems]         = useState<ProductImageItem[]>([])
+  const [initialImageUrls,   setInitialImageUrls]   = useState<string[]>([])
+  const [initialForm,        setInitialForm]        = useState<FormState | null>(null)
+  const [initialVariants,    setInitialVariants]    = useState<VariantFormState[]>([])
+  const [isUploading,        setIsUploading]        = useState(false)
+  const [imageError,         setImageError]         = useState('')
+  const [variants,           setVariants]           = useState<VariantFormState[]>([])
+  const [globalColors,       setGlobalColors]       = useState<VariantColor[]>([])
+  const [globalPrimaryValues, setGlobalPrimaryValues] = useState<string[]>([])
+  const [globalSizeValues, setGlobalSizeValues] = useState<string[]>([])
+  const [newGlobalColorInput, setNewGlobalColorInput] = useState<VariantColor>({ name: '', hex: '#94a3b8' })
+  const [newGlobalPrimaryValue, setNewGlobalPrimaryValue] = useState('')
+  const [newGlobalSizeValue, setNewGlobalSizeValue] = useState('')
+  const [newColorInputs,     setNewColorInputs]     = useState<Record<number, { name: string; hex: string }>>({})
+  const [newStyleInputs,     setNewStyleInputs]     = useState<Record<number, string>>({})
+  const [roomTouched,        setRoomTouched]        = useState(false)
+  const [brandText,          setBrandText]          = useState('')
+  const [draftRestored,      setDraftRestored]      = useState(false)
+  const [activeNewImageAdjustId, setActiveNewImageAdjustId] = useState<string | null>(null)
+  const activeImageDragIndexRef = useRef<number | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const formContentRef = useRef<HTMLDivElement>(null)
+
+  const { data: session } = useSession()
+  const sessionAccessToken = String((session?.user as { accessToken?: string } | undefined)?.accessToken ?? '')
+  const adminIdentityKey = sessionAccessToken
+    ? `${String((session?.user as { id?: string } | undefined)?.id ?? 'unknown')}:${sessionAccessToken}`
+    : undefined
+  const { data: adminMe } = useGetAdminMeQuery(adminIdentityKey, { skip: !sessionAccessToken })
+  const role = String(adminMe?.role ?? session?.user?.role ?? '').toLowerCase()
+  const linkedSupplierId = Number(adminMe?.supplier_id ?? session?.user?.supplierId ?? 0)
+  const isSupplierScopedActor =
+    role === 'supplier' || role === 'supplier_admin' || Number(adminMe?.user_level_id ?? session?.user?.userLevelId ?? 0) === 8
+
+  const [updateProduct, { isLoading }] = useUpdateProductMutation()
+  const { data: categoriesData } = useGetCategoriesQuery(
+    {
+      page: 1,
+      per_page: 500,
+      supplier_id: isSupplierScopedActor && linkedSupplierId > 0 ? linkedSupplierId : undefined,
+    },
+    undefined
+  )
+  const categories = useMemo(() => categoriesData?.categories ?? [], [categoriesData?.categories])
+  const { data: brandsData } = useGetProductBrandsQuery()
+  const brands = useMemo(
+    () => (brandsData?.brands ?? []).filter((brand) => brand.status === 0 || brand.id === Number(form.pd_brand_type || 0)),
+    [brandsData?.brands, form.pd_brand_type],
+  )
+  const selectedCategory = useMemo(
+    () => categories.find((category) => String(category.id) === form.pd_catid),
+    [categories, form.pd_catid],
+  )
+  const selectedBrand = useMemo(
+    () => brands.find((brand) => String(brand.id) === form.pd_brand_type),
+    [brands, form.pd_brand_type],
+  )
+
+  useEffect(() => {
+    if (selectedBrand?.name) {
+      setBrandText(selectedBrand.name)
+      return
+    }
+    if (!form.pd_brand_type) {
+      setBrandText('')
+    }
+  }, [selectedBrand?.name, form.pd_brand_type])
+
+  const resolveBrandIdByName = (value: string) => {
+    const normalized = value.trim().toLowerCase()
+    if (!normalized) return null
+    const match = brands.find((brand) => brand.name.trim().toLowerCase() === normalized)
+    return match ? String(match.id) : null
+  }
+  const selectedRoom = useMemo(
+    () => ROOM_OPTIONS.find((room) => String(room.id) === form.pd_room_type),
+    [form.pd_room_type],
+  )
+  const generatedParentSku = useMemo(
+    () => generateSkuFromName(form.pd_name, product?.id),
+    [form.pd_name, product?.id],
+  )
+  const mainPricingSummary = useMemo(
+    () => buildPricingSummary({
+      pricingTier: form.pd_pricing_tier,
+      srp: form.pd_price_srp,
+      dealer: form.pd_price_dp,
+      member: form.pd_price_member,
+      pv: form.pd_prodpv,
+      multiplier: form.pd_reversed_pv_multiplier,
+    }),
+    [form.pd_pricing_tier, form.pd_price_srp, form.pd_price_dp, form.pd_price_member, form.pd_reversed_pv_multiplier],
+  )
+  const computedMainPvDisplay = useMemo(() => (
+    getComputedPvDisplay({
+      transfer: form.pd_price_dp,
+      multiplier: form.pd_reversed_pv_multiplier,
+    })
+  ), [form.pd_price_dp, form.pd_reversed_pv_multiplier])
+  const openedProductRef = useRef<Product | null>(null)
+  if (product && openedProductRef.current?.id !== product.id) {
+    openedProductRef.current = product
+  }
+  const openedProduct = openedProductRef.current
+
+  /* Populate form when product changes — only re-initialize when a different product is opened,
+     not when RTK Query returns an updated reference for the same product (which would reset
+     any in-progress edits like variant deletions). */
+  useEffect(() => {
+    if (!openedProduct) return
+    const row = openedProduct as Product & Record<string, unknown>
+    const optionLabels = extractVariantOptionLabels(openedProduct.specifications)
+    const nextForm = {
+      pd_name:       openedProduct.name        ?? '',
+      pd_catid:      String(openedProduct.catid ?? ''),
+      pd_room_type:  openedProduct.roomType ? String(openedProduct.roomType) : '',
+      pd_brand_type: openedProduct.brandType ? String(openedProduct.brandType) : '',
+      pd_description:openedProduct.description ?? '',
+      pd_specifications: openedProduct.specifications ?? '',
+      pd_price_srp:  String(openedProduct.priceSrp ?? ''),
+      pd_price_dp:   String(openedProduct.priceDp  ?? ''),
+      pd_price_member: String(openedProduct.priceMember ?? ''),
+      pd_primary_option_label: optionLabels.primaryLabel ?? '',
+      pd_secondary_option_label: optionLabels.secondaryLabel ?? '',
+      pd_pricing_tier: optionLabels.pricingTier ?? 'low_end',
+      pd_reversed_pv_multiplier: deriveMultiplierFromPv({ transfer: openedProduct.priceDp, pv: openedProduct.prodpv }),
+      pd_prodpv:     String(openedProduct.prodpv   ?? ''),
+      pd_qty:        String(openedProduct.qty      ?? ''),
+      pd_weight:     String(openedProduct.weight   ?? ''),
+      pd_psweight:   String(row.psweight  ?? row.pd_psweight  ?? ''),
+      pd_pswidth:    String(row.pswidth   ?? row.pd_pswidth   ?? ''),
+      pd_pslenght:   String(row.pslenght  ?? row.pd_pslenght  ?? ''),
+      pd_psheight:   String(row.psheight  ?? row.pd_psheight  ?? ''),
+      pd_material:   String(row.material  ?? row.pd_material  ?? ''),
+      pd_warranty:   String(row.warranty  ?? row.pd_warranty  ?? ''),
+      pd_assembly_required: Boolean(row.assemblyRequired ?? row.pd_assembly_required),
+      pd_parent_sku: generateSkuFromName(openedProduct.name ?? '', openedProduct.id),
+      pd_type:       String(openedProduct.type   ?? 0),
+      pd_musthave:   openedProduct.musthave    ?? false,
+      pd_bestseller: openedProduct.bestseller  ?? false,
+      pd_salespromo: openedProduct.salespromo  ?? false,
+      pd_verified:   openedProduct.verified    ?? true,
+      pd_status:     String(openedProduct.status ?? 0),
+    }
+    setForm(nextForm)
+    setInitialForm(nextForm)
+    const existing = dedupeImageUrls(Array.isArray(openedProduct.images) && openedProduct.images.length > 0
+      ? openedProduct.images.filter((img): img is string => Boolean(img))
+      : (openedProduct.image ? [openedProduct.image] : []))
+    setInitialImageUrls(existing)
+    const rawNextVariants = Array.isArray(openedProduct.variants)
+      ? dedupeVariantFormStates(mapProductVariantsToFormStates(openedProduct.variants))
+      : []
+    const collapsedInitialState = collapseGeneratedGlobalVariants(rawNextVariants, {
+      srp: nextForm.pd_price_srp,
+      dealer: nextForm.pd_price_dp,
+      member: nextForm.pd_price_member,
+      multiplier: nextForm.pd_reversed_pv_multiplier,
+    })
+    setInitialVariants(collapsedInitialState.visibleVariants)
+    setGlobalColors(collapsedInitialState.globalColors)
+    setGlobalPrimaryValues(collapsedInitialState.globalPrimaryValues)
+    setGlobalSizeValues(collapsedInitialState.globalSizeValues)
+    setImageItems(existing.map(makeExistingImageItem))
+    setNewGlobalColorInput({ name: '', hex: '#94a3b8' })
+    setNewGlobalPrimaryValue('')
+    setNewGlobalSizeValue('')
+    setNewColorInputs({})
+    setNewStyleInputs({})
+    setErrors({}); setServerError(''); setImageError('')
+    setDraftRestored(false)
+    setActiveNewImageAdjustId(null)
+
+    if (typeof window !== 'undefined') {
+      try {
+        const savedDraft = window.localStorage.getItem(getEditProductDraftKey(openedProduct.id))
+        if (savedDraft) {
+          const parsedDraft = JSON.parse(savedDraft) as Partial<EditProductDraft>
+          if (parsedDraft.version === 1 && parsedDraft.productId === openedProduct.id) {
+            const restoredRawVariants = Array.isArray(parsedDraft.variants)
+              ? dedupeVariantFormStates(parsedDraft.variants.map((variant) => ({
+                  ...emptyVariant(),
+                  ...variant,
+                  pv_style: typeof variant?.pv_style === 'string' ? variant.pv_style : '',
+                  pv_extra_styles: Array.isArray((variant as Partial<VariantFormState>).pv_extra_styles)
+                    ? dedupeVariantValues((variant as Partial<VariantFormState>).pv_extra_styles ?? [])
+                    : [],
+                })))
+              : collapsedInitialState.visibleVariants
+            const restoredCollapsedState = collapseGeneratedGlobalVariants(restoredRawVariants, {
+              srp: nextForm.pd_price_srp,
+              dealer: nextForm.pd_price_dp,
+              member: nextForm.pd_price_member,
+              multiplier: nextForm.pd_reversed_pv_multiplier,
+            })
+            const restoredVariants = restoredCollapsedState.visibleVariants
+            const restoredGlobalColors = Array.isArray(parsedDraft.globalColors)
+              ? dedupeVariantColors(parsedDraft.globalColors)
+              : restoredCollapsedState.globalColors
+            const restoredGlobalPrimaryValues = Array.isArray(parsedDraft.globalPrimaryValues)
+              ? dedupeVariantValues(parsedDraft.globalPrimaryValues)
+              : restoredCollapsedState.globalPrimaryValues
+            const restoredGlobalSizeValues = Array.isArray(parsedDraft.globalSizeValues)
+              ? dedupeVariantValues(parsedDraft.globalSizeValues)
+              : restoredCollapsedState.globalSizeValues
+            setForm({ ...nextForm, ...parsedDraft.form })
+            setImageItems((Array.isArray(parsedDraft.imageUrls) ? dedupeImageUrls(parsedDraft.imageUrls) : existing).map(makeExistingImageItem))
+            setVariants(restoredVariants)
+            setGlobalColors(restoredGlobalColors)
+            setGlobalPrimaryValues(restoredGlobalPrimaryValues)
+            setGlobalSizeValues(restoredGlobalSizeValues)
+            setRoomTouched(Boolean(parsedDraft.roomTouched))
+            setDraftRestored(true)
+            return
+          }
+        }
+      } catch {
+        window.localStorage.removeItem(getEditProductDraftKey(openedProduct.id))
+      }
+    }
+
+    setImageItems(existing.map(makeExistingImageItem))
+    setVariants(collapsedInitialState.visibleVariants)
+    setGlobalColors(collapsedInitialState.globalColors)
+    setGlobalPrimaryValues(collapsedInitialState.globalPrimaryValues)
+    setGlobalSizeValues(collapsedInitialState.globalSizeValues)
+    setRoomTouched(false)
+  }, [openedProduct])
+
+  const set = (key: keyof FormState, value: string | boolean) => {
+    setForm(p => ({ ...p, [key]: value }))
+    setErrors(p => ({ ...p, [key]: undefined }))
+  }
+
+  useEffect(() => {
+    if (!product || roomTouched || form.pd_room_type.trim() !== '') return
+    const selectedCategory = categories.find((category) => String(category.id) === form.pd_catid)
+    const inferredRoomType = inferRoomTypeFromCategory(selectedCategory)
+    if (!inferredRoomType) return
+    setForm((prev) => ({ ...prev, pd_room_type: String(inferredRoomType) }))
+  }, [categories, form.pd_catid, form.pd_room_type, product, roomTouched])
+
+  const hasVariants = form.pd_type === '1'
+
+  useEffect(() => {
+    if (!hasVariants) return
+    if (globalPrimaryValues.length === 0 && globalSizeValues.length === 0) return
+
+    setVariants((prev) => {
+      const next = buildGeneratedVariantRows(prev, globalPrimaryValues, globalSizeValues, globalColors)
+      return JSON.stringify(normalizeVariantsForComparison(prev)) === JSON.stringify(normalizeVariantsForComparison(next))
+        ? prev
+        : next
+    })
+  }, [globalColors, globalPrimaryValues, globalSizeValues, hasVariants])
+
+  /* ── image handlers ── */
+  const applySelectedImages = (files: File[]) => {
+    if (!files.length) return
+    setImageError('')
+    for (const file of files) {
+      if (!IMAGE_MIME_TYPES.includes(file.type)) { setImageError('Only JPEG, PNG, WEBP, or GIF allowed.'); return }
+      if (file.size > MAX_IMAGE_BYTES) { setImageError('File too large. Max 5MB.'); return }
+    }
+    setImageItems((prev) => {
+      const availableSlots = Math.max(0, 15 - prev.length)
+      if (availableSlots <= 0) return prev
+      return [...prev, ...files.slice(0, availableSlots).map(makeNewImageItem)]
+    })
+  }
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    applySelectedImages(Array.from(e.target.files ?? []))
+  }
+
+  const preventFileDropNavigation = (e: React.DragEvent<HTMLElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
+  const handleMainImageDrop = (e: React.DragEvent<HTMLElement>) => {
+    preventFileDropNavigation(e)
+    applySelectedImages(Array.from(e.dataTransfer.files ?? []))
+  }
+
+  const handleRemoveImageItem = (id: string) => {
+    setImageItems((prev) => {
+      const next = prev.filter((item) => item.id !== id)
+      if (fileInputRef.current && !next.some((item) => item.kind === 'new')) {
+        fileInputRef.current.value = ''
+      }
+      return next
+    })
+    setActiveNewImageAdjustId((prev) => (prev === id ? null : prev))
+  }
+  const handleClearNewImages      = () => {
+    setImageItems((prev) => prev.filter((item) => item.kind === 'existing'))
+    setActiveNewImageAdjustId(null)
+    setImageError('')
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  const handleImageDragStart = (index: number) => (event: React.DragEvent<HTMLElement>) => {
+    activeImageDragIndexRef.current = index
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/plain', String(index))
+  }
+
+  const handleImageDragEnter = (targetIndex: number) => (event: React.DragEvent<HTMLElement>) => {
+    event.preventDefault()
+    const sourceIndex = activeImageDragIndexRef.current
+    if (sourceIndex == null || sourceIndex === targetIndex) return
+
+    setImageItems((prev) => moveItem(prev, sourceIndex, targetIndex))
+    activeImageDragIndexRef.current = targetIndex
+  }
+
+  const stopImageDrag = () => {
+    activeImageDragIndexRef.current = null
+  }
+
+  const handleApplyAdjustedNewImage = async (nextFile: File) => {
+    if (activeNewImageAdjustId == null) return
+
+    setImageItems((prev) =>
+      prev.map((item) =>
+        item.id === activeNewImageAdjustId && item.kind === 'new'
+          ? { ...item, file: nextFile, preview: URL.createObjectURL(nextFile) }
+          : item,
+      ),
+    )
+    setActiveNewImageAdjustId(null)
+  }
+
+  /* ── variant handlers ── */
+  const addVariant    = () => setVariants(prev => [...prev, { ...emptyVariant(), pv_colors: globalColors.map((color) => ({ ...color })) }])
+  const removeVariant = (index: number) => {
+    setVariants(prev => prev.filter((_, i) => i !== index))
+    setNewColorInputs(prev => {
+      const next: Record<number, { name: string; hex: string }> = {}
+      Object.entries(prev).forEach(([k, v]) => {
+        const key = Number(k)
+        if (key < index) next[key] = v
+        if (key > index) next[key - 1] = v
+      })
+      return next
+    })
+    setNewStyleInputs(prev => {
+      const next: Record<number, string> = {}
+      Object.entries(prev).forEach(([k, v]) => {
+        const key = Number(k)
+        if (key < index) next[key] = v
+        if (key > index) next[key - 1] = v
+      })
+      return next
+    })
+  }
+
+  const setVariant = (index: number, key: keyof VariantFormState, value: string | string[]) =>
+    setVariants(prev => prev.map((item, i) => i === index ? { ...item, [key]: value } : item))
+
+  const addGlobalColor = () => {
+    const hex = newGlobalColorInput.hex ?? '#94a3b8'
+    const typedName = normalizeVariantLabel(newGlobalColorInput.name ?? '')
+    const name = typedName || hexToColorName(hex)
+    if (!name) return
+
+    const colorToAdd = { name, hex }
+    setGlobalColors((prev) => dedupeVariantColors([...prev, colorToAdd]))
+    setVariants((prev) =>
+      prev.map((item) => ({
+        ...item,
+        pv_colors: dedupeVariantColors([...item.pv_colors, colorToAdd]),
+      })),
+    )
+    setNewGlobalColorInput({ name: '', hex: '#94a3b8' })
+  }
+
+  const removeGlobalColor = (colorIndex: number) => {
+    const target = globalColors[colorIndex]
+    if (!target) return
+    const targetKey = getVariantColorKey(target)
+
+    setGlobalColors((prev) => prev.filter((_, index) => index !== colorIndex))
+    setVariants((prev) =>
+      prev.map((item) => ({
+        ...item,
+        pv_colors: item.pv_colors.filter((color) => getVariantColorKey(color) !== targetKey),
+      })),
+    )
+  }
+
+  const addGlobalPrimaryValue = () => {
+    const value = normalizeVariantLabel(newGlobalPrimaryValue)
+    if (!value) return
+    setGlobalPrimaryValues((prev) => dedupeVariantValues([...prev, value]))
+    setNewGlobalPrimaryValue('')
+  }
+
+  const removeGlobalPrimaryValue = (valueIndex: number) => {
+    setGlobalPrimaryValues((prev) => prev.filter((_, index) => index !== valueIndex))
+  }
+
+  const addGlobalSizeValue = () => {
+    const value = normalizeVariantLabel(newGlobalSizeValue)
+    if (!value) return
+    setGlobalSizeValues((prev) => dedupeVariantValues([...prev, value]))
+    setNewGlobalSizeValue('')
+  }
+
+  const removeGlobalSizeValue = (valueIndex: number) => {
+    setGlobalSizeValues((prev) => prev.filter((_, index) => index !== valueIndex))
+  }
+
+  const addVariantColor = (index: number) => {
+    const hex  = newColorInputs[index]?.hex ?? '#94a3b8'
+    const typedName = normalizeVariantLabel(newColorInputs[index]?.name ?? '')
+    const name = typedName || hexToColorName(hex)
+    if (!name) return
+    setVariants(prev =>
+      prev.map((item, i) => (
+        i === index
+          ? (
+            item.pv_colors.some((color) => normalizeVariantLabel(color.name).toLowerCase() === name.toLowerCase())
+              ? item
+              : { ...item, pv_colors: [...item.pv_colors, { name, hex }] }
+          )
+          : item
+      )),
+    )
+    setNewColorInputs(prev => ({ ...prev, [index]: { name: '', hex: '#94a3b8' } }))  // reset after add
+  }
+
+  const removeVariantColor = (variantIndex: number, colorIndex: number) =>
+    setVariants(prev =>
+      prev.map((item, i) =>
+        i === variantIndex ? { ...item, pv_colors: item.pv_colors.filter((_, ci) => ci !== colorIndex) } : item,
+      ),
+    )
+
+  const addVariantExtraStyle = (index: number) => {
+    const value = normalizeVariantLabel(newStyleInputs[index] ?? '')
+    if (!value) return
+
+    setVariants((prev) =>
+      prev.map((item, i) =>
+        i === index
+          ? {
+              ...item,
+              ...(item.pv_style.trim()
+                ? {
+                    pv_extra_styles: dedupeVariantValues([
+                      ...item.pv_extra_styles,
+                      ...(normalizeVariantLabel(item.pv_style).toLowerCase() === value.toLowerCase() ? [] : [value]),
+                    ]),
+                  }
+                : {
+                    pv_style: value,
+                    pv_extra_styles: dedupeVariantValues(item.pv_extra_styles),
+                  }),
+            }
+          : item,
+      ),
+    )
+    setNewStyleInputs((prev) => ({ ...prev, [index]: '' }))
+  }
+
+  const removeVariantStyle = (variantIndex: number, styleIndex: number) =>
+    setVariants((prev) =>
+      prev.map((item, i) =>
+        i !== variantIndex
+          ? item
+          : (() => {
+              const nextStyles = getAllVariantStyles(item).filter((_, si) => si !== styleIndex)
+              return {
+                ...item,
+                pv_style: nextStyles[0] ?? '',
+                pv_extra_styles: nextStyles.slice(1),
+              }
+            })(),
+      ),
+    )
+
+  const uploadVariantImages = async (index: number, files: FileList | File[] | null) => {
+    const picked = Array.from(files ?? [])
+    if (!picked.length) return
+    for (const file of picked) {
+      if (!IMAGE_MIME_TYPES.includes(file.type)) { setImageError('Only JPEG, PNG, WEBP, or GIF files are allowed.'); return }
+      if (file.size > MAX_IMAGE_BYTES) { setImageError('File too large. Maximum size is 5MB.'); return }
+    }
+    setIsUploading(true)
+    try {
+      const uploaded: string[] = []
+      for (const file of picked) {
+        const fd = new FormData()
+        fd.append('file', file)
+        const res  = await fetch('/api/admin/upload', { method: 'POST', body: fd })
+        const json = await res.json()
+        if (!res.ok) throw new Error(json.error ?? 'Upload failed')
+        uploaded.push(json.url)
+      }
+      setVariants(prev =>
+        prev.map((item, i) => i === index ? { ...item, pv_images: dedupeImageUrls([...item.pv_images, ...uploaded]) } : item),
+      )
+      setImageError('')
+    } catch (err: unknown) {
+      setImageError(getUploadErrorMessage(err, 'Variant image upload failed.'))
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const handleVariantImageDrop = (index: number) => (e: React.DragEvent<HTMLElement>) => {
+    preventFileDropNavigation(e)
+    void uploadVariantImages(index, Array.from(e.dataTransfer.files ?? []))
+  }
+
+  /* ── validation ── */
+  const validate = (): Errors => {
+    const e: Errors = {}
+    if (!form.pd_name.trim())                                           e.pd_name      = 'Product name is required'
+    if (!form.pd_catid.trim())                                          e.pd_catid     = 'Category is required'
+    if (!form.pd_price_srp.trim() || isNaN(Number(form.pd_price_srp))) e.pd_price_srp = 'Valid SRP price is required'
+    if (form.pd_price_dp && isNaN(Number(form.pd_price_dp)))           e.pd_price_dp  = 'Must be a valid number'
+    if (form.pd_price_member && isNaN(Number(form.pd_price_member)))   e.pd_price_member = 'Must be a valid number'
+    if (form.pd_reversed_pv_multiplier && isNaN(Number(form.pd_reversed_pv_multiplier))) e.pd_prodpv = 'Multiplier must be a valid number'
+    if (form.pd_qty      && isNaN(Number(form.pd_qty)))                e.pd_qty       = 'Must be a valid number'
+    if (form.pd_weight   && isNaN(Number(form.pd_weight)))             e.pd_weight    = 'Must be a valid number'
+    if (form.pd_psweight && isNaN(Number(form.pd_psweight)))           e.pd_psweight  = 'Must be a valid number'
+    if (form.pd_pswidth  && isNaN(Number(form.pd_pswidth)))            e.pd_pswidth   = 'Must be a valid number'
+    if (form.pd_pslenght && isNaN(Number(form.pd_pslenght)))           e.pd_pslenght  = 'Must be a valid number'
+    if (form.pd_psheight && isNaN(Number(form.pd_psheight)))           e.pd_psheight  = 'Must be a valid number'
+    if (brandText.trim() && !form.pd_brand_type.trim())                e.pd_brand_type = 'Brand not found. Add it in Brands first.'
+    return e
+  }
+
+  const variantRowsForExpansion = variants.length > 0
+    ? variants
+    : (globalColors.length > 0 || globalPrimaryValues.length > 0 || globalSizeValues.length > 0)
+      ? (globalPrimaryValues.length > 0 ? globalPrimaryValues : ['']).flatMap((value) =>
+          (globalSizeValues.length > 0 ? globalSizeValues : ['']).map((sizeValue) => ({
+            ...emptyVariant(),
+            pv_name: value,
+            pv_style: '',
+            pv_extra_styles: [],
+            pv_size: sizeValue,
+            pv_colors: globalColors.map((color) => ({ ...color })),
+          })),
+        )
+      : []
+
+  const expandedVariants = variantRowsForExpansion
+    .filter(v => v.pv_name || v.pv_colors.length > 0 || v.pv_style || v.pv_extra_styles.length > 0 || v.pv_size || v.pv_width || v.pv_dimension || v.pv_height || v.pv_sku || v.pv_images.length > 0)
+    .flatMap((v) => {
+      const styleValues = getAllVariantStyles(v)
+      return (styleValues.length > 0 ? styleValues : ['']).map((styleValue) => ({
+        ...v,
+        pv_style: styleValue,
+        pv_extra_styles: [],
+      }))
+    })
+    .flatMap((v, index) => {
+      const autoSku    = buildVariantSku(form.pd_parent_sku || generateSkuFromName(form.pd_name, product?.id), index)
+      const variantSku = v.pv_sku.trim() || autoSku
+      const baseSrp = toOptionalPositiveNumber(form.pd_price_srp)
+      const baseDp = toOptionalPositiveNumber(form.pd_price_dp)
+      const baseMember = toOptionalPositiveNumber(form.pd_price_member)
+      const baseMultiplier = toOptionalPositiveNumber(form.pd_reversed_pv_multiplier)
+      const variantTransferPrice = toOptionalPositiveNumber(v.pv_price_dp) ?? baseDp
+      const variantMultiplier = toOptionalPositiveNumber(v.pv_reversed_pv_multiplier) ?? baseMultiplier
+      const base = {
+        pv_name:      v.pv_name.trim() || undefined,
+        pv_style:     v.pv_style || undefined,
+        pv_size:      v.pv_size || undefined,
+        pv_width:     toOptionalPositiveNumber(v.pv_width),
+        pv_dimension: toOptionalPositiveNumber(v.pv_dimension),
+        pv_height:    toOptionalPositiveNumber(v.pv_height),
+        pv_price_srp: toOptionalPositiveNumber(v.pv_price_srp) ?? baseSrp,
+        pv_price_dp:  variantTransferPrice,
+        pv_price_member: toOptionalPositiveNumber(v.pv_price_member) ?? baseMember,
+        pv_prodpv:    variantTransferPrice != null && variantMultiplier != null
+          ? deriveComputedPv({ transfer: variantTransferPrice, multiplier: variantMultiplier })
+          : undefined,
+        pv_qty:       v.pv_qty       ? Number(v.pv_qty)       : undefined,
+        pv_status:    Number(v.pv_status),
+        pv_images:    dedupeImageUrls(v.pv_images).length > 0 ? dedupeImageUrls(v.pv_images) : undefined,
+      }
+      if (!v.pv_colors.length) {
+        return [{ ...base, pv_sku: variantSku }]
+      }
+
+      return v.pv_colors.map((color, colorIndex) => ({
+        ...base,
+        pv_sku: buildVariantColorSku(variantSku, color.name, colorIndex, v.pv_colors.length),
+        pv_color: color.name,
+        pv_color_hex: color.hex,
+      }))
+    })
+
+  /* ── submit ── */
+  const handleSubmit = async (e: React.SyntheticEvent) => {
+    e.preventDefault()
+    if (!product) return
+    setServerError('')
+    const errs = validate()
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs)
+      scrollToFirstErrorField(formContentRef.current)
+      return
+    }
+    const baseChanged =
+      JSON.stringify(normalizeFormForComparison(form)) !== JSON.stringify(normalizeFormForComparison(initialForm ?? form))
+    const variantsChanged =
+      JSON.stringify(normalizeVariantsForComparison(variants)) !== JSON.stringify(normalizeVariantsForComparison(initialVariants))
+    const globalPrimaryValuesChanged =
+      JSON.stringify(dedupeVariantValues(globalPrimaryValues)) !== JSON.stringify(collectVariantNames(initialVariants))
+    const globalSizeValuesChanged =
+      JSON.stringify(dedupeVariantValues(globalSizeValues)) !== JSON.stringify(collectVariantSizes(initialVariants))
+    const productTypeChanged = Number(form.pd_type) !== Number(initialForm?.pd_type ?? form.pd_type)
+    const variantPayloadChanged =
+      variantsChanged || globalPrimaryValuesChanged || globalSizeValuesChanged || productTypeChanged
+    const hasNewImages = imageItems.some((item) => item.kind === 'new')
+    const currentExistingImageUrls = imageItems
+      .filter((item): item is Extract<ProductImageItem, { kind: 'existing' }> => item.kind === 'existing')
+      .map((item) => item.url)
+    const existingImagesChanged =
+      hasNewImages ||
+      currentExistingImageUrls.length !== initialImageUrls.length ||
+      currentExistingImageUrls.some((url, index) => url !== initialImageUrls[index])
+
+    if (!baseChanged && !variantsChanged && !globalPrimaryValuesChanged && !globalSizeValuesChanged && !existingImagesChanged) {
+      showSuccessToast('No changes detected.')
+      onClose()
+      return
+    }
+
+    let finalImageUrls = dedupeImageUrls(currentExistingImageUrls)
+    if (hasNewImages) {
+      setIsUploading(true)
+      try {
+        const uploadedById = new Map<string, string>()
+        for (const item of imageItems) {
+          if (item.kind !== 'new') continue
+          const fd = new FormData()
+          fd.append('file', item.file)
+          const res  = await fetch('/api/admin/upload', { method: 'POST', body: fd })
+          const json = await res.json()
+          if (!res.ok) throw new Error(json.error ?? 'Upload failed')
+          uploadedById.set(item.id, json.url)
+        }
+        finalImageUrls = dedupeImageUrls(
+          imageItems
+            .map((item) => item.kind === 'existing' ? item.url : uploadedById.get(item.id) ?? '')
+            .filter(Boolean),
+        )
+      } catch (err: unknown) {
+        setImageError(getUploadErrorMessage(err, 'Image upload failed.'))
+        setIsUploading(false)
+        return
+      }
+      setIsUploading(false)
+    }
+
+    const imagesChanged =
+      finalImageUrls.length !== initialImageUrls.length ||
+      finalImageUrls.some((url, index) => url !== initialImageUrls[index])
+
+    const computedMainPv = deriveComputedPv({
+      transfer: form.pd_price_dp,
+      multiplier: form.pd_reversed_pv_multiplier,
+    })
+    const resolvedMainPv = toOptionalPositiveNumber(form.pd_prodpv) ?? (computedMainPv > 0 ? computedMainPv : undefined)
+    const nextSpecifications = mergeVariantOptionLabelsMeta(form.pd_specifications, {
+      primaryLabel: form.pd_primary_option_label,
+      secondaryLabel: form.pd_secondary_option_label,
+      pricingTier: form.pd_pricing_tier,
+    })
+
+    const payload: Partial<CreateProductPayload> = {
+      pd_name:        form.pd_name.trim(),
+      pd_catid:       Number(form.pd_catid),
+      pd_room_type:   form.pd_room_type.trim() ? Number(form.pd_room_type) : undefined,
+      pd_brand_type:  form.pd_brand_type.trim() ? Number(form.pd_brand_type) : undefined,
+      pd_price_srp:   Number(form.pd_price_srp),
+      pd_description: form.pd_description.trim() || undefined,
+      pd_specifications: nextSpecifications,
+      pd_price_dp:    form.pd_price_dp  ? Number(form.pd_price_dp)  : undefined,
+      pd_price_member: form.pd_price_member ? Number(form.pd_price_member) : undefined,
+      pd_prodpv:      resolvedMainPv,
+      pd_qty:         form.pd_qty       ? Number(form.pd_qty)       : undefined,
+      pd_weight:      form.pd_weight    ? Number(form.pd_weight)    : undefined,
+      pd_psweight:    form.pd_psweight  ? Number(form.pd_psweight)  : undefined,
+      pd_pswidth:     form.pd_pswidth   ? Number(form.pd_pswidth)   : undefined,
+      pd_pslenght:    form.pd_pslenght  ? Number(form.pd_pslenght)  : undefined,
+      pd_psheight:    form.pd_psheight  ? Number(form.pd_psheight)  : undefined,
+      pd_material:    form.pd_material.trim()  || undefined,
+      pd_warranty:    form.pd_warranty.trim()  || undefined,
+      pd_assembly_required: form.pd_assembly_required,
+      pd_parent_sku:  form.pd_parent_sku.trim() || generatedParentSku || undefined,
+      pd_type:        Number(form.pd_type),
+      pd_musthave:    form.pd_musthave,
+      pd_bestseller:  form.pd_bestseller,
+      pd_salespromo:  form.pd_salespromo,
+      pd_verified:    form.pd_verified,
+      pd_status:      Number(form.pd_status),
+    }
+
+    if (variantPayloadChanged) {
+      payload.pd_variants = hasVariants ? expandedVariants : []
+    }
+
+    if (imagesChanged) {
+      payload.pd_image = finalImageUrls[0] ?? null
+      payload.pd_images = finalImageUrls
+    }
+
+    try {
+      const response = await updateProduct({ id: product.id, data: payload }).unwrap()
+      const updatedProduct: Product = response.product
+        ? normalizeProduct(response.product as Product & Record<string, unknown>)
+        : normalizeProduct({
+            ...product,
+            name: form.pd_name.trim(),
+            catid: Number(form.pd_catid),
+            roomType: form.pd_room_type ? Number(form.pd_room_type) : undefined,
+            brandType: form.pd_brand_type ? Number(form.pd_brand_type) : undefined,
+            brand: brands.find((brand) => brand.id === Number(form.pd_brand_type))?.name ?? product.brand ?? null,
+            description: form.pd_description.trim() || null,
+            specifications: nextSpecifications ?? null,
+            priceSrp: Number(form.pd_price_srp),
+            priceDp: form.pd_price_dp ? Number(form.pd_price_dp) : 0,
+            priceMember: form.pd_price_member ? Number(form.pd_price_member) : undefined,
+            prodpv: resolvedMainPv,
+            qty: form.pd_qty ? Number(form.pd_qty) : 0,
+            weight: form.pd_weight ? Number(form.pd_weight) : 0,
+            psweight: form.pd_psweight ? Number(form.pd_psweight) : undefined,
+            pswidth: form.pd_pswidth ? Number(form.pd_pswidth) : undefined,
+            pslenght: form.pd_pslenght ? Number(form.pd_pslenght) : undefined,
+            psheight: form.pd_psheight ? Number(form.pd_psheight) : undefined,
+            material: form.pd_material.trim() || null,
+            warranty: form.pd_warranty.trim() || null,
+            assemblyRequired: form.pd_assembly_required,
+            type: Number(form.pd_type),
+            musthave: form.pd_musthave,
+            bestseller: form.pd_bestseller,
+            salespromo: form.pd_salespromo,
+            verified: form.pd_verified,
+            status: Number(form.pd_status),
+            image: finalImageUrls[0] ?? null,
+            images: finalImageUrls,
+            variants: hasVariants ? expandedVariants.map(mapExpandedVariantToProductVariant) : [],
+          } as Product & Record<string, unknown>)
+      showSuccessToast('Product updated successfully.')
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem(getEditProductDraftKey(product.id))
+      }
+      onSaved?.(updatedProduct)
+      onClose()
+    } catch (err: unknown) {
+      const message = getRequestErrorMessage(err, 'Failed to update product.')
+      setServerError(message)
+      showErrorToast(message)
+    }
+  }
+
+  const handleClose = () => { if (isLoading || isUploading) return; onClose() }
+  const isBusy      = isLoading || isUploading
+  const hasAnyImages = imageItems.length > 0
+  const pendingImageCount = imageItems.filter((item) => item.kind === 'new').length
+
+  /* ── change detection (for button disable + grid visibility) ── */
+  const orderedCurrentImageUrls = imageItems
+    .filter((item): item is Extract<ProductImageItem, { kind: 'existing' }> => item.kind === 'existing')
+    .map((item) => item.url)
+  /* Keep grid visible even after all existing images are removed so user can still add new ones */
+  const showImageGrid = hasAnyImages || initialImageUrls.length > 0
+  const draftImageUrls = orderedCurrentImageUrls
+  const activeNewImageAdjustItem = activeNewImageAdjustId
+    ? imageItems.find((item): item is Extract<ProductImageItem, { kind: 'new' }> => item.kind === 'new' && item.id === activeNewImageAdjustId) ?? null
+    : null
+
+  useEffect(() => {
+    if (!isOpen || !openedProduct || typeof window === 'undefined') return
+
+    const draftKey = getEditProductDraftKey(openedProduct.id)
+    const shouldPersistDraft = hasEditDraftContent(
+      form,
+      initialForm,
+      variants,
+      initialVariants,
+      draftImageUrls,
+      initialImageUrls,
+      roomTouched,
+    )
+
+    if (!shouldPersistDraft) {
+      window.localStorage.removeItem(draftKey)
+      return
+    }
+
+    const draft: EditProductDraft = {
+      version: 1,
+      productId: openedProduct.id,
+      form,
+      variants,
+      globalColors,
+      globalPrimaryValues,
+      globalSizeValues,
+      imageUrls: draftImageUrls,
+      roomTouched,
+    }
+
+    window.localStorage.setItem(draftKey, JSON.stringify(draft))
+  }, [draftImageUrls, form, globalColors, globalPrimaryValues, globalSizeValues, initialForm, initialImageUrls, initialVariants, isOpen, openedProduct, roomTouched, variants])
+
+  /* ─── render ─────────────────────────────────────────────── */
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={handleClose}
+            className="fixed inset-0 z-50 bg-slate-950/55 backdrop-blur-md"
+          />
+
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 12 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              onClick={e => e.stopPropagation()}
+              className="flex max-h-[94vh] w-full max-w-6xl flex-col overflow-hidden rounded-[32px] border border-white/70 bg-white shadow-[0_32px_100px_-36px_rgba(15,23,42,0.55)] dark:border-slate-800 dark:bg-slate-950 dark:shadow-black/40"
+            >
+              {/* ── Header ── */}
+              <div className="shrink-0 border-b border-slate-200/80 bg-gradient-to-r from-blue-50 via-white to-cyan-50 px-4 py-4 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-blue-950/30 sm:px-6 sm:py-5">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-lg shadow-blue-500/30">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-600 dark:text-blue-300">Catalog Workspace</p>
+                    <h2 className="mt-1 text-lg font-bold leading-none text-slate-900 dark:text-slate-100">Edit Product</h2>
+                    <p className="mt-1 max-w-xl truncate text-xs text-slate-500 dark:text-slate-400">
+                      ID #{product?.id} · {product?.name}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  disabled={isBusy}
+                  className="flex h-10 w-10 items-center justify-center rounded-2xl text-slate-400 transition-colors hover:bg-white hover:text-slate-700 disabled:opacity-40 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                </button>
+                </div>
+              </div>
+
+              {/* ── Scrollable form body ── */}
+              <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+                <div ref={formContentRef} className="flex-1 space-y-6 overflow-y-auto px-5 py-5 sm:px-6 sm:py-6">
+                <div className="space-y-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400">Product Images</p>
+                  {draftRestored && (
+                    <div className="flex items-start gap-2.5 p-3.5 bg-amber-50 rounded-xl border border-amber-100">
+                      <svg className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
+                      <p className="text-xs text-amber-700">Local draft restored. Unsaved edits and uploaded image links are back in this product form.</p>
+                    </div>
+                  )}
+
+                  <SectionLabel>Product Images</SectionLabel>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    onChange={handleImageChange}
+                    className="hidden"
+                    id="edit-product-image-input"
+                  />
+                  <Card variant="default" className={sectionCardCls}>
+                    <Card.Content className={sectionCardBodyCls}>
+                  {showImageGrid ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-slate-700">Images</span>
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
+                            {imageItems.length} / 15
+                          </span>
+                          {pendingImageCount > 0 && (
+                            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-600">
+                              +{pendingImageCount} pending
+                            </span>
+                          )}
+                        </div>
+                        {pendingImageCount > 0 && (
+                          <button type="button" onClick={handleClearNewImages} className="text-xs font-semibold text-slate-400 hover:text-red-500 transition-colors">
+                            Clear new
+                          </button>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-5">
+                        {imageItems.map((item, index) => {
+                          const src = item.kind === 'existing' ? item.url : item.preview
+                          return (
+                            <div
+                              key={item.id}
+                              draggable
+                              onDragStart={handleImageDragStart(index)}
+                              onDragEnter={handleImageDragEnter(index)}
+                              onDragOver={preventFileDropNavigation}
+                              onDragEnd={stopImageDrag}
+                              onDrop={stopImageDrag}
+                              className={`group relative aspect-square cursor-grab overflow-hidden rounded-xl bg-slate-100 active:cursor-grabbing ${
+                                item.kind === 'new' ? 'ring-2 ring-emerald-400' : ''
+                              }`}
+                            >
+                              <Image
+                                src={src}
+                                alt={`Image ${index + 1}`}
+                                fill
+                                className="object-cover pointer-events-none"
+                                unoptimized
+                              />
+                              <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/40" />
+                              <span className="absolute left-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/50 text-[10px] font-bold text-white">
+                                {index + 1}
+                              </span>
+                              <div className="absolute bottom-1.5 left-1.5 flex flex-wrap gap-1">
+                                {index === 0 && (
+                                  <span className="rounded-md bg-blue-500 px-1.5 py-0.5 text-[9px] font-bold text-white">Main</span>
+                                )}
+                                {item.kind === 'new' && (
+                                  <span className="rounded-md bg-emerald-500 px-1.5 py-0.5 text-[9px] font-bold text-white">New</span>
+                                )}
+                              </div>
+                              <div className="absolute inset-0 flex items-center justify-center gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
+                                {item.kind === 'new' && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setActiveNewImageAdjustId(item.id)}
+                                    className="h-7 rounded-full bg-white/90 px-2.5 text-[10px] font-bold text-slate-700 shadow hover:bg-white"
+                                  >
+                                    Adjust
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveImageItem(item.id)}
+                                  className="flex h-7 w-7 items-center justify-center rounded-full bg-red-500/90 text-white shadow hover:bg-red-600"
+                                  title="Remove"
+                                >
+                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12"/>
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          )
+                        })}
+                        {/* Add more slot */}
+                        {imageItems.length < 15 && (
+                          <label
+                            htmlFor="edit-product-image-input"
+                            onDragOver={preventFileDropNavigation}
+                            onDrop={handleMainImageDrop}
+                            className="group flex aspect-square cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 transition-all hover:border-blue-400 hover:bg-blue-50/30 dark:border-slate-700 dark:bg-slate-950/70 dark:hover:border-blue-500 dark:hover:bg-blue-950/20"
+                          >
+                            <svg className="w-5 h-5 text-slate-300 group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
+                            </svg>
+                            <span className="text-[10px] font-medium text-slate-400 group-hover:text-blue-500 transition-colors">Add</span>
+                          </label>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-400">
+                        {!hasAnyImages
+                          ? 'All images removed - click + to add new images'
+                          : 'Drag images to reorder - first image is the main'}
+                      </p>
+                    </div>
+                  ) : (
+                    <label
+                      htmlFor="edit-product-image-input"
+                      onDragOver={preventFileDropNavigation}
+                      onDrop={handleMainImageDrop}
+                      className="group flex h-48 w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 transition-all hover:border-blue-400 hover:bg-blue-50/30 dark:border-slate-700 dark:bg-slate-950/70 dark:hover:border-blue-500 dark:hover:bg-blue-950/20"
+                    >
+                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-md ring-1 ring-slate-100 transition-all group-hover:bg-blue-50 group-hover:ring-blue-200 dark:bg-slate-900 dark:ring-slate-800 dark:group-hover:bg-blue-950/40 dark:group-hover:ring-blue-800">
+                        <svg className="w-6 h-6 text-slate-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+                        </svg>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm font-semibold text-slate-700 transition-colors group-hover:text-blue-700 dark:text-slate-200 dark:group-hover:text-blue-300">Drop images here or click to browse</p>
+                        <p className="mt-1 text-xs text-slate-400">JPEG · PNG · WEBP · GIF &nbsp;·&nbsp; max 5 MB each &nbsp;·&nbsp; up to 15 images</p>
+                      </div>
+                    </label>
+                  )}
+                    </Card.Content>
+                  </Card>
+                  {imageError && (
+                    <p className="mt-1 flex items-center gap-1 text-xs text-red-500">
+                      <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
+                      </svg>
+                      {imageError}
+                    </p>
+                  )}
+                </div>
+
+                  {serverError && (
+                    <div className="flex items-start gap-2.5 rounded-xl border border-red-100 bg-red-50 p-3.5">
+                      <svg className="w-4 h-4 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
+                      <p className="text-xs text-red-600">{serverError}</p>
+                    </div>
+                  )}
+                  <SectionLabel>Product Information</SectionLabel>
+                  <Card variant="default" className={sectionCardCls}>
+                    <Card.Content className={`${sectionCardBodyCls} space-y-5`}>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="rounded-[22px] border border-slate-200 bg-gradient-to-br from-slate-50 to-white px-4 py-4 shadow-sm">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">Supplier</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-700 dark:text-slate-200">{product.supplierName?.trim() || 'No supplier assigned'}</p>
+                      {product.supplierId ? (
+                        <p className="mt-1 text-[11px] text-slate-400">Supplier #{product.supplierId}</p>
+                      ) : null}
+                    </div>
+                    <div className="rounded-[22px] border border-slate-200 bg-gradient-to-br from-slate-50 to-white px-4 py-4 shadow-sm">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">Uploaded By</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-700 dark:text-slate-200">{product.uploaderName?.trim() || 'Unknown user'}</p>
+                      {product.uploaderRole ? (
+                        <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-slate-400">{product.uploaderRole.replace(/_/g, ' ')}</p>
+                      ) : product.uploaderEmail ? (
+                        <p className="mt-1 text-[11px] text-slate-400">{product.uploaderEmail}</p>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <Field label="Product Name" required error={errors.pd_name}>
+                    <input
+                      type="text"
+                      value={form.pd_name}
+                      onChange={e => {
+                        const value = e.target.value
+                        setForm(prev => ({
+                          ...prev,
+                          pd_name: value,
+                          pd_parent_sku: prev.pd_parent_sku.trim() ? prev.pd_parent_sku : '',
+                        }))
+                        setErrors(prev => ({ ...prev, pd_name: undefined }))
+                      }}
+                      placeholder="Product name"
+                      className={inputCls(!!errors.pd_name)}
+                    />
+                  </Field>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Category" required error={errors.pd_catid}>
+                      <ModalSelectField
+                        ariaLabel="Select product category"
+                        value={form.pd_catid}
+                        hasError={!!errors.pd_catid}
+                        searchable
+                        searchPlaceholder="Search categories..."
+                        onChange={(value) => {
+                          set('pd_catid', value)
+                          if (!roomTouched) {
+                            const selectedCategory = categories.find((category) => String(category.id) === value)
+                            const inferredRoomType = inferRoomTypeFromCategory(selectedCategory)
+                            set('pd_room_type', inferredRoomType ? String(inferredRoomType) : '')
+                          }
+                        }}
+                        options={[
+                          { value: '', label: 'Select category...' },
+                          ...categories.map((cat) => ({ value: String(cat.id), label: cat.name })),
+                        ]}
+                      />
+                    </Field>
+
+                    <Field label="Shop By Room">
+                      <div className="space-y-1">
+                        <ModalSelectField
+                          ariaLabel="Select room type"
+                          value={form.pd_room_type}
+                          onChange={(value) => {
+                            setRoomTouched(true)
+                            set('pd_room_type', value)
+                          }}
+                          options={[
+                            { value: '', label: 'Auto / Not assigned' },
+                            ...ROOM_OPTIONS.map((room) => ({ value: String(room.id), label: room.label })),
+                          ]}
+                        />
+                        <p className="text-[11px] text-slate-500">Auto-filled from category when possible, but still editable here.</p>
+                      </div>
+                    </Field>
+
+                    <Field label="Brand" error={errors.pd_brand_type}>
+                      <ModalSelectField
+                        ariaLabel="Select brand"
+                        value={form.pd_brand_type}
+                        searchable
+                        searchPlaceholder="Search brands..."
+                        onChange={(value) => {
+                          set('pd_brand_type', value)
+                          setErrors((prev) => ({ ...prev, pd_brand_type: undefined }))
+                        }}
+                        options={[
+                          { value: '', label: 'Not assigned' },
+                          ...brands.map((brand) => ({ value: String(brand.id), label: brand.name })),
+                        ]}
+                      />
+                      <div className="mt-2">
+                        <input
+                          type="text"
+                          list="brand-options-edit"
+                          value={brandText}
+                          onChange={(event) => {
+                            const next = event.target.value
+                            setBrandText(next)
+                            const matchId = resolveBrandIdByName(next)
+                            if (matchId) {
+                              set('pd_brand_type', matchId)
+                              setErrors((prev) => ({ ...prev, pd_brand_type: undefined }))
+                            } else if (!next.trim()) {
+                              set('pd_brand_type', '')
+                              setErrors((prev) => ({ ...prev, pd_brand_type: undefined }))
+                            }
+                          }}
+                          onBlur={() => {
+                            if (!brandText.trim()) return
+                            const matchId = resolveBrandIdByName(brandText)
+                            if (!matchId) {
+                              setErrors((prev) => ({ ...prev, pd_brand_type: 'Brand not found. Add it in Brands first.' }))
+                            }
+                          }}
+                          placeholder="Type brand name"
+                          className={inputCls(!!errors.pd_brand_type)}
+                        />
+                        <datalist id="brand-options-edit">
+                          {brands.map((brand) => (
+                            <option key={brand.id} value={brand.name} />
+                          ))}
+                        </datalist>
+                        <p className="mt-1 text-[11px] text-slate-500">You can type a brand name to auto-match.</p>
+                      </div>
+                    </Field>
+
+                    <Field label="SKU">
+                      <div className="space-y-1">
+                        <input
+                          type="text"
+                          value={form.pd_parent_sku}
+                          onChange={e => set('pd_parent_sku', e.target.value.toUpperCase())}
+                          placeholder={generatedParentSku || 'Auto-generated from product name'}
+                          className={inputCls()}
+                        />
+                        <p className="text-[11px] text-slate-500">
+                          Leave this blank to auto-generate: <span className="font-mono">{generatedParentSku || 'Waiting for product name'}</span>
+                        </p>
+                      </div>
+                    </Field>
+                  </div>
+                    </Card.Content>
+                  </Card>
+                  <Field label="Description">
+                    <div className="space-y-3">
+                      <ProductDescriptionGenerator
+                        input={{
+                          productName: form.pd_name,
+                          categoryName: selectedCategory?.name,
+                          roomLabel: selectedRoom?.label,
+                          brandName: selectedBrand?.name,
+                          material: form.pd_material,
+                          warranty: form.pd_warranty,
+                          assemblyRequired: form.pd_assembly_required,
+                          width: form.pd_pswidth,
+                          depth: form.pd_pslenght,
+                          height: form.pd_psheight,
+                        }}
+                        disabled={isLoading}
+                        onGenerate={(html) => set('pd_description', html)}
+                      />
+                      <RichTextEditor
+                        value={form.pd_description}
+                        onChange={html => set('pd_description', html)}
+                      />
+                    </div>
+                  </Field>
+
+                  {/* ── Section: Product Details ── */}
+                  <SectionLabel>Product Details</SectionLabel>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Material">
+                      <input type="text" value={form.pd_material} onChange={e => set('pd_material', e.target.value)} placeholder="e.g. Solid Wood & Fabric" className={inputCls()}/>
+                    </Field>
+                    <Field label="Warranty">
+                      <ModalSelectField
+                        ariaLabel="Select warranty"
+                        value={form.pd_warranty}
+                        onChange={(value) => set('pd_warranty', value)}
+                        options={[
+                          { value: '', label: 'Select warranty...' },
+                          ...WARRANTY_OPTIONS.map((option) => ({ value: option, label: option })),
+                        ]}
+                      />
+                    </Field>
+                  </div>
+                  <Field label="Assembly Required">
+                    <button
+                      type="button"
+                      onClick={() => set('pd_assembly_required', !form.pd_assembly_required)}
+                      className={`flex items-center justify-between w-full px-3.5 py-2.5 rounded-xl border-2 transition-all ${
+                        form.pd_assembly_required
+                          ? 'border-teal-300 bg-teal-50'
+                          : 'border-slate-200 bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      <span className={`text-sm font-semibold ${form.pd_assembly_required ? 'text-teal-700' : 'text-slate-500'}`}>
+                        {form.pd_assembly_required ? 'Yes — Assembly Required' : 'No Assembly Required'}
+                      </span>
+                      <div className={`relative h-5 w-9 rounded-full transition-colors ${form.pd_assembly_required ? 'bg-teal-500' : 'bg-slate-200'}`}>
+                        <div className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${form.pd_assembly_required ? 'left-4' : 'left-0.5'}`}/>
+                      </div>
+                    </button>
+                  </Field>
+
+                  {/* ── Section: Pricing ── */}
+                  <SectionLabel>Pricing</SectionLabel>
+                  <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+                    <Field label="PV Pricing Tier">
+                      <div className="space-y-1">
+                        <ModalSelectField
+                          ariaLabel="Select pricing tier"
+                          value={form.pd_pricing_tier}
+                          onChange={(value) => set('pd_pricing_tier', value)}
+                          options={PRICING_TIER_OPTIONS.map((option) => ({ value: option.value, label: option.label }))}
+                        />
+                        <p className="text-[11px] text-slate-500">Low-End is active for the current formula. High-End will follow once its formula is finalized.</p>
+                      </div>
+                    </Field>
+                    <Field label="SRP Price (₱)" required error={errors.pd_price_srp}>
+                      <input type="number" value={form.pd_price_srp} onChange={e => set('pd_price_srp', e.target.value)} placeholder="0.00" className={inputCls(!!errors.pd_price_srp)}/>
+                    </Field>
+                    <Field label="Member Price (₱)" error={errors.pd_price_member}>
+                      <div className="space-y-1">
+                        <input type="number" value={form.pd_price_member} onChange={e => set('pd_price_member', e.target.value)} placeholder="0.00" className={inputCls(!!errors.pd_price_member)}/>
+                        <p className="text-[11px] text-slate-500">Shown to member accounts. If blank, SRP will be used.</p>
+                      </div>
+                    </Field>
+                    <Field label="Dealer Price (₱)" error={errors.pd_price_dp}>
+                      <div className="space-y-1">
+                        <input type="number" value={form.pd_price_dp} onChange={e => set('pd_price_dp', e.target.value)} placeholder="0.00" className={inputCls(!!errors.pd_price_dp)}/>
+                        <p className="text-[11px] text-slate-500">Separate dealer pricing. Optional.</p>
+                      </div>
+                    </Field>
+                    <Field label="PV Product">
+                      <div className="space-y-1">
+                        <input
+                          type="number"
+                          value={computedMainPvDisplay}
+                          placeholder="0.00"
+                          disabled
+                          className={`${inputCls()} bg-slate-50 text-slate-600 cursor-not-allowed`}
+                        />
+                        <p className="text-[11px] text-slate-500">Auto-computed from Dealer Price × Reversed PV Multiplier.</p>
+                      </div>
+                    </Field>
+                    <Field label="Reversed PV Multiplier" error={errors.pd_prodpv}>
+                      <div className="space-y-1">
+                        <input type="number" value={form.pd_reversed_pv_multiplier} onChange={e => set('pd_reversed_pv_multiplier', e.target.value)} placeholder="e.g. 0.2" className={inputCls(!!errors.pd_prodpv)}/>
+                        <p className="text-[11px] text-slate-500">Formula: PV = Transfer Price × Multiplier.</p>
+                      </div>
+                    </Field>
+                  </div>
+                  <PricingSummaryPanel summary={mainPricingSummary} memberFallbackToSrp={!form.pd_price_member.trim()} />
+
+                  {/* ── Section: Stock & Shipping ── */}
+                  <SectionLabel>Stock & Shipping</SectionLabel>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Quantity" error={errors.pd_qty}>
+                      <input type="number" value={form.pd_qty} onChange={e => set('pd_qty', e.target.value)} placeholder="0" className={inputCls(!!errors.pd_qty)}/>
+                    </Field>
+                    <Field label="Net Weight (kg)" error={errors.pd_weight}>
+                      <input type="number" value={form.pd_weight} onChange={e => set('pd_weight', e.target.value)} placeholder="0.00" className={inputCls(!!errors.pd_weight)}/>
+                    </Field>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
+                    <Field label="Width / W (cm)" error={errors.pd_pswidth}>
+                      <input type="number" value={form.pd_pswidth} onChange={e => set('pd_pswidth', e.target.value)} placeholder="0" className={inputCls(!!errors.pd_pswidth)}/>
+                    </Field>
+                    <Field label="Length / L (cm)" error={errors.pd_pslenght}>
+                      <input type="number" value={form.pd_pslenght} onChange={e => set('pd_pslenght', e.target.value)} placeholder="0" className={inputCls(!!errors.pd_pslenght)}/>
+                    </Field>
+                    <Field label="Height / H (cm)" error={errors.pd_psheight}>
+                      <input type="number" value={form.pd_psheight} onChange={e => set('pd_psheight', e.target.value)} placeholder="0" className={inputCls(!!errors.pd_psheight)}/>
+                    </Field>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Package Weight (kg)" error={errors.pd_psweight}>
+                      <input type="number" value={form.pd_psweight} onChange={e => set('pd_psweight', e.target.value)} placeholder="0.00" className={inputCls(!!errors.pd_psweight)}/>
+                    </Field>
+                  </div>
+
+                  {/* ── Section: Settings ── */}
+                  <SectionLabel>Settings</SectionLabel>
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* Status */}
+                    <Field label="Status">
+                      <div className="flex items-center p-1 bg-slate-100 rounded-xl gap-0.5">
+                        {[{ value: '1', label: 'Active' }, { value: '0', label: 'Inactive (Draft)' }].map(opt => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => set('pd_status', opt.value)}
+                            className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                              form.pd_status === opt.value
+                                ? 'bg-white text-slate-700 shadow-sm'
+                                : 'text-slate-500 hover:text-slate-700'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </Field>
+
+                    {/* Has Variants */}
+                    <Field label="Product Type">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const next = !hasVariants
+                          set('pd_type', next ? '1' : '0')
+                          if (!next) {
+                            setVariants([])
+                            setGlobalColors([])
+                            setGlobalPrimaryValues([])
+                            setGlobalSizeValues([])
+                            setNewGlobalColorInput({ name: '', hex: '#94a3b8' })
+                            setNewGlobalPrimaryValue('')
+                            setNewGlobalSizeValue('')
+                            setNewColorInputs({})
+                            setNewStyleInputs({})
+                          }
+                        }}
+                        className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border-2 transition-all ${
+                          hasVariants
+                            ? 'border-teal-300 bg-teal-50'
+                            : 'border-slate-200 bg-white hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <svg className={`w-4 h-4 ${hasVariants ? 'text-teal-600' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                          </svg>
+                          <span className={`text-sm font-semibold ${hasVariants ? 'text-teal-700' : 'text-slate-600'}`}>
+                            {hasVariants ? 'Has Variants' : 'Simple Product'}
+                          </span>
+                        </div>
+                        <div className={`relative h-5 w-9 rounded-full transition-colors ${hasVariants ? 'bg-teal-500' : 'bg-slate-200'}`}>
+                          <div className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${hasVariants ? 'left-4' : 'left-0.5'}`}/>
+                        </div>
+                      </button>
+                    </Field>
+                  </div>
+
+                  {/* ── Section: Product Badges ── */}
+                  <SectionLabel>Product Badges</SectionLabel>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {FLAG_CARDS.map(flag => {
+                      const isActive = form[flag.key] as boolean
+                      return (
+                        <button
+                          key={flag.key}
+                          type="button"
+                          onClick={() => set(flag.key, !isActive)}
+                          className={[
+                            'relative flex flex-col gap-2 p-3 rounded-xl border-2 text-left transition-all',
+                            isActive ? flag.activeCard : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-slate-600 dark:hover:bg-slate-800',
+                          ].join(' ')}
+                        >
+                          <div className={`h-7 w-7 rounded-lg flex items-center justify-center transition-colors ${isActive ? flag.activeIcon : 'bg-slate-100 text-slate-400'}`}>
+                            {flag.icon}
+                          </div>
+                          <div>
+                            <p className={`text-xs font-bold ${isActive ? '' : 'text-slate-600'}`}>{flag.label}</p>
+                            <p className="text-[10px] text-slate-400 leading-snug mt-0.5">{flag.desc}</p>
+                          </div>
+                          {isActive && (
+                            <div className={`absolute top-2 right-2 h-3.5 w-3.5 rounded-full flex items-center justify-center ${flag.activeIcon}`}>
+                              <svg className="w-2 h-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                              </svg>
+                            </div>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  {/* ── Section: Variants ── */}
+                  {hasVariants && (
+                    <>
+                      <SectionLabel>Variants</SectionLabel>
+                      <div className="space-y-3">
+                        <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-cyan-50 p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-bold text-slate-800 dark:text-slate-100">Global Colors</p>
+                              <p className="mt-1 max-w-2xl text-xs leading-relaxed text-slate-500">
+                                Use this section to define common variant choices for this product upload. These options are not limited to size and color; they can also include finishes, dimensions, materials, styles, thickness, or any custom values that apply to this product variant set.
+                              </p>
+                            </div>
+                            <div className="rounded-full border border-blue-100 bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-blue-700 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-300">
+                              {globalColors.length} color{globalColors.length === 1 ? '' : 's'}
+                            </div>
+                          </div>
+
+                          <div className="mt-4 flex items-center gap-2 rounded-xl border border-blue-100 bg-white/80 p-2.5 dark:border-blue-900/50 dark:bg-slate-950/70">
+                            <label className="shrink-0 cursor-pointer relative group">
+                              <div
+                                className="h-10 w-10 rounded-xl border-2 border-white ring-1 ring-slate-200 group-hover:ring-blue-400 transition-all shadow-sm"
+                                style={{ backgroundColor: newGlobalColorInput.hex ?? '#94a3b8' }}
+                              />
+                              <input
+                                type="color"
+                                value={newGlobalColorInput.hex ?? '#94a3b8'}
+                                onChange={(e) => {
+                                  const hex = e.target.value
+                                  setNewGlobalColorInput((prev) => ({
+                                    hex,
+                                    name: normalizeVariantLabel(prev.name) || hexToColorName(hex),
+                                  }))
+                                }}
+                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                              />
+                            </label>
+                            <div className="flex-1 space-y-1">
+                              <input
+                                type="text"
+                                value={newGlobalColorInput.name ?? ''}
+                                onChange={(e) => {
+                                  const name = e.target.value
+                                  const matchedHex = colorNameToHex(name)
+                                  setNewGlobalColorInput((prev) => ({
+                                    name,
+                                    hex: matchedHex ?? prev.hex ?? '#94a3b8',
+                                  }))
+                                }}
+                                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addGlobalColor())}
+                                placeholder="Global color / finish (e.g. Walnut Oak, Matte Black)"
+                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/40 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
+                              />
+                              <p className="text-[11px] text-slate-400">Use this when the same colors apply across the whole product.</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={addGlobalColor}
+                              className="shrink-0 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-colors"
+                            >
+                              Add Color
+                            </button>
+                          </div>
+
+                          {globalColors.length > 0 && (
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              {globalColors.map((color, colorIndex) => (
+                                <span key={`${getVariantColorKey(color)}-${colorIndex}`} className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-white py-1 pl-1 pr-2.5 shadow-sm dark:border-blue-900/50 dark:bg-slate-900">
+                                  <span className="h-5 w-5 rounded-full shrink-0 border border-slate-200" style={{ backgroundColor: color.hex }} />
+                                  <span className="text-xs font-medium text-slate-700 dark:text-slate-200">{color.name !== color.hex ? color.name : color.hex}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeGlobalColor(colorIndex)}
+                                    className="text-slate-300 hover:text-red-500 transition-colors leading-none"
+                                  >
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                  </button>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="mt-4 space-y-4 rounded-xl border border-blue-100 bg-white/80 p-3 dark:border-blue-900/50 dark:bg-slate-950/70">
+                            <div className="grid gap-3 md:grid-cols-[1.2fr_1fr]">
+                              <div className="space-y-1">
+                                <label className="text-xs font-semibold text-slate-600 block">Variant Header</label>
+                                <input
+                                  value={form.pd_primary_option_label}
+                                  onChange={(e) => set('pd_primary_option_label', e.target.value)}
+                                  placeholder="e.g. Thickness"
+                                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/40 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
+                                />
+                                <p className="text-[11px] text-slate-400">Set the display title shown on the product page for these variant values.</p>
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-xs font-semibold text-slate-600 block">Add Custom Variant Values</label>
+                                <div className="flex gap-2">
+                                  <input
+                                    value={newGlobalPrimaryValue}
+                                    onChange={(e) => setNewGlobalPrimaryValue(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addGlobalPrimaryValue())}
+                                    placeholder="e.g. 1 inch, 2 inches"
+                                    className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/40 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={addGlobalPrimaryValue}
+                                    className="shrink-0 rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50 dark:border-blue-900/60 dark:bg-slate-900 dark:text-blue-300 dark:hover:bg-blue-950/30"
+                                  >
+                                    + Add
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+
+                            {globalPrimaryValues.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {globalPrimaryValues.map((value, valueIndex) => (
+                                  <span key={`${value}-${valueIndex}`} className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50/70 pl-3 pr-2 py-1.5 shadow-sm">
+                                    <span className="text-xs font-medium text-slate-700 dark:text-slate-200">{value}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeGlobalPrimaryValue(valueIndex)}
+                                      className="text-slate-300 hover:text-red-500 transition-colors leading-none"
+                                    >
+                                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12"/>
+                                      </svg>
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-slate-600 block">Global Sizes</label>
+                              <div className="flex gap-2">
+                                <input
+                                  value={newGlobalSizeValue}
+                                  onChange={(e) => setNewGlobalSizeValue(e.target.value)}
+                                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addGlobalSizeValue())}
+                                  placeholder="e.g. 36 x 75, 48 x 75"
+                                  className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/40 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={addGlobalSizeValue}
+                                  className="shrink-0 rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50 dark:border-blue-900/60 dark:bg-slate-900 dark:text-blue-300 dark:hover:bg-blue-950/30"
+                                >
+                                  + Add
+                                </button>
+                              </div>
+                              <p className="text-[11px] text-slate-400">Add repeatable size values here if you do not need per-variant cards.</p>
+                            </div>
+
+                            {globalSizeValues.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {globalSizeValues.map((value, valueIndex) => (
+                                  <span key={`${value}-${valueIndex}`} className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-white py-1.5 pl-3 pr-2 shadow-sm dark:border-blue-900/50 dark:bg-slate-900">
+                                    <span className="text-xs font-medium text-slate-700 dark:text-slate-200">{value}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeGlobalSizeValue(valueIndex)}
+                                      className="text-slate-300 hover:text-red-500 transition-colors leading-none"
+                                    >
+                                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12"/>
+                                      </svg>
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {variants.length === 0 ? (
+                          <div className="flex flex-col items-center gap-2 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 py-8 text-center dark:border-slate-700 dark:bg-slate-950/70">
+                            <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center">
+                              <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                              </svg>
+                            </div>
+                            <p className="text-xs font-semibold text-slate-500">No variants yet</p>
+                            <p className="text-[11px] text-slate-400">Add color / size options with their own stock and pricing</p>
+                          </div>
+                        ) : (
+                          variants.map((variant, index) => {
+                            const autoSku = buildVariantSku(form.pd_parent_sku || generateSkuFromName(form.pd_name, product?.id), index)
+                            const variantStyles = getAllVariantStyles(variant)
+                            return (
+                              <div key={`variant-${variant.id ?? index}`} className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+                                {/* Variant header */}
+                                <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950/70">
+                                  <div className="flex items-center gap-2">
+                                    <div className="h-6 w-6 rounded-lg bg-blue-100 flex items-center justify-center">
+                                      <span className="text-[10px] font-bold text-blue-700">{index + 1}</span>
+                                    </div>
+                                    <p className="text-xs font-bold text-slate-700 dark:text-slate-100">
+                                      {variant.pv_name.trim() || `Variant #${index + 1}`}
+                                      {variantStyles.length > 1 && <span className="text-slate-400 font-normal ml-1">(+{variantStyles.length - 1} more styles)</span>}
+                                      {variant.pv_style && <span className="text-slate-400 font-normal ml-1">· {variant.pv_style}</span>}
+                                      {variant.pv_size && <span className="text-slate-400 font-normal ml-1">· {variant.pv_size}</span>}
+                                      {(variant.pv_width || variant.pv_dimension || variant.pv_height) && (
+                                        <span className="text-slate-400 font-normal ml-1">
+                                          · {variant.pv_width || '-'}W x {variant.pv_dimension || '-'}D x {variant.pv_height || '-'}H
+                                        </span>
+                                      )}
+                                      {variant.pv_colors.length > 0 && (
+                                        <span className="inline-flex items-center gap-1 ml-2">
+                                          {variant.pv_colors.map((c, ci) => (
+                                            <span key={ci} className="h-3 w-3 rounded-full border border-slate-200 shrink-0" style={{ backgroundColor: c.hex }} title={c.name}/>
+                                          ))}
+                                          <span className="text-[10px] font-medium text-slate-400 ml-1">{variant.pv_colors.length}</span>
+                                        </span>
+                                      )}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-mono text-slate-400">{variant.pv_sku || autoSku}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeVariant(index)}
+                                      className="h-6 w-6 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                    >
+                                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
+                                      </svg>
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <div className="divide-y divide-slate-100 dark:divide-slate-800/70">
+
+                                  {/* ── Identity ── */}
+                                  <div className="px-4 py-3.5 space-y-2.5">
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Identity</p>
+                                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                                      <div className="space-y-1">
+                                        <label className="text-[11px] font-semibold text-slate-500 block">
+                                          Name <span className="font-normal text-slate-400">(recommended)</span>
+                                        </label>
+                                        <input value={variant.pv_name} onChange={e => setVariant(index, 'pv_name', e.target.value)} placeholder="e.g. 4 inches, Black, Standard" className={variantInputCls}/>
+                                      </div>
+                                      <div className="space-y-1">
+                                        <label className="text-[11px] font-semibold text-slate-500 block">Style</label>
+                                        <p className="text-[10px] text-slate-400">Use this for layout/style choices that should not appear under Size.</p>
+                                        <div className="flex gap-2 items-center">
+                                          <input
+                                            type="text"
+                                            value={newStyleInputs[index] ?? ''}
+                                            onChange={e => setNewStyleInputs(prev => ({ ...prev, [index]: e.target.value }))}
+                                            onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addVariantExtraStyle(index))}
+                                            placeholder="e.g. Left Facing, Armless, Recliner"
+                                            className={variantInputCls}
+                                          />
+                                          <button
+                                            type="button"
+                                            onClick={() => addVariantExtraStyle(index)}
+                                            className="shrink-0 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-semibold transition-colors border border-blue-200"
+                                          >
+                                            + Add
+                                          </button>
+                                        </div>
+                                        {getAllVariantStyles(variant).length > 0 && (
+                                          <div className="flex flex-wrap gap-1.5 pt-1">
+                                            {getAllVariantStyles(variant).map((style, styleIndex) => (
+                                              <span key={`${style}-${styleIndex}`} className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2 py-0.5 shadow-sm">
+                                                <span className="text-slate-600 font-medium text-[11px]">{style}</span>
+                                                <button type="button" onClick={() => removeVariantStyle(index, styleIndex)} className="text-slate-300 hover:text-red-500 transition-colors leading-none">
+                                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12"/>
+                                                  </svg>
+                                                </button>
+                                              </span>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                      <div className="space-y-1">
+                                        <label className="text-[11px] font-semibold text-slate-500 block">Size</label>
+                                        <input value={variant.pv_size} onChange={e => setVariant(index, 'pv_size', e.target.value)} placeholder="e.g. 10L, Large, 500ml, 60x75" className={variantInputCls}/>
+                                        <p className="text-[10px] text-slate-400">Leave blank if this variant does not use a size value.</p>
+                                      </div>
+                                      <div className="space-y-1">
+                                        <label className="text-[11px] font-semibold text-slate-500 block">SKU <span className="font-normal text-slate-400">(optional)</span></label>
+                                        <input value={variant.pv_sku} onChange={e => setVariant(index, 'pv_sku', e.target.value)} placeholder={autoSku} className={variantInputCls}/>
+                                      </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                                      <div className="space-y-1">
+                                        <label className="text-[11px] font-semibold text-slate-500 block">Width / W (cm)</label>
+                                        <input type="number" value={variant.pv_width} onChange={e => setVariant(index, 'pv_width', e.target.value)} onBlur={e => setVariant(index, 'pv_width', toOptionalPositiveNumber(e.target.value)?.toString() ?? '')} placeholder="e.g. 120" className={variantInputCls}/>
+                                      </div>
+                                      <div className="space-y-1">
+                                        <label className="text-[11px] font-semibold text-slate-500 block">Length / L (cm)</label>
+                                        <input type="number" value={variant.pv_dimension} onChange={e => setVariant(index, 'pv_dimension', e.target.value)} onBlur={e => setVariant(index, 'pv_dimension', toOptionalPositiveNumber(e.target.value)?.toString() ?? '')} placeholder="e.g. 200" className={variantInputCls}/>
+                                      </div>
+                                      <div className="space-y-1">
+                                        <label className="text-[11px] font-semibold text-slate-500 block">Height / H (cm)</label>
+                                        <input type="number" value={variant.pv_height} onChange={e => setVariant(index, 'pv_height', e.target.value)} onBlur={e => setVariant(index, 'pv_height', toOptionalPositiveNumber(e.target.value)?.toString() ?? '')} placeholder="e.g. 35" className={variantInputCls}/>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* ── Colors ── */}
+                                  <div className="px-4 py-3.5 space-y-2.5">
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Colors / Extra Option Values</p>
+                                    {variant.pv_colors.length > 0 && (
+                                      <div className="flex flex-wrap gap-1.5">
+                                        {variant.pv_colors.map((color, ci) => (
+                                          <span key={ci} className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white pl-1 pr-2 py-0.5 shadow-sm">
+                                            <span className="h-4 w-4 rounded-full shrink-0 border border-slate-200" style={{ backgroundColor: color.hex }}/>
+                                            <span className="text-slate-600 font-medium text-[11px]">{color.name !== color.hex ? color.name : color.hex}</span>
+                                            <button type="button" onClick={() => removeVariantColor(index, ci)} className="text-slate-300 hover:text-red-500 transition-colors leading-none ml-0.5">
+                                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12"/>
+                                              </svg>
+                                            </button>
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )}
+                                    <div className="flex gap-2 items-center p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+                                      <label className="shrink-0 cursor-pointer relative group">
+                                        <div
+                                          className="h-9 w-9 rounded-lg border-2 border-white ring-1 ring-slate-200 group-hover:ring-teal-400 transition-all shadow-sm"
+                                          style={{ backgroundColor: newColorInputs[index]?.hex ?? '#94a3b8' }}
+                                        />
+                                        <input
+                                          type="color"
+                                          value={newColorInputs[index]?.hex ?? '#94a3b8'}
+                                          onChange={e => {
+                                            const hex = e.target.value
+                                            const currentName = newColorInputs[index]?.name ?? ''
+                                            setNewColorInputs(prev => ({
+                                              ...prev,
+                                              [index]: { hex, name: normalizeVariantLabel(currentName) || hexToColorName(hex) },
+                                            }))
+                                          }}
+                                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                        />
+                                      </label>
+                                      <div className="flex-1 space-y-1">
+                                        <input
+                                          type="text"
+                                          value={newColorInputs[index]?.name ?? ''}
+                                          onChange={e => {
+                                            const name = e.target.value
+                                            const matchedHex = colorNameToHex(name)
+                                            setNewColorInputs(prev => ({
+                                              ...prev,
+                                              [index]: {
+                                                ...(prev[index] ?? { hex: '#94a3b8' }),
+                                                name,
+                                                hex: matchedHex ?? prev[index]?.hex ?? '#94a3b8',
+                                              },
+                                            }))
+                                          }}
+                                          onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addVariantColor(index))}
+                                          placeholder="Color / finish (e.g. Matte Black, Walnut Oak)"
+                                          className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-teal-400 focus:border-teal-400"
+                                        />
+                                        <p className="text-[10px] text-slate-400 px-0.5">Optional. Use this when you also need color or finish choices under the same variant row.</p>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => addVariantColor(index)}
+                                        className="shrink-0 px-3 py-2 bg-teal-50 hover:bg-teal-100 text-teal-700 rounded-lg text-xs font-semibold transition-colors border border-teal-200"
+                                      >
+                                        + Add
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {/* ── Pricing ── */}
+                                  <div className="px-4 py-3.5 space-y-2.5">
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pricing</p>
+                                    <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+                                      <div className="space-y-1">
+                                        <label className="text-[11px] font-semibold text-slate-500 block">SRP (₱)</label>
+                                        <input type="number" value={variant.pv_price_srp} onChange={e => setVariant(index, 'pv_price_srp', e.target.value)} onBlur={e => setVariant(index, 'pv_price_srp', toOptionalPositiveNumber(e.target.value)?.toString() ?? '')} placeholder="0.00" className={variantInputCls}/>
+                                      </div>
+                                      <div className="space-y-1">
+                                        <label className="text-[11px] font-semibold text-slate-500 block">Dealer (₱)</label>
+                                        <input type="number" value={variant.pv_price_dp} onChange={e => setVariant(index, 'pv_price_dp', e.target.value)} onBlur={e => setVariant(index, 'pv_price_dp', toOptionalPositiveNumber(e.target.value)?.toString() ?? '')} placeholder="Inherit" className={variantInputCls}/>
+                                      </div>
+                                      <div className="space-y-1">
+                                        <label className="text-[11px] font-semibold text-slate-500 block">Member (₱)</label>
+                                        <input type="number" value={variant.pv_price_member} onChange={e => setVariant(index, 'pv_price_member', e.target.value)} onBlur={e => setVariant(index, 'pv_price_member', toOptionalPositiveNumber(e.target.value)?.toString() ?? '')} placeholder="Inherit" className={variantInputCls}/>
+                                      </div>
+                                      <div className="space-y-1">
+                                        <label className="text-[11px] font-semibold text-slate-500 block">Reversed PV Multiplier</label>
+                                        <input type="number" value={variant.pv_reversed_pv_multiplier} onChange={e => setVariant(index, 'pv_reversed_pv_multiplier', e.target.value)} placeholder="Inherit" className={variantInputCls}/>
+                                      </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                      <div className="space-y-1">
+                                        <label className="text-[11px] font-semibold text-slate-500 block">PV Product</label>
+                                        <input
+                                          type="number"
+                                          value={getComputedPvDisplay({
+                                            transfer: variant.pv_price_dp || form.pd_price_dp,
+                                            multiplier: variant.pv_reversed_pv_multiplier || form.pd_reversed_pv_multiplier,
+                                          })}
+                                          placeholder="0.00"
+                                          disabled
+                                          className={`${variantInputCls} bg-slate-50 text-slate-600 cursor-not-allowed`}
+                                        />
+                                      </div>
+                                      <div className="space-y-1">
+                                        <label className="text-[11px] font-semibold text-slate-500 block">Retail Profit</label>
+                                        <input
+                                          type="text"
+                                          value={formatDecimalInput(buildPricingSummary({
+                                            pricingTier: form.pd_pricing_tier,
+                                            srp: variant.pv_price_srp,
+                                            dealer: variant.pv_price_dp || form.pd_price_dp,
+                                            member: variant.pv_price_member || form.pd_price_member,
+                                            pv: variant.pv_prodpv,
+                                            multiplier: variant.pv_reversed_pv_multiplier || form.pd_reversed_pv_multiplier,
+                                          }).retailProfit, 2)}
+                                          readOnly
+                                          placeholder="Auto"
+                                          className={`${variantInputCls} bg-slate-50 text-slate-600`}
+                                        />
+                                      </div>
+                                    </div>
+                                    <p className="text-[11px] text-slate-400">Leave Transfer, Member, or Multiplier blank to inherit the main product setup. PV Product is auto-computed.</p>
+                                    <PricingSummaryPanel
+                                      title="Variant PV Summary"
+                                      summary={buildPricingSummary({
+                                        pricingTier: form.pd_pricing_tier,
+                                        srp: variant.pv_price_srp,
+                                        dealer: variant.pv_price_dp,
+                                        member: variant.pv_price_member || form.pd_price_member,
+                                        pv: variant.pv_prodpv,
+                                        multiplier: variant.pv_reversed_pv_multiplier || form.pd_reversed_pv_multiplier,
+                                      })}
+                                      memberFallbackToSrp={!(variant.pv_price_member || form.pd_price_member).trim()}
+                                    />
+                                  </div>
+
+                                  {/* ── Inventory & Status ── */}
+                                  <div className="px-4 py-3.5 space-y-2.5">
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Inventory & Status</p>
+                                    <div className="grid grid-cols-2 gap-3">
+                                      <div className="space-y-1">
+                                        <label className="text-[11px] font-semibold text-slate-500 block">Stock Quantity</label>
+                                        <input type="number" value={variant.pv_qty} onChange={e => setVariant(index, 'pv_qty', e.target.value)} placeholder="0" className={variantInputCls}/>
+                                      </div>
+                                      <div className="space-y-1">
+                                        <label className="text-[11px] font-semibold text-slate-500 block">Status</label>
+                                        <div className="flex items-center p-0.5 bg-slate-100 rounded-lg gap-0.5">
+                                          {[{ value: '1', label: 'Active' }, { value: '0', label: 'Inactive' }].map(opt => (
+                                            <button
+                                              key={opt.value}
+                                              type="button"
+                                              onClick={() => setVariant(index, 'pv_status', opt.value)}
+                                              className={`flex-1 py-1.5 rounded-md text-[11px] font-semibold transition-all ${
+                                                variant.pv_status === opt.value
+                                                  ? opt.value === '1'
+                                                    ? 'bg-teal-500 text-white shadow-sm'
+                                                    : 'bg-white text-slate-600 shadow-sm'
+                                                  : 'text-slate-400 hover:text-slate-600'
+                                              }`}
+                                            >
+                                              {opt.label}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* ── Images ── */}
+                                  <div className="px-4 py-3.5 space-y-2.5">
+                                    <div className="flex items-center justify-between">
+                                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Images</p>
+                                      <label onDragOver={preventFileDropNavigation} onDrop={handleVariantImageDrop(index)} className="inline-flex cursor-pointer items-center gap-1.5 px-2.5 py-1 bg-slate-100 hover:bg-teal-50 hover:text-teal-700 text-slate-600 rounded-lg text-[11px] font-semibold transition-colors">
+                                        <input type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={e => uploadVariantImages(index, e.target.files)}/>
+                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                        </svg>
+                                        Upload Images
+                                      </label>
+                                    </div>
+                                    {variant.pv_images.length > 0 ? (
+                                      <div className="grid grid-cols-5 gap-1.5">
+                                        {variant.pv_images.map((url, imageIndex) => (
+                                          <div key={`${url}-${imageIndex}`} className="relative h-14 overflow-hidden rounded-lg border border-slate-200 group">
+                                            <Image src={url} alt={`Variant image ${imageIndex + 1}`} fill className="object-cover" unoptimized/>
+                                            <button
+                                              type="button"
+                                              onClick={() => setVariant(index, 'pv_images', variant.pv_images.filter((_, i) => i !== imageIndex))}
+                                              className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                              <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12"/>
+                                              </svg>
+                                            </button>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <label onDragOver={preventFileDropNavigation} onDrop={handleVariantImageDrop(index)} className="flex flex-col items-center justify-center gap-1.5 h-16 rounded-lg border-2 border-dashed border-slate-200 hover:border-teal-400 hover:bg-teal-50/30 transition-colors cursor-pointer">
+                                        <input type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={e => uploadVariantImages(index, e.target.files)}/>
+                                        <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                        </svg>
+                                        <p className="text-[11px] text-slate-400">Click or drag to upload variant images</p>
+                                      </label>
+                                    )}
+                                  </div>
+
+                                </div>
+                              </div>
+                            )
+                          })
+                        )}
+
+                        <Button
+                          type="button"
+                          onPress={addVariant}
+                          variant="outline"
+                          className="h-12 w-full rounded-2xl border-2 border-dashed border-slate-200 bg-white text-xs font-semibold text-slate-600 transition-all hover:border-blue-400 hover:bg-blue-50/40 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-500 dark:hover:bg-blue-950/20 dark:hover:text-blue-300"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
+                          </svg>
+                          Add Variant
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Sticky footer */}
+                <div className="flex shrink-0 items-center gap-3 border-t border-slate-100 bg-white px-5 py-3.5 dark:border-slate-800 dark:bg-slate-950 sm:px-6">
+                  <p className="flex-1 text-xs text-slate-400">
+                    Fields marked <span className="font-semibold text-red-400">*</span> are required
+                  </p>
+                  <Button
+                    type="button"
+                    onPress={handleClose}
+                    isDisabled={isBusy}
+                    variant="outline"
+                    className="h-10 rounded-xl border border-slate-200 bg-slate-100 px-5 text-sm font-semibold text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    isDisabled={isBusy}
+                    className="h-10 rounded-xl bg-blue-600 px-6 text-sm font-bold text-white shadow-sm shadow-blue-500/30 hover:bg-blue-700"
+                  >
+                    {isBusy ? (
+                      <>
+                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                        </svg>
+                        {isUploading ? 'Uploading…' : 'Saving…'}
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Save Changes
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        </>
+      )}
+      <ImagePositionEditorModal
+        isOpen={activeNewImageAdjustItem != null}
+        imageSrc={activeNewImageAdjustItem?.preview ?? null}
+        fileName={activeNewImageAdjustItem?.file.name}
+        onClose={() => setActiveNewImageAdjustId(null)}
+        onSave={handleApplyAdjustedNewImage}
+      />
+    </AnimatePresence>
+  )
+}

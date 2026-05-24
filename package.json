@@ -1,0 +1,11 @@
+{
+  "name": "fullstack-apsara",
+  "private": true,
+  "scripts": {
+    "dev:frontend": "pnpm --filter apsara-home-frontend dev",
+    "dev:backend": "pnpm --filter apsara-home-backend dev",
+    "dev:dreambuild": "pnpm --filter dreambuild-landing dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint"
+  }
+}

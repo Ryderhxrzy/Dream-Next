@@ -1,0 +1,17 @@
+[phases.setup]
+nixPkgs = [
+  "nodejs_22"
+]
+
+[phases.install]
+cmds = [
+  "npm exec --yes pnpm@11.0.9 -- install --frozen-lockfile"
+]
+
+[phases.build]
+cmds = [
+  "npm exec --yes pnpm@11.0.9 -- run build"
+]
+
+[start]
+cmd = "npm exec --yes pnpm@11.0.9 -- run start"

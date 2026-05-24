@@ -1,0 +1,239 @@
+'use client';
+
+import { CategoryProduct } from "@/libs/CategoryData";
+import { displayColorName } from "@/libs/colorUtils";
+import { motion } from "framer-motion";
+import StarRating from "../ui/StarRating";
+import type { ProductReview, ProductReviewSummary } from "@/store/api/productsApi";
+
+interface ProductTabsProps {
+    product: CategoryProduct;
+    reviews?: ProductReview[];
+    reviewSummary?: ProductReviewSummary | null;
+}
+
+const decodeHtmlEntities = (value: string) =>
+    value
+        .replace(/&lt;/gi, '<')
+        .replace(/&gt;/gi, '>')
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;|&#039;/gi, "'")
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/&amp;/gi, '&');
+
+const cleanProductDescription = (value: string) => {
+    let decoded = value.trim();
+
+    // Some rows arrive double-encoded from the database, so decode a few times.
+    for (let i = 0; i < 3; i += 1) {
+        const next = decodeHtmlEntities(decoded);
+        if (next === decoded) break;
+        decoded = next;
+    }
+
+    return decoded
+        .replace(/<\s*br\s*\/?>/gi, '\n')
+        .replace(/<\s*\/p\s*>/gi, '\n\n')
+        .replace(/<\s*\/div\s*>/gi, '\n')
+        .replace(/<\s*\/li\s*>/gi, '\n')
+        .replace(/<li\b[^>]*>/gi, '- ')
+        .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '')
+        .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\r/g, '')
+        .replace(/[ \t]+\n/g, '\n')
+        .replace(/\n[ \t]+/g, '\n')
+        .replace(/[ \t]{2,}/g, ' ')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+};
+
+const sanitizeProductDescriptionHtml = (value: string) => {
+    let decoded = value.trim();
+
+    for (let i = 0; i < 3; i += 1) {
+        const next = decodeHtmlEntities(decoded);
+        if (next === decoded) break;
+        decoded = next;
+    }
+
+    return decoded
+        .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
+        .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '');
+};
+
+const ProductTabs = ({ product, reviews = [], reviewSummary }: ProductTabsProps) => {
+    const cleanedDescription = product.description ? cleanProductDescription(product.description) : '';
+    const sanitizedDescriptionHtml = product.description ? sanitizeProductDescriptionHtml(product.description) : '';
+
+    const reviewCount = reviewSummary?.count ?? reviews.length ?? 0;
+    const avgRatingValue = typeof reviewSummary?.average === 'number'
+        ? reviewSummary.average
+        : (reviewCount > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / reviewCount : 0);
+    const avgRating = avgRatingValue.toFixed(1);
+    const breakdown = reviewSummary?.breakdown ?? { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    const formattedDate = (value?: string | null) => {
+        if (!value) return '';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return '';
+        return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(date);
+    };
+    const getInitials = (name: string) =>
+        name
+            .split(' ')
+            .filter(Boolean)
+            .map((part) => part[0]?.toUpperCase())
+            .slice(0, 2)
+            .join('') || 'CU';
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="space-y-4"
+        >
+            {/* Description Section */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3">Description</h3>
+                {sanitizedDescriptionHtml ? (
+                    <div
+                        className="prose prose-sm max-w-none text-gray-600 dark:prose-invert dark:text-gray-300 prose-headings:scroll-mt-24 prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0"
+                        dangerouslySetInnerHTML={{ __html: sanitizedDescriptionHtml }}
+                    />
+                ) : cleanedDescription ? (
+                    <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                            {cleanedDescription.split(/\n{2,}/).map((paragraph, index) => (
+                                <p key={`${index}-${paragraph.slice(0, 24)}`} className="whitespace-pre-line">
+                                    {paragraph.trim()}
+                                </p>
+                            ))}
+                    </div>
+                ) : (
+                    <p className="text-gray-400 dark:text-gray-500 italic">No description available.</p>
+                )}
+            </div>
+
+            {/* Specifications Section */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3">Specifications</h3>
+                {(() => {
+                    const dimParts: string[] = []
+                    if (product.pswidth  && product.pswidth  > 0) dimParts.push(`W: ${product.pswidth} cm`)
+                    if (product.pslenght && product.pslenght > 0) dimParts.push(`D: ${product.pslenght} cm`)
+                    if (product.psheight && product.psheight > 0) dimParts.push(`H: ${product.psheight} cm`)
+                    const dimensions = dimParts.length > 0 ? dimParts.join(' x ') : null
+
+                    const colorSet = new Set<string>()
+                    product.variants?.forEach(v => { if (v.color) colorSet.add(displayColorName(v.color, v.colorHex)) })
+                    const colorOptions = colorSet.size > 0 ? [...colorSet].join(', ') : null
+
+                    const rows = [
+                        product.material                          ? { label: 'Material',          value: product.material }         : null,
+                        dimensions                                ? { label: 'Dimensions',         value: dimensions }                : null,
+                        product.weight && product.weight > 0      ? { label: 'Weight Capacity',   value: `${product.weight} kg` }   : null,
+                        product.assemblyRequired                  ? { label: 'Assembly Required',  value: 'Yes' }                    : null,
+                        product.warranty                          ? { label: 'Warranty',           value: product.warranty }          : null,
+                        colorOptions                              ? { label: 'Color Options',       value: colorOptions }              : null,
+                    ].filter(Boolean) as { label: string; value: string }[]
+
+                    return rows.length > 0 ? (
+                        <div className="space-y-2">
+                            {rows.map((spec) => (
+                                <div
+                                    key={spec.label}
+                                    className="flex items-center justify-between px-4 py-2 text-sm border-b border-gray-100 dark:border-gray-700 last:border-b-0 bg-gray-50 dark:bg-gray-700/50 rounded"
+                                >
+                                    <span className="font-semibold text-slate-700 dark:text-gray-200 w-36 shrink-0">{spec.label}</span>
+                                    <span className="text-gray-500 dark:text-gray-300 text-right">{spec.value}</span>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-gray-400 dark:text-gray-500 italic text-sm">No specifications available.</p>
+                    )
+                })()}
+            </div>
+
+            {/* Reviews Section */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3">Reviews ({reviewCount})</h3>
+                <div className="space-y-3">
+                    <div className="flex items-center gap-4 bg-sky-50 dark:bg-sky-900/20 rounded-xl p-4">
+                        <div className="text-center shrink-0">
+                            <div className="text-3xl font-bold text-sky-500 dark:text-sky-400">{avgRating}</div>
+                            <StarRating rating={Math.round(Number(avgRating))} size={12} />
+                            <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">{reviewCount} reviews</div>
+                        </div>
+                        <div className="flex-1 space-y-1">
+                            {[5, 4, 3, 2, 1].map(star => {
+                                const count = breakdown[star] ?? 0;
+                                const pct = reviewCount > 0 ? (count / reviewCount) * 100 : 0;
+                                return (
+                                    <div key={star} className="flex items-center gap-2 text-xs">
+                                        <span className="w-3 text-gray-500 dark:text-gray-400">{star}</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="#38bdf8" className="shrink-0">
+                                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                        </svg>
+                                        <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
+                                            <motion.div
+                                                initial={{ width: 0 }}
+                                                animate={{ width: `${pct}%` }}
+                                                transition={{ duration: 0.6, delay: star * 0.05 }}
+                                                className="bg-sky-400 dark:bg-sky-500 h-full rounded-full"
+                                            />
+                                        </div>
+                                        <span className="w-4 text-gray-400 dark:text-gray-500 text-right">{count}</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {reviews.length > 0 ? (
+                        reviews.map((review) => (
+                            <motion.div
+                                key={review.id}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.2 }}
+                                className="border border-gray-100 dark:border-gray-700 rounded-xl p-4 hover:border-sky-100 dark:hover:border-sky-900/50 transition-all"
+                            >
+                                <div className="flex items-start gap-3 mb-2">
+                                    {review.customer_avatar ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img
+                                            src={review.customer_avatar}
+                                            alt={review.customer_name}
+                                            className="w-8 h-8 rounded-full object-cover border border-sky-100 dark:border-sky-900/50 shrink-0"
+                                        />
+                                    ) : (
+                                        <div className="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center text-sky-600 dark:text-sky-400 text-xs font-bold shrink-0">
+                                            {getInitials(review.customer_name)}
+                                        </div>
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                                            <span className="text-sm font-semibold text-slate-800 dark:text-gray-200">{review.customer_name}</span>
+                                            {review.created_at && (
+                                                <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">{formattedDate(review.created_at)}</span>
+                                            )}
+                                        </div>
+                                        <StarRating rating={review.rating} size={12} />
+                                    </div>
+                                </div>
+                                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{review.review}</p>
+                            </motion.div>
+                        ))
+                    ) : (
+                        <div className="border border-dashed border-gray-200 dark:border-gray-700 rounded-xl p-4 text-center text-sm text-gray-400 dark:text-gray-500">
+                            No reviews yet. Be the first to share your experience.
+                        </div>
+                    )}
+                </div>
+            </div>
+        </motion.div>
+    );
+};
+
+export default ProductTabs;

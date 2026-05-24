@@ -1,0 +1,1808 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Mail\Checkout\OrderStatusUpdatedMail;
+use App\Models\Admin;
+use App\Models\AdminNotification;
+use App\Models\AdminNotificationRead;
+use App\Models\CheckoutHistory;
+use App\Models\Customer;
+use App\Models\Category;
+use App\Models\Product;
+use App\Models\WebPageContent;
+use App\Services\Payments\PaymongoPaymentSyncService;
+use App\Services\Shipping\JntShippingService;
+use App\Services\Shipping\XdeShippingService;
+use App\Services\Zq\ZqApiService;
+use App\Support\AdminAccess;
+use App\Support\DirectReferralCommission;
+use App\Support\OrderPvPosting;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
+use RuntimeException;
+
+class AdminOrderController extends Controller
+{
+    public function __construct(
+        private readonly PaymongoPaymentSyncService $paymongoPaymentSyncService,
+        private readonly XdeShippingService $xdeShippingService,
+        private readonly JntShippingService $jntShippingService,
+        private readonly ZqApiService $zqApiService
+    )
+    {
+    }
+
+    public function notifications(Request $request)
+    {
+        $admin = $this->resolveAdmin($request);
+        if (!$admin) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $this->syncRecentPendingPayments();
+        $this->backfillOrderNotificationsIfEmpty();
+
+        $limit = max(10, min(50, (int) $request->query('limit', 20)));
+        $rows = AdminNotification::query()
+            ->orderByDesc('an_created_at')
+            ->orderByDesc('an_id')
+            ->limit(max(100, $limit * 5))
+            ->get();
+
+        $rows = $rows
+            ->filter(fn (AdminNotification $notification) => $this->canAdminSeeNotification($admin, $notification))
+            ->take($limit)
+            ->values();
+
+        $notificationIds = $rows->pluck('an_id')->map(fn ($id) => (int) $id)->all();
+        $readIds = [];
+        if (!empty($notificationIds)) {
+            $readIds = AdminNotificationRead::query()
+                ->where('anr_admin_id', (int) $admin->id)
+                ->whereIn('anr_notification_id', $notificationIds)
+                ->pluck('anr_notification_id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+        }
+        $readLookup = array_fill_keys($readIds, true);
+
+        $items = $rows->map(function (AdminNotification $row) use ($readLookup) {
+            $id = (int) $row->an_id;
+            $isRead = isset($readLookup[$id]);
+
+            return [
+                'id' => (string) $id,
+                'type' => (string) ($row->an_type ?? 'system'),
+                'title' => (string) $row->an_title,
+                'description' => (string) ($row->an_message ?? ''),
+                'severity' => (string) ($row->an_severity ?? 'info'),
+                'href' => (string) ($row->an_href ?? '/admin/orders'),
+                'count' => $isRead ? 0 : 1,
+                'is_read' => $isRead,
+                'updated_at' => $row->an_created_at
+                    ? $row->an_created_at->timezone('Asia/Manila')->toIso8601String()
+                    : null,
+                'payload' => is_array($row->an_payload) ? $row->an_payload : null,
+            ];
+        })->values()->all();
+
+        usort($items, function (array $left, array $right) {
+            if (($left['is_read'] ?? false) !== ($right['is_read'] ?? false)) {
+                return ($left['is_read'] ?? false) <=> ($right['is_read'] ?? false);
+            }
+
+            return strcmp((string) ($right['updated_at'] ?? ''), (string) ($left['updated_at'] ?? ''));
+        });
+
+        $unreadCount = collect($items)->where('is_read', false)->count();
+
+        return response()->json([
+            'unread_count' => $unreadCount,
+            'items' => $items,
+            'generated_at' => now('Asia/Manila')->toIso8601String(),
+        ]);
+    }
+
+    public function markNotificationRead(Request $request, int $id)
+    {
+        $admin = $this->resolveAdmin($request);
+        if (!$admin) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $notification = AdminNotification::query()->where('an_id', $id)->first();
+        if (!$notification) {
+            return response()->json(['message' => 'Notification not found.'], 404);
+        }
+        if (! $this->canAdminSeeNotification($admin, $notification)) {
+            return response()->json(['message' => 'Notification not found.'], 404);
+        }
+
+        AdminNotificationRead::query()->updateOrCreate(
+            [
+                'anr_notification_id' => (int) $notification->an_id,
+                'anr_admin_id' => (int) $admin->id,
+            ],
+            [
+                'anr_read_at' => now(),
+            ]
+        );
+
+        return response()->json(['message' => 'Notification marked as read.']);
+    }
+
+    public function markAllNotificationsRead(Request $request)
+    {
+        $admin = $this->resolveAdmin($request);
+        if (!$admin) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $ids = AdminNotification::query()
+            ->orderByDesc('an_created_at')
+            ->orderByDesc('an_id')
+            ->limit(200)
+            ->get()
+            ->filter(fn (AdminNotification $notification) => $this->canAdminSeeNotification($admin, $notification))
+            ->pluck('an_id')
+            ->map(fn ($value) => (int) $value)
+            ->all();
+
+        if (empty($ids)) {
+            return response()->json(['message' => 'No notifications to mark as read.']);
+        }
+
+        $now = now();
+
+        DB::transaction(function () use ($ids, $admin, $now) {
+            foreach ($ids as $notificationId) {
+                AdminNotificationRead::query()->updateOrCreate(
+                    [
+                        'anr_notification_id' => (int) $notificationId,
+                        'anr_admin_id' => (int) $admin->id,
+                    ],
+                    [
+                        'anr_read_at' => $now,
+                    ]
+                );
+            }
+        });
+
+        return response()->json(['message' => 'All notifications marked as read.']);
+    }
+
+    private function backfillOrderNotificationsIfEmpty(): void
+    {
+        $orders = CheckoutHistory::query()
+            ->where(function ($query) {
+                $query->whereNotNull('ch_paid_at')
+                    ->orWhereIn('ch_status', ['paid', 'succeeded', 'success']);
+            })
+            ->where(function ($query) {
+                $query->where('created_at', '>=', now()->subDays(3))
+                    ->orWhere('ch_paid_at', '>=', now()->subDays(3));
+            })
+            ->orderByDesc('ch_paid_at')
+            ->orderByDesc('ch_id')
+            ->limit(150)
+            ->get([
+                'ch_id',
+                'ch_checkout_id',
+                'ch_customer_name',
+                'ch_amount',
+                'ch_approval_status',
+                'ch_fulfillment_status',
+                'ch_paid_at',
+                'created_at',
+            ]);
+
+        foreach ($orders as $order) {
+            $orderId = (int) $order->ch_id;
+            if ($orderId <= 0) {
+                continue;
+            }
+
+            $customerName = trim((string) ($order->ch_customer_name ?? 'Customer'));
+            $checkoutId = trim((string) ($order->ch_checkout_id ?? ''));
+            $amount = (float) ($order->ch_amount ?? 0);
+            $approvalStatus = (string) ($order->ch_approval_status ?? 'pending_approval');
+            $fulfillmentStatus = (string) ($order->ch_fulfillment_status ?? 'pending');
+            $createdAt = $order->ch_paid_at ?? $order->created_at ?? now();
+
+            $severity = $approvalStatus === 'pending_approval' ? 'warning' : 'info';
+            if (in_array($fulfillmentStatus, ['cancelled', 'refunded'], true)) {
+                $severity = 'critical';
+            }
+
+            AdminNotification::query()->firstOrCreate(
+                [
+                    'an_type' => 'order_created',
+                    'an_source_type' => 'order',
+                    'an_source_id' => $orderId,
+                ],
+                [
+                    'an_severity' => $severity,
+                    'an_title' => 'Order Update',
+                    'an_message' => sprintf(
+                        '%s order %s (%s).',
+                        $customerName !== '' ? $customerName : 'Customer',
+                        $checkoutId !== '' ? $checkoutId : '#' . $orderId,
+                        'PHP ' . number_format($amount, 2)
+                    ),
+                    'an_href' => '/admin/orders',
+                    'an_payload' => [
+                        'order_id' => $orderId,
+                        'checkout_id' => $checkoutId,
+                        'customer_name' => $customerName,
+                        'amount' => $amount,
+                        'approval_status' => $approvalStatus,
+                        'fulfillment_status' => $fulfillmentStatus,
+                        'seeded' => true,
+                    ],
+                    'an_created_at' => $createdAt,
+                ]
+            );
+        }
+    }
+
+    private function canAdminSeeNotification(Admin $admin, AdminNotification $notification): bool
+    {
+        if ((int) $admin->user_level_id === 1) {
+            return true;
+        }
+
+        $href = (string) ($notification->an_href ?? '/admin/orders');
+        $permission = AdminAccess::permissionForPath($href);
+
+        return $permission === null || AdminAccess::hasPermission($admin, $permission);
+    }
+
+    public function pusherAuth(Request $request)
+    {
+        $admin = $this->resolveAdmin($request);
+        if (!$admin) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $validated = $request->validate([
+            'socket_id' => 'required|string|max:100',
+            'channel_name' => 'required|string|max:255',
+        ]);
+
+        $channelName = (string) $validated['channel_name'];
+        if (!Str::startsWith($channelName, 'private-admin-orders')) {
+            return response()->json(['message' => 'Forbidden channel.'], 403);
+        }
+
+        $key = (string) config('services.pusher.key', '');
+        $secret = (string) config('services.pusher.secret', '');
+
+        if ($key === '' || $secret === '') {
+            return response()->json(['message' => 'Pusher is not configured.'], 503);
+        }
+
+        $socketId = (string) $validated['socket_id'];
+        $signature = hash_hmac('sha256', $socketId . ':' . $channelName, $secret);
+
+        return response()->json([
+            'auth' => $key . ':' . $signature,
+        ]);
+    }
+
+    public function index(Request $request)
+    {
+        $admin = $this->resolveAdmin($request);
+        if (!$admin) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $this->syncRecentPendingPayments();
+
+        $validated = $request->validate([
+            'filter' => 'nullable|string|max:40',
+            'q' => 'nullable|string|max:120',
+            'page' => 'nullable|integer|min:1',
+            'per_page' => 'nullable|integer|min:1|max:100',
+        ]);
+
+        $filter = $this->normalizeFilter((string) ($validated['filter'] ?? 'all'));
+        $search = trim((string) ($validated['q'] ?? ''));
+        $perPage = (int) ($validated['per_page'] ?? 20);
+
+        $selectColumns = [
+            'ch_id',
+            'ch_customer_id',
+            'ch_checkout_id',
+            'ch_status',
+            'ch_approval_status',
+            'ch_approval_notes',
+            'ch_approved_by',
+            'ch_approved_at',
+            'ch_fulfillment_status',
+            'ch_courier',
+            'ch_tracking_no',
+            'ch_shipment_status',
+            'ch_shipment_payload',
+            'ch_shipped_at',
+            'ch_zq_platform_order_id',
+            'ch_zq_order_id',
+            'ch_zq_status',
+            'ch_zq_payload',
+            'ch_zq_response',
+            'ch_zq_synced_at',
+            'ch_product_name',
+            'ch_product_id',
+            'ch_product_sku',
+            'ch_product_pv',
+            'ch_earned_pv',
+            'ch_pv_posted_at',
+            'ch_product_image',
+            'ch_quantity',
+            'ch_amount',
+            'ch_payment_method',
+            'ch_customer_name',
+            'ch_customer_email',
+            'ch_customer_phone',
+            'ch_customer_address',
+            'ch_refund_reason',
+            'ch_refund_image_urls',
+            'ch_refund_video_urls',
+            'ch_refund_requested_at',
+            'ch_paid_at',
+            'created_at',
+            'updated_at',
+        ];
+
+        $optionalSourceColumns = [
+            'ch_source_label',
+            'ch_source_slug',
+            'ch_source_host',
+            'ch_source_url',
+        ];
+
+        foreach ($optionalSourceColumns as $column) {
+            if (Schema::hasColumn('tbl_checkout_history', $column)) {
+                $selectColumns[] = $column;
+            }
+        }
+
+        $query = CheckoutHistory::query()
+            ->select($selectColumns)
+            ->when($search !== '', function ($builder) use ($search) {
+                $builder->where(function ($q) use ($search) {
+                    $q->where('ch_checkout_id', 'like', "%{$search}%")
+                        ->orWhere('ch_product_name', 'like', "%{$search}%")
+                        ->orWhere('ch_customer_name', 'like', "%{$search}%")
+                        ->orWhere('ch_customer_email', 'like', "%{$search}%");
+                });
+            });
+
+        $this->applyStorefrontScope($query, $admin);
+        $this->applyFilter($query, $filter);
+
+        $paginated = $query
+            ->orderByDesc('ch_paid_at')
+            ->orderByDesc('ch_id')
+            ->paginate($perPage);
+
+        $pageOrders = collect($paginated->items());
+        $productIds = $pageOrders
+            ->pluck('ch_product_id')
+            ->filter(fn ($id) => is_numeric($id) && (int) $id > 0)
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+        $productSkus = $pageOrders
+            ->pluck('ch_product_sku')
+            ->map(fn ($sku) => strtolower(trim((string) $sku)))
+            ->filter(fn ($sku) => $sku !== '')
+            ->unique()
+            ->values()
+            ->all();
+
+        $productCategoryById = [];
+        $productCategoryBySku = [];
+        $categoryIds = [];
+        if (!empty($productIds) || !empty($productSkus)) {
+            $productRows = Product::query()
+                ->select(['pd_id', 'pd_parent_sku', 'pd_catid'])
+                ->when(!empty($productIds), fn ($q) => $q->orWhereIn('pd_id', $productIds))
+                ->when(!empty($productSkus), fn ($q) => $q->orWhereIn(DB::raw('LOWER(pd_parent_sku)'), $productSkus))
+                ->get();
+
+            foreach ($productRows as $productRow) {
+                $catId = (int) ($productRow->pd_catid ?? 0);
+                if ($catId <= 0) {
+                    continue;
+                }
+
+                $pid = (int) ($productRow->pd_id ?? 0);
+                if ($pid > 0) {
+                    $productCategoryById[$pid] = $catId;
+                }
+
+                $sku = strtolower(trim((string) ($productRow->pd_parent_sku ?? '')));
+                if ($sku !== '') {
+                    $productCategoryBySku[$sku] = $catId;
+                }
+
+                $categoryIds[] = $catId;
+            }
+        }
+
+        $categoryNameById = [];
+        $categoryIds = array_values(array_unique(array_filter($categoryIds, fn ($id) => is_int($id) && $id > 0)));
+        if (!empty($categoryIds)) {
+            $categoryNameById = Category::query()
+                ->whereIn('cat_id', $categoryIds)
+                ->pluck('cat_name', 'cat_id')
+                ->toArray();
+        }
+
+        $items = collect($paginated->items())->map(function (CheckoutHistory $order) use ($productCategoryById, $productCategoryBySku, $categoryNameById) {
+            $sla = $this->computeSla($order);
+            $shipmentPayload = $order->ch_shipment_payload;
+            if (is_string($shipmentPayload) && trim($shipmentPayload) !== '') {
+                $decodedPayload = json_decode($shipmentPayload, true);
+                $shipmentPayload = is_array($decodedPayload) ? $decodedPayload : [];
+            }
+            if (!is_array($shipmentPayload)) {
+                $shipmentPayload = [];
+            }
+
+            $trackingNo = $this->resolveOrderTrackingNumber($order, $shipmentPayload);
+            $shipmentStatus = $order->ch_shipment_status ?: $this->extractShipmentStatus($shipmentPayload);
+            $fulfillmentMode = $this->resolveStoredFulfillmentMode($order);
+            $resolvedProductId = $order->ch_product_id ? (int) $order->ch_product_id : null;
+            $resolvedProductSku = strtolower(trim((string) ($order->ch_product_sku ?? '')));
+            $productCategoryId = null;
+            if ($resolvedProductId !== null && isset($productCategoryById[$resolvedProductId])) {
+                $productCategoryId = (int) $productCategoryById[$resolvedProductId];
+            } elseif ($resolvedProductSku !== '' && isset($productCategoryBySku[$resolvedProductSku])) {
+                $productCategoryId = (int) $productCategoryBySku[$resolvedProductSku];
+            }
+            $productCategoryName = $productCategoryId !== null ? ($categoryNameById[$productCategoryId] ?? null) : null;
+
+            return [
+                'id' => (int) $order->ch_id,
+                'customer_id' => (int) $order->ch_customer_id,
+                'checkout_id' => $order->ch_checkout_id,
+                'payment_status' => $order->ch_status,
+                'approval_status' => $order->ch_approval_status ?? 'pending_approval',
+                'approval_notes' => $order->ch_approval_notes,
+                'approved_by' => $order->ch_approved_by ? (int) $order->ch_approved_by : null,
+                'approved_at' => optional($order->ch_approved_at)->toDateTimeString(),
+                'fulfillment_status' => $order->ch_fulfillment_status ?? 'pending',
+                'fulfillment_mode' => $fulfillmentMode,
+                'courier' => $order->ch_courier,
+                'tracking_no' => $trackingNo,
+                'shipment_status' => $shipmentStatus,
+                'shipment_payload' => !empty($shipmentPayload) ? $shipmentPayload : null,
+                'shipped_at' => optional($order->ch_shipped_at)->toDateTimeString(),
+                'zq_platform_order_id' => $order->ch_zq_platform_order_id,
+                'zq_order_id' => $order->ch_zq_order_id,
+                'zq_status' => $order->ch_zq_status,
+                'zq_payload' => is_array($order->ch_zq_payload) ? $order->ch_zq_payload : null,
+                'zq_response' => is_array($order->ch_zq_response) ? $order->ch_zq_response : null,
+                'zq_synced_at' => optional($order->ch_zq_synced_at)->toDateTimeString(),
+                'product_name' => $order->ch_product_name ?? ($order->ch_description ?? 'Order Item'),
+                'product_id' => $order->ch_product_id ? (int) $order->ch_product_id : null,
+                'product_sku' => $order->ch_product_sku,
+                'product_category_id' => $productCategoryId,
+                'product_category_name' => $productCategoryName,
+                'product_pv' => (float) ($order->ch_product_pv ?? 0),
+                'earned_pv' => (float) ($order->ch_earned_pv ?? 0),
+                'pv_posted_at' => optional($order->ch_pv_posted_at)->toDateTimeString(),
+                'product_image' => $order->ch_product_image,
+                'quantity' => (int) $order->ch_quantity,
+                'amount' => (float) $order->ch_amount,
+                'payment_method' => $order->ch_payment_method,
+                'customer_name' => $order->ch_customer_name,
+                'customer_email' => $order->ch_customer_email,
+                'customer_phone' => $order->ch_customer_phone,
+                'customer_address' => $order->ch_customer_address,
+                'refund_reason' => $order->ch_refund_reason ?: null,
+                'refund_image_urls' => is_array($order->ch_refund_image_urls) ? array_values(array_filter($order->ch_refund_image_urls, fn ($url) => is_string($url) && trim($url) !== '')) : [],
+                'refund_video_urls' => is_array($order->ch_refund_video_urls) ? array_values(array_filter($order->ch_refund_video_urls, fn ($url) => is_string($url) && trim($url) !== '')) : [],
+                'refund_requested_at' => optional($order->ch_refund_requested_at)->toDateTimeString(),
+                'source_label' => $order->ch_source_label ?: null,
+                'source_slug' => $order->ch_source_slug ?: null,
+                'source_host' => $order->ch_source_host ?: null,
+                'source_url' => $order->ch_source_url ?: null,
+                'paid_at' => optional($order->ch_paid_at)->toDateTimeString(),
+                'created_at' => optional($order->created_at)->toDateTimeString(),
+                'updated_at' => optional($order->updated_at)->toDateTimeString(),
+                'sla' => $sla,
+            ];
+        })->values();
+
+        return response()->json([
+            'orders' => $items,
+            'meta' => [
+                'current_page' => $paginated->currentPage(),
+                'last_page' => $paginated->lastPage(),
+                'per_page' => $paginated->perPage(),
+                'total' => $paginated->total(),
+                'from' => $paginated->firstItem(),
+                'to' => $paginated->lastItem(),
+            ],
+            'counts' => $this->counts($request)->getData(true),
+        ]);
+    }
+
+    public function updateFulfillmentMode(Request $request, int $id)
+    {
+        $admin = $this->resolveAdmin($request);
+        if (!$admin) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        if (!$this->canUpdateFulfillment($admin)) {
+            return response()->json(['message' => 'Forbidden: tracking access is limited.'], 403);
+        }
+
+        $validated = $request->validate([
+            'mode' => 'required|in:manual,local_courier,zq',
+        ]);
+
+        $order = CheckoutHistory::query()->where('ch_id', $id)->firstOrFail();
+        if (($order->ch_approval_status ?? 'pending_approval') !== 'approved') {
+            return response()->json(['message' => 'Order must be approved before assigning fulfillment mode.'], 422);
+        }
+
+        $zqResponse = is_array($order->ch_zq_response) ? $order->ch_zq_response : [];
+        $zqResponse['admin_fulfillment_mode'] = (string) $validated['mode'];
+        $order->ch_zq_response = $zqResponse;
+        $order->save();
+
+        return response()->json([
+            'message' => 'Fulfillment mode updated.',
+            'order_id' => (int) $order->ch_id,
+            'fulfillment_mode' => $zqResponse['admin_fulfillment_mode'],
+        ]);
+    }
+
+    private function syncRecentPendingPayments(): void
+    {
+        try {
+            $this->paymongoPaymentSyncService->syncPendingOrders(25);
+        } catch (\Throwable $e) {
+            Log::warning('Admin order page pending payment sync failed.', [
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function approve(Request $request, int $id)
+    {
+        $admin = $this->resolveAdmin($request);
+        if (!$admin) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        if (!$this->canApprove($admin)) {
+            return response()->json(['message' => 'Forbidden: approval access is limited.'], 403);
+        }
+
+        $validated = $request->validate([
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        $order = CheckoutHistory::query()->where('ch_id', $id)->firstOrFail();
+        if (($order->ch_approval_status ?? 'pending_approval') === 'approved') {
+            return response()->json(['message' => 'Order is already approved.'], 422);
+        }
+
+        DB::transaction(function () use ($order, $admin, $validated) {
+            $order->fill([
+                'ch_approval_status' => 'approved',
+                'ch_approval_notes' => $validated['notes'] ?? null,
+                'ch_approved_by' => (int) $admin->id,
+                'ch_approved_at' => now(),
+                'ch_fulfillment_status' => $order->ch_fulfillment_status === 'pending' ? 'processing' : $order->ch_fulfillment_status,
+            ])->save();
+        });
+
+        \App\Models\OrderNotification::updateStatusForCheckout(
+            (string) ($order->ch_checkout_id ?? ''),
+            (string) ($order->ch_fulfillment_status ?? 'pending')
+        );
+
+        $this->sendCustomerOrderStatusEmail($order, 'approval_approved');
+
+        $this->notifyCustomerOrderStatusUpdateSafely(
+            $order,
+            'approval_approved',
+            'Order Approved',
+            'Your order has been approved and is now being processed.'
+        );
+
+        return response()->json([
+            'message' => 'Order approved. Push to ZQ manually only for ZQ supplier orders.',
+        ]);
+    }
+
+    public function pushToZq(Request $request, int $id)
+    {
+        $admin = $this->resolveAdmin($request);
+        if (!$admin) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        if (!$this->canApprove($admin)) {
+            return response()->json(['message' => 'Forbidden: approval access is limited.'], 403);
+        }
+
+        $order = CheckoutHistory::query()->where('ch_id', $id)->firstOrFail();
+        if (($order->ch_approval_status ?? 'pending_approval') !== 'approved') {
+            return response()->json(['message' => 'Order must be approved before pushing to ZQ.'], 422);
+        }
+
+        $response = $this->pushOrderToZq($order);
+
+        return response()->json([
+            'message' => 'Order pushed to ZQ successfully.',
+            'zq' => $response,
+        ]);
+    }
+
+    public function fetchZqDetail(Request $request, int $id)
+    {
+        $admin = $this->resolveAdmin($request);
+        if (!$admin) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        if (!$this->canUpdateFulfillment($admin)) {
+            return response()->json(['message' => 'Forbidden: tracking access is limited.'], 403);
+        }
+
+        $order = CheckoutHistory::query()->where('ch_id', $id)->firstOrFail();
+        $platformOrderId = $this->resolveZqPlatformOrderId($order);
+
+        if ($platformOrderId === '') {
+            return response()->json(['message' => 'Order has no ZQ platform order ID yet.'], 422);
+        }
+
+        $response = $this->zqApiService->getOrderDetail($platformOrderId);
+        $this->persistZqDetail($order, $response);
+
+        return response()->json([
+            'message' => 'ZQ order detail fetched successfully.',
+            'zq' => $response,
+        ]);
+    }
+
+    public function syncZqTracking(Request $request, int $id)
+    {
+        $admin = $this->resolveAdmin($request);
+        if (!$admin) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        if (!$this->canUpdateFulfillment($admin)) {
+            return response()->json(['message' => 'Forbidden: tracking access is limited.'], 403);
+        }
+
+        $order = CheckoutHistory::query()->where('ch_id', $id)->firstOrFail();
+        $platformOrderId = $this->resolveZqPlatformOrderId($order);
+
+        if ($platformOrderId === '') {
+            return response()->json(['message' => 'Order has no ZQ platform order ID yet.'], 422);
+        }
+
+        $response = $this->zqApiService->getTracking($platformOrderId);
+        $this->persistZqTracking($order, $response);
+
+        return response()->json([
+            'message' => 'ZQ tracking synced successfully.',
+            'zq' => $response,
+        ]);
+    }
+
+    public function reject(Request $request, int $id)
+    {
+        $admin = $this->resolveAdmin($request);
+        if (!$admin) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        if (!$this->canApprove($admin)) {
+            return response()->json(['message' => 'Forbidden: approval access is limited.'], 403);
+        }
+
+        $validated = $request->validate([
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        $order = CheckoutHistory::query()->where('ch_id', $id)->firstOrFail();
+
+        DB::transaction(function () use ($order, $admin, $validated) {
+            $order->fill([
+                'ch_approval_status' => 'rejected',
+                'ch_approval_notes' => $validated['notes'] ?? null,
+                'ch_approved_by' => (int) $admin->id,
+                'ch_approved_at' => now(),
+                'ch_fulfillment_status' => 'cancelled',
+            ])->save();
+
+            DirectReferralCommission::cancelPendingForOrder(
+                $order,
+                (int) $admin->id,
+                'Direct referral commission cancelled because the order was rejected.'
+            );
+        });
+
+        $this->sendCustomerOrderStatusEmail($order, 'approval_rejected');
+
+        $this->notifyCustomerOrderStatusUpdateSafely(
+            $order,
+            'approval_rejected',
+            'Order Rejected',
+            'Your order was not approved. Please contact AF Home support for assistance.'
+        );
+
+        return response()->json(['message' => 'Order rejected.']);
+    }
+
+    public function updateStatus(Request $request, int $id)
+    {
+        $admin = $this->resolveAdmin($request);
+        if (!$admin) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        if (!$this->canUpdateFulfillment($admin)) {
+            return response()->json(['message' => 'Forbidden: tracking access is limited.'], 403);
+        }
+
+        $validated = $request->validate([
+            'status' => 'required|in:pending,processing,packed,shipped,out_for_delivery,delivered,cancelled,refunded',
+        ]);
+
+        $order = CheckoutHistory::query()->where('ch_id', $id)->firstOrFail();
+        if (($order->ch_approval_status ?? 'pending_approval') !== 'approved') {
+            return response()->json(['message' => 'Order must be approved before fulfillment tracking updates.'], 422);
+        }
+        $previousStatus = (string) ($order->ch_fulfillment_status ?? 'pending');
+        $order->ch_fulfillment_status = $validated['status'];
+        $order->save();
+        \App\Models\OrderNotification::updateStatusForCheckout(
+            (string) ($order->ch_checkout_id ?? ''),
+            (string) $validated['status']
+        );
+
+        if ($validated['status'] === 'delivered') {
+            OrderPvPosting::postIfNeeded($order, (int) $admin->id);
+            DirectReferralCommission::releaseAvailableForOrder($order, (int) $admin->id);
+        } elseif (in_array($validated['status'], ['cancelled', 'refunded'], true)) {
+            DirectReferralCommission::cancelPendingForOrder(
+                $order,
+                (int) $admin->id,
+                'Direct referral commission cancelled because the order was marked as ' . $validated['status'] . '.'
+            );
+        }
+
+        $shippingResult = $this->bookShipmentOnShipped($order, (string) $validated['status']);
+
+        if ($previousStatus !== (string) $order->ch_fulfillment_status) {
+            $this->sendCustomerOrderStatusEmailSafely($order, 'fulfillment_status');
+            
+            // Send real-time notification to customer
+            $statusLabels = [
+                'pending' => 'Order Pending',
+                'processing' => 'Order Processing',
+                'packed' => 'Order Packed',
+                'shipped' => 'Order Shipped',
+                'out_for_delivery' => 'Order Out for Delivery',
+                'delivered' => 'Order Delivered',
+                'cancelled' => 'Order Cancelled',
+                'refunded' => 'Order Refunded',
+            ];
+            
+            $title = $statusLabels[$validated['status']] ?? 'Order Status Updated';
+            $description = "Your order #{$order->ch_checkout_id} status has been updated to: " . ($statusLabels[$validated['status']] ?? $validated['status']);
+            
+            $this->notifyCustomerOrderStatusUpdateSafely($order, 'status_update', $title, $description);
+        }
+
+        $message = 'Order status updated.';
+        if (($shippingResult['state'] ?? '') === 'booked') {
+            $label = strtoupper((string) ($shippingResult['courier'] ?? 'courier'));
+            $message = "Order status updated. {$label} shipment booked.";
+        } elseif (($shippingResult['state'] ?? '') === 'failed') {
+            $label = strtoupper((string) ($shippingResult['courier'] ?? 'courier'));
+            $message = "Order status updated. {$label} booking failed.";
+        }
+
+        return response()->json([
+            'message' => $message,
+            'shipping' => $shippingResult,
+        ]);
+    }
+
+    public function updateShipmentStatus(Request $request, int $id)
+    {
+        $admin = $this->resolveAdmin($request);
+        if (!$admin) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        if (!$this->canUpdateFulfillment($admin)) {
+            return response()->json(['message' => 'Forbidden: tracking access is limited.'], 403);
+        }
+
+        $validated = $request->validate([
+            'shipment_status' => 'required|in:for_pickup,picked_up,in_transit,out_for_delivery,delivered,failed_delivery,returned_to_sender,cancelled',
+            'courier' => 'nullable|in:jnt,xde',
+            'clear_courier' => 'nullable|boolean',
+        ]);
+
+        $order = CheckoutHistory::query()->where('ch_id', $id)->firstOrFail();
+        if (($order->ch_approval_status ?? 'pending_approval') !== 'approved') {
+            return response()->json(['message' => 'Order must be approved before shipment tracking updates.'], 422);
+        }
+
+        $shipmentStatus = (string) $validated['shipment_status'];
+        $previousShipmentStatus = (string) ($order->ch_shipment_status ?? '');
+        $selectedCourier = $this->normalizeCourier($validated['courier'] ?? null);
+        $shouldClearCourier = (bool) ($validated['clear_courier'] ?? false);
+        if ($shouldClearCourier) {
+            $order->ch_courier = 'afhome';
+            if (trim((string) ($order->ch_tracking_no ?? '')) === '') {
+                $order->ch_tracking_no = $this->generateAfHomeTrackingNumber($order);
+            }
+        } elseif ($selectedCourier !== null) {
+            $order->ch_courier = $selectedCourier;
+        }
+        $order->ch_shipment_status = $shipmentStatus;
+
+        if (in_array($shipmentStatus, ['picked_up', 'in_transit', 'for_pickup'], true)) {
+            $order->ch_fulfillment_status = 'shipped';
+            if (!$order->ch_shipped_at) {
+                $order->ch_shipped_at = now();
+            }
+        } elseif ($shipmentStatus === 'out_for_delivery') {
+            $order->ch_fulfillment_status = 'out_for_delivery';
+        } elseif ($shipmentStatus === 'delivered') {
+            $order->ch_fulfillment_status = 'delivered';
+        } elseif (in_array($shipmentStatus, ['failed_delivery', 'returned_to_sender'], true)) {
+            $order->ch_fulfillment_status = 'cancelled';
+        }
+
+        $order->save();
+        \App\Models\OrderNotification::updateStatusForCheckout(
+            (string) $order->ch_checkout_id,
+            (string) ($order->ch_fulfillment_status ?? 'pending')
+        );
+
+        if ($shipmentStatus === 'delivered') {
+            OrderPvPosting::postIfNeeded($order, (int) $admin->id);
+            DirectReferralCommission::releaseAvailableForOrder($order, (int) $admin->id);
+        } elseif (in_array($shipmentStatus, ['failed_delivery', 'returned_to_sender', 'cancelled'], true)) {
+            DirectReferralCommission::cancelPendingForOrder(
+                $order,
+                (int) $admin->id,
+                'Direct referral commission cancelled because the shipment status became ' . $shipmentStatus . '.'
+            );
+        }
+
+        if ($previousShipmentStatus !== (string) $order->ch_shipment_status) {
+            $this->sendCustomerOrderStatusEmailSafely($order, 'shipment_status');
+            
+            // Send real-time notification to customer
+            $shipmentLabels = [
+                'for_pickup' => 'Ready for Pickup',
+                'picked_up' => 'Order Picked Up',
+                'in_transit' => 'Order In Transit',
+                'out_for_delivery' => 'Order Out for Delivery',
+                'delivered' => 'Order Delivered',
+                'failed_delivery' => 'Delivery Failed',
+                'returned_to_sender' => 'Order Returned',
+                'cancelled' => 'Shipment Cancelled',
+            ];
+            
+            $title = $shipmentLabels[$shipmentStatus] ?? 'Shipment Status Updated';
+            $description = "Your order #{$order->ch_checkout_id} shipment status has been updated to: " . ($shipmentLabels[$shipmentStatus] ?? $shipmentStatus);
+            
+            $this->notifyCustomerOrderStatusUpdateSafely($order, 'shipment_update', $title, $description);
+        }
+
+        return response()->json([
+            'message' => 'Shipment status updated.',
+            'order_id' => (int) $order->ch_id,
+            'shipment_status' => $order->ch_shipment_status,
+            'fulfillment_status' => $order->ch_fulfillment_status,
+        ]);
+    }
+
+    private function bookShipmentOnShipped(CheckoutHistory $order, string $status): array
+    {
+        if ($status !== 'shipped') {
+            return ['state' => 'skipped', 'reason' => 'status_not_shipped'];
+        }
+
+        $courier = $this->normalizeCourier($order->ch_courier) ?? $this->defaultCourier();
+        if ($courier === null) {
+            return ['state' => 'skipped', 'reason' => 'no_courier_configured'];
+        }
+
+        if (!empty($order->ch_tracking_no) && strtolower((string) $order->ch_courier) === $courier) {
+            return [
+                'state' => 'skipped',
+                'reason' => 'already_booked',
+                'courier' => $courier,
+                'tracking_no' => (string) $order->ch_tracking_no,
+            ];
+        }
+
+        return $this->bookCourierShipment($order, $courier);
+    }
+
+    private function bookCourierShipment(CheckoutHistory $order, string $courier): array
+    {
+        $payload = [
+            'reference_no' => (string) ($order->ch_checkout_id ?? ''),
+            'recipient_name' => (string) ($order->ch_customer_name ?? ''),
+            'recipient_phone' => (string) ($order->ch_customer_phone ?? ''),
+            'recipient_email' => (string) ($order->ch_customer_email ?? ''),
+            'recipient_address' => (string) ($order->ch_customer_address ?? ''),
+            'declared_value' => (float) ($order->ch_amount ?? 0),
+            'payment_method' => (string) ($order->ch_payment_method ?? ''),
+            'items' => [[
+                'name' => (string) ($order->ch_product_name ?? 'Order Item'),
+                'quantity' => (int) ($order->ch_quantity ?? 1),
+            ]],
+        ];
+
+        try {
+            $response = match ($courier) {
+                'jnt' => $this->jntShippingService->bookShipment($payload),
+                default => $this->xdeShippingService->bookShipment($payload),
+            };
+            $trackingNo = $this->extractTrackingNoFromShipment($response);
+            $shipmentStatus = $this->extractShipmentStatus($response);
+
+            $order->ch_courier = $courier;
+            if ($trackingNo !== null) {
+                $order->ch_tracking_no = $trackingNo;
+            }
+            if ($shipmentStatus !== null) {
+                $order->ch_shipment_status = $shipmentStatus;
+            }
+            $order->ch_shipment_payload = $response;
+            if ($trackingNo !== null && !$order->ch_shipped_at) {
+                $order->ch_shipped_at = now();
+            }
+            $order->save();
+
+            return [
+                'state' => 'booked',
+                'courier' => $courier,
+                'tracking_no' => $order->ch_tracking_no,
+                'shipment_status' => $order->ch_shipment_status,
+            ];
+        } catch (RuntimeException $e) {
+            Log::warning('Courier auto-booking failed on shipped status update.', [
+                'order_id' => (int) $order->ch_id,
+                'checkout_id' => (string) $order->ch_checkout_id,
+                'courier' => $courier,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'state' => 'failed',
+                'courier' => $courier,
+                'reason' => $courier . '_book_failed',
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    private function normalizeCourier(mixed $courier): ?string
+    {
+        $normalized = strtolower(trim((string) $courier));
+        return in_array($normalized, ['jnt', 'xde', 'afhome'], true) ? $normalized : null;
+    }
+
+    private function generateAfHomeTrackingNumber(CheckoutHistory $order): string
+    {
+        $datePart = now()->format('Ymd');
+        $orderPart = str_pad((string) ((int) $order->ch_id), 4, '0', STR_PAD_LEFT);
+
+        return "AFH-{$datePart}-{$orderPart}";
+    }
+
+    private function resolveOrderTrackingNumber(CheckoutHistory $order, ?array $shipmentPayload = null): ?string
+    {
+        $trackingNo = trim((string) ($order->ch_tracking_no ?? ''));
+        if ($trackingNo !== '') {
+            return $trackingNo;
+        }
+
+        $payload = $shipmentPayload ?? (is_array($order->ch_shipment_payload) ? $order->ch_shipment_payload : []);
+        $payloadTrackingNo = trim((string) ($this->extractTrackingNoFromShipment($payload) ?? ''));
+        if ($payloadTrackingNo !== '') {
+            return $payloadTrackingNo;
+        }
+
+        if (strtolower(trim((string) ($order->ch_courier ?? ''))) !== 'afhome') {
+            return null;
+        }
+
+        $generated = $this->generateAfHomeTrackingNumber($order);
+        $order->ch_tracking_no = $generated;
+        $order->save();
+
+        return $generated;
+    }
+
+    private function resolveStoredFulfillmentMode(CheckoutHistory $order): string
+    {
+        $storedContainer = is_array($order->ch_zq_response) ? $order->ch_zq_response : [];
+        $storedMode = strtolower(trim((string) ($storedContainer['admin_fulfillment_mode'] ?? '')));
+        if (in_array($storedMode, ['manual', 'local_courier', 'zq'], true)) {
+            return $storedMode;
+        }
+
+        $courier = strtolower(trim((string) ($order->ch_courier ?? '')));
+        if ($courier === 'zq' || !empty($order->ch_zq_platform_order_id) || !empty($order->ch_zq_order_id) || !empty($order->ch_zq_status)) {
+            return 'zq';
+        }
+
+        if (in_array($courier, ['jnt', 'xde'], true)) {
+            return 'local_courier';
+        }
+
+        return 'manual';
+    }
+
+    private function pushOrderToZqIfEligible(CheckoutHistory $order): ?array
+    {
+        if (! $this->zqApiService->isConfigured()) {
+            return null;
+        }
+
+        return $this->pushOrderToZq($order);
+    }
+
+    private function pushOrderToZq(CheckoutHistory $order): array
+    {
+        $payload = [$this->buildZqOrderPayload($order)];
+        $response = $this->zqApiService->createOrder($payload);
+
+        $responseData = is_array($response['data'] ?? null) ? $response['data'] : [];
+        $platformOrderIds = $responseData['platformOrderIds'] ?? [];
+        $platformOrderId = '';
+
+        if (is_array($platformOrderIds) && ! empty($platformOrderIds[0])) {
+            $platformOrderId = trim((string) $platformOrderIds[0]);
+        }
+
+        if ($platformOrderId === '') {
+            $platformOrderId = (string) ($payload[0]['orderNumber'] ?? $order->ch_checkout_id);
+        }
+
+        $order->fill([
+            'ch_zq_platform_order_id' => $platformOrderId,
+            'ch_zq_status' => $this->mapZqStateToLocalStatus((string) ($responseData['state'] ?? 'submitted')),
+            'ch_zq_payload' => $payload[0],
+            'ch_zq_response' => $response,
+            'ch_zq_synced_at' => now(),
+        ])->save();
+
+        return $response;
+    }
+
+    private function buildZqOrderPayload(CheckoutHistory $order): array
+    {
+        $quantity = max(1, (int) ($order->ch_quantity ?? 1));
+        $lineAmount = (int) round((((float) ($order->ch_amount ?? 0)) / $quantity) * 100);
+        $parsedAddress = $this->parseOrderAddress((string) ($order->ch_customer_address ?? ''));
+        $variantLabel = $this->buildZqVariantLabel($order);
+        $sku = trim((string) ($order->ch_product_sku ?? '')) !== ''
+            ? trim((string) $order->ch_product_sku)
+            : ('ORDER-' . (string) $order->ch_id);
+        $imageUrl = trim((string) ($order->ch_product_image ?? ''));
+
+        return [
+            'orderNumber' => (string) $order->ch_checkout_id,
+            'countryCode' => 'PH',
+            'city' => $parsedAddress['city'],
+            'province' => $parsedAddress['province'],
+            'postCode' => $parsedAddress['postCode'],
+            'consignee' => (string) ($order->ch_customer_name ?? 'Customer'),
+            'addressDetail' => $parsedAddress['addressDetail'],
+            'address2' => $parsedAddress['address2'],
+            'phone1' => (string) ($order->ch_customer_phone ?? ''),
+            'email' => (string) ($order->ch_customer_email ?? ''),
+            'amount' => (int) round(((float) ($order->ch_amount ?? 0)) * 100),
+            'commodities' => [[
+                'sku' => $sku,
+                'productName' => (string) ($order->ch_product_name ?: ($order->ch_description ?? 'Order Item')),
+                'variant' => $variantLabel,
+                'quantity' => $quantity,
+                'amount' => max(0, $lineAmount),
+                'productImgUrls' => $imageUrl !== '' ? [$imageUrl] : [],
+            ]],
+        ];
+    }
+
+    private function buildZqVariantLabel(CheckoutHistory $order): string
+    {
+        $parts = array_values(array_filter([
+            trim((string) ($order->ch_selected_color ?? '')),
+            trim((string) ($order->ch_selected_size ?? '')),
+            trim((string) ($order->ch_selected_type ?? '')),
+        ], fn ($value) => $value !== ''));
+
+        return ! empty($parts) ? implode(' / ', $parts) : 'Default';
+    }
+
+    private function parseOrderAddress(string $address): array
+    {
+        $parts = array_values(array_filter(array_map(
+            fn ($part) => trim($part),
+            explode(',', $address)
+        ), fn ($part) => $part !== ''));
+
+        $addressDetail = $parts[0] ?? $address;
+        $address2 = $parts[1] ?? '';
+        $city = $parts[2] ?? ($parts[1] ?? 'Metro Manila');
+        $province = $parts[3] ?? ($parts[2] ?? 'Metro Manila');
+        $postCodeSource = end($parts) ?: '';
+        preg_match('/\b(\d{4,6})\b/', (string) $postCodeSource, $matches);
+
+        return [
+            'addressDetail' => $addressDetail !== '' ? $addressDetail : 'Address not provided',
+            'address2' => $address2,
+            'city' => $city !== '' ? $city : 'Metro Manila',
+            'province' => $province !== '' ? $province : 'Metro Manila',
+            'postCode' => $matches[1] ?? '0000',
+        ];
+    }
+
+    private function resolveZqPlatformOrderId(CheckoutHistory $order): string
+    {
+        $stored = trim((string) ($order->ch_zq_platform_order_id ?? ''));
+        if ($stored !== '') {
+            return $stored;
+        }
+
+        return trim((string) ($order->ch_checkout_id ?? ''));
+    }
+
+    private function persistZqDetail(CheckoutHistory $order, array $response): void
+    {
+        $data = is_array($response['data'] ?? null) ? $response['data'] : [];
+        $state = $this->normalizeZqStringValue($data['state'] ?? '');
+        $trackingNo = $this->normalizeZqStringValue($data['trackNumber'] ?? '');
+        $trackingNoFirstMile = $this->normalizeZqStringValue($data['trackNumber1'] ?? '');
+
+        $shipmentPayload = is_array($order->ch_shipment_payload) ? $order->ch_shipment_payload : [];
+        $shipmentPayload['zq_detail'] = $response;
+
+        $order->fill([
+            'ch_zq_platform_order_id' => $this->normalizeZqStringValue($data['platformOrderId'] ?? $this->resolveZqPlatformOrderId($order)),
+            'ch_zq_order_id' => $this->normalizeZqStringValue($data['orderId'] ?? ($order->ch_zq_order_id ?? '')),
+            'ch_zq_status' => $state !== '' ? $state : ($order->ch_zq_status ?? null),
+            'ch_zq_response' => $response,
+            'ch_zq_synced_at' => now(),
+            'ch_shipment_payload' => $shipmentPayload,
+        ]);
+
+        if ($trackingNo !== '') {
+            $order->ch_courier = $order->ch_courier ?: 'zq';
+            $order->ch_tracking_no = $trackingNo;
+            $order->ch_shipped_at = $order->ch_shipped_at ?: now();
+        } elseif ($trackingNoFirstMile !== '' && trim((string) ($order->ch_tracking_no ?? '')) === '') {
+            $order->ch_courier = $order->ch_courier ?: 'zq';
+            $order->ch_tracking_no = $trackingNoFirstMile;
+            $order->ch_shipped_at = $order->ch_shipped_at ?: now();
+        }
+
+        $mappedStatus = $this->mapZqStateToLocalStatus($state);
+        if ($mappedStatus !== null) {
+            $previousStatus = (string) ($order->ch_fulfillment_status ?? 'pending');
+            $order->ch_fulfillment_status = $mappedStatus;
+
+            if ($mappedStatus === 'delivered' && $previousStatus !== 'delivered') {
+                $order->save();
+                OrderPvPosting::postIfNeeded($order, null);
+                DirectReferralCommission::releaseAvailableForOrder($order, null);
+                return;
+            } elseif (in_array($mappedStatus, ['cancelled', 'refunded'], true) && !in_array($previousStatus, ['cancelled', 'refunded'], true)) {
+                DirectReferralCommission::cancelPendingForOrder($order, null, 'Order cancelled via ZQ sync.');
+            }
+        }
+
+        $order->save();
+    }
+
+    private function persistZqTracking(CheckoutHistory $order, array $response): void
+    {
+        $data = is_array($response['data'] ?? null) ? $response['data'] : [];
+        $trackingNo = $this->normalizeZqStringValue($data['trackNumber'] ?? '');
+        $trackingNoFirstMile = $this->normalizeZqStringValue($data['trackNumber1'] ?? '');
+
+        $shipmentPayload = is_array($order->ch_shipment_payload) ? $order->ch_shipment_payload : [];
+        $shipmentPayload['zq_tracking'] = $response;
+
+        $order->fill([
+            'ch_shipment_payload' => $shipmentPayload,
+            'ch_zq_response' => $response,
+            'ch_zq_synced_at' => now(),
+        ]);
+
+        if ($trackingNo !== '') {
+            $order->ch_courier = 'zq';
+            $order->ch_tracking_no = $trackingNo;
+            $order->ch_shipment_status = 'in_transit';
+            $order->ch_fulfillment_status = in_array((string) ($order->ch_fulfillment_status ?? ''), ['delivered', 'out_for_delivery'], true)
+                ? $order->ch_fulfillment_status
+                : 'shipped';
+            $order->ch_shipped_at = $order->ch_shipped_at ?: now();
+        } elseif ($trackingNoFirstMile !== '') {
+            $order->ch_courier = 'zq';
+            $order->ch_tracking_no = $trackingNoFirstMile;
+            $order->ch_shipment_status = $order->ch_shipment_status ?: 'for_pickup';
+        }
+
+        $order->save();
+    }
+
+    private function normalizeZqStringValue(mixed $value): string
+    {
+        if (is_array($value)) {
+            foreach ($value as $item) {
+                $normalized = $this->normalizeZqStringValue($item);
+                if ($normalized !== '') {
+                    return $normalized;
+                }
+            }
+
+            return '';
+        }
+
+        if ($value === null) {
+            return '';
+        }
+
+        return trim((string) $value);
+    }
+
+    private function mapZqStateToLocalStatus(string $state): ?string
+    {
+        return match (strtoupper(trim($state))) {
+            'UNFULFILLED' => 'pending',
+            'PAID' => 'processing',
+            'PROCESSING' => 'processing',
+            'SUCCESS' => 'delivered',
+            'CLOSE' => 'cancelled',
+            'SUBMITTED' => 'processing',
+            default => null,
+        };
+    }
+
+    private function defaultCourier(): ?string
+    {
+        if ($this->hasCourierConfig('jnt')) {
+            return 'jnt';
+        }
+
+        if ($this->hasCourierConfig('xde')) {
+            return 'xde';
+        }
+
+        return null;
+    }
+
+    private function hasCourierConfig(string $courier): bool
+    {
+        return (string) config("services.{$courier}.base_url", '') !== ''
+            && (string) config("services.{$courier}.api_key", '') !== ''
+            && (string) config("services.{$courier}.token", '') !== '';
+    }
+
+    private function extractTrackingNoFromShipment(array $response): ?string
+    {
+        $candidates = [
+            data_get($response, 'tracking_no'),
+            data_get($response, 'tracking_number'),
+            data_get($response, 'waybill_no'),
+            data_get($response, 'waybillNo'),
+            data_get($response, 'billCode'),
+            data_get($response, 'txlogisticId'),
+            data_get($response, 'awb'),
+            data_get($response, 'data.tracking_no'),
+            data_get($response, 'data.tracking_number'),
+            data_get($response, 'data.waybill_no'),
+            data_get($response, 'data.waybillNo'),
+            data_get($response, 'data.billCode'),
+            data_get($response, 'data.txlogisticId'),
+            data_get($response, 'data.data.tracking_no'),
+            data_get($response, 'data.data.tracking_number'),
+            data_get($response, 'data.data.waybillNo'),
+            data_get($response, 'data.data.billCode'),
+            data_get($response, 'data.data.txlogisticId'),
+            data_get($response, 'result.tracking_no'),
+            data_get($response, 'result.tracking_number'),
+            data_get($response, 'result.waybillNo'),
+            data_get($response, 'result.billCode'),
+            data_get($response, 'result.txlogisticId'),
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (is_string($candidate) && trim($candidate) !== '') {
+                return trim($candidate);
+            }
+        }
+
+        return null;
+    }
+
+    private function extractShipmentStatus(array $response): ?string
+    {
+        $candidates = [
+            data_get($response, 'status'),
+            data_get($response, 'shipment_status'),
+            data_get($response, 'data.status'),
+            data_get($response, 'data.shipment_status'),
+            data_get($response, 'result.status'),
+            data_get($response, 'result.shipment_status'),
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (is_string($candidate) && trim($candidate) !== '') {
+                return strtolower(trim($candidate));
+            }
+        }
+
+        return null;
+    }
+
+    private function resolveAdmin(Request $request): ?Admin
+    {
+        $user = $request->user();
+        return $user instanceof Admin ? $user : null;
+    }
+
+    private function canApprove(Admin $admin): bool
+    {
+        return in_array($this->roleFromAdmin($admin), ['super_admin', 'admin', 'merchant_admin'], true);
+    }
+
+    private function canUpdateFulfillment(Admin $admin): bool
+    {
+        return in_array($this->roleFromAdmin($admin), ['super_admin', 'admin', 'csr', 'merchant_admin'], true);
+    }
+
+    private function roleFromAdmin(Admin $admin): string
+    {
+        return match ((int) $admin->user_level_id) {
+            1 => 'super_admin',
+            2 => 'admin',
+            3 => 'csr',
+            4 => 'web_content',
+            7 => 'merchant_admin',
+            8 => 'supplier_admin',
+            default => 'staff',
+        };
+    }
+
+    private function applyFilter($query, string $filter): void
+    {
+        if ($filter === 'all' || $filter === '') {
+            return;
+        }
+
+        if ($filter === 'pending') {
+            $query->where(function ($q) {
+                $q->where('ch_approval_status', 'pending_approval')
+                    ->orWhere('ch_fulfillment_status', 'pending');
+            });
+            return;
+        }
+
+        if ($filter === 'processing') {
+            $query->where('ch_fulfillment_status', 'processing');
+            return;
+        }
+
+        if ($filter === 'paid') {
+            $query->where('ch_status', 'paid');
+            return;
+        }
+
+        if ($filter === 'packed') {
+            $query->where('ch_fulfillment_status', 'packed');
+            return;
+        }
+
+        if ($filter === 'shipped') {
+            $query->where('ch_fulfillment_status', 'shipped');
+            return;
+        }
+
+        if ($filter === 'out_for_delivery') {
+            $query->where('ch_fulfillment_status', 'out_for_delivery');
+            return;
+        }
+
+        if ($filter === 'delivered') {
+            $query->where('ch_fulfillment_status', 'delivered');
+            return;
+        }
+
+        if ($filter === 'cancelled') {
+            $query->where('ch_fulfillment_status', 'cancelled');
+            return;
+        }
+
+        if ($filter === 'refunded') {
+            $query->where('ch_fulfillment_status', 'refunded');
+            return;
+        }
+
+        if ($filter === 'failed_payments') {
+            $query->whereIn('ch_status', ['failed', 'cancelled', 'expired']);
+            return;
+        }
+
+        if ($filter === 'order_history' || $filter === 'completed') {
+            $query->whereIn('ch_fulfillment_status', ['delivered', 'cancelled', 'refunded']);
+            return;
+        }
+
+        $query->where('ch_fulfillment_status', $filter);
+    }
+
+    private function normalizeFilter(string $filter): string
+    {
+        $normalized = strtolower(trim($filter));
+        $normalized = str_replace([' ', '-'], '_', $normalized);
+
+        return match ($normalized) {
+            'returned_refunded', 'returned', 'refund', 'refunds' => 'refunded',
+            'history' => 'order_history',
+            'deliverd' => 'delivered',
+            'outfordelivery' => 'out_for_delivery',
+            default => $normalized,
+        };
+    }
+
+    private function applyStorefrontScope($query, Admin $admin): void
+    {
+        if ((int) $admin->user_level_id !== 4) {
+            return;
+        }
+
+        $storefrontIds = $this->resolveStorefrontIds($admin);
+        if (empty($storefrontIds)) {
+            $query->whereRaw('1 = 0');
+            return;
+        }
+
+        $storefrontRows = WebPageContent::query()
+            ->whereIn('wpc_type', ['partner-storefront', 'partner-storefronts'])
+            ->whereIn('wpc_id', $storefrontIds)
+            ->get(['wpc_key', 'wpc_title', 'wpc_payload']);
+
+        $sourceSlugs = $storefrontRows
+            ->map(function (WebPageContent $storefront) {
+                $payloadSlug = trim((string) data_get($storefront->wpc_payload, 'fields.slug', ''));
+                $fallbackKey = trim((string) ($storefront->wpc_key ?? ''));
+                $slug = strtolower($payloadSlug !== '' ? $payloadSlug : $fallbackKey);
+                return $slug !== '' ? $slug : null;
+            })
+            ->filter()
+            ->values()
+            ->all();
+
+        $sourceLabels = $storefrontRows
+            ->flatMap(function (WebPageContent $storefront) {
+                $displayName = trim((string) data_get($storefront->wpc_payload, 'fields.display_name', ''));
+                $title = trim((string) ($storefront->wpc_title ?? ''));
+                $key = trim((string) ($storefront->wpc_key ?? ''));
+                return [$displayName, $title, $key];
+            })
+            ->map(static fn (string $value) => strtolower(trim($value)))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($sourceSlugs) && empty($sourceLabels)) {
+            $query->whereRaw('1 = 0');
+            return;
+        }
+
+        $query->where(function ($scoped) use ($sourceSlugs, $sourceLabels) {
+            if (!empty($sourceSlugs) && Schema::hasColumn('tbl_checkout_history', 'ch_source_slug')) {
+                $scoped->whereIn('ch_source_slug', $sourceSlugs);
+            }
+
+            if (!empty($sourceSlugs) && Schema::hasColumn('tbl_checkout_history', 'ch_source_url')) {
+                $likeOperator = DB::connection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
+
+                foreach ($sourceSlugs as $slug) {
+                    $pattern = '%/' . $slug . '/%';
+                    $scoped->orWhere('ch_source_url', $likeOperator, $pattern);
+                }
+            }
+
+            if (!empty($sourceLabels) && Schema::hasColumn('tbl_checkout_history', 'ch_source_label')) {
+                $scoped->orWhereIn(DB::raw('LOWER(ch_source_label)'), $sourceLabels);
+            }
+        });
+    }
+
+    private function resolveStorefrontIds(Admin $admin): array
+    {
+        $raw = $admin->admin_permissions ?? [];
+        if (!is_array($raw)) {
+            return [];
+        }
+
+        $ids = array_values(array_unique(array_filter(array_map(
+            static fn ($id) => is_numeric($id) ? (int) $id : null,
+            $raw
+        ), static fn ($id) => is_int($id) && $id > 0)));
+
+        if (!empty($ids)) {
+            return $ids;
+        }
+
+        // Fallback: some partner accounts may have storefront ids in a JSON string payload.
+        if (is_string($admin->admin_permissions) && trim($admin->admin_permissions) !== '') {
+            $decoded = json_decode($admin->admin_permissions, true);
+            if (is_array($decoded)) {
+                $fallbackIds = array_values(array_unique(array_filter(array_map(
+                    static fn ($id) => is_numeric($id) ? (int) $id : null,
+                    $decoded
+                ), static fn ($id) => is_int($id) && $id > 0)));
+                if (!empty($fallbackIds)) {
+                    return $fallbackIds;
+                }
+            }
+        }
+
+        return [];
+    }
+
+    public function counts(Request $request)
+    {
+        $admin = $this->resolveAdmin($request);
+        if (!$admin) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $base = CheckoutHistory::query();
+
+        return response()->json([
+            'all' => (int) (clone $base)->count(),
+            'pending' => (int) (clone $base)->where(function ($q) {
+                $q->where('ch_approval_status', 'pending_approval')
+                    ->orWhere('ch_fulfillment_status', 'pending');
+            })->count(),
+            'processing' => (int) (clone $base)->whereIn('ch_fulfillment_status', ['processing', 'packed'])->count(),
+            'shipped' => (int) (clone $base)->where('ch_fulfillment_status', 'shipped')->count(),
+            'to_receive' => (int) (clone $base)->where('ch_fulfillment_status', 'out_for_delivery')->count(),
+            'out_for_delivery' => (int) (clone $base)->where('ch_fulfillment_status', 'out_for_delivery')->count(),
+            'delivered' => (int) (clone $base)->where('ch_fulfillment_status', 'delivered')->count(),
+            'cancelled' => (int) (clone $base)->whereIn('ch_fulfillment_status', ['cancelled', 'refunded'])->count(),
+            'completed' => (int) (clone $base)->where('ch_fulfillment_status', 'delivered')->count(),
+            'paid' => (int) (clone $base)->whereIn('ch_status', ['paid', 'succeeded', 'success'])->count(),
+        ]);
+    }
+
+    private function computeSla(CheckoutHistory $order): array
+    {
+        $approvalStatus = (string) ($order->ch_approval_status ?? 'pending_approval');
+        $fulfillment = (string) ($order->ch_fulfillment_status ?? 'pending');
+
+        $key = $approvalStatus === 'pending_approval' ? 'pending_approval' : $fulfillment;
+
+        $targets = [
+            'pending_approval' => 45,
+            'processing' => 240,
+            'packed' => 720,
+            'shipped' => 1440,
+            'out_for_delivery' => 2880,
+        ];
+
+        $targetMinutes = $targets[$key] ?? null;
+        if ($targetMinutes === null) {
+            return [
+                'key' => $key,
+                'state' => 'no_sla',
+                'target_minutes' => null,
+                'elapsed_minutes' => null,
+                'remaining_minutes' => null,
+                'overdue_minutes' => null,
+            ];
+        }
+
+        $baseTime = $order->updated_at ?? $order->created_at ?? now();
+        $elapsedMinutes = max(0, (int) Carbon::parse($baseTime)->diffInMinutes(now()));
+        $remaining = $targetMinutes - $elapsedMinutes;
+        $overdue = $elapsedMinutes - $targetMinutes;
+
+        $state = 'on_track';
+        if ($overdue > 0) {
+            $state = 'overdue';
+        } elseif ($remaining <= max(15, (int) round($targetMinutes * 0.2))) {
+            $state = 'due_soon';
+        }
+
+        return [
+            'key' => $key,
+            'state' => $state,
+            'target_minutes' => $targetMinutes,
+            'elapsed_minutes' => $elapsedMinutes,
+            'remaining_minutes' => max(0, $remaining),
+            'overdue_minutes' => max(0, $overdue),
+        ];
+    }
+
+    private function sendCustomerOrderStatusEmail(CheckoutHistory $order, string $eventType): void
+    {
+        $recipient = trim((string) ($order->ch_customer_email ?? ''));
+        if ($recipient === '' || !filter_var($recipient, FILTER_VALIDATE_EMAIL)) {
+            return;
+        }
+
+        $statusKey = $this->buildOrderNotificationKey($order, $eventType);
+        if ($statusKey === '') {
+            return;
+        }
+
+        $cacheKey = sprintf('order_status_email_sent:%d:%s', (int) $order->ch_id, $statusKey);
+        if (!Cache::add($cacheKey, true, now()->addDays(30))) {
+            return;
+        }
+
+        $payload = $this->buildOrderStatusEmailPayload($order, $eventType);
+        if ($payload === null) {
+            Cache::forget($cacheKey);
+            return;
+        }
+
+        $mailRecipient = env('MAIL_TEST_TO') ?: $recipient;
+
+        try {
+            Mail::mailer('resend')->to($mailRecipient)->send(new OrderStatusUpdatedMail($payload));
+        } catch (\Throwable $e) {
+            Cache::forget($cacheKey);
+            Log::error('Order status email send failed.', [
+                'order_id' => (int) $order->ch_id,
+                'checkout_id' => (string) $order->ch_checkout_id,
+                'recipient' => $mailRecipient,
+                'event_type' => $eventType,
+                'error' => $e->getMessage(),
+            ]);
+            report($e);
+        }
+    }
+
+    private function sendCustomerOrderStatusEmailSafely(CheckoutHistory $order, string $eventType): void
+    {
+        try {
+            $this->sendCustomerOrderStatusEmail($order, $eventType);
+        } catch (\Throwable $e) {
+            Log::warning('Order status update continued after email notification failed.', [
+                'order_id' => (int) $order->ch_id,
+                'checkout_id' => (string) $order->ch_checkout_id,
+                'event_type' => $eventType,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function notifyCustomerOrderStatusUpdateSafely(
+        CheckoutHistory $order,
+        string $eventType,
+        string $title,
+        string $description
+    ): void {
+        try {
+            (new PaymentController())->notifyCustomerOrderStatusUpdate($order, $eventType, $title, $description);
+        } catch (\Throwable $e) {
+            Log::warning('Order status update continued after customer notification failed.', [
+                'order_id' => (int) $order->ch_id,
+                'checkout_id' => (string) $order->ch_checkout_id,
+                'event_type' => $eventType,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function buildOrderNotificationKey(CheckoutHistory $order, string $eventType): string
+    {
+        return match ($eventType) {
+            'approval_approved' => 'approval:approved',
+            'approval_rejected' => 'approval:rejected',
+            'fulfillment_status' => 'fulfillment:' . strtolower((string) ($order->ch_fulfillment_status ?? '')),
+            'shipment_status' => 'shipment:' . strtolower((string) ($order->ch_shipment_status ?? '')),
+            default => '',
+        };
+    }
+
+    private function buildOrderStatusEmailPayload(CheckoutHistory $order, string $eventType): ?array
+    {
+        $customerName = trim((string) ($order->ch_customer_name ?? 'Customer')) ?: 'Customer';
+        $fulfillmentStatus = strtolower((string) ($order->ch_fulfillment_status ?? 'pending'));
+        $shipmentStatus = strtolower((string) ($order->ch_shipment_status ?? ''));
+        $trackingNo = $this->resolveOrderTrackingNumber($order) ?? '';
+        $courier = trim((string) ($order->ch_courier ?? ''));
+
+        $title = 'Order Update';
+        $subtitle = 'There is a new update for your AF Home order.';
+        $badge = strtoupper(str_replace('_', ' ', $fulfillmentStatus));
+        $badgeColor = 'background:#ffedd5;color:#c2410c;';
+        $nextStep = 'You can keep your order number handy and track your delivery progress anytime.';
+
+        if ($eventType === 'approval_approved') {
+            $title = 'Order Approved';
+            $subtitle = 'Your payment has been confirmed and your order is now being prepared.';
+            $badge = 'APPROVED';
+            $badgeColor = 'background:#dcfce7;color:#15803d;';
+            $nextStep = 'Our team is now preparing your order for packing and shipment.';
+        } elseif ($eventType === 'approval_rejected') {
+            $title = 'Order Update';
+            $subtitle = 'Your order was not approved. Please contact AF Home support for assistance.';
+            $badge = 'REJECTED';
+            $badgeColor = 'background:#fee2e2;color:#b91c1c;';
+            $nextStep = 'If you need help reviewing this order, please contact the AF Home support team.';
+        } elseif ($eventType === 'fulfillment_status') {
+            [$title, $subtitle, $badgeColor, $nextStep] = match ($fulfillmentStatus) {
+                'processing' => ['Order Is Processing', 'Your order is now in our active processing queue.', 'background:#dbeafe;color:#1d4ed8;', 'Our team is preparing your items and will notify you once shipment begins.'],
+                'packed' => ['Order Packed', 'Good news. Your items are packed and almost ready to leave our warehouse.', 'background:#e0e7ff;color:#4338ca;', 'The next update you receive should be your shipment or delivery progress.'],
+                'shipped' => ['Order Shipped', 'Your order is already on the way.', 'background:#ede9fe;color:#6d28d9;', 'Keep an eye on your tracking number for courier movement updates.'],
+                'out_for_delivery' => ['Out for Delivery', 'Your order is already out for delivery and should arrive soon.', 'background:#ffedd5;color:#c2410c;', 'Please keep your line open in case the rider or courier needs to contact you.'],
+                'delivered' => ['Order Delivered', 'Your AF Home order has been marked as delivered.', 'background:#dcfce7;color:#15803d;', 'If anything looks incorrect with the delivery, please contact support right away.'],
+                'cancelled' => ['Order Cancelled', 'Your order has been cancelled.', 'background:#fee2e2;color:#b91c1c;', 'Please contact support if you think this cancellation was made in error.'],
+                'refunded' => ['Order Refunded', 'Your order has been marked as refunded.', 'background:#e5e7eb;color:#374151;', 'Please allow additional time for the refund to reflect depending on your payment channel.'],
+                default => ['Order Update', 'Your order status has changed.', 'background:#fef3c7;color:#92400e;', 'You can track your order anytime using your checkout details.'],
+            };
+            $badge = strtoupper(str_replace('_', ' ', $fulfillmentStatus));
+        } elseif ($eventType === 'shipment_status') {
+            [$title, $subtitle, $badgeColor, $nextStep] = match ($shipmentStatus) {
+                'for_pickup' => ['Shipment Scheduled', 'Your parcel is scheduled for courier pickup.', 'background:#ede9fe;color:#6d28d9;', 'We will notify you again once the courier has picked up your order.'],
+                'picked_up' => ['Shipment Picked Up', 'The courier has already picked up your order.', 'background:#ede9fe;color:#6d28d9;', 'Your order is now moving through the delivery network.'],
+                'in_transit' => ['Shipment In Transit', 'Your package is currently in transit.', 'background:#ede9fe;color:#6d28d9;', 'The next update should be once your parcel is out for delivery.'],
+                'out_for_delivery' => ['Shipment Out for Delivery', 'Your package is with the courier and arriving soon.', 'background:#ffedd5;color:#c2410c;', 'Please be ready to receive the order today if delivery is successful.'],
+                'delivered' => ['Shipment Delivered', 'The courier marked your shipment as delivered.', 'background:#dcfce7;color:#15803d;', 'If you have any concern about the received items, contact AF Home support.'],
+                'cancelled' => ['Shipment Cancelled', 'The courier booking for your shipment has been cancelled.', 'background:#fee2e2;color:#b91c1c;', 'Please contact AF Home support if you need the order rebooked or reviewed.'],
+                'failed_delivery' => ['Delivery Attempt Failed', 'The courier was not able to complete the delivery attempt.', 'background:#fee2e2;color:#b91c1c;', 'Please wait for the next courier instruction or contact support for help.'],
+                'returned_to_sender' => ['Shipment Returned', 'The shipment was returned to sender.', 'background:#e5e7eb;color:#374151;', 'Please contact AF Home support so the order can be reviewed with you.'],
+                default => ['Shipment Update', 'There is a new courier update for your order.', 'background:#fef3c7;color:#92400e;', 'You can check your latest tracking details using your order reference.'],
+            };
+            $badge = strtoupper(str_replace('_', ' ', $shipmentStatus !== '' ? $shipmentStatus : $fulfillmentStatus));
+        }
+
+        return [
+            'customer_name' => $customerName,
+            'title' => $title,
+            'subtitle' => $subtitle,
+            'badge' => $badge,
+            'badge_color' => $badgeColor,
+            'next_step' => $nextStep,
+            'checkout_id' => (string) ($order->ch_checkout_id ?? '-'),
+            'order_number' => (string) ($order->ch_checkout_id ?? '-'),
+            'product_name' => (string) ($order->ch_product_name ?: ($order->ch_description ?? 'Order Item')),
+            'quantity' => max(1, (int) ($order->ch_quantity ?? 1)),
+            'amount' => (float) ($order->ch_amount ?? 0),
+            'payment_method' => (string) ($order->ch_payment_method ?? '-'),
+            'shipping_address' => (string) ($order->ch_customer_address ?? '-'),
+            'fulfillment_status' => $fulfillmentStatus,
+            'shipment_status' => $shipmentStatus,
+            'tracking_no' => $trackingNo !== '' ? $trackingNo : null,
+            'courier' => $courier !== '' ? strtoupper($courier) : null,
+            'shipped_at' => optional($order->ch_shipped_at)->toDateTimeString(),
+            'paid_at' => optional($order->ch_paid_at)->toDateTimeString(),
+            'approval_notes' => (string) ($order->ch_approval_notes ?? ''),
+        ];
+    }
+}
