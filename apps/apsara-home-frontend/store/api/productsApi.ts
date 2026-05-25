@@ -1036,6 +1036,13 @@ export const productsApi = baseApi.injectEndpoints({
       }),
       providesTags: ['Products'],
     }),
+    deleteProductReview: builder.mutation<{ message: string; deleted_id: number; product_id: number }, number>({
+      query: (id) => ({
+        url: `/api/admin/products/reviews/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Products'],
+    }),
     getProductBrand: builder.query<ProductBrandInfo, number>({
       query: (id) => ({
         url: `/api/products/${id}/brand`,
@@ -1334,6 +1341,7 @@ export const {
   useGetPublicZqProductsQuery,
   useGetPublicZqProductQuery,
   useGetProductReviewsQuery,
+  useDeleteProductReviewMutation,
   useGetProductBrandQuery,
   useHeartbeatProductViewerMutation,
   useGetProductsQuery,

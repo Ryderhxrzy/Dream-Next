@@ -539,6 +539,33 @@ class AdminOrderController extends Controller
         ]);
     }
 
+    public function destroy(Request $request, int $id)
+    {
+        $admin = $this->resolveAdmin($request);
+        if (!$admin) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        // Super admin only
+        if ($this->roleFromAdmin($admin) !== 'super_admin') {
+            return response()->json(['message' => 'Forbidden: only super admin can delete orders.'], 403);
+        }
+
+        $order = CheckoutHistory::query()->where('ch_id', $id)->firstOrFail();
+
+        DB::transaction(function () use ($order, $id) {
+            // remove related admin notifications (if any) created for this order
+            AdminNotification::query()
+                ->where('an_source_type', 'order')
+                ->where('an_source_id', (int) $id)
+                ->delete();
+
+            $order->delete();
+        });
+
+        return response()->json(['message' => 'Order deleted.']);
+    }
+
     public function updateFulfillmentMode(Request $request, int $id)
     {
         $admin = $this->resolveAdmin($request);

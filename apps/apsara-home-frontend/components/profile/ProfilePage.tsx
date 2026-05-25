@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { MeResponse, ReferralTreeNode, AccountSnapshot, useChangePasswordMutation, useMeQuery, useAccountSnapshotQuery, useReferralTreeQuery, useUpdateProfileMutation, useUploadAvatarMutation, useSendUsernameChangeOtpMutation, useSubmitUsernameChangeRequestMutation, useSubmitWebstoreRequestMutation, useUploadWebstoreReceiptMutation, useCreateWebstorePaymentSessionMutation, useLazyVerifyWebstorePaymentSessionQuery, useUsernameChangeLatestQuery, useWebstoreRequestLatestQuery, useSyncWebstorePartnerAccountMutation, useMemberActivityQuery, useMemberSessionsQuery, useRevokeMemberSessionMutation, useLinkedAccountsQuery, useLinkGoogleAccountMutation, useUnlinkGoogleAccountMutation, useLinkFacebookAccountMutation, useUnlinkFacebookAccountMutation, LinkedAccount, useSetupTotpMutation, useEnableTotpMutation, useDisableTotpMutation, SetupTotpResponse } from '@/store/api/userApi';
+import { MeResponse, ReferralTreeNode, AccountSnapshot, useChangePasswordMutation, useMeQuery, useAccountSnapshotQuery, useReferralTreeQuery, useUpdateProfileMutation, useUploadAvatarMutation, useSendUsernameChangeOtpMutation, useSubmitUsernameChangeRequestMutation, useSubmitWebstoreRequestMutation, useUploadWebstoreReceiptMutation, useUsernameChangeLatestQuery, useWebstoreRequestLatestQuery, useSyncWebstorePartnerAccountMutation, useMemberActivityQuery, useMemberSessionsQuery, useRevokeMemberSessionMutation, useLinkedAccountsQuery, useLinkGoogleAccountMutation, useUnlinkGoogleAccountMutation, useLinkFacebookAccountMutation, useUnlinkFacebookAccountMutation, LinkedAccount, useSetupTotpMutation, useEnableTotpMutation, useDisableTotpMutation, SetupTotpResponse } from '@/store/api/userApi';
 import { signOut, useSession } from 'next-auth/react';
 import { ChangeEvent, DragEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Loading from '../Loading';
@@ -588,8 +588,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
   const [submitUsernameChangeRequest, { isLoading: isSubmittingUsernameChange }] = useSubmitUsernameChangeRequestMutation();
   const [submitWebstoreRequest, { isLoading: isSubmittingWebstoreRequest }] = useSubmitWebstoreRequestMutation();
   const [uploadWebstoreReceipt] = useUploadWebstoreReceiptMutation();
-  const [createWebstorePaymentSession, { isLoading: isCreatingWebstorePaymentSession }] = useCreateWebstorePaymentSessionMutation();
-  const [triggerVerifyWebstorePaymentSession] = useLazyVerifyWebstorePaymentSessionQuery();
+  const isCreatingWebstorePaymentSession = false;
   const [syncWebstorePartnerAccount, { isLoading: isSyncingWebstoreAccount }] = useSyncWebstorePartnerAccountMutation();
   const [revokeMemberSession, { isLoading: isRevokingSession }] = useRevokeMemberSessionMutation();
   const { data: linkedAccountsData, refetch: refetchLinkedAccounts } = useLinkedAccountsQuery(undefined, {
@@ -649,10 +648,11 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
   const [webstoreMsg, setWebstoreMsg] = useState<AlertMsg | null>(null);
   const [webstoreSyncSuccessOpen, setWebstoreSyncSuccessOpen] = useState(false);
   const [showPartnerLoginShortcut, setShowPartnerLoginShortcut] = useState(false);
+  const [webstoreBankReference, setWebstoreBankReference] = useState('');
   const [selectedWebstorePlan, setSelectedWebstorePlan] = useState<'quarterly' | 'semiAnnual' | 'annual' | null>(null);
   const [selectedBillingOption, setSelectedBillingOption] = useState<'full' | 'monthly' | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
-    'gcash' | 'grab_pay' | 'maya' | 'card' | 'online_banking' | null
+    'online_banking' | null
   >(null);
   const [webstorePaymentProofUrl, setWebstorePaymentProofUrl] = useState<string | null>(null);
   const [webstorePaymentReferenceId, setWebstorePaymentReferenceId] = useState<string | null>(null);
@@ -663,6 +663,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
   const [webstoreReceiptFiles, setWebstoreReceiptFiles] = useState<Array<{ name: string; preview: string; file: File }>>([]);
   const [webstoreReceiptPreview, setWebstoreReceiptPreview] = useState<{ name: string; src: string } | null>(null);
   const [isDraggingReceipt, setIsDraggingReceipt] = useState(false);
+  const [dismissedRejectedReceiptKeys, setDismissedRejectedReceiptKeys] = useState<string[]>([]);
   const [webstoreInvalidFields, setWebstoreInvalidFields] = useState<Record<string, boolean>>({});
   const [webstoreLatestRequestPreview, setWebstoreLatestRequestPreview] = useState<{
     id: number
@@ -677,6 +678,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
     latest_receipt_message?: string | null
     latest_receipt_detail_id?: number | null
     latest_receipt_submitted_at?: string | null
+    latest_receipt_urls?: string[] | null
   } | null>(null);
   const webstoreReceiptInputRef = useRef<HTMLInputElement | null>(null);
   const webstorePlanSectionRef = useRef<HTMLDivElement | null>(null);
@@ -684,6 +686,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
   const webstoreDisplayInputRef = useRef<HTMLInputElement | null>(null);
   const webstoreBillingSelectRef = useRef<HTMLSelectElement | null>(null);
   const webstorePaymentSelectRef = useRef<HTMLSelectElement | null>(null);
+  const webstoreBankReferenceInputRef = useRef<HTMLInputElement | null>(null);
   const webstoreReceiptSectionRef = useRef<HTMLDivElement | null>(null);
   const webstoreTermsSectionRef = useRef<HTMLDivElement | null>(null);
 
@@ -1855,6 +1858,29 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
   const latestWebstoreRejectionMessage = latestWebstoreRequest?.latest_receipt_status === 'rejected'
     ? (latestWebstoreRequest.latest_receipt_message || 'Your payment has been rejected by the admin due to mismatch ID.')
     : null;
+  const rejectedWebstoreReceiptUrls = latestWebstoreRequest?.latest_receipt_status === 'rejected'
+    ? (latestWebstoreRequest.latest_receipt_urls ?? latestWebstoreRequest.receipt_urls ?? [])
+      .map((url) => String(url).trim())
+      .filter(Boolean)
+    : [];
+  const webstoreReceiptGalleryItems = useMemo(() => {
+    const rejectedItems = rejectedWebstoreReceiptUrls.map((url, index) => ({
+      key: `rejected-${index}-${url}`,
+      name: `Rejected receipt ${index + 1}`,
+      src: url,
+      kind: 'rejected' as const,
+    }));
+    const selectedItems = webstoreReceiptFiles.map((file, index) => ({
+      key: `selected-${index}-${file.preview}`,
+      name: file.name,
+      src: file.preview,
+      kind: 'selected' as const,
+      fileIndex: index,
+    }));
+    const hiddenRejected = new Set(dismissedRejectedReceiptKeys);
+    return [...rejectedItems, ...selectedItems].filter((item) => !hiddenRejected.has(item.key));
+  }, [dismissedRejectedReceiptKeys, rejectedWebstoreReceiptUrls, webstoreReceiptFiles]);
+  const hasRejectedWebstoreReceipts = webstoreReceiptGalleryItems.some((item) => item.kind === 'rejected');
 
   useEffect(() => {
     if (webstoreRequestLatest?.request) {
@@ -1885,14 +1911,11 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
     if (!selectedBillingOption && (latestWebstoreRequest.billing_option === 'full' || latestWebstoreRequest.billing_option === 'monthly')) {
       setSelectedBillingOption(latestWebstoreRequest.billing_option);
     }
-    if (!selectedPaymentMethod && (
-      latestWebstoreRequest.payment_method === 'gcash'
-      || latestWebstoreRequest.payment_method === 'grab_pay'
-      || latestWebstoreRequest.payment_method === 'maya'
-      || latestWebstoreRequest.payment_method === 'card'
-      || latestWebstoreRequest.payment_method === 'online_banking'
-    )) {
-      setSelectedPaymentMethod(latestWebstoreRequest.payment_method);
+    if (!selectedPaymentMethod && latestWebstoreRequest.payment_method === 'online_banking') {
+      setSelectedPaymentMethod('online_banking');
+    }
+    if (latestWebstoreRequest.status === 'approved') {
+      setWebstoreAcceptedTerms(true);
     }
   }, [latestWebstoreRequest, requestPlan, selectedBillingOption, selectedPaymentMethod, selectedWebstorePlan]);
   const webstoreDraftStorageKey = 'afhome:webstore-payment-draft:v1';
@@ -1968,18 +1991,14 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
     : selectedBillingOption === 'full'
       ? 'Full Payment'
       : '-';
-  const webstorePaymentMethodLabel = selectedPaymentMethod === 'gcash'
-    ? 'GCash'
-    : selectedPaymentMethod === 'grab_pay'
-      ? 'GrabPay'
-      : selectedPaymentMethod === 'maya'
-        ? 'Maya'
-        : selectedPaymentMethod === 'card'
-          ? 'Card'
-          : selectedPaymentMethod === 'online_banking'
-            ? 'Online Banking'
-            : '-';
+  const webstorePaymentMethodLabel = selectedPaymentMethod === 'online_banking'
+    ? 'Bank Transfer'
+    : '-';
   const webstorePaymentCompleted = Boolean(webstorePaymentReferenceId || webstorePaymentProofUrl);
+  const webstoreBankName = process.env.NEXT_PUBLIC_WEBSTORE_BANK_NAME ?? '';
+  const webstoreBankAccountName = process.env.NEXT_PUBLIC_WEBSTORE_BANK_ACCOUNT_NAME ?? '';
+  const webstoreBankAccountNumber = process.env.NEXT_PUBLIC_WEBSTORE_BANK_ACCOUNT_NUMBER ?? '';
+  const webstoreBankInstructions = process.env.NEXT_PUBLIC_WEBSTORE_BANK_INSTRUCTIONS ?? 'Transfer the payment to the bank details below, then upload your receipt to continue.';
 
   useEffect(() => {
     if (!webstorePaymentCompleted) return;
@@ -1989,7 +2008,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
   }, [webstorePaymentCompleted]);
 
   const saveWebstoreDraft = useCallback((overrides?: {
-    selectedPaymentMethod?: 'gcash' | 'grab_pay' | 'maya' | 'card' | 'online_banking' | null
+    selectedPaymentMethod?: 'online_banking' | null
   }) => {
     if (typeof window === 'undefined') return;
     const draft = {
@@ -1997,10 +2016,11 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       selectedWebstorePlan,
       selectedBillingOption,
       selectedPaymentMethod: overrides?.selectedPaymentMethod ?? selectedPaymentMethod,
+      webstoreBankReference,
       webstoreAcceptedTerms,
     };
     window.localStorage.setItem(webstoreDraftStorageKey, JSON.stringify(draft));
-  }, [selectedBillingOption, selectedPaymentMethod, selectedWebstorePlan, webstoreAcceptedTerms, webstoreForm]);
+  }, [selectedBillingOption, selectedPaymentMethod, selectedWebstorePlan, webstoreAcceptedTerms, webstoreBankReference, webstoreForm]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -2011,7 +2031,8 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
         webstoreForm?: WebstoreRequestFormState;
         selectedWebstorePlan?: 'quarterly' | 'semiAnnual' | 'annual' | null;
         selectedBillingOption?: 'full' | 'monthly' | null;
-        selectedPaymentMethod?: 'gcash' | 'grab_pay' | 'maya' | 'card' | 'online_banking' | null;
+        selectedPaymentMethod?: 'online_banking' | null;
+        webstoreBankReference?: string;
         webstoreAcceptedTerms?: boolean;
       };
       if (draft.webstoreForm) {
@@ -2019,7 +2040,8 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       }
       if (draft.selectedWebstorePlan) setSelectedWebstorePlan(draft.selectedWebstorePlan);
       if (draft.selectedBillingOption) setSelectedBillingOption(draft.selectedBillingOption);
-      if (draft.selectedPaymentMethod) setSelectedPaymentMethod(draft.selectedPaymentMethod);
+      if (draft.selectedPaymentMethod === 'online_banking') setSelectedPaymentMethod('online_banking');
+      if (typeof draft.webstoreBankReference === 'string') setWebstoreBankReference(draft.webstoreBankReference);
       if (typeof draft.webstoreAcceptedTerms === 'boolean') setWebstoreAcceptedTerms(draft.webstoreAcceptedTerms);
     } catch {
       // ignore invalid draft cache
@@ -2027,54 +2049,8 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
   }, []);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (webstorePaymentStatus !== 'success') return;
-    const fallbackSession = (() => {
-      try {
-        const raw = window.localStorage.getItem(webstorePaymentSessionStorageKey);
-        return raw ? (JSON.parse(raw) as { checkoutId?: string; paymentMode?: 'test' | 'live'; paymentMethod?: string }) : null;
-      } catch {
-        return null;
-      }
-    })();
-    const resolvedCheckoutId = webstoreCheckoutId || fallbackSession?.checkoutId || '';
-    const resolvedPaymentMode = webstorePaymentMode === 'test' || webstorePaymentMode === 'live'
-      ? (webstorePaymentMode as 'test' | 'live')
-      : fallbackSession?.paymentMode;
-    if (!resolvedCheckoutId) return;
-    setWebstoreSuccessModalOpen(true);
-    setWebstorePaymentCheckoutId(resolvedCheckoutId);
-    if (fallbackSession?.paymentMethod && ['gcash', 'grab_pay', 'maya', 'card', 'online_banking'].includes(fallbackSession.paymentMethod)) {
-      setSelectedPaymentMethod(fallbackSession.paymentMethod as 'gcash' | 'grab_pay' | 'maya' | 'card' | 'online_banking');
-    }
-    void triggerVerifyWebstorePaymentSession({
-      checkoutId: resolvedCheckoutId,
-      paymentMode: resolvedPaymentMode,
-    })
-      .unwrap()
-      .then((result) => {
-        if (!result?.is_paid) {
-          setWebstoreMsg({ type: 'error', text: 'Payment was not completed yet. Please try paying again.' });
-          return;
-        }
-        if (result.payment_method && ['gcash', 'grab_pay', 'maya', 'card', 'online_banking'].includes(result.payment_method)) {
-          setSelectedPaymentMethod(result.payment_method as 'gcash' | 'grab_pay' | 'maya' | 'card' | 'online_banking');
-        }
-        setWebstorePaymentProofUrl(result.proof_url || null);
-        setWebstorePaymentReferenceId(result.payment_reference || result.payment_intent_id || null);
-        setWebstorePaymentIntentId(result.payment_intent_id || null);
-        setWebstorePaymentCheckoutId(result.checkout_id || resolvedCheckoutId || null);
-        setWebstoreMsg({ type: 'success', text: 'Payment successful. Your proof is attached automatically.' });
-        const nextParams = new URLSearchParams(searchParams.toString());
-        nextParams.delete('webstore_payment');
-        nextParams.delete('checkout_id');
-        nextParams.delete('payment_mode');
-        router.replace(`${pathname}?${nextParams.toString()}`, { scroll: false });
-      })
-      .catch(() => {
-        setWebstoreMsg({ type: 'error', text: 'Unable to verify payment right now. Please refresh and try again.' });
-      });
-  }, [pathname, router, searchParams, triggerVerifyWebstorePaymentSession, webstoreCheckoutId, webstorePaymentMode, webstorePaymentStatus]);
+    // Manual bank-transfer flow only. No gateway callback to verify here.
+  }, []);
 
   const handleDownloadWebstoreSuccessImage = useCallback(async () => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return;
@@ -2313,6 +2289,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
         displayName: webstoreDisplayInputRef.current,
         billingOption: webstoreBillingSelectRef.current,
         paymentMethod: webstorePaymentSelectRef.current,
+        bankReference: webstoreBankReferenceInputRef.current,
         receipt: webstoreReceiptSectionRef.current,
         terms: webstoreTermsSectionRef.current,
       };
@@ -2324,7 +2301,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       }
     };
 
-    const markInvalidAndFocus = (key: 'plan' | 'slugName' | 'displayName' | 'billingOption' | 'paymentMethod' | 'receipt' | 'terms', message: string) => {
+    const markInvalidAndFocus = (key: 'plan' | 'slugName' | 'displayName' | 'billingOption' | 'paymentMethod' | 'bankReference' | 'receipt' | 'terms', message: string) => {
       setWebstoreInvalidFields({ [key]: true });
       setWebstoreMsg({ type: 'error', text: message });
       focusField(key);
@@ -2353,8 +2330,12 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       markInvalidAndFocus('paymentMethod', 'Please select a payment method.');
       return;
     }
-    if (webstoreReceiptFiles.length === 0 && !webstorePaymentProofUrl) {
-      markInvalidAndFocus('receipt', 'Please upload a receipt or complete PayMongo payment first.');
+    if (!webstoreBankReference.trim()) {
+      markInvalidAndFocus('bankReference', 'Please enter your bank transfer reference / transaction number.');
+      return;
+    }
+    if (webstoreReceiptFiles.length === 0) {
+      markInvalidAndFocus('receipt', 'Please upload your bank transfer receipt.');
       return;
     }
     if (!webstoreAcceptedTerms) {
@@ -2371,7 +2352,6 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
           return uploadResult.url;
         }),
       );
-      const receiptUrls = [...uploadedReceiptUrls, ...(webstorePaymentProofUrl ? [webstorePaymentProofUrl] : [])];
 
       const planMap: Record<'quarterly' | 'semiAnnual' | 'annual', 'quarterly' | 'semi_annual' | 'annual'> = {
         quarterly: 'quarterly',
@@ -2388,10 +2368,8 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
         plan: planMap[selectedWebstorePlan],
         billing_option: selectedBillingOption,
         payment_method: selectedPaymentMethod,
-        receipt_urls: receiptUrls,
-        checkout_id: webstorePaymentCheckoutId || webstoreCheckoutId || null,
-        payment_reference: webstorePaymentReferenceId || null,
-        payment_intent_id: webstorePaymentIntentId || null,
+        receipt_urls: uploadedReceiptUrls,
+        payment_reference: webstoreBankReference.trim(),
         accepted_terms: webstoreAcceptedTerms,
       }).unwrap();
 
@@ -2423,12 +2401,8 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       }
       if (typeof window !== 'undefined') {
         window.localStorage.removeItem(webstoreDraftStorageKey);
-        window.localStorage.removeItem(webstorePaymentSessionStorageKey);
       }
-      setWebstorePaymentProofUrl(null);
-      setWebstorePaymentReferenceId(null);
-      setWebstorePaymentIntentId(null);
-      setWebstorePaymentCheckoutId(null);
+      setWebstoreBankReference('');
       webstoreSuccessAutoShownRef.current = false;
       setWebstoreSuccessModalOpen(false);
       await refetchWebstoreRequestLatest();
@@ -2438,43 +2412,6 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       const message = firstValidation || apiError?.data?.message || 'Failed to submit webstore request.';
       setWebstoreMsg({ type: 'error', text: message });
       showErrorToast(message);
-    }
-  };
-
-  const handleStartWebstorePayment = async (method: 'gcash' | 'grab_pay' | 'maya' | 'card' | 'online_banking') => {
-    if (!selectedWebstorePlan || !selectedBillingOption) {
-      setWebstoreMsg({ type: 'error', text: 'Please select a plan and billing option before choosing payment method.' });
-      return;
-    }
-
-    const planMap: Record<'quarterly' | 'semiAnnual' | 'annual', 'quarterly' | 'semi_annual' | 'annual'> = {
-      quarterly: 'quarterly',
-      semiAnnual: 'semi_annual',
-      annual: 'annual',
-    };
-
-    try {
-      webstoreSuccessAutoShownRef.current = false;
-      setWebstoreSuccessModalOpen(false);
-      saveWebstoreDraft({ selectedPaymentMethod: method });
-      const response = await createWebstorePaymentSession({
-        plan: planMap[selectedWebstorePlan],
-        billing_option: selectedBillingOption,
-        payment_method: method,
-      }).unwrap();
-      if (!response.checkout_url) {
-        throw new Error('Missing checkout URL.');
-      }
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(
-          webstorePaymentSessionStorageKey,
-          JSON.stringify({ checkoutId: response.checkout_id, paymentMode: response.payment_mode || 'test', paymentMethod: method }),
-        );
-      }
-      window.location.href = response.checkout_url;
-    } catch (err: unknown) {
-      const apiError = err as { data?: { message?: string }; message?: string };
-      setWebstoreMsg({ type: 'error', text: apiError?.data?.message || apiError?.message || 'Failed to start payment flow.' });
     }
   };
 
@@ -6009,52 +5946,23 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                           <select
                             value={selectedPaymentMethod ?? ''}
                             onChange={(event) => {
-                              const method = (event.target.value || null) as 'gcash' | 'grab_pay' | 'maya' | 'card' | 'online_banking' | null
+                              const method = event.target.value === 'online_banking' ? 'online_banking' : null
                               setSelectedPaymentMethod(method)
                               if (method) {
-                                void handleStartWebstorePayment(method)
+                                saveWebstoreDraft({ selectedPaymentMethod: method })
                               }
                             }}
                             className="w-full appearance-none rounded-xl border border-[#d5def1] bg-white px-4 py-3 pr-28 text-sm font-semibold text-[#163060] outline-none transition hover:border-[#9fb4ef] focus:border-[#4f7df0] focus:bg-[#fbfdff] focus:ring-2 focus:ring-sky-100"
                           >
                             <option value="">Select payment method</option>
-                            <option value="gcash">GCash</option>
-                            <option value="grab_pay">GrabPay</option>
-                            <option value="maya">Maya / PayMaya</option>
-                            <option value="card">Card (Visa / Mastercard / JCB)</option>
-                            <option value="online_banking">Online Banking</option>
+                            <option value="online_banking">Bank Transfer</option>
                           </select>
-                          {selectedPaymentMethod === 'gcash' ? (
-                            <img
-                              src="/payment-logos/gcash.svg"
-                              alt="GCash"
-                              className="pointer-events-none absolute right-12 top-1/2 h-4 w-auto -translate-y-1/2"
-                            />
-                          ) : null}
-                          {selectedPaymentMethod === 'maya' ? (
-                            <img
-                              src="/payment-logos/maya.svg"
-                              alt="Maya"
-                              className="pointer-events-none absolute right-12 top-1/2 h-4 w-auto -translate-y-1/2"
-                            />
-                          ) : null}
                           {selectedPaymentMethod === 'online_banking' ? (
                             <img
                               src="/payment-logos/online-banking.svg"
-                              alt="Online Banking"
+                              alt="Bank Transfer"
                               className="pointer-events-none absolute right-12 top-1/2 h-4 w-auto -translate-y-1/2"
                             />
-                          ) : null}
-                          {selectedPaymentMethod === 'card' ? (
-                            <div className="pointer-events-none absolute right-12 top-1/2 flex -translate-y-1/2 items-center gap-1">
-                              <img src="/payment-logos/visa.svg" alt="Visa" className="h-3.5 w-auto" />
-                              <img src="/payment-logos/mastercard.svg" alt="Mastercard" className="h-3.5 w-auto" />
-                            </div>
-                          ) : null}
-                          {selectedPaymentMethod === 'grab_pay' ? (
-                            <span className="pointer-events-none absolute right-12 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-[#2853bb]">
-                              GrabPay
-                            </span>
                           ) : null}
                           <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#2457e7]">
                             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -6062,54 +5970,44 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                             </svg>
                           </span>
                         </div>
-                        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-xl border border-[#dbe4f7] bg-[#f8fbff] p-3">
-                          <span className="text-[11px] font-semibold uppercase tracking-wide text-[#6d7fa6]">Available Payment Method:</span>
-                          <div className="inline-flex items-center gap-1.5 rounded-lg border border-[#d6e0f6] bg-white px-2 py-1">
-                            <img src="/payment-logos/gcash.svg" alt="GCash" className="h-4 w-auto" />
-                            <span className="text-[11px] font-semibold text-[#314a84]">Gcash</span>
+                        <div className="mt-2 rounded-2xl border border-[#dbe4f7] bg-[#f8fbff] p-4">
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6d7fa6]">Bank Transfer Details</p>
+                          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
+                            <div className="rounded-xl border border-[#d6e0f6] bg-white px-3 py-2">
+                              <p className="text-[10px] font-semibold uppercase tracking-wide text-[#7a89a8]">Bank Name</p>
+                              <p className="mt-1 text-sm font-semibold text-[#1b2f5d]">{webstoreBankName || 'Set NEXT_PUBLIC_WEBSTORE_BANK_NAME'}</p>
+                            </div>
+                            <div className="rounded-xl border border-[#d6e0f6] bg-white px-3 py-2">
+                              <p className="text-[10px] font-semibold uppercase tracking-wide text-[#7a89a8]">Account Name</p>
+                              <p className="mt-1 text-sm font-semibold text-[#1b2f5d]">{webstoreBankAccountName || 'Set NEXT_PUBLIC_WEBSTORE_BANK_ACCOUNT_NAME'}</p>
+                            </div>
+                            <div className="rounded-xl border border-[#d6e0f6] bg-white px-3 py-2">
+                              <p className="text-[10px] font-semibold uppercase tracking-wide text-[#7a89a8]">Account Number</p>
+                              <p className="mt-1 text-sm font-semibold text-[#1b2f5d]">{webstoreBankAccountNumber || 'Set NEXT_PUBLIC_WEBSTORE_BANK_ACCOUNT_NUMBER'}</p>
+                            </div>
                           </div>
-                          <span className="inline-flex items-center rounded-lg border border-[#d6e0f6] bg-white px-2 py-1 text-[11px] font-semibold text-[#2853bb]">
-                            GrabPay
-                          </span>
-                          <div className="inline-flex items-center rounded-lg border border-[#d6e0f6] bg-white px-2 py-1">
-                            <img src="/payment-logos/maya.svg" alt="Maya" className="h-4 w-auto" />
-                          </div>
-                          <div className="inline-flex items-center gap-1 rounded-lg border border-[#d6e0f6] bg-white px-2 py-1">
-                            <img src="/payment-logos/visa.svg" alt="Visa" className="h-4 w-auto" />
-                            <img src="/payment-logos/mastercard.svg" alt="Mastercard" className="h-4 w-auto" />
-                            <span className="text-[10px] font-semibold text-[#314a84]">JCB</span>
-                          </div>
-                          <div className="inline-flex items-center rounded-lg border border-[#d6e0f6] bg-white px-2 py-1">
-                            <img src="/payment-logos/online-banking.svg" alt="Online Banking" className="h-4 w-auto" />
-                          </div>
+                          <p className="mt-3 text-xs leading-relaxed text-[#4c638f]">{webstoreBankInstructions}</p>
                         </div>
-                        {selectedPaymentMethod ? (
-                          <div className="mt-2">
-                            <button
-                              type="button"
-                              onClick={() => void handleStartWebstorePayment(selectedPaymentMethod)}
-                              disabled={isCreatingWebstorePaymentSession}
-                              className="inline-flex items-center gap-2 rounded-lg border border-[#bcd0ff] bg-[#eef4ff] px-3.5 py-2 text-xs font-semibold text-[#1f4fc9] transition hover:bg-[#e3ecff] disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                              {isCreatingWebstorePaymentSession ? 'Opening checkout...' : `Pay Again with ${webstorePaymentMethodLabel}`}
-                            </button>
-                          </div>
-                        ) : null}
-                        {webstorePaymentCompleted ? (
-                          <div className="mt-3 flex flex-wrap items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-                            <span className="inline-flex items-center rounded-full bg-emerald-500 px-3 py-1 text-xs font-bold text-white">
-                              Payment Success
-                            </span>
-                            <p className="text-sm font-semibold text-emerald-900">Your payment is confirmed. The success modal opens automatically and you can download the image receipt.</p>
-                            <button
-                              type="button"
-                              onClick={() => setWebstoreSuccessModalOpen(true)}
-                              className="rounded-full border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
-                            >
-                              View success details
-                            </button>
-                          </div>
-                        ) : null}
+                        <div className="space-y-1.5 mt-3">
+                          <label className="text-sm font-semibold text-[#1f3763]">Bank Transfer Reference / Transaction No.</label>
+                          <input
+                            ref={webstoreBankReferenceInputRef}
+                            type="text"
+                            value={webstoreBankReference}
+                            onChange={(e) => {
+                              setWebstoreBankReference(e.target.value)
+                              if (webstoreInvalidFields.bankReference) {
+                                setWebstoreInvalidFields((prev) => ({ ...prev, bankReference: false }))
+                              }
+                            }}
+                            className={`w-full rounded-xl border bg-white px-4 py-3 text-sm font-semibold text-[#163060] outline-none transition focus:bg-[#fbfdff] focus:ring-2 focus:ring-sky-100 ${
+                              webstoreInvalidFields.bankReference
+                                ? 'border-rose-300 focus:border-rose-400 focus:ring-rose-100'
+                                : 'border-[#d5def1] hover:border-[#9fb4ef] focus:border-[#4f7df0]'
+                            }`}
+                            placeholder="Enter your bank transfer reference number"
+                          />
+                        </div>
                         {selectedWebstorePaymentAmount != null ? (
                           <p className="mt-2 text-xs font-semibold text-[#4c638f]">
                             {selectedBillingOption === 'monthly'
@@ -6167,54 +6065,104 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                             <div className="flex items-start justify-between gap-4">
                               <div className="min-w-0 flex-1 space-y-1">
                                 <p className="text-sm font-semibold text-[#163060]">Upload your payment receipt</p>
-                                <p className="text-xs text-[#7d8fb0]">Click anywhere to add one or more images.</p>
+                                <p className="text-xs text-[#7d8fb0]">
+                                  Click anywhere to add one or more images. If a receipt was rejected, upload a replacement here.
+                                </p>
                               </div>
-                              <div className="rounded-full bg-[#eff4ff] px-3 py-1 text-[11px] font-semibold text-[#4968c9]">
-                                {webstoreReceiptFiles.length > 0 ? `${webstoreReceiptFiles.length} selected` : 'Click to upload'}
+                              <div className="flex items-center gap-2">
+                                {hasRejectedWebstoreReceipts ? (
+                                  <span className="rounded-full bg-rose-50 px-3 py-1 text-[11px] font-semibold text-rose-600">
+                                    Rejected receipt loaded
+                                  </span>
+                                ) : null}
+                                <div className="rounded-full bg-[#eff4ff] px-3 py-1 text-[11px] font-semibold text-[#4968c9]">
+                                  {webstoreReceiptFiles.length > 0 ? `${webstoreReceiptFiles.length} selected` : 'Click to upload'}
+                                </div>
                               </div>
                             </div>
 
                             <div className="mt-5">
-                              {webstoreReceiptFiles.length > 0 ? (
+                              {webstoreReceiptGalleryItems.length > 0 ? (
                                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                                  {webstoreReceiptFiles.map((file, index) => (
+                                  {webstoreReceiptGalleryItems.map((item, index) => (
                                     <div
-                                      key={`${file.name}-${index}`}
-                                      onClick={() => setWebstoreReceiptPreview({ name: file.name, src: file.preview })}
+                                      key={item.key}
+                                      onClick={() => setWebstoreReceiptPreview({ name: item.name, src: item.src })}
                                       role="button"
                                       tabIndex={0}
                                       onKeyDown={(event) => {
                                         if (event.key === 'Enter' || event.key === ' ') {
-                                          event.preventDefault();
-                                          setWebstoreReceiptPreview({ name: file.name, src: file.preview });
+                                          event.preventDefault()
+                                          setWebstoreReceiptPreview({ name: item.name, src: item.src })
                                         }
                                       }}
-                                      className="overflow-hidden rounded-2xl border border-[#d5def1] bg-[#f8fbff] text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-sky-200"
+                                      className={`overflow-hidden rounded-2xl text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 ${
+                                        item.kind === 'rejected'
+                                          ? 'border border-rose-200 bg-rose-50/70 focus:ring-rose-200'
+                                          : 'border border-[#d5def1] bg-[#f8fbff] focus:ring-sky-200'
+                                      }`}
                                     >
-                                      <div className="flex items-center justify-between gap-2 border-b border-[#e7eefb] px-3 py-2">
-                                        <p className="truncate text-xs font-semibold text-[#5d739f]">{file.name}</p>
-                                        <button
-                                          type="button"
-                                          onClick={(event) => {
-                                            event.stopPropagation()
-                                            setWebstoreReceiptFiles((prev) => {
-                                              const removed = prev[index]
-                                              if (removed?.preview?.startsWith('blob:')) URL.revokeObjectURL(removed.preview)
-                                              return prev.filter((_, itemIndex) => itemIndex !== index)
-                                            })
-                                          }}
-                                          className="rounded-full border border-[#d5def1] bg-white px-2 py-1 text-[11px] font-semibold text-[#355289] hover:bg-[#f6f9ff]"
-                                          aria-label={`Remove receipt ${file.name}`}
-                                        >
-                                          X
-                                        </button>
+                                      <div className={`flex items-center justify-between gap-2 border-b px-3 py-2 ${
+                                        item.kind === 'rejected' ? 'border-rose-100 bg-rose-50' : 'border-[#e7eefb]'
+                                      }`}>
+                                        <p className={`truncate text-xs font-semibold ${
+                                          item.kind === 'rejected' ? 'text-rose-700' : 'text-[#5d739f]'
+                                        }`}>
+                                          {item.name}
+                                        </p>
+                                        <div className="flex items-center gap-2">
+                                          {item.kind === 'rejected' ? (
+                                            <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-700">
+                                              Rejected
+                                            </span>
+                                          ) : null}
+                                          {item.kind === 'rejected' ? (
+                                            <button
+                                              type="button"
+                                              onClick={(event) => {
+                                                event.stopPropagation()
+                                                setDismissedRejectedReceiptKeys((prev) => (
+                                                  prev.includes(item.key) ? prev : [...prev, item.key]
+                                                ))
+                                              }}
+                                              className="rounded-full border border-rose-200 bg-white px-2 py-1 text-[11px] font-semibold text-rose-700 hover:bg-rose-50"
+                                              aria-label={`Dismiss ${item.name}`}
+                                            >
+                                              X
+                                            </button>
+                                          ) : null}
+                                          {item.kind === 'selected' ? (
+                                            <button
+                                              type="button"
+                                              onClick={(event) => {
+                                                event.stopPropagation()
+                                                setWebstoreReceiptFiles((prev) => {
+                                                  const removed = prev[item.fileIndex ?? index]
+                                                  if (removed?.preview?.startsWith('blob:')) URL.revokeObjectURL(removed.preview)
+                                                  return prev.filter((_, itemIndex) => itemIndex !== (item.fileIndex ?? index))
+                                                })
+                                              }}
+                                              className="rounded-full border border-[#d5def1] bg-white px-2 py-1 text-[11px] font-semibold text-[#355289] hover:bg-[#f6f9ff]"
+                                              aria-label={`Remove receipt ${item.name}`}
+                                            >
+                                              X
+                                            </button>
+                                          ) : null}
+                                        </div>
                                       </div>
-                                      <div className="p-3">
+                                      <div className="relative p-3">
                                         <img
-                                          src={file.preview}
-                                          alt={file.name}
+                                          src={item.src}
+                                          alt={item.name}
                                           className="h-40 w-full rounded-xl bg-white object-contain"
                                         />
+                                        {item.kind === 'rejected' ? (
+                                          <div className="pointer-events-none absolute inset-x-3 top-3 flex justify-end">
+                                            <span className="rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-700 shadow-sm">
+                                              Replace this receipt
+                                            </span>
+                                          </div>
+                                        ) : null}
                                       </div>
                                     </div>
                                   ))}
@@ -6246,7 +6194,8 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                         <label className="inline-flex items-start gap-2 text-sm text-[#334b76]">
                           <input
                             type="checkbox"
-                            checked={webstoreAcceptedTerms}
+                            checked={isApprovedWebstoreRequest ? true : webstoreAcceptedTerms}
+                            disabled={isApprovedWebstoreRequest}
                             onChange={(e) => {
                               const nextChecked = e.target.checked;
                               setWebstoreAcceptedTerms(nextChecked);
@@ -6265,7 +6214,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                             >
                               Terms and Conditions
                             </button>
-                            . <span className="text-rose-500">(Required)</span>
+                            . <span className="text-rose-500">{isApprovedWebstoreRequest ? '(Already accepted)' : '(Required)'}</span>
                           </span>
                         </label>
                       </div>
@@ -6282,15 +6231,13 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                         </div>
                         <button
                           type="submit"
-                          disabled={isSubmittingWebstoreRequest || isCreatingWebstorePaymentSession}
+                          disabled={isSubmittingWebstoreRequest}
                           className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] px-6 py-3 text-base font-semibold text-white shadow-[0_10px_25px_rgba(37,99,235,0.35)] transition hover:from-[#1d4ed8] hover:to-[#1e40af]"
                         >
                           <Icon.Package className="h-5 w-5" />
-                          {isCreatingWebstorePaymentSession
-                            ? 'Redirecting to PayMongo...'
-                            : isSubmittingWebstoreRequest
-                              ? (isApprovedWebstoreRequest ? 'Uploading Receipt...' : 'Submitting...')
-                              : (isApprovedWebstoreRequest ? 'Upload Webstore Receipt' : 'Submit Webstore Request')}
+                          {isSubmittingWebstoreRequest
+                            ? (isApprovedWebstoreRequest ? 'Uploading Receipt...' : 'Submitting...')
+                            : (isApprovedWebstoreRequest ? 'Upload Webstore Receipt' : 'Submit Webstore Request')}
                           <span aria-hidden>→</span>
                         </button>
                       </div>
