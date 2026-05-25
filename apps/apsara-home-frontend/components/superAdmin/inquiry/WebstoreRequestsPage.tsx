@@ -386,7 +386,6 @@ export default function WebstoreRequestsPage() {
     }
   }
 
-  const latestReceiptCheckoutId = String(details.checkoutId ?? '').trim()
   const latestReceiptReferenceId = String(
     details.paymentReference ?? details.paymentIntentId ?? '',
   ).trim()
@@ -1131,26 +1130,7 @@ export default function WebstoreRequestsPage() {
                             )}
                           </div>
                       </div>
-                    <div className="grid grid-cols-1 border-t border-slate-200/70 md:grid-cols-4">
-                      <div className="border-b border-slate-200 p-4 md:border-b-0 md:border-r dark:border-slate-800">
-                        <div className="flex items-center gap-2">
-                          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-blue-500 ring-1 ring-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:ring-blue-500/20">
-                            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 4h12M6 4a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2M6 8h12M6 12h12M6 16h6" />
-                            </svg>
-                          </span>
-                          <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">Latest Checkout ID</p>
-                        </div>
-                        {latestReceiptCheckoutId ? (
-                          <p className="mt-1 break-words text-sm font-semibold leading-tight text-[#163060]">
-                            {latestReceiptCheckoutId}
-                          </p>
-                        ) : (
-                          <span className="mt-1 inline-flex rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-bold text-orange-700 dark:border-orange-500/20 dark:bg-orange-500/10 dark:text-orange-200">
-                            Not Match ID
-                          </span>
-                        )}
-                      </div>
+                    <div className="grid grid-cols-1 border-t border-slate-200/70 md:grid-cols-3">
                       <div className="border-b border-slate-200 p-4 md:border-b-0 md:border-r dark:border-slate-800">
                         <div className="flex items-center gap-2">
                           <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-50 text-emerald-500 ring-1 ring-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20">
@@ -1158,7 +1138,7 @@ export default function WebstoreRequestsPage() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h10M7 11h10M7 15h6M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
                             </svg>
                           </span>
-                          <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">Latest Payment Reference</p>
+                          <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">Bank Transfer Reference.</p>
                         </div>
                         {latestReceiptReferenceId ? (
                           <p className="mt-1 break-words text-sm font-semibold leading-tight text-[#163060]">
@@ -1166,7 +1146,7 @@ export default function WebstoreRequestsPage() {
                           </p>
                         ) : (
                           <span className="mt-1 inline-flex rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-bold text-orange-700 dark:border-orange-500/20 dark:bg-orange-500/10 dark:text-orange-200">
-                            Not Match ID
+                            Not provided
                           </span>
                         )}
                       </div>

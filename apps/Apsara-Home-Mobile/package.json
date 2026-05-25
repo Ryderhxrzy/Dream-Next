@@ -2,10 +2,10 @@
   "name": "apsara-mobile-application",
   "version": "1.0.0",
   "main": "index.ts",
-  "packageManager": "pnpm@11.0.9",
+  "packageManager": "pnpm@10.0.0",
   "engines": {
     "node": ">=20.9.0",
-    "pnpm": ">=11"
+    "pnpm": ">=10"
   },
   "scripts": {
     "start": "expo start",

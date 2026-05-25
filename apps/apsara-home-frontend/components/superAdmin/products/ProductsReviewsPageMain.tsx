@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
-import { ChevronLeft, ChevronRight, MessageSquareText, Play, Star, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, MessageSquareText, Play, Star, Trash2, X } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   Product,
   ProductReview,
   ProductsResponse,
+  useDeleteProductReviewMutation,
   useGetProductsQuery,
   useGetProductReviewsQuery,
   useLazyGetProductsQuery,
@@ -281,8 +282,10 @@ export default function ProductsReviewsPageMain({ initialData = null }: Products
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [activeMediaReviewId, setActiveMediaReviewId] = useState<number | null>(null)
   const [activeMediaIndex, setActiveMediaIndex] = useState(0)
+  const [reviewDeleteTarget, setReviewDeleteTarget] = useState<ProductReview | null>(null)
   const triggerGetProductsRef = useRef(triggerGetProducts)
   const rowRefs = useRef<Record<number, HTMLDivElement | null>>({ 5: null, 4: null, 3: null, 2: null, 1: null })
+  const [deleteProductReview, { isLoading: isDeletingReview }] = useDeleteProductReviewMutation()
 
   useEffect(() => {
     triggerGetProductsRef.current = triggerGetProducts
@@ -383,6 +386,7 @@ export default function ProductsReviewsPageMain({ initialData = null }: Products
   const {
     data: selectedReviewsData,
     isFetching: isFetchingReviews,
+    refetch: refetchSelectedReviews,
   } = useGetProductReviewsQuery(selectedProduct?.id ?? 0, { skip: !selectedProduct })
 
   const selectedReviews = selectedReviewsData?.reviews ?? []
@@ -408,6 +412,21 @@ export default function ProductsReviewsPageMain({ initialData = null }: Products
 
     return base
   }, [selectedSummary, selectedReviews])
+
+  const handleDeleteReview = async () => {
+    if (!reviewDeleteTarget) return
+
+    try {
+      await deleteProductReview(reviewDeleteTarget.id).unwrap()
+      await refetchSelectedReviews()
+      if (activeMediaReviewId === reviewDeleteTarget.id) {
+        setActiveMediaReviewId(null)
+      }
+      setReviewDeleteTarget(null)
+    } catch (error) {
+      console.error('Failed to delete review:', error)
+    }
+  }
 
   const scrollRow = (stars: number, direction: 'left' | 'right') => {
     const row = rowRefs.current[stars]
@@ -619,9 +638,11 @@ export default function ProductsReviewsPageMain({ initialData = null }: Products
                               </div>
                             )}
                           </div>
-                          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{review.customer_name}</p>
+                          <div>
+                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{review.customer_name}</p>
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{formatDate(review.created_at)}</p>
+                          </div>
                         </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">{formatDate(review.created_at)}</p>
                       </div>
                       <div className="mt-1">
                         <Stars rating={review.rating} size={13} />
@@ -629,6 +650,19 @@ export default function ProductsReviewsPageMain({ initialData = null }: Products
                       <p className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
                         {review.review?.trim() ? review.review : 'No comment provided.'}
                       </p>
+                      <div className="mt-4 flex items-center justify-between gap-3">
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                          Admin action
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setReviewDeleteTarget(review)}
+                          className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50 dark:border-red-500/20 dark:bg-slate-900 dark:text-red-300 dark:hover:bg-red-500/10"
+                        >
+                          <Trash2 size={13} />
+                          Delete review
+                        </button>
+                      </div>
                       {((review.review_images?.length ?? 0) > 0 || (review.review_videos?.length ?? 0) > 0 || review.review_image || review.review_video) && (
                         <div className="mt-3">
                           <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Customer Media</p>
@@ -691,6 +725,37 @@ export default function ProductsReviewsPageMain({ initialData = null }: Products
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {reviewDeleteTarget ? (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+          <div className="absolute inset-0" onClick={() => setReviewDeleteTarget(null)} />
+          <div className="relative z-[81] w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-red-600">Delete Review</p>
+            <h3 className="mt-2 text-lg font-bold text-slate-900 dark:text-slate-100">Remove this review?</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+              This will permanently delete the review and comment by{' '}
+              <span className="font-semibold text-slate-900 dark:text-slate-100">{reviewDeleteTarget.customer_name}</span>.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setReviewDeleteTarget(null)}
+                className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleDeleteReview()}
+                disabled={isDeletingReview}
+                className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isDeletingReview ? 'Deleting...' : 'Delete Review'}
+              </button>
             </div>
           </div>
         </div>

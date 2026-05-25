@@ -47,7 +47,6 @@ export interface AdminOrder {
   zq_synced_at?: string | null
   product_id?: number | null
   product_name: string
-  product_id?: number | null
   product_sku?: string | null
   product_category_id?: number | null
   product_category_name?: string | null
@@ -268,6 +267,16 @@ export const adminOrdersApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Orders', 'AdminNotifications'],
     }),
+    deleteAdminOrder: builder.mutation<
+      { message: string },
+      { id: number }
+    >({
+      query: ({ id }) => ({
+        url: `/api/admin/orders/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Orders', 'AdminNotifications'],
+    }),
   }),
 })
 
@@ -287,4 +296,5 @@ export const {
   usePushAdminOrderToZqMutation,
   useFetchAdminOrderZqDetailMutation,
   useSyncAdminOrderZqTrackingMutation,
+  useDeleteAdminOrderMutation,
 } = adminOrdersApi

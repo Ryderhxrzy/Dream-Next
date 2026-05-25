@@ -1,7 +1,7 @@
 {
   "name": "fullstack-apsara",
   "private": true,
-  "packageManager": "pnpm@11.3.0",
+  "packageManager": "pnpm@10.0.0",
   "scripts": {
     "dev:frontend": "pnpm --filter apsara-home-frontend dev",
     "dev:backend": "pnpm --filter apsara-home-backend dev",

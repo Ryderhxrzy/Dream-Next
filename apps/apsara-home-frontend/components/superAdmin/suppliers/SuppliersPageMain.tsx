@@ -343,7 +343,7 @@ export default function SuppliersPageMain() {
 
     try {
       const result = await deleteSupplier({
-        id: deleteTarget.id,
+        id: Number(deleteTarget.id),
         company: deleteTarget.company,
         name: deleteTarget.name,
       }).unwrap()
@@ -1099,7 +1099,7 @@ export default function SuppliersPageMain() {
 
           <div className="mt-5 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm leading-6 text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-200">
             Delete <span className="font-semibold">{deleteTarget.company || deleteTarget.name}</span>?
-            This will only work if there are no linked supplier accounts or products.
+            This will remove linked supplier accounts and unassign products from this company.
           </div>
 
           <div className="mt-6 flex justify-end gap-3">

@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductActivityLog;
 use App\Models\ProductPhoto;
+use App\Models\ProductReview;
 use App\Models\ProductVariant;
 use App\Models\ProductVariantPhoto;
 use App\Models\ProductBrand;
@@ -267,6 +268,27 @@ class ProductController extends Controller
                 'breakdown' => $breakdown,
             ],
             'reviews' => $reviews,
+        ]);
+    }
+
+    public function destroyReview(Request $request, int $id): JsonResponse
+    {
+        $admin = $this->resolveAdmin($request);
+        if (! $admin) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $review = ProductReview::query()->find($id);
+        if (! $review) {
+            return response()->json(['message' => 'Review not found.'], 404);
+        }
+
+        $review->delete();
+
+        return response()->json([
+            'message' => 'Review deleted successfully.',
+            'deleted_id' => (int) $review->pr_id,
+            'product_id' => (int) ($review->pr_product_id ?? 0),
         ]);
     }
 
@@ -1478,6 +1500,8 @@ class ProductController extends Controller
     private function mapProductSummary(Product $p, int $soldCount = 0): array
     {
         $primaryImage = $p->photos->first()?->pp_filename ?? $p->pd_image ?? null;
+        $originalPrice = $this->toNumber($p->pd_price_srp);
+        $memberPrice = $this->toOptionalNumber($p->pd_price_member);
 
         
         return [
@@ -1486,7 +1510,7 @@ class ProductController extends Controller
             'image'          => $primaryImage ? (string) $primaryImage : null,
             'soldCount'      => $soldCount,
             'originalPrice'  => $originalPrice,
-            'discountedPrice'=> $memberPrice,
+            'discountedPrice'=> $memberPrice ?? $originalPrice,
             'pv'             => $this->toNumber($p->pd_prodpv),
             'brandName'      => $p->brand?->pb_name ? (string) $p->brand->pb_name : null,
             'variantCount'   => (int) ($p->variants_count ?? 0),
@@ -1501,7 +1525,7 @@ class ProductController extends Controller
     public function indexCards(Request $request): JsonResponse
     {
         try {
-            \Log::info('indexCards: Starting request', [
+            Log::info('indexCards: Starting request', [
                 'query_params' => $request->all(),
                 'timestamp' => now()
             ]);
@@ -1516,7 +1540,7 @@ class ProductController extends Controller
             $roomType  = $request->query('room_type', '');
             $brandType = $request->query('brand_type', '');
 
-            \Log::info('indexCards: Building query', [
+            Log::info('indexCards: Building query', [
                 'perPage' => $perPage,
                 'search' => $search,
                 'catId' => $catId,
@@ -1543,15 +1567,15 @@ class ProductController extends Controller
                 ->when($brandType !== '', fn ($q) => $q->where('pd_brand_type', (int) $brandType))
                 ->orderByDesc('pd_id');
 
-            \Log::info('indexCards: Executing query');
+            Log::info('indexCards: Executing query');
             $paginator = $query->paginate($perPage);
-            \Log::info('indexCards: Query executed', [
+            Log::info('indexCards: Query executed', [
                 'total_results' => $paginator->total(),
                 'current_page' => $paginator->currentPage()
             ]);
 
             $productIds = collect($paginator->items())->pluck('pd_id')->toArray();
-            \Log::info('indexCards: Got product IDs', ['count' => count($productIds)]);
+            Log::info('indexCards: Got product IDs', ['count' => count($productIds)]);
 
             $soldCounts = DB::table('tbl_checkout_history')
                 ->whereIn('ch_product_id', $productIds)
@@ -1560,7 +1584,7 @@ class ProductController extends Controller
                 ->selectRaw('ch_product_id as product_id, SUM(ch_quantity) as sold_count')
                 ->pluck('sold_count', 'product_id');
 
-            \Log::info('indexCards: Got sold counts', ['sold_counts' => $soldCounts]);
+            Log::info('indexCards: Got sold counts', ['sold_counts' => $soldCounts]);
 
             $products = collect($paginator->items())
                 ->map(function (Product $p) use ($soldCounts) {
@@ -1569,7 +1593,7 @@ class ProductController extends Controller
                 })
                 ->values();
 
-            \Log::info('indexCards: Products mapped successfully', ['product_count' => $products->count()]);
+            Log::info('indexCards: Products mapped successfully', ['product_count' => $products->count()]);
 
             return response()->json([
                 'products' => $products,
@@ -1583,7 +1607,7 @@ class ProductController extends Controller
                 ],
             ]);
         } catch (\Exception $e) {
-            \Log::error('indexCards: Exception occurred', [
+            Log::error('indexCards: Exception occurred', [
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
@@ -1678,6 +1702,38 @@ class ProductController extends Controller
             $brandType = $request->query('brand_type', '');
             $requestedSupplierId = (int) $request->query('supplier_id', 0);
 
+            // Get user's personalized categories if authenticated
+            $personalizedCatIds = [];
+            Log::info('Personalization Check', [
+                'isAuthenticated' => auth('sanctum')->check(),
+                'catId' => $catId,
+                'roomType' => $roomType,
+                'brandType' => $brandType,
+            ]);
+
+            if (auth('sanctum')->check() && empty($catId) && empty($roomType) && empty($brandType)) {
+                $userId = auth('sanctum')->id();
+                Log::info('User is authenticated for personalization', ['userId' => $userId]);
+                try {
+                    $topCategories = \App\Models\UserBehavior::getTopCategoriesForUser($userId, 5);
+                    $personalizedCatIds = $topCategories->pluck('ub_category_id')->toArray();
+                    Log::info('Personalized Categories Retrieved', [
+                        'userId' => $userId,
+                        'catIds' => $personalizedCatIds,
+                        'count' => count($personalizedCatIds),
+                        'topCategories' => $topCategories->toArray()
+                    ]);
+                } catch (\Throwable $e) {
+                    Log::error('Personalization Error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+                    // Silently fail - show all products if personalization fails
+                }
+            } else {
+                Log::info('Personalization skipped - no user or filters applied', [
+                    'isAuth' => auth('sanctum')->check(),
+                    'hasFilters' => !empty($catId) || !empty($roomType) || !empty($brandType),
+                ]);
+            }
+
             $query = Product::query()
                 ->select([
                     'pd_id', 'pd_name', 'pd_description', 'pd_specifications', 'pd_material', 'pd_warranty',
@@ -1721,8 +1777,29 @@ class ProductController extends Controller
                 })
                 ->when($brandType !== '', function ($q) use ($brandType) {
                     $q->where('pd_brand_type', (int) $brandType);
-                })
-                ->orderByDesc('pd_id');
+                });
+
+            // Apply personalization only if no manual filters and user has behavior data
+            if (!empty($personalizedCatIds) && $catId === '' && $roomType === '' && $brandType === '') {
+                $query->whereIn('pd_catid', $personalizedCatIds);
+                // Sort by user visit frequency using behavior count
+                $userId = auth('sanctum')->id();
+
+                // Use raw ORDER BY with behavior count from subquery
+                // Add tertiary sort by pd_id for consistent pagination when behavior counts are equal
+                $query->orderByRaw(
+                    '(SELECT COUNT(*) FROM tbl_user_behavior WHERE ub_user_id = ? AND ub_product_id = tbl_product.pd_id AND ub_behavior_type IN (\'product_view\', \'product_click\', \'purchase\', \'wishlist_add\', \'cart_add\')) DESC',
+                    [$userId]
+                )
+                ->orderByDesc('pd_date')
+                ->orderByDesc('pd_id');  // Tertiary sort for pagination consistency
+
+                Log::info('Personalized query', ['userId' => $userId, 'catIds' => $personalizedCatIds]);
+            } else {
+                // For regular/filtered products, sort by date then by ID for consistency
+                $query->orderByDesc('pd_date')
+                      ->orderByDesc('pd_id');
+            }
 
             if ($supplierUser) {
                 $supplierId = (int) $supplierUser->su_supplier;
@@ -3078,7 +3155,7 @@ class ProductController extends Controller
             return $product;
         });
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Product store failed: ' . $e->getMessage(), [
+            Log::error('Product store failed: ' . $e->getMessage(), [
                 'sql'  => method_exists($e, 'getSql') ? $e->getSql() : null,
                 'file' => $e->getFile() . ':' . $e->getLine(),
             ]);
@@ -3437,8 +3514,15 @@ class ProductController extends Controller
 
         $deletedProductName = (string) $product->pd_name;
         $deletedProductSku = (string) ($product->pd_parent_sku ?? '');
+        $deletedReviewCount = 0;
         try {
-            $product->delete();
+            DB::transaction(function () use ($product, &$deletedReviewCount) {
+                $deletedReviewCount = (int) ProductReview::query()
+                    ->where('pr_product_id', (int) $product->pd_id)
+                    ->delete();
+
+                $product->delete();
+            });
         } catch (\Throwable $e) {
             try {
                 $this->recordFailedProductActivity('deleted', $admin, $supplierUser, $product, $deletedProductName, $deletedProductSku);
@@ -3463,8 +3547,12 @@ class ProductController extends Controller
             ]);
         }
 
-        return response()->json(['message' => 'Product deleted successfully.']);
+        return response()->json([
+            'message' => 'Product deleted successfully.',
+            'deleted_reviews' => $deletedReviewCount,
+        ]);
     }
+
 
     public function fetchZqImportPreview(Request $request): JsonResponse
     {
