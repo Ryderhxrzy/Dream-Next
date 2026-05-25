@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Middleware\HandleCors;
 use Illuminate\Http\Request;
 use App\Http\Middleware\EnsureAdminActor;
 use App\Http\Middleware\EnsureAdminOrSupplierActor;
@@ -24,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // API-first app: unauthenticated requests should return 401 JSON, not redirect to a named "login" route.
         $middleware->redirectGuestsTo(fn (Request $request) => $request->expectsJson() ? null : null);
+        $middleware->prepend(HandleCors::class);
         $middleware->append(RequestAbuseGuard::class);
         $middleware->append(SecurityHeaders::class);
 
