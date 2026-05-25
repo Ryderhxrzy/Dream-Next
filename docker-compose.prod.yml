@@ -37,8 +37,6 @@ services:
       PAYMONGO_WEBHOOK_SECRET: "${PAYMONGO_WEBHOOK_SECRET:-}"
       FIREBASE_CREDENTIALS_JSON: "${FIREBASE_CREDENTIALS_JSON:-}"
       FIREBASE_CREDENTIALS_PATH: "${FIREBASE_CREDENTIALS_PATH:-storage/firebase-credentials.json}"
-    ports:
-      - "8000:8000"
     depends_on:
       - redis
 
@@ -72,8 +70,6 @@ services:
       CLOUDINARY_API_SECRET: "${CLOUDINARY_API_SECRET:-}"
       GOOGLE_CLIENT_EMAIL: "${GOOGLE_CLIENT_EMAIL:-}"
       GOOGLE_PRIVATE_KEY: "${GOOGLE_PRIVATE_KEY:-}"
-    ports:
-      - "3000:3000"
     depends_on:
       - backend
 
@@ -96,8 +92,6 @@ services:
       LARAVEL_API_URL: "${LARAVEL_API_URL:-http://backend:8000}"
       NEXT_PUBLIC_PUSHER_KEY: "${NEXT_PUBLIC_PUSHER_KEY:-}"
       NEXT_PUBLIC_PUSHER_CLUSTER: "${NEXT_PUBLIC_PUSHER_CLUSTER:-ap1}"
-    ports:
-      - "3001:3000"
     depends_on:
       - backend
 
