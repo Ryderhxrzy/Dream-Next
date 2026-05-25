@@ -7,7 +7,7 @@ services:
     restart: unless-stopped
     working_dir: /app
     env_file:
-      - ./apps/apsara-home-backend/.env.docker
+      - ./apps/apsara-home-backend/.env.docker.example
     environment:
       APP_URL: http://localhost:8000
       FRONTEND_URL: http://localhost:3000
@@ -33,7 +33,7 @@ services:
     working_dir: /workspace
     command: pnpm --filter apsara-home-frontend dev --hostname 0.0.0.0
     env_file:
-      - ./apps/apsara-home-frontend/.env.docker
+      - ./apps/apsara-home-frontend/.env.docker.example
     environment:
       NEXT_TELEMETRY_DISABLED: "1"
     ports:
@@ -55,7 +55,7 @@ services:
     working_dir: /workspace
     command: pnpm --filter dreambuild dev --hostname 0.0.0.0
     env_file:
-      - ./apps/Dreambuild-Landing-Page/.env.docker
+      - ./apps/Dreambuild-Landing-Page/.env.docker.example
     environment:
       NEXT_TELEMETRY_DISABLED: "1"
     ports:
