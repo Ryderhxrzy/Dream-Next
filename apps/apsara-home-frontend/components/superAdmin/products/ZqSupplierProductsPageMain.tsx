@@ -187,6 +187,7 @@ export default function ZqSupplierProductsPageMain({
       <EditZqPricingModal
         product={editingProduct}
         onClose={() => setEditingProduct(null)}
+        showVariantReversedMultiplier={scope === 'supplier'}
       />
       {!embedded ? (
         <motion.div

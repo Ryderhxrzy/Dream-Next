@@ -309,6 +309,7 @@ const mapCachedZqProductToLocalRow = (product: ZqCachedProduct): Product => ({
   image: product.primaryImage ?? null,
   images: product.images ?? (product.primaryImage ? [product.primaryImage] : []),
   variants: [],
+  variantCount: Number(product.variantCount ?? 0),
   soldCount: 0,
   avgRating: 0,
   createdAt: product.sourceCreatedAt ?? product.publishedAt ?? null,
@@ -2342,7 +2343,11 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
       />
       <ProductActivityLogsModal isOpen={showActivityLogs} onClose={() => setShowActivityLogs(false)} />
       <EditProductModal product={editProduct} onClose={() => setEditProduct(null)} onSaved={handleProductsSaved}/>
-      <EditZqPricingModal product={editZqPricing} onClose={() => setEditZqPricing(null)} />
+      <EditZqPricingModal
+        product={editZqPricing}
+        onClose={() => setEditZqPricing(null)}
+        showVariantReversedMultiplier={isSupplierPortal}
+      />
       <ImportZqPricingModal
         isOpen={showImportZq}
         onClose={() => setShowImportZq(false)}

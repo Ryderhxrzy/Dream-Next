@@ -39,6 +39,7 @@ export interface Product {
   image: string | null
   images?: string[] | null
   variants?: ProductVariant[] | null
+  variantCount?: number
   soldCount?: number
   avgRating?: number
   createdAt: string | null

@@ -4896,19 +4896,24 @@ class ProductController extends Controller
 
         $saved = [];
         foreach ($request->input('variants') as $variant) {
+            $updates = [
+                'zvp_dealer_price' => isset($variant['dealer_price'])  ? (int) $variant['dealer_price'] : null,
+                'zvp_member_price' => isset($variant['member_price'])  ? (int) $variant['member_price'] : null,
+                'zvp_pv'           => isset($variant['pv'])            ? (float) $variant['pv']          : null,
+            ];
+
+            if (array_key_exists('reversed_pv_multiplier', $variant)) {
+                $updates['zvp_reversed_pv_multiplier'] = $variant['reversed_pv_multiplier'] !== null
+                    ? (float) $variant['reversed_pv_multiplier']
+                    : null;
+            }
+
             $row = ZqVariantPricing::updateOrCreate(
                 [
                     'zvp_external_id' => $externalId,
                     'zvp_sku_id'      => $variant['skuId'],
                 ],
-                [
-                    'zvp_dealer_price' => isset($variant['dealer_price'])  ? (int) $variant['dealer_price'] : null,
-                    'zvp_member_price' => isset($variant['member_price'])  ? (int) $variant['member_price'] : null,
-                    'zvp_pv'           => isset($variant['pv'])            ? (float) $variant['pv']          : null,
-                    'zvp_reversed_pv_multiplier' => isset($variant['reversed_pv_multiplier'])
-                        ? (float) $variant['reversed_pv_multiplier']
-                        : null,
-                ]
+                $updates
             );
 
             $saved[] = [

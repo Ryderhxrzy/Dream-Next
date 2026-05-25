@@ -31,6 +31,7 @@ interface Props {
   product: ZqCachedProduct | null
   onClose: () => void
   onSaved?: () => void
+  showVariantReversedMultiplier?: boolean
 }
 
 interface PricingForm {
@@ -213,7 +214,7 @@ const variantInputCls = (disabled = false) => [
 
 /* ─── component ───────────────────────────────────────────────────────  */
 
-export default function EditZqPricingModal({ product, onClose, onSaved }: Props) {
+export default function EditZqPricingModal({ product, onClose, onSaved, showVariantReversedMultiplier = false }: Props) {
   const [form, setForm] = useState<PricingForm>({
     dealer_price: '', member_price: '', pv: '', pv_tier: 'low_end', reversed_pv_multiplier: '',
   })
@@ -302,14 +303,32 @@ export default function EditZqPricingModal({ product, onClose, onSaved }: Props)
 
       /* save variant pricing — only rows with at least one value */
       const variantRows = Object.entries(variantPricing)
-        .filter(([, v]) => v.dealer_price !== '' || v.member_price !== '' || v.pv !== '' || v.reversed_pv_multiplier !== '')
-        .map(([skuId, v]) => ({
-          skuId,
-          dealer_price: phpToCents(v.dealer_price),
-          member_price: phpToCents(v.member_price),
-          pv:           v.pv !== '' ? parseFloat(v.pv) : null,
-          reversed_pv_multiplier: v.reversed_pv_multiplier !== '' ? parseFloat(v.reversed_pv_multiplier) : null,
-        }))
+        .filter(([, v]) => (
+          v.dealer_price !== ''
+          || v.member_price !== ''
+          || v.pv !== ''
+          || (showVariantReversedMultiplier && v.reversed_pv_multiplier !== '')
+        ))
+        .map(([skuId, v]) => {
+          const row = {
+            skuId,
+            dealer_price: phpToCents(v.dealer_price),
+            member_price: phpToCents(v.member_price),
+            pv:           v.pv !== '' ? parseFloat(v.pv) : null,
+          } as {
+            skuId: string
+            dealer_price: number | null
+            member_price: number | null
+            pv: number | null
+            reversed_pv_multiplier?: number | null
+          }
+
+          if (showVariantReversedMultiplier) {
+            row.reversed_pv_multiplier = v.reversed_pv_multiplier !== '' ? parseFloat(v.reversed_pv_multiplier) : null
+          }
+
+          return row
+        })
 
       if (variantRows.length > 0) {
         await updateVariantPricing({ externalId: product.externalId, variants: variantRows }).unwrap()
@@ -328,6 +347,7 @@ export default function EditZqPricingModal({ product, onClose, onSaved }: Props)
   const showSummary  = summary.computedPv > 0 || summary.effectiveMemberPrice > 0 || summary.transferPrice > 0
   const displayImages = detail?.images ?? (product?.primaryImage ? [{ image: product.primaryImage, isMain: true }] : [])
   const displaySubject = detail?.subject || product?.subject || ''
+  const variantTotal = detail?.specs.length ?? product?.variantCount ?? 0
   const mult = Math.max(toSafe(form.reversed_pv_multiplier), 0)
 
   return (
@@ -361,9 +381,14 @@ export default function EditZqPricingModal({ product, onClose, onSaved }: Props)
                     <div>
                       <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-600 dark:text-sky-300">Global Supplier Workspace</p>
                       <h2 className="mt-1 text-lg font-bold leading-none text-slate-900 dark:text-slate-100">Edit Product Pricing</h2>
-                      <p className="mt-1 max-w-xl truncate text-xs text-slate-500 dark:text-slate-400">
-                        ID {product.externalId} · {displaySubject}
-                      </p>
+                      <div className="mt-1 flex max-w-xl flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                        <span className="font-mono">Global ID {product.externalId}</span>
+                        <span className="text-slate-300">|</span>
+                        <span className="rounded-full border border-sky-100 bg-sky-50 px-2 py-0.5 font-semibold text-sky-700">
+                          {variantTotal.toLocaleString()} variants
+                        </span>
+                      </div>
+                      <p className="mt-1 max-w-xl truncate text-xs text-slate-500 dark:text-slate-400">{displaySubject}</p>
                     </div>
                   </div>
                   <button type="button" onClick={onClose} disabled={isSaving}
@@ -523,7 +548,9 @@ export default function EditZqPricingModal({ product, onClose, onSaved }: Props)
                                     <th className="px-3 py-2.5 text-right text-[11px] font-semibold uppercase tracking-wide text-slate-500">Stock</th>
                                     <th className="px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-600 bg-emerald-50/60">Member (₱)</th>
                                     <th className="px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-600 bg-emerald-50/60">Dealer (₱)</th>
-                                    <th className="px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-600 bg-emerald-50/60">Multiplier</th>
+                                    {showVariantReversedMultiplier && (
+                                      <th className="px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-600 bg-emerald-50/60">Multiplier</th>
+                                    )}
                                     <th className="px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-600 bg-emerald-50/60">PV</th>
                                     <th className="px-3 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wide text-teal-600 bg-teal-50/60">Auto PV</th>
                                   </tr>
@@ -535,8 +562,10 @@ export default function EditZqPricingModal({ product, onClose, onSaved }: Props)
                                     const effectiveDealer = Number.isFinite(variantDealer) && variantDealer > 0
                                       ? variantDealer
                                       : toSafe(form.dealer_price)
-                                    const variantMultiplier = parseFloat(vp?.reversed_pv_multiplier || '')
-                                    const effectiveMultiplier = Number.isFinite(variantMultiplier) && variantMultiplier > 0
+                                    const variantMultiplier = showVariantReversedMultiplier
+                                      ? parseFloat(vp?.reversed_pv_multiplier || '')
+                                      : 0
+                                    const effectiveMultiplier = showVariantReversedMultiplier && Number.isFinite(variantMultiplier) && variantMultiplier > 0
                                       ? variantMultiplier
                                       : mult
                                     const autoPv = effectiveMultiplier > 0 ? roundTo(effectiveDealer * effectiveMultiplier, 2) : 0
@@ -544,7 +573,7 @@ export default function EditZqPricingModal({ product, onClose, onSaved }: Props)
                                       vp.dealer_price !== ''
                                       || vp.member_price !== ''
                                       || vp.pv !== ''
-                                      || vp.reversed_pv_multiplier !== ''
+                                      || (showVariantReversedMultiplier && vp.reversed_pv_multiplier !== '')
                                     )
 
                                     return (
@@ -574,12 +603,14 @@ export default function EditZqPricingModal({ product, onClose, onSaved }: Props)
                                             onChange={(e) => setVariantField(spec.skuId, 'dealer_price', e.target.value)}
                                             className={variantInputCls()} />
                                         </td>
-                                        <td className="px-2 py-2 bg-emerald-50/40 min-w-[90px]">
-                                          <input type="number" min="0" step="0.0001" placeholder={mult > 0 ? mult.toFixed(4) : 'inherit'}
-                                            value={vp?.reversed_pv_multiplier ?? ''}
-                                            onChange={(e) => setVariantField(spec.skuId, 'reversed_pv_multiplier', e.target.value)}
-                                            className={variantInputCls()} />
-                                        </td>
+                                        {showVariantReversedMultiplier && (
+                                          <td className="px-2 py-2 bg-emerald-50/40 min-w-[90px]">
+                                            <input type="number" min="0" step="0.0001" placeholder={mult > 0 ? mult.toFixed(4) : 'inherit'}
+                                              value={vp?.reversed_pv_multiplier ?? ''}
+                                              onChange={(e) => setVariantField(spec.skuId, 'reversed_pv_multiplier', e.target.value)}
+                                              className={variantInputCls()} />
+                                          </td>
+                                        )}
                                         <td className="px-2 py-2 bg-emerald-50/40 min-w-[80px]">
                                           <input type="number" min="0" step="0.01" placeholder="auto"
                                             value={vp?.pv ?? ''}

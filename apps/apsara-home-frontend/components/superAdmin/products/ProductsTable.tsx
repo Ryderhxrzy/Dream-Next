@@ -92,6 +92,10 @@ const getVariantCoreGroupKey = (variant: NonNullable<Product['variants']>[number
 ].join('|')
 
 const getVariantCount = (product: Product) => {
+  if (Number(product.variantCount ?? 0) > 0) {
+    return Number(product.variantCount)
+  }
+
   const variants = product.variants ?? []
   if (variants.length === 0) return 0
 
@@ -580,16 +584,25 @@ export default function ProductsTable({
                       <div className="min-w-0">
                         <p className="line-clamp-1 font-medium leading-snug text-slate-800 dark:text-slate-100">{product.name || 'N/A'}</p>
                         <div className="mt-1 flex flex-wrap items-center gap-2">
-                          <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500">#{product.id}</span>
                           {isZqMode ? (
-                            <span className="rounded-md bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-700 dark:bg-sky-500/12 dark:text-sky-200">
-                              {product.specifications?.trim() || 'Global Supplier Product'}
-                            </span>
-                          ) : variantCount > 0 ? (
-                            <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                              {variantCount} variant{variantCount !== 1 ? 's' : ''}
-                            </span>
-                          ) : null}
+                            <>
+                              <span className="rounded-md bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-700 dark:bg-sky-500/12 dark:text-sky-200">
+                                Global Supplier Product
+                              </span>
+                              <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                                {variantCount.toLocaleString()} variant{variantCount !== 1 ? 's' : ''}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500">#{product.id}</span>
+                              {variantCount > 0 ? (
+                                <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                                  {variantCount} variant{variantCount !== 1 ? 's' : ''}
+                                </span>
+                              ) : null}
+                            </>
+                          )}
                         </div>
                       </div>
                     </td>
