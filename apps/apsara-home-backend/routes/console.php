@@ -1,5 +1,9 @@
 <?php
 
+use App\Models\AdminNotification;
+use App\Models\CheckoutHistory;
+use App\Models\CustomerNotification;
+use App\Models\Supplier;
 use App\Models\SystemSetting;
 use App\Services\DatabaseExportService;
 use App\Services\GoogleDriveUploadService;
@@ -15,6 +19,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Schema;
+use Pusher\Pusher;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -82,6 +87,310 @@ Artisan::command('zq:sync-tracking {--limit=25}', function () {
 
     $this->newLine();
 })->purpose('Sync pending ZQ tracking updates into local orders');
+
+Artisan::command('zq:test-tracking {checkout_id? : Checkout ID to update, e.g. cs_xxx} {--tracking=TEST-ZQ-TRACK-123456 : Fake tracking number} {--status=shipped : Local fulfillment status} {--shipment=in_transit : Local shipment status} {--force : Allow this command outside local/testing environments}', function () {
+    if (! app()->environment(['local', 'testing']) && ! $this->option('force')) {
+        $this->error('This dev-only command is blocked outside local/testing. Add --force only if you really intend to run it here.');
+        return self::FAILURE;
+    }
+
+    $checkoutId = trim((string) ($this->argument('checkout_id') ?? ''));
+    $trackingNo = trim((string) $this->option('tracking'));
+    $status = strtolower(trim((string) $this->option('status')));
+    $shipmentStatus = strtolower(trim((string) $this->option('shipment')));
+    $allowedStatuses = ['processing', 'packed', 'shipped', 'out_for_delivery', 'delivered', 'cancelled', 'refunded'];
+    $allowedShipmentStatuses = ['for_pickup', 'picked_up', 'in_transit', 'out_for_delivery', 'delivered', 'failed_delivery', 'returned_to_sender', 'cancelled'];
+
+    if ($trackingNo === '') {
+        $this->error('Tracking number is required.');
+        return self::FAILURE;
+    }
+
+    if (! in_array($status, $allowedStatuses, true)) {
+        $this->error('Invalid status. Allowed: ' . implode(', ', $allowedStatuses));
+        return self::FAILURE;
+    }
+
+    if (! in_array($shipmentStatus, $allowedShipmentStatuses, true)) {
+        $this->error('Invalid shipment status. Allowed: ' . implode(', ', $allowedShipmentStatuses));
+        return self::FAILURE;
+    }
+
+    $query = CheckoutHistory::query()
+        ->where('ch_approval_status', 'approved')
+        ->whereNotNull('ch_zq_platform_order_id')
+        ->where('ch_zq_platform_order_id', '!=', '');
+
+    if ($checkoutId !== '') {
+        $query->where('ch_checkout_id', $checkoutId);
+    }
+
+    /** @var CheckoutHistory|null $order */
+    $order = $query->orderByDesc('ch_id')->first();
+
+    if (! $order) {
+        $this->error($checkoutId !== ''
+            ? "No approved pushed ZQ order found for {$checkoutId}."
+            : 'No approved pushed ZQ order found.'
+        );
+        return self::FAILURE;
+    }
+
+    $now = now('Asia/Manila');
+    $orderLabel = trim((string) ($order->ch_checkout_id ?? '')) ?: '#' . (int) $order->ch_id;
+    $previousStatus = (string) ($order->ch_fulfillment_status ?? 'pending');
+    $shipmentPayload = is_array($order->ch_shipment_payload) ? $order->ch_shipment_payload : [];
+    $shipmentPayload['zq_test_tracking'] = [
+        'trackNumber' => $trackingNo,
+        'state' => strtoupper($status),
+        'generated_at' => $now->toIso8601String(),
+        'dev_only' => true,
+    ];
+
+    $order->fill([
+        'ch_courier' => 'zq',
+        'ch_tracking_no' => $trackingNo,
+        'ch_shipment_status' => $shipmentStatus,
+        'ch_fulfillment_status' => $status,
+        'ch_zq_status' => strtoupper($status),
+        'ch_zq_synced_at' => $now,
+        'ch_shipment_payload' => $shipmentPayload,
+    ]);
+
+    if (in_array($status, ['shipped', 'out_for_delivery', 'delivered'], true)) {
+        $order->ch_shipped_at = $order->ch_shipped_at ?: $now;
+    }
+
+    $order->save();
+
+    $adminNotification = AdminNotification::query()->create([
+        'an_type' => 'zq_test_tracking',
+        'an_severity' => 'info',
+        'an_title' => 'ZQ Test Tracking Applied',
+        'an_message' => sprintf('Test tracking %s was applied to order %s.', $trackingNo, $orderLabel),
+        'an_href' => '/admin/orders',
+        'an_source_type' => 'order',
+        'an_source_id' => (int) $order->ch_id,
+        'an_payload' => [
+            'order_id' => (int) $order->ch_id,
+            'checkout_id' => trim((string) ($order->ch_checkout_id ?? '')),
+            'tracking_no' => $trackingNo,
+            'previous_status' => $previousStatus,
+            'status' => $status,
+            'shipment_status' => $shipmentStatus,
+            'courier' => 'zq',
+            'dev_only' => true,
+        ],
+        'an_created_at' => $now,
+    ]);
+
+    $customerNotification = null;
+    $customerId = (int) ($order->ch_customer_id ?? 0);
+    if ($customerId > 0) {
+        $customerNotification = CustomerNotification::query()->create([
+            'cn_customer_id' => $customerId,
+            'cn_type' => 'zq_test_tracking',
+            'cn_severity' => 'info',
+            'cn_title' => 'Order Tracking Update',
+            'cn_message' => sprintf('Your order %s now has tracking number %s.', $orderLabel, $trackingNo),
+            'cn_href' => '/orders',
+            'cn_source_type' => 'order',
+            'cn_source_id' => (int) $order->ch_id,
+            'cn_payload' => [
+                'order_id' => (int) $order->ch_id,
+                'checkout_id' => trim((string) ($order->ch_checkout_id ?? '')),
+                'tracking_no' => $trackingNo,
+                'status' => $status,
+                'shipment_status' => $shipmentStatus,
+                'courier' => 'zq',
+                'dev_only' => true,
+            ],
+            'cn_created_at' => $now,
+        ]);
+    }
+
+    $appId = (string) config('services.pusher.app_id', '');
+    $key = (string) config('services.pusher.key', '');
+    $secret = (string) config('services.pusher.secret', '');
+
+    if ($appId !== '' && $key !== '' && $secret !== '') {
+        try {
+            $pusher = new Pusher($key, $secret, $appId, [
+                'cluster' => (string) config('services.pusher.cluster', 'ap1'),
+                'useTLS' => (bool) config('services.pusher.use_tls', true),
+            ]);
+
+            $createdAt = $now->toIso8601String();
+            $pusher->trigger('private-admin-orders', 'notification.created', [
+                'id' => (int) $adminNotification->an_id,
+                'type' => (string) $adminNotification->an_type,
+                'title' => (string) $adminNotification->an_title,
+                'description' => (string) $adminNotification->an_message,
+                'href' => (string) ($adminNotification->an_href ?? '/admin/orders'),
+                'severity' => (string) ($adminNotification->an_severity ?? 'info'),
+                'created_at' => $createdAt,
+                'payload' => $adminNotification->an_payload,
+            ]);
+
+            if ($customerNotification && $customerId > 0) {
+                $pusher->trigger('private-customer-' . $customerId, 'notification.created', [
+                    'id' => 'customer_notification:' . (int) $customerNotification->cn_id,
+                    'type' => (string) $customerNotification->cn_type,
+                    'title' => (string) $customerNotification->cn_title,
+                    'description' => (string) $customerNotification->cn_message,
+                    'count' => 1,
+                    'severity' => (string) ($customerNotification->cn_severity ?? 'info'),
+                    'href' => (string) ($customerNotification->cn_href ?? '/orders'),
+                    'latest_at' => $createdAt,
+                    'created_at' => $createdAt,
+                    'payload' => $customerNotification->cn_payload,
+                ]);
+            }
+
+            $supplier = Supplier::query()
+                ->get(['s_id', 's_name', 's_company'])
+                ->first(function (Supplier $supplier) {
+                    $candidate = strtolower(preg_replace('/[^a-z0-9]/i', '', trim(
+                        ((string) ($supplier->s_company ?? '')) . ' ' . ((string) ($supplier->s_name ?? ''))
+                    )) ?? '');
+
+                    return str_contains($candidate, 'afhomeglobal')
+                        || str_contains($candidate, 'globalsupplier')
+                        || str_contains($candidate, 'zqsupplier');
+                });
+
+            if ($supplier) {
+                $pusher->trigger('private-supplier-' . (int) $supplier->s_id, 'notification.created', [
+                    'order_id' => (int) $order->ch_id,
+                    'checkout_id' => trim((string) ($order->ch_checkout_id ?? '')),
+                    'type' => 'zq_test_tracking',
+                    'title' => 'ZQ Test Tracking Applied',
+                    'description' => sprintf('Test tracking %s was applied to order %s.', $trackingNo, $orderLabel),
+                    'href' => '/supplier/orders',
+                    'created_at' => $createdAt,
+                    'payload' => [
+                        'order_id' => (int) $order->ch_id,
+                        'checkout_id' => trim((string) ($order->ch_checkout_id ?? '')),
+                        'tracking_no' => $trackingNo,
+                        'status' => $status,
+                        'shipment_status' => $shipmentStatus,
+                        'courier' => 'zq',
+                        'dev_only' => true,
+                    ],
+                ]);
+            } else {
+                $this->warn('Supplier realtime notification skipped: no global supplier found.');
+            }
+        } catch (Throwable $exception) {
+            $this->warn('Order updated, but realtime Pusher publish failed: ' . $exception->getMessage());
+        }
+    } else {
+        $this->warn('Order updated, but Pusher is not configured.');
+    }
+
+    $this->newLine();
+    $this->info('ZQ test tracking applied.');
+    $this->line('Order: ' . $orderLabel);
+    $this->line('Tracking: ' . $trackingNo);
+    $this->line('Fulfillment: ' . $previousStatus . ' -> ' . $status);
+    $this->line('Shipment: ' . $shipmentStatus);
+    $this->line('PH Time: ' . $now->toDateTimeString());
+    $this->newLine();
+
+    return self::SUCCESS;
+})->purpose('Dev-only: simulate a ZQ tracking/status update and realtime notification');
+
+Artisan::command('zq:test-supplier-notification {--supplier-id= : Specific supplier ID channel to notify} {--all : Send to every supplier channel for channel-mismatch testing} {--message=Supplier realtime test from ZQ flow. : Notification message} {--force : Allow this command outside local/testing environments}', function () {
+    if (! app()->environment(['local', 'testing']) && ! $this->option('force')) {
+        $this->error('This dev-only command is blocked outside local/testing. Add --force only if you really intend to run it here.');
+        return self::FAILURE;
+    }
+
+    $supplierIdOption = trim((string) ($this->option('supplier-id') ?? ''));
+    $suppliers = collect();
+
+    if ($this->option('all')) {
+        $suppliers = Supplier::query()->get(['s_id', 's_name', 's_company']);
+    } elseif ($supplierIdOption !== '') {
+        $supplier = Supplier::query()->find((int) $supplierIdOption);
+        $suppliers = $supplier ? collect([$supplier]) : collect();
+    } else {
+        $supplier = Supplier::query()
+            ->get(['s_id', 's_name', 's_company'])
+            ->first(function (Supplier $supplier) {
+                $candidate = strtolower(preg_replace('/[^a-z0-9]/i', '', trim(
+                    ((string) ($supplier->s_company ?? '')) . ' ' . ((string) ($supplier->s_name ?? ''))
+                )) ?? '');
+
+                return str_contains($candidate, 'afhomeglobal')
+                    || str_contains($candidate, 'globalsupplier')
+                    || str_contains($candidate, 'zqsupplier');
+            });
+        $suppliers = $supplier ? collect([$supplier]) : collect();
+    }
+
+    if ($suppliers->isEmpty()) {
+        $this->error('No supplier found. Try passing --supplier-id=YOUR_SUPPLIER_ID or --all.');
+        return self::FAILURE;
+    }
+
+    $appId = (string) config('services.pusher.app_id', '');
+    $key = (string) config('services.pusher.key', '');
+    $secret = (string) config('services.pusher.secret', '');
+
+    if ($appId === '' || $key === '' || $secret === '') {
+        $this->error('Pusher is not configured.');
+        return self::FAILURE;
+    }
+
+    $now = now('Asia/Manila');
+    $message = trim((string) $this->option('message')) ?: 'Supplier realtime test from ZQ flow.';
+    $sent = [];
+
+    try {
+        $pusher = new Pusher($key, $secret, $appId, [
+            'cluster' => (string) config('services.pusher.cluster', 'ap1'),
+            'useTLS' => (bool) config('services.pusher.use_tls', true),
+        ]);
+
+        foreach ($suppliers as $supplier) {
+            $supplierId = (int) $supplier->s_id;
+            $channelName = 'private-supplier-' . $supplierId;
+            $pusher->trigger($channelName, 'notification.created', [
+                'order_id' => time() + $supplierId,
+                'checkout_id' => 'TEST-SUPPLIER-NOTIF',
+                'type' => 'zq_supplier_realtime_test',
+                'title' => 'Supplier Realtime Test',
+                'description' => $message,
+                'href' => '/supplier/orders',
+                'created_at' => $now->toIso8601String(),
+                'payload' => [
+                    'supplier_id' => $supplierId,
+                    'dev_only' => true,
+                    'ph_time' => $now->toIso8601String(),
+                ],
+            ]);
+            $sent[] = [
+                'id' => $supplierId,
+                'name' => trim(((string) ($supplier->s_company ?? '')) . ' ' . ((string) ($supplier->s_name ?? ''))),
+                'channel' => $channelName,
+            ];
+        }
+    } catch (Throwable $exception) {
+        $this->error('Failed to publish supplier notification: ' . $exception->getMessage());
+        return self::FAILURE;
+    }
+
+    $this->newLine();
+    $this->info('Supplier realtime test sent.');
+    foreach ($sent as $target) {
+        $this->line('Supplier ID: ' . $target['id'] . ' | ' . $target['channel'] . ' | ' . $target['name']);
+    }
+    $this->line('PH Time: ' . $now->toDateTimeString());
+    $this->newLine();
+
+    return self::SUCCESS;
+})->purpose('Dev-only: send a direct supplier realtime notification test');
 
 Artisan::command('database:export-daily', function () {
     /** @var DatabaseExportService $service */

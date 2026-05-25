@@ -558,6 +558,13 @@ class AdminOrderController extends Controller
             return response()->json(['message' => 'Order must be approved before assigning fulfillment mode.'], 422);
         }
 
+        if ((string) $validated['mode'] === 'zq') {
+            $zqEligibilityError = $this->zqPushEligibilityError($order);
+            if ($zqEligibilityError !== null) {
+                return response()->json(['message' => $zqEligibilityError], 422);
+            }
+        }
+
         $zqResponse = is_array($order->ch_zq_response) ? $order->ch_zq_response : [];
         $zqResponse['admin_fulfillment_mode'] = (string) $validated['mode'];
         $order->ch_zq_response = $zqResponse;
@@ -642,6 +649,22 @@ class AdminOrderController extends Controller
         $order = CheckoutHistory::query()->where('ch_id', $id)->firstOrFail();
         if (($order->ch_approval_status ?? 'pending_approval') !== 'approved') {
             return response()->json(['message' => 'Order must be approved before pushing to ZQ.'], 422);
+        }
+
+        if (trim((string) ($order->ch_zq_platform_order_id ?? '')) !== '') {
+            return response()->json([
+                'message' => 'Order is already pushed to ZQ.',
+                'zq' => [
+                    'already_pushed' => true,
+                    'platform_order_id' => (string) $order->ch_zq_platform_order_id,
+                    'status' => $order->ch_zq_status,
+                ],
+            ]);
+        }
+
+        $zqEligibilityError = $this->zqPushEligibilityError($order);
+        if ($zqEligibilityError !== null) {
+            return response()->json(['message' => $zqEligibilityError], 422);
         }
 
         $response = $this->pushOrderToZq($order);
@@ -1064,11 +1087,20 @@ class AdminOrderController extends Controller
             return null;
         }
 
+        if ($this->zqPushEligibilityError($order) !== null) {
+            return null;
+        }
+
         return $this->pushOrderToZq($order);
     }
 
     private function pushOrderToZq(CheckoutHistory $order): array
     {
+        $zqEligibilityError = $this->zqPushEligibilityError($order);
+        if ($zqEligibilityError !== null) {
+            throw new \RuntimeException($zqEligibilityError);
+        }
+
         $payload = [$this->buildZqOrderPayload($order)];
         $response = $this->zqApiService->createOrder($payload);
 
@@ -1084,15 +1116,37 @@ class AdminOrderController extends Controller
             $platformOrderId = (string) ($payload[0]['orderNumber'] ?? $order->ch_checkout_id);
         }
 
+        $existingZqPayload = is_array($order->ch_zq_payload) ? $order->ch_zq_payload : [];
+
         $order->fill([
             'ch_zq_platform_order_id' => $platformOrderId,
             'ch_zq_status' => $this->mapZqStateToLocalStatus((string) ($responseData['state'] ?? 'submitted')),
-            'ch_zq_payload' => $payload[0],
+            'ch_zq_payload' => array_merge($existingZqPayload, ['order_request' => $payload[0]]),
             'ch_zq_response' => $response,
             'ch_zq_synced_at' => now(),
         ])->save();
 
         return $response;
+    }
+
+    private function zqPushEligibilityError(CheckoutHistory $order): ?string
+    {
+        $zqPayload = is_array($order->ch_zq_payload) ? $order->ch_zq_payload : [];
+        $isZqOrder = strtolower(trim((string) ($zqPayload['source_type'] ?? ''))) === 'zq'
+            || trim((string) ($zqPayload['zq_external_id'] ?? '')) !== ''
+            || trim((string) ($zqPayload['zq_product_id'] ?? '')) !== ''
+            || trim((string) ($zqPayload['zq_offer_id'] ?? '')) !== '';
+
+        if (! $isZqOrder) {
+            return 'Only ZQ dropship orders can be pushed to ZQ.';
+        }
+
+        $sku = trim((string) ($order->ch_product_sku ?? ''));
+        if ($sku === '' || strcasecmp($sku, 'SKU-undefined') === 0) {
+            return 'ZQ variant SKU is missing. Select a valid ZQ product variant before pushing to ZQ.';
+        }
+
+        return null;
     }
 
     private function buildZqOrderPayload(CheckoutHistory $order): array
