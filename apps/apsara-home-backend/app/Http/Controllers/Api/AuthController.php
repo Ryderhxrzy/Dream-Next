@@ -1966,11 +1966,11 @@ class AuthController extends Controller
             'display_name' => 'required|string|max:255',
             'plan' => ['required', Rule::in(['quarterly', 'semi_annual', 'annual'])],
             'billing_option' => ['required', Rule::in(['full', 'monthly'])],
-            'payment_method' => ['required', Rule::in(['gcash', 'grab_pay', 'maya', 'card', 'online_banking'])],
+            'payment_method' => ['required', Rule::in(['online_banking'])],
             'receipt_urls' => 'required|array|min:1|max:5',
             'receipt_urls.*' => 'required|url|max:2048',
             'checkout_id' => ['nullable', 'string', 'max:255'],
-            'payment_reference' => ['nullable', 'string', 'max:255'],
+            'payment_reference' => ['required', 'string', 'max:255'],
             'payment_intent_id' => ['nullable', 'string', 'max:255'],
             'accepted_terms' => 'required|boolean|accepted',
         ]);
@@ -2139,7 +2139,7 @@ class AuthController extends Controller
         $validated = $request->validate([
             'plan' => ['required', Rule::in(['quarterly', 'semi_annual', 'annual'])],
             'billing_option' => ['required', Rule::in(['full', 'monthly'])],
-            'payment_method' => ['required', Rule::in(['gcash', 'grab_pay', 'maya', 'card', 'online_banking'])],
+            'payment_method' => ['required', Rule::in(['online_banking'])],
             'payment_mode' => ['nullable', Rule::in(['test', 'live'])],
         ]);
 
@@ -3425,6 +3425,9 @@ class AuthController extends Controller
                 }
             }
         }
+        $latestReceiptUrls = is_array($latestReceiptPayload['receipt_urls'] ?? null)
+            ? array_values($latestReceiptPayload['receipt_urls'])
+            : [];
         $subscriptionProgress = $this->calculateWebstoreSubscriptionProgress($ticketId);
         $status = $this->mapTicketDecisionStatus((int) $ticket->t_status, $ticketId);
 
@@ -3469,6 +3472,7 @@ class AuthController extends Controller
             'latest_receipt_message' => $latestReceiptMessage,
             'latest_receipt_detail_id' => $latestReceiptDetailId,
             'latest_receipt_submitted_at' => $latestReceiptSubmittedAt,
+            'latest_receipt_urls' => $latestReceiptUrls,
             'created_at' => $ticket->t_date ? (string) $ticket->t_date : null,
         ];
     }
@@ -3865,12 +3869,8 @@ class AuthController extends Controller
     private function mapWebstorePaymentMethodTypes(string $method, string $mode): array
     {
         return match ($method) {
-            'card' => ['card'],
-            'gcash' => ['gcash'],
-            'grab_pay' => ['grab_pay'],
-            'maya' => ['paymaya'],
             'online_banking' => strtolower($mode) === 'live' ? ['dob'] : ['dob'],
-            default => ['gcash'],
+            default => ['dob'],
         };
     }
 

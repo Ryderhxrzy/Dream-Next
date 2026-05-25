@@ -5,13 +5,13 @@ nixPkgs = [
 
 [phases.install]
 cmds = [
-  "npm exec --yes pnpm@11.0.9 -- install --frozen-lockfile"
+  "npm exec --yes pnpm@10.0.0 -- install --frozen-lockfile"
 ]
 
 [phases.build]
 cmds = [
-  "npm exec --yes pnpm@11.0.9 -- run build"
+  "npm exec --yes pnpm@10.0.0 -- run build"
 ]
 
 [start]
-cmd = "npm exec --yes pnpm@11.0.9 -- run start"
+cmd = "npm exec --yes pnpm@10.0.0 -- run start"

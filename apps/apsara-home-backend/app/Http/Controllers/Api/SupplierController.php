@@ -292,28 +292,50 @@ class SupplierController extends Controller
             return response()->json(['message' => 'Supplier company not found.'], 404);
         }
 
-        $linkedUserCount = SupplierUser::query()
-            ->where('su_supplier', $supplier->s_id)
-            ->count();
-        if ($linkedUserCount > 0) {
-            return response()->json([
-                'message' => 'This supplier company still has linked supplier login accounts. Remove or reassign those accounts first.',
-            ], 422);
-        }
+        $supplierId = (int) $supplier->s_id;
 
-        $linkedProductCount = Product::query()
-            ->where('pd_supplier', $supplier->s_id)
-            ->count();
-        if ($linkedProductCount > 0) {
-            return response()->json([
-                'message' => 'This supplier company still has linked products. Remove or reassign those products first.',
-            ], 422);
-        }
+        $deletedSupplierUsers = 0;
+        $unassignedProducts = 0;
+        $deletedMobileSections = 0;
+        $deletedCategoryAccess = 0;
 
-        $supplier->delete();
+        DB::transaction(function () use (
+            $supplier,
+            $supplierId,
+            &$deletedSupplierUsers,
+            &$unassignedProducts,
+            &$deletedMobileSections,
+            &$deletedCategoryAccess
+        ) {
+            $deletedCategoryAccess = (int) SupplierCategoryAccess::query()
+                ->where('supplier_id', $supplierId)
+                ->delete();
+
+            $deletedSupplierUsers = (int) SupplierUser::query()
+                ->where('su_supplier', $supplierId)
+                ->delete();
+
+            if (Schema::hasTable('tbl_supplier_mobile_home_sections')) {
+                $deletedMobileSections = (int) DB::table('tbl_supplier_mobile_home_sections')
+                    ->where('smhs_supplier_id', $supplierId)
+                    ->delete();
+            }
+
+            if (Schema::hasColumn('tbl_product', 'pd_supplier')) {
+                $unassignedProducts = (int) Product::query()
+                    ->where('pd_supplier', $supplierId)
+                    ->update(['pd_supplier' => null]);
+            }
+
+            $supplier->delete();
+        });
 
         return response()->json([
             'message' => 'Supplier company deleted successfully.',
+            'deleted_supplier_users' => $deletedSupplierUsers,
+            'unassigned_products' => $unassignedProducts,
+            'deleted_mobile_sections' => $deletedMobileSections,
+            'deleted_category_access' => $deletedCategoryAccess,
         ]);
     }
 

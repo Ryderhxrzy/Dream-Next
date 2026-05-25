@@ -415,6 +415,7 @@ Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.or_supplier'
     Route::post('/admin/products/bulk-update/preview', [ProductController::class, 'bulkUpdatePreview']);
     Route::post('/admin/products/bulk-update/apply', [ProductController::class, 'bulkUpdateApply']);
     Route::post('/admin/products/manual-checkout/apply', [ProductController::class, 'manualCheckoutApply']);
+    Route::delete('/admin/products/reviews/{id}', [ProductController::class, 'destroyReview']);
 Route::get('/admin/webpages/adds-content', [AddsContentController::class, 'index']);
     Route::post('/admin/webpages/adds-content', [AddsContentController::class, 'store']);
     Route::patch('/admin/webpages/adds-content/{id}', [AddsContentController::class, 'update']);
@@ -475,6 +476,7 @@ Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_a
 Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_admin,admin,csr,merchant_admin,web_content'])->group(function () {
     Route::get('/admin/orders', [AdminOrderController::class, 'index']);
     Route::get('/admin/orders/counts', [AdminOrderController::class, 'counts']);
+    Route::delete('/admin/orders/{id}', [AdminOrderController::class, 'destroy']);
 });
 
 Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_admin,admin,csr,merchant_admin'])->group(function () {

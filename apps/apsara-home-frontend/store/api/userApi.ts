@@ -210,10 +210,10 @@ export interface SubmitWebstoreRequestPayload {
     display_name: string;
     plan: 'quarterly' | 'semi_annual' | 'annual';
     billing_option: 'full' | 'monthly';
-    payment_method: 'gcash' | 'grab_pay' | 'maya' | 'card' | 'online_banking';
+    payment_method: 'online_banking';
     receipt_urls: string[];
     checkout_id?: string | null;
-    payment_reference?: string | null;
+    payment_reference: string;
     payment_intent_id?: string | null;
     accepted_terms: boolean;
 }
@@ -240,7 +240,7 @@ export interface WebstoreRequest {
     display_name?: string | null;
     plan?: 'quarterly' | 'semi_annual' | 'annual' | null;
     billing_option?: 'full' | 'monthly' | null;
-    payment_method?: 'gcash' | 'grab_pay' | 'maya' | 'card' | 'online_banking' | null;
+    payment_method?: 'online_banking' | null;
     receipt_urls?: string[] | null;
     base_checkout_id?: string | null;
     base_payment_reference?: string | null;
@@ -256,37 +256,13 @@ export interface WebstoreRequest {
     latest_receipt_message?: string | null;
     latest_receipt_detail_id?: number | null;
     latest_receipt_submitted_at?: string | null;
+    latest_receipt_urls?: string[] | null;
 }
 
 export interface UploadWebstoreReceiptResponse {
     message: string;
     url: string;
     public_id?: string;
-}
-
-export interface CreateWebstorePaymentSessionPayload {
-    plan: 'quarterly' | 'semi_annual' | 'annual';
-    billing_option: 'full' | 'monthly';
-    payment_method: 'gcash' | 'grab_pay' | 'maya' | 'card' | 'online_banking';
-    payment_mode?: 'test' | 'live';
-}
-
-export interface CreateWebstorePaymentSessionResponse {
-    checkout_id: string;
-    checkout_url: string;
-    payment_mode?: 'test' | 'live';
-}
-
-export interface VerifyWebstorePaymentSessionResponse {
-    checkout_id: string;
-    status: string;
-    is_paid: boolean;
-    payment_mode?: 'test' | 'live';
-    payment_method?: 'gcash' | 'grab_pay' | 'maya' | 'card' | 'online_banking' | string;
-    proof_url?: string;
-    payment_intent_id?: string;
-    payment_reference?: string;
-    raw?: Record<string, unknown>;
 }
 
 export interface LinkedAccount {
@@ -496,22 +472,6 @@ export const userApi = baseApi.injectEndpoints({
             }),
         }),
 
-        createWebstorePaymentSession: builder.mutation<CreateWebstorePaymentSessionResponse, CreateWebstorePaymentSessionPayload>({
-            query: (body) => ({
-                url: '/api/webstore-requests/payment-session',
-                method: 'POST',
-                body,
-            }),
-        }),
-
-        verifyWebstorePaymentSession: builder.query<VerifyWebstorePaymentSessionResponse, { checkoutId: string; paymentMode?: 'test' | 'live' }>({
-            query: ({ checkoutId, paymentMode }) => ({
-                url: `/api/webstore-requests/payment-session/${checkoutId}`,
-                method: 'GET',
-                params: paymentMode ? { payment_mode: paymentMode } : undefined,
-            }),
-        }),
-
         usernameChangeLatest: builder.query<{ request: UsernameChangeRequest | null }, void>({
             query: () => ({
                 url: '/api/auth/username-change/latest',
@@ -642,8 +602,6 @@ export const {
     useSubmitUsernameChangeRequestMutation,
     useSubmitWebstoreRequestMutation,
     useUploadWebstoreReceiptMutation,
-    useCreateWebstorePaymentSessionMutation,
-    useLazyVerifyWebstorePaymentSessionQuery,
     useUsernameChangeLatestQuery,
     useWebstoreRequestLatestQuery,
     useSyncWebstorePartnerAccountMutation,
