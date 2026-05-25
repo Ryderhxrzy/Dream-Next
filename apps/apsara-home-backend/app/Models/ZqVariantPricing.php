@@ -15,11 +15,13 @@ class ZqVariantPricing extends Model
         'zvp_dealer_price',
         'zvp_member_price',
         'zvp_pv',
+        'zvp_reversed_pv_multiplier',
     ];
 
     protected $casts = [
         'zvp_dealer_price' => 'integer',
         'zvp_member_price' => 'integer',
         'zvp_pv'           => 'decimal:2',
+        'zvp_reversed_pv_multiplier' => 'decimal:6',
     ];
 }

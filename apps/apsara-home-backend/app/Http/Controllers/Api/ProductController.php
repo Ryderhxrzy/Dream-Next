@@ -4868,6 +4868,7 @@ class ProductController extends Controller
                 'dealerPrice' => $r->zvp_dealer_price,
                 'memberPrice' => $r->zvp_member_price,
                 'pv'          => $r->zvp_pv !== null ? (float) $r->zvp_pv : null,
+                'reversedPvMultiplier' => $r->zvp_reversed_pv_multiplier !== null ? (float) $r->zvp_reversed_pv_multiplier : null,
             ])->values(),
         ]);
     }
@@ -4880,6 +4881,7 @@ class ProductController extends Controller
             'variants.*.dealer_price' => 'nullable|integer|min:0',
             'variants.*.member_price' => 'nullable|integer|min:0',
             'variants.*.pv'           => 'nullable|numeric|min:0',
+            'variants.*.reversed_pv_multiplier' => 'nullable|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -4903,6 +4905,9 @@ class ProductController extends Controller
                     'zvp_dealer_price' => isset($variant['dealer_price'])  ? (int) $variant['dealer_price'] : null,
                     'zvp_member_price' => isset($variant['member_price'])  ? (int) $variant['member_price'] : null,
                     'zvp_pv'           => isset($variant['pv'])            ? (float) $variant['pv']          : null,
+                    'zvp_reversed_pv_multiplier' => isset($variant['reversed_pv_multiplier'])
+                        ? (float) $variant['reversed_pv_multiplier']
+                        : null,
                 ]
             );
 
@@ -4911,6 +4916,7 @@ class ProductController extends Controller
                 'dealerPrice' => $row->zvp_dealer_price,
                 'memberPrice' => $row->zvp_member_price,
                 'pv'          => $row->zvp_pv !== null ? (float) $row->zvp_pv : null,
+                'reversedPvMultiplier' => $row->zvp_reversed_pv_multiplier !== null ? (float) $row->zvp_reversed_pv_multiplier : null,
             ];
         }
 

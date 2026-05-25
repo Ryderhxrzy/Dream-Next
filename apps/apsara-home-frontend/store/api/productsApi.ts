@@ -534,6 +534,7 @@ export interface ZqVariantPricingRow {
   dealerPrice: number | null
   memberPrice: number | null
   pv: number | null
+  reversedPvMultiplier: number | null
 }
 
 export interface GetZqVariantPricingResponse {
@@ -548,6 +549,7 @@ export interface UpdateZqVariantPricingPayload {
     dealer_price?: number | null
     member_price?: number | null
     pv?: number | null
+    reversed_pv_multiplier?: number | null
   }>
 }
 

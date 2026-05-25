@@ -45,6 +45,7 @@ interface VariantPricingFields {
   dealer_price: string
   member_price: string
   pv: string
+  reversed_pv_multiplier: string
 }
 
 interface PricingSummary {
@@ -263,6 +264,7 @@ export default function EditZqPricingModal({ product, onClose, onSaved }: Props)
               dealer_price: row.dealerPrice != null ? String(row.dealerPrice / 100) : '',
               member_price: row.memberPrice != null ? String(row.memberPrice / 100) : '',
               pv:           row.pv          != null ? String(row.pv)                : '',
+              reversed_pv_multiplier: row.reversedPvMultiplier != null ? String(row.reversedPvMultiplier) : '',
             }
           }
           setVariantPricing(map)
@@ -282,7 +284,7 @@ export default function EditZqPricingModal({ product, onClose, onSaved }: Props)
   const setVariantField = (skuId: string, field: keyof VariantPricingFields, value: string) =>
     setVariantPricing((prev) => ({
       ...prev,
-      [skuId]: { ...{ dealer_price: '', member_price: '', pv: '' }, ...prev[skuId], [field]: value },
+      [skuId]: { ...{ dealer_price: '', member_price: '', pv: '', reversed_pv_multiplier: '' }, ...prev[skuId], [field]: value },
     }))
 
   const handleSubmit = async (e: { preventDefault(): void }) => {
@@ -300,12 +302,13 @@ export default function EditZqPricingModal({ product, onClose, onSaved }: Props)
 
       /* save variant pricing — only rows with at least one value */
       const variantRows = Object.entries(variantPricing)
-        .filter(([, v]) => v.dealer_price !== '' || v.member_price !== '' || v.pv !== '')
+        .filter(([, v]) => v.dealer_price !== '' || v.member_price !== '' || v.pv !== '' || v.reversed_pv_multiplier !== '')
         .map(([skuId, v]) => ({
           skuId,
           dealer_price: phpToCents(v.dealer_price),
           member_price: phpToCents(v.member_price),
           pv:           v.pv !== '' ? parseFloat(v.pv) : null,
+          reversed_pv_multiplier: v.reversed_pv_multiplier !== '' ? parseFloat(v.reversed_pv_multiplier) : null,
         }))
 
       if (variantRows.length > 0) {
@@ -506,7 +509,7 @@ export default function EditZqPricingModal({ product, onClose, onSaved }: Props)
                       {detail && detail.specs.length > 0 && (
                         <>
                           <SectionLabel>Variant Pricing</SectionLabel>
-                          <p className="text-[11px] text-slate-400">Set individual pricing per variant. Leave blank to inherit the product-level pricing above. Auto PV = Dealer Price × Multiplier ({mult > 0 ? mult.toFixed(4) : '—'}).</p>
+                          <p className="text-[11px] text-slate-400">Set individual pricing per variant. Leave blank to inherit the product-level pricing above. Auto PV = Dealer Price × Multiplier.</p>
                           <div className="overflow-hidden rounded-2xl border border-slate-200">
                             <div className="overflow-x-auto">
                               <table className="min-w-full text-xs">
@@ -520,6 +523,7 @@ export default function EditZqPricingModal({ product, onClose, onSaved }: Props)
                                     <th className="px-3 py-2.5 text-right text-[11px] font-semibold uppercase tracking-wide text-slate-500">Stock</th>
                                     <th className="px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-600 bg-emerald-50/60">Member (₱)</th>
                                     <th className="px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-600 bg-emerald-50/60">Dealer (₱)</th>
+                                    <th className="px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-600 bg-emerald-50/60">Multiplier</th>
                                     <th className="px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-600 bg-emerald-50/60">PV</th>
                                     <th className="px-3 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wide text-teal-600 bg-teal-50/60">Auto PV</th>
                                   </tr>
@@ -531,8 +535,17 @@ export default function EditZqPricingModal({ product, onClose, onSaved }: Props)
                                     const effectiveDealer = Number.isFinite(variantDealer) && variantDealer > 0
                                       ? variantDealer
                                       : toSafe(form.dealer_price)
-                                    const autoPv = mult > 0 ? roundTo(effectiveDealer * mult, 2) : 0
-                                    const hasVariantPricing = vp && (vp.dealer_price !== '' || vp.member_price !== '' || vp.pv !== '')
+                                    const variantMultiplier = parseFloat(vp?.reversed_pv_multiplier || '')
+                                    const effectiveMultiplier = Number.isFinite(variantMultiplier) && variantMultiplier > 0
+                                      ? variantMultiplier
+                                      : mult
+                                    const autoPv = effectiveMultiplier > 0 ? roundTo(effectiveDealer * effectiveMultiplier, 2) : 0
+                                    const hasVariantPricing = vp && (
+                                      vp.dealer_price !== ''
+                                      || vp.member_price !== ''
+                                      || vp.pv !== ''
+                                      || vp.reversed_pv_multiplier !== ''
+                                    )
 
                                     return (
                                       <tr key={spec.skuId || String(spec.id)} className={hasVariantPricing ? 'bg-emerald-50/30' : 'hover:bg-slate-50/60'}>
@@ -561,6 +574,12 @@ export default function EditZqPricingModal({ product, onClose, onSaved }: Props)
                                             onChange={(e) => setVariantField(spec.skuId, 'dealer_price', e.target.value)}
                                             className={variantInputCls()} />
                                         </td>
+                                        <td className="px-2 py-2 bg-emerald-50/40 min-w-[90px]">
+                                          <input type="number" min="0" step="0.0001" placeholder={mult > 0 ? mult.toFixed(4) : 'inherit'}
+                                            value={vp?.reversed_pv_multiplier ?? ''}
+                                            onChange={(e) => setVariantField(spec.skuId, 'reversed_pv_multiplier', e.target.value)}
+                                            className={variantInputCls()} />
+                                        </td>
                                         <td className="px-2 py-2 bg-emerald-50/40 min-w-[80px]">
                                           <input type="number" min="0" step="0.01" placeholder="auto"
                                             value={vp?.pv ?? ''}
@@ -568,13 +587,16 @@ export default function EditZqPricingModal({ product, onClose, onSaved }: Props)
                                             className={variantInputCls()} />
                                         </td>
                                         <td className="px-3 py-2.5 text-center bg-teal-50/40">
-                                          {mult > 0 ? (
-                                            <span className="inline-flex rounded-full border border-teal-200 bg-teal-50 px-2 py-0.5 text-[11px] font-bold text-teal-700">
-                                              {autoPv.toFixed(2)}
+                                          <div className="inline-flex flex-col items-center rounded-full border border-teal-200 bg-teal-50 px-2 py-0.5">
+                                            <span className="text-[11px] font-bold text-teal-700">
+                                              {effectiveMultiplier > 0 ? autoPv.toFixed(2) : '—'}
                                             </span>
-                                          ) : (
-                                            <span className="text-slate-300">—</span>
-                                          )}
+                                            {effectiveMultiplier > 0 && (
+                                              <span className="text-[9px] font-semibold text-teal-500">
+                                                x {effectiveMultiplier.toFixed(4)}
+                                              </span>
+                                            )}
+                                          </div>
                                         </td>
                                       </tr>
                                     )
