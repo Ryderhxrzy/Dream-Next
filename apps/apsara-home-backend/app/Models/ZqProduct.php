@@ -37,6 +37,11 @@ class ZqProduct extends Model
         'zqp_total_stock',
         'zqp_variant_count',
         'zqp_raw_payload',
+        'zqp_dealer_price',
+        'zqp_member_price',
+        'zqp_pv',
+        'zqp_pv_tier',
+        'zqp_reversed_pv_multiplier',
     ];
 
     protected $casts = [
@@ -53,5 +58,9 @@ class ZqProduct extends Model
         'zqp_total_stock' => 'integer',
         'zqp_variant_count' => 'integer',
         'zqp_brand_type' => 'integer',
+        'zqp_dealer_price' => 'integer',
+        'zqp_member_price' => 'integer',
+        'zqp_pv' => 'decimal:2',
+        'zqp_reversed_pv_multiplier' => 'decimal:6',
     ];
 }

@@ -20,6 +20,7 @@ use App\Services\Zq\ZqApiService;
 use App\Services\Zq\ZqProductSyncService;
 use App\Models\ZqCategoryMapping;
 use App\Models\ZqProduct;
+use App\Models\ZqVariantPricing;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -3891,6 +3892,11 @@ class ProductController extends Controller
                     'sourceCreatedAt' => optional($product->zqp_source_created_at)?->toIso8601String(),
                     'sourceUpdatedAt' => optional($product->zqp_source_updated_at)?->toIso8601String(),
                     'syncedAt' => optional($product->updated_at)?->toIso8601String(),
+                    'dealerPrice' => $product->zqp_dealer_price,
+                    'memberPrice' => $product->zqp_member_price,
+                    'pv' => $product->zqp_pv !== null ? (float) $product->zqp_pv : null,
+                    'pvTier' => $product->zqp_pv_tier ?? 'low_end',
+                    'reversedPvMultiplier' => $product->zqp_reversed_pv_multiplier !== null ? (float) $product->zqp_reversed_pv_multiplier : null,
                 ];
             })->values(),
             'meta' => [
@@ -4087,6 +4093,155 @@ class ProductController extends Controller
         return $payload;
     }
 
+    public function zqInventory(Request $request, string $sku): JsonResponse
+    {
+        if (! $this->zqApiService->isConfigured()) {
+            return response()->json(['message' => 'ZQ API configuration is incomplete.'], 503);
+        }
+
+        $sku = trim($sku);
+        if ($sku === '') {
+            return response()->json(['message' => 'SKU is required.'], 422);
+        }
+
+        try {
+            $product = ZqProduct::query()
+                ->where('zqp_external_id', $sku)
+                ->first();
+
+            $skuCandidates = [];
+            if ($product instanceof ZqProduct) {
+                $specs = is_array($product->zqp_specs ?? null) ? $product->zqp_specs : [];
+                foreach ($specs as $spec) {
+                    $row = is_array($spec) ? $spec : [];
+                    $variantSku = trim((string) ($row['skuId'] ?? $row['specId'] ?? $row['sku'] ?? ''));
+                    if ($variantSku !== '') {
+                        $skuCandidates[] = $variantSku;
+                    }
+                }
+            }
+
+            if ($skuCandidates === []) {
+                $skuCandidates[] = $sku;
+            }
+
+            $skuCandidates = array_values(array_unique($skuCandidates));
+            $available = 0;
+            $locked = 0;
+            $onTransit = 0;
+            $rawBySku = [];
+            $errors = [];
+
+            foreach ($skuCandidates as $variantSku) {
+                try {
+                    $response = $this->zqApiService->getInventory($variantSku);
+                    $totals = $this->extractZqInventoryTotals($response);
+                    $available += $totals['available'];
+                    $locked += $totals['locked'];
+                    $onTransit += $totals['on_transit'];
+                    $rawBySku[$variantSku] = $response;
+                } catch (\Throwable $e) {
+                    $errors[$variantSku] = $e->getMessage();
+                }
+            }
+
+            if ($rawBySku === [] && $errors !== []) {
+                $fallback = $this->getZqProductDetailInventoryFallback($sku);
+
+                return response()->json([
+                    'sku' => $sku,
+                    'available' => $fallback['available'],
+                    'total' => $fallback['available'],
+                    'locked' => 0,
+                    'on_transit' => 0,
+                    'variant_count' => $fallback['variant_count'],
+                    'checked_skus' => $skuCandidates,
+                    'partial_errors' => $errors,
+                    'source' => 'product_detail_fallback',
+                    'raw' => $fallback['raw'],
+                ]);
+            }
+
+            return response()->json([
+                'sku' => $sku,
+                'available' => $available,
+                'total' => $available,
+                'locked' => $locked,
+                'on_transit' => $onTransit,
+                'variant_count' => count($skuCandidates),
+                'checked_skus' => $skuCandidates,
+                'partial_errors' => $errors,
+                'source' => 'order_inventory',
+                'raw' => $rawBySku,
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('ZQ live stock check failed for sku ' . $sku . ': ' . $e->getMessage());
+            return response()->json(['message' => 'Failed to fetch ZQ inventory: ' . $e->getMessage()], 500);
+        }
+    }
+
+    private function extractZqInventoryTotals(mixed $payload): array
+    {
+        $totals = [
+            'available' => 0,
+            'locked' => 0,
+            'on_transit' => 0,
+        ];
+
+        $walk = function (mixed $node) use (&$walk, &$totals): void {
+            if (! is_array($node)) {
+                return;
+            }
+
+            $hasInventoryFields = array_key_exists('availableCount', $node)
+                || array_key_exists('available_count', $node)
+                || array_key_exists('available', $node)
+                || array_key_exists('lockQuantity', $node)
+                || array_key_exists('lock_quantity', $node)
+                || array_key_exists('onTransitQuantity', $node)
+                || array_key_exists('on_transit_quantity', $node);
+
+            if ($hasInventoryFields) {
+                $totals['available'] += (int) ($node['availableCount'] ?? $node['available_count'] ?? $node['available'] ?? 0);
+                $totals['locked'] += (int) ($node['lockQuantity'] ?? $node['lock_quantity'] ?? 0);
+                $totals['on_transit'] += (int) ($node['onTransitQuantity'] ?? $node['on_transit_quantity'] ?? 0);
+
+                return;
+            }
+
+            foreach ($node as $child) {
+                $walk($child);
+            }
+        };
+
+        $walk($payload['data'] ?? $payload);
+
+        return $totals;
+    }
+
+    private function getZqProductDetailInventoryFallback(string $externalId): array
+    {
+        $response = $this->zqApiService->getImportProductDetail($externalId);
+        $data = is_array($response['data'] ?? null) ? $response['data'] : [];
+        $specs = is_array($data['specs'] ?? null) ? $data['specs'] : [];
+
+        $totalStock = 0;
+        foreach ($specs as $spec) {
+            $row = is_array($spec) ? $spec : [];
+            $totalStock += (int) ($row['amountOnSale'] ?? $row['stock'] ?? $row['qty'] ?? 0);
+        }
+
+        if ($totalStock === 0 && count($specs) === 0) {
+            $totalStock = (int) ($data['totalStock'] ?? $data['stock'] ?? $data['qty'] ?? 0);
+        }
+
+        return [
+            'available' => $totalStock,
+            'variant_count' => count($specs),
+            'raw' => $response,
+        ];
+    }
+
     public function zqProductsSummary(): JsonResponse
     {
         $baseQuery = ZqProduct::query();
@@ -4100,12 +4255,16 @@ class ProductController extends Controller
             ->where('zqp_total_stock', '>', 0)
             ->where('zqp_total_stock', '<=', 5)
             ->count();
+        $outOfStock = (clone $baseQuery)
+            ->where('zqp_total_stock', '<=', 0)
+            ->count();
 
         return response()->json([
             'total' => $total,
             'active' => $active,
             'inactive' => $inactive,
             'low_stock' => $lowStock,
+            'out_of_stock' => $outOfStock,
             'saved_cursor' => $this->zqProductSyncService->getSavedCursor(),
             'has_saved_cursor' => $this->zqProductSyncService->getSavedCursor() !== null,
         ]);
@@ -4661,5 +4820,285 @@ class ProductController extends Controller
             ])
             ->values()
             ->all();
+    }
+
+    public function updateZqProductPricing(Request $request, string $externalId): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'dealer_price'           => 'nullable|integer|min:0',
+            'member_price'           => 'nullable|integer|min:0',
+            'pv'                     => 'nullable|numeric|min:0',
+            'pv_tier'                => 'nullable|string|in:low_end,high_end',
+            'reversed_pv_multiplier' => 'nullable|numeric|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->validationErrorResponse($validator);
+        }
+
+        $product = ZqProduct::query()->where('zqp_external_id', $externalId)->first();
+
+        if (! $product) {
+            return response()->json(['message' => 'ZQ product not found.'], 404);
+        }
+
+        $product->update([
+            'zqp_dealer_price'           => $request->filled('dealer_price') ? (int) $request->input('dealer_price') : null,
+            'zqp_member_price'           => $request->filled('member_price') ? (int) $request->input('member_price') : null,
+            'zqp_pv'                     => $request->filled('pv') ? (float) $request->input('pv') : null,
+            'zqp_pv_tier'                => $request->input('pv_tier') ?? 'low_end',
+            'zqp_reversed_pv_multiplier' => $request->filled('reversed_pv_multiplier') ? (float) $request->input('reversed_pv_multiplier') : null,
+        ]);
+
+        return response()->json([
+            'message' => 'Pricing updated successfully.',
+            'product' => [
+                'externalId'           => $product->zqp_external_id,
+                'dealerPrice'          => $product->zqp_dealer_price,
+                'memberPrice'          => $product->zqp_member_price,
+                'pv'                   => $product->zqp_pv,
+                'pvTier'               => $product->zqp_pv_tier ?? 'low_end',
+                'reversedPvMultiplier' => $product->zqp_reversed_pv_multiplier !== null ? (float) $product->zqp_reversed_pv_multiplier : null,
+            ],
+        ]);
+    }
+
+    public function exportCachedZqProducts(Request $request): JsonResponse
+    {
+        $query = ZqProduct::query();
+
+        $search = trim((string) $request->input('search', ''));
+        if ($search !== '') {
+            $query->where(function ($inner) use ($search) {
+                $like = '%' . $search . '%';
+                $inner->where('zqp_subject', 'ilike', $like)
+                    ->orWhere('zqp_external_id', 'ilike', $like)
+                    ->orWhere('zqp_category_name', 'ilike', $like);
+            });
+        }
+
+        if ($request->filled('brand_type')) {
+            $query->where('zqp_brand_type', (int) $request->input('brand_type'));
+        }
+        if ($request->filled('source_type')) {
+            $query->where('zqp_source_type', $request->input('source_type'));
+        }
+        if ($request->filled('status')) {
+            $query->where('zqp_status', $request->input('status'));
+        }
+        if ($request->filled('import_status')) {
+            $query->where('zqp_import_status', $request->input('import_status'));
+        }
+
+        $products = $query
+            ->orderByDesc('zqp_published_at')
+            ->orderByDesc('updated_at')
+            ->limit(10000)
+            ->get([
+                'zqp_id', 'zqp_external_id', 'zqp_subject', 'zqp_subject_cn',
+                'zqp_category_name', 'zqp_source_type', 'zqp_status', 'zqp_import_status',
+                'zqp_shipping_to', 'zqp_target_currency', 'zqp_total_stock', 'zqp_variant_count',
+                'zqp_dealer_price', 'zqp_member_price', 'zqp_pv',
+                'zqp_pv_tier', 'zqp_reversed_pv_multiplier',
+                'zqp_price_min_cents', 'zqp_price_max_cents',
+                'zqp_cost_min_cents', 'zqp_cost_max_cents',
+                'zqp_primary_image', 'zqp_product_url',
+                'zqp_source_created_at', 'updated_at',
+            ]);
+
+        return response()->json([
+            'products' => $products->map(fn (ZqProduct $p) => [
+                'externalId'           => (string) $p->zqp_external_id,
+                'subject'              => (string) $p->zqp_subject,
+                'subjectCn'            => $p->zqp_subject_cn,
+                'categoryName'         => $p->zqp_category_name,
+                'sourceType'           => $p->zqp_source_type,
+                'status'               => $p->zqp_status,
+                'importStatus'         => $p->zqp_import_status,
+                'shippingTo'           => $p->zqp_shipping_to,
+                'targetCurrency'       => $p->zqp_target_currency,
+                'totalStock'           => (int) ($p->zqp_total_stock ?? 0),
+                'variantCount'         => (int) ($p->zqp_variant_count ?? 0),
+                'dealerPrice'          => $p->zqp_dealer_price,
+                'memberPrice'          => $p->zqp_member_price,
+                'pv'                   => $p->zqp_pv !== null ? (float) $p->zqp_pv : null,
+                'pvTier'               => $p->zqp_pv_tier ?? 'low_end',
+                'reversedPvMultiplier' => $p->zqp_reversed_pv_multiplier !== null ? (float) $p->zqp_reversed_pv_multiplier : null,
+                'priceMinCents'        => $p->zqp_price_min_cents,
+                'priceMaxCents'        => $p->zqp_price_max_cents,
+                'costMinCents'         => $p->zqp_cost_min_cents,
+                'costMaxCents'         => $p->zqp_cost_max_cents,
+                'primaryImage'         => $p->zqp_primary_image,
+                'productUrl'           => $p->zqp_product_url,
+                'sourceCreatedAt'      => optional($p->zqp_source_created_at)?->toIso8601String(),
+                'syncedAt'             => optional($p->updated_at)?->toIso8601String(),
+            ])->values(),
+            'total' => $products->count(),
+        ]);
+    }
+
+    public function getZqVariantPricing(Request $request, string $externalId): JsonResponse
+    {
+        $product = ZqProduct::query()->where('zqp_external_id', $externalId)->first();
+
+        if (! $product) {
+            return response()->json(['message' => 'ZQ product not found.'], 404);
+        }
+
+        $rows = ZqVariantPricing::query()
+            ->where('zvp_external_id', $externalId)
+            ->get();
+
+        return response()->json([
+            'externalId' => $externalId,
+            'variants'   => $rows->map(fn (ZqVariantPricing $r) => [
+                'skuId'       => $r->zvp_sku_id,
+                'dealerPrice' => $r->zvp_dealer_price,
+                'memberPrice' => $r->zvp_member_price,
+                'pv'          => $r->zvp_pv !== null ? (float) $r->zvp_pv : null,
+                'reversedPvMultiplier' => $r->zvp_reversed_pv_multiplier !== null ? (float) $r->zvp_reversed_pv_multiplier : null,
+            ])->values(),
+        ]);
+    }
+
+    public function updateZqVariantPricing(Request $request, string $externalId): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'variants'                => 'required|array|min:1',
+            'variants.*.skuId'        => 'required|string|max:80',
+            'variants.*.dealer_price' => 'nullable|integer|min:0',
+            'variants.*.member_price' => 'nullable|integer|min:0',
+            'variants.*.pv'           => 'nullable|numeric|min:0',
+            'variants.*.reversed_pv_multiplier' => 'nullable|numeric|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->validationErrorResponse($validator);
+        }
+
+        $product = ZqProduct::query()->where('zqp_external_id', $externalId)->first();
+
+        if (! $product) {
+            return response()->json(['message' => 'ZQ product not found.'], 404);
+        }
+
+        $saved = [];
+        foreach ($request->input('variants') as $variant) {
+            $row = ZqVariantPricing::updateOrCreate(
+                [
+                    'zvp_external_id' => $externalId,
+                    'zvp_sku_id'      => $variant['skuId'],
+                ],
+                [
+                    'zvp_dealer_price' => isset($variant['dealer_price'])  ? (int) $variant['dealer_price'] : null,
+                    'zvp_member_price' => isset($variant['member_price'])  ? (int) $variant['member_price'] : null,
+                    'zvp_pv'           => isset($variant['pv'])            ? (float) $variant['pv']          : null,
+                    'zvp_reversed_pv_multiplier' => isset($variant['reversed_pv_multiplier'])
+                        ? (float) $variant['reversed_pv_multiplier']
+                        : null,
+                ]
+            );
+
+            $saved[] = [
+                'skuId'       => $row->zvp_sku_id,
+                'dealerPrice' => $row->zvp_dealer_price,
+                'memberPrice' => $row->zvp_member_price,
+                'pv'          => $row->zvp_pv !== null ? (float) $row->zvp_pv : null,
+                'reversedPvMultiplier' => $row->zvp_reversed_pv_multiplier !== null ? (float) $row->zvp_reversed_pv_multiplier : null,
+            ];
+        }
+
+        return response()->json([
+            'message'  => 'Variant pricing updated successfully.',
+            'variants' => $saved,
+        ]);
+    }
+
+    public function bulkUpdateZqProductPricing(Request $request): JsonResponse
+    {
+        $body = $request->input('rows');
+
+        if (! is_array($body) || empty($body)) {
+            return response()->json(['message' => 'No rows provided.'], 422);
+        }
+
+        if (count($body) > 1000) {
+            return response()->json(['message' => 'Maximum 1000 rows per request.'], 422);
+        }
+
+        $updated = 0;
+        $skipped = 0;
+        $errors  = 0;
+        $results = [];
+
+        foreach ($body as $index => $row) {
+            $rowNum = $index + 1;
+
+            $validator = Validator::make((array) $row, [
+                'externalId'             => 'required|string',
+                'dealer_price'           => 'nullable|integer|min:0',
+                'member_price'           => 'nullable|integer|min:0',
+                'pv'                     => 'nullable|numeric|min:0',
+                'pv_tier'                => 'nullable|string|in:low_end,high_end',
+                'reversed_pv_multiplier' => 'nullable|numeric|min:0',
+            ]);
+
+            if ($validator->fails()) {
+                $errors++;
+                $results[] = [
+                    'row'        => $rowNum,
+                    'externalId' => $row['externalId'] ?? null,
+                    'status'     => 'error',
+                    'reason'     => implode('; ', $validator->errors()->all()),
+                ];
+                continue;
+            }
+
+            $externalId = trim((string) ($row['externalId'] ?? ''));
+            $product    = ZqProduct::query()->where('zqp_external_id', $externalId)->first();
+
+            if (! $product) {
+                $skipped++;
+                $results[] = [
+                    'row'        => $rowNum,
+                    'externalId' => $externalId,
+                    'status'     => 'skipped',
+                    'reason'     => 'Product not found.',
+                ];
+                continue;
+            }
+
+            $product->update([
+                'zqp_dealer_price'           => array_key_exists('dealer_price', $row) && $row['dealer_price'] !== null
+                                                    ? (int) $row['dealer_price'] : $product->zqp_dealer_price,
+                'zqp_member_price'           => array_key_exists('member_price', $row) && $row['member_price'] !== null
+                                                    ? (int) $row['member_price'] : $product->zqp_member_price,
+                'zqp_pv'                     => array_key_exists('pv', $row) && $row['pv'] !== null
+                                                    ? (float) $row['pv'] : $product->zqp_pv,
+                'zqp_pv_tier'                => array_key_exists('pv_tier', $row) && $row['pv_tier'] !== null
+                                                    ? $row['pv_tier'] : ($product->zqp_pv_tier ?? 'low_end'),
+                'zqp_reversed_pv_multiplier' => array_key_exists('reversed_pv_multiplier', $row) && $row['reversed_pv_multiplier'] !== null
+                                                    ? (float) $row['reversed_pv_multiplier'] : $product->zqp_reversed_pv_multiplier,
+            ]);
+
+            $updated++;
+            $results[] = [
+                'row'        => $rowNum,
+                'externalId' => $externalId,
+                'status'     => 'updated',
+                'reason'     => null,
+            ];
+        }
+
+        return response()->json([
+            'message' => "Bulk update complete: {$updated} updated, {$skipped} skipped, {$errors} errors.",
+            'summary' => [
+                'total'   => count($body),
+                'updated' => $updated,
+                'skipped' => $skipped,
+                'errors'  => $errors,
+            ],
+            'results' => $results,
+        ]);
     }
 }

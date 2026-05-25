@@ -93,15 +93,9 @@ class PaymentController extends Controller
     private function resolveRequestedPaymongoMode(?string $requestedMode = null, ?Request $request = null): string
     {
         $requestedMode = strtolower(trim((string) $requestedMode));
-        $isLocalRequest = $this->requestCanUseTestPaymongoMode($request);
 
-        if (!$isLocalRequest) {
+        if (!$this->requestCanUseTestPaymongoMode($request)) {
             return 'live';
-        }
-
-        // Force PayMongo test mode for localhost/local environments.
-        if ($isLocalRequest && !in_array($requestedMode, ['live'], true)) {
-            return 'test';
         }
 
         if (!$this->canSwitchPaymongoMode()) {
@@ -131,13 +125,8 @@ class PaymentController extends Controller
 
     private function resolveCheckoutPaymentMode(string $checkoutId, ?string $requestedMode = null, ?Request $request = null): string
     {
-        $isLocalRequest = $this->requestCanUseTestPaymongoMode($request);
-        if (!$isLocalRequest) {
+        if (!$this->requestCanUseTestPaymongoMode($request)) {
             return 'live';
-        }
-
-        if ($isLocalRequest && strtolower(trim((string) $requestedMode)) !== 'live') {
-            return 'test';
         }
 
         if ($requestedMode !== null && $requestedMode !== '' && $this->canSwitchPaymongoMode()) {
@@ -156,7 +145,7 @@ class PaymentController extends Controller
             ]);
         }
 
-        return $isLocalRequest ? 'test' : $this->paymongoDefaultMode();
+        return $this->paymongoDefaultMode();
     }
 
     private function getValidPaymongoWebhookSecrets(?string $requestedMode = null): array
@@ -264,9 +253,6 @@ class PaymentController extends Controller
             'payment_method' => 'required|in:online_banking,card,gcash,maya',
             'payment_mode' => 'nullable|in:test,live',
             'online_banking_provider' => 'nullable|in:dob,ubp',
-            'platform' => 'nullable|in:ios,android',
-            'device_id' => 'nullable|string|max:255',
-            'app_version' => 'nullable|string|max:50',
             'voucher_code' => 'nullable|string|max:80',
             'source_label' => 'nullable|string|max:255',
             'source_slug' => 'nullable|string|max:255',
@@ -362,23 +348,14 @@ class PaymentController extends Controller
         $storefrontPartner = trim((string) ($validated['storefront_partner'] ?? ''));
         $sourceHost = trim((string) ($validated['source_host'] ?? ''));
         $sourceUrl = trim((string) ($validated['source_url'] ?? ''));
-        $platform = trim((string) ($validated['platform'] ?? ''));
-        $isMobileRequest = in_array($platform, ['ios', 'android'], true);
-
-        if ($isMobileRequest) {
-            $frontendBase = 'purchases://';
-            $successPath = 'paid';
-            $cancelPath = 'cancelled';
-        } else {
-            $frontendBase = $this->resolveFrontendBaseUrl($sourceUrl);
-            $normalizedSourceSlug = $this->resolveStorefrontSlug($storefrontPartner !== '' ? $storefrontPartner : $sourceSlug, $sourceUrl, $sourceLabel);
-            $successPath = $normalizedSourceSlug !== ''
-                ? "/{$normalizedSourceSlug}/checkout/success"
-                : '/checkout/success';
-            $cancelPath = $normalizedSourceSlug !== ''
-                ? "/{$normalizedSourceSlug}/checkout/failed"
-                : '/checkout/failed';
-        }
+        $frontendBase = $this->resolveFrontendBaseUrl($sourceUrl);
+        $normalizedSourceSlug = $this->resolveStorefrontSlug($storefrontPartner !== '' ? $storefrontPartner : $sourceSlug, $sourceUrl, $sourceLabel);
+        $successPath = $normalizedSourceSlug !== ''
+            ? "/{$normalizedSourceSlug}/checkout/success"
+            : '/checkout/success';
+        $cancelPath = $normalizedSourceSlug !== ''
+            ? "/{$normalizedSourceSlug}/checkout/failed"
+            : '/checkout/failed';
 
         $voucherCode = trim((string) ($validated['voucher_code'] ?? ''));
         $resolvedOrderSnapshot = $this->resolveOrderSnapshot(is_array($validated['order'] ?? null) ? $validated['order'] : []);
@@ -470,20 +447,15 @@ class PaymentController extends Controller
         $data = $res->json('data');
         $checkoutId = $data['id'] ?? null;
         if (is_string($checkoutId) && trim($checkoutId) !== '') {
-            if ($isMobileRequest) {
-                $patchedSuccessUrl = $frontendBase . $successPath . '/' . urlencode($checkoutId);
-                $patchedCancelUrl = $frontendBase . $cancelPath . '/' . urlencode($checkoutId);
-            } else {
-                $successBase = $normalizedSourceSlug !== ''
-                    ? "{$frontendBase}/{$normalizedSourceSlug}/checkout/success"
-                    : "{$frontendBase}/checkout/success";
-                $cancelBase = $normalizedSourceSlug !== ''
-                    ? "{$frontendBase}/{$normalizedSourceSlug}/checkout/failed"
-                    : "{$frontendBase}/checkout/failed";
+            $successBase = $normalizedSourceSlug !== ''
+                ? "{$frontendBase}/{$normalizedSourceSlug}/checkout/success"
+                : "{$frontendBase}/checkout/success";
+            $cancelBase = $normalizedSourceSlug !== ''
+                ? "{$frontendBase}/{$normalizedSourceSlug}/checkout/failed"
+                : "{$frontendBase}/checkout/failed";
 
-                $patchedSuccessUrl = $successBase . '?checkout_id=' . urlencode($checkoutId);
-                $patchedCancelUrl = $cancelBase . '?checkout_id=' . urlencode($checkoutId);
-            }
+            $patchedSuccessUrl = $successBase . '?checkout_id=' . urlencode($checkoutId);
+            $patchedCancelUrl = $cancelBase . '?checkout_id=' . urlencode($checkoutId);
 
             try {
                 $patchResponse = Http::withBasicAuth($secretKey, '')
@@ -793,21 +765,6 @@ class PaymentController extends Controller
             return response()->json(['message' => 'Invalid webhook signature.'], 401);
         }
 
-        // Extract webhook event ID for idempotency
-        $webhookEventId = (string) data_get($payload, 'data.id', '');
-        if ($webhookEventId) {
-            $cacheKey = "paymongo_webhook_processed:{$webhookEventId}";
-            if (Cache::has($cacheKey)) {
-                Log::info('PayMongo webhook DUPLICATE - already processed', [
-                    'webhook_event_id' => $webhookEventId,
-                    'ip' => $request->ip(),
-                ]);
-                return response()->json(['received' => true, 'processed' => false, 'reason' => 'duplicate_event'], 202);
-            }
-            // Mark this webhook as processed (24 hour TTL)
-            Cache::put($cacheKey, true, 86400);
-        }
-
         $eventType = strtolower((string) data_get($payload, 'data.attributes.type', ''));
         $paidEventTypes = ['checkout_session.payment.paid', 'checkout_session.paid', 'payment.paid'];
 
@@ -842,16 +799,6 @@ class PaymentController extends Controller
         $attrs = $this->extractCheckoutAttributesFromWebhook($payload);
         $attrs['status'] = $attrs['status'] ?? 'paid';
         $attrs = $this->hydrateCheckoutAttributesIfNeeded($checkoutId, $attrs);
-
-        // Extract payment ID from multiple possible locations
-        $paymentId = $this->extractPaymentIdFromWebhookOrAttributes($payload, $attrs);
-        if ($paymentId) {
-            $attrs['payment_id'] = $paymentId;
-            Log::info('PayMongo webhook extracted payment_id', [
-                'checkout_id' => $checkoutId,
-                'payment_id' => $paymentId,
-            ]);
-        }
 
         // Debug: Check if notification exists before update
         $notificationExists = \App\Models\OrderNotification::query()
@@ -1327,6 +1274,9 @@ class PaymentController extends Controller
                     'total_amount' => (float) $order->ch_amount,
                     'shipping_fee' => (float) ($order->ch_shipping_fee ?? 0),
                     'payment_method' => $this->formatPaymentMethod((string) ($order->ch_payment_method ?? '')),
+                    'courier' => $order->ch_courier ?: null,
+                    'shipment_status' => $order->ch_shipment_status ?: null,
+                    'tracking_no' => $trackingNo,
                     'tracking_number' => $trackingNo,
                     'refund_reason' => $order->ch_refund_reason ?: null,
                     'refund_image_urls' => is_array($order->ch_refund_image_urls) ? array_values($order->ch_refund_image_urls) : [],
@@ -1651,7 +1601,6 @@ class PaymentController extends Controller
                     [
                         'ch_customer_id' => null,
                         'ch_payment_intent_id' => data_get($attrs, 'payment_intent.id'),
-                        'ch_payment_id' => data_get($attrs, 'payment_id') ?: data_get($attrs, 'payments.0.id'),
                         'ch_status' => (string) ($attrs['status'] ?? 'pending'),
                         'ch_approval_status' => 'pending_approval',
                         'ch_fulfillment_status' => 'pending',
@@ -1693,7 +1642,6 @@ class PaymentController extends Controller
 
             $history->ch_status = (string) ($attrs['status'] ?? $history->ch_status ?? 'pending');
             $history->ch_payment_intent_id = data_get($attrs, 'payment_intent.id') ?: $history->ch_payment_intent_id;
-            $history->ch_payment_id = data_get($attrs, 'payment_id') ?: data_get($attrs, 'payments.0.id') ?: $history->ch_payment_id;
             if ((string) ($history->ch_payment_method ?? '') === '' && $resolvedPaymentMethod !== '') {
                 $history->ch_payment_method = $resolvedPaymentMethod;
             }
@@ -1759,7 +1707,6 @@ class PaymentController extends Controller
                     'ch_referrer_customer_id' => !empty($cached['referrer_user_id']) ? (int) $cached['referrer_user_id'] : null,
                     'ch_referral_source_type' => (string) ($cached['referral_source_type'] ?? ''),
                     'ch_payment_intent_id' => data_get($attrs, 'payment_intent.id'),
-                    'ch_payment_id' => data_get($attrs, 'payment_id') ?: data_get($attrs, 'payments.0.id'),
                     'ch_status' => (string) ($attrs['status'] ?? 'paid'),
                     'ch_description' => (string) ($cached['description'] ?? ''),
                     'ch_amount' => (float) ($cached['amount'] ?? 0),
@@ -2727,32 +2674,6 @@ class PaymentController extends Controller
         return is_array($attrs) ? $attrs : [];
     }
 
-    private function extractPaymentIdFromWebhookOrAttributes(array $payload, array $attrs): ?string
-    {
-        // Try to extract payment ID from various possible locations in PayMongo response
-        // NOTE: data.attributes.data.id is the CHECKOUT_SESSION_ID, not the payment ID!
-        // Actual payment ID comes from the payments array
-        $candidates = [
-            // From payments array in attributes (PRIORITY: actual payment ID)
-            data_get($attrs, 'payments.0.id'),
-            // From nested payment object
-            data_get($payload, 'data.attributes.payments.0.id'),
-            // From payment method/source
-            data_get($attrs, 'payment_method.id'),
-            data_get($attrs, 'source.id'),
-            // Fallback: webhook event ID (not ideal but better than checkout_id)
-            data_get($payload, 'data.id'),
-        ];
-
-        foreach ($candidates as $candidate) {
-            if (is_string($candidate) && trim($candidate) !== '') {
-                return trim($candidate);
-            }
-        }
-
-        return null;
-    }
-
     private function hydrateCheckoutAttributesIfNeeded(string $checkoutId, array $attrs): array
     {
         $hasStatus = !empty($attrs['status']);
@@ -3145,270 +3066,5 @@ class PaymentController extends Controller
                 ],
             ], 500);
         }
-    }
-
-    public function getCancellationReasons(): \Illuminate\Http\JsonResponse
-    {
-        $reasons = [
-            'changed_mind' => 'Changed my mind',
-            'found_better_price' => 'Found a better price',
-            'item_out_of_stock' => 'Item out of stock',
-            'wrong_item_ordered' => 'Wrong item ordered',
-            'quality_issue' => 'Quality concern',
-            'delivery_too_slow' => 'Delivery taking too long',
-            'duplicate_order' => 'Duplicate order',
-            'other' => 'Other reason',
-        ];
-
-        return response()->json([
-            'cancellation_reasons' => $reasons,
-        ]);
-    }
-
-    public function cancelOrder(Request $request, $id): \Illuminate\Http\JsonResponse
-    {
-        $customer = $request->user();
-        if (!$customer) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
-        $id = (int) $id;
-
-        $validReasons = [
-            'changed_mind' => 'Changed my mind',
-            'found_better_price' => 'Found a better price',
-            'item_out_of_stock' => 'Item out of stock',
-            'wrong_item_ordered' => 'Wrong item ordered',
-            'quality_issue' => 'Quality concern',
-            'delivery_too_slow' => 'Delivery taking too long',
-            'duplicate_order' => 'Duplicate order',
-            'other' => 'Other reason',
-        ];
-
-        $validated = $request->validate([
-            'payment_mode' => 'nullable|in:test,live',
-            'cancellation_reason' => 'nullable|in:' . implode(',', array_keys($validReasons)),
-            'cancellation_notes' => 'nullable|string|max:500',
-        ]);
-
-        Log::info('=== CANCEL ORDER DEBUG START ===');
-        Log::info('Cancel request params', ['order_id' => $id, 'validated' => $validated]);
-
-        $order = CheckoutHistory::query()
-            ->where('ch_id', $id)
-            ->where('ch_customer_id', (int) $customer->getAuthIdentifier())
-            ->first();
-
-        if (!$order) {
-            Log::warning('Order not found', ['order_id' => $id]);
-            return response()->json(['message' => 'Order not found.'], 404);
-        }
-
-        Log::info('Order found', [
-            'ch_id' => $order->ch_id,
-            'ch_status' => $order->ch_status,
-            'ch_fulfillment_status' => $order->ch_fulfillment_status,
-            'ch_payment_intent_id' => $order->ch_payment_intent_id,
-            'ch_amount' => $order->ch_amount,
-            'ch_checkout_id' => $order->ch_checkout_id,
-        ]);
-
-        if ($order->ch_fulfillment_status !== 'pending' || !in_array($order->ch_status, ['pending', 'paid', 'succeeded', 'success'])) {
-            Log::warning('Order cancellation rejected', [
-                'order_id' => $order->ch_id,
-                'fulfillment_status' => $order->ch_fulfillment_status,
-                'payment_status' => $order->ch_status,
-            ]);
-            return response()->json([
-                'message' => 'Order can only be cancelled if pending payment or payment confirmed but processing has not started.',
-                'current_fulfillment_status' => $order->ch_fulfillment_status,
-                'current_payment_status' => $order->ch_status,
-            ], 422);
-        }
-
-        try {
-            $mode = $validated['payment_mode'] ?? $this->resolveCheckoutPaymentMode($order->ch_checkout_id);
-            $cancellationReason = $validated['cancellation_reason'] ?? 'customer_request';
-            $cancellationNotes = $validated['cancellation_notes'] ?? null;
-            $reasonLabel = $validReasons[$cancellationReason] ?? 'Customer request';
-
-            Log::info('Cancel processing params', [
-                'mode' => $mode,
-                'cancellation_reason' => $cancellationReason,
-                'cancellation_notes' => $cancellationNotes,
-            ]);
-
-            // Check if order was paid BEFORE changing status
-            $isPaid = in_array($order->ch_status, ['paid', 'succeeded', 'success']);
-
-            Log::info('Payment status check', [
-                'ch_status' => $order->ch_status,
-                'isPaid' => $isPaid,
-                'ch_payment_intent_id' => $order->ch_payment_intent_id,
-                'ch_payment_intent_id_exists' => !empty($order->ch_payment_intent_id),
-            ]);
-
-            // Only process refund if payment was already confirmed (paid/succeeded/success status)
-            if ($order->ch_payment_intent_id && $isPaid) {
-                Log::info('Processing refund', ['order_id' => $order->ch_id, 'amount' => $order->ch_amount]);
-                $this->processPaymongoRefund($order, $mode, $cancellationReason);
-                Log::info('Refund processed successfully', ['order_id' => $order->ch_id]);
-            } else {
-                Log::info('Refund not processed', [
-                    'reason' => !$order->ch_payment_intent_id ? 'no_payment_intent_id' : 'order_not_paid',
-                    'has_payment_intent_id' => !empty($order->ch_payment_intent_id),
-                    'isPaid' => $isPaid,
-                ]);
-            }
-
-            $order->ch_fulfillment_status = 'cancelled';
-            $order->ch_status = 'cancelled';
-            $order->ch_refund_reason = "{$reasonLabel}" . ($cancellationNotes ? " - {$cancellationNotes}" : '');
-            $order->save();
-
-            // Create cancellation record in dedicated table
-            \App\Models\OrderCancellation::create([
-                'oc_order_id' => $order->ch_id,
-                'oc_customer_id' => (int) $customer->getAuthIdentifier(),
-                'oc_cancellation_reason' => $cancellationReason,
-                'oc_reason_label' => $reasonLabel,
-                'oc_cancellation_notes' => $cancellationNotes,
-                'oc_refund_amount' => $isPaid ? $order->ch_amount : 0,
-                'oc_refund_status' => $isPaid ? 'processing' : 'not_applicable',
-                'oc_cancelled_at' => now(),
-            ]);
-
-            OrderNotification::updateStatusForCheckout($order->ch_checkout_id, 'cancelled', [
-                'refund_amount' => $isPaid ? $order->ch_amount : 0,
-                'is_paid' => $isPaid,
-            ]);
-
-            $this->notifyCustomerOrderStatusUpdate(
-                $order,
-                'order_cancelled',
-                'Order Cancelled',
-                'Your order has been successfully cancelled and a refund will be processed within 3-5 business days.',
-            );
-
-            Log::info('Order cancelled by customer', [
-                'order_id' => $order->ch_id,
-                'customer_id' => $customer->getAuthIdentifier(),
-                'cancellation_reason' => $cancellationReason,
-                'payment_mode' => $mode,
-                'amount' => $order->ch_amount,
-                'was_paid' => $isPaid,
-            ]);
-            $message = $isPaid
-                ? 'Order cancelled successfully. Refund will be processed to your original payment method within 3-5 business days.'
-                : 'Order cancelled successfully. No refund is needed as payment was not yet confirmed.';
-
-            Log::info('=== CANCEL ORDER DEBUG END ===', [
-                'order_id' => $order->ch_id,
-                'final_status' => $order->ch_status,
-                'final_fulfillment_status' => $order->ch_fulfillment_status,
-                'refund_processed' => $isPaid && !empty($order->ch_payment_intent_id),
-            ]);
-
-            return response()->json([
-                'message' => $message,
-                'order_id' => $order->ch_id,
-                'refund_amount' => $isPaid ? $order->ch_amount : 0,
-                'cancellation_reason' => $reasonLabel,
-                'estimated_refund_days' => $isPaid ? 3 : 0,
-                'cancellation_reasons' => $validReasons,
-            ]);
-        } catch (\Throwable $e) {
-            Log::error('Error cancelling order', [
-                'order_id' => $order->ch_id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'Failed to cancel order: ' . $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    private function processPaymongoRefund(CheckoutHistory $order, string $mode, string $reason = 'customer_request'): void
-    {
-        Log::info('=== PAYMONGO REFUND PROCESS START ===');
-        Log::info('Refund config', ['order_id' => $order->ch_id, 'mode' => $mode]);
-
-        $paymongoConfig = config("services.paymongo.modes.{$mode}");
-        if (!$paymongoConfig) {
-            throw new RuntimeException("Invalid PayMongo mode: {$mode}");
-        }
-
-        $secretKey = (string) ($paymongoConfig['secret_key'] ?? '');
-        if (!$secretKey) {
-            throw new RuntimeException("PayMongo secret key not configured for mode: {$mode}");
-        }
-
-        $paymentId = (string) $order->ch_payment_id;
-        if (!$paymentId) {
-            throw new RuntimeException("Payment ID is missing. Cannot process refund without payment_id.");
-        }
-
-        $refundAmount = (int) ($order->ch_amount * 100);
-
-        // Map cancellation reasons to PayMongo valid reasons
-        $paymongoReasonMap = [
-            'changed_mind' => 'cancelled_by_customer',
-            'found_better_price' => 'duplicate',
-            'item_out_of_stock' => 'out_of_stock',
-            'wrong_item_ordered' => 'incorrect_amount',
-            'quality_issue' => 'fraudulent',
-            'delivery_too_slow' => 'customer_request',
-            'duplicate_order' => 'duplicate',
-            'customer_request' => 'customer_request',
-            'other' => 'customer_request',
-        ];
-        $paymongoReason = $paymongoReasonMap[$reason] ?? 'customer_request';
-
-        Log::info('Refund request data', [
-            'order_id' => $order->ch_id,
-            'payment_id' => $paymentId,
-            'refund_amount_cents' => $refundAmount,
-            'refund_amount_php' => $order->ch_amount,
-            'original_reason' => $reason,
-            'paymongo_reason' => $paymongoReason,
-        ]);
-
-        $response = Http::withBasicAuth($secretKey, '')
-            ->timeout(30)
-            ->post('https://api.paymongo.com/v1/refunds', [
-                'data' => [
-                    'attributes' => [
-                        'amount' => $refundAmount,
-                        'payment_id' => $paymentId,
-                        'reason' => $paymongoReason,
-                    ],
-                ],
-            ]);
-
-        Log::info('PayMongo refund response', [
-            'status_code' => $response->status(),
-            'response_body' => $response->json(),
-        ]);
-
-        if (!$response->successful()) {
-            $errorMessage = $response->json('errors.0.detail') ?? 'Unknown refund error';
-            Log::error('PayMongo refund failed', [
-                'order_id' => $order->ch_id,
-                'status_code' => $response->status(),
-                'error_message' => $errorMessage,
-                'full_response' => $response->json(),
-            ]);
-            throw new RuntimeException("PayMongo refund failed: {$errorMessage}");
-        }
-
-        Log::info('PayMongo refund processed', [
-            'order_id' => $order->ch_id,
-            'refund_amount' => $order->ch_amount,
-            'payment_intent_id' => $paymentIntentId,
-            'mode' => $mode,
-            'reason' => $reason,
-            'refund_id' => $response->json('data.id'),
-        ]);
     }
 }

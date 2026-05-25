@@ -237,9 +237,6 @@ Route::middleware(['auth:sanctum', 'customer.actor'])->group(function () {
     Route::post('/username-change/send-otp', [AuthController::class, 'sendUsernameChangeOtp']);
     Route::post('/username-change/submit', [AuthController::class, 'submitUsernameChangeRequest']);
     Route::post('/webstore-requests', [AuthController::class, 'submitWebstoreRequest']);
-    Route::post('/webstore-requests/payment-session', [AuthController::class, 'createWebstorePaymentSession']);
-    Route::get('/webstore-requests/payment-session/{checkoutId}', [AuthController::class, 'verifyWebstorePaymentSession']);
-    Route::post('/webstore-requests/receipt', [AuthController::class, 'uploadWebstoreReceipt'])->middleware('throttle:uploads');
     Route::get('/webstore-requests/latest', [AuthController::class, 'latestWebstoreRequest']);
     Route::post('/webstore-requests/sync-account', [AuthController::class, 'syncWebstorePartnerAccount']);
     Route::get('/account/snapshot', [AuthController::class, 'accountSnapshot']);
@@ -250,8 +247,6 @@ Route::middleware(['auth:sanctum', 'customer.actor'])->group(function () {
     Route::get('/orders/counts', [PaymentController::class, 'orderCounts']);
     Route::post('/orders/{id}/confirm', [PaymentController::class, 'confirmOrder']);
     Route::post('/orders/{id}/refund', [PaymentController::class, 'refundOrder']);
-    Route::get('/orders/cancellation-reasons', [PaymentController::class, 'getCancellationReasons']);
-    Route::post('/orders/{id}/cancel', [PaymentController::class, 'cancelOrder']);
     Route::post('/orders/test/status-update-fcm', [PaymentController::class, 'testOrderStatusUpdateWithFcn']);
     // Mobile payment endpoints
     Route::middleware('throttle:10,1')->group(function () {
@@ -376,8 +371,6 @@ Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_a
     Route::patch('/admin/inquiries/username-changes/{id}/reject', [AdminInquiryController::class, 'rejectUsernameChange']);
     Route::get('/admin/inquiries/webstore-requests', [AdminInquiryController::class, 'webstoreRequests']);
     Route::patch('/admin/inquiries/webstore-requests/{id}/approve', [AdminInquiryController::class, 'approveWebstoreRequest']);
-    Route::patch('/admin/inquiries/webstore-requests/{id}/receipts/{detailId}/approve', [AdminInquiryController::class, 'approveWebstoreReceipt']);
-    Route::patch('/admin/inquiries/webstore-requests/{id}/receipts/{detailId}/reject', [AdminInquiryController::class, 'rejectWebstoreReceipt']);
     Route::patch('/admin/inquiries/webstore-requests/{id}/reject', [AdminInquiryController::class, 'rejectWebstoreRequest']);
     Route::delete('/admin/inquiries/webstore-requests/{id}', [AdminInquiryController::class, 'destroyWebstoreRequest']);
 
@@ -408,6 +401,7 @@ Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.or_supplier'
     Route::get('/admin/products/zq/detail/{id}', [ProductController::class, 'fetchZqImportDetail']);
     Route::post('/admin/products/zq/sync', [ProductController::class, 'syncZqProducts']);
     Route::get('/admin/products/zq/summary', [ProductController::class, 'zqProductsSummary']);
+    Route::get('/admin/products/zq/inventory/{sku}', [ProductController::class, 'zqInventory']);
     Route::get('/admin/products/zq/cached', [ProductController::class, 'listCachedZqProducts']);
     Route::post('/admin/products/zq/import-to-local/{id}', [ProductController::class, 'importZqProductToLocal']);
     Route::post('/admin/products/bulk-price/preview', [ProductController::class, 'bulkPricePreview']);
@@ -513,9 +507,7 @@ Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_a
     Route::patch('/admin/encashment/{id}/approve', [AdminEncashmentController::class, 'approve']);
     Route::patch('/admin/encashment/{id}/reject', [AdminEncashmentController::class, 'reject']);
     Route::patch('/admin/encashment/{id}/release', [AdminEncashmentController::class, 'release']);
-
     Route::post('/admin/encashment/yearly-global-bonus/award', [AdminEncashmentController::class, 'awardYearlyGlobalBonus']);
-
     Route::get('/admin/expenses/categories', [ExpenseCategoryController::class, 'index']);
     Route::post('/admin/expenses/categories', [ExpenseCategoryController::class, 'store']);
     Route::put('/admin/expenses/categories/{id}', [ExpenseCategoryController::class, 'update']);
@@ -613,10 +605,16 @@ Route::middleware(['auth:sanctum', 'supplier.actor'])->group(function () {
     Route::get('/supplier/products/zq/detail/{id}', [ProductController::class, 'fetchZqImportDetail']);
     Route::post('/supplier/products/zq/sync', [ProductController::class, 'syncZqProducts']);
     Route::get('/supplier/products/zq/summary', [ProductController::class, 'zqProductsSummary']);
+    Route::get('/supplier/products/zq/inventory/{sku}', [ProductController::class, 'zqInventory']);
     Route::get('/supplier/products/zq/cached', [ProductController::class, 'listCachedZqProducts']);
     Route::get('/supplier/products/zq/category-mappings', [ProductController::class, 'listZqCategoryMappings']);
     Route::post('/supplier/products/zq/category-mappings', [ProductController::class, 'upsertZqCategoryMapping']);
     Route::post('/supplier/products/zq/import-to-local/{id}', [ProductController::class, 'importZqProductToLocal']);
+    Route::get('/supplier/products/zq/cached/export', [ProductController::class, 'exportCachedZqProducts']);
+    Route::get('/supplier/products/zq/pricing/{externalId}/variants',  [ProductController::class, 'getZqVariantPricing']);
+    Route::post('/supplier/products/zq/pricing/{externalId}/variants', [ProductController::class, 'updateZqVariantPricing']);
+    Route::patch('/supplier/products/zq/pricing/{externalId}', [ProductController::class, 'updateZqProductPricing']);
+    Route::post('/supplier/products/zq/pricing/bulk-update', [ProductController::class, 'bulkUpdateZqProductPricing']);
 });
 
 // Leads: same strict limit as auth to prevent spam submissions

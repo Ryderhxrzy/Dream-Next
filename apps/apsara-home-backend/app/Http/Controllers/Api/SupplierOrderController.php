@@ -232,6 +232,10 @@ class SupplierOrderController extends Controller
             return response()->json(['message' => 'Order must be approved before supplier fulfillment can start.'], 422);
         }
 
+        if ($this->isZqManagedOrder($order)) {
+            return response()->json(['message' => 'Dropshipping order status is managed by ZQ and cannot be changed manually.'], 422);
+        }
+
         $status = (string) $validated['fulfillment_status'];
 
         DB::transaction(function () use ($order, $status) {
@@ -300,6 +304,10 @@ class SupplierOrderController extends Controller
 
         if (($order->ch_approval_status ?? 'pending_approval') !== 'approved') {
             return response()->json(['message' => 'Order must be approved before tracking can be added.'], 422);
+        }
+
+        if ($this->isZqManagedOrder($order)) {
+            return response()->json(['message' => 'Dropshipping tracking is provided by ZQ and cannot be entered manually.'], 422);
         }
 
         $shipmentStatus = (string) ($validated['shipment_status'] ?? 'in_transit');
@@ -419,6 +427,23 @@ class SupplierOrderController extends Controller
             return response()->json(['message' => 'Order must be approved before pushing to ZQ.'], 422);
         }
 
+        if (trim((string) ($order->ch_zq_platform_order_id ?? '')) !== '') {
+            return response()->json([
+                'message' => 'Order is already pushed to ZQ.',
+                'zq' => [
+                    'already_pushed' => true,
+                    'platform_order_id' => (string) $order->ch_zq_platform_order_id,
+                    'status' => $order->ch_zq_status,
+                ],
+                'order' => $this->mapOrder($order->fresh()),
+            ]);
+        }
+
+        $zqEligibilityError = $this->zqPushEligibilityError($order);
+        if ($zqEligibilityError !== null) {
+            return response()->json(['message' => $zqEligibilityError], 422);
+        }
+
         $response = $this->pushOrderToZq($order);
 
         return response()->json([
@@ -430,6 +455,11 @@ class SupplierOrderController extends Controller
 
     private function pushOrderToZq(CheckoutHistory $order): array
     {
+        $zqEligibilityError = $this->zqPushEligibilityError($order);
+        if ($zqEligibilityError !== null) {
+            throw new \RuntimeException($zqEligibilityError);
+        }
+
         $payload = [$this->buildZqOrderPayload($order)];
         $response = $this->zqApiService->createOrder($payload);
 
@@ -445,15 +475,52 @@ class SupplierOrderController extends Controller
             $platformOrderId = (string) ($payload[0]['orderNumber'] ?? $order->ch_checkout_id);
         }
 
+        $existingZqPayload = is_array($order->ch_zq_payload) ? $order->ch_zq_payload : [];
+
         $order->fill([
             'ch_zq_platform_order_id' => $platformOrderId,
             'ch_zq_status' => $this->mapZqStateToLocalStatus((string) ($responseData['state'] ?? 'submitted')),
-            'ch_zq_payload' => $payload[0],
+            'ch_zq_payload' => array_merge($existingZqPayload, ['order_request' => $payload[0]]),
             'ch_zq_response' => $response,
             'ch_zq_synced_at' => now(),
         ])->save();
 
         return $response;
+    }
+
+    private function zqPushEligibilityError(CheckoutHistory $order): ?string
+    {
+        $zqPayload = is_array($order->ch_zq_payload) ? $order->ch_zq_payload : [];
+
+        if (! $this->hasZqSourceMetadata($zqPayload)) {
+            return 'Only ZQ dropship orders can be pushed to ZQ.';
+        }
+
+        $sku = trim((string) ($order->ch_product_sku ?? ''));
+        if ($sku === '' || strcasecmp($sku, 'SKU-undefined') === 0) {
+            return 'ZQ variant SKU is missing. Select a valid ZQ product variant before pushing to ZQ.';
+        }
+
+        return null;
+    }
+
+    private function isZqManagedOrder(CheckoutHistory $order): bool
+    {
+        $zqPayload = is_array($order->ch_zq_payload) ? $order->ch_zq_payload : [];
+
+        return $this->hasZqSourceMetadata($zqPayload)
+            || strtolower(trim((string) ($order->ch_courier ?? ''))) === 'zq'
+            || trim((string) ($order->ch_zq_platform_order_id ?? '')) !== ''
+            || trim((string) ($order->ch_zq_order_id ?? '')) !== ''
+            || trim((string) ($order->ch_zq_status ?? '')) !== '';
+    }
+
+    private function hasZqSourceMetadata(array $zqPayload): bool
+    {
+        return strtolower(trim((string) ($zqPayload['source_type'] ?? ''))) === 'zq'
+            || trim((string) ($zqPayload['zq_external_id'] ?? '')) !== ''
+            || trim((string) ($zqPayload['zq_product_id'] ?? '')) !== ''
+            || trim((string) ($zqPayload['zq_offer_id'] ?? '')) !== '';
     }
 
     private function buildZqOrderPayload(CheckoutHistory $order): array
@@ -685,7 +752,11 @@ class SupplierOrderController extends Controller
                 'tbl_checkout_history.ch_customer_address',
                 'tbl_checkout_history.ch_paid_at',
                 'tbl_checkout_history.ch_zq_platform_order_id',
+                'tbl_checkout_history.ch_zq_order_id',
                 'tbl_checkout_history.ch_zq_status',
+                'tbl_checkout_history.ch_zq_payload',
+                'tbl_checkout_history.ch_zq_response',
+                'tbl_checkout_history.ch_zq_synced_at',
                 'tbl_checkout_history.created_at',
                 'tbl_checkout_history.updated_at',
                 'p.pd_description as product_description',
@@ -772,7 +843,11 @@ class SupplierOrderController extends Controller
             'customer_address' => $row->ch_customer_address,
             'paid_at' => optional($row->ch_paid_at)->toDateTimeString(),
             'zq_platform_order_id' => $row->ch_zq_platform_order_id ?? null,
+            'zq_order_id' => $row->ch_zq_order_id ?? null,
             'zq_status' => $row->ch_zq_status ?? null,
+            'zq_payload' => is_array($row->ch_zq_payload) ? $row->ch_zq_payload : null,
+            'zq_response' => is_array($row->ch_zq_response) ? $row->ch_zq_response : null,
+            'zq_synced_at' => optional($row->ch_zq_synced_at)->toDateTimeString(),
             'created_at' => optional($row->created_at)->toDateTimeString(),
             'updated_at' => optional($row->updated_at)->toDateTimeString(),
         ];
