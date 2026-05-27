@@ -43,3 +43,5 @@ php artisan cache:clear >/dev/null 2>&1 || true
 php artisan migrate --force
 
 exec "$@"
+
+# test
