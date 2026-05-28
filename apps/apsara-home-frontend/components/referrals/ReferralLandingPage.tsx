@@ -26,28 +26,6 @@ const ReferralLandingPage = ({ referralCode }: ReferralLandingPageProps) => {
     setStoredReferralCode(normalizedCode);
   }, [isLoggedIn, normalizedCode]);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    // Check if device is mobile
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    if (!isMobile) return;
-
-    const appScheme = `apsarahome://ref/${encodeURIComponent(normalizedCode)}`;
-
-    // Set a timeout to fallback to web if app doesn't open
-    const appOpenTimeout = setTimeout(() => {
-      console.log('[ReferralLandingPage] App not detected on mobile, staying on web');
-    }, 1000);
-
-    // Try to open the app
-    console.log('[ReferralLandingPage] Attempting to open app with scheme:', appScheme);
-    window.location.href = appScheme;
-
-    // Cleanup timeout
-    return () => clearTimeout(appOpenTimeout);
-  }, [normalizedCode]);
-
   return (
     <>
       <AppPromoBar />
