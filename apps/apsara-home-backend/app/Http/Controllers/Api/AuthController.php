@@ -73,7 +73,7 @@ class AuthController extends Controller
             'last_name'             => 'required|string|max:255',
             'middle_name'           => 'nullable|string|max:255',
             'name'                  => 'required|string|max:255',
-            'email'                 => ['required', 'email', Rule::unique('tbl_customer', 'c_email')],
+            'email'                 => ['nullable', 'email', Rule::unique('tbl_customer', 'c_email')],
             'username'              => ['required', 'string', 'max:255', 'regex:/^[A-Za-z0-9]+$/', Rule::unique('tbl_customer', 'c_username')],
             'phone'                 => 'nullable|string|max:20',
             'birth_date'            => 'nullable|date',
@@ -90,7 +90,6 @@ class AuthController extends Controller
                 'regex:/[A-Z]/',
                 'regex:/[a-z]/',
                 'regex:/[0-9]/',
-                'regex:/[^A-Za-z0-9]/',
             ],
             'address'               => 'nullable|string|max:500',
             'barangay'              => 'nullable|string|max:255',
@@ -106,7 +105,7 @@ class AuthController extends Controller
         ], [
             'password.min' => 'Password must be at least 8 characters.',
             'password.confirmed' => 'Password confirmation does not match.',
-            'password.regex' => 'Password must include uppercase, lowercase, number, and special character.',
+            'password.regex' => 'Password must include uppercase, lowercase, and number.',
             'username.regex' => 'Username must contain letters and numbers only.',
         ]);
 
@@ -6006,6 +6005,129 @@ class AuthController extends Controller
             ],
             'token' => $token,
         ]);
+    }
+
+    public function sendOtpViaSms(Request $request)
+    {
+        $validated = $request->validate([
+            'phone' => 'required|string|max:20',
+        ]);
+
+        try {
+            $phoneNumber = trim((string) $validated['phone']);
+            $otp = (string) random_int(1000, 9999);
+            $verificationToken = (string) Str::uuid();
+
+            $semaphoreService = new \App\Services\SemaphoreService();
+            $sent = $semaphoreService->sendOtp($phoneNumber, $otp);
+
+            if (!$sent) {
+                return response()->json([
+                    'message' => 'Failed to send OTP. Please try again.',
+                ], 500);
+            }
+
+            Cache::put($this->otpSmsCacheKey($verificationToken), [
+                'otp_hash' => Hash::make($otp),
+                'phone' => $phoneNumber,
+            ], now()->addMinutes(10));
+
+            return response()->json([
+                'message' => 'OTP has been sent to your phone number.',
+                'requires_otp' => true,
+                'verification_token' => $verificationToken,
+                'phone' => $phoneNumber,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('sendOtpViaSms error', [
+                'error' => $e->getMessage(),
+                'phone' => $validated['phone'] ?? null,
+            ]);
+
+            return response()->json([
+                'message' => 'An error occurred while sending OTP.',
+            ], 500);
+        }
+    }
+
+    public function verifySmsOtp(Request $request)
+    {
+        $validated = $request->validate([
+            'verification_token' => 'required|string',
+            'otp' => 'required|string|size:4',
+        ]);
+
+        $token = $validated['verification_token'];
+        $cacheKey = $this->otpSmsCacheKey($token);
+        $attemptsKey = $this->otpAttemptsCacheKey($token);
+        $cached = Cache::get($cacheKey);
+
+        // Check if OTP expired
+        if (!is_array($cached) || empty($cached['otp_hash'])) {
+            Log::warning('SMS OTP verification failed: expired', [
+                'token_prefix' => substr($token, 0, 8),
+            ]);
+
+            return response()->json([
+                'message' => 'The verification code has expired. Please request a new OTP.',
+                'error' => 'OTP_EXPIRED',
+            ], 410); // 410 Gone
+        }
+
+        // Check attempt limit (max 5 attempts)
+        $attempts = (int) Cache::get($attemptsKey, 0);
+        if ($attempts >= 5) {
+            Log::warning('SMS OTP verification failed: max attempts exceeded', [
+                'token_prefix' => substr($token, 0, 8),
+                'attempts' => $attempts,
+            ]);
+
+            return response()->json([
+                'message' => 'Too many failed attempts. Please request a new OTP.',
+                'error' => 'MAX_ATTEMPTS_EXCEEDED',
+            ], 429); // 429 Too Many Requests
+        }
+
+        // Verify OTP
+        if (!Hash::check((string) $validated['otp'], (string) $cached['otp_hash'])) {
+            $newAttempts = $attempts + 1;
+            Cache::put($attemptsKey, $newAttempts, now()->addMinutes(10));
+
+            Log::warning('SMS OTP verification failed: invalid OTP', [
+                'token_prefix' => substr($token, 0, 8),
+                'attempt' => $newAttempts,
+            ]);
+
+            return response()->json([
+                'message' => "Invalid verification code. {5 - $newAttempts} attempt(s) remaining.",
+                'error' => 'INVALID_OTP',
+                'attempts_remaining' => max(0, 5 - $newAttempts),
+            ], 422); // 422 Unprocessable Entity
+        }
+
+        // OTP is valid - clean up cache
+        Cache::forget($cacheKey);
+        Cache::forget($attemptsKey);
+
+        Log::info('SMS OTP verification successful', [
+            'token_prefix' => substr($token, 0, 8),
+            'phone' => $cached['phone'] ?? null,
+        ]);
+
+        return response()->json([
+            'message' => 'Phone number verified successfully.',
+            'phone' => $cached['phone'] ?? null,
+        ], 200);
+    }
+
+    private function otpSmsCacheKey(string $verificationToken): string
+    {
+        return "otp_sms:{$verificationToken}";
+    }
+
+    private function otpAttemptsCacheKey(string $verificationToken): string
+    {
+        return "otp_sms_attempts:{$verificationToken}";
     }
 
 }

@@ -204,4 +204,8 @@ return [
         'credentials' => env('FIREBASE_CREDENTIALS_PATH', storage_path('firebase-credentials.json')),
     ],
 
+    'semaphore' => [
+        'key' => env('SEMAPHORE_API_KEY'),
+    ],
+
 ];

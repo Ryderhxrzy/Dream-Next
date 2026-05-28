@@ -88,6 +88,8 @@ Route::prefix('auth')->group(function () {
         Route::post('/register/resend-otp', [AuthController::class, 'resendRegistrationOtp']);
         Route::post('/login/2fa/resend', [AuthController::class, 'resendLoginOtp']);
         Route::post('/login/mfa/resend', [AuthController::class, 'resendLoginOtp']);
+        Route::post('/send-sms-otp', [AuthController::class, 'sendOtpViaSms']);
+        Route::post('/verify-sms-otp', [AuthController::class, 'verifySmsOtp']);
     });
     // Low-risk read/check endpoints
     Route::get('/register/check-email', [AuthController::class, 'checkEmailAvailability']);
