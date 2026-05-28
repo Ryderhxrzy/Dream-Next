@@ -1965,7 +1965,7 @@ class AuthController extends Controller
             'display_name' => 'required|string|max:255',
             'plan' => ['required', Rule::in(['quarterly', 'semi_annual', 'annual'])],
             'billing_option' => ['required', Rule::in(['full', 'monthly'])],
-            'payment_method' => ['required', Rule::in(['online_banking'])],
+            'payment_method' => ['required', Rule::in(['gcash', 'grab_pay', 'maya', 'card'])],
             'receipt_urls' => 'required|array|min:1|max:5',
             'receipt_urls.*' => 'required|url|max:2048',
             'checkout_id' => ['nullable', 'string', 'max:255'],
@@ -2011,9 +2011,28 @@ class AuthController extends Controller
             'submitted_at' => $submittedAt->toDateTimeString(),
         ];
 
-        // If member already has an approved storefront request, treat submission as
-        // a monthly/continuation payment proof upload on the same ticket.
-        if ($latest && $this->mapTicketDecisionStatus((int) $latest->t_status, (int) $latest->t_id) === 'approved') {
+        $latestPayload = [];
+        if ($latest) {
+            $latestDetail = DB::table('tbl_tickets_details')
+                ->where('t_id', (int) $latest->t_id)
+                ->where('td_replystat', 0)
+                ->orderBy('td_id')
+                ->first();
+            $decodedLatestPayload = $this->decodeWebstorePayload($latestDetail?->td_content ?? null);
+            if (is_array($decodedLatestPayload) && ! empty($decodedLatestPayload)) {
+                $latestPayload = $decodedLatestPayload;
+            }
+        }
+
+        $latestStatus = $latest ? $this->mapWebstoreRequestStatus(
+            (int) $latest->t_status,
+            (int) $latest->t_id,
+            (string) ($latestPayload['slug_name'] ?? '')
+        ) : '';
+
+        // Only keep adding continuation receipts when the previous request is truly
+        // active/approved. A deleted storefront request should behave like a fresh start.
+        if ($latest && $latestStatus === 'approved') {
             $continuationPayload = array_merge($requestPayload, [
                 'type' => 'webstore_payment_continuation',
             ]);
@@ -2138,7 +2157,7 @@ class AuthController extends Controller
         $validated = $request->validate([
             'plan' => ['required', Rule::in(['quarterly', 'semi_annual', 'annual'])],
             'billing_option' => ['required', Rule::in(['full', 'monthly'])],
-            'payment_method' => ['required', Rule::in(['online_banking'])],
+            'payment_method' => ['required', Rule::in(['gcash', 'grab_pay', 'maya', 'card'])],
             'payment_mode' => ['nullable', Rule::in(['test', 'live'])],
         ]);
 
@@ -3428,7 +3447,7 @@ class AuthController extends Controller
             ? array_values($latestReceiptPayload['receipt_urls'])
             : [];
         $subscriptionProgress = $this->calculateWebstoreSubscriptionProgress($ticketId);
-        $status = $this->mapTicketDecisionStatus((int) $ticket->t_status, $ticketId);
+        $status = $this->mapWebstoreRequestStatus((int) $ticket->t_status, $ticketId, (string) ($payload['slug_name'] ?? ''));
 
         return [
             'id' => (int) $ticket->t_id,
@@ -3583,6 +3602,42 @@ class AuthController extends Controller
             'total_paid_amount' => $paidAmount,
             'remaining_balance' => $remainingBalance,
         ];
+    }
+
+    private function normalizeStorefrontSlug(string $value): string
+    {
+        $slug = mb_strtolower(trim($value), 'UTF-8');
+        if ($slug === '') {
+            return '';
+        }
+
+        $slug = preg_replace('/[^a-z0-9]+/i', '-', $slug) ?? '';
+        return trim($slug, '-');
+    }
+
+    private function mapWebstoreRequestStatus(int $ticketStatus, int $ticketId, string $slugName): string
+    {
+        $status = $this->mapTicketDecisionStatus($ticketStatus, $ticketId);
+        if ($status !== 'approved') {
+            return $status;
+        }
+
+        $normalizedSlug = $this->normalizeStorefrontSlug($slugName);
+        if ($normalizedSlug === '') {
+            return 'deleted';
+        }
+
+        $exists = WebPageContent::query()
+            ->whereIn('wpc_type', ['partner-storefront', 'partner-storefronts'])
+            ->orderByDesc('wpc_status')
+            ->get()
+            ->contains(function (WebPageContent $item) use ($normalizedSlug): bool {
+                $key = strtolower(trim((string) ($item->wpc_key ?? '')));
+                $payloadSlug = strtolower(trim((string) data_get($item->wpc_payload, 'fields.slug', '')));
+                return $key === $normalizedSlug || $payloadSlug === $normalizedSlug;
+            });
+
+        return $exists ? 'approved' : 'deleted';
     }
 
     private function ticketReferenceNo(int $ticketId): string
@@ -3868,8 +3923,11 @@ class AuthController extends Controller
     private function mapWebstorePaymentMethodTypes(string $method, string $mode): array
     {
         return match ($method) {
-            'online_banking' => strtolower($mode) === 'live' ? ['dob'] : ['dob'],
-            default => ['dob'],
+            'gcash' => ['gcash'],
+            'grab_pay' => ['grab_pay'],
+            'maya' => ['paymaya'],
+            'card' => ['card'],
+            default => ['card'],
         };
     }
 

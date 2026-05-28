@@ -9,6 +9,7 @@ import Footer from '@/components/landing-page/Footer';
 import ScrollToTop from '@/components/landing-page/ScrollToTop';
 import type { TopBarConfig } from '@/components/layout/TopBar';
 import type { TrustBarConfig } from '@/components/layout/TrustBar';
+import { setStoredReferralCode } from '@/libs/referral';
 
 type ShopPageClientProps = {
   shopData: ShopBuilderApiResponse | null;
@@ -25,6 +26,11 @@ const ShopPageClient = ({ shopData, navbarCategories, topBarConfig, trustBarConf
     const refParam = searchParams.get('ref');
 
     if (!refParam) return;
+
+    setStoredReferralCode(refParam);
+
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(window.navigator.userAgent);
+    if (!isMobile) return;
 
     const appScheme = `apsarahome://shop?ref=${encodeURIComponent(refParam)}`;
 
