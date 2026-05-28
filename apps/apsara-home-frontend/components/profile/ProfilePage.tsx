@@ -23,7 +23,6 @@ import Toggle from './Toggle';
 import getActivityIcon from './GetActivityIcon';
 import EncashmentTab from './EncashmentTab';
 import WalletTab from './WalletTab';
-import PerformanceTab from './PerformanceTab';
 import InteriorRequestsTab from './InteriorRequestsTab';
 import AvatarCropModal from './AvatarCropModal';
 import LevelsTab from './LevelsTab';
@@ -321,11 +320,11 @@ type PreferencesState = {
   currency: 'PHP' | 'USD';
 };
 
-type Tab = 'profile' | 'security' | 'preferences' | 'wallet' | 'pv' | 'performance' | 'encashment' | 'interior-requests' | 'activity' | 'change-username' | 'webstore' | 'referrals' | 'levels';
+type Tab = 'profile' | 'security' | 'preferences' | 'wallet' | 'pv' | 'encashment' | 'interior-requests' | 'activity' | 'change-username' | 'webstore' | 'referrals' | 'levels';
 
 type AlertMsg = { type: 'success' | 'error'; text: string };
 type TreeStatusFilter = 'all' | 'verified' | 'pending_review' | 'not_verified' | 'blocked';
-const PROFILE_TABS: Tab[] = ['profile', 'security', 'preferences', 'wallet', 'pv', 'performance', 'encashment', 'interior-requests', 'activity', 'change-username', 'webstore', 'referrals', 'levels'];
+const PROFILE_TABS: Tab[] = ['profile', 'security', 'preferences', 'wallet', 'pv', 'encashment', 'interior-requests', 'activity', 'change-username', 'webstore', 'referrals', 'levels'];
 
 type WebstorePaymentMethod = 'gcash' | 'grab_pay' | 'maya' | 'card';
 type WebstoreRequestPreview = Omit<WebstoreRequest, 'status'> & {
@@ -3072,7 +3071,6 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
     { key: 'preferences', label: 'Preferences', Icon: Icon.Bell },
     { key: 'wallet', label: 'Wallet', Icon: Icon.Wallet },
     { key: 'pv', label: 'E-Voucher', Icon: Icon.Star },
-    { key: 'performance', label: 'Performance', Icon: Icon.Activity },
     { key: 'encashment', label: 'Encashment', Icon: Icon.Bag },
     { key: 'interior-requests', label: 'Interior Requests', Icon: Icon.Package },
     { key: 'activity', label: 'Activity', Icon: Icon.Activity },
@@ -3479,7 +3477,6 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                 preferences: 'Prefs',
                 wallet: 'Wallet',
                 pv: 'Voucher',
-                performance: 'Performance',
                 encashment: 'Encash',
                 'interior-requests': 'Requests',
                 activity: 'Activity',
@@ -5372,15 +5369,6 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                   {...tabMotionProps}
                 >
                   <WalletTab isVerified={isVerified} initialWalletType="pv" />
-                </motion.div>
-              )}
-
-              {activeTab === 'performance' && (
-                <motion.div
-                  key="performance"
-                  {...tabMotionProps}
-                >
-                  <PerformanceTab />
                 </motion.div>
               )}
 
