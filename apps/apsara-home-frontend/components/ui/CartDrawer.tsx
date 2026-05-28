@@ -118,7 +118,7 @@ export default function CartDrawer() {
     const firstItem = checkoutItems[0]
     const firstProductId = Number(firstItem.productId ?? firstItem.id)
     const totalSelectedQuantity = checkoutItems.reduce((sum, item) => sum + Math.max(1, Number(item.quantity ?? 1)), 0)
-    const checkoutSource = resolveCheckoutSource()
+    const checkoutSource = resolveCheckoutSource(pathname)
 
     localStorage.setItem('guest_checkout', JSON.stringify({
       product: {

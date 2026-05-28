@@ -32,11 +32,11 @@ type WalletViewType = WalletTypeFilter | 'network';
 const walletOptions: Array<{ key: WalletViewType; label: string; icon: string }> = [
   { key: 'network', label: 'Network Earnings', icon: '↗' },
   { key: 'all',     label: 'Overview',    icon: '◈' },
-  { key: 'pv',      label: 'AF Voucher',  icon: '◆' },
   { key: 'rewards', label: 'Rewards',     icon: '✦' },
+  { key: 'pv',      label: 'E Voucher',  icon: '◆' },
 ];
 
-const walletOptionOrder: WalletViewType[] = ['all', 'pv', 'rewards', 'network'];
+const walletOptionOrder: WalletViewType[] = ['all', 'rewards', 'pv', 'network'];
 const orderedWalletOptions = [...walletOptions].sort(
   (a, b) => walletOptionOrder.indexOf(a.key) - walletOptionOrder.indexOf(b.key),
 );
@@ -49,20 +49,20 @@ const walletMeta = {
     glow: 'shadow-indigo-500/20',
   },
   pv: {
-    title: 'AF Voucher',
+    title: 'E Voucher',
     subtitle: 'Monitor your AF Home voucher balances, referral metrics, and approved voucher history.',
     gradient: 'from-blue-500 via-indigo-500 to-violet-500',
     glow: 'shadow-blue-500/20',
   },
   network: {
     title: 'Network Earnings',
-    subtitle: 'See each Unilevel bonus, downline source, delivered PV, rate, and computation.',
+    subtitle: 'See each Group Purchase Bonus source, delivered PV, rate, and computation.',
     gradient: 'from-sky-500 via-cyan-500 to-emerald-500',
     glow: 'shadow-sky-500/20',
   },
   rewards: {
     title: 'Rewards Center',
-    subtitle: 'Track your AF Voucher, cashback, and available digital reward balances.',
+    subtitle: 'Track your E Voucher, cashback, and available digital reward balances.',
     gradient: 'from-amber-500 via-orange-500 to-rose-500',
     glow: 'shadow-amber-500/20',
   },
@@ -80,7 +80,12 @@ export default function WalletTab({ initialWalletType = 'all' }: WalletTabProps)
   const [page, setPage] = useState(1);
   const [refreshKey, setRefreshKey] = useState(0);
   const [createAffiliateVoucher, { isLoading: isCreatingVoucher }] = useCreateAffiliateVoucherMutation();
-  const queryWalletType: WalletTypeFilter = walletType === 'network' ? 'all' : walletType;
+  const contentWalletType: WalletViewType = walletType === 'rewards'
+    ? 'pv'
+    : walletType === 'pv'
+      ? 'rewards'
+      : walletType;
+  const queryWalletType: WalletTypeFilter = contentWalletType === 'network' ? 'all' : contentWalletType;
   const { data, isLoading, isFetching, isError, refetch } = useGetWalletOverviewQuery({
     page,
     perPage: 15,
@@ -91,22 +96,7 @@ export default function WalletTab({ initialWalletType = 'all' }: WalletTabProps)
   const summary = data?.summary;
   const ledger  = data?.ledger ?? [];
   const meta    = data?.meta;
-  const currentWalletMeta = walletMeta[walletType as keyof typeof walletMeta] ?? walletMeta.all;
-
-  const pvHistory = useMemo(
-    () =>
-      ledger
-        .filter((row) => row.wallet_type === 'pv')
-        .map((row) => ({
-          id: row.id,
-          description: row.notes || row.reference_no || 'Performance Value wallet entry',
-          source: row.source_type || 'wallet',
-          amount: Math.abs(Number(row.amount ?? 0)),
-          status: (row.entry_type === 'debit' ? 'cancelled' : 'approved') as 'approved' | 'cancelled' | 'pending',
-          created_at: row.created_at || new Date().toISOString(),
-        })),
-    [ledger]
-  );
+  const currentWalletMeta = walletMeta[contentWalletType as keyof typeof walletMeta] ?? walletMeta.all;
 
   const utilizationPct = useMemo(() => {
     if (!summary) return 0;
@@ -201,8 +191,8 @@ export default function WalletTab({ initialWalletType = 'all' }: WalletTabProps)
               exit={{ opacity: 0, y: -4, filter: 'blur(2px)' }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              {walletType === 'pv' ? (
-                isLoading ? <SkeletonCards /> : isError ? <ErrorBanner msg="Failed to load AF Voucher data." /> : (
+              {contentWalletType === 'pv' ? (
+                isLoading ? <SkeletonCards /> : isError ? <ErrorBanner msg="Failed to load E Voucher data." /> : (
                   <PvWalletTab
                     currentPv={Number(summary?.cashback_balance ?? summary?.affiliate_retail_profit ?? summary?.current_pv ?? 0)}
                     pendingPv={Number(summary?.pending_pv ?? 0)}
@@ -214,32 +204,21 @@ export default function WalletTab({ initialWalletType = 'all' }: WalletTabProps)
                     currentCv={Number(summary?.total_bonus ?? summary?.current_cv ?? 0)}
                     yearlyPurchasePv={Number(summary?.yearly_purchase_pv ?? 0)}
                     pendingReferralEarnings={Number(summary?.pending_referral_earnings ?? 0)}
-                    goalProgressPv={Number(summary?.direct_referral_total_pv ?? 0)}
-                    goalPv={50000}
-                    history={pvHistory}
-                    totalReferrals={Number(summary?.referrals?.total ?? 0)}
-                    verifiedReferrals={Number(summary?.referrals?.verified ?? 0)}
-                    activeReferrals={Number(summary?.referrals?.active ?? 0)}
                     monthlyActivation={summary?.monthly_activation}
-                    unilevelAwards={data?.unilevel_awards ?? []}
                   />
                 )
-              ) : walletType === 'network' ? (
+              ) : contentWalletType === 'network' ? (
                 isLoading ? <SkeletonCards /> : isError ? <ErrorBanner msg="Failed to load Network Earnings data." /> : (
                   <NetworkEarningsTab
                     awards={data?.unilevel_awards ?? []}
                     monthlyActivation={summary?.monthly_activation}
                   />
                 )
-              ) : walletType === 'rewards' ? (
+              ) : contentWalletType === 'rewards' ? (
                 isLoading ? <SkeletonCards /> : isError ? <ErrorBanner msg="Failed to load rewards wallet data." /> : (
                   <RewardsWalletTab
                     afVoucherBalance={Number(summary?.af_voucher_balance ?? 0)}
                     afVoucherSourceBalance={Number(summary?.af_voucher_source_balance ?? 0)}
-                    cashbackSourceBalance={Number(summary?.cashback_source_balance ?? 0)}
-                    cashbackReservedBalance={Number(summary?.cashback_reserved_balance ?? 0)}
-                    availableEgcBalance={Number(summary?.available_egc_balance ?? 0)}
-                    cashbackBalance={Number(summary?.cashback_balance ?? 0)}
                     cashbackRate={Number(summary?.cashback_rate ?? 0)}
                     vouchers={data?.affiliate_vouchers ?? []}
                     isCreatingVoucher={isCreatingVoucher}
@@ -324,9 +303,9 @@ export default function WalletTab({ initialWalletType = 'all' }: WalletTabProps)
                     </div>
                   </div>
 
-                  {/* ── Section 2: AF Voucher (PV) ── */}
+                  {/* ── Section 2: E Voucher (PV) ── */}
                   <div>
-                    <SectionLabel icon="◆" label="AF Voucher (Performance Value)" color="text-blue-600 dark:text-blue-400" />
+                    <SectionLabel icon="◆" label="E Voucher (Performance Value)" color="text-blue-600 dark:text-blue-400" />
                     <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <BalanceCard
                         label="PV Balance"
@@ -361,7 +340,7 @@ export default function WalletTab({ initialWalletType = 'all' }: WalletTabProps)
                     <SectionLabel icon="✦" label="Rewards" color="text-amber-600 dark:text-amber-400" />
                     <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-3">
                       <BalanceCard
-                        label="AF Voucher Balance"
+                        label="E Voucher Balance"
                         value={peso(summary?.af_voucher_balance ?? 0)}
                         sub="Redeemable on checkout"
                         gradient="from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20"
