@@ -171,6 +171,7 @@ return [
         'oauth_refresh_token' => env('GOOGLE_DRIVE_OAUTH_REFRESH_TOKEN'),
         'service_account_email' => env('GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL'),
         'service_account_private_key' => env('GOOGLE_DRIVE_SERVICE_ACCOUNT_PRIVATE_KEY'),
+        'service_account_private_key_b64' => env('GOOGLE_DRIVE_SERVICE_ACCOUNT_PRIVATE_KEY_B64'),
     ],
 
     'google' => [
