@@ -6,7 +6,7 @@ import ProductImageGallery from './ProductImageGallery';
 import ProductInfo from './ProductInfo';
 import StickyAddToCart from './StickyAddToCart';
 import { useGetProductBrandQuery } from '@/store/api/productsApi';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { setStoredReferralCode } from '@/libs/referral';
 import { resolveCheckoutSource } from '@/libs/checkoutSource';
 import { useSession } from 'next-auth/react';
@@ -224,8 +224,6 @@ const ProductPageClient = ({
     const { data: publicSettingsData } = useGetPublicGeneralSettingsQuery();
     const role = String(session?.user?.role ?? '').toLowerCase();
     const isManualCheckoutOnly = Boolean(publicSettingsData?.settings?.enable_manual_checkout_mode) && !Boolean(product.manualCheckoutEnabled);
-
-    const pathname = usePathname();
 
     const handleVariantChange = useCallback((variant?: VariantOption) => {
         setSelectedVariant(variant);

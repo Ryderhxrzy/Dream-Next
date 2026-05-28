@@ -188,6 +188,16 @@ class GoogleDriveUploadService
 
     private function serviceAccountPrivateKey(): string
     {
+        $encoded = trim((string) config('services.google_drive.service_account_private_key_b64', ''));
+        if ($encoded !== '') {
+            $decoded = base64_decode($encoded, true);
+            if ($decoded === false) {
+                throw new RuntimeException('Invalid base64 Google service account private key.');
+            }
+
+            return trim($decoded);
+        }
+
         $raw = (string) config('services.google_drive.service_account_private_key', '');
         $normalized = str_replace('\n', "\n", $raw);
         return trim($normalized);
