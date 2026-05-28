@@ -28,7 +28,7 @@ class SemaphoreService
                 ]);
             }
 
-            $response = Http::post(self::SEMAPHORE_API_URL . '/messages', [
+            $response = Http::timeout(10)->post(self::SEMAPHORE_API_URL . '/messages', [
                 'apikey' => $this->apiKey,
                 'number' => $this->normalizePhoneNumber($phoneNumber),
                 'message' => $message,
