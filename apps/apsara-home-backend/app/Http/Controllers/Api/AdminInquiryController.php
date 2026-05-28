@@ -556,6 +556,7 @@ class AdminInquiryController extends Controller
             'td_ip' => (string) $request->ip(),
         ]);
 
+        $customer = Customer::query()->where('c_userid', (int) $ticket->t_eid)->first();
         if ($customer instanceof Customer) {
             CustomerNotification::query()->create([
                 'cn_customer_id' => (int) $customer->c_userid,
@@ -768,6 +769,10 @@ class AdminInquiryController extends Controller
             default => $billingLabel,
         };
 
+        $subscriptionFee = (int) ($initialPayload['subscription_fee'] ?? 0);
+        $effectiveMonthly = (int) ($initialPayload['effective_monthly'] ?? 0);
+        $planTerm = (string) ($initialPayload['plan_term'] ?? '');
+
         $subscriptionProgress = $this->calculateWebstoreSubscriptionProgress($ticketId);
         $receiptCount = (int) ($subscriptionProgress['payment_count'] ?? 0);
         $remainingBalance = (float) ($subscriptionProgress['remaining_balance'] ?? 0);
@@ -778,6 +783,9 @@ class AdminInquiryController extends Controller
             'customer_name' => $this->fullName($customer) ?: ('Member #' . $customer->c_userid),
             'reference_no' => sprintf('TKT-%06d', $ticketId),
             'plan_label' => $planLabel,
+            'plan_term' => $planTerm,
+            'subscription_fee' => $subscriptionFee,
+            'effective_monthly' => $effectiveMonthly,
             'billing_label' => $billingLabel,
             'payment_method' => (string) ($activePayload['payment_method'] ?? ''),
             'checkout_id' => (string) ($activePayload['checkout_id'] ?? $initialPayload['checkout_id'] ?? ''),
@@ -785,6 +793,8 @@ class AdminInquiryController extends Controller
             'payment_intent_id' => (string) ($activePayload['payment_intent_id'] ?? $initialPayload['payment_intent_id'] ?? ''),
             'submitted_at_label' => $submittedAt !== '' ? date('F j, Y g:i A', strtotime($submittedAt)) : '',
             'receipt_count' => $receiptCount,
+            'payment_count' => $receiptCount,
+            'amount_paid' => (int) $paidAmount,
             'remaining_balance' => (float) $remainingBalance,
             'receipt_urls' => is_array($activePayload['receipt_urls'] ?? null) ? array_values($activePayload['receipt_urls']) : [],
         ];

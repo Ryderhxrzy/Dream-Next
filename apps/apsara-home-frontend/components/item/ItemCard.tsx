@@ -408,18 +408,19 @@ export default function ItemCard({
   const srpPrice = (product.priceSrp ? Number(product.priceSrp) : undefined) ?? baseSrp
   const memberPrice = (product.priceMember ? Number(product.priceMember) : undefined) ?? (product.priceDp ? Number(product.priceDp) : undefined) ?? 0
   const hasMemberPrice = memberPrice > 0 && memberPrice < srpPrice
-  const showMemberPrice = hasMemberPrice && !forceRealPrice
-  const displayPrice = showMemberPrice ? memberPrice : srpPrice
-  const strikePrice = showMemberPrice ? srpPrice : (product.originalPrice && product.originalPrice > srpPrice ? product.originalPrice : 0)
+  const displayPrice = srpPrice
+  const strikePrice = product.originalPrice && product.originalPrice > srpPrice ? product.originalPrice : 0
   const displayPv = Number(product.prodpv ?? 0)
   const getVariantDisplayPrice = (variant?: ProductVariant) => {
     const variantSrp = (variant?.priceSrp ? Number(variant.priceSrp) : undefined) ?? srpPrice
     const variantMember = (variant?.priceMember ? Number(variant.priceMember) : undefined) ?? memberPrice
     const variantHasMemberPrice = variantMember > 0 && variantMember < variantSrp
-    const variantDisplay = variantHasMemberPrice && !forceRealPrice ? variantMember : variantSrp
-    const variantStrike = variantHasMemberPrice && !forceRealPrice ? variantSrp : 0
+    const variantStrikeBase = variantSrp
+    const variantOriginal = variant?.priceSrp ? variant?.priceSrp : variant?.priceDp ?? variant?.priceMember
+    const variantStrike =
+      variantOriginal && Number(variantOriginal) > variantStrikeBase ? Number(variantOriginal) : 0
     const variantPv = Number(variant?.prodpv ?? displayPv)
-    return { display: variantDisplay, strike: variantStrike, pv: variantPv }
+    return { display: variantSrp, strike: variantStrike, pv: variantPv, variantHasMemberPrice }
   }
   const averageRating = Math.max(0, Math.min(5, Number(product.avgRating ?? 0)))
   const hasRating = averageRating > 0
@@ -498,9 +499,9 @@ export default function ItemCard({
 
         {/* Badges */}
         <div className="absolute top-0 left-0 flex flex-col">
-          {showMemberPrice && !hideDiscountBadge && (
+          {hasMemberPrice && !hideDiscountBadge && isLoggedIn && (
             <div className="bg-sky-500 text-white text-xs font-bold px-2 py-1">
-              {isLoggedIn ? `Enjoy ${Math.round(((srpPrice - memberPrice) / srpPrice) * 100)}% off` : `Register to get ${Math.round(((srpPrice - memberPrice) / srpPrice) * 100)}% discount`}
+              Enjoy {Math.round(((srpPrice - memberPrice) / srpPrice) * 100)}% off
             </div>
           )}
           {product.bestseller && (
@@ -563,7 +564,7 @@ export default function ItemCard({
               </span>
             )}
           </div>
-          {displayPv > 0 && (
+          {isLoggedIn && displayPv > 0 && (
             <span className="rounded-full border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/30 px-1 sm:px-2 py-0.5 text-[8px] sm:text-[11px] font-semibold text-blue-700 dark:text-blue-300 shrink-0 whitespace-nowrap w-fit">
               PV {displayPv.toLocaleString()}
             </span>

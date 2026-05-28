@@ -216,6 +216,7 @@ export interface SubmitWebstoreRequestPayload {
     payment_reference: string;
     payment_intent_id?: string | null;
     accepted_terms: boolean;
+    renewal_enabled?: boolean;
 }
 
 export interface SubmitWebstoreRequestResponse {
