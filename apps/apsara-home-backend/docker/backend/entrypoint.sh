@@ -33,6 +33,12 @@ set_env_value() {
     return
   fi
 
+  # Multiline secrets should stay in the runtime environment. Writing them with
+  # sed can break startup before Laravel can boot.
+  if [ "$(printf '%s' "$value" | wc -l | tr -d ' ')" -gt 0 ]; then
+    return
+  fi
+
   escaped="$(printf '%s' "$value" | sed 's/[\/&]/\\&/g')"
 
   if grep -q "^${key}=" .env; then
