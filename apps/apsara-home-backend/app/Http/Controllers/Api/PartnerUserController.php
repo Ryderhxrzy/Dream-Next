@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
+use App\Support\PartnerStorefrontAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -11,6 +12,11 @@ use Laravel\Sanctum\PersonalAccessToken;
 
 class PartnerUserController extends Controller
 {
+    private function storefrontAccess(): PartnerStorefrontAccess
+    {
+        return new PartnerStorefrontAccess();
+    }
+
     private function canManagePartnerUsers(mixed $actor): bool
     {
         if (! ($actor instanceof Admin)) {
@@ -235,14 +241,20 @@ class PartnerUserController extends Controller
 
             // Keep disabled storefront IDs valid after assignment changes.
             $currentDisabled = $this->normalizeStorefrontIds($target->partner_disabled_storefront_ids ?? []);
-            $target->partner_disabled_storefront_ids = array_values(array_intersect($currentDisabled, $finalStorefrontIds));
+            $target->partner_disabled_storefront_ids = $this->storefrontAccess()->mergeDisabledStorefrontIds(
+                $currentDisabled,
+                $finalStorefrontIds,
+            );
         }
 
         if (array_key_exists('disabled_storefront_ids', $validated)) {
             $requestedDisabledIds = $this->normalizeStorefrontIds($validated['disabled_storefront_ids'] ?? []);
             $assignedStorefrontIds = $this->normalizeStorefrontIds($target->admin_permissions ?? []);
             // Disabled IDs must be a subset of assigned storefront IDs.
-            $target->partner_disabled_storefront_ids = array_values(array_intersect($requestedDisabledIds, $assignedStorefrontIds));
+            $target->partner_disabled_storefront_ids = $this->storefrontAccess()->mergeDisabledStorefrontIds(
+                $requestedDisabledIds,
+                $assignedStorefrontIds,
+            );
         }
 
         $target->save();
@@ -290,14 +302,21 @@ class PartnerUserController extends Controller
 
     private function transform(Admin $admin): array
     {
+        $storefrontAccess = $this->storefrontAccess();
+        $assignedStorefrontIds = $storefrontAccess->normalizeStorefrontIds($admin->admin_permissions ?? []);
+        $disabledStorefrontIds = $storefrontAccess->mergeDisabledStorefrontIds(
+            $admin->partner_disabled_storefront_ids ?? [],
+            $assignedStorefrontIds,
+        );
+
         return [
             'id' => (int) $admin->id,
             'name' => (string) ($admin->fname ?: $admin->username),
             'username' => (string) $admin->username,
             'email' => (string) $admin->user_email,
             'user_level_id' => (int) $admin->user_level_id,
-            'storefront_ids' => $this->normalizeStorefrontIds($admin->admin_permissions ?? []),
-            'disabled_storefront_ids' => $this->normalizeStorefrontIds($admin->partner_disabled_storefront_ids ?? []),
+            'storefront_ids' => $assignedStorefrontIds,
+            'disabled_storefront_ids' => $disabledStorefrontIds,
             'is_banned' => (bool) $admin->is_banned,
         ];
     }

@@ -387,7 +387,15 @@ export default function WebstoreRequestsPage() {
   }
 
   const latestReceiptReferenceId = String(
-    details.paymentReference ?? details.paymentIntentId ?? '',
+    [...(details.receiptItems ?? [])]
+      .reverse()
+      .find((receipt) => String(receipt.paymentReference ?? receipt.paymentIntentId ?? '').trim())?.paymentReference
+    ?? [...(details.receiptItems ?? [])]
+      .reverse()
+      .find((receipt) => String(receipt.paymentReference ?? receipt.paymentIntentId ?? '').trim())?.paymentIntentId
+    ?? details.paymentReference
+    ?? details.paymentIntentId
+    ?? '',
   ).trim()
 
   const parseDateSafe = (value?: string | null): Date | null => {
@@ -518,6 +526,14 @@ export default function WebstoreRequestsPage() {
       return status === 'pending'
     }) ?? null
   }
+
+  const fallbackReceiptStatus = String(details.status ?? '').toLowerCase()
+  const fallbackReceiptBadgeText =
+    fallbackReceiptStatus === 'approved'
+      ? 'Approved'
+      : fallbackReceiptStatus === 'rejected'
+        ? 'Rejected'
+        : 'Pending'
 
   return (
     <div className="space-y-5">
@@ -1029,11 +1045,19 @@ export default function WebstoreRequestsPage() {
                           </div>
                           <div className="mt-0.5 grid max-h-[360px] grid-cols-1 gap-3 overflow-y-auto pr-1 sm:grid-cols-2 xl:grid-cols-3">
                             {Array.isArray(details.receiptItems) && details.receiptItems.length > 0 ? (
-                              details.receiptItems.map((receipt, index) => {
+                              [...details.receiptItems].reverse().map((receipt, index) => {
                                 const urls = Array.isArray(receipt.receiptUrls) ? receipt.receiptUrls : []
                                 const primaryUrl = urls[0] ?? null
                                 const receiptId = receipt.id ?? null
-                                const receiptStatus = getReceiptStatus(receipt)
+                                const requestStatus = String(details.status ?? '').toLowerCase()
+                                const receiptStatus =
+                                  receipt.type !== 'webstore_payment_continuation'
+                                    ? (requestStatus === 'approved'
+                                        ? 'approved'
+                                        : requestStatus === 'rejected'
+                                          ? 'rejected'
+                                          : getReceiptStatus(receipt))
+                                    : getReceiptStatus(receipt)
                                 const isApproved = receiptStatus === 'approved'
                                 const isRejected = receiptStatus === 'rejected'
                                 const canReview = receipt.type === 'webstore_payment_continuation' && !isApproved && !isRejected && receiptId != null
@@ -1116,8 +1140,8 @@ export default function WebstoreRequestsPage() {
                                       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/70 to-transparent px-3 py-2 text-white">
                                         <div className="flex items-end justify-between gap-2">
                                           <p className="truncate text-xs font-bold">Receipt {index + 1}</p>
-                                          <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold text-amber-100">
-                                            Pending
+                                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${fallbackReceiptBadgeText === 'Approved' ? 'bg-emerald-500/20 text-emerald-100' : fallbackReceiptBadgeText === 'Rejected' ? 'bg-rose-500/20 text-rose-100' : 'bg-amber-500/20 text-amber-100'}`}>
+                                            {fallbackReceiptBadgeText}
                                           </span>
                                         </div>
                                       </div>
@@ -1138,7 +1162,7 @@ export default function WebstoreRequestsPage() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h10M7 11h10M7 15h6M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
                             </svg>
                           </span>
-                          <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">Bank Transfer Reference.</p>
+                          <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">Payment Reference No.</p>
                         </div>
                         {latestReceiptReferenceId ? (
                           <p className="mt-1 break-words text-sm font-semibold leading-tight text-[#163060]">

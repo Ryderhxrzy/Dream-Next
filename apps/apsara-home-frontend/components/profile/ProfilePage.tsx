@@ -1,7 +1,6 @@
 ﻿'use client';
 
-import { MeResponse, ReferralTreeNode, AccountSnapshot, useChangePasswordMutation, useMeQuery, useAccountSnapshotQuery, useReferralTreeQuery, useUpdateProfileMutation, useUploadAvatarMutation, useSendUsernameChangeOtpMutation, useSubmitUsernameChangeRequestMutation, useSubmitWebstoreRequestMutation, useCreateWebstorePaymentSessionMutation, useLazyVerifyWebstorePaymentSessionQuery, useUsernameChangeLatestQuery, useWebstoreRequestLatestQuery, useSyncWebstorePartnerAccountMutation, useMemberActivityQuery, useMemberSessionsQuery, useRevokeMemberSessionMutation, useLinkedAccountsQuery, useLinkGoogleAccountMutation, useUnlinkGoogleAccountMutation, useLinkFacebookAccountMutation, useUnlinkFacebookAccountMutation, LinkedAccount, useSetupTotpMutation, useEnableTotpMutation, useDisableTotpMutation, SetupTotpResponse } from '@/store/api/userApi';
-import type { WebstoreRequest } from '@/store/api/userApi';
+import { MeResponse, ReferralTreeNode, AccountSnapshot, useChangePasswordMutation, useMeQuery, useAccountSnapshotQuery, useReferralTreeQuery, useUpdateProfileMutation, useUploadAvatarMutation, useSendUsernameChangeOtpMutation, useSubmitUsernameChangeRequestMutation, useSubmitWebstoreRequestMutation, useUploadWebstoreReceiptMutation, useCreateWebstorePaymentSessionMutation, useLazyVerifyWebstorePaymentSessionQuery, useUsernameChangeLatestQuery, useWebstoreRequestLatestQuery, useSyncWebstorePartnerAccountMutation, useMemberActivityQuery, useMemberSessionsQuery, useRevokeMemberSessionMutation, useLinkedAccountsQuery, useLinkGoogleAccountMutation, useUnlinkGoogleAccountMutation, useLinkFacebookAccountMutation, useUnlinkFacebookAccountMutation, LinkedAccount, useSetupTotpMutation, useEnableTotpMutation, useDisableTotpMutation, SetupTotpResponse } from '@/store/api/userApi';
 import { signOut, useSession } from 'next-auth/react';
 import { ChangeEvent, DragEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Loading from '../Loading';
@@ -327,9 +326,6 @@ type TreeStatusFilter = 'all' | 'verified' | 'pending_review' | 'not_verified' |
 const PROFILE_TABS: Tab[] = ['profile', 'security', 'preferences', 'wallet', 'pv', 'encashment', 'interior-requests', 'activity', 'change-username', 'webstore', 'referrals', 'levels'];
 
 type WebstorePaymentMethod = 'gcash' | 'grab_pay' | 'maya' | 'card';
-type WebstoreRequestPreview = Omit<WebstoreRequest, 'status'> & {
-  status: WebstoreRequest['status'] | 'deleted';
-};
 
 const WEBSTORE_PAYMENT_METHODS: Array<{
   value: WebstorePaymentMethod;
@@ -654,6 +650,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
   const [sendUsernameChangeOtp, { isLoading: isSendingUsernameOtp }] = useSendUsernameChangeOtpMutation();
   const [submitUsernameChangeRequest, { isLoading: isSubmittingUsernameChange }] = useSubmitUsernameChangeRequestMutation();
   const [submitWebstoreRequest, { isLoading: isSubmittingWebstoreRequest }] = useSubmitWebstoreRequestMutation();
+  const [uploadWebstoreReceipt] = useUploadWebstoreReceiptMutation();
   const [createWebstorePaymentSession, { isLoading: isCreatingWebstorePaymentSession }] = useCreateWebstorePaymentSessionMutation();
   const [verifyWebstorePaymentSession] = useLazyVerifyWebstorePaymentSessionQuery();
   const [syncWebstorePartnerAccount, { isLoading: isSyncingWebstoreAccount }] = useSyncWebstorePartnerAccountMutation();
@@ -711,13 +708,38 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
     displayName: '',
   });
   const [webstoreAcceptedTerms, setWebstoreAcceptedTerms] = useState(false);
+  const [webstoreRenewalEnabled, setWebstoreRenewalEnabled] = useState(false);
   const [webstoreTermsOpen, setWebstoreTermsOpen] = useState(false);
   const [webstoreMsg, setWebstoreMsg] = useState<AlertMsg | null>(null);
+  useEffect(() => {
+    if (!webstoreMsg || webstoreMsg.type !== 'success') return;
+
+    const timeoutId = window.setTimeout(() => {
+      setWebstoreMsg((current) => (current?.type === 'success' ? null : current));
+    }, 4000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [webstoreMsg]);
+  useEffect(() => {
+    if (!webstoreMsg || webstoreMsg.type !== 'error') return;
+    if (!webstoreMsg.text.toLowerCase().includes('receipt under review')) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setWebstoreMsg((current) => (
+        current?.type === 'error' && current.text.toLowerCase().includes('receipt under review')
+          ? null
+          : current
+      ));
+    }, 4000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [webstoreMsg]);
   const [webstoreSyncSuccessOpen, setWebstoreSyncSuccessOpen] = useState(false);
   const [showPartnerLoginShortcut, setShowPartnerLoginShortcut] = useState(false);
   const [selectedWebstorePlan, setSelectedWebstorePlan] = useState<'quarterly' | 'semiAnnual' | 'annual' | null>(null);
   const [selectedBillingOption, setSelectedBillingOption] = useState<'full' | 'monthly' | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<WebstorePaymentMethod | null>(null);
+  const [webstorePaymentMethodSnapshot, setWebstorePaymentMethodSnapshot] = useState<WebstorePaymentMethod | null>(null);
   const [webstorePaymentProofUrl, setWebstorePaymentProofUrl] = useState<string | null>(null);
   const [webstorePaymentReferenceId, setWebstorePaymentReferenceId] = useState<string | null>(null);
   const [webstorePaymentIntentId, setWebstorePaymentIntentId] = useState<string | null>(null);
@@ -732,7 +754,24 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
   const webstorePaymentMethodTouchedRef = useRef(false);
   const webstoreDraftHydratedRef = useRef(false);
   const webstoreStorefrontFieldsEditedRef = useRef(false);
-  const [webstoreLatestRequestPreview, setWebstoreLatestRequestPreview] = useState<WebstoreRequestPreview | null>(null);
+  const [webstoreLatestRequestPreview, setWebstoreLatestRequestPreview] = useState<{
+    id: number
+    reference_no?: string
+    status: 'pending_review' | 'approved' | 'rejected'
+    full_name?: string | null
+    username?: string | null
+    email?: string | null
+    slug_name?: string | null
+    display_name?: string | null
+    created_at?: string | null
+    billing_option?: 'full' | 'monthly' | null
+    payment_method?: WebstorePaymentMethod | null
+    latest_receipt_status?: 'pending_review' | 'approved' | 'rejected' | null
+    latest_receipt_message?: string | null
+    latest_receipt_detail_id?: number | null
+    latest_receipt_submitted_at?: string | null
+    latest_receipt_urls?: string[] | null
+  } | null>(null);
   const webstoreReceiptInputRef = useRef<HTMLInputElement | null>(null);
   const webstorePlanSectionRef = useRef<HTMLDivElement | null>(null);
   const webstoreSlugInputRef = useRef<HTMLInputElement | null>(null);
@@ -793,7 +832,6 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
   const [isSavingAddressDetails, setIsSavingAddressDetails] = useState(false);
   const [revokingTokenId, setRevokingTokenId] = useState<number | null>(null);
   const [addressForm, setAddressForm] = useState<AddressFormState>({ address: '', zipCode: '' });
-  const [runtimeSiteOrigin, setRuntimeSiteOrigin] = useState('');
   const msgTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const usernameMsgTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const referralMsgTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1085,14 +1123,12 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
   const verificationStatus = profileData?.verification_status ?? 'not_verified';
   const isVerified = verificationStatus === 'verified' || profileData?.account_status === 1;
   const configuredAppUrl = (process.env.NEXT_PUBLIC_APP_URL ?? '').trim().replace(/\/+$/, '');
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const runtimeOrigin = window.location.origin.trim().replace(/\/+$/, '');
-    const runtimeHostname = window.location.hostname.toLowerCase();
-    const isLocalHost = runtimeHostname === 'localhost' || runtimeHostname === '127.0.0.1' || runtimeHostname === '[::1]';
-    setRuntimeSiteOrigin(isLocalHost ? runtimeOrigin || 'http://localhost:3000' : '');
-  }, []);
-  const siteOrigin = runtimeSiteOrigin || configuredAppUrl || 'http://localhost:3000';
+  const runtimeOrigin = (typeof window !== 'undefined' ? window.location.origin : '').trim().replace(/\/+$/, '');
+  const runtimeHostname = typeof window !== 'undefined' ? window.location.hostname.toLowerCase() : '';
+  const isLocalHost = runtimeHostname === 'localhost' || runtimeHostname === '127.0.0.1' || runtimeHostname === '[::1]';
+  const siteOrigin = isLocalHost
+    ? runtimeOrigin || 'http://localhost:3000'
+    : configuredAppUrl || runtimeOrigin || 'http://localhost:3000';
   const referralCode = ((profileData?.username ?? form.username) || '').trim();
   const encodedReferralCode = encodeURIComponent(referralCode);
   const memberReferralLink = referralCode
@@ -1910,11 +1946,84 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
     }
   };
 
+  const webstoreDraftStorageKey = 'afhome:webstore-payment-draft:v1';
+  const webstorePaymentSessionStorageKey = 'afhome:webstore-payment-session:v1';
+  const webstorePaymentContextStorageKey = 'afhome:webstore-payment-context:v1';
+  const webstorePaymentStatus = (searchParams.get('webstore_payment') || '').toLowerCase();
+  const webstoreCheckoutId = searchParams.get('checkout_id') || '';
+  const webstorePaymentMode = (searchParams.get('payment_mode') || '').toLowerCase();
+
+  const latestWebstoreRequest = useMemo(() => {
+    const backendRequest = webstoreRequestLatest?.request ?? null;
+    if (!backendRequest) return webstoreLatestRequestPreview ?? null;
+    if (!webstoreLatestRequestPreview) return backendRequest;
+
+    return {
+      ...webstoreLatestRequestPreview,
+      ...backendRequest,
+      slug_name: backendRequest.slug_name || webstoreLatestRequestPreview.slug_name || null,
+      display_name: backendRequest.display_name || webstoreLatestRequestPreview.display_name || null,
+      billing_option: backendRequest.billing_option || webstoreLatestRequestPreview.billing_option || null,
+      payment_method: normalizeWebstorePaymentMethod(backendRequest.payment_method)
+        ?? webstoreLatestRequestPreview.payment_method
+        ?? selectedPaymentMethod
+        ?? null,
+    };
+  }, [selectedPaymentMethod, webstoreLatestRequestPreview, webstoreRequestLatest?.request]);
+
   const latestUsernameRequest = usernameChangeLatest?.request ?? null;
-  const latestWebstoreRequest = webstoreRequestLatest?.request ?? webstoreLatestRequestPreview ?? null;
   const activeWebstoreRequest = latestWebstoreRequest?.status === 'deleted' ? null : latestWebstoreRequest;
   const hasExistingWebstoreRequest = Boolean(activeWebstoreRequest);
   const isApprovedWebstoreRequest = activeWebstoreRequest?.status === 'approved';
+  const storedWebstorePaymentContext = useMemo<{
+    checkoutId?: string | null;
+    paymentMethod?: WebstorePaymentMethod | null;
+    fullName?: string | null;
+    username?: string | null;
+    email?: string | null;
+    slugName?: string | null;
+    displayName?: string | null;
+    selectedWebstorePlan?: 'quarterly' | 'semiAnnual' | 'annual' | null;
+    selectedBillingOption?: 'full' | 'monthly' | null;
+    webstoreRenewalEnabled?: boolean;
+  } | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const candidates = [
+      window.sessionStorage.getItem(webstorePaymentContextStorageKey),
+      window.localStorage.getItem(webstorePaymentContextStorageKey),
+    ].filter(Boolean) as string[];
+
+    for (const raw of candidates) {
+      try {
+        const parsed = JSON.parse(raw) as {
+          checkoutId?: string | null;
+          paymentMethod?: WebstorePaymentMethod | null;
+          fullName?: string | null;
+          username?: string | null;
+          email?: string | null;
+          slugName?: string | null;
+          displayName?: string | null;
+          selectedWebstorePlan?: 'quarterly' | 'semiAnnual' | 'annual' | null;
+          selectedBillingOption?: 'full' | 'monthly' | null;
+          webstoreRenewalEnabled?: boolean;
+        };
+        const storedCheckoutId = String(parsed.checkoutId ?? '').trim();
+        const currentCheckoutId = String(webstoreCheckoutId || window.sessionStorage.getItem('last_checkout_id') || window.localStorage.getItem('last_checkout_id') || '').trim();
+        if (storedCheckoutId && currentCheckoutId && storedCheckoutId !== currentCheckoutId) continue;
+        return parsed;
+      } catch {
+        // ignore bad cache
+      }
+    }
+
+    return null;
+  }, [webstoreCheckoutId, webstorePaymentContextStorageKey]);
+  const resolvedWebstorePaymentMethod = normalizeWebstorePaymentMethod(activeWebstoreRequest?.payment_method)
+    ?? normalizeWebstorePaymentMethod(webstoreLatestRequestPreview?.payment_method)
+    ?? normalizeWebstorePaymentMethod(storedWebstorePaymentContext?.paymentMethod)
+    ?? webstorePaymentMethodSnapshot
+    ?? selectedPaymentMethod
+    ?? null;
   const webstoreContactFullName = activeWebstoreRequest?.full_name?.trim()
     || webstoreForm.fullName.trim()
     || profileData?.name?.trim()
@@ -1932,6 +2041,9 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
   const latestWebstoreRejectionMessage = activeWebstoreRequest?.latest_receipt_status === 'rejected'
     ? (activeWebstoreRequest.latest_receipt_message || 'Your payment has been rejected by the admin due to mismatch ID.')
     : null;
+  const isWebstoreReceiptPendingReview = activeWebstoreRequest?.latest_receipt_status === 'pending_review';
+  const isWebstoreReceiptRejected = activeWebstoreRequest?.latest_receipt_status === 'rejected';
+  const isWebstoreReceiptRetryFlow = isWebstoreReceiptPendingReview || isWebstoreReceiptRejected;
   const rejectedWebstoreReceiptUrls = activeWebstoreRequest?.latest_receipt_status === 'rejected'
     ? (activeWebstoreRequest.latest_receipt_urls ?? activeWebstoreRequest.receipt_urls ?? [])
       .map((url) => String(url).trim())
@@ -1956,11 +2068,6 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
   }, [dismissedRejectedReceiptKeys, rejectedWebstoreReceiptUrls, webstoreReceiptFiles]);
   const hasRejectedWebstoreReceipts = webstoreReceiptGalleryItems.some((item) => item.kind === 'rejected');
 
-  useEffect(() => {
-    if (webstoreRequestLatest?.request) {
-      setWebstoreLatestRequestPreview(null);
-    }
-  }, [webstoreRequestLatest?.request]);
   const requestPlan = latestWebstoreRequest?.plan === 'semi_annual'
     ? 'semiAnnual'
     : latestWebstoreRequest?.plan === 'quarterly' || latestWebstoreRequest?.plan === 'annual'
@@ -2004,11 +2111,35 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       setWebstoreAcceptedTerms(true);
     }
   }, [latestWebstoreRequest, requestPlan, selectedBillingOption, selectedPaymentMethod, selectedWebstorePlan]);
-  const webstoreDraftStorageKey = 'afhome:webstore-payment-draft:v1';
-  const webstorePaymentSessionStorageKey = 'afhome:webstore-payment-session:v1';
-  const webstorePaymentStatus = (searchParams.get('webstore_payment') || '').toLowerCase();
-  const webstoreCheckoutId = searchParams.get('checkout_id') || '';
-  const webstorePaymentMode = (searchParams.get('payment_mode') || '').toLowerCase();
+
+  useEffect(() => {
+    if (!storedWebstorePaymentContext) return;
+
+    setWebstoreForm((prev) => ({
+      ...prev,
+      fullName: storedWebstorePaymentContext.fullName || prev.fullName,
+      username: storedWebstorePaymentContext.username || prev.username,
+      email: storedWebstorePaymentContext.email || prev.email,
+      slugName: storedWebstorePaymentContext.slugName || prev.slugName,
+      displayName: storedWebstorePaymentContext.displayName || prev.displayName,
+    }));
+
+    if (storedWebstorePaymentContext.selectedWebstorePlan) {
+      setSelectedWebstorePlan(storedWebstorePaymentContext.selectedWebstorePlan);
+    }
+    if (storedWebstorePaymentContext.selectedBillingOption) {
+      setSelectedBillingOption(storedWebstorePaymentContext.selectedBillingOption);
+    }
+    if (typeof storedWebstorePaymentContext.webstoreRenewalEnabled === 'boolean') {
+      setWebstoreRenewalEnabled(storedWebstorePaymentContext.webstoreRenewalEnabled);
+    }
+    if (storedWebstorePaymentContext.paymentMethod) {
+      setSelectedPaymentMethod(storedWebstorePaymentContext.paymentMethod);
+      setWebstorePaymentMethodSnapshot(storedWebstorePaymentContext.paymentMethod);
+    }
+    setWebstoreAcceptedTerms(true);
+  }, [storedWebstorePaymentContext]);
+
   const hasPendingUsernameRequest = isUsernamePendingLocal || latestUsernameRequest?.status === 'pending_review';
   const pendingRequestedUsername = latestUsernameRequest?.requested_username || usernameRequest.trim();
   const selectedWebstorePaymentAmount = useMemo(() => {
@@ -2072,29 +2203,285 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
     if (!selectedWebstorePlan) return null;
     return monthlyFees[selectedWebstorePlan] ?? null;
   }, [selectedWebstorePlan]);
+  const webstorePaymentBreakdownLabel = selectedBillingOption === 'monthly'
+    ? 'Monthly Pay'
+    : selectedBillingOption === 'full'
+      ? 'Amount Due'
+      : 'Payment Due';
+  const webstorePaymentBreakdownValue = selectedBillingOption === 'full'
+    ? webstoreRemainingBalance
+    : webstoreMonthlyPay;
   const webstoreBillingLabel = selectedBillingOption === 'monthly'
     ? 'Monthly Installment'
     : selectedBillingOption === 'full'
       ? 'Full Payment'
       : '-';
-  const webstorePaymentMethodLabel = selectedPaymentMethod ? getWebstorePaymentMethodConfig(selectedPaymentMethod).label : '-';
+  const webstorePaymentMethodLabel = resolvedWebstorePaymentMethod
+    ? getWebstorePaymentMethodConfig(resolvedWebstorePaymentMethod).label
+    : '-';
   const webstorePaymentCompleted = Boolean(webstorePaymentReferenceId || webstorePaymentProofUrl);
+  const shouldUploadReceiptOnly = webstorePaymentCompleted || isApprovedWebstoreRequest || isWebstoreReceiptRetryFlow;
   const hasWebstorePaymentHistory = Number(activeWebstoreRequest?.payment_count ?? 0) > 0
     || Number(activeWebstoreRequest?.total_paid_amount ?? 0) > 0;
+  const resolvedWebstoreSubmissionForm = useMemo<WebstoreRequestFormState>(() => ({
+    fullName: (webstoreContactFullName || storedWebstorePaymentContext?.fullName || webstoreForm.fullName || '').trim(),
+    username: (webstoreContactUsername || storedWebstorePaymentContext?.username || webstoreForm.username || '').trim(),
+    email: (webstoreContactEmail || storedWebstorePaymentContext?.email || webstoreForm.email || '').trim(),
+    slugName: (activeWebstoreRequest?.slug_name || webstoreLatestRequestPreview?.slug_name || storedWebstorePaymentContext?.slugName || webstoreForm.slugName || '').trim().toLowerCase(),
+    displayName: (activeWebstoreRequest?.display_name || webstoreLatestRequestPreview?.display_name || storedWebstorePaymentContext?.displayName || webstoreForm.displayName || '').trim(),
+  }), [
+    activeWebstoreRequest?.display_name,
+    activeWebstoreRequest?.slug_name,
+    webstoreContactEmail,
+    webstoreContactFullName,
+    webstoreContactUsername,
+    storedWebstorePaymentContext?.displayName,
+    storedWebstorePaymentContext?.email,
+    storedWebstorePaymentContext?.fullName,
+    storedWebstorePaymentContext?.slugName,
+    storedWebstorePaymentContext?.username,
+    webstoreLatestRequestPreview?.display_name,
+    webstoreLatestRequestPreview?.slug_name,
+    webstoreForm.displayName,
+    webstoreForm.email,
+    webstoreForm.fullName,
+    webstoreForm.slugName,
+    webstoreForm.username,
+  ]);
+
+  const openWebstoreReceiptUpload = () => {
+    if (isWebstoreReceiptPendingReview) return;
+    setWebstoreSuccessModalOpen(false);
+    window.requestAnimationFrame(() => {
+      webstoreReceiptSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      webstoreReceiptInputRef.current?.click();
+    });
+  };
 
   const saveWebstoreDraft = useCallback((overrides?: {
     selectedPaymentMethod?: WebstorePaymentMethod | null
+    webstoreForm?: WebstoreRequestFormState
+    webstoreRenewalEnabled?: boolean
   }) => {
     if (typeof window === 'undefined') return;
     const draft = {
-      webstoreForm,
+      webstoreForm: overrides?.webstoreForm ?? resolvedWebstoreSubmissionForm,
       selectedWebstorePlan,
       selectedBillingOption,
       selectedPaymentMethod: overrides?.selectedPaymentMethod ?? selectedPaymentMethod,
       webstoreAcceptedTerms,
+      webstoreRenewalEnabled: overrides?.webstoreRenewalEnabled ?? webstoreRenewalEnabled,
     };
     window.localStorage.setItem(webstoreDraftStorageKey, JSON.stringify(draft));
-  }, [selectedBillingOption, selectedPaymentMethod, selectedWebstorePlan, webstoreAcceptedTerms, webstoreForm]);
+  }, [resolvedWebstoreSubmissionForm, selectedBillingOption, selectedPaymentMethod, selectedWebstorePlan, webstoreAcceptedTerms, webstoreRenewalEnabled]);
+
+  const saveWebstorePaymentContext = useCallback((context: {
+    checkoutId?: string | null;
+    paymentMethod?: WebstorePaymentMethod | null;
+    fullName?: string | null;
+    username?: string | null;
+    email?: string | null;
+    slugName?: string | null;
+    displayName?: string | null;
+    selectedWebstorePlan?: 'quarterly' | 'semiAnnual' | 'annual' | null;
+    selectedBillingOption?: 'full' | 'monthly' | null;
+    webstoreRenewalEnabled?: boolean;
+  }) => {
+    if (typeof window === 'undefined') return;
+    const payload = JSON.stringify(context);
+    window.sessionStorage.setItem(webstorePaymentContextStorageKey, payload);
+    window.localStorage.setItem(webstorePaymentContextStorageKey, payload);
+  }, [webstorePaymentContextStorageKey]);
+
+  const uploadSelectedWebstoreReceiptUrls = useCallback(async () => {
+    const uploadedUrls: string[] = [];
+
+    for (const receipt of webstoreReceiptFiles) {
+      const formData = new FormData();
+      formData.append('file', receipt.file);
+
+      const response = await uploadWebstoreReceipt(formData).unwrap();
+      if (response?.url) {
+        uploadedUrls.push(response.url);
+      }
+    }
+
+    return uploadedUrls;
+  }, [uploadWebstoreReceipt, webstoreReceiptFiles]);
+
+  const finalizeWebstorePaymentSubmission = useCallback(async (params: {
+    resolvedCheckoutId: string;
+    verified: {
+      payment_reference?: string | null;
+      payment_intent_id?: string | null;
+      checkout_id?: string | null;
+      proof_url?: string | null;
+    };
+    receiptUrls: string[];
+    showPaymentSuccessModal?: boolean;
+    successMessage?: string;
+  }) => {
+    if (typeof window === 'undefined') {
+      throw new Error('Webstore payment could not be finalized in this environment.');
+    }
+
+    const { resolvedCheckoutId, verified, receiptUrls, showPaymentSuccessModal = true, successMessage = 'Webstore Payment Success.' } = params;
+    const storedDraftRaw = window.sessionStorage.getItem(webstorePaymentSessionStorageKey)
+      || window.localStorage.getItem(webstoreDraftStorageKey);
+    let storedDraft: {
+      webstoreForm?: WebstoreRequestFormState;
+      selectedWebstorePlan?: 'quarterly' | 'semiAnnual' | 'annual' | null;
+      selectedBillingOption?: 'full' | 'monthly' | null;
+      selectedPaymentMethod?: WebstorePaymentMethod | null;
+      webstoreAcceptedTerms?: boolean;
+      webstoreRenewalEnabled?: boolean;
+    } | null = null;
+    if (storedDraftRaw) {
+      try {
+        storedDraft = JSON.parse(storedDraftRaw) as {
+          webstoreForm?: WebstoreRequestFormState;
+          selectedWebstorePlan?: 'quarterly' | 'semiAnnual' | 'annual' | null;
+          selectedBillingOption?: 'full' | 'monthly' | null;
+          selectedPaymentMethod?: WebstorePaymentMethod | null;
+          webstoreAcceptedTerms?: boolean;
+          webstoreRenewalEnabled?: boolean;
+        };
+      } catch {
+        storedDraft = null;
+      }
+    }
+
+    const draftForm = {
+      fullName: (storedDraft?.webstoreForm?.fullName || webstoreContactFullName || '').trim(),
+      username: (storedDraft?.webstoreForm?.username || webstoreContactUsername || '').trim(),
+      email: (storedDraft?.webstoreForm?.email || webstoreContactEmail || '').trim(),
+      slugName: (storedDraft?.webstoreForm?.slugName || activeWebstoreRequest?.slug_name || webstoreForm.slugName || '').trim().toLowerCase(),
+      displayName: (storedDraft?.webstoreForm?.displayName || activeWebstoreRequest?.display_name || webstoreForm.displayName || '').trim(),
+    };
+    const draftPlan = storedDraft?.selectedWebstorePlan ?? selectedWebstorePlan ?? null;
+    const draftBilling = storedDraft?.selectedBillingOption ?? selectedBillingOption ?? null;
+    const draftPaymentMethod = normalizeWebstorePaymentMethod(storedDraft?.selectedPaymentMethod) ?? selectedPaymentMethod ?? 'gcash';
+    const draftAcceptedTerms = storedDraft?.webstoreAcceptedTerms ?? webstoreAcceptedTerms;
+    const draftRenewalEnabled = storedDraft?.webstoreRenewalEnabled ?? webstoreRenewalEnabled;
+
+    if (!draftPlan || !draftBilling || !draftForm.fullName || !draftForm.username || !draftForm.email || !draftForm.slugName || !draftForm.displayName) {
+      throw new Error('Webstore draft is incomplete. Please reopen the profile page and try again.');
+    }
+
+    if (draftPaymentMethod) {
+      setWebstorePaymentMethodSnapshot(draftPaymentMethod);
+    }
+    saveWebstorePaymentContext({
+      checkoutId: resolvedCheckoutId,
+      paymentMethod: draftPaymentMethod,
+      fullName: draftForm.fullName,
+      username: draftForm.username,
+      email: draftForm.email,
+      slugName: draftForm.slugName,
+      displayName: draftForm.displayName,
+      selectedWebstorePlan: draftPlan,
+      selectedBillingOption: draftBilling,
+      webstoreRenewalEnabled: draftRenewalEnabled,
+    });
+
+    const planMap: Record<'quarterly' | 'semiAnnual' | 'annual', 'quarterly' | 'semi_annual' | 'annual'> = {
+      quarterly: 'quarterly',
+      semiAnnual: 'semi_annual',
+      annual: 'annual',
+    };
+
+    const paymentReference = String(
+      verified.payment_reference
+      || verified.payment_intent_id
+      || verified.checkout_id
+      || resolvedCheckoutId,
+    ).trim();
+
+    const receiptPayloadUrls = receiptUrls.length > 0 ? receiptUrls : [window.location.href];
+
+    const submitResponse = await submitWebstoreRequest({
+      full_name: draftForm.fullName.trim(),
+      username: draftForm.username.trim(),
+      email: draftForm.email.trim(),
+      slug_name: draftForm.slugName.trim().toLowerCase(),
+      display_name: draftForm.displayName.trim(),
+      plan: planMap[draftPlan],
+      billing_option: draftBilling,
+      payment_method: draftPaymentMethod,
+      receipt_urls: receiptPayloadUrls,
+      checkout_id: resolvedCheckoutId,
+      payment_reference: paymentReference || `WEB-${Date.now()}`,
+      payment_intent_id: verified.payment_intent_id || null,
+      accepted_terms: draftAcceptedTerms,
+      renewal_enabled: draftRenewalEnabled,
+    }).unwrap();
+
+    setWebstorePaymentReferenceId(paymentReference || null);
+    setWebstorePaymentProofUrl(receiptUrls[0] || verified.proof_url || null);
+    setWebstorePaymentIntentId(verified.payment_intent_id || null);
+    setWebstorePaymentCheckoutId(verified.checkout_id || resolvedCheckoutId);
+    setWebstoreLatestRequestPreview({
+      id: Number(submitResponse?.request?.id ?? Date.now()),
+      reference_no: submitResponse?.request?.reference_no
+        ?? (submitResponse?.request?.id ? `WR-${submitResponse.request.id}` : undefined),
+      status: (submitResponse?.request?.status as 'pending_review' | 'approved' | 'rejected' | undefined) ?? 'pending_review',
+      slug_name: draftForm.slugName.trim().toLowerCase(),
+      display_name: draftForm.displayName.trim(),
+      created_at: submitResponse?.request?.created_at ?? submitResponse?.request?.submitted_at ?? new Date().toISOString(),
+      billing_option: draftBilling,
+      payment_method: draftPaymentMethod,
+      full_name: draftForm.fullName.trim(),
+      username: draftForm.username.trim(),
+      email: draftForm.email.trim(),
+      webstoreRenewalEnabled: draftRenewalEnabled,
+    });
+
+    if (showPaymentSuccessModal) {
+      setWebstoreSuccessModalOpen(true);
+      setWebstoreMsg({ type: 'success', text: successMessage });
+      showSuccessToast('Webstore Payment Success');
+    } else {
+      setWebstoreMsg({ type: 'success', text: successMessage });
+      showSuccessToast(successMessage);
+    }
+    processedWebstoreCheckoutRef.current = resolvedCheckoutId;
+
+    window.sessionStorage.removeItem(webstorePaymentSessionStorageKey);
+    window.localStorage.removeItem(webstoreDraftStorageKey);
+
+    await refetchWebstoreRequestLatest();
+    router.replace('/profile?tab=webstore');
+
+    if (webstoreReceiptFiles.length > 0) {
+      setWebstoreReceiptFiles((prev) => {
+        prev.forEach((file) => {
+          if (file.preview.startsWith('blob:')) {
+            URL.revokeObjectURL(file.preview);
+          }
+        });
+        return [];
+      });
+    }
+
+    return submitResponse;
+  }, [
+    activeWebstoreRequest?.display_name,
+    activeWebstoreRequest?.slug_name,
+    refetchWebstoreRequestLatest,
+    router,
+    selectedBillingOption,
+    selectedPaymentMethod,
+    selectedWebstorePlan,
+    submitWebstoreRequest,
+    webstoreAcceptedTerms,
+    webstoreRenewalEnabled,
+    webstoreContactEmail,
+    webstoreContactFullName,
+    webstoreContactUsername,
+    webstoreForm.displayName,
+    webstoreForm.slugName,
+    webstoreReceiptFiles.length,
+  ]);
 
   useEffect(() => {
     if (!webstoreDraftHydratedRef.current) return;
@@ -2112,6 +2499,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
         selectedBillingOption?: 'full' | 'monthly' | null;
         selectedPaymentMethod?: WebstorePaymentMethod | null;
         webstoreAcceptedTerms?: boolean;
+        webstoreRenewalEnabled?: boolean;
       };
       if (draft.webstoreForm) {
         setWebstoreForm((prev) => ({ ...prev, ...draft.webstoreForm }));
@@ -2119,6 +2507,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       if (draft.selectedWebstorePlan) setSelectedWebstorePlan(draft.selectedWebstorePlan);
       if (draft.selectedBillingOption) setSelectedBillingOption(draft.selectedBillingOption);
       if (typeof draft.webstoreAcceptedTerms === 'boolean') setWebstoreAcceptedTerms(draft.webstoreAcceptedTerms);
+      if (typeof draft.webstoreRenewalEnabled === 'boolean') setWebstoreRenewalEnabled(draft.webstoreRenewalEnabled);
     } catch {
       // ignore invalid draft cache
     } finally {
@@ -2152,109 +2541,44 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
 
         if (!isMounted) return;
         if (processedWebstoreCheckoutRef.current === resolvedCheckoutId) return;
-
-        const storedDraftRaw = window.localStorage.getItem(webstoreDraftStorageKey) || window.sessionStorage.getItem(webstorePaymentSessionStorageKey);
-        let storedDraft: {
-          webstoreForm?: WebstoreRequestFormState;
-          selectedWebstorePlan?: 'quarterly' | 'semiAnnual' | 'annual' | null;
-          selectedBillingOption?: 'full' | 'monthly' | null;
-          selectedPaymentMethod?: WebstorePaymentMethod | null;
-          webstoreAcceptedTerms?: boolean;
-        } | null = null;
-        if (storedDraftRaw) {
-          try {
-            storedDraft = JSON.parse(storedDraftRaw) as {
-              webstoreForm?: WebstoreRequestFormState;
-              selectedWebstorePlan?: 'quarterly' | 'semiAnnual' | 'annual' | null;
-              selectedBillingOption?: 'full' | 'monthly' | null;
-              selectedPaymentMethod?: WebstorePaymentMethod | null;
-              webstoreAcceptedTerms?: boolean;
-            };
-          } catch {
-            storedDraft = null;
-          }
-        }
-
-        const draftForm = storedDraft?.webstoreForm;
-        const draftPlan = storedDraft?.selectedWebstorePlan;
-        const draftBilling = storedDraft?.selectedBillingOption;
-        const draftPaymentMethod = normalizeWebstorePaymentMethod(storedDraft?.selectedPaymentMethod) ?? selectedPaymentMethod ?? 'gcash';
-        const draftAcceptedTerms = storedDraft?.webstoreAcceptedTerms ?? webstoreAcceptedTerms;
-
-        if (!draftPlan || !draftBilling || !draftForm || !draftForm.fullName.trim() || !draftForm.username.trim() || !draftForm.email.trim() || !draftForm.slugName.trim() || !draftForm.displayName.trim()) {
-          throw new Error('Webstore draft is incomplete. Please reopen the profile page and try again.');
-        }
-
-        const planMap: Record<'quarterly' | 'semiAnnual' | 'annual', 'quarterly' | 'semi_annual' | 'annual'> = {
-          quarterly: 'quarterly',
-          semiAnnual: 'semi_annual',
-          annual: 'annual',
-        };
-
-        const paymentReference = String(
-          verified.payment_reference
-          || verified.payment_intent_id
-          || verified.checkout_id
-          || resolvedCheckoutId,
-        ).trim();
         const proofUrl = String(verified.proof_url || '').trim() || null;
-        const receiptUrls = proofUrl ? [proofUrl] : [window.location.href];
+        const isContinuationPayment = isApprovedWebstoreRequest;
+        const requiresReceiptUpload = !isContinuationPayment;
 
-        const submitResponse = await submitWebstoreRequest({
-          full_name: draftForm.fullName.trim(),
-          username: draftForm.username.trim(),
-          email: draftForm.email.trim(),
-          slug_name: draftForm.slugName.trim().toLowerCase(),
-          display_name: draftForm.displayName.trim(),
-          plan: planMap[draftPlan],
-          billing_option: draftBilling,
-          payment_method: draftPaymentMethod,
-          receipt_urls: receiptUrls,
-          checkout_id: resolvedCheckoutId,
-          payment_reference: paymentReference || `WEB-${Date.now()}`,
-          payment_intent_id: verified.payment_intent_id || null,
-          accepted_terms: draftAcceptedTerms,
-        }).unwrap();
-
-        if (!isMounted) return;
-
-        setWebstorePaymentReferenceId(paymentReference || null);
+        setWebstorePaymentReferenceId(
+          String(verified.payment_reference || verified.payment_intent_id || verified.checkout_id || resolvedCheckoutId).trim() || null,
+        );
         setWebstorePaymentProofUrl(proofUrl);
         setWebstorePaymentIntentId(verified.payment_intent_id || null);
         setWebstorePaymentCheckoutId(verified.checkout_id || resolvedCheckoutId);
-        setWebstoreLatestRequestPreview({
-          id: Number(submitResponse?.request?.id ?? Date.now()),
-          reference_no: submitResponse?.request?.reference_no
-            ?? (submitResponse?.request?.id ? `WR-${submitResponse.request.id}` : `WR-${Date.now()}`),
-          status: (submitResponse?.request?.status as 'pending_review' | 'approved' | 'rejected' | undefined) ?? 'pending_review',
-          full_name: draftForm.fullName.trim(),
-          username: draftForm.username.trim(),
-          email: draftForm.email.trim(),
-          slug_name: draftForm.slugName.trim().toLowerCase(),
-          display_name: draftForm.displayName.trim(),
-          plan: planMap[draftPlan],
-          created_at: submitResponse?.request?.created_at ?? submitResponse?.request?.submitted_at ?? new Date().toISOString(),
-          billing_option: draftBilling,
-          payment_method: draftPaymentMethod,
-          receipt_urls: receiptUrls,
-        });
 
-        setWebstoreSuccessModalOpen(true);
-        setWebstoreMsg({ type: 'success', text: 'PayMongo payment confirmed successfully.' });
-        showSuccessToast('PayMongo payment confirmed.');
-        processedWebstoreCheckoutRef.current = resolvedCheckoutId;
-
-        if (typeof window !== 'undefined') {
-          window.sessionStorage.removeItem(webstorePaymentSessionStorageKey);
-          window.localStorage.removeItem(webstoreDraftStorageKey);
+        if (isContinuationPayment) {
+          setWebstoreSuccessModalOpen(true);
+          setWebstoreMsg({
+            type: 'success',
+            text: 'Continuation payment confirmed. Please upload your receipt and submit the request.',
+          });
+          showSuccessToast('Continuation payment confirmed');
+          processedWebstoreCheckoutRef.current = resolvedCheckoutId;
+          await refetchWebstoreRequestLatest();
+          router.replace('/profile?tab=webstore');
+          return;
         }
 
+        setWebstoreSuccessModalOpen(true);
+        setWebstoreMsg({
+          type: 'success',
+          text: 'Webstore Payment Success. Please upload your receipt before submitting the request.',
+        });
+        showSuccessToast('Webstore Payment Success');
+        processedWebstoreCheckoutRef.current = resolvedCheckoutId;
         await refetchWebstoreRequestLatest();
         router.replace('/profile?tab=webstore');
+        return;
       } catch (error) {
         if (!isMounted) return;
         const apiErr = error as { data?: { message?: string }; message?: string };
-        const message = apiErr?.data?.message || apiErr?.message || 'Failed to verify PayMongo payment session.';
+        const message = apiErr?.data?.message || apiErr?.message || 'Failed to verify webstore payment session.';
         setWebstoreMsg({ type: 'error', text: message });
         showErrorToast(message);
       }
@@ -2266,10 +2590,12 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       isMounted = false;
     };
   }, [
+    finalizeWebstorePaymentSubmission,
     refetchWebstoreRequestLatest,
     router,
     selectedPaymentMethod,
-    submitWebstoreRequest,
+    isApprovedWebstoreRequest,
+    uploadSelectedWebstoreReceiptUrls,
     webstoreAcceptedTerms,
     webstoreCheckoutId,
     webstoreDraftStorageKey,
@@ -2322,8 +2648,8 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
           <path d="M -16 0 L -4 12 L 20 -12" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
         </g>
 
-        <text x="600" y="198" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="52" font-weight="800" fill="#ffffff">Payment Successful!</text>
-        <text x="600" y="244" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="22" fill="rgba(255,255,255,0.92)">Your payment is confirmed and your webstore request is ready to continue.</text>
+        <text x="600" y="198" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="52" font-weight="800" fill="#ffffff">Webstore Payment Success</text>
+        <text x="600" y="244" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="22" fill="rgba(255,255,255,0.92)">Your payment is confirmed. Upload your receipt to submit the request, unless this is an approved continuation payment.</text>
 
         <g transform="translate(76 300)">
           <rect x="0" y="0" width="1048" height="94" rx="22" fill="#f8fafc" stroke="#e5e7eb"/>
@@ -2522,28 +2848,37 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       semiAnnual: 'semi_annual',
       annual: 'annual',
     };
-    const selectedPlan = selectedWebstorePlan;
-    const billingOption = selectedBillingOption;
-
-    if (!selectedPlan || !billingOption || !paymentMethod) {
-      setWebstoreMsg({ type: 'error', text: 'Please complete the required fields first.' });
-      return;
-    }
 
     try {
+      if (paymentMethod) {
+        setWebstorePaymentMethodSnapshot(paymentMethod);
+      }
+      saveWebstorePaymentContext({
+        paymentMethod,
+        fullName: resolvedWebstoreSubmissionForm.fullName,
+        username: resolvedWebstoreSubmissionForm.username,
+        email: resolvedWebstoreSubmissionForm.email,
+        slugName: resolvedWebstoreSubmissionForm.slugName,
+        displayName: resolvedWebstoreSubmissionForm.displayName,
+        selectedWebstorePlan,
+        selectedBillingOption,
+        webstoreRenewalEnabled,
+      });
+
       if (typeof window !== 'undefined') {
         window.sessionStorage.setItem(webstorePaymentSessionStorageKey, JSON.stringify({
-          webstoreForm,
-          selectedWebstorePlan: selectedPlan,
-          selectedBillingOption: billingOption,
+          webstoreForm: resolvedWebstoreSubmissionForm,
+          selectedWebstorePlan,
+          selectedBillingOption,
           selectedPaymentMethod: paymentMethod,
           webstoreAcceptedTerms,
+          webstoreRenewalEnabled,
         }));
       }
 
       const data = await createWebstorePaymentSession({
-        plan: planMap[selectedPlan],
-        billing_option: billingOption,
+        plan: planMap[selectedWebstorePlan],
+        billing_option: selectedBillingOption,
         payment_method: paymentMethod,
         payment_mode: resolveWebstorePaymentMode(),
       }).unwrap();
@@ -2684,9 +3019,50 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       return;
     }
 
-    if (!selectedPaymentMethod) {
-      setWebstoreMsg({ type: 'error', text: 'Please select a payment method.' });
-      focusWebstoreInvalidField('payment_method');
+    if (shouldUploadReceiptOnly) {
+      if (isWebstoreReceiptPendingReview) {
+        const message = 'Receipt under review. Please wait before submitting another.';
+        setWebstoreMsg({ type: 'error', text: message });
+        showErrorToast(message);
+        return;
+      }
+
+      if (webstoreReceiptFiles.length === 0) {
+        const message = 'Please upload your payment receipt before submitting the webstore request.';
+        setWebstoreMsg({ type: 'error', text: message });
+        showErrorToast(message);
+        return;
+      }
+
+      try {
+        const uploadedReceiptUrls = await uploadSelectedWebstoreReceiptUrls();
+
+        if (uploadedReceiptUrls.length === 0) {
+          throw new Error('Please upload your payment receipt before submitting the webstore request.');
+        }
+
+        await finalizeWebstorePaymentSubmission({
+          resolvedCheckoutId: webstorePaymentCheckoutId || webstoreCheckoutId || webstorePaymentReferenceId || `WEB-${Date.now()}`,
+          verified: {
+            payment_reference: webstorePaymentReferenceId || webstorePaymentIntentId || webstorePaymentCheckoutId || webstoreCheckoutId,
+            payment_intent_id: webstorePaymentIntentId,
+            checkout_id: webstorePaymentCheckoutId || webstoreCheckoutId || null,
+            proof_url: webstorePaymentProofUrl,
+          },
+          receiptUrls: uploadedReceiptUrls,
+          showPaymentSuccessModal: false,
+          successMessage: isApprovedWebstoreRequest
+            ? 'Continuation payment submitted successfully.'
+            : isWebstoreReceiptRejected
+              ? 'Receipt reuploaded and webstore request submitted successfully.'
+              : 'Receipt uploaded and webstore request submitted successfully.',
+        });
+      } catch (error) {
+        const apiErr = error as { data?: { message?: string }; message?: string };
+        const message = apiErr?.data?.message || apiErr?.message || 'Failed to submit the webstore request.';
+        setWebstoreMsg({ type: 'error', text: message });
+        showErrorToast(message);
+      }
       return;
     }
 
@@ -3070,7 +3446,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
     { key: 'security', label: 'Security', Icon: Icon.Shield },
     { key: 'preferences', label: 'Preferences', Icon: Icon.Bell },
     { key: 'wallet', label: 'Wallet', Icon: Icon.Wallet },
-    { key: 'pv', label: 'E-Voucher', Icon: Icon.Star },
+    { key: 'pv', label: 'AF Voucher', Icon: Icon.Star },
     { key: 'encashment', label: 'Encashment', Icon: Icon.Bag },
     { key: 'interior-requests', label: 'Interior Requests', Icon: Icon.Package },
     { key: 'activity', label: 'Activity', Icon: Icon.Activity },
@@ -5990,9 +6366,21 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                             <p className="text-xs text-[#5f739d]">Fixed duration plan for partner storefront access.</p>
                           </div>
                         </div>
-                        <div className="min-w-[170px] rounded-2xl border border-[#d9e6ff] bg-white/90 px-4 py-3 text-right shadow-[0_8px_18px_rgba(80,120,220,0.08)]">
-                          <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#6d82ab]">Remaining Balance</p>
-                          <p className="mt-1 text-lg font-black tracking-tight text-[#0f1f44]">PHP {webstoreRemainingBalance.toLocaleString()}</p>
+                        <div className={`min-w-[170px] rounded-2xl border bg-white/90 px-4 py-3 text-right shadow-[0_8px_18px_rgba(80,120,220,0.08)] ${
+                          webstoreRemainingBalance <= 0
+                            ? 'border-emerald-200'
+                            : 'border-[#d9e6ff]'
+                        }`}>
+                          <p className={`text-[10px] text-center font-extrabold uppercase tracking-[0.18em] ${
+                            webstoreRemainingBalance <= 0 ? 'text-emerald-600' : 'text-[#6d82ab]'
+                          }`}>
+                            {webstoreRemainingBalance <= 0 ? 'Paid' : 'Remaining Balance'}
+                          </p>
+                          <p className={`mt-1 text-lg font-black text-center tracking-tight ${
+                            webstoreRemainingBalance <= 0 ? 'text-emerald-700' : 'text-[#0f1f44]'
+                          }`}>
+                            {webstoreRemainingBalance <= 0 ? 'Paid' : `PHP ${webstoreRemainingBalance.toLocaleString()}`}
+                          </p>
                         </div>
                       </div>
                       <div className="px-4 py-4 md:px-5">
@@ -6124,6 +6512,37 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                         <p className="mt-1 text-xs font-semibold text-[#2f5bd8]">
                           Selected plan: {selectedWebstorePlan ? (selectedWebstorePlan === 'quarterly' ? 'Quarterly' : selectedWebstorePlan === 'semiAnnual' ? 'Semi-Annual' : 'Annual') : 'None selected'}
                         </p>
+                        <div className="mt-3 rounded-2xl border border-[#d7e4fb] bg-[#f8fbff] px-4 py-3">
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold text-[#163060]">Renewal</p>
+                              <p className="text-xs text-[#7d8fb0]">
+                                {webstoreRenewalEnabled
+                                  ? 'Enabled for the next term when renewal is available.'
+                                  : 'Disabled. You can turn it on for future renewal tracking.'}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const next = !webstoreRenewalEnabled;
+                                setWebstoreRenewalEnabled(next);
+                                saveWebstoreDraft({ webstoreRenewalEnabled: next });
+                              }}
+                              className={`relative inline-flex h-8 w-14 items-center rounded-full px-1 transition ${
+                                webstoreRenewalEnabled ? 'bg-emerald-500' : 'bg-slate-300'
+                              }`}
+                              aria-pressed={webstoreRenewalEnabled}
+                              aria-label={webstoreRenewalEnabled ? 'Disable renewal' : 'Enable renewal'}
+                            >
+                              <span
+                                className={`inline-block h-6 w-6 rounded-full bg-white shadow transition-transform ${
+                                  webstoreRenewalEnabled ? 'translate-x-6' : 'translate-x-0'
+                                }`}
+                              />
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -6176,7 +6595,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                           <input
                             type="text"
                             ref={webstoreSlugInputRef}
-                            value={hasExistingWebstoreRequest ? (activeWebstoreRequest?.slug_name || '-') : webstoreForm.slugName}
+                            value={resolvedWebstoreSubmissionForm.slugName}
                             onChange={(e) => {
                               webstoreStorefrontFieldsEditedRef.current = true;
                               setWebstoreInvalidFields((prev) => ({ ...prev, slugName: false }));
@@ -6206,7 +6625,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                           <input
                             type="text"
                             ref={webstoreDisplayInputRef}
-                            value={hasExistingWebstoreRequest ? (activeWebstoreRequest?.display_name || '-') : webstoreForm.displayName}
+                            value={resolvedWebstoreSubmissionForm.displayName}
                             onChange={(e) => {
                               webstoreStorefrontFieldsEditedRef.current = true;
                               setWebstoreInvalidFields((prev) => ({ ...prev, displayName: false }));
@@ -6262,7 +6681,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                           <div className="relative">
                           <select
                             ref={webstorePaymentSelectRef}
-                            value={selectedPaymentMethod ?? ''}
+                            value={selectedPaymentMethod ?? storedWebstorePaymentContext?.paymentMethod ?? ''}
                             disabled={isCreatingWebstorePaymentSession}
                             onChange={(event) => {
                               const method = isWebstorePaymentMethod(event.target.value) ? event.target.value : null
@@ -6271,7 +6690,6 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                               setWebstoreInvalidFields((prev) => ({ ...prev, paymentMethod: false }));
                               if (method) {
                                 saveWebstoreDraft({ selectedPaymentMethod: method })
-                                void handleStartWebstorePayment(method)
                               }
                             }}
                             className={`w-full appearance-none rounded-xl border bg-white px-4 py-3 pr-12 text-sm font-semibold text-[#163060] outline-none transition hover:border-[#9fb4ef] focus:border-[#4f7df0] focus:bg-[#fbfdff] focus:ring-2 focus:ring-sky-100 disabled:cursor-not-allowed disabled:opacity-70 ${
@@ -6347,13 +6765,18 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                             accept="image/*"
                             multiple
                             className="hidden"
+                            disabled={isWebstoreReceiptPendingReview}
                             onChange={handleWebstoreReceiptUpload}
                           />
                           <div
                             role="button"
-                            tabIndex={0}
-                            onClick={() => webstoreReceiptInputRef.current?.click()}
+                            tabIndex={isWebstoreReceiptPendingReview ? -1 : 0}
+                            onClick={() => {
+                              if (isWebstoreReceiptPendingReview) return
+                              webstoreReceiptInputRef.current?.click()
+                            }}
                             onKeyDown={(event) => {
+                              if (isWebstoreReceiptPendingReview) return
                               if (event.key === 'Enter' || event.key === ' ') {
                                 event.preventDefault()
                                 webstoreReceiptInputRef.current?.click()
@@ -6374,9 +6797,11 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                               event.stopPropagation()
                               setIsDraggingReceipt(false)
                             }}
-                            onDrop={handleWebstoreReceiptDrop}
+                            onDrop={isWebstoreReceiptPendingReview ? undefined : handleWebstoreReceiptDrop}
                             className={`rounded-[22px] border border-dashed bg-white p-5 outline-none transition focus-visible:ring-2 focus-visible:ring-sky-100 ${
-                              isDraggingReceipt
+                              isWebstoreReceiptPendingReview
+                                ? 'cursor-not-allowed border-[#d9e2f4] bg-[#f7f9fc] opacity-80'
+                                : isDraggingReceipt
                                 ? 'border-[#4f7df0] bg-[#f5f9ff] shadow-[0_0_0_4px_rgba(37,99,235,0.08)]'
                                 : 'border-[#c6d4f7] hover:border-[#9fb4ef] hover:bg-[#fbfdff]'
                             }`}
@@ -6387,10 +6812,19 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                                 <p className="text-xs text-[#7d8fb0]">
                                   Click anywhere to add one or more images.
                                 </p>
+                                {isWebstoreReceiptPendingReview ? (
+                                  <p className="text-xs font-medium text-sky-700">
+                                    The latest receipt is still under review. Please wait until it is approved or rejected before uploading a new receipt.
+                                  </p>
+                                ) : null}
                               </div>
                               <div className="flex items-center gap-2">
                                 <div className="rounded-full bg-[#eff4ff] px-3 py-1 text-[11px] font-semibold text-[#4968c9]">
-                                  {webstoreReceiptFiles.length > 0 ? `${webstoreReceiptFiles.length} selected` : 'Click to upload'}
+                                  {isWebstoreReceiptPendingReview
+                                    ? 'Locked while under review'
+                                    : webstoreReceiptFiles.length > 0
+                                      ? `${webstoreReceiptFiles.length} selected`
+                                      : 'Click to upload'}
                                 </div>
                               </div>
                             </div>
@@ -6429,6 +6863,19 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                                             <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-700">
                                               Rejected
                                             </span>
+                                          ) : null}
+                                          {item.kind === 'rejected' ? (
+                                            <button
+                                              type="button"
+                                              onClick={(event) => {
+                                                event.stopPropagation()
+                                                setDismissedRejectedReceiptKeys((prev) => Array.from(new Set([...prev, item.key])))
+                                              }}
+                                              className="rounded-full border border-rose-200 bg-white px-2 py-1 text-[11px] font-semibold text-rose-700 hover:bg-rose-50"
+                                              aria-label={`Remove rejected receipt ${item.name}`}
+                                            >
+                                              X
+                                            </button>
                                           ) : null}
                                           {item.kind === 'selected' ? (
                                             <button
@@ -6537,9 +6984,15 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                           className="inline-flex w-full items-center justify-center gap-3 rounded-[18px] bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] px-6 py-4 text-[17px] font-semibold text-white shadow-[0_12px_28px_rgba(37,99,235,0.38)] transition hover:from-[#1d4ed8] hover:to-[#1e40af] sm:w-auto sm:min-w-[320px]"
                         >
                           <Icon.Package className="h-5 w-5" />
-                          {hasExistingWebstoreRequest
-                            ? 'Upload Webstore Receipt'
-                            : 'Submit Request'}
+                          {shouldUploadReceiptOnly
+                            ? (isApprovedWebstoreRequest
+                                ? 'Continue Payment'
+                                : isWebstoreReceiptRejected
+                                  ? 'Reupload Receipt & Submit'
+                                  : 'Upload Receipt & Submit')
+                            : hasExistingWebstoreRequest
+                              ? 'Upload Webstore Receipt'
+                              : 'Submit Request'}
                           <span aria-hidden>→</span>
                         </button>
                       </div>
@@ -7143,9 +7596,13 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                     <path d="m5 13 4 4L19 7" />
                   </svg>
                 </div>
-                <h3 className="text-3xl font-black tracking-tight">Payment Successful!</h3>
+                <h3 className="text-3xl font-black tracking-tight">
+                  {isApprovedWebstoreRequest ? 'Continuation Payment Confirmed' : 'Webstore Payment Success'}
+                </h3>
                 <p className="mt-2 text-sm text-white/90 md:text-base">
-                  Your payment is confirmed and your webstore request is ready to continue.
+                  {isApprovedWebstoreRequest
+                    ? 'Your continuation payment is confirmed. Upload your receipt to complete the request.'
+                    : 'Your payment is confirmed. Upload your receipt to submit the request.'}
                 </p>
               </div>
 
@@ -7169,6 +7626,21 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                     <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Payment Intent</p>
                     <p className="mt-1 break-all text-sm font-semibold text-slate-900">{webstorePaymentIntentId || '-'}</p>
                   </div>
+                  {!isApprovedWebstoreRequest ? (
+                    <div className="rounded-3xl border border-dashed border-sky-200 bg-sky-50 px-4 py-4 md:col-span-2">
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-sky-500">Receipt Upload</p>
+                      <p className="mt-1 text-sm font-medium text-slate-700">
+                        Upload your payment receipt next so we can submit the webstore request.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={openWebstoreReceiptUpload}
+                        className="mt-3 inline-flex items-center justify-center rounded-full bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700"
+                      >
+                        Upload Receipt
+                      </button>
+                    </div>
+                  ) : null}
                   <div className="rounded-3xl border border-slate-200 bg-white px-4 py-3">
                     <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Customer</p>
                     <p className="mt-1 text-sm font-semibold text-slate-900">{webstoreForm.fullName || '-'}</p>
@@ -7195,16 +7667,16 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                   </div>
                   <div className="rounded-3xl border border-slate-200 bg-white px-4 py-3">
                     <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
-                      {activeWebstoreRequest?.status === 'approved' && selectedBillingOption === 'full' ? 'Remaining Balance' : 'Subscription Fee'}
+                      Subscription Fee
                     </p>
                     <p className="mt-1 text-sm font-semibold text-slate-900">
-                      {selectedWebstorePaymentAmount != null ? `PHP ${selectedWebstorePaymentAmount.toLocaleString()}` : '-'}
+                      {selectedWebstoreSubscriptionFee != null ? `PHP ${selectedWebstoreSubscriptionFee.toLocaleString()}` : '-'}
                     </p>
                   </div>
                   <div className="rounded-3xl border border-slate-200 bg-white px-4 py-3">
-                    <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Monthly Pay</p>
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">{webstorePaymentBreakdownLabel}</p>
                     <p className="mt-1 text-sm font-semibold text-slate-900">
-                      {webstoreMonthlyPay != null ? `PHP ${webstoreMonthlyPay.toLocaleString()}` : '-'}
+                      {webstorePaymentBreakdownValue != null ? `PHP ${webstorePaymentBreakdownValue.toLocaleString()}` : '-'}
                     </p>
                   </div>
                 </div>

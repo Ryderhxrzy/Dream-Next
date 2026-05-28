@@ -231,6 +231,31 @@ const ProductPageClient = ({
     }, []);
 
     useEffect(() => {
+        if (typeof window === 'undefined') return;
+
+        // Check if device is mobile
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (!isMobile) return;
+
+        const slug = pathname.split('/').pop();
+        if (!slug) return;
+
+        const appScheme = `apsarahome://product/${slug}`;
+
+        // Set a timeout to fallback to web if app doesn't open
+        const appOpenTimeout = setTimeout(() => {
+            console.log('[ProductPage] App not detected on mobile, staying on web');
+        }, 1000);
+
+        // Try to open the app
+        console.log('[ProductPage] Attempting to open app with scheme:', appScheme);
+        window.location.href = appScheme;
+
+        // Cleanup timeout
+        return () => clearTimeout(appOpenTimeout);
+    }, [pathname]);
+
+    useEffect(() => {
         const username = (searchParams.get('username') ?? '').trim();
         const preferredBy = (searchParams.get('preffered_by') ?? '').trim();
         if (!username || !preferredBy) return;

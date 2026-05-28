@@ -157,23 +157,6 @@ class FirebaseMessagingService
                 $data['image'] = $image;
             }
 
-            $androidNotification = [
-                'title' => $title,
-                'body' => $body,
-                'channel_id' => 'default',
-                'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-                'color' => $color,
-                'notification_priority' => 'PRIORITY_MAX',
-                'sound' => 'default',
-                'tag' => 'firebase-notification',
-                'ticker' => $title,
-            ];
-
-            // Only add image if it exists and is not empty (shows as big picture in banner)
-            if ($image && trim((string) $image) !== '') {
-                $androidNotification['image'] = (string) $image;
-            }
-
             // Include data in payload for app to use
             $deeplink = $data['href'] ?? $data['deeplink'] ?? '/orders';
             $dataPayload = array_merge($data, [
@@ -182,23 +165,21 @@ class FirebaseMessagingService
                 'image' => $image ?: '',
                 'href' => $deeplink,
                 'deeplink' => $deeplink,
+                'channel_id' => 'afhome_notifications',
+                'color' => $color,
+                'sound' => 'default',
             ]);
 
             $payload = [
                 'message' => [
                     'token' => $token,
                     'data' => $dataPayload,
-                    // Add notification payload for background/closed state display
-                    'notification' => [
-                        'title' => $title,
-                        'body' => $body,
-                        'image' => $image && trim((string) $image) !== '' ? (string) $image : null,
-                    ],
+                    // Send as data-first Android message.
+                    // App-side native service builds the notification for consistent custom UI.
                     'android' => [
                         'priority' => 'HIGH',
                         'ttl' => '3600s',
                         'direct_boot_ok' => true,
-                        'notification' => $androidNotification,
                     ],
                     'apns' => [
                         'headers' => [
