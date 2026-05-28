@@ -323,7 +323,7 @@ type Tab = 'profile' | 'security' | 'preferences' | 'wallet' | 'pv' | 'encashmen
 
 type AlertMsg = { type: 'success' | 'error'; text: string };
 type TreeStatusFilter = 'all' | 'verified' | 'pending_review' | 'not_verified' | 'blocked';
-const PROFILE_TABS: Tab[] = ['profile', 'security', 'preferences', 'wallet', 'encashment', 'interior-requests', 'activity', 'change-username', 'webstore', 'referrals', 'levels'];
+const PROFILE_TABS: Tab[] = ['profile', 'security', 'preferences', 'wallet', 'pv', 'encashment', 'interior-requests', 'activity', 'change-username', 'webstore', 'referrals', 'levels'];
 
 type WebstorePaymentMethod = 'gcash' | 'grab_pay' | 'maya' | 'card';
 
