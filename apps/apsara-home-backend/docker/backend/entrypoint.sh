@@ -39,12 +39,17 @@ set_env_value() {
     return
   fi
 
-  escaped="$(printf '%s' "$value" | sed 's/[\/&]/\\&/g')"
+  dotenv_value="$value"
+  if printf '%s' "$value" | grep -q '[[:space:]]'; then
+    dotenv_value="\"$(printf '%s' "$value" | sed 's/\\/\\\\/g; s/"/\\"/g')\""
+  fi
+
+  escaped="$(printf '%s' "$dotenv_value" | sed 's/[\/&]/\\&/g')"
 
   if grep -q "^${key}=" .env; then
     sed -i "s/^${key}=.*/${key}=${escaped}/" .env
   else
-    printf '\n%s=%s\n' "$key" "$value" >> .env
+    printf '\n%s=%s\n' "$key" "$dotenv_value" >> .env
   fi
 }
 
