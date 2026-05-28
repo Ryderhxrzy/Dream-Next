@@ -323,7 +323,7 @@ type Tab = 'profile' | 'security' | 'preferences' | 'wallet' | 'pv' | 'encashmen
 
 type AlertMsg = { type: 'success' | 'error'; text: string };
 type TreeStatusFilter = 'all' | 'verified' | 'pending_review' | 'not_verified' | 'blocked';
-const PROFILE_TABS: Tab[] = ['profile', 'security', 'preferences', 'wallet', 'encashment', 'interior-requests', 'activity', 'change-username', 'webstore', 'referrals', 'levels'];
+const PROFILE_TABS: Tab[] = ['profile', 'security', 'preferences', 'wallet', 'pv', 'encashment', 'interior-requests', 'activity', 'change-username', 'webstore', 'referrals', 'levels'];
 
 type WebstorePaymentMethod = 'gcash' | 'grab_pay' | 'maya' | 'card';
 
@@ -771,6 +771,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
     latest_receipt_detail_id?: number | null
     latest_receipt_submitted_at?: string | null
     latest_receipt_urls?: string[] | null
+    webstoreRenewalEnabled?: boolean
   } | null>(null);
   const webstoreReceiptInputRef = useRef<HTMLInputElement | null>(null);
   const webstorePlanSectionRef = useRef<HTMLDivElement | null>(null);

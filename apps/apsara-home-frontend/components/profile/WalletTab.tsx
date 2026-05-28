@@ -6,6 +6,7 @@ import { WalletTypeFilter, useCreateAffiliateVoucherMutation, useGetWalletOvervi
 import PvWalletTab from './PvWalletTab';
 import RewardsWalletTab from './RewardsWalletTab';
 import NetworkEarningsTab from './NetworkEarningsTab';
+import PerformanceTab from './PerformanceTab';
 
 const peso = (value: number) =>
   new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', minimumFractionDigits: 2 }).format(value || 0);
@@ -27,16 +28,17 @@ const formatDate = (value?: string | null) => {
 };
 
 // "Cash" tab removed — "All Wallets" is now the unified cash overview + ledger
-type WalletViewType = WalletTypeFilter | 'network';
+type WalletViewType = WalletTypeFilter | 'network' | 'performance';
 
 const walletOptions: Array<{ key: WalletViewType; label: string; icon: string }> = [
-  { key: 'network', label: 'Network Earnings', icon: '↗' },
-  { key: 'all',     label: 'Overview',    icon: '◈' },
-  { key: 'rewards', label: 'Rewards',     icon: '✦' },
-  { key: 'pv',      label: 'E Voucher',  icon: '◆' },
+  { key: 'network',     label: 'Network Earnings', icon: '↗' },
+  { key: 'all',         label: 'Overview',         icon: '◈' },
+  { key: 'rewards',     label: 'Rewards',          icon: '✦' },
+  { key: 'pv',          label: 'E Voucher',        icon: '◆' },
+  { key: 'performance', label: 'Performance',      icon: '⚡' },
 ];
 
-const walletOptionOrder: WalletViewType[] = ['all', 'rewards', 'pv', 'network'];
+const walletOptionOrder: WalletViewType[] = ['all', 'rewards', 'pv', 'network', 'performance'];
 const orderedWalletOptions = [...walletOptions].sort(
   (a, b) => walletOptionOrder.indexOf(a.key) - walletOptionOrder.indexOf(b.key),
 );
@@ -59,6 +61,12 @@ const walletMeta = {
     subtitle: 'See each Group Purchase Bonus source, delivered PV, rate, and computation.',
     gradient: 'from-sky-500 via-cyan-500 to-emerald-500',
     glow: 'shadow-sky-500/20',
+  },
+  performance: {
+    title: 'Performance',
+    subtitle: 'Track your referral performance and PV progress toward your goals.',
+    gradient: 'from-green-500 via-emerald-500 to-teal-500',
+    glow: 'shadow-green-500/20',
   },
   rewards: {
     title: 'Rewards Center',
@@ -85,7 +93,7 @@ export default function WalletTab({ initialWalletType = 'all' }: WalletTabProps)
     : walletType === 'pv'
       ? 'rewards'
       : walletType;
-  const queryWalletType: WalletTypeFilter = contentWalletType === 'network' ? 'all' : contentWalletType;
+  const queryWalletType: WalletTypeFilter = (contentWalletType === 'network' || contentWalletType === 'performance') ? 'all' : contentWalletType;
   const { data, isLoading, isFetching, isError, refetch } = useGetWalletOverviewQuery({
     page,
     perPage: 15,
@@ -207,6 +215,8 @@ export default function WalletTab({ initialWalletType = 'all' }: WalletTabProps)
                     monthlyActivation={summary?.monthly_activation}
                   />
                 )
+              ) : contentWalletType === 'performance' ? (
+                <PerformanceTab />
               ) : contentWalletType === 'network' ? (
                 isLoading ? <SkeletonCards /> : isError ? <ErrorBanner msg="Failed to load Network Earnings data." /> : (
                   <NetworkEarningsTab
