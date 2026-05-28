@@ -9,6 +9,7 @@ import Footer from '@/components/landing-page/Footer';
 import ScrollToTop from '@/components/landing-page/ScrollToTop';
 import type { TopBarConfig } from '@/components/layout/TopBar';
 import type { TrustBarConfig } from '@/components/layout/TrustBar';
+import { setStoredReferralCode } from '@/libs/referral';
 
 type ShopPageClientProps = {
   shopData: ShopBuilderApiResponse | null;
@@ -26,19 +27,7 @@ const ShopPageClient = ({ shopData, navbarCategories, topBarConfig, trustBarConf
 
     if (!refParam) return;
 
-    const appScheme = `apsarahome://shop?ref=${encodeURIComponent(refParam)}`;
-
-    // Set a timeout to check if app doesn't open
-    const appOpenTimeout = setTimeout(() => {
-      console.log('[ShopPage] App not detected, staying on web');
-    }, 500);
-
-    // Try to open the app
-    console.log('[ShopPage] Attempting to open app with scheme:', appScheme);
-    window.location.href = appScheme;
-
-    // Cleanup timeout
-    return () => clearTimeout(appOpenTimeout);
+    setStoredReferralCode(refParam);
   }, []);
 
   return (
