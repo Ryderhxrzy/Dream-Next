@@ -66,6 +66,7 @@ class AuthController extends Controller
 
         $request->merge([
             'referred_by' => $this->normalizeReferralValue((string) $request->input('referred_by', '')),
+            'email' => $request->input('email') ? trim((string) $request->input('email')) : null,
         ]);
 
         $validated = $request->validate([
@@ -139,6 +140,7 @@ class AuthController extends Controller
         $otp = (string) random_int(1000, 9999);
         $partnerSlug = strtolower(trim((string) ($validated['partner_slug'] ?? '')));
         $senderContext = $this->resolvePartnerOtpSenderContext($partnerSlug);
+        $email = $validated['email'] ? (string) $validated['email'] : null;
 
         Cache::put($this->registrationOtpCacheKey($verificationToken), [
             'otp_hash' => Hash::make($otp),
@@ -146,17 +148,20 @@ class AuthController extends Controller
                 'validated' => $validated,
                 'referrer_user_id' => (int) $referrer->c_userid,
             ], JSON_THROW_ON_ERROR)),
-            'email' => (string) $validated['email'],
+            'email' => $email,
             'sender_context' => $senderContext,
         ], now()->addMinutes(10));
 
-        $this->sendRegistrationOtpEmail((string) $validated['email'], $otp, $senderContext);
+        // Send email OTP only if email is provided
+        if ($email) {
+            $this->sendRegistrationOtpEmail($email, $otp, $senderContext);
+        }
 
         return response()->json([
-            'message' => 'A 4-digit verification code has been sent to your email.',
+            'message' => 'A 4-digit verification code has been sent to your phone.',
             'requires_otp' => true,
             'verification_token' => $verificationToken,
-            'email' => (string) $validated['email'],
+            'email' => $email,
         ]);
     }
 
@@ -196,7 +201,7 @@ class AuthController extends Controller
         $registration = $payload['validated'] ?? [];
         $referrerUserId = (int) ($payload['referrer_user_id'] ?? 0);
 
-        if (empty($registration['email']) || empty($registration['username'])) {
+        if (empty($registration['username'])) {
             $fail('otp', 'The verification payload is invalid. Please register again.');
         }
 
@@ -6077,27 +6082,53 @@ class AuthController extends Controller
     public function sendOtpViaSms(Request $request)
     {
         $validated = $request->validate([
+            'verification_token' => 'required|string',
             'phone' => 'required|string|max:20',
         ]);
 
         try {
+            $verificationToken = trim((string) $validated['verification_token']);
             $phoneNumber = trim((string) $validated['phone']);
-            $otp = (string) random_int(1000, 9999);
-            $verificationToken = (string) Str::uuid();
 
+            // Retrieve the cached registration data
+            $cached = Cache::get($this->registrationOtpCacheKey($verificationToken));
+
+            if (!is_array($cached) || empty($cached['payload'])) {
+                Log::warning('sendOtpViaSms: verification token not found or expired', [
+                    'token_prefix' => substr($verificationToken, 0, 8),
+                ]);
+
+                return response()->json([
+                    'message' => 'Verification token expired. Please register again.',
+                    'error' => 'TOKEN_EXPIRED',
+                ], 410);
+            }
+
+            $otp = (string) random_int(1000, 9999);
             $semaphoreService = new \App\Services\SemaphoreService();
             $sent = $semaphoreService->sendOtp($phoneNumber, $otp);
 
             if (!$sent) {
+                Log::error('sendOtpViaSms: Semaphore failed to send', [
+                    'phone' => $this->maskPhoneNumber($phoneNumber),
+                ]);
+
                 return response()->json([
                     'message' => 'Failed to send OTP. Please try again.',
                 ], 500);
             }
 
+            // Store SMS OTP data using the same verification token
             Cache::put($this->otpSmsCacheKey($verificationToken), [
                 'otp_hash' => Hash::make($otp),
                 'phone' => $phoneNumber,
+                'payload' => $cached['payload'],
             ], now()->addMinutes(10));
+
+            Log::info('sendOtpViaSms successful', [
+                'token_prefix' => substr($verificationToken, 0, 8),
+                'phone' => $this->maskPhoneNumber($phoneNumber),
+            ]);
 
             return response()->json([
                 'message' => 'OTP has been sent to your phone number.',
@@ -6172,19 +6203,136 @@ class AuthController extends Controller
             ], 422); // 422 Unprocessable Entity
         }
 
-        // OTP is valid - clean up cache
-        Cache::forget($cacheKey);
+        // OTP is valid - proceed with registration
         Cache::forget($attemptsKey);
 
-        Log::info('SMS OTP verification successful', [
+        // Get cached registration payload
+        if (!is_array($cached) || empty($cached['payload'])) {
+            Log::warning('SMS OTP verification: payload not found', [
+                'token_prefix' => substr($token, 0, 8),
+            ]);
+
+            return response()->json([
+                'message' => 'The verification has expired. Please register again.',
+                'error' => 'VERIFICATION_EXPIRED',
+            ], 410);
+        }
+
+        $payload = json_decode(Crypt::decryptString((string) $cached['payload']), true, 512, JSON_THROW_ON_ERROR);
+        $registration = $payload['validated'] ?? [];
+        $referrerUserId = (int) ($payload['referrer_user_id'] ?? 0);
+
+        if (empty($registration['username'])) {
+            Log::warning('SMS OTP verification: invalid payload', [
+                'token_prefix' => substr($token, 0, 8),
+            ]);
+
+            return response()->json([
+                'message' => 'The verification payload is invalid. Please register again.',
+                'error' => 'INVALID_PAYLOAD',
+            ], 422);
+        }
+
+        $existingByEmail = !empty($registration['email']) ? Customer::query()
+            ->whereRaw('LOWER(c_email) = ?', [mb_strtolower((string) $registration['email'], 'UTF-8')])
+            ->first() : null;
+        $existingByUsername = Customer::query()
+            ->whereRaw('LOWER(c_username) = ?', [mb_strtolower((string) $registration['username'], 'UTF-8')])
+            ->first();
+
+        // Idempotency: if account already exists by username, return success
+        if ($existingByUsername instanceof Customer) {
+            // If email is also provided, verify it matches
+            if (!empty($registration['email']) && $existingByEmail instanceof Customer) {
+                if ((int) $existingByEmail->c_userid === (int) $existingByUsername->c_userid) {
+                    Cache::forget($cacheKey);
+                    return response()->json([
+                        'message' => 'Registration complete. You can now sign in.',
+                        'user' => $this->transformCustomer($existingByUsername),
+                    ], 201);
+                }
+            } else if (empty($registration['email'])) {
+                // Email is null, just return the existing user
+                Cache::forget($cacheKey);
+                return response()->json([
+                    'message' => 'Registration complete. You can now sign in.',
+                    'user' => $this->transformCustomer($existingByUsername),
+                ], 201);
+            }
+
+            Log::warning('SMS OTP verification: username exists', [
+                'token_prefix' => substr($token, 0, 8),
+            ]);
+
+            return response()->json([
+                'message' => 'This username is already taken.',
+                'error' => 'USERNAME_EXISTS',
+            ], 422);
+        }
+
+        if ($existingByEmail instanceof Customer) {
+            Log::warning('SMS OTP verification: email exists', [
+                'token_prefix' => substr($token, 0, 8),
+            ]);
+
+            return response()->json([
+                'message' => 'This email is already registered.',
+                'error' => 'EMAIL_EXISTS',
+            ], 422);
+        }
+
+        $customer = DB::transaction(function () use ($registration, $referrerUserId) {
+            if (DB::connection()->getDriverName() === 'pgsql') {
+                DB::statement('LOCK TABLE tbl_customer IN EXCLUSIVE MODE');
+            }
+
+            $nextCustomerId = ((int) DB::table('tbl_customer')->whereNotNull('c_userid')->max('c_userid')) + 1;
+
+            return Customer::create([
+                'c_userid'       => $nextCustomerId,
+                'c_fname'        => $registration['first_name'],
+                'c_lname'        => $registration['last_name'],
+                'c_mname'        => $registration['middle_name'] ?? null,
+                'c_username'     => $registration['username'],
+                'c_email'        => $registration['email'],
+                'c_mobile'       => $registration['phone'] ?? '0',
+                'c_bdate'        => $registration['birth_date'] ?? null,
+                'c_gender'       => $this->mapGenderToInt($registration['gender'] ?? null),
+                'c_occupation'   => $registration['occupation'] ?? 'None',
+                'c_country'      => $registration['country'] ?? (($registration['work_location'] ?? 'local') === 'overseas' ? 'Overseas' : 'Philippines'),
+                'c_password'     => Hash::make($registration['password']),
+                'c_password_pin' => '',
+                'c_password_change_required' => false,
+                'c_rank'         => 0,
+                'c_accnt_status' => 0,
+                'c_lockstatus'   => 0,
+                'c_sponsor'      => $referrerUserId,
+                'c_date_started' => now(),
+                'c_address'      => $registration['address'] ?? null,
+                'c_barangay'     => $registration['barangay'] ?? null,
+                'c_city'         => $registration['city'] ?? null,
+                'c_province'     => $registration['province'] ?? null,
+                'c_region'       => $registration['region'] ?? null,
+                'c_region_code'  => $registration['region_code'] ?? null,
+                'c_province_code'=> $registration['province_code'] ?? null,
+                'c_city_code'    => $registration['city_code'] ?? null,
+                'c_barangay_code'=> $registration['barangay_code'] ?? null,
+                'c_zipcode'      => $registration['zip_code'] ?? null,
+                'c_partner_slug' => ($slug = strtolower(trim((string) ($registration['partner_slug'] ?? '')))) !== '' ? $slug : null,
+            ]);
+        });
+
+        Cache::forget($cacheKey);
+
+        Log::info('SMS OTP verification and registration successful', [
             'token_prefix' => substr($token, 0, 8),
-            'phone' => $cached['phone'] ?? null,
+            'customer_id' => (int) $customer->c_userid,
         ]);
 
         return response()->json([
-            'message' => 'Phone number verified successfully.',
-            'phone' => $cached['phone'] ?? null,
-        ], 200);
+            'message' => 'Registration complete. You can now sign in.',
+            'user' => $this->transformCustomer($customer),
+        ], 201);
     }
 
     private function otpSmsCacheKey(string $verificationToken): string
@@ -6195,6 +6343,15 @@ class AuthController extends Controller
     private function otpAttemptsCacheKey(string $verificationToken): string
     {
         return "otp_sms_attempts:{$verificationToken}";
+    }
+
+    private function maskPhoneNumber(string $phoneNumber): string
+    {
+        $normalized = preg_replace('/[^0-9]/', '', $phoneNumber);
+        if (strlen($normalized) >= 7) {
+            return substr($normalized, 0, 3) . '***' . substr($normalized, -3);
+        }
+        return '***' . substr($normalized, -3);
     }
 
 }

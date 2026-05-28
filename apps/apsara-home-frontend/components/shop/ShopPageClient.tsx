@@ -28,23 +28,6 @@ const ShopPageClient = ({ shopData, navbarCategories, topBarConfig, trustBarConf
     if (!refParam) return;
 
     setStoredReferralCode(refParam);
-
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(window.navigator.userAgent);
-    if (!isMobile) return;
-
-    const appScheme = `apsarahome://shop?ref=${encodeURIComponent(refParam)}`;
-
-    // Set a timeout to check if app doesn't open
-    const appOpenTimeout = setTimeout(() => {
-      console.log('[ShopPage] App not detected, staying on web');
-    }, 500);
-
-    // Try to open the app
-    console.log('[ShopPage] Attempting to open app with scheme:', appScheme);
-    window.location.href = appScheme;
-
-    // Cleanup timeout
-    return () => clearTimeout(appOpenTimeout);
   }, []);
 
   return (

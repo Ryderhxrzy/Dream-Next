@@ -285,6 +285,7 @@ Route::middleware(['auth:sanctum', 'customer.actor'])->group(function () {
     Route::post('/notifications/fcm/register-token', [CustomerNotificationController::class, 'registerFcmToken']);
     Route::post('/notifications/fcm/send', [CustomerNotificationController::class, 'sendFcmNotification']);
     Route::post('/notifications/fcm/test', [CustomerNotificationController::class, 'sendTestFcmNotification']);
+    Route::post('/notifications/fcm/test-custom', [CustomerNotificationController::class, 'sendCustomFcmNotification']);
 
     // Follower routes
     Route::post('/followers/follow', [FollowerController::class, 'follow']);

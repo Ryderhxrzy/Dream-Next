@@ -2,14 +2,11 @@
 
 import { FormEvent, useMemo, useState } from 'react';
 import { AffiliateVoucherItem } from '@/store/api/encashmentApi';
+import { BadgePercent, CalendarDays, Hash, Sparkles, TicketPercent } from 'lucide-react';
 
 interface RewardsWalletTabProps {
   afVoucherBalance: number;
   afVoucherSourceBalance: number;
-  cashbackSourceBalance: number;
-  cashbackReservedBalance: number;
-  availableEgcBalance: number;
-  cashbackBalance: number;
   cashbackRate?: number;
   vouchers: AffiliateVoucherItem[];
   isCreatingVoucher?: boolean;
@@ -140,10 +137,6 @@ function CopyButton({ text }: { text: string }) {
 export default function RewardsWalletTab({
   afVoucherBalance,
   afVoucherSourceBalance,
-  cashbackSourceBalance,
-  cashbackReservedBalance,
-  availableEgcBalance,
-  cashbackBalance,
   cashbackRate = 0,
   vouchers,
   isCreatingVoucher = false,
@@ -201,121 +194,88 @@ export default function RewardsWalletTab({
   };
 
   return (
-    <div className="space-y-5">
-      {/* ── Balance Summary ── */}
-      <div className="grid gap-3 sm:grid-cols-3">
-        {([
-          {
-            label: 'AF Voucher Balance',
-            value: peso(afVoucherBalance),
-            bg: 'from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20',
-            border: 'border-amber-200/60 dark:border-amber-700/40',
-            iconBg: 'from-amber-500 to-orange-500',
-            icon: '🎟',
-            helper: 'Reward vouchers available in your account',
-          },
-          {
-            label: 'E-GC Balance',
-            value: peso(availableEgcBalance),
-            bg: 'from-sky-50 to-blue-50 dark:from-sky-900/20 dark:to-blue-900/20',
-            border: 'border-sky-200/60 dark:border-sky-700/40',
-            iconBg: 'from-sky-500 to-blue-500',
-            icon: '💎',
-            helper: 'Digital gift card balance ready for use',
-          },
-          {
-            label: 'Available Cashback',
-            value: peso(cashbackBalance),
-            bg: 'from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20',
-            border: 'border-emerald-200/60 dark:border-emerald-700/40',
-            iconBg: 'from-emerald-500 to-teal-500',
-            icon: '💰',
-            helper: 'Can be converted into shareable AF vouchers',
-          },
-        ] as const).map(({ label, value, bg, border, iconBg, icon, helper }) => (
-          <div key={label} className={`relative overflow-hidden rounded-2xl border ${border} bg-gradient-to-br ${bg} p-4`}>
-            <div className={`inline-flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br ${iconBg} text-white text-sm mb-3`}>
-              {icon}
+    <div className="space-y-6">
+      <div className="relative overflow-hidden rounded-2xl border border-amber-200/70 bg-white shadow-sm dark:border-amber-800/40 dark:bg-gray-900">
+        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-400 via-orange-500 to-sky-500" />
+        <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-orange-200/60 dark:shadow-orange-950/30">
+              <TicketPercent className="h-6 w-6" strokeWidth={2.3} />
             </div>
-            <p className="text-[10px] uppercase tracking-widest font-semibold text-slate-400 dark:text-slate-500">{label}</p>
-            <p className="mt-1 text-xl font-black tracking-tight text-slate-900 dark:text-white">{value}</p>
-            <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{helper}</p>
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-amber-600 dark:text-amber-300">E Voucher Balance</p>
+              <p className="mt-1 text-3xl font-black tracking-tight text-slate-950 dark:text-white">{peso(afVoucherBalance)}</p>
+              <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">Reward vouchers available in your account.</p>
+            </div>
           </div>
-        ))}
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left dark:border-slate-700 dark:bg-slate-800 sm:min-w-32 sm:text-center">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Active Codes</p>
+            <p className="mt-1 text-2xl font-black text-slate-900 dark:text-white">{activeVoucherCount}</p>
+          </div>
+        </div>
       </div>
 
       {/* ── Voucher Studio + Program Notes ── */}
-      <div className="grid gap-5 lg:grid-cols-[1fr_300px]">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         {/* Create Voucher */}
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-gray-800/80 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <span className="text-base">🎟</span>
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-gray-900">
+          <div className="flex flex-col gap-4 border-b border-slate-100 bg-slate-50/80 px-5 py-4 dark:border-slate-700 dark:bg-gray-800/70 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-orange-500 shadow-sm ring-1 ring-slate-200 dark:bg-gray-900 dark:ring-slate-700">
+                <BadgePercent className="h-5 w-5" strokeWidth={2.3} />
+              </div>
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white">Create Affiliate Voucher</h3>
                 <p className="text-xs text-slate-400 dark:text-slate-500">Reserve cashback into a shareable promo code</p>
               </div>
             </div>
-            <div className="shrink-0 text-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-900 px-3.5 py-2">
+            <div className="inline-flex shrink-0 items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+              <Sparkles className="h-3.5 w-3.5" />
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Active</p>
-              <p className="text-lg font-black text-slate-900 dark:text-white">{activeVoucherCount}</p>
+              <p className="text-sm font-black">{activeVoucherCount}</p>
             </div>
           </div>
 
-          <div className="p-5 space-y-4">
-            {/* Cashback sub-balances */}
-            <div className="grid grid-cols-3 gap-2">
-              <div className="rounded-xl bg-slate-50 dark:bg-gray-900/50 border border-slate-200 dark:border-slate-700 px-3 py-2.5">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-sky-500 dark:text-sky-400">Source</p>
-                <p className="mt-0.5 text-sm font-black text-slate-900 dark:text-white">{peso(cashbackSourceBalance)}</p>
-              </div>
-              <div className="rounded-xl bg-slate-50 dark:bg-gray-900/50 border border-slate-200 dark:border-slate-700 px-3 py-2.5">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-amber-500 dark:text-amber-400">Reserved</p>
-                <p className="mt-0.5 text-sm font-black text-slate-900 dark:text-white">{peso(cashbackReservedBalance)}</p>
-              </div>
-              <div className="rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-3 py-2.5">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Available</p>
-                <p className="mt-0.5 text-sm font-black text-emerald-700 dark:text-emerald-300">{peso(cashbackBalance)}</p>
-              </div>
-            </div>
-
-            <form className="space-y-3.5" onSubmit={handleCreateVoucher}>
+          <div className="p-5 sm:p-6">
+            <form className="space-y-5" onSubmit={handleCreateVoucher}>
               <div>
                 <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1.5">
                   Voucher Amount <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400 dark:text-slate-500">₱</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400 dark:text-slate-500">₱</span>
                   <input
                     type="number"
                     min="1"
                     step="0.01"
                     value={voucherAmount}
                     onChange={(e) => setVoucherAmount(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-900 dark:text-white py-2.5 pl-8 pr-4 text-sm text-slate-900 outline-none transition focus:border-amber-400 dark:focus:border-amber-600 focus:ring-2 focus:ring-amber-200 dark:focus:ring-amber-800/50"
+                    className="h-12 w-full rounded-2xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-amber-400 focus:ring-4 focus:ring-amber-100 dark:border-slate-700 dark:bg-gray-950 dark:text-white dark:focus:border-amber-600 dark:focus:ring-amber-900/40"
                     placeholder="0.00"
                     required
                   />
                 </div>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1.5">
-                    Valid Until <span className="text-slate-400 dark:text-slate-500 font-normal normal-case">(optional)</span>
+                  <label className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                    <CalendarDays className="h-3.5 w-3.5" />
+                    Valid Until <span className="font-normal normal-case text-slate-400 dark:text-slate-500">(optional)</span>
                   </label>
                   <input
                     type="date"
                     min={todayStr}
                     value={expiresAt}
                     onChange={(e) => setExpiresAt(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-900 dark:text-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-amber-400 dark:focus:border-amber-600 focus:ring-2 focus:ring-amber-200 dark:focus:ring-amber-800/50"
+                    className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-900 outline-none transition focus:border-amber-400 focus:ring-4 focus:ring-amber-100 dark:border-slate-700 dark:bg-gray-950 dark:text-white dark:focus:border-amber-600 dark:focus:ring-amber-900/40"
                   />
                   <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">Leave blank for no expiry.</p>
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1.5">
-                    Max Uses <span className="text-slate-400 dark:text-slate-500 font-normal normal-case">(optional)</span>
+                  <label className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                    <Hash className="h-3.5 w-3.5" />
+                    Max Uses <span className="font-normal normal-case text-slate-400 dark:text-slate-500">(optional)</span>
                   </label>
                   <input
                     type="number"
@@ -323,7 +283,7 @@ export default function RewardsWalletTab({
                     step="1"
                     value={maxUses}
                     onChange={(e) => setMaxUses(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-900 dark:text-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-amber-400 dark:focus:border-amber-600 focus:ring-2 focus:ring-amber-200 dark:focus:ring-amber-800/50"
+                    className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-amber-400 focus:ring-4 focus:ring-amber-100 dark:border-slate-700 dark:bg-gray-950 dark:text-white dark:focus:border-amber-600 dark:focus:ring-amber-900/40"
                     placeholder="e.g. 1"
                   />
                   <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">Leave blank for unlimited uses.</p>
@@ -344,12 +304,13 @@ export default function RewardsWalletTab({
               <button
                 type="submit"
                 disabled={isCreatingVoucher}
-                className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 py-2.5 text-sm font-bold text-white transition-all disabled:cursor-not-allowed disabled:opacity-60 shadow-sm shadow-amber-200 dark:shadow-amber-900/20"
+                className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-sm font-black text-white shadow-lg shadow-orange-200/60 transition hover:from-amber-600 hover:to-orange-600 disabled:cursor-not-allowed disabled:opacity-60 dark:shadow-orange-950/30"
               >
-                {isCreatingVoucher ? 'Creating…' : '✦ Create Voucher'}
+                <Sparkles className="h-4 w-4" />
+                {isCreatingVoucher ? 'Creating...' : 'Create Voucher'}
               </button>
 
-              <p className="text-[11px] leading-5 text-slate-400 dark:text-slate-500">
+              <p className="rounded-2xl border border-amber-100 bg-amber-50/70 px-4 py-3 text-[11px] leading-5 text-amber-800 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-200">
                 The reserved amount is deducted from your available cashback balance immediately and returned if the code is cancelled.
               </p>
             </form>
@@ -357,12 +318,12 @@ export default function RewardsWalletTab({
         </div>
 
         {/* Program Notes */}
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-gray-800/80">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Program Notes</p>
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-gray-900">
+          <div className="border-b border-slate-100 bg-slate-50/80 px-5 py-4 dark:border-slate-700 dark:bg-gray-800/70">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">Program Notes</p>
           </div>
           <div className="px-5 pb-5 pt-4 space-y-3">
-            <div className="rounded-xl bg-slate-50 dark:bg-gray-900/50 border border-slate-200 dark:border-slate-700 px-4 py-3.5">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 dark:border-slate-700 dark:bg-gray-950">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Cashback Rate</p>
               <p className="mt-1 text-2xl font-black text-slate-900 dark:text-white">
                 {displayCashbackRate.toLocaleString('en-PH', {
@@ -375,15 +336,15 @@ export default function RewardsWalletTab({
               </p>
             </div>
 
-            <div className="rounded-xl bg-slate-50 dark:bg-gray-900/50 border border-slate-200 dark:border-slate-700 px-4 py-3.5">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">AF Voucher Pool</p>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 dark:border-slate-700 dark:bg-gray-950">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">E Voucher Pool</p>
               <p className="mt-1 text-2xl font-black text-slate-900 dark:text-white">{peso(afVoucherSourceBalance)}</p>
               <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                Existing AF Voucher rewards, separate from cashback-backed voucher creation.
+                Existing E Voucher rewards, separate from cashback-backed voucher creation.
               </p>
             </div>
 
-            <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-700 px-4 py-4 space-y-2.5">
+            <div className="space-y-3 rounded-2xl border border-dashed border-slate-200 px-4 py-4 dark:border-slate-700">
               <p className="text-xs font-bold text-slate-700 dark:text-slate-300">How voucher creation works</p>
               {[
                 'Create a voucher from your available cashback balance.',
@@ -392,7 +353,7 @@ export default function RewardsWalletTab({
                 'The amount stays reserved until redeemed, cancelled, or expired.',
               ].map((step, index) => (
                 <div key={index} className="flex items-start gap-2.5 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                  <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30 text-[10px] font-bold text-amber-700 dark:text-amber-400">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-100 text-[10px] font-black text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
                     {index + 1}
                   </span>
                   {step}
@@ -404,14 +365,14 @@ export default function RewardsWalletTab({
       </div>
 
       {/* ── Issued Vouchers ── */}
-      <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-gray-800/80 flex items-center justify-between gap-3">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-gray-900">
+        <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/80 px-5 py-4 dark:border-slate-700 dark:bg-gray-800/70">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Issued Vouchers</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">Issued Vouchers</p>
             <h3 className="mt-0.5 text-sm font-bold text-slate-900 dark:text-white">Your shareable codes</h3>
           </div>
-          <span className="shrink-0 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-900 px-3 py-1 text-xs font-semibold text-slate-600 dark:text-slate-400">
-            {vouchers.length} total · {activeVoucherCount} active
+          <span className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 dark:border-slate-700 dark:bg-gray-950 dark:text-slate-400">
+            {vouchers.length} total / {activeVoucherCount} active
           </span>
         </div>
 
@@ -433,19 +394,19 @@ export default function RewardsWalletTab({
                 const usesText = voucher.max_uses != null ? `${voucher.used_count ?? 0} / ${voucher.max_uses}` : '∞ uses';
 
                 return (
-                  <div key={voucher.id} className={`relative overflow-hidden rounded-[32px] border border-white/10 bg-gradient-to-r ${gradient} p-4 shadow-[0_20px_60px_rgba(15,23,42,0.12)]`}>
-                    <span className="pointer-events-none absolute left-0 top-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/20" />
-                    <span className="pointer-events-none absolute right-0 top-1/2 h-6 w-6 translate-x-1/2 -translate-y-1/2 rounded-full bg-white/20" />
+                  <div key={voucher.id} className={`relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-r ${gradient} p-4 shadow-[0_20px_60px_rgba(15,23,42,0.12)]`}>
+                    <span className="pointer-events-none absolute left-0 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/20" />
+                    <span className="pointer-events-none absolute right-0 top-1/2 h-7 w-7 translate-x-1/2 -translate-y-1/2 rounded-full bg-white/20" />
 
-                    <div className="grid gap-4 lg:grid-cols-[1.9fr_1.2fr_0.8fr] items-center">
+                    <div className="grid items-center gap-4 lg:grid-cols-[1.7fr_1.15fr_0.75fr]">
                       <div className="space-y-3 text-white">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-white/15 text-xl">
-                            <span>🎟</span>
+                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 text-white ring-1 ring-white/15">
+                            <TicketPercent className="h-6 w-6" strokeWidth={2.3} />
                           </div>
                           <div>
-                            <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/80">discount voucher</p>
-                            <p className="mt-2 text-3xl font-black tracking-tight">₱{(voucher.amount || 0).toLocaleString('en-PH', { maximumFractionDigits: 2 })}</p>
+                            <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-white/80">discount voucher</p>
+                            <p className="mt-1 text-2xl font-black tracking-tight">₱{(voucher.amount || 0).toLocaleString('en-PH', { maximumFractionDigits: 2 })}</p>
                           </div>
                         </div>
                         <div className="flex flex-wrap items-center gap-3">
@@ -454,7 +415,7 @@ export default function RewardsWalletTab({
                         </div>
                       </div>
 
-                      <div className="grid gap-3 rounded-[28px] bg-white/10 p-3 text-sm text-white/95">
+                      <div className="grid gap-3 rounded-2xl bg-white/10 p-3 text-sm text-white/95 ring-1 ring-white/10">
                         <div className="space-y-1">
                           <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">Valid until</p>
                           <p className="font-semibold">{voucher.expires_at ? formatDate(voucher.expires_at) : 'No expiry'}</p>
@@ -469,7 +430,7 @@ export default function RewardsWalletTab({
                         </div>
                       </div>
 
-                      <div className="flex flex-col justify-between gap-4 rounded-[28px] bg-white/10 p-4 text-white/95">
+                      <div className="flex flex-col justify-between gap-4 rounded-2xl bg-white/10 p-4 text-white/95 ring-1 ring-white/10">
                         <div className="flex items-center justify-between gap-3">
                           <StatusBadge status={voucher.status} />
                         </div>

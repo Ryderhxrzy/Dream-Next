@@ -6,7 +6,7 @@ import ProductImageGallery from './ProductImageGallery';
 import ProductInfo from './ProductInfo';
 import StickyAddToCart from './StickyAddToCart';
 import { useGetProductBrandQuery } from '@/store/api/productsApi';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { setStoredReferralCode } from '@/libs/referral';
 import { resolveCheckoutSource } from '@/libs/checkoutSource';
 import { useSession } from 'next-auth/react';
@@ -219,13 +219,12 @@ const ProductPageClient = ({
     const [selectedVariant, setSelectedVariant] = useState<VariantOption | undefined>(undefined);
     const galleryKey = selectedVariant?.images?.join('|') || product.images?.join('|') || product.image;
     const router = useRouter();
+    const pathname = usePathname();
     const searchParams = useSearchParams();
     const { data: session, status } = useSession();
     const { data: publicSettingsData } = useGetPublicGeneralSettingsQuery();
     const role = String(session?.user?.role ?? '').toLowerCase();
     const isManualCheckoutOnly = Boolean(publicSettingsData?.settings?.enable_manual_checkout_mode) && !Boolean(product.manualCheckoutEnabled);
-
-    const pathname = usePathname();
 
     const handleVariantChange = useCallback((variant?: VariantOption) => {
         setSelectedVariant(variant);
@@ -234,19 +233,26 @@ const ProductPageClient = ({
     useEffect(() => {
         if (typeof window === 'undefined') return;
 
+        // Check if device is mobile
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (!isMobile) return;
+
         const slug = pathname.split('/').pop();
         if (!slug) return;
 
         const appScheme = `apsarahome://product/${slug}`;
 
+        // Set a timeout to fallback to web if app doesn't open
+        const appOpenTimeout = setTimeout(() => {
+            console.log('[ProductPage] App not detected on mobile, staying on web');
+        }, 1000);
+
+        // Try to open the app
         console.log('[ProductPage] Attempting to open app with scheme:', appScheme);
         window.location.href = appScheme;
 
-        const fallbackTimeout = setTimeout(() => {
-            console.log('[ProductPage] App not detected, staying on web');
-        }, 500);
-
-        return () => clearTimeout(fallbackTimeout);
+        // Cleanup timeout
+        return () => clearTimeout(appOpenTimeout);
     }, [pathname]);
 
     useEffect(() => {
@@ -266,7 +272,7 @@ const ProductPageClient = ({
             const subtotal = unitPrice * quantity;
             const handlingFee = 0;
             const total = subtotal + handlingFee;
-            const checkoutSource = resolveCheckoutSource();
+            const checkoutSource = resolveCheckoutSource(pathname);
 
             localStorage.setItem('guest_checkout', JSON.stringify({
                 product: {
@@ -295,7 +301,7 @@ const ProductPageClient = ({
         } catch {
             // If anything fails, keep user on product page.
         }
-    }, [isManualCheckoutOnly, product, role, router, searchParams, selectedVariant, status]);
+    }, [isManualCheckoutOnly, pathname, product, role, router, searchParams, selectedVariant, status]);
 
     const toSlugBrand = (value: string) =>
         value
