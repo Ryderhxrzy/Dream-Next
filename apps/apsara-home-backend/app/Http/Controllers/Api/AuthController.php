@@ -66,6 +66,7 @@ class AuthController extends Controller
 
         $request->merge([
             'referred_by' => $this->normalizeReferralValue((string) $request->input('referred_by', '')),
+            'email' => $request->input('email') ? trim((string) $request->input('email')) : null,
         ]);
 
         $validated = $request->validate([
@@ -6072,27 +6073,53 @@ class AuthController extends Controller
     public function sendOtpViaSms(Request $request)
     {
         $validated = $request->validate([
+            'verification_token' => 'required|string',
             'phone' => 'required|string|max:20',
         ]);
 
         try {
+            $verificationToken = trim((string) $validated['verification_token']);
             $phoneNumber = trim((string) $validated['phone']);
-            $otp = (string) random_int(1000, 9999);
-            $verificationToken = (string) Str::uuid();
 
+            // Retrieve the cached registration data
+            $cached = Cache::get($this->registrationOtpCacheKey($verificationToken));
+
+            if (!is_array($cached) || empty($cached['payload'])) {
+                Log::warning('sendOtpViaSms: verification token not found or expired', [
+                    'token_prefix' => substr($verificationToken, 0, 8),
+                ]);
+
+                return response()->json([
+                    'message' => 'Verification token expired. Please register again.',
+                    'error' => 'TOKEN_EXPIRED',
+                ], 410);
+            }
+
+            $otp = (string) random_int(1000, 9999);
             $semaphoreService = new \App\Services\SemaphoreService();
             $sent = $semaphoreService->sendOtp($phoneNumber, $otp);
 
             if (!$sent) {
+                Log::error('sendOtpViaSms: Semaphore failed to send', [
+                    'phone' => $this->maskPhoneNumber($phoneNumber),
+                ]);
+
                 return response()->json([
                     'message' => 'Failed to send OTP. Please try again.',
                 ], 500);
             }
 
+            // Store SMS OTP data using the same verification token
             Cache::put($this->otpSmsCacheKey($verificationToken), [
                 'otp_hash' => Hash::make($otp),
                 'phone' => $phoneNumber,
+                'payload' => $cached['payload'],
             ], now()->addMinutes(10));
+
+            Log::info('sendOtpViaSms successful', [
+                'token_prefix' => substr($verificationToken, 0, 8),
+                'phone' => $this->maskPhoneNumber($phoneNumber),
+            ]);
 
             return response()->json([
                 'message' => 'OTP has been sent to your phone number.',
@@ -6307,6 +6334,15 @@ class AuthController extends Controller
     private function otpAttemptsCacheKey(string $verificationToken): string
     {
         return "otp_sms_attempts:{$verificationToken}";
+    }
+
+    private function maskPhoneNumber(string $phoneNumber): string
+    {
+        $normalized = preg_replace('/[^0-9]/', '', $phoneNumber);
+        if (strlen($normalized) >= 7) {
+            return substr($normalized, 0, 3) . '***' . substr($normalized, -3);
+        }
+        return '***' . substr($normalized, -3);
     }
 
 }
