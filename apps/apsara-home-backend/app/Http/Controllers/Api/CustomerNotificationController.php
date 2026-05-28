@@ -947,4 +947,54 @@ class CustomerNotificationController extends Controller
             'failed' => $result['failed'],
         ], 201);
     }
+
+    public function sendCustomFcmNotification(Request $request)
+    {
+        $user = $request->user();
+        if (!$user instanceof Customer) {
+            return response()->json(['message' => 'Only customer accounts can send notifications.'], 403);
+        }
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'body' => 'required|string|max:500',
+            'deeplink' => 'nullable|string|max:500',
+            'image' => 'nullable|url|max:2000',
+        ]);
+
+        $service = new FirebaseMessagingService();
+
+        $notification = [
+            'title' => (string) $validated['title'],
+            'body' => (string) $validated['body'],
+            'data' => [
+                'href' => $validated['deeplink'] ?? 'purchases://pending/test',
+                'type' => 'custom_test',
+            ],
+        ];
+
+        if (!empty($validated['image'])) {
+            $notification['image'] = (string) $validated['image'];
+        }
+
+        Log::info('📤 Sending custom FCM test notification to customer', [
+            'customer_id' => (int) $user->c_userid,
+            'title' => $validated['title'],
+            'body' => $validated['body'],
+        ]);
+
+        $result = $service->sendToCustomer((int) $user->c_userid, $notification);
+
+        return response()->json([
+            'message' => '✅ Custom FCM notification sent!',
+            'notification' => [
+                'title' => $validated['title'],
+                'body' => $validated['body'],
+                'deeplink' => $validated['deeplink'] ?? 'purchases://pending/test',
+                'image' => $validated['image'] ?? null,
+            ],
+            'sent' => $result['sent'],
+            'failed' => $result['failed'],
+        ], 201);
+    }
 }
