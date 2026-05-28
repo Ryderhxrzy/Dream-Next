@@ -7,6 +7,7 @@ use App\Mail\Auth\PortalLoginOtpMail;
 use App\Mail\Admin\AdminPasswordResetMail;
 use App\Models\Admin;
 use App\Models\SystemSetting;
+use App\Support\PartnerStorefrontAccess;
 use App\Support\AdminAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -339,23 +340,12 @@ class AdminAuthController extends Controller
 
     private function resolveStorefrontIds(?Admin $admin): array
     {
-        if (! $admin || (int) $admin->user_level_id !== 4) {
-            return [];
-        }
-
-        $assignedIds = $this->normalizeStorefrontIds($admin->admin_permissions ?? []);
-        $disabledIds = $this->normalizeStorefrontIds($admin->partner_disabled_storefront_ids ?? []);
-
-        return array_values(array_diff($assignedIds, $disabledIds));
+        return (new PartnerStorefrontAccess())->resolveActiveStorefrontIds($admin);
     }
 
     private function resolveDisabledStorefrontIds(?Admin $admin): array
     {
-        if (! $admin || (int) $admin->user_level_id !== 4) {
-            return [];
-        }
-
-        return $this->normalizeStorefrontIds($admin->partner_disabled_storefront_ids ?? []);
+        return (new PartnerStorefrontAccess())->resolveDisabledStorefrontIds($admin);
     }
 
     private function normalizeStorefrontIds(mixed $raw): array

@@ -239,6 +239,7 @@ Route::middleware(['auth:sanctum', 'customer.actor'])->group(function () {
     Route::post('/username-change/send-otp', [AuthController::class, 'sendUsernameChangeOtp']);
     Route::post('/username-change/submit', [AuthController::class, 'submitUsernameChangeRequest']);
     Route::post('/webstore-requests', [AuthController::class, 'submitWebstoreRequest']);
+    Route::post('/webstore-requests/receipt', [AuthController::class, 'uploadWebstoreReceipt']);
     Route::post('/webstore-requests/payment-session', [AuthController::class, 'createWebstorePaymentSession']);
     Route::get('/webstore-requests/payment-session/{checkoutId}', [AuthController::class, 'verifyWebstorePaymentSession']);
     Route::get('/webstore-requests/latest', [AuthController::class, 'latestWebstoreRequest']);
@@ -376,6 +377,8 @@ Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_a
     Route::patch('/admin/inquiries/username-changes/{id}/reject', [AdminInquiryController::class, 'rejectUsernameChange']);
     Route::get('/admin/inquiries/webstore-requests', [AdminInquiryController::class, 'webstoreRequests']);
     Route::patch('/admin/inquiries/webstore-requests/{id}/approve', [AdminInquiryController::class, 'approveWebstoreRequest']);
+    Route::patch('/admin/inquiries/webstore-requests/{id}/receipts/{detailId}/approve', [AdminInquiryController::class, 'approveWebstoreReceipt']);
+    Route::patch('/admin/inquiries/webstore-requests/{id}/receipts/{detailId}/reject', [AdminInquiryController::class, 'rejectWebstoreReceipt']);
     Route::patch('/admin/inquiries/webstore-requests/{id}/reject', [AdminInquiryController::class, 'rejectWebstoreRequest']);
     Route::delete('/admin/inquiries/webstore-requests/{id}', [AdminInquiryController::class, 'destroyWebstoreRequest']);
 

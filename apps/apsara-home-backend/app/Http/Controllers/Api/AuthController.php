@@ -3800,12 +3800,20 @@ class AuthController extends Controller
             default => $billingLabel,
         };
 
+        $subscriptionFee = (int) ($request['subscription_fee'] ?? 0);
+        $effectiveMonthly = (int) ($request['effective_monthly'] ?? 0);
+        $amountPaid = (int) ($request['amount_paid'] ?? ($billingLabel === 'Monthly Installment' ? $effectiveMonthly : $subscriptionFee));
+
         $submittedAt = (string) ($request['created_at'] ?? $request['reviewed_at'] ?? '');
 
         $payload = [
             'customer_name' => $this->fullName($customer) ?: ('Member #' . $customer->c_userid),
             'reference_no' => (string) ($request['reference_no'] ?? ''),
             'plan_label' => $planLabel,
+            'plan_term' => (string) ($request['plan_term'] ?? ''),
+            'subscription_fee' => $subscriptionFee,
+            'effective_monthly' => $effectiveMonthly,
+            'amount_paid' => $amountPaid,
             'billing_label' => $billingLabel,
             'payment_method' => (string) ($request['payment_method'] ?? ''),
             'checkout_id' => (string) ($request['checkout_id'] ?? ''),
@@ -3813,7 +3821,8 @@ class AuthController extends Controller
             'payment_intent_id' => (string) ($request['payment_intent_id'] ?? ''),
             'submitted_at_label' => $submittedAt !== '' ? date('F j, Y g:i A', strtotime($submittedAt)) : '',
             'receipt_count' => (int) ($request['payment_count'] ?? 0),
-            'remaining_balance' => (float) ($request['remaining_balance'] ?? 0),
+            'payment_count' => (int) ($request['payment_count'] ?? 0),
+            'remaining_balance' => max(0, $subscriptionFee - $amountPaid),
             'receipt_urls' => is_array($request['receipt_urls'] ?? null) ? array_values($request['receipt_urls']) : [],
         ];
 

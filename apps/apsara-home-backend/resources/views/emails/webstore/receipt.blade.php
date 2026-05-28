@@ -40,6 +40,14 @@
                   <td style="padding:12px 16px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#1e293b;font-weight:600;">{{ $payload['reference_no'] ?? '-' }}</td>
                 </tr>
                 <tr>
+                  <td style="padding:12px 16px;border-bottom:1px solid #f1f5f9;background:#fafafa;font-size:12px;color:#94a3b8;">Checkout ID</td>
+                  <td style="padding:12px 16px;border-bottom:1px solid #f1f5f9;background:#fafafa;font-size:13px;color:#1e293b;font-weight:600;">{{ $payload['checkout_id'] ?? '-' }}</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px;border-bottom:1px solid #f1f5f9;font-size:12px;color:#94a3b8;">Payment Reference</td>
+                  <td style="padding:12px 16px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#1e293b;font-weight:600;">{{ $payload['payment_reference'] ?? '-' }}</td>
+                </tr>
+                <tr>
                   <td style="padding:12px 16px;border-bottom:1px solid #f1f5f9;background:#fafafa;font-size:12px;color:#94a3b8;">Plan</td>
                   <td style="padding:12px 16px;border-bottom:1px solid #f1f5f9;background:#fafafa;font-size:13px;color:#1e293b;font-weight:600;">{{ $payload['plan_label'] ?? '-' }}</td>
                 </tr>
@@ -67,24 +75,29 @@
             </td>
           </tr>
 
-          @if(!empty($payload['receipt_urls']) && is_array($payload['receipt_urls']))
           <tr>
             <td style="padding:0 30px 28px;">
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:linear-gradient(135deg,#ecfeff 0%,#f0fdfa 100%);border:1px solid #99f6e4;border-radius:12px;overflow:hidden;">
                 <tr>
-                  <td style="padding:18px 20px;">
-                    <p style="margin:0 0 10px;font-size:12px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:0.6px;">Receipt Files</p>
-                    @foreach($payload['receipt_urls'] as $url)
-                      <p style="margin:0 0 8px;font-size:13px;line-height:1.5;word-break:break-all;">
-                        <a href="{{ $url }}" style="color:#2563eb;text-decoration:none;">{{ $url }}</a>
-                      </p>
-                    @endforeach
+                  <td colspan="2" style="padding:10px 16px;border-bottom:1px solid #99f6e4;">
+                    <span style="font-size:11px;font-weight:700;color:#0f766e;text-transform:uppercase;letter-spacing:1px;">Payment Success Summary</span>
                   </td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px;border-bottom:1px solid #ccfbf1;font-size:12px;color:#0f766e;width:42%;">Subscription Fee</td>
+                  <td style="padding:12px 16px;border-bottom:1px solid #ccfbf1;font-size:13px;color:#134e4a;font-weight:700;">&#8369;{{ number_format((float) ($payload['subscription_fee'] ?? 0), 0) }}</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px;border-bottom:1px solid #ccfbf1;background:#fafafa;font-size:12px;color:#0f766e;">Amount Paid</td>
+                  <td style="padding:12px 16px;border-bottom:1px solid #ccfbf1;background:#fafafa;font-size:13px;color:#134e4a;font-weight:700;">&#8369;{{ number_format((float) ($payload['amount_paid'] ?? 0), 0) }}</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px;font-size:12px;color:#0f766e;">Remaining Balance</td>
+                  <td style="padding:12px 16px;font-size:13px;color:#134e4a;font-weight:700;">&#8369;{{ number_format((float) ($payload['remaining_balance'] ?? 0), 0) }}</td>
                 </tr>
               </table>
             </td>
           </tr>
-          @endif
 
           <tr>
             <td style="padding:0 30px 32px;">
