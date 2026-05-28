@@ -2344,8 +2344,9 @@ class PaymentController extends Controller
             ];
 
             // Include product image in notification payload
-            if (!empty($orderNotificationImage)) {
-                $fcmData['image'] = (string) $orderNotificationImage;
+            $normalizedNotificationImage = $this->normalizeNotificationImageUrl($orderNotificationImage);
+            if ($normalizedNotificationImage !== null) {
+                $fcmData['image'] = $normalizedNotificationImage;
             }
 
             // DEBUG: Log the complete notification payload being sent
@@ -2886,6 +2887,24 @@ class PaymentController extends Controller
             ->first();
     }
 
+    private function normalizeNotificationImageUrl(?string $imageUrl): ?string
+    {
+        $raw = trim((string) $imageUrl);
+        if ($raw === '') {
+            return null;
+        }
+
+        if (filter_var($raw, FILTER_VALIDATE_URL)) {
+            return $raw;
+        }
+
+        if (str_starts_with($raw, '/')) {
+            return url($raw);
+        }
+
+        return url('/' . ltrim($raw, '/'));
+    }
+
     public function testOrderStatusUpdateWithFcn(Request $request)
     {
         $customer = auth('sanctum')->user();
@@ -3014,8 +3033,9 @@ class PaymentController extends Controller
                 ],
             ];
 
-            if (!empty($orderNotificationImage)) {
-                $fcmData['image'] = (string) $orderNotificationImage;
+            $normalizedNotificationImage = $this->normalizeNotificationImageUrl($orderNotificationImage);
+            if ($normalizedNotificationImage !== null) {
+                $fcmData['image'] = $normalizedNotificationImage;
             }
 
             $result = $fcmService->sendToCustomer((int) $order->ch_customer_id, $fcmData);
