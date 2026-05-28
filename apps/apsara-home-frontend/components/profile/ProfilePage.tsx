@@ -771,6 +771,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
     latest_receipt_detail_id?: number | null
     latest_receipt_submitted_at?: string | null
     latest_receipt_urls?: string[] | null
+    webstoreRenewalEnabled?: boolean
   } | null>(null);
   const webstoreReceiptInputRef = useRef<HTMLInputElement | null>(null);
   const webstorePlanSectionRef = useRef<HTMLDivElement | null>(null);
