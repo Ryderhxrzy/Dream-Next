@@ -16,6 +16,9 @@ export default function AdminSecuritySettingsPageMain() {
   const [maxLoginAttempts, setMaxLoginAttempts] = useState('5')
   const [passwordMinLength, setPasswordMinLength] = useState('8')
   const [enable2fa, setEnable2fa] = useState(false)
+  const [registrationOtpEnabled, setRegistrationOtpEnabled] = useState(true)
+  const [strictPasswordPolicy, setStrictPasswordPolicy] = useState(true)
+  const [forcePasswordChangeEnabled, setForcePasswordChangeEnabled] = useState(true)
 
   useEffect(() => {
     if (!data?.settings || hasHydrated.current) return
@@ -24,6 +27,9 @@ export default function AdminSecuritySettingsPageMain() {
     setMaxLoginAttempts(String(settings.max_login_attempts ?? 5))
     setPasswordMinLength(String(settings.password_min_length ?? 8))
     setEnable2fa(Boolean(settings.enable_2fa))
+    setRegistrationOtpEnabled(Boolean(settings.registration_otp_enabled ?? true))
+    setStrictPasswordPolicy(Boolean(settings.strict_password_policy ?? true))
+    setForcePasswordChangeEnabled(Boolean(settings.force_password_change_enabled ?? true))
     hasHydrated.current = true
   }, [data])
 
@@ -99,6 +105,90 @@ export default function AdminSecuritySettingsPageMain() {
         </div>
       </div>
 
+      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Registration</p>
+          <h2 className="mt-2 text-lg font-bold text-slate-900 dark:text-white">Sign-up Settings</h2>
+        </div>
+
+        <div className="mt-6 grid gap-5 md:grid-cols-2">
+          <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white px-4 py-3 dark:border-slate-700 dark:from-slate-700/50 dark:to-slate-800">
+            <div>
+              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Email OTP on Registration</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {registrationOtpEnabled
+                  ? 'New members must verify their email via OTP.'
+                  : 'Email OTP is skipped — accounts are created instantly.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setRegistrationOtpEnabled((prev) => !prev)}
+              className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition ${
+                registrationOtpEnabled ? 'bg-emerald-500 dark:bg-emerald-600' : 'bg-slate-300 dark:bg-slate-600'
+              }`}
+              aria-pressed={registrationOtpEnabled}
+            >
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${
+                  registrationOtpEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white px-4 py-3 dark:border-slate-700 dark:from-slate-700/50 dark:to-slate-800">
+            <div>
+              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Strict Password Policy</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {strictPasswordPolicy
+                  ? 'Requires 8+ chars, uppercase, number & special character.'
+                  : 'Relaxed: 6+ chars minimum only.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setStrictPasswordPolicy((prev) => !prev)}
+              className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition ${
+                strictPasswordPolicy ? 'bg-emerald-500 dark:bg-emerald-600' : 'bg-slate-300 dark:bg-slate-600'
+              }`}
+              aria-pressed={strictPasswordPolicy}
+            >
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${
+                  strictPasswordPolicy ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white px-4 py-3 dark:border-slate-700 dark:from-slate-700/50 dark:to-slate-800">
+            <div>
+              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Force Password Change for Legacy Accounts</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {forcePasswordChangeEnabled
+                  ? 'Members with old passwords are required to set a new one on login.'
+                  : 'Disabled — members with old passwords can log in without changing.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setForcePasswordChangeEnabled((prev) => !prev)}
+              className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition ${
+                forcePasswordChangeEnabled ? 'bg-emerald-500 dark:bg-emerald-600' : 'bg-slate-300 dark:bg-slate-600'
+              }`}
+              aria-pressed={forcePasswordChangeEnabled}
+            >
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${
+                  forcePasswordChangeEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div className="flex flex-wrap items-center justify-end gap-3">
         <button
           type="button"
@@ -126,12 +216,18 @@ export default function AdminSecuritySettingsPageMain() {
                 max_login_attempts: maxLoginAttemptsValue,
                 password_min_length: passwordMinLengthValue,
                 enable_2fa: enable2fa,
+                registration_otp_enabled: registrationOtpEnabled,
+                strict_password_policy: strictPasswordPolicy,
+                force_password_change_enabled: forcePasswordChangeEnabled,
               }).unwrap()
 
               setSessionTimeout(String(response.settings.session_timeout_minutes))
               setMaxLoginAttempts(String(response.settings.max_login_attempts))
               setPasswordMinLength(String(response.settings.password_min_length))
               setEnable2fa(Boolean(response.settings.enable_2fa))
+              setRegistrationOtpEnabled(Boolean(response.settings.registration_otp_enabled))
+              setStrictPasswordPolicy(Boolean(response.settings.strict_password_policy))
+              setForcePasswordChangeEnabled(Boolean(response.settings.force_password_change_enabled))
               showSuccessToast(response.message || 'Security settings saved.')
             } catch (error) {
               console.error(error)

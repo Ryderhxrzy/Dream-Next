@@ -10,6 +10,7 @@ use App\Models\CustomerLoginSession;
 use App\Models\CustomerAddress;
 use App\Models\MemberActivityLog;
 use App\Models\MemberTier;
+use App\Models\SystemSetting;
 use App\Models\WebPageContent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -64,10 +65,29 @@ class AuthController extends Controller
             }
         }
 
+        $systemSettings = SystemSetting::query()->first();
+        $otpEnabled = (bool) ($systemSettings?->registration_otp_enabled ?? true);
+        $strictPassword = (bool) ($systemSettings?->strict_password_policy ?? true);
+
         $request->merge([
             'referred_by' => $this->normalizeReferralValue((string) $request->input('referred_by', '')),
             'email' => $request->input('email') ? trim((string) $request->input('email')) : null,
         ]);
+
+        $passwordRules = $strictPassword
+            ? ['required', 'string', 'min:8', 'confirmed', 'regex:/[A-Z]/', 'regex:/[a-z]/', 'regex:/[0-9]/', 'regex:/[^A-Za-z0-9]/']
+            : ['required', 'string', 'min:6', 'confirmed'];
+
+        $passwordMessages = $strictPassword
+            ? [
+                'password.min' => 'Password must be at least 8 characters.',
+                'password.confirmed' => 'Password confirmation does not match.',
+                'password.regex' => 'Password must include uppercase, lowercase, number, and special character.',
+            ]
+            : [
+                'password.min' => 'Password must be at least 6 characters.',
+                'password.confirmed' => 'Password confirmation does not match.',
+            ];
 
         $validated = $request->validate([
             'first_name'            => 'required|string|max:255',
@@ -83,15 +103,7 @@ class AuthController extends Controller
             'work_location'         => 'nullable|in:local,overseas',
             'country'               => 'nullable|string|max:45',
             'referred_by'           => 'required|string|max:255',
-            'password'              => [
-                'required',
-                'string',
-                'min:8',
-                'confirmed',
-                'regex:/[A-Z]/',
-                'regex:/[a-z]/',
-                'regex:/[0-9]/',
-            ],
+            'password'              => $passwordRules,
             'address'               => 'nullable|string|max:500',
             'barangay'              => 'nullable|string|max:255',
             'city'                  => 'nullable|string|max:255',
@@ -103,12 +115,9 @@ class AuthController extends Controller
             'region_code'           => 'nullable|string|max:20',
             'zip_code'              => 'nullable|string|max:20',
             'partner_slug'          => 'nullable|string|max:255',
-        ], [
-            'password.min' => 'Password must be at least 8 characters.',
-            'password.confirmed' => 'Password confirmation does not match.',
-            'password.regex' => 'Password must include uppercase, lowercase, and number.',
+        ], array_merge($passwordMessages, [
             'username.regex' => 'Username must contain letters and numbers only.',
-        ]);
+        ]));
 
         $this->validateNoBadWords([
             'first_name' => $validated['first_name'] ?? null,
@@ -136,11 +145,23 @@ class AuthController extends Controller
             ]);
         }
 
-        $verificationToken = (string) Str::uuid();
-        $otp = (string) random_int(1000, 9999);
+        $email = $validated['email'] ? (string) $validated['email'] : null;
         $partnerSlug = strtolower(trim((string) ($validated['partner_slug'] ?? '')));
         $senderContext = $this->resolvePartnerOtpSenderContext($partnerSlug);
-        $email = $validated['email'] ? (string) $validated['email'] : null;
+
+        // OTP disabled — create account immediately without a verification step
+        if (! $otpEnabled) {
+            $customer = $this->createCustomerFromValidated($validated, (int) $referrer->c_userid);
+
+            return response()->json([
+                'message' => 'Registration complete. You can now sign in.',
+                'requires_otp' => false,
+                'user' => $this->transformCustomer($customer),
+            ], 201);
+        }
+
+        $verificationToken = (string) Str::uuid();
+        $otp = (string) random_int(1000, 9999);
 
         Cache::put($this->registrationOtpCacheKey($verificationToken), [
             'otp_hash' => Hash::make($otp),
@@ -152,17 +173,60 @@ class AuthController extends Controller
             'sender_context' => $senderContext,
         ], now()->addMinutes(10));
 
-        // Send email OTP only if email is provided
         if ($email) {
             $this->sendRegistrationOtpEmail($email, $otp, $senderContext);
         }
 
         return response()->json([
-            'message' => 'A 4-digit verification code has been sent to your phone.',
+            'message' => 'A 4-digit verification code has been sent to your email.',
             'requires_otp' => true,
             'verification_token' => $verificationToken,
             'email' => $email,
         ]);
+    }
+
+    private function createCustomerFromValidated(array $registration, int $referrerUserId): Customer
+    {
+        return DB::transaction(function () use ($registration, $referrerUserId): Customer {
+            if (DB::connection()->getDriverName() === 'pgsql') {
+                DB::statement('LOCK TABLE tbl_customer IN EXCLUSIVE MODE');
+            }
+
+            $nextCustomerId = ((int) DB::table('tbl_customer')->whereNotNull('c_userid')->max('c_userid')) + 1;
+
+            return Customer::create([
+                'c_userid'       => $nextCustomerId,
+                'c_fname'        => $registration['first_name'],
+                'c_lname'        => $registration['last_name'],
+                'c_mname'        => $registration['middle_name'] ?? null,
+                'c_username'     => $registration['username'],
+                'c_email'        => $registration['email'] ?? null,
+                'c_mobile'       => $registration['phone'] ?? '0',
+                'c_bdate'        => $registration['birth_date'] ?? null,
+                'c_gender'       => $this->mapGenderToInt($registration['gender'] ?? null),
+                'c_occupation'   => $registration['occupation'] ?? 'None',
+                'c_country'      => $registration['country'] ?? (($registration['work_location'] ?? 'local') === 'overseas' ? 'Overseas' : 'Philippines'),
+                'c_password'     => Hash::make($registration['password']),
+                'c_password_pin' => '',
+                'c_password_change_required' => false,
+                'c_rank'         => 0,
+                'c_accnt_status' => 0,
+                'c_lockstatus'   => 0,
+                'c_sponsor'      => $referrerUserId,
+                'c_date_started' => now(),
+                'c_address'      => $registration['address'] ?? null,
+                'c_barangay'     => $registration['barangay'] ?? null,
+                'c_city'         => $registration['city'] ?? null,
+                'c_province'     => $registration['province'] ?? null,
+                'c_region'       => $registration['region'] ?? null,
+                'c_region_code'  => $registration['region_code'] ?? null,
+                'c_province_code'=> $registration['province_code'] ?? null,
+                'c_city_code'    => $registration['city_code'] ?? null,
+                'c_barangay_code'=> $registration['barangay_code'] ?? null,
+                'c_zipcode'      => $registration['zip_code'] ?? null,
+                'c_partner_slug' => ($slug = strtolower(trim((string) ($registration['partner_slug'] ?? '')))) !== '' ? $slug : null,
+            ]);
+        });
     }
 
     public function verifyRegistrationOtp(Request $request)
@@ -231,46 +295,7 @@ class AuthController extends Controller
             $fail('username', 'This username is already taken.');
         }
 
-        $customer = DB::transaction(function () use ($registration, $referrerUserId) {
-            if (DB::connection()->getDriverName() === 'pgsql') {
-                DB::statement('LOCK TABLE tbl_customer IN EXCLUSIVE MODE');
-            }
-
-            $nextCustomerId = ((int) DB::table('tbl_customer')->whereNotNull('c_userid')->max('c_userid')) + 1;
-
-            return Customer::create([
-                'c_userid'       => $nextCustomerId,
-                'c_fname'        => $registration['first_name'],
-                'c_lname'        => $registration['last_name'],
-                'c_mname'        => $registration['middle_name'] ?? null,
-                'c_username'     => $registration['username'],
-                'c_email'        => $registration['email'],
-                'c_mobile'       => $registration['phone'] ?? '0',
-                'c_bdate'        => $registration['birth_date'] ?? null,
-                'c_gender'       => $this->mapGenderToInt($registration['gender'] ?? null),
-                'c_occupation'   => $registration['occupation'] ?? 'None',
-                'c_country'      => $registration['country'] ?? (($registration['work_location'] ?? 'local') === 'overseas' ? 'Overseas' : 'Philippines'),
-                'c_password'     => Hash::make($registration['password']),
-                'c_password_pin' => '',
-                'c_password_change_required' => false,
-                'c_rank'         => 0,
-                'c_accnt_status' => 0,
-                'c_lockstatus'   => 0,
-                'c_sponsor'      => $referrerUserId,
-                'c_date_started' => now(),
-                'c_address'      => $registration['address'] ?? null,
-                'c_barangay'     => $registration['barangay'] ?? null,
-                'c_city'         => $registration['city'] ?? null,
-                'c_province'     => $registration['province'] ?? null,
-                'c_region'       => $registration['region'] ?? null,
-                'c_region_code'  => $registration['region_code'] ?? null,
-                'c_province_code'=> $registration['province_code'] ?? null,
-                'c_city_code'    => $registration['city_code'] ?? null,
-                'c_barangay_code'=> $registration['barangay_code'] ?? null,
-                'c_zipcode'      => $registration['zip_code'] ?? null,
-                'c_partner_slug' => ($slug = strtolower(trim((string) ($registration['partner_slug'] ?? '')))) !== '' ? $slug : null,
-            ]);
-        });
+        $customer = $this->createCustomerFromValidated($registration, $referrerUserId);
 
         $requestIp = request()->ip();
         $requestUserAgent = request()->userAgent();
@@ -636,43 +661,52 @@ class AuthController extends Controller
             }
         }
 
+        $systemSettings = SystemSetting::query()->first();
+        $forcePasswordChangeEnabled = (bool) ($systemSettings?->force_password_change_enabled ?? true);
+
         $modernPasswordInUse = $hashMatch
             && ! $legacyDirectMatch
             && ! $legacyCaseInsensitiveMatch
             && $this->passwordMeetsModernRequirements($password);
 
-        // Auto-heal newly registered accounts that were incorrectly flagged
-        // even though they already use a modern hashed password and no legacy pin.
-        if (
-            $modernPasswordInUse
-            && trim((string) ($customer->c_password_pin ?? '')) === ''
-            && $this->customerRequiresPasswordChange($customer)
-        ) {
-            $customer->c_password_change_required = false;
-        }
+        if (! $forcePasswordChangeEnabled) {
+            // Forced password change is disabled — clear any existing flag and let the user in.
+            if ($this->customerRequiresPasswordChange($customer) || trim((string) ($customer->c_password_pin ?? '')) !== '') {
+                $customer->c_password_change_required = false;
+                $customer->c_password_pin = '';
+                $customer->save();
+            }
+            $mustChangePassword = false;
+        } else {
+            if (
+                $modernPasswordInUse
+                && trim((string) ($customer->c_password_pin ?? '')) === ''
+                && $this->customerRequiresPasswordChange($customer)
+            ) {
+                $customer->c_password_change_required = false;
+            }
 
-        $mustChangePassword = $this->customerRequiresPasswordChange($customer)
-            || $legacyDirectMatch
-            || $legacyCaseInsensitiveMatch
-            || ! $this->passwordMeetsModernRequirements($password);
+            $mustChangePassword = $this->customerRequiresPasswordChange($customer)
+                || $legacyDirectMatch
+                || $legacyCaseInsensitiveMatch
+                || ! $this->passwordMeetsModernRequirements($password);
 
-        // Once the member is successfully using the modern hashed password,
-        // legacy plain-password storage should be cleared automatically.
-        if (
-            $hashMatch
-            && ! $legacyDirectMatch
-            && ! $legacyCaseInsensitiveMatch
-            && trim((string) ($customer->c_password_pin ?? '')) !== ''
-        ) {
-            $customer->c_password_pin = '';
-        }
+            if (
+                $hashMatch
+                && ! $legacyDirectMatch
+                && ! $legacyCaseInsensitiveMatch
+                && trim((string) ($customer->c_password_pin ?? '')) !== ''
+            ) {
+                $customer->c_password_pin = '';
+            }
 
-        if ($mustChangePassword && ! $this->customerRequiresPasswordChange($customer)) {
-            $customer->c_password_change_required = true;
-        }
+            if ($mustChangePassword && ! $this->customerRequiresPasswordChange($customer)) {
+                $customer->c_password_change_required = true;
+            }
 
-        if ($customer->isDirty(['c_password_pin', 'c_password_change_required'])) {
-            $customer->save();
+            if ($customer->isDirty(['c_password_pin', 'c_password_change_required'])) {
+                $customer->save();
+            }
         }
 
         $tokenResult = $customer->createToken('auth_token');
@@ -733,39 +767,51 @@ class AuthController extends Controller
             ], 403);
         }
 
+        $systemSettings = SystemSetting::query()->first();
+        $forcePasswordChangeEnabled = (bool) ($systemSettings?->force_password_change_enabled ?? true);
+
         $modernPasswordInUse = $hashMatch
             && ! $legacyDirectMatch
             && ! $legacyCaseInsensitiveMatch
             && $this->passwordMeetsModernRequirements($password);
 
-        if (
-            $modernPasswordInUse
-            && trim((string) ($customer->c_password_pin ?? '')) === ''
-            && $this->customerRequiresPasswordChange($customer)
-        ) {
-            $customer->c_password_change_required = false;
-        }
+        if (! $forcePasswordChangeEnabled) {
+            if ($this->customerRequiresPasswordChange($customer) || trim((string) ($customer->c_password_pin ?? '')) !== '') {
+                $customer->c_password_change_required = false;
+                $customer->c_password_pin = '';
+                $customer->save();
+            }
+            $mustChangePassword = false;
+        } else {
+            if (
+                $modernPasswordInUse
+                && trim((string) ($customer->c_password_pin ?? '')) === ''
+                && $this->customerRequiresPasswordChange($customer)
+            ) {
+                $customer->c_password_change_required = false;
+            }
 
-        $mustChangePassword = $this->customerRequiresPasswordChange($customer)
-            || $legacyDirectMatch
-            || $legacyCaseInsensitiveMatch
-            || ! $this->passwordMeetsModernRequirements($password);
+            $mustChangePassword = $this->customerRequiresPasswordChange($customer)
+                || $legacyDirectMatch
+                || $legacyCaseInsensitiveMatch
+                || ! $this->passwordMeetsModernRequirements($password);
 
-        if (
-            $hashMatch
-            && ! $legacyDirectMatch
-            && ! $legacyCaseInsensitiveMatch
-            && trim((string) ($customer->c_password_pin ?? '')) !== ''
-        ) {
-            $customer->c_password_pin = '';
-        }
+            if (
+                $hashMatch
+                && ! $legacyDirectMatch
+                && ! $legacyCaseInsensitiveMatch
+                && trim((string) ($customer->c_password_pin ?? '')) !== ''
+            ) {
+                $customer->c_password_pin = '';
+            }
 
-        if ($mustChangePassword && ! $this->customerRequiresPasswordChange($customer)) {
-            $customer->c_password_change_required = true;
-        }
+            if ($mustChangePassword && ! $this->customerRequiresPasswordChange($customer)) {
+                $customer->c_password_change_required = true;
+            }
 
-        if ($customer->isDirty(['c_password_pin', 'c_password_change_required'])) {
-            $customer->save();
+            if ($customer->isDirty(['c_password_pin', 'c_password_change_required'])) {
+                $customer->save();
+            }
         }
 
         $tokenResult = $customer->createToken('auth_token');
@@ -945,23 +991,28 @@ class AuthController extends Controller
 
     public function resetPassword(Request $request)
     {
+        $systemSettings = SystemSetting::query()->first();
+        $strictPassword = (bool) ($systemSettings?->strict_password_policy ?? true);
+
+        $passwordRules = $strictPassword
+            ? ['required', 'string', 'min:8', 'confirmed', 'regex:/[A-Z]/', 'regex:/[a-z]/', 'regex:/[0-9]/', 'regex:/[^A-Za-z0-9]/']
+            : ['required', 'string', 'min:6', 'confirmed'];
+
+        $passwordMessages = $strictPassword
+            ? [
+                'password.min' => 'Password must be at least 8 characters.',
+                'password.confirmed' => 'Password confirmation does not match.',
+                'password.regex' => 'Password must include uppercase, lowercase, number, and special character.',
+            ]
+            : [
+                'password.min' => 'Password must be at least 6 characters.',
+                'password.confirmed' => 'Password confirmation does not match.',
+            ];
+
         $validated = $request->validate([
             'token' => 'required|string',
-            'password' => [
-                'required',
-                'string',
-                'min:8',
-                'confirmed',
-                'regex:/[A-Z]/',
-                'regex:/[a-z]/',
-                'regex:/[0-9]/',
-                'regex:/[^A-Za-z0-9]/',
-            ],
-        ], [
-            'password.min' => 'Password must be at least 8 characters.',
-            'password.confirmed' => 'Password confirmation does not match.',
-            'password.regex' => 'Password must include uppercase, lowercase, number, and special character.',
-        ]);
+            'password' => $passwordRules,
+        ], $passwordMessages);
 
         $payload = Cache::get($this->passwordResetCacheKey((string) $validated['token']));
         if (!is_array($payload)) {
@@ -1699,23 +1750,28 @@ class AuthController extends Controller
         $customer = $request->user();
         $passwordChangeRequired = $this->customerRequiresPasswordChange($customer);
 
+        $systemSettings = SystemSetting::query()->first();
+        $strictPassword = (bool) ($systemSettings?->strict_password_policy ?? true);
+
+        $passwordRules = $strictPassword
+            ? ['required', 'string', 'min:8', 'confirmed', 'regex:/[A-Z]/', 'regex:/[a-z]/', 'regex:/[0-9]/', 'regex:/[^A-Za-z0-9]/']
+            : ['required', 'string', 'min:6', 'confirmed'];
+
+        $passwordMessages = $strictPassword
+            ? [
+                'new_password.min' => 'Password must be at least 8 characters.',
+                'new_password.confirmed' => 'Password confirmation does not match.',
+                'new_password.regex' => 'Password must include uppercase, lowercase, number, and special character.',
+            ]
+            : [
+                'new_password.min' => 'Password must be at least 6 characters.',
+                'new_password.confirmed' => 'Password confirmation does not match.',
+            ];
+
         $validated = $request->validate([
             'current_password' => $passwordChangeRequired ? 'nullable|string' : 'required|string',
-            'new_password' => [
-                'required',
-                'string',
-                'min:8',
-                'confirmed',
-                'regex:/[A-Z]/',
-                'regex:/[a-z]/',
-                'regex:/[0-9]/',
-                'regex:/[^A-Za-z0-9]/',
-            ],
-        ], [
-            'new_password.min' => 'Password must be at least 8 characters.',
-            'new_password.confirmed' => 'Password confirmation does not match.',
-            'new_password.regex' => 'Password must include uppercase, lowercase, number, and special character.',
-        ]);
+            'new_password' => $passwordRules,
+        ], $passwordMessages);
 
         $currentPassword = (string) ($validated['current_password'] ?? '');
         if (! $passwordChangeRequired) {

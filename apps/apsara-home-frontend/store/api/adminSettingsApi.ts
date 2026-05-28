@@ -24,7 +24,16 @@ export interface AdminSecuritySettings {
   max_login_attempts: number
   password_min_length: number
   enable_2fa: boolean
+  registration_otp_enabled: boolean
+  strict_password_policy: boolean
+  force_password_change_enabled: boolean
   updated_at?: string | null
+}
+
+export interface PublicSecuritySettings {
+  registration_otp_enabled: boolean
+  strict_password_policy: boolean
+  force_password_change_enabled: boolean
 }
 
 export interface AdminNotificationSettings {
@@ -62,6 +71,14 @@ export const adminSettingsApi = baseApi.injectEndpoints({
         body,
       }),
       invalidatesTags: ['AdminSettings'],
+    }),
+    getPublicSecuritySettings: builder.query<PublicSecuritySettings, void>({
+      query: () => ({
+        url: '/api/settings/security',
+        method: 'GET',
+        cache: 'no-store',
+      }),
+      providesTags: ['AdminSettings'],
     }),
     getAdminSecuritySettings: builder.query<{ settings: AdminSecuritySettings }, void>({
       query: () => ({
@@ -106,6 +123,7 @@ export const adminSettingsApi = baseApi.injectEndpoints({
 
 export const {
   useGetPublicGeneralSettingsQuery,
+  useGetPublicSecuritySettingsQuery,
   useGetAdminGeneralSettingsQuery,
   useUpdateAdminGeneralSettingsMutation,
   useGetAdminSecuritySettingsQuery,

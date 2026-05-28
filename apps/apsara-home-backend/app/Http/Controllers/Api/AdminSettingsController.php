@@ -168,6 +168,17 @@ class AdminSettingsController extends Controller
         ]);
     }
 
+    public function publicSecurity(): JsonResponse
+    {
+        $settings = SystemSetting::query()->first();
+
+        return response()->json([
+            'registration_otp_enabled' => (bool) ($settings?->registration_otp_enabled ?? true),
+            'strict_password_policy' => (bool) ($settings?->strict_password_policy ?? true),
+            'force_password_change_enabled' => (bool) ($settings?->force_password_change_enabled ?? true),
+        ]);
+    }
+
     public function updateSecurity(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -175,6 +186,9 @@ class AdminSettingsController extends Controller
             'max_login_attempts' => 'required|integer|min:1|max:20',
             'password_min_length' => 'required|integer|min:6|max:64',
             'enable_2fa' => 'required|boolean',
+            'registration_otp_enabled' => 'required|boolean',
+            'strict_password_policy' => 'required|boolean',
+            'force_password_change_enabled' => 'required|boolean',
         ]);
 
         $settings = SystemSetting::query()->first();
@@ -187,6 +201,9 @@ class AdminSettingsController extends Controller
         $settings->max_login_attempts = $validated['max_login_attempts'];
         $settings->password_min_length = $validated['password_min_length'];
         $settings->enable_2fa = $validated['enable_2fa'];
+        $settings->registration_otp_enabled = $validated['registration_otp_enabled'];
+        $settings->strict_password_policy = $validated['strict_password_policy'];
+        $settings->force_password_change_enabled = $validated['force_password_change_enabled'];
         $settings->save();
 
         return response()->json([
@@ -294,7 +311,10 @@ class AdminSettingsController extends Controller
             'session_timeout_minutes' => $settings?->session_timeout_minutes ?? 60,
             'max_login_attempts' => $settings?->max_login_attempts ?? 5,
             'password_min_length' => $settings?->password_min_length ?? 8,
-            'enable_2fa' => (bool)($settings?->enable_2fa ?? false),
+            'enable_2fa' => (bool) ($settings?->enable_2fa ?? false),
+            'registration_otp_enabled' => (bool) ($settings?->registration_otp_enabled ?? true),
+            'strict_password_policy' => (bool) ($settings?->strict_password_policy ?? true),
+            'force_password_change_enabled' => (bool) ($settings?->force_password_change_enabled ?? true),
             'updated_at' => optional($settings?->updated_at)->toDateTimeString(),
         ];
     }

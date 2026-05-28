@@ -10,6 +10,7 @@ import { showErrorToast, showSuccessToast } from '@/libs/toast'
 import OtpVerification from './auth/OtpVerification'
 import { clearStoredReferralCode, getStoredReferralCode, normalizeReferralCode } from '@/libs/referral'
 import PrimaryButton from '@/components/ui/buttons/PrimaryButton'
+import { useGetPublicSecuritySettingsQuery } from '@/store/api/adminSettingsApi'
 
 const EyeIcon = ({ open }: { open: boolean }) => open
   ? <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
@@ -72,13 +73,17 @@ function FloatingInput({ id, type = 'text', label, value, onChange, onBlur, onPa
   )
 }
 
-const passwordChecks = (password: string) => ([
-  { label: 'At least 8 characters', passed: password.length >= 8 },
-  { label: 'At least one uppercase letter', passed: /[A-Z]/.test(password) },
-  { label: 'At least one lowercase letter', passed: /[a-z]/.test(password) },
-  { label: 'At least one number', passed: /[0-9]/.test(password) },
-  { label: 'At least one special character', passed: /[^A-Za-z0-9]/.test(password) },
-])
+const passwordChecks = (password: string, strict: boolean) => strict
+  ? [
+      { label: 'At least 8 characters', passed: password.length >= 8 },
+      { label: 'At least one uppercase letter', passed: /[A-Z]/.test(password) },
+      { label: 'At least one lowercase letter', passed: /[a-z]/.test(password) },
+      { label: 'At least one number', passed: /[0-9]/.test(password) },
+      { label: 'At least one special character', passed: /[^A-Za-z0-9]/.test(password) },
+    ]
+  : [
+      { label: 'At least 6 characters', passed: password.length >= 6 },
+    ]
 
 const termsSections = [
   {
@@ -159,6 +164,9 @@ export default function SignUpForm({
 }: SignUpFormProps) {
   const searchParams = useSearchParams()
   const [register, { isLoading }] = useRegisterMutation()
+  const { data: securitySettings } = useGetPublicSecuritySettingsQuery()
+  const otpEnabled = securitySettings?.registration_otp_enabled ?? true
+  const strictPassword = securitySettings?.strict_password_policy ?? true
   const turnstileRef = useRef<HTMLDivElement>(null)
   const widgetIdRef = useRef<string>('')
   const [turnstileToken, setTurnstileToken] = useState('')
@@ -194,7 +202,7 @@ export default function SignUpForm({
     confirmPassword: '',
   })
 
-  const passwordRequirements = passwordChecks(form.password)
+  const passwordRequirements = passwordChecks(form.password, strictPassword)
   const mobileDigits = form.mobileNumber.replace(/\D/g, '')
   const normalizedEmail = form.email.trim()
   const normalizedReferral = normalizeReferralCode(form.referredBy)
@@ -390,9 +398,10 @@ export default function SignUpForm({
     if (!mobileNumber) return showError('Mobile number is required.')
     if (mobileNumber.length < 11) return showError('Mobile number is incomplete. It must be 11 digits.')
     if (!/^09\d{9}$/.test(mobileNumber)) return showError('Enter a valid Philippine mobile number in 11-digit format, like 0929-226-0447.')
-    if (!email) return showError('Email address is required.')
-    if (emailAvailability.status === 'unavailable') return showError(emailAvailability.message || 'This email is already registered.')
-    if (emailAvailability.status !== 'available') return showError('Please wait until email availability is confirmed.')
+    if (email) {
+      if (emailAvailability.status === 'unavailable') return showError(emailAvailability.message || 'This email is already registered.')
+      if (emailAvailability.status === 'checking') return showError('Please wait until email availability is confirmed.')
+    }
     if (!username) return showError('Username is required.')
     if (!/^[A-Za-z0-9]+$/.test(username)) return showError('Username must contain letters and numbers only.')
     if (usernameAvailability.status === 'unavailable') return showError(usernameAvailability.message || 'This username is already taken.')
@@ -401,7 +410,8 @@ export default function SignUpForm({
     if (referralAvailability.status === 'unavailable') return showError(referralAvailability.message || 'Referral code is invalid or unavailable.')
     if (referralAvailability.status === 'checking') return showError('Please wait until referral code validation is confirmed.')
     if (!form.password) return showError('Password is required.')
-    if (form.password.length < 8) return showError('Password must be at least 8 characters.')
+    const minLen = strictPassword ? 8 : 6
+    if (form.password.length < minLen) return showError(`Password must be at least ${minLen} characters.`)
     if (form.password !== form.confirmPassword) return showError('Passwords do not match.')
     if (!acceptedTerms) return showError('You must read and accept the Terms and Conditions to continue.')
 
@@ -430,6 +440,13 @@ export default function SignUpForm({
       return
     }
 
+    if (!result.data.requires_otp) {
+      clearStoredReferralCode()
+      showSuccessToast('Registration complete! You can now sign in.')
+      onSwitchToLogin()
+      return
+    }
+
     setVerificationToken(result.data.verification_token)
     setPendingEmail(result.data.email || email)
     setStep('otp')
@@ -447,7 +464,9 @@ export default function SignUpForm({
       <p className="text-gray-500 dark:text-white/70 text-sm mb-5">
         {step === 'otp'
           ? 'Enter the 4-digit code we sent to your email to finish your registration.'
-          : 'Please enter the required details to create your account.'}
+          : otpEnabled
+            ? 'Please enter the required details to create your account.'
+            : 'Please enter the required details to create your account. No email verification required.'}
       </p>
 
       {step === 'otp' ? (
@@ -510,8 +529,8 @@ export default function SignUpForm({
 
             {/* Email */}
             <div>
-              <FloatingInput id="signup-email" type="email" label="Email Address" required value={form.email} onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))} />
-              {emailAvailability.message ? (
+              <FloatingInput id="signup-email" type="email" label="Email Address (Optional)" value={form.email} onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))} />
+              {form.email.trim() && emailAvailability.message ? (
                 <p className={`mt-1 text-[11px] ${emailAvailability.status === 'available' ? 'text-emerald-600 dark:text-emerald-300' : emailAvailability.status === 'checking' ? 'text-sky-600 dark:text-sky-300' : 'text-red-600 dark:text-red-300'}`}>
                   {emailAvailability.message}
                 </p>
@@ -642,7 +661,7 @@ export default function SignUpForm({
                 {isLoading ? (
                   <>
                     <Loading size={14} />
-                    <span>SENDING OTP...</span>
+                    <span>{otpEnabled ? 'SENDING OTP...' : 'SIGNING UP...'}</span>
                   </>
                 ) : (
                   <span>SIGN UP</span>

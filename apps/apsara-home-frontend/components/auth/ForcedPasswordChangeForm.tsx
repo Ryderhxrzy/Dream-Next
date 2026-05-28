@@ -5,8 +5,12 @@ import { signOut, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useChangePasswordMutation } from '@/store/api/userApi';
 import Loading from '@/components/Loading';
+import { useGetPublicSecuritySettingsQuery } from '@/store/api/adminSettingsApi';
 
-function getPasswordChecks(password: string) {
+function getPasswordChecks(password: string, strict: boolean) {
+  if (!strict) {
+    return { length: password.length >= 6 };
+  }
   return {
     length: password.length >= 8,
     uppercase: /[A-Z]/.test(password),
@@ -56,12 +60,14 @@ export default function ForcedPasswordChangeForm() {
   const router = useRouter();
   const { update: updateSession, data: session } = useSession();
   const [changePassword, { isLoading }] = useChangePasswordMutation();
+  const { data: securitySettings } = useGetPublicSecuritySettingsQuery();
+  const strictPassword = securitySettings?.strict_password_policy ?? true;
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const checks = useMemo(() => getPasswordChecks(password), [password]);
+  const checks = useMemo(() => getPasswordChecks(password, strictPassword), [password, strictPassword]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,7 +80,10 @@ export default function ForcedPasswordChangeForm() {
     }
 
     if (!Object.values(checks).every(Boolean)) {
-      setError('Password must include uppercase, lowercase, number, and special character.');
+      const msg = strictPassword
+        ? 'Password must include uppercase, lowercase, number, and special character.'
+        : `Password must be at least 6 characters.`;
+      setError(msg);
       return;
     }
 
@@ -125,11 +134,21 @@ export default function ForcedPasswordChangeForm() {
         <div className="rounded-2xl border border-gray-200 bg-slate-50 p-4 shadow-inner shadow-slate-200/40 dark:border-white/10 dark:bg-white/[0.07] dark:shadow-white/[0.02]">
           <p className="text-sm font-semibold text-gray-900 dark:text-white">Password requirements</p>
           <ul className="mt-2 space-y-1 text-sm text-gray-500 dark:text-white/70">
-            <li className={checks.length ? 'text-emerald-600 dark:text-emerald-300' : ''}>At least 8 characters</li>
-            <li className={checks.uppercase ? 'text-emerald-600 dark:text-emerald-300' : ''}>At least one uppercase letter</li>
-            <li className={checks.lowercase ? 'text-emerald-600 dark:text-emerald-300' : ''}>At least one lowercase letter</li>
-            <li className={checks.number ? 'text-emerald-600 dark:text-emerald-300' : ''}>At least one number</li>
-            <li className={checks.special ? 'text-emerald-600 dark:text-emerald-300' : ''}>At least one special character</li>
+            <li className={checks.length ? 'text-emerald-600 dark:text-emerald-300' : ''}>
+              {strictPassword ? 'At least 8 characters' : 'At least 6 characters'}
+            </li>
+            {'uppercase' in checks && (
+              <li className={checks.uppercase ? 'text-emerald-600 dark:text-emerald-300' : ''}>At least one uppercase letter</li>
+            )}
+            {'lowercase' in checks && (
+              <li className={checks.lowercase ? 'text-emerald-600 dark:text-emerald-300' : ''}>At least one lowercase letter</li>
+            )}
+            {'number' in checks && (
+              <li className={checks.number ? 'text-emerald-600 dark:text-emerald-300' : ''}>At least one number</li>
+            )}
+            {'special' in checks && (
+              <li className={checks.special ? 'text-emerald-600 dark:text-emerald-300' : ''}>At least one special character</li>
+            )}
           </ul>
         </div>
 
