@@ -139,6 +139,7 @@ class AuthController extends Controller
         $otp = (string) random_int(1000, 9999);
         $partnerSlug = strtolower(trim((string) ($validated['partner_slug'] ?? '')));
         $senderContext = $this->resolvePartnerOtpSenderContext($partnerSlug);
+        $email = $validated['email'] ? (string) $validated['email'] : null;
 
         Cache::put($this->registrationOtpCacheKey($verificationToken), [
             'otp_hash' => Hash::make($otp),
@@ -146,17 +147,20 @@ class AuthController extends Controller
                 'validated' => $validated,
                 'referrer_user_id' => (int) $referrer->c_userid,
             ], JSON_THROW_ON_ERROR)),
-            'email' => (string) $validated['email'],
+            'email' => $email,
             'sender_context' => $senderContext,
         ], now()->addMinutes(10));
 
-        $this->sendRegistrationOtpEmail((string) $validated['email'], $otp, $senderContext);
+        // Send email OTP only if email is provided
+        if ($email) {
+            $this->sendRegistrationOtpEmail($email, $otp, $senderContext);
+        }
 
         return response()->json([
-            'message' => 'A 4-digit verification code has been sent to your email.',
+            'message' => 'A 4-digit verification code has been sent to your phone.',
             'requires_otp' => true,
             'verification_token' => $verificationToken,
-            'email' => (string) $validated['email'],
+            'email' => $email,
         ]);
     }
 
@@ -196,7 +200,7 @@ class AuthController extends Controller
         $registration = $payload['validated'] ?? [];
         $referrerUserId = (int) ($payload['referrer_user_id'] ?? 0);
 
-        if (empty($registration['email']) || empty($registration['username'])) {
+        if (empty($registration['username'])) {
             $fail('otp', 'The verification payload is invalid. Please register again.');
         }
 
