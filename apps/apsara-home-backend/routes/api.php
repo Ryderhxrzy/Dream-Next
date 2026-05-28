@@ -237,6 +237,8 @@ Route::middleware(['auth:sanctum', 'customer.actor'])->group(function () {
     Route::post('/username-change/send-otp', [AuthController::class, 'sendUsernameChangeOtp']);
     Route::post('/username-change/submit', [AuthController::class, 'submitUsernameChangeRequest']);
     Route::post('/webstore-requests', [AuthController::class, 'submitWebstoreRequest']);
+    Route::post('/webstore-requests/payment-session', [AuthController::class, 'createWebstorePaymentSession']);
+    Route::get('/webstore-requests/payment-session/{checkoutId}', [AuthController::class, 'verifyWebstorePaymentSession']);
     Route::get('/webstore-requests/latest', [AuthController::class, 'latestWebstoreRequest']);
     Route::post('/webstore-requests/sync-account', [AuthController::class, 'syncWebstorePartnerAccount']);
     Route::get('/account/snapshot', [AuthController::class, 'accountSnapshot']);
