@@ -6,7 +6,7 @@ import ProductImageGallery from './ProductImageGallery';
 import ProductInfo from './ProductInfo';
 import StickyAddToCart from './StickyAddToCart';
 import { useGetProductBrandQuery } from '@/store/api/productsApi';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { setStoredReferralCode } from '@/libs/referral';
 import { resolveCheckoutSource } from '@/libs/checkoutSource';
 import { useSession } from 'next-auth/react';
@@ -219,6 +219,7 @@ const ProductPageClient = ({
     const [selectedVariant, setSelectedVariant] = useState<VariantOption | undefined>(undefined);
     const galleryKey = selectedVariant?.images?.join('|') || product.images?.join('|') || product.image;
     const router = useRouter();
+    const pathname = usePathname();
     const searchParams = useSearchParams();
     const { data: session, status } = useSession();
     const { data: publicSettingsData } = useGetPublicGeneralSettingsQuery();
@@ -271,7 +272,7 @@ const ProductPageClient = ({
             const subtotal = unitPrice * quantity;
             const handlingFee = 0;
             const total = subtotal + handlingFee;
-            const checkoutSource = resolveCheckoutSource();
+            const checkoutSource = resolveCheckoutSource(pathname);
 
             localStorage.setItem('guest_checkout', JSON.stringify({
                 product: {
@@ -300,7 +301,7 @@ const ProductPageClient = ({
         } catch {
             // If anything fails, keep user on product page.
         }
-    }, [isManualCheckoutOnly, product, role, router, searchParams, selectedVariant, status]);
+    }, [isManualCheckoutOnly, pathname, product, role, router, searchParams, selectedVariant, status]);
 
     const toSlugBrand = (value: string) =>
         value

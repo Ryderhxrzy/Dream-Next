@@ -123,7 +123,7 @@ export default function NetworkEarningsTab({ awards, monthlyActivation }: Props)
         <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-[11px] font-black uppercase tracking-[0.22em] text-sky-400">Network Earnings</p>
-            <h3 className="mt-1 text-xl font-black tracking-tight sm:text-2xl">Unilevel Breakdown</h3>
+            <h3 className="mt-1 text-xl font-black tracking-tight sm:text-2xl">Group Purchase Bonus Breakdown</h3>
             <p className="mt-1 max-w-sm text-sm text-slate-400">
               Every bonus credited from your downline's delivered purchases.
             </p>
@@ -134,7 +134,7 @@ export default function NetworkEarningsTab({ awards, monthlyActivation }: Props)
               : 'bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/40'
           }`}>
             <span className={`h-2 w-2 rounded-full animate-pulse ${isActive ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-            {isActive ? 'Active for Unilevel' : 'Inactive for Unilevel'}
+            {isActive ? 'Active for Group Bonus' : 'Inactive for Group Bonus'}
           </span>
         </div>
 

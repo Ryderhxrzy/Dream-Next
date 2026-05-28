@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import { MeResponse, ReferralTreeNode, AccountSnapshot, useChangePasswordMutation, useMeQuery, useAccountSnapshotQuery, useReferralTreeQuery, useUpdateProfileMutation, useUploadAvatarMutation, useSendUsernameChangeOtpMutation, useSubmitUsernameChangeRequestMutation, useSubmitWebstoreRequestMutation, useCreateWebstorePaymentSessionMutation, useLazyVerifyWebstorePaymentSessionQuery, useUsernameChangeLatestQuery, useWebstoreRequestLatestQuery, useSyncWebstorePartnerAccountMutation, useMemberActivityQuery, useMemberSessionsQuery, useRevokeMemberSessionMutation, useLinkedAccountsQuery, useLinkGoogleAccountMutation, useUnlinkGoogleAccountMutation, useLinkFacebookAccountMutation, useUnlinkFacebookAccountMutation, LinkedAccount, useSetupTotpMutation, useEnableTotpMutation, useDisableTotpMutation, SetupTotpResponse } from '@/store/api/userApi';
+import type { WebstoreRequest } from '@/store/api/userApi';
 import { signOut, useSession } from 'next-auth/react';
 import { ChangeEvent, DragEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Loading from '../Loading';
@@ -22,6 +23,7 @@ import Toggle from './Toggle';
 import getActivityIcon from './GetActivityIcon';
 import EncashmentTab from './EncashmentTab';
 import WalletTab from './WalletTab';
+import PerformanceTab from './PerformanceTab';
 import InteriorRequestsTab from './InteriorRequestsTab';
 import AvatarCropModal from './AvatarCropModal';
 import LevelsTab from './LevelsTab';
@@ -319,13 +321,16 @@ type PreferencesState = {
   currency: 'PHP' | 'USD';
 };
 
-type Tab = 'profile' | 'security' | 'preferences' | 'wallet' | 'pv' | 'encashment' | 'interior-requests' | 'activity' | 'change-username' | 'webstore' | 'referrals' | 'levels';
+type Tab = 'profile' | 'security' | 'preferences' | 'wallet' | 'pv' | 'performance' | 'encashment' | 'interior-requests' | 'activity' | 'change-username' | 'webstore' | 'referrals' | 'levels';
 
 type AlertMsg = { type: 'success' | 'error'; text: string };
 type TreeStatusFilter = 'all' | 'verified' | 'pending_review' | 'not_verified' | 'blocked';
-const PROFILE_TABS: Tab[] = ['profile', 'security', 'preferences', 'wallet', 'encashment', 'interior-requests', 'activity', 'change-username', 'webstore', 'referrals', 'levels'];
+const PROFILE_TABS: Tab[] = ['profile', 'security', 'preferences', 'wallet', 'pv', 'performance', 'encashment', 'interior-requests', 'activity', 'change-username', 'webstore', 'referrals', 'levels'];
 
 type WebstorePaymentMethod = 'gcash' | 'grab_pay' | 'maya' | 'card';
+type WebstoreRequestPreview = Omit<WebstoreRequest, 'status'> & {
+  status: WebstoreRequest['status'] | 'deleted';
+};
 
 const WEBSTORE_PAYMENT_METHODS: Array<{
   value: WebstorePaymentMethod;
@@ -728,21 +733,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
   const webstorePaymentMethodTouchedRef = useRef(false);
   const webstoreDraftHydratedRef = useRef(false);
   const webstoreStorefrontFieldsEditedRef = useRef(false);
-  const [webstoreLatestRequestPreview, setWebstoreLatestRequestPreview] = useState<{
-    id: number
-    reference_no?: string
-    status: 'pending_review' | 'approved' | 'rejected'
-    slug_name?: string | null
-    display_name?: string | null
-    created_at?: string | null
-    billing_option?: 'full' | 'monthly' | null
-    payment_method?: WebstorePaymentMethod | null
-    latest_receipt_status?: 'pending_review' | 'approved' | 'rejected' | null
-    latest_receipt_message?: string | null
-    latest_receipt_detail_id?: number | null
-    latest_receipt_submitted_at?: string | null
-    latest_receipt_urls?: string[] | null
-  } | null>(null);
+  const [webstoreLatestRequestPreview, setWebstoreLatestRequestPreview] = useState<WebstoreRequestPreview | null>(null);
   const webstoreReceiptInputRef = useRef<HTMLInputElement | null>(null);
   const webstorePlanSectionRef = useRef<HTMLDivElement | null>(null);
   const webstoreSlugInputRef = useRef<HTMLInputElement | null>(null);
@@ -803,6 +794,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
   const [isSavingAddressDetails, setIsSavingAddressDetails] = useState(false);
   const [revokingTokenId, setRevokingTokenId] = useState<number | null>(null);
   const [addressForm, setAddressForm] = useState<AddressFormState>({ address: '', zipCode: '' });
+  const [runtimeSiteOrigin, setRuntimeSiteOrigin] = useState('');
   const msgTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const usernameMsgTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const referralMsgTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1094,12 +1086,14 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
   const verificationStatus = profileData?.verification_status ?? 'not_verified';
   const isVerified = verificationStatus === 'verified' || profileData?.account_status === 1;
   const configuredAppUrl = (process.env.NEXT_PUBLIC_APP_URL ?? '').trim().replace(/\/+$/, '');
-  const runtimeOrigin = (typeof window !== 'undefined' ? window.location.origin : '').trim().replace(/\/+$/, '');
-  const runtimeHostname = typeof window !== 'undefined' ? window.location.hostname.toLowerCase() : '';
-  const isLocalHost = runtimeHostname === 'localhost' || runtimeHostname === '127.0.0.1' || runtimeHostname === '[::1]';
-  const siteOrigin = isLocalHost
-    ? runtimeOrigin || 'http://localhost:3000'
-    : configuredAppUrl || runtimeOrigin || 'http://localhost:3000';
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const runtimeOrigin = window.location.origin.trim().replace(/\/+$/, '');
+    const runtimeHostname = window.location.hostname.toLowerCase();
+    const isLocalHost = runtimeHostname === 'localhost' || runtimeHostname === '127.0.0.1' || runtimeHostname === '[::1]';
+    setRuntimeSiteOrigin(isLocalHost ? runtimeOrigin || 'http://localhost:3000' : '');
+  }, []);
+  const siteOrigin = runtimeSiteOrigin || configuredAppUrl || 'http://localhost:3000';
   const referralCode = ((profileData?.username ?? form.username) || '').trim();
   const encodedReferralCode = encodeURIComponent(referralCode);
   const memberReferralLink = referralCode
@@ -2232,13 +2226,18 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
         setWebstoreLatestRequestPreview({
           id: Number(submitResponse?.request?.id ?? Date.now()),
           reference_no: submitResponse?.request?.reference_no
-            ?? (submitResponse?.request?.id ? `WR-${submitResponse.request.id}` : undefined),
+            ?? (submitResponse?.request?.id ? `WR-${submitResponse.request.id}` : `WR-${Date.now()}`),
           status: (submitResponse?.request?.status as 'pending_review' | 'approved' | 'rejected' | undefined) ?? 'pending_review',
+          full_name: draftForm.fullName.trim(),
+          username: draftForm.username.trim(),
+          email: draftForm.email.trim(),
           slug_name: draftForm.slugName.trim().toLowerCase(),
           display_name: draftForm.displayName.trim(),
+          plan: planMap[draftPlan],
           created_at: submitResponse?.request?.created_at ?? submitResponse?.request?.submitted_at ?? new Date().toISOString(),
           billing_option: draftBilling,
           payment_method: draftPaymentMethod,
+          receipt_urls: receiptUrls,
         });
 
         setWebstoreSuccessModalOpen(true);
@@ -2524,21 +2523,28 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       semiAnnual: 'semi_annual',
       annual: 'annual',
     };
+    const selectedPlan = selectedWebstorePlan;
+    const billingOption = selectedBillingOption;
+
+    if (!selectedPlan || !billingOption || !paymentMethod) {
+      setWebstoreMsg({ type: 'error', text: 'Please complete the required fields first.' });
+      return;
+    }
 
     try {
       if (typeof window !== 'undefined') {
         window.sessionStorage.setItem(webstorePaymentSessionStorageKey, JSON.stringify({
           webstoreForm,
-          selectedWebstorePlan,
-          selectedBillingOption,
+          selectedWebstorePlan: selectedPlan,
+          selectedBillingOption: billingOption,
           selectedPaymentMethod: paymentMethod,
           webstoreAcceptedTerms,
         }));
       }
 
       const data = await createWebstorePaymentSession({
-        plan: planMap[selectedWebstorePlan],
-        billing_option: selectedBillingOption,
+        plan: planMap[selectedPlan],
+        billing_option: billingOption,
         payment_method: paymentMethod,
         payment_mode: resolveWebstorePaymentMode(),
       }).unwrap();
@@ -2676,6 +2682,12 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       if (validation.firstInvalidField) {
         focusWebstoreInvalidField(validation.firstInvalidField);
       }
+      return;
+    }
+
+    if (!selectedPaymentMethod) {
+      setWebstoreMsg({ type: 'error', text: 'Please select a payment method.' });
+      focusWebstoreInvalidField('payment_method');
       return;
     }
 
@@ -3059,7 +3071,8 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
     { key: 'security', label: 'Security', Icon: Icon.Shield },
     { key: 'preferences', label: 'Preferences', Icon: Icon.Bell },
     { key: 'wallet', label: 'Wallet', Icon: Icon.Wallet },
-    { key: 'pv', label: 'AF Voucher', Icon: Icon.Star },
+    { key: 'pv', label: 'E-Voucher', Icon: Icon.Star },
+    { key: 'performance', label: 'Performance', Icon: Icon.Activity },
     { key: 'encashment', label: 'Encashment', Icon: Icon.Bag },
     { key: 'interior-requests', label: 'Interior Requests', Icon: Icon.Package },
     { key: 'activity', label: 'Activity', Icon: Icon.Activity },
@@ -3466,6 +3479,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                 preferences: 'Prefs',
                 wallet: 'Wallet',
                 pv: 'Voucher',
+                performance: 'Performance',
                 encashment: 'Encash',
                 'interior-requests': 'Requests',
                 activity: 'Activity',
@@ -5358,6 +5372,15 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                   {...tabMotionProps}
                 >
                   <WalletTab isVerified={isVerified} initialWalletType="pv" />
+                </motion.div>
+              )}
+
+              {activeTab === 'performance' && (
+                <motion.div
+                  key="performance"
+                  {...tabMotionProps}
+                >
+                  <PerformanceTab />
                 </motion.div>
               )}
 

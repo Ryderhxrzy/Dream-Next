@@ -38,6 +38,8 @@ services:
       CI: "true"
       PNPM_CONFIG_CONFIRM_MODULES_PURGE: "false"
       NEXT_TELEMETRY_DISABLED: "1"
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
     ports:
       - "3000:3000"
     volumes:
