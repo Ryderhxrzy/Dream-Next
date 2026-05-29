@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendScheduledPushNotificationJob;
 use App\Models\FcmDeviceToken;
 use App\Models\SupplierPushNotification;
 use App\Models\SupplierUser;
@@ -39,6 +40,7 @@ class SupplierPushNotificationController extends Controller
             'recipients' => 'required|array|min:1',
             'recipients.*' => 'integer|min:1',
             'buttonText' => 'nullable|string|max:255',
+            'scheduled_at' => 'nullable|date_format:Y-m-d\TH:i|after:now',
         ]);
 
         try {
@@ -46,12 +48,52 @@ class SupplierPushNotificationController extends Controller
             $body = $validated['body'];
             $image = $validated['image'] ?? null;
             $recipientCustomerIds = $validated['recipients'];
+            $scheduledAt = isset($validated['scheduled_at']) ? \Carbon\Carbon::parse($validated['scheduled_at']) : null;
 
             Log::info('Supplier push notification send initiated', [
                 'supplier_id' => $supplierId,
                 'recipient_count' => count($recipientCustomerIds),
                 'title' => $title,
+                'scheduled_at' => $scheduledAt,
             ]);
+
+            // If scheduled, save and dispatch job with delay
+            if ($scheduledAt) {
+                $notificationRecord = SupplierPushNotification::create([
+                    'spn_supplier_id' => $supplierId,
+                    'spn_title' => $title,
+                    'spn_body' => $body,
+                    'spn_image' => $image,
+                    'spn_recipients' => $recipientCustomerIds,
+                    'spn_sent_count' => 0,
+                    'spn_failed_count' => 0,
+                    'spn_scheduled_at' => $scheduledAt,
+                    'spn_status' => 'scheduled',
+                    'spn_created_at' => now(),
+                    'spn_updated_at' => now(),
+                ]);
+
+                // Calculate delay in seconds
+                $delay = $scheduledAt->diffInSeconds(now());
+
+                // Dispatch job to queue with delay - will execute automatically at scheduled time
+                SendScheduledPushNotificationJob::dispatch($notificationRecord->spn_id)
+                    ->delay($delay);
+
+                Log::info('Supplier push notification scheduled with delayed job', [
+                    'notification_id' => $notificationRecord->spn_id,
+                    'supplier_id' => $supplierId,
+                    'scheduled_for' => $scheduledAt,
+                    'delay_seconds' => $delay,
+                ]);
+
+                return response()->json([
+                    'message' => 'Notification scheduled successfully.',
+                    'notification_id' => $notificationRecord->spn_id,
+                    'scheduled_at' => $scheduledAt,
+                    'status' => 'scheduled',
+                ], 200);
+            }
 
             // Get FCM tokens for specified customers
             $tokens = FcmDeviceToken::query()
@@ -103,6 +145,7 @@ class SupplierPushNotificationController extends Controller
                 'spn_sent_count' => $result['sent'],
                 'spn_failed_count' => $result['failed'],
                 'spn_sent_at' => now(),
+                'spn_status' => 'sent',
                 'spn_created_at' => now(),
                 'spn_updated_at' => now(),
             ]);
