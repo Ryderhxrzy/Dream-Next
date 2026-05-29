@@ -54,20 +54,20 @@ class ProductController extends Controller
     private function applyPersonalizedSort(&$query, int $userId, array $categoryIds)
     {
         $cacheKey = "user_product_behavior:{$userId}";
-        $cacheTTL = 60 * 10; // 10 minutes
 
         // Try to get behavior ranking from Redis cache first
         $behaviorRanking = Cache::get($cacheKey);
 
         if ($behaviorRanking && is_array($behaviorRanking) && !empty($behaviorRanking)) {
-            // Cache hit: Use cached ranking with smart shuffle
-            Log::info('Using Redis cache with smart shuffle', [
+            // Cache hit: Use cached ranking
+            Log::info('Using Redis cache for product ranking', [
                 'userId' => $userId,
                 'cachedCount' => count($behaviorRanking),
                 'cacheKey' => $cacheKey,
             ]);
 
-            $this->applySmartShuffledSort($query, $behaviorRanking);
+            $productIds = array_keys($behaviorRanking);
+            $this->applyPostgresqlOrderByBehavior($query, $productIds);
         } else {
             // Cache miss: Use JOIN query (Option 1) as fallback
             Log::info('Cache miss - using JOIN fallback for product ranking', [
@@ -97,53 +97,23 @@ class ProductController extends Controller
         }
     }
 
-    private function applySmartShuffledSort(&$query, array $behaviorRanking)
+    private function applyPostgresqlOrderByBehavior(&$query, array $productIds)
     {
-        // Split products into tiers based on behavior count
-        $high = [];     // 5+ behaviors
-        $medium = [];   // 2-4 behaviors
-        $low = [];      // 1 behavior
-        $none = [];     // 0 behaviors
-
-        foreach ($behaviorRanking as $productId => $count) {
-            if ($count >= 5) {
-                $high[] = $productId;
-            } elseif ($count >= 2) {
-                $medium[] = $productId;
-            } elseif ($count >= 1) {
-                $low[] = $productId;
-            } else {
-                $none[] = $productId;
-            }
+        // PostgreSQL doesn't have FIELD(), use CASE WHEN instead
+        $cases = [];
+        foreach ($productIds as $index => $id) {
+            $cases[] = "WHEN pd_id = {$id} THEN {$index}";
         }
 
-        // Build order by: High tier first (guaranteed favorites), then shuffle medium/low/none
-        $orderedIds = [];
-
-        // Add high-interest products first (always visible)
-        $orderedIds = array_merge($orderedIds, array_slice($high, 0, 5));
-
-        // Shuffle and add remaining from all tiers for discovery
-        $remaining = array_merge(
-            array_slice($high, 5),
-            $medium,
-            $low,
-            $none
-        );
-        shuffle($remaining);
-        $orderedIds = array_merge($orderedIds, $remaining);
-
-        // Apply ordering
-        if (!empty($orderedIds)) {
-            $query->orderByRaw('FIELD(pd_id, ' . implode(',', $orderedIds) . ') ASC');
+        if (!empty($cases)) {
+            $caseStatement = 'CASE ' . implode(' ', $cases) . ' ELSE ' . count($cases) . ' END';
+            $query->orderByRaw($caseStatement)
+                  ->orderByDesc('pd_date')
+                  ->orderByDesc('pd_id');
         }
 
-        Log::info('Smart shuffled sort applied', [
-            'highTier' => count($high),
-            'mediumTier' => count($medium),
-            'lowTier' => count($low),
-            'noneTier' => count($none),
-            'totalOrdered' => count($orderedIds),
+        Log::info('Applied PostgreSQL behavior sort', [
+            'caseCount' => count($cases),
         ]);
     }
 
