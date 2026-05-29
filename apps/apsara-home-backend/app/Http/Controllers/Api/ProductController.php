@@ -51,6 +51,140 @@ class ProductController extends Controller
         return $query->whereIn('pd_status', [1, 2]);
     }
 
+    private function applyPersonalizedSort(&$query, int $userId, array $categoryIds)
+    {
+        $cacheKey = "user_product_behavior:{$userId}";
+        $cacheTTL = 60 * 10; // 10 minutes
+
+        // Try to get behavior ranking from Redis cache first
+        $behaviorRanking = Cache::get($cacheKey);
+
+        if ($behaviorRanking && is_array($behaviorRanking) && !empty($behaviorRanking)) {
+            // Cache hit: Use cached ranking with smart shuffle
+            Log::info('Using Redis cache with smart shuffle', [
+                'userId' => $userId,
+                'cachedCount' => count($behaviorRanking),
+                'cacheKey' => $cacheKey,
+            ]);
+
+            $this->applySmartShuffledSort($query, $behaviorRanking);
+        } else {
+            // Cache miss: Use JOIN query (Option 1) as fallback
+            Log::info('Cache miss - using JOIN fallback for product ranking', [
+                'userId' => $userId,
+                'cacheKey' => $cacheKey,
+            ]);
+
+            $query->leftJoin('tbl_user_behavior as ub', function ($join) use ($userId) {
+                $join->on('ub.ub_product_id', '=', 'tbl_product.pd_id')
+                    ->where('ub.ub_user_id', '=', $userId)
+                    ->whereIn('ub.ub_behavior_type', [
+                        'product_view',
+                        'product_click',
+                        'purchase',
+                        'wishlist_add',
+                        'cart_add',
+                    ]);
+            })
+            ->groupBy('tbl_product.pd_id')
+            ->selectRaw('tbl_product.*, COUNT(ub.ub_id) as behavior_count')
+            ->orderByRaw('COUNT(ub.ub_id) DESC')
+            ->orderByDesc('pd_date')
+            ->orderByDesc('pd_id');
+
+            // Cache the result for next time
+            $this->cacheUserBehaviorRanking($userId);
+        }
+    }
+
+    private function applySmartShuffledSort(&$query, array $behaviorRanking)
+    {
+        // Split products into tiers based on behavior count
+        $high = [];     // 5+ behaviors
+        $medium = [];   // 2-4 behaviors
+        $low = [];      // 1 behavior
+        $none = [];     // 0 behaviors
+
+        foreach ($behaviorRanking as $productId => $count) {
+            if ($count >= 5) {
+                $high[] = $productId;
+            } elseif ($count >= 2) {
+                $medium[] = $productId;
+            } elseif ($count >= 1) {
+                $low[] = $productId;
+            } else {
+                $none[] = $productId;
+            }
+        }
+
+        // Build order by: High tier first (guaranteed favorites), then shuffle medium/low/none
+        $orderedIds = [];
+
+        // Add high-interest products first (always visible)
+        $orderedIds = array_merge($orderedIds, array_slice($high, 0, 5));
+
+        // Shuffle and add remaining from all tiers for discovery
+        $remaining = array_merge(
+            array_slice($high, 5),
+            $medium,
+            $low,
+            $none
+        );
+        shuffle($remaining);
+        $orderedIds = array_merge($orderedIds, $remaining);
+
+        // Apply ordering
+        if (!empty($orderedIds)) {
+            $query->orderByRaw('FIELD(pd_id, ' . implode(',', $orderedIds) . ') ASC');
+        }
+
+        Log::info('Smart shuffled sort applied', [
+            'highTier' => count($high),
+            'mediumTier' => count($medium),
+            'lowTier' => count($low),
+            'noneTier' => count($none),
+            'totalOrdered' => count($orderedIds),
+        ]);
+    }
+
+    private function cacheUserBehaviorRanking(int $userId)
+    {
+        $cacheKey = "user_product_behavior:{$userId}";
+        $cacheTTL = 60 * 10; // 10 minutes
+
+        try {
+            // Build ranking from behavior data
+            $behaviorRanking = DB::table('tbl_user_behavior')
+                ->where('ub_user_id', $userId)
+                ->whereIn('ub_behavior_type', [
+                    'product_view',
+                    'product_click',
+                    'purchase',
+                    'wishlist_add',
+                    'cart_add',
+                ])
+                ->select('ub_product_id', DB::raw('COUNT(*) as behavior_count'))
+                ->groupBy('ub_product_id')
+                ->orderByDesc('behavior_count')
+                ->pluck('behavior_count', 'ub_product_id')
+                ->toArray();
+
+            if (!empty($behaviorRanking)) {
+                Cache::put($cacheKey, $behaviorRanking, $cacheTTL);
+                Log::info('Cached user behavior ranking', [
+                    'userId' => $userId,
+                    'count' => count($behaviorRanking),
+                    'cacheKey' => $cacheKey,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::error('Failed to cache behavior ranking', [
+                'userId' => $userId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
     public function rooms(): JsonResponse
     {
         return response()->json([
@@ -1782,19 +1916,12 @@ class ProductController extends Controller
             // Apply personalization only if no manual filters and user has behavior data
             if (!empty($personalizedCatIds) && $catId === '' && $roomType === '' && $brandType === '') {
                 $query->whereIn('pd_catid', $personalizedCatIds);
-                // Sort by user visit frequency using behavior count
+                // Sort by user visit frequency using behavior count (Redis cache + JOIN fallback)
                 $userId = auth('sanctum')->id();
 
-                // Use raw ORDER BY with behavior count from subquery
-                // Add tertiary sort by pd_id for consistent pagination when behavior counts are equal
-                $query->orderByRaw(
-                    '(SELECT COUNT(*) FROM tbl_user_behavior WHERE ub_user_id = ? AND ub_product_id = tbl_product.pd_id AND ub_behavior_type IN (\'product_view\', \'product_click\', \'purchase\', \'wishlist_add\', \'cart_add\')) DESC',
-                    [$userId]
-                )
-                ->orderByDesc('pd_date')
-                ->orderByDesc('pd_id');  // Tertiary sort for pagination consistency
+                $this->applyPersonalizedSort($query, $userId, $personalizedCatIds);
 
-                Log::info('Personalized query', ['userId' => $userId, 'catIds' => $personalizedCatIds]);
+                Log::info('Personalized query with hybrid caching', ['userId' => $userId, 'catIds' => $personalizedCatIds]);
             } else {
                 // For regular/filtered products, sort by date then by ID for consistency
                 $query->orderByDesc('pd_date')
