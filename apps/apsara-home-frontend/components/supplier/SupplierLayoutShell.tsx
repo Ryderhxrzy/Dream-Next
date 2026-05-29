@@ -192,26 +192,25 @@ export default function SupplierLayoutShell({ children }: { children: React.Reac
         ) : null}
       </AnimatePresence>
 
-      <div className="relative z-10 min-w-0 flex-1">
-        <header className="sticky top-0 z-20 border-b border-white/55 bg-white/70 backdrop-blur-2xl dark:border-white/8 dark:bg-slate-950/45">
-          <div className="flex items-center justify-between gap-4 px-4 py-4 lg:px-8">
+      <div className="relative z-10 min-w-0 flex-1 flex flex-col h-screen overflow-hidden">
+        <header className="sticky top-0 z-20 h-16 border-b border-slate-200/80 bg-white/95 backdrop-blur-xl dark:border-slate-700/50 dark:bg-slate-900 shrink-0">
+          <div className="flex h-full items-center justify-between gap-4 px-4 lg:px-8">
             <div className="flex min-w-0 items-center gap-3 lg:gap-4">
               <button
                 type="button"
                 onClick={() => setMenuOpen(true)}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200/80 bg-white/80 text-slate-600 shadow-sm transition hover:border-cyan-200 hover:text-cyan-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:border-cyan-500/30 dark:hover:text-cyan-300 lg:hidden"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-100 lg:hidden"
               >
-                <Menu className="h-5 w-5" />
+                <Menu className="h-4 w-4" />
               </button>
 
               <div className="min-w-0">
-                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.28em] text-cyan-700 dark:text-cyan-300">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  Supplier Workspace
+                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+                  AF Home / Supplier
                 </div>
                 <div className="mt-1 flex min-w-0 flex-wrap items-center gap-2">
-                  <h1 className="truncate text-base font-bold text-slate-900 dark:text-white lg:text-lg">{supplierName}</h1>
-                  <span className="inline-flex items-center rounded-full border border-slate-200/80 bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
+                  <h1 className="truncate text-sm font-bold text-slate-900 dark:text-white">{supplierName}</h1>
+                  <span className="inline-flex items-center rounded-full border border-slate-200/80 bg-white/80 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
                     {isMainSupplier ? 'Main Supplier' : 'Sub Supplier'}
                   </span>
                 </div>
@@ -223,9 +222,9 @@ export default function SupplierLayoutShell({ children }: { children: React.Reac
                 type="button"
                 onClick={() => setTheme(isDark ? 'light' : 'dark')}
                 aria-label="Toggle theme"
-                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200/80 bg-white/80 text-slate-600 shadow-sm transition hover:border-amber-200 hover:text-amber-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:border-amber-500/30 dark:hover:text-amber-300"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-100"
               >
-                {isDark ? <SunMedium className="h-5 w-5" /> : <MoonStar className="h-5 w-5" />}
+                {isDark ? <SunMedium className="h-4 w-4" /> : <MoonStar className="h-4 w-4" />}
               </button>
 
               <div className="relative">
@@ -244,9 +243,9 @@ export default function SupplierLayoutShell({ children }: { children: React.Reac
                     })
                   }}
                   aria-label="Notifications"
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200/80 bg-white/80 text-slate-600 shadow-sm transition hover:border-cyan-200 hover:text-cyan-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:border-cyan-500/30 dark:hover:text-cyan-300"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-100"
                 >
-                  <Bell className="h-5 w-5" />
+                  <Bell className="h-4 w-4" />
                   {unreadNotificationCount > 0 ? (
                     <span className="absolute right-2.5 top-2.5 inline-flex min-h-4 min-w-4 items-center justify-center rounded-full bg-cyan-500 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white dark:ring-slate-950">
                       {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
@@ -388,19 +387,19 @@ export default function SupplierLayoutShell({ children }: { children: React.Reac
                   clearAccessTokenCache()
                   await signOut({ callbackUrl: '/supplier/login' })
                 }}
-                className="inline-flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/80 px-3 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:border-red-500/30 dark:hover:bg-red-500/10 dark:hover:text-red-300"
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-100"
               >
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#06b6d4,#2563eb)] text-[11px] font-bold text-white shadow-lg shadow-cyan-500/20">
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-sky-500 text-[9px] font-bold text-white">
                   {getInitials(supplierName)}
                 </span>
-                <span className="hidden max-w-28 truncate sm:block">{supplierName}</span>
-                <LogOut className="h-4 w-4" />
+                <span className="hidden max-w-20 truncate sm:block">{supplierName}</span>
+                <LogOut className="h-3.5 w-3.5" />
               </button>
             </div>
           </div>
         </header>
 
-        <main className="px-4 py-5 lg:px-8 lg:py-7">{children}</main>
+        <main className="flex-1 overflow-y-auto px-4 py-5 lg:px-8 lg:py-7">{children}</main>
       </div>
 
       {typeof document !== 'undefined' && createPortal(
