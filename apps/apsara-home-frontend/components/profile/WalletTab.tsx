@@ -34,7 +34,7 @@ const walletOptions: Array<{ key: WalletViewType; label: string; icon: string }>
   { key: 'network',     label: 'Network Earnings', icon: '↗' },
   { key: 'all',         label: 'Overview',         icon: '◈' },
   { key: 'rewards',     label: 'Rewards',          icon: '✦' },
-  { key: 'pv',          label: 'E Voucher',        icon: '◆' },
+  { key: 'pv',          label: 'E-Voucher',        icon: '◆' },
   { key: 'performance', label: 'Performance',      icon: '⚡' },
 ];
 
