@@ -16,122 +16,13 @@ type PhotoGalleryPageClientProps = {
   initialCategories?: Category[]
 }
 
-const SAMPLE_GALLERY_ITEMS = [
-  {
-    id: 1,
-    title: 'Modern Living Room',
-    subtitle: 'Contemporary furniture arrangement with elegant decor',
-    image_url: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&h=600&fit=crop',
-    category: 'Living Room',
-    is_active: true,
-  },
-  {
-    id: 2,
-    title: 'Bedroom Comfort',
-    subtitle: 'Cozy bedroom design with premium bedding',
-    image_url: 'https://images.unsplash.com/photo-1540932239986-310128078ceb?w=800&h=600&fit=crop',
-    category: 'Bedroom',
-    is_active: true,
-  },
-  {
-    id: 3,
-    title: 'Kitchen Excellence',
-    subtitle: 'Modern kitchen with professional appliances',
-    image_url: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&h=600&fit=crop',
-    category: 'Kitchen',
-    is_active: true,
-  },
-  {
-    id: 4,
-    title: 'Dining Experience',
-    subtitle: 'Elegant dining room setup',
-    image_url: 'https://images.unsplash.com/photo-1554995207-c18c203602cb?w=800&h=600&fit=crop',
-    category: 'Dining Room',
-    is_active: true,
-  },
-  {
-    id: 5,
-    title: 'Home Office',
-    subtitle: 'Productive workspace design',
-    image_url: 'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=800&h=600&fit=crop',
-    category: 'Office',
-    is_active: true,
-  },
-  {
-    id: 6,
-    title: 'Bathroom Spa',
-    subtitle: 'Luxurious bathroom with modern fixtures',
-    image_url: 'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=800&h=600&fit=crop',
-    category: 'Bathroom',
-    is_active: true,
-  },
-  {
-    id: 7,
-    title: 'Living Space',
-    subtitle: 'Spacious living area with natural lighting',
-    image_url: 'https://images.unsplash.com/photo-1537457905121-5650b2b1c8da?w=800&h=600&fit=crop',
-    category: 'Living Room',
-    is_active: true,
-  },
-  {
-    id: 8,
-    title: 'Outdoor Patio',
-    subtitle: 'Beautiful outdoor entertainment space',
-    image_url: 'https://images.unsplash.com/photo-1600493463592-8e36ae95ef56?w=800&h=600&fit=crop',
-    category: 'Outdoor',
-    is_active: true,
-  },
-  {
-    id: 9,
-    title: 'Cozy Corner',
-    subtitle: 'Perfect reading nook with comfortable seating',
-    image_url: 'https://images.unsplash.com/photo-1578769169216-5f1b07b6b79c?w=800&h=600&fit=crop',
-    category: 'Living Room',
-    is_active: true,
-  },
-  {
-    id: 10,
-    title: 'Modern Aesthetic',
-    subtitle: 'Minimalist design with clean lines',
-    image_url: 'https://images.unsplash.com/photo-1512519439147-ca5c5b59afaa?w=800&h=600&fit=crop',
-    category: 'Bedroom',
-    is_active: true,
-  },
-  {
-    id: 11,
-    title: 'Kitchen Island',
-    subtitle: 'Functional and stylish cooking space',
-    image_url: 'https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=800&h=600&fit=crop',
-    category: 'Kitchen',
-    is_active: true,
-  },
-  {
-    id: 12,
-    title: 'Garden Paradise',
-    subtitle: 'Lush outdoor garden with seating area',
-    image_url: 'https://images.unsplash.com/photo-1469022563149-aa64dbd37dae?w=800&h=600&fit=crop',
-    category: 'Outdoor',
-    is_active: true,
-  },
-]
 
 export default function PhotoGalleryPageClient({ initialCategories }: PhotoGalleryPageClientProps) {
   const [selectedImageId, setSelectedImageId] = useState<number | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
   const { data, isLoading } = useGetPublicWebPageItemsQuery('photo-gallery')
 
-  // Fallback demo items so the UI always shows like a real gallery even if API returns empty.
-  const fallbackGalleryItems = SAMPLE_GALLERY_ITEMS.map((it) => ({
-    id: it.id,
-    title: it.title,
-    subtitle: it.subtitle,
-    image_url: it.image_url,
-    payload: { category: it.category },
-    is_active: true,
-  }))
-
-  const galleryItems = (data?.items?.filter((item) => item.is_active) ?? [])
-  const effectiveGalleryItems = galleryItems.length > 0 ? galleryItems : fallbackGalleryItems
+  const effectiveGalleryItems = data?.items?.filter((item) => item.is_active) ?? []
 
 
   // Extract unique categories
@@ -156,7 +47,7 @@ export default function PhotoGalleryPageClient({ initialCategories }: PhotoGalle
   }, [effectiveGalleryItems, selectedCategory])
 
 
-  const selectedImage = galleryItems.find(item => item.id === selectedImageId)
+  const selectedImage = effectiveGalleryItems.find(item => item.id === selectedImageId)
   const selectedIndex = filteredItems.findIndex(item => item.id === selectedImageId)
 
   const handlePrevious = () => {

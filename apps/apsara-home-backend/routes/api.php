@@ -474,6 +474,10 @@ Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_a
     // Email Blast
     Route::post('/admin/email-blast/send', [AdminEmailBlastController::class, 'send']);
     Route::get('/admin/email-blast/recipients', [AdminEmailBlastController::class, 'getRecipients']);
+
+    // SMS Blast
+    Route::post('/admin/sms-blast/send', [\App\Http\Controllers\Api\AdminSmsBlastController::class, 'send']);
+    Route::get('/admin/sms-blast/recipients', [\App\Http\Controllers\Api\AdminSmsBlastController::class, 'getRecipients']);
 });
 
 Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_admin,admin,csr,merchant_admin,web_content'])->group(function () {

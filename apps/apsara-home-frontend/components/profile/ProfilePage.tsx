@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { MeResponse, ReferralTreeNode, AccountSnapshot, useChangePasswordMutation, useMeQuery, useAccountSnapshotQuery, useReferralTreeQuery, useUpdateProfileMutation, useUploadAvatarMutation, useSendUsernameChangeOtpMutation, useSubmitUsernameChangeRequestMutation, useSubmitWebstoreRequestMutation, useUploadWebstoreReceiptMutation, useCreateWebstorePaymentSessionMutation, useLazyVerifyWebstorePaymentSessionQuery, useUsernameChangeLatestQuery, useWebstoreRequestLatestQuery, useSyncWebstorePartnerAccountMutation, useMemberActivityQuery, useMemberSessionsQuery, useRevokeMemberSessionMutation, useLinkedAccountsQuery, useLinkGoogleAccountMutation, useUnlinkGoogleAccountMutation, useLinkFacebookAccountMutation, useUnlinkFacebookAccountMutation, LinkedAccount, useSetupTotpMutation, useEnableTotpMutation, useDisableTotpMutation, SetupTotpResponse } from '@/store/api/userApi';
+import { MeResponse, ReferralTreeNode, AccountSnapshot, useChangePasswordMutation, useMeQuery, useAccountSnapshotQuery, useReferralTreeQuery, useUpdateProfileMutation, useUploadAvatarMutation, useSendUsernameChangeOtpMutation, useSubmitUsernameChangeRequestMutation, useSubmitWebstoreRequestMutation, useUploadWebstoreReceiptMutation, useCreateWebstorePaymentSessionMutation, useLazyVerifyWebstorePaymentSessionQuery, useUsernameChangeLatestQuery, useWebstoreRequestLatestQuery, useWebstoreRequestHistoryQuery, useSyncWebstorePartnerAccountMutation, useMemberActivityQuery, useMemberSessionsQuery, useRevokeMemberSessionMutation, useLinkedAccountsQuery, useLinkGoogleAccountMutation, useUnlinkGoogleAccountMutation, useLinkFacebookAccountMutation, useUnlinkFacebookAccountMutation, LinkedAccount, useSetupTotpMutation, useEnableTotpMutation, useDisableTotpMutation, SetupTotpResponse } from '@/store/api/userApi';
 import { signOut, useSession } from 'next-auth/react';
 import { ChangeEvent, DragEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Loading from '../Loading';
@@ -638,6 +638,11 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
     refetchOnReconnect: true,
     pollingInterval: 5000,
   });
+  const { data: webstoreHistoryData, isLoading: isWebstoreHistoryLoading } = useWebstoreRequestHistoryQuery(undefined, {
+    skip: !isCustomerSession,
+    refetchOnMountOrArgChange: true,
+  });
+
   const { data: activityData, isLoading: isActivityLoading } = useMemberActivityQuery(undefined, {
     skip: !isCustomerSession,
   });
@@ -1975,6 +1980,13 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
   const latestUsernameRequest = usernameChangeLatest?.request ?? null;
   const activeWebstoreRequest = latestWebstoreRequest?.status === 'deleted' ? null : latestWebstoreRequest;
   const hasExistingWebstoreRequest = Boolean(activeWebstoreRequest);
+
+  const webstoreTransactions = useMemo(() => {
+    const fromHistory = webstoreHistoryData?.requests ?? [];
+    if (fromHistory.length > 0) return fromHistory;
+    if (activeWebstoreRequest) return [activeWebstoreRequest];
+    return [];
+  }, [webstoreHistoryData?.requests, activeWebstoreRequest]);
   const isApprovedWebstoreRequest = activeWebstoreRequest?.status === 'approved';
   const storedWebstorePaymentContext = useMemo<{
     checkoutId?: string | null;
@@ -7130,6 +7142,156 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                       ) : null}
                     </div>
                   </div>
+                  </div>
+
+                  {/* Transaction History */}
+                  <div className="overflow-hidden rounded-3xl border border-[#dfe8fb] bg-white shadow-[0_16px_45px_rgba(30,64,175,0.08)]">
+                    {/* Header */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e6edfb] bg-gradient-to-r from-[#f8fbff] to-[#f4f8ff] px-6 py-5 md:px-8">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#7ed7f7] to-[#3b82f6] shadow-sm">
+                          <Icon.Activity className="h-5 w-5 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold tracking-tight text-[#0f1f44]">Transaction History</h3>
+                          <p className="text-sm text-[#60739b]">All your webstore subscription payment records.</p>
+                        </div>
+                      </div>
+                      <span className="rounded-full border border-[#dce8ff] bg-white px-3 py-1 text-xs font-bold text-[#1d4ed8] shadow-sm">
+                        {isWebstoreHistoryLoading ? '...' : webstoreTransactions.length} record{webstoreTransactions.length !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+
+                    {isWebstoreHistoryLoading ? (
+                      <div className="flex items-center justify-center gap-3 py-12 text-sm text-[#8a9ec0]">
+                        <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" /></svg>
+                        Loading transactions…
+                      </div>
+                    ) : webstoreTransactions.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center gap-2 py-14 text-center">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#eef3ff] text-[#6d82ab]">
+                          <Icon.Activity className="h-6 w-6" />
+                        </div>
+                        <p className="text-sm font-semibold text-[#0f1f44]">No transactions yet</p>
+                        <p className="text-xs text-[#8a9ec0]">Your webstore subscription payments will appear here.</p>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Table — horizontal scroll on small screens */}
+                        <div className="overflow-x-auto">
+                          <table className="w-full min-w-[760px] border-collapse text-sm">
+                            <thead>
+                              <tr className="border-b border-[#e7efff] bg-[#f4f8ff]">
+                                {['#', 'Reference No.', 'Date', 'Plan / Term', 'Payment Method', 'Amount Paid', 'Remaining', 'Status', 'Receipt'].map((col) => (
+                                  <th key={col} className="px-4 py-3 text-left text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#6d82ab] first:pl-6 last:pr-6">
+                                    {col}
+                                  </th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-[#edf2ff]">
+                              {webstoreTransactions.map((tx, idx) => (
+                                <tr key={tx.id} className="transition hover:bg-[#f8fbff]">
+                                  {/* # */}
+                                  <td className="py-4 pl-6 pr-4 text-xs font-bold text-[#8a9ec0]">{idx + 1}</td>
+                                  {/* Reference No. */}
+                                  <td className="px-4 py-4">
+                                    <p className="font-mono text-xs font-semibold text-[#0f1f44]">{tx.reference_no || '—'}</p>
+                                    {tx.payment_reference ? (
+                                      <p className="mt-0.5 text-[10px] text-[#8a9ec0]">Ref: {tx.payment_reference}</p>
+                                    ) : null}
+                                  </td>
+                                  {/* Date */}
+                                  <td className="px-4 py-4">
+                                    {tx.created_at ? (
+                                      <>
+                                        <p className="text-xs font-semibold text-[#0f1f44]">
+                                          {new Date(tx.created_at).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })}
+                                        </p>
+                                        {tx.reviewed_at ? (
+                                          <p className="mt-0.5 text-[10px] text-[#8a9ec0]">
+                                            Reviewed: {new Date(tx.reviewed_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                          </p>
+                                        ) : null}
+                                      </>
+                                    ) : <span className="text-xs text-[#8a9ec0]">—</span>}
+                                  </td>
+                                  {/* Plan / Term */}
+                                  <td className="px-4 py-4">
+                                    <p className="text-xs font-semibold text-[#0f1f44]">
+                                      {tx.plan === 'quarterly' ? 'Quarterly' : tx.plan === 'semi_annual' ? 'Semi-Annual' : tx.plan === 'annual' ? 'Annual' : '—'}
+                                    </p>
+                                    <p className="mt-0.5 text-[10px] text-[#8a9ec0]">
+                                      {tx.billing_option === 'full' ? 'Full payment' : tx.billing_option === 'monthly' ? 'Monthly installment' : '—'}
+                                    </p>
+                                  </td>
+                                  {/* Payment Method */}
+                                  <td className="px-4 py-4">
+                                    <span className="inline-flex items-center rounded-lg border border-[#dce8ff] bg-[#f4f8ff] px-2.5 py-1 text-xs font-semibold text-[#1d4ed8]">
+                                      {tx.payment_method === 'gcash' ? 'GCash' : tx.payment_method === 'grab_pay' ? 'GrabPay' : tx.payment_method === 'maya' ? 'Maya' : tx.payment_method === 'card' ? 'Card' : '—'}
+                                    </span>
+                                  </td>
+                                  {/* Amount Paid */}
+                                  <td className="px-4 py-4">
+                                    <p className="text-sm font-extrabold text-[#0f1f44]">
+                                      ₱{(tx.total_paid_amount ?? 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                                    </p>
+                                    {(tx.payment_count ?? 0) > 0 ? (
+                                      <p className="mt-0.5 text-[10px] text-[#8a9ec0]">{tx.payment_count} payment{tx.payment_count !== 1 ? 's' : ''}</p>
+                                    ) : null}
+                                  </td>
+                                  {/* Remaining */}
+                                  <td className="px-4 py-4">
+                                    <p className={`text-sm font-extrabold ${(tx.remaining_balance ?? 0) <= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                      {(tx.remaining_balance ?? 0) <= 0
+                                        ? 'Paid in full'
+                                        : `₱${(tx.remaining_balance ?? 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`}
+                                    </p>
+                                  </td>
+                                  {/* Status */}
+                                  <td className="px-4 py-4">
+                                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide ${
+                                      tx.status === 'approved'
+                                        ? 'bg-emerald-100 text-emerald-700'
+                                        : tx.status === 'rejected'
+                                          ? 'bg-rose-100 text-rose-700'
+                                          : 'bg-amber-100 text-amber-700'
+                                    }`}>
+                                      {tx.status === 'approved' ? 'Approved' : tx.status === 'rejected' ? 'Rejected' : 'Pending'}
+                                    </span>
+                                  </td>
+                                  {/* Receipt */}
+                                  <td className="py-4 pl-4 pr-6">
+                                    {tx.latest_receipt_status ? (
+                                      <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide ${
+                                        tx.latest_receipt_status === 'approved'
+                                          ? 'bg-emerald-100 text-emerald-700'
+                                          : tx.latest_receipt_status === 'rejected'
+                                            ? 'bg-rose-100 text-rose-700'
+                                            : 'bg-amber-100 text-amber-700'
+                                      }`}>
+                                        {tx.latest_receipt_status === 'approved' ? 'Approved' : tx.latest_receipt_status === 'rejected' ? 'Rejected' : 'Under Review'}
+                                      </span>
+                                    ) : <span className="text-xs text-[#8a9ec0]">—</span>}
+                                    {tx.latest_receipt_submitted_at ? (
+                                      <p className="mt-0.5 text-[10px] text-[#8a9ec0]">
+                                        {new Date(tx.latest_receipt_submitted_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                      </p>
+                                    ) : null}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        {/* Footer */}
+                        <div className="border-t border-[#e7efff] bg-[#f8fbff] px-6 py-3 md:px-8">
+                          <p className="text-[11px] text-[#8a9ec0]">
+                            Showing {webstoreTransactions.length} record{webstoreTransactions.length !== 1 ? 's' : ''} · Sorted newest first
+                          </p>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </motion.div>
               )}

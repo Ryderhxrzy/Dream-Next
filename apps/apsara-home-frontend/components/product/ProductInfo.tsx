@@ -1,4 +1,4 @@
-﻿'use client'
+﻿﻿'use client';
 
 import Image from 'next/image';
 import { useCart } from "@/context/CartContext";
@@ -686,8 +686,11 @@ const ProductInfo = ({
     const variantSrp = toPositiveNumber(selectedVariant?.priceSrp) ?? baseSrp;
     const variantMember = toPositiveNumber(selectedVariant?.priceMember) ?? toPositiveNumber(product.priceMember) ?? 0;
     const hasMemberPrice = variantMember > 0 && variantMember < variantSrp;
-    const shouldDisplayMemberPrice = hasMemberPrice && !forceRealPrice;
+
+    // Real SRP for non-members (do not apply member-discount pricing unless user is allowed to use member price).
+    const shouldDisplayMemberPrice = hasMemberPrice && !forceRealPrice && canUseMemberPrice;
     const displayPrice = shouldDisplayMemberPrice ? variantMember : variantSrp;
+
     const displayOriginalPrice = shouldDisplayMemberPrice
         ? variantSrp
         : (!forceRealPrice && product.originalPrice && product.originalPrice > variantSrp ? product.originalPrice : undefined);
@@ -726,6 +729,8 @@ const ProductInfo = ({
     const reviewCount = reviewSummary?.count ?? 0;
     const avgRatingValue = typeof reviewSummary?.average === 'number' ? reviewSummary.average : 0;
     const avgRating = avgRatingValue.toFixed(1);
+    const hasBestSellerSignal = avgRatingValue >= 4;
+    const soldCount = Number(product.soldCount ?? 0);
 
     const handleAddToCart = () => {
         if (!isInStock || !isCheckoutAvailable) return;
@@ -887,38 +892,43 @@ const ProductInfo = ({
                 </div>
             </div>
             {/* Product Badges */}
-            {(product.musthave || product.bestseller || product.salespromo) && (
-                <div className="flex flex-wrap gap-2 pb-4 border-b border-gray-200 dark:border-gray-700">
-                    {product.musthave && (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-700">
-                            Must Have
-                        </span>
-                    )}
-                    {product.bestseller && (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-sky-200 px-3 py-1 text-xs font-semibold text-sky-700">
-                            Best Seller
-                        </span>
-                    )}
-                    {product.salespromo && (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-700">
-                            On Sale
-                        </span>
-                    )}
-                </div>
+            {(product.musthave ||
+              product.salespromo) && (
+              <div className="flex flex-wrap gap-2 pb-4 border-b border-gray-200 dark:border-gray-700">
+                {product.musthave && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-700">
+                    Must Have
+                  </span>
+                )}
+
+                {product.salespromo && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-700">
+                    On Sale
+                  </span>
+                )}
+              </div>
             )}
 
             {/* Price Section */}
             <div className="bg-gradient-to-r from-sky-50 to-sky-50 dark:from-sky-900/20 dark:to-sky-900/20 rounded-2xl p-6 border border-sky-100 dark:border-sky-900/30 mb-6">
-                <div className="flex items-baseline gap-3 flex-wrap mb-3">
-                    <span className="text-3xl sm:text-4xl font-bold text-sky-600 dark:text-sky-400">{'\u20b1'}{displayPrice.toLocaleString()}</span>
-                    {displayOriginalPrice && (
-                        <>
+                <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
+                    <div className="flex items-baseline gap-3 flex-wrap">
+                        <span className="text-3xl sm:text-4xl font-bold text-sky-600 dark:text-sky-400">{'\u20b1'}{displayPrice.toLocaleString()}</span>
+                        {displayOriginalPrice && (
                             <span className="text-lg text-gray-400 dark:text-gray-500 line-through">{'\u20b1'}{displayOriginalPrice.toLocaleString()}</span>
-                            <span className="text-sm font-semibold text-green-600 dark:text-green-400 border border-green-200 dark:border-green-900/50 px-3 py-1 rounded-full">
-                                Save {'\u20b1'}{(displayOriginalPrice - displayPrice).toLocaleString()}
+                        )}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                            {soldCount.toLocaleString('en-PH')} Sold
+                        </span>
+                        {hasBestSellerSignal && (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-sky-200 px-3 py-1 text-xs font-semibold text-sky-700">
+                                Best Seller
                             </span>
-                        </>
-                    )}
+                        )}
+                    </div>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                     {!forceRealPrice && canUseMemberPrice && hasMemberPrice && (
@@ -926,24 +936,14 @@ const ProductInfo = ({
                             Member Price Applied
                         </span>
                     )}
-                    {!forceRealPrice && !canUseMemberPrice && hasMemberPrice && (
-                        <span className="inline-flex items-center rounded-full border border-sky-200 dark:border-sky-900/50 bg-sky-50 dark:bg-sky-900/20 px-3 py-1 text-[11px] font-semibold text-sky-700 dark:text-sky-400">
-                            Sign in or Register to claim {Math.round(((variantSrp - variantMember) / variantSrp) * 100)}% savings!
-                        </span>
-                    )}
-                    {variantPv > 0 && (
+
+                    {/* Hide PV + member-savings promotion for non-members */}
+                    {canUseMemberPrice && variantPv > 0 && (
                         <span className="inline-flex items-center rounded-full border border-blue-200 dark:border-blue-900/30 bg-blue-50 dark:bg-blue-900/20 px-3 py-1 text-xs font-semibold text-blue-700 dark:text-blue-400">
                             PV {variantPv.toLocaleString()}
                         </span>
                     )}
                 </div>
-                {!forceRealPrice && hasMemberPrice && (
-                    <div className="mt-2 p-3 bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-900/50 rounded-lg">
-                        <p className="text-xs text-sky-800 dark:text-sky-700">
-                            <span className="font-semibold">Note:</span> The price shown above is our member discount price. {!canUseMemberPrice ? 'Sign in or create an account to enjoy this price at checkout.' : 'You\'re enjoying this exclusive member price!'}
-                        </p>
-                    </div>
-                )}
             </div>
 
             {/* Product Details */}

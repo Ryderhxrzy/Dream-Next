@@ -21,6 +21,20 @@ const decodeHtmlEntities = (value: string) =>
         .replace(/&nbsp;/gi, ' ')
         .replace(/&amp;/gi, '&');
 
+const normalizeMojibake = (value: string) =>
+    value
+        .replace(/â€œ|â€|â€/g, '"')
+        .replace(/â€˜|â€™/g, "'")
+        .replace(/â€¢/g, '•')
+        .replace(/â€“/g, '-')
+        .replace(/â€”/g, '—')
+        .replace(/â€¦/g, '…')
+        .replace(/Ã—/g, '×')
+        .replace(/Â°/g, '°')
+        .replace(/Â±/g, '±')
+        .replace(/Â·/g, '·')
+        .replace(/Â/g, '');
+
 const cleanProductDescription = (value: string) => {
     let decoded = value.trim();
 
@@ -31,7 +45,7 @@ const cleanProductDescription = (value: string) => {
         decoded = next;
     }
 
-    return decoded
+    return normalizeMojibake(decoded)
         .replace(/<\s*br\s*\/?>/gi, '\n')
         .replace(/<\s*\/p\s*>/gi, '\n\n')
         .replace(/<\s*\/div\s*>/gi, '\n')
@@ -57,7 +71,7 @@ const sanitizeProductDescriptionHtml = (value: string) => {
         decoded = next;
     }
 
-    return decoded
+    return normalizeMojibake(decoded)
         .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
         .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '');
 };
