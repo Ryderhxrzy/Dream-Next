@@ -1912,9 +1912,9 @@ class ProductController extends Controller
                     // Sort by price descending
                     $query->orderByDesc('pd_price_member')->orderByDesc('pd_id');
                 } else {
-                    // Default: sort by ID only for consistency
-                    // Do NOT sort by pd_date as it breaks pagination when combined with behavior filtering
-                    $query->orderByDesc('pd_id');
+                    // Default: Random shuffle for discovery experience
+                    $query->inRandomOrder();
+                    Log::info('Applied default random sort');
                 }
             }
 
