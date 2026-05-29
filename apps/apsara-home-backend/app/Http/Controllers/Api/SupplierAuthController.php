@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Mail\Auth\PortalLoginOtpMail;
+use App\Models\ProductBrand;
 use App\Models\SystemSetting;
 use App\Models\SupplierUser;
 use Illuminate\Http\Request;
@@ -282,13 +283,26 @@ class SupplierAuthController extends Controller
 
     private function transform(SupplierUser $supplierUser): array
     {
+        $supplier = $supplierUser->supplier;
+        $supplierName = (string) ($supplier?->s_company ?? $supplier?->s_name ?? '');
+        $supplierLogo = null;
+
+        // Get logo from ProductBrand table by matching s_company name
+        if ($supplierName && $supplier?->s_company) {
+            $brand = ProductBrand::query()
+                ->whereRaw('LOWER(TRIM(pb_name)) = ?', [mb_strtolower(trim($supplier->s_company))])
+                ->first();
+            $supplierLogo = $brand?->pb_image;
+        }
+
         return [
             'id' => (int) $supplierUser->su_id,
             'name' => (string) ($supplierUser->su_fullname ?: $supplierUser->su_username),
             'email' => (string) ($supplierUser->su_email ?? ''),
             'role' => 'supplier',
             'supplier_id' => (int) $supplierUser->su_supplier,
-            'supplier_name' => $supplierUser->supplier?->s_company ?: $supplierUser->supplier?->s_name,
+            'supplier_name' => $supplierName,
+            'supplier_logo' => $supplierLogo,
             'username' => (string) $supplierUser->su_username,
             'level_type' => (int) ($supplierUser->su_level_type ?? 0),
             'is_main_supplier' => (int) ($supplierUser->su_level_type ?? 0) === 1,
