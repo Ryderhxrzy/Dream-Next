@@ -25,6 +25,8 @@ export default function PushNotificationsPage() {
   const [success, setSuccess] = useState<string | null>(null)
   const [isButtonEnabled, setIsButtonEnabled] = useState(true)
   const [activeTab, setActiveTab] = useState<'details' | 'image' | 'recipients' | 'schedule' | 'review'>('details')
+  const [isScheduled, setIsScheduled] = useState(false)
+  const [scheduledDateTime, setScheduledDateTime] = useState('')
 
   // RTK Query hooks
   const { data: customersData, isLoading: isLoadingCustomers } = useGetAvailableCustomersQuery()
@@ -131,6 +133,11 @@ export default function PushNotificationsPage() {
       return
     }
 
+    if (isScheduled && !scheduledDateTime) {
+      setError('Please select a date and time for scheduling')
+      return
+    }
+
     try {
       setError(null)
       setSuccess(null)
@@ -146,12 +153,23 @@ export default function PushNotificationsPage() {
         payload.buttonText = formData.buttonText
       }
 
+      if (isScheduled && scheduledDateTime) {
+        payload.scheduled_at = scheduledDateTime
+      }
+
       const result = await sendNotification(payload).unwrap()
 
-      setSuccess(`Notification sent! ${result.sent} device(s) reached, ${result.failed} failed.`)
+      if (result.status === 'scheduled') {
+        setSuccess(`Notification scheduled for ${new Date(result.scheduled_at).toLocaleString()}`)
+      } else {
+        setSuccess(`Notification sent! ${result.sent} device(s) reached, ${result.failed} failed.`)
+      }
+
       setFormData({ title: '', description: '', image: '', buttonText: 'Shop Now' })
       setPreviewImage(null)
       setSelectedCustomers(new Set())
+      setIsScheduled(false)
+      setScheduledDateTime('')
     } catch (err: any) {
       setError(err?.data?.message || 'Failed to send notification')
     }
@@ -346,18 +364,54 @@ export default function PushNotificationsPage() {
 
             {/* Section 5: Schedule Notification */}
             <Card className="border border-slate-200/80 bg-white/95 shadow-none dark:border-slate-700/50 dark:bg-slate-900">
-              <Card.Content className="p-6">
-                <h2 className="text-base font-bold text-slate-900 dark:text-white mb-4">
+              <Card.Content className="p-6 space-y-4">
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">
                   Schedule Notification
                 </h2>
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
-                    Schedule feature coming soon
-                  </p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">
-                    Configure when to send your notifications
-                  </p>
+
+                {/* Schedule Toggle */}
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setIsScheduled(!isScheduled)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      isScheduled ? 'bg-sky-600' : 'bg-slate-300 dark:bg-slate-600'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        isScheduled ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                  <label className="text-sm font-semibold text-slate-900 dark:text-white">
+                    Schedule for later
+                  </label>
                 </div>
+
+                {/* Date/Time Input */}
+                {isScheduled && (
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
+                      Send at *
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={scheduledDateTime}
+                      onChange={(e) => setScheduledDateTime(e.target.value)}
+                      min={new Date().toISOString().slice(0, 16)}
+                      className="w-full rounded-lg border border-slate-200/80 bg-white/95 px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-sky-400 dark:border-slate-700/50 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400/60"
+                    />
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                      {scheduledDateTime && new Date(scheduledDateTime).toLocaleString()}
+                    </p>
+                  </div>
+                )}
+
+                {!isScheduled && (
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Toggle to schedule this notification for a later time
+                  </p>
+                )}
               </Card.Content>
             </Card>
           </div>
@@ -426,18 +480,18 @@ export default function PushNotificationsPage() {
             <Card.Content className="p-6">
               <button
                 onClick={handleSendNotification}
-                disabled={isSending || selectedCustomers.size === 0}
+                disabled={isSending || selectedCustomers.size === 0 || (isScheduled && !scheduledDateTime)}
                 className="w-full flex items-center justify-center gap-2 rounded-lg bg-sky-600 px-6 py-3 font-semibold text-white transition hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSending ? (
                   <>
                     <Loader className="w-4 h-4 animate-spin" />
-                    Sending...
+                    {isScheduled ? 'Scheduling...' : 'Sending...'}
                   </>
                 ) : (
                   <>
                     <Send className="w-4 h-4" />
-                    Send Notification
+                    {isScheduled ? 'Schedule Notification' : 'Send Notification'}
                   </>
                 )}
               </button>
