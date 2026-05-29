@@ -7,11 +7,12 @@ use App\Models\UserBehavior;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 
 class UserBehaviorController extends Controller
 {
     /**
-     * Track user behavior
+     * Track user behavior and invalidate cache
      */
     public function track(Request $request): JsonResponse
     {
@@ -36,6 +37,10 @@ class UserBehaviorController extends Controller
                 searchQuery: $validated['search_query'] ?? null,
                 metadata: $validated['metadata'] ?? null,
             );
+
+            // Invalidate product ranking cache for this user (will rebuild on next request)
+            $cacheKey = "user_product_behavior:{$userId}";
+            Cache::forget($cacheKey);
 
             return response()->json([
                 'success' => true,

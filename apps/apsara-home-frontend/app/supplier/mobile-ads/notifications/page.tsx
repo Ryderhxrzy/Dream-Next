@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useSession } from 'next-auth/react'
 import { Card } from '@heroui/react/card'
 import { X, Upload } from 'lucide-react'
 import Image from 'next/image'
@@ -14,13 +15,27 @@ interface NotificationAd {
 }
 
 export default function PushNotificationsPage() {
+  const { data: session } = useSession()
   const [ads, setAds] = useState<NotificationAd[]>([])
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    image: '',
+    title: 'Special Discount Available',
+    description: 'Get 30% off on selected items. Limited time offer!',
+    image: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200"%3E%3Crect fill="%230EA5E9" width="400" height="200"/%3E%3Ctext x="200" y="100" font-size="32" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle"%3E30% OFF%3C/text%3E%3C/svg%3E',
   })
   const [previewImage, setPreviewImage] = useState<string | null>(null)
+  const [isNotificationExpanded, setIsNotificationExpanded] = useState(true)
+
+  const supplierName = (session?.user as { supplierName?: string } | undefined)?.supplierName || 'Brand'
+  const supplierLogo = (session?.user as { supplierLogo?: string | null } | undefined)?.supplierLogo || null
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .slice(0, 2)
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+  }
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -212,96 +227,157 @@ export default function PushNotificationsPage() {
         <div className="lg:col-span-1">
           <Card className="border border-slate-200/80 bg-white/95 shadow-none dark:border-slate-700/50 dark:bg-slate-900 sticky top-6">
             <Card.Content className="p-5">
-              <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Preview</h3>
+              <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Device Preview</h3>
 
-              {/* Phone Frame */}
-              <div className="mx-auto w-full max-w-xs rounded-3xl border-8 border-slate-900 bg-black shadow-2xl dark:border-slate-700 overflow-hidden">
-                <div className="bg-white dark:bg-slate-900 overflow-hidden flex flex-col h-96">
-                  {/* Status Bar */}
-                  <div className="h-6 bg-slate-900 dark:bg-slate-950 flex items-center px-3 text-white text-[8px]">
-                    <div className="flex-1">9:41</div>
-                    <div className="flex gap-1">
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z" /></svg>
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z" /></svg>
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" /></svg>
+              {/* iPhone Frame */}
+              <div className="mx-auto w-full max-w-xs">
+                {/* Phone Bezel */}
+                <div className="rounded-3xl border-8 border-slate-900 bg-black shadow-2xl dark:border-slate-700 overflow-hidden">
+                  {/* Screen */}
+                  <div className="bg-slate-700 dark:bg-slate-700 relative h-[480px]">
+                    {/* Notch */}
+                    <div className="mx-auto w-40 h-7 bg-slate-900 dark:bg-slate-950 rounded-b-2xl flex items-center justify-between px-4 text-white text-[8px] absolute top-0 left-1/2 -translate-x-1/2 z-50">
+                      <span>9:41</span>
+                      <div className="flex gap-0.5">
+                        <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0z" /></svg>
+                        <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><path d="M1 9h4V7H1v2zm6 0h4V7H7v2zm6 0h4V7h-4v2zm6 0h4V7h-4v2zM1 13h4v-2H1v2zm6 0h4v-2H7v2zm6 0h4v-2h-4v2zm6 0h4v-2h-4v2z" /></svg>
+                        <svg className="w-3 h-2.5" fill="currentColor" viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0z" /></svg>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* App Header */}
-                  <div className="bg-sky-600 text-white px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <Image
-                        src="/af_home_logo.png"
-                        alt="AF Home"
-                        width={24}
-                        height={24}
-                        className="w-6 h-6"
-                        style={{ filter: 'brightness(0) invert(1)' }}
-                      />
-                      <span className="font-semibold text-sm">AF Home</span>
-                    </div>
-                  </div>
+                    {/* Screen Content - Lock Screen / Home Screen */}
+                    <div className="h-full pt-7 px-3 pb-12 flex flex-col justify-end items-center">
+                      {/* Time on lock screen */}
+                      <div className="text-center mb-8">
+                        <p className="text-4xl font-bold text-slate-900 dark:text-white">9:41</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Thursday, May 29</p>
+                      </div>
 
-                  {/* Notification Banner */}
-                  {(formData.title || formData.description) && (
-                    <div className="bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-3 py-2">
-                      <div className="flex gap-2">
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-500">
-                          <Image
-                            src="/af_home_logo.png"
-                            alt="AF Home"
-                            width={16}
-                            height={16}
-                            className="w-4 h-4"
-                            style={{ filter: 'brightness(0) invert(1)' }}
-                          />
+                      {/* Push Notification Banner */}
+                      {(formData.title || formData.description) && (
+                        <div className="absolute top-8 left-3 right-3 z-40">
+                          {!isNotificationExpanded ? (
+                            /* Collapsed State */
+                            <button
+                              onClick={() => setIsNotificationExpanded(true)}
+                              className="w-full bg-white dark:bg-slate-800 rounded-2xl px-4 py-3 transition-colors text-left"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-500 shrink-0">
+                                  <Image
+                                    src="/af_home_logo.png"
+                                    alt="AF Home"
+                                    width={16}
+                                    height={16}
+                                    className="w-4 h-4"
+                                    style={{ filter: 'brightness(0) invert(1)' }}
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-semibold text-slate-900 dark:text-white line-clamp-1">{formData.title}</p>
+                                  <p className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">{formData.description}</p>
+                                </div>
+                                {formData.image && (
+                                  <div className="relative h-10 w-10 shrink-0 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-700">
+                                    <Image
+                                      src={formData.image}
+                                      alt="Product"
+                                      fill
+                                      className="object-cover"
+                                    />
+                                  </div>
+                                )}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setIsNotificationExpanded(true)
+                                  }}
+                                  className="bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors rounded-full p-1.5 shrink-0"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </button>
+                          ) : (
+                            /* Expanded State */
+                            <div className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden">
+                              {/* Header with App Info */}
+                              <div className="px-4 py-2 flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-500 shrink-0">
+                                    <Image
+                                      src="/af_home_logo.png"
+                                      alt="AF Home"
+                                      width={16}
+                                      height={16}
+                                      className="w-4 h-4"
+                                      style={{ filter: 'brightness(0) invert(1)' }}
+                                    />
+                                  </div>
+                                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                                    <p className="text-xs font-semibold text-slate-900 dark:text-white whitespace-nowrap">AF Home</p>
+                                    <p className="text-[10px] text-slate-500 dark:text-slate-400 whitespace-nowrap">15m ago</p>
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => setIsNotificationExpanded(false)}
+                                  className="bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors rounded-full p-1.5 shrink-0"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                  </svg>
+                                </button>
+                              </div>
+
+                              {/* Content */}
+                              <div className="px-4 py-2 space-y-1.5">
+                                {/* Title */}
+                                <p className="font-bold text-slate-900 dark:text-white text-sm leading-snug">
+                                  {formData.title}
+                                </p>
+
+                                {/* Description */}
+                                <p className="text-slate-700 dark:text-slate-300 text-xs leading-relaxed">
+                                  {formData.description}
+                                </p>
+
+                                {/* Image */}
+                                {formData.image && (
+                                  <div className="relative h-36 w-full rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-700 mt-2.5">
+                                    <Image
+                                      src={formData.image}
+                                      alt="Preview"
+                                      fill
+                                      className="object-cover"
+                                    />
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Action Button */}
+                              <div className="px-4 py-2">
+                                <button className="w-full bg-sky-600 dark:bg-sky-700 hover:bg-sky-700 dark:hover:bg-sky-800 text-white font-semibold text-sm py-2.5 rounded-lg transition-colors">
+                                  Test only
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-slate-900 dark:text-white text-[10px]">
-                            {formData.title || 'Notification Title'}
-                          </p>
-                          <p className="text-[8px] text-slate-600 dark:text-slate-400 mt-0.5 line-clamp-1">
-                            {formData.description || 'Notification description'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* App Content */}
-                  <div className="flex-1 px-3 py-4 space-y-3 overflow-y-auto">
-                    {formData.image && (
-                      <div className="relative h-24 w-full rounded-lg overflow-hidden">
-                        <Image
-                          src={formData.image}
-                          alt="Preview"
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    )}
-
-                    <div className="space-y-2">
-                      <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-3/4" />
-                      <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded w-full" />
-                      <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded w-5/6" />
+                      )}
                     </div>
 
-                    <div className="pt-2">
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="h-16 bg-slate-100 dark:bg-slate-800 rounded-lg" />
-                        <div className="h-16 bg-slate-100 dark:bg-slate-800 rounded-lg" />
-                      </div>
+                    {/* Home Indicator */}
+                    <div className="absolute bottom-0 left-0 right-0 h-5 flex items-center justify-center">
+                      <div className="w-32 h-1 bg-slate-900 dark:bg-slate-700 rounded-full" />
                     </div>
                   </div>
-
-                  {/* Home Indicator */}
-                  <div className="h-5 bg-slate-900 dark:bg-slate-950" />
                 </div>
               </div>
 
               <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center mt-4">
-                How your notification appears in the AF Home app
+                Tap notification banner to expand or collapse
               </p>
             </Card.Content>
           </Card>

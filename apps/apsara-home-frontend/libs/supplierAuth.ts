@@ -7,6 +7,7 @@ type TokenUser = {
   role?: string;
   supplierId?: number | null;
   supplierName?: string | null;
+  supplierLogo?: string | null;
   supplierLevelType?: number | null;
   isMainSupplier?: boolean;
   sessionTimeoutMinutes?: number;
@@ -83,6 +84,7 @@ export const supplierAuthOptions: NextAuthOptions = {
             role: data.user.role,
             supplierId: data.user.supplier_id ?? null,
             supplierName: data.user.supplier_name ?? null,
+            supplierLogo: data.user.supplier_logo ?? null,
             supplierLevelType: data.user.level_type ?? null,
             isMainSupplier: Boolean(data.user.is_main_supplier),
             sessionTimeoutMinutes: Number(data.user.session_timeout_minutes ?? 60),
@@ -144,6 +146,7 @@ export const supplierAuthOptions: NextAuthOptions = {
         token.role = authUser.role;
         token.supplierId = authUser.supplierId;
         token.supplierName = authUser.supplierName;
+        token.supplierLogo = authUser.supplierLogo;
         token.supplierLevelType = authUser.supplierLevelType;
         token.isMainSupplier = authUser.isMainSupplier;
         token.sessionTimeoutMinutes = authUser.sessionTimeoutMinutes;
@@ -174,6 +177,7 @@ export const supplierAuthOptions: NextAuthOptions = {
         sessionUser.role = authToken.role;
         sessionUser.supplierId = authToken.supplierId;
         sessionUser.supplierName = authToken.supplierName;
+        sessionUser.supplierLogo = authToken.supplierLogo;
         sessionUser.supplierLevelType = authToken.supplierLevelType;
         sessionUser.isMainSupplier = authToken.isMainSupplier;
         sessionUser.sessionTimeoutMinutes = authToken.sessionTimeoutMinutes;
