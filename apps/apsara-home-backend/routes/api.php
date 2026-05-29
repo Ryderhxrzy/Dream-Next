@@ -24,6 +24,8 @@ use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\SupplierAuthController;
 use App\Http\Controllers\Api\SupplierUserController;
 use App\Http\Controllers\Api\SupplierOrderController;
+use App\Http\Controllers\Api\SupplierPushNotificationController;
+use App\Http\Controllers\Api\SupplierUploadController;
 use App\Http\Controllers\Api\CustomerAddressController;
 use App\Http\Controllers\Api\InteriorRequestController;
 use App\Http\Controllers\Api\JntWebhookController;
@@ -624,7 +626,16 @@ Route::middleware(['auth:sanctum', 'supplier.actor'])->group(function () {
     Route::post('/supplier/products/zq/pricing/{externalId}/variants', [ProductController::class, 'updateZqVariantPricing']);
     Route::patch('/supplier/products/zq/pricing/{externalId}', [ProductController::class, 'updateZqProductPricing']);
     Route::post('/supplier/products/zq/pricing/bulk-update', [ProductController::class, 'bulkUpdateZqProductPricing']);
+
+    // Push Notifications
+    Route::post('/supplier/push-notifications/send', [SupplierPushNotificationController::class, 'send']);
+    Route::get('/supplier/push-notifications/history', [SupplierPushNotificationController::class, 'getHistory']);
+    Route::get('/supplier/push-notifications/available-customers', [SupplierPushNotificationController::class, 'getAvailableCustomers']);
+
 });
+
+// Supplier Cloudinary Signing (no auth required - Cloudinary validates the signature)
+Route::post('/supplier/cloudinary-sign', [SupplierUploadController::class, 'generateCloudinarySignature']);
 
 // Leads: same strict limit as auth to prevent spam submissions
 Route::prefix('leads')->middleware('throttle:auth')->group(function () {

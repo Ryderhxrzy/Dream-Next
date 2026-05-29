@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
+import Image from 'next/image'
 import { AnimatePresence, motion } from 'framer-motion'
 import { signOut, useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
@@ -37,6 +38,7 @@ export default function SupplierLayoutShell({ children }: { children: React.Reac
 
   const accessToken = (session?.user as { accessToken?: string } | undefined)?.accessToken
   const supplierId = (session?.user as { supplierId?: number | null } | undefined)?.supplierId
+  const supplierLogo = (session?.user as { supplierLogo?: string | null } | undefined)?.supplierLogo || null
 
   const supplierName = session?.user?.supplierName || session?.user?.name || 'Supplier Account'
   const isMainSupplier = Boolean(session?.user?.isMainSupplier)
@@ -389,9 +391,20 @@ export default function SupplierLayoutShell({ children }: { children: React.Reac
                 }}
                 className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-100"
               >
-                <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-sky-500 text-[9px] font-bold text-white">
-                  {getInitials(supplierName)}
-                </span>
+                {supplierLogo ? (
+                  <div className="relative h-7 w-7 rounded-lg overflow-hidden bg-sky-100 dark:bg-sky-900/30 shrink-0">
+                    <Image
+                      src={supplierLogo}
+                      alt={supplierName}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                ) : (
+                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-sky-500 text-[9px] font-bold text-white">
+                    {getInitials(supplierName)}
+                  </span>
+                )}
                 <span className="hidden max-w-20 truncate sm:block">{supplierName}</span>
                 <LogOut className="h-3.5 w-3.5" />
               </button>

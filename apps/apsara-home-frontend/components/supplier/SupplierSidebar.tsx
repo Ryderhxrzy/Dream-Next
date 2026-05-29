@@ -79,6 +79,7 @@ export default function SupplierSidebar({
   const supplierName = session?.user?.supplierName || session?.user?.name || 'Supplier'
   const isMainSupplier = Boolean(session?.user?.isMainSupplier)
   const userEmail = session?.user?.email || ''
+  const supplierLogo = (session?.user as { supplierLogo?: string | null } | undefined)?.supplierLogo || null
   const displayRole = formatRole(isMainSupplier)
 
   const toggleMenu = (id: string) =>
@@ -112,9 +113,20 @@ export default function SupplierSidebar({
       {/* Profile Card */}
       <div className="px-2 py-3 border-b border-slate-200/80 dark:border-slate-700/50">
         <div className="flex items-start gap-3 rounded-xl border border-slate-200/80 bg-slate-50/50 dark:border-slate-700/50 dark:bg-slate-800/30 p-3">
-          <div className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-500 text-xs font-bold text-white">
-            {getInitials(supplierName)}
-          </div>
+          {supplierLogo ? (
+            <div className="relative h-9 w-9 shrink-0 rounded-lg overflow-hidden bg-sky-100 dark:bg-sky-900/30">
+              <Image
+                src={supplierLogo}
+                alt={supplierName}
+                fill
+                className="object-cover"
+              />
+            </div>
+          ) : (
+            <div className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-500 text-xs font-bold text-white">
+              {getInitials(supplierName)}
+            </div>
+          )}
           <div className="min-w-0 flex-1">
             <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Account</p>
             <p className="mt-1 truncate text-xs font-semibold text-slate-900 dark:text-white">{supplierName}</p>

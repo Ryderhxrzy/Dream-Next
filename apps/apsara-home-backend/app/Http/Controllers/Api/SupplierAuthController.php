@@ -287,11 +287,9 @@ class SupplierAuthController extends Controller
         $supplierName = (string) ($supplier?->s_company ?? $supplier?->s_name ?? '');
         $supplierLogo = null;
 
-        // Get logo from ProductBrand table by matching s_company name
-        if ($supplierName && $supplier?->s_company) {
-            $brand = ProductBrand::query()
-                ->whereRaw('LOWER(TRIM(pb_name)) = ?', [mb_strtolower(trim($supplier->s_company))])
-                ->first();
+        // Get logo from ProductBrand table by intelligent matching
+        if ($supplier && ($supplier->s_company || $supplier->s_name)) {
+            $brand = $this->findBrandForSupplier($supplier);
             $supplierLogo = $brand?->pb_image;
         }
 
@@ -307,6 +305,52 @@ class SupplierAuthController extends Controller
             'level_type' => (int) ($supplierUser->su_level_type ?? 0),
             'is_main_supplier' => (int) ($supplierUser->su_level_type ?? 0) === 1,
         ];
+    }
+
+    private function findBrandForSupplier($supplier): ?ProductBrand
+    {
+        $candidates = [
+            (string) ($supplier->s_company ?? ''),
+            (string) ($supplier->s_name ?? ''),
+        ];
+
+        $normalizedCandidates = collect($candidates)
+            ->map(fn ($value) => strtolower(preg_replace('/[^a-z0-9]/i', '', trim($value)) ?? ''))
+            ->filter(fn ($value) => $value !== '')
+            ->values();
+
+        if ($normalizedCandidates->isEmpty()) {
+            return null;
+        }
+
+        // Exact match first
+        $brands = ProductBrand::query()->select(['pb_id', 'pb_name', 'pb_image'])->get();
+        foreach ($brands as $brand) {
+            $brandKey = strtolower(preg_replace('/[^a-z0-9]/i', '', (string) ($brand->pb_name ?? '')) ?? '');
+            if ($brandKey !== '' && $normalizedCandidates->contains($brandKey)) {
+                return $brand;
+            }
+        }
+
+        // Fuzzy match if exact match fails
+        $bestScore = 0;
+        $bestBrand = null;
+        foreach ($brands as $brand) {
+            $brandKey = strtolower(preg_replace('/[^a-z0-9]/i', '', (string) ($brand->pb_name ?? '')) ?? '');
+            if ($brandKey === '' || strlen($brandKey) < 2) {
+                continue;
+            }
+            foreach ($normalizedCandidates as $candidate) {
+                $similarity = 0;
+                similar_text($candidate, $brandKey, $similarity);
+                if ($similarity > $bestScore) {
+                    $bestScore = $similarity;
+                    $bestBrand = $brand;
+                }
+            }
+        }
+
+        return $bestBrand;
     }
 
     private function isLoginTwoFactorEnabled(): bool
