@@ -1893,9 +1893,9 @@ class ProductController extends Controller
 
                 Log::info('Personalized query with hybrid caching', ['userId' => $userId, 'catIds' => $personalizedCatIds]);
             } else {
-                // For regular/filtered products, sort by date then by ID for consistency
-                $query->orderByDesc('pd_date')
-                      ->orderByDesc('pd_id');
+                // For regular/filtered products: sort by ID only for consistency
+                // Do NOT sort by pd_date as it breaks pagination when combined with behavior filtering
+                $query->orderByDesc('pd_id');
             }
 
             if ($supplierUser) {
