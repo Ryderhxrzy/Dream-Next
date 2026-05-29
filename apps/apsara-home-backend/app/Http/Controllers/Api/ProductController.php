@@ -89,7 +89,6 @@ class ProductController extends Controller
             ->groupBy('tbl_product.pd_id')
             ->selectRaw('tbl_product.*, COUNT(ub.ub_id) as behavior_count')
             ->orderByRaw('COUNT(ub.ub_id) DESC')
-            ->orderByDesc('pd_date')
             ->orderByDesc('pd_id');
 
             // Cache the result for next time
@@ -107,8 +106,9 @@ class ProductController extends Controller
 
         if (!empty($cases)) {
             $caseStatement = 'CASE ' . implode(' ', $cases) . ' ELSE ' . count($cases) . ' END';
+            // IMPORTANT: Only sort by CASE (behavior) and pd_id, NOT by pd_date
+            // pd_date as secondary sort would override behavior ranking on later pages
             $query->orderByRaw($caseStatement)
-                  ->orderByDesc('pd_date')
                   ->orderByDesc('pd_id');
         }
 
@@ -1893,9 +1893,9 @@ class ProductController extends Controller
 
                 Log::info('Personalized query with hybrid caching', ['userId' => $userId, 'catIds' => $personalizedCatIds]);
             } else {
-                // For regular/filtered products, sort by date then by ID for consistency
-                $query->orderByDesc('pd_date')
-                      ->orderByDesc('pd_id');
+                // For regular/filtered products: sort by ID only for consistency
+                // Do NOT sort by pd_date as it breaks pagination when combined with behavior filtering
+                $query->orderByDesc('pd_id');
             }
 
             if ($supplierUser) {
