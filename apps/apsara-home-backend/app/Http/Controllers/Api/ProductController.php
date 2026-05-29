@@ -89,7 +89,6 @@ class ProductController extends Controller
             ->groupBy('tbl_product.pd_id')
             ->selectRaw('tbl_product.*, COUNT(ub.ub_id) as behavior_count')
             ->orderByRaw('COUNT(ub.ub_id) DESC')
-            ->orderByDesc('pd_date')
             ->orderByDesc('pd_id');
 
             // Cache the result for next time
@@ -107,8 +106,9 @@ class ProductController extends Controller
 
         if (!empty($cases)) {
             $caseStatement = 'CASE ' . implode(' ', $cases) . ' ELSE ' . count($cases) . ' END';
+            // IMPORTANT: Only sort by CASE (behavior) and pd_id, NOT by pd_date
+            // pd_date as secondary sort would override behavior ranking on later pages
             $query->orderByRaw($caseStatement)
-                  ->orderByDesc('pd_date')
                   ->orderByDesc('pd_id');
         }
 
