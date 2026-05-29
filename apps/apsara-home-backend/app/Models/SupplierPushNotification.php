@@ -19,6 +19,8 @@ class SupplierPushNotification extends Model
         'spn_sent_count',
         'spn_failed_count',
         'spn_sent_at',
+        'spn_scheduled_at',
+        'spn_status',
         'spn_created_at',
         'spn_updated_at',
     ];
@@ -26,6 +28,7 @@ class SupplierPushNotification extends Model
     protected $casts = [
         'spn_recipients' => 'array',
         'spn_sent_at' => 'datetime',
+        'spn_scheduled_at' => 'datetime',
         'spn_created_at' => 'datetime',
         'spn_updated_at' => 'datetime',
     ];
