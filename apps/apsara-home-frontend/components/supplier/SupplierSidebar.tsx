@@ -1,11 +1,13 @@
 'use client'
 
-import type { ElementType, ReactNode } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import Link from 'next/link'
+import Image from 'next/image'
 import {
   BarChart3,
+  Bell,
   Box,
   Building2,
   ChevronDown,
@@ -37,6 +39,7 @@ const mobileAdsItems = [
   { label: 'Home', href: '/supplier/mobile-ads', icon: Home },
   { label: 'Products', href: '/supplier/mobile-ads/products', icon: Package },
   { label: 'Categories', href: '/supplier/mobile-ads/categories', icon: Box },
+  { label: 'Push Notifications', href: '/supplier/mobile-ads/notifications', icon: Bell },
 ]
 
 const settingsItems = [
@@ -57,46 +60,8 @@ function getInitials(name: string) {
   )
 }
 
-function SectionLabel({ children }: { children: ReactNode }) {
-  return <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.26em] text-slate-400/80 dark:text-slate-500">{children}</p>
-}
-
-function SidebarNavButton({
-  label,
-  icon: Icon,
-  active,
-  onClick,
-}: {
-  label: string
-  icon: ElementType
-  active: boolean
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`group relative flex w-full items-center gap-3 overflow-hidden rounded-2xl px-3.5 py-3 text-sm font-semibold transition-all duration-200 ${
-        active
-          ? 'bg-[linear-gradient(135deg,rgba(6,182,212,0.18),rgba(37,99,235,0.12))] text-cyan-700 shadow-sm shadow-cyan-500/10 dark:bg-[linear-gradient(135deg,rgba(34,211,238,0.18),rgba(99,102,241,0.16))] dark:text-cyan-200'
-          : 'text-slate-600 hover:bg-white/70 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/4 dark:hover:text-white'
-      }`}
-    >
-      {active ? (
-        <span className="absolute inset-y-3 left-0 w-1 rounded-r-full bg-cyan-500 dark:bg-cyan-300" />
-      ) : null}
-      <span
-        className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border transition ${
-          active
-            ? 'border-cyan-200 bg-white text-cyan-700 dark:border-cyan-400/20 dark:bg-white/10 dark:text-cyan-200'
-            : 'border-slate-200 bg-white text-slate-500 group-hover:border-cyan-200 group-hover:text-cyan-700 dark:border-white/10 dark:bg-white/3 dark:text-slate-400 dark:group-hover:border-cyan-400/20 dark:group-hover:text-cyan-200'
-        }`}
-      >
-        <Icon className="h-4.5 w-4.5" />
-      </span>
-      <span className="flex-1 text-left">{label}</span>
-    </button>
-  )
+const formatRole = (isMainSupplier: boolean) => {
+  return isMainSupplier ? 'Main Supplier' : 'Sub Supplier'
 }
 
 export default function SupplierSidebar({
@@ -108,128 +73,145 @@ export default function SupplierSidebar({
 }) {
   const pathname = usePathname()
   const router = useRouter()
-  const [reportsOpen, setReportsOpen] = useState(pathname?.startsWith('/supplier/reports') ?? false)
-  const [mobileAdsOpen, setMobileAdsOpen] = useState(pathname?.startsWith('/supplier/mobile-ads') ?? false)
+  const [openMenus, setOpenMenus] = useState<string[]>([])
   const { data: session } = useSession()
+
   const supplierName = session?.user?.supplierName || session?.user?.name || 'Supplier'
   const isMainSupplier = Boolean(session?.user?.isMainSupplier)
   const userEmail = session?.user?.email || ''
-  const reportsActive = pathname?.startsWith('/supplier/reports') ?? false
-  const mobileAdsActive = pathname?.startsWith('/supplier/mobile-ads') ?? false
+  const displayRole = formatRole(isMainSupplier)
 
-  const navigate = (href: string) => {
-    router.push(href)
-    onClose?.()
-  }
+  const toggleMenu = (id: string) =>
+    setOpenMenus(prev => prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id])
+
+  const isActive = (href: string) => pathname === href
+  const isChildActive = (items: typeof reportItems) => items.some((item) => pathname === item.href)
 
   return (
-    <aside className={`flex w-72 shrink-0 flex-col border-r border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(244,249,255,0.94))] backdrop-blur-2xl dark:border-white/8 dark:bg-[linear-gradient(180deg,rgba(6,13,24,0.96),rgba(9,17,32,0.98))] ${className}`}>
-      <div className="px-5 pb-4 pt-5">
-        <div className="rounded-[28px] border border-slate-200/80 bg-white/85 p-4 shadow-lg shadow-slate-200/40 dark:border-white/10 dark:bg-white/4 dark:shadow-black/20">
-          <div className="flex items-start gap-3">
-            <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#06b6d4,#2563eb)] text-sm font-bold text-white shadow-lg shadow-cyan-500/25">
-              {getInitials(supplierName)}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-cyan-700 dark:text-cyan-300">Supplier Portal</p>
-              <h2 className="mt-1 truncate text-lg font-bold text-slate-900 dark:text-white">{supplierName}</h2>
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{userEmail || 'Workspace access active'}</p>
-            </div>
-          </div>
+    <aside className={`sticky top-0 h-screen flex w-64 shrink-0 flex-col bg-white/95 dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-700/50 backdrop-blur-xl ${className}`}>
+      {/* Logo */}
+      <div className="flex items-center h-16 px-3 border-b border-slate-200/80 dark:border-slate-700/50 shrink-0 gap-2">
+        <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-orange-50 to-cyan-50 ring-1 ring-slate-200 dark:bg-transparent dark:ring-0">
+          <Image
+            src="/af_home_logo.png"
+            alt="AF Home"
+            fill
+            className="object-contain"
+            priority
+          />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-slate-900 dark:text-white font-bold text-sm leading-none whitespace-nowrap">AF Home</p>
+          <p className="text-teal-600 dark:text-teal-400 text-xs mt-0.5">Supplier</p>
+        </div>
+        <button onClick={onClose} className="lg:hidden text-slate-400 hover:text-slate-900 dark:hover:text-white ml-auto">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
 
-          <div className="mt-4 flex items-center justify-between rounded-2xl border border-slate-200/80 bg-slate-50/80 px-3.5 py-3 dark:border-white/10 dark:bg-white/3">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">Access</p>
-              <p className="mt-1 text-xs font-semibold text-slate-700 dark:text-slate-200">
-                {isMainSupplier ? 'Main Supplier Owner' : 'Sub Supplier Staff'}
-              </p>
-            </div>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              Live
-            </span>
+      {/* Profile Card */}
+      <div className="px-2 py-3 border-b border-slate-200/80 dark:border-slate-700/50">
+        <div className="flex items-start gap-3 rounded-xl border border-slate-200/80 bg-slate-50/50 dark:border-slate-700/50 dark:bg-slate-800/30 p-3">
+          <div className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-500 text-xs font-bold text-white">
+            {getInitials(supplierName)}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Account</p>
+            <p className="mt-1 truncate text-xs font-semibold text-slate-900 dark:text-white">{supplierName}</p>
+            <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 truncate">{displayRole}</p>
           </div>
         </div>
       </div>
 
-      <nav className="flex-1 space-y-5 overflow-y-auto px-4 py-3">
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', scrollbarColor: 'transparent transparent' }}>
+        <style>{`nav::-webkit-scrollbar { display: none; }`}</style>
+        {/* Main Section */}
         <div>
-          <SectionLabel>Main</SectionLabel>
-          <div className="space-y-1.5">
-            {mainItems.map((item) => (
-              <SidebarNavButton
-                key={item.href}
-                label={item.label}
-                icon={item.icon}
-                active={pathname === item.href}
-                onClick={() => navigate(item.href)}
-              />
-            ))}
+          <div className="flex items-center gap-2 px-2 pb-1.5 pt-1">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Main</span>
+            <div className="flex-1 h-px bg-slate-100 dark:bg-slate-700/60" />
+          </div>
+          <div className="space-y-0.5">
+            {mainItems.map((item) => {
+              const Icon = item.icon
+              const active = isActive(item.href)
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => onClose?.()}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-200 group relative
+                    ${active
+                      ? 'bg-sky-500 text-white dark:bg-sky-600'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100'
+                    }
+                  `}
+                >
+                  <span className={`flex items-center justify-center h-7 w-7 rounded-lg shrink-0 transition-colors ${active ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800 group-hover:bg-slate-200 dark:group-hover:bg-slate-700'}`}>
+                    <Icon className="w-5 h-5" />
+                  </span>
+                  <span className="font-medium flex-1">{item.label}</span>
+                </Link>
+              )
+            })}
           </div>
         </div>
 
+        {/* Reports Section */}
         <div>
-          <SectionLabel>Analytics</SectionLabel>
+          <div className="flex items-center gap-2 px-2 pb-1.5 pt-4">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Analytics</span>
+            <div className="flex-1 h-px bg-slate-100 dark:bg-slate-700/60" />
+          </div>
           <button
-            type="button"
-            onClick={() => setReportsOpen((prev) => !prev)}
-            className={`group flex w-full items-center justify-between rounded-2xl px-3.5 py-3 text-sm font-semibold transition ${
-              reportsActive
-                ? 'bg-[linear-gradient(135deg,rgba(6,182,212,0.18),rgba(37,99,235,0.12))] text-cyan-700 dark:bg-[linear-gradient(135deg,rgba(34,211,238,0.18),rgba(99,102,241,0.16))] dark:text-cyan-200'
-                : 'text-slate-600 hover:bg-white/70 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/4 dark:hover:text-white'
-            }`}
+            onClick={() => toggleMenu('reports')}
+            className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-200 group relative
+              ${isChildActive(reportItems)
+                ? 'bg-sky-500 text-white dark:bg-sky-600'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100'
+              }
+            `}
           >
-            <span className="flex items-center gap-3">
-              <span
-                className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl border transition ${
-                  reportsActive
-                    ? 'border-cyan-200 bg-white text-cyan-700 dark:border-cyan-400/20 dark:bg-white/10 dark:text-cyan-200'
-                    : 'border-slate-200 bg-white text-slate-500 group-hover:border-cyan-200 group-hover:text-cyan-700 dark:border-white/10 dark:bg-white/3 dark:text-slate-400 dark:group-hover:border-cyan-400/20 dark:group-hover:text-cyan-200'
-                }`}
-              >
-                <FileText className="h-4 w-4" />
+            <span className="flex items-center gap-3 flex-1">
+              <span className={`flex items-center justify-center h-7 w-7 rounded-lg shrink-0 transition-colors ${isChildActive(reportItems) ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800 group-hover:bg-slate-200 dark:group-hover:bg-slate-700'}`}>
+                <FileText className="w-5 h-5" />
               </span>
-              Reports
+              <span className="font-medium">Reports</span>
             </span>
-            <ChevronDown className={`h-4 w-4 transition ${reportsOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-4 h-4 shrink-0 transition-transform duration-200 ${openMenus.includes('reports') || isChildActive(reportItems) ? 'rotate-180' : ''}`} />
           </button>
 
           <AnimatePresence initial={false}>
-            {reportsOpen ? (
+            {(openMenus.includes('reports') || isChildActive(reportItems)) ? (
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2, ease: 'easeOut' }}
-                className="mt-2 overflow-hidden"
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
               >
-                <div className="space-y-1.5 pl-3">
+                <div className="space-y-0.5 pl-2">
                   {reportItems.map((item) => {
-                    const active = pathname === item.href
                     const Icon = item.icon
-
+                    const active = isActive(item.href)
                     return (
-                      <button
+                      <Link
                         key={item.href}
-                        type="button"
-                        onClick={() => navigate(item.href)}
-                        className={`group flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-[13px] font-semibold transition ${
-                          active
-                            ? 'bg-cyan-50 text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-200'
-                            : 'text-slate-500 hover:bg-white/70 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/4 dark:hover:text-white'
-                        }`}
+                        href={item.href}
+                        onClick={() => onClose?.()}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-200
+                          ${active
+                            ? 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-200'
+                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100'
+                          }
+                        `}
                       >
-                        <span
-                          className={`inline-flex h-8 w-8 items-center justify-center rounded-xl border ${
-                            active
-                              ? 'border-cyan-200 bg-white text-cyan-700 dark:border-cyan-400/20 dark:bg-white/10 dark:text-cyan-200'
-                              : 'border-slate-200 bg-white text-slate-500 dark:border-white/10 dark:bg-white/3 dark:text-slate-400'
-                          }`}
-                        >
-                          <Icon className="h-3.5 w-3.5" />
+                        <span className="flex items-center justify-center h-6 w-6">
+                          <Icon className="w-4 h-4" />
                         </span>
-                        <span className="truncate">{item.label}</span>
-                      </button>
+                        <span className="font-medium">{item.label}</span>
+                      </Link>
                     )
                   })}
                 </div>
@@ -238,68 +220,60 @@ export default function SupplierSidebar({
           </AnimatePresence>
         </div>
 
+        {/* Mobile Section */}
         <div>
-          <SectionLabel>Mobile</SectionLabel>
+          <div className="flex items-center gap-2 px-2 pb-1.5 pt-4">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Mobile</span>
+            <div className="flex-1 h-px bg-slate-100 dark:bg-slate-700/60" />
+          </div>
           <button
-            type="button"
-            onClick={() => setMobileAdsOpen((prev) => !prev)}
-            className={`group flex w-full items-center justify-between rounded-2xl px-3.5 py-3 text-sm font-semibold transition ${
-              mobileAdsActive
-                ? 'bg-[linear-gradient(135deg,rgba(6,182,212,0.18),rgba(37,99,235,0.12))] text-cyan-700 dark:bg-[linear-gradient(135deg,rgba(34,211,238,0.18),rgba(99,102,241,0.16))] dark:text-cyan-200'
-                : 'text-slate-600 hover:bg-white/70 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/4 dark:hover:text-white'
-            }`}
+            onClick={() => toggleMenu('mobile')}
+            className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-200 group relative
+              ${isChildActive(mobileAdsItems)
+                ? 'bg-sky-500 text-white dark:bg-sky-600'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100'
+              }
+            `}
           >
-            <span className="flex items-center gap-3">
-              <span
-                className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl border transition ${
-                  mobileAdsActive
-                    ? 'border-cyan-200 bg-white text-cyan-700 dark:border-cyan-400/20 dark:bg-white/10 dark:text-cyan-200'
-                    : 'border-slate-200 bg-white text-slate-500 group-hover:border-cyan-200 group-hover:text-cyan-700 dark:border-white/10 dark:bg-white/3 dark:text-slate-400 dark:group-hover:border-cyan-400/20 dark:group-hover:text-cyan-200'
-                }`}
-              >
-                <Smartphone className="h-4 w-4" />
+            <span className="flex items-center gap-3 flex-1">
+              <span className={`flex items-center justify-center h-7 w-7 rounded-lg shrink-0 transition-colors ${isChildActive(mobileAdsItems) ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800 group-hover:bg-slate-200 dark:group-hover:bg-slate-700'}`}>
+                <Smartphone className="w-5 h-5" />
               </span>
-              Mobile Management
+              <span className="font-medium">Mobile Management</span>
             </span>
-            <ChevronDown className={`h-4 w-4 transition ${mobileAdsOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-4 h-4 shrink-0 transition-transform duration-200 ${openMenus.includes('mobile') || isChildActive(mobileAdsItems) ? 'rotate-180' : ''}`} />
           </button>
 
           <AnimatePresence initial={false}>
-            {mobileAdsOpen ? (
+            {(openMenus.includes('mobile') || isChildActive(mobileAdsItems)) ? (
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2, ease: 'easeOut' }}
-                className="mt-2 overflow-hidden"
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
               >
-                <div className="space-y-1.5 pl-3">
+                <div className="space-y-0.5 pl-2">
                   {mobileAdsItems.map((item) => {
-                    const active = pathname === item.href
                     const Icon = item.icon
-
+                    const active = isActive(item.href)
                     return (
-                      <button
+                      <Link
                         key={item.href}
-                        type="button"
-                        onClick={() => navigate(item.href)}
-                        className={`group flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-[13px] font-semibold transition ${
-                          active
-                            ? 'bg-cyan-50 text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-200'
-                            : 'text-slate-500 hover:bg-white/70 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/4 dark:hover:text-white'
-                        }`}
+                        href={item.href}
+                        onClick={() => onClose?.()}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-200
+                          ${active
+                            ? 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-200'
+                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100'
+                          }
+                        `}
                       >
-                        <span
-                          className={`inline-flex h-8 w-8 items-center justify-center rounded-xl border ${
-                            active
-                              ? 'border-cyan-200 bg-white text-cyan-700 dark:border-cyan-400/20 dark:bg-white/10 dark:text-cyan-200'
-                              : 'border-slate-200 bg-white text-slate-500 dark:border-white/10 dark:bg-white/3 dark:text-slate-400'
-                          }`}
-                        >
-                          <Icon className="h-3.5 w-3.5" />
+                        <span className="flex items-center justify-center h-6 w-6">
+                          <Icon className="w-4 h-4" />
                         </span>
-                        <span className="truncate">{item.label}</span>
-                      </button>
+                        <span className="font-medium">{item.label}</span>
+                      </Link>
                     )
                   })}
                 </div>
@@ -308,33 +282,50 @@ export default function SupplierSidebar({
           </AnimatePresence>
         </div>
 
+        {/* Settings Section */}
         <div>
-          <SectionLabel>Settings</SectionLabel>
-          <div className="space-y-1.5">
-            {settingsItems.map((item) => (
-              <SidebarNavButton
-                key={item.href}
-                label={item.label}
-                icon={item.icon}
-                active={pathname === item.href}
-                onClick={() => navigate(item.href)}
-              />
-            ))}
+          <div className="flex items-center gap-2 px-2 pb-1.5 pt-4">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Settings</span>
+            <div className="flex-1 h-px bg-slate-100 dark:bg-slate-700/60" />
+          </div>
+          <div className="space-y-0.5">
+            {settingsItems.map((item) => {
+              const Icon = item.icon
+              const active = isActive(item.href)
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => onClose?.()}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-200 group relative
+                    ${active
+                      ? 'bg-sky-500 text-white dark:bg-sky-600'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100'
+                    }
+                  `}
+                >
+                  <span className={`flex items-center justify-center h-7 w-7 rounded-lg shrink-0 transition-colors ${active ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800 group-hover:bg-slate-200 dark:group-hover:bg-slate-700'}`}>
+                    <Icon className="w-5 h-5" />
+                  </span>
+                  <span className="font-medium flex-1">{item.label}</span>
+                </Link>
+              )
+            })}
           </div>
         </div>
       </nav>
 
-      <div className="border-t border-slate-200/80 p-4 dark:border-white/8">
+      {/* Footer - Logout */}
+      <div className="mt-auto border-t border-slate-200/80 dark:border-slate-700/50 p-3">
         <button
-          type="button"
           onClick={async () => {
             clearAccessTokenCache()
             await signOut({ callbackUrl: '/supplier/login' })
           }}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200/80 bg-white/80 px-4 py-3 text-sm font-semibold text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 dark:border-white/10 dark:bg-white/4 dark:text-slate-300 dark:hover:border-red-500/30 dark:hover:bg-red-500/10 dark:hover:text-red-300"
+          className="flex w-full items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-200 transition-all duration-200"
         >
-          <LogOut className="h-4 w-4" />
-          Logout
+          <LogOut className="w-4 h-4" />
+          <span>Logout</span>
         </button>
       </div>
     </aside>
