@@ -22,9 +22,9 @@ export default function DataTableShell({
   className = '',
 }: DataTableShellProps) {
   return (
-    <section className={`overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 ${className}`}>
+    <section className={`overflow-hidden rounded-lg border border-slate-200/80 bg-white/95 dark:border-slate-700/50 dark:bg-slate-900 ${className}`}>
       {(title || subtitle || badge || actions) && (
-        <div className="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-5 py-4 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-b border-slate-200/80 bg-slate-50/50 px-5 py-4 dark:border-slate-700/50 dark:bg-slate-800/30 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             {badge ? (
               <div className="mb-2">{badge}</div>
@@ -41,7 +41,7 @@ export default function DataTableShell({
       </div>
 
       {footer ? (
-        <div className="border-t border-slate-100 px-5 py-3.5 text-xs text-slate-400 dark:border-slate-800 dark:text-slate-500">
+        <div className="border-t border-slate-200/80 px-5 py-3.5 text-xs text-slate-400 dark:border-slate-700/50 dark:text-slate-500">
           {footer}
         </div>
       ) : null}

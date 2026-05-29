@@ -154,7 +154,6 @@ export default function SupplierDashboardHome() {
       description: 'Current catalog items under your supplier account.',
       href: '/supplier/products',
       icon: Layers3,
-      accent: 'cyan',
     },
     {
       title: 'Active Products',
@@ -162,7 +161,6 @@ export default function SupplierDashboardHome() {
       description: 'Products currently active in your supplier catalog.',
       href: '/supplier/products',
       icon: TrendingUp,
-      accent: 'emerald',
     },
     {
       title: 'Inactive Products',
@@ -170,7 +168,6 @@ export default function SupplierDashboardHome() {
       description: 'Products that still need attention before going live.',
       href: '/supplier/products',
       icon: Clock3,
-      accent: 'slate',
     },
     {
       title: 'Low Stock',
@@ -178,7 +175,6 @@ export default function SupplierDashboardHome() {
       description: 'Products with quantity from 1 to 5 in the current supplier catalog.',
       href: '/supplier/products',
       icon: Box,
-      accent: 'amber',
     },
     {
       title: 'Allowed Categories',
@@ -186,7 +182,6 @@ export default function SupplierDashboardHome() {
       description: 'Categories you are allowed to use for product posting.',
       href: '/supplier/categories',
       icon: ShieldCheck,
-      accent: 'violet',
     },
     {
       title: 'Supplier Users',
@@ -194,7 +189,6 @@ export default function SupplierDashboardHome() {
       description: 'Separate supplier portal logins currently active for your team.',
       href: '/supplier/users',
       icon: Users,
-      accent: 'indigo',
     },
   ] as const
 
@@ -209,26 +203,21 @@ export default function SupplierDashboardHome() {
 
   return (
     <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-[2rem] border border-white/60 bg-[linear-gradient(135deg,rgba(255,255,255,0.86),rgba(239,248,255,0.96)_38%,rgba(232,250,247,0.88))] p-6 shadow-[0_30px_80px_-40px_rgba(14,116,144,0.35)] dark:border-white/8 dark:bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.12),transparent_34%),radial-gradient(circle_at_top_right,rgba(99,102,241,0.10),transparent_28%),linear-gradient(135deg,rgba(7,14,25,0.92),rgba(10,19,34,0.94)_48%,rgba(9,28,31,0.9))]">
-        <div className="pointer-events-none absolute inset-0 opacity-80">
-          <div className="absolute left-0 top-0 h-48 w-48 rounded-full bg-cyan-300/20 blur-3xl dark:bg-cyan-500/10" />
-          <div className="absolute bottom-0 right-8 h-56 w-56 rounded-full bg-emerald-200/20 blur-3xl dark:bg-emerald-500/10" />
-        </div>
-
-        <div className="relative flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+      <section className="rounded-xl border border-slate-200/80 bg-white/95 p-6 dark:border-slate-700/50 dark:bg-slate-900">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200/70 bg-white/80 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.28em] text-cyan-700 dark:border-cyan-400/20 dark:bg-white/[0.05] dark:text-cyan-300">
+            <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.28em] text-sky-700 dark:border-sky-400/20 dark:bg-sky-500/10 dark:text-sky-300">
               <BadgeCheck className="h-3.5 w-3.5" />
               Supplier Dashboard
             </div>
-            <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 dark:text-white lg:text-4xl">
+            <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
               Welcome back, {supplierName}.
             </h1>
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="inline-flex rounded-full border border-cyan-200 bg-white/90 px-3 py-1.5 text-xs font-semibold text-cyan-700 dark:border-cyan-400/20 dark:bg-white/[0.06] dark:text-cyan-200">
+              <span className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 dark:border-sky-400/20 dark:bg-sky-500/10 dark:text-sky-200">
                 {isMainSupplier ? 'Main Supplier' : 'Sub Supplier'}
               </span>
-              <span className="inline-flex rounded-full border border-slate-200 bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-300">
+              <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                 {supplier?.status === 1 ? 'Company Active' : 'Company Inactive'}
               </span>
             </div>
@@ -246,15 +235,15 @@ export default function SupplierDashboardHome() {
                 <Link
                   key={action.label}
                   href={action.href}
-                  className="group inline-flex min-w-[180px] items-center justify-between gap-3 rounded-2xl border border-white/70 bg-white/80 px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-cyan-200 hover:bg-cyan-50/80 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-100 dark:hover:border-cyan-400/20 dark:hover:bg-cyan-500/10"
+                  className="group inline-flex min-w-[180px] items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
                 >
                   <span className="inline-flex items-center gap-3">
-                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-300">
+                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-sky-100 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300">
                       <Icon className="h-4.5 w-4.5" />
                     </span>
                     {action.label}
                   </span>
-                  <ArrowRight className="h-4 w-4 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-cyan-700 dark:group-hover:text-cyan-300" />
+                  <ArrowRight className="h-4 w-4 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-sky-700 dark:group-hover:text-sky-300" />
                 </Link>
               )
             })}
@@ -271,7 +260,6 @@ export default function SupplierDashboardHome() {
             description={card.description}
             href={card.href}
             icon={card.icon}
-            accent={card.accent}
           />
         ))}
       </section>
@@ -306,8 +294,8 @@ export default function SupplierDashboardHome() {
               'Check low stock items so your catalog stays accurate',
               'Keep company profile and supplier contacts up to date',
             ].map((step, index) => (
-              <div key={step} className="flex gap-3 rounded-2xl border border-slate-200/80 bg-slate-50/80 p-3 dark:border-white/8 dark:bg-white/[0.03]">
-                <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-xs font-bold text-white dark:bg-cyan-500/15 dark:text-cyan-200">
+              <div key={step} className="flex gap-3 rounded-lg border border-slate-200/80 bg-slate-50/50 p-3 dark:border-slate-700/50 dark:bg-slate-800/30">
+                <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-xs font-bold text-white dark:bg-sky-500/15 dark:text-sky-200">
                   {index + 1}
                 </span>
                 <p className="pt-1 text-sm text-slate-600 dark:text-slate-300">{step}</p>
@@ -325,7 +313,7 @@ export default function SupplierDashboardHome() {
           actionLabel="Manage"
         >
           {recentProducts.length === 0 ? (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-300">
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-300">
               No products yet. Start by adding your first supplier product.
             </div>
           ) : (
@@ -353,13 +341,13 @@ export default function SupplierDashboardHome() {
                 {categoryPreview.map((category) => (
                   <span
                     key={category.id}
-                    className="inline-flex rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1.5 text-xs font-semibold text-cyan-700 dark:border-cyan-400/20 dark:bg-cyan-500/10 dark:text-cyan-300"
+                    className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 dark:border-sky-400/20 dark:bg-sky-500/10 dark:text-sky-300"
                   >
                     {category.name}
                   </span>
                 ))}
               </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/8 dark:bg-white/[0.03]">
+              <div className="rounded-lg border border-slate-200/80 bg-slate-50/50 p-4 dark:border-slate-700/50 dark:bg-slate-800/30">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
                   Category Access Rule
                 </p>
@@ -447,11 +435,11 @@ function SurfaceCard({
   children: React.ReactNode
 }) {
   return (
-    <div className="rounded-[1.75rem] border border-white/70 bg-white/90 p-6 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.35)] dark:border-white/8 dark:bg-slate-900/70 dark:shadow-black/20">
+    <div className="rounded-lg border border-slate-200/80 bg-white/95 p-6 dark:border-slate-700/50 dark:bg-slate-900">
       <div className="mb-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           {Icon ? (
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-300">
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-sky-100 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300">
               <Icon className="h-5 w-5" />
             </span>
           ) : null}
@@ -462,13 +450,13 @@ function SurfaceCard({
         </div>
 
         {badge ? (
-          <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300">
+          <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
             {badge}
           </span>
         ) : null}
 
         {actionHref && actionLabel ? (
-          <Link href={actionHref} className="text-sm font-semibold text-cyan-700 hover:text-cyan-600 dark:text-cyan-300 dark:hover:text-cyan-200">
+          <Link href={actionHref} className="text-sm font-semibold text-sky-700 hover:text-sky-600 dark:text-sky-300 dark:hover:text-sky-200">
             {actionLabel}
           </Link>
         ) : null}
@@ -485,41 +473,29 @@ function MetricCard({
   description,
   href,
   icon: Icon,
-  accent,
 }: {
   title: string
   value: string
   description: string
   href: string
   icon: ElementType
-  accent: 'cyan' | 'emerald' | 'slate' | 'amber' | 'violet' | 'indigo'
 }) {
-  const accentClasses = {
-    cyan: 'border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-400/20 dark:bg-cyan-500/10 dark:text-cyan-300',
-    emerald: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-300',
-    slate: 'border-slate-200 bg-slate-50 text-slate-700 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200',
-    amber: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-300',
-    violet: 'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-400/20 dark:bg-violet-500/10 dark:text-violet-300',
-    indigo: 'border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-400/20 dark:bg-indigo-500/10 dark:text-indigo-300',
-  }[accent]
-
   return (
     <Link
       href={href}
-      className="group relative overflow-hidden rounded-[1.75rem] border border-white/70 bg-white/90 p-5 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.35)] transition hover:-translate-y-1 hover:border-cyan-200 dark:border-white/8 dark:bg-slate-900/70 dark:shadow-black/20"
+      className="group relative overflow-hidden rounded-lg border border-slate-200/80 bg-white/95 p-5 transition hover:-translate-y-1 dark:border-slate-700/50 dark:bg-slate-900"
     >
-      <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,rgba(6,182,212,0.7),rgba(59,130,246,0.7),rgba(16,185,129,0.6))] opacity-70" />
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">{title}</p>
           <p className="mt-3 text-3xl font-bold text-slate-900 dark:text-white">{value}</p>
         </div>
-        <span className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl border ${accentClasses}`}>
+        <span className="inline-flex h-12 w-12 items-center justify-center rounded-lg border border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-400/20 dark:bg-sky-500/10 dark:text-sky-300">
           <Icon className="h-5 w-5" />
         </span>
       </div>
       <p className="mt-3 text-sm leading-6 text-slate-500 dark:text-slate-400">{description}</p>
-      <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-cyan-700 dark:text-cyan-300">
+      <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-sky-700 dark:text-sky-300">
         Open <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
       </span>
     </Link>
@@ -536,7 +512,7 @@ function SnapshotCard({
   icon: ElementType
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/8 dark:bg-white/[0.03]">
+    <div className="rounded-lg border border-slate-200/80 bg-slate-50/50 p-4 dark:border-slate-700/50 dark:bg-slate-800/30">
       <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
         <Icon className="h-4 w-4" />
         <p className="text-xs font-semibold uppercase tracking-wide">{label}</p>
@@ -560,11 +536,11 @@ function InventoryStatusCard({
   const toneClasses = {
     amber: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-300',
     emerald: 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-300',
-    slate: 'border-slate-200 bg-slate-50 text-slate-800 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200',
+    slate: 'border-slate-200/80 bg-slate-50/50 text-slate-800 dark:border-slate-700/50 dark:bg-slate-800/30 dark:text-slate-200',
   }[tone]
 
   return (
-    <div className={`rounded-2xl border p-4 ${toneClasses}`}>
+    <div className={`rounded-lg border p-4 ${toneClasses}`}>
       <p className="text-xs font-semibold uppercase tracking-[0.18em]">{label}</p>
       <p className="mt-3 text-2xl font-bold">{value}</p>
       <p className="mt-2 text-sm leading-6 opacity-90">{description}</p>
@@ -574,12 +550,12 @@ function InventoryStatusCard({
 
 function TeamAccessRow({ label, value, badge }: { label: string; value: string; badge: string }) {
   return (
-    <div className="flex items-start justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/8 dark:bg-white/[0.03]">
+    <div className="flex items-start justify-between gap-4 rounded-lg border border-slate-200/80 bg-slate-50/50 p-4 dark:border-slate-700/50 dark:bg-slate-800/30">
       <div className="min-w-0">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">{label}</p>
         <p className="mt-2 text-sm font-semibold text-slate-800 dark:text-slate-100">{value}</p>
       </div>
-      <span className="inline-flex rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-cyan-700 dark:border-cyan-400/20 dark:bg-cyan-500/10 dark:text-cyan-300">
+      <span className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-sky-700 dark:border-sky-400/20 dark:bg-sky-500/10 dark:text-sky-300">
         {badge}
       </span>
     </div>
@@ -590,7 +566,7 @@ function RecentProductRow({ product }: { product: Product }) {
   const updatedLabel = formatProductDate(product.updatedAt || product.createdAt)
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-cyan-200 dark:border-white/8 dark:bg-white/[0.03] dark:hover:border-cyan-400/20">
+    <div className="rounded-lg border border-slate-200/80 bg-slate-50/50 p-4 transition hover:border-sky-200 dark:border-slate-700/50 dark:bg-slate-800/30 dark:hover:border-sky-400/20">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{product.name}</p>
@@ -602,7 +578,7 @@ function RecentProductRow({ product }: { product: Product }) {
           className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold ${
             Number(product.status) === 1 || Number(product.status) === 2
               ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-300'
-              : 'border-slate-200 bg-white text-slate-600 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300'
+              : 'border-slate-200/80 bg-slate-50/50 text-slate-600 dark:border-slate-700/50 dark:bg-slate-800/30 dark:text-slate-300'
           }`}
         >
           {Number(product.status) === 1 || Number(product.status) === 2 ? 'Active' : 'Inactive'}
