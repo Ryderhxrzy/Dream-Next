@@ -1,10 +1,13 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useRef, useState, useMemo } from 'react'
 import { cn } from 'tailwind-variants'
 import Image from 'next/image'
 import { RefreshCw, Search, Warehouse, PackageCheck, PackageMinus, PackageX, Boxes } from 'lucide-react'
-import { useGetZqCachedProductsQuery, useLazyGetZqInventoryQuery, ZqCachedProduct } from '@/store/api/productsApi'
+import { useSession } from 'next-auth/react'
+import { useGetPublicProductBrandsQuery } from '@/store/api/productBrandsApi'
+import { useGetSuppliersQuery } from '@/store/api/suppliersApi'
+import { useGetZqCachedProductsQuery, useLazyGetZqInventoryQuery, useGetProductsQuery, ZqCachedProduct, Product } from '@/store/api/productsApi'
 
 function StockBadge({ qty }: { qty: number }) {
   if (qty === 0) {
@@ -31,6 +34,69 @@ function StockBadge({ qty }: { qty: number }) {
   )
 }
 
+function ProductInventoryRow({ product, index }: { product: Product; index: number }) {
+  return (
+    <tr className={cn(
+      'border-b border-slate-200/80 transition-colors hover:bg-white/95 dark:border-slate-700/50 dark:hover:bg-slate-900',
+      index % 2 === 1 ? 'bg-slate-50/30 dark:bg-slate-900/30' : '',
+    )}>
+      {/* Product */}
+      <td className="px-5 py-4 align-top">
+        <div className="flex items-start gap-3">
+          <div className="relative mt-0.5 h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-slate-200/80 bg-slate-100 dark:border-slate-700 dark:bg-slate-800">
+            {product.image ? (
+              <Image src={product.image} alt={product.name} fill className="object-cover" unoptimized />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center">
+                <Warehouse className="h-5 w-5 text-slate-300 dark:text-slate-600" />
+              </div>
+            )}
+          </div>
+          <div className="min-w-0">
+            <p className="line-clamp-2 text-[13px] font-semibold leading-snug text-slate-800 dark:text-slate-100">{product.name}</p>
+            <span className="mt-1.5 inline-block rounded-md border border-slate-200/80 bg-slate-50/50 px-1.5 py-0.5 font-mono text-[10px] text-slate-400 dark:border-slate-700/50 dark:bg-slate-800 dark:text-slate-500">
+              {product.sku || 'No SKU'}
+            </span>
+          </div>
+        </div>
+      </td>
+
+      {/* Quantity */}
+      <td className="px-5 py-4 align-top">
+        <div className="min-w-[100px]">
+          <p className="text-lg font-bold text-slate-900 dark:text-white">
+            {Number(product.qty ?? 0).toLocaleString()}
+          </p>
+          <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">units</p>
+        </div>
+      </td>
+
+      {/* Status */}
+      <td className="px-5 py-4 align-top">
+        <span className={cn(
+          'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold',
+          Number(product.status) === 1 || Number(product.status) === 2
+            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400'
+            : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
+        )}>
+          <span className={cn('h-1.5 w-1.5 rounded-full', Number(product.status) === 1 || Number(product.status) === 2 ? 'bg-emerald-500' : 'bg-slate-400')} />
+          {Number(product.status) === 1 || Number(product.status) === 2 ? 'Active' : 'Inactive'}
+        </span>
+      </td>
+
+      {/* Price */}
+      <td className="px-5 py-4 align-top">
+        <div className="min-w-[100px]">
+          <p className="text-sm font-medium text-slate-900 dark:text-white">
+            ₱{Number(product.priceSrp ?? 0).toLocaleString('en-PH', { maximumFractionDigits: 2 })}
+          </p>
+          <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">SRP</p>
+        </div>
+      </td>
+    </tr>
+  )
+}
+
 function InventoryRow({ product, index }: { product: ZqCachedProduct; index: number }) {
   const [checkLive, { data, isFetching, isError }] = useLazyGetZqInventoryQuery()
   const hasResult = data !== undefined || isError
@@ -38,13 +104,13 @@ function InventoryRow({ product, index }: { product: ZqCachedProduct; index: num
 
   return (
     <tr className={cn(
-      'border-b border-slate-100 transition-colors hover:bg-white dark:border-slate-800/50 dark:hover:bg-slate-900',
+      'border-b border-slate-200/80 transition-colors hover:bg-white/95 dark:border-slate-700/50/50 dark:hover:bg-slate-900',
       index % 2 === 1 ? 'bg-slate-50/40 dark:bg-slate-900/30' : '',
     )}>
       {/* Product */}
       <td className="px-5 py-4 align-top">
         <div className="flex items-start gap-3">
-          <div className="relative mt-0.5 h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800">
+          <div className="relative mt-0.5 h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-slate-200/80 bg-slate-100 dark:border-slate-700 dark:bg-slate-800">
             {product.primaryImage ? (
               <Image src={product.primaryImage} alt={product.subject} fill className="object-cover" unoptimized />
             ) : (
@@ -55,7 +121,7 @@ function InventoryRow({ product, index }: { product: ZqCachedProduct; index: num
           </div>
           <div className="min-w-0">
             <p className="line-clamp-2 text-[13px] font-semibold leading-snug text-slate-800 dark:text-slate-100">{product.subject}</p>
-            <span className="mt-1.5 inline-block rounded-md border border-slate-100 bg-slate-50 px-1.5 py-0.5 font-mono text-[10px] text-slate-400 dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-500">
+            <span className="mt-1.5 inline-block rounded-md border border-slate-200/80 bg-slate-50 px-1.5 py-0.5 font-mono text-[10px] text-slate-400 dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-500">
               {product.externalId}
             </span>
           </div>
@@ -166,9 +232,78 @@ export default function SupplierInventoryPage() {
   const [page, setPage] = useState(1)
   const perPage = 25
 
+  const { data: session, status } = useSession()
+  const supplierId = Number(session?.user?.supplierId ?? 0)
+  const supplierName = session?.user?.supplierName || session?.user?.name || 'Supplier'
+
+  const { data: suppliersData } = useGetSuppliersQuery(undefined, { skip: status !== 'authenticated' })
+  const { data: brandsData } = useGetPublicProductBrandsQuery()
+
+  const supplier = useMemo(
+    () => (suppliersData?.suppliers ?? []).find((item) => item.id === supplierId),
+    [supplierId, suppliersData?.suppliers],
+  )
+
+  const zqBrandId = useMemo(() => {
+    const brands = brandsData?.brands ?? []
+    const zqBrand = brands.find(brand => {
+      const brandKey = String(brand.name ?? '').toLowerCase().replace(/[^a-z0-9]/g, '')
+      return brandKey === 'zq' || brandKey === 'globalsupplier' || brandKey === 'zqdropshipping'
+    })
+    return zqBrand?.id ? Number(zqBrand.id) : 0
+  }, [brandsData?.brands])
+
+  const brandType = useMemo(() => {
+    const brands = brandsData?.brands ?? []
+    if (brands.length === 0) return 0
+
+    const candidates = [supplierName, supplier?.company, supplier?.name]
+      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+      .map((value) => value.toLowerCase().replace(/[^a-z0-9]/g, ''))
+
+    if (candidates.length === 0) return 0
+
+    const exactMatch = brands.find((brand) => {
+      const brandKey = String(brand.name ?? '').toLowerCase().replace(/[^a-z0-9]/g, '')
+      return brandKey !== '' && candidates.some((candidate) => candidate === brandKey)
+    })
+
+    if (exactMatch?.id) return Number(exactMatch.id)
+
+    let bestId = 0
+    let bestScore = 0
+    let bestLen = 0
+
+    brands.forEach((brand) => {
+      const brandKey = String(brand.name ?? '').toLowerCase().replace(/[^a-z0-9]/g, '')
+      if (!brandKey) return
+
+      candidates.forEach((candidate) => {
+        if (!candidate) return
+        let score = 0
+        if (candidate === brandKey) score = 3
+        else if (candidate.includes(brandKey)) score = 2
+        else if (brandKey.includes(candidate)) score = 1
+
+        if (score > 0) {
+          const len = brandKey.length
+          if (score > bestScore || (score === bestScore && len > bestLen)) {
+            bestScore = score
+            bestLen = len
+            bestId = Number(brand.id ?? 0)
+          }
+        }
+      })
+    })
+
+    return bestId
+  }, [brandsData?.brands, supplier?.company, supplier?.name, supplierName])
+
   const scrollRef = useRef<HTMLDivElement>(null)
   const dragState = useRef({ isDragging: false, startX: 0, scrollLeft: 0 })
   const [isDragging, setIsDragging] = useState(false)
+
+  const isZqSupplier = zqBrandId > 0 && brandType === zqBrandId
 
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     const target = e.target as HTMLElement
@@ -193,14 +328,36 @@ export default function SupplierInventoryPage() {
     setIsDragging(false)
   }, [])
 
-  const { data, isLoading, isFetching, refetch } = useGetZqCachedProductsQuery({
-    page,
-    perPage,
-    search: search || undefined,
-  })
+  const { data: zqData, isLoading: zqIsLoading, isFetching: zqIsFetching, refetch: zqRefetch } = useGetZqCachedProductsQuery(
+    {
+      page,
+      perPage,
+      search: search || undefined,
+    },
+    { skip: !isZqSupplier },
+  )
 
-  const products = data?.products ?? []
-  const meta = data?.meta
+  const { data: supplierData, isLoading: supplierIsLoading, isFetching: supplierIsFetching, refetch: supplierRefetch } = useGetProductsQuery(
+    {
+      supplierId,
+      page,
+      perPage,
+      search: search || undefined,
+    },
+    { skip: isZqSupplier || supplierId <= 0 },
+  )
+
+  const isLoading = isZqSupplier ? zqIsLoading : supplierIsLoading
+  const isFetching = isZqSupplier ? zqIsFetching : supplierIsFetching
+  const refetch = isZqSupplier ? zqRefetch : supplierRefetch
+
+  const zqProducts = zqData?.products ?? []
+  const zqMeta = zqData?.meta
+  const supplierProducts = supplierData?.products ?? []
+  const supplierMeta = supplierData?.meta
+
+  const products = isZqSupplier ? zqProducts : supplierProducts
+  const meta = isZqSupplier ? zqMeta : supplierMeta
 
   const stats = [
     {
@@ -245,11 +402,23 @@ export default function SupplierInventoryPage() {
       {/* Page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-violet-600 dark:text-violet-400">Global Supplier</p>
-          <h1 className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">ZQ Inventory</h1>
-          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-            Live warehouse stock from Global Supplier (ZQ) — check per product on demand.
-          </p>
+          {isZqSupplier ? (
+            <>
+              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-violet-600 dark:text-violet-400">Global Supplier</p>
+              <h1 className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">ZQ Inventory</h1>
+              <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+                Live warehouse stock from Global Supplier (ZQ) — check per product on demand.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-sky-600 dark:text-sky-400">{supplierName}</p>
+              <h1 className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">Product Inventory</h1>
+              <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+                View and manage your product inventory levels.
+              </p>
+            </>
+          )}
         </div>
 
         <div className="flex shrink-0 items-center gap-2.5">
@@ -260,14 +429,14 @@ export default function SupplierInventoryPage() {
               placeholder="Search products..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-              className="h-10 w-56 rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-700 placeholder-slate-400 outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:focus:border-violet-500 dark:focus:ring-violet-500/15"
+              className="h-10 w-56 rounded-lg border border-slate-200/80 bg-white/95 pl-9 pr-3 text-sm text-slate-700 placeholder-slate-400 outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100 dark:border-slate-700/50 dark:bg-slate-800 dark:text-slate-200 dark:focus:border-violet-500 dark:focus:ring-violet-500/15"
             />
           </div>
           <button
             type="button"
             onClick={() => refetch()}
             disabled={isFetching}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-violet-500/40 dark:hover:bg-violet-500/10 dark:hover:text-violet-300"
+            className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200/80 bg-white/95 px-3.5 text-sm font-semibold text-slate-600 transition hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 disabled:opacity-50 dark:border-slate-700/50 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-violet-500/40 dark:hover:bg-violet-500/10 dark:hover:text-violet-300"
           >
             <RefreshCw className={cn('h-4 w-4', isFetching ? 'animate-spin' : '')} />
             Refresh
@@ -280,7 +449,7 @@ export default function SupplierInventoryPage() {
         {stats.map((stat) => {
           const Icon = stat.icon
           return (
-            <div key={stat.label} className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-100 dark:border-slate-800 dark:bg-slate-950 dark:shadow-none">
+            <div key={stat.label} className="relative overflow-hidden rounded-lg border border-slate-200/80 bg-white/95 p-4  dark:border-slate-700/50 dark:bg-slate-900 ">
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">{stat.label}</p>
@@ -301,7 +470,7 @@ export default function SupplierInventoryPage() {
       </div>
 
       {/* Table card */}
-      <div className="overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white shadow-[0_18px_50px_-28px_rgba(15,23,42,0.22)] dark:border-slate-800 dark:bg-slate-950 dark:shadow-[0_24px_70px_-34px_rgba(139,92,246,0.12)]">
+      <div className="overflow-hidden rounded-lg border border-slate-200/80 bg-white/95  dark:border-slate-700/50 dark:bg-slate-900 ">
         {/* loading bar */}
         {isFetching && (
           <div className="h-0.5 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
@@ -319,20 +488,25 @@ export default function SupplierInventoryPage() {
           onMouseLeave={stopDrag}
         >
           <table className="w-full min-w-[900px] border-separate border-spacing-0 text-sm">
-            <thead className="bg-slate-50/95 dark:bg-slate-900">
+            <thead className="bg-slate-50/50 dark:bg-slate-800/30">
               <tr>
-                {[
+                {(isZqSupplier ? [
                   { label: 'Product', width: 'min-w-[300px]' },
                   { label: 'Category', width: 'min-w-[150px]' },
                   { label: 'Cached Stock', width: 'min-w-[130px]' },
                   { label: 'Live Check', width: 'min-w-[160px]' },
                   { label: 'Status', width: 'min-w-[110px]' },
                   { label: 'Last Synced', width: 'min-w-[120px]' },
-                ].map((col) => (
+                ] : [
+                  { label: 'Product', width: 'min-w-[300px]' },
+                  { label: 'Quantity', width: 'min-w-[120px]' },
+                  { label: 'Status', width: 'min-w-[110px]' },
+                  { label: 'Price', width: 'min-w-[120px]' },
+                ]).map((col) => (
                   <th
                     key={col.label}
                     className={cn(
-                      'border-b border-slate-200 px-5 py-4 text-left text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:border-slate-800 dark:text-slate-500',
+                      'border-b border-slate-200/80 px-5 py-4 text-left text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:border-slate-700/50 dark:text-slate-500',
                       col.width,
                     )}
                   >
@@ -344,17 +518,17 @@ export default function SupplierInventoryPage() {
             <tbody>
               {isLoading ? (
                 Array.from({ length: 7 }).map((_, i) => (
-                  <tr key={i} className={cn('border-b border-slate-100 dark:border-slate-800/50', i % 2 === 1 ? 'bg-slate-50/40 dark:bg-slate-900/30' : '')}>
+                  <tr key={i} className={cn('border-b border-slate-200/80 dark:border-slate-700/50', i % 2 === 1 ? 'bg-slate-50/40 dark:bg-slate-900/30' : '')}>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="h-12 w-12 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
+                        <div className="h-12 w-12 animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800" />
                         <div className="flex-1 space-y-2">
                           <div className="h-3 animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800" />
                           <div className="h-2.5 w-24 animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800" />
                         </div>
                       </div>
                     </td>
-                    {[1, 2, 3, 4, 5].map((c) => (
+                    {Array.from({ length: isZqSupplier ? 5 : 3 }).map((_, c) => (
                       <td key={c} className="px-5 py-4">
                         <div className="h-6 animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800" />
                       </td>
@@ -363,27 +537,29 @@ export default function SupplierInventoryPage() {
                 ))
               ) : products.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-20 text-center">
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800">
+                  <td colSpan={isZqSupplier ? 6 : 4} className="py-20 text-center">
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
                       <Warehouse className="h-7 w-7 text-slate-300 dark:text-slate-600" />
                     </div>
                     <p className="mt-4 text-sm font-semibold text-slate-500 dark:text-slate-400">No products found</p>
                     <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-                      {search ? 'Try a different search term.' : 'Sync products from Global Supplier first.'}
+                      {search ? 'Try a different search term.' : isZqSupplier ? 'Sync products from Global Supplier first.' : 'Add products to your inventory.'}
                     </p>
                   </td>
                 </tr>
               ) : (
-                products.map((product, index) => (
-                  <InventoryRow key={product.id} product={product} index={index} />
-                ))
+                products.map((product, index) =>
+                  isZqSupplier
+                    ? <InventoryRow key={product.id} product={product as ZqCachedProduct} index={index} />
+                    : <ProductInventoryRow key={product.id} product={product as Product} index={index} />
+                )
               )}
             </tbody>
           </table>
         </div>
 
         {/* Pagination footer */}
-        <div className="border-t border-slate-200 bg-slate-50/90 px-5 py-3.5 dark:border-slate-800 dark:bg-slate-900/80">
+        <div className="border-t border-slate-200/80 bg-slate-50/50 px-5 py-3.5 dark:border-slate-700/50 dark:bg-slate-800/30">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {meta
@@ -397,7 +573,7 @@ export default function SupplierInventoryPage() {
                   type="button"
                   disabled={page === 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-600 transition hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-violet-500/40 dark:hover:bg-violet-500/10 dark:hover:text-violet-300"
+                  className="rounded-lg border border-slate-200/80 bg-white/95 px-3.5 py-2 text-sm font-medium text-slate-600 transition hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700/50 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-violet-500/40 dark:hover:bg-violet-500/10 dark:hover:text-violet-300"
                 >
                   ← Prev
                 </button>
@@ -408,7 +584,7 @@ export default function SupplierInventoryPage() {
                   type="button"
                   disabled={page === meta.last_page}
                   onClick={() => setPage((p) => Math.min(meta.last_page, p + 1))}
-                  className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-600 transition hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-violet-500/40 dark:hover:bg-violet-500/10 dark:hover:text-violet-300"
+                  className="rounded-lg border border-slate-200/80 bg-white/95 px-3.5 py-2 text-sm font-medium text-slate-600 transition hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700/50 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-violet-500/40 dark:hover:bg-violet-500/10 dark:hover:text-violet-300"
                 >
                   Next →
                 </button>
