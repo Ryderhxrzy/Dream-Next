@@ -9,6 +9,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import OutlineButton from '@/components/ui/buttons/OutlineButton';
 import PrimaryButton from '@/components/ui/buttons/PrimaryButton';
 import type { Product, ProductVariant } from '@/store/api/productsApi';
+import { useSession } from 'next-auth/react';
 
 type CheckoutSummaryProduct = CategoryProduct | Product;
 
@@ -43,6 +44,11 @@ export default function CustomerCheckoutOrderSummary({
   checkoutDisabledReason,
   fullProduct,
 }: Props) {
+  const { data: session, status } = useSession();
+  const role = String(session?.user?.role ?? '').toLowerCase();
+  const isLoggedIn = status === 'authenticated' && (role === 'customer' || role === '');
+  const canUseMemberPrice = isLoggedIn && status === 'authenticated';
+
   const [variantPickerOpen, setVariantPickerOpen] = useState(false);
   const variantOptions = (fullProduct?.variants ?? []).filter((v) =>
     Boolean(v.color || v.style || v.size || v.name || v.sku),
@@ -263,14 +269,18 @@ export default function CustomerCheckoutOrderSummary({
               <span className="font-semibold">-PHP {voucherDiscount.toLocaleString()}</span>
             </div>
           ) : null}
-          <div className="flex justify-between text-slate-500 dark:text-slate-400">
-            <span>PV per item</span>
-            <span className="font-semibold text-blue-700">{unitPv.toLocaleString()} PV</span>
-          </div>
-          <div className="flex justify-between text-slate-500 dark:text-slate-400">
-            <span>Total PV</span>
-            <span className="font-semibold text-blue-700">{totalPv.toLocaleString()} PV</span>
-          </div>
+          {canUseMemberPrice && (
+            <>
+              <div className="flex justify-between text-slate-500 dark:text-slate-400">
+                <span>PV per item</span>
+                <span className="font-semibold text-blue-700">{unitPv.toLocaleString()} PV</span>
+              </div>
+              <div className="flex justify-between text-slate-500 dark:text-slate-400">
+                <span>Total PV</span>
+                <span className="font-semibold text-blue-700">{totalPv.toLocaleString()} PV</span>
+              </div>
+            </>
+          )}
           <div className="flex justify-between text-slate-500 dark:text-slate-400">
             <div className="flex items-center gap-1.5">
               <span>Shipping fee</span>

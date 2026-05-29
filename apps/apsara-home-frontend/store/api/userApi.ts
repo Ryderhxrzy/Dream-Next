@@ -538,6 +538,14 @@ export const userApi = baseApi.injectEndpoints({
             providesTags: ['User', 'WebstoreRequests'],
         }),
 
+        webstoreRequestHistory: builder.query<{ requests: WebstoreRequest[] }, void>({
+            query: () => ({
+                url: '/api/webstore-requests',
+                method: 'GET',
+            }),
+            providesTags: ['User', 'WebstoreRequests'],
+        }),
+
         syncWebstorePartnerAccount: builder.mutation<{ message: string; partner?: { id: number; username: string; storefront_ids: number[] } }, void>({
             query: () => ({
                 url: '/api/webstore-requests/sync-account',
@@ -656,6 +664,7 @@ export const {
     useLazyVerifyWebstorePaymentSessionQuery,
     useUsernameChangeLatestQuery,
     useWebstoreRequestLatestQuery,
+    useWebstoreRequestHistoryQuery,
     useSyncWebstorePartnerAccountMutation,
     useReferralTreeQuery,
     useMemberActivityQuery,

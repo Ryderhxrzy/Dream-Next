@@ -174,31 +174,33 @@ const mapProductToDisplay = (product: Product | LooseRecord, apiUrl?: string): D
   const dp = toNumber(row.priceDp ?? row.pd_price_dp ?? 0);
   const prodpv = toNumber(row.prodpv ?? row.pd_prodpv ?? 0);
   const price = srp;
+
   const rawVariants = Array.isArray(row.variants)
     ? row.variants
     : Array.isArray(row.pd_variants)
       ? row.pd_variants
       : [];
-  const variants = rawVariants.map((item) => {
-    const variant = toLooseRecord(item);
+
+  const variants = rawVariants.map((variantRow: unknown) => {
+    const variant = toLooseRecord(variantRow);
     return {
       qty: toNumber(variant.qty ?? variant.pv_qty ?? 0),
       status: toNumber(variant.status ?? variant.pv_status ?? 1),
     };
   });
+
   const stock = resolveDisplayStock(toNumber(row.qty ?? row.pd_qty ?? 0), variants);
-
-  let badge: string | undefined;
-  if (toBoolean(row.salespromo ?? row.pd_salespromo)) badge = 'SALE';
-  else if (toBoolean(row.bestseller ?? row.pd_bestseller)) badge = 'BEST SELLER';
-  else if (toBoolean(row.musthave ?? row.pd_musthave)) badge = 'MUST HAVE';
-
   const rawImage = (row.image ?? row.pd_image) as string | null | undefined;
   const rawImages = toStringArray(row.images ?? row.pd_images);
   const verified = toBoolean(row.verified ?? row.pd_verified);
   const brand = typeof row.brand === 'string' ? row.brand : undefined;
   const soldCount = toNumber(row.soldCount ?? row.sold_count ?? 0);
   const avgRating = toNumber(row.avgRating ?? row.avg_rating ?? row.rating ?? 0);
+
+  let badge: string | undefined;
+  if (toBoolean(row.salespromo ?? row.pd_salespromo)) badge = 'SALE';
+  else if (toBoolean(row.bestseller ?? row.pd_bestseller)) badge = 'BEST SELLER';
+  else if (toBoolean(row.musthave ?? row.pd_musthave)) badge = 'MUST HAVE';
 
   return {
     id: toNumber(row.id ?? row.pd_id ?? 0) || undefined,
@@ -213,7 +215,7 @@ const mapProductToDisplay = (product: Product | LooseRecord, apiUrl?: string): D
     prodpv,
     originalPrice: undefined,
     image: resolveImageUrl(rawImage, apiUrl),
-    images: rawImages.map((item) => resolveImageUrl(item, apiUrl)),
+    images: rawImages.map((img) => resolveImageUrl(img, apiUrl)),
     badge,
     verified,
     stock,
@@ -224,9 +226,9 @@ const mapProductToDisplay = (product: Product | LooseRecord, apiUrl?: string): D
   };
 };
 
-async function getCategoryProducts(slug: string): Promise<{ label?: string; products?: DisplayProduct[] }> {
+async function getCategoryProducts(slug: string): Promise<{ label?: string; products?: DisplayProduct[]; totalProducts?: number }> {
   const apiUrl = process.env.LARAVEL_API_URL ?? process.env.NEXT_PUBLIC_LARAVEL_API_URL;
-  if (!apiUrl) return { label: titleFromSlug(slug), products: [] };
+  if (!apiUrl) return { label: titleFromSlug(slug), products: [], totalProducts: 0 };
 
   try {
     const categoriesRes = await fetch(`${apiUrl}/api/categories`, {
@@ -236,7 +238,7 @@ async function getCategoryProducts(slug: string): Promise<{ label?: string; prod
     });
 
     if (!categoriesRes.ok) {
-      return { label: titleFromSlug(slug), products: [] };
+      return { label: titleFromSlug(slug), products: [], totalProducts: 0 };
     }
 
     const categoriesJson = (await categoriesRes.json()) as ApiCategoriesResponse;
@@ -260,6 +262,7 @@ async function getCategoryProducts(slug: string): Promise<{ label?: string; prod
         return Number(b.id ?? 0) - Number(a.id ?? 0);
       })[0];
 
+    const categoryLabel = category?.name ?? titleFromSlug(slug);
     const categoryId = category ? Number(category.id) : undefined;
     const categoryIds = Array.from(
       new Set(
@@ -268,17 +271,27 @@ async function getCategoryProducts(slug: string): Promise<{ label?: string; prod
           .filter((id) => Number.isFinite(id)),
       ),
     );
-    const categoryLabel = category?.name ?? titleFromSlug(slug);
 
-    const fetchProductsByCategory = async (id?: number) => {
-      const fetchPage = async (page: number) => {
+    const fetchProductsByCategory = async (
+      id?: number,
+      minimumCount = 50,
+    ): Promise<DisplayProduct[]> => {
+      const perPage = 100;
+
+      const seenIds = new Set<number>();
+      const seenNames = new Set<string>();
+      const result: DisplayProduct[] = [];
+
+      const normalizeKey = (value: string) => value.trim().toLowerCase();
+
+      let page = 1;
+      let lastPage = 1;
+
+      const fetchPage = async (pageToFetch: number) => {
         const productsUrl = new URL(`${apiUrl}/api/products`);
-        productsUrl.searchParams.set('page', String(page));
-        productsUrl.searchParams.set('per_page', '100');
+        productsUrl.searchParams.set('page', String(pageToFetch));
+        productsUrl.searchParams.set('per_page', String(perPage));
         productsUrl.searchParams.set('status', '1');
-        if (typeof id === 'number' && Number.isFinite(id)) {
-          productsUrl.searchParams.set('cat_id', String(id));
-        }
 
         const productsRes = await fetch(productsUrl.toString(), {
           method: 'GET',
@@ -287,7 +300,7 @@ async function getCategoryProducts(slug: string): Promise<{ label?: string; prod
         });
 
         if (!productsRes.ok) {
-          return { products: [] as Product[], lastPage: 1 };
+          return { products: [] as Product[], metaLastPage: 1 };
         }
 
         const productsJson = (await productsRes.json()) as ProductsResponse & {
@@ -296,85 +309,94 @@ async function getCategoryProducts(slug: string): Promise<{ label?: string; prod
 
         return {
           products: extractProducts(productsJson),
-          lastPage: Number(productsJson?.meta?.last_page ?? 1) || 1,
+          metaLastPage: Number(productsJson?.meta?.last_page ?? 1) || 1,
         };
       };
 
-      const firstPage = await fetchPage(1);
-      if (firstPage.lastPage <= 1) {
-        return firstPage.products;
-      }
+      const slugLower = slug.toLowerCase();
+      const matchingCategoryIdSet = new Set(categoryIds);
 
-      const remainingPages = await Promise.all(
-        Array.from({ length: firstPage.lastPage - 1 }, (_, index) => fetchPage(index + 2)),
-      );
+      while (page <= lastPage && result.length < minimumCount) {
+        const batch = await fetchPage(page);
 
-      return [firstPage, ...remainingPages].flatMap((batch) => batch.products);
-    };
+        lastPage = batch.metaLastPage || lastPage;
 
-    const productBatches = categoryIds.length > 0
-      ? await Promise.all(categoryIds.map((id) => fetchProductsByCategory(id)))
-      : [await fetchProductsByCategory(categoryId)];
-    const products = productBatches.flat();
-    const matchingCategoryIdSet = new Set(categoryIds);
+        for (const item of batch.products) {
+          if (result.length >= minimumCount) break;
 
-    return {
-      label: categoryLabel,
-      products: products
-        .filter((item) => {
           const row = toLooseRecord(item);
+
           const productCategoryId = Number(
             row.catid ??
-            row.pd_catid ??
-            row.cat_id ??
-            row.category_id ??
-            ((row.category as LooseRecord | undefined)?.id) ??
-            -1,
+              row.pd_catid ??
+              row.cat_id ??
+              row.category_id ??
+              ((row.category as LooseRecord | undefined)?.id) ??
+              -1,
           );
           const productCategorySlug = resolveProductCategorySlug(row);
 
-          const byId = matchingCategoryIdSet.size > 0
-            ? matchingCategoryIdSet.has(productCategoryId)
-            : (typeof categoryId === 'number' && Number.isFinite(categoryId) && productCategoryId === categoryId);
-          const bySlug = productCategorySlug === slug.toLowerCase();
+          const byId =
+            matchingCategoryIdSet.size > 0
+              ? matchingCategoryIdSet.has(productCategoryId)
+              : (typeof categoryId === 'number' && Number.isFinite(categoryId) && productCategoryId === categoryId);
 
-          return byId || bySlug;
-        })
-        .filter((item, index, list) => {
-          const row = toLooseRecord(item);
-          const currentId = Number(row.id ?? row.pd_id ?? 0);
-          if (currentId > 0) {
-            return list.findIndex((candidate) => {
-              const candidateRow = toLooseRecord(candidate);
-              return Number(candidateRow.id ?? candidateRow.pd_id ?? 0) === currentId;
-            }) === index;
+          const bySlug = productCategorySlug === slugLower;
+
+          if (!(byId || bySlug)) continue;
+
+          const display = mapProductToDisplay(item, apiUrl);
+
+          const currentId = display.id ? Number(display.id) : undefined;
+          if (typeof currentId === 'number' && Number.isFinite(currentId) && currentId > 0) {
+            if (seenIds.has(currentId)) continue;
+            seenIds.add(currentId);
+          } else {
+            const key = normalizeKey(display.name);
+            if (seenNames.has(key)) continue;
+            seenNames.add(key);
           }
 
-          const currentName = String(row.name ?? row.pd_name ?? '').trim().toLowerCase();
-          if (!currentName) return true;
-          return list.findIndex((candidate) => {
-            const candidateRow = toLooseRecord(candidate);
-            return String(candidateRow.name ?? candidateRow.pd_name ?? '').trim().toLowerCase() === currentName;
-          }) === index;
-        })
-        .map((item) => mapProductToDisplay(item, apiUrl)),
+          result.push(display);
+        }
+
+        page += 1;
+
+        if (!Number.isFinite(lastPage) || lastPage < 1) break;
+      }
+
+      return result;
+    };
+
+    const minimumDisplayProducts = 50;
+    const filteredMapped = categoryIds.length > 0
+      ? (await Promise.all(categoryIds.map((id) => fetchProductsByCategory(id, minimumDisplayProducts)))).flat()
+      : await fetchProductsByCategory(categoryId, minimumDisplayProducts);
+    const totalProducts = Number(category?.product_count ?? filteredMapped.length ?? 0) || 0;
+
+    return {
+      label: categoryLabel,
+      products: filteredMapped,
+      totalProducts,
     };
   } catch {
     return {
       label: titleFromSlug(slug),
       products: [],
+      totalProducts: 0,
     };
   }
 }
 
 async function CategoryContent({ slug, navbarCategories }: { slug: string; navbarCategories: Category[] }) {
-  const { label, products } = await getCategoryProducts(slug);
+  const { label, products, totalProducts } = await getCategoryProducts(slug);
 
   return (
     <CategoryListProductMain
       slug={slug}
       initialCategoryLabel={label}
       initialProducts={products}
+      initialTotalProducts={totalProducts}
       initialCategories={navbarCategories}
     />
   );

@@ -9,6 +9,7 @@ import { useGetPublicProductsQuery } from '@/store/api/productsApi';
 import { usePathname } from 'next/navigation';
 import PrimaryButton from '@/components/ui/buttons/PrimaryButton';
 import { buildStorefrontProductPath, extractPartnerSlugFromPath } from '@/libs/storefrontRouting';
+import { useSession } from 'next-auth/react';
 
 interface CompleteTheLookProps {
   currentCategory: string;
@@ -84,7 +85,15 @@ const CompleteTheLook = ({ currentCategory, currentCategoryId, currentCategoryLa
   const { addToCart } = useCart();
   const pathname = usePathname();
   const partnerSlug = extractPartnerSlugFromPath(pathname);
-  const forceRealPrice = Boolean(partnerSlug) && !enableActivateDiscount;
+
+  const { data: session, status } = useSession();
+  const role = String(session?.user?.role ?? '').toLowerCase();
+  const isLoggedIn = status === 'authenticated' && (role === 'customer' || role === '');
+  const canUseMemberPrice = isLoggedIn;
+
+  // Show real SRP for non-members; allow member-discount only when the viewer can use member price.
+  const forceRealPrice = !canUseMemberPrice || (Boolean(partnerSlug) && !enableActivateDiscount);
+
   const { title, subtitle } = useMemo(
     () => resolveBundleCopy(currentCategoryLabel, currentCategory),
     [currentCategoryLabel, currentCategory],
@@ -128,7 +137,11 @@ const CompleteTheLook = ({ currentCategory, currentCategoryId, currentCategoryLa
       .map((product) => {
         const srpPrice = Number(product.priceSrp ?? 0) || 0;
         const memberPrice = Number(product.priceMember ?? 0) || 0;
-        const effectivePrice = !forceRealPrice && memberPrice > 0 && memberPrice < srpPrice ? memberPrice : srpPrice;
+
+        // Non-members always get the real SRP.
+        // Members get member price only when it's cheaper and allowed.
+        const effectivePrice =
+          !forceRealPrice && memberPrice > 0 && memberPrice < srpPrice ? memberPrice : srpPrice;
 
         return {
           id: product.id,
@@ -258,14 +271,17 @@ const CompleteTheLook = ({ currentCategory, currentCategoryId, currentCategoryLa
               {selectedSet.size} item{selectedSet.size !== 1 ? 's' : ''} selected
             </p>
             <p className="text-lg font-bold text-slate-900 dark:text-gray-100">
-              Total: <span className="text-sky-500 dark:text-sky-400">{formatMoney(total)}</span>
+              Total: <span className="text-sky-500 dark:text-gray-400">{formatMoney(total)}</span>
             </p>
           </div>
-            <PrimaryButton
+          <PrimaryButton
             onClick={handleAddAll}
             disabled={selectedSet.size === 0}
             className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm"
           >
+            {/*
+              Explicit JSX children for PrimaryButton typing.
+            */}
             <CartIcon />
             Add {selectedSet.size > 0 ? `${selectedSet.size} Items` : 'Items'} to Cart
           </PrimaryButton>

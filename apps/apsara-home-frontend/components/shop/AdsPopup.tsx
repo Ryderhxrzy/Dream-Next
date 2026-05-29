@@ -56,8 +56,6 @@ export default function AdsPopup() {
   const [pendingOpen, setPendingOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
   const [isReady, setIsReady] = useState(false)
-  const [canClose, setCanClose] = useState(false)
-  const [countdown, setCountdown] = useState(10)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -77,10 +75,7 @@ export default function AdsPopup() {
       setIsOpen(false)
       return
     }
-    // Route changed: always reset stale popup state before scheduling next open.
     setIsOpen(false)
-    setCanClose(false)
-    setCountdown(10)
     setPendingOpen(true)
   }, [adsPage, pathname, isReady])
 
@@ -94,31 +89,9 @@ export default function AdsPopup() {
       setActiveIndex(0)
       setIsOpen(true)
       setPendingOpen(false)
-      setCanClose(false)
-      setCountdown(10)
     }, 350)
     return () => window.clearTimeout(timer)
   }, [activeItems.length, adsPage, pendingOpen, isReady, isLoading, isError])
-
-  useEffect(() => {
-    if (!isOpen) return
-    const openedAt = Date.now()
-    setCanClose(false)
-    setCountdown(10)
-    const tickTimer = window.setInterval(() => {
-      const elapsedSeconds = Math.floor((Date.now() - openedAt) / 1000)
-      const remaining = Math.max(0, 10 - elapsedSeconds)
-      setCountdown(remaining)
-      if (remaining <= 0) {
-        setCanClose(true)
-        window.clearInterval(tickTimer)
-      }
-    }, 250)
-
-    return () => {
-      window.clearInterval(tickTimer)
-    }
-  }, [isOpen])
 
   if (!adsPage || isLoading || isError || activeItems.length === 0 || !isOpen) return null
 
@@ -128,30 +101,20 @@ export default function AdsPopup() {
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/65 px-4 py-6 backdrop-blur-md">
       <button
         type="button"
-        onClick={() => {
-          if (!canClose) return
-          setIsOpen(false)
-        }}
-        className={`absolute inset-0 ${canClose ? 'cursor-pointer' : 'cursor-default'}`}
+        onClick={() => setIsOpen(false)}
+        className="absolute inset-0 cursor-pointer"
         aria-label="Close ads popup"
       />
       <div className="relative z-[71] flex w-full max-w-[96vw] items-center justify-center">
         <div className="relative">
-          {!canClose ? (
-            <div className="absolute right-2 top-2 z-10 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-slate-700 shadow">
-              Close in {countdown}s
-            </div>
-          ) : null}
-          {canClose ? (
-            <button
-              type="button"
-              onClick={() => setIsOpen(false)}
-              className="absolute right-2 top-2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-[#ECECEC] text-sm font-semibold text-slate-700 shadow-md transition hover:bg-white"
-              aria-label="Close"
-            >
-              X
-            </button>
-          ) : null}
+          <button
+            type="button"
+            onClick={() => setIsOpen(false)}
+            className="absolute right-2 top-2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-[#ECECEC] text-sm font-semibold text-slate-700 shadow-md transition hover:bg-white"
+            aria-label="Close"
+          >
+            ✕
+          </button>
           {activeItem?.video_url ? (
             <video
               src={activeItem.video_url}

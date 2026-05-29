@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import Header from '@/components/landing-page/Header';
+import TopBar from '@/components/layout/TopBar';
+import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/landing-page/Footer';
 
 type LegalPageShellProps = {
@@ -12,10 +13,11 @@ type LegalPageShellProps = {
 export default function LegalPageShell({ title, subtitle, children }: LegalPageShellProps) {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-gray-950 text-gray-900 dark:text-white">
-      <Header cartCount={0} />
+      <TopBar />
+      <Navbar />
 
       {/* Page header band */}
-      <div className="bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 pt-24 md:pt-28 pb-8">
+      <div className="bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 pt-8 pb-8">
         <div className="container mx-auto px-4">
           <nav className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 mb-4">
             <Link href="/shop" className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
