@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { BarChart3, Gift, Network, Sparkles, TicketPercent, Zap } from 'lucide-react';
 import { WalletTypeFilter, useCreateAffiliateVoucherMutation, useGetWalletOverviewQuery } from '@/store/api/encashmentApi';
 import PvWalletTab from './PvWalletTab';
 import RewardsWalletTab from './RewardsWalletTab';
@@ -28,17 +29,18 @@ const formatDate = (value?: string | null) => {
 };
 
 // "Cash" tab removed — "All Wallets" is now the unified cash overview + ledger
-type WalletViewType = WalletTypeFilter | 'network' | 'performance';
+type WalletViewType = WalletTypeFilter | 'network' | 'performance' | 'egc';
 
-const walletOptions: Array<{ key: WalletViewType; label: string; icon: string }> = [
-  { key: 'network',     label: 'Network Earnings', icon: '↗' },
-  { key: 'all',         label: 'Overview',         icon: '◈' },
-  { key: 'rewards',     label: 'Rewards',          icon: '✦' },
-  { key: 'pv',          label: 'E-Voucher',        icon: '◆' },
-  { key: 'performance', label: 'Performance',      icon: '⚡' },
+const walletOptions: Array<{ key: WalletViewType; label: string; Icon: typeof BarChart3; iconClass: string }> = [
+  { key: 'network',     label: 'Network Earnings', Icon: Network,       iconClass: 'text-sky-600 dark:text-sky-400' },
+  { key: 'all',         label: 'Overview',         Icon: BarChart3,     iconClass: 'text-indigo-600 dark:text-indigo-400' },
+  { key: 'rewards',     label: 'Rewards',          Icon: Sparkles,      iconClass: 'text-amber-600 dark:text-amber-400' },
+  { key: 'egc',         label: 'E-GC',             Icon: Gift,          iconClass: 'text-fuchsia-600 dark:text-fuchsia-400' },
+  { key: 'pv',          label: 'E-Voucher',        Icon: TicketPercent, iconClass: 'text-blue-600 dark:text-blue-400' },
+  { key: 'performance', label: 'Performance',      Icon: Zap,           iconClass: 'text-orange-500 dark:text-orange-400' },
 ];
 
-const walletOptionOrder: WalletViewType[] = ['all', 'rewards', 'pv', 'network', 'performance'];
+const walletOptionOrder: WalletViewType[] = ['all', 'rewards', 'pv', 'egc', 'network', 'performance'];
 const orderedWalletOptions = [...walletOptions].sort(
   (a, b) => walletOptionOrder.indexOf(a.key) - walletOptionOrder.indexOf(b.key),
 );
@@ -74,6 +76,12 @@ const walletMeta = {
     gradient: 'from-amber-500 via-orange-500 to-rose-500',
     glow: 'shadow-amber-500/20',
   },
+  egc: {
+    title: 'E-GC',
+    subtitle: 'View electronic gift credits from referral rewards and store-credit programs.',
+    gradient: 'from-fuchsia-500 via-pink-500 to-amber-500',
+    glow: 'shadow-fuchsia-500/20',
+  },
 };
 
 type WalletTabProps = {
@@ -93,7 +101,7 @@ export default function WalletTab({ initialWalletType = 'all' }: WalletTabProps)
     : walletType === 'pv'
       ? 'rewards'
       : walletType;
-  const queryWalletType: WalletTypeFilter = (contentWalletType === 'network' || contentWalletType === 'performance') ? 'all' : contentWalletType;
+  const queryWalletType: WalletTypeFilter = (contentWalletType === 'network' || contentWalletType === 'performance' || contentWalletType === 'egc') ? 'all' : contentWalletType;
   const { data, isLoading, isFetching, isError, refetch } = useGetWalletOverviewQuery({
     page,
     perPage: 15,
@@ -174,7 +182,7 @@ export default function WalletTab({ initialWalletType = 'all' }: WalletTabProps)
                 }`}
               >
                 <span className="flex items-center gap-1.5">
-                  <span className="text-sm leading-none">{item.icon}</span>
+                  <item.Icon className={`h-3.5 w-3.5 ${item.iconClass}`} strokeWidth={2.4} />
                   {item.label}
                 </span>
                 {walletType === item.key && (
@@ -222,6 +230,13 @@ export default function WalletTab({ initialWalletType = 'all' }: WalletTabProps)
                   <NetworkEarningsTab
                     awards={data?.unilevel_awards ?? []}
                     monthlyActivation={summary?.monthly_activation}
+                  />
+                )
+              ) : contentWalletType === 'egc' ? (
+                isLoading ? <SkeletonCards /> : isError ? <ErrorBanner msg="Failed to load E-GC data." /> : (
+                  <EgcWalletPanel
+                    availableEgcBalance={Number(summary?.available_egc_balance ?? 0)}
+                    pendingReferralEarnings={Number(summary?.pending_referral_earnings ?? 0)}
                   />
                 )
               ) : contentWalletType === 'rewards' ? (
@@ -595,6 +610,53 @@ function BalanceCard({ label, value, sub, gradient, border, iconBg, iconColor, v
       </div>
       <p className={`mt-3 font-black leading-tight ${large ? 'text-xl' : 'text-lg'} ${valueColor}`}>{value}</p>
       <p className={`mt-1 text-[11px] font-medium ${subColor}`}>{sub}</p>
+    </div>
+  );
+}
+
+function EgcWalletPanel({
+  availableEgcBalance,
+  pendingReferralEarnings,
+}: {
+  availableEgcBalance: number;
+  pendingReferralEarnings: number;
+}) {
+  return (
+    <div className="space-y-5 pt-1">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <BalanceCard
+          label="E-GC Balance"
+          value={peso(availableEgcBalance)}
+          sub="Store credit from non-cash rewards"
+          gradient="from-fuchsia-50 to-pink-50 dark:from-fuchsia-900/20 dark:to-pink-900/20"
+          border="border-fuchsia-200/60 dark:border-fuchsia-700/40"
+          iconBg="bg-fuchsia-100 dark:bg-fuchsia-900/40"
+          iconColor="text-fuchsia-600 dark:text-fuchsia-400"
+          valueColor="text-fuchsia-700 dark:text-fuchsia-300"
+          subColor="text-fuchsia-500"
+          icon="G"
+          large
+        />
+        <BalanceCard
+          label="Pending Referral Rewards"
+          value={peso(pendingReferralEarnings)}
+          sub="Awaiting order delivery/release"
+          gradient="from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20"
+          border="border-amber-200/60 dark:border-amber-700/40"
+          iconBg="bg-amber-100 dark:bg-amber-900/40"
+          iconColor="text-amber-600 dark:text-amber-400"
+          valueColor="text-amber-700 dark:text-amber-300"
+          subColor="text-amber-500"
+          icon="P"
+        />
+      </div>
+
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60">
+        <p className="text-sm font-bold text-slate-800 dark:text-slate-200">E-GC Source</p>
+        <p className="mt-2 max-w-2xl text-xs leading-5 text-slate-500 dark:text-slate-400">
+          E-GC is the store-credit share of direct referral rewards. In the backend, direct referral commission is split between cash and E-GC, so this balance is kept separate from encashment.
+        </p>
+      </div>
     </div>
   );
 }

@@ -36,6 +36,7 @@ services:
       - ./apps/apsara-home-frontend/.env.docker.example
     environment:
       CI: "true"
+      PNPM_CONFIG_STORE_DIR: /root/.local/share/pnpm/store
       PNPM_CONFIG_CONFIRM_MODULES_PURGE: "false"
       NEXT_TELEMETRY_DISABLED: "1"
       WATCHPACK_POLLING: "true"
@@ -62,6 +63,7 @@ services:
       - ./apps/Dreambuild-Landing-Page/.env.docker.example
     environment:
       CI: "true"
+      PNPM_CONFIG_STORE_DIR: /root/.local/share/pnpm/store
       PNPM_CONFIG_CONFIRM_MODULES_PURGE: "false"
       NEXT_TELEMETRY_DISABLED: "1"
     ports:
@@ -71,6 +73,26 @@ services:
       - root_node_modules:/workspace/node_modules
       - dreambuild_node_modules:/workspace/apps/Dreambuild-Landing-Page/node_modules
       - dreambuild_next:/workspace/apps/Dreambuild-Landing-Page/.next
+
+  community-backend:
+    build:
+      context: .
+      dockerfile: docker/next.Dockerfile
+    container_name: community-backend
+    restart: unless-stopped
+    working_dir: /workspace
+    command: pnpm --filter community-backend dev
+    environment:
+      CI: "true"
+      PNPM_CONFIG_STORE_DIR: /root/.local/share/pnpm/store
+      PNPM_CONFIG_CONFIRM_MODULES_PURGE: "false"
+      PORT: 4000
+    ports:
+      - "4000:4000"
+    volumes:
+      - .:/workspace
+      - root_node_modules:/workspace/node_modules
+      - community_backend_node_modules:/workspace/apps/community-backend/node_modules
 
   redis:
     image: redis:7-alpine
@@ -86,6 +108,7 @@ volumes:
   root_node_modules:
   frontend_node_modules:
   dreambuild_node_modules:
+  community_backend_node_modules:
   frontend_next:
   dreambuild_next:
   redis_data:

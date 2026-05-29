@@ -17,6 +17,28 @@ class DirectReferralCommission
             return;
         }
 
+        CheckoutHistory::query()
+            ->whereNotNull('ch_referrer_customer_id')
+            ->where('ch_referrer_customer_id', '>', 0)
+            ->where(function ($statusQuery) {
+                $statusQuery
+                    ->where('ch_fulfillment_status', 'delivered')
+                    ->orWhere('ch_fulfillment_status', 'completed')
+                    ->orWhere('ch_shipment_status', 'delivered');
+            })
+            ->when((int) $referrerCustomerId > 0, function ($query) use ($referrerCustomerId) {
+                $query->where('ch_referrer_customer_id', (int) $referrerCustomerId);
+            })
+            ->orderBy('created_at')
+            ->get()
+            ->each(function (CheckoutHistory $order) {
+                self::createPendingIfEligible(
+                    $order,
+                    (int) ($order->ch_referrer_customer_id ?? 0),
+                    (string) ($order->ch_referral_source_type ?? 'checkout_referral')
+                );
+            });
+
         $query = ReferralEarning::query()
             ->where('re_status', 'pending')
             ->whereIn('re_order_id', function ($builder) {

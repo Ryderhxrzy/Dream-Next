@@ -235,6 +235,19 @@ class EncashmentController extends Controller
 
         $afVoucherBalance = max(0, (float) ($customer->c_WP ?? $customer->c_wp ?? 0));
         $availableEgcBalance = max(0, (float) ($customer->c_AP ?? $customer->c_ap ?? 0));
+        if (Schema::hasTable('tbl_customer_wallet_ledger')) {
+            $egcCredits = (float) CustomerWalletLedger::query()
+                ->where('wl_customer_id', (int) $customer->c_userid)
+                ->where('wl_wallet_type', 'egc')
+                ->where('wl_entry_type', 'credit')
+                ->sum('wl_amount');
+            $egcDebits = (float) CustomerWalletLedger::query()
+                ->where('wl_customer_id', (int) $customer->c_userid)
+                ->where('wl_wallet_type', 'egc')
+                ->where('wl_entry_type', 'debit')
+                ->sum('wl_amount');
+            $availableEgcBalance = max(0, $egcCredits - $egcDebits);
+        }
 
         $cashbackRate = PersonalPurchaseCashback::rate();
         $cashbackSourceBalance = PersonalPurchaseCashback::sourceBalance($customer);
