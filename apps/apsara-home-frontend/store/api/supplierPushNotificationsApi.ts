@@ -31,14 +31,17 @@ export interface SendNotificationRequest {
   image?: string | null
   recipients: number[]
   buttonText?: string
+  scheduled_at?: string | null
 }
 
 export interface SendNotificationResponse {
   message: string
   notification_id: number
-  sent: number
-  failed: number
-  total_tokens: number
+  sent?: number
+  failed?: number
+  total_tokens?: number
+  scheduled_at?: string
+  status?: 'sent' | 'scheduled'
 }
 
 export interface PushNotificationsHistoryResponse {
@@ -60,6 +63,7 @@ export interface CloudinarySignResponse {
 }
 
 export const supplierPushNotificationsApi = baseApi.injectEndpoints({
+  overrideExisting: true,
   endpoints: (builder) => ({
     getAvailableCustomers: builder.query<AvailableCustomersResponse, void>({
       query: () => ({
