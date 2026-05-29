@@ -1805,6 +1805,7 @@ class ProductController extends Controller
             $roomType = $request->query('room_type', '');
             $brandType = $request->query('brand_type', '');
             $requestedSupplierId = (int) $request->query('supplier_id', 0);
+            $sort = trim((string) $request->query('sort', ''));
 
             // Get user's personalized categories if authenticated
             $personalizedCatIds = [];
@@ -1893,9 +1894,28 @@ class ProductController extends Controller
 
                 Log::info('Personalized query with hybrid caching', ['userId' => $userId, 'catIds' => $personalizedCatIds]);
             } else {
-                // For regular/filtered products: sort by ID only for consistency
-                // Do NOT sort by pd_date as it breaks pagination when combined with behavior filtering
-                $query->orderByDesc('pd_id');
+                // Apply sorting based on sort parameter
+                if ($sort === 'random') {
+                    // Random shuffle for discovery experience
+                    $query->inRandomOrder();
+                    Log::info('Applied random sort');
+                } elseif ($sort === 'bestseller') {
+                    // Sort by best selling products
+                    $query->orderByDesc('pd_bestseller')->orderByDesc('pd_id');
+                } elseif ($sort === 'newest') {
+                    // Sort by newest products
+                    $query->orderByDesc('pd_date')->orderByDesc('pd_id');
+                } elseif ($sort === 'price_asc') {
+                    // Sort by price ascending
+                    $query->orderBy('pd_price_member')->orderByDesc('pd_id');
+                } elseif ($sort === 'price_desc') {
+                    // Sort by price descending
+                    $query->orderByDesc('pd_price_member')->orderByDesc('pd_id');
+                } else {
+                    // Default: sort by ID only for consistency
+                    // Do NOT sort by pd_date as it breaks pagination when combined with behavior filtering
+                    $query->orderByDesc('pd_id');
+                }
             }
 
             if ($supplierUser) {
