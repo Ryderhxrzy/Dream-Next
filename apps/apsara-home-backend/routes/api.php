@@ -308,6 +308,7 @@ Route::middleware(['auth:sanctum', 'customer.actor'])->group(function () {
     Route::post('/cart/bulk-add', [CartController::class, 'bulkAddToCart']);
     Route::get('/cart', [CartController::class, 'getCart']);
     Route::put('/cart/{id}', [CartController::class, 'updateCartItem']);
+    Route::put('/cart/{id}/variant', [CartController::class, 'updateCartItemVariant']);
     Route::delete('/cart/{id}', [CartController::class, 'removeCartItem']);
     Route::delete('/cart', [CartController::class, 'clearCart']);
     // Search endpoints
