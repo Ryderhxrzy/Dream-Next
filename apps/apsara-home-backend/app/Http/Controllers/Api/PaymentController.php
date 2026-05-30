@@ -16,6 +16,7 @@ use App\Models\SystemSetting;
 use App\Models\WebPageContent;
 use App\Services\CloudinaryUploadService;
 use App\Services\FirebaseMessagingService;
+use App\Services\QueryOptimizerService;
 use App\Support\DirectReferralCommission;
 use App\Support\OrderPvPosting;
 use Illuminate\Http\Request;
@@ -870,6 +871,9 @@ class PaymentController extends Controller
                 Log::info('Order notification update completed successfully', [
                     'checkout_id' => $checkoutId,
                 ]);
+
+                // Remove cart items after successful payment
+                $this->removeOrderItemsFromCart($checkoutId);
 
                 // Send confirmation email for mobile orders after payment
                 $mobileOrder = CheckoutHistory::query()
@@ -3206,6 +3210,72 @@ class PaymentController extends Controller
                     'status' => $status,
                 ],
             ], 500);
+        }
+    }
+
+    private function removeOrderItemsFromCart(string $checkoutId): void
+    {
+        try {
+            // Get all order items for this checkout
+            $orderItems = CheckoutHistory::query()
+                ->where('ch_checkout_id', $checkoutId)
+                ->get();
+
+            if ($orderItems->isEmpty()) {
+                Log::warning('No order items found for checkout', ['checkout_id' => $checkoutId]);
+                return;
+            }
+
+            // Get the customer ID from the first order item
+            $customerId = $orderItems->first()->ch_customer_id;
+
+            if (!$customerId) {
+                Log::warning('Customer ID not found in order', ['checkout_id' => $checkoutId]);
+                return;
+            }
+
+            // Collect product IDs and variants from order items
+            $productVariantPairs = $orderItems->map(function ($item) {
+                return [
+                    'product_id' => $item->ch_product_id,
+                    'variant_id' => $item->ch_variant_id,
+                    'selected_color' => $item->ch_selected_color,
+                    'selected_size' => $item->ch_selected_size,
+                    'selected_type' => $item->ch_selected_type,
+                ];
+            })->toArray();
+
+            // Remove matching cart items
+            foreach ($productVariantPairs as $pair) {
+                DB::table('tbl_add_to_cart')
+                    ->where('crt_customer_id', $customerId)
+                    ->where('crt_product_id', $pair['product_id'])
+                    ->where('crt_variant_id', $pair['variant_id'])
+                    ->where('crt_selected_color', $pair['selected_color'])
+                    ->where('crt_selected_size', $pair['selected_size'])
+                    ->where('crt_selected_type', $pair['selected_type'])
+                    ->where('crt_status', 'active')
+                    ->update([
+                        'crt_status' => 'completed',
+                        'crt_updated_at' => now(),
+                    ]);
+            }
+
+            Log::info('Cart items removed after successful payment', [
+                'checkout_id' => $checkoutId,
+                'customer_id' => $customerId,
+                'items_removed' => count($productVariantPairs),
+            ]);
+
+            // Invalidate customer cache
+            QueryOptimizerService::invalidateCustomerCaches((int) $customerId);
+
+        } catch (\Throwable $e) {
+            Log::error('Error removing cart items after payment', [
+                'checkout_id' => $checkoutId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
         }
     }
 }

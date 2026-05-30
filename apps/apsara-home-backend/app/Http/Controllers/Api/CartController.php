@@ -474,6 +474,124 @@ class CartController extends Controller
         ]);
     }
 
+    public function updateCartItemVariant(Request $request, $id)
+    {
+        try {
+            $validated = $request->validate([
+                'variant_id' => 'nullable|integer',
+                'quantity' => 'nullable|integer|min:1',
+                'selected_color' => 'nullable|string|max:100',
+                'selected_size' => 'nullable|string|max:100',
+                'selected_type' => 'nullable|string|max:100',
+            ]);
+
+            $customer = $request->user();
+
+            if (!$customer instanceof Customer) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
+
+            $cartItem = DB::table('tbl_add_to_cart')
+                ->where('crt_id', $id)
+                ->where('crt_customer_id', $customer->c_userid)
+                ->where('crt_status', 'active')
+                ->first();
+
+            if (!$cartItem) {
+                return response()->json(['message' => 'Cart item not found'], 404);
+            }
+
+            // Get product details
+            $product = DB::table('tbl_product')
+                ->where('pd_id', $cartItem->crt_product_id)
+                ->first();
+
+            if (!$product) {
+                return response()->json(['message' => 'Product not found'], 404);
+            }
+
+            // Determine new variant and calculate unit price
+            $newVariantId = $validated['variant_id'] ?? $cartItem->crt_variant_id;
+            $unitPrice = $cartItem->crt_unit_price;
+
+            if (isset($validated['variant_id'])) {
+                $variant = ProductVariant::query()
+                    ->where('pv_id', $validated['variant_id'])
+                    ->where('pv_pdid', $cartItem->crt_product_id)
+                    ->where('pv_status', 1)
+                    ->first();
+
+                if (!$variant) {
+                    return response()->json(['message' => 'Selected variant is not available'], 422);
+                }
+
+                // Calculate unit price for new variant
+                if ($variant->pv_price_member && $variant->pv_price_member > 0) {
+                    $unitPrice = $variant->pv_price_member;
+                } elseif ($variant->pv_price_dp && $variant->pv_price_dp > 0) {
+                    $unitPrice = $variant->pv_price_dp;
+                } elseif ($variant->pv_price_srp && $variant->pv_price_srp > 0) {
+                    $unitPrice = $variant->pv_price_srp;
+                } else {
+                    return response()->json(['message' => 'New variant price not available'], 400);
+                }
+            }
+
+            // Use current quantity if not provided
+            $newQuantity = $validated['quantity'] ?? $cartItem->crt_quantity;
+            $newTotalPrice = $unitPrice * $newQuantity;
+
+            // Prepare update data
+            $updateData = [
+                'crt_quantity' => $newQuantity,
+                'crt_unit_price' => $unitPrice,
+                'crt_total_price' => $newTotalPrice,
+                'crt_updated_at' => now(),
+            ];
+
+            // Update variant-related fields if variant_id is provided
+            if (isset($validated['variant_id'])) {
+                $updateData['crt_variant_id'] = $validated['variant_id'];
+            }
+
+            if (isset($validated['selected_color'])) {
+                $updateData['crt_selected_color'] = $validated['selected_color'];
+            }
+
+            if (isset($validated['selected_size'])) {
+                $updateData['crt_selected_size'] = $validated['selected_size'];
+            }
+
+            if (isset($validated['selected_type'])) {
+                $updateData['crt_selected_type'] = $validated['selected_type'];
+            }
+
+            DB::table('tbl_add_to_cart')
+                ->where('crt_id', $id)
+                ->update($updateData);
+
+            $updatedItem = DB::table('tbl_add_to_cart')->where('crt_id', $id)->first();
+
+            // Invalidate customer-specific caches
+            QueryOptimizerService::invalidateCustomerCaches((int) $customer->c_userid);
+
+            return response()->json([
+                'message' => 'Cart item updated successfully',
+                'cart_item' => $updatedItem,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Cart: Error updating item variant and quantity', [
+                'cart_item_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'message' => 'Error updating cart item',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function removeCartItem(Request $request, $id)
     {
         $customer = $request->user();
