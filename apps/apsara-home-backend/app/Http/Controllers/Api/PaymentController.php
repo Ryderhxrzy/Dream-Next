@@ -1796,6 +1796,17 @@ class PaymentController extends Controller
         $isNowPaid = $this->isPaidStatus($attrs['status'] ?? null);
         $wasPaidBefore = $this->isPaidStatus($existingPaymentStatus);
 
+        // Update ALL items with this checkout_id (for multi-item orders)
+        if ($alreadyExists) {
+            CheckoutHistory::where('ch_checkout_id', $checkoutId)
+                ->update([
+                    'ch_status' => (string) ($attrs['status'] ?? 'paid'),
+                    'ch_payment_intent_id' => data_get($attrs, 'payment_intent.id') ?: DB::raw('ch_payment_intent_id'),
+                    'ch_payment_id' => data_get($attrs, 'payments.0.id') ?: data_get($attrs, 'payment_id') ?: DB::raw('ch_payment_id'),
+                    'ch_paid_at' => $this->isPaidStatus($attrs['status'] ?? null) ? now() : DB::raw('ch_paid_at'),
+                ]);
+        }
+
         if ($isNowPaid && (!$alreadyExists || !$wasPaidBefore)) {
             $this->notifyAdminOrderCreated($history);
 
