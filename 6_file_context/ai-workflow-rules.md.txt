@@ -1,0 +1,167 @@
+# AI Workflow Rules — AF Nexus Community
+
+These rules are for AI assistants (Claude, Copilot, etc.) working on this codebase.
+Read this file before generating any code.
+
+---
+
+## Project Identity
+
+- Project: AF Nexus Community Module
+- Part of: AFHome (Apsara Home) ecosystem
+- Primary goal: Build a Neighborly/Nextdoor-style community platform on top of AFHome's existing auth system
+- Current focus: Phase 1 (auth integration) and Phase 2 (community backend API)
+
+---
+
+## Always Read First
+
+Before generating code, check these files:
+1. `6_file_context/project-overview.md.txt` — what we're building and why
+2. `6_file_context/architecture.md.txt` — system design and folder structure
+3. `6_file_context/code-standards.md.txt` — coding patterns to follow
+4. `6_file_context/ui-context.md.txt` — UI design reference
+5. `6_file_context/progress-tracker.md.txt` — current status, don't redo completed work
+
+---
+
+## Tech Stack Rules
+
+### Backend
+- Framework: **Hono.js** (NOT Express, NOT NestJS, NOT Fastify)
+- ORM: **Prisma** (NOT raw SQL, NOT TypeORM, NOT Drizzle)
+- Language: **TypeScript** with strict mode
+- Pattern: Route → Controller → Service → Repository (always, no shortcuts)
+- Auth: Validate AFHome JWT token — never create a separate auth system
+
+### Frontend
+- Framework: **Next.js App Router** (NOT Pages Router)
+- UI: **shadcn/ui** components (NOT custom CSS components from scratch)
+- Styling: **Tailwind CSS** only (NO CSS modules, NO styled-components)
+- State (server): **RTK Query** (NOT useEffect + fetch, NOT React Query, NOT SWR)
+- State (UI): **Redux Toolkit** (NOT Zustand, NOT Context API for global UI state)
+
+---
+
+## Code Generation Rules
+
+### DO
+- Follow the Route → Controller → Service → Repository pattern strictly
+- Use shadcn/ui components — import from `@/components/ui/`
+- Use `cn()` from `@/lib/utils` for conditional Tailwind classes
+- Use RTK Query for all API calls in the frontend
+- Use Prisma for all database access in the backend
+- Use AFHome JWT token in `Authorization: Bearer <token>` header for all community API requests
+- Export Prisma client as a singleton from `src/lib/prisma.ts`
+- Keep Hono route files thin — just register routes and middlewares
+
+### DO NOT
+- Do not create a separate login/signup system — auth comes from AFHome
+- Do not put Prisma queries in controllers or route handlers
+- Do not use `useEffect` for data fetching in React components
+- Do not use inline styles or CSS modules
+- Do not use `any` TypeScript type
+- Do not add `console.log` statements — use a proper logger
+- Do not hardcode API URLs — use environment variables
+- Do not use Pages Router (`pages/` directory) — use App Router (`app/` directory)
+- Do not create new shadcn components from scratch if an existing one fits
+
+---
+
+## File Creation Rules
+
+When creating new backend files:
+```
+src/routes/[feature].ts         ← thin, just route registration
+src/controllers/[Feature]Controller.ts
+src/services/[Feature]Service.ts
+src/repositories/[Feature]Repository.ts
+```
+
+When creating new frontend files:
+```
+features/community/components/[ComponentName].tsx
+features/community/store/communityApi.ts    ← RTK Query
+features/community/store/communitySlice.ts  ← Redux UI state
+features/community/hooks/use[Feature].ts
+```
+
+---
+
+## Prisma Rules
+
+- Always generate client to `src/generated/prisma` (as configured in schema)
+- Use `cuid()` for all primary keys (not `uuid()`, not auto-increment)
+- Use `snake_case` for all database field names in `@map()` if needed
+- Always include `createdAt` and `updatedAt` on every model
+- Run `prisma generate` after schema changes
+- Run `prisma migrate dev` for local schema migrations
+
+---
+
+## API Response Rules
+
+All API responses must follow this format:
+
+**Success:**
+```json
+{ "data": { ... } }
+{ "data": [...], "meta": { "total": 100, "page": 1, "limit": 20 } }
+```
+
+**Error:**
+```json
+{ "error": "Human-readable message", "code": "SNAKE_CASE_CODE", "status": 404 }
+```
+
+HTTP status codes:
+- 200: Success (GET, PUT)
+- 201: Created (POST)
+- 204: No Content (DELETE)
+- 400: Bad Request (validation error)
+- 401: Unauthorized (missing/invalid token)
+- 403: Forbidden (valid token, insufficient permissions)
+- 404: Not Found
+- 500: Internal Server Error
+
+---
+
+## Auth Rules
+
+- Community backend validates AFHome tokens on every protected route
+- Use `authMiddleware` from `src/middleware/auth.ts` — apply at router level, not per-route
+- The validated user object is stored in Hono context: `c.get('user')`
+- User identity fields available: `id`, `name`, `email`, `avatar`, `tier`
+- Never trust client-provided `authorId` — always use `c.get('user').id`
+
+---
+
+## UI Generation Rules
+
+When building UI components, the reference design is the Neighborly/Nextdoor screenshot:
+- 3-column layout: sidebar | feed | right panel
+- White cards on gray background
+- Blue primary color for CTAs and active states
+- Rounded corners on all cards (`rounded-xl`)
+- Subtle shadows (`shadow-sm`)
+- Gray muted text for timestamps and metadata
+
+When in doubt, refer to `6_file_context/ui-context.md.txt` for the exact component breakdown.
+
+---
+
+## Progress Check
+
+Before starting any task, check `6_file_context/progress-tracker.md.txt`:
+- If the task is marked `[x]` — it's done, don't redo it
+- If the task is in a `⬜ Not Started` phase — it's safe to start
+- Update the tracker when a task is completed
+
+---
+
+## Communication Style (when explaining to the user)
+
+- Be direct and specific
+- Show file paths when referencing code locations
+- When generating multiple files, generate them one by one in logical order
+- Always state which phase of the progress tracker a task belongs to

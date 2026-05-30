@@ -1,0 +1,145 @@
+# Project Overview — AF Nexus Community
+
+## System Name
+AF Nexus — Community Module
+
+---
+
+## What Is This?
+
+AF Nexus Community is a neighborhood/community social platform built on top of the existing **AFHome (Apsara Home)** e-commerce ecosystem.
+
+It is NOT a standalone app. It is an **extension layer** — users log in once through AFHome and the community features become available without a second login or separate account.
+
+---
+
+## Platform Reference (UI Model)
+
+The community UI is modeled after **Nextdoor / Neighborly** style:
+- Neighborhood-based feed
+- Location-aware posts and events
+- Community groups
+- Safety alerts
+- Local marketplace listings
+- Neighbor profiles and activity
+
+---
+
+## Core Principle
+
+> Single Authentication — AFHome credentials are the identity system.
+
+- No separate signup or login for the community module
+- The AFHome session token is validated by the community backend
+- User profile data (name, avatar, tier) is pulled from AFHome
+
+---
+
+## Existing Systems (AFHome)
+
+| System | Status |
+|---|---|
+| E-commerce platform | Live |
+| Affiliate system | Live |
+| User authentication (Laravel backend) | Live |
+| Mobile app (React Native / Expo) | Live |
+| Web frontend (Next.js) | Live |
+
+---
+
+## AF Nexus Extension Modules
+
+### 1. Community System (PRIMARY — in development)
+- Neighborhood-based feed (posts, images, videos)
+- Post categories: Questions, Events, For Sale, Safety, Free
+- Comments & threaded replies
+- Reactions / Helpful votes
+- Community groups
+- Active neighbors / online status
+- Neighborhood stats (members, active today, new posts, events)
+
+### 2. Chat System (Planned)
+- Direct messaging (DM)
+- Group chat channels
+- Real-time messaging via WebSockets
+
+### 3. Learning System (Planned)
+- Video courses (paid/free)
+- Lessons and enrollments
+- Progress tracking
+
+---
+
+## Tech Stack
+
+### Frontend (Community)
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 14 (App Router) |
+| UI Components | shadcn/ui |
+| Styling | Tailwind CSS |
+| State (UI) | Redux Toolkit |
+| State (Server) | RTK Query |
+| Auth Integration | AFHome session token via cookie/header |
+
+### Backend (Community)
+| Layer | Technology |
+|---|---|
+| Runtime | Node.js + TypeScript |
+| Framework | Hono.js |
+| ORM | Prisma |
+| Database | PostgreSQL (shared with AFHome or separate schema) |
+| Auth Validation | Validates AFHome JWT/session tokens |
+
+### Existing AFHome Backend
+| Layer | Technology |
+|---|---|
+| Framework | Laravel (PHP) |
+| Database | MySQL / PostgreSQL |
+| Auth | Laravel Sanctum / JWT |
+
+---
+
+## Integration Architecture
+
+```
+AFHome User (Logged In)
+        ↓
+AFHome Auth Token (JWT / Cookie)
+        ↓
+Community Backend (Hono.js)
+  → Validates token against AFHome API
+  → Fetches user identity (id, name, avatar, tier)
+        ↓
+Community Features (Feed, Posts, Events, Groups)
+```
+
+---
+
+## Repository Structure
+
+```
+Dream-Next/
+├── apps/
+│   ├── apsara-home-frontend/     ← Existing AFHome Next.js frontend
+│   ├── apsara-home-backend/      ← Existing AFHome Laravel backend
+│   ├── Apsara-Home-Mobile/       ← Existing AFHome React Native app
+│   └── community-backend/        ← NEW: Community Hono.js backend
+│       ├── src/
+│       │   ├── routes/           ← Hono route handlers
+│       │   ├── services/         ← Business logic
+│       │   ├── middleware/        ← Auth, error handling
+│       │   └── generated/prisma/ ← Prisma client output
+│       └── prisma/
+│           └── schema.prisma
+├── 6_file_context/               ← AI context files (this folder)
+└── pnpm-workspace.yaml
+```
+
+---
+
+## Goal
+
+Transform AFHome from a pure e-commerce/affiliate platform into a **unified community-powered ecosystem**:
+
+> E-commerce + Affiliate + Community + Chat + Learning

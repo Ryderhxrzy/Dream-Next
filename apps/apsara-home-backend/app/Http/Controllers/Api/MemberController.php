@@ -1846,4 +1846,11 @@ class MemberController extends Controller
             'total' => count($emails),
         ]);
     }
+
+    public function communityStats()
+    {
+        return response()->json([
+            'total_members' => \App\Models\Customer::count(),
+        ]);
+    }
 }
