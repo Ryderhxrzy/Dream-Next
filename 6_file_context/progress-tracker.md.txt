@@ -1,0 +1,141 @@
+# Progress Tracker — AF Nexus Community
+
+Last Updated: 2026-05-30
+
+---
+
+## Phase 1: Project Setup & Auth Integration
+**Status: 🟡 In Progress**
+
+- [x] community-backend app created (Hono.js + Prisma + TypeScript)
+- [x] pnpm workspace configured
+- [x] Hono.js server running on port 4000
+- [ ] Prisma schema — define all models (User, Community, Post, Comment, Event)
+- [ ] Prisma migration — initial database setup
+- [ ] Auth middleware — validate AFHome JWT token
+- [ ] Test auth flow: AFHome token → community-backend validation
+- [ ] .env setup (DATABASE_URL, AFHOME_API_URL, AFHOME_JWT_SECRET)
+
+---
+
+## Phase 2: Backend — Community & Posts API
+**Status: ⬜ Not Started**
+
+### Folder Structure
+- [ ] Create `src/controllers/` folder and files
+- [ ] Create `src/services/` folder and files
+- [ ] Create `src/repositories/` folder and files
+- [ ] Create `src/lib/prisma.ts` singleton
+- [ ] Create `src/middleware/auth.ts`
+- [ ] Create `src/middleware/errorHandler.ts`
+
+### Routes
+- [ ] `GET  /api/communities` — list communities
+- [ ] `POST /api/communities` — create community
+- [ ] `GET  /api/communities/:slug` — get community
+- [ ] `POST /api/communities/:id/join` — join community
+- [ ] `GET  /api/posts?communityId=` — get feed posts
+- [ ] `POST /api/posts` — create post
+- [ ] `PUT  /api/posts/:id` — edit post
+- [ ] `DELETE /api/posts/:id` — delete post
+- [ ] `POST /api/posts/:id/helpful` — mark helpful
+- [ ] `GET  /api/posts/:id/comments` — get comments
+- [ ] `POST /api/posts/:id/comments` — add comment
+- [ ] `POST /api/comments/:id/reply` — reply to comment
+- [ ] `GET  /api/events?communityId=` — get events
+- [ ] `POST /api/events` — create event
+- [ ] `GET  /api/users/me` — current user
+
+---
+
+## Phase 3: Frontend — Community UI
+**Status: ⬜ Not Started**
+
+### Layout & Shell
+- [ ] Community layout with 3-column design (sidebar, feed, right panel)
+- [ ] Left sidebar navigation (Home, Feed, Events, Groups, Messages, Safety)
+- [ ] Topbar (logo, location dropdown, search, notifications, avatar)
+- [ ] Right panel shell
+
+### Neighborhood Header
+- [ ] NeighborhoodHeader component (greeting, name, stats)
+- [ ] Neighborhood stats (members, active today, new posts, events this week)
+
+### Feed
+- [ ] Category filter tabs (All, Questions, Events, For Sale, Safety, Free)
+- [ ] PostCard component (avatar, name, badge, content, image, actions)
+- [ ] PostFeed component (list of PostCards)
+- [ ] Helpful/vote button with optimistic update
+
+### Comments
+- [ ] CommentThread component
+- [ ] Nested replies support
+- [ ] Add comment form
+
+### Right Panel
+- [ ] NeighborhoodStats widget
+- [ ] UpcomingEvents widget
+- [ ] ActiveNeighbors widget (avatars + online count)
+- [ ] QuickActions widget (List Item, Create Event, Report Issue)
+
+### Create Post Flow
+- [ ] "+ Post to Neighborhood" button
+- [ ] CreatePostModal (dialog with title, content, category, image upload)
+
+---
+
+## Phase 4: RTK Query & Redux Integration
+**Status: ⬜ Not Started**
+
+- [ ] Setup `communityApi` with RTK Query
+- [ ] `getPosts` endpoint + cache invalidation
+- [ ] `createPost` mutation
+- [ ] `markHelpful` mutation with optimistic update
+- [ ] `getEvents` endpoint
+- [ ] `getNeighborhoodStats` endpoint
+- [ ] `getActiveNeighbors` endpoint
+- [ ] `communitySlice` for UI state (activeCategory, modals, sidebarOpen)
+- [ ] Attach AFHome token to all community API requests
+
+---
+
+## Phase 5: Chat System
+**Status: ⬜ Not Started**
+
+- [ ] WebSocket server setup (Socket.io or Hono WebSocket)
+- [ ] Direct messaging (DM) API
+- [ ] Group chat channels
+- [ ] Messages UI (conversation list + chat window)
+- [ ] Online/offline status indicator
+
+---
+
+## Phase 6: Learning System
+**Status: ⬜ Not Started**
+
+- [ ] Course API (create, list, enroll)
+- [ ] Video upload + streaming
+- [ ] Lesson progress tracking
+- [ ] Course UI (Udemy-style video player + lesson sidebar)
+- [ ] Enrollment system
+
+---
+
+## Phase 7: Polish & Optimization
+**Status: ⬜ Not Started**
+
+- [ ] RTK Query caching strategy review
+- [ ] PostgreSQL indexes on frequently queried columns
+- [ ] Pagination on feed (cursor-based)
+- [ ] Mobile responsive layout
+- [ ] Error handling and loading states throughout
+- [ ] Skeleton loaders for feed items
+
+---
+
+## Notes
+
+- Auth: AFHome Laravel backend issues JWT. Community backend validates it.
+- DB: Community uses its own PostgreSQL DB (not shared with AFHome MySQL).
+- Images: TBD — either upload to AFHome CDN or separate S3 bucket.
+- Phase 1 is the blocker — auth must work before anything else.

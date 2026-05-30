@@ -1,0 +1,246 @@
+# Code Standards — AF Nexus Community
+
+---
+
+## General Rules
+
+- TypeScript strict mode everywhere (`"strict": true` in tsconfig)
+- No `any` types — use `unknown` and narrow, or define proper interfaces
+- No unused imports or variables
+- Prefer `const` over `let`; never use `var`
+- Async/await over raw Promises
+- Early returns over nested if-else
+
+---
+
+## Backend Standards (Hono.js + Prisma + Node.js)
+
+### Layer Responsibilities
+
+```
+Route Handler  →  validates request shape, calls controller
+Controller     →  orchestrates logic, formats response
+Service        →  business logic, calls repository
+Repository     →  database access only (Prisma queries)
+```
+
+**Rule:** Never put Prisma queries directly in route handlers or controllers.
+
+### Route Handler Pattern
+
+```typescript
+// src/routes/posts.ts
+import { Hono } from 'hono'
+import { PostController } from '../controllers/PostController'
+import { authMiddleware } from '../middleware/auth'
+
+const posts = new Hono()
+
+posts.use('*', authMiddleware)
+
+posts.get('/', PostController.getAll)
+posts.post('/', PostController.create)
+posts.get('/:id', PostController.getOne)
+posts.put('/:id', PostController.update)
+posts.delete('/:id', PostController.delete)
+
+export default posts
+```
+
+### Controller Pattern
+
+```typescript
+// src/controllers/PostController.ts
+import type { Context } from 'hono'
+import { PostService } from '../services/PostService'
+
+export const PostController = {
+  async getAll(c: Context) {
+    const communityId = c.req.query('communityId')
+    const posts = await PostService.getAll(communityId)
+    return c.json(posts)
+  },
+
+  async create(c: Context) {
+    const user = c.get('user')
+    const body = await c.req.json()
+    const post = await PostService.create({ ...body, authorId: user.id })
+    return c.json(post, 201)
+  },
+}
+```
+
+### Service Pattern
+
+```typescript
+// src/services/PostService.ts
+import { PostRepository } from '../repositories/PostRepository'
+
+export const PostService = {
+  async getAll(communityId?: string) {
+    return PostRepository.findAll(communityId)
+  },
+
+  async create(data: CreatePostInput) {
+    // business logic here (validation, enrichment)
+    return PostRepository.create(data)
+  },
+}
+```
+
+### Repository Pattern
+
+```typescript
+// src/repositories/PostRepository.ts
+import { prisma } from '../lib/prisma'
+
+export const PostRepository = {
+  async findAll(communityId?: string) {
+    return prisma.post.findMany({
+      where: communityId ? { communityId } : {},
+      include: { author: true, _count: { select: { comments: true } } },
+      orderBy: { createdAt: 'desc' },
+    })
+  },
+
+  async create(data: Prisma.PostCreateInput) {
+    return prisma.post.create({ data })
+  },
+}
+```
+
+### Prisma Singleton
+
+```typescript
+// src/lib/prisma.ts
+import { PrismaClient } from '../generated/prisma'
+
+const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
+
+export const prisma = globalForPrisma.prisma ?? new PrismaClient()
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+```
+
+---
+
+## Frontend Standards (Next.js + shadcn/ui)
+
+### Folder Structure Rule
+
+Use **feature-based** structure, not type-based:
+
+```
+✅ features/community/components/PostCard.tsx
+❌ components/PostCard.tsx  ← too flat, hard to scale
+```
+
+### Component Rules
+
+- One component per file
+- File name = component name (PascalCase)
+- Use shadcn/ui primitives first, extend only when needed
+- No inline styles — Tailwind classes only
+- Use `cn()` from `lib/utils` for conditional classes
+
+```typescript
+// ✅ Good
+import { cn } from '@/lib/utils'
+import { Card, CardContent } from '@/components/ui/card'
+
+export function PostCard({ post, className }: PostCardProps) {
+  return (
+    <Card className={cn('hover:shadow-md transition-shadow', className)}>
+      <CardContent>{post.title}</CardContent>
+    </Card>
+  )
+}
+```
+
+### State Management Rules
+
+| State Type | Tool |
+|---|---|
+| UI state (sidebar open, modal, filters) | Redux Toolkit slice |
+| Server data (posts, users, events) | RTK Query |
+| Local form state | React `useState` |
+| URL state (filters, pagination) | `useSearchParams` |
+
+**Never** fetch data directly in components with `useEffect` + `fetch`. Use RTK Query.
+
+### RTK Query Pattern
+
+```typescript
+// features/community/store/communityApi.ts
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+
+export const communityApi = createApi({
+  reducerPath: 'communityApi',
+  baseQuery: fetchBaseQuery({
+    baseUrl: process.env.NEXT_PUBLIC_COMMUNITY_API_URL,
+    prepareHeaders: (headers) => {
+      const token = getAFHomeToken()  // from cookie/localStorage
+      if (token) headers.set('Authorization', `Bearer ${token}`)
+      return headers
+    },
+  }),
+  endpoints: (builder) => ({
+    getPosts: builder.query<Post[], { communityId?: string }>({
+      query: ({ communityId }) => `/posts?communityId=${communityId ?? ''}`,
+    }),
+    createPost: builder.mutation<Post, CreatePostInput>({
+      query: (body) => ({ url: '/posts', method: 'POST', body }),
+    }),
+  }),
+})
+
+export const { useGetPostsQuery, useCreatePostMutation } = communityApi
+```
+
+---
+
+## Naming Conventions
+
+| Context | Convention | Example |
+|---|---|---|
+| TypeScript files | camelCase | `postService.ts` |
+| React components | PascalCase | `PostCard.tsx` |
+| Variables/functions | camelCase | `getPostById` |
+| Types/Interfaces | PascalCase | `PostCardProps` |
+| Constants | SCREAMING_SNAKE | `MAX_POST_LENGTH` |
+| Database columns | snake_case | `author_id` |
+| API routes | kebab-case | `/api/community-members` |
+| CSS classes | Tailwind only | `text-sm font-medium` |
+
+---
+
+## API Response Format
+
+### Success
+```json
+{
+  "data": { ... },
+  "meta": { "total": 100, "page": 1 }
+}
+```
+
+### Error
+```json
+{
+  "error": "Post not found",
+  "code": "NOT_FOUND",
+  "status": 404
+}
+```
+
+---
+
+## What NOT to Do
+
+- No `console.log` in production code — use a logger
+- No hardcoded API URLs — always use env variables
+- No direct DOM manipulation in React
+- No Prisma queries outside repositories
+- No business logic in route handlers
+- No Redux for server data — that's RTK Query's job
+- No `useEffect` for data fetching — use RTK Query
