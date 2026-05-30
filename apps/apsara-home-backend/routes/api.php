@@ -48,6 +48,7 @@ use App\Http\Controllers\Api\ProductViewerController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\TotpController;
 use App\Http\Controllers\Api\GeminiController;
+use App\Http\Controllers\MeilisearchController;
 use App\Http\Controllers\Api\MobilePaymentController;
 use App\Http\Controllers\Api\FollowerController;
 use App\Http\Controllers\Api\UserBehaviorController;
@@ -645,4 +646,17 @@ Route::post('/supplier/cloudinary-sign', [SupplierUploadController::class, 'gene
 Route::prefix('leads')->middleware('throttle:auth')->group(function () {
     Route::post('/', [LeadController::class, 'store']);
     Route::post('/batch', [LeadController::class, 'storeBatch']);
+});
+
+// Meilisearch - Search
+Route::prefix('meilisearch')->group(function () {
+    // Public search endpoint
+    Route::get('/search', [MeilisearchController::class, 'search']);
+
+    // Admin endpoints (require authentication)
+    Route::middleware(['auth:sanctum', 'admin.actor'])->group(function () {
+        Route::post('/sync-products', [MeilisearchController::class, 'syncProducts']);
+        Route::post('/sync-product/{id}', [MeilisearchController::class, 'syncProduct']);
+        Route::post('/clear-index', [MeilisearchController::class, 'clearIndex']);
+    });
 });
