@@ -20,6 +20,7 @@ export interface CreateCheckoutSessionPayload {
   payment_mode?: CheckoutPaymentMode
   online_banking_provider?: CheckoutOnlineBankingProvider
   voucher_code?: string
+  egc_amount?: number
   source_label?: string | null
   source_slug?: string | null
   storefront_partner?: string | null

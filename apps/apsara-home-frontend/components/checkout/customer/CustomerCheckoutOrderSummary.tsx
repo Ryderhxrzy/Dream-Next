@@ -18,6 +18,7 @@ interface Props {
   loading: boolean;
   onSubmit: () => void;
   voucher?: { code: string; discount: number } | null;
+  egcApplied?: number;
   computedTotal?: number;
   subtotalOverride?: number;
   unitPriceOverride?: number;
@@ -34,6 +35,7 @@ export default function CustomerCheckoutOrderSummary({
   loading,
   onSubmit,
   voucher,
+  egcApplied = 0,
   computedTotal,
   subtotalOverride,
   unitPriceOverride,
@@ -76,6 +78,7 @@ export default function CustomerCheckoutOrderSummary({
   const displayUnitPrice = typeof unitPriceOverride === 'number' ? unitPriceOverride : product.price;
   const displaySubtotal = typeof subtotalOverride === 'number' ? subtotalOverride : subtotal;
   const voucherDiscount = Math.max(0, Number(voucher?.discount ?? 0));
+  const egcDiscount = Math.max(0, Number(egcApplied ?? 0));
   const displayTotal = typeof computedTotal === 'number' ? computedTotal : total;
   const displayShippingFee = typeof shippingFee === 'number' ? shippingFee : Number(handlingFee ?? 0);
   const isCheckoutDisabled = loading || Boolean(checkoutDisabledReason);
@@ -267,6 +270,12 @@ export default function CustomerCheckoutOrderSummary({
             <div className="flex justify-between text-emerald-600">
               <span>Voucher ({voucher?.code ?? 'Applied'})</span>
               <span className="font-semibold">-PHP {voucherDiscount.toLocaleString()}</span>
+            </div>
+          ) : null}
+          {egcDiscount > 0 ? (
+            <div className="flex justify-between text-fuchsia-600">
+              <span>E-GC Applied</span>
+              <span className="font-semibold">-PHP {egcDiscount.toLocaleString()}</span>
             </div>
           ) : null}
           {canUseMemberPrice && (

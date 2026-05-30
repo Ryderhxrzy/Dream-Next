@@ -13,6 +13,7 @@ import CustomerCheckoutAddressForm from "./CustomerCheckoutAddressForm";
 import CustomerCheckoutPaymentMethod from "./CustomerCheckoutPaymentMethod";
 import CustomerCheckoutOrderSummary from "./CustomerCheckoutOrderSummary";
 import { CheckoutOnlineBankingProvider, useCreateCheckoutSessionMutation, useValidateVoucherMutation } from "@/store/api/paymentApi";
+import { useGetWalletOverviewQuery } from "@/store/api/encashmentApi";
 import { useGetPublicGeneralSettingsQuery } from "@/store/api/adminSettingsApi";
 import { useGetPublicShippingRatesQuery } from "@/store/api/shippingRatesApi";
 import { getStoredReferralCode } from "@/libs/referral";
@@ -224,6 +225,12 @@ const CustomerCheckoutMain = ({
     const [validateVoucher, { isLoading: voucherLoading }] = useValidateVoucherMutation();
     const [voucherInfo, setVoucherInfo] = useState<{ code: string; amount: number; discount: number } | null>(null);
     const [voucherError, setVoucherError] = useState<string | null>(null);
+    const [egcAmountInput, setEgcAmountInput] = useState('');
+    const [appliedEgcAmount, setAppliedEgcAmount] = useState(0);
+    const [egcError, setEgcError] = useState<string | null>(null);
+    const { data: walletOverview } = useGetWalletOverviewQuery({ page: 1, perPage: 1, walletType: 'all' }, {
+        skip: !isLoggedIn,
+    });
     const canSwitchPaymentMode = isLocalPaymentHost || paymentModeEnabledByAdmin;
     const effectivePaymentMode: PaymentMode = canSwitchPaymentMode ? paymentMode : 'live';
     const paymentModeOptions = useMemo<PaymentMode[]>(
@@ -262,6 +269,7 @@ const CustomerCheckoutMain = ({
     const resolvedShippingFee = shippingFee ?? 0;
 
     const voucherDiscount = useMemo(() => Math.max(0, Number(voucherInfo?.discount ?? 0)), [voucherInfo?.discount]);
+    const availableEgcBalance = useMemo(() => Math.max(0, Number(walletOverview?.summary?.available_egc_balance ?? 0)), [walletOverview?.summary?.available_egc_balance]);
     const hasMultiItemsCheckout = Boolean((checkoutData?.items?.length ?? 0) > 0);
     const guestPricing = useMemo(() => {
         if (!checkoutData || isLoggedIn || hasMultiItemsCheckout) {
@@ -334,8 +342,13 @@ const CustomerCheckoutMain = ({
 
     const computedTotal = useMemo(() => {
         if (!checkoutData) return 0;
-        return Math.max(0, effectiveSubtotal - voucherDiscount) + resolvedShippingFee;
-    }, [checkoutData, effectiveSubtotal, resolvedShippingFee, voucherDiscount]);
+        const effectiveEgcAmount = Math.min(appliedEgcAmount, Math.max(0, effectiveSubtotal - voucherDiscount));
+        return Math.max(0, effectiveSubtotal - voucherDiscount - effectiveEgcAmount) + resolvedShippingFee;
+    }, [appliedEgcAmount, checkoutData, effectiveSubtotal, resolvedShippingFee, voucherDiscount]);
+    const maxApplicableEgc = useMemo(
+        () => Math.max(0, Math.min(availableEgcBalance, effectiveSubtotal - voucherDiscount)),
+        [availableEgcBalance, effectiveSubtotal, voucherDiscount]
+    );
     const effectiveSourceSlug = useMemo(() => {
         const draftSlug = String(checkoutData?.sourceSlug ?? '').trim().toLowerCase();
         if (draftSlug) return draftSlug;
@@ -409,8 +422,48 @@ const CustomerCheckoutMain = ({
         if (key === 'voucher_coupon') {
             setVoucherInfo(null)
             setVoucherError(null)
+            setAppliedEgcAmount(0)
+            setEgcError(null)
         }
-    }, [])
+    }, [setAppliedEgcAmount, setEgcError])
+
+    const handleApplyEgc = useCallback(() => {
+        setEgcError(null);
+
+        if (!isLoggedIn) {
+            setEgcError('Please sign in to use E-GC.');
+            return;
+        }
+
+        const amount = Number(egcAmountInput);
+        if (!Number.isFinite(amount) || amount <= 0) {
+            setEgcError('Enter an E-GC amount greater than zero.');
+            return;
+        }
+
+        if (availableEgcBalance <= 0) {
+            setEgcError('No E-GC balance available.');
+            return;
+        }
+
+        if (amount > availableEgcBalance) {
+            setEgcError('Amount exceeds your available E-GC balance.');
+            return;
+        }
+
+        if (amount > maxApplicableEgc) {
+            setEgcError('E-GC cannot exceed the remaining product subtotal.');
+            return;
+        }
+
+        setAppliedEgcAmount(Number(amount.toFixed(2)));
+    }, [availableEgcBalance, egcAmountInput, isLoggedIn, maxApplicableEgc, setAppliedEgcAmount, setEgcError]);
+
+    const handleClearEgc = useCallback(() => {
+        setAppliedEgcAmount(0);
+        setEgcAmountInput('');
+        setEgcError(null);
+    }, [setAppliedEgcAmount, setEgcAmountInput, setEgcError]);
 
     const validate = (): FormErrors => {
         const e: FormErrors = {};
@@ -494,6 +547,12 @@ const CustomerCheckoutMain = ({
             });
             return;
         }
+        if (appliedEgcAmount > maxApplicableEgc) {
+            const message = 'E-GC amount exceeds the available discount for this order.';
+            setEgcError(message);
+            notify.error(message);
+            return;
+        }
 
         try {
             const normalizedProductId = Number(checkoutData.product.id);
@@ -506,6 +565,7 @@ const CustomerCheckoutMain = ({
                     ? selectedOnlineBankingProvider
                     : undefined,
                 voucher_code: voucherInfo?.code,
+                egc_amount: appliedEgcAmount > 0 ? appliedEgcAmount : undefined,
                 source_label: checkoutData.sourceLabel ?? null,
                 source_slug: effectiveSourceSlug || null,
                 storefront_partner: effectiveSourceSlug || null,
@@ -658,6 +718,20 @@ const CustomerCheckoutMain = ({
                                     error: voucherError,
                                     appliedAmount: voucherInfo?.discount ?? 0,
                                 }}
+                                egcStatus={{
+                                    available: availableEgcBalance,
+                                    amount: egcAmountInput,
+                                    appliedAmount: appliedEgcAmount,
+                                    error: egcError,
+                                    disabled: !isLoggedIn || availableEgcBalance <= 0,
+                                }}
+                                onEgcAmountChange={(value) => {
+                                    setEgcAmountInput(value);
+                                    setEgcError(null);
+                                    if (appliedEgcAmount > 0) setAppliedEgcAmount(0);
+                                }}
+                                onApplyEgc={handleApplyEgc}
+                                onClearEgc={handleClearEgc}
                             />
                             <CustomerCheckoutAddressForm
                                 form={form}
@@ -691,6 +765,7 @@ const CustomerCheckoutMain = ({
                                 loading={loading}
                                 onSubmit={handleSubmit}
                                 voucher={voucherInfo ? { code: voucherInfo.code, discount: voucherInfo.discount } : null}
+                                egcApplied={appliedEgcAmount}
                                 computedTotal={computedTotal}
                                 subtotalOverride={effectiveSubtotal}
                                 unitPriceOverride={!isLoggedIn && !hasMultiItemsCheckout ? guestPricing.unitPrice : undefined}

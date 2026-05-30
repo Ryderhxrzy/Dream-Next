@@ -7,6 +7,7 @@ use App\Mail\Checkout\PartnerStorefrontGuestOrderMail;
 use App\Models\AdminNotification;
 use App\Mail\Checkout\CheckoutCompletedMail;
 use App\Models\CheckoutHistory;
+use App\Models\CustomerWalletLedger;
 use App\Models\CustomerNotification;
 use App\Models\OrderNotification;
 use App\Models\ProductReview;
@@ -254,6 +255,7 @@ class PaymentController extends Controller
             'payment_mode' => 'nullable|in:test,live',
             'online_banking_provider' => 'nullable|in:dob,ubp',
             'voucher_code' => 'nullable|string|max:80',
+            'egc_amount' => 'nullable|numeric|min:0',
             'source_label' => 'nullable|string|max:255',
             'source_slug' => 'nullable|string|max:255',
             'storefront_partner' => 'nullable|string|max:255',
@@ -380,7 +382,23 @@ class PaymentController extends Controller
             $voucherDiscount = min($subtotal, (float) ($voucher->avi_amount ?? 0));
         }
 
-        $computedAmount = max(0, $subtotal - $voucherDiscount) + $handlingFee;
+        $egcAmount = round(max(0, (float) ($validated['egc_amount'] ?? 0)), 2);
+        if ($egcAmount > 0) {
+            if (!$customerId) {
+                return response()->json(['message' => 'Please sign in to use E-GC.'], 422);
+            }
+
+            $availableEgcBalance = $this->customerEgcBalance((int) $customerId);
+            $maxEgcAmount = round(max(0, $subtotal - $voucherDiscount), 2);
+            if ($egcAmount > $availableEgcBalance) {
+                return response()->json(['message' => 'E-GC amount exceeds available balance.'], 422);
+            }
+            if ($egcAmount > $maxEgcAmount) {
+                return response()->json(['message' => 'E-GC amount exceeds the remaining product subtotal.'], 422);
+            }
+        }
+
+        $computedAmount = max(0, $subtotal - $voucherDiscount - $egcAmount) + $handlingFee;
 
         $payload = [
             'data' => [
@@ -517,6 +535,9 @@ class PaymentController extends Controller
                     'code' => (string) ($voucher->avi_code ?? ''),
                     'amount' => (float) ($voucher->avi_amount ?? 0),
                     'discount' => (float) $voucherDiscount,
+                ] : null,
+                'egc' => $egcAmount > 0 ? [
+                    'amount' => (float) $egcAmount,
                 ] : null,
             ], now()->addDays(3));
 
@@ -1784,7 +1805,14 @@ class PaymentController extends Controller
         }
 
         if ($isNowPaid) {
+            DirectReferralCommission::createPendingIfEligible(
+                $history,
+                !empty($history->ch_referrer_customer_id) ? (int) $history->ch_referrer_customer_id : null,
+                (string) ($history->ch_referral_source_type ?? 'checkout_referral')
+            );
+            DirectReferralCommission::releaseAvailableForOrder($history, null);
             $this->markAffiliateVoucherUsedIfNeeded($checkoutId, is_array($cached) ? $cached : []);
+            $this->debitEgcIfNeeded($checkoutId, is_array($cached) ? $cached : []);
         }
     }
 
@@ -2144,6 +2172,79 @@ class PaymentController extends Controller
             DB::table('tbl_affiliate_voucher_issuances')
                 ->where('avi_id', (int) $row->avi_id)
                 ->update($update);
+        });
+
+        Cache::put($cacheKey, true, now()->addDays(7));
+    }
+
+    private function customerEgcBalance(int $customerId): float
+    {
+        if ($customerId <= 0 || !Schema::hasTable('tbl_customer_wallet_ledger')) {
+            return 0.0;
+        }
+
+        $credits = (float) CustomerWalletLedger::query()
+            ->where('wl_customer_id', $customerId)
+            ->where('wl_wallet_type', 'egc')
+            ->where('wl_entry_type', 'credit')
+            ->sum('wl_amount');
+
+        $debits = (float) CustomerWalletLedger::query()
+            ->where('wl_customer_id', $customerId)
+            ->where('wl_wallet_type', 'egc')
+            ->where('wl_entry_type', 'debit')
+            ->sum('wl_amount');
+
+        return round(max(0, $credits - $debits), 2);
+    }
+
+    private function debitEgcIfNeeded(string $checkoutId, array $cached): void
+    {
+        $egc = $cached['egc'] ?? null;
+        $amount = is_array($egc) ? round(max(0, (float) ($egc['amount'] ?? 0)), 2) : 0.0;
+        $customerId = (int) ($cached['customer_id'] ?? 0);
+
+        if ($amount <= 0 || $customerId <= 0 || !Schema::hasTable('tbl_customer_wallet_ledger')) {
+            return;
+        }
+
+        $cacheKey = "checkout_egc_debited:{$checkoutId}";
+        if (Cache::has($cacheKey)) {
+            return;
+        }
+
+        DB::transaction(function () use ($amount, $customerId, $checkoutId) {
+            $alreadyDebited = CustomerWalletLedger::query()
+                ->where('wl_wallet_type', 'egc')
+                ->where('wl_entry_type', 'debit')
+                ->where('wl_source_type', 'checkout_egc')
+                ->where('wl_reference_no', $checkoutId)
+                ->exists();
+
+            if ($alreadyDebited) {
+                return;
+            }
+
+            if ($this->customerEgcBalance($customerId) < $amount) {
+                Log::warning('Skipping E-GC debit because balance is insufficient at payment confirmation.', [
+                    'checkout_id' => $checkoutId,
+                    'customer_id' => $customerId,
+                    'amount' => $amount,
+                ]);
+                return;
+            }
+
+            CustomerWalletLedger::create([
+                'wl_customer_id' => $customerId,
+                'wl_wallet_type' => 'egc',
+                'wl_entry_type' => 'debit',
+                'wl_amount' => $amount,
+                'wl_source_type' => 'checkout_egc',
+                'wl_source_id' => null,
+                'wl_reference_no' => $checkoutId,
+                'wl_notes' => 'E-GC store credit applied to checkout.',
+                'wl_created_by' => null,
+            ]);
         });
 
         Cache::put($cacheKey, true, now()->addDays(7));
