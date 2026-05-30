@@ -4,13 +4,8 @@
 
 ## Design Reference
 
-The community UI is modeled after **Neighborly / Nextdoor** style:
-- Clean, modern layout
-- Neighborhood/location-aware feed
-- Left sidebar navigation
-- Main content feed (center)
-- Right panel with stats and quick info
-- Light theme (white background, subtle borders, blue accents)
+The community UI layout is modeled after **Neighborly / Nextdoor** — 3-column layout.
+But the **color aesthetic** is **Modern SaaS** (Linear / Notion / Circle.so style) — NOT Facebook/blue.
 
 ---
 
@@ -18,12 +13,52 @@ The community UI is modeled after **Neighborly / Nextdoor** style:
 
 | Property | Value |
 |---|---|
-| UI Library | shadcn/ui |
-| Styling | Tailwind CSS |
-| Theme | Light-first (white/gray backgrounds, blue accents) |
-| Font | System font / Inter |
+| UI Library | shadcn/ui (Nova preset, Radix) |
+| Styling | Tailwind CSS v4 |
+| Theme | Light — white bg, zinc/neutral accents |
+| Font | Inter (next/font/google) |
 | Icons | Lucide React (bundled with shadcn) |
-| Border radius | Rounded (rounded-lg, rounded-xl on cards) |
+| Border radius | `rounded-md` (subtle), `rounded-lg` on cards |
+
+---
+
+## Color Palette
+
+| Element | Tailwind Class |
+|---|---|
+| Page background | `bg-white` |
+| Sidebar background | `bg-white` |
+| Sidebar border | `border-zinc-200` |
+| Topbar border | `border-zinc-200` |
+| Active nav item bg | `bg-zinc-100` |
+| Active nav text | `text-zinc-900 font-medium` |
+| Inactive nav text | `text-zinc-500` |
+| Inactive nav hover | `hover:bg-zinc-50 hover:text-zinc-900` |
+| Active nav icon | `text-zinc-900` |
+| Inactive nav icon | `text-zinc-400` |
+| Primary button | `bg-zinc-950 hover:bg-zinc-800 text-white` |
+| Muted text | `text-zinc-400` |
+| Body text | `text-zinc-900` |
+| Subtext | `text-zinc-500` |
+| Card border | `border-zinc-200` |
+| Card background | `bg-white` |
+| Input background | `bg-zinc-50 border-zinc-200` |
+| Input focus ring | `focus-visible:ring-zinc-900` |
+| Unread badge | `bg-zinc-900 text-white` |
+| Notification dot | `bg-red-500` |
+| Online indicator | `bg-emerald-400` |
+| Logo background | `bg-zinc-950` |
+| Avatar fallback | `bg-zinc-900 text-white` |
+| Neighborhood card | `border border-zinc-200 rounded-lg` |
+
+---
+
+## What to AVOID
+
+- ❌ `bg-blue-*` — too Facebook-like
+- ❌ `bg-gray-50` as page bg — use `bg-white`
+- ❌ Rounded-full on nav items — use `rounded-md`
+- ❌ Colored sidebar highlights — zinc only
 
 ---
 
