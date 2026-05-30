@@ -1,0 +1,228 @@
+# UI Context — AF Nexus Community
+
+---
+
+## Design Reference
+
+The community UI is modeled after **Neighborly / Nextdoor** style:
+- Clean, modern layout
+- Neighborhood/location-aware feed
+- Left sidebar navigation
+- Main content feed (center)
+- Right panel with stats and quick info
+- Light theme (white background, subtle borders, blue accents)
+
+---
+
+## Design System
+
+| Property | Value |
+|---|---|
+| UI Library | shadcn/ui |
+| Styling | Tailwind CSS |
+| Theme | Light-first (white/gray backgrounds, blue accents) |
+| Font | System font / Inter |
+| Icons | Lucide React (bundled with shadcn) |
+| Border radius | Rounded (rounded-lg, rounded-xl on cards) |
+
+---
+
+## Layout Structure
+
+```
+┌───────────────────────────────────────────────────────────────────┐
+│  TOPBAR: Logo | Location Dropdown | Search Bar | Notifications | Profile │
+├──────────────┬────────────────────────────────┬───────────────────┤
+│              │                                │                   │
+│  LEFT        │        MAIN FEED               │   RIGHT PANEL     │
+│  SIDEBAR     │                                │                   │
+│              │  ┌──────────────────────────┐  │  Neighborhood     │
+│  Home        │  │ Neighborhood Header       │  │  Stats            │
+│  Feed        │  │ (Name, Stats, Greeting)   │  │                   │
+│  Events      │  └──────────────────────────┘  │  Upcoming Events  │
+│  Groups      │                                │                   │
+│  Messages    │  ┌──────────────────────────┐  │  Active Neighbors │
+│  Safety      │  │ Category Filter Tabs      │  │                   │
+│              │  │ All | Questions | Events   │  │  Quick Actions    │
+│  ACCOUNT     │  │ For Sale | Safety | Free   │  │                   │
+│  Settings    │  └──────────────────────────┘  │                   │
+│              │                                │                   │
+│              │  ┌──────────────────────────┐  │                   │
+│  MY          │  │ PostCard (Official Post)  │  │                   │
+│  NEIGHBORHOOD│  │ PostCard (Question)       │  │                   │
+│  (name)      │  │ PostCard (Event)          │  │                   │
+│  (members)   │  └──────────────────────────┘  │                   │
+└──────────────┴────────────────────────────────┴───────────────────┘
+```
+
+---
+
+## Component Breakdown
+
+### Topbar
+```
+- Logo (left)
+- Location/Neighborhood Dropdown (pill button with map pin)
+- Search Input (center, wide): placeholder "Search neighbors, posts, events..."
+- Notification Bell (with red badge count)
+- App Grid Icon (9-dot menu)
+- User Avatar (circle, with initials fallback)
+```
+
+### Left Sidebar
+```
+- Navigation items with icon + label
+  - Home (highlighted/active state = blue bg)
+  - Feed
+  - Events
+  - Groups
+  - Messages (with badge for unread count)
+  - Safety
+
+- Section divider: "ACCOUNT"
+  - Settings
+
+- Bottom section: "MY NEIGHBORHOOD"
+  - Neighborhood name (bold)
+  - Member count + active count
+  - Current user avatar + name + menu icon
+```
+
+### Neighborhood Header Card
+```
+- Map thumbnail (left, small)
+- Greeting text: "GOOD MORNING, [NAME] 🌤" (small caps, orange/yellow)
+- Neighborhood name (large, bold)
+- 4 stat columns:
+  - [number] Neighbors
+  - [number] Active today (green)
+  - [number] New posts
+  - [number] Events this week
+```
+
+### Category Filter Tabs
+```
+- Pill/button style tabs (not underline tabs)
+- Active: blue filled background, white text
+- Inactive: gray border, gray text
+- Items: All | Questions | Events | For Sale | Safety | Free
+```
+
+### PostCard
+```
+- User avatar (circle) + name + badge (e.g. "✓ Official", "? Question", "📅 Event")
+- Timestamp + location (gray, small)
+- Post content (text)
+- Optional image attachment (rounded, full-width within card)
+- Footer actions:
+  - 👍 [N] Helpful
+  - 💬 [N] Comments
+  - ↗ Share
+  - OR "+ Answer" button (for questions)
+- Three-dot menu (top right)
+```
+
+### Right Panel
+```
+─── "+ Post to Neighborhood" button (blue, full-width, top)
+
+─── Neighborhood Stats section
+  - 4 stat boxes in 2x2 grid:
+    - Total members
+    - Active today (green number)
+    - New posts
+    - Events this week
+
+─── Upcoming Events section (with "See all" link)
+  - Color dot (green/blue/orange) + Event name
+  - Date, location, time
+
+─── Active Neighbors section (with "View all" link)
+  - "● N online right now" (green dot)
+  - Row of avatar circles (colored, with initials)
+  - "+136" overflow count
+
+─── Quick Actions section
+  - List an Item for Sale (icon + text)
+  - Create an Event (icon + text)
+  - Report Local Issue (icon + text)
+```
+
+---
+
+## shadcn/ui Components Used
+
+| UI Element | shadcn Component |
+|---|---|
+| Cards (posts, panels) | `<Card>`, `<CardContent>`, `<CardHeader>` |
+| Navigation items | `<Button variant="ghost">` |
+| Category filter pills | `<Badge>` or `<Button variant="outline">` |
+| Search bar | `<Input>` |
+| Dropdowns | `<DropdownMenu>` |
+| Modals / dialogs | `<Dialog>` |
+| Avatar | `<Avatar>`, `<AvatarFallback>`, `<AvatarImage>` |
+| Tabs | `<Tabs>`, `<TabsList>`, `<TabsTrigger>` |
+| Tooltips | `<Tooltip>` |
+| Separators | `<Separator>` |
+| Notification badge | `<Badge>` |
+| Post button | `<Button>` (default blue) |
+| Quick action items | `<Button variant="outline">` |
+
+---
+
+## Redux UI State (communitySlice)
+
+```typescript
+interface CommunityUIState {
+  sidebarOpen: boolean
+  activeCategory: 'all' | 'questions' | 'events' | 'for_sale' | 'safety' | 'free'
+  activeNeighborhoodId: string | null
+  modalState: {
+    createPost: boolean
+    createEvent: boolean
+    reportIssue: boolean
+  }
+}
+```
+
+---
+
+## RTK Query Endpoints (communityApi)
+
+```typescript
+getPosts(communityId, category)      → PostCard[]
+getNeighborhoodStats(communityId)    → NeighborhoodStats
+getUpcomingEvents(communityId)       → Event[]
+getActiveNeighbors(communityId)      → User[]
+createPost(body)                     → Post
+markHelpful(postId)                  → Post
+getComments(postId)                  → Comment[]
+createComment(postId, body)          → Comment
+```
+
+---
+
+## Color Palette (Tailwind)
+
+| Element | Class |
+|---|---|
+| Primary action button | `bg-blue-600 hover:bg-blue-700` |
+| Active nav item | `bg-blue-50 text-blue-700` |
+| Active today stat | `text-green-600` |
+| Online indicator dot | `bg-green-500` |
+| Unread badge | `bg-red-500 text-white` |
+| Event dot — upcoming | `bg-blue-500` |
+| Event dot — social | `bg-green-500` |
+| Event dot — urgent | `bg-orange-500` |
+| Card background | `bg-white` |
+| Page background | `bg-gray-50` |
+| Borders | `border-gray-200` |
+| Muted text | `text-gray-500 text-sm` |
+
+---
+
+## Responsive Behavior
+
+- Mobile: sidebar collapses to bottom nav or hamburger
+- Tablet: right panel hides, sidebar icon-only
+- Desktop: full 3-column layout

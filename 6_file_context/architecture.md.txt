@@ -1,0 +1,249 @@
+# Architecture — AF Nexus Community
+
+---
+
+## System Overview
+
+```
+┌─────────────────────────────────────────────────────┐
+│                    CLIENT LAYER                     │
+│                                                     │
+│   Next.js (App Router) + shadcn/ui + Tailwind CSS  │
+│   Redux Toolkit (UI state) + RTK Query (API state) │
+└────────────────────┬────────────────────────────────┘
+                     │ HTTP / WebSocket
+          ┌──────────┴──────────┐
+          │                     │
+┌─────────▼──────────┐  ┌──────▼──────────────────────┐
+│  COMMUNITY BACKEND  │  │     AFHOME BACKEND          │
+│                     │  │                             │
+│  Hono.js (Node.js)  │  │  Laravel (PHP)              │
+│  Prisma ORM         │  │  MySQL/PostgreSQL            │
+│  PostgreSQL         │  │  Sanctum/JWT Auth           │
+│  Port: 4000         │  │  Port: 8000                 │
+└─────────────────────┘  └─────────────────────────────┘
+          │                          │
+          │    Token Validation      │
+          └──────────────────────────┘
+```
+
+---
+
+## Authentication Flow
+
+```
+1. User logs in → AFHome Laravel backend
+2. AFHome issues JWT token (stored in cookie or localStorage)
+3. Community frontend sends request with token in Authorization header
+4. Community backend (Hono.js middleware) validates token:
+   → Option A: Call AFHome /api/validate-token endpoint
+   → Option B: Verify JWT secret shared between both backends
+5. If valid → attach user identity to request context
+6. If invalid → return 401 Unauthorized
+```
+
+### Auth Middleware (community-backend)
+
+```typescript
+// src/middleware/auth.ts
+export const authMiddleware = async (c, next) => {
+  const token = c.req.header('Authorization')?.replace('Bearer ', '')
+  if (!token) return c.json({ error: 'Unauthorized' }, 401)
+
+  // Validate against AFHome
+  const user = await validateAFHomeToken(token)
+  if (!user) return c.json({ error: 'Invalid token' }, 401)
+
+  c.set('user', user)
+  await next()
+}
+```
+
+---
+
+## Backend Architecture (Hono.js)
+
+### Pattern: Route → Controller → Service → Repository
+
+```
+src/
+├── index.ts                  ← App entry, registers routes
+├── middleware/
+│   ├── auth.ts               ← AFHome token validation
+│   └── errorHandler.ts       ← Global error handling
+├── routes/
+│   ├── posts.ts              ← POST /api/posts
+│   ├── comments.ts           ← POST /api/comments
+│   ├── communities.ts        ← POST /api/communities
+│   ├── events.ts             ← POST /api/events
+│   └── users.ts              ← GET  /api/users/me
+├── controllers/
+│   ├── PostController.ts
+│   ├── CommentController.ts
+│   ├── CommunityController.ts
+│   └── EventController.ts
+├── services/
+│   ├── PostService.ts
+│   ├── CommentService.ts
+│   ├── CommunityService.ts
+│   └── AuthService.ts        ← AFHome token validation logic
+├── repositories/
+│   ├── PostRepository.ts
+│   ├── CommentRepository.ts
+│   └── CommunityRepository.ts
+├── lib/
+│   └── prisma.ts             ← Prisma client singleton
+└── generated/
+    └── prisma/               ← Auto-generated Prisma client
+```
+
+---
+
+## Database Schema (Prisma)
+
+### Core Models
+
+```
+User (synced from AFHome)
+  id          String   @id (AFHome user ID)
+  name        String
+  email       String   @unique
+  avatar      String?
+  tier        String?  (AFHome affiliate tier)
+  createdAt   DateTime
+
+Community
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  banner      String?
+  ownerId     String   → User
+  members     CommunityMember[]
+  posts       Post[]
+
+CommunityMember
+  userId      String   → User
+  communityId String   → Community
+  role        MemberRole (OWNER | MODERATOR | MEMBER)
+  joinedAt    DateTime
+  @@id([userId, communityId])
+
+Post
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  category    PostCategory (QUESTION | EVENT | FOR_SALE | SAFETY | FREE | GENERAL)
+  imageUrl    String?
+  helpfulCount Int     @default(0)
+  authorId    String   → User
+  communityId String   → Community
+  comments    Comment[]
+
+Comment
+  id          String   @id @default(cuid())
+  content     String
+  authorId    String   → User
+  postId      String   → Post
+  parentId    String?  → Comment (for replies)
+  replies     Comment[]
+
+Event
+  id          String   @id @default(cuid())
+  title       String
+  date        DateTime
+  location    String
+  communityId String   → Community
+  createdById String   → User
+```
+
+---
+
+## Frontend Architecture (Next.js)
+
+### Folder Structure
+
+```
+apps/apsara-home-frontend/   (or new community-frontend app)
+├── app/
+│   └── community/
+│       ├── layout.tsx         ← Community shell with sidebar
+│       ├── page.tsx           ← Feed (home)
+│       ├── [slug]/
+│       │   └── page.tsx       ← Community detail page
+│       └── events/
+│           └── page.tsx
+├── features/
+│   └── community/
+│       ├── components/
+│       │   ├── PostCard.tsx
+│       │   ├── PostFeed.tsx
+│       │   ├── CommentThread.tsx
+│       │   ├── CommunityHeader.tsx
+│       │   ├── NeighborhoodStats.tsx
+│       │   ├── EventsList.tsx
+│       │   ├── ActiveNeighbors.tsx
+│       │   └── QuickActions.tsx
+│       ├── store/
+│       │   ├── communitySlice.ts   ← Redux UI state
+│       │   └── communityApi.ts     ← RTK Query endpoints
+│       └── hooks/
+│           └── useCommunity.ts
+├── components/
+│   └── ui/                    ← shadcn/ui components
+└── lib/
+    └── auth.ts                ← AFHome token helpers
+```
+
+---
+
+## API Endpoints
+
+### Community
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | /api/communities | List all communities |
+| POST | /api/communities | Create community |
+| GET | /api/communities/:slug | Get community by slug |
+| POST | /api/communities/:id/join | Join community |
+
+### Posts
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | /api/posts?communityId= | Get posts feed |
+| POST | /api/posts | Create post |
+| GET | /api/posts/:id | Get single post |
+| PUT | /api/posts/:id | Update post |
+| DELETE | /api/posts/:id | Delete post |
+| POST | /api/posts/:id/helpful | Upvote post |
+
+### Comments
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | /api/posts/:id/comments | Get comments for post |
+| POST | /api/posts/:id/comments | Add comment |
+| POST | /api/comments/:id/reply | Reply to comment |
+
+### Events
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | /api/events?communityId= | Get upcoming events |
+| POST | /api/events | Create event |
+
+### Users
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | /api/users/me | Current user profile |
+| GET | /api/users/:id | Public user profile |
+
+---
+
+## Environment Variables
+
+```env
+# community-backend .env
+DATABASE_URL=postgresql://user:pass@localhost:5432/community_db
+AFHOME_API_URL=https://api.afhome.com
+AFHOME_JWT_SECRET=shared_secret_key
+PORT=4000
+```

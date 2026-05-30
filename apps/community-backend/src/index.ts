@@ -1,25 +1,16 @@
-import 'dotenv/config';
-import { serve } from '@hono/node-server';
-import { Hono } from 'hono';
-import { cors } from 'hono/cors';
-
-const port = Number(process.env.PORT ?? 4000);
+import { Hono } from "hono";
+import { serve } from "@hono/node-server";
 const app = new Hono();
 
-app.use('*', cors());
-
-app.get('/health', (c) => {
-  return c.json({ ok: true, service: 'community-backend' });
+app.get("/", (c) => {
+  return c.text("Hello, World!");
 });
 
-app.get('/', (c) => {
-  return c.text('Community backend is running');
-});
+const port = 4000;
 
 serve({
   fetch: app.fetch,
-  hostname: '0.0.0.0',
   port,
-}, (info) => {
-  console.log(`community-backend listening on http://${info.address}:${info.port}`);
-});
+})
+
+console.log(`Server is running on http://localhost:${port}`);
