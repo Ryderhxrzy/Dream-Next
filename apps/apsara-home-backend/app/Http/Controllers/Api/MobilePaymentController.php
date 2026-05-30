@@ -213,15 +213,19 @@ class MobilePaymentController extends Controller
     {
         $customer = $request->user();
 
-        // Get the EXISTING pending order using checkout_id
-        $order = CheckoutHistory::where('ch_checkout_id', $checkoutId)
+        // Get ALL pending orders with this checkout_id (handles multi-item orders)
+        $orders = CheckoutHistory::where('ch_checkout_id', $checkoutId)
             ->where('ch_customer_id', (int) $customer->getAuthIdentifier())
             ->where('ch_status', 'pending')
-            ->first();
+            ->get();
 
-        if (!$order) {
+        if ($orders->isEmpty()) {
             return response()->json(['message' => 'Pending order not found'], 404);
         }
+
+        $firstOrder = $orders->first();
+        $totalAmount = (float) $orders->sum('ch_amount');
+        $shippingFee = (float) ($firstOrder->ch_shipping_fee ?? 0);
 
         // Get checkout URL from PayMongo
         $checkoutUrl = $this->getCheckoutUrlFromPayMongo($checkoutId);
@@ -230,11 +234,14 @@ class MobilePaymentController extends Controller
             'checkout_id' => $checkoutId,
             'checkout_url' => $checkoutUrl,
             'status' => 'pending',
-            'amount' => (float) $order->ch_amount,
-            'shipping_fee' => (float) ($order->ch_shipping_fee ?? 0),
-            'product_name' => $order->ch_product_name,
-            'quantity' => (int) $order->ch_quantity,
-            'created_at' => $order->created_at->toISOString(),
+            'amount' => $totalAmount,
+            'shipping_fee' => $shippingFee,
+            'product_name' => $orders->count() > 1
+                ? "Order with {$orders->count()} items"
+                : $firstOrder->ch_product_name,
+            'quantity' => (int) $orders->sum('ch_quantity'),
+            'items_count' => $orders->count(),
+            'created_at' => $firstOrder->created_at->toISOString(),
         ]);
     }
 
