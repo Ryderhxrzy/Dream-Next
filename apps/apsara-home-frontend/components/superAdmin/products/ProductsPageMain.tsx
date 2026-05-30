@@ -925,6 +925,8 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
   const [page,            setPage]            = useState(1)
   const [showAddModal,    setShowAddModal]    = useState(false)
   const [showActivityLogs, setShowActivityLogs] = useState(false)
+  const [isSyncingMeilisearch, setIsSyncingMeilisearch] = useState(false)
+  const [meilisearchError, setMeilisearchError] = useState<string | null>(null)
   const [showManualSelectionModal, setShowManualSelectionModal] = useState(false)
   const [manualSelectionProducts, setManualSelectionProducts] = useState<Product[]>([])
   const [manualSelectionMode, setManualSelectionMode] = useState<'review' | 'view'>('review')
@@ -1459,6 +1461,49 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
     }
   }
 
+  const handleSyncMeilisearch = async () => {
+    setIsSyncingMeilisearch(true)
+    setMeilisearchError(null)
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_LARAVEL_API_URL ?? '').replace(/\/+$/, '')
+
+    try {
+      if (!apiBaseUrl) {
+        throw new Error('Laravel API URL is not configured')
+      }
+
+      if (!sessionAccessToken) {
+        throw new Error('Authentication token is missing. Please login again')
+      }
+
+      const response = await fetch(`${apiBaseUrl}/api/meilisearch/sync-products`, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionAccessToken}`,
+        },
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        const errorMsg = data?.message || data?.error || `HTTP ${response.status}: ${response.statusText}`
+        throw new Error(errorMsg)
+      }
+
+      setMeilisearchError(null)
+      showSuccessToast(data?.message || 'Products synced to search index successfully!')
+    } catch (error) {
+      const err = error as { message?: string }
+      const errorMessage = err?.message || 'Failed to sync products to search index'
+      setMeilisearchError(errorMessage)
+      showErrorToast(errorMessage)
+      console.error('[Meilisearch Sync Error]', error)
+    } finally {
+      setIsSyncingMeilisearch(false)
+    }
+  }
+
   const handleCancelZqImport = () => {
     if (isSyncingAllZq || isDiscoveringZqTotal) {
       zqImportCancelRef.current = true
@@ -1940,6 +1985,32 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
 
   return (
     <div className="space-y-5">
+      {/* ── Meilisearch Error Alert ── */}
+      {meilisearchError && (
+        <motion.div
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -12 }}
+          className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900/40 dark:bg-red-900/20"
+        >
+          <svg className="w-5 h-5 text-red-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <div className="flex-1">
+            <h3 className="font-semibold text-red-800 dark:text-red-300">Sync Failed</h3>
+            <p className="text-sm text-red-700 dark:text-red-400 mt-1">{meilisearchError}</p>
+          </div>
+          <button
+            onClick={() => setMeilisearchError(null)}
+            className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 shrink-0"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </motion.div>
+      )}
+
       {/* ── Header ── */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
         className="flex items-start justify-between gap-4">
@@ -2000,6 +2071,27 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m-6 9 2 2 4-4"/>
             </svg>
             <span className="hidden sm:inline">Upload History</span>
+          </button>
+          <button
+            onClick={handleSyncMeilisearch}
+            disabled={isSyncingMeilisearch}
+            className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-60 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-300 dark:hover:bg-amber-900/30"
+          >
+            {isSyncingMeilisearch ? (
+              <>
+                <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                <span className="hidden sm:inline">Syncing...</span>
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                <span className="hidden sm:inline">Sync Search</span>
+              </>
+            )}
           </button>
           <button
             onClick={() => setShowAddModal(true)}
