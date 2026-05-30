@@ -24,50 +24,6 @@ type VideoGalleryItem = {
 
 
 
-const SAMPLE_VIDEO_ITEMS: VideoGalleryItem[] = [
-  {
-    id: 1,
-    title: 'Modern Living Room Tour',
-    subtitle: 'A complete tour of contemporary furniture arrangements',
-    link_url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    is_active: true,
-  },
-  {
-    id: 2,
-    title: 'Bedroom Design Tips',
-    subtitle: 'Creating the perfect bedroom sanctuary',
-    link_url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    is_active: true,
-  },
-  {
-    id: 3,
-    title: 'Kitchen Setup Guide',
-    subtitle: 'Professional kitchen organization and design',
-    link_url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    is_active: true,
-  },
-  {
-    id: 4,
-    title: 'Furniture Assembly',
-    subtitle: 'Step-by-step furniture assembly instructions',
-    link_url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    is_active: true,
-  },
-  {
-    id: 5,
-    title: 'Home Office Setup',
-    subtitle: 'Creating an efficient home workspace',
-    link_url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    is_active: true,
-  },
-  {
-    id: 6,
-    title: 'Interior Design Trends',
-    subtitle: 'Latest trends in home interior design',
-    link_url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    is_active: true,
-  },
-]
 
 function getVideoId(url: string): string | null {
   if (!url) return null
@@ -151,8 +107,7 @@ export default function VideoGalleryPageClient({ initialCategories }: VideoGalle
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null)
   const { data, isLoading } = useGetPublicWebPageItemsQuery('video-gallery')
 
-  const galleryItems: VideoGalleryItem[] = data?.items?.filter((item: VideoGalleryItem) => item.is_active) ?? []
-  const effectiveGalleryItems = galleryItems.length > 0 ? galleryItems : SAMPLE_VIDEO_ITEMS
+  const effectiveGalleryItems: VideoGalleryItem[] = data?.items?.filter((item: VideoGalleryItem) => item.is_active) ?? []
 
   const selectedItem = useMemo(() => {
     if (!selectedVideo) return null

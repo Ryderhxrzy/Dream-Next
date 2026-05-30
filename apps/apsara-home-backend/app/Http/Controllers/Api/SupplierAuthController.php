@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Mail\Auth\PortalLoginOtpMail;
+use App\Models\ProductBrand;
 use App\Models\SystemSetting;
 use App\Models\SupplierUser;
 use Illuminate\Http\Request;
@@ -282,17 +283,74 @@ class SupplierAuthController extends Controller
 
     private function transform(SupplierUser $supplierUser): array
     {
+        $supplier = $supplierUser->supplier;
+        $supplierName = (string) ($supplier?->s_company ?? $supplier?->s_name ?? '');
+        $supplierLogo = null;
+
+        // Get logo from ProductBrand table by intelligent matching
+        if ($supplier && ($supplier->s_company || $supplier->s_name)) {
+            $brand = $this->findBrandForSupplier($supplier);
+            $supplierLogo = $brand?->pb_image;
+        }
+
         return [
             'id' => (int) $supplierUser->su_id,
             'name' => (string) ($supplierUser->su_fullname ?: $supplierUser->su_username),
             'email' => (string) ($supplierUser->su_email ?? ''),
             'role' => 'supplier',
             'supplier_id' => (int) $supplierUser->su_supplier,
-            'supplier_name' => $supplierUser->supplier?->s_company ?: $supplierUser->supplier?->s_name,
+            'supplier_name' => $supplierName,
+            'supplier_logo' => $supplierLogo,
             'username' => (string) $supplierUser->su_username,
             'level_type' => (int) ($supplierUser->su_level_type ?? 0),
             'is_main_supplier' => (int) ($supplierUser->su_level_type ?? 0) === 1,
         ];
+    }
+
+    private function findBrandForSupplier($supplier): ?ProductBrand
+    {
+        $candidates = [
+            (string) ($supplier->s_company ?? ''),
+            (string) ($supplier->s_name ?? ''),
+        ];
+
+        $normalizedCandidates = collect($candidates)
+            ->map(fn ($value) => strtolower(preg_replace('/[^a-z0-9]/i', '', trim($value)) ?? ''))
+            ->filter(fn ($value) => $value !== '')
+            ->values();
+
+        if ($normalizedCandidates->isEmpty()) {
+            return null;
+        }
+
+        // Exact match first
+        $brands = ProductBrand::query()->select(['pb_id', 'pb_name', 'pb_image'])->get();
+        foreach ($brands as $brand) {
+            $brandKey = strtolower(preg_replace('/[^a-z0-9]/i', '', (string) ($brand->pb_name ?? '')) ?? '');
+            if ($brandKey !== '' && $normalizedCandidates->contains($brandKey)) {
+                return $brand;
+            }
+        }
+
+        // Fuzzy match if exact match fails
+        $bestScore = 0;
+        $bestBrand = null;
+        foreach ($brands as $brand) {
+            $brandKey = strtolower(preg_replace('/[^a-z0-9]/i', '', (string) ($brand->pb_name ?? '')) ?? '');
+            if ($brandKey === '' || strlen($brandKey) < 2) {
+                continue;
+            }
+            foreach ($normalizedCandidates as $candidate) {
+                $similarity = 0;
+                similar_text($candidate, $brandKey, $similarity);
+                if ($similarity > $bestScore) {
+                    $bestScore = $similarity;
+                    $bestBrand = $brand;
+                }
+            }
+        }
+
+        return $bestBrand;
     }
 
     private function isLoginTwoFactorEnabled(): bool

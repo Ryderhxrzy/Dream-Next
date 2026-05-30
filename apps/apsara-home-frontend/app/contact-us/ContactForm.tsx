@@ -28,13 +28,18 @@ export default function ContactForm() {
 
   if (submitted) {
     return (
-      <div className="rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-6 py-8 text-center">
-        <p className="text-lg font-semibold text-emerald-700 dark:text-emerald-400 mb-1">Message sent!</p>
-        <p className="text-sm text-emerald-600 dark:text-emerald-500">We&apos;ll get back to you as soon as possible.</p>
+      <div className="rounded-2xl border border-sky-200 bg-sky-50 px-6 py-10 text-center dark:border-sky-800 dark:bg-sky-900/20">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-100 text-sky-600 dark:bg-sky-900/40 dark:text-sky-300">
+          <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </div>
+        <p className="text-lg font-bold text-sky-700 dark:text-sky-300">Message sent!</p>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">We&apos;ll get back to you within 24 hours.</p>
         <button
           type="button"
           onClick={() => { setSubmitted(false); setForm({ name: '', email: '', phone: '', subject: '', message: '' }); }}
-          className="mt-4 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline"
+          className="mt-5 rounded-xl border border-sky-200 bg-white px-4 py-2 text-xs font-semibold text-sky-700 transition hover:bg-sky-50 dark:border-sky-800 dark:bg-slate-900 dark:text-sky-300"
         >
           Send another message
         </button>

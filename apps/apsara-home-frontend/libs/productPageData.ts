@@ -199,6 +199,8 @@ const toCategoryProduct = (row: LooseRecord, apiUrl?: string): CategoryProduct =
   const srp = toNumber(row.priceSrp ?? row.pd_price_srp ?? 0)
   const member = toNumber(row.priceMember ?? row.pd_price_member ?? 0)
   const prodpv = toNumber(row.prodpv ?? row.pd_prodpv ?? 0)
+  const soldCount = toOptionalNumber(row.soldCount ?? row.sold_count ?? row.pd_sold_count)
+  const rating = toOptionalNumber(row.avgRating ?? row.avg_rating ?? row.rating ?? row.pd_avg_rating)
   const price = srp
   const rawImage = (row.image ?? row.pd_image) as string | null | undefined
   const images = toStringArray(row.images ?? row.pd_images).map((item) => resolveImageUrl(item, apiUrl))
@@ -278,6 +280,8 @@ const toCategoryProduct = (row: LooseRecord, apiUrl?: string): CategoryProduct =
     priceDp: toOptionalNumber(row.priceDp ?? row.pd_price_dp),
     priceMember: member || undefined,
     prodpv: prodpv || undefined,
+    soldCount,
+    rating,
     originalPrice: toOptionalNumber(row.originalPrice ?? row.pd_original_price),
     image: resolveImageUrl(rawImage, apiUrl),
     images,

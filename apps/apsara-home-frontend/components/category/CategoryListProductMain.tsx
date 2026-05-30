@@ -18,7 +18,7 @@ import ShareModal from '@/components/ui/ShareModal';
 import { CategoryProduct, categoryMeta, categoryProducts, CATEGORY_BRANDS } from '@/libs/CategoryData';
 import { buildStorefrontProductPath, extractPartnerSlugFromPath } from '@/libs/storefrontRouting';
 import type { Category } from '@/store/api/categoriesApi';
-import { useGetPublicZqProductsQuery, type ZqCachedProduct } from '@/store/api/productsApi';
+import { useGetPublicProductsQuery } from '@/store/api/productsApi';
 import { useGetPublicProductBrandsQuery } from '@/store/api/productBrandsApi';
 
 const containerVariants = {
@@ -72,86 +72,6 @@ const normalizeCategorySlug = (rawUrl: string | null | undefined, fallbackName: 
     return cleaned || slugifyCategory(fallbackName);
 };
 
-const zqPrice = (product: ZqCachedProduct) => Number(product.priceMinCents ?? product.priceMaxCents ?? 0) / 100;
-const zqComparePrice = (product: ZqCachedProduct) => Number(product.priceMaxCents ?? product.priceMinCents ?? 0) / 100;
-
-function ZqCategoryGridCard({ product }: { product: ZqCachedProduct }) {
-    const price = zqPrice(product);
-    const comparePrice = zqComparePrice(product);
-    const image = product.primaryImage || product.images?.[0] || '/Images/af_home_logo.png';
-    const discount = comparePrice > price ? Math.max(1, Math.round(((comparePrice - price) / comparePrice) * 100)) : 6;
-
-    return (
-        <Link href={`/global-product/${product.id}`} className="flex flex-col group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:border-sky-500 dark:hover:border-sky-400 transition-colors cursor-pointer">
-            <div className="relative aspect-square w-full bg-gray-100 dark:bg-gray-700 overflow-hidden border-b border-gray-200 dark:border-gray-700">
-                <div className="absolute top-2 right-2 flex flex-col gap-2 z-10">
-                    <button
-                        onClick={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                        }}
-                        className="p-2 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200 dark:border-gray-600 shadow-lg hover:bg-sky-500 hover:border-sky-500 dark:hover:bg-sky-500 dark:hover:border-sky-500 transition-all duration-200 cursor-pointer"
-                        title="Add to Wishlist"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-700 dark:text-gray-300 hover:text-white transition-colors">
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                        </svg>
-                    </button>
-                    <button
-                        onClick={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            void navigator.clipboard.writeText(`${window.location.origin}/global-product/${product.id}`);
-                        }}
-                        className="p-2 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200 dark:border-gray-600 shadow-lg hover:bg-sky-500 hover:border-sky-500 dark:hover:bg-sky-500 dark:hover:border-sky-500 transition-all duration-200 cursor-pointer"
-                        title="Share"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-700 dark:text-gray-300 hover:text-white transition-colors">
-                            <circle cx="18" cy="5" r="3" />
-                            <circle cx="6" cy="12" r="3" />
-                            <circle cx="18" cy="19" r="3" />
-                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-                        </svg>
-                    </button>
-                </div>
-                <img src={image} alt={product.subject} className="h-full w-full object-cover" />
-                <div className="absolute top-0 left-0 flex flex-col">
-                    <div className="bg-sky-500 text-white text-xs font-bold px-2 py-1">Register to get {discount}% discount</div>
-                </div>
-                <div className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-sky-500 text-white shadow-lg transition-all duration-300 hover:bg-sky-600 sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2 sm:text-sm sm:font-semibold sm:opacity-0 sm:translate-y-2 sm:group-hover:opacity-100 sm:group-hover:translate-y-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="9" cy="21" r="1" />
-                        <circle cx="20" cy="21" r="1" />
-                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-                    </svg>
-                    <span className="hidden sm:inline">View Product</span>
-                </div>
-            </div>
-            <div className="mt-1 flex flex-col gap-1 px-2.5 sm:px-3 py-2.5 sm:py-3">
-                <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">AF HOME GLOBAL BRAND</p>
-                <h3 className="line-clamp-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200 leading-snug min-h-[2.5rem]">{product.subject}</h3>
-                <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1 sm:gap-2">
-                    <div className="flex items-baseline gap-1.5 sm:gap-2 flex-wrap">
-                        <span className="text-sm sm:text-base font-bold text-sky-500 dark:text-sky-400">P{price.toLocaleString()}</span>
-                        {comparePrice > price && <span className="text-xs sm:text-sm text-gray-400 dark:text-gray-500 line-through">P{comparePrice.toLocaleString()}</span>}
-                    </div>
-                    <span className="rounded-full border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/30 px-1 sm:px-2 py-0.5 text-[8px] sm:text-[11px] font-semibold text-blue-700 dark:text-blue-300 shrink-0 whitespace-nowrap w-fit">PV 0</span>
-                </div>
-                <div className="flex items-center gap-0.5 sm:gap-1">
-                    <div className="flex items-center">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                            <svg key={star} xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="2" className="sm:w-[10px] sm:h-[10px]">
-                                <path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                            </svg>
-                        ))}
-                    </div>
-                    <span className="text-xs text-gray-400 dark:text-gray-500">0 sold</span>
-                </div>
-            </div>
-        </Link>
-    );
-}
 
 function TopFilterSkeleton() {
     return (
@@ -221,6 +141,7 @@ interface CategoryListProductMainProps {
     slug: string;
     initialCategoryLabel?: string;
     initialProducts?: CategoryProduct[];
+    initialTotalProducts?: number;
     initialCategories?: Category[];
     partnerBranding?: {
         logoSrc?: string;
@@ -255,12 +176,14 @@ export default function CategoryListProductMain({
     slug,
     initialCategoryLabel,
     initialProducts,
+    initialTotalProducts,
     initialCategories = [],
     partnerBranding,
     isRoomPage = false,
     isLoading = false,
     hasError = false,
 }: CategoryListProductMainProps) {
+    const DEFAULT_SHOW_COUNT = 50;
     const pathname = usePathname();
     const partnerSlug = extractPartnerSlugFromPath(pathname);
     const isPartnerStorefrontRoute = Boolean(partnerSlug);
@@ -274,20 +197,23 @@ export default function CategoryListProductMain({
     const meta = categoryMeta[slug];
     const staticProducts = categoryProducts[slug];
     const hasDynamicProducts = Array.isArray(initialProducts) && initialProducts.length > 0;
-    const safeProducts = useMemo(
+    const baseProducts = useMemo(
         () => (hasDynamicProducts ? (initialProducts ?? []) : (staticProducts ?? [])),
         [hasDynamicProducts, initialProducts, staticProducts],
     );
     const defaultPriceMax = useMemo(() => {
-        const maxPrice = safeProducts.reduce((highest, product) => Math.max(highest, Number(product.price ?? 0)), 0);
-        if (maxPrice <= 0) return 10000;
-        return Math.max(10000, Math.ceil(maxPrice / 1000) * 1000);
-    }, [safeProducts]);
+        const maxPrice = baseProducts.reduce((highest, product) => Math.max(highest, Number(product.price ?? 0)), 0);
+        const computedMax = maxPrice > 0 ? Math.ceil(maxPrice / 1000) * 1000 : 10000;
+        if (hasDynamicProducts) {
+            return Math.max(1000000, computedMax);
+        }
+        return Math.max(10000, computedMax);
+    }, [baseProducts, hasDynamicProducts]);
     const defaultPvMax = useMemo(() => {
-        const maxPv = safeProducts.reduce((highest, product) => Math.max(highest, Number(product.prodpv ?? 0)), 0);
+        const maxPv = baseProducts.reduce((highest, product) => Math.max(highest, Number(product.prodpv ?? 0)), 0);
         if (maxPv <= 0) return 5000;
         return Math.max(5000, Math.ceil(maxPv / 100) * 100);
-    }, [safeProducts]);
+    }, [baseProducts]);
     const currentCategoryId = useMemo(() => {
         const normalizedSlug = slug.toLowerCase();
         const matchedCategory = initialCategories.find((category) => {
@@ -298,24 +224,10 @@ export default function CategoryListProductMain({
 
         return matchedCategory?.id;
     }, [initialCategories, slug]);
-    const shouldLoadMappedZqProducts = Boolean(currentCategoryId && !isRoomPage && !isPartnerStorefrontRoute);
-    const { data: zqCategoryProductsData, isFetching: isFetchingZqCategoryProducts } = useGetPublicZqProductsQuery(
-        shouldLoadMappedZqProducts
-            ? { page: 1, perPage: 100, localCategoryId: currentCategoryId }
-            : undefined,
-        { skip: !shouldLoadMappedZqProducts },
-    );
     const { data: publicBrandsData } = useGetPublicProductBrandsQuery(undefined, {
         skip: isPartnerStorefrontRoute,
     });
-    const zqCategoryProducts = useMemo(
-        () => zqCategoryProductsData?.products ?? [],
-        [zqCategoryProductsData?.products],
-    );
-    const effectiveDefaultPriceMax = useMemo(() => {
-        const maxZqPrice = zqCategoryProducts.reduce((highest, product) => Math.max(highest, zqComparePrice(product), zqPrice(product)), 0);
-        return Math.max(defaultPriceMax, maxZqPrice > 0 ? Math.ceil(maxZqPrice / 1000) * 1000 : 0);
-    }, [defaultPriceMax, zqCategoryProducts]);
+    const effectiveDefaultPriceMax = defaultPriceMax;
     const publicBrandOptions = useMemo(() => {
         const map = new Map<string, { id: number; name: string }>();
         (publicBrandsData?.brands ?? []).forEach((brand) => {
@@ -479,7 +391,7 @@ export default function CategoryListProductMain({
     }
 
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-    const [showCount, setShowCount] = useState(16);
+    const [showCount, setShowCount] = useState(DEFAULT_SHOW_COUNT);
     const [currentPage, setCurrentPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState('');
     const listingTopRef = useRef<HTMLDivElement | null>(null);
@@ -501,6 +413,33 @@ export default function CategoryListProductMain({
         brand: ''
     });
     const [topSortBy, setTopSortBy] = useState('default');
+    const shouldLoadLocalProducts = Boolean(currentCategoryId && !isRoomPage && !isPartnerStorefrontRoute);
+    const loadCurrentPageFromApi =
+        !(hasDynamicProducts && currentPage === 1 && showCount === DEFAULT_SHOW_COUNT);
+    const { data: localCategoryProductsData, isFetching: isFetchingLocalCategoryProducts } = useGetPublicProductsQuery(
+        shouldLoadLocalProducts && loadCurrentPageFromApi
+            ? { page: currentPage, perPage: showCount, catId: currentCategoryId, status: 1 }
+            : undefined,
+        { skip: !shouldLoadLocalProducts || !loadCurrentPageFromApi },
+    );
+    const currentLocalProducts = useMemo(() => {
+        if (!shouldLoadLocalProducts) {
+            return baseProducts;
+        }
+
+        if (loadCurrentPageFromApi) {
+            return (localCategoryProductsData?.products ?? []).map((product) => ({
+                ...product,
+                price: Number(product.priceSrp ?? product.priceDp ?? 0),
+                image: product.image ?? '/Images/af_home_logo.png',
+                originalPrice: product.priceSrp ?? undefined,
+            } as CategoryProduct));
+        }
+
+        return baseProducts;
+    }, [baseProducts, loadCurrentPageFromApi, localCategoryProductsData?.products, shouldLoadLocalProducts]);
+    const totalLocalProducts = Math.max(0, Number(initialTotalProducts ?? baseProducts.length ?? 0));
+    const totalAvailableProducts = totalLocalProducts;
 
     // Filter change handler for ProductFilter component
     const handleFilterChange = (filters: FilterState) => {
@@ -524,7 +463,7 @@ export default function CategoryListProductMain({
         setSearchQuery('');
         setTopSortBy('default');
         setViewMode('grid');
-        setShowCount(16);
+        setShowCount(DEFAULT_SHOW_COUNT);
     };
 
     // Search change handler for TopFilter component
@@ -539,7 +478,7 @@ export default function CategoryListProductMain({
 
     // Show number change handler for TopFilter component
     const handleShowNumberChange = (showNumber: number | 'all') => {
-        setShowCount(showNumber === 'all' ? Math.max(1, safeProducts.length + zqCategoryProducts.length) : showNumber);
+        setShowCount(showNumber === 'all' ? Math.max(1, totalAvailableProducts) : showNumber);
     };
 
     // Sort change handler for TopFilter component
@@ -548,7 +487,7 @@ export default function CategoryListProductMain({
     };
 
     const filteredProducts = useMemo(() => {
-        let result = safeProducts.filter(p => {
+        let result = currentLocalProducts.filter(p => {
             // Filter by price range
             const passPrice = p.price >= filterState.priceRange[0] && p.price <= filterState.priceRange[1];
 
@@ -607,45 +546,7 @@ export default function CategoryListProductMain({
         // 'default' keeps original order
 
         return result;
-    }, [safeProducts, filterState, searchQuery, topSortBy]);
-
-    const filteredZqProducts = useMemo(() => {
-        let result = zqCategoryProducts.filter((product) => {
-            const price = zqPrice(product);
-            const comparePrice = zqComparePrice(product);
-            const passPrice = price >= filterState.priceRange[0] && price <= filterState.priceRange[1];
-            const searchValue = searchQuery.trim().toLowerCase();
-            const passSearch = searchValue === '' ||
-                product.subject.toLowerCase().includes(searchValue) ||
-                (product.categoryName ?? '').toLowerCase().includes(searchValue) ||
-                'af home global brand'.includes(searchValue);
-            const passStock = !filterState.inStock || product.totalStock > 0;
-            const hasDiscount = comparePrice > price;
-            const discountPercent = comparePrice > 0 ? ((comparePrice - price) / comparePrice) * 100 : 0;
-            const passDiscount = !filterState.discountOnly ||
-                (hasDiscount && (filterState.minDiscount <= 0 || discountPercent >= filterState.minDiscount));
-            const passPv = !filterState.hasPvOnly;
-            const selectedBrand = (filterState.brand ?? '').trim().toLowerCase();
-            const passBrand = !selectedBrand || selectedBrand === 'af home global brand';
-
-            return passPrice && passSearch && passStock && passDiscount && passPv && passBrand;
-        });
-
-        const sortBy = topSortBy !== 'default' ? topSortBy : filterState.sortBy;
-        const effectiveSortBy = sortBy === 'asc' ? 'name-asc' : sortBy === 'desc' ? 'name-desc' : sortBy;
-
-        if (effectiveSortBy === 'name-asc') {
-            result = [...result].sort((a, b) => a.subject.localeCompare(b.subject));
-        } else if (effectiveSortBy === 'name-desc') {
-            result = [...result].sort((a, b) => b.subject.localeCompare(a.subject));
-        } else if (effectiveSortBy === 'price-asc') {
-            result = [...result].sort((a, b) => zqPrice(a) - zqPrice(b));
-        } else if (effectiveSortBy === 'price-desc') {
-            result = [...result].sort((a, b) => zqPrice(b) - zqPrice(a));
-        }
-
-        return result;
-    }, [zqCategoryProducts, filterState, searchQuery, topSortBy]);
+    }, [currentLocalProducts, filterState, searchQuery, topSortBy]);
 
     const categoryBrandOptions = publicBrandOptions;
 
@@ -654,23 +555,25 @@ export default function CategoryListProductMain({
             ...filteredProducts
                 .filter((product): product is CategoryProduct & { id: number } => product.id !== undefined)
                 .map((product) => ({ type: 'local' as const, product, key: `local-${product.id}` })),
-            ...filteredZqProducts.map((product) => ({ type: 'zq' as const, product, key: `zq-${product.id}` })),
         ],
-        [filteredProducts, filteredZqProducts],
+        [filteredProducts],
+    );
+    const visibleCatalogRows = useMemo(() => catalogRows.slice(0, showCount), [catalogRows, showCount]);
+    const isCurrentPageLoading = loadCurrentPageFromApi && (
+        shouldLoadLocalProducts && isFetchingLocalCategoryProducts && filteredProducts.length === 0
     );
 
     // Reset to page 1 when filters/sort/showCount change.
-    useEffect(() => { setCurrentPage(1); }, [filterState, searchQuery, showCount, topSortBy, zqCategoryProducts.length]);
+    useEffect(() => { setCurrentPage(1); }, [filterState, searchQuery, showCount, topSortBy]);
 
     // Reset pagination when switching to a different category route.
     useEffect(() => {
         setCurrentPage(1);
     }, [slug]);
 
-    const totalPages = Math.max(1, Math.ceil(catalogRows.length / showCount));
+    const totalPages = Math.max(1, Math.ceil(totalAvailableProducts / showCount));
     const boundedCurrentPage = Math.min(currentPage, totalPages);
     const visiblePages = buildVisiblePages(totalPages, boundedCurrentPage);
-    const paginatedRows = catalogRows.slice((boundedCurrentPage - 1) * showCount, boundedCurrentPage * showCount);
 
     useEffect(() => {
         if (boundedCurrentPage <= 1) return;
@@ -687,7 +590,7 @@ export default function CategoryListProductMain({
         searchQuery !== '' ||
         topSortBy !== 'default' ||
         viewMode !== 'grid' ||
-        showCount !== 16;
+        showCount !== DEFAULT_SHOW_COUNT;
     
     const activeFilterCount = [
         filterState.priceRange[0] > 0,
@@ -791,11 +694,11 @@ export default function CategoryListProductMain({
                                     showPageSizeControl={false}
                                 />
                                 <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-                                    <span>
-                                        Showing <span className="font-semibold text-slate-700 dark:text-gray-200">{paginatedRows.length}</span> of{' '}
-                                        <span className="font-semibold text-slate-700 dark:text-gray-200">{catalogRows.length}</span> products
-                                        {isFetchingZqCategoryProducts && (
-                                            <span className="ml-2 text-xs font-medium text-sky-500">Loading global products...</span>
+                                        <span>
+                                        Showing <span className="font-semibold text-slate-700 dark:text-gray-200">{visibleCatalogRows.length.toLocaleString()}</span> of{' '}
+                                        <span className="font-semibold text-slate-700 dark:text-gray-200">{totalAvailableProducts.toLocaleString()}</span> products
+                                        {isFetchingLocalCategoryProducts && (
+                                            <span className="ml-2 text-xs font-medium text-sky-500">Loading products...</span>
                                         )}
                                     </span>
                                     {hasActiveFilters && (
@@ -807,7 +710,9 @@ export default function CategoryListProductMain({
                             </div>
 
                             {/* Products */}
-                            {catalogRows.length === 0 ? (
+                            {isCurrentPageLoading ? (
+                                <ProductGridSkeleton />
+                            ) : visibleCatalogRows.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-24 text-center">
                                     <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5" strokeLinecap="round">
@@ -826,16 +731,14 @@ export default function CategoryListProductMain({
                                         ? 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4'
                                         : 'flex flex-col gap-3'
                                 }>
-                                    {paginatedRows.map((row) => (
+                                    {visibleCatalogRows.map((row) => (
                                         <motion.div
                                             key={row.key}
                                             initial={false}
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ duration: 0.16, ease: 'easeOut' }}
                                         >
-                                            {row.type === 'zq' ? (
-                                                <ZqCategoryGridCard product={row.product} />
-                                            ) : viewMode === 'grid' ? (
+                                            {viewMode === 'grid' ? (
                                                 <ItemCard
                                                     key={row.product.id}
                                                     product={row.product}
@@ -859,17 +762,17 @@ export default function CategoryListProductMain({
                                 </div>
                             )}
 {/* Pagination */}
-                            {catalogRows.length > 0 && (
+                            {totalAvailableProducts > 0 && (
                                 <div className="mt-8 border-t border-gray-100 pt-5 dark:border-gray-800">
                                     <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-end">
                                         <div className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                                             <span>Show</span>
                                             <select
-                                                value={showCount >= catalogRows.length ? catalogRows.length : showCount}
+                                                value={String(showCount)}
                                                 onChange={(event) => handleShowNumberChange(Number(event.target.value))}
                                                 className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold text-slate-700 transition-all hover:border-sky-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400/20 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
                                             >
-                                                {[12, 16, 24, 48, 96].map((option) => (
+                                                {[25, 50, 75, 100, 150, 200].map((option) => (
                                                     <option key={option} value={option}>
                                                         {option}
                                                     </option>

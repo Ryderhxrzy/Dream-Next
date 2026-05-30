@@ -502,7 +502,7 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
       `}>
         {/* Logo */}
         <div className={`flex items-center h-16 px-3 border-b border-slate-200/80 dark:border-slate-700/50 shrink-0 ${isCollapsed ? 'justify-center' : 'gap-2'}`}>
-          <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-orange-50 to-cyan-50 ring-1 ring-slate-200 dark:bg-transparent dark:ring-0">
+          <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-xl bg-linear-to-br from-orange-50 to-cyan-50 ring-1 ring-slate-200 dark:bg-transparent dark:ring-0">
             <Image
               src="/af_home_logo.png"
               alt="AF Home"
@@ -522,11 +522,6 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7" /></svg>
             </button>
           )}
-          {isCollapsed && (
-            <button onClick={onToggleCollapse} className="hidden lg:flex items-center justify-center h-7 w-7 rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors absolute right-1 top-4">
-              <svg className="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7" /></svg>
-            </button>
-          )}
           <button onClick={onClose} className="lg:hidden text-slate-400 hover:text-slate-900 dark:hover:text-white ml-auto">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
@@ -534,6 +529,20 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5" style={{ scrollbarWidth: 'none' }}>
+          {isCollapsed && (
+            <button
+              onClick={onToggleCollapse}
+              title="Expand sidebar"
+              aria-label="Expand sidebar"
+              className="hidden lg:flex w-full items-center justify-center mb-2 rounded-xl py-1 transition-colors"
+            >
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-600 shadow-sm transition-colors hover:bg-indigo-100 dark:border-indigo-700/60 dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/50">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 5l7 7-7 7" />
+                </svg>
+              </span>
+            </button>
+          )}
           {visibleNavItems.map((item) => {
             const hasChildren = !!item.children?.length
             const childActive = isChildActive(item.children)
@@ -569,7 +578,7 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
                       <>
                         <span className="flex-1 text-left font-medium">{item.label}</span>
                         {typeof item.badge === 'number' && item.badge > 0 && (
-                          <span className="bg-sky-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold min-w-[20px] text-center">
+                          <span className="bg-sky-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold min-w-5 text-center">
                             {item.badge}
                           </span>
                         )}
@@ -630,7 +639,7 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
                               {typeof child.badge === 'number' && child.badge > 0 && (
                                 <span className={`${isExactActive(child.path)
                                   ? 'inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-700 dark:border-sky-900/50 dark:bg-sky-900/30 dark:text-sky-300'
-                                  : 'min-w-[20px] rounded-full px-1.5 py-0.5 text-[10px] font-semibold text-center bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                                  : 'min-w-5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold text-center bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
                                 }`}>
                                   {child.badge}
                                 </span>
@@ -650,7 +659,7 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
         {/* Footer */}
         <div className={`shrink-0 p-3 border-t border-slate-200/80 dark:border-slate-700/50`}>
           {!isCollapsed && (
-            <div className="flex items-center gap-3 px-3 py-2.5 mb-2 rounded-2xl bg-gradient-to-br from-slate-50 to-white ring-1 ring-slate-200 shadow-sm dark:from-slate-800 dark:to-slate-800 dark:ring-slate-700/70 dark:shadow-none">
+            <div className="flex items-center gap-3 px-3 py-2.5 mb-2 rounded-2xl bg-linear-to-br from-slate-50 to-white ring-1 ring-slate-200 shadow-sm dark:from-slate-800 dark:to-slate-800 dark:ring-slate-700/70 dark:shadow-none">
               {avatarSrc ? (
                 <Image
                   src={avatarSrc}
@@ -660,7 +669,7 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
                   className="h-8 w-8 rounded-full object-cover shrink-0"
                 />
               ) : (
-                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center shrink-0">
+                <div className="h-8 w-8 rounded-full bg-linear-to-br from-teal-400 to-cyan-500 flex items-center justify-center shrink-0">
                   <span className="text-white font-bold text-xs">{displayInitials}</span>
                 </div>
               )}

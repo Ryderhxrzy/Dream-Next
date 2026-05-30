@@ -135,14 +135,14 @@ const BuyNowOptionsModal = ({
   const activeSelectedSize = activeVariant?.size ?? selectedSize ?? null;
   const activeSelectedType = activeVariant?.name ?? selectedType ?? null;
   const role = String(session?.user?.role ?? '').toLowerCase();
-  const canUseMemberPrice = status === 'authenticated' && (role === 'customer' || role === '');
   const baseSrp = toPositiveNumber(product.originalPrice) ?? toPositiveNumber(product.price) ?? 0;
   const srpPrice = toPositiveNumber(activeVariant?.priceSrp) ?? baseSrp;
   const memberPrice = toPositiveNumber(activeVariant?.priceMember) ?? toPositiveNumber(product.priceMember) ?? 0;
   const hasMemberPrice = memberPrice > 0 && memberPrice < srpPrice;
-  // Guest checkout must always use SRP. Member price applies only for authenticated customer accounts.
-  const unitPrice = !forceRealPrice && canUseMemberPrice && hasMemberPrice ? memberPrice : srpPrice;
-  const unitPv = toPositiveNumber(activeVariant?.prodpv) ?? Number(product.prodpv ?? 0);
+  // Always show real SRP price (no member-discount pricing in this modal).
+  const unitPrice = srpPrice;
+  const unitPvRaw = toPositiveNumber(activeVariant?.prodpv) ?? Number(product.prodpv ?? 0);
+  const unitPv = status === 'authenticated' ? unitPvRaw : 0;
   const selectedVariantImage = activeVariant?.images?.[0] || product.image;
   const colorOptions = useMemo(() => {
     const map = new Map<string, string | undefined>();
@@ -332,14 +332,18 @@ const BuyNowOptionsModal = ({
                         <span>Subtotal ({quantity} item{quantity > 1 ? 's' : ''})</span>
                         <span className="font-semibold text-gray-700 dark:text-gray-300">P{subtotal.toLocaleString()}</span>
                       </div>
-                      <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-                        <span>PV per item</span>
-                        <span className="font-semibold text-blue-600 dark:text-blue-400">{unitPv.toLocaleString()} PV</span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-                        <span>Total PV</span>
-                        <span className="font-semibold text-blue-600 dark:text-blue-400">{totalPv.toLocaleString()} PV</span>
-                      </div>
+                      {status === 'authenticated' && (
+                        <>
+                          <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+                            <span>PV per item</span>
+                            <span className="font-semibold text-blue-600 dark:text-blue-400">{unitPv.toLocaleString()} PV</span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+                            <span>Total PV</span>
+                            <span className="font-semibold text-blue-600 dark:text-blue-400">{totalPv.toLocaleString()} PV</span>
+                          </div>
+                        </>
+                      )}
                       <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
                         <span>Shipping fee</span>
                         <span className={handlingFee === 0 ? 'font-semibold text-green-600 dark:text-green-400' : 'font-semibold text-gray-700 dark:text-gray-300'}>

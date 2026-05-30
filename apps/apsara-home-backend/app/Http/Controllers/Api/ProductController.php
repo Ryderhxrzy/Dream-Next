@@ -51,6 +51,110 @@ class ProductController extends Controller
         return $query->whereIn('pd_status', [1, 2]);
     }
 
+    private function applyPersonalizedSort(&$query, int $userId, array $categoryIds)
+    {
+        $cacheKey = "user_product_behavior:{$userId}";
+
+        // Try to get behavior ranking from Redis cache first
+        $behaviorRanking = Cache::get($cacheKey);
+
+        if ($behaviorRanking && is_array($behaviorRanking) && !empty($behaviorRanking)) {
+            // Cache hit: Use cached ranking
+            Log::info('Using Redis cache for product ranking', [
+                'userId' => $userId,
+                'cachedCount' => count($behaviorRanking),
+                'cacheKey' => $cacheKey,
+            ]);
+
+            $productIds = array_keys($behaviorRanking);
+            $this->applyPostgresqlOrderByBehavior($query, $productIds);
+        } else {
+            // Cache miss: Use JOIN query (Option 1) as fallback
+            Log::info('Cache miss - using JOIN fallback for product ranking', [
+                'userId' => $userId,
+                'cacheKey' => $cacheKey,
+            ]);
+
+            $query->leftJoin('tbl_user_behavior as ub', function ($join) use ($userId) {
+                $join->on('ub.ub_product_id', '=', 'tbl_product.pd_id')
+                    ->where('ub.ub_user_id', '=', $userId)
+                    ->whereIn('ub.ub_behavior_type', [
+                        'product_view',
+                        'product_click',
+                        'purchase',
+                        'wishlist_add',
+                        'cart_add',
+                    ]);
+            })
+            ->groupBy('tbl_product.pd_id')
+            ->selectRaw('tbl_product.*, COUNT(ub.ub_id) as behavior_count')
+            ->orderByRaw('COUNT(ub.ub_id) DESC')
+            ->orderByDesc('pd_id');
+
+            // Cache the result for next time
+            $this->cacheUserBehaviorRanking($userId);
+        }
+    }
+
+    private function applyPostgresqlOrderByBehavior(&$query, array $productIds)
+    {
+        // PostgreSQL doesn't have FIELD(), use CASE WHEN instead
+        $cases = [];
+        foreach ($productIds as $index => $id) {
+            $cases[] = "WHEN pd_id = {$id} THEN {$index}";
+        }
+
+        if (!empty($cases)) {
+            $caseStatement = 'CASE ' . implode(' ', $cases) . ' ELSE ' . count($cases) . ' END';
+            // IMPORTANT: Only sort by CASE (behavior) and pd_id, NOT by pd_date
+            // pd_date as secondary sort would override behavior ranking on later pages
+            $query->orderByRaw($caseStatement)
+                  ->orderByDesc('pd_id');
+        }
+
+        Log::info('Applied PostgreSQL behavior sort', [
+            'caseCount' => count($cases),
+        ]);
+    }
+
+    private function cacheUserBehaviorRanking(int $userId)
+    {
+        $cacheKey = "user_product_behavior:{$userId}";
+        $cacheTTL = 60 * 10; // 10 minutes
+
+        try {
+            // Build ranking from behavior data
+            $behaviorRanking = DB::table('tbl_user_behavior')
+                ->where('ub_user_id', $userId)
+                ->whereIn('ub_behavior_type', [
+                    'product_view',
+                    'product_click',
+                    'purchase',
+                    'wishlist_add',
+                    'cart_add',
+                ])
+                ->select('ub_product_id', DB::raw('COUNT(*) as behavior_count'))
+                ->groupBy('ub_product_id')
+                ->orderByDesc('behavior_count')
+                ->pluck('behavior_count', 'ub_product_id')
+                ->toArray();
+
+            if (!empty($behaviorRanking)) {
+                Cache::put($cacheKey, $behaviorRanking, $cacheTTL);
+                Log::info('Cached user behavior ranking', [
+                    'userId' => $userId,
+                    'count' => count($behaviorRanking),
+                    'cacheKey' => $cacheKey,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::error('Failed to cache behavior ranking', [
+                'userId' => $userId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
     public function rooms(): JsonResponse
     {
         return response()->json([
@@ -1701,6 +1805,7 @@ class ProductController extends Controller
             $roomType = $request->query('room_type', '');
             $brandType = $request->query('brand_type', '');
             $requestedSupplierId = (int) $request->query('supplier_id', 0);
+            $sort = trim((string) $request->query('sort', ''));
 
             // Get user's personalized categories if authenticated
             $personalizedCatIds = [];
@@ -1782,23 +1887,35 @@ class ProductController extends Controller
             // Apply personalization only if no manual filters and user has behavior data
             if (!empty($personalizedCatIds) && $catId === '' && $roomType === '' && $brandType === '') {
                 $query->whereIn('pd_catid', $personalizedCatIds);
-                // Sort by user visit frequency using behavior count
+                // Sort by user visit frequency using behavior count (Redis cache + JOIN fallback)
                 $userId = auth('sanctum')->id();
 
-                // Use raw ORDER BY with behavior count from subquery
-                // Add tertiary sort by pd_id for consistent pagination when behavior counts are equal
-                $query->orderByRaw(
-                    '(SELECT COUNT(*) FROM tbl_user_behavior WHERE ub_user_id = ? AND ub_product_id = tbl_product.pd_id AND ub_behavior_type IN (\'product_view\', \'product_click\', \'purchase\', \'wishlist_add\', \'cart_add\')) DESC',
-                    [$userId]
-                )
-                ->orderByDesc('pd_date')
-                ->orderByDesc('pd_id');  // Tertiary sort for pagination consistency
+                $this->applyPersonalizedSort($query, $userId, $personalizedCatIds);
 
-                Log::info('Personalized query', ['userId' => $userId, 'catIds' => $personalizedCatIds]);
+                Log::info('Personalized query with hybrid caching', ['userId' => $userId, 'catIds' => $personalizedCatIds]);
             } else {
-                // For regular/filtered products, sort by date then by ID for consistency
-                $query->orderByDesc('pd_date')
-                      ->orderByDesc('pd_id');
+                // Apply sorting based on sort parameter
+                if ($sort === 'random') {
+                    // Random shuffle for discovery experience
+                    $query->inRandomOrder();
+                    Log::info('Applied random sort');
+                } elseif ($sort === 'bestseller') {
+                    // Sort by best selling products
+                    $query->orderByDesc('pd_bestseller')->orderByDesc('pd_id');
+                } elseif ($sort === 'newest') {
+                    // Sort by newest products
+                    $query->orderByDesc('pd_date')->orderByDesc('pd_id');
+                } elseif ($sort === 'price_asc') {
+                    // Sort by price ascending
+                    $query->orderBy('pd_price_member')->orderByDesc('pd_id');
+                } elseif ($sort === 'price_desc') {
+                    // Sort by price descending
+                    $query->orderByDesc('pd_price_member')->orderByDesc('pd_id');
+                } else {
+                    // Default: Random shuffle for discovery experience
+                    $query->inRandomOrder();
+                    Log::info('Applied default random sort');
+                }
             }
 
             if ($supplierUser) {

@@ -129,6 +129,7 @@ export default function PartnerStorefrontStudio() {
   const [helperProductById, setHelperProductById] = useState<Record<number, Product>>({})
   const [isLoadingHelperProducts, setIsLoadingHelperProducts] = useState(false)
   const [logoVersion, setLogoVersion] = useState(0)
+  const [activeTab, setActiveTab] = useState<'identity' | 'categories' | 'products'>('identity')
   const missingSelectedProductRequestIdsRef = useRef<Set<number>>(new Set())
   const { data: session } = useSession()
 
@@ -1040,715 +1041,557 @@ export default function PartnerStorefrontStudio() {
   const saving = isCreating || isUpdating || isDeleting || isDeletingPartnerUser
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)] text-slate-900 dark:text-slate-100">
+    <div className="flex flex-col gap-5 lg:flex-row lg:items-start text-slate-900 dark:text-slate-100">
+      {/* Delete modal */}
       {deleteModal.open ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Delete storefront confirmation"
-        >
-          <button
-            type="button"
-            className="absolute inset-0"
-            aria-label="Close delete confirmation"
-            onClick={() => setDeleteModal({ open: false })}
-          />
-
-          <div className="relative z-[51] w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-950">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-rose-500">Confirm Delete</p>
-            <h3 className="mt-2 text-lg font-bold text-slate-900 dark:text-slate-100">Delete storefront?</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-label="Delete storefront confirmation">
+          <button type="button" className="absolute inset-0" aria-label="Close" onClick={() => setDeleteModal({ open: false })} />
+          <div className="relative z-[51] w-full max-w-md rounded-3xl border border-slate-200 bg-white p-7 shadow-2xl dark:border-slate-700 dark:bg-slate-950">
+            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-100 text-rose-600 dark:bg-rose-950/50 dark:text-rose-300">
+              <Trash2 className="h-5 w-5" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Delete storefront?</h3>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              This will delete <span className="font-semibold text-slate-900 dark:text-slate-100">{deleteModal.displayName ?? 'this storefront'}</span> and also delete related partner user account records. This action cannot be undone.
+              This will permanently delete <span className="font-semibold text-slate-900 dark:text-slate-100">{deleteModal.displayName ?? 'this storefront'}</span> and all related partner user accounts. This cannot be undone.
             </p>
-
             <div className="mt-6 flex items-center justify-end gap-3">
-              <button
-                type="button"
-                className="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-800"
-                onClick={() => setDeleteModal({ open: false })}
-                disabled={isDeleting || isDeletingPartnerUser}
-              >
+              <button type="button" onClick={() => setDeleteModal({ open: false })} disabled={isDeleting || isDeletingPartnerUser} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
                 Cancel
               </button>
-              <button
-                type="button"
-                className="rounded-2xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-rose-900/20 transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-rose-400"
-                onClick={() => void confirmDeleteStorefrontNow()}
-                disabled={isDeleting || isDeletingPartnerUser}
-              >
-                {isDeleting || isDeletingPartnerUser ? 'Deleting...' : 'Delete'}
+              <button type="button" onClick={() => void confirmDeleteStorefrontNow()} disabled={isDeleting || isDeletingPartnerUser} className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-rose-400">
+                {isDeleting || isDeletingPartnerUser ? 'Deleting…' : 'Delete'}
               </button>
             </div>
           </div>
         </div>
       ) : null}
 
-      <aside className="space-y-4">
-        <div className="rounded-3xl border border-emerald-100 bg-gradient-to-br from-white via-emerald-50 to-cyan-50 p-5 shadow-sm dark:border-emerald-900/50 dark:from-slate-900 dark:via-emerald-950/40 dark:to-slate-900 dark:shadow-black/20">
+      {/* Sidebar */}
+      <aside className="lg:w-[290px] lg:shrink-0 space-y-3">
+        <div className="rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-500 p-5 text-white shadow-lg shadow-emerald-900/20">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.20em] text-emerald-700 dark:text-emerald-300">Partner Storefronts</p>
-              <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-4xl">Storefront Studio</h1>
-              <p className="mt-3 max-w-xl text-sm leading-7 text-slate-600 dark:text-slate-300">Build and manage branded partner shop pages with curated categories, product highlights, and landing page branding in one place.</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Partner</p>
+              <h1 className="mt-0.5 text-2xl font-bold tracking-tight">Storefront Studio</h1>
             </div>
             {!isPartnerScoped ? (
-              <button
-                type="button"
-                onClick={() => selectStorefront()}
-                className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20"
-              >
-                New
+              <button type="button" onClick={() => selectStorefront()} className="rounded-xl bg-white/20 px-3 py-2 text-xs font-bold text-white transition hover:bg-white/30">
+                + New
               </button>
             ) : null}
           </div>
-          <div className="mt-5 flex flex-wrap items-center gap-2">
-            <span className="rounded-full border border-emerald-200 bg-white/90 px-3 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-700 dark:bg-slate-900 dark:text-emerald-300">
-              {storefronts.length} storefront{storefronts.length === 1 ? '' : 's'}
-            </span>
-            <span className="rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
-              Live editor
-            </span>
-          </div>
+          <p className="mt-3 text-xs opacity-70">{storefronts.length} storefront{storefronts.length !== 1 ? 's' : ''} · Live editor</p>
         </div>
 
-        <div className="rounded-3xl border border-slate-200/80 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-black/20">
-          <div className="mb-2 px-1">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Your Storefronts</p>
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Your Storefronts</p>
           </div>
-
-          <div className="max-h-[520px] space-y-2 overflow-y-auto pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="max-h-[560px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {storefronts.length === 0 ? (
+              <p className="p-5 text-sm text-slate-400 dark:text-slate-500">
+                {hasSpecificStorefrontIds ? 'No storefront assigned to your account yet.' : 'No partner storefronts yet.'}
+              </p>
+            ) : null}
             {storefronts.map(({ item, config }) => {
               const active = selectedId === item.id
               const isDiscountEnabled = discountToggleByStorefrontId[item.id] ?? config.enableActivateDiscount
               return (
-                <div key={item.id} className="space-y-2">
-                  <button
-                    type="button"
-                    onClick={() => selectStorefront(item)}
-                    className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
-                      active
-                        ? 'border-emerald-300 bg-emerald-50/60 shadow-sm dark:border-emerald-700/70 dark:bg-emerald-900/20'
-                        : 'border-slate-200 bg-white hover:border-emerald-200 hover:bg-emerald-50/40 dark:border-slate-700 dark:bg-slate-900/70 dark:hover:border-emerald-700/60 dark:hover:bg-emerald-900/15'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{config.displayName}</p>
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">/{config.slug}</p>
-                      </div>
+                <div
+                  key={item.id}
+                  onClick={() => selectStorefront(item)}
+                  className={`cursor-pointer p-4 transition ${active ? 'bg-emerald-50 dark:bg-emerald-950/30' : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'}`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800">
+                      {config.logoUrl ? (
+                        <img src={config.logoUrl} alt="" className="h-full w-full object-contain" />
+                      ) : (
+                        <span className={`text-sm font-bold ${active ? 'text-emerald-600 dark:text-emerald-300' : 'text-slate-400'}`}>
+                          {(config.displayName[0] ?? '?').toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
+                        <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{config.displayName}</p>
                         {active ? (
-                          <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
-                            Active
-                          </span>
-                        ) : null}
-                        {!isPartnerScoped ? (
-                          <span
-                            role="button"
-                            tabIndex={0}
-                            onClick={(event) => {
-                              event.stopPropagation()
-                              void handleDeleteStorefront(item, config.displayName)
-                            }}
-                            onKeyDown={(event) => {
-                              if (event.key === 'Enter' || event.key === ' ') {
-                                event.preventDefault()
-                                event.stopPropagation()
-                                void handleDeleteStorefront(item, config.displayName)
-                              }
-                            }}
-                            className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-rose-200 bg-rose-50 text-rose-600 transition hover:bg-rose-100 dark:border-rose-800/60 dark:bg-rose-900/20 dark:text-rose-300 dark:hover:bg-rose-900/40"
-                            aria-label={`Delete ${config.displayName}`}
-                            title={`Delete ${config.displayName}`}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
+                          <span className="shrink-0 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                            Selected
                           </span>
                         ) : null}
                       </div>
-                    </div>
-                    <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">{config.allowedCategoryIds.length} selected categories</p>
-                  </button>
-
-                  <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M20 10V7a2 2 0 0 0-2-2h-3" />
-                          <path d="M14 3H8a2 2 0 0 0-2 2v3" />
-                          <path d="M4 14v3a2 2 0 0 0 2 2h3" />
-                          <path d="M10 21h6a2 2 0 0 0 2-2v-3" />
-                          <path d="m8 12 2 2 6-6" />
-                        </svg>
+                      <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">/{config.slug}</p>
+                      <div className="mt-2 flex items-center justify-between">
+                        <span className="text-xs text-slate-400 dark:text-slate-500">{config.allowedCategoryIds.length} categories</span>
+                        <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                          <span className="text-[10px] text-slate-400">Discount</span>
+                          <label className="relative inline-flex cursor-pointer items-center">
+                            <input
+                              type="checkbox"
+                              className="sr-only peer"
+                              checked={isDiscountEnabled}
+                              onChange={() => {
+                                const next = !isDiscountEnabled
+                                setDiscountToggleByStorefrontId((current) => ({ ...current, [item.id]: next }))
+                                if (selectedId === item.id) {
+                                  setDraft((current) => ({ ...current, enableActivateDiscount: next }))
+                                }
+                                if (hasSpecificStorefrontIds && !allowedStorefrontIds.includes(item.id)) {
+                                  showErrorToast('You do not have access to edit this storefront.')
+                                  setDiscountToggleByStorefrontId((current) => ({ ...current, [item.id]: isDiscountEnabled }))
+                                  return
+                                }
+                                const baseDraft = toDraft(item)
+                                const payload = buildStorefrontPayload({ ...baseDraft, enableActivateDiscount: next })
+                                updateItem({ type: 'partner-storefront', id: item.id, data: payload })
+                                  .unwrap()
+                                  .then(() => {
+                                    setDiscountToggleByStorefrontId((current) => {
+                                      const nextState = { ...current }
+                                      delete nextState[item.id]
+                                      return nextState
+                                    })
+                                    broadcastStorefrontUpdate(baseDraft.slug || baseDraft.displayName)
+                                    refetch()
+                                  })
+                                  .catch(() => {
+                                    setDiscountToggleByStorefrontId((current) => ({ ...current, [item.id]: isDiscountEnabled }))
+                                    showErrorToast('Failed to update activate discount.')
+                                  })
+                              }}
+                            />
+                            <div className={`peer h-5 w-9 rounded-full border transition ${isDiscountEnabled ? '!border-emerald-500 !bg-emerald-500' : 'border-slate-200 bg-slate-300 dark:border-slate-600 dark:bg-slate-700'}`} />
+                            <div className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${isDiscountEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
+                          </label>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Activate discount</p>
-                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Enable this option to activate the discount.</p>
-                      </div>
                     </div>
-
-                    <div className="flex items-center gap-3">
-                      <label className="relative inline-flex cursor-pointer items-center">
-                        <input
-                          type="checkbox"
-                          className="sr-only peer"
-                          checked={isDiscountEnabled}
-                          onChange={() => {
-                            // Optimistic UI per storefront row.
-                            const next = !isDiscountEnabled
-                            setDiscountToggleByStorefrontId((current) => ({ ...current, [item.id]: next }))
-
-                            if (selectedId === item.id) {
-                              setDraft((current) => ({ ...current, enableActivateDiscount: next }))
-                            }
-
-                            if (hasSpecificStorefrontIds && !allowedStorefrontIds.includes(item.id)) {
-                              showErrorToast('You do not have access to edit this storefront.')
-                              setDiscountToggleByStorefrontId((current) => ({ ...current, [item.id]: isDiscountEnabled }))
-                              return
-                            }
-
-                            const baseDraft = toDraft(item)
-                            const payload = buildStorefrontPayload({
-                              ...baseDraft,
-                              enableActivateDiscount: next,
-                            })
-
-                            updateItem({ type: 'partner-storefront', id: item.id, data: payload })
-                              .unwrap()
-                              .then(() => {
-                                setDiscountToggleByStorefrontId((current) => {
-                                  const nextState = { ...current }
-                                  delete nextState[item.id]
-                                  return nextState
-                                })
-                                broadcastStorefrontUpdate(baseDraft.slug || baseDraft.displayName)
-                                refetch()
-                              })
-                              .catch(() => {
-                                setDiscountToggleByStorefrontId((current) => ({ ...current, [item.id]: isDiscountEnabled }))
-                                showErrorToast('Failed to update activate discount.')
-                              })
-                          }}
-                        />
-                        <div
-                          className={`peer h-6 w-10 rounded-full border transition ${
-                            isDiscountEnabled
-                              ? '!border-emerald-500 !bg-emerald-500'
-                              : 'border-slate-200 bg-slate-300'
-                          }`}
-                        />
-                        <div
-                          className={`absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform dark:bg-slate-900 ${
-                            isDiscountEnabled ? 'translate-x-4' : 'translate-x-0'
-                          }`}
-                        />
-                      </label>
-                      <span
-                        className={`text-xs font-bold uppercase whitespace-nowrap leading-none ${
-                          isDiscountEnabled ? 'text-emerald-600 dark:text-emerald-300' : 'text-slate-400 dark:text-slate-500'
-                        }`}
+                    {!isPartnerScoped ? (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); void handleDeleteStorefront(item, config.displayName) }}
+                        className="shrink-0 rounded-lg p-1.5 text-slate-300 transition hover:bg-rose-50 hover:text-rose-500 dark:text-slate-600 dark:hover:bg-rose-950/30 dark:hover:text-rose-400"
+                        aria-label={`Delete ${config.displayName}`}
                       >
-                        {isDiscountEnabled ? 'ON' : 'OFF'}
-                      </span>
-                    </div>
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    ) : null}
                   </div>
                 </div>
               )
             })}
-
-
-            {storefronts.length === 0 ? (
-              <p className="p-3 text-sm text-slate-500 dark:text-slate-400">
-                {hasSpecificStorefrontIds ? 'No storefront assigned to this account yet.' : 'No partner storefronts yet.'}
-              </p>
-            ) : null}
           </div>
         </div>
       </aside>
 
-      <section className="space-y-5">
-        <div className={panelClass}>
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-50 to-cyan-50 px-4 py-4 dark:border-emerald-900/50 dark:bg-emerald-950/30">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700 dark:text-emerald-300">Identity</p>
-              <p className="mt-2 max-w-xl text-sm leading-7 text-slate-600 dark:text-slate-300">Configure your storefront identity, hero messaging, brand assets, and partner settings for a polished launch.</p>
-            </div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-700 dark:bg-slate-900 dark:text-emerald-300">
-              Live
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            </span>
+      {/* Main editor */}
+      <section className="min-w-0 flex-1 space-y-4">
+        {/* Top bar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div>
+            <p className="text-xs text-slate-400 dark:text-slate-500">
+              {selectedId === 'new' ? 'Creating new storefront' : `Storefront ID ${selectedId}`}
+            </p>
+            <h2 className="mt-0.5 text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+              {draft.displayName || <span className="text-slate-400">Untitled Storefront</span>}
+            </h2>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Slug" className="md:order-1">
-              <input
-                value={draft.slug}
-                onChange={(event) => setDraft((current) => ({ ...current, slug: event.target.value }))}
-                onBlur={(event) => setDraft((current) => ({ ...current, slug: toSlug(event.target.value) }))}
-                placeholder="Your Shop name"
-                className={inputClass}
-              />
-            </Field>
-            <Field label="Display Name" className="md:order-2">
-              <input
-                value={draft.displayName}
-                onChange={(event) => setDraft((current) => ({ ...current, displayName: event.target.value }))}
-                placeholder="Your Shop name"
-                className={inputClass}
-              />
-            </Field>
-            <Field label="Hero Title" className="md:order-3">
-              <input
-                value={draft.heroTitle}
-                onChange={(event) => setDraft((current) => ({ ...current, heroTitle: event.target.value }))}
-                placeholder="Shop name Shop Furniture Store"
-                className={inputClass}
-              />
-            </Field>
-            <Field label="Partner Notification Email" className="md:order-4">
-              <input
-                value={draft.notificationEmail}
-                onChange={(event) => setDraft((current) => ({ ...current, notificationEmail: event.target.value }))}
-                placeholder="youremail@.gmail.com"
-                className={inputClass}
-              />
-            </Field>
-            <Field label="Logo Upload" className="md:order-7">
-              <div className="space-y-3">
-                <div className={`${softCardClass} flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between`}>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Upload storefront logo</p>
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">PNG, JPG, or WebP. Upload directly from your device.</p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <input
-                      ref={logoInputRef}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,image/gif"
-                      onChange={handleLogoUpload}
-                      className="hidden"
-                    />
-                    {draft.logoUrl ? (
-                      <button
-                        type="button"
-                        onClick={() => void handleRemoveLogo()}
-                        className="min-w-[112px] whitespace-nowrap rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold leading-tight text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-                      >
-                        Remove
-                      </button>
-                    ) : null}
-                    <button
-                      type="button"
-                      onClick={() => logoInputRef.current?.click()}
-                      disabled={isUploadingLogo}
-                      className="inline-flex min-w-[140px] items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-emerald-200 bg-white px-4 py-2.5 text-sm font-semibold leading-tight text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300 dark:hover:bg-emerald-500/10"
-                    >
-                      {isUploadingLogo ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
-                      <span>Upload Logo</span>
-                    </button>
-                  </div>
-                </div>
-                {draft.logoUrl ? (
-                  <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800/70">
-                    <div className="h-12 w-12 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
-                      <img
-                        src={`${draft.logoUrl}${draft.logoUrl.includes('?') ? '&' : '?'}v=${logoVersion || draft.logoVersion || '1'}`}
-                        alt="Uploaded logo preview"
-                        className="h-full w-full object-contain p-1"
-                      />
-                    </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Logo uploaded.</p>
-                  </div>
-                ) : null}
-              </div>
-            </Field>
-            <Field label="Referral & Shop Link Upload" className="md:order-6">
-              <div className="space-y-3">
-                <div className={softCardClass}>
-                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Add referral & shop link</p>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Set both links for this storefront in one place.</p>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">Referral Link</p>
-                  <input
-                    value={draft.referralLink}
-                    onChange={(event) => setDraft((current) => ({ ...current, referralLink: event.target.value }))}
-                    placeholder="https://www.afhome.ph/ref/username "
-                    className="min-w-0 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100/70 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-emerald-500 dark:focus:ring-emerald-900/30"
-                  />
-                </div>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <input
-                    value={draft.domainLink}
-                    onChange={(event) => setDraft((current) => ({ ...current, domainLink: event.target.value }))}
-                    placeholder="https://www.afhome.ph/shop?ref=username"
-                    className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100/70 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-emerald-500 dark:focus:ring-emerald-900/30"
-                  />
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => void handleApplyReferralLink()}
-                      disabled={isUploadingReferralLink || saving}
-                      className="inline-flex min-w-[116px] items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-emerald-200 bg-white px-4 py-3 text-sm font-semibold leading-tight text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300 dark:hover:bg-emerald-500/10"
-                    >
-                      {isUploadingReferralLink ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
-                      <span>Save Link</span>
-                    </button>
-                    {draft.referralLink.trim() ? (
-                      <button
-                        type="button"
-                        onClick={() => void handleRemoveReferralLink()}
-                        disabled={saving}
-                        className="min-w-[112px] whitespace-nowrap rounded-2xl border border-red-200 bg-white px-4 py-3 text-sm font-semibold leading-tight text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-900/60 dark:bg-slate-800 dark:text-red-300 dark:hover:bg-red-950/30"
-                      >
-                        Remove
-                      </button>
-                    ) : null}
-                  </div>
-                </div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">Shop URL</p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">Saved when you click <span className="font-semibold text-slate-700 dark:text-slate-200">Save Storefront</span>, or upload directly for existing storefronts.</p>
-              </div>
-            </Field>
-            <Field label="Tab Logo Upload" className="md:col-span-1 md:order-9">
-              <div className="space-y-3">
-                <div className={`${softCardClass} flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between`}>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Upload browser tab logo</p>
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Used as favicon on your partner storefront page.</p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <input
-                      ref={tabLogoInputRef}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,image/gif,image/x-icon,image/vnd.microsoft.icon"
-                      onChange={handleTabLogoUpload}
-                      className="hidden"
-                    />
-                    {draft.tabLogoUrl ? (
-                      <button
-                        type="button"
-                        onClick={() => void handleRemoveTabLogo()}
-                        className="min-w-[112px] whitespace-nowrap rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold leading-tight text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-                      >
-                        Remove
-                      </button>
-                    ) : null}
-                    <button
-                      type="button"
-                      onClick={() => tabLogoInputRef.current?.click()}
-                      disabled={isUploadingTabLogo}
-                      className="inline-flex min-w-[140px] items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-emerald-200 bg-white px-4 py-2.5 text-sm font-semibold leading-tight text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300 dark:hover:bg-emerald-500/10"
-                    >
-                      {isUploadingTabLogo ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
-                      <span>Upload Tab Logo</span>
-                    </button>
-                  </div>
-                </div>
-                {draft.tabLogoUrl ? (
-                  <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800/70">
-                    <div className="h-12 w-12 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
-                      <img
-                        src={`${draft.tabLogoUrl}${draft.tabLogoUrl.includes('?') ? '&' : '?'}v=${logoVersion || draft.logoVersion || '1'}`}
-                        alt="Uploaded tab logo preview"
-                        className="h-full w-full object-contain p-1"
-                      />
-                    </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Tab logo uploaded.</p>
-                  </div>
-                ) : null}
-              </div>
-            </Field>
-            <Field label="Hero Video Upload" className="md:col-span-1 md:order-8">
-              <div className="space-y-3">
-                <div className={softCardClass}>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Upload storefront hero video</p>
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Accepted: MP4, MOV, WEBM, AVI, WMV. Minimum file size is 5MB.</p>
-                  </div>
-                  <div className="mt-3 flex items-center gap-3">
-                    <input
-                      ref={heroVideoInputRef}
-                      type="file"
-                      accept="video/mp4,video/quicktime,video/webm,video/x-msvideo,video/x-ms-wmv"
-                      onChange={handleHeroVideoUpload}
-                      className="hidden"
-                    />
-                    {draft.heroVideoUrl ? (
-                      <button
-                        type="button"
-                        onClick={() => void handleRemoveHeroVideo()}
-                        className="min-w-[112px] whitespace-nowrap rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold leading-tight text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-                      >
-                        Remove
-                      </button>
-                    ) : null}
-                    <button
-                      type="button"
-                      onClick={() => heroVideoInputRef.current?.click()}
-                      disabled={isUploadingHeroVideo}
-                      className="inline-flex min-w-[164px] items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-emerald-200 bg-white px-4 py-2.5 text-sm font-semibold leading-tight text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300 dark:hover:bg-emerald-500/10"
-                    >
-                      {isUploadingHeroVideo ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
-                      <span>Upload Hero Video</span>
-                    </button>
-                  </div>
-                </div>
-                {draft.heroVideoUrl ? (
-                  <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800/70">
-                    <video
-                      src={draft.heroVideoUrl}
-                      controls
-                      className="w-full max-h-72 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-900"
-                    />
-                    <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Hero video uploaded.</p>
-                  </div>
-                ) : null}
-              </div>
-            </Field>
-            <Field label="Hero Subtitle" className="md:col-span-2 md:order-10">
-              <textarea
-                value={draft.heroSubtitle}
-                onChange={(event) => setDraft((current) => ({ ...current, heroSubtitle: event.target.value }))}
-                placeholder="Curated home furniture for condo buyers."
-                rows={3}
-                className={inputClass}
-              />
-            </Field>
-            <Field label="Theme Color" className="md:order-11">
-              <input
-                type="color"
-                value={draft.themeColor}
-                onChange={(event) => setDraft((current) => ({ ...current, themeColor: event.target.value }))}
-                className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-2 py-2 dark:border-slate-700 dark:bg-slate-800/80"
-              />
-            </Field>
-            <Field label="Accent Color" className="md:order-12">
-              <input
-                type="color"
-                value={draft.accentColor}
-                onChange={(event) => setDraft((current) => ({ ...current, accentColor: event.target.value }))}
-                className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-2 py-2 dark:border-slate-700 dark:bg-slate-800/80"
-              />
-            </Field>
-            {canManageAiSupport ? (
-              <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 md:col-span-2 md:order-13 dark:border-slate-700 dark:bg-slate-800/70">
-                <input
-                  type="checkbox"
-                  checked={draft.enableAiSupport}
-                  onChange={(event) => setDraft((current) => ({ ...current, enableAiSupport: event.target.checked }))}
-                  className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-900"
-                />
-                <div>
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Enable AI Support</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Show the floating AI chat widget on this partner storefront.</p>
-                </div>
-              </label>
-            ) : null}
-          </div>
-
-          <div className="mt-5 flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={() => void saveStorefront()}
-              disabled={saving}
-              className="inline-flex min-w-[148px] items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm shadow-emerald-900/20 transition hover:-translate-y-0.5 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
-              <span>Save Storefront</span>
-            </button>
+          <div className="flex items-center gap-2">
             <a
               href={draft.slug ? `/shop/${draft.slug}` : '#'}
               target="_blank"
               rel="noreferrer"
-              className={`rounded-2xl border px-5 py-3 text-sm font-semibold transition ${
-                draft.slug
-                  ? 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700'
-                  : 'pointer-events-none border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-500'
-              }`}
+              className={`rounded-xl border px-4 py-2.5 text-sm font-semibold transition ${draft.slug ? 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200' : 'pointer-events-none border-slate-200 bg-slate-50 text-slate-300 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-600'}`}
             >
               Open Preview
             </a>
+            <button
+              type="button"
+              onClick={() => void saveStorefront()}
+              disabled={saving}
+              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-emerald-900/20 transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
+              Save Storefront
+            </button>
           </div>
-
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <div className="space-y-5">
-            <div className={panelClass}>
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Allowed Categories</h2>
-                <p className="mt-2 text-sm leading-7 text-slate-600 dark:text-slate-300">Only the selected categories will appear on the partner storefront page, creating a cleaner curated shop experience.</p>
+        {/* Tab navigation */}
+        <div className="flex rounded-2xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-900/60">
+          {(['identity', 'categories', 'products'] as const).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+                activeTab === tab
+                  ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-slate-100'
+                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+              }`}
+            >
+              {tab === 'identity'
+                ? 'Identity'
+                : tab === 'categories'
+                  ? `Categories${draft.allowedCategoryIds.length > 0 ? ` (${draft.allowedCategoryIds.length})` : ''}`
+                  : `Products${draft.featuredProductIds.length > 0 ? ` (${draft.featuredProductIds.length})` : ''}`}
+            </button>
+          ))}
+        </div>
+
+        {/* Identity Tab */}
+        {activeTab === 'identity' ? (
+          <div className={panelClass}>
+            <div className="mb-5">
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Basic Info</h2>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Configure storefront identity, hero messaging and partner settings.</p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Slug">
+                <input value={draft.slug} onChange={(e) => setDraft((c) => ({ ...c, slug: e.target.value }))} onBlur={(e) => setDraft((c) => ({ ...c, slug: toSlug(e.target.value) }))} placeholder="your-shop-name" className={inputClass} />
+              </Field>
+              <Field label="Display Name">
+                <input value={draft.displayName} onChange={(e) => setDraft((c) => ({ ...c, displayName: e.target.value }))} placeholder="Your Shop Name" className={inputClass} />
+              </Field>
+              <Field label="Hero Title">
+                <input value={draft.heroTitle} onChange={(e) => setDraft((c) => ({ ...c, heroTitle: e.target.value }))} placeholder="Shop Name Furniture Store" className={inputClass} />
+              </Field>
+              <Field label="Partner Notification Email">
+                <input value={draft.notificationEmail} onChange={(e) => setDraft((c) => ({ ...c, notificationEmail: e.target.value }))} placeholder="partner@example.com" className={inputClass} />
+              </Field>
+              <Field label="Hero Subtitle" className="sm:col-span-2">
+                <textarea value={draft.heroSubtitle} onChange={(e) => setDraft((c) => ({ ...c, heroSubtitle: e.target.value }))} placeholder="Curated home furniture for condo buyers." rows={3} className={inputClass} />
+              </Field>
+            </div>
+
+            <div className="mt-6 border-t border-slate-100 pt-6 dark:border-slate-800">
+              <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-300">Brand Colors</h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Theme Color">
+                  <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800/80">
+                    <input type="color" value={draft.themeColor} onChange={(e) => setDraft((c) => ({ ...c, themeColor: e.target.value }))} className="h-9 w-9 cursor-pointer rounded-lg border border-slate-200 dark:border-slate-600" />
+                    <span className="font-mono text-sm text-slate-600 dark:text-slate-300">{draft.themeColor}</span>
+                  </div>
+                </Field>
+                <Field label="Accent Color">
+                  <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800/80">
+                    <input type="color" value={draft.accentColor} onChange={(e) => setDraft((c) => ({ ...c, accentColor: e.target.value }))} className="h-9 w-9 cursor-pointer rounded-lg border border-slate-200 dark:border-slate-600" />
+                    <span className="font-mono text-sm text-slate-600 dark:text-slate-300">{draft.accentColor}</span>
+                  </div>
+                </Field>
               </div>
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+            </div>
+
+            <div className="mt-6 border-t border-slate-100 pt-6 dark:border-slate-800">
+              <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-300">Brand Assets</h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {/* Logo */}
+                <div className="space-y-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Logo</p>
+                  <div className={softCardClass}>
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+                        {draft.logoUrl ? (
+                          <img src={`${draft.logoUrl}${draft.logoUrl.includes('?') ? '&' : '?'}v=${logoVersion || draft.logoVersion || '1'}`} alt="Logo" className="h-full w-full object-contain p-1" />
+                        ) : (
+                          <span className="text-xs text-slate-300 dark:text-slate-600">No logo</span>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">Storefront logo</p>
+                        <p className="mt-0.5 text-xs text-slate-400">PNG, JPG, or WebP</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex items-center gap-2">
+                      <input ref={logoInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleLogoUpload} className="hidden" />
+                      <button type="button" onClick={() => logoInputRef.current?.click()} disabled={isUploadingLogo} className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-white px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300">
+                        {isUploadingLogo ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : null}
+                        Upload
+                      </button>
+                      {draft.logoUrl ? (
+                        <button type="button" onClick={() => void handleRemoveLogo()} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">Remove</button>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tab Logo */}
+                <div className="space-y-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Browser Tab Logo</p>
+                  <div className={softCardClass}>
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+                        {draft.tabLogoUrl ? (
+                          <img src={`${draft.tabLogoUrl}${draft.tabLogoUrl.includes('?') ? '&' : '?'}v=${logoVersion || draft.logoVersion || '1'}`} alt="Tab logo" className="h-full w-full object-contain p-1" />
+                        ) : (
+                          <span className="text-xs text-slate-300 dark:text-slate-600">No icon</span>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">Favicon / tab icon</p>
+                        <p className="mt-0.5 text-xs text-slate-400">PNG, ICO, or WebP</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex items-center gap-2">
+                      <input ref={tabLogoInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/x-icon,image/vnd.microsoft.icon" onChange={handleTabLogoUpload} className="hidden" />
+                      <button type="button" onClick={() => tabLogoInputRef.current?.click()} disabled={isUploadingTabLogo} className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-white px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300">
+                        {isUploadingTabLogo ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : null}
+                        Upload
+                      </button>
+                      {draft.tabLogoUrl ? (
+                        <button type="button" onClick={() => void handleRemoveTabLogo()} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">Remove</button>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Hero Video */}
+                <div className="space-y-2 sm:col-span-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Hero Video</p>
+                  <div className={softCardClass}>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">Storefront hero video</p>
+                        <p className="mt-0.5 text-xs text-slate-400">MP4, MOV, WEBM · Min 5MB</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input ref={heroVideoInputRef} type="file" accept="video/mp4,video/quicktime,video/webm,video/x-msvideo,video/x-ms-wmv" onChange={handleHeroVideoUpload} className="hidden" />
+                        <button type="button" onClick={() => heroVideoInputRef.current?.click()} disabled={isUploadingHeroVideo} className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-white px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300">
+                          {isUploadingHeroVideo ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : null}
+                          Upload Video
+                        </button>
+                        {draft.heroVideoUrl ? (
+                          <button type="button" onClick={() => void handleRemoveHeroVideo()} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">Remove</button>
+                        ) : null}
+                      </div>
+                    </div>
+                    {draft.heroVideoUrl ? (
+                      <video src={draft.heroVideoUrl} controls className="mt-3 w-full max-h-56 rounded-xl border border-slate-200 bg-slate-900 dark:border-slate-700" />
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 border-t border-slate-100 pt-6 dark:border-slate-800">
+              <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-300">Links</h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Referral Link</p>
+                  <input value={draft.referralLink} onChange={(e) => setDraft((c) => ({ ...c, referralLink: e.target.value }))} placeholder="https://www.afhome.ph/ref/username" className={inputClass} />
+                </div>
+                <div className="space-y-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Shop URL</p>
+                  <input value={draft.domainLink} onChange={(e) => setDraft((c) => ({ ...c, domainLink: e.target.value }))} placeholder="https://www.afhome.ph/shop?ref=username" className={inputClass} />
+                </div>
+                <div className="flex flex-wrap items-center gap-2 sm:col-span-2">
+                  <button type="button" onClick={() => void handleApplyReferralLink()} disabled={isUploadingReferralLink || saving} className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300">
+                    {isUploadingReferralLink ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
+                    Save Link
+                  </button>
+                  {draft.referralLink.trim() ? (
+                    <button type="button" onClick={() => void handleRemoveReferralLink()} disabled={saving} className="rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-60 dark:border-red-900/60 dark:bg-slate-800 dark:text-red-300">
+                      Remove Link
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+
+            {canManageAiSupport ? (
+              <div className="mt-6 border-t border-slate-100 pt-6 dark:border-slate-800">
+                <label className="flex cursor-pointer items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800/50 dark:hover:bg-slate-800">
+                  <input type="checkbox" checked={draft.enableAiSupport} onChange={(e) => setDraft((c) => ({ ...c, enableAiSupport: e.target.checked }))} className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-900" />
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Enable AI Support</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Show the floating AI chat widget on this partner storefront.</p>
+                  </div>
+                </label>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        {/* Categories Tab */}
+        {activeTab === 'categories' ? (
+          <div className={panelClass}>
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Allowed Categories</h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Only selected categories appear on this storefront.</p>
+              </div>
+              <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
                 {draft.allowedCategoryIds.length} selected
               </span>
             </div>
-
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  {categories.map((category) => {
-                    const active = draft.allowedCategoryIds.includes(category.id)
-
-                    const categoryName = (category.name ?? '').toLowerCase()
-                    const iconTone = categoryName.includes('mobile') || categoryName.includes('accessories')
-                      ? 'border-violet-100 bg-violet-50 text-violet-500'
-                      : categoryName.includes('decor')
-                        ? 'border-emerald-100 bg-emerald-50 text-emerald-500'
-                        : categoryName.includes('essential') || categoryName.includes('home ')
-                          ? 'border-amber-100 bg-amber-50 text-amber-500'
-                          : categoryName.includes('appliance')
-                            ? 'border-sky-100 bg-sky-50 text-sky-500'
-                            : categoryName.includes('auto') || categoryName.includes('care')
-                              ? 'border-rose-100 bg-rose-50 text-rose-500'
-                              : categoryName.includes('living')
-                                ? 'border-purple-100 bg-purple-50 text-purple-500'
-                                : categoryName.includes('service')
-                                  ? 'border-cyan-100 bg-cyan-50 text-cyan-500'
-                                  : categoryName.includes('propert')
-                                    ? 'border-orange-100 bg-orange-50 text-orange-500'
-                                    : 'border-slate-200 bg-slate-50 text-slate-500'
-                    const countTone = categoryName.includes('mobile') || categoryName.includes('accessories')
-                      ? 'text-violet-500'
-                      : categoryName.includes('decor')
-                        ? 'text-emerald-500'
-                        : categoryName.includes('essential') || categoryName.includes('home ')
-                          ? 'text-amber-500'
-                          : categoryName.includes('appliance')
-                            ? 'text-sky-500'
-                            : categoryName.includes('auto') || categoryName.includes('care')
-                              ? 'text-rose-500'
-                              : categoryName.includes('living')
-                                ? 'text-purple-500'
-                                : categoryName.includes('service')
-                                  ? 'text-cyan-500'
-                                  : categoryName.includes('propert')
-                                    ? 'text-orange-500'
-                                    : 'text-slate-500'
-                    const modernIcon =
-                      categoryName.includes('mobile') || categoryName.includes('accessories') ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-                          <rect x="7" y="2.5" width="10" height="19" rx="2.5" />
-                          <path d="M11 18h2" />
-                        </svg>
-                      ) : categoryName.includes('decor') ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-                          <path d="M4 12h16" />
-                          <path d="M6.5 12V9a3.5 3.5 0 0 1 7 0v3" />
-                          <path d="M10.5 12V9a3.5 3.5 0 0 1 7 0v3" />
-                          <path d="M5 12v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" />
-                        </svg>
-                      ) : categoryName.includes('essential') || categoryName.includes('home ') ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-                          <path d="M3 10.5L12 3l9 7.5" />
-                          <path d="M5 9.5V21h14V9.5" />
-                          <path d="M10 21v-6h4v6" />
-                        </svg>
-                      ) : categoryName.includes('appliance') ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-                          <rect x="5" y="2.5" width="14" height="19" rx="2.5" />
-                          <circle cx="12" cy="13" r="4" />
-                          <path d="M8 6.5h8" />
-                        </svg>
-                      ) : categoryName.includes('auto') || categoryName.includes('care') ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-                          <path d="M6 16h12l-1.5-5a2 2 0 0 0-1.9-1.4H9.4A2 2 0 0 0 7.5 11z" />
-                          <path d="M4 16h16v2a2 2 0 0 1-2 2h-1v-2H7v2H6a2 2 0 0 1-2-2z" />
-                          <circle cx="8" cy="16.5" r="0.8" />
-                          <circle cx="16" cy="16.5" r="0.8" />
-                        </svg>
-                      ) : categoryName.includes('living') ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-                          <path d="M12 2l5 9h-10z" />
-                          <path d="M12 11v9" />
-                          <path d="M8 20h8" />
-                        </svg>
-                      ) : categoryName.includes('service') ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-                          <path d="M21 7.5a3 3 0 0 1-3 3h-1l-4.7 4.7a2 2 0 0 1-2.8 0L8 13.7a2 2 0 0 1 0-2.8L12.7 6H14a3 3 0 1 1 0 6h-1.2" />
-                          <path d="M4 20l4-4" />
-                        </svg>
-                      ) : categoryName.includes('propert') ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-                          <rect x="4" y="3" width="16" height="18" rx="2" />
-                          <path d="M8 7h2M14 7h2M8 11h2M14 11h2M8 15h2M14 15h2" />
-                        </svg>
-                      ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-                          <path d="M4 7h16" />
-                          <path d="M4 12h16" />
-                          <path d="M4 17h16" />
-                        </svg>
-                      )
-
-                    const text = active ? 'text-slate-900 dark:text-slate-100' : 'text-slate-800 dark:text-slate-100'
-                    const sub = active ? 'text-slate-500 dark:text-slate-300' : 'text-slate-500 dark:text-slate-300'
-
-                    return (
-                      <button
-                        key={category.id}
-                        type="button"
-                        onClick={() => toggleCategory(category.id)}
-                        className={[
-                          'group relative flex items-center justify-between gap-3 rounded-2xl border px-4 py-4 text-left transition',
-                          'focus:outline-none focus:ring-4 focus:ring-slate-200/70 dark:focus:ring-slate-700/40',
-                          active
-                            ? 'border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-900/40'
-                            : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900/20 dark:hover:border-slate-600',
-                        ].join(' ')}
-                        aria-pressed={active}
-                      >
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-3">
-                            <div
-                              className={[
-                                'flex h-12 w-12 items-center justify-center rounded-xl border',
-                                'dark:bg-slate-900/30',
-                                iconTone,
-                                'dark:border-slate-700/60 dark:bg-slate-800/70',
-                              ].join(' ')}
-                              aria-hidden="true"
-                            >
-                              <div className="text-current">
-                                {modernIcon}
-                              </div>
-                            </div>
-                            <div className="min-w-0">
-                              <p className={`truncate text-sm font-semibold ${text}`}>{category.name}</p>
-                              <p className={`mt-0.5 text-xs ${sub}`}>
-                                ID {category.id} • <span className={countTone}>{category.product_count ?? 0} items</span>
-                              </p>
-                            </div>
-                          </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {categories.map((category) => {
+                const active = draft.allowedCategoryIds.includes(category.id)
+                const categoryName = (category.name ?? '').toLowerCase()
+                const iconTone = categoryName.includes('mobile') || categoryName.includes('accessories')
+                  ? 'border-violet-100 bg-violet-50 text-violet-500'
+                  : categoryName.includes('decor')
+                    ? 'border-emerald-100 bg-emerald-50 text-emerald-500'
+                    : categoryName.includes('essential') || categoryName.includes('home ')
+                      ? 'border-amber-100 bg-amber-50 text-amber-500'
+                      : categoryName.includes('appliance')
+                        ? 'border-sky-100 bg-sky-50 text-sky-500'
+                        : categoryName.includes('auto') || categoryName.includes('care')
+                          ? 'border-rose-100 bg-rose-50 text-rose-500'
+                          : categoryName.includes('living')
+                            ? 'border-purple-100 bg-purple-50 text-purple-500'
+                            : categoryName.includes('service')
+                              ? 'border-cyan-100 bg-cyan-50 text-cyan-500'
+                              : categoryName.includes('propert')
+                                ? 'border-orange-100 bg-orange-50 text-orange-500'
+                                : 'border-slate-200 bg-slate-50 text-slate-500'
+                const countTone = categoryName.includes('mobile') || categoryName.includes('accessories')
+                  ? 'text-violet-500'
+                  : categoryName.includes('decor')
+                    ? 'text-emerald-500'
+                    : categoryName.includes('essential') || categoryName.includes('home ')
+                      ? 'text-amber-500'
+                      : categoryName.includes('appliance')
+                        ? 'text-sky-500'
+                        : categoryName.includes('auto') || categoryName.includes('care')
+                          ? 'text-rose-500'
+                          : categoryName.includes('living')
+                            ? 'text-purple-500'
+                            : categoryName.includes('service')
+                              ? 'text-cyan-500'
+                              : categoryName.includes('propert')
+                                ? 'text-orange-500'
+                                : 'text-slate-500'
+                const modernIcon =
+                  categoryName.includes('mobile') || categoryName.includes('accessories') ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><rect x="7" y="2.5" width="10" height="19" rx="2.5" /><path d="M11 18h2" /></svg>
+                  ) : categoryName.includes('decor') ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M4 12h16" /><path d="M6.5 12V9a3.5 3.5 0 0 1 7 0v3" /><path d="M10.5 12V9a3.5 3.5 0 0 1 7 0v3" /><path d="M5 12v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" /></svg>
+                  ) : categoryName.includes('essential') || categoryName.includes('home ') ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M3 10.5L12 3l9 7.5" /><path d="M5 9.5V21h14V9.5" /><path d="M10 21v-6h4v6" /></svg>
+                  ) : categoryName.includes('appliance') ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><rect x="5" y="2.5" width="14" height="19" rx="2.5" /><circle cx="12" cy="13" r="4" /><path d="M8 6.5h8" /></svg>
+                  ) : categoryName.includes('auto') || categoryName.includes('care') ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M6 16h12l-1.5-5a2 2 0 0 0-1.9-1.4H9.4A2 2 0 0 0 7.5 11z" /><path d="M4 16h16v2a2 2 0 0 1-2 2h-1v-2H7v2H6a2 2 0 0 1-2-2z" /><circle cx="8" cy="16.5" r="0.8" /><circle cx="16" cy="16.5" r="0.8" /></svg>
+                  ) : categoryName.includes('living') ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M12 2l5 9h-10z" /><path d="M12 11v9" /><path d="M8 20h8" /></svg>
+                  ) : categoryName.includes('service') ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M21 7.5a3 3 0 0 1-3 3h-1l-4.7 4.7a2 2 0 0 1-2.8 0L8 13.7a2 2 0 0 1 0-2.8L12.7 6H14a3 3 0 1 1 0 6h-1.2" /><path d="M4 20l4-4" /></svg>
+                  ) : categoryName.includes('propert') ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M8 7h2M14 7h2M8 11h2M14 11h2M8 15h2M14 15h2" /></svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h16" /></svg>
+                  )
+                return (
+                  <button
+                    key={category.id}
+                    type="button"
+                    onClick={() => toggleCategory(category.id)}
+                    className={[
+                      'group relative flex items-center justify-between gap-3 rounded-2xl border px-4 py-4 text-left transition',
+                      'focus:outline-none focus:ring-4 focus:ring-slate-200/70 dark:focus:ring-slate-700/40',
+                      active
+                        ? 'border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-900/40'
+                        : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900/20 dark:hover:border-slate-600',
+                    ].join(' ')}
+                    aria-pressed={active}
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-3">
+                        <div className={['flex h-12 w-12 items-center justify-center rounded-xl border', 'dark:border-slate-700/60 dark:bg-slate-800/70', iconTone].join(' ')} aria-hidden="true">
+                          {modernIcon}
                         </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{category.name}</p>
+                          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-300">
+                            ID {category.id} · <span className={countTone}>{category.product_count ?? 0} items</span>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <span className={['flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition', active ? 'border-slate-400 bg-slate-100 dark:border-slate-500 dark:bg-slate-700/60' : 'border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-900/40'].join(' ')} aria-label={active ? 'Selected' : 'Not selected'}>
+                      {active ? <span className="h-2.5 w-2.5 rounded-full bg-slate-500 dark:bg-slate-200" /> : <span className="h-2.5 w-2.5 rounded-full bg-transparent" />}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        ) : null}
 
-                        <span
-                          className={[
-                            'mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition',
-                            active
-                              ? 'border-slate-400 bg-slate-100 dark:border-slate-500 dark:bg-slate-700/60'
-                              : 'border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-900/40',
-                          ].join(' ')}
-                          aria-label={active ? 'Selected' : 'Not selected'}
-                        >
-                          {active ? <span className="h-2.5 w-2.5 rounded-full bg-slate-500 dark:bg-slate-200" /> : <span className="h-2.5 w-2.5 rounded-full bg-transparent" />}
-                        </span>
-                      </button>
-                    )
-                  })}
-                </div>
+        {/* Products Tab */}
+        {activeTab === 'products' ? (
+          <div className="grid gap-5 lg:grid-cols-2">
+            {/* Product Helper */}
+            <div className={`flex h-[600px] flex-col ${panelClass}`}>
+              <div>
+                <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Product Helper</h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Select products from an allowed category to feature.</p>
+              </div>
+              <label className="mt-3 block">
+                <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Category</span>
+                <select
+                  value={helperCategoryId}
+                  onChange={(event) => {
+                    const nextId = Number.parseInt(event.target.value, 10)
+                    setHelperCategoryId(Number.isFinite(nextId) ? nextId : '')
+                  }}
+                  disabled={allowedCategoryOptions.length === 0}
+                  className={`${selectClass} disabled:cursor-not-allowed disabled:opacity-60`}
+                >
+                  {allowedCategoryOptions.length === 0 ? <option value="">Select allowed categories first</option> : null}
+                  {allowedCategoryOptions.map((category) => (
+                    <option key={category.id} value={category.id}>{category.name} (ID {category.id})</option>
+                  ))}
+                </select>
+              </label>
+              <div className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+                {isLoadingHelperProducts ? (
+                  <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-400">Loading products...</p>
+                ) : null}
+                {helperProducts.map((product) => {
+                  const imageUrl =
+                    (typeof product.image === 'string' && product.image.trim().length > 0 ? product.image : undefined) ??
+                    (Array.isArray(product.images) && typeof product.images[0] === 'string' ? product.images[0] : undefined)
+                  const isFeatured = draft.featuredProductIds.includes(product.id)
+                  return (
+                    <button key={product.id} type="button" onClick={() => toggleFeaturedProduct(product.id)} className={`relative w-full rounded-2xl border px-4 py-3 text-left transition ${isFeatured ? 'border-emerald-300 bg-emerald-50/60 dark:border-emerald-700/70 dark:bg-emerald-900/20' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-slate-600 dark:hover:bg-slate-800/60'}`}>
+                      <span className="absolute right-3 top-3.5">
+                        <input type="checkbox" checked={isFeatured} onChange={() => toggleFeaturedProduct(product.id)} onClick={(e) => e.stopPropagation()} className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-900" />
+                      </span>
+                      <div className="flex items-center gap-3 pr-6">
+                        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+                          {imageUrl ? <img src={imageUrl} alt={product.name} className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center text-xs font-semibold uppercase text-slate-400 dark:text-slate-500">No Image</div>}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="line-clamp-2 text-sm font-semibold leading-snug text-slate-900 dark:text-slate-100">{product.name}</p>
+                          <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">ID {product.id} · Cat {product.catid}</p>
+                          <p className="mt-1.5 text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                            ₱{Number(product.priceSrp).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  )
+                })}
+                {!isLoadingHelperProducts && allowedCategoryOptions.length > 0 && helperProducts.length === 0 ? (
+                  <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-400">No active products found for this category.</p>
+                ) : null}
+              </div>
             </div>
 
-            <div className={`flex h-[500px] flex-col ${panelClass}`}>
+            {/* Selected Products */}
+            <div className={`flex h-[600px] flex-col ${panelClass}`}>
               <div className="flex items-center justify-between gap-3">
-                <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Selected Products</h2>
-                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                  {draft.featuredProductIds.length} selected
-                </span>
+                <div>
+                  <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Selected Products</h2>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Featured products on this storefront.</p>
+                </div>
+                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">{draft.featuredProductIds.length} selected</span>
               </div>
-              <p className="mt-2 text-sm leading-7 text-slate-600 dark:text-slate-400">Products checked in Product Helper will appear here and auto-save.</p>
               <label className="mt-3 block">
-                <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Filter Category</span>
+                <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Filter Category</span>
                 <select
                   value={selectedProductsCategoryFilter}
                   onChange={(event) => {
@@ -1764,42 +1607,28 @@ export default function PartnerStorefrontStudio() {
                 >
                   <option value="all">All Categories</option>
                   {selectedProductCategoryOptions.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.label} (ID {category.id})
-                    </option>
+                    <option key={category.id} value={category.id}>{category.label} (ID {category.id})</option>
                   ))}
                 </select>
               </label>
               <div className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
                 {filteredSelectedProducts.map((product) => {
                   const imageUrl =
-                    (typeof product.image === 'string' && product.image.trim().length > 0
-                      ? product.image
-                      : undefined) ??
-                    (Array.isArray(product.images) && typeof product.images[0] === 'string'
-                      ? product.images[0]
-                      : undefined)
-
+                    (typeof product.image === 'string' && product.image.trim().length > 0 ? product.image : undefined) ??
+                    (Array.isArray(product.images) && typeof product.images[0] === 'string' ? product.images[0] : undefined)
                   return (
-                    <div key={product.id} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/70">
-                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-                        {imageUrl ? (
-                          <img src={imageUrl} alt={product.name} className="h-full w-full object-cover" />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-[9px] font-semibold uppercase text-slate-400 dark:text-slate-500">
-                            No Image
-                          </div>
-                        )}
+                    <div key={product.id} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900/40">
+                      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900">
+                        {imageUrl ? <img src={imageUrl} alt={product.name} className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center text-[9px] font-semibold uppercase text-slate-400 dark:text-slate-500">No Image</div>}
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{product.name}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">ID {product.id} Â· Category {product.catid}</p>
+                        <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">ID {product.id} · Cat {product.catid}</p>
+                        <p className="mt-1.5 text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                          ₱{Number(product.priceSrp).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => toggleFeaturedProduct(product.id)}
-                        className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
-                      >
+                      <button type="button" onClick={() => toggleFeaturedProduct(product.id)} className="shrink-0 rounded-xl border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 dark:border-rose-900/60 dark:bg-slate-900 dark:text-rose-300 dark:hover:bg-rose-950/30">
                         Remove
                       </button>
                     </div>
@@ -1808,13 +1637,7 @@ export default function PartnerStorefrontStudio() {
                 {filteredMissingSelectedProductIds.map((id) => (
                   <div key={id} className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/70">
                     <p className="text-xs text-slate-500 dark:text-slate-400">Product ID {id}</p>
-                    <button
-                      type="button"
-                      onClick={() => toggleFeaturedProduct(id)}
-                      className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
-                    >
-                      Remove
-                    </button>
+                    <button type="button" onClick={() => toggleFeaturedProduct(id)} className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800">Remove</button>
                   </div>
                 ))}
                 {filteredSelectedProducts.length === 0 && filteredMissingSelectedProductIds.length === 0 ? (
@@ -1825,105 +1648,8 @@ export default function PartnerStorefrontStudio() {
               </div>
             </div>
           </div>
-
-          <div className="space-y-5">
-            <div className={`hidden ${panelClass}`}>
-              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Featured Product IDs</h2>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">These IDs can be used by shop builder sections for curated product cards.</p>
-              <textarea
-                value={draft.featuredProductIds.join(',')}
-                onChange={(event) => setDraft((current) => ({ ...current, featuredProductIds: parseIdList(event.target.value) }))}
-                rows={4}
-                placeholder="12,18,25,36"
-                className={`mt-3 ${inputClass}`}
-              />
-            </div>
-
-            <div className={`flex h-[500px] flex-col ${panelClass}`}>
-              <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Product Helper</h2>
-              <p className="mt-2 text-sm leading-7 text-slate-600 dark:text-slate-300">Select active products from the allowed category to feature them on your partner storefront.</p>
-              <label className="mt-3 block">
-                <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Category</span>
-                <select
-                  value={helperCategoryId}
-                  onChange={(event) => {
-                    const nextId = Number.parseInt(event.target.value, 10)
-                    setHelperCategoryId(Number.isFinite(nextId) ? nextId : '')
-                  }}
-                  disabled={allowedCategoryOptions.length === 0}
-                  className={`${selectClass} disabled:cursor-not-allowed disabled:opacity-60`}
-                >
-                  {allowedCategoryOptions.length === 0 ? (
-                    <option value="">Select allowed categories first</option>
-                  ) : null}
-                  {allowedCategoryOptions.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name} (ID {category.id})
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <div className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
-                {isLoadingHelperProducts ? (
-                  <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-400">
-                    Loading products...
-                  </p>
-                ) : null}
-                {helperProducts.map((product) => {
-                  const imageUrl =
-                    (typeof product.image === 'string' && product.image.trim().length > 0
-                      ? product.image
-                      : undefined) ??
-                    (Array.isArray(product.images) && typeof product.images[0] === 'string'
-                      ? product.images[0]
-                      : undefined)
-                  const isFeatured = draft.featuredProductIds.includes(product.id)
-
-                  return (
-                    <button
-                      key={product.id}
-                      type="button"
-                      onClick={() => toggleFeaturedProduct(product.id)}
-                      className="relative w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-left transition hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800/70 dark:hover:border-slate-600"
-                    >
-                      <span className="absolute right-3 top-3">
-                        <input
-                          type="checkbox"
-                          checked={isFeatured}
-                          onChange={() => toggleFeaturedProduct(product.id)}
-                          onClick={(event) => event.stopPropagation()}
-                          className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-900"
-                        />
-                      </span>
-                      <div className="flex items-center gap-3">
-                        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-                          {imageUrl ? (
-                            <img src={imageUrl} alt={product.name} className="h-full w-full object-cover" />
-                          ) : (
-                <div className="flex h-full w-full items-center justify-center text-xs font-semibold uppercase text-slate-400 dark:text-slate-500">
-                              No Image
-                            </div>
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="line-clamp-2 text-sm font-semibold text-slate-900 dark:text-slate-100">{product.name}</p>
-                          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">ID {product.id} Â· Category {product.catid}</p>
-                        </div>
-                      </div>
-                    </button>
-                  )
-                })}
-                {!isLoadingHelperProducts && allowedCategoryOptions.length > 0 && helperProducts.length === 0 ? (
-                  <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-400">
-                    No active products found for this category.
-                  </p>
-                ) : null}
-              </div>
-            </div>
-          </div>
-        </div>
+        ) : null}
       </section>
-
     </div>
   )
 }
