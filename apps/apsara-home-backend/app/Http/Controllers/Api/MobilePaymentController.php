@@ -157,8 +157,12 @@ class MobilePaymentController extends Controller
             // Cache mobile order data for payment verification
             $this->cacheMobileOrderData($mobileOrderId, $validated, $mobileOrder);
 
-            // Create order notification with product details (parent notification only - not email yet)
-            $this->createOrderNotification($mobileOrder, $validated);
+            // Create order notifications - multiple for multi-item orders
+            if ($isSingleItem) {
+                $this->createOrderNotification($mobileOrder, $validated);
+            } else {
+                $this->createMultipleOrderNotifications($mobileOrders, $validated);
+            }
 
             return response()->json([
                 'order_id' => (int) $mobileOrder->ch_id,
@@ -791,6 +795,100 @@ class MobilePaymentController extends Controller
             Log::error('Failed to create order notification', [
                 'mobile_order_id' => $order->ch_mobile_order_id,
                 'checkout_id' => $order->ch_checkout_id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function createMultipleOrderNotifications(array $mobileOrders, array $validated): void
+    {
+        if (empty($mobileOrders)) {
+            return;
+        }
+
+        $firstOrder = $mobileOrders[0];
+        $checkoutId = $firstOrder->ch_checkout_id;
+        $customerId = (int) $firstOrder->ch_customer_id;
+        $totalAmount = (float) $validated['amount'];
+
+        try {
+            // Create parent notification for the order
+            $parentNotification = OrderNotification::createParentNotification(
+                $customerId,
+                $checkoutId,
+                $checkoutId,
+                [
+                    'title' => 'Order Placed ✓',
+                    'message' => 'Your order with ' . count($mobileOrders) . ' items has been created and is pending payment. Amount: ₱' . number_format($totalAmount, 2),
+                    'product_name' => 'Multi-item Order',
+                    'amount' => $totalAmount,
+                    'payment_method' => $validated['payment_method'] ?? null,
+                    'href' => 'purchases://pending/' . $checkoutId,
+                    'payload' => [
+                        'mobile_order_id' => $firstOrder->ch_mobile_order_id,
+                        'checkout_id' => $checkoutId,
+                        'platform' => $validated['platform'] ?? null,
+                        'items_count' => count($mobileOrders),
+                    ],
+                ]
+            );
+
+            Log::info('Parent notification created for multi-item order', [
+                'notification_id' => $parentNotification->on_id,
+                'items_count' => count($mobileOrders),
+                'checkout_id' => $checkoutId,
+            ]);
+
+            // Create individual notifications for each item
+            foreach ($mobileOrders as $index => $order) {
+                try {
+                    $itemAmount = (float) $order->ch_amount;
+                    $itemQuantity = (int) $order->ch_quantity;
+
+                    OrderNotification::createChildNotification(
+                        $parentNotification->on_id,
+                        $customerId,
+                        $checkoutId,
+                        $checkoutId,
+                        [
+                            'title' => ($index + 1) . '. ' . $order->ch_product_name,
+                            'message' => 'Qty: ' . $itemQuantity . ' | Amount: ₱' . number_format($itemAmount, 2),
+                            'product_name' => $order->ch_product_name,
+                            'product_image' => $order->ch_product_image,
+                            'product_sku' => $order->ch_product_sku,
+                            'quantity' => $itemQuantity,
+                            'amount' => $itemAmount,
+                            'payment_method' => $validated['payment_method'] ?? null,
+                            'href' => 'purchases://pending/' . $checkoutId,
+                            'payload' => [
+                                'product_id' => $order->ch_product_id,
+                                'product_sku' => $order->ch_product_sku,
+                                'variant_color' => $order->ch_selected_color,
+                                'variant_size' => $order->ch_selected_size,
+                                'checkout_line_item_id' => (int) $order->ch_id,
+                            ],
+                        ]
+                    );
+
+                    Log::debug('Item notification created', [
+                        'product_name' => $order->ch_product_name,
+                        'quantity' => $itemQuantity,
+                        'amount' => $itemAmount,
+                    ]);
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to create item notification', [
+                        'product_id' => $order->ch_product_id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            // Broadcast realtime notification to customer
+            $this->broadcastOrderNotification($customerId, $checkoutId);
+        } catch (\Throwable $e) {
+            Log::error('Failed to create multiple order notifications', [
+                'checkout_id' => $checkoutId,
+                'items_count' => count($mobileOrders),
                 'error' => $e->getMessage(),
             ]);
         }
