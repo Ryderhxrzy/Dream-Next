@@ -95,6 +95,7 @@ class MobilePaymentController extends Controller
             'order.items.*.product_sku' => 'nullable|string|max:100',
             'order.items.*.product_image' => 'nullable|string|max:1000',
             'order.items.*.quantity' => 'required|integer|min:1|max:1000',
+            'order.items.*.price' => 'nullable|numeric|min:0',
             'order.items.*.variant_color' => 'nullable|string|max:100',
             'order.items.*.variant_size' => 'nullable|string|max:100',
         ]);
@@ -273,7 +274,7 @@ class MobilePaymentController extends Controller
                     'name' => $order->ch_product_name ?: ($order->ch_description ?: 'Order Item'),
                     'image' => $order->ch_product_image ?: '/Images/HeroSection/sofas.jpg',
                     'quantity' => max(1, (int) $order->ch_quantity),
-                    'price' => max(0, (float) $order->ch_amount - (float) ($order->ch_shipping_fee ?? 0)) / max(1, count($itemsGroup)),
+'price' => max(0, (float) $order->ch_amount - (float) ($order->ch_shipping_fee ?? 0)),
                     'selected_color' => $order->ch_selected_color,
                     'selected_size' => $order->ch_selected_size,
                     'selected_type' => $order->ch_selected_type,
@@ -455,8 +456,6 @@ class MobilePaymentController extends Controller
         $orderData = $validated['order'] ?? [];
         $items = $orderData['items'] ?? [];
         $customerData = $validated['customer'] ?? [];
-        $itemCount = count($items);
-        $perItemAmount = $itemCount > 0 ? (float) $validated['amount'] / $itemCount : (float) $validated['amount'];
 
         $createdOrders = [];
 
@@ -473,7 +472,9 @@ class MobilePaymentController extends Controller
                 'ch_customer_address' => $customerData['address'] ?? null,
 
                 'ch_description' => $validated['description'],
-                'ch_amount' => $perItemAmount,
+                'ch_amount' => isset($item['price']) && is_numeric($item['price'])
+                    ? (float) $item['price']
+                    : ((float) ($validated['amount'] ?? 0) / max(1, count($items))),
                 'ch_shipping_fee' => (float) ($orderData['handling_fee'] ?? 0),
                 'ch_payment_method' => $validated['payment_method'],
                 'ch_status' => 'pending',
