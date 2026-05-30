@@ -75,7 +75,7 @@ class MobilePaymentController extends Controller
             'customer.referred_by' => 'nullable|string|max:255',
             'customer.is_member' => 'nullable|boolean',
 
-            // Order info
+            // Order info - support both single item and multiple items
             'order' => 'nullable|array',
             'order.product_name' => 'nullable|string|max:255',
             'order.product_id' => 'nullable|integer|min:1',
@@ -88,11 +88,25 @@ class MobilePaymentController extends Controller
             'order.selected_type' => 'nullable|string|max:100',
             'order.subtotal' => 'nullable|numeric|min:0',
             'order.handling_fee' => 'nullable|numeric|min:0',
+            // Multiple items support
+            'order.items' => 'nullable|array',
+            'order.items.*.product_id' => 'required|integer|min:1',
+            'order.items.*.product_name' => 'required|string|max:255',
+            'order.items.*.product_sku' => 'nullable|string|max:100',
+            'order.items.*.product_image' => 'nullable|string|max:1000',
+            'order.items.*.quantity' => 'required|integer|min:1|max:1000',
+            'order.items.*.variant_color' => 'nullable|string|max:100',
+            'order.items.*.variant_size' => 'nullable|string|max:100',
         ]);
 
         try {
             $customer = $request->user();
             $idempotencyKey = $validated['idempotency_key'] ?? null;
+            $orderData = $validated['order'] ?? [];
+            $items = $orderData['items'] ?? [];
+
+            // Determine if single or multiple items
+            $isSingleItem = empty($items) && !empty($orderData['product_id']);
 
             // Check for duplicate pending order with idempotency key or duplicate detection
             $existingOrder = $this->checkForDuplicateOrder($customer, $validated, $idempotencyKey);
@@ -121,12 +135,23 @@ class MobilePaymentController extends Controller
                 ->where('ch_is_mobile', true)
                 ->first();
 
-            if ($existingMobileOrder) {
-                // Mobile order already exists, reuse it
+            if ($existingMobileOrder && $isSingleItem) {
+                // Single item: reuse existing mobile order
                 $mobileOrder = $existingMobileOrder;
             } else {
-                // Create mobile order record with checkout ID
-                $mobileOrder = $this->createMobileOrder($request, $validated, $mobileOrderId, $paymongoResponse, $idempotencyKey);
+                // Multiple items or new order: create records for each item
+                if ($isSingleItem) {
+                    // Single item - create one record
+                    $mobileOrder = $this->createMobileOrder($request, $validated, $mobileOrderId, $paymongoResponse, $idempotencyKey);
+                } else {
+                    // Multiple items - create one record per item, all with same checkout_id
+                    $mobileOrders = $this->createMultipleMobileOrders($request, $validated, $mobileOrderId, $paymongoResponse, $idempotencyKey);
+                    $mobileOrder = $mobileOrders[0] ?? null;
+                }
+            }
+
+            if (!$mobileOrder) {
+                throw new \Exception('Failed to create mobile order records');
             }
 
             // Cache mobile order data for payment verification
@@ -213,7 +238,7 @@ class MobilePaymentController extends Controller
         $customer = $request->user();
         $platform = $request->query('platform'); // Optional platform filter
 
-        $orders = CheckoutHistory::query()
+        $checkoutRecords = CheckoutHistory::query()
             ->where('ch_customer_id', (int) $customer->getAuthIdentifier())
             ->where('ch_is_mobile', true)
             ->when($platform, function ($query, $platform) {
@@ -221,48 +246,57 @@ class MobilePaymentController extends Controller
             })
             ->orderByRaw('COALESCE(ch_paid_at, created_at) DESC')
             ->orderByDesc('ch_id')
-            ->get()
-            ->map(function (CheckoutHistory $order) {
-                $paymentStatus = match(strtolower($order->ch_status)) {
-                    'paid', 'succeeded', 'success' => 'paid',
-                    'failed', 'cancelled', 'expired' => 'cancelled',
-                    'active', 'unpaid', 'pending' => 'pending',
-                    default => 'pending',
-                };
-                $fulfillmentStatus = $order->ch_fulfillment_status ?: 'pending';
-                $displayStatus = $fulfillmentStatus !== 'pending' ? $fulfillmentStatus : $paymentStatus;
+            ->get();
 
+        // Group by checkout_id to handle multiple items per order
+        $groupedOrders = $checkoutRecords->groupBy('ch_checkout_id')->map(function ($itemsGroup) {
+            $firstItem = $itemsGroup->first();
+
+            $paymentStatus = match(strtolower($firstItem->ch_status)) {
+                'paid', 'succeeded', 'success' => 'paid',
+                'failed', 'cancelled', 'expired' => 'cancelled',
+                'active', 'unpaid', 'pending' => 'pending',
+                default => 'pending',
+            };
+            $fulfillmentStatus = $firstItem->ch_fulfillment_status ?: 'pending';
+            $displayStatus = $fulfillmentStatus !== 'pending' ? $fulfillmentStatus : $paymentStatus;
+
+            // Build items array from all records with same checkout_id
+            $items = $itemsGroup->map(function (CheckoutHistory $order) {
                 return [
                     'id' => (int) $order->ch_id,
-                    'mobile_order_id' => $order->ch_mobile_order_id,
-                    'order_number' => $order->ch_checkout_id,
-                    'status' => $displayStatus,
-                    'payment_status' => $paymentStatus,
-                    'fulfillment_status' => $fulfillmentStatus,
-                    'platform' => $order->ch_platform,
-                    'app_version' => $order->ch_app_version,
-                    'items' => [[
-                        'id' => (int) $order->ch_id,
-                        'product_id' => $order->ch_product_id ? (int) $order->ch_product_id : null,
-                        'name' => $order->ch_product_name ?: ($order->ch_description ?: 'Order Item'),
-                        'image' => $order->ch_product_image ?: '/Images/HeroSection/sofas.jpg',
-                        'quantity' => max(1, (int) $order->ch_quantity),
-                        'price' => max(0, (float) $order->ch_amount - (float) ($order->ch_shipping_fee ?? 0)) / max(1, (int) $order->ch_quantity),
-                        'selected_color' => $order->ch_selected_color,
-                        'selected_size' => $order->ch_selected_size,
-                        'selected_type' => $order->ch_selected_type,
-                    ]],
-                    'total_amount' => (float) $order->ch_amount,
-                    'shipping_fee' => (float) ($order->ch_shipping_fee ?? 0),
-                    'payment_method' => $this->formatPaymentMethod((string) ($order->ch_payment_method ?? '')),
-                    'tracking_number' => $this->resolveOrderTrackingNumber($order),
-                    'created_at' => optional($order->ch_paid_at ?? $order->created_at)->toDateTimeString(),
+                    'product_id' => $order->ch_product_id ? (int) $order->ch_product_id : null,
+                    'name' => $order->ch_product_name ?: ($order->ch_description ?: 'Order Item'),
+                    'image' => $order->ch_product_image ?: '/Images/HeroSection/sofas.jpg',
+                    'quantity' => max(1, (int) $order->ch_quantity),
+                    'price' => max(0, (float) $order->ch_amount - (float) ($order->ch_shipping_fee ?? 0)) / max(1, count($itemsGroup)),
+                    'selected_color' => $order->ch_selected_color,
+                    'selected_size' => $order->ch_selected_size,
+                    'selected_type' => $order->ch_selected_type,
                 ];
-            });
+            })->values()->all();
+
+            return [
+                'id' => (int) $firstItem->ch_id,
+                'mobile_order_id' => $firstItem->ch_mobile_order_id,
+                'order_number' => $firstItem->ch_checkout_id,
+                'status' => $displayStatus,
+                'payment_status' => $paymentStatus,
+                'fulfillment_status' => $fulfillmentStatus,
+                'platform' => $firstItem->ch_platform,
+                'app_version' => $firstItem->ch_app_version,
+                'items' => $items,
+                'total_amount' => (float) $firstItem->ch_amount,
+                'shipping_fee' => (float) ($firstItem->ch_shipping_fee ?? 0),
+                'payment_method' => $this->formatPaymentMethod((string) ($firstItem->ch_payment_method ?? '')),
+                'tracking_number' => $this->resolveOrderTrackingNumber($firstItem),
+                'created_at' => optional($firstItem->ch_paid_at ?? $firstItem->created_at)->toDateTimeString(),
+            ];
+        });
 
         return response()->json([
-            'orders' => $orders,
-            'total' => count($orders),
+            'orders' => $groupedOrders->values(),
+            'total' => count($groupedOrders),
             'platform' => $platform,
         ]);
     }
@@ -409,6 +443,68 @@ class MobilePaymentController extends Controller
                 'created_at' => now()->toISOString(),
             ]),
         ]);
+    }
+
+    private function createMultipleMobileOrders(Request $request, array $validated, string $mobileOrderId, array $paymongoResponse, ?string $idempotencyKey = null): array
+    {
+        $customer = $request->user();
+        $orderData = $validated['order'] ?? [];
+        $items = $orderData['items'] ?? [];
+        $customerData = $validated['customer'] ?? [];
+
+        $createdOrders = [];
+
+        foreach ($items as $itemIndex => $item) {
+            $mobileOrder = CheckoutHistory::create([
+                'ch_checkout_id' => $paymongoResponse['checkout_id'],
+                'ch_payment_intent_id' => $paymongoResponse['payment_intent_id'] ?? null,
+                'ch_payment_id' => null,
+                'ch_mobile_order_id' => $mobileOrderId,
+                'ch_customer_id' => (int) $customer->getAuthIdentifier(),
+                'ch_customer_name' => $customerData['name'] ?? $customer->c_name,
+                'ch_customer_email' => $customerData['email'] ?? $customer->c_email,
+                'ch_customer_phone' => $customerData['phone'] ?? $customer->c_phone,
+                'ch_customer_address' => $customerData['address'] ?? null,
+
+                'ch_description' => $validated['description'],
+                'ch_amount' => (float) $validated['amount'],
+                'ch_shipping_fee' => (float) ($orderData['handling_fee'] ?? 0),
+                'ch_payment_method' => $validated['payment_method'],
+                'ch_status' => 'pending',
+                'ch_approval_status' => 'pending_approval',
+                'ch_fulfillment_status' => 'pending',
+
+                'ch_product_name' => $item['product_name'] ?? null,
+                'ch_product_id' => $item['product_id'] ?? null,
+                'ch_product_sku' => $item['product_sku'] ?? null,
+                'ch_product_pv' => 0,
+                'ch_product_image' => $item['product_image'] ?? null,
+                'ch_quantity' => (int) ($item['quantity'] ?? 1),
+                'ch_selected_color' => $item['variant_color'] ?? null,
+                'ch_selected_size' => $item['variant_size'] ?? null,
+                'ch_selected_type' => null,
+
+                'ch_is_mobile' => true,
+                'ch_platform' => $validated['platform'],
+                'ch_app_version' => $validated['app_version'],
+                'ch_device_id' => $validated['device_id'] ?? null,
+                'ch_mobile_metadata' => json_encode([
+                    'platform' => $validated['platform'],
+                    'app_version' => $validated['app_version'],
+                    'device_id' => $validated['device_id'] ?? null,
+                    'idempotency_key' => $idempotencyKey,
+                    'item_index' => $itemIndex,
+                    'total_items' => count($items),
+                    'user_agent' => $request->userAgent(),
+                    'ip_address' => $request->ip(),
+                    'created_at' => now()->toISOString(),
+                ]),
+            ]);
+
+            $createdOrders[] = $mobileOrder;
+        }
+
+        return $createdOrders;
     }
 
     private function createPayMongoCheckoutSession(array $validated, string $mobileOrderId): array
