@@ -1262,54 +1262,63 @@ class PaymentController extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        $orders = CheckoutHistory::query()
+        $checkoutRecords = CheckoutHistory::query()
             ->where('ch_customer_id', (int) $customer->getAuthIdentifier())
             ->orderByRaw('COALESCE(ch_paid_at, created_at) DESC')
             ->orderByDesc('ch_id')
-            ->get()
-            ->map(function (CheckoutHistory $order) {
-                $trackingNo = $this->resolveOrderTrackingNumber($order);
+            ->get();
+
+        // Group by checkout_id to handle multiple items per order
+        $groupedOrders = $checkoutRecords->groupBy('ch_checkout_id')->map(function ($itemsGroup) {
+            $firstItem = $itemsGroup->first();
+            $trackingNo = $this->resolveOrderTrackingNumber($firstItem);
+            $paymentStatus = $this->mapCheckoutStatusToOrderStatus((string) $firstItem->ch_status);
+            $fulfillmentStatus = $firstItem->ch_fulfillment_status ?: 'pending';
+            $status = $fulfillmentStatus !== 'pending' ? $fulfillmentStatus : $paymentStatus;
+
+            // Build items array from all records with same checkout_id
+            $items = $itemsGroup->map(function (CheckoutHistory $order) use ($itemsGroup) {
                 $quantity = max(1, (int) $order->ch_quantity);
                 $itemName = $order->ch_product_name ?: ($order->ch_description ?: 'Order Item');
-                $paymentStatus = $this->mapCheckoutStatusToOrderStatus((string) $order->ch_status);
-                $fulfillmentStatus = $order->ch_fulfillment_status ?: 'pending';
-                $status = $fulfillmentStatus !== 'pending' ? $fulfillmentStatus : $paymentStatus;
 
                 return [
                     'id' => (int) $order->ch_id,
-                    'order_number' => $order->ch_checkout_id,
-                    'status' => $status,
-                    'payment_status' => $paymentStatus,
-                    'fulfillment_status' => $fulfillmentStatus,
-                    'items' => [[
-                        'id' => (int) $order->ch_id,
-                        'product_id' => $order->ch_product_id ? (int) $order->ch_product_id : null,
-                        'name' => $itemName,
-                        'image' => $order->ch_product_image ?: '/Images/HeroSection/sofas.jpg',
-                        'quantity' => $quantity,
-                        'price' => $quantity > 0 ? (max(0, (float) $order->ch_amount - (float) ($order->ch_shipping_fee ?? 0)) / $quantity) : (float) $order->ch_amount,
-                        'selected_color' => $order->ch_selected_color ?: null,
-                        'selected_size' => $order->ch_selected_size ?: null,
-                        'selected_type' => $order->ch_selected_type ?: null,
-                    ]],
-                    'total_amount' => (float) $order->ch_amount,
-                    'shipping_fee' => (float) ($order->ch_shipping_fee ?? 0),
-                    'payment_method' => $this->formatPaymentMethod((string) ($order->ch_payment_method ?? '')),
-                    'courier' => $order->ch_courier ?: null,
-                    'shipment_status' => $order->ch_shipment_status ?: null,
-                    'tracking_no' => $trackingNo,
-                    'tracking_number' => $trackingNo,
-                    'refund_reason' => $order->ch_refund_reason ?: null,
-                    'refund_image_urls' => is_array($order->ch_refund_image_urls) ? array_values($order->ch_refund_image_urls) : [],
-                    'refund_video_urls' => is_array($order->ch_refund_video_urls) ? array_values($order->ch_refund_video_urls) : [],
-                    'refund_requested_at' => optional($order->ch_refund_requested_at)->toDateTimeString(),
-                    'created_at' => optional($order->ch_paid_at ?? $order->created_at)->toDateTimeString(),
+                    'product_id' => $order->ch_product_id ? (int) $order->ch_product_id : null,
+                    'name' => $itemName,
+                    'image' => $order->ch_product_image ?: '/Images/HeroSection/sofas.jpg',
+                    'quantity' => $quantity,
+                    'price' => $quantity > 0 ? (max(0, (float) $order->ch_amount - (float) ($order->ch_shipping_fee ?? 0)) / max(1, count($itemsGroup))) : (float) $order->ch_amount,
+                    'selected_color' => $order->ch_selected_color ?: null,
+                    'selected_size' => $order->ch_selected_size ?: null,
+                    'selected_type' => $order->ch_selected_type ?: null,
                 ];
             })->values()->all();
 
+            return [
+                'id' => (int) $firstItem->ch_id,
+                'order_number' => $firstItem->ch_checkout_id,
+                'status' => $status,
+                'payment_status' => $paymentStatus,
+                'fulfillment_status' => $fulfillmentStatus,
+                'items' => $items,
+                'total_amount' => (float) $firstItem->ch_amount,
+                'shipping_fee' => (float) ($firstItem->ch_shipping_fee ?? 0),
+                'payment_method' => $this->formatPaymentMethod((string) ($firstItem->ch_payment_method ?? '')),
+                'courier' => $firstItem->ch_courier ?: null,
+                'shipment_status' => $firstItem->ch_shipment_status ?: null,
+                'tracking_no' => $trackingNo,
+                'tracking_number' => $trackingNo,
+                'refund_reason' => $firstItem->ch_refund_reason ?: null,
+                'refund_image_urls' => is_array($firstItem->ch_refund_image_urls) ? array_values($firstItem->ch_refund_image_urls) : [],
+                'refund_video_urls' => is_array($firstItem->ch_refund_video_urls) ? array_values($firstItem->ch_refund_video_urls) : [],
+                'refund_requested_at' => optional($firstItem->ch_refund_requested_at)->toDateTimeString(),
+                'created_at' => optional($firstItem->ch_paid_at ?? $firstItem->created_at)->toDateTimeString(),
+            ];
+        })->values()->all();
+
         return response()->json([
-            'orders' => $orders,
-            'total' => count($orders),
+            'orders' => $groupedOrders,
+            'total' => count($groupedOrders),
         ]);
     }
 
