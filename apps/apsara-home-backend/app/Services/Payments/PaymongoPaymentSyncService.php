@@ -104,6 +104,16 @@ class PaymongoPaymentSyncService
         }
         $order->save();
 
+        // Update ALL items with same checkout_id (for multi-item orders)
+        CheckoutHistory::where('ch_checkout_id', $checkoutId)
+            ->where('ch_id', '!=', $order->ch_id)
+            ->update([
+                'ch_status' => $status,
+                'ch_payment_intent_id' => data_get($attrs, 'payment_intent.id') ?: \Illuminate\Database\Query\Expression::raw('ch_payment_intent_id'),
+                'ch_payment_id' => data_get($attrs, 'payments.0.id') ?: data_get($attrs, 'payment_id'),
+                'ch_paid_at' => $isNowPaid && !$order->ch_paid_at ? now() : \Illuminate\Database\Query\Expression::raw('ch_paid_at'),
+            ]);
+
         // Only update notification if status actually changed
         if ($oldStatus !== $status) {
             OrderNotification::updateStatusForCheckout($checkoutId, $status);
