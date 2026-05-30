@@ -792,7 +792,6 @@ class AdminInquiryController extends Controller
             'payment_reference' => (string) ($activePayload['payment_reference'] ?? $initialPayload['payment_reference'] ?? ''),
             'payment_intent_id' => (string) ($activePayload['payment_intent_id'] ?? $initialPayload['payment_intent_id'] ?? ''),
             'submitted_at_label' => $submittedAt !== '' ? date('F j, Y g:i A', strtotime($submittedAt)) : '',
-            'receipt_count' => $receiptCount,
             'payment_count' => $receiptCount,
             'amount_paid' => (int) $paidAmount,
             'remaining_balance' => (float) $remainingBalance,

@@ -46,7 +46,7 @@ export interface AdminWebstoreRequest {
   email?: string | null;
   slug_name?: string | null;
   display_name?: string | null;
-  plan?: string | null;
+  plan?: 'test' | 'quarterly' | 'semi_annual' | 'annual' | null;
   plan_term?: string | null;
   subscription_fee?: number | null;
   effective_monthly?: number | null;

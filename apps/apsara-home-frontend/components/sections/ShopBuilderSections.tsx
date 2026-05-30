@@ -173,6 +173,7 @@ export type ShopBuilderSectionsData = {
 export type ShopBuilderSectionsProps = {
   data?: ShopBuilderSectionsData
   partnerSlug?: string
+  partnerPublicShopUrl?: string
   partnerHeroVideoUrl?: string
   allowedCategoryIds?: number[]
   featuredProductIds?: number[]
@@ -193,7 +194,15 @@ export function normalizeShopBuilderApiResponse(data: ShopBuilderApiResponse | n
   }
 }
 
-export default function ShopBuilderSections({ data = null, partnerSlug, partnerHeroVideoUrl, allowedCategoryIds, featuredProductIds, enableActivateDiscount }: ShopBuilderSectionsProps) {
+export default function ShopBuilderSections({
+  data = null,
+  partnerSlug,
+  partnerPublicShopUrl,
+  partnerHeroVideoUrl,
+  allowedCategoryIds,
+  featuredProductIds,
+  enableActivateDiscount,
+}: ShopBuilderSectionsProps) {
   const { items, categories, products } = normalizeShopBuilderApiResponse(data)
 
   if (!data || items.length === 0) {
@@ -219,10 +228,11 @@ export default function ShopBuilderSections({ data = null, partnerSlug, partnerH
     .map((id, index) => {
       const category = categories.find((item) => item.id === id)
       if (!category) return null
+      const categoryLink = buildPartnerCategoryLink(partnerSlug, category)
       return {
         id: category.id,
         name: category.name,
-        url: buildPartnerCategoryLink(partnerSlug, category),
+        url: resolvePartnerHref(categoryLink, partnerPublicShopUrl),
         count: category.product_count ?? 0,
         image: resolveCategoryCardImage({
           section: categoryGrid,
@@ -242,7 +252,7 @@ export default function ShopBuilderSections({ data = null, partnerSlug, partnerH
       .map((category, index) => ({
         id: category.id,
         name: category.name,
-        url: buildPartnerCategoryLink(partnerSlug, category),
+        url: resolvePartnerHref(buildPartnerCategoryLink(partnerSlug, category), partnerPublicShopUrl),
         count: category.product_count ?? 0,
         image: resolveCategoryCardImage({
           section: categoryGrid,
@@ -266,6 +276,7 @@ export default function ShopBuilderSections({ data = null, partnerSlug, partnerH
           categories={categories}
           products={products}
           partnerSlug={partnerSlug}
+          partnerPublicShopUrl={partnerPublicShopUrl}
           partnerHeroVideoUrl={partnerHeroVideoUrl}
         />
       ) : null}
@@ -285,16 +296,32 @@ export default function ShopBuilderSections({ data = null, partnerSlug, partnerH
           featuredProducts={featuredProducts}
           categories={categories}
           partnerSlug={partnerSlug}
+          partnerPublicShopUrl={partnerPublicShopUrl}
           enableActivateDiscount={enableActivateDiscount}
         />
       ) : (
         <FeaturedSections />
       )}
 
-      {promoPair ? <PromoPairSection section={promoPair} partnerSlug={partnerSlug} /> : <PromoBenners />}
+      {promoPair ? <PromoPairSection section={promoPair} partnerSlug={partnerSlug} partnerPublicShopUrl={partnerPublicShopUrl} /> : <PromoBenners />}
       {newsletter ? <NewsletterSection section={newsletter} /> : <NewsLetter />}
     </>
   )
+}
+
+const resolvePartnerHref = (href: string, partnerPublicShopUrl?: string) => {
+  const value = href.trim()
+  if (!partnerPublicShopUrl || value === '' || !value.startsWith('/')) {
+    return value
+  }
+
+  try {
+    const base = new URL(partnerPublicShopUrl)
+    const resolved = new URL(value, base)
+    return `${resolved.origin}${resolved.pathname}${resolved.search}${resolved.hash}`.replace(/\/$/, '')
+  } catch {
+    return value
+  }
 }
 
 function AnnouncementsSection({ section }: { section: WebPageItem }) {
@@ -336,12 +363,14 @@ function CampaignBannersSection({
   categories,
   products,
   partnerSlug,
+  partnerPublicShopUrl,
   partnerHeroVideoUrl,
 }: {
   section: WebPageItem
   categories: Category[]
   products: Product[]
   partnerSlug?: string
+  partnerPublicShopUrl?: string
   partnerHeroVideoUrl?: string
 }) {
   const videoUrl = getField(section, 'video_url')
@@ -365,6 +394,7 @@ function CampaignBannersSection({
     : linkType === 'category' && linkCategory
       ? buildPartnerCategoryLink(partnerSlug, linkCategory)
       : buildPartnerShopLink(getField(section, 'video_link') || '/shop', partnerSlug)
+  const resolvedLink = resolvePartnerHref(link, partnerPublicShopUrl)
 
   return (
     <motion.section
@@ -381,8 +411,8 @@ function CampaignBannersSection({
           transition={{ duration: 0.42 }}
         >
           <div className="rounded-[32px] border border-slate-200 bg-slate-950 dark:border-gray-700">
-            <Link
-              href={link}
+              <Link
+              href={resolvedLink}
               className="group relative isolate block overflow-hidden rounded-[32px]"
             >
               <div className="relative min-h-[280px] overflow-hidden rounded-[32px] md:min-h-[380px]">
@@ -484,12 +514,14 @@ function FeaturedCollectionSection({
   featuredProducts,
   categories,
   partnerSlug,
+  partnerPublicShopUrl,
   enableActivateDiscount,
 }: {
   section: WebPageItem
   featuredProducts: Product[]
   categories: Category[]
   partnerSlug?: string
+  partnerPublicShopUrl?: string
   enableActivateDiscount?: boolean
 }) {
   const sourceCategoryId = Number.parseInt(getField(section, 'source_category_id'), 10)
@@ -499,6 +531,7 @@ function FeaturedCollectionSection({
   const buttonLink = sourceCategory
     ? buildPartnerCategoryLink(partnerSlug, sourceCategory)
     : buildPartnerShopLink('/shop', partnerSlug)
+  const resolvedButtonLink = resolvePartnerHref(buttonLink, partnerPublicShopUrl)
   const buttonText = 'Shop Collection'
 
   const forceRealPriceForPartner = Boolean(partnerSlug) && !Boolean(enableActivateDiscount)
@@ -518,7 +551,7 @@ function FeaturedCollectionSection({
             viewport={{ once: true, amount: 0.25 }}
             transition={{ duration: 0.55 }}
           >
-            <Link href={buttonLink} className="group relative block aspect-[4/5] overflow-hidden rounded-3xl">
+            <Link href={resolvedButtonLink} className="group relative block aspect-[4/5] overflow-hidden rounded-3xl">
               <Image
                 src={getField(section, 'lead_image') || '/Images/FeaturedSection/home_living.jpg'}
                 alt={getField(section, 'left_heading') || 'Featured collection'}
@@ -589,14 +622,22 @@ function FeaturedCollectionSection({
   )
 }
 
-function PromoPairSection({ section, partnerSlug }: { section: WebPageItem; partnerSlug?: string }) {
+function PromoPairSection({
+  section,
+  partnerSlug,
+  partnerPublicShopUrl,
+}: {
+  section: WebPageItem
+  partnerSlug?: string
+  partnerPublicShopUrl?: string
+}) {
   const promos = [
     {
       eyebrow: getField(section, 'left_eyebrow') || 'Limited Offer',
       heading: getField(section, 'left_heading') || 'Build Your Home with Furniture',
       button: getField(section, 'left_button') || 'Shop Now',
       image: getField(section, 'left_image') || '/Images/PromoBanners/ct2-img1-large.jpg',
-      link: buildPartnerShopLink(getField(section, 'left_link') || '/shop', partnerSlug),
+      link: resolvePartnerHref(buildPartnerShopLink(getField(section, 'left_link') || '/shop', partnerSlug), partnerPublicShopUrl),
       badge: 'text-orange-300',
       tone: 'from-slate-900/90 via-slate-900/40 to-transparent',
     },
@@ -605,7 +646,7 @@ function PromoPairSection({ section, partnerSlug }: { section: WebPageItem; part
       heading: getField(section, 'right_heading') || 'Choose Your Best Appliance',
       button: getField(section, 'right_button') || 'Explore',
       image: getField(section, 'right_image') || '/Images/PromoBanners/ct2-img2-large.jpg',
-      link: buildPartnerShopLink(getField(section, 'right_link') || '/shop', partnerSlug),
+      link: resolvePartnerHref(buildPartnerShopLink(getField(section, 'right_link') || '/shop', partnerSlug), partnerPublicShopUrl),
       badge: 'text-sky-300',
       tone: 'from-sky-900/90 via-sky-900/40 to-transparent',
     },

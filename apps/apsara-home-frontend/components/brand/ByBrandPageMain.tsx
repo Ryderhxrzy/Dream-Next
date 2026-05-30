@@ -583,7 +583,7 @@ export default function ByBrandPageMain() {
 
   const { data: brandProductsData, isFetching: isFetchingProducts } = useGetPublicProductsQuery(
     selectedBrandItem
-      ? { page: productPage, perPage: perPage, status: '1', brandType: selectedBrandItem.id }
+      ? { page: productPage, perPage: perPage, brandType: selectedBrandItem.id, includeAll: perPage >= 50 }
       : undefined,
     { skip: !selectedBrandItem },
   )
@@ -723,6 +723,7 @@ export default function ByBrandPageMain() {
 
   const productDisplayCount = brandProducts.length + zqBrandProducts.length
   const productTotalCount = (productsMeta?.total ?? brandProducts.length) + (zqProductsMeta?.total ?? 0)
+  const brandTotalProducts = Number(brandInfo?.totalProducts ?? productTotalCount)
   const isFetchingBrandProducts = isFetchingProducts || (isGlobalSupplierBrand && isFetchingZqProducts)
 
   const activeFilterCount = useMemo(() => {
@@ -1212,7 +1213,7 @@ export default function ByBrandPageMain() {
                 {!isFetchingBrandProducts && (
                   <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mt-4">
                     <span>
-                      Showing <span className="font-semibold text-slate-700 dark:text-gray-200">{productDisplayCount}</span> of{' '}
+                      Showing <span className="font-semibold text-slate-700 dark:text-gray-200">{perPage}</span> per page of{' '}
                       <span className="font-semibold text-slate-700 dark:text-gray-200">{productTotalCount}</span> products
                     </span>
                   </div>
@@ -1230,9 +1231,21 @@ export default function ByBrandPageMain() {
                   <>
                     {productDisplayCount === 0 ? (
                       <div className="flex flex-col items-center justify-center py-20 text-center">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-2xl">ðŸ“¦</div>
-                        <p className="mt-4 font-semibold text-gray-700 dark:text-gray-300">No products yet</p>
-                        <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">No products assigned to this brand yet.</p>
+                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                            <path d="M3 7.5 12 3l9 4.5-9 4.5-9-4.5Z" />
+                            <path d="M3 7.5V16.5L12 21l9-4.5V7.5" />
+                            <path d="M12 12v9" />
+                          </svg>
+                        </div>
+                        <p className="mt-4 font-semibold text-gray-700 dark:text-gray-300">
+                          {brandTotalProducts > 0 ? 'No approved products yet' : 'No products yet'}
+                        </p>
+                        <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+                          {brandTotalProducts > 0
+                            ? 'This brand has products, but none are public or approved yet.'
+                            : 'No products assigned to this brand yet.'}
+                        </p>
                       </div>
                     ) : (
                       <div className={viewType === 'grid' ? 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-6' : 'flex flex-col gap-4 pb-6'}>

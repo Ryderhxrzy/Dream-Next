@@ -1,10 +1,13 @@
 import { buildPageMetadata } from '@/app/seo';
+import { headers } from 'next/headers'
+import { redirect } from 'next/navigation'
 
 export const metadata = buildPageMetadata({ title: 'Shop', description: 'Browse the Shop page on AF Home.', path: '/shop' });
 
 import ShopPageClient from "@/components/shop/ShopPageClient"
 import ShopBuilderSections, { type ShopBuilderApiResponse } from "@/components/sections/ShopBuilderSections"
 import { getNavbarCategories } from '@/libs/serverStorefront'
+import { getPartnerStorefrontRecordByHost } from '@/libs/partnerStorefrontServer'
 import type { TopBarConfig } from '@/components/layout/TopBar'
 import type { TrustBarConfig } from '@/components/layout/TrustBar'
 
@@ -118,6 +121,13 @@ async function getShopBuilderData(): Promise<ShopBuilderApiResponse | null> {
 }
 
 const ShopPage = async () => {
+  const requestHeaders = await headers()
+  const requestHost = requestHeaders.get('x-forwarded-host') ?? requestHeaders.get('host') ?? ''
+  const storefront = await getPartnerStorefrontRecordByHost(requestHost, { fresh: true })
+  if (storefront) {
+    redirect(`/shop/${storefront.config.slug}`)
+  }
+
   const shopBuilderData = await getShopBuilderData()
   const navbarCategories = await getNavbarCategories()
   const shopHeader = getShopHeaderConfig(shopBuilderData?.items ?? [])

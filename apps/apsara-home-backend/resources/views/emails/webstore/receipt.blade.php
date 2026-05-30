@@ -64,8 +64,6 @@
                   <td style="padding:12px 16px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#1e293b;font-weight:600;">{{ $payload['submitted_at_label'] ?? '-' }}</td>
                 </tr>
                 <tr>
-                  <td style="padding:12px 16px;border-bottom:1px solid #f1f5f9;background:#fafafa;font-size:12px;color:#94a3b8;">Receipt Count</td>
-                  <td style="padding:12px 16px;border-bottom:1px solid #f1f5f9;background:#fafafa;font-size:13px;color:#1e293b;font-weight:600;">{{ $payload['receipt_count'] ?? 0 }}</td>
                 </tr>
                 <tr>
                   <td style="padding:12px 16px;font-size:12px;color:#94a3b8;">Remaining Balance</td>

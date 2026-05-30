@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { showErrorToast, showSuccessToast } from '@/libs/toast'
-import { getPartnerStorefrontConfig, parseIdList } from '@/libs/partnerStorefront'
+import { buildPartnerStorefrontPublicUrl, getPartnerStorefrontConfig, parseIdList } from '@/libs/partnerStorefront'
 import { Loader2, Trash2 } from 'lucide-react'
 import { useGetCategoriesQuery } from '@/store/api/categoriesApi'
 import { type Product, useLazyGetProductsQuery, useLazyGetPublicProductQuery } from '@/store/api/productsApi'
@@ -29,10 +29,11 @@ type DraftState = {
   heroVideoUrl: string
   logoVersion: string
   referralLink: string
+  shopUrl: string
+  domainLink: string
   themeColor: string
   accentColor: string
   notificationEmail: string
-  domainLink: string
   allowedCategoryIds: number[]
   featuredProductIds: number[]
   enableAiSupport: boolean
@@ -50,10 +51,11 @@ const emptyDraft: DraftState = {
   heroVideoUrl: '',
   logoVersion: '',
   referralLink: '',
+  shopUrl: '',
+  domainLink: '',
   themeColor: '#0f766e',
   accentColor: '#f97316',
   notificationEmail: '',
-  domainLink: '',
   allowedCategoryIds: [],
   featuredProductIds: [],
   enableAiSupport: false,
@@ -82,10 +84,11 @@ const toDraft = (item?: WebPageItem): DraftState => {
     heroVideoUrl: config.heroVideoUrl ?? '',
     logoVersion: config.logoVersion ?? '',
     referralLink: config.referralLink ?? '',
+    shopUrl: config.shopUrl ?? '',
+    domainLink: config.domainLink ?? '',
     themeColor: config.themeColor,
     accentColor: config.accentColor,
     notificationEmail: config.notificationEmail,
-    domainLink: config.domainLink,
     allowedCategoryIds: config.allowedCategoryIds,
     featuredProductIds: config.featuredProductIds,
     enableAiSupport: config.enableAiSupport,
@@ -170,6 +173,8 @@ export default function PartnerStorefrontStudio() {
   const tabLogoInputRef = useRef<HTMLInputElement | null>(null)
   const [isUploadingHeroVideo, setIsUploadingHeroVideo] = useState(false)
   const [isUploadingReferralLink, setIsUploadingReferralLink] = useState(false)
+  const [isUploadingShopUrl, setIsUploadingShopUrl] = useState(false)
+  const [isUploadingDomainLink, setIsUploadingDomainLink] = useState(false)
   const heroVideoInputRef = useRef<HTMLInputElement | null>(null)
   const { data: categoriesData } = useGetCategoriesQuery({ per_page: 200 })
   const [fetchProducts] = useLazyGetProductsQuery()
@@ -208,6 +213,10 @@ export default function PartnerStorefrontStudio() {
   const allowedCategoryOptions = useMemo(
     () => categories.filter((category) => draft.allowedCategoryIds.includes(category.id)),
     [categories, draft.allowedCategoryIds],
+  )
+  const publicShopUrl = useMemo(
+    () => buildPartnerStorefrontPublicUrl(draft.shopUrl, draft.domainLink),
+    [draft.domainLink, draft.shopUrl],
   )
   const selectedProducts = useMemo(
     () => draft.featuredProductIds.map((id) => helperProductById[id]).filter((product): product is Product => Boolean(product)),
@@ -352,10 +361,11 @@ export default function PartnerStorefrontStudio() {
           hero_video_url: nextDraft.heroVideoUrl.trim(),
           logo_version: nextDraft.logoVersion.trim(),
           referral_link: nextDraft.referralLink.trim(),
+          shop_url: nextDraft.shopUrl.trim(),
+          storefront_domain: nextDraft.domainLink.trim(),
           theme_color: nextDraft.themeColor.trim(),
           accent_color: nextDraft.accentColor.trim(),
           notification_email: nextDraft.notificationEmail.trim(),
-          domain_link: nextDraft.domainLink.trim(),
           allowed_category_ids: nextDraft.allowedCategoryIds.length > 0 ? nextDraft.allowedCategoryIds.join(',') : '0',
           featured_product_ids: nextDraft.featuredProductIds.length > 0 ? nextDraft.featuredProductIds.join(',') : '0',
           enable_ai_support: nextDraft.enableAiSupport ? '1' : '0',
@@ -873,6 +883,156 @@ export default function PartnerStorefrontStudio() {
     }
   }
 
+  const handleApplyShopUrl = async () => {
+    const shopUrl = draft.shopUrl.trim()
+    if (!shopUrl) {
+      showErrorToast('Enter a shop URL before saving.')
+      return
+    }
+
+    if (!draft.id) {
+      showSuccessToast('Shop URL set. Click "Save Storefront" to apply it.')
+      return
+    }
+
+    if (hasSpecificStorefrontIds && !allowedStorefrontIds.includes(draft.id)) {
+      showErrorToast('You do not have access to edit this storefront.')
+      return
+    }
+
+    const slug = toSlug(draft.slug || draft.displayName)
+    if (!slug) {
+      showErrorToast('Add a slug or display name first.')
+      return
+    }
+
+    setIsUploadingShopUrl(true)
+
+    try {
+      await updateItem({ type: 'partner-storefront', id: draft.id, data: buildStorefrontPayload(draft) }).unwrap()
+      showSuccessToast('Shop URL saved successfully.')
+      broadcastStorefrontUpdate(draft.slug || draft.displayName)
+      refetch()
+    } catch (error) {
+      const apiErr = error as { data?: { message?: string } }
+      showErrorToast(apiErr?.data?.message || 'Failed to save shop URL.')
+    } finally {
+      setIsUploadingShopUrl(false)
+    }
+  }
+
+  const handleRemoveShopUrl = async () => {
+    const previousShopUrl = draft.shopUrl
+    if (!previousShopUrl.trim()) return
+
+    const nextDraft = { ...draft, shopUrl: '' }
+    setDraft(nextDraft)
+
+    if (!nextDraft.id) {
+      showSuccessToast('Shop URL removed. Click "Save Storefront" to apply it.')
+      return
+    }
+
+    if (hasSpecificStorefrontIds && !allowedStorefrontIds.includes(nextDraft.id)) {
+      setDraft((current) => ({ ...current, shopUrl: previousShopUrl }))
+      showErrorToast('You do not have access to edit this storefront.')
+      return
+    }
+
+    const slug = toSlug(nextDraft.slug || nextDraft.displayName)
+    if (!slug) {
+      setDraft((current) => ({ ...current, shopUrl: previousShopUrl }))
+      showErrorToast('Add a slug or display name first.')
+      return
+    }
+
+    try {
+      await updateItem({ type: 'partner-storefront', id: nextDraft.id, data: buildStorefrontPayload(nextDraft) }).unwrap()
+      showSuccessToast('Shop URL removed.')
+      broadcastStorefrontUpdate(nextDraft.slug || nextDraft.displayName)
+      refetch()
+    } catch (error) {
+      setDraft((current) => ({ ...current, shopUrl: previousShopUrl }))
+      const apiErr = error as { data?: { message?: string } }
+      showErrorToast(apiErr?.data?.message || 'Failed to remove shop URL.')
+    }
+  }
+
+  const handleApplyDomainLink = async () => {
+    const domain = draft.domainLink.trim()
+    if (!domain) {
+      showErrorToast('Enter a domain link before saving.')
+      return
+    }
+
+    if (!draft.id) {
+      showSuccessToast('Domain link set. Click "Save Storefront" to apply it.')
+      return
+    }
+
+    if (hasSpecificStorefrontIds && !allowedStorefrontIds.includes(draft.id)) {
+      showErrorToast('You do not have access to edit this storefront.')
+      return
+    }
+
+    const slug = toSlug(draft.slug || draft.displayName)
+    if (!slug) {
+      showErrorToast('Add a slug or display name first.')
+      return
+    }
+
+    setIsUploadingDomainLink(true)
+
+    try {
+      await updateItem({ type: 'partner-storefront', id: draft.id, data: buildStorefrontPayload(draft) }).unwrap()
+      showSuccessToast('Domain link saved successfully.')
+      broadcastStorefrontUpdate(draft.slug || draft.displayName)
+      refetch()
+    } catch (error) {
+      const apiErr = error as { data?: { message?: string } }
+      showErrorToast(apiErr?.data?.message || 'Failed to save domain link.')
+    } finally {
+      setIsUploadingDomainLink(false)
+    }
+  }
+
+  const handleRemoveDomainLink = async () => {
+    const previousDomain = draft.domainLink
+    if (!previousDomain.trim()) return
+
+    const nextDraft = { ...draft, domainLink: '' }
+    setDraft(nextDraft)
+
+    if (!nextDraft.id) {
+      showSuccessToast('Domain link removed. Click "Save Storefront" to apply it.')
+      return
+    }
+
+    if (hasSpecificStorefrontIds && !allowedStorefrontIds.includes(nextDraft.id)) {
+      setDraft((current) => ({ ...current, domainLink: previousDomain }))
+      showErrorToast('You do not have access to edit this storefront.')
+      return
+    }
+
+    const slug = toSlug(nextDraft.slug || nextDraft.displayName)
+    if (!slug) {
+      setDraft((current) => ({ ...current, domainLink: previousDomain }))
+      showErrorToast('Add a slug or display name first.')
+      return
+    }
+
+    try {
+      await updateItem({ type: 'partner-storefront', id: nextDraft.id, data: buildStorefrontPayload(nextDraft) }).unwrap()
+      showSuccessToast('Domain link removed.')
+      broadcastStorefrontUpdate(nextDraft.slug || nextDraft.displayName)
+      refetch()
+    } catch (error) {
+      setDraft((current) => ({ ...current, domainLink: previousDomain }))
+      const apiErr = error as { data?: { message?: string } }
+      showErrorToast(apiErr?.data?.message || 'Failed to remove domain link.')
+    }
+  }
+
   useEffect(() => {
     if (!isPartnerScoped) return
 
@@ -1247,7 +1407,7 @@ export default function PartnerStorefrontStudio() {
               <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Basic Info</h2>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Configure storefront identity, hero messaging and partner settings.</p>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <Field label="Slug">
                 <input value={draft.slug} onChange={(e) => setDraft((c) => ({ ...c, slug: e.target.value }))} onBlur={(e) => setDraft((c) => ({ ...c, slug: toSlug(e.target.value) }))} placeholder="your-shop-name" className={inputClass} />
               </Field>
@@ -1260,21 +1420,21 @@ export default function PartnerStorefrontStudio() {
               <Field label="Partner Notification Email">
                 <input value={draft.notificationEmail} onChange={(e) => setDraft((c) => ({ ...c, notificationEmail: e.target.value }))} placeholder="partner@example.com" className={inputClass} />
               </Field>
-              <Field label="Hero Subtitle" className="sm:col-span-2">
+              <Field label="Hero Subtitle" className="sm:col-span-2 xl:col-span-4">
                 <textarea value={draft.heroSubtitle} onChange={(e) => setDraft((c) => ({ ...c, heroSubtitle: e.target.value }))} placeholder="Curated home furniture for condo buyers." rows={3} className={inputClass} />
               </Field>
             </div>
 
             <div className="mt-6 border-t border-slate-100 pt-6 dark:border-slate-800">
               <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-300">Brand Colors</h3>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Theme Color">
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <Field label="Theme Color" className="xl:col-span-2">
                   <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800/80">
                     <input type="color" value={draft.themeColor} onChange={(e) => setDraft((c) => ({ ...c, themeColor: e.target.value }))} className="h-9 w-9 cursor-pointer rounded-lg border border-slate-200 dark:border-slate-600" />
                     <span className="font-mono text-sm text-slate-600 dark:text-slate-300">{draft.themeColor}</span>
                   </div>
                 </Field>
-                <Field label="Accent Color">
+                <Field label="Accent Color" className="xl:col-span-2">
                   <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800/80">
                     <input type="color" value={draft.accentColor} onChange={(e) => setDraft((c) => ({ ...c, accentColor: e.target.value }))} className="h-9 w-9 cursor-pointer rounded-lg border border-slate-200 dark:border-slate-600" />
                     <span className="font-mono text-sm text-slate-600 dark:text-slate-300">{draft.accentColor}</span>
@@ -1285,9 +1445,9 @@ export default function PartnerStorefrontStudio() {
 
             <div className="mt-6 border-t border-slate-100 pt-6 dark:border-slate-800">
               <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-300">Brand Assets</h3>
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 {/* Logo */}
-                <div className="space-y-2">
+                <div className="space-y-2 xl:col-span-2">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Logo</p>
                   <div className={softCardClass}>
                     <div className="flex items-center gap-3">
@@ -1317,7 +1477,7 @@ export default function PartnerStorefrontStudio() {
                 </div>
 
                 {/* Tab Logo */}
-                <div className="space-y-2">
+                <div className="space-y-2 xl:col-span-2">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Browser Tab Logo</p>
                   <div className={softCardClass}>
                     <div className="flex items-center gap-3">
@@ -1347,7 +1507,7 @@ export default function PartnerStorefrontStudio() {
                 </div>
 
                 {/* Hero Video */}
-                <div className="space-y-2 sm:col-span-2">
+                <div className="space-y-2 sm:col-span-2 xl:col-span-4">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Hero Video</p>
                   <div className={softCardClass}>
                     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1375,17 +1535,11 @@ export default function PartnerStorefrontStudio() {
             </div>
 
             <div className="mt-6 border-t border-slate-100 pt-6 dark:border-slate-800">
-              <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-300">Links</h3>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Referral Link</p>
-                  <input value={draft.referralLink} onChange={(e) => setDraft((c) => ({ ...c, referralLink: e.target.value }))} placeholder="https://www.afhome.ph/ref/username" className={inputClass} />
-                </div>
-                <div className="space-y-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Shop URL</p>
-                  <input value={draft.domainLink} onChange={(e) => setDraft((c) => ({ ...c, domainLink: e.target.value }))} placeholder="https://www.afhome.ph/shop?ref=username" className={inputClass} />
-                </div>
-                <div className="flex flex-wrap items-center gap-2 sm:col-span-2">
+              <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-300">Referral Link</h3>
+              <div className="space-y-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Referral Link</p>
+                <input value={draft.referralLink} onChange={(e) => setDraft((c) => ({ ...c, referralLink: e.target.value }))} placeholder="https://www.afhome.ph/ref/username" className={inputClass} />
+                <div className="flex flex-wrap items-center gap-2 pt-1">
                   <button type="button" onClick={() => void handleApplyReferralLink()} disabled={isUploadingReferralLink || saving} className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300">
                     {isUploadingReferralLink ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
                     Save Link
@@ -1393,6 +1547,48 @@ export default function PartnerStorefrontStudio() {
                   {draft.referralLink.trim() ? (
                     <button type="button" onClick={() => void handleRemoveReferralLink()} disabled={saving} className="rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-60 dark:border-red-900/60 dark:bg-slate-800 dark:text-red-300">
                       Remove Link
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 border-t border-slate-100 pt-6 dark:border-slate-800">
+              <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-300">Shop URL</h3>
+              <div className="space-y-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Shop URL</p>
+                <input value={draft.shopUrl} onChange={(e) => setDraft((c) => ({ ...c, shopUrl: e.target.value }))} placeholder="https://www.afhome.ph/shop?ref=username" className={inputClass} />
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <button type="button" onClick={() => void handleApplyShopUrl()} disabled={isUploadingShopUrl || saving} className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300">
+                    {isUploadingShopUrl ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
+                    Save Shop URL
+                  </button>
+                  {draft.shopUrl.trim() ? (
+                    <button type="button" onClick={() => void handleRemoveShopUrl()} disabled={saving} className="rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-60 dark:border-red-900/60 dark:bg-slate-800 dark:text-red-300">
+                      Remove Shop URL
+                    </button>
+                  ) : null}
+                </div>
+                <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
+                  <span className="font-semibold text-slate-700 dark:text-slate-100">Public storefront URL:</span>{' '}
+                  {publicShopUrl || 'Will appear here after you enter a Shop URL or Domain Link.'}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 border-t border-slate-100 pt-6 dark:border-slate-800">
+              <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-300">Domain Link(optional)</h3>
+              <div className="space-y-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Domain Link</p>
+                <input value={draft.domainLink} onChange={(e) => setDraft((c) => ({ ...c, domainLink: e.target.value }))} placeholder="https://myshop.com" className={inputClass} />
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <button type="button" onClick={() => void handleApplyDomainLink()} disabled={isUploadingDomainLink || saving} className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300">
+                    {isUploadingDomainLink ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
+                    Save Domain Link
+                  </button>
+                  {draft.domainLink.trim() ? (
+                    <button type="button" onClick={() => void handleRemoveDomainLink()} disabled={saving} className="rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-60 dark:border-red-900/60 dark:bg-slate-800 dark:text-red-300">
+                      Remove Domain Link
                     </button>
                   ) : null}
                 </div>

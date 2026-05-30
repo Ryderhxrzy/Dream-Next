@@ -107,8 +107,7 @@ async function getInitialProducts(): Promise<{ data: ProductsResponse | null; br
 
   const brandType = supplierId > 0 ? await resolveSupplierBrandType(apiUrl, accessToken, supplierId, supplierName) : 0
   const supplierQuery = supplierId > 0 ? `&supplier_id=${supplierId}` : ''
-  const brandQuery = brandType > 0 ? `&brand_type=${brandType}` : ''
-  const res = await fetch(`${apiUrl}/api/admin/products?page=1&per_page=25${supplierQuery}${brandQuery}`, {
+  const res = await fetch(`${apiUrl}/api/admin/products?page=1&per_page=25${supplierQuery}`, {
     method: 'GET',
     headers: {
       Accept: 'application/json',

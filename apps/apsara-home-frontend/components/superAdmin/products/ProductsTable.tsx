@@ -47,6 +47,7 @@ type SortDescriptor = {
 }
 
 const isActiveStatus = (status: number) => status === 1 || status === 2
+const isPendingStatus = (status: number) => status === 3
 
 const formatPrice = (value: number) =>
   new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 2 }).format(value)
@@ -544,7 +545,7 @@ export default function ProductsTable({
                   const effectiveStockQty = getEffectiveStockQty(product)
                   const isSelected = selectedIds.includes(product.id)
                   const variantCount = getVariantCount(product)
-                  const statusLabel = isActiveStatus(product.status) ? 'Active' : 'Inactive'
+                  const statusLabel = isActiveStatus(product.status) ? 'Active' : isPendingStatus(product.status) ? 'Pending' : 'Inactive'
 
                   return (
                     <tr
@@ -699,7 +700,9 @@ export default function ProductsTable({
                         className={
                           statusLabel === 'Active'
                             ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/12 dark:text-emerald-200'
-                            : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                            : statusLabel === 'Pending'
+                              ? 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
+                              : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
                         }
                       >
                         {statusLabel}

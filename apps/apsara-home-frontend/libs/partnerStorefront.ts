@@ -14,6 +14,8 @@ export type PartnerStorefrontConfig = {
   heroVideoUrl: string | null
   logoVersion: string
   referralLink: string
+  shopUrl: string
+  domainLink: string
   heroTitle: string
   heroSubtitle: string
   themeColor: string
@@ -21,9 +23,9 @@ export type PartnerStorefrontConfig = {
   allowedCategoryIds: number[]
   featuredProductIds: number[]
   notificationEmail: string
-  domainLink: string
   enableAiSupport: boolean
   enableActivateDiscount: boolean
+  publicShopUrl: string
 }
 
 
@@ -73,6 +75,74 @@ const toBoolean = (value: unknown) => {
   return false
 }
 
+const normalizeBaseUrl = (value: string) => {
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+}
+
+export const normalizeStorefrontHost = (value: string) => {
+  const trimmed = String(value ?? '').trim().toLowerCase()
+  if (!trimmed) return ''
+
+  const firstHost = trimmed.split(',')[0]?.trim() ?? ''
+  const withoutProtocol = firstHost.replace(/^https?:\/\//i, '')
+  const withoutPath = withoutProtocol.split('/')[0] ?? ''
+  const withoutPort = withoutPath.split(':')[0] ?? ''
+  return withoutPort.replace(/^www\./, '')
+}
+
+const getUrlHost = (value: string) => {
+  const normalized = String(value ?? '').trim()
+  if (!normalized) return ''
+
+  try {
+    return normalizeStorefrontHost(new URL(normalizeBaseUrl(normalized)).host)
+  } catch {
+    return normalizeStorefrontHost(normalized)
+  }
+}
+
+export const buildPartnerStorefrontPublicUrl = (shopUrl: string, domainLink?: string | null) => {
+  const source = String(shopUrl ?? '').trim()
+  if (!source) return ''
+
+  const baseValue = normalizeBaseUrl(String(domainLink ?? ''))
+  if (!baseValue) return source
+
+  try {
+    const base = new URL(baseValue)
+    const resolved = source.startsWith('http://') || source.startsWith('https://')
+      ? new URL(source)
+      : new URL(source.replace(/^\/+/, '/'), base)
+
+    base.pathname = resolved.pathname
+    base.search = resolved.search
+    base.hash = resolved.hash
+
+    return `${base.origin}${base.pathname}${base.search}${base.hash}`.replace(/\/$/, '')
+  } catch {
+    return source
+  }
+}
+
+export const resolvePartnerStorefrontPublicUrl = (
+  config: Pick<PartnerStorefrontConfig, 'shopUrl' | 'domainLink'> | null | undefined,
+  requestHost?: string | null,
+) => {
+  if (!config) return undefined
+
+  const configuredHost = getUrlHost(String(config.domainLink ?? ''))
+  const currentHost = normalizeStorefrontHost(String(requestHost ?? ''))
+
+  if (!configuredHost || !currentHost || configuredHost !== currentHost) {
+    return undefined
+  }
+
+  const resolved = buildPartnerStorefrontPublicUrl(config.shopUrl, config.domainLink)
+  return resolved || undefined
+}
+
 export const getPartnerStorefrontConfig = (item: WebPageItem | undefined): PartnerStorefrontConfig | null => {
   if (!item) return null
 
@@ -88,6 +158,8 @@ export const getPartnerStorefrontConfig = (item: WebPageItem | undefined): Partn
     heroVideoUrl: String(fields.hero_video_url ?? '').trim() || null,
     logoVersion: String(fields.logo_version ?? '').trim(),
     referralLink: String(fields.referral_link ?? '').trim(),
+    shopUrl: String(fields.shop_url ?? fields.domain_link ?? '').trim(),
+    domainLink: String(fields.storefront_domain ?? '').trim(),
     heroTitle: String(fields.hero_title ?? item.subtitle ?? '').trim() || `Shop ${slug}`,
     heroSubtitle: String(fields.hero_subtitle ?? item.body ?? '').trim() || 'Curated products for your partner storefront.',
     themeColor: String(fields.theme_color ?? defaultThemeColor).trim() || defaultThemeColor,
@@ -95,9 +167,12 @@ export const getPartnerStorefrontConfig = (item: WebPageItem | undefined): Partn
     allowedCategoryIds: parseIdList(String(fields.allowed_category_ids ?? '')),
     featuredProductIds: parseIdList(String(fields.featured_product_ids ?? '')),
     notificationEmail: String(fields.notification_email ?? '').trim(),
-    domainLink: String(fields.domain_link ?? '').trim(),
     enableAiSupport: toBoolean(fields.enable_ai_support),
     enableActivateDiscount: toBoolean(fields.activate_discount ?? fields.enable_activate_discount),
+    publicShopUrl: buildPartnerStorefrontPublicUrl(
+      String(fields.shop_url ?? fields.domain_link ?? '').trim(),
+      String(fields.storefront_domain ?? '').trim(),
+    ),
   }
 }
 

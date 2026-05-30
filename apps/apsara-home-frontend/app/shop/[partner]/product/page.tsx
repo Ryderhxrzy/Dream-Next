@@ -1,7 +1,12 @@
 import { notFound } from 'next/navigation'
+import { headers } from 'next/headers'
 import CategoryListProductMain from '@/components/category/CategoryListProductMain'
 import { buildPageMetadata } from '@/app/seo'
-import { filterPartnerCategories, getPartnerStorefrontConfig } from '@/libs/partnerStorefront'
+import {
+  filterPartnerCategories,
+  getPartnerStorefrontConfig,
+  resolvePartnerStorefrontPublicUrl,
+} from '@/libs/partnerStorefront'
 import { getPartnerStorefrontBySlug } from '@/libs/partnerStorefrontServer'
 import type { CategoryProduct } from '@/libs/CategoryData'
 import type { Category } from '@/store/api/categoriesApi'
@@ -139,6 +144,8 @@ const mapProductToDisplay = (product: Product, apiUrl?: string): CategoryProduct
 
 export async function generateMetadata({ params }: PageProps) {
   const resolved = await params
+  const requestHeaders = await headers()
+  const requestHost = requestHeaders.get('x-forwarded-host') ?? requestHeaders.get('host') ?? ''
   const plainTitle = `${resolved.partner} Products`
   const metadata = buildPageMetadata({
     title: `${resolved.partner} Products`,
@@ -146,12 +153,16 @@ export async function generateMetadata({ params }: PageProps) {
     path: `/shop/${resolved.partner}/product`,
   })
   const partnerConfig = await getPartnerStorefrontBySlug(resolved.partner)
+  const resolvedPublicShopUrl = resolvePartnerStorefrontPublicUrl(partnerConfig, requestHost)
   const apiUrl = process.env.LARAVEL_API_URL ?? process.env.NEXT_PUBLIC_LARAVEL_API_URL
   const partnerIcon = resolveStorefrontAssetUrl(partnerConfig?.tabLogoUrl || partnerConfig?.logoUrl, apiUrl)
 
   return {
     ...metadata,
     title: plainTitle,
+    alternates: resolvedPublicShopUrl
+      ? { canonical: `${resolvedPublicShopUrl.replace(/\/$/, '')}/product` }
+      : metadata.alternates,
     icons: partnerIcon
       ? {
         icon: [{ url: partnerIcon, type: 'image/png' }],
@@ -309,6 +320,9 @@ async function getPartnerProductPageData(partnerSlug: string) {
 export default async function PartnerProductPage({ params }: PageProps) {
   const resolved = await params
   const payload = await getPartnerProductPageData(resolved.partner)
+  const requestHeaders = await headers()
+  const requestHost = requestHeaders.get('x-forwarded-host') ?? requestHeaders.get('host') ?? ''
+  const partnerPublicShopUrl = resolvePartnerStorefrontPublicUrl(payload?.partner ?? null, requestHost)
 
   if (!payload) {
     notFound()
@@ -323,7 +337,7 @@ export default async function PartnerProductPage({ params }: PageProps) {
       partnerBranding={{
         logoSrc: payload.partner?.logoUrl || payload.partner?.tabLogoUrl || '/Images/af_home_logo.png',
         displayName: payload.partner?.displayName || resolved.partner,
-        productHref: `/shop/${resolved.partner}/product`,
+        productHref: `${partnerPublicShopUrl || `/shop/${resolved.partner}`}/product`,
         heroVideoUrl: payload.partner?.heroVideoUrl || undefined,
         enableActivateDiscount: Boolean(payload.partner?.enableActivateDiscount),
       }}

@@ -34,6 +34,156 @@ interface ProductsPageMainProps {
 
 const NEW_BADGE_DAYS = 7
 const getZqInlineStorageKey = (pathname: string) => `afhome:zq-inline:${pathname}`
+const ADD_PRODUCT_DRAFT_KEY = 'afhome:add-product-draft'
+
+type DuplicateAddProductDraft = {
+  version: 1
+  form: {
+    pd_name: string
+    pd_catid: string
+    pd_catsubid: string
+    pd_room_type: string
+    pd_brand_type: string
+    pd_manual_checkout_enabled: boolean
+    pd_description: string
+    pd_specifications: string
+    pd_price_srp: string
+    pd_price_dp: string
+    pd_price_member: string
+    pd_primary_option_label: string
+    pd_secondary_option_label: string
+    pd_pricing_tier: string
+    pd_reversed_pv_multiplier: string
+    pd_prodpv: string
+    pd_qty: string
+    pd_weight: string
+    pd_psweight: string
+    pd_pswidth: string
+    pd_pslenght: string
+    pd_psheight: string
+    pd_material: string
+    pd_warranty: string
+    pd_assembly_required: boolean
+    pd_parent_sku: string
+    pd_type: string
+    pd_musthave: boolean
+    pd_bestseller: boolean
+    pd_salespromo: boolean
+    pd_verified: boolean
+    pd_status: string
+  }
+  variants: Array<{
+    pv_name: string
+    pv_sku: string
+    pv_colors: Array<{ name: string; hex: string }>
+    pv_size: string
+    pv_style: string
+    pv_extra_styles: string[]
+    pv_width: string
+    pv_dimension: string
+    pv_height: string
+    pv_price_srp: string
+    pv_price_dp: string
+    pv_price_member: string
+    pv_reversed_pv_multiplier: string
+    pv_prodpv: string
+    pv_qty: string
+    pv_status: string
+    pv_images: string[]
+  }>
+  globalColors: Array<{ name: string; hex: string }>
+  globalPrimaryValues: string[]
+  globalSizeValues: string[]
+  uploadedUrls: string[]
+  roomTouched: boolean
+}
+
+const toDraftString = (value: unknown) => {
+  if (value == null) return ''
+  return String(value)
+}
+
+const toDraftNumberString = (value: number | null | undefined) => {
+  if (value == null || Number.isNaN(Number(value))) return ''
+  return String(value)
+}
+
+const uniqueDraftUrls = (urls: Array<string | null | undefined>) =>
+  Array.from(new Set(urls.filter((url): url is string => typeof url === 'string' && url.trim().length > 0)))
+
+const buildDuplicateProductDraft = (product: Product): DuplicateAddProductDraft => {
+  const variants = (product.variants ?? []).map((variant) => ({
+    pv_name: toDraftString(variant.name),
+    pv_sku: toDraftString(variant.sku),
+    pv_colors: variant.color
+      ? [{ name: toDraftString(variant.color), hex: toDraftString(variant.colorHex) || '#94a3b8' }]
+      : [],
+    pv_size: toDraftString(variant.size),
+    pv_style: toDraftString(variant.style),
+    pv_extra_styles: [],
+    pv_width: toDraftNumberString(variant.width),
+    pv_dimension: toDraftNumberString(variant.dimension),
+    pv_height: toDraftNumberString(variant.height),
+    pv_price_srp: toDraftNumberString(variant.priceSrp),
+    pv_price_dp: toDraftNumberString(variant.priceDp),
+    pv_price_member: toDraftNumberString(variant.priceMember),
+    pv_reversed_pv_multiplier: '',
+    pv_prodpv: toDraftNumberString(variant.prodpv),
+    pv_qty: toDraftNumberString(variant.qty),
+    pv_status: toDraftNumberString(variant.status) || '1',
+    pv_images: uniqueDraftUrls(variant.images ?? []),
+  }))
+
+  const globalColors = Array.from(
+    new Map(
+      variants.flatMap((variant) => variant.pv_colors).map((color) => [`${color.name.toLowerCase()}::${color.hex.toLowerCase()}`, color] as const),
+    ).values(),
+  )
+
+  return {
+    version: 1,
+    form: {
+      pd_name: toDraftString(product.name),
+      pd_catid: toDraftNumberString(product.catid),
+      pd_catsubid: Number(product.catsubid ?? 0) > 0 ? toDraftNumberString(product.catsubid) : '',
+      pd_room_type: toDraftNumberString(product.roomType),
+      pd_brand_type: toDraftNumberString(product.brandType),
+      pd_manual_checkout_enabled: Boolean(product.manualCheckoutEnabled),
+      pd_description: toDraftString(product.description),
+      pd_specifications: toDraftString(product.specifications),
+      pd_price_srp: toDraftNumberString(product.priceSrp),
+      pd_price_dp: toDraftNumberString(product.priceDp),
+      pd_price_member: toDraftNumberString(product.priceMember),
+      pd_primary_option_label: '',
+      pd_secondary_option_label: '',
+      pd_pricing_tier: 'low_end',
+      pd_reversed_pv_multiplier: '',
+      pd_prodpv: toDraftNumberString(product.prodpv),
+      pd_qty: toDraftNumberString(product.qty),
+      pd_weight: toDraftNumberString(product.weight),
+      pd_psweight: toDraftNumberString(product.psweight),
+      pd_pswidth: toDraftNumberString(product.pswidth),
+      pd_pslenght: toDraftNumberString(product.pslenght),
+      pd_psheight: toDraftNumberString(product.psheight),
+      pd_material: toDraftString(product.material),
+      pd_warranty: toDraftString(product.warranty),
+      pd_assembly_required: Boolean(product.assemblyRequired),
+      pd_parent_sku: '',
+      pd_type: toDraftNumberString(product.type) || '0',
+      pd_musthave: Boolean(product.musthave),
+      pd_bestseller: Boolean(product.bestseller),
+      pd_salespromo: Boolean(product.salespromo),
+      pd_verified: product.verified ?? true,
+      pd_status: toDraftNumberString(product.status) || '1',
+    },
+    variants,
+    globalColors,
+    globalPrimaryValues: [],
+    globalSizeValues: [],
+    uploadedUrls: uniqueDraftUrls([...(product.images ?? []), product.image]),
+    roomTouched: Boolean(product.roomType),
+  }
+}
 
 const exportToCSV = (products: Product[]) => {
   if (products.length === 0) {
@@ -341,6 +491,35 @@ const isNewProduct = (product: Product) => {
   return diffDays >= 0 && diffDays < NEW_BADGE_DAYS
 }
 
+const getDuplicateProductKey = (product: Product) => {
+  const sku = String(product.sku ?? '').trim().toLowerCase()
+  if (sku) {
+    return `sku:${sku}`
+  }
+
+  const name = String(product.name ?? '').trim().toLowerCase().replace(/\s+/g, ' ')
+  const catId = String(product.catid ?? '')
+  const supplierId = String(product.supplierId ?? '')
+  return `name:${name}|cat:${catId}|supplier:${supplierId}`
+}
+
+const getDuplicateProductIds = (items: Product[]) => {
+  const grouped = new Map<string, Product[]>()
+
+  items.forEach((product) => {
+    const key = getDuplicateProductKey(product)
+    const list = grouped.get(key) ?? []
+    list.push(product)
+    grouped.set(key, list)
+  })
+
+  return new Set(
+    Array.from(grouped.values())
+      .filter((group) => group.length > 1)
+      .flatMap((group) => group.map((product) => product.id)),
+  )
+}
+
 const getEffectiveStockQty = (product: Product) => {
   const activeVariants = (product.variants ?? []).filter((variant) => Number(variant.status ?? 1) === 1)
 
@@ -362,15 +541,18 @@ function StatCard({
   colorClass: string
 }) {
   return (
-    <div className="rounded-lg border border-slate-200/80 bg-white/95 px-5 py-4 flex items-center gap-3 dark:border-slate-700/50 dark:bg-slate-900">
-      <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 ${colorClass}`}>
+    <div className="group relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-slate-700/50 dark:bg-slate-900">
+      {/* Icon container */}
+      <div className={`mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl ${colorClass} shadow-sm`}>
         {icon}
       </div>
-      <div className="min-w-0">
-        <p className="text-2xl font-bold leading-none text-slate-800 dark:text-slate-100">{value}</p>
-        <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-300">{label}</p>
-        {sub && <p className="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">{sub}</p>}
-      </div>
+      {/* Value */}
+      <p className="text-[28px] font-bold leading-none tracking-tight text-slate-900 dark:text-white">{value}</p>
+      {/* Label */}
+      <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">{label}</p>
+      {sub && <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">{sub}</p>}
+      {/* Decorative glow orb */}
+      <div className={`pointer-events-none absolute -bottom-5 -right-5 h-20 w-20 rounded-full ${colorClass} opacity-30 blur-2xl transition-opacity duration-300 group-hover:opacity-50`} />
     </div>
   )
 }
@@ -917,6 +1099,7 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
   const [search,          setSearch]          = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [status,          setStatus]          = useState('')
+  const [showDuplicateOnly, setShowDuplicateOnly] = useState(false)
   const [catId,           setCatId]           = useState<number | undefined>(undefined)
   const [brandType,       setBrandType]       = useState<number | undefined>(
     typeof initialBrandType === 'number' && initialBrandType > 0 ? initialBrandType : undefined,
@@ -970,7 +1153,6 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
   const [createdProducts, setCreatedProducts] = useState<Product[]>([])
   const [useInitialData,  setUseInitialData]  = useState(Boolean(initialData))
   const [userPerPage, setUserPerPage] = useState<number | 'all'>(50)
-  const defaultPerPage = 50
   const searchPerPage = 500
   const perPage = debouncedSearch ? searchPerPage : (userPerPage === 'all' ? 10000 : userPerPage)
   const canShowZqSupplierSide = !isSupplierPortal || isZqSupplierAccount
@@ -1059,18 +1241,10 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
     search: debouncedSearch || undefined,
     status: status === 'new' ? undefined : (status || undefined),
     catId,
-    brandType,
+    brandType: isSupplierPortal ? undefined : brandType,
     supplierId: isSupplierPortal && linkedSupplierId > 0 ? linkedSupplierId : supplierFilterId,
   }
-  const publicQueryArgs = {
-    page: debouncedSearch ? 1 : page,
-    perPage,
-    search: debouncedSearch || undefined,
-    status: status === 'new' ? undefined : (status || undefined),
-    catId,
-    brandType,
-    supplierId: isSupplierPortal && linkedSupplierId > 0 ? linkedSupplierId : undefined,
-  }
+
 
   const {
     data: adminData,
@@ -1079,81 +1253,79 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
     isError: isAdminError,
     error: adminError,
     refetch: refetchAdminProducts,
-  } = useGetProductsQuery(adminQueryArgs, { skip: isSupplierPortal, refetchOnMountOrArgChange: true })
+  } = useGetProductsQuery(adminQueryArgs, { refetchOnMountOrArgChange: true })
 
-  const {
-    data: publicData,
-    isLoading: isPublicLoading,
-    isFetching: isPublicFetching,
-    isError: isPublicError,
-    error: publicError,
-    refetch: refetchPublicProducts,
-  } = useGetPublicProductsQuery(publicQueryArgs, { skip: !isSupplierPortal, refetchOnMountOrArgChange: true })
+  // Keep the hook call stable but always skip — supplier portal now uses the authenticated query above
+  useGetPublicProductsQuery(undefined, { skip: true })
 
-  const data = isSupplierPortal ? publicData : adminData
-  const isLoading = isSupplierPortal ? isPublicLoading : isAdminLoading
-  const isFetching = isSupplierPortal ? isPublicFetching : isAdminFetching
-  const isError = isSupplierPortal ? isPublicError : isAdminError
-  const error = isSupplierPortal ? publicError : adminError
-  const refetchProducts = isSupplierPortal ? refetchPublicProducts : refetchAdminProducts
+  const data = adminData
+  const isLoading = isAdminLoading
+  const isFetching = isAdminFetching
+  const isError = isAdminError
+  const error = adminError
+  const refetchProducts = refetchAdminProducts
 
   const adminSelectionQueryArgs = {
     ...adminQueryArgs,
     page: 1,
     perPage: selectionPerPage,
   }
-  const publicSelectionQueryArgs = {
-    ...publicQueryArgs,
-    page: 1,
-    perPage: selectionPerPage,
-  }
+
 
   const { data: adminSelectionData } = useGetProductsQuery(
     adminSelectionQueryArgs,
-    { skip: isSupplierPortal, refetchOnMountOrArgChange: true },
+    { refetchOnMountOrArgChange: true },
   )
-  const { data: publicSelectionData } = useGetPublicProductsQuery(
-    publicSelectionQueryArgs,
-    { skip: !isSupplierPortal, refetchOnMountOrArgChange: true },
-  )
+  // Keep hook call stable but always skip — supplier portal uses the authenticated query above
+  useGetPublicProductsQuery(undefined, { skip: true })
 
-  const selectionData = isSupplierPortal ? publicSelectionData : adminSelectionData
+  const selectionData = adminSelectionData
 
   /* Lightweight count queries for stats */
   const activeCountArgs = {
     perPage: 1,
     status: '1',
     supplierId: isSupplierPortal && linkedSupplierId > 0 ? linkedSupplierId : supplierFilterId,
-    brandType: isSupplierPortal ? brandType : undefined,
+    brandType: isSupplierPortal ? undefined : brandType,
   }
   const inactiveCountArgs = {
     perPage: 1,
     status: '0',
     supplierId: isSupplierPortal && linkedSupplierId > 0 ? linkedSupplierId : supplierFilterId,
-    brandType: isSupplierPortal ? brandType : undefined,
+    brandType: isSupplierPortal ? undefined : brandType,
   }
+  const pendingCountArgs = {
+    perPage: 1,
+    status: '3',
+    supplierId: isSupplierPortal && linkedSupplierId > 0 ? linkedSupplierId : supplierFilterId,
+    brandType: isSupplierPortal ? undefined : brandType,
+  }
+
+  const countQueryOpts = { refetchOnMountOrArgChange: true, pollingInterval: 2000, refetchOnFocus: true, refetchOnReconnect: true }
 
   const { data: adminActiveCountData, refetch: refetchAdminActiveCount } = useGetProductsQuery(
     activeCountArgs,
-    { skip: isSupplierPortal, refetchOnMountOrArgChange: true },
+    countQueryOpts,
   )
   const { data: adminInactiveCountData, refetch: refetchAdminInactiveCount } = useGetProductsQuery(
     inactiveCountArgs,
-    { skip: isSupplierPortal, refetchOnMountOrArgChange: true },
+    countQueryOpts,
   )
-  const { data: publicActiveCountData, refetch: refetchPublicActiveCount } = useGetPublicProductsQuery(
-    activeCountArgs,
-    { skip: !isSupplierPortal, refetchOnMountOrArgChange: true },
+  const { data: adminPendingCountData, refetch: refetchAdminPendingCount } = useGetProductsQuery(
+    pendingCountArgs,
+    countQueryOpts,
   )
-  const { data: publicInactiveCountData, refetch: refetchPublicInactiveCount } = useGetPublicProductsQuery(
-    inactiveCountArgs,
-    { skip: !isSupplierPortal, refetchOnMountOrArgChange: true },
-  )
+  // Keep hook calls stable — all count queries now use the authenticated endpoint (admin.or_supplier)
+  useGetPublicProductsQuery(undefined, { skip: true })
+  useGetPublicProductsQuery(undefined, { skip: true })
+  useGetPublicProductsQuery(undefined, { skip: true })
 
-  const activeCountData = isSupplierPortal ? publicActiveCountData : adminActiveCountData
-  const inactiveCountData = isSupplierPortal ? publicInactiveCountData : adminInactiveCountData
-  const refetchActiveCount = isSupplierPortal ? refetchPublicActiveCount : refetchAdminActiveCount
-  const refetchInactiveCount = isSupplierPortal ? refetchPublicInactiveCount : refetchAdminInactiveCount
+  const activeCountData = adminActiveCountData
+  const inactiveCountData = adminInactiveCountData
+  const pendingCountData = adminPendingCountData
+  const refetchActiveCount = refetchAdminActiveCount
+  const refetchInactiveCount = refetchAdminInactiveCount
+  const refetchPendingCount = refetchAdminPendingCount
   const {
     data: zqSummaryData,
     refetch: refetchZqSummary,
@@ -1185,6 +1357,22 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
     }
   }, [data])
 
+  const normalizeSupplierCreatedProduct = (product: Product): Product => {
+    if (!isSupplierPortal) return product
+
+    const nextSupplierId = Number(product.supplierId ?? 0) > 0 ? Number(product.supplierId) : linkedSupplierId
+    const nextSupplierName = product.supplierName?.trim()
+      ? product.supplierName
+      : (supplierName.trim() || product.brand?.trim() || null)
+
+    return {
+      ...product,
+      supplierId: nextSupplierId > 0 ? nextSupplierId : product.supplierId ?? 0,
+      supplierName: nextSupplierName,
+      status: 3,
+    }
+  }
+
   useEffect(() => {
     if (typeof window === 'undefined') return
 
@@ -1213,9 +1401,10 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
   const handleProductsSaved = (updatedProduct?: Product) => {
     setUseInitialData(false)
     if (updatedProduct) {
-      setProductOverrides((prev) => ({ ...prev, [updatedProduct.id]: updatedProduct }))
+      const nextProduct = normalizeSupplierCreatedProduct(updatedProduct)
+      setProductOverrides((prev) => ({ ...prev, [nextProduct.id]: nextProduct }))
       setCreatedProducts((prev) => {
-        const next = [updatedProduct, ...prev.filter((product) => product.id !== updatedProduct.id)]
+        const next = [nextProduct, ...prev.filter((product) => product.id !== nextProduct.id)]
         return next
       })
     }
@@ -1224,6 +1413,7 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
     void refetchProducts()
     void refetchActiveCount()
     void refetchInactiveCount()
+    void refetchPendingCount()
   }
 
   const products = useMemo(() => {
@@ -1259,6 +1449,11 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
     })
   }, [brandType, createdProducts, data?.products, initialData?.products, isSupplierPortal, linkedSupplierId, productOverrides, supplierFilterId, useInitialData])
 
+  const duplicateProductIds = useMemo(
+    () => getDuplicateProductIds(products),
+    [products],
+  )
+
   const zqRows = useMemo(
     () => (zqCachedData?.products ?? []).map(mapCachedZqProductToLocalRow),
     [zqCachedData?.products],
@@ -1274,13 +1469,16 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
       typeof catId === 'number' && catId > 0
         ? baseProducts.filter((product) => Number(product.catid ?? 0) === catId)
         : baseProducts
+    const duplicateFiltered = showDuplicateOnly
+      ? categoryFiltered.filter((product) => duplicateProductIds.has(product.id))
+      : categoryFiltered
     const keyword = debouncedSearch.trim().toLowerCase()
-    if (!keyword) return categoryFiltered
+    if (!keyword) return duplicateFiltered
 
     const terms = keyword.split(/\s+/).filter(Boolean)
-    if (terms.length === 0) return categoryFiltered
+    if (terms.length === 0) return duplicateFiltered
 
-    return categoryFiltered.filter((product) => {
+    return duplicateFiltered.filter((product) => {
       const haystacks = [
         product.name,
         product.sku,
@@ -1300,7 +1498,7 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
 
       return terms.every((term) => haystacks.some((value) => value.includes(term)))
     })
-  }, [catId, debouncedSearch, products, status, zqInlineActive, zqRows])
+  }, [catId, debouncedSearch, products, showDuplicateOnly, status, zqInlineActive, zqRows])
 
   const selectableProducts = useMemo(() => {
     const selectionSource = selectionData?.products
@@ -1361,21 +1559,46 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
       }
     }
 
+    const visibleTotal = visibleProducts.length
+
     // Keep API pagination totals (meta.total) whenever we're not in client-only "new" status mode.
     // Manual checkout mode should not change how total results are counted.
     if (!debouncedSearch && status !== 'new') {
+      if (meta && visibleTotal > meta.total) {
+        return {
+          ...meta,
+          current_page: 1,
+          last_page: 1,
+          per_page: visibleTotal || perPage,
+          total: visibleTotal,
+          from: visibleTotal > 0 ? 1 : 0,
+          to: visibleTotal,
+        }
+      }
+
       return meta
     }
 
     return {
       current_page: 1,
       last_page: 1,
-      per_page: visibleProducts.length || perPage,
-      total: meta?.total ?? visibleProducts.length,
-      from: visibleProducts.length > 0 ? 1 : 0,
-      to: visibleProducts.length,
+      per_page: visibleTotal || perPage,
+      total: meta?.total ?? visibleTotal,
+      from: visibleTotal > 0 ? 1 : 0,
+      to: visibleTotal,
     }
   }, [debouncedSearch, meta, perPage, status, visibleProducts.length, zqCachedData?.meta, zqInlineActive])
+
+  const localPendingCount = useMemo(
+    () => createdProducts.filter((product) => {
+      if (Number(product.status ?? 0) !== 3) return false
+      if (!isSupplierPortal || linkedSupplierId <= 0) return true
+      const serverProducts = data?.products ?? (useInitialData ? (initialData?.products ?? []) : [])
+      const isAlreadyOnServer = serverProducts.some((serverProduct) => serverProduct.id === product.id)
+      return !isAlreadyOnServer && Number(product.supplierId ?? 0) === linkedSupplierId
+    }).length,
+    [createdProducts, data?.products, initialData?.products, isSupplierPortal, linkedSupplierId, useInitialData],
+  )
 
   /* Low-stock count from current page */
   const lowStockCount = useMemo(
@@ -1726,6 +1949,11 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
     [selectableProducts],
   )
 
+  const handleToggleDuplicateFilter = () => {
+    setShowDuplicateOnly((current) => !current)
+    setPage(1)
+  }
+
   const openManualSelectionModal = (products: Product[], mode: 'review' | 'view' = 'review') => {
     if (products.length === 0) {
       showErrorToast(mode === 'view' ? 'No manual checkout products found yet.' : 'Select at least one product first.')
@@ -2016,7 +2244,7 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
       {/* ── Stats strip ── */}
       <motion.div
         initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 }}
-        className="grid grid-cols-2 sm:grid-cols-4 gap-3"
+        className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3"
       >
         <StatCard
           label="Total Products"
@@ -2049,6 +2277,16 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
           }
         />
         <StatCard
+          label="Pending"
+          value={pendingCountData ? ((pendingCountData.meta?.total ?? 0) + localPendingCount).toLocaleString() : localPendingCount.toLocaleString()}
+          colorClass="bg-amber-100"
+          icon={
+            <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          }
+        />
+        <StatCard
           label="Low Stock"
           value={zqInlineActive ? (zqSummaryData?.low_stock ?? lowStockCount) : (isLoading ? '—' : lowStockCount)}
           sub="on this page (qty ≤ 5)"
@@ -2076,6 +2314,9 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
           supplierOptions={!isSupplierPortal ? supplierOptions : undefined}
           selectedCount={selectedIds.length}
           onViewSelected={() => openManualSelectionModal(selectedProducts)}
+          isDuplicateFilterActive={showDuplicateOnly}
+          duplicateCount={duplicateProductIds.size}
+          onToggleDuplicateFilter={handleToggleDuplicateFilter}
           manualCheckoutCount={manualCheckoutProducts.length}
           onViewManualCheckout={() => openManualSelectionModal(manualCheckoutProducts, 'view')}
         />
@@ -2340,6 +2581,7 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
           }
         }}
         onSaved={handleProductsSaved}
+        isSupplierPortal={isSupplierPortal}
       />
       <ProductActivityLogsModal isOpen={showActivityLogs} onClose={() => setShowActivityLogs(false)} />
       <EditProductModal product={editProduct} onClose={() => setEditProduct(null)} onSaved={handleProductsSaved}/>
@@ -2394,6 +2636,3 @@ function SkeletonTable() {
     </div>
   )
 }
-
-
-

@@ -10,9 +10,10 @@ import type { PartnerStorefrontConfig } from '@/libs/partnerStorefront'
 type Props = {
   partner: PartnerStorefrontConfig
   data: ShopBuilderApiResponse | null
+  publicShopUrl?: string
 }
 
-export default function PartnerStorefrontPage({ partner, data }: Props) {
+export default function PartnerStorefrontPage({ partner, data, publicShopUrl }: Props) {
   const { status, data: session } = useSession()
   const router = useRouter()
   const titleColor = partner.themeColor
@@ -42,8 +43,8 @@ export default function PartnerStorefrontPage({ partner, data }: Props) {
   const tabLogoUrlWithVersion = partner.tabLogoUrl
     ? `${partner.tabLogoUrl}${partner.tabLogoUrl.includes('?') ? '&' : '?'}v=${partner.logoVersion || '1'}`
     : logoUrlWithVersion
-  const partnerShopPath = `/shop/${partner.slug}`
-  const partnerProductPath = `/shop/${partner.slug}/product`
+  const partnerShopPath = publicShopUrl || `/shop/${partner.slug}`
+  const partnerProductPath = `${partnerShopPath.replace(/\/$/, '')}/product`
   const loginHref = `/${partner.slug}/login?switch=1&callback=${encodeURIComponent(partnerProductPath)}`
   const role = String(session?.user?.role ?? '').toLowerCase()
   const isCustomerSession = status === 'authenticated' && (role === 'customer' || role === '')
@@ -156,7 +157,7 @@ export default function PartnerStorefrontPage({ partner, data }: Props) {
                 href={`${partnerShopPath}/product`}
                 className="inline-flex items-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700"
               >
-                {partner.displayName} Products
+                Products
               </Link>
             </div>
           </div>
@@ -166,6 +167,7 @@ export default function PartnerStorefrontPage({ partner, data }: Props) {
       <ShopBuilderSections
         data={sanitizedData ?? data}
         partnerSlug={partner.slug}
+        partnerPublicShopUrl={publicShopUrl}
         partnerHeroVideoUrl={partner.heroVideoUrl || undefined}
         allowedCategoryIds={partner.allowedCategoryIds}
         featuredProductIds={partner.featuredProductIds}
