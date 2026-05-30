@@ -455,6 +455,8 @@ class MobilePaymentController extends Controller
         $orderData = $validated['order'] ?? [];
         $items = $orderData['items'] ?? [];
         $customerData = $validated['customer'] ?? [];
+        $itemCount = count($items);
+        $perItemAmount = $itemCount > 0 ? (float) $validated['amount'] / $itemCount : (float) $validated['amount'];
 
         $createdOrders = [];
 
@@ -471,7 +473,7 @@ class MobilePaymentController extends Controller
                 'ch_customer_address' => $customerData['address'] ?? null,
 
                 'ch_description' => $validated['description'],
-                'ch_amount' => (float) $validated['amount'],
+                'ch_amount' => $perItemAmount,
                 'ch_shipping_fee' => (float) ($orderData['handling_fee'] ?? 0),
                 'ch_payment_method' => $validated['payment_method'],
                 'ch_status' => 'pending',
@@ -842,6 +844,7 @@ class MobilePaymentController extends Controller
             // Create individual notifications for each item
             foreach ($mobileOrders as $index => $order) {
                 try {
+                    // Use per-item amount stored in ch_amount
                     $itemAmount = (float) $order->ch_amount;
                     $itemQuantity = (int) $order->ch_quantity;
 
