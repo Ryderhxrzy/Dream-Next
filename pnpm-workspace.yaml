@@ -13,3 +13,4 @@ allowBuilds:
   unrs-resolver: true
 minimumReleaseAgeExclude:
   - shadcn@4.8.3
+  - date-fns@4.4.0

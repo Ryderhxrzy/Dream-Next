@@ -1,8 +1,24 @@
-export default function AuthLayout({
+async function getCommunityStats() {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_AFHOME_API_URL}/api/public/community-stats`,
+      { next: { revalidate: 300 } }
+    )
+    const data = await res.json()
+    return data.total_members ?? 0
+  } catch {
+    return 0
+  }
+}
+
+import { CountUp } from "@/components/ui/CountUp"
+
+export default async function AuthLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const totalMembers = await getCommunityStats()
   return (
     <div className="min-h-screen flex">
       {/* Left Panel — Dark Branding */}
@@ -34,7 +50,7 @@ export default function AuthLayout({
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-3 py-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              <span className="text-zinc-300 text-xs font-medium">142 neighbors active now</span>
+              <span className="text-zinc-300 text-xs font-medium">142 members online now</span>
             </div>
             <h2 className="text-4xl font-bold text-white leading-tight tracking-tight">
               Your community,<br />all in one place.
@@ -47,7 +63,7 @@ export default function AuthLayout({
           {/* Stats row */}
           <div className="flex gap-6">
             {[
-              { value: "2,847", label: "Members" },
+              { value: <CountUp target={totalMembers} />, label: "Members" },
               { value: "38", label: "Posts today" },
               { value: "6", label: "Events this week" },
             ].map((stat) => (
