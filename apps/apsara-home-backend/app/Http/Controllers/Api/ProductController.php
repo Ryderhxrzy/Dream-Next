@@ -626,6 +626,58 @@ class ProductController extends Controller
         return 0;
     }
 
+    /**
+     * Find suppliers whose company/name matches the given brand.
+     * This lets brand filters include products that were saved with pd_brand_type = 0
+     * but still belong to the supplier behind that brand.
+     *
+     * @return int[]
+     */
+    private function resolveSupplierIdsForBrandType(int $brandType): array
+    {
+        if ($brandType <= 0) {
+            return [];
+        }
+
+        $brand = ProductBrand::query()->select(['pb_id', 'pb_name'])->find($brandType);
+        if (! $brand) {
+            return [];
+        }
+
+        $brandKey = strtolower(preg_replace('/[^a-z0-9]/i', '', trim((string) ($brand->pb_name ?? ''))) ?? '');
+        if ($brandKey === '') {
+            return [];
+        }
+
+        return Supplier::query()
+            ->select(['s_id', 's_company', 's_name'])
+            ->get()
+            ->filter(function (Supplier $supplier) use ($brandKey) {
+                $candidates = [
+                    (string) ($supplier->s_company ?? ''),
+                    (string) ($supplier->s_name ?? ''),
+                ];
+
+                foreach ($candidates as $candidate) {
+                    $candidateKey = strtolower(preg_replace('/[^a-z0-9]/i', '', trim($candidate)) ?? '');
+                    if ($candidateKey === '') {
+                        continue;
+                    }
+
+                    if ($candidateKey === $brandKey || str_contains($candidateKey, $brandKey) || str_contains($brandKey, $candidateKey)) {
+                        return true;
+                    }
+                }
+
+                return false;
+            })
+            ->pluck('s_id')
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn (int $id) => $id > 0)
+            ->values()
+            ->all();
+    }
+
     private function resolveRoomType(Request $request): int
     {
         if ($request->exists('pd_room_type')) {
@@ -1643,6 +1695,7 @@ class ProductController extends Controller
             $catId     = $request->query('cat_id', '');
             $roomType  = $request->query('room_type', '');
             $brandType = $request->query('brand_type', '');
+            $includeAll = filter_var($request->query('include_all', false), FILTER_VALIDATE_BOOL);
 
             Log::info('indexCards: Building query', [
                 'perPage' => $perPage,
@@ -1664,7 +1717,7 @@ class ProductController extends Controller
                     'brand:pb_id,pb_name',
                 ])
                 ->withCount('variants')
-                ->tap(fn ($q) => $this->applyPublicVisibility($q))
+                ->when(! $includeAll, fn ($q) => $this->applyPublicVisibility($q))
                 ->when($search !== '', fn ($q) => $this->applyKeywordSearch($q, $search))
                 ->when($catId !== '', fn ($q) => $q->where('pd_catid', (int) $catId))
                 ->when($roomType !== '', fn ($q) => $q->where('pd_room_type', (int) $roomType))
@@ -1881,7 +1934,16 @@ class ProductController extends Controller
                     $q->where('pd_room_type', (int) $roomType);
                 })
                 ->when($brandType !== '', function ($q) use ($brandType) {
-                    $q->where('pd_brand_type', (int) $brandType);
+                    $brandTypeId = (int) $brandType;
+                    $supplierIds = $this->resolveSupplierIdsForBrandType($brandTypeId);
+
+                    $q->where(function ($brandQuery) use ($brandTypeId, $supplierIds) {
+                        $brandQuery->where('pd_brand_type', $brandTypeId);
+
+                        if (!empty($supplierIds)) {
+                            $brandQuery->orWhereIn('pd_supplier', $supplierIds);
+                        }
+                    });
                 });
 
             // Apply personalization only if no manual filters and user has behavior data
@@ -2096,7 +2158,7 @@ class ProductController extends Controller
             'rows.*.pd_images'                   => 'nullable|array',
             'rows.*.pd_images.*'                 => 'nullable|string|max:1000',
             'rows.*.pd_type'                     => 'nullable|integer|in:0,1',
-            'rows.*.pd_status'                   => 'nullable|integer|in:0,1,2',
+            'rows.*.pd_status'                   => 'nullable|integer|in:0,1,2,3',
             'rows.*.pd_musthave'                 => 'nullable|integer|in:0,1',
             'rows.*.pd_bestseller'               => 'nullable|integer|in:0,1',
             'rows.*.pd_salespromo'               => 'nullable|integer|in:0,1',
@@ -3126,7 +3188,7 @@ class ProductController extends Controller
             'pd_bestseller'  => 'nullable|boolean',
             'pd_salespromo'  => 'nullable|boolean',
             'pd_manual_checkout_enabled' => 'nullable|boolean',
-            'pd_status'      => 'nullable|integer|in:0,1,2',
+            'pd_status'      => 'nullable|integer|in:0,1,2,3',
             'pd_image'       => 'nullable|string|max:500',
             'pd_images'      => 'nullable|array',
             'pd_images.*'    => 'nullable|string|max:1000',
@@ -3364,7 +3426,7 @@ class ProductController extends Controller
             'pd_bestseller'  => 'nullable|boolean',
             'pd_salespromo'  => 'nullable|boolean',
             'pd_manual_checkout_enabled' => 'nullable|boolean',
-            'pd_status'      => 'nullable|integer|in:0,1,2',
+            'pd_status'      => 'nullable|integer|in:0,1,2,3',
             'pd_image'       => 'nullable|string|max:500',
             'pd_images'      => 'nullable|array',
             'pd_images.*'    => 'nullable|string|max:1000',

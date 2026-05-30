@@ -1,6 +1,11 @@
 import { notFound, redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import PartnerStorefrontPage from '@/components/partner/PartnerStorefrontPage'
-import { filterPartnerCategories, filterPartnerProducts } from '@/libs/partnerStorefront'
+import {
+  filterPartnerCategories,
+  filterPartnerProducts,
+  resolvePartnerStorefrontPublicUrl,
+} from '@/libs/partnerStorefront'
 import { getPartnerStorefrontBySlug } from '@/libs/partnerStorefrontServer'
 import type { Category } from '@/store/api/categoriesApi'
 import type { Product } from '@/store/api/productsApi'
@@ -33,6 +38,8 @@ const BLANK_FAVICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/s
 
 export async function generateMetadata({ params }: PageProps) {
   const resolved = await params
+  const requestHeaders = await headers()
+  const requestHost = requestHeaders.get('x-forwarded-host') ?? requestHeaders.get('host') ?? ''
   const RAW_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://afhome.ph'
   const SITE_URL = RAW_SITE_URL.startsWith('http') ? RAW_SITE_URL : `https://${RAW_SITE_URL}`
   const partnerName = resolved.partner
@@ -43,7 +50,9 @@ export async function generateMetadata({ params }: PageProps) {
   const title = partnerName.toLowerCase().endsWith('shop') ? partnerName : `${partnerName} Shop`
   const description = `Browse the curated storefront for ${resolved.partner}.`
   const path = `/shop/${resolved.partner}`
-  const canonicalUrl = `${SITE_URL}${path}`
+  const partnerConfig = await getPartnerStorefrontBySlug(resolved.partner)
+  const resolvedPublicShopUrl = resolvePartnerStorefrontPublicUrl(partnerConfig, requestHost)
+  const canonicalUrl = resolvedPublicShopUrl || `${SITE_URL}${path}`
   const metadata: Metadata = {
     title,
     description,
@@ -62,7 +71,6 @@ export async function generateMetadata({ params }: PageProps) {
     },
   }
 
-  const partnerConfig = await getPartnerStorefrontBySlug(resolved.partner)
   const iconUrl = partnerConfig?.tabLogoUrl || partnerConfig?.logoUrl
 
   metadata.icons = iconUrl
@@ -188,6 +196,8 @@ export default async function PartnerShopPage({ params, searchParams }: PageProp
   const resolved = await params
   const resolvedSearchParams = searchParams ? await searchParams : undefined
   const selectedCategoryId = Number.parseInt(String(resolvedSearchParams?.category ?? ''), 10)
+  const requestHeaders = await headers()
+  const requestHost = requestHeaders.get('x-forwarded-host') ?? requestHeaders.get('host') ?? ''
   const payload = await getPartnerStorefrontData(
     resolved.partner,
     Number.isFinite(selectedCategoryId) && selectedCategoryId > 0 ? selectedCategoryId : undefined,
@@ -198,5 +208,11 @@ export default async function PartnerShopPage({ params, searchParams }: PageProp
     notFound()
   }
 
-  return <PartnerStorefrontPage partner={payload.partner} data={payload.data} />
+  return (
+    <PartnerStorefrontPage
+      partner={payload.partner}
+      data={payload.data}
+      publicShopUrl={resolvePartnerStorefrontPublicUrl(payload.partner, requestHost)}
+    />
+  )
 }

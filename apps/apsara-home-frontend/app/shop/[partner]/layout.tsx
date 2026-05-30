@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { headers } from 'next/headers'
 import { getPartnerStorefrontBySlug, getPartnerStorefrontRecordBySlug } from '@/libs/partnerStorefrontServer'
 import { getServerSession } from 'next-auth'
 import { redirect } from 'next/navigation'
@@ -38,6 +39,14 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
 export default async function PartnerShopLayout({ children, params }: LayoutProps) {
   const { partner } = await params
   const normalizedPartner = String(partner ?? '').trim().toLowerCase()
+  const requestHeaders = await headers()
+  const referer = requestHeaders.get('referer') ?? ''
+  const isAdminPreview = /\/admin\/webpages\/partner-storefronts/i.test(referer)
+
+  if (isAdminPreview) {
+    return children
+  }
+
   const adminSession = await getServerSession(adminAuthOptions)
   if (adminSession?.user) {
     return children

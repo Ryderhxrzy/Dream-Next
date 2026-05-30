@@ -28,6 +28,7 @@ interface AddProductModalProps {
   isOpen: boolean
   onClose: () => void
   onSaved?: (createdProduct?: Product) => void
+  isSupplierPortal?: boolean
 }
 
 interface FormState {
@@ -948,7 +949,7 @@ const scrollToFirstErrorField = (container: HTMLElement | null) => {
 
 /* --- main component --------------------------------------- */
 
-export default function AddProductModal({ isOpen, onClose, onSaved }: AddProductModalProps) {
+export default function AddProductModal({ isOpen, onClose, onSaved, isSupplierPortal = false }: AddProductModalProps) {
   const [entryMode, setEntryMode] = useState<'manual' | 'csv' | 'api'>('manual')
   const [form,         setForm]         = useState<FormState>(defaultForm)
   const [errors,       setErrors]       = useState<Errors>({})
@@ -1620,7 +1621,7 @@ export default function AddProductModal({ isOpen, onClose, onSaved }: AddProduct
       pd_bestseller:  form.pd_bestseller,
       pd_salespromo:  form.pd_salespromo,
       pd_verified:    form.pd_verified,
-      pd_status:      Number(form.pd_status),
+      pd_status:      isSupplierPortal ? 3 : Number(form.pd_status),
       pd_image:           finalImageUrls[0] ?? undefined,
       pd_images:          finalImageUrls.length > 0 ? finalImageUrls : undefined,
       pd_variants:        hasVariants ? expandedVariants : [],
@@ -2414,12 +2415,14 @@ export default function AddProductModal({ isOpen, onClose, onSaved }: AddProduct
                     <Field label="SRP Price (₱)" required error={errors.pd_price_srp}>
                       <input type="number" value={form.pd_price_srp} onChange={e => set('pd_price_srp', e.target.value)} placeholder="0.00" className={inputCls(!!errors.pd_price_srp)}/>
                     </Field>
-                    <Field label="Member Price (₱)" error={errors.pd_price_member}>
-                      <div className="space-y-1">
-                        <input type="number" value={form.pd_price_member} onChange={e => set('pd_price_member', e.target.value)} placeholder="0.00" className={inputCls(!!errors.pd_price_member)}/>
-                        <p className="text-[11px] text-slate-500">Shown to member accounts. If blank, SRP will be used.</p>
-                      </div>
-                    </Field>
+                    {!isSupplierPortal && (
+                      <Field label="Member Price (₱)" error={errors.pd_price_member}>
+                        <div className="space-y-1">
+                          <input type="number" value={form.pd_price_member} onChange={e => set('pd_price_member', e.target.value)} placeholder="0.00" className={inputCls(!!errors.pd_price_member)}/>
+                          <p className="text-[11px] text-slate-500">Shown to member accounts. If blank, SRP will be used.</p>
+                        </div>
+                      </Field>
+                    )}
                     <Field label="Dealer Price (₱)" error={errors.pd_price_dp}>
                       <div className="space-y-1">
                         <input type="number" value={form.pd_price_dp} onChange={e => set('pd_price_dp', e.target.value)} placeholder="0.00" className={inputCls(!!errors.pd_price_dp)}/>
@@ -2479,23 +2482,35 @@ export default function AddProductModal({ isOpen, onClose, onSaved }: AddProduct
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                     {/* Status */}
                     <Field label="Status">
-                      <div className="flex items-center p-1 bg-slate-100 rounded-xl gap-0.5">
-                        {[{ value: '1', label: 'Active' }, { value: '0', label: 'Inactive (Draft)' }].map((opt, index) => (
-                          <Button
-                            key={`product-status-${index}-${opt.value}`}
-                            type="button"
-                            onPress={() => set('pd_status', opt.value)}
-                            variant="tertiary"
-                            className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                              form.pd_status === opt.value
-                                ? opt.value === '1' ? 'bg-white text-teal-700 shadow-sm' : 'bg-white text-slate-600 shadow-sm'
-                                : 'text-slate-500 hover:text-slate-700'
-                            }`}
-                          >
-                            {opt.label}
-                          </Button>
-                        ))}
-                      </div>
+                      {isSupplierPortal ? (
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 dark:border-amber-500/25 dark:bg-amber-500/10">
+                            <span className="h-2 w-2 shrink-0 rounded-full bg-amber-400" />
+                            <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">Pending Admin Review</span>
+                          </div>
+                          <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                            Products submitted by suppliers are inactive until approved by an admin.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="flex items-center p-1 bg-slate-100 rounded-xl gap-0.5">
+                          {[{ value: '1', label: 'Active' }, { value: '0', label: 'Inactive (Draft)' }].map((opt, index) => (
+                            <Button
+                              key={`product-status-${index}-${opt.value}`}
+                              type="button"
+                              onPress={() => set('pd_status', opt.value)}
+                              variant="tertiary"
+                              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                                form.pd_status === opt.value
+                                  ? opt.value === '1' ? 'bg-white text-teal-700 shadow-sm' : 'bg-white text-slate-600 shadow-sm'
+                                  : 'text-slate-500 hover:text-slate-700'
+                              }`}
+                            >
+                              {opt.label}
+                            </Button>
+                          ))}
+                        </div>
+                      )}
                     </Field>
 
                     {/* Has Variants */}

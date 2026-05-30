@@ -109,7 +109,38 @@ export default function WebstoreRequestsPage() {
       type?: string | null
     }> | null
   }>({ open: false, id: null, displayName: null, slugName: null, customerName: null, email: null, username: null, status: null, submittedAt: null })
-  const [receiptPreviewUrl, setReceiptPreviewUrl] = useState<string | null>(null)
+  const [receiptPreview, setReceiptPreview] = useState<{
+    open: boolean
+    label?: string | null
+    urls: string[]
+    activeIndex: number
+  }>({ open: false, label: null, urls: [], activeIndex: 0 })
+
+  const openReceiptPreview = (urls: string[], label?: string | null, activeIndex?: number) => {
+    const normalizedUrls = urls.map((url) => String(url ?? '').trim()).filter(Boolean)
+    if (normalizedUrls.length === 0) return
+    const nextIndex = typeof activeIndex === 'number'
+      ? Math.max(0, Math.min(activeIndex, normalizedUrls.length - 1))
+      : normalizedUrls.length - 1
+    setReceiptPreview({
+      open: true,
+      label: label ?? null,
+      urls: normalizedUrls,
+      activeIndex: nextIndex,
+    })
+  }
+
+  const closeReceiptPreview = () => {
+    setReceiptPreview({ open: false, label: null, urls: [], activeIndex: 0 })
+  }
+
+  const setActiveReceiptPreviewIndex = (index: number) => {
+    setReceiptPreview((prev) => {
+      if (!prev.open || prev.urls.length === 0) return prev
+      const nextIndex = Math.max(0, Math.min(index, prev.urls.length - 1))
+      return { ...prev, activeIndex: nextIndex }
+    })
+  }
 
   const rows = useMemo(() => {
     const source = data?.requests ?? []
@@ -280,7 +311,7 @@ export default function WebstoreRequestsPage() {
       receiptItems: [],
     })
     closeReceiptConfirm()
-    setReceiptPreviewUrl(null)
+    closeReceiptPreview()
   }
 
   const handleApproveReceipt = async (receiptId: number) => {
@@ -1047,7 +1078,7 @@ export default function WebstoreRequestsPage() {
                             {Array.isArray(details.receiptItems) && details.receiptItems.length > 0 ? (
                               [...details.receiptItems].reverse().map((receipt, index) => {
                                 const urls = Array.isArray(receipt.receiptUrls) ? receipt.receiptUrls : []
-                                const primaryUrl = urls[0] ?? null
+                                const primaryUrl = urls.length > 0 ? urls[urls.length - 1] : null
                                 const receiptId = receipt.id ?? null
                                 const requestStatus = String(details.status ?? '').toLowerCase()
                                 const receiptStatus =
@@ -1066,7 +1097,7 @@ export default function WebstoreRequestsPage() {
                                     <button
                                       type="button"
                                       disabled={!primaryUrl}
-                                      onClick={() => primaryUrl && setReceiptPreviewUrl(primaryUrl)}
+                                      onClick={() => openReceiptPreview(urls, receipt.label ?? `Receipt ${index + 1}`)}
                                       className="block w-full text-left transition hover:bg-white/50 disabled:cursor-not-allowed disabled:opacity-60 dark:hover:bg-slate-950/20"
                                       aria-label={primaryUrl ? `Preview ${receipt.label ?? `Receipt ${index + 1}`}` : `${receipt.label ?? `Receipt ${index + 1}`} has no image`}
                                     >
@@ -1127,11 +1158,11 @@ export default function WebstoreRequestsPage() {
                                 )
                               })
                             ) : Array.isArray(details.receiptUrls) && details.receiptUrls.length > 0 ? (
-                              details.receiptUrls.slice(0, 1).map((url, index) => (
+                              details.receiptUrls.map((url, index) => (
                                   <div key={`${url}-${index}`} className="w-full overflow-hidden rounded-2xl border border-sky-100 bg-sky-50/60 shadow-sm dark:border-sky-500/20 dark:bg-sky-500/10">
                                     <button
                                       type="button"
-                                      onClick={() => setReceiptPreviewUrl(url)}
+                                      onClick={() => openReceiptPreview([url], `Receipt ${index + 1}`, 0)}
                                     className="block w-full text-left transition hover:bg-white/50 dark:hover:bg-slate-950/20"
                                     aria-label={`Preview Receipt ${index + 1}`}
                                   >
@@ -1277,20 +1308,25 @@ export default function WebstoreRequestsPage() {
         </div>
       ) : null}
 
-      {receiptPreviewUrl ? (
+      {receiptPreview.open ? (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm"
-          onClick={() => setReceiptPreviewUrl(null)}
+          onClick={closeReceiptPreview}
         >
           <div
             className="relative w-full max-w-4xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Receipt Preview</p>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">Receipt Preview</p>
+                {receiptPreview.label ? (
+                  <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">{receiptPreview.label}</p>
+                ) : null}
+              </div>
               <button
                 type="button"
-                onClick={() => setReceiptPreviewUrl(null)}
+                onClick={closeReceiptPreview}
                 className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
                 aria-label="Close receipt preview"
               >
@@ -1298,11 +1334,38 @@ export default function WebstoreRequestsPage() {
               </button>
             </div>
             <div className="max-h-[78vh] overflow-auto bg-slate-50 p-4 dark:bg-slate-950/40">
-              <img
-                src={receiptPreviewUrl}
-                alt="Receipt preview"
-                className="mx-auto h-auto max-w-full rounded-xl border border-slate-200 bg-white dark:border-slate-700"
-              />
+              <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700">
+                  <img
+                    src={receiptPreview.urls[receiptPreview.activeIndex] ?? receiptPreview.urls[0]}
+                    alt={receiptPreview.label ?? `Receipt ${receiptPreview.activeIndex + 1}`}
+                    className="mx-auto h-auto max-w-full bg-white"
+                  />
+                </div>
+                {receiptPreview.urls.length > 1 ? (
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {receiptPreview.urls.map((url, index) => (
+                      <button
+                        key={`${url}-${index}`}
+                        type="button"
+                        onClick={() => setActiveReceiptPreviewIndex(index)}
+                        className={`overflow-hidden rounded-lg border transition ${
+                          index === receiptPreview.activeIndex
+                            ? 'border-sky-400 ring-2 ring-sky-200'
+                            : 'border-slate-200 hover:border-sky-300'
+                        }`}
+                        aria-label={`Show receipt ${index + 1}`}
+                      >
+                        <img
+                          src={url}
+                          alt={`Receipt ${index + 1}`}
+                          className="h-16 w-16 object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>

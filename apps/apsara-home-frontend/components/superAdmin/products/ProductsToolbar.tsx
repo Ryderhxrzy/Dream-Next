@@ -29,6 +29,9 @@ interface ProductsToolbarProps {
   supplierOptions?: Array<{ id: number; label: string }>
   selectedCount?: number
   onViewSelected?: () => void
+  isDuplicateFilterActive?: boolean
+  duplicateCount?: number
+  onToggleDuplicateFilter?: () => void
   manualCheckoutCount?: number
   onViewManualCheckout?: () => void
 }
@@ -37,6 +40,7 @@ const STATUS_TABS = [
   { value: '', label: 'All' },
   { value: '1', label: 'Active' },
   { value: '0', label: 'Inactive' },
+  { value: '3', label: 'Pending' },
   { value: 'new', label: 'New' },
 ]
 
@@ -101,6 +105,9 @@ export default function ProductsToolbar({
   supplierOptions = [],
   selectedCount = 0,
   onViewSelected,
+  isDuplicateFilterActive = false,
+  duplicateCount = 0,
+  onToggleDuplicateFilter,
   manualCheckoutCount = 0,
   onViewManualCheckout,
 }: ProductsToolbarProps) {
@@ -160,6 +167,24 @@ export default function ProductsToolbar({
                 {tab.label}
               </Button>
             ))}
+
+            {onToggleDuplicateFilter ? (
+              <Button
+                size="sm"
+                variant={isDuplicateFilterActive ? 'primary' : 'tertiary'}
+                onPress={onToggleDuplicateFilter}
+                className={isDuplicateFilterActive
+                  ? 'rounded-xl bg-sky-600 px-4 text-xs font-semibold text-white hover:bg-sky-700'
+                  : 'rounded-xl border border-transparent bg-slate-100 px-4 text-xs font-semibold text-slate-600 hover:bg-slate-200 hover:text-slate-800 dark:bg-white/12 dark:text-slate-200 dark:hover:bg-white/18 dark:hover:text-white'}
+              >
+                <span>Duplicate item</span>
+                {duplicateCount > 0 ? (
+                  <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-bold leading-none text-current">
+                    {duplicateCount}
+                  </span>
+                ) : null}
+              </Button>
+            ) : null}
           </div>
 
           <div className="flex w-full max-w-4xl flex-col gap-3 lg:flex-row lg:items-center lg:justify-end">
@@ -213,6 +238,7 @@ export default function ProductsToolbar({
                 </Button>
               </div>
             ) : null}
+
           </div>
         </div>
 

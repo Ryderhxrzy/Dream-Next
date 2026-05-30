@@ -1238,7 +1238,6 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
   const linkedSupplierId = Number(adminMe?.supplier_id ?? session?.user?.supplierId ?? 0)
   const isSupplierScopedActor =
     role === 'supplier' || role === 'supplier_admin' || Number(adminMe?.user_level_id ?? session?.user?.userLevelId ?? 0) === 8
-
   const [updateProduct, { isLoading }] = useUpdateProductMutation()
   const { data: categoriesData } = useGetCategoriesQuery(
     {
@@ -1309,6 +1308,8 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
     openedProductRef.current = product
   }
   const openedProduct = openedProductRef.current
+  const currentProductStatus = Number(openedProduct?.status ?? product?.status ?? form.pd_status ?? 0)
+  const canEditProductStatus = currentProductStatus !== 3
 
   /* Populate form when product changes — only re-initialize when a different product is opened,
      not when RTK Query returns an updated reference for the same product (which would reset
@@ -1909,7 +1910,9 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
       pd_bestseller:  form.pd_bestseller,
       pd_salespromo:  form.pd_salespromo,
       pd_verified:    form.pd_verified,
-      pd_status:      Number(form.pd_status),
+      pd_status:      canEditProductStatus
+        ? Number(form.pd_status)
+        : currentProductStatus,
     }
 
     if (variantPayloadChanged) {
@@ -2462,12 +2465,14 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
                     <Field label="SRP Price (₱)" required error={errors.pd_price_srp}>
                       <input type="number" value={form.pd_price_srp} onChange={e => set('pd_price_srp', e.target.value)} placeholder="0.00" className={inputCls(!!errors.pd_price_srp)}/>
                     </Field>
-                    <Field label="Member Price (₱)" error={errors.pd_price_member}>
-                      <div className="space-y-1">
-                        <input type="number" value={form.pd_price_member} onChange={e => set('pd_price_member', e.target.value)} placeholder="0.00" className={inputCls(!!errors.pd_price_member)}/>
-                        <p className="text-[11px] text-slate-500">Shown to member accounts. If blank, SRP will be used.</p>
-                      </div>
-                    </Field>
+                    {!isSupplierScopedActor && (
+                      <Field label="Member Price (₱)" error={errors.pd_price_member}>
+                        <div className="space-y-1">
+                          <input type="number" value={form.pd_price_member} onChange={e => set('pd_price_member', e.target.value)} placeholder="0.00" className={inputCls(!!errors.pd_price_member)}/>
+                          <p className="text-[11px] text-slate-500">Shown to member accounts. If blank, SRP will be used.</p>
+                        </div>
+                      </Field>
+                    )}
                     <Field label="Dealer Price (₱)" error={errors.pd_price_dp}>
                       <div className="space-y-1">
                         <input type="number" value={form.pd_price_dp} onChange={e => set('pd_price_dp', e.target.value)} placeholder="0.00" className={inputCls(!!errors.pd_price_dp)}/>
@@ -2532,17 +2537,23 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
                           <button
                             key={opt.value}
                             type="button"
-                            onClick={() => set('pd_status', opt.value)}
+                            disabled={!canEditProductStatus}
+                            onClick={canEditProductStatus ? () => set('pd_status', opt.value) : undefined}
                             className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                               form.pd_status === opt.value
                                 ? 'bg-white text-slate-700 shadow-sm'
                                 : 'text-slate-500 hover:text-slate-700'
-                            }`}
+                            } ${!canEditProductStatus ? 'cursor-not-allowed opacity-60 hover:text-slate-500' : ''}`}
                           >
                             {opt.label}
                           </button>
                         ))}
                       </div>
+                      {!canEditProductStatus && (
+                        <p className="mt-1 text-[11px] text-slate-400">
+                          Status is locked while the product is pending review.
+                        </p>
+                      )}
                     </Field>
 
                     {/* Has Variants */}

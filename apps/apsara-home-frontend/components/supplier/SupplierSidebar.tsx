@@ -15,6 +15,7 @@ import {
   FileText,
   Home,
   LogOut,
+  MessageSquare,
   Package,
   Smartphone,
   Users,
@@ -25,6 +26,7 @@ import { clearAccessTokenCache } from '@/store/api/baseApi'
 
 const mainItems = [
   { label: 'Dashboard', href: '/supplier/dashboard', icon: BarChart3 },
+  { label: 'Chats', href: '/supplier/chat', icon: MessageSquare },
   { label: 'Products', href: '/supplier/products', icon: Package },
   { label: 'Orders', href: '/supplier/orders', icon: ClipboardList },
   { label: 'Inventory', href: '/supplier/inventory', icon: Warehouse },
@@ -46,6 +48,8 @@ const settingsItems = [
   { label: 'Categories', href: '/supplier/categories', icon: Box },
   { label: 'Users', href: '/supplier/users', icon: Users },
   { label: 'Company', href: '/supplier/company', icon: Building2 },
+  // Warehouse icon added (still simple nav for now)
+  { label: 'Warehouse', href: '/supplier/warehouse', icon: Warehouse },
 ]
 
 function getInitials(name: string) {
@@ -160,9 +164,22 @@ export default function SupplierSidebar({
                     }
                   `}
                 >
-                  <span className={`flex items-center justify-center h-7 w-7 rounded-lg shrink-0 transition-colors ${active ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800 group-hover:bg-slate-200 dark:group-hover:bg-slate-700'}`}>
-                    <Icon className="w-5 h-5" />
-                  </span>
+                  {item.icon ? (
+                    <span
+                      className={`flex items-center justify-center h-7 w-7 rounded-lg shrink-0 transition-colors ${
+                        active
+                          ? 'bg-white/20'
+                          : 'bg-slate-100 dark:bg-slate-800 group-hover:bg-slate-200 dark:group-hover:bg-slate-700'
+                      }`}
+                    >
+                      <span className="flex items-center justify-center">
+                        {(() => {
+                          const Icon = item.icon as unknown as React.ComponentType<{ className?: string }>
+                          return <Icon className="w-5 h-5" />
+                        })()}
+                      </span>
+                    </span>
+                  ) : null}
                   <span className="font-medium flex-1">{item.label}</span>
                 </Link>
               )
@@ -316,9 +333,13 @@ export default function SupplierSidebar({
                     }
                   `}
                 >
-                  <span className={`flex items-center justify-center h-7 w-7 rounded-lg shrink-0 transition-colors ${active ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800 group-hover:bg-slate-200 dark:group-hover:bg-slate-700'}`}>
-                    <Icon className="w-5 h-5" />
-                  </span>
+                  {item.icon ? (
+                    <span
+                      className={`flex items-center justify-center h-7 w-7 rounded-lg shrink-0 transition-colors ${active ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800 group-hover:bg-slate-200 dark:group-hover:bg-slate-700'}`}
+                    >
+                      <Icon className="w-5 h-5" />
+                    </span>
+                  ) : null}
                   <span className="font-medium flex-1">{item.label}</span>
                 </Link>
               )

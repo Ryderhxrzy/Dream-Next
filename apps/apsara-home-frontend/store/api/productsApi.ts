@@ -678,6 +678,7 @@ interface ProductsQueryParams {
   roomType?: number
   brandType?: number
   supplierId?: number
+  includeAll?: boolean
 }
 
 interface ProductActivityLogsQueryParams {
@@ -978,18 +979,19 @@ export const productsApi = baseApi.injectEndpoints({
         url: '/api/products',
         method: 'GET',
         cache: 'no-store',
-        params: cleanParams({
-          page: params?.page ?? 1,
-          per_page: params?.perPage ?? 25,
-          q: params?.search,
-          search: params?.search,
-          status: params?.status,
-          cat_id: params?.catId,
-          room_type: params?.roomType,
-          brand_type: params?.brandType,
-          supplier_id: params?.supplierId,
+          params: cleanParams({
+            page: params?.page ?? 1,
+            per_page: params?.perPage ?? 25,
+            q: params?.search,
+            search: params?.search,
+            status: params?.status,
+            cat_id: params?.catId,
+            room_type: params?.roomType,
+            brand_type: params?.brandType,
+            supplier_id: params?.supplierId,
+            include_all: params?.includeAll ? 1 : undefined,
+          }),
         }),
-      }),
       transformResponse: (response: ProductsResponse) => normalizeProductsResponse(response),
       providesTags: ['Products'],
     }),

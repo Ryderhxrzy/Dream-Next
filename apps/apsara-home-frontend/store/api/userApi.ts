@@ -208,7 +208,7 @@ export interface SubmitWebstoreRequestPayload {
     email: string;
     slug_name: string;
     display_name: string;
-    plan: 'quarterly' | 'semi_annual' | 'annual';
+    plan: 'test' | 'quarterly' | 'semi_annual' | 'annual';
     billing_option: 'full' | 'monthly';
     payment_method: 'gcash' | 'grab_pay' | 'maya' | 'card';
     receipt_urls: string[];
@@ -239,19 +239,38 @@ export interface WebstoreRequest {
     email?: string | null;
     slug_name?: string | null;
     display_name?: string | null;
-    plan?: 'quarterly' | 'semi_annual' | 'annual' | null;
+    plan?: 'test' | 'quarterly' | 'semi_annual' | 'annual' | null;
     billing_option?: 'full' | 'monthly' | null;
     payment_method?: 'gcash' | 'grab_pay' | 'maya' | 'card' | null;
     receipt_urls?: string[] | null;
     payment_reference?: string | null;
+    checkout_id?: string | null;
+    payment_intent_id?: string | null;
     base_checkout_id?: string | null;
     base_payment_reference?: string | null;
     base_payment_intent_id?: string | null;
+    subscription_fee?: number | null;
+    effective_monthly?: number | null;
     reviewed_at?: string | null;
     created_at?: string | null;
     payment_count?: number;
     total_paid_amount?: number;
     remaining_balance?: number;
+    receipt_items?: Array<{
+        id: number;
+        label?: string | null;
+        submitted_at?: string | null;
+        receipt_urls?: string[] | null;
+        billing_option?: 'full' | 'monthly' | null;
+        payment_method?: 'gcash' | 'grab_pay' | 'maya' | 'card' | null;
+        checkout_id?: string | null;
+        payment_reference?: string | null;
+        payment_intent_id?: string | null;
+        approval_status?: 'pending_review' | 'approved' | 'rejected' | '' | null;
+        approved_at?: string | null;
+        approved_by?: number | null;
+        type?: string | null;
+    }> | null;
     can_sync_account?: boolean;
     partner_sync_status?: 'synced' | 'not_synced';
     latest_receipt_status?: 'pending_review' | 'approved' | 'rejected' | null;
@@ -271,7 +290,7 @@ export interface UploadWebstoreReceiptResponse {
 }
 
 export interface CreateWebstorePaymentSessionPayload {
-    plan: 'quarterly' | 'semi_annual' | 'annual';
+    plan: 'test' | 'quarterly' | 'semi_annual' | 'annual';
     billing_option: 'full' | 'monthly';
     payment_method: 'gcash' | 'grab_pay' | 'maya' | 'card';
     payment_mode?: 'test' | 'live';

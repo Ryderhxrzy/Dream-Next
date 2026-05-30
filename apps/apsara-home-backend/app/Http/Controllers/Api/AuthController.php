@@ -2024,7 +2024,7 @@ class AuthController extends Controller
             'email' => 'required|email|max:255',
             'slug_name' => ['required', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
             'display_name' => 'required|string|max:255',
-            'plan' => ['required', Rule::in(['quarterly', 'semi_annual', 'annual'])],
+            'plan' => ['required', Rule::in(['test', 'quarterly', 'semi_annual', 'annual'])],
             'billing_option' => ['required', Rule::in(['full', 'monthly'])],
             'payment_method' => ['required', Rule::in(['gcash', 'grab_pay', 'maya', 'card'])],
             'receipt_urls' => 'required|array|min:1|max:5',
@@ -2043,6 +2043,7 @@ class AuthController extends Controller
             ->first();
 
         $subscriptionMatrix = [
+            'test' => ['term' => 'Unlimited', 'term_months' => 0, 'subscription_fee' => 1, 'effective_monthly' => 1],
             'quarterly' => ['term' => '3 months', 'term_months' => 3, 'subscription_fee' => 48000, 'effective_monthly' => 16000],
             'semi_annual' => ['term' => '6 months', 'term_months' => 6, 'subscription_fee' => 90000, 'effective_monthly' => 15000],
             'annual' => ['term' => 'Yearly', 'term_months' => 12, 'subscription_fee' => 150000, 'effective_monthly' => 12500],
@@ -2216,13 +2217,14 @@ class AuthController extends Controller
         }
 
         $validated = $request->validate([
-            'plan' => ['required', Rule::in(['quarterly', 'semi_annual', 'annual'])],
+            'plan' => ['required', Rule::in(['test', 'quarterly', 'semi_annual', 'annual'])],
             'billing_option' => ['required', Rule::in(['full', 'monthly'])],
             'payment_method' => ['required', Rule::in(['gcash', 'grab_pay', 'maya', 'card'])],
             'payment_mode' => ['nullable', Rule::in(['test', 'live'])],
         ]);
 
         $planMatrix = [
+            'test' => ['label' => 'Test', 'full_amount' => 1, 'monthly_amount' => 1],
             'quarterly' => ['label' => 'Quarterly', 'full_amount' => 48000, 'monthly_amount' => 16000],
             'semi_annual' => ['label' => 'Semi-Annual', 'full_amount' => 90000, 'monthly_amount' => 15000],
             'annual' => ['label' => 'Annual', 'full_amount' => 150000, 'monthly_amount' => 12500],
@@ -3533,6 +3535,7 @@ class AuthController extends Controller
             'base_payment_reference' => (string) ($payload['payment_reference'] ?? ''),
             'base_payment_intent_id' => (string) ($payload['payment_intent_id'] ?? ''),
             'receipt_urls' => is_array($payload['receipt_urls'] ?? null) ? array_values($payload['receipt_urls']) : [],
+            'receipt_items' => $this->collectWebstoreReceiptItems($ticketId),
             'payment_count' => (int) ($subscriptionProgress['payment_count'] ?? 0),
             'total_paid_amount' => (int) ($subscriptionProgress['total_paid_amount'] ?? 0),
             'remaining_balance' => (int) ($subscriptionProgress['remaining_balance'] ?? 0),
@@ -3663,6 +3666,45 @@ class AuthController extends Controller
             'total_paid_amount' => $paidAmount,
             'remaining_balance' => $remainingBalance,
         ];
+    }
+
+    private function collectWebstoreReceiptItems(int $ticketId): array
+    {
+        $details = DB::table('tbl_tickets_details')
+            ->where('t_id', $ticketId)
+            ->where('td_replystat', 0)
+            ->orderBy('td_datetime')
+            ->orderBy('td_id')
+            ->get();
+
+        $items = [];
+        $sequence = 0;
+
+        foreach ($details as $detail) {
+            $payload = $this->decodeWebstorePayload($detail->td_content ?? null);
+            if (!is_array($payload) || empty($payload)) {
+                continue;
+            }
+
+            $sequence++;
+            $items[] = [
+                'id' => (int) $detail->td_id,
+                'label' => 'Receipt ' . $sequence,
+                'submitted_at' => $detail->td_datetime ? (string) $detail->td_datetime : (string) ($payload['submitted_at'] ?? null),
+                'receipt_urls' => is_array($payload['receipt_urls'] ?? null) ? array_values($payload['receipt_urls']) : [],
+                'billing_option' => (string) ($payload['billing_option'] ?? ''),
+                'payment_method' => (string) ($payload['payment_method'] ?? ''),
+                'checkout_id' => (string) ($payload['checkout_id'] ?? ''),
+                'payment_reference' => (string) ($payload['payment_reference'] ?? ''),
+                'payment_intent_id' => (string) ($payload['payment_intent_id'] ?? ''),
+                'approval_status' => (string) ($payload['approval_status'] ?? ''),
+                'approved_at' => (string) ($payload['approved_at'] ?? ''),
+                'approved_by' => (int) ($payload['approved_by'] ?? 0),
+                'type' => (string) ($payload['type'] ?? ''),
+            ];
+        }
+
+        return $items;
     }
 
     private function normalizeStorefrontSlug(string $value): string
@@ -3843,6 +3885,7 @@ class AuthController extends Controller
 
         $planLabel = (string) ($request['plan'] ?? '');
         $planLabel = match ($planLabel) {
+            'test' => 'Test',
             'quarterly' => 'Quarterly',
             'semi_annual' => 'Semi-Annual',
             'annual' => 'Annual',
@@ -3876,7 +3919,6 @@ class AuthController extends Controller
             'payment_reference' => (string) ($request['payment_reference'] ?? ''),
             'payment_intent_id' => (string) ($request['payment_intent_id'] ?? ''),
             'submitted_at_label' => $submittedAt !== '' ? date('F j, Y g:i A', strtotime($submittedAt)) : '',
-            'receipt_count' => (int) ($request['payment_count'] ?? 0),
             'payment_count' => (int) ($request['payment_count'] ?? 0),
             'remaining_balance' => max(0, $subscriptionFee - $amountPaid),
             'receipt_urls' => is_array($request['receipt_urls'] ?? null) ? array_values($request['receipt_urls']) : [],

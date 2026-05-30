@@ -1,7 +1,12 @@
 import { notFound, redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import CategoryListProductMain from '@/components/category/CategoryListProductMain'
 import { buildPageMetadata } from '@/app/seo'
-import { filterPartnerCategories, normalizeCategorySlug } from '@/libs/partnerStorefront'
+import {
+  filterPartnerCategories,
+  normalizeCategorySlug,
+  resolvePartnerStorefrontPublicUrl,
+} from '@/libs/partnerStorefront'
 import { getPartnerStorefrontBySlug } from '@/libs/partnerStorefrontServer'
 import type { Category } from '@/store/api/categoriesApi'
 import type { Product } from '@/store/api/productsApi'
@@ -100,6 +105,8 @@ const toCategoryTitle = (slug: string) =>
 
 export async function generateMetadata({ params }: PageProps) {
   const resolved = await params
+  const requestHeaders = await headers()
+  const requestHost = requestHeaders.get('x-forwarded-host') ?? requestHeaders.get('host') ?? ''
   const categoryTitle = toCategoryTitle(resolved.slug)
   const metadata = buildPageMetadata({
     title: `${resolved.slug} Category`,
@@ -108,6 +115,7 @@ export async function generateMetadata({ params }: PageProps) {
   })
 
   const partnerConfig = await getPartnerStorefrontBySlug(resolved.partner)
+  const resolvedPublicShopUrl = resolvePartnerStorefrontPublicUrl(partnerConfig, requestHost)
   const plainTitle = `${partnerConfig?.displayName ?? resolved.partner} | ${categoryTitle}`
   const apiUrl = process.env.LARAVEL_API_URL ?? process.env.NEXT_PUBLIC_LARAVEL_API_URL
   const iconUrl = resolveStorefrontAssetUrl(partnerConfig?.tabLogoUrl || partnerConfig?.logoUrl, apiUrl)
@@ -115,6 +123,9 @@ export async function generateMetadata({ params }: PageProps) {
   return {
     ...metadata,
     title: plainTitle,
+    alternates: resolvedPublicShopUrl
+      ? { canonical: `${resolvedPublicShopUrl.replace(/\/$/, '')}/category/${resolved.slug}` }
+      : metadata.alternates,
     icons: iconUrl
       ? {
         icon: [{ url: iconUrl, type: 'image/png' }],
@@ -243,6 +254,9 @@ export default async function PartnerCategoryPage({ params }: PageProps) {
   const resolved = await params
   const payload = await getPartnerCategoryPageData(resolved.partner, resolved.slug)
   const normalizedSlug = normalizeCategorySlug(resolved.slug, resolved.slug)
+  const requestHeaders = await headers()
+  const requestHost = requestHeaders.get('x-forwarded-host') ?? requestHeaders.get('host') ?? ''
+  const partnerPublicShopUrl = resolvePartnerStorefrontPublicUrl(payload?.partner ?? null, requestHost)
 
   if (!payload) {
     notFound()
@@ -260,7 +274,7 @@ export default async function PartnerCategoryPage({ params }: PageProps) {
       partnerBranding={{
         logoSrc: payload.partner.logoUrl || payload.partner.tabLogoUrl || '/Images/af_home_logo.png',
         displayName: payload.partner.displayName,
-        productHref: `/shop/${resolved.partner}/product`,
+        productHref: `${partnerPublicShopUrl || `/shop/${resolved.partner}`}/product`,
         heroVideoUrl: payload.partner.heroVideoUrl || undefined,
         enableActivateDiscount: Boolean(payload.partner.enableActivateDiscount),
       }}
