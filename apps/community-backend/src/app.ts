@@ -23,9 +23,14 @@ export function createApp() {
     return c.json({ message: "Community backend is running" });
   });
 
-  app.route("/", authRoutes);
-  app.route("/posts", communityPostRoutes);
-  app.route("/posts", communityCommentRoutes);
+  registerCommunityRoutes(app, "");
+  registerCommunityRoutes(app, "/api/community");
 
   return app;
+}
+
+function registerCommunityRoutes(app: Hono, prefix: string) {
+  app.route(prefix || "/", authRoutes);
+  app.route(`${prefix}/posts`, communityPostRoutes);
+  app.route(`${prefix}/posts`, communityCommentRoutes);
 }

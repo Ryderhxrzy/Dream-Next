@@ -13,6 +13,15 @@ function withCommunityBasePath(pathname: string) {
   return `${COMMUNITY_BASE_PATH}${pathname}`;
 }
 
+function createAfHomeLoginUrl(request: NextRequest, next: string) {
+  const loginUrl = new URL(request.url);
+  loginUrl.pathname = LOGIN_PATH;
+  loginUrl.search = "";
+  loginUrl.searchParams.set("next", next);
+
+  return loginUrl;
+}
+
 export function proxy(request: NextRequest) {
   const token = request.cookies.get(AUTH_COOKIE)?.value;
   const pathname = request.nextUrl.pathname;
@@ -25,17 +34,15 @@ export function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL(withCommunityBasePath(FEED_PATH), request.url));
     }
 
-    const loginUrl = new URL(LOGIN_PATH, request.url);
-    loginUrl.searchParams.set("next", withCommunityBasePath(FEED_PATH));
+    return NextResponse.redirect(createAfHomeLoginUrl(request, withCommunityBasePath(FEED_PATH)));
+  }
 
-    return NextResponse.redirect(loginUrl);
+  if (isLoginPage && !token) {
+    return NextResponse.redirect(createAfHomeLoginUrl(request, withCommunityBasePath(FEED_PATH)));
   }
 
   if (isProtectedPage && !token) {
-    const loginUrl = new URL(LOGIN_PATH, request.url);
-    loginUrl.searchParams.set("next", withCommunityBasePath(pathname));
-
-    return NextResponse.redirect(loginUrl);
+    return NextResponse.redirect(createAfHomeLoginUrl(request, withCommunityBasePath(pathname)));
   }
 
   if (isLoginPage && token) {
