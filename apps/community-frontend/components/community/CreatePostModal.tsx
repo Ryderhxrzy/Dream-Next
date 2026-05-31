@@ -1,117 +1,213 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { AnimatePresence, motion, type Transition } from "framer-motion"
+import { toast } from "sonner";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { format } from "date-fns";
+import { AnimatePresence, motion, type Transition } from "framer-motion";
+import { CalendarIcon, ImagePlus, Loader2, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Controller, useForm, type Resolver } from "react-hook-form";
+import { z } from "zod/v4";
+
+import { useCreateCommunityPost } from "@/lib/hooks/use-create-community-post";
+import { useUpdateCommunityPost } from "@/lib/hooks/use-update-community-post";
+import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { LocationSearch } from "@/components/ui/LocationSearch";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
-import { format } from "date-fns"
-import { CalendarIcon, ImagePlus, X } from "lucide-react"
-import { TimePicker } from "@/components/ui/TimePicker"
-import { LocationSearch } from "@/components/ui/LocationSearch"
-import { cn } from "@/lib/utils"
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { TimePicker } from "@/components/ui/TimePicker";
+import { cn } from "@/lib/utils";
 
 const categories = [
-  { value: "general",  label: "General" },
-  { value: "question", label: "❓ Question" },
-  { value: "event",    label: "📅 Event" },
-  { value: "for_sale", label: "🏷️ For Sale" },
-  { value: "safety",   label: "🛡️ Safety" },
-  { value: "free",     label: "🎁 Free" },
-]
+  { value: "GENERAL", label: "General" },
+  { value: "QUESTION", label: "Question" },
+  { value: "EVENT", label: "Event" },
+  { value: "FOR_SALE", label: "For Sale" },
+  { value: "SAFETY", label: "Safety" },
+  { value: "FREE", label: "Free" },
+] as const;
 
-const conditions = ["Brand New", "Like New", "Good", "Fair", "For Parts"]
+const conditions = [
+  { value: "BRAND_NEW", label: "Brand New" },
+  { value: "LIKE_NEW", label: "Like New" },
+  { value: "GOOD", label: "Good" },
+  { value: "FAIR", label: "Fair" },
+  { value: "FOR_PARTS", label: "For Parts" },
+] as const;
+
+const createPostSchema = z.object({
+  category: z.enum([
+    "GENERAL",
+    "QUESTION",
+    "EVENT",
+    "FOR_SALE",
+    "SAFETY",
+    "FREE",
+  ]),
+  title: z.string().trim().min(1, "Title is required"),
+  content: z.string().trim().min(1, "Details are required"),
+  image: z.instanceof(File).optional().nullable(),
+  eventDate: z.date().optional().nullable(),
+  eventTime: z.string().optional().nullable(),
+  location: z.string().optional().nullable(),
+  price: z.string().optional().nullable(),
+  condition: z.string().optional().nullable(),
+});
+
+type CreatePostValues = z.infer<typeof createPostSchema>;
+
+type EditPost = {
+  id: string;
+  category: CreatePostValues["category"];
+  title: string;
+  content: string;
+  imageUrl?: string | null;
+  eventDate?: string | null;
+  eventTime?: string | null;
+  location?: string | null;
+  price?: string | null;
+  condition?: string | null;
+};
 
 interface CreatePostModalProps {
-  open: boolean
-  onClose: () => void
+  open: boolean;
+  onClose: () => void;
+  editPost?: EditPost;
 }
 
-export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
-  const [category, setCategory]       = useState("general")
-  const [title, setTitle]             = useState("")
-  const [content, setContent]         = useState("")
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
-  // Event fields
-  const [eventDate, setEventDate]     = useState<Date | undefined>(undefined)
-  const [eventTime, setEventTime]     = useState("")
-  const [location, setLocation]       = useState("")
-  // For Sale fields
-  const [price, setPrice]             = useState("")
-  const [condition, setCondition]     = useState("Brand New")
+export function CreatePostModal({ open, onClose, editPost }: CreatePostModalProps) {
+  const isEditMode = !!editPost;
+  const [imagePreview, setImagePreview] = useState<string | null>(editPost?.imageUrl ?? null);
+  const createPost = useCreateCommunityPost();
+  const updatePost = useUpdateCommunityPost(editPost?.id ?? "");
 
-  const showImage    = ["general", "for_sale", "free"].includes(category)
-  const showEvent    = category === "event"
-  const showForSale  = category === "for_sale"
-  const showLocation = ["event", "safety"].includes(category)
+  const mutation = isEditMode ? updatePost : createPost;
 
-  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => setImagePreview(reader.result as string)
-    reader.readAsDataURL(file)
+  const form = useForm<CreatePostValues>({
+    resolver: zodResolver(createPostSchema as never) as Resolver<CreatePostValues>,
+    defaultValues: getDefaultValues(),
+  });
+
+  useEffect(() => {
+    if (open && editPost) {
+      form.reset({
+        category: editPost.category,
+        title: editPost.title,
+        content: editPost.content,
+        image: null,
+        eventDate: editPost.eventDate ? new Date(editPost.eventDate) : null,
+        eventTime: editPost.eventTime ?? "",
+        location: editPost.location ?? "",
+        price: editPost.price ?? "",
+        condition: editPost.condition ?? "BRAND_NEW",
+      });
+      setImagePreview(editPost.imageUrl ?? null);
+    } else if (!open) {
+      form.reset(getDefaultValues());
+      setImagePreview(null);
+    }
+  }, [open, editPost, form]);
+
+  const category = form.watch("category");
+  const title = form.watch("title");
+  const content = form.watch("content");
+  const eventDate = form.watch("eventDate");
+
+  const showImage = ["GENERAL", "FOR_SALE", "FREE"].includes(category);
+  const showEvent = category === "EVENT";
+  const showForSale = category === "FOR_SALE";
+  const showLocation = ["EVENT", "SAFETY"].includes(category);
+
+  function handleImageChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null;
+    form.setValue("image", file, { shouldDirty: true, shouldValidate: true });
+
+    if (!file) {
+      setImagePreview(null);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => setImagePreview(reader.result as string);
+    reader.readAsDataURL(file);
   }
 
-  function handleCategoryChange(val: string) {
-    setCategory(val)
-    setImagePreview(null)
-    setEventDate(undefined)
-    setEventTime("")
-    setLocation("")
-    setPrice("")
-    setCondition("Brand New")
-  }
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    // TODO: connect to community backend
-    handleClose()
+  function handleCategoryChange(value: CreatePostValues["category"]) {
+    form.setValue("category", value, { shouldDirty: true });
+    form.setValue("image", null);
+    form.setValue("eventDate", null);
+    form.setValue("eventTime", "");
+    form.setValue("location", "");
+    form.setValue("price", "");
+    form.setValue("condition", "BRAND_NEW");
+    setImagePreview(null);
   }
 
   function handleClose() {
-    setCategory("general")
-    setTitle("")
-    setContent("")
-    setImagePreview(null)
-    setEventDate(undefined)
-    setEventTime("")
-    setLocation("")
-    setPrice("")
-    setCondition("Brand New")
-    onClose()
+    form.reset(getDefaultValues());
+    setImagePreview(null);
+    onClose();
+  }
+
+  function onSubmit(values: CreatePostValues) {
+    if (isEditMode) {
+      updatePost.mutate(values, {
+        onSuccess: () => {
+          handleClose();
+          toast.success("Post updated successfully!");
+        },
+        onError: (error) => {
+          toast.error(error.message ?? "Failed to update. Please try again.");
+        },
+      });
+    } else {
+      createPost.mutate(values, {
+        onSuccess: () => {
+          handleClose();
+          toast.success("Post shared to the community!");
+        },
+        onError: (error) => {
+          toast.error(error.message ?? "Failed to post. Please try again.");
+        },
+      });
+    }
   }
 
   const fieldVariants = {
     hidden: { opacity: 0, y: 8, height: 0 },
     visible: { opacity: 1, y: 0, height: "auto" },
-    exit:   { opacity: 0, y: -4, height: 0 },
-  }
+    exit: { opacity: 0, y: -4, height: 0 },
+  };
 
-  const transition: Transition = { duration: 0.18 }
+  const transition: Transition = { duration: 0.18 };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) handleClose();
+      }}
+    >
       <AnimatePresence>
         {open && (
           <DialogContent forceMount className="sm:max-w-lg p-0">
@@ -124,49 +220,49 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
             >
               <DialogHeader className="mb-4">
                 <DialogTitle className="text-base font-semibold text-zinc-900">
-                  Post to Community
+                  {isEditMode ? "Edit Post" : "Post to Community"}
                 </DialogTitle>
               </DialogHeader>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-
-                {/* Category */}
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label className="text-sm font-medium text-zinc-700">Category</Label>
-                  <Select value={category} onValueChange={handleCategoryChange}>
-                    <SelectTrigger className="h-9 bg-zinc-50 border-zinc-200 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat.value} value={cat.value}>
-                          {cat.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Title */}
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium text-zinc-700">Title</Label>
-                  <Input
-                    placeholder={
-                      category === "question" ? "What would you like to ask?"
-                      : category === "for_sale" ? "What are you selling?"
-                      : category === "free" ? "What are you giving away?"
-                      : category === "safety" ? "Describe the safety concern"
-                      : category === "event" ? "Event name"
-                      : "What's on your mind?"
-                    }
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="h-9 bg-zinc-50 border-zinc-200 text-sm"
-                    required
+                  <Label className="text-sm font-medium text-zinc-700">
+                    Category
+                  </Label>
+                  <Controller
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={handleCategoryChange}
+                      >
+                        <SelectTrigger className="h-9 bg-zinc-50 border-zinc-200 text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((cat) => (
+                            <SelectItem key={cat.value} value={cat.value}>
+                              {cat.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   />
                 </div>
 
-                {/* Event Fields */}
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium text-zinc-700">
+                    Title
+                  </Label>
+                  <Input
+                    placeholder={getTitlePlaceholder(category)}
+                    className="h-9 bg-zinc-50 border-zinc-200 text-sm"
+                    {...form.register("title")}
+                  />
+                </div>
+
                 <AnimatePresence>
                   {showEvent && (
                     <motion.div
@@ -179,40 +275,57 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                       className="space-y-3 overflow-hidden"
                     >
                       <div className="grid grid-cols-2 gap-3">
-                        {/* Date — shadcn Calendar */}
                         <div className="space-y-1.5">
-                          <Label className="text-sm font-medium text-zinc-700">Date</Label>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                className={cn(
-                                  "w-full h-9 justify-start text-sm font-normal bg-zinc-50 border-zinc-200",
-                                  !eventDate && "text-zinc-400"
-                                )}
-                              >
-                                <CalendarIcon className="w-3.5 h-3.5 mr-2 text-zinc-400" />
-                                {eventDate ? format(eventDate, "MMM d, yyyy") : "Pick a date"}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={eventDate}
-                                onSelect={setEventDate}
-                                disabled={{ before: new Date() }}
-                              />
-                            </PopoverContent>
-                          </Popover>
+                          <Label className="text-sm font-medium text-zinc-700">
+                            Date
+                          </Label>
+                          <Controller
+                            control={form.control}
+                            name="eventDate"
+                            render={({ field }) => (
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    className={cn(
+                                      "w-full h-9 justify-start text-sm font-normal bg-zinc-50 border-zinc-200",
+                                      !field.value && "text-zinc-400",
+                                    )}
+                                  >
+                                    <CalendarIcon className="w-3.5 h-3.5 mr-2 text-zinc-400" />
+                                    {field.value
+                                      ? format(field.value, "MMM d, yyyy")
+                                      : "Pick a date"}
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                  <Calendar
+                                    mode="single"
+                                    selected={field.value ?? undefined}
+                                    onSelect={(date) => field.onChange(date ?? null)}
+                                    disabled={{ before: new Date() }}
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                            )}
+                          />
                         </div>
-                        {/* Time */}
+
                         <div className="space-y-1.5">
-                          <Label className="text-sm font-medium text-zinc-700">Time</Label>
-                          <TimePicker
-                            value={eventTime}
-                            onChange={setEventTime}
-                            placeholder="Pick a time"
+                          <Label className="text-sm font-medium text-zinc-700">
+                            Time
+                          </Label>
+                          <Controller
+                            control={form.control}
+                            name="eventTime"
+                            render={({ field }) => (
+                              <TimePicker
+                                value={field.value ?? ""}
+                                onChange={field.onChange}
+                                placeholder="Pick a time"
+                              />
+                            )}
                           />
                         </div>
                       </div>
@@ -220,7 +333,6 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                   )}
                 </AnimatePresence>
 
-                {/* Location */}
                 <AnimatePresence>
                   {showLocation && (
                     <motion.div
@@ -230,20 +342,27 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                       animate="visible"
                       exit="exit"
                       transition={transition}
-                      className="space-y-1.5 overflow-hidden"
+                      className="relative z-10 space-y-1.5 overflow-visible"
                     >
-                      <Label className="text-sm font-medium text-zinc-700">Location</Label>
-                      <LocationSearch
-                        value={location}
-                        onChange={setLocation}
-                        placeholder="Search location..."
-                        required={showLocation}
+                      <Label className="text-sm font-medium text-zinc-700">
+                        Location
+                      </Label>
+                      <Controller
+                        control={form.control}
+                        name="location"
+                        render={({ field }) => (
+                          <LocationSearch
+                            value={field.value ?? ""}
+                            onChange={field.onChange}
+                            placeholder="Search location..."
+                            required={showLocation}
+                          />
+                        )}
                       />
                     </motion.div>
                   )}
                 </AnimatePresence>
 
-                {/* For Sale Fields */}
                 <AnimatePresence>
                   {showForSale && (
                     <motion.div
@@ -256,50 +375,60 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                       className="grid grid-cols-2 gap-3 overflow-hidden"
                     >
                       <div className="space-y-1.5">
-                        <Label className="text-sm font-medium text-zinc-700">Price (₱)</Label>
+                        <Label className="text-sm font-medium text-zinc-700">
+                          Price (PHP)
+                        </Label>
                         <Input
                           type="number"
                           placeholder="0.00"
-                          value={price}
-                          onChange={(e) => setPrice(e.target.value)}
                           className="h-9 bg-zinc-50 border-zinc-200 text-sm"
-                          required={showForSale}
+                          {...form.register("price")}
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-sm font-medium text-zinc-700">Condition</Label>
-                        <Select value={condition} onValueChange={setCondition}>
-                          <SelectTrigger className="h-9 bg-zinc-50 border-zinc-200 text-sm">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {conditions.map((c) => (
-                              <SelectItem key={c} value={c}>{c}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Label className="text-sm font-medium text-zinc-700">
+                          Condition
+                        </Label>
+                        <Controller
+                          control={form.control}
+                          name="condition"
+                          render={({ field }) => (
+                            <Select
+                              value={field.value ?? "BRAND_NEW"}
+                              onValueChange={field.onChange}
+                            >
+                              <SelectTrigger className="h-9 bg-zinc-50 border-zinc-200 text-sm">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {conditions.map((condition) => (
+                                  <SelectItem
+                                    key={condition.value}
+                                    value={condition.value}
+                                  >
+                                    {condition.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
 
-                {/* Content */}
                 <div className="space-y-1.5">
-                  <Label className="text-sm font-medium text-zinc-700">Details</Label>
+                  <Label className="text-sm font-medium text-zinc-700">
+                    Details
+                  </Label>
                   <Textarea
-                    placeholder={
-                      category === "question" ? "Add more context to your question..."
-                      : category === "safety" ? "Describe what happened and where..."
-                      : "Share more details with your community..."
-                    }
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
+                    placeholder={getContentPlaceholder(category)}
                     className="bg-zinc-50 border-zinc-200 text-sm resize-none min-h-24"
-                    required
+                    {...form.register("content")}
                   />
                 </div>
 
-                {/* Image Upload */}
                 <AnimatePresence>
                   {showImage && (
                     <motion.div
@@ -311,7 +440,9 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                       transition={transition}
                       className="space-y-1.5 overflow-hidden"
                     >
-                      <Label className="text-sm font-medium text-zinc-700">Photo (optional)</Label>
+                      <Label className="text-sm font-medium text-zinc-700">
+                        Photo (optional)
+                      </Label>
                       <AnimatePresence mode="wait">
                         {imagePreview ? (
                           <motion.div
@@ -322,10 +453,17 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                             transition={{ duration: 0.15 }}
                             className="relative rounded-lg overflow-hidden border border-zinc-200"
                           >
-                            <img src={imagePreview} alt="preview" className="w-full h-40 object-cover" />
+                            <img
+                              src={imagePreview}
+                              alt=""
+                              className="w-full h-40 object-cover"
+                            />
                             <button
                               type="button"
-                              onClick={() => setImagePreview(null)}
+                              onClick={() => {
+                                form.setValue("image", null);
+                                setImagePreview(null);
+                              }}
                               className="absolute top-2 right-2 w-6 h-6 bg-zinc-900/70 text-white rounded-full flex items-center justify-center hover:bg-zinc-900 transition-colors"
                             >
                               <X className="w-3 h-3" />
@@ -341,8 +479,15 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                             className="flex flex-col items-center justify-center gap-2 border border-dashed border-zinc-300 rounded-lg h-24 cursor-pointer hover:bg-zinc-50 transition-colors"
                           >
                             <ImagePlus className="w-5 h-5 text-zinc-400" />
-                            <span className="text-xs text-zinc-400">Click to upload a photo</span>
-                            <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                            <span className="text-xs text-zinc-400">
+                              Click to upload a photo
+                            </span>
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp,image/gif"
+                              className="hidden"
+                              onChange={handleImageChange}
+                            />
                           </motion.label>
                         )}
                       </AnimatePresence>
@@ -350,27 +495,71 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                   )}
                 </AnimatePresence>
 
-                {/* Actions */}
+                {mutation.error && (
+                  <p className="text-sm text-red-600">
+                    {mutation.error.message}
+                  </p>
+                )}
+
                 <div className="flex items-center justify-end gap-2 pt-1">
-                  <Button type="button" variant="ghost" onClick={handleClose} className="h-9 text-sm text-zinc-600">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={handleClose}
+                    className="h-9 text-sm text-zinc-600"
+                  >
                     Cancel
                   </Button>
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
                     <Button
                       type="submit"
-                      className="h-9 px-5 bg-zinc-950 hover:bg-zinc-800 text-white text-sm font-medium"
-                      disabled={!title || !content}
+                      className="h-9 px-5 bg-zinc-950 hover:bg-zinc-800 text-white text-sm font-medium min-w-[80px]"
+                      disabled={mutation.isPending || !title.trim() || !content.trim()}
                     >
-                      Post
+                      {mutation.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : isEditMode ? (
+                        "Save changes"
+                      ) : (
+                        "Post"
+                      )}
                     </Button>
                   </motion.div>
                 </div>
-
               </form>
             </motion.div>
           </DialogContent>
         )}
       </AnimatePresence>
     </Dialog>
-  )
+  );
+}
+
+function getDefaultValues(): CreatePostValues {
+  return {
+    category: "GENERAL",
+    title: "",
+    content: "",
+    image: null,
+    eventDate: null,
+    eventTime: "",
+    location: "",
+    price: "",
+    condition: "BRAND_NEW",
+  };
+}
+
+function getTitlePlaceholder(category: CreatePostValues["category"]) {
+  if (category === "QUESTION") return "What would you like to ask?";
+  if (category === "FOR_SALE") return "What are you selling?";
+  if (category === "FREE") return "What are you giving away?";
+  if (category === "SAFETY") return "Describe the safety concern";
+  if (category === "EVENT") return "Event name";
+  return "What's on your mind?";
+}
+
+function getContentPlaceholder(category: CreatePostValues["category"]) {
+  if (category === "QUESTION") return "Add more context to your question...";
+  if (category === "SAFETY") return "Describe what happened and where...";
+  return "Share more details with your community...";
 }

@@ -1,9 +1,11 @@
 "use client"
 
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Plus, LayoutGrid, CalendarDays, AlertCircle } from "lucide-react"
 import { CreatePostModal } from "@/components/community/CreatePostModal"
+import { CommentsModal } from "@/components/community/CommentsModal"
+import { DeletePostModal } from "@/components/community/DeletePostModal"
+import { useCommunityUiStore } from "@/store/community-ui.store"
 
 const stats = [
   { value: "2,847", label: "Total members" },
@@ -27,21 +29,24 @@ const quickActions = [
 ]
 
 export default function RightPanel() {
-  const [modalOpen, setModalOpen] = useState(false)
+  const { createPostOpen, openCreatePost, closeCreatePost, editPost, closeEditPost } = useCommunityUiStore()
 
   return (
     <aside className="w-64 shrink-0 h-[calc(100vh-3.5rem)] sticky top-14 overflow-y-auto py-4 px-3 space-y-5 border-l border-zinc-200">
 
       {/* Post Button */}
       <Button
-        onClick={() => setModalOpen(true)}
+        onClick={openCreatePost}
         className="w-full bg-zinc-950 hover:bg-zinc-800 text-white h-9 text-sm font-medium rounded-md"
       >
         <Plus className="w-4 h-4 mr-1.5" />
         Post to Community
       </Button>
 
-      <CreatePostModal open={modalOpen} onClose={() => setModalOpen(false)} />
+      <CreatePostModal open={createPostOpen} onClose={closeCreatePost} />
+      <CreatePostModal open={!!editPost} onClose={closeEditPost} editPost={editPost ?? undefined} />
+      <DeletePostModal />
+      <CommentsModal />
 
       {/* Stats */}
       <div>

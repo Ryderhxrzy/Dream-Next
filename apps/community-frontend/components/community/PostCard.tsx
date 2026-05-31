@@ -1,12 +1,23 @@
 "use client"
 
+import { useEffect, useRef, useState } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { ThumbsUp, MessageCircle, Share2, MoreHorizontal } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { useHideCommunityPost } from "@/lib/hooks/use-hide-community-post"
+import { useCommunityUiStore } from "@/store/community-ui.store"
+import { Bookmark, EyeOff, Flag, Pencil, ThumbsUp, MessageCircle, Share2, MoreHorizontal, Trash2, UserX } from "lucide-react"
+import type { CommunityPost } from "@/lib/hooks/use-community-posts"
 
-type PostType = "normal" | "question" | "event"
+export type PostType = "normal" | "question" | "event"
 
-interface Post {
+export interface Post {
   id: string
   type: PostType
   author: {
@@ -39,8 +50,82 @@ const typeBadge: Record<PostType, { label: string; className: string }> = {
   event:    { label: "📅 Event",   className: "bg-blue-50 text-blue-600 border border-blue-200" },
 }
 
-const PostCard = ({ post }: { post: Post }) => {
+const UNDO_DURATION = 5000
+
+interface PostCardProps {
+  post: Post
+  postId: string
+  isOwner: boolean
+  rawPost: CommunityPost
+}
+
+const PostCard = ({ post, postId, isOwner, rawPost }: PostCardProps) => {
   const badge = typeBadge[post.type]
+  const { hide } = useHideCommunityPost()
+
+  const [hidePending, setHidePending] = useState(false)
+  const [undoProgress, setUndoProgress] = useState(100)
+  const openEditPost = useCommunityUiStore((state) => state.openEditPost)
+  const confirmDeletePost = useCommunityUiStore((state) => state.confirmDeletePost)
+  const openComments = useCommunityUiStore((state) => state.openComments)
+
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    }
+  }, [])
+
+  function handleHide() {
+    setHidePending(true)
+    setUndoProgress(100)
+
+    const start = Date.now()
+    intervalRef.current = setInterval(() => {
+      const elapsed = Date.now() - start
+      setUndoProgress(Math.max(0, 100 - (elapsed / UNDO_DURATION) * 100))
+    }, 50)
+
+    timerRef.current = setTimeout(() => {
+      clearInterval(intervalRef.current!)
+      hide.mutate(postId)
+    }, UNDO_DURATION)
+  }
+
+  function handleUndo() {
+    if (timerRef.current) clearTimeout(timerRef.current)
+    if (intervalRef.current) clearInterval(intervalRef.current)
+    setHidePending(false)
+    setUndoProgress(100)
+  }
+
+  if (hidePending) {
+    return (
+      <div className="bg-white border border-zinc-200 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-sm text-zinc-500">
+          <EyeOff className="w-4 h-4 shrink-0 text-zinc-400" />
+          Post hidden
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="w-24 h-1 bg-zinc-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-zinc-400 rounded-full transition-none"
+              style={{ width: `${undoProgress}%` }}
+            />
+          </div>
+          <button
+            onClick={handleUndo}
+            className="text-sm font-medium text-zinc-900 hover:underline shrink-0"
+          >
+            Undo
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-white border border-zinc-200 rounded-xl p-4 space-y-3">
@@ -71,9 +156,63 @@ const PostCard = ({ post }: { post: Post }) => {
             </p>
           </div>
         </div>
-        <button className="text-zinc-400 hover:text-zinc-600 transition-colors">
-          <MoreHorizontal className="w-4 h-4" />
-        </button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="text-zinc-400 hover:text-zinc-600 transition-colors outline-none">
+              <MoreHorizontal className="w-4 h-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            {isOwner ? (
+              <>
+                <DropdownMenuItem className="gap-2 text-sm cursor-pointer">
+                  <Bookmark className="w-3.5 h-3.5" />
+                  Save post
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="gap-2 text-sm cursor-pointer"
+                  onClick={() => openEditPost(rawPost)}
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                  Edit post
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="gap-2 text-sm cursor-pointer"
+                  onClick={handleHide}
+                >
+                  <EyeOff className="w-3.5 h-3.5" />
+                  Hide post
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  className="gap-2 text-sm cursor-pointer"
+                  onClick={() => confirmDeletePost(postId)}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Delete post
+                </DropdownMenuItem>
+              </>
+            ) : (
+              <>
+                <DropdownMenuItem className="gap-2 text-sm cursor-pointer">
+                  <Bookmark className="w-3.5 h-3.5" />
+                  Save post
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="gap-2 text-sm cursor-pointer text-orange-600 focus:text-orange-600">
+                  <Flag className="w-3.5 h-3.5" />
+                  Report post
+                </DropdownMenuItem>
+                <DropdownMenuItem className="gap-2 text-sm cursor-pointer text-red-600 focus:text-red-600">
+                  <UserX className="w-3.5 h-3.5" />
+                  Block user
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Content */}
@@ -126,7 +265,10 @@ const PostCard = ({ post }: { post: Post }) => {
             <ThumbsUp className="w-3.5 h-3.5" />
             {post.helpfulCount} Helpful
           </button>
-          <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 transition-colors">
+          <button
+            onClick={() => openComments({ id: postId, title: rawPost.title })}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 transition-colors"
+          >
             <MessageCircle className="w-3.5 h-3.5" />
             {post.commentCount} Comments
           </button>

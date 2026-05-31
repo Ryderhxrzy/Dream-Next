@@ -46,7 +46,7 @@ export function LocationSearch({
       const res = await fetch(`/api/location?q=${encodeURIComponent(q)}`)
       const data: Suggestion[] = await res.json()
       setSuggestions(data)
-      setOpen(data.length > 0)
+      setOpen(true)
     } catch {
       setSuggestions([])
       setOpen(false)
@@ -106,7 +106,7 @@ export function LocationSearch({
 
       {/* Dropdown */}
       {open && suggestions.length > 0 && (
-        <div className="absolute z-9999 w-full mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg overflow-hidden">
+        <div className="absolute z-[9999] w-full mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg overflow-hidden">
           {suggestions.map((s, i) => {
             const parts = s.display_name.split(", ")
             const main  = parts[0]

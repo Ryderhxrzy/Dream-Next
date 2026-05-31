@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -8,4 +7,137 @@ datasource db {
   provider = "postgresql"
 }
 
+enum CommunityPostCategory {
+  GENERAL
+  QUESTION
+  EVENT
+  FOR_SALE
+  SAFETY
+  FREE
+}
 
+enum CommunityPostStatus {
+  ACTIVE
+  HIDDEN
+  DELETED
+}
+
+enum CommunityItemCondition {
+  BRAND_NEW
+  LIKE_NEW
+  GOOD
+  FAIR
+  FOR_PARTS
+}
+
+model CommunityPost {
+  id BigInt @id @default(autoincrement()) @map("cp_id")
+
+  // user/customer id ng nag-post
+  authorId BigInt   @map("cp_author_id")
+  author   Customer @relation(fields: [authorId], references: [id])
+
+  category CommunityPostCategory @map("cp_category")
+  title    String                @map("cp_title")
+  content  String                @map("cp_content") @db.Text
+
+  imageUrl String? @map("cp_image_url")
+
+  // for event posts
+  eventDate DateTime? @map("cp_event_date")
+  eventTime String?   @map("cp_event_time")
+
+  // for event/safety posts
+  location  String?  @map("cp_location")
+  latitude  Decimal? @map("cp_latitude") @db.Decimal(10, 7)
+  longitude Decimal? @map("cp_longitude") @db.Decimal(10, 7)
+
+  // for sale posts 
+  price     Decimal?                @map("cp_price") @db.Decimal(10, 2)
+  condition CommunityItemCondition? @map("cp_condition")
+
+  status CommunityPostStatus @default(ACTIVE) @map("cp_status")
+
+  createdAt DateTime @default(now()) @map("cp_created_at")
+  updatedAt DateTime @updatedAt @map("cp_updated_at")
+
+  comments  CommunityComment[]
+  reactions CommunityReaction[]
+
+  @@index([authorId])
+  @@index([category])
+  @@index([createdAt])
+  @@map("tbl_community_posts")
+}
+
+model CommunityComment {
+  id BigInt @id @default(autoincrement()) @map("cc_id")
+
+  postId   BigInt  @map("cc_post_id")
+  authorId BigInt  @map("cc_author_id")
+  parentId BigInt? @map("cc_parent_id")
+
+  content String @map("cc_content") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  post    CommunityPost     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author  Customer          @relation(fields: [authorId], references: [id])
+  parent  CommunityComment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies CommunityComment[] @relation("CommentReplies")
+
+  @@index([postId])
+  @@index([authorId])
+  @@index([parentId])
+  @@map("tbl_community_comments")
+}
+
+model CommunityReaction {
+  id BigInt @id @default(autoincrement()) @map("cr_id")
+
+  postId   BigInt @map("cr_post_id")
+  authorId BigInt @map("cr_author_id")
+
+  type String @default("LIKE") @map("cr_type")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  post   CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author Customer      @relation(fields: [authorId], references: [id])
+
+  @@unique([postId, authorId])
+  @@index([postId])
+  @@index([authorId])
+  @@map("tbl_community_reactions")
+}
+
+model Customer {
+  id        BigInt  @id @map("c_userid")
+  firstName String? @map("c_fname")
+  lastName  String? @map("c_lname")
+  email     String? @map("c_email")
+  avatarUrl String? @map("c_avatar_url")
+
+  posts     CommunityPost[]
+  comments  CommunityComment[]
+  reactions CommunityReaction[]
+
+  @@map("tbl_customer")
+}
+
+model PersonalAccessToken {
+  id            BigInt    @id @default(autoincrement())
+  tokenableType String    @map("tokenable_type")
+  tokenableId   BigInt    @map("tokenable_id")
+  name          String
+  token         String    @unique
+  abilities     String?
+  lastUsedAt    DateTime? @map("last_used_at")
+  expiresAt     DateTime? @map("expires_at")
+  createdAt     DateTime? @map("created_at")
+  updatedAt     DateTime? @map("updated_at")
+
+  @@index([tokenableType, tokenableId])
+  @@map("personal_access_tokens")
+}

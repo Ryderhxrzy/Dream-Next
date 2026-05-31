@@ -1,59 +1,146 @@
-'use client';
+"use client";
 
-import PostCard from "./PostCard";
+import { useState } from "react";
+import { format, formatDistanceToNowStrict } from "date-fns";
+import { ArrowUp } from "lucide-react";
 
-const DUMMY_POSTS = [
-  {
-    id: "1",
-    type: "normal" as const,
-    author: { name: "City of Maplewood", initials: "CM", isOfficial: true },
-    timeAgo: "2 hours ago",
-    location: "Maplewood Heights",
-    content: "The park renovation at Elm St & 4th Ave is officially complete! New playground equipment, a refurbished basketball court, and beautiful landscaping. Come to the ribbon cutting this Saturday at 10am — all neighbors welcome!",
-    imageUrl: "https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=800&auto=format&fit=crop",
-    helpfulCount: 142,
-    commentCount: 34,
-  },
-  {
-    id: "2",
-    type: "question" as const,
-    author: { name: "Mark T.", initials: "MT" },
-    timeAgo: "3 hours ago",
-    location: "Pinecrest Block",
-    content: "Does anyone have a recommendation for a reliable plumber in the area? Had a pipe burst last night and my usual guy is completely booked out for 3 weeks. Any help appreciated — it's kind of urgent!",
-    helpfulCount: 8,
-    commentCount: 23,
-  },
-  {
-    id: "3",
-    type: "event" as const,
-    author: { name: "Sarah K.", initials: "SK" },
-    timeAgo: "Yesterday",
-    location: "Maple Street",
-    content: "You're invited to the Annual Summer Block Party! 🎉 Join us Saturday, June 14th from 3–9 PM on Maple Street. Bring a dish to share, kids are very welcome, and live music starts at 5 PM!",
-    helpfulCount: 0,
-    commentCount: 12,
-    event: {
-      month: "JUN",
-      day: "14",
-      title: "Summer Block Party",
-      date: "Sat, Jun 14 · 3:00 PM",
-      location: "Maple St, 2nd–4th Ave",
-      going: true,
-      goingCount: 89,
-      interestedCount: 24,
-    },
-  },
-]
+import PostCard, { type Post, type PostType } from "./PostCard";
+import {
+  type CommunityPost,
+  useCommunityPosts,
+} from "@/lib/hooks/use-community-posts";
+import { useCurrentUser } from "@/lib/hooks/use-current-user";
+import { useNotifications } from "@/lib/hooks/use-notifications";
 
 const PostFeed = () => {
+  const postsQuery = useCommunityPosts();
+  const { data: currentUser } = useCurrentUser();
+  const { notifications } = useNotifications();
+  const [lastSeenCount, setLastSeenCount] = useState(0);
+
+  const newPostCount = notifications.filter(
+    (n) => n.type === "new_post" && !n.read
+  ).length;
+
+  function handleRefresh() {
+    postsQuery.refetch();
+    setLastSeenCount(notifications.length);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  if (postsQuery.isLoading) {
+    return (
+      <div className="space-y-3">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <div
+            key={index}
+            className="h-56 animate-pulse rounded-xl border border-zinc-200 bg-white"
+          />
+        ))}
+      </div>
+    );
+  }
+
+  if (postsQuery.isError) {
+    return (
+      <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        {postsQuery.error.message}
+      </div>
+    );
+  }
+
+  const posts = postsQuery.data ?? [];
+
+  if (posts.length === 0) {
+    return (
+      <div className="rounded-xl border border-zinc-200 bg-white p-8 text-center">
+        <p className="text-sm font-medium text-zinc-900">No posts yet</p>
+        <p className="mt-1 text-sm text-zinc-500">
+          Be the first to post something for the community.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
-      {DUMMY_POSTS.map((post) => (
-        <PostCard key={post.id} post={post}/>
+      {newPostCount > 0 && (
+        <button
+          onClick={handleRefresh}
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-zinc-200 bg-white text-sm font-medium text-zinc-900 hover:bg-zinc-50 transition-colors shadow-sm"
+        >
+          <ArrowUp className="w-4 h-4" />
+          {newPostCount === 1 ? "1 new post" : `${newPostCount} new posts`} — tap to refresh
+        </button>
+      )}
+      {posts.map((post) => (
+        <PostCard
+          key={post.id}
+          post={mapCommunityPostToCard(post)}
+          postId={post.id}
+          isOwner={!!currentUser && currentUser.id === post.authorId}
+          rawPost={post}
+        />
       ))}
     </div>
-  )
+  );
+};
+
+function mapCommunityPostToCard(post: CommunityPost): Post {
+  return {
+    id: post.id,
+    type: mapPostType(post.category),
+    author: {
+      name: post.author.name,
+      initials: getInitials(post.author.name),
+      avatar: post.author.avatarUrl ?? undefined,
+    },
+    timeAgo: formatDistanceToNowStrict(new Date(post.createdAt), {
+      addSuffix: true,
+    }),
+    location: post.location || "Quezon City",
+    content: post.content,
+    imageUrl: post.imageUrl ?? undefined,
+    helpfulCount: post.counts.reactions,
+    commentCount: post.counts.comments,
+    event: mapEvent(post),
+  };
 }
 
-export default PostFeed
+function mapPostType(category: CommunityPost["category"]): PostType {
+  if (category === "QUESTION") return "question";
+  if (category === "EVENT") return "event";
+  return "normal";
+}
+
+function mapEvent(post: CommunityPost): Post["event"] {
+  if (post.category !== "EVENT" || !post.eventDate) {
+    return undefined;
+  }
+
+  const eventDate = new Date(post.eventDate);
+
+  return {
+    month: format(eventDate, "MMM").toUpperCase(),
+    day: format(eventDate, "d"),
+    title: post.title,
+    date: `${format(eventDate, "EEE, MMM d")}${
+      post.eventTime ? ` - ${post.eventTime}` : ""
+    }`,
+    location: post.location || "Community",
+    going: false,
+    goingCount: 0,
+    interestedCount: 0,
+  };
+}
+
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+}
+
+export default PostFeed;

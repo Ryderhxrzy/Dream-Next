@@ -1,16 +1,6 @@
-import { Hono } from "hono";
-import { serve } from "@hono/node-server";
-const app = new Hono();
+import { startServer } from "./server.js";
 
-app.get("/", (c) => {
-  return c.text("Hello, World!");
+startServer().catch((error) => {
+  console.error("Failed to start server:", error);
+  process.exit(1);
 });
-
-const port = 4000;
-
-serve({
-  fetch: app.fetch,
-  port,
-})
-
-console.log(`Server is running on http://localhost:${port}`);

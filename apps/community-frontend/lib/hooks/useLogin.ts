@@ -2,38 +2,45 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import Cookies from "js-cookie";
+import { useAuthStore } from "@/store/auth.store";
 
 export function useLogin() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const router = useRouter();
+    const setToken = useAuthStore((state) => state.setToken);
 
     async function login (email: string, password: string)  {
         setLoading(true);
         setError("");
 
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_AFHOME_API_URL}/api/auth/mobile/login`, {
+            const res = await fetch("/api/auth/login", {
                 method: "POST",
                 headers: {
+                    Accept: "application/json",
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({ email, password }),
             });
 
-            const data = await res.json();
+            const data = await res.json().catch(() => null);
 
             if (!res.ok) {
-                setError(data.message || "Login failed");
+                setError(data?.message || "Login failed");
                 return;
             }
 
-            Cookies.set("af_token", data.token, { expires: 7 });
+            if (!data?.token) {
+                setError("Login response did not include an auth token");
+                return;
+            }
 
-            router.push("/feed");
+            setToken(data.token);
+
+            router.replace("/feed");
         } catch(error) {
-            setError("An error occurred during login");
+            setError(error instanceof Error ? error.message : "An error occurred during login");
         } finally {
             setLoading(false);
         }
