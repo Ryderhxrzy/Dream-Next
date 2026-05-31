@@ -14,12 +14,20 @@ import Footer from "@/components/landing-page/Footer";
 
 type Mode = 'login' | 'signup' | 'force-password-change'
 const LOGIN_REDIRECT_GUARD_KEY = 'afhome-skip-login-redirect'
+const COMMUNITY_AUTH_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
 
 function resolveCallbackPath(value: string | null | undefined): string {
   const normalized = String(value ?? '').trim();
   if (!normalized.startsWith('/')) return '/shop';
   if (normalized.startsWith('//')) return '/shop';
   return normalized;
+}
+
+function syncCommunityAuthCookie(accessToken: string | null | undefined) {
+  if (typeof window === 'undefined' || !accessToken) return;
+
+  const secureFlag = window.location.protocol === 'https:' ? '; Secure' : '';
+  document.cookie = `af_token=${encodeURIComponent(accessToken)}; Path=/; Max-Age=${COMMUNITY_AUTH_COOKIE_MAX_AGE}; SameSite=Lax${secureFlag}`;
 }
 
 interface LoginPageClientProps {
@@ -105,9 +113,11 @@ export default function LoginPageClient({
     if (forcePasswordChange || passwordChangeRequired) return;
     if (switchAccount) return;
 
+    syncCommunityAuthCookie(session?.user?.accessToken);
     router.replace(callbackPath);
   }, [
     status,
+    session?.user?.accessToken,
     justLoggedOut,
     forcePasswordChange,
     passwordChangeRequired,
