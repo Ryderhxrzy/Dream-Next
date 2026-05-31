@@ -283,6 +283,9 @@ services:
       CLOUDINARY_COMMUNITY_POSTS_FOLDER: afhome/community/posts
     depends_on:
       - redis
+    networks:
+      - dokploy-network
+      - default
 
   realtime-service:
     build:
@@ -299,6 +302,9 @@ services:
       CORS_ORIGINS: "https://afhome.ph"
     depends_on:
       - redis
+    networks:
+      - dokploy-network
+      - default
 
   redis:
     image: redis:7-alpine
