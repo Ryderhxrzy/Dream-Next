@@ -1,6 +1,35 @@
+"use client";
+
+import { useEffect, useMemo } from "react";
+
+function getCommunityFeedPath() {
+  if (typeof window === "undefined") {
+    return "/feed";
+  }
+
+  return window.location.pathname.startsWith("/community")
+    ? "/community/feed"
+    : "/feed";
+}
 
 export default function Home() {
+  const feedPath = useMemo(() => getCommunityFeedPath(), []);
+
+  useEffect(() => {
+    window.location.replace(feedPath);
+  }, [feedPath]);
+
   return (
-    <div></div>
+    <main className="flex min-h-screen items-center justify-center bg-white px-6 text-center">
+      <div className="space-y-3">
+        <p className="text-sm font-medium text-zinc-500">Opening AF Nexus Community...</p>
+        <a
+          href={feedPath}
+          className="inline-flex h-10 items-center justify-center rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white hover:bg-zinc-800"
+        >
+          Continue to feed
+        </a>
+      </div>
+    </main>
   );
 }

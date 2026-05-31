@@ -1,4 +1,4 @@
-import Redis from "ioredis";
+import { Redis } from "ioredis";
 import { config } from "./config.js";
 
 export const subscriber = new Redis({
@@ -6,10 +6,10 @@ export const subscriber = new Redis({
   port: config.redis.port,
   password: config.redis.password,
   lazyConnect: true,
-  retryStrategy: (times) => Math.min(times * 500, 5000),
+  retryStrategy: (times: number): number => Math.min(times * 500, 5000),
 });
 
-subscriber.on("error", (error) => {
+subscriber.on("error", (error: Error) => {
   console.error("Redis subscriber error:", error.message);
 });
 

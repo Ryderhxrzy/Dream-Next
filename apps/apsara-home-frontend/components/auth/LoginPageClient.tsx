@@ -72,7 +72,12 @@ export default function LoginPageClient({
   const passwordChangeRequired = Boolean(session?.user?.passwordChangeRequired);
   const hasReferral = Boolean(searchParams.get('ref') || searchParams.get('referred_by'));
   const requestedMode = searchParams.get('mode');
-  const callbackPath = resolveCallbackPath(searchParams.get('callback') || searchParams.get('callbackUrl') || defaultCallbackPath);
+  const callbackPath = resolveCallbackPath(
+    searchParams.get('next') ||
+    searchParams.get('callback') ||
+    searchParams.get('callbackUrl') ||
+    defaultCallbackPath
+  );
   const [manualMode, setManualMode] = useState<'login' | 'signup' | null>(null);
 
   useEffect(() => {

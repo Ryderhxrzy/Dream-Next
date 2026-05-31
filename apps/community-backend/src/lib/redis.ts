@@ -1,4 +1,4 @@
-import Redis from "ioredis";
+import { Redis } from "ioredis";
 
 import { config } from "../config/config.js";
 
@@ -12,10 +12,9 @@ export const redis = new Redis({
   enableOfflineQueue: false,
 });
 
-redis.on("error", (error) => {
+redis.on("error", (error: NodeJS.ErrnoException) => {
   // Non-fatal — only log once, not on every retry
-  if ((error as NodeJS.ErrnoException).code === "ECONNREFUSED" ||
-      (error as NodeJS.ErrnoException).code === "ENOTFOUND") {
+  if (error.code === "ECONNREFUSED" || error.code === "ENOTFOUND") {
     return; // silently ignore — already warned in startServer()
   }
   console.error("Redis error:", error.message);

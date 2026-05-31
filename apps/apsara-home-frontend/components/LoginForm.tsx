@@ -32,6 +32,7 @@ const BLOCKED_KEYWORDS = ['banned', 'blocked', 'contact support']
 const TWO_FACTOR_PREFIX = '2FA_REQUIRED|'
 const MFA_APPROVAL_PREFIX = 'MFA_APPROVAL_REQUIRED|'
 const LOCKOUT_PREFIX = 'LOCKOUT|'
+const COMMUNITY_AUTH_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
 
 function parseTwoFactorError(rawMessage: string): { token: string; message: string } | null {
     if (!rawMessage.startsWith(TWO_FACTOR_PREFIX)) return null
@@ -69,6 +70,13 @@ function resolveCallbackPath(value: string | null | undefined): string {
     if (!normalized.startsWith('/')) return '/shop'
     if (normalized.startsWith('//')) return '/shop'
     return normalized
+}
+
+function syncCommunityAuthCookie(accessToken: string | null | undefined) {
+    if (typeof window === 'undefined' || !accessToken) return
+
+    const secureFlag = window.location.protocol === 'https:' ? '; Secure' : ''
+    document.cookie = `af_token=${encodeURIComponent(accessToken)}; Path=/; Max-Age=${COMMUNITY_AUTH_COOKIE_MAX_AGE}; SameSite=Lax${secureFlag}`
 }
 
 function getRememberedUserEmail() {
@@ -286,7 +294,10 @@ const LoginForm = ({
 
     const blockedFromRedirect = searchParams.get('blocked') === '1'
     const callbackPath = resolveCallbackPath(
-        searchParams.get('callback') || searchParams.get('callbackUrl') || defaultCallbackPath,
+        searchParams.get('next') ||
+        searchParams.get('callback') ||
+        searchParams.get('callbackUrl') ||
+        defaultCallbackPath,
     )
     const apiBaseUrl = (process.env.NEXT_PUBLIC_LARAVEL_API_URL || '').trim()
     const autoLoginInFlightRef = useRef(false)
@@ -447,6 +458,8 @@ const LoginForm = ({
 
             dynamicIsland.success(source === 'auto' ? 'Login approved. Welcome back!' : 'Login successful. Welcome back!')
             const sessionReady = await waitForAuthenticatedSession()
+            const latestSession = session?.user?.accessToken ? session : await getSession()
+            syncCommunityAuthCookie(latestSession?.user?.accessToken)
             const targetPath = callbackPath.startsWith('/') ? callbackPath : '/shop'
 
             router.replace(targetPath)
@@ -609,6 +622,8 @@ const LoginForm = ({
 
             dynamicIsland.success('Passkey sign-in successful. Welcome back!')
             const sessionReady = await waitForAuthenticatedSession()
+            const latestSession = session?.user?.accessToken ? session : await getSession()
+            syncCommunityAuthCookie(latestSession?.user?.accessToken)
             const targetPath = callbackPath.startsWith('/') ? callbackPath : '/shop'
             router.replace(targetPath)
             router.refresh()
@@ -696,6 +711,7 @@ const LoginForm = ({
             }
 
             dynamicIsland.success('Google sign-in successful. Welcome back!')
+            syncCommunityAuthCookie(session?.user?.accessToken)
             const targetPath = callbackPath.startsWith('/') ? callbackPath : '/shop'
             window.location.replace(targetPath)
         } catch (err: unknown) {
@@ -1062,7 +1078,7 @@ const LoginForm = ({
             <QrModal
               isOpen={isQrModalOpen}
               onClose={() => setIsQrModalOpen(false)}
-              defaultCallbackPath={defaultCallbackPath}
+              defaultCallbackPath={callbackPath}
               accountLabel={accountLabel}
               preGeneratedSessionId={preGeneratedQr?.sessionId}
               preGeneratedQrData={preGeneratedQr?.qrData}
