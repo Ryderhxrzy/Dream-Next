@@ -28,10 +28,18 @@ class MeilisearchService
                     'limit' => $limit,
                 ]);
 
-            return $results;
+            return [
+                'hits' => $results->getHits(),
+                'estimatedTotalHits' => $results->getEstimatedTotalHits(),
+                'processingTimeMs' => $results->getProcessingTimeMs(),
+            ];
         } catch (\Exception $e) {
             \Log::error('Meilisearch search error: ' . $e->getMessage());
-            return [];
+            return [
+                'hits' => [],
+                'estimatedTotalHits' => 0,
+                'processingTimeMs' => 0,
+            ];
         }
     }
 
