@@ -73,18 +73,14 @@ class SupplierPushNotificationController extends Controller
                     'spn_updated_at' => now(),
                 ]);
 
-                // Calculate delay in seconds
-                $delay = $scheduledAt->diffInSeconds(now());
-
                 // Dispatch job to queue with delay - will execute automatically at scheduled time
                 SendScheduledPushNotificationJob::dispatch($notificationRecord->spn_id)
-                    ->delay($delay);
+                    ->delay($scheduledAt);
 
                 Log::info('Supplier push notification scheduled with delayed job', [
                     'notification_id' => $notificationRecord->spn_id,
                     'supplier_id' => $supplierId,
                     'scheduled_for' => $scheduledAt,
-                    'delay_seconds' => $delay,
                 ]);
 
                 return response()->json([
