@@ -4,6 +4,9 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
 
+// Match next.config.ts basePath so the fetch hits /community/api/... in prod
+const BASE_PATH = process.env.NODE_ENV === "production" ? "/community" : "";
+
 export function useLogin() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -15,7 +18,7 @@ export function useLogin() {
         setError("");
 
         try {
-            const res = await fetch("/api/auth/login", {
+            const res = await fetch(`${BASE_PATH}/api/auth/login`, {
                 method: "POST",
                 headers: {
                     Accept: "application/json",

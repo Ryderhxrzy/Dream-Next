@@ -43,7 +43,7 @@ export function LocationSearch({
     if (q.length < 3) { setSuggestions([]); setOpen(false); return }
     setLoading(true)
     try {
-      const res = await fetch(`/api/location?q=${encodeURIComponent(q)}`)
+      const res = await fetch(`${process.env.NODE_ENV === "production" ? "/community" : ""}/api/location?q=${encodeURIComponent(q)}`)
       const data: Suggestion[] = await res.json()
       setSuggestions(data)
       setOpen(true)

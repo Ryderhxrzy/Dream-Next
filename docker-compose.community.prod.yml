@@ -1,0 +1,79 @@
+services:
+  community-backend:
+    build:
+      context: .
+      dockerfile: docker/node.prod.Dockerfile
+      args:
+        APP_FILTER: community-backend
+    restart: unless-stopped
+    environment:
+      PORT: "4000"
+      DATABASE_URL: "${COMMUNITY_DATABASE_URL:-}"
+      DATABASE_SCHEMA: community
+      REDIS_HOST: "${REDIS_HOST:-redis}"
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: "${REDIS_PASSWORD:-}"
+      CORS_ORIGINS: "${CORS_ORIGINS:-https://afhome.ph}"
+      CLOUDINARY_CLOUD_NAME: "${CLOUDINARY_CLOUD_NAME:-}"
+      CLOUDINARY_API_KEY: "${CLOUDINARY_API_KEY:-}"
+      CLOUDINARY_API_SECRET: "${CLOUDINARY_API_SECRET:-}"
+      CLOUDINARY_COMMUNITY_POSTS_FOLDER: afhome/community/posts
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.community-backend.rule=Host(`community-backend.afhome.ph`)"
+      - "traefik.http.routers.community-backend.entrypoints=websecure"
+      - "traefik.http.routers.community-backend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.community-backend.loadbalancer.server.port=4000"
+    networks:
+      - dokploy-network
+
+  community-frontend:
+    build:
+      context: .
+      dockerfile: docker/next.prod.Dockerfile
+      args:
+        APP_FILTER: community-frontend
+        NEXT_PUBLIC_AFHOME_API_URL: "${NEXT_PUBLIC_AFHOME_API_URL:-https://backend.afhome.ph}"
+        NEXT_PUBLIC_COMMUNITY_API_URL: "${NEXT_PUBLIC_COMMUNITY_API_URL:-https://community-backend.afhome.ph}"
+        NEXT_PUBLIC_REALTIME_URL: "${NEXT_PUBLIC_REALTIME_URL:-https://realtime.afhome.ph}"
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: "1"
+      NEXT_PUBLIC_AFHOME_API_URL: "${NEXT_PUBLIC_AFHOME_API_URL:-https://backend.afhome.ph}"
+      NEXT_PUBLIC_COMMUNITY_API_URL: "${NEXT_PUBLIC_COMMUNITY_API_URL:-https://community-backend.afhome.ph}"
+      NEXT_PUBLIC_REALTIME_URL: "${NEXT_PUBLIC_REALTIME_URL:-https://realtime.afhome.ph}"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.community-frontend.rule=Host(`afhome.ph`) && PathPrefix(`/community`)"
+      - "traefik.http.routers.community-frontend.entrypoints=websecure"
+      - "traefik.http.routers.community-frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.community-frontend.loadbalancer.server.port=3000"
+    networks:
+      - dokploy-network
+
+  realtime-service:
+    build:
+      context: .
+      dockerfile: docker/node.prod.Dockerfile
+      args:
+        APP_FILTER: realtime-service
+    restart: unless-stopped
+    environment:
+      PORT: "4001"
+      REDIS_HOST: "${REDIS_HOST:-redis}"
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: "${REDIS_PASSWORD:-}"
+      CORS_ORIGINS: "${CORS_ORIGINS:-https://afhome.ph}"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.realtime-service.rule=Host(`realtime.afhome.ph`)"
+      - "traefik.http.routers.realtime-service.entrypoints=websecure"
+      - "traefik.http.routers.realtime-service.tls.certresolver=letsencrypt"
+      - "traefik.http.services.realtime-service.loadbalancer.server.port=4001"
+    networks:
+      - dokploy-network
+
+networks:
+  dokploy-network:
+    external: true

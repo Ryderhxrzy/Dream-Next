@@ -3,6 +3,7 @@ FROM node:22-alpine
 WORKDIR /workspace
 
 ARG APP_FILTER
+ENV APP_FILTER=${APP_FILTER}
 
 RUN corepack enable && corepack prepare pnpm@11.3.0 --activate
 
