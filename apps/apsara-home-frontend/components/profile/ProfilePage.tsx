@@ -2380,7 +2380,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
         ? 'Annual'
         : '-';
   const webstoreTermLabel = selectedWebstorePlan === 'test'
-    ? 'Unlimited'
+    ? '2 days'
     : selectedWebstorePlan === 'quarterly'
     ? '3 months'
     : selectedWebstorePlan === 'semiAnnual'
@@ -6628,7 +6628,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                                 </div>
                                 <div className="md:px-4 md:py-4">
                                   <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6d82ab] md:hidden">Term</p>
-                                  <p className="text-sm font-semibold text-[#163060]">Unlimited</p>
+                                  <p className="text-sm font-semibold text-[#163060]">2 days</p>
                                 </div>
                                 <div className="md:px-4 md:py-4">
                                   <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6d82ab] md:hidden">Subscription Fee</p>
