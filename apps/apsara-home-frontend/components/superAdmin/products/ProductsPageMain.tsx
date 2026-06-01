@@ -648,9 +648,9 @@ function ManualCheckoutSelectionModal({
                         className="bg-white/95 dark:bg-slate-900"
                       >
                         <td className="px-5 py-3.5">
-                          <div className="relative h-14 w-14 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                          <div className="relative h-14 w-14 overflow-hidden rounded-xl border border-slate-200 bg-white p-1">
                             {product.image ? (
-                              <Image src={product.image} alt={product.name} fill className="object-cover" unoptimized />
+                              <Image src={product.image} alt={product.name} fill className="object-contain p-0.5" unoptimized />
                             ) : (
                               <div className="flex h-full w-full items-center justify-center">
                                 <svg className="h-5 w-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1369,7 +1369,6 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
       ...product,
       supplierId: nextSupplierId > 0 ? nextSupplierId : product.supplierId ?? 0,
       supplierName: nextSupplierName,
-      status: 3,
     }
   }
 

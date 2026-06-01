@@ -366,7 +366,7 @@ const ProductImageGallery = ({ product, selectedVariantImages, preferredActiveIm
           {/* Main image */}
           <div
             ref={galleryRef}
-            className="group relative aspect-square rounded-2xl sm:rounded-3xl overflow-hidden cursor-zoom-in select-none"
+            className="group relative aspect-[4/3] overflow-hidden rounded-2xl bg-white p-2 shadow-sm sm:rounded-3xl sm:aspect-[5/4] xl:aspect-[16/10] dark:bg-slate-900"
             onClick={() => { if (!didSwipeRef.current) setIsZoomed(true); }}
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
@@ -381,7 +381,7 @@ const ProductImageGallery = ({ product, selectedVariantImages, preferredActiveIm
                   src={img.large || img.original}
                   alt={index === 0 ? product.name : `${product.name} ${index + 1}`}
                   fill
-                  className="object-cover"
+                  className="object-contain p-1"
                   priority={index < 3}
                   loading="eager"
                 />

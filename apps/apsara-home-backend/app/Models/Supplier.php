@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Supplier extends Model
 {
@@ -16,6 +17,16 @@ class Supplier extends Model
         's_email',
         's_contact',
         's_address',
+        's_warehouse_name',
+        's_warehouse_address',
+        's_warehouse_latitude',
+        's_warehouse_longitude',
+        's_warehouse_image_url',
         's_status',
     ];
+
+    public function warehouses(): HasMany
+    {
+        return $this->hasMany(SupplierWarehouse::class, 'sw_supplier_id', 's_id');
+    }
 }
