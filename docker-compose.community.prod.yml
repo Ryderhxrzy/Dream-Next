@@ -50,7 +50,7 @@ services:
       - "traefik.http.routers.community-frontend.entrypoints=websecure"
       - "traefik.http.routers.community-frontend.tls.certresolver=letsencrypt"
       - "traefik.http.services.community-frontend.loadbalancer.server.port=3000"
-      - "traefik.http.routers.community-frontend.priority=10"
+      - "traefik.http.routers.community-frontend.priority=100"
     networks:
       - dokploy-network
 
