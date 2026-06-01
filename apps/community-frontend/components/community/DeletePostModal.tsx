@@ -35,19 +35,19 @@ export function DeletePostModal() {
     <Dialog open={!!deletePostId} onOpenChange={(open) => !open && cancelDeletePost()}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle className="text-base font-semibold text-zinc-900">
+          <DialogTitle className="text-base font-semibold text-foreground">
             Delete post?
           </DialogTitle>
         </DialogHeader>
 
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-muted-foreground">
           This will permanently remove your post from the community. This action cannot be undone.
         </p>
 
         <div className="flex items-center justify-end gap-2 pt-2">
           <Button
             variant="ghost"
-            className="h-9 text-sm text-zinc-600"
+            className="h-9 text-sm text-foreground/80"
             onClick={cancelDeletePost}
             disabled={deletePost.isPending}
           >

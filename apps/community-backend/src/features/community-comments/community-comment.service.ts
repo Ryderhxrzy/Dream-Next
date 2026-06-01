@@ -1,5 +1,6 @@
 import { prisma } from "../../lib/prisma.js";
 import { publish, CHANNELS } from "../../lib/redis.js";
+import { createNotification } from "../notifications/notification.service.js";
 
 export function listPostComments(postId: bigint) {
   return prisma.communityComment.findMany({
@@ -45,6 +46,18 @@ export async function createComment(postId: bigint, authorId: bigint, content: s
     getPostAuthorId(postId),
   ]);
 
+  const notificationPayload = {
+    postId: comment.postId.toString(),
+    commentId: comment.id.toString(),
+    content: comment.content,
+    author: serializeAuthor(comment.author),
+  };
+
+  // Persist notification for the post owner (skip if commenting on own post)
+  if (postAuthorId && postAuthorId !== authorId.toString()) {
+    await createNotification(BigInt(postAuthorId), "NEW_COMMENT", notificationPayload);
+  }
+
   await publish(CHANNELS.NEW_COMMENT, {
     id: comment.id.toString(),
     postId: comment.postId.toString(),
@@ -75,11 +88,24 @@ export async function createReply(
     select: { authorId: true },
   });
 
+  const parentAuthorId = parentComment?.authorId.toString() ?? null;
+
+  // Persist notification for the parent comment author (skip if replying to self)
+  if (parentAuthorId && parentAuthorId !== authorId.toString()) {
+    await createNotification(BigInt(parentAuthorId), "NEW_REPLY", {
+      postId: reply.postId.toString(),
+      commentId: reply.id.toString(),
+      parentId: reply.parentId?.toString() ?? null,
+      content: reply.content,
+      author: serializeAuthor(reply.author),
+    });
+  }
+
   await publish(CHANNELS.NEW_REPLY, {
     id: reply.id.toString(),
     postId: reply.postId.toString(),
     parentId: reply.parentId?.toString(),
-    parentAuthorId: parentComment?.authorId.toString() ?? null, // who gets notified
+    parentAuthorId,                        // who gets notified
     replyAuthorId: authorId.toString(),
     content: reply.content,
     createdAt: reply.createdAt,

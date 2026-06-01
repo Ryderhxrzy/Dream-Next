@@ -2,6 +2,7 @@ import { Hono } from "hono";
 
 import { errorResponse } from "../../http/responses.js";
 import { requireAuth } from "../../middleware/auth.middleware.js";
+import { getAuthCustomer } from "../auth/auth.service.js";
 import {
   serializeCommunityPost,
   serializeCommunityPostListItem,
@@ -9,9 +10,13 @@ import {
 } from "./community-post.serializer.js";
 import {
   createCommunityPost,
+  createRepost,
   deleteCommunityPost,
   listCommunityPosts,
+  listRsvps,
   setPostVisibility,
+  setRsvp,
+  toggleReaction,
   updateCommunityPost,
   uploadCommunityPostImage,
 } from "./community-post.service.js";
@@ -23,9 +28,59 @@ import {
 export const communityPostRoutes = new Hono();
 
 communityPostRoutes.get("/", async (c) => {
-  const posts = await listCommunityPosts();
+  // Optional auth — to know if the viewer liked/RSVP'd each post (no 401 if guest)
+  const viewer = await getAuthCustomer(c);
+  const posts = await listCommunityPosts(viewer?.id);
 
-  return c.json(posts.map(serializeCommunityPostListItem));
+  return c.json(posts.map((post) => serializeCommunityPostListItem(post, viewer?.id)));
+});
+
+communityPostRoutes.post("/:id/react", requireAuth, async (c) => {
+  const id = BigInt(c.req.param("id") ?? "0");
+  const result = await toggleReaction(id, c.get("customer").id);
+
+  return c.json(result);
+});
+
+communityPostRoutes.post("/:id/rsvp", requireAuth, async (c) => {
+  const id = BigInt(c.req.param("id") ?? "0");
+  const body = await c.req.json().catch(() => null);
+  const status = body?.status;
+
+  if (status !== "GOING" && status !== "INTERESTED") {
+    return c.json({ message: "Invalid RSVP status" }, 422);
+  }
+
+  const result = await setRsvp(id, c.get("customer").id, status);
+
+  return c.json(result);
+});
+
+communityPostRoutes.post("/:id/repost", requireAuth, async (c) => {
+  const id = BigInt(c.req.param("id") ?? "0");
+  const body = await c.req.json().catch(() => null);
+  const caption = typeof body?.caption === "string" ? body.caption.trim() : "";
+
+  const { data, error } = await createRepost(c.get("customer").id, id, caption);
+
+  if (error === "not_found") return c.json({ message: "Post not found" }, 404);
+
+  return c.json(serializeCommunityPostListItem(data!, c.get("customer").id), 201);
+});
+
+communityPostRoutes.get("/:id/rsvps", async (c) => {
+  const id = BigInt(c.req.param("id") ?? "0");
+  const rsvps = await listRsvps(id);
+
+  return c.json(
+    rsvps.map((r) => ({
+      userId: r.userId.toString(),
+      name: [r.user.firstName, r.user.lastName].filter(Boolean).join(" ") || "Community Member",
+      avatarUrl: r.user.avatarUrl,
+      status: r.status,
+      createdAt: r.createdAt,
+    })),
+  );
 });
 
 communityPostRoutes.post("/", requireAuth, async (c) => {

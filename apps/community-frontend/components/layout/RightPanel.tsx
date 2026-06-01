@@ -1,10 +1,8 @@
 "use client"
 
+import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Plus, LayoutGrid, CalendarDays, AlertCircle } from "lucide-react"
-import { CreatePostModal } from "@/components/community/CreatePostModal"
-import { CommentsModal } from "@/components/community/CommentsModal"
-import { DeletePostModal } from "@/components/community/DeletePostModal"
 import { useCommunityUiStore } from "@/store/community-ui.store"
 
 const stats = [
@@ -29,37 +27,36 @@ const quickActions = [
 ]
 
 export default function RightPanel() {
-  const { createPostOpen, openCreatePost, closeCreatePost, editPost, closeEditPost } = useCommunityUiStore()
+  const { openCreatePost } = useCommunityUiStore()
+  const pathname = usePathname()
+
+  // Messages page is full-width — no right panel
+  if (pathname?.includes("/messages")) return null
 
   return (
-    <aside className="w-64 shrink-0 h-[calc(100vh-3.5rem)] sticky top-14 overflow-y-auto py-4 px-3 space-y-5 border-l border-zinc-200">
+    <aside className="hidden xl:block w-64 shrink-0 h-[calc(100vh-3.5rem)] sticky top-14 overflow-y-auto py-4 px-3 space-y-5 border-l border-border">
 
       {/* Post Button */}
       <Button
         onClick={openCreatePost}
-        className="w-full bg-zinc-950 hover:bg-zinc-800 text-white h-9 text-sm font-medium rounded-md"
+        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-9 text-sm font-medium rounded-md"
       >
         <Plus className="w-4 h-4 mr-1.5" />
         Post to Community
       </Button>
 
-      <CreatePostModal open={createPostOpen} onClose={closeCreatePost} />
-      <CreatePostModal open={!!editPost} onClose={closeEditPost} editPost={editPost ?? undefined} />
-      <DeletePostModal />
-      <CommentsModal />
-
       {/* Stats */}
       <div>
-        <p className="text-[10px] font-medium text-zinc-400 uppercase tracking-widest mb-2.5">
+        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-2.5">
           Community Stats
         </p>
         <div className="grid grid-cols-2 gap-2">
           {stats.map((stat) => (
-            <div key={stat.label} className="border border-zinc-200 rounded-lg p-2.5">
-              <p className={`text-lg font-bold leading-none ${stat.highlight ? "text-emerald-600" : "text-zinc-900"}`}>
+            <div key={stat.label} className="border border-border rounded-lg p-2.5">
+              <p className={`text-lg font-bold leading-none ${stat.highlight ? "text-emerald-600" : "text-foreground"}`}>
                 {stat.value}
               </p>
-              <p className="text-[11px] text-zinc-400 mt-1">{stat.label}</p>
+              <p className="text-[11px] text-muted-foreground mt-1">{stat.label}</p>
             </div>
           ))}
         </div>
@@ -68,10 +65,10 @@ export default function RightPanel() {
       {/* Upcoming Events */}
       <div>
         <div className="flex items-center justify-between mb-2.5">
-          <p className="text-[10px] font-medium text-zinc-400 uppercase tracking-widest">
+          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">
             Upcoming Events
           </p>
-          <button className="text-[11px] text-zinc-400 hover:text-zinc-900 transition-colors">
+          <button className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">
             See all
           </button>
         </div>
@@ -80,8 +77,8 @@ export default function RightPanel() {
             <div key={event.title} className="flex items-start gap-2">
               <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${event.color}`} />
               <div>
-                <p className="text-sm font-medium text-zinc-900 leading-none">{event.title}</p>
-                <p className="text-[11px] text-zinc-400 mt-1">{event.detail}</p>
+                <p className="text-sm font-medium text-foreground leading-none">{event.title}</p>
+                <p className="text-[11px] text-muted-foreground mt-1">{event.detail}</p>
               </div>
             </div>
           ))}
@@ -91,14 +88,14 @@ export default function RightPanel() {
       {/* Active Members */}
       <div>
         <div className="flex items-center justify-between mb-2.5">
-          <p className="text-[10px] font-medium text-zinc-400 uppercase tracking-widest">
+          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">
             Active Members
           </p>
-          <button className="text-[11px] text-zinc-400 hover:text-zinc-900 transition-colors">
+          <button className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">
             View all
           </button>
         </div>
-        <p className="flex items-center gap-1.5 text-xs text-zinc-500 mb-2">
+        <p className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
           142 online right now
         </p>
@@ -106,12 +103,12 @@ export default function RightPanel() {
           {activeMembers.map((initials) => (
             <div
               key={initials}
-              className="w-8 h-8 rounded-full bg-zinc-200 flex items-center justify-center text-xs font-semibold text-zinc-700 ring-2 ring-white cursor-pointer hover:ring-zinc-400 transition-all"
+              className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-semibold text-foreground ring-2 ring-card cursor-pointer hover:ring-muted-foreground transition-all"
             >
               {initials}
             </div>
           ))}
-          <div className="w-8 h-8 rounded-full bg-zinc-100 border border-zinc-200 flex items-center justify-center text-[10px] font-medium text-zinc-500">
+          <div className="w-8 h-8 rounded-full bg-accent border border-border flex items-center justify-center text-[10px] font-medium text-muted-foreground">
             +136
           </div>
         </div>
@@ -119,16 +116,16 @@ export default function RightPanel() {
 
       {/* Quick Actions */}
       <div>
-        <p className="text-[10px] font-medium text-zinc-400 uppercase tracking-widest mb-2">
+        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-2">
           Quick Actions
         </p>
         <div className="space-y-0.5">
           {quickActions.map((action) => (
             <button
               key={action.label}
-              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 transition-colors text-left"
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm text-foreground/80 hover:bg-accent hover:text-foreground transition-colors text-left"
             >
-              <action.icon className="w-4 h-4 text-zinc-400 shrink-0" />
+              <action.icon className="w-4 h-4 text-muted-foreground shrink-0" />
               {action.label}
             </button>
           ))}

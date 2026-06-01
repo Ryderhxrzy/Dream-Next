@@ -35,6 +35,29 @@ export type CommunityPost = {
   counts: {
     comments: number;
     reactions: number;
+    going: number;
+    interested: number;
+  };
+  viewerHasReacted: boolean;
+  viewerRsvp: "GOING" | "INTERESTED" | null;
+  repostOf: RepostOriginal | null;
+};
+
+export type RepostOriginal = {
+  id: string;
+  authorId: string;
+  category: CommunityPostCategory;
+  title: string;
+  content: string;
+  imageUrl: string | null;
+  eventDate: string | null;
+  eventTime: string | null;
+  location: string | null;
+  createdAt: string;
+  author: {
+    id: string;
+    name: string;
+    avatarUrl: string | null;
   };
 };
 

@@ -10,6 +10,8 @@ import { createNotifySocket } from "@/lib/socket";
 import { useAuthStore } from "@/store/auth.store";
 import { useCurrentUser } from "@/lib/hooks/use-current-user";
 import { useNotificationsStore } from "@/store/notifications.store";
+import { usePresenceStore } from "@/store/presence.store";
+import { useNotificationSync } from "@/lib/hooks/use-notification-sync";
 
 type NotificationAuthor = { name: string; avatarUrl?: string | null };
 
@@ -55,7 +57,12 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   const { data: currentUser } = useCurrentUser();
   const queryClient = useQueryClient();
   const addNotification = useNotificationsStore((s) => s.addNotification);
+  const setOnlineUsers = usePresenceStore((s) => s.setOnlineUsers);
+  const setPresence = usePresenceStore((s) => s.setPresence);
   const socketRef = useRef<Socket | null>(null);
+
+  // Seed persisted notifications from backend on load
+  useNotificationSync();
 
   useEffect(() => {
     if (!token || !currentUser?.id) return;
@@ -64,6 +71,12 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     socketRef.current = socket;
 
     socket.on("connect", () => console.log("[notify] connected"));
+
+    // Presence — who's online
+    socket.on("online_users", (ids: string[]) => setOnlineUsers(ids));
+    socket.on("presence", (data: { userId: string; online: boolean }) =>
+      setPresence(data.userId, data.online),
+    );
 
     // New post — refresh feed for everyone
     socket.on("new_post", (payload: Record<string, unknown>) => {
@@ -98,13 +111,57 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       addNotification("new_reply", payload);
     });
 
+    // Personal: someone liked YOUR post
+    socket.on("new_reaction", (payload: Record<string, unknown>) => {
+      const author = payload.author as { name: string; avatarUrl?: string | null };
+      showNotificationToast({
+        author,
+        label: "liked your post",
+        content: "",
+      });
+      addNotification("new_reaction", payload);
+    });
+
+    // Personal: someone is going to YOUR event
+    socket.on("new_rsvp", (payload: Record<string, unknown>) => {
+      const author = payload.author as { name: string; avatarUrl?: string | null };
+      showNotificationToast({
+        author,
+        label: "is going to your event",
+        content: "",
+      });
+      addNotification("new_rsvp", payload);
+    });
+
+    // Personal: someone reposted YOUR post
+    socket.on("new_repost", (payload: Record<string, unknown>) => {
+      const author = payload.author as { name: string; avatarUrl?: string | null };
+      showNotificationToast({
+        author,
+        label: "reposted your post",
+        content: "",
+      });
+      addNotification("new_repost", payload);
+    });
+
+    // Direct message — TOAST ONLY (not in the notification bell)
+    socket.on("new_message", (payload: { conversationId: string; message: { content: string; sender: NotificationAuthor } }) => {
+      showNotificationToast({
+        author: payload.message.sender,
+        label: "sent you a message",
+        content: payload.message.content,
+      });
+      // Update the Messages badge (unread count) everywhere
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    });
+
     socket.on("disconnect", () => console.log("[notify] disconnected"));
 
     return () => {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [token, currentUser?.id, queryClient, addNotification]);
+  }, [token, currentUser?.id, queryClient, addNotification, setOnlineUsers, setPresence]);
 
   return <>{children}</>;
 }

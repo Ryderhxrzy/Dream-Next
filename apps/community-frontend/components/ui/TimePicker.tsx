@@ -75,17 +75,17 @@ export function TimePicker({ value, onChange, placeholder = "Pick a time" }: Tim
           type="button"
           variant="outline"
           className={cn(
-            "w-full h-9 justify-start text-sm font-normal bg-zinc-50 border-zinc-200",
-            !displayTime && "text-zinc-400"
+            "w-full h-9 justify-start text-sm font-normal bg-muted border-border",
+            !displayTime && "text-muted-foreground"
           )}
         >
-          <Clock className="w-3.5 h-3.5 mr-2 text-zinc-400" />
+          <Clock className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
           {displayTime ?? placeholder}
         </Button>
       </PopoverTrigger>
 
       <PopoverContent className="w-auto p-0 overflow-hidden" align="start">
-        <div className="flex divide-x divide-zinc-100">
+        <div className="flex divide-x divide-border">
 
           {/* Hours */}
           <div
@@ -102,10 +102,10 @@ export function TimePicker({ value, onChange, placeholder = "Pick a time" }: Tim
                   data-active={hour === h}
                   onClick={() => selectHour(h)}
                   className={cn(
-                    "w-full px-3 py-2 text-sm text-center transition-colors hover:bg-zinc-50",
+                    "w-full px-3 py-2 text-sm text-center transition-colors hover:bg-accent",
                     hour === h
-                      ? "bg-zinc-950 text-white font-semibold"
-                      : "text-zinc-700"
+                      ? "bg-primary text-primary-foreground font-semibold"
+                      : "text-foreground"
                   )}
                 >
                   {h}
@@ -129,10 +129,10 @@ export function TimePicker({ value, onChange, placeholder = "Pick a time" }: Tim
                   data-active={minute === m}
                   onClick={() => selectMinute(m)}
                   className={cn(
-                    "w-full px-3 py-2 text-sm text-center transition-colors hover:bg-zinc-50",
+                    "w-full px-3 py-2 text-sm text-center transition-colors hover:bg-accent",
                     minute === m
-                      ? "bg-zinc-950 text-white font-semibold"
-                      : "text-zinc-700"
+                      ? "bg-primary text-primary-foreground font-semibold"
+                      : "text-foreground"
                   )}
                 >
                   {m}
@@ -149,10 +149,10 @@ export function TimePicker({ value, onChange, placeholder = "Pick a time" }: Tim
                 type="button"
                 onClick={() => selectPeriod(p)}
                 className={cn(
-                  "w-full px-3 py-2 text-sm text-center transition-colors hover:bg-zinc-50",
+                  "w-full px-3 py-2 text-sm text-center transition-colors hover:bg-accent",
                   period === p
-                    ? "bg-zinc-950 text-white font-semibold"
-                    : "text-zinc-700"
+                    ? "bg-primary text-primary-foreground font-semibold"
+                    : "text-foreground"
                 )}
               >
                 {p}

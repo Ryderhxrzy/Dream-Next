@@ -22,6 +22,9 @@ export const config = {
     communityPostsFolder:
       process.env.CLOUDINARY_COMMUNITY_POSTS_FOLDER?.trim() ??
       "afhome/community/posts",
+    communityChatFolder:
+      process.env.CLOUDINARY_COMMUNITY_CHAT_FOLDER?.trim() ??
+      "afhome/community/chat",
   },
 };
 
