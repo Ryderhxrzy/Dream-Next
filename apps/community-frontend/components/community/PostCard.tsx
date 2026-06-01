@@ -134,7 +134,7 @@ const PostCard = ({ post, postId, isOwner, rawPost }: PostCardProps) => {
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2.5">
           <Avatar className="w-9 h-9">
-            <AvatarImage src={post.author.avatar} />
+            <AvatarImage src={post.author.avatar || undefined} />
             <AvatarFallback className="bg-zinc-900 text-white text-xs font-semibold">
               {post.author.initials}
             </AvatarFallback>
