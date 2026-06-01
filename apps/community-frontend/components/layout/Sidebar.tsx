@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { cn } from "@/lib/utils"
 import {
   Home, Rss, CalendarDays, Users, MessageCircle,
@@ -26,7 +27,7 @@ export default function Sidebar() {
       {/* Nav */}
       <nav className="px-3 space-y-1">
         {navItems.map((item) => (
-          <a
+          <Link
             key={item.label}
             href={item.href}
             className={cn(
@@ -43,7 +44,7 @@ export default function Sidebar() {
                 {unreadMessages > 9 ? "9+" : unreadMessages}
               </span>
             )}
-          </a>
+          </Link>
         ))}
 
         {/* Divider */}
@@ -51,13 +52,13 @@ export default function Sidebar() {
           <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">Account</p>
         </div>
 
-        <a
+        <Link
           href="/settings"
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
         >
           <Settings className="w-5 h-5 text-muted-foreground shrink-0" />
           Settings
-        </a>
+        </Link>
       </nav>
 
       {/* My Neighborhood + User */}
