@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import { Home, CalendarDays, Users, MessageCircle, ShieldCheck } from "lucide-react"
+import Link from "next/link"
 import { useUnreadMessageCount } from "@/lib/hooks/use-messages"
 
 const tabs = [
@@ -19,7 +20,7 @@ export function MobileBottomNav() {
     <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-card border-t border-border">
       <div className="flex items-center justify-around h-16 px-1 pb-[env(safe-area-inset-bottom)]">
         {tabs.map((tab) => (
-          <a
+          <Link
             key={tab.label}
             href={tab.href}
             className={cn(
@@ -36,7 +37,7 @@ export function MobileBottomNav() {
               )}
             </div>
             <span className="text-[10px] font-medium">{tab.label}</span>
-          </a>
+          </Link>
         ))}
       </div>
     </nav>

@@ -107,7 +107,7 @@ const navLinks: NavLink[] = [
     dropdown: ['Photo Gallery', 'Video Gallery'],
   },
   { label: 'Blogs', href: '/blog' },
-  { label: 'Community', href: '/community' },
+  { label: 'Community', href: '/community/feed' },
 ]
 
 const toSlug = (value: string) => value.toLowerCase().trim().replace(/\s+/g, '-');
