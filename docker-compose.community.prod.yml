@@ -46,7 +46,7 @@ services:
       NEXT_PUBLIC_REALTIME_URL: "${NEXT_PUBLIC_REALTIME_URL:-https://realtime.afhome.ph}"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.community-frontend.rule=Host(`afhome.ph`) && PathPrefix(`/community`)"
+      - "traefik.http.routers.community-frontend.rule=(Host(`afhome.ph`) || Host(`www.afhome.ph`)) && PathPrefix(`/community`)"
       - "traefik.http.routers.community-frontend.entrypoints=websecure"
       - "traefik.http.routers.community-frontend.tls.certresolver=letsencrypt"
       - "traefik.http.services.community-frontend.loadbalancer.server.port=3000"
