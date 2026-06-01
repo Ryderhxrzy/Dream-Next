@@ -453,15 +453,25 @@ export default function WebstoreRequestsPage() {
     })
   }
 
-  const planTermMonths = (plan?: string | null, term?: string | null): number => {
+  const planTermDuration = (plan?: string | null, term?: string | null): { months: number; days: number } => {
     const raw = String(term ?? '').toLowerCase()
-    const matched = raw.match(/(\d+)/)
-    if (matched) return Number(matched[1])
+    const dayMatch = raw.match(/(\d+)\s*day/)
+    if (dayMatch) {
+      return { months: 0, days: Number(dayMatch[1]) }
+    }
+
+    const monthMatch = raw.match(/(\d+)\s*month/)
+    if (monthMatch) {
+      return { months: Number(monthMatch[1]), days: 0 }
+    }
+
     const normalizedPlan = String(plan ?? '').toLowerCase()
-    if (normalizedPlan === 'quarterly') return 3
-    if (normalizedPlan === 'semi_annual' || normalizedPlan === 'semi-annual') return 6
-    if (normalizedPlan === 'annual') return 12
-    return 0
+    if (normalizedPlan === 'quarterly') return { months: 3, days: 0 }
+    if (normalizedPlan === 'semi_annual' || normalizedPlan === 'semi-annual') return { months: 6, days: 0 }
+    if (normalizedPlan === 'annual') return { months: 12, days: 0 }
+    if (normalizedPlan === 'test') return { months: 0, days: 2 }
+
+    return { months: 0, days: 0 }
   }
 
   const formatPlanLabel = (value?: string | null): string => {
@@ -470,6 +480,17 @@ export default function WebstoreRequestsPage() {
     const normalized = v.toLowerCase()
     if (normalized === 'semi_annual' || normalized === 'semi-annual') return 'Semi-annual'
     return v
+  }
+
+  const formatPlanTermLabel = (plan?: string | null, term?: string | null): string => {
+    const raw = String(term ?? '').trim()
+    const normalizedPlan = String(plan ?? '').toLowerCase()
+    if (normalizedPlan === 'test') return '2 days'
+    if (!raw) return '-'
+    const normalized = raw.toLowerCase()
+    if (normalized === 'unlimited' && normalizedPlan === 'test') return '2 days'
+    if (normalized === 'semi_annual' || normalized === 'semi-annual') return '6 months'
+    return raw
   }
 
   const formatSingleCapitalized = (value?: string | null): string => {
@@ -527,9 +548,13 @@ export default function WebstoreRequestsPage() {
       return format(endDate)
     }
 
-    const months = planTermMonths(plan, term)
-    if (months <= 0) return '-'
-    endDate.setMonth(endDate.getMonth() + months)
+    const duration = planTermDuration(plan, term)
+    if (duration.days > 0) {
+      endDate.setDate(endDate.getDate() + duration.days)
+      return format(endDate)
+    }
+    if (duration.months <= 0) return '-'
+    endDate.setMonth(endDate.getMonth() + duration.months)
     return format(endDate)
   }
 
@@ -980,7 +1005,7 @@ export default function WebstoreRequestsPage() {
                               {formatPlanLabel(details.plan)}
                             </span>
                             <span className="mt-1 inline-flex w-fit whitespace-nowrap rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-200 dark:ring-emerald-500/30">
-                              {formatPlanLabel(details.planTerm)}
+                              {formatPlanTermLabel(details.plan, details.planTerm)}
                             </span>
                           </div>
                         </div>

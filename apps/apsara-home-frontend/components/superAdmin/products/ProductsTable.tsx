@@ -568,9 +568,9 @@ export default function ProductsTable({
                       </td>
 
                       <td className="border-b border-slate-100 px-4 py-4 dark:border-slate-800/70">
-                        <div className="relative h-11 w-11 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800">
+                        <div className="relative h-11 w-11 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-800">
                           {product.image ? (
-                            <Image src={product.image} alt={product.name} fill className="object-cover" unoptimized />
+                            <Image src={product.image} alt={product.name} fill className="object-contain p-0.5" unoptimized />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center">
                               <svg className="h-5 w-5 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

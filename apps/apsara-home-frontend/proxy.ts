@@ -76,6 +76,7 @@ const SUPPLIER_ALLOWED_PREFIXES = [
   "/supplier/products",
   "/supplier/orders",
   "/supplier/inventory",
+  "/supplier/warehouse",
   "/supplier/reports",
   "/supplier/mobile-ads",
   "/supplier/categories",

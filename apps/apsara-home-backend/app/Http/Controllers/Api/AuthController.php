@@ -2043,7 +2043,7 @@ class AuthController extends Controller
             ->first();
 
         $subscriptionMatrix = [
-            'test' => ['term' => 'Unlimited', 'term_months' => 0, 'subscription_fee' => 1, 'effective_monthly' => 1],
+            'test' => ['term' => '2 days', 'term_months' => 0, 'subscription_fee' => 1, 'effective_monthly' => 1],
             'quarterly' => ['term' => '3 months', 'term_months' => 3, 'subscription_fee' => 48000, 'effective_monthly' => 16000],
             'semi_annual' => ['term' => '6 months', 'term_months' => 6, 'subscription_fee' => 90000, 'effective_monthly' => 15000],
             'annual' => ['term' => 'Yearly', 'term_months' => 12, 'subscription_fee' => 150000, 'effective_monthly' => 12500],

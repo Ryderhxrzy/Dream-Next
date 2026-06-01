@@ -277,13 +277,123 @@ class WebPageController extends Controller
         }
 
         if ($resolvedType === 'partner-storefront') {
-            $this->detachPartnerStorefrontFromUsers($id);
+            $storefrontSlug = $this->resolvePartnerStorefrontSlug($item);
+
+            DB::transaction(function () use ($id, $item, $storefrontSlug): void {
+                $this->detachPartnerStorefrontFromUsers($id);
+
+                if ($storefrontSlug !== '') {
+                    $this->deleteAssociatedWebstoreRequestsForStorefront($storefrontSlug);
+                }
+
+                $item->delete();
+            });
+
+            $this->publishDreamBuildContentUpdated($resolvedType, $item, 'deleted');
+
+            return response()->json(['message' => 'Web content item deleted successfully.']);
         }
 
         $item->delete();
         $this->publishDreamBuildContentUpdated($resolvedType, $item, 'deleted');
 
         return response()->json(['message' => 'Web content item deleted successfully.']);
+    }
+
+    private function resolvePartnerStorefrontSlug(WebPageContent $storefront): string
+    {
+        $payloadSlug = trim((string) data_get($storefront->wpc_payload, 'fields.slug', ''));
+        if ($payloadSlug !== '') {
+            return strtolower($payloadSlug);
+        }
+
+        $fallbackKey = trim((string) ($storefront->wpc_key ?? ''));
+        return strtolower($fallbackKey);
+    }
+
+    private function deleteAssociatedWebstoreRequestsForStorefront(string $storefrontSlug): void
+    {
+        $normalizedSlug = strtolower(trim($storefrontSlug));
+        if ($normalizedSlug === '') {
+            return;
+        }
+
+        $tickets = DB::table('tbl_tickets')
+            ->where(function ($query): void {
+                $subject = mb_strtolower($this->webstoreRequestTicketSubject(), 'UTF-8');
+                $query
+                    ->whereRaw('LOWER(TRIM(t_subject)) = ?', [$subject])
+                    ->orWhereRaw('LOWER(TRIM(t_subject)) = ?', ['webstore request'])
+                    ->orWhereRaw('LOWER(TRIM(t_subject)) = ?', ['partner webstore request']);
+            })
+            ->orderByDesc('t_id')
+            ->get();
+
+        foreach ($tickets as $ticket) {
+            $ticketId = (int) ($ticket->t_id ?? 0);
+            if ($ticketId <= 0) {
+                continue;
+            }
+
+            $requestDetails = DB::table('tbl_tickets_details')
+                ->where('t_id', $ticketId)
+                ->where('td_replystat', 0)
+                ->orderBy('td_datetime')
+                ->orderBy('td_id')
+                ->get();
+
+            $matchesStorefront = false;
+            foreach ($requestDetails as $detail) {
+                $payload = $this->decodeJsonPayload($detail->td_content ?? null);
+                if (! is_array($payload) || empty($payload)) {
+                    continue;
+                }
+
+                $detailSlug = strtolower(trim((string) ($payload['slug_name'] ?? '')));
+                if ($detailSlug !== '' && $detailSlug === $normalizedSlug) {
+                    $matchesStorefront = true;
+                    break;
+                }
+            }
+
+            if (! $matchesStorefront) {
+                continue;
+            }
+
+            DB::table('tbl_tickets_details')->where('t_id', $ticketId)->delete();
+            DB::table('tbl_tickets')->where('t_id', $ticketId)->delete();
+
+            DB::table('tbl_admin_notifications')
+                ->where('an_source_type', 'ticket')
+                ->where('an_source_id', $ticketId)
+                ->where('an_type', 'webstore_request')
+                ->delete();
+
+            DB::table('tbl_customer_notifications')
+                ->where('cn_source_type', 'webstore_request')
+                ->where('cn_source_id', $ticketId)
+                ->delete();
+        }
+    }
+
+    private function decodeJsonPayload(mixed $content): array
+    {
+        if (! is_string($content) || trim($content) === '') {
+            return [];
+        }
+
+        try {
+            $decoded = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\Throwable) {
+            return [];
+        }
+
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    private function webstoreRequestTicketSubject(): string
+    {
+        return 'Partner Webstore Request';
     }
 
     private function detachPartnerStorefrontFromUsers(int $storefrontId): void
