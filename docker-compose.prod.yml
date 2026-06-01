@@ -238,6 +238,53 @@ services:
     depends_on:
       - backend
 
+  queue-worker:
+    build:
+      context: .
+      dockerfile: docker/backend.prod.Dockerfile
+    restart: unless-stopped
+    command: php artisan queue:work redis --sleep=3 --tries=3 --timeout=90
+    environment:
+      APP_NAME: "${APP_NAME:-AF Home}"
+      APP_ENV: production
+      APP_KEY: "${APP_KEY:-}"
+      APP_DEBUG: "false"
+      APP_URL: "${APP_URL:-}"
+      FRONTEND_URL: "${FRONTEND_URL:-}"
+      DB_CONNECTION: "${DB_CONNECTION:-sqlite}"
+      DB_HOST: "${DB_HOST:-}"
+      DB_PORT: "${DB_PORT:-}"
+      DB_DATABASE: "${DB_DATABASE:-}"
+      DB_USERNAME: "${DB_USERNAME:-}"
+      DB_PASSWORD: "${DB_PASSWORD:-}"
+      SESSION_DRIVER: "${SESSION_DRIVER:-database}"
+      QUEUE_CONNECTION: "${QUEUE_CONNECTION:-redis}"
+      CACHE_STORE: "${CACHE_STORE:-database}"
+      BROADCAST_CONNECTION: "${BROADCAST_CONNECTION:-log}"
+      FILESYSTEM_DISK: "${FILESYSTEM_DISK:-local}"
+      REDIS_CLIENT: predis
+      REDIS_HOST: redis
+      REDIS_PASSWORD: "${REDIS_PASSWORD:-local_redis_password}"
+      REDIS_PORT: 6379
+      REDIS_DB: "${REDIS_DB:-0}"
+      REDIS_CACHE_DB: "${REDIS_CACHE_DB:-1}"
+      MAIL_MAILER: "${MAIL_MAILER:-log}"
+      RESEND_API_KEY: "${RESEND_API_KEY:-}"
+      MAIL_HOST: "${MAIL_HOST:-}"
+      MAIL_PORT: "${MAIL_PORT:-}"
+      MAIL_USERNAME: "${MAIL_USERNAME:-}"
+      MAIL_PASSWORD: "${MAIL_PASSWORD:-}"
+      MAIL_SCHEME: "${MAIL_SCHEME:-}"
+      MAIL_FROM_ADDRESS: "${MAIL_FROM_ADDRESS:-hello@example.com}"
+      MAIL_FROM_NAME: "${MAIL_FROM_NAME:-AF Home}"
+      FIREBASE_CREDENTIALS_JSON: "${FIREBASE_CREDENTIALS_JSON:-}"
+      FIREBASE_CREDENTIALS_PATH: "${FIREBASE_CREDENTIALS_PATH:-storage/firebase-credentials.json}"
+      ONESIGNAL_APP_ID: "${ONESIGNAL_APP_ID:-}"
+      ONESIGNAL_REST_API_KEY: "${ONESIGNAL_REST_API_KEY:-}"
+    depends_on:
+      - redis
+      - backend
+
   redis:
     image: redis:7-alpine
     restart: unless-stopped
