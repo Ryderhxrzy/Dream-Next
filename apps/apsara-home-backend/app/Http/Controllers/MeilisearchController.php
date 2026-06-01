@@ -35,7 +35,9 @@ class MeilisearchController extends Controller
 
         return response()->json([
             'success' => true,
-            'results' => $results
+            'results' => $results['hits'] ?? [],
+            'totalHits' => $results['estimatedTotalHits'] ?? 0,
+            'processingTime' => $results['processingTimeMs'] ?? 0
         ]);
     }
 
