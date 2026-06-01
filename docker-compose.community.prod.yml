@@ -40,6 +40,7 @@ services:
     environment:
       NODE_ENV: production
       NEXT_TELEMETRY_DISABLED: "1"
+      NODE_OPTIONS: "--max-old-space-size=512"
       NEXT_PUBLIC_AFHOME_API_URL: "${NEXT_PUBLIC_AFHOME_API_URL:-https://backend.afhome.ph}"
       NEXT_PUBLIC_COMMUNITY_API_URL: "${NEXT_PUBLIC_COMMUNITY_API_URL:-https://community-backend.afhome.ph}"
       NEXT_PUBLIC_REALTIME_URL: "${NEXT_PUBLIC_REALTIME_URL:-https://realtime.afhome.ph}"
@@ -49,6 +50,7 @@ services:
       - "traefik.http.routers.community-frontend.entrypoints=websecure"
       - "traefik.http.routers.community-frontend.tls.certresolver=letsencrypt"
       - "traefik.http.services.community-frontend.loadbalancer.server.port=3000"
+      - "traefik.http.routers.community-frontend.priority=10"
     networks:
       - dokploy-network
 
