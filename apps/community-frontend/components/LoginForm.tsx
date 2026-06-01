@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { Loader2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -107,7 +108,14 @@ export function LoginForm() {
           className="w-full h-11 bg-zinc-950 hover:bg-zinc-800 text-white font-semibold rounded-lg transition-colors mt-1"
           disabled={loading}
         >
-          {loading ? "Signing in..." : "Sign in"} 
+          {loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Signing in...
+            </span>
+          ) : (
+            "Sign in"
+          )}
         </Button>
 
         {error && (
