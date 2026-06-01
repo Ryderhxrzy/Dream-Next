@@ -47,7 +47,7 @@ class MeilisearchController extends Controller
     public function syncProducts()
     {
         try {
-            // Get all products with necessary fields
+            // Get all products with necessary fields, including brand name
             $products = Product::select(
                 'pd_id as id',
                 'pd_name as name',
@@ -58,8 +58,11 @@ class MeilisearchController extends Controller
                 'pd_image as image',
                 'pd_prodpv as prodpv',
                 'pd_qty as qty',
-                'pd_description as description'
-            )->get();
+                'pd_description as description',
+                'tbl_product_brand.pb_name as brand_name'
+            )
+            ->leftJoin('tbl_product_brand', 'tbl_product.pd_brand_type', '=', 'tbl_product_brand.pb_id')
+            ->get();
 
             $result = $this->meilisearch->indexProducts($products);
 
@@ -78,7 +81,21 @@ class MeilisearchController extends Controller
     public function syncProduct($id)
     {
         try {
-            $product = Product::findOrFail($id);
+            $product = Product::select(
+                'pd_id as id',
+                'pd_name as name',
+                'pd_brand_type as brand',
+                'pd_price_dp as price',
+                'pd_price_srp as priceSrp',
+                'pd_price_member as priceMember',
+                'pd_image as image',
+                'pd_prodpv as prodpv',
+                'pd_qty as qty',
+                'pd_description as description',
+                'tbl_product_brand.pb_name as brand_name'
+            )
+            ->leftJoin('tbl_product_brand', 'tbl_product.pd_brand_type', '=', 'tbl_product_brand.pb_id')
+            ->findOrFail($id);
 
             $result = $this->meilisearch->indexProducts([$product]);
 
