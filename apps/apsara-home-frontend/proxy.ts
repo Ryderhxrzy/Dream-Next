@@ -73,6 +73,7 @@ const ADMIN_SUPPLIER_ALLOWED_PREFIXES = [
 const AUTH_REQUIRED_PREFIXES = ["/profile", "/orders"]
 const SUPPLIER_ALLOWED_PREFIXES = [
   "/supplier/dashboard",
+  "/supplier/chat",
   "/supplier/products",
   "/supplier/orders",
   "/supplier/inventory",

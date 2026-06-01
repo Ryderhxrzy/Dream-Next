@@ -233,7 +233,9 @@ const ProductPageClient = ({
     useEffect(() => {
         if (typeof window === 'undefined') return;
 
-        // Check if device is mobile
+        const openInApp = searchParams.get('openInApp') === '1';
+        if (!openInApp) return;
+
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         if (!isMobile) return;
 
@@ -241,19 +243,9 @@ const ProductPageClient = ({
         if (!slug) return;
 
         const appScheme = `apsarahome://product/${slug}`;
-
-        // Set a timeout to fallback to web if app doesn't open
-        const appOpenTimeout = setTimeout(() => {
-            console.log('[ProductPage] App not detected on mobile, staying on web');
-        }, 1000);
-
-        // Try to open the app
-        console.log('[ProductPage] Attempting to open app with scheme:', appScheme);
+        console.log('[ProductPage] Attempting app deep link for explicit opt-in:', appScheme);
         window.location.href = appScheme;
-
-        // Cleanup timeout
-        return () => clearTimeout(appOpenTimeout);
-    }, [pathname]);
+    }, [pathname, searchParams]);
 
     useEffect(() => {
         const username = (searchParams.get('username') ?? '').trim();

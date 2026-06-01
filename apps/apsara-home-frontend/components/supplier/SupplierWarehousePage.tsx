@@ -7,10 +7,13 @@ import {
   Camera,
   CheckCircle2,
   ChevronRight,
+  Edit2,
   ExternalLink,
+  Lightbulb,
   Loader2,
   MapPin,
   MapPinned,
+  MoreHorizontal,
   Navigation,
   Pencil,
   Plus,
@@ -322,12 +325,81 @@ function WarehouseModal({
   )
 }
 
+function DeleteConfirmModal({
+  warehouse,
+  isDeleting,
+  onConfirm,
+  onCancel,
+}: {
+  warehouse: SupplierWarehouseProfile
+  isDeleting: boolean
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onCancel() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onCancel])
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onCancel} />
+      <div className="relative w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-900">
+        {/* Icon header */}
+        <div className="flex flex-col items-center gap-3 px-6 pt-8 pb-5 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 dark:bg-rose-500/10">
+            <Trash2 className="h-7 w-7 text-rose-500" />
+          </div>
+          <div>
+            <h2 className="text-[17px] font-black text-slate-900 dark:text-white">Delete Warehouse?</h2>
+            <p className="mt-1.5 text-[13px] leading-5 text-slate-500 dark:text-slate-400">
+              You&apos;re about to permanently delete{' '}
+              <span className="font-bold text-slate-700 dark:text-slate-200">&ldquo;{warehouse.warehouse_name}&rdquo;</span>.
+              This action cannot be undone.
+            </p>
+          </div>
+        </div>
+
+        {/* Preview strip */}
+        {warehouse.image_url ? (
+          <div className="mx-6 mb-5 overflow-hidden rounded-xl border border-slate-100 dark:border-slate-800">
+            <img src={warehouse.image_url} alt={warehouse.warehouse_name} className="h-24 w-full object-cover" />
+          </div>
+        ) : null}
+
+        {/* Actions */}
+        <div className="flex gap-3 border-t border-slate-100 px-6 py-4 dark:border-slate-800">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isDeleting}
+            className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={isDeleting}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-rose-600 py-2.5 text-sm font-bold text-white shadow-sm shadow-rose-500/25 transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+            {isDeleting ? 'Deleting…' : 'Yes, Delete'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function SupplierWarehousePage() {
   const { data, isLoading, isFetching, isError, refetch } = useGetSupplierWarehousesQuery()
   const [deleteWarehouse, { isLoading: isDeleting }] = useDeleteSupplierWarehouseMutation()
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add')
   const [modalOpen, setModalOpen] = useState(false)
   const [editingWarehouse, setEditingWarehouse] = useState<SupplierWarehouseProfile | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<SupplierWarehouseProfile | null>(null)
   const [selectedWarehouseId, setSelectedWarehouseId] = useState<number | null>(null)
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
@@ -384,20 +456,24 @@ export default function SupplierWarehousePage() {
     setTimeout(() => setSaveSuccess(false), 4000)
   }
 
-  const handleDelete = async (warehouse: SupplierWarehouseProfile) => {
-    const confirmed = window.confirm(`Delete "${warehouse.warehouse_name}"?`)
-    if (!confirmed) return
+  const handleDelete = (warehouse: SupplierWarehouseProfile) => {
+    setDeleteTarget(warehouse)
+  }
 
+  const confirmDelete = async () => {
+    if (!deleteTarget) return
     try {
       setNotice(null)
-      await deleteWarehouse(warehouse.id).unwrap()
-      if (selectedWarehouseId === warehouse.id) {
+      await deleteWarehouse(deleteTarget.id).unwrap()
+      if (selectedWarehouseId === deleteTarget.id) {
         setSelectedWarehouseId(null)
       }
       await refetch()
+      setDeleteTarget(null)
       setNotice('Warehouse deleted successfully.')
       setTimeout(() => setNotice(null), 3500)
     } catch {
+      setDeleteTarget(null)
       setNotice('Failed to delete warehouse. Please try again.')
       setTimeout(() => setNotice(null), 4000)
     }
@@ -484,7 +560,8 @@ export default function SupplierWarehousePage() {
                     }`}
                   >
                     <div className="p-3">
-                      <div className="relative h-48 overflow-hidden rounded-[18px] bg-slate-100 dark:bg-slate-800">
+                      {/* Card image */}
+                      <div className="relative h-42 overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800">
                         {warehouse.image_url ? (
                           <img src={warehouse.image_url} alt={warehouse.warehouse_name} className="h-full w-full object-cover" />
                         ) : (
@@ -493,8 +570,8 @@ export default function SupplierWarehousePage() {
                             <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500">No photo</p>
                           </div>
                         )}
-                        <div className="absolute inset-x-0 top-0 flex items-start justify-between p-3">
-                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500 px-2.5 py-1 text-[10px] font-bold text-white shadow">
+                        <div className="absolute inset-x-0 top-0 flex items-start justify-between p-2.5">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500 px-2.5 py-1 text-[10px] font-bold text-white shadow-md">
                             <CheckCircle2 className="h-3 w-3" />
                             Saved
                           </span>
@@ -504,55 +581,62 @@ export default function SupplierWarehousePage() {
                               event.stopPropagation()
                               openEdit(warehouse)
                             }}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/95 text-slate-700 shadow-lg ring-1 ring-slate-200/80 backdrop-blur transition hover:bg-white dark:bg-slate-900/95 dark:text-slate-200 dark:ring-slate-700"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/95 text-slate-600 shadow-md ring-1 ring-black/5 backdrop-blur transition hover:bg-white dark:bg-slate-900/95 dark:text-slate-300 dark:ring-white/10"
                           >
-                            <Pencil className="h-3.5 w-3.5" />
+                            <MoreHorizontal className="h-4 w-4" />
                           </button>
                         </div>
                       </div>
 
-                      <div className="space-y-4 px-1 pt-4">
-                        <div className="flex items-start justify-between gap-3">
+                      {/* Card body */}
+                      <div className="space-y-3 px-1 pt-4">
+                        {/* Name row */}
+                        <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
-                            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400">Warehouse</p>
-                            <p className="mt-1 truncate text-[18px] font-extrabold tracking-tight text-slate-900 dark:text-white">
+                            <div className="flex items-center gap-1.5">
+                              <Building2 className="h-3 w-3 shrink-0 text-slate-400" />
+                              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Warehouse</p>
+                            </div>
+                            <p className="mt-1 truncate text-[17px] font-extrabold tracking-tight text-slate-900 dark:text-white">
                               {warehouse.warehouse_name || 'Unnamed Warehouse'}
                             </p>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex shrink-0 items-center gap-1.5 pt-0.5">
                             <button
                               type="button"
                               onClick={(event) => {
                                 event.stopPropagation()
                                 openEdit(warehouse)
                               }}
-                              className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[11px] font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                              title="Edit"
+                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50 hover:text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
                             >
-                              <Pencil className="h-3 w-3" />
-                              Edit
+                              <Pencil className="h-3.5 w-3.5" />
                             </button>
                             <button
                               type="button"
                               onClick={(event) => {
                                 event.stopPropagation()
-                                void handleDelete(warehouse)
+                                handleDelete(warehouse)
                               }}
                               disabled={isDeleting}
-                              className="inline-flex items-center gap-1 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-200 dark:hover:bg-rose-500/20"
+                              title="Delete"
+                              className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-500 text-white shadow-sm transition hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                              <Trash2 className="h-3 w-3" />
-                              Delete
+                              <Trash2 className="h-3.5 w-3.5" />
                             </button>
                           </div>
                         </div>
 
-                        <div className="flex items-start gap-2 rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800">
-                          <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
-                          <p className="text-[12px] leading-5 text-slate-600 dark:text-slate-300">
+                        {/* Address */}
+                        <div className="flex items-start gap-1.5">
+                          <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
+                          <p className="text-[12px] leading-5 text-slate-500 dark:text-slate-400">
                             {warehouse.warehouse_address || 'No address saved yet'}
                           </p>
                         </div>
 
+                        {/* Status badges */}
                         <div className="flex flex-wrap gap-1.5">
                           {[
                             { label: 'Maps', ok: !!mapsUrl },
@@ -561,10 +645,10 @@ export default function SupplierWarehousePage() {
                           ].map((item) => (
                             <span
                               key={item.label}
-                              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                                 item.ok
-                                  ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20'
-                                  : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500'
+                                  ? 'text-emerald-700 dark:text-emerald-300'
+                                  : 'text-slate-400 dark:text-slate-500'
                               }`}
                             >
                               <span className={`h-1.5 w-1.5 rounded-full ${item.ok ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
@@ -573,7 +657,8 @@ export default function SupplierWarehousePage() {
                           ))}
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2.5 pt-1" onClick={(event) => event.stopPropagation()}>
+                        {/* Nav buttons */}
+                        <div className="grid grid-cols-2 gap-2" onClick={(event) => event.stopPropagation()}>
                           <NavBtn href={mapsUrl} label="Google Maps" icon={<Navigation className="h-3.5 w-3.5" />} variant={mapsUrl ? 'google' : 'disabled'} />
                           <NavBtn href={wazeUrlItem} label="Waze" icon={<Navigation className="h-3.5 w-3.5" />} variant={wazeUrlItem ? 'waze' : 'disabled'} />
                         </div>
@@ -638,17 +723,41 @@ export default function SupplierWarehousePage() {
               </div>
             </div>
 
-            <div className="rounded-[24px] border border-violet-100 bg-violet-50 p-5 dark:border-violet-500/15 dark:bg-violet-500/5">
-              <p className="text-[10px] font-bold uppercase tracking-[0.26em] text-violet-500">Tips</p>
-              <ul className="mt-3 space-y-2.5">
+            <div className="overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm dark:border-violet-500/15 dark:bg-slate-900">
+              {/* Header */}
+              <div className="flex items-center gap-2.5 bg-linear-to-r from-violet-600 to-indigo-600 px-5 py-4">
+                <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-white/20">
+                  <Lightbulb className="h-4 w-4 text-white" />
+                </div>
+                <p className="text-[11px] font-black uppercase tracking-[0.28em] text-white">Tips</p>
+              </div>
+
+              {/* Tip items */}
+              <ul className="divide-y divide-slate-100 dark:divide-slate-800">
                 {[
-                  'Use a distinct name for each warehouse so the team can identify it quickly.',
-                  'Upload a clear photo of the entrance or signage for easy identification.',
-                  'Click Edit or Delete on any card to manage warehouses individually.',
-                ].map((tip, index) => (
-                  <li key={index} className="flex items-start gap-2">
-                    <ChevronRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-400" />
-                    <p className="text-[12px] leading-5 text-violet-700 dark:text-violet-300">{tip}</p>
+                  {
+                    num: '1',
+                    icon: <Building2 className="h-4 w-4 text-violet-500" />,
+                    text: 'Use a distinct name for each warehouse so the team can identify it quickly.',
+                  },
+                  {
+                    num: '2',
+                    icon: <Camera className="h-4 w-4 text-violet-500" />,
+                    text: 'Upload a clear photo of the entrance or signage for easy identification.',
+                  },
+                  {
+                    num: '3',
+                    icon: <Edit2 className="h-4 w-4 text-violet-500" />,
+                    text: 'Click Edit or Delete on any card to manage warehouses individually.',
+                  },
+                ].map((tip) => (
+                  <li key={tip.num} className="flex items-start gap-3 px-5 py-4">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-violet-50 dark:bg-violet-500/10">
+                      {tip.icon}
+                    </div>
+                    <p className="pt-1 text-[12px] leading-[1.6] text-slate-600 dark:text-slate-400">
+                      {tip.text}
+                    </p>
                   </li>
                 ))}
               </ul>
@@ -663,6 +772,15 @@ export default function SupplierWarehousePage() {
           warehouse={editingWarehouse}
           onClose={() => setModalOpen(false)}
           onSaved={handleSaved}
+        />
+      ) : null}
+
+      {deleteTarget ? (
+        <DeleteConfirmModal
+          warehouse={deleteTarget}
+          isDeleting={isDeleting}
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteTarget(null)}
         />
       ) : null}
     </>
