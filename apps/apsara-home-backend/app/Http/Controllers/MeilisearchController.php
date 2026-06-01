@@ -47,17 +47,16 @@ class MeilisearchController extends Controller
         try {
             // Get all products with necessary fields
             $products = Product::select(
-                'id',
-                'name',
-                'brand',
-                'price',
-                'priceSrp',
-                'priceMember',
-                'image',
-                'prodpv',
-                'qty',
-                'avgRating',
-                'description'
+                'pd_id as id',
+                'pd_name as name',
+                'pd_brand_type as brand',
+                'pd_price_dp as price',
+                'pd_price_srp as priceSrp',
+                'pd_price_member as priceMember',
+                'pd_image as image',
+                'pd_prodpv as prodpv',
+                'pd_qty as qty',
+                'pd_description as description'
             )->get();
 
             $result = $this->meilisearch->indexProducts($products);
