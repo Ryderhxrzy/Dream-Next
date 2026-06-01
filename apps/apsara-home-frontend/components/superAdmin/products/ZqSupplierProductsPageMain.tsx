@@ -425,9 +425,9 @@ function ProductRow({
     <tr>
       <td className="px-5 py-4 align-top">
         <div className="flex items-start gap-4">
-          <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+          <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-white p-1">
             {product.primaryImage ? (
-              <Image src={product.primaryImage} alt={product.subject} fill className="object-cover" unoptimized />
+              <Image src={product.primaryImage} alt={product.subject} fill className="object-contain p-0.5" unoptimized />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">No img</div>
             )}

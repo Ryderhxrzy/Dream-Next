@@ -176,11 +176,15 @@ final class PartnerStorefrontAccess
             }
 
             $billingOption = strtolower(trim((string) ($initialPayload['billing_option'] ?? '')));
+            $plan = strtolower(trim((string) ($initialPayload['plan'] ?? '')));
+            $planTerm = (string) ($initialPayload['plan_term'] ?? '');
             $planTermMonths = $this->resolvePlanTermMonths($initialPayload);
             $endDate = $this->computeEndDate(
                 approvedAt: $approvedAt,
                 billingOption: $billingOption,
+                plan: $plan,
                 planTermMonths: $planTermMonths,
+                planTerm: $planTerm,
                 payloads: $payloads,
             );
 
@@ -200,9 +204,10 @@ final class PartnerStorefrontAccess
         return $latestByStorefrontId;
     }
 
-    private function computeEndDate(Carbon $approvedAt, string $billingOption, int $planTermMonths, array $payloads): ?Carbon
+    private function computeEndDate(Carbon $approvedAt, string $billingOption, string $plan, int $planTermMonths, string $planTerm, array $payloads): ?Carbon
     {
         $billingOption = strtolower(trim($billingOption));
+        $plan = strtolower(trim($plan));
 
         if ($billingOption === 'monthly') {
             $continuationCount = 0;
@@ -223,7 +228,12 @@ final class PartnerStorefrontAccess
         }
 
         if ($planTermMonths <= 0) {
-            return null;
+            $planTermDays = $this->resolvePlanTermDays($planTerm, $plan);
+            if ($planTermDays <= 0) {
+                return null;
+            }
+
+            return $approvedAt->copy()->addDays($planTermDays);
         }
 
         return $approvedAt->copy()->addMonthsNoOverflow($planTermMonths);
@@ -281,6 +291,20 @@ final class PartnerStorefrontAccess
             'annual' => 12,
             default => 0,
         };
+    }
+
+    private function resolvePlanTermDays(string $planTerm, string $plan = ''): int
+    {
+        $normalized = strtolower(trim($planTerm));
+        if ($normalized === '') {
+            return $plan === 'test' ? 2 : 0;
+        }
+
+        if (preg_match('/(\d+)\s*day/', $normalized, $matches)) {
+            return max(0, (int) $matches[1]);
+        }
+
+        return $plan === 'test' ? 2 : 0;
     }
 
     private function isApprovedReceiptPayload(array $payload): bool

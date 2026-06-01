@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\AddressController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\SupplierAuthController;
 use App\Http\Controllers\Api\SupplierUserController;
+use App\Http\Controllers\Api\SupplierWarehouseController;
 use App\Http\Controllers\Api\SupplierOrderController;
 use App\Http\Controllers\Api\SupplierPushNotificationController;
 use App\Http\Controllers\Api\SupplierUploadController;
@@ -612,6 +613,10 @@ Route::middleware(['auth:sanctum', 'supplier.actor'])->prefix('supplier/auth')->
 });
 
 Route::middleware(['auth:sanctum', 'supplier.actor'])->group(function () {
+    Route::get('/supplier/warehouse', [SupplierWarehouseController::class, 'index']);
+    Route::post('/supplier/warehouse', [SupplierWarehouseController::class, 'store']);
+    Route::put('/supplier/warehouse/{warehouse}', [SupplierWarehouseController::class, 'update']);
+    Route::delete('/supplier/warehouse/{warehouse}', [SupplierWarehouseController::class, 'destroy']);
     Route::post('/supplier/realtime/pusher/auth', [SupplierOrderController::class, 'pusherAuth']);
     Route::get('/supplier/orders/notifications', [SupplierOrderController::class, 'notifications']);
     Route::get('/supplier/orders', [SupplierOrderController::class, 'index']);
