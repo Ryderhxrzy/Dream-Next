@@ -72,7 +72,7 @@ export default function Sidebar() {
         {/* User */}
         <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-zinc-50 cursor-pointer transition-colors">
           <Avatar className="w-8 h-8 shrink-0">
-            <AvatarImage src="" />
+            <AvatarImage src={undefined} />
             <AvatarFallback className="bg-zinc-900 text-white text-xs font-semibold">SJ</AvatarFallback>
           </Avatar>
           <div className="min-w-0">

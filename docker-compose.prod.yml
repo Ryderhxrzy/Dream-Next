@@ -276,11 +276,17 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: "6379"
       REDIS_PASSWORD: "${REDIS_PASSWORD:-local_redis_password}"
-      CORS_ORIGINS: "https://afhome.ph"
+      CORS_ORIGINS: "https://afhome.ph,https://community-backend.afhome.ph"
       CLOUDINARY_CLOUD_NAME: "${CLOUDINARY_CLOUD_NAME:-}"
       CLOUDINARY_API_KEY: "${CLOUDINARY_API_KEY:-}"
       CLOUDINARY_API_SECRET: "${CLOUDINARY_API_SECRET:-}"
       CLOUDINARY_COMMUNITY_POSTS_FOLDER: afhome/community/posts
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.community-backend.rule=Host(`community-backend.afhome.ph`)"
+      - "traefik.http.routers.community-backend.entrypoints=websecure"
+      - "traefik.http.routers.community-backend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.community-backend.loadbalancer.server.port=4000"
     depends_on:
       - redis
     networks:
@@ -300,6 +306,12 @@ services:
       REDIS_PORT: "6379"
       REDIS_PASSWORD: "${REDIS_PASSWORD:-local_redis_password}"
       CORS_ORIGINS: "https://afhome.ph"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.realtime-service.rule=Host(`realtime.afhome.ph`)"
+      - "traefik.http.routers.realtime-service.entrypoints=websecure"
+      - "traefik.http.routers.realtime-service.tls.certresolver=letsencrypt"
+      - "traefik.http.services.realtime-service.loadbalancer.server.port=4001"
     depends_on:
       - redis
     networks:

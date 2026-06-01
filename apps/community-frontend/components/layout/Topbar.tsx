@@ -35,6 +35,9 @@ export function Topbar() {
   const { unreadCount, notifications, markAllRead } = useNotifications()
 
   function handleLogout() {
+    import("js-cookie").then(({ default: Cookies }) => {
+      Cookies.remove("af_token")
+    })
     setToken(null)
     router.replace("/login")
     router.refresh()

@@ -37,10 +37,6 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(createAfHomeLoginUrl(request, withCommunityBasePath(FEED_PATH)));
   }
 
-  if (isLoginPage && !token) {
-    return NextResponse.redirect(createAfHomeLoginUrl(request, withCommunityBasePath(FEED_PATH)));
-  }
-
   if (isProtectedPage && !token) {
     return NextResponse.redirect(createAfHomeLoginUrl(request, withCommunityBasePath(pathname)));
   }
