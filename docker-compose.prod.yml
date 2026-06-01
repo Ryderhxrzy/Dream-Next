@@ -152,6 +152,9 @@ services:
       MOBILE_PAYMENT_CANCEL_URL: "${MOBILE_PAYMENT_CANCEL_URL:-}"
     depends_on:
       - redis
+    networks:
+      - dokploy-network
+      - default
 
   frontend:
     build:
@@ -179,6 +182,7 @@ services:
     environment:
       NODE_ENV: production
       NEXT_TELEMETRY_DISABLED: "1"
+      NODE_OPTIONS: "--max-old-space-size=512"
       NEXTAUTH_URL: "${NEXTAUTH_URL:-}"
       NEXTAUTH_SECRET: "${NEXTAUTH_SECRET:-}"
       NEXT_PUBLIC_LARAVEL_API_URL: "${NEXT_PUBLIC_LARAVEL_API_URL:-}"
@@ -215,6 +219,9 @@ services:
       GOOGLE_PRIVATE_KEY: "${GOOGLE_PRIVATE_KEY:-}"
     depends_on:
       - backend
+    networks:
+      - dokploy-network
+      - default
 
   dreambuild:
     build:
@@ -235,8 +242,12 @@ services:
       LARAVEL_API_URL: "${LARAVEL_API_URL:-http://backend:8000}"
       NEXT_PUBLIC_PUSHER_KEY: "${NEXT_PUBLIC_PUSHER_KEY:-}"
       NEXT_PUBLIC_PUSHER_CLUSTER: "${NEXT_PUBLIC_PUSHER_CLUSTER:-ap1}"
+      NODE_OPTIONS: "--max-old-space-size=512"
     depends_on:
       - backend
+    networks:
+      - dokploy-network
+      - default
 
   queue-worker:
     build:
@@ -284,6 +295,9 @@ services:
     depends_on:
       - redis
       - backend
+    networks:
+      - dokploy-network
+      - default
 
   redis:
     image: redis:7-alpine
