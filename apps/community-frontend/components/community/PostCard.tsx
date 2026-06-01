@@ -11,9 +11,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useHideCommunityPost } from "@/lib/hooks/use-hide-community-post"
+import { useToggleReaction } from "@/lib/hooks/use-toggle-reaction"
+import { useSetRsvp } from "@/lib/hooks/use-set-rsvp"
+import { cn } from "@/lib/utils"
 import { useCommunityUiStore } from "@/store/community-ui.store"
-import { Bookmark, EyeOff, Flag, Pencil, ThumbsUp, MessageCircle, Share2, MoreHorizontal, Trash2, UserX } from "lucide-react"
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
+import { Bookmark, EyeOff, Flag, Pencil, ThumbsUp, MessageCircle, MessageSquare, Share2, Repeat2, MoreHorizontal, Trash2, UserX } from "lucide-react"
 import type { CommunityPost } from "@/lib/hooks/use-community-posts"
+import { useStartConversation } from "@/lib/hooks/use-messages"
 
 export type PostType = "normal" | "question" | "event"
 
@@ -31,6 +37,7 @@ export interface Post {
   content: string
   imageUrl?: string
   helpfulCount: number
+  liked: boolean
   commentCount: number
   event?: {
     month: string
@@ -39,6 +46,7 @@ export interface Post {
     date: string
     location: string
     going?: boolean
+    interested?: boolean
     goingCount?: number
     interestedCount?: number
   }
@@ -46,8 +54,8 @@ export interface Post {
 
 const typeBadge: Record<PostType, { label: string; className: string }> = {
   normal:   { label: "",           className: "" },
-  question: { label: "? Question", className: "bg-orange-50 text-orange-600 border border-orange-200" },
-  event:    { label: "📅 Event",   className: "bg-blue-50 text-blue-600 border border-blue-200" },
+  question: { label: "? Question", className: "bg-orange-500/10 text-orange-600 border border-orange-500/20" },
+  event:    { label: "📅 Event",   className: "bg-blue-500/10 text-blue-600 border border-blue-500/20" },
 }
 
 const UNDO_DURATION = 5000
@@ -62,12 +70,33 @@ interface PostCardProps {
 const PostCard = ({ post, postId, isOwner, rawPost }: PostCardProps) => {
   const badge = typeBadge[post.type]
   const { hide } = useHideCommunityPost()
+  const toggleReaction = useToggleReaction()
+  const setRsvp = useSetRsvp()
 
   const [hidePending, setHidePending] = useState(false)
   const [undoProgress, setUndoProgress] = useState(100)
   const openEditPost = useCommunityUiStore((state) => state.openEditPost)
   const confirmDeletePost = useCommunityUiStore((state) => state.confirmDeletePost)
   const openComments = useCommunityUiStore((state) => state.openComments)
+  const openRespondents = useCommunityUiStore((state) => state.openRespondents)
+  const openRepost = useCommunityUiStore((state) => state.openRepost)
+
+  const router = useRouter()
+  const startConversation = useStartConversation()
+
+  function handleShare() {
+    // Use the current path so it works in dev (no basePath) and prod (/community)
+    const url = `${window.location.origin}${window.location.pathname}#post-${postId}`
+    navigator.clipboard.writeText(url)
+    toast.success("Link copied to clipboard")
+  }
+
+  function handleMessage() {
+    startConversation.mutate(rawPost.authorId, {
+      onSuccess: ({ conversationId }) => router.push(`/messages?c=${conversationId}`),
+      onError: (e) => toast.error(e.message ?? "Failed to start conversation"),
+    })
+  }
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -104,21 +133,21 @@ const PostCard = ({ post, postId, isOwner, rawPost }: PostCardProps) => {
 
   if (hidePending) {
     return (
-      <div className="bg-white border border-zinc-200 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-sm text-zinc-500">
-          <EyeOff className="w-4 h-4 shrink-0 text-zinc-400" />
+      <div className="bg-card border border-border rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <EyeOff className="w-4 h-4 shrink-0 text-muted-foreground" />
           Post hidden
         </div>
         <div className="flex items-center gap-3">
-          <div className="w-24 h-1 bg-zinc-100 rounded-full overflow-hidden">
+          <div className="w-24 h-1 bg-accent rounded-full overflow-hidden">
             <div
-              className="h-full bg-zinc-400 rounded-full transition-none"
+              className="h-full bg-muted-foreground rounded-full transition-none"
               style={{ width: `${undoProgress}%` }}
             />
           </div>
           <button
             onClick={handleUndo}
-            className="text-sm font-medium text-zinc-900 hover:underline shrink-0"
+            className="text-sm font-medium text-foreground hover:underline shrink-0"
           >
             Undo
           </button>
@@ -128,20 +157,20 @@ const PostCard = ({ post, postId, isOwner, rawPost }: PostCardProps) => {
   }
 
   return (
-    <div className="bg-white border border-zinc-200 rounded-xl p-4 space-y-3">
+    <div id={`post-${postId}`} className="bg-card border border-border rounded-xl p-4 space-y-3 scroll-mt-20">
 
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2.5">
           <Avatar className="w-9 h-9">
             <AvatarImage src={post.author.avatar || undefined} />
-            <AvatarFallback className="bg-zinc-900 text-white text-xs font-semibold">
+            <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
               {post.author.initials}
             </AvatarFallback>
           </Avatar>
           <div>
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-sm font-semibold text-zinc-900">{post.author.name}</span>
+              <span className="text-sm font-semibold text-foreground">{post.author.name}</span>
               {post.author.isOfficial && (
                 <span className="text-xs text-blue-600 font-medium">✓ Official</span>
               )}
@@ -151,7 +180,7 @@ const PostCard = ({ post, postId, isOwner, rawPost }: PostCardProps) => {
                 </span>
               )}
             </div>
-            <p className="text-xs text-zinc-400 mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               {post.timeAgo} · {post.location}
             </p>
           </div>
@@ -159,7 +188,7 @@ const PostCard = ({ post, postId, isOwner, rawPost }: PostCardProps) => {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="text-zinc-400 hover:text-zinc-600 transition-colors outline-none">
+            <button className="text-muted-foreground hover:text-foreground/80 transition-colors outline-none">
               <MoreHorizontal className="w-4 h-4" />
             </button>
           </DropdownMenuTrigger>
@@ -196,6 +225,10 @@ const PostCard = ({ post, postId, isOwner, rawPost }: PostCardProps) => {
               </>
             ) : (
               <>
+                <DropdownMenuItem className="gap-2 text-sm cursor-pointer" onClick={handleMessage} disabled={startConversation.isPending}>
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  Message {post.author.name.split(" ")[0]}
+                </DropdownMenuItem>
                 <DropdownMenuItem className="gap-2 text-sm cursor-pointer">
                   <Bookmark className="w-3.5 h-3.5" />
                   Save post
@@ -215,69 +248,148 @@ const PostCard = ({ post, postId, isOwner, rawPost }: PostCardProps) => {
         </DropdownMenu>
       </div>
 
-      {/* Content */}
-      <p className="text-sm text-zinc-700 leading-relaxed">{post.content}</p>
+      {/* Content (caption) */}
+      {post.content && (
+        <p className="text-sm text-foreground/90 leading-relaxed">{post.content}</p>
+      )}
 
-      {/* Image */}
+      {/* Embedded original (repost) */}
+      {rawPost.repostOf && (
+        <div className="border border-border rounded-lg p-3 space-y-2">
+          <div className="flex items-center gap-2">
+            <Avatar className="w-6 h-6">
+              <AvatarImage src={rawPost.repostOf.author.avatarUrl ?? undefined} />
+              <AvatarFallback className="bg-primary text-primary-foreground text-[9px] font-semibold">
+                {rawPost.repostOf.author.name.slice(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-xs font-semibold text-foreground">{rawPost.repostOf.author.name}</span>
+          </div>
+          {rawPost.repostOf.title && (
+            <p className="text-sm font-medium text-foreground">{rawPost.repostOf.title}</p>
+          )}
+          <p className="text-sm text-foreground/80 leading-relaxed">{rawPost.repostOf.content}</p>
+          {rawPost.repostOf.imageUrl && (
+            <div className="rounded-md overflow-hidden bg-accent aspect-video">
+              <img src={rawPost.repostOf.imageUrl} alt="" className="w-full h-full object-cover" />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Image (own) */}
       {post.imageUrl && (
-        <div className="rounded-lg overflow-hidden bg-zinc-100 aspect-video">
+        <div className="rounded-lg overflow-hidden bg-accent aspect-video">
           <img src={post.imageUrl} alt="" className="w-full h-full object-cover" />
         </div>
       )}
 
       {/* Event Card */}
       {post.event && (
-        <div className="border border-zinc-200 rounded-lg p-3 flex items-center justify-between">
+        <div className="border border-border rounded-lg p-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-red-50 border border-red-100 flex flex-col items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-lg bg-red-500/10 border border-red-500/20 flex flex-col items-center justify-center shrink-0">
               <span className="text-[9px] font-bold text-red-500 uppercase leading-none">{post.event.month}</span>
-              <span className="text-base font-bold text-zinc-900 leading-tight">{post.event.day}</span>
+              <span className="text-base font-bold text-foreground leading-tight">{post.event.day}</span>
             </div>
             <div>
-              <p className="text-sm font-semibold text-zinc-900">{post.event.title}</p>
-              <p className="text-xs text-zinc-400 mt-0.5">{post.event.date} · {post.event.location}</p>
+              <p className="text-sm font-semibold text-foreground">{post.event.title}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{post.event.date} · {post.event.location}</p>
             </div>
           </div>
-          {post.event.going && (
-            <Button className="h-8 px-3 text-xs bg-zinc-950 hover:bg-zinc-800 text-white rounded-md shrink-0">
-              Going
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Button
+              onClick={() => setRsvp.mutate({ postId, status: "GOING" })}
+              className={cn(
+                "h-8 px-3 text-xs rounded-md transition-colors",
+                post.event.going
+                  ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                  : "bg-muted hover:bg-accent text-foreground"
+              )}
+            >
+              {post.event.going ? "✓ Going" : "Going"}
             </Button>
-          )}
+            <Button
+              onClick={() => setRsvp.mutate({ postId, status: "INTERESTED" })}
+              className={cn(
+                "h-8 px-3 text-xs rounded-md transition-colors",
+                post.event.interested
+                  ? "bg-primary hover:bg-primary/90 text-primary-foreground"
+                  : "bg-muted hover:bg-accent text-foreground"
+              )}
+            >
+              Interested
+            </Button>
+          </div>
         </div>
       )}
 
       {/* Event Footer */}
       {post.event && (
-        <div className="flex items-center gap-3 text-xs text-zinc-500 pt-1 border-t border-zinc-100">
-          <span className="text-emerald-600 font-medium">✓ {post.event.goingCount} Going</span>
-          <span>{post.event.interestedCount} Interested</span>
-          <span className="flex items-center gap-1">
+        <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1 border-t border-border">
+          <button
+            onClick={() => openRespondents({ id: postId, title: rawPost.title, isOwner })}
+            className="text-emerald-600 font-medium hover:underline"
+          >
+            ✓ {post.event.goingCount} Going
+          </button>
+          <button
+            onClick={() => openRespondents({ id: postId, title: rawPost.title, isOwner })}
+            className="hover:text-foreground hover:underline transition-colors"
+          >
+            {post.event.interestedCount} Interested
+          </button>
+          <button
+            onClick={() => openComments({ id: postId, title: rawPost.title })}
+            className="flex items-center gap-1 hover:text-foreground transition-colors"
+          >
             <MessageCircle className="w-3 h-3" />
             {post.commentCount} Comments
-          </span>
+          </button>
         </div>
       )}
 
       {/* Actions */}
       {!post.event && (
-        <div className="flex items-center gap-1 pt-1 border-t border-zinc-100">
-          <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 transition-colors">
-            <ThumbsUp className="w-3.5 h-3.5" />
+        <div className="flex items-center gap-1 pt-1 border-t border-border">
+          <button
+            onClick={() => toggleReaction.mutate(postId)}
+            className={cn(
+              "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs transition-colors",
+              post.liked
+                ? "text-blue-600 hover:bg-blue-500/10"
+                : "text-muted-foreground hover:bg-accent hover:text-foreground"
+            )}
+          >
+            <ThumbsUp className={cn("w-3.5 h-3.5", post.liked && "fill-blue-600")} />
             {post.helpfulCount} Helpful
           </button>
           <button
             onClick={() => openComments({ id: postId, title: rawPost.title })}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 transition-colors"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
           >
             <MessageCircle className="w-3.5 h-3.5" />
             {post.commentCount} Comments
           </button>
-          <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 transition-colors">
+          <button
+            onClick={() => openRepost(rawPost)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          >
+            <Repeat2 className="w-3.5 h-3.5" />
+            Repost
+          </button>
+          <button
+            onClick={handleShare}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          >
             <Share2 className="w-3.5 h-3.5" />
             Share
           </button>
           {post.type === "question" && (
-            <button className="ml-auto flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium text-zinc-700 border border-zinc-200 hover:bg-zinc-50 transition-colors">
+            <button
+              onClick={() => openComments({ id: postId, title: rawPost.title })}
+              className="ml-auto flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium text-foreground/90 border border-border hover:bg-accent transition-colors"
+            >
               + Answer
             </button>
           )}

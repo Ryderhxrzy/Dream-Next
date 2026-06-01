@@ -219,14 +219,14 @@ export function CreatePostModal({ open, onClose, editPost }: CreatePostModalProp
               className="p-6 overflow-visible"
             >
               <DialogHeader className="mb-4">
-                <DialogTitle className="text-base font-semibold text-zinc-900">
+                <DialogTitle className="text-base font-semibold text-foreground">
                   {isEditMode ? "Edit Post" : "Post to Community"}
                 </DialogTitle>
               </DialogHeader>
 
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label className="text-sm font-medium text-zinc-700">
+                  <Label className="text-sm font-medium text-foreground/90">
                     Category
                   </Label>
                   <Controller
@@ -237,7 +237,7 @@ export function CreatePostModal({ open, onClose, editPost }: CreatePostModalProp
                         value={field.value}
                         onValueChange={handleCategoryChange}
                       >
-                        <SelectTrigger className="h-9 bg-zinc-50 border-zinc-200 text-sm">
+                        <SelectTrigger className="h-9 bg-muted border-border text-sm">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -253,12 +253,12 @@ export function CreatePostModal({ open, onClose, editPost }: CreatePostModalProp
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-sm font-medium text-zinc-700">
+                  <Label className="text-sm font-medium text-foreground/90">
                     Title
                   </Label>
                   <Input
                     placeholder={getTitlePlaceholder(category)}
-                    className="h-9 bg-zinc-50 border-zinc-200 text-sm"
+                    className="h-9 bg-muted border-border text-sm"
                     {...form.register("title")}
                   />
                 </div>
@@ -276,7 +276,7 @@ export function CreatePostModal({ open, onClose, editPost }: CreatePostModalProp
                     >
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
-                          <Label className="text-sm font-medium text-zinc-700">
+                          <Label className="text-sm font-medium text-foreground/90">
                             Date
                           </Label>
                           <Controller
@@ -289,11 +289,11 @@ export function CreatePostModal({ open, onClose, editPost }: CreatePostModalProp
                                     type="button"
                                     variant="outline"
                                     className={cn(
-                                      "w-full h-9 justify-start text-sm font-normal bg-zinc-50 border-zinc-200",
-                                      !field.value && "text-zinc-400",
+                                      "w-full h-9 justify-start text-sm font-normal bg-muted border-border",
+                                      !field.value && "text-muted-foreground",
                                     )}
                                   >
-                                    <CalendarIcon className="w-3.5 h-3.5 mr-2 text-zinc-400" />
+                                    <CalendarIcon className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
                                     {field.value
                                       ? format(field.value, "MMM d, yyyy")
                                       : "Pick a date"}
@@ -313,7 +313,7 @@ export function CreatePostModal({ open, onClose, editPost }: CreatePostModalProp
                         </div>
 
                         <div className="space-y-1.5">
-                          <Label className="text-sm font-medium text-zinc-700">
+                          <Label className="text-sm font-medium text-foreground/90">
                             Time
                           </Label>
                           <Controller
@@ -344,7 +344,7 @@ export function CreatePostModal({ open, onClose, editPost }: CreatePostModalProp
                       transition={transition}
                       className="relative z-10 space-y-1.5 overflow-visible"
                     >
-                      <Label className="text-sm font-medium text-zinc-700">
+                      <Label className="text-sm font-medium text-foreground/90">
                         Location
                       </Label>
                       <Controller
@@ -375,18 +375,18 @@ export function CreatePostModal({ open, onClose, editPost }: CreatePostModalProp
                       className="grid grid-cols-2 gap-3 overflow-hidden"
                     >
                       <div className="space-y-1.5">
-                        <Label className="text-sm font-medium text-zinc-700">
+                        <Label className="text-sm font-medium text-foreground/90">
                           Price (PHP)
                         </Label>
                         <Input
                           type="number"
                           placeholder="0.00"
-                          className="h-9 bg-zinc-50 border-zinc-200 text-sm"
+                          className="h-9 bg-muted border-border text-sm"
                           {...form.register("price")}
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-sm font-medium text-zinc-700">
+                        <Label className="text-sm font-medium text-foreground/90">
                           Condition
                         </Label>
                         <Controller
@@ -397,7 +397,7 @@ export function CreatePostModal({ open, onClose, editPost }: CreatePostModalProp
                               value={field.value ?? "BRAND_NEW"}
                               onValueChange={field.onChange}
                             >
-                              <SelectTrigger className="h-9 bg-zinc-50 border-zinc-200 text-sm">
+                              <SelectTrigger className="h-9 bg-muted border-border text-sm">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -419,12 +419,12 @@ export function CreatePostModal({ open, onClose, editPost }: CreatePostModalProp
                 </AnimatePresence>
 
                 <div className="space-y-1.5">
-                  <Label className="text-sm font-medium text-zinc-700">
+                  <Label className="text-sm font-medium text-foreground/90">
                     Details
                   </Label>
                   <Textarea
                     placeholder={getContentPlaceholder(category)}
-                    className="bg-zinc-50 border-zinc-200 text-sm resize-none min-h-24"
+                    className="bg-muted border-border text-sm resize-none min-h-24"
                     {...form.register("content")}
                   />
                 </div>
@@ -440,7 +440,7 @@ export function CreatePostModal({ open, onClose, editPost }: CreatePostModalProp
                       transition={transition}
                       className="space-y-1.5 overflow-hidden"
                     >
-                      <Label className="text-sm font-medium text-zinc-700">
+                      <Label className="text-sm font-medium text-foreground/90">
                         Photo (optional)
                       </Label>
                       <AnimatePresence mode="wait">
@@ -451,7 +451,7 @@ export function CreatePostModal({ open, onClose, editPost }: CreatePostModalProp
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.97 }}
                             transition={{ duration: 0.15 }}
-                            className="relative rounded-lg overflow-hidden border border-zinc-200"
+                            className="relative rounded-lg overflow-hidden border border-border"
                           >
                             <img
                               src={imagePreview}
@@ -464,7 +464,7 @@ export function CreatePostModal({ open, onClose, editPost }: CreatePostModalProp
                                 form.setValue("image", null);
                                 setImagePreview(null);
                               }}
-                              className="absolute top-2 right-2 w-6 h-6 bg-zinc-900/70 text-white rounded-full flex items-center justify-center hover:bg-zinc-900 transition-colors"
+                              className="absolute top-2 right-2 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-black/80 transition-colors"
                             >
                               <X className="w-3 h-3" />
                             </button>
@@ -476,10 +476,10 @@ export function CreatePostModal({ open, onClose, editPost }: CreatePostModalProp
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.15 }}
-                            className="flex flex-col items-center justify-center gap-2 border border-dashed border-zinc-300 rounded-lg h-24 cursor-pointer hover:bg-zinc-50 transition-colors"
+                            className="flex flex-col items-center justify-center gap-2 border border-dashed border-border rounded-lg h-24 cursor-pointer hover:bg-accent transition-colors"
                           >
-                            <ImagePlus className="w-5 h-5 text-zinc-400" />
-                            <span className="text-xs text-zinc-400">
+                            <ImagePlus className="w-5 h-5 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">
                               Click to upload a photo
                             </span>
                             <input
@@ -506,14 +506,14 @@ export function CreatePostModal({ open, onClose, editPost }: CreatePostModalProp
                     type="button"
                     variant="ghost"
                     onClick={handleClose}
-                    className="h-9 text-sm text-zinc-600"
+                    className="h-9 text-sm text-foreground/80"
                   >
                     Cancel
                   </Button>
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
                     <Button
                       type="submit"
-                      className="h-9 px-5 bg-zinc-950 hover:bg-zinc-800 text-white text-sm font-medium min-w-[80px]"
+                      className="h-9 px-5 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium min-w-[80px]"
                       disabled={mutation.isPending || !title.trim() || !content.trim()}
                     >
                       {mutation.isPending ? (

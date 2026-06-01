@@ -13,22 +13,21 @@ export function registerChatNamespace(io: Server) {
 
     console.log(`[chat] user ${userId} connected`);
 
-    // Join a conversation room
-    socket.on("join_room", (roomId: string) => {
-      socket.join(roomId);
-      console.log(`[chat] user ${userId} joined room ${roomId}`);
+    // Join a conversation room — messages are persisted via REST + delivered via Redis
+    socket.on("join_conversation", (conversationId: string) => {
+      socket.join(`conversation:${conversationId}`);
     });
 
-    socket.on("leave_room", (roomId: string) => {
-      socket.leave(roomId);
+    socket.on("leave_conversation", (conversationId: string) => {
+      socket.leave(`conversation:${conversationId}`);
     });
 
-    // Send a message to a room
-    socket.on("send_message", (data: { roomId: string; message: string }) => {
-      chat.to(data.roomId).emit("new_message", {
-        senderId: userId,
-        message: data.message,
-        createdAt: new Date().toISOString(),
+    // Typing indicator — relay to others in the room (not back to sender)
+    socket.on("typing", (data: { conversationId: string; userId: string; isTyping: boolean }) => {
+      socket.to(`conversation:${data.conversationId}`).emit("user_typing", {
+        conversationId: data.conversationId,
+        userId: data.userId,
+        isTyping: data.isTyping,
       });
     });
 

@@ -25,6 +25,11 @@ export const CHANNELS = {
   NEW_POST: "community:new_post",
   NEW_COMMENT: "community:new_comment",
   NEW_REPLY: "community:new_reply",
+  NEW_REACTION: "community:new_reaction",
+  NEW_RSVP: "community:new_rsvp",
+  NEW_REPOST: "community:new_repost",
+  NEW_MESSAGE: "community:new_message",
+  MESSAGE_READ: "community:message_read",
 } as const;
 
 export async function publish(channel: string, payload: object) {

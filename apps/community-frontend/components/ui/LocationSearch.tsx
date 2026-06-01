@@ -83,7 +83,7 @@ export function LocationSearch({
     <div ref={containerRef} className="relative">
       {/* Input */}
       <div className="relative flex items-center">
-        <MapPin className="absolute left-3 w-3.5 h-3.5 text-zinc-400 pointer-events-none shrink-0" />
+        <MapPin className="absolute left-3 w-3.5 h-3.5 text-muted-foreground pointer-events-none shrink-0" />
         <input
           type="text"
           value={query}
@@ -91,14 +91,14 @@ export function LocationSearch({
           onFocus={() => suggestions.length > 0 && setOpen(true)}
           placeholder={placeholder}
           required={required}
-          className="w-full h-9 pl-8 pr-8 text-sm bg-zinc-50 border border-zinc-200 rounded-md outline-none ring-offset-0 focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 text-zinc-900 placeholder:text-zinc-400 transition-colors"
+          className="w-full h-9 pl-8 pr-8 text-sm bg-muted border border-border rounded-md outline-none ring-offset-0 focus:border-ring focus:ring-1 focus:ring-ring text-foreground placeholder:text-muted-foreground transition-colors"
         />
         <div className="absolute right-3">
           {loading ? (
-            <Loader2 className="w-3.5 h-3.5 text-zinc-400 animate-spin" />
+            <Loader2 className="w-3.5 h-3.5 text-muted-foreground animate-spin" />
           ) : query ? (
             <button type="button" onClick={handleClear} tabIndex={-1}>
-              <X className="w-3.5 h-3.5 text-zinc-400 hover:text-zinc-700 transition-colors" />
+              <X className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground transition-colors" />
             </button>
           ) : null}
         </div>
@@ -106,7 +106,7 @@ export function LocationSearch({
 
       {/* Dropdown */}
       {open && suggestions.length > 0 && (
-        <div className="absolute z-[9999] w-full mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg overflow-hidden">
+        <div className="absolute z-[9999] w-full mt-1 bg-popover border border-border rounded-lg shadow-lg overflow-hidden">
           {suggestions.map((s, i) => {
             const parts = s.display_name.split(", ")
             const main  = parts[0]
@@ -118,14 +118,14 @@ export function LocationSearch({
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => handleSelect(s)}
                 className={cn(
-                  "w-full flex items-start gap-2.5 px-3 py-2.5 text-left hover:bg-zinc-50 transition-colors",
-                  i !== 0 && "border-t border-zinc-100"
+                  "w-full flex items-start gap-2.5 px-3 py-2.5 text-left hover:bg-accent transition-colors",
+                  i !== 0 && "border-t border-border"
                 )}
               >
-                <MapPin className="w-3.5 h-3.5 text-zinc-400 mt-0.5 shrink-0" />
+                <MapPin className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-zinc-900 truncate">{main}</p>
-                  {sub && <p className="text-xs text-zinc-400 truncate mt-0.5">{sub}</p>}
+                  <p className="text-sm font-medium text-foreground truncate">{main}</p>
+                  {sub && <p className="text-xs text-muted-foreground truncate mt-0.5">{sub}</p>}
                 </div>
               </button>
             )
@@ -135,8 +135,8 @@ export function LocationSearch({
 
       {/* No results */}
       {open && !loading && query.length >= 3 && suggestions.length === 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg px-3 py-3 text-center">
-          <p className="text-sm text-zinc-400">No locations found</p>
+        <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-lg shadow-lg px-3 py-3 text-center">
+          <p className="text-sm text-muted-foreground">No locations found</p>
         </div>
       )}
     </div>

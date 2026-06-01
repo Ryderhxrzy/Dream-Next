@@ -30,7 +30,7 @@ export async function startServer() {
 
   // Register namespaces
   const notify = registerNotifyNamespace(io);
-  registerChatNamespace(io);
+  const chat = registerChatNamespace(io);
 
   // Subscribe to Redis channels from community-backend
   if (redisConnected) {
@@ -38,6 +38,11 @@ export async function startServer() {
       CHANNELS.NEW_POST,
       CHANNELS.NEW_COMMENT,
       CHANNELS.NEW_REPLY,
+      CHANNELS.NEW_REACTION,
+      CHANNELS.NEW_RSVP,
+      CHANNELS.NEW_REPOST,
+      CHANNELS.NEW_MESSAGE,
+      CHANNELS.MESSAGE_READ,
     );
 
     subscriber.on("message", (channel: string, message: string) => {
@@ -71,6 +76,58 @@ export async function startServer() {
               .to(`user:${payload.parentAuthorId}`)
               .emit("new_reply", payload);
           }
+        }
+
+        if (channel === CHANNELS.NEW_REACTION) {
+          // Toast notification only for the post author (not the reactor)
+          if (payload.postAuthorId && payload.postAuthorId !== payload.reactorId) {
+            notify
+              .to(`user:${payload.postAuthorId}`)
+              .emit("new_reaction", payload);
+          }
+        }
+
+        if (channel === CHANNELS.NEW_RSVP) {
+          // Toast notification only for the event owner (not the RSVP'er)
+          if (payload.postAuthorId && payload.postAuthorId !== payload.rsvpUserId) {
+            notify
+              .to(`user:${payload.postAuthorId}`)
+              .emit("new_rsvp", payload);
+          }
+        }
+
+        if (channel === CHANNELS.NEW_REPOST) {
+          // Refresh feeds (new repost appeared)
+          notify.emit("new_post", payload);
+
+          // Toast notification for the original post owner (not the reposter)
+          if (payload.postAuthorId && payload.postAuthorId !== payload.reposterId) {
+            notify
+              .to(`user:${payload.postAuthorId}`)
+              .emit("new_repost", payload);
+          }
+        }
+
+        if (channel === CHANNELS.NEW_MESSAGE) {
+          // Deliver to everyone in the conversation room (chat namespace)
+          chat.to(`conversation:${payload.conversationId}`).emit("new_message", payload.message);
+
+          // Also notify recipients on notify namespace (for unread badge / toast)
+          for (const recipientId of payload.recipientIds ?? []) {
+            notify.to(`user:${recipientId}`).emit("new_message", {
+              conversationId: payload.conversationId,
+              message: payload.message,
+            });
+          }
+        }
+
+        if (channel === CHANNELS.MESSAGE_READ) {
+          // Tell the conversation room that someone read it (update Sent → Seen)
+          chat.to(`conversation:${payload.conversationId}`).emit("conversation_read", {
+            conversationId: payload.conversationId,
+            readerId: payload.readerId,
+            readAt: payload.readAt,
+          });
         }
       } catch {
         console.error("Failed to parse Redis message:", message);

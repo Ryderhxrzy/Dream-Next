@@ -25,11 +25,19 @@ export function serializeCommunityPost(post: CommunityPost) {
   };
 }
 
-export function serializeCommunityPostListItem(post: CommunityPostListItem) {
+export function serializeCommunityPostListItem(
+  post: CommunityPostListItem,
+  viewerId?: bigint,
+) {
   const authorName = [post.author.firstName, post.author.lastName]
     .filter(Boolean)
     .join(" ")
     .trim();
+
+  const going = post.rsvps.filter((r) => r.status === "GOING").length;
+  const interested = post.rsvps.filter((r) => r.status === "INTERESTED").length;
+  const viewerRsvp =
+    post.rsvps.find((r) => r.userId === viewerId)?.status ?? null;
 
   return {
     ...serializeCommunityPost(post),
@@ -44,7 +52,25 @@ export function serializeCommunityPostListItem(post: CommunityPostListItem) {
     counts: {
       comments: post._count.comments,
       reactions: post._count.reactions,
+      going,
+      interested,
     },
+    viewerHasReacted: post.reactions.length > 0,
+    viewerRsvp,
+    repostOf: post.repostOf
+      ? {
+          ...serializeCommunityPost(post.repostOf),
+          author: {
+            id: post.repostOf.author.id.toString(),
+            name:
+              [post.repostOf.author.firstName, post.repostOf.author.lastName]
+                .filter(Boolean)
+                .join(" ")
+                .trim() || "Community Member",
+            avatarUrl: post.repostOf.author.avatarUrl,
+          },
+        }
+      : null,
   };
 }
 

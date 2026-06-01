@@ -58,11 +58,17 @@ model CommunityPost {
 
   status CommunityPostStatus @default(ACTIVE) @map("cp_status")
 
+  // repost — points to the original post being reshared (quote repost)
+  repostOfId BigInt?        @map("cp_repost_of_id")
+  repostOf   CommunityPost? @relation("Reposts", fields: [repostOfId], references: [id])
+  reposts    CommunityPost[] @relation("Reposts")
+
   createdAt DateTime @default(now()) @map("cp_created_at")
   updatedAt DateTime @updatedAt @map("cp_updated_at")
 
   comments  CommunityComment[]
   reactions CommunityReaction[]
+  rsvps     CommunityEventRsvp[]
 
   @@index([authorId])
   @@index([category])
@@ -112,6 +118,103 @@ model CommunityReaction {
   @@map("tbl_community_reactions")
 }
 
+enum EventRsvpStatus {
+  GOING
+  INTERESTED
+}
+
+model CommunityEventRsvp {
+  id BigInt @id @default(autoincrement()) @map("re_id")
+
+  postId BigInt @map("re_post_id")
+  userId BigInt @map("re_user_id")
+
+  status EventRsvpStatus @map("re_status")
+
+  createdAt DateTime @default(now()) @map("re_created_at")
+  updatedAt DateTime @updatedAt @map("re_updated_at")
+
+  post CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user Customer      @relation(fields: [userId], references: [id])
+
+  @@unique([postId, userId])
+  @@index([postId])
+  @@index([userId])
+  @@map("tbl_community_event_rsvps")
+}
+
+enum CommunityNotificationType {
+  NEW_POST
+  NEW_COMMENT
+  NEW_REPLY
+  NEW_REACTION
+  NEW_RSVP
+  NEW_REPOST
+}
+
+model CommunityNotification {
+  id BigInt @id @default(autoincrement()) @map("cn_id")
+
+  // recipient — kung sino ang dapat makakita ng notif
+  userId BigInt   @map("cn_user_id")
+  user   Customer @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type    CommunityNotificationType @map("cn_type")
+  payload Json                      @map("cn_payload")
+
+  read   Boolean @default(false) @map("cn_read")
+
+  createdAt DateTime @default(now()) @map("cn_created_at")
+
+  @@index([userId])
+  @@index([userId, read])
+  @@index([createdAt])
+  @@map("tbl_community_notifications")
+}
+
+model Conversation {
+  id BigInt @id @default(autoincrement()) @map("conv_id")
+
+  createdAt DateTime @default(now()) @map("conv_created_at")
+  updatedAt DateTime @updatedAt @map("conv_updated_at") // bumps on new message (for sorting)
+
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@map("tbl_community_conversations")
+}
+
+model ConversationParticipant {
+  conversationId BigInt    @map("ccp_conversation_id")
+  userId         BigInt    @map("ccp_user_id")
+  lastReadAt     DateTime? @map("ccp_last_read_at")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         Customer     @relation(fields: [userId], references: [id])
+
+  @@id([conversationId, userId])
+  @@index([userId])
+  @@map("tbl_community_conversation_participants")
+}
+
+model Message {
+  id BigInt @id @default(autoincrement()) @map("msg_id")
+
+  conversationId BigInt  @map("msg_conversation_id")
+  senderId       BigInt  @map("msg_sender_id")
+  content        String  @map("msg_content") @db.Text
+  imageUrl       String? @map("msg_image_url")
+
+  createdAt DateTime @default(now()) @map("msg_created_at")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       Customer     @relation(fields: [senderId], references: [id])
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@map("tbl_community_messages")
+}
+
 model Customer {
   id        BigInt  @id @map("c_userid")
   firstName String? @map("c_fname")
@@ -119,9 +222,13 @@ model Customer {
   email     String? @map("c_email")
   avatarUrl String? @map("c_avatar_url")
 
-  posts     CommunityPost[]
-  comments  CommunityComment[]
-  reactions CommunityReaction[]
+  posts         CommunityPost[]
+  comments      CommunityComment[]
+  reactions     CommunityReaction[]
+  notifications CommunityNotification[]
+  rsvps         CommunityEventRsvp[]
+  conversations ConversationParticipant[]
+  messages      Message[]
 
   @@map("tbl_customer")
 }
