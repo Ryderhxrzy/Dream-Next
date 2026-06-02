@@ -29,6 +29,11 @@ export function listCommunityPosts(viewerId?: bigint) {
       rsvps: {
         select: { userId: true, status: true },
       },
+      // Viewer's own save (empty if not saved)
+      savedBy: {
+        where: { userId: viewerId ?? BigInt(-1) },
+        select: { id: true },
+      },
       // Original post if this is a repost (embedded in feed)
       repostOf: {
         include: { author: true },
@@ -165,6 +170,63 @@ export async function createRepost(
   await publish(CHANNELS.NEW_POST, { id: repost.id.toString() });
 
   return { data: repost, error: null };
+}
+
+// List event posts, soonest upcoming first.
+export function listEvents(viewerId?: bigint) {
+  return prisma.communityPost.findMany({
+    where: {
+      status: CommunityPostStatus.ACTIVE,
+      category: "EVENT",
+    },
+    include: {
+      author: true,
+      _count: { select: { comments: true, reactions: true, rsvps: true } },
+      reactions: { where: { authorId: viewerId ?? BigInt(-1) }, select: { id: true } },
+      rsvps: { select: { userId: true, status: true } },
+      savedBy: { where: { userId: viewerId ?? BigInt(-1) }, select: { id: true } },
+      repostOf: { include: { author: true } },
+    },
+    orderBy: [{ eventDate: "asc" }, { createdAt: "desc" }],
+    take: 100,
+  });
+}
+
+// Toggle save/bookmark on a post.
+export async function toggleSave(postId: bigint, userId: bigint) {
+  const existing = await prisma.communitySavedPost.findUnique({
+    where: { userId_postId: { userId, postId } },
+  });
+
+  if (existing) {
+    await prisma.communitySavedPost.delete({ where: { id: existing.id } });
+    return { saved: false };
+  }
+
+  await prisma.communitySavedPost.create({ data: { userId, postId } });
+  return { saved: true };
+}
+
+// List the posts a user has saved (newest saved first).
+export async function listSavedPosts(viewerId: bigint) {
+  const saved = await prisma.communitySavedPost.findMany({
+    where: { userId: viewerId, post: { status: CommunityPostStatus.ACTIVE } },
+    orderBy: { createdAt: "desc" },
+    include: {
+      post: {
+        include: {
+          author: true,
+          _count: { select: { comments: true, reactions: true, rsvps: true } },
+          reactions: { where: { authorId: viewerId }, select: { id: true } },
+          rsvps: { select: { userId: true, status: true } },
+          savedBy: { where: { userId: viewerId }, select: { id: true } },
+          repostOf: { include: { author: true } },
+        },
+      },
+    },
+  });
+
+  return saved.map((s) => s.post);
 }
 
 // List everyone who RSVP'd to an event (with their user info).

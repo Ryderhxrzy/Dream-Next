@@ -93,9 +93,10 @@ interface CreatePostModalProps {
   open: boolean;
   onClose: () => void;
   editPost?: EditPost;
+  presetCategory?: string;
 }
 
-export function CreatePostModal({ open, onClose, editPost }: CreatePostModalProps) {
+export function CreatePostModal({ open, onClose, editPost, presetCategory }: CreatePostModalProps) {
   const isEditMode = !!editPost;
   const [imagePreview, setImagePreview] = useState<string | null>(editPost?.imageUrl ?? null);
   const createPost = useCreateCommunityPost();
@@ -122,11 +123,14 @@ export function CreatePostModal({ open, onClose, editPost }: CreatePostModalProp
         condition: editPost.condition ?? "BRAND_NEW",
       });
       setImagePreview(editPost.imageUrl ?? null);
+    } else if (open && presetCategory) {
+      form.reset({ ...getDefaultValues(), category: presetCategory as CreatePostValues["category"] });
+      setImagePreview(null);
     } else if (!open) {
       form.reset(getDefaultValues());
       setImagePreview(null);
     }
-  }, [open, editPost, form]);
+  }, [open, editPost, presetCategory, form]);
 
   const category = form.watch("category");
   const title = form.watch("title");

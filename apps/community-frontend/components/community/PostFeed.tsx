@@ -78,7 +78,7 @@ const PostFeed = () => {
   );
 };
 
-function mapCommunityPostToCard(post: CommunityPost): Post {
+export function mapCommunityPostToCard(post: CommunityPost): Post {
   return {
     id: post.id,
     type: mapPostType(post.category),

@@ -13,10 +13,13 @@ import {
   createRepost,
   deleteCommunityPost,
   listCommunityPosts,
+  listEvents,
   listRsvps,
+  listSavedPosts,
   setPostVisibility,
   setRsvp,
   toggleReaction,
+  toggleSave,
   updateCommunityPost,
   uploadCommunityPostImage,
 } from "./community-post.service.js";
@@ -38,6 +41,27 @@ communityPostRoutes.get("/", async (c) => {
 communityPostRoutes.post("/:id/react", requireAuth, async (c) => {
   const id = BigInt(c.req.param("id") ?? "0");
   const result = await toggleReaction(id, c.get("customer").id);
+
+  return c.json(result);
+});
+
+// List the current user's saved posts
+communityPostRoutes.get("/saved", requireAuth, async (c) => {
+  const posts = await listSavedPosts(c.get("customer").id);
+  return c.json(posts.map((post) => serializeCommunityPostListItem(post, c.get("customer").id)));
+});
+
+// List event posts (upcoming first) — optional auth for viewer RSVP/save state
+communityPostRoutes.get("/events", async (c) => {
+  const viewer = await getAuthCustomer(c);
+  const posts = await listEvents(viewer?.id);
+  return c.json(posts.map((post) => serializeCommunityPostListItem(post, viewer?.id)));
+});
+
+// Toggle save/bookmark
+communityPostRoutes.post("/:id/save", requireAuth, async (c) => {
+  const id = BigInt(c.req.param("id") ?? "0");
+  const result = await toggleSave(id, c.get("customer").id);
 
   return c.json(result);
 });

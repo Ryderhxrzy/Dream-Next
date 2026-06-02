@@ -13,6 +13,7 @@ import {
 import { useHideCommunityPost } from "@/lib/hooks/use-hide-community-post"
 import { useToggleReaction } from "@/lib/hooks/use-toggle-reaction"
 import { useSetRsvp } from "@/lib/hooks/use-set-rsvp"
+import { useToggleSave } from "@/lib/hooks/use-saved-posts"
 import { cn } from "@/lib/utils"
 import { useCommunityUiStore } from "@/store/community-ui.store"
 import { toast } from "sonner"
@@ -72,6 +73,7 @@ const PostCard = ({ post, postId, isOwner, rawPost }: PostCardProps) => {
   const { hide } = useHideCommunityPost()
   const toggleReaction = useToggleReaction()
   const setRsvp = useSetRsvp()
+  const toggleSave = useToggleSave()
 
   const [hidePending, setHidePending] = useState(false)
   const [undoProgress, setUndoProgress] = useState(100)
@@ -195,9 +197,9 @@ const PostCard = ({ post, postId, isOwner, rawPost }: PostCardProps) => {
           <DropdownMenuContent align="end" className="w-44">
             {isOwner ? (
               <>
-                <DropdownMenuItem className="gap-2 text-sm cursor-pointer">
-                  <Bookmark className="w-3.5 h-3.5" />
-                  Save post
+                <DropdownMenuItem className="gap-2 text-sm cursor-pointer" onClick={() => toggleSave.mutate(postId)}>
+                  <Bookmark className={cn("w-3.5 h-3.5", rawPost.viewerHasSaved && "fill-current")} />
+                  {rawPost.viewerHasSaved ? "Saved" : "Save post"}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="gap-2 text-sm cursor-pointer"
@@ -229,9 +231,9 @@ const PostCard = ({ post, postId, isOwner, rawPost }: PostCardProps) => {
                   <MessageSquare className="w-3.5 h-3.5" />
                   Message {post.author.name.split(" ")[0]}
                 </DropdownMenuItem>
-                <DropdownMenuItem className="gap-2 text-sm cursor-pointer">
-                  <Bookmark className="w-3.5 h-3.5" />
-                  Save post
+                <DropdownMenuItem className="gap-2 text-sm cursor-pointer" onClick={() => toggleSave.mutate(postId)}>
+                  <Bookmark className={cn("w-3.5 h-3.5", rawPost.viewerHasSaved && "fill-current")} />
+                  {rawPost.viewerHasSaved ? "Saved" : "Save post"}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="gap-2 text-sm cursor-pointer text-orange-600 focus:text-orange-600">
