@@ -54,9 +54,16 @@ class MeilisearchService
                 ? $products->toArray()
                 : $products;
 
-            $this->client
-                ->index('products')
-                ->addDocuments($documents, 'id');
+            $index = $this->client->index('products');
+
+            // Configure searchable attributes to include brand_name
+            $index->updateSearchableAttributes([
+                'name',
+                'brand_name',
+                'description'
+            ]);
+
+            $index->addDocuments($documents, 'id');
 
             return [
                 'success' => true,

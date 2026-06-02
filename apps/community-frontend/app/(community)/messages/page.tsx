@@ -1,5 +1,6 @@
 "use client"
 
+import { Suspense } from "react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { formatDistanceToNowStrict, format, isToday, isYesterday, isSameDay } from "date-fns"
@@ -46,7 +47,7 @@ const EMOJIS = [
   "🍕", "☕", "🏠", "🚗", "📦", "💬", "✅", "❓",
 ]
 
-export default function MessagesPage() {
+function MessagesPageInner() {
   const searchParams = useSearchParams()
   const token = useAuthStore((s) => s.token)
   const { data: currentUser } = useCurrentUser()
@@ -524,5 +525,13 @@ export default function MessagesPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense>
+      <MessagesPageInner />
+    </Suspense>
   )
 }

@@ -64,6 +64,7 @@ class SupplierPushNotificationController extends Controller
                     'spn_title' => $title,
                     'spn_body' => $body,
                     'spn_image' => $image,
+                    'spn_button_text' => $validated['buttonText'] ?? null,
                     'spn_recipients' => $recipientCustomerIds,
                     'spn_sent_count' => 0,
                     'spn_failed_count' => 0,
@@ -73,18 +74,14 @@ class SupplierPushNotificationController extends Controller
                     'spn_updated_at' => now(),
                 ]);
 
-                // Calculate delay in seconds
-                $delay = $scheduledAt->diffInSeconds(now());
-
                 // Dispatch job to queue with delay - will execute automatically at scheduled time
                 SendScheduledPushNotificationJob::dispatch($notificationRecord->spn_id)
-                    ->delay($delay);
+                    ->delay($scheduledAt);
 
                 Log::info('Supplier push notification scheduled with delayed job', [
                     'notification_id' => $notificationRecord->spn_id,
                     'supplier_id' => $supplierId,
                     'scheduled_for' => $scheduledAt,
-                    'delay_seconds' => $delay,
                 ]);
 
                 return response()->json([
@@ -141,6 +138,7 @@ class SupplierPushNotificationController extends Controller
                 'spn_title' => $title,
                 'spn_body' => $body,
                 'spn_image' => $image,
+                'spn_button_text' => $validated['buttonText'] ?? null,
                 'spn_recipients' => $recipientCustomerIds,
                 'spn_sent_count' => $result['sent'],
                 'spn_failed_count' => $result['failed'],

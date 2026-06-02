@@ -15,6 +15,7 @@ class SupplierPushNotification extends Model
         'spn_title',
         'spn_body',
         'spn_image',
+        'spn_button_text',
         'spn_recipients',
         'spn_sent_count',
         'spn_failed_count',

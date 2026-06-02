@@ -72,6 +72,10 @@ class SendScheduledPushNotificationJob implements ShouldQueue
                 'href' => '/orders',
             ];
 
+            if (!empty($notification->spn_button_text)) {
+                $data['buttonText'] = $notification->spn_button_text;
+            }
+
             $notificationPayload = [
                 'title' => $notification->spn_title,
                 'body' => $notification->spn_body,
