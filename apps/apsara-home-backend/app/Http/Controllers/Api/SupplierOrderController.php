@@ -255,7 +255,7 @@ class SupplierOrderController extends Controller
             } elseif ($status === 'returned') {
                 $order->ch_shipment_status = 'returned_to_sender';
             }
-
+            //ss
             $payload = is_array($order->ch_shipment_payload) ? $order->ch_shipment_payload : [];
             $payload['supplier_portal'] = array_merge(
                 is_array($payload['supplier_portal'] ?? null) ? $payload['supplier_portal'] : [],
