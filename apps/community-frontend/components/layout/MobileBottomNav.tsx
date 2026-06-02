@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { Home, CalendarDays, Users, MessageCircle, ShieldCheck } from "lucide-react"
 import Link from "next/link"

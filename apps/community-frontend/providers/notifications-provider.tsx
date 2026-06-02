@@ -11,6 +11,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { useCurrentUser } from "@/lib/hooks/use-current-user";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { usePresenceStore } from "@/store/presence.store";
+import { useChatUiStore } from "@/store/chat-ui.store";
 import { useNotificationSync } from "@/lib/hooks/use-notification-sync";
 
 type NotificationAuthor = { name: string; avatarUrl?: string | null };
@@ -146,11 +147,15 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
 
     // Direct message — TOAST ONLY (not in the notification bell)
     socket.on("new_message", (payload: { conversationId: string; message: { content: string; sender: NotificationAuthor } }) => {
-      showNotificationToast({
-        author: payload.message.sender,
-        label: "sent you a message",
-        content: payload.message.content,
-      });
+      // Skip toast if the user is already viewing this conversation
+      const activeConversationId = useChatUiStore.getState().activeConversationId;
+      if (payload.conversationId !== activeConversationId) {
+        showNotificationToast({
+          author: payload.message.sender,
+          label: "sent you a message",
+          content: payload.message.content,
+        });
+      }
       // Update the Messages badge (unread count) everywhere
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     });

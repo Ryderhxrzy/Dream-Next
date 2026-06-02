@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils"
 import { createChatSocket } from "@/lib/socket"
 import { useAuthStore } from "@/store/auth.store"
 import { usePresenceStore } from "@/store/presence.store"
+import { useChatUiStore } from "@/store/chat-ui.store"
 import { useCurrentUser } from "@/lib/hooks/use-current-user"
 import {
   useConversations,
@@ -96,6 +97,13 @@ function MessagesPageInner() {
 
   const activeConvo = conversations?.find((c) => c.id === activeId)
   const onlineIds = usePresenceStore((s) => s.onlineUserIds)
+  const setActiveConversation = useChatUiStore((s) => s.setActiveConversation)
+
+  // Tell the app which conversation is open (to suppress its toast)
+  useEffect(() => {
+    setActiveConversation(activeId)
+    return () => setActiveConversation(null)
+  }, [activeId, setActiveConversation])
   const otherOnline = !!activeConvo?.otherUser && onlineIds.has(activeConvo.otherUser.id)
 
   // Filtered conversation list (search + unread tab)
