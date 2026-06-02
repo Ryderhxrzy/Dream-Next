@@ -14,6 +14,7 @@ export function serializeCommunityPost(post: CommunityPost) {
     imageUrl: post.imageUrl,
     eventDate: post.eventDate,
     eventTime: post.eventTime,
+    eventEndTime: post.eventEndTime,
     location: post.location,
     latitude: post.latitude?.toString() ?? null,
     longitude: post.longitude?.toString() ?? null,

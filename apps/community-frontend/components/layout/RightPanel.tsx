@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Plus, LayoutGrid, CalendarDays, AlertCircle } from "lucide-react"
 import { useCommunityUiStore } from "@/store/community-ui.store"
+import { EventsRightPanel } from "@/components/community/events/EventsRightPanel"
 
 const stats = [
   { value: "2,847", label: "Total members" },
@@ -30,8 +31,10 @@ export default function RightPanel() {
   const { openCreatePost } = useCommunityUiStore()
   const pathname = usePathname()
 
-  // Messages page is full-width — no right panel
+  // Messages & profile pages render their own layout — no generic right panel
   if (pathname?.includes("/messages")) return null
+  if (pathname?.includes("/profile")) return null
+  if (pathname?.includes("/events")) return <EventsRightPanel />
 
   return (
     <aside className="hidden xl:block w-64 shrink-0 h-[calc(100vh-3.5rem)] sticky top-14 overflow-y-auto py-4 px-3 space-y-5 border-l border-border">

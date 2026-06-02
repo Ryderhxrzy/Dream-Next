@@ -5,6 +5,7 @@ import { format, formatDistanceToNowStrict } from "date-fns";
 import { ArrowUp } from "lucide-react";
 
 import PostCard, { type Post, type PostType } from "./PostCard";
+import { formatEventTimeRange } from "@/components/community/events/event-utils";
 import { PostFeedSkeleton } from "./PostCardSkeleton";
 import {
   type CommunityPost,
@@ -118,7 +119,9 @@ function mapEvent(post: CommunityPost): Post["event"] {
     day: format(eventDate, "d"),
     title: post.title,
     date: `${format(eventDate, "EEE, MMM d")}${
-      post.eventTime ? ` - ${post.eventTime}` : ""
+      formatEventTimeRange(post.eventTime, post.eventEndTime)
+        ? ` · ${formatEventTimeRange(post.eventTime, post.eventEndTime)}`
+        : ""
     }`,
     location: post.location || "Community",
     going: post.viewerRsvp === "GOING",

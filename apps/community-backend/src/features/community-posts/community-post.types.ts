@@ -10,6 +10,7 @@ export type CreateCommunityPostInput = {
   imageUrl: string | null;
   eventDate: Date | null;
   eventTime: string | null;
+  eventEndTime: string | null;
   location: string | null;
   latitude: string | null;
   longitude: string | null;

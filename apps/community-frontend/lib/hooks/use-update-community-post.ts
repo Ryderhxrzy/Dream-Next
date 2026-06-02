@@ -9,6 +9,7 @@ type UpdatePostInput = {
   content: string;
   eventDate?: Date | null;
   eventTime?: string | null;
+  eventEndTime?: string | null;
   location?: string | null;
   price?: string | null;
   condition?: string | null;

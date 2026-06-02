@@ -73,19 +73,14 @@ export function MessagesView() {
     setOtherReadAt(messagesData?.otherReadAt ?? null)
   }, [messagesData?.otherReadAt])
 
-  // Open from ?c= query, OR auto-open the first one on desktop
+  // Open only when a specific conversation is deep-linked via ?c=.
+  // We intentionally do NOT auto-open the first conversation, otherwise its
+  // messages would be marked "seen" the moment the user lands on /messages.
   useEffect(() => {
     if (activeId) return
     const c = searchParams.get("c")
-    if (c) {
-      setActiveId(c)
-      return
-    }
-    const isDesktop = typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches
-    if (isDesktop && conversations && conversations.length > 0) {
-      setActiveId(conversations[0].id)
-    }
-  }, [searchParams, conversations, activeId])
+    if (c) setActiveId(c)
+  }, [searchParams, activeId])
 
   // Chat socket
   useEffect(() => {

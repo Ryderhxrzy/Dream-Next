@@ -1,6 +1,8 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { endOfMonth, endOfWeek } from "date-fns"
+import { motion } from "framer-motion"
 import { Search, Plus, CalendarDays, Loader2 } from "lucide-react"
 
 import { Input } from "@/components/ui/input"
@@ -12,7 +14,14 @@ import { useEvents } from "@/lib/hooks/use-events"
 import { useCommunityUiStore } from "@/store/community-ui.store"
 import { cn } from "@/lib/utils"
 
-type Tab = "upcoming" | "past"
+type Tab = "upcoming" | "week" | "month" | "past"
+
+const TABS: { value: Tab; label: string }[] = [
+  { value: "upcoming", label: "Upcoming" },
+  { value: "week", label: "This Week" },
+  { value: "month", label: "This Month" },
+  { value: "past", label: "Past" },
+]
 
 export function EventsView() {
   const { data: events, isLoading } = useEvents()
@@ -26,7 +35,11 @@ export function EventsView() {
     let list = events ?? []
     list = list.filter((e) => {
       const d = eventDateOf(e)
-      return tab === "upcoming" ? d >= now : d < now
+      if (tab === "past") return d < now
+      if (d < now) return false
+      if (tab === "week") return d <= endOfWeek(now, { weekStartsOn: 1 })
+      if (tab === "month") return d <= endOfMonth(now)
+      return true // upcoming
     })
     if (search.trim()) {
       const q = search.toLowerCase()
@@ -44,7 +57,7 @@ export function EventsView() {
   )
 
   return (
-    <div className="max-w-5xl mx-auto space-y-5">
+    <div className="w-full space-y-5">
       {/* Header */}
       <div className="flex items-center gap-3 flex-wrap">
         <h1 className="text-xl font-bold text-foreground">Events</h1>
@@ -70,19 +83,30 @@ export function EventsView() {
       {featured && <FeaturedEvent event={featured} />}
 
       {/* Filter tabs */}
-      <div className="flex items-center gap-1.5">
-        {(["upcoming", "past"] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={cn(
-              "px-4 py-1.5 rounded-full text-sm font-medium transition-colors capitalize",
-              tab === t ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {t}
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="inline-flex items-center gap-1 rounded-full bg-muted p-1">
+          {TABS.map((t) => (
+            <button
+              key={t.value}
+              onClick={() => setTab(t.value)}
+              className={cn(
+                "relative rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors sm:px-4",
+                tab === t.value
+                  ? "text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {tab === t.value && (
+                <motion.span
+                  layoutId="events-tab"
+                  className="absolute inset-0 rounded-full bg-primary"
+                  transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                />
+              )}
+              <span className="relative z-10 whitespace-nowrap">{t.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Grid */}
@@ -99,7 +123,7 @@ export function EventsView() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map((event) => (
             <EventCard key={event.id} event={event} />
           ))}

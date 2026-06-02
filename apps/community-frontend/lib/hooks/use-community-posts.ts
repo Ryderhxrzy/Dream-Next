@@ -20,6 +20,7 @@ export type CommunityPost = {
   imageUrl: string | null;
   eventDate: string | null;
   eventTime: string | null;
+  eventEndTime: string | null;
   location: string | null;
   price: string | null;
   condition: string | null;
@@ -53,6 +54,7 @@ export type RepostOriginal = {
   imageUrl: string | null;
   eventDate: string | null;
   eventTime: string | null;
+  eventEndTime: string | null;
   location: string | null;
   createdAt: string;
   author: {

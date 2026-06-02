@@ -43,6 +43,8 @@ export async function startServer() {
       CHANNELS.NEW_REPOST,
       CHANNELS.NEW_MESSAGE,
       CHANNELS.MESSAGE_READ,
+      CHANNELS.CONNECT_REQUEST,
+      CHANNELS.CONNECT_ACCEPTED,
     );
 
     subscriber.on("message", (channel: string, message: string) => {
@@ -118,6 +120,20 @@ export async function startServer() {
               conversationId: payload.conversationId,
               message: payload.message,
             });
+          }
+        }
+
+        if (channel === CHANNELS.CONNECT_REQUEST) {
+          // Notify the addressee that they received a connection request
+          if (payload.recipientId) {
+            notify.to(`user:${payload.recipientId}`).emit("connect_request", payload);
+          }
+        }
+
+        if (channel === CHANNELS.CONNECT_ACCEPTED) {
+          // Notify the original requester that their request was accepted
+          if (payload.recipientId) {
+            notify.to(`user:${payload.recipientId}`).emit("connect_accepted", payload);
           }
         }
 

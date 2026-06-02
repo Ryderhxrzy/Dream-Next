@@ -2,7 +2,15 @@ import { create } from "zustand";
 
 export type Notification = {
   id: string;
-  type: "new_post" | "new_comment" | "new_reply" | "new_reaction" | "new_rsvp" | "new_repost";
+  type:
+    | "new_post"
+    | "new_comment"
+    | "new_reply"
+    | "new_reaction"
+    | "new_rsvp"
+    | "new_repost"
+    | "connect_request"
+    | "connect_accepted";
   payload: Record<string, unknown>;
   createdAt: string;
   read: boolean;

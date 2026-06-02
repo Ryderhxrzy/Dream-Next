@@ -37,6 +37,7 @@ export function parseCreateCommunityPostInput(body: unknown) {
       imageUrl: parseOptionalString(body.imageUrl),
       eventDate,
       eventTime: parseOptionalString(body.eventTime),
+      eventEndTime: parseOptionalString(body.eventEndTime),
       location: parseOptionalString(body.location),
       latitude: parseOptionalString(body.latitude),
       longitude: parseOptionalString(body.longitude),

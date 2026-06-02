@@ -44,8 +44,9 @@ model CommunityPost {
   imageUrl String? @map("cp_image_url")
 
   // for event posts
-  eventDate DateTime? @map("cp_event_date")
-  eventTime String?   @map("cp_event_time")
+  eventDate    DateTime? @map("cp_event_date")
+  eventTime    String?   @map("cp_event_time")
+  eventEndTime String?   @map("cp_event_end_time")
 
   // for event/safety posts
   location  String?  @map("cp_location")
@@ -151,6 +152,8 @@ enum CommunityNotificationType {
   NEW_REACTION
   NEW_RSVP
   NEW_REPOST
+  CONNECT_REQUEST
+  CONNECT_ACCEPTED
 }
 
 model CommunityNotification {
@@ -247,8 +250,51 @@ model Customer {
   conversations ConversationParticipant[]
   messages      Message[]
   savedPosts    CommunitySavedPost[]
+  profile       CommunityProfile?
+  connectionsRequested CommunityConnection[] @relation("ConnectionsRequested")
+  connectionsReceived  CommunityConnection[] @relation("ConnectionsReceived")
 
   @@map("tbl_customer")
+}
+
+enum CommunityConnectionStatus {
+  PENDING
+  ACCEPTED
+}
+
+model CommunityConnection {
+  id          BigInt   @id @default(autoincrement()) @map("cc_id")
+  requesterId BigInt   @map("cc_requester_id")
+  addresseeId BigInt   @map("cc_addressee_id")
+  requester   Customer @relation("ConnectionsRequested", fields: [requesterId], references: [id])
+  addressee   Customer @relation("ConnectionsReceived", fields: [addresseeId], references: [id])
+
+  status CommunityConnectionStatus @default(PENDING) @map("cc_status")
+
+  createdAt DateTime @default(now()) @map("cc_created_at")
+  updatedAt DateTime @updatedAt @map("cc_updated_at")
+
+  @@unique([requesterId, addresseeId])
+  @@index([addresseeId])
+  @@map("tbl_community_connections")
+}
+
+model CommunityProfile {
+  id         BigInt   @id @default(autoincrement()) @map("cprof_id")
+  customerId BigInt   @unique @map("cprof_customer_id")
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  bio        String?  @map("cprof_bio") @db.Text
+  location   String?  @map("cprof_location")
+  coverUrl   String?  @map("cprof_cover_url")
+  occupation String?  @map("cprof_occupation")
+  role       String?  @map("cprof_role")
+  interests  String[] @map("cprof_interests")
+
+  createdAt DateTime @default(now()) @map("cprof_created_at")
+  updatedAt DateTime @updatedAt @map("cprof_updated_at")
+
+  @@map("tbl_community_profiles")
 }
 
 model PersonalAccessToken {
