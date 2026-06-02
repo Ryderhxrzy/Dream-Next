@@ -6,7 +6,6 @@ import {
   Home, Rss, CalendarDays, Users, MessageCircle,
   ShieldCheck, Settings, MapPin
 } from "lucide-react"
-import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useUnreadMessageCount } from "@/lib/hooks/use-messages"
 

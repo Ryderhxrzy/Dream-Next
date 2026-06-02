@@ -85,7 +85,7 @@ const PostCard = ({ post, postId, isOwner, rawPost }: PostCardProps) => {
   const startConversation = useStartConversation()
 
   function handleShare() {
-    // Use the current path so it works in dev (no basePath) and prod (/community)
+    // Use the current path so the login redirect works on the active host.
     const url = `${window.location.origin}${window.location.pathname}#post-${postId}`
     navigator.clipboard.writeText(url)
     toast.success("Link copied to clipboard")
