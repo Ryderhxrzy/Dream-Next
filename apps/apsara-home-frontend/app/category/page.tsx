@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import type { Category } from '@/store/api/categoriesApi';
 import { buildPageMetadata } from '@/app/seo';
+import { serverFetch } from '@/libs/serverFetch';
 
 export const metadata = buildPageMetadata({ title: 'Category', description: 'Browse the Category page on AF Home.', path: '/category' });
 export const revalidate = 120;
@@ -29,7 +30,7 @@ async function getFirstCategorySlug(): Promise<string> {
   if (!apiUrl) return 'chairs-stools';
 
   try {
-    const res = await fetch(`${apiUrl}/api/categories`, {
+    const res = await serverFetch(`${apiUrl}/api/categories`, {
       method: 'GET',
       headers: { Accept: 'application/json' },
       next: {

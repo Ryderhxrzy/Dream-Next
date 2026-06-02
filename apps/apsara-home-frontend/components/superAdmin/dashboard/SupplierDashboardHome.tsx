@@ -1,6 +1,7 @@
 'use client'
 
 import type { ElementType } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { useSession } from 'next-auth/react'
@@ -12,7 +13,9 @@ import {
   Building2,
   CheckCircle2,
   Clock3,
+  Eye,
   Layers3,
+  Settings,
   Package,
   RefreshCw,
   ShieldCheck,
@@ -516,48 +519,87 @@ export default function SupplierDashboardHome() {
               <p className="text-[11px] text-slate-400 dark:text-slate-500">Latest incoming from your storefront</p>
             </div>
           </div>
-          <Link href="/supplier/orders" className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-sky-500/30 dark:hover:bg-sky-500/10 dark:hover:text-sky-300">
-            View all <ArrowRight className="h-3 w-3" />
+          <Link href="/supplier/orders" className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:from-sky-600 hover:to-blue-700">
+            View all orders <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
 
-        <div className="p-5">
+        <div>
           {ordersLoading ? (
-            <div className="space-y-2.5">
+            <div className="space-y-2.5 p-5">
               {Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-14 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />)}
             </div>
           ) : recentOrders.length === 0 ? (
-            <EmptyState icon={ShoppingCart} message="No orders yet" sub="Orders from your storefront will appear here" />
+            <div className="p-5">
+              <EmptyState icon={ShoppingCart} message="No orders yet" sub="Orders from your storefront will appear here" />
+            </div>
           ) : (
-            <div className="space-y-2">
-              {recentOrders.map((order, i) => (
-                <div
-                  key={order.id}
-                  className="group flex items-center gap-4 rounded-xl border border-transparent bg-slate-50/70 px-4 py-3 transition hover:border-sky-100 hover:bg-sky-50/60 dark:bg-slate-800/40 dark:hover:border-sky-500/20 dark:hover:bg-sky-500/5"
-                >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-xs font-bold text-slate-400 shadow-sm ring-1 ring-slate-200 dark:bg-slate-700 dark:ring-slate-600">
-                    {i + 1}
-                  </span>
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-100 dark:bg-sky-500/10">
-                    <Package className="h-4 w-4 text-sky-600 dark:text-sky-400" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] font-semibold text-slate-800 dark:text-slate-100">{order.product_name}</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                      {order.customer_name ?? 'Customer'} · Qty {order.quantity} · {fmtDate(order.created_at ?? null)}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 flex-col items-end gap-1">
-                    <FulfillmentBadge status={order.fulfillment_status} />
-                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200">{fmtMoney(Number(order.amount))}</span>
-                  </div>
-                </div>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-800/50">
+                    {['Order ID', 'Product', 'Customer', 'Date', 'Status', 'Amount', 'Actions'].map((h) => (
+                      <th key={h} className={`px-4 py-3 text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500 ${h === 'Amount' ? 'text-right' : h === 'Actions' ? 'text-center' : 'text-left'}`}>
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {recentOrders.map((order) => (
+                    <tr key={order.id} className="group transition hover:bg-sky-50/50 dark:hover:bg-sky-500/5">
+                      <td className="px-4 py-3.5 text-[13px] font-bold text-sky-600 dark:text-sky-400">
+                        #{order.id}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-3">
+                          {order.product_image ? (
+                            <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                              <Image src={order.product_image} alt={order.product_name} fill className="object-cover" />
+                            </div>
+                          ) : (
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-100 dark:bg-sky-500/10">
+                              <Package className="h-5 w-5 text-sky-500 dark:text-sky-400" />
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="max-w-[200px] truncate text-[13px] font-semibold text-slate-800 dark:text-slate-100">{order.product_name}</p>
+                            {order.product_description ? (
+                              <p className="max-w-[200px] truncate text-[11px] text-slate-400 dark:text-slate-500">{order.product_description}</p>
+                            ) : null}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <p className="text-[13px] font-medium text-slate-700 dark:text-slate-200">{order.customer_name ?? 'Customer'}</p>
+                        <p className="text-[11px] text-slate-400 dark:text-slate-500">Qty {order.quantity}</p>
+                      </td>
+                      <td className="px-4 py-3.5 text-[13px] text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                        {fmtDate(order.created_at ?? null)}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <FulfillmentBadge status={order.fulfillment_status} />
+                      </td>
+                      <td className="px-4 py-3.5 text-right text-[13px] font-bold text-slate-700 dark:text-slate-200 whitespace-nowrap">
+                        {fmtMoney(Number(order.amount))}
+                      </td>
+                      <td className="px-4 py-3.5 text-center">
+                        <Link
+                          href="/supplier/orders"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-sky-100 hover:text-sky-600 dark:hover:bg-sky-500/10 dark:hover:text-sky-400"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
 
           {(orderCounts?.return ?? 0) > 0 && (
-            <div className="mt-3 flex items-center gap-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 dark:border-orange-500/20 dark:bg-orange-500/10">
+            <div className="m-5 flex items-center gap-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 dark:border-orange-500/20 dark:bg-orange-500/10">
               <RefreshCw className="h-4 w-4 shrink-0 text-orange-500 dark:text-orange-400" />
               <p className="flex-1 text-xs font-semibold text-orange-700 dark:text-orange-300">
                 {orderCounts?.return} return{(orderCounts?.return ?? 0) !== 1 ? 's' : ''} need attention
@@ -647,19 +689,34 @@ export default function SupplierDashboardHome() {
                 <p className="text-[11px] text-slate-400 dark:text-slate-500">Latest from your supplier catalog</p>
               </div>
             </div>
-            <Link href="/supplier/products" className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-semibold text-slate-500 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:text-sky-400">
-              Manage
+            <Link href="/supplier/products" className="inline-flex items-center gap-1.5 rounded-xl bg-linear-to-r from-violet-500 to-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:from-violet-600 hover:to-indigo-700">
+              <Settings className="h-3.5 w-3.5" /> Manage Products
             </Link>
           </div>
-          <div className="p-5">
+          <div>
             {recentProducts.length === 0 ? (
-              <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-400/20 dark:bg-amber-500/10">
-                <span className="mt-0.5 text-amber-500">⚠</span>
-                <p className="text-sm text-amber-700 dark:text-amber-300">No products yet. Start by adding your first supplier product.</p>
+              <div className="p-5">
+                <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-400/20 dark:bg-amber-500/10">
+                  <span className="mt-0.5 text-amber-500">⚠</span>
+                  <p className="text-sm text-amber-700 dark:text-amber-300">No products yet. Start by adding your first supplier product.</p>
+                </div>
               </div>
             ) : (
-              <div className="space-y-2.5">
-                {recentProducts.map((product) => <ProductRow key={product.id} product={product} />)}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-800/50">
+                      {['Product', 'SKU', 'Quantity', 'Status', 'Updated', 'Actions'].map((h) => (
+                        <th key={h} className={`px-4 py-3 text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500 ${h === 'Actions' || h === 'Quantity' ? 'text-center' : 'text-left'}`}>
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {recentProducts.map((product) => <ProductRow key={product.id} product={product} />)}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
@@ -920,27 +977,52 @@ function SnapCard({ label, value, icon: Icon, accent = 'sky' }: { label: string;
 function ProductRow({ product }: { product: Product }) {
   const active = Number(product.status) === 1 || Number(product.status) === 2
   return (
-    <div className="group flex items-center gap-4 rounded-2xl border border-slate-200/60 bg-white p-4 shadow-sm transition hover:border-sky-200 hover:shadow-md dark:border-slate-700/50 dark:bg-slate-800/60 dark:hover:border-sky-500/30">
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-sky-100 to-cyan-100 dark:from-sky-500/15 dark:to-cyan-500/10">
-        <Package className="h-5 w-5 text-sky-600 dark:text-sky-400" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-bold text-slate-800 dark:text-slate-100">{product.name}</p>
-        <div className="mt-1 flex items-center gap-2">
-          <span className="rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-slate-500 dark:bg-slate-700 dark:text-slate-400">
-            {product.sku || 'No SKU'}
-          </span>
-          <span className="text-slate-300 dark:text-slate-600">·</span>
-          <span className="text-[11px] text-slate-400 dark:text-slate-500">
-            Qty <strong className="text-slate-600 dark:text-slate-300">{Number(product.qty ?? 0)}</strong>
-          </span>
+    <tr className="group transition hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+      <td className="px-4 py-3.5">
+        <div className="flex items-center gap-3">
+          {product.image ? (
+            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-700">
+              <Image src={product.image} alt={product.name} fill className="object-cover" />
+            </div>
+          ) : (
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-sky-100 to-cyan-100 dark:from-sky-500/15 dark:to-cyan-500/10">
+              <Package className="h-5 w-5 text-sky-600 dark:text-sky-400" />
+            </div>
+          )}
+          <div className="min-w-0">
+            <p className="max-w-[220px] truncate text-[13px] font-bold text-slate-800 dark:text-slate-100">{product.name}</p>
+            {product.description ? (
+              <p className="max-w-[220px] truncate text-[11px] text-slate-400 dark:text-slate-500">{product.description}</p>
+            ) : null}
+          </div>
         </div>
-      </div>
-      <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide ${active ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'}`}>
-        <span className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-emerald-500' : 'bg-slate-400'}`} />
-        {active ? 'Active' : 'Inactive'}
-      </span>
-    </div>
+      </td>
+      <td className="px-4 py-3.5">
+        <span className="rounded-md bg-slate-100 px-2 py-1 font-mono text-[11px] font-semibold text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+          {product.sku || 'No SKU'}
+        </span>
+      </td>
+      <td className="px-4 py-3.5 text-center text-[13px] font-semibold text-slate-700 dark:text-slate-200">
+        {Number(product.qty ?? 0)}
+      </td>
+      <td className="px-4 py-3.5">
+        <span className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1 text-[10px] font-bold uppercase tracking-wide ${active ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'}`}>
+          <span className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+          {active ? 'Active' : 'Inactive'}
+        </span>
+      </td>
+      <td className="whitespace-nowrap px-4 py-3.5 text-[12px] text-slate-500 dark:text-slate-400">
+        {fmtDate(product.updatedAt ?? null)}
+      </td>
+      <td className="px-4 py-3.5 text-center">
+        <Link
+          href="/supplier/products"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-violet-100 hover:text-violet-600 dark:hover:bg-violet-500/10 dark:hover:text-violet-400"
+        >
+          <Eye className="h-4 w-4" />
+        </Link>
+      </td>
+    </tr>
   )
 }
 

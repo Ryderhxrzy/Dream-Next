@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import PartnerStorefrontPage from '@/components/partner/PartnerStorefrontPage'
+import { serverFetch } from '@/libs/serverFetch'
 import {
   filterPartnerCategories,
   filterPartnerProducts,
@@ -155,7 +156,7 @@ async function getPartnerStorefrontData(partnerSlug: string, selectedCategoryId?
       const featuredFetchResults = await Promise.all(
         missingFeaturedIds.map(async (id) => {
           try {
-            const response = await fetch(`${apiUrl}/api/products/${id}`, {
+            const response = await serverFetch(`${apiUrl}/api/products/${id}`, {
               method: 'GET',
               headers: { Accept: 'application/json' },
               cache: 'no-store',

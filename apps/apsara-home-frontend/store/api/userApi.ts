@@ -417,6 +417,7 @@ export const userApi = baseApi.injectEndpoints({
                 method: 'GET'
             }),
             providesTags: ['User'],
+            keepUnusedDataFor: 300,
         }),
 
         accountSnapshot: builder.query<AccountSnapshot, void>({
@@ -425,6 +426,7 @@ export const userApi = baseApi.injectEndpoints({
                 method: 'GET'
             }),
             providesTags: ['User', 'AccountSnapshot'],
+            keepUnusedDataFor: 300,
         }),
 
         updateProfile: builder.mutation<MeResponse, UpdateProfilePayload>({
@@ -460,6 +462,7 @@ export const userApi = baseApi.injectEndpoints({
                 method: 'GET',
             }),
             providesTags: ['User'],
+            keepUnusedDataFor: 300,
         }),
 
         customerAddresses: builder.query<CustomerAddressesResponse, void>({
@@ -468,6 +471,7 @@ export const userApi = baseApi.injectEndpoints({
                 method: 'GET',
             }),
             providesTags: ['User'],
+            keepUnusedDataFor: 300,
         }),
 
         createCustomerAddress: builder.mutation<{ message: string; address: CustomerAddress }, CreateCustomerAddressPayload>({
@@ -547,6 +551,7 @@ export const userApi = baseApi.injectEndpoints({
                 method: 'GET',
             }),
             providesTags: ['User'],
+            keepUnusedDataFor: 300,
         }),
 
         webstoreRequestLatest: builder.query<{ request: WebstoreRequest | null }, void>({
@@ -555,6 +560,7 @@ export const userApi = baseApi.injectEndpoints({
                 method: 'GET',
             }),
             providesTags: ['User', 'WebstoreRequests'],
+            keepUnusedDataFor: 300,
         }),
 
         webstoreRequestHistory: builder.query<{ requests: WebstoreRequest[] }, void>({
@@ -563,6 +569,7 @@ export const userApi = baseApi.injectEndpoints({
                 method: 'GET',
             }),
             providesTags: ['User', 'WebstoreRequests'],
+            keepUnusedDataFor: 300,
         }),
 
         syncWebstorePartnerAccount: builder.mutation<{ message: string; partner?: { id: number; username: string; storefront_ids: number[] } }, void>({
@@ -579,6 +586,7 @@ export const userApi = baseApi.injectEndpoints({
                 method: 'GET',
             }),
             providesTags: ['User'],
+            keepUnusedDataFor: 300,
         }),
 
         memberSessions: builder.query<{ items: MemberSessionItem[] }, void>({
@@ -587,6 +595,7 @@ export const userApi = baseApi.injectEndpoints({
                 method: 'GET',
             }),
             providesTags: ['User'],
+            keepUnusedDataFor: 300,
         }),
 
         revokeMemberSession: builder.mutation<{ message: string; revoked_token_id: number; is_current: boolean }, number>({
@@ -603,6 +612,7 @@ export const userApi = baseApi.injectEndpoints({
                 method: 'GET',
             }),
             providesTags: ['User'],
+            keepUnusedDataFor: 300,
         }),
 
         linkGoogleAccount: builder.mutation<{ message: string }, LinkGooglePayload>({

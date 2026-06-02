@@ -741,10 +741,14 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
   const partnerSlug = useMemo(() => extractPartnerSlugFromPath(pathname), [pathname]);
   const profileBasePath = partnerSlug ? `/${partnerSlug}/profile` : '/profile';
   const levelUpBasePath = partnerSlug ? `/${partnerSlug}/profile/level-up` : '/profile/level-up';
+  const [activeTab, setActiveTab] = useState<Tab>(() => resolveTabFromSearchParams(searchParams.get('tab')));
+  const isWebstoreTab = activeTab === 'webstore';
   const { data: partnerStorefrontData } = useGetPublicWebPageItemsQuery('partner-storefront', {
     skip: !partnerSlug,
   });
-  const { data: publicTermsData } = useGetPublicWebPageItemsQuery('terms-and-conditions');
+  const { data: publicTermsData } = useGetPublicWebPageItemsQuery('terms-and-conditions', {
+    skip: !isWebstoreTab,
+  });
   const partnerStorefront = useMemo(() => {
     if (!partnerSlug) return null;
     const storefrontItems = partnerStorefrontData?.items ?? [];
@@ -775,6 +779,10 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
   const apiBaseUrl = (process.env.NEXT_PUBLIC_LARAVEL_API_URL || '').trim();
   const passkeySupported = typeof window !== 'undefined' && !!window.PublicKeyCredential && !!navigator.credentials;
   const isCustomerSession = status === 'authenticated' && (role === 'customer' || role === '');
+  const isActivityTab = activeTab === 'activity';
+  const isSecurityTab = activeTab === 'security';
+  const isReferralTab = activeTab === 'referrals' || activeTab === 'levels';
+  const isUsernameTab = activeTab === 'change-username';
   const { data, refetch: refetchMe } = useMeQuery(undefined, {
     skip: !isCustomerSession,
   });
@@ -782,36 +790,35 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
     skip: !isCustomerSession,
   });
   const { data: referralTree, isLoading: isReferralTreeLoading, refetch: refetchReferralTree } = useReferralTreeQuery(undefined, {
-    skip: !isCustomerSession,
-    refetchOnMountOrArgChange: true,
-    refetchOnFocus: true,
-    refetchOnReconnect: true,
-    pollingInterval: 15000,
+    skip: !isCustomerSession || !isReferralTab,
+    refetchOnMountOrArgChange: false,
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
   });
   const { data: usernameChangeLatest, refetch: refetchUsernameChangeLatest } = useUsernameChangeLatestQuery(undefined, {
-    skip: !isCustomerSession,
-    refetchOnMountOrArgChange: true,
-    refetchOnFocus: true,
-    refetchOnReconnect: true,
-    pollingInterval: 10000,
+    skip: !isCustomerSession || !isUsernameTab,
+    refetchOnMountOrArgChange: false,
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
   });
   const { data: webstoreRequestLatest, refetch: refetchWebstoreRequestLatest } = useWebstoreRequestLatestQuery(undefined, {
-    skip: !isCustomerSession,
-    refetchOnMountOrArgChange: true,
-    refetchOnFocus: true,
-    refetchOnReconnect: true,
-    pollingInterval: 5000,
+    skip: !isCustomerSession || !isWebstoreTab,
+    refetchOnMountOrArgChange: false,
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
   });
   const { data: webstoreHistoryData, isLoading: isWebstoreHistoryLoading } = useWebstoreRequestHistoryQuery(undefined, {
-    skip: !isCustomerSession,
-    refetchOnMountOrArgChange: true,
+    skip: !isCustomerSession || !isWebstoreTab,
+    refetchOnMountOrArgChange: false,
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
   });
 
   const { data: activityData, isLoading: isActivityLoading } = useMemberActivityQuery(undefined, {
-    skip: !isCustomerSession,
+    skip: !isCustomerSession || !isActivityTab,
   });
   const { data: sessionsData, isLoading: isSessionsLoading } = useMemberSessionsQuery(undefined, {
-    skip: !isCustomerSession,
+    skip: !isCustomerSession || !isActivityTab,
   });
   const [updateProfile, { isLoading: isSaving }] = useUpdateProfileMutation();
   const [uploadAvatar] = useUploadAvatarMutation();
@@ -825,7 +832,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
   const [syncWebstorePartnerAccount, { isLoading: isSyncingWebstoreAccount }] = useSyncWebstorePartnerAccountMutation();
   const [revokeMemberSession, { isLoading: isRevokingSession }] = useRevokeMemberSessionMutation();
   const { data: linkedAccountsData, refetch: refetchLinkedAccounts } = useLinkedAccountsQuery(undefined, {
-    skip: !isCustomerSession,
+    skip: !isCustomerSession || !isSecurityTab,
   });
   const [linkGoogleAccount, { isLoading: isLinkingGoogle }] = useLinkGoogleAccountMutation();
   const [unlinkGoogleAccount, { isLoading: isUnlinkingGoogle }] = useUnlinkGoogleAccountMutation();
@@ -843,7 +850,6 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
     return linkedAccountsData?.accounts?.some((account: LinkedAccount) => account.provider === 'facebook') ?? false;
   }, [linkedAccountsData]);
 
-  const [activeTab, setActiveTab] = useState<Tab>(() => resolveTabFromSearchParams(searchParams.get('tab')));
   const [googleLinkSuccess, setGoogleLinkSuccess] = useState(false);
   const [facebookLinkSuccess, setFacebookLinkSuccess] = useState(false);
   const profileDraftDirtyRef = useRef(false);
@@ -6740,19 +6746,19 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                           </div>
                         </div>
                         <div className={`min-w-[170px] rounded-2xl border bg-white/90 px-4 py-3 text-right shadow-[0_8px_18px_rgba(80,120,220,0.08)] ${
-                          webstoreRemainingBalance <= 0
+                          activeWebstoreRequest && webstoreRemainingBalance <= 0
                             ? 'border-emerald-200'
                             : 'border-[#d9e6ff]'
                         }`}>
                           <p className={`text-[10px] text-center font-extrabold uppercase tracking-[0.18em] ${
-                            webstoreRemainingBalance <= 0 ? 'text-emerald-600' : 'text-[#6d82ab]'
+                            activeWebstoreRequest && webstoreRemainingBalance <= 0 ? 'text-emerald-600' : 'text-[#6d82ab]'
                           }`}>
-                            {webstoreRemainingBalance <= 0 ? 'Paid' : 'Remaining Balance'}
+                            {activeWebstoreRequest && webstoreRemainingBalance <= 0 ? 'Paid' : 'Remaining Balance'}
                           </p>
                           <p className={`mt-1 text-lg font-black text-center tracking-tight ${
-                            webstoreRemainingBalance <= 0 ? 'text-emerald-700' : 'text-[#0f1f44]'
+                            activeWebstoreRequest && webstoreRemainingBalance <= 0 ? 'text-emerald-700' : 'text-[#0f1f44]'
                           }`}>
-                            {webstoreRemainingBalance <= 0 ? 'Paid' : `PHP ${webstoreRemainingBalance.toLocaleString()}`}
+                            {activeWebstoreRequest && webstoreRemainingBalance <= 0 ? 'Paid' : activeWebstoreRequest ? `PHP ${webstoreRemainingBalance.toLocaleString()}` : 'PHP 0'}
                           </p>
                         </div>
                       </div>
