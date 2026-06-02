@@ -46,7 +46,8 @@ class SupplierPushNotificationController extends Controller
         try {
             $title = $validated['title'];
             $body = $validated['body'];
-            $image = $validated['image'] ?? null;
+            $rawImage = $validated['image'] ?? null;
+            $image = $this->transformCloudinaryImage($rawImage);
             $recipientCustomerIds = $validated['recipients'];
             $scheduledAt = isset($validated['scheduled_at']) ? \Carbon\Carbon::parse($validated['scheduled_at']) : null;
 
@@ -55,6 +56,8 @@ class SupplierPushNotificationController extends Controller
                 'recipient_count' => count($recipientCustomerIds),
                 'title' => $title,
                 'scheduled_at' => $scheduledAt,
+                'image_raw' => $rawImage ? substr($rawImage, 0, 80) : 'NONE',
+                'image_transformed' => $image ? substr($image, 0, 80) : 'NONE',
             ]);
 
             // If scheduled, save and dispatch job with delay
@@ -225,5 +228,22 @@ class SupplierPushNotificationController extends Controller
             'devices' => $devices,
             'customer_ids' => $uniqueCustomers,
         ]);
+    }
+
+    private function transformCloudinaryImage(?string $imageUrl): ?string
+    {
+        if (!$imageUrl || !str_contains($imageUrl, 'cloudinary.com')) {
+            return $imageUrl;
+        }
+
+        // Add Cloudinary transformation: rounded corners (r_20) + fill (c_fill) + dimensions
+        $transformed = str_replace(
+            '/image/upload/',
+            '/image/upload/c_fill,w_400,h_300,r_20/',
+            $imageUrl
+        );
+
+        // Add cache-busting param to force Android to reload without cache
+        return $transformed . '?t=' . time();
     }
 }
