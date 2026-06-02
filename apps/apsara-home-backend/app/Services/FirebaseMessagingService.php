@@ -210,7 +210,7 @@ class FirebaseMessagingService
                 'title' => $title,
                 'body' => $body,
                 'has_image' => !empty($image),
-                'image_url' => !empty($image) ? substr($image, 0, 50) . '...' : 'NONE',
+                'image_url_full' => $image ?: 'NONE',
                 'deeplink' => $deeplink,
                 'data_keys' => array_keys($dataPayload),
             ]);
