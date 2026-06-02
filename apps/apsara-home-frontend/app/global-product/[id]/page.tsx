@@ -4,6 +4,7 @@ import ScrollToTop from '@/components/landing-page/ScrollToTop'
 import GlobalProductDetail from '@/components/globalProduct/GlobalProductDetail'
 import ProductPageWrapper from '@/components/product/ProductPageWrapper'
 import { getNavbarCategories } from '@/libs/serverStorefront'
+import { serverFetch } from '@/libs/serverFetch'
 import type { ZqPublicProductResponse, ZqCachedProduct } from '@/store/api/productsApi'
 
 export const revalidate = 60
@@ -17,7 +18,7 @@ async function getGlobalProduct(id: string, preview = false) {
     productUrl.searchParams.set('preview', '1')
   }
 
-  const response = await fetch(productUrl.toString(), {
+  const response = await serverFetch(productUrl.toString(), {
     next: { revalidate },
   })
 
@@ -30,7 +31,7 @@ async function getRelatedGlobalProducts(currentId: number): Promise<ZqCachedProd
   const apiUrl = process.env.LARAVEL_API_URL ?? process.env.NEXT_PUBLIC_LARAVEL_API_URL
   if (!apiUrl) return []
 
-  const response = await fetch(`${apiUrl.replace(/\/$/, '')}/api/products/zq/cached?per_page=12&page=1`, {
+  const response = await serverFetch(`${apiUrl.replace(/\/$/, '')}/api/products/zq/cached?per_page=12&page=1`, {
     next: { revalidate: 300 },
   })
 
