@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useMeQuery } from '@/store/api/userApi';
 import { setStoredReferralCode } from '@/libs/referral';
@@ -17,9 +17,37 @@ const ReferralLandingPage = ({ referralCode }: ReferralLandingPageProps) => {
   const role = String(session?.user?.role ?? '').toLowerCase();
   const isCustomerSession = status === 'authenticated' && (role === 'customer' || role === '');
   const { data: me } = useMeQuery(undefined, { skip: !isCustomerSession });
+  const appRedirectAttemptedRef = useRef(false);
 
   const isLoggedIn = Boolean(me) && isCustomerSession;
   const isOwnLink = isLoggedIn && me?.username?.toLowerCase() === normalizedCode.toLowerCase();
+
+  // Auto-detect app and redirect if installed
+  useEffect(() => {
+    if (appRedirectAttemptedRef.current) return;
+
+    const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
+      navigator.userAgent.toLowerCase()
+    );
+
+    if (!isMobile) return;
+
+    appRedirectAttemptedRef.current = true;
+    const appScheme = `apsarahome://ref/${encodeURIComponent(normalizedCode)}`;
+
+    console.log('[ReferralLandingPage] Attempting to open app with deep link:', appScheme);
+
+    // Try to open app
+    window.location.href = appScheme;
+
+    // If app is not installed, fallback after 2.5 seconds
+    const fallbackTimer = setTimeout(() => {
+      console.log('[ReferralLandingPage] App not detected, showing content');
+      // App didn't open, let user see the page
+    }, 2500);
+
+    return () => clearTimeout(fallbackTimer);
+  }, [normalizedCode]);
 
   useEffect(() => {
     if (!normalizedCode || isLoggedIn) return;
