@@ -3019,15 +3019,27 @@ class PaymentController extends Controller
             return null;
         }
 
+        $normalizedUrl = '';
         if (filter_var($raw, FILTER_VALIDATE_URL)) {
-            return $raw;
+            $normalizedUrl = $raw;
+        } elseif (str_starts_with($raw, '/')) {
+            $normalizedUrl = url($raw);
+        } else {
+            $normalizedUrl = url('/' . ltrim($raw, '/'));
         }
 
-        if (str_starts_with($raw, '/')) {
-            return url($raw);
+        // Apply Cloudinary transformation for border radius if URL is from Cloudinary
+        if (str_contains($normalizedUrl, 'cloudinary.com')) {
+            $normalizedUrl = str_replace(
+                '/image/upload/',
+                '/image/upload/c_fill,w_400,h_300,r_20/',
+                $normalizedUrl
+            );
+            // Add cache-busting param to force Android to reload without cache
+            $normalizedUrl = $normalizedUrl . '?t=' . time();
         }
 
-        return url('/' . ltrim($raw, '/'));
+        return $normalizedUrl;
     }
 
     public function testOrderStatusUpdateWithFcn(Request $request)

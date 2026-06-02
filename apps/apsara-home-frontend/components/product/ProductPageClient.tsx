@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import type { CategoryProduct } from '@/libs/CategoryData';
 import ProductImageGallery from './ProductImageGallery';
 import ProductInfo from './ProductInfo';
@@ -225,10 +225,37 @@ const ProductPageClient = ({
     const { data: publicSettingsData } = useGetPublicGeneralSettingsQuery();
     const role = String(session?.user?.role ?? '').toLowerCase();
     const isManualCheckoutOnly = Boolean(publicSettingsData?.settings?.enable_manual_checkout_mode) && !Boolean(product.manualCheckoutEnabled);
+    const appRedirectAttemptedRef = useRef(false);
 
     const handleVariantChange = useCallback((variant?: VariantOption) => {
         setSelectedVariant(variant);
     }, []);
+
+    // Auto-detect and redirect to app on mobile
+    useEffect(() => {
+        if (appRedirectAttemptedRef.current) return;
+
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+            navigator.userAgent
+        );
+        if (!isMobile) return;
+
+        const slug = pathname.split('/').pop();
+        if (!slug) return;
+
+        appRedirectAttemptedRef.current = true;
+        const appScheme = `apsarahome://product/${slug}`;
+
+        console.log('[ProductPage] Auto-detecting app for mobile:', appScheme);
+        window.location.href = appScheme;
+
+        // If app is not installed, fallback after 2.5 seconds
+        const fallbackTimer = setTimeout(() => {
+            console.log('[ProductPage] App not detected, showing content');
+        }, 2500);
+
+        return () => clearTimeout(fallbackTimer);
+    }, [pathname]);
 
     useEffect(() => {
         if (typeof window === 'undefined') return;
