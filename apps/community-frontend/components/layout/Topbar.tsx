@@ -34,9 +34,6 @@ export function Topbar() {
   const { data: currentUser } = useCurrentUser()
 
   function handleLogout() {
-    import("js-cookie").then(({ default: Cookies }) => {
-      Cookies.remove("af_token")
-    })
     setToken(null)
     router.replace("/login")
     router.refresh()

@@ -107,7 +107,7 @@ const navLinks: NavLink[] = [
     dropdown: ['Photo Gallery', 'Video Gallery'],
   },
   { label: 'Blogs', href: '/blog' },
-  { label: 'Community', href: '/community/feed' },
+  { label: 'Community', href: 'https://community.afhome.ph/feed' },
 ]
 
 const toSlug = (value: string) => value.toLowerCase().trim().replace(/\s+/g, '-');

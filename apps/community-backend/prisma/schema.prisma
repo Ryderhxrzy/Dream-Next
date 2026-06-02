@@ -69,6 +69,7 @@ model CommunityPost {
   comments  CommunityComment[]
   reactions CommunityReaction[]
   rsvps     CommunityEventRsvp[]
+  savedBy   CommunitySavedPost[]
 
   @@index([authorId])
   @@index([category])
@@ -215,6 +216,22 @@ model Message {
   @@map("tbl_community_messages")
 }
 
+model CommunitySavedPost {
+  id BigInt @id @default(autoincrement()) @map("csp_id")
+
+  userId BigInt @map("csp_user_id")
+  postId BigInt @map("csp_post_id")
+
+  createdAt DateTime @default(now()) @map("csp_created_at")
+
+  user Customer      @relation(fields: [userId], references: [id])
+  post CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@index([userId])
+  @@map("tbl_community_saved_posts")
+}
+
 model Customer {
   id        BigInt  @id @map("c_userid")
   firstName String? @map("c_fname")
@@ -229,6 +246,7 @@ model Customer {
   rsvps         CommunityEventRsvp[]
   conversations ConversationParticipant[]
   messages      Message[]
+  savedPosts    CommunitySavedPost[]
 
   @@map("tbl_customer")
 }

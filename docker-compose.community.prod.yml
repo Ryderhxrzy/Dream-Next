@@ -13,7 +13,7 @@ services:
       REDIS_HOST: "${REDIS_HOST:-redis}"
       REDIS_PORT: "6379"
       REDIS_PASSWORD: "${REDIS_PASSWORD:-}"
-      CORS_ORIGINS: "${CORS_ORIGINS:-https://afhome.ph}"
+      CORS_ORIGINS: "${CORS_ORIGINS:-https://afhome.ph,https://community.afhome.ph}"
       CLOUDINARY_CLOUD_NAME: "${CLOUDINARY_CLOUD_NAME:-}"
       CLOUDINARY_API_KEY: "${CLOUDINARY_API_KEY:-}"
       CLOUDINARY_API_SECRET: "${CLOUDINARY_API_SECRET:-}"
@@ -46,11 +46,20 @@ services:
       NEXT_PUBLIC_REALTIME_URL: "${NEXT_PUBLIC_REALTIME_URL:-https://realtime.afhome.ph}"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.community-frontend.rule=(Host(`afhome.ph`) || Host(`www.afhome.ph`)) && PathPrefix(`/community`)"
+      - "traefik.http.routers.community-frontend.rule=Host(`community.afhome.ph`)"
       - "traefik.http.routers.community-frontend.entrypoints=websecure"
       - "traefik.http.routers.community-frontend.tls.certresolver=letsencrypt"
       - "traefik.http.services.community-frontend.loadbalancer.server.port=3000"
       - "traefik.http.routers.community-frontend.priority=10000"
+      - "traefik.http.routers.community-frontend-legacy.rule=(Host(`afhome.ph`) || Host(`www.afhome.ph`)) && PathPrefix(`/community`)"
+      - "traefik.http.routers.community-frontend-legacy.entrypoints=websecure"
+      - "traefik.http.routers.community-frontend-legacy.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.community-frontend-legacy.priority=10000"
+      - "traefik.http.routers.community-frontend-legacy.middlewares=community-frontend-redirect"
+      - "traefik.http.routers.community-frontend-legacy.service=community-frontend"
+      - "traefik.http.middlewares.community-frontend-redirect.redirectregex.regex=^https?://(?:www\\.)?afhome\\.ph/community(?:/(.*))?$"
+      - "traefik.http.middlewares.community-frontend-redirect.redirectregex.replacement=https://community.afhome.ph/$${1}"
+      - "traefik.http.middlewares.community-frontend-redirect.redirectregex.permanent=true"
     networks:
       - dokploy-network
 
@@ -66,7 +75,7 @@ services:
       REDIS_HOST: "${REDIS_HOST:-redis}"
       REDIS_PORT: "6379"
       REDIS_PASSWORD: "${REDIS_PASSWORD:-}"
-      CORS_ORIGINS: "${CORS_ORIGINS:-https://afhome.ph}"
+      CORS_ORIGINS: "${CORS_ORIGINS:-https://afhome.ph,https://community.afhome.ph}"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.realtime-service.rule=Host(`realtime.afhome.ph`)"

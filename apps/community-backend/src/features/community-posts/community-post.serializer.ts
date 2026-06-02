@@ -56,6 +56,7 @@ export function serializeCommunityPostListItem(
       interested,
     },
     viewerHasReacted: post.reactions.length > 0,
+    viewerHasSaved: post.savedBy.length > 0,
     viewerRsvp,
     repostOf: post.repostOf
       ? {

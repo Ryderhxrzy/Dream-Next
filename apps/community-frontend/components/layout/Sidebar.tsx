@@ -1,18 +1,19 @@
 "use client"
 
 import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import {
-  Home, Rss, CalendarDays, Users, MessageCircle,
+  Home, Bookmark, CalendarDays, Users, MessageCircle,
   ShieldCheck, Settings, MapPin
 } from "lucide-react"
-import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useUnreadMessageCount } from "@/lib/hooks/use-messages"
 
 const navItems = [
-  { icon: Home,          label: "Home",     href: "/feed",     active: true },
-  { icon: Rss,           label: "Feed",     href: "/feed/all" },
+  { icon: Home,          label: "Home",     href: "/feed" },
+  { icon: Bookmark,      label: "Saved",    href: "/saved" },
   { icon: CalendarDays,  label: "Events",   href: "/events" },
   { icon: Users,         label: "Groups",   href: "/groups" },
   { icon: MessageCircle, label: "Messages", href: "/messages", messages: true },
@@ -21,32 +22,47 @@ const navItems = [
 
 export default function Sidebar() {
   const unreadMessages = useUnreadMessageCount()
+  const pathname = usePathname()
+
+  function isActive(href: string) {
+    return pathname === href || pathname?.startsWith(href + "/")
+  }
 
   return (
     <aside className="hidden lg:flex w-64 shrink-0 h-[calc(100vh-3.5rem)] sticky top-14 flex-col justify-between border-r border-border bg-card py-3 overflow-y-auto">
 
       {/* Nav */}
       <nav className="px-3 space-y-1">
-        {navItems.map((item) => (
+        {navItems.map((item) => {
+          const active = isActive(item.href)
+          return (
           <Link
             key={item.label}
             href={item.href}
             className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-              item.active
-                ? "bg-accent text-foreground"
+              "relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+              active
+                ? "text-foreground"
                 : "text-muted-foreground hover:bg-accent hover:text-foreground"
             )}
           >
-            <item.icon className={cn("w-5 h-5 shrink-0", item.active ? "text-foreground" : "text-muted-foreground")} />
-            <span>{item.label}</span>
+            {active && (
+              <motion.span
+                layoutId="sidebar-active"
+                className="absolute inset-0 bg-accent rounded-lg"
+                transition={{ type: "spring", stiffness: 400, damping: 32 }}
+              />
+            )}
+            <item.icon className={cn("relative z-10 w-5 h-5 shrink-0", active ? "text-foreground" : "text-muted-foreground")} />
+            <span className="relative z-10">{item.label}</span>
             {item.messages && unreadMessages > 0 && (
-              <span className="ml-auto bg-primary text-primary-foreground text-[10px] font-bold rounded-full min-w-5 h-5 px-1 flex items-center justify-center">
+              <span className="relative z-10 ml-auto bg-primary text-primary-foreground text-[10px] font-bold rounded-full min-w-5 h-5 px-1 flex items-center justify-center">
                 {unreadMessages > 9 ? "9+" : unreadMessages}
               </span>
             )}
           </Link>
-        ))}
+          )
+        })}
 
         {/* Divider */}
         <div className="pt-3 pb-1 px-3">

@@ -7,7 +7,7 @@ export function proxy(request: NextRequest) {
   const token = request.cookies.get(AUTH_COOKIE)?.value;
   const { pathname } = request.nextUrl;
 
-  const isLoginPage = pathname === "/login" || pathname === "/community/login";
+  const isLoginPage = pathname === "/login";
 
   if (!token && !isLoginPage) {
     const loginUrl = new URL("/login", request.url);

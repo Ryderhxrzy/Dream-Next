@@ -39,6 +39,7 @@ export type CommunityPost = {
     interested: number;
   };
   viewerHasReacted: boolean;
+  viewerHasSaved: boolean;
   viewerRsvp: "GOING" | "INTERESTED" | null;
   repostOf: RepostOriginal | null;
 };

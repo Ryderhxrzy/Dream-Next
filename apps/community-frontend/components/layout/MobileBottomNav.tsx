@@ -1,13 +1,13 @@
 "use client"
 
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Home, CalendarDays, Users, MessageCircle, ShieldCheck } from "lucide-react"
-import Link from "next/link"
 import { useUnreadMessageCount } from "@/lib/hooks/use-messages"
 
 const tabs = [
-  { icon: Home,          label: "Home",     href: "/feed",     active: true },
+  { icon: Home,          label: "Home",     href: "/feed" },
   { icon: CalendarDays,  label: "Events",   href: "/events" },
   { icon: Users,         label: "Groups",   href: "/groups" },
   { icon: MessageCircle, label: "Messages", href: "/messages", messages: true },
@@ -16,17 +16,20 @@ const tabs = [
 
 export function MobileBottomNav() {
   const unreadMessages = useUnreadMessageCount()
+  const pathname = usePathname()
 
   return (
     <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-card border-t border-border">
       <div className="flex items-center justify-around h-16 px-1 pb-[env(safe-area-inset-bottom)]">
-        {tabs.map((tab) => (
+        {tabs.map((tab) => {
+          const active = pathname === tab.href || pathname?.startsWith(tab.href + "/")
+          return (
           <Link
             key={tab.label}
             href={tab.href}
             className={cn(
               "relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors",
-              tab.active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+              active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
             )}
           >
             <div className="relative">
@@ -39,7 +42,8 @@ export function MobileBottomNav() {
             </div>
             <span className="text-[10px] font-medium">{tab.label}</span>
           </Link>
-        ))}
+          )
+        })}
       </div>
     </nav>
   )

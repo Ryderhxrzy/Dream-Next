@@ -5,7 +5,8 @@ import type { CommunityPost } from "@/lib/hooks/use-community-posts";
 type CommunityUiState = {
   // Create post modal
   createPostOpen: boolean;
-  openCreatePost: () => void;
+  createPostCategory: string | null;
+  openCreatePost: (category?: string) => void;
   closeCreatePost: () => void;
 
   // Edit post modal
@@ -36,8 +37,9 @@ type CommunityUiState = {
 
 export const useCommunityUiStore = create<CommunityUiState>((set) => ({
   createPostOpen: false,
-  openCreatePost: () => set({ createPostOpen: true }),
-  closeCreatePost: () => set({ createPostOpen: false }),
+  createPostCategory: null,
+  openCreatePost: (category) => set({ createPostOpen: true, createPostCategory: category ?? null }),
+  closeCreatePost: () => set({ createPostOpen: false, createPostCategory: null }),
 
   editPost: null,
   openEditPost: (post) => set({ editPost: post }),

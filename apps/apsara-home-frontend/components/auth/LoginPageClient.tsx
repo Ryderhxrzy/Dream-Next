@@ -27,7 +27,10 @@ function syncCommunityAuthCookie(accessToken: string | null | undefined) {
   if (typeof window === 'undefined' || !accessToken) return;
 
   const secureFlag = window.location.protocol === 'https:' ? '; Secure' : '';
-  document.cookie = `af_token=${encodeURIComponent(accessToken)}; Path=/; Max-Age=${COMMUNITY_AUTH_COOKIE_MAX_AGE}; SameSite=Lax${secureFlag}`;
+  const domainFlag = window.location.hostname === 'afhome.ph' || window.location.hostname.endsWith('.afhome.ph')
+    ? '; Domain=.afhome.ph'
+    : '';
+  document.cookie = `af_token=${encodeURIComponent(accessToken)}; Path=/; Max-Age=${COMMUNITY_AUTH_COOKIE_MAX_AGE}; SameSite=Lax${secureFlag}${domainFlag}`;
 }
 
 interface LoginPageClientProps {

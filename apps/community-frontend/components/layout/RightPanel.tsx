@@ -38,7 +38,7 @@ export default function RightPanel() {
 
       {/* Post Button */}
       <Button
-        onClick={openCreatePost}
+        onClick={() => openCreatePost()}
         className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-9 text-sm font-medium rounded-md"
       >
         <Plus className="w-4 h-4 mr-1.5" />
