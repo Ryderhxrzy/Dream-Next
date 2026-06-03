@@ -430,6 +430,7 @@ class SupplierChatController extends Controller
                 'id' => (int) $conversation->assignedAdmin->id,
                 'name' => (string) ($conversation->assignedAdmin->fname ?: $conversation->assignedAdmin->user_email ?: 'Admin'),
                 'email' => (string) ($conversation->assignedAdmin->user_email ?? ''),
+                'avatar_url' => ! empty($conversation->assignedAdmin->avatar_url) ? (string) $conversation->assignedAdmin->avatar_url : null,
             ] : null,
             'counterpart_label' => $conversation->assignedAdmin
                 ? (string) ($conversation->assignedAdmin->fname ?: $conversation->assignedAdmin->user_email ?: 'Admin Support')

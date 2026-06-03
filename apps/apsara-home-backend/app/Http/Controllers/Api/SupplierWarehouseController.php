@@ -28,6 +28,22 @@ class SupplierWarehouseController extends Controller
         ]);
     }
 
+    public function adminIndex(Request $request, int $supplierId): JsonResponse
+    {
+        $supplier = Supplier::find($supplierId);
+        if (! $supplier) {
+            return response()->json(['warehouses' => []]);
+        }
+
+        return response()->json([
+            'warehouses' => $supplier->warehouses()
+                ->orderByDesc('sw_id')
+                ->get()
+                ->map(fn (SupplierWarehouse $warehouse) => $this->transform($warehouse))
+                ->values(),
+        ]);
+    }
+
     public function store(Request $request, CloudinaryUploadService $cloudinary): JsonResponse
     {
         $supplier = $this->resolveSupplier($request);

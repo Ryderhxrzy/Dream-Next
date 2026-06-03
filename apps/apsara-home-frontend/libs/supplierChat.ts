@@ -43,6 +43,7 @@ export type SupplierChatConversation = {
     id: number
     name: string
     email: string
+    avatar_url?: string | null
   } | null
   counterpart_label: string
   last_message: {
