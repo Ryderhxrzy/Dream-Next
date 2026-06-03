@@ -246,6 +246,15 @@ class ProductBrandController extends Controller
     {
         $hasBrandImageColumn = $this->hasBrandImageColumn();
 
+        // Get product counts for all brands
+        $brandProductCounts = Product::query()
+            ->select('pd_brand_type', Product::raw('COUNT(*) as total_products'))
+            ->whereIn('pd_status', [1, 2])
+            ->whereNotNull('pd_brand_type')
+            ->groupBy('pd_brand_type')
+            ->pluck('total_products', 'pd_brand_type')
+            ->toArray();
+
         $brands = ProductBrand::query()
             ->select(['pb_id', 'pb_name'])
             ->when($hasBrandImageColumn, function ($query) {
@@ -254,10 +263,11 @@ class ProductBrandController extends Controller
             ->where('pb_status', 0)
             ->orderBy('pb_name')
             ->get()
-            ->map(function ($brand) use ($hasBrandImageColumn) {
+            ->map(function ($brand) use ($hasBrandImageColumn, $brandProductCounts) {
                 $brandData = [
                     'id' => (int) $brand->pb_id,
                     'name' => (string) $brand->pb_name,
+                    'total_products' => $brandProductCounts[$brand->pb_id] ?? 0,
                 ];
 
                 if ($hasBrandImageColumn) {
