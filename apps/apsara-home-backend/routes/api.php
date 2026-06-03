@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\SupplierWarehouseController;
 use App\Http\Controllers\Api\SupplierOrderController;
 use App\Http\Controllers\Api\SupplierPushNotificationController;
 use App\Http\Controllers\Api\SupplierUploadController;
+use App\Http\Controllers\Api\SupplierChatController;
 use App\Http\Controllers\Api\CustomerAddressController;
 use App\Http\Controllers\Api\InteriorRequestController;
 use App\Http\Controllers\Api\JntWebhookController;
@@ -617,6 +618,11 @@ Route::middleware(['auth:sanctum', 'supplier.actor'])->group(function () {
     Route::post('/supplier/warehouse', [SupplierWarehouseController::class, 'store']);
     Route::put('/supplier/warehouse/{warehouse}', [SupplierWarehouseController::class, 'update']);
     Route::delete('/supplier/warehouse/{warehouse}', [SupplierWarehouseController::class, 'destroy']);
+    Route::get('/supplier/chat/conversations', [SupplierChatController::class, 'index']);
+    Route::post('/supplier/chat/conversations', [SupplierChatController::class, 'store']);
+    Route::get('/supplier/chat/conversations/{id}', [SupplierChatController::class, 'show']);
+    Route::post('/supplier/chat/conversations/{id}/messages', [SupplierChatController::class, 'sendMessage']);
+    Route::patch('/supplier/chat/conversations/{id}/status', [SupplierChatController::class, 'updateStatus']);
     Route::post('/supplier/realtime/pusher/auth', [SupplierOrderController::class, 'pusherAuth']);
     Route::get('/supplier/orders/notifications', [SupplierOrderController::class, 'notifications']);
     Route::get('/supplier/orders', [SupplierOrderController::class, 'index']);
@@ -644,6 +650,14 @@ Route::middleware(['auth:sanctum', 'supplier.actor'])->group(function () {
     Route::get('/supplier/push-notifications/history', [SupplierPushNotificationController::class, 'getHistory']);
     Route::get('/supplier/push-notifications/available-customers', [SupplierPushNotificationController::class, 'getAvailableCustomers']);
 
+});
+
+Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.actor'])->group(function () {
+    Route::get('/admin/supplier-chat/conversations', [SupplierChatController::class, 'index']);
+    Route::post('/admin/supplier-chat/conversations', [SupplierChatController::class, 'store']);
+    Route::get('/admin/supplier-chat/conversations/{id}', [SupplierChatController::class, 'show']);
+    Route::post('/admin/supplier-chat/conversations/{id}/messages', [SupplierChatController::class, 'sendMessage']);
+    Route::patch('/admin/supplier-chat/conversations/{id}/status', [SupplierChatController::class, 'updateStatus']);
 });
 
 // Supplier Cloudinary Signing (no auth required - Cloudinary validates the signature)

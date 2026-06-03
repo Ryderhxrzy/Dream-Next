@@ -67,17 +67,13 @@ export default async function PartnerShopLayout({ children, params }: LayoutProp
 
     const record = await getPartnerStorefrontRecordBySlug(normalizedPartner, { fresh: true })
     if (record) {
-      const assignedStorefrontIds = (user.storefrontIds ?? [])
-        .map((id) => Number(id))
-        .filter((id) => Number.isFinite(id))
       const disabledStorefrontIds = (user.disabledStorefrontIds ?? [])
         .map((id) => Number(id))
         .filter((id) => Number.isFinite(id))
 
-      const isAssigned = assignedStorefrontIds.includes(record.id)
       const isDisabled = disabledStorefrontIds.includes(record.id)
 
-      if (!isAssigned || isDisabled) {
+      if (isDisabled) {
         redirect(`/unauthorized?store=${encodeURIComponent(record.config.displayName)}`)
       }
     }

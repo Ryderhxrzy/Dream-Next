@@ -85,23 +85,23 @@ const SUPPLIER_ALLOWED_PREFIXES = [
   "/supplier/company",
 ];
 
-const PARTNER_STOREFRONT_CACHE_TTL_MS = 0;
+const PARTNER_LOOKUP_CACHE_TTL_MS = Math.max(5_000, Number(process.env.FRONTEND_PROXY_LOOKUP_CACHE_MS ?? 15_000));
 let partnerStorefrontCache: { expiresAt: number; slugToId: Map<string, number> } | null = null;
+const partnerStorefrontIdsCache = new Map<string, { expiresAt: number; ids: number[] }>();
 
 const getLaravelApiUrl = (): string => {
   return String(process.env.LARAVEL_API_URL || process.env.NEXT_PUBLIC_LARAVEL_API_URL || '').trim();
 };
 
-const resolveStorefrontSlugToIdMap = async (originFallback: string): Promise<Map<string, number>> => {
+const resolveStorefrontSlugToIdMap = async (): Promise<Map<string, number>> => {
   const now = Date.now();
   if (partnerStorefrontCache && partnerStorefrontCache.expiresAt > now) {
     return partnerStorefrontCache.slugToId;
   }
 
   const apiUrl = getLaravelApiUrl();
-  const endpoint = apiUrl
-    ? `${apiUrl}/api/web-pages/partner-storefronts`
-    : `${originFallback}/api/web-pages/partner-storefronts`;
+  if (!apiUrl) return new Map<string, number>();
+  const endpoint = `${apiUrl}/api/web-pages/partner-storefronts`;
 
   try {
     const response = await fetch(endpoint, {
@@ -121,7 +121,7 @@ const resolveStorefrontSlugToIdMap = async (originFallback: string): Promise<Map
       const slug = fieldSlug || keySlug;
       if (slug) map.set(slug, id);
     }
-    partnerStorefrontCache = { expiresAt: now + PARTNER_STOREFRONT_CACHE_TTL_MS, slugToId: map };
+    partnerStorefrontCache = { expiresAt: now + PARTNER_LOOKUP_CACHE_TTL_MS, slugToId: map };
     return map;
   } catch {
     return new Map<string, number>();
@@ -131,6 +131,11 @@ const resolveStorefrontSlugToIdMap = async (originFallback: string): Promise<Map
 const fetchLivePartnerStorefrontIds = async (accessToken: string): Promise<number[] | null> => {
   const apiUrl = getLaravelApiUrl();
   if (!apiUrl || !accessToken) return null;
+  const now = Date.now();
+  const cached = partnerStorefrontIdsCache.get(accessToken);
+  if (cached && cached.expiresAt > now) {
+    return cached.ids;
+  }
   try {
     const response = await fetch(`${apiUrl}/api/admin/auth/me`, {
       headers: {
@@ -146,6 +151,7 @@ const fetchLivePartnerStorefrontIds = async (accessToken: string): Promise<numbe
           .map((id) => Number(id))
           .filter((id) => Number.isFinite(id) && id > 0)
       : [];
+    partnerStorefrontIdsCache.set(accessToken, { expiresAt: now + PARTNER_LOOKUP_CACHE_TTL_MS, ids });
     return ids;
   } catch {
     return null;
@@ -451,25 +457,17 @@ export async function proxy(req: NextRequest) {
     const role = String((partnerToken as { role?: string } | null)?.role ?? "").toLowerCase();
     const userLevelId = Number((partnerToken as { userLevelId?: number } | null)?.userLevelId ?? 0);
     const isWebContent = role === "web_content" || userLevelId === 4;
-    const tokenStorefrontIds = Array.isArray((partnerToken as { storefrontIds?: number[] } | null)?.storefrontIds)
-      ? ((partnerToken as { storefrontIds?: number[] } | null)?.storefrontIds ?? [])
+    const disabledStorefrontIds = Array.isArray((partnerToken as { disabledStorefrontIds?: number[] } | null)?.disabledStorefrontIds)
+      ? ((partnerToken as { disabledStorefrontIds?: number[] } | null)?.disabledStorefrontIds ?? [])
       : [];
-    const partnerAccessToken = String((partnerToken as { accessToken?: string } | null)?.accessToken ?? '');
-    const liveStorefrontIds = partnerAccessToken ? await fetchLivePartnerStorefrontIds(partnerAccessToken) : null;
-    const storefrontIds = liveStorefrontIds ?? (partnerAccessToken ? [] : tokenStorefrontIds);
-    const hasStorefrontAccess = storefrontIds.length > 0;
 
-    if (isWebContent && !hasStorefrontAccess) {
-      return redirectUnauthorized();
-    }
-
-    if (isWebContent && hasStorefrontAccess) {
+    if (isWebContent) {
       const segments = pathname.split('/').filter(Boolean);
       const partnerSlug = String(segments[1] ?? '').trim().toLowerCase();
       if (partnerSlug) {
-        const slugToId = await resolveStorefrontSlugToIdMap(req.nextUrl.origin);
+        const slugToId = await resolveStorefrontSlugToIdMap();
         const targetStorefrontId = Number(slugToId.get(partnerSlug) ?? 0);
-        if (targetStorefrontId > 0 && !storefrontIds.includes(targetStorefrontId)) {
+        if (targetStorefrontId > 0 && disabledStorefrontIds.includes(targetStorefrontId)) {
           const partnerStoreName = partnerSlug
             .split('-')
             .filter(Boolean)

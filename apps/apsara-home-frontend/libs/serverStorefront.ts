@@ -1,4 +1,5 @@
 import type { Category } from '@/store/api/categoriesApi'
+import { serverFetch } from '@/libs/serverFetch'
 
 type ApiCategoriesResponse = {
   categories?: Category[]
@@ -9,7 +10,7 @@ export async function getNavbarCategories(): Promise<Category[]> {
   if (!apiUrl) return []
 
   try {
-    const response = await fetch(`${apiUrl}/api/categories?page=1&per_page=100`, {
+    const response = await serverFetch(`${apiUrl}/api/categories?page=1&per_page=100`, {
       method: 'GET',
       headers: { Accept: 'application/json' },
       cache: 'no-store',

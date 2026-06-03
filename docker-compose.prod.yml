@@ -253,7 +253,9 @@ services:
       - default
 
   redis:
-    image: redis:7-alpine
+    build:
+      context: .
+      dockerfile: docker/redis.Dockerfile
     restart: unless-stopped
     mem_limit: 384m
     command: redis-server --requirepass "${REDIS_PASSWORD:-local_redis_password}" --appendonly yes
