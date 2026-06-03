@@ -25,6 +25,22 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // API-first app: unauthenticated requests should return 401 JSON, not redirect to a named "login" route.
         $middleware->redirectGuestsTo(fn (Request $request) => $request->expectsJson() ? null : null);
+        $trustedProxies = array_values(array_filter(array_map(
+            'trim',
+            explode(',', (string) env('TRUSTED_PROXIES', ''))
+        )));
+        if ($trustedProxies !== []) {
+            $middleware->trustProxies(at: $trustedProxies);
+        }
+
+        $trustedHosts = array_values(array_filter(array_map(
+            'trim',
+            explode(',', (string) env('TRUSTED_HOSTS', ''))
+        )));
+        if ($trustedHosts !== []) {
+            $middleware->trustHosts(fn () => $trustedHosts);
+        }
+
         $middleware->prepend(HandleCors::class);
         $middleware->append(RequestAbuseGuard::class);
         $middleware->append(SecurityHeaders::class);
