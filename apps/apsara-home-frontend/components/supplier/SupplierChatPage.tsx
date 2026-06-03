@@ -1,11 +1,11 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import Image from 'next/image'
-import { useSession } from 'next-auth/react'
 import {
   AlertCircle,
   CheckCheck,
+  ChevronDown,
+  ExternalLink,
   FileText,
   Image as ImageIcon,
   Link2,
@@ -24,9 +24,11 @@ import {
   fetchSupplierChatConversation,
   fetchSupplierChatConversations,
   sendSupplierChatMessage,
+  uploadSupplierChatAttachment,
   type SupplierChatConversation,
   type SupplierChatMessage,
 } from '@/libs/supplierChat'
+import EmojiPicker from '@/components/ui/EmojiPicker'
 
 
 const MAX_ATTACHMENT_SIZE_BYTES = 25 * 1024 * 1024
@@ -133,9 +135,6 @@ function getInitials(value: string): string {
 }
 
 export default function SupplierChatPage() {
-  const { data: session } = useSession()
-  const supplierName = (session?.user as { supplierName?: string } | undefined)?.supplierName || session?.user?.name || 'My Company'
-  const supplierLogo = (session?.user as { supplierLogo?: string | null } | undefined)?.supplierLogo ?? null
 
   const [conversations, setConversations] = useState<SupplierChatConversation[]>([])
   const [activeId, setActiveId] = useState<number | null>(null)
@@ -146,6 +145,8 @@ export default function SupplierChatPage() {
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([])
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [openPanel, setOpenPanel] = useState<'media' | 'files' | 'links' | null>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const attachmentInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -204,6 +205,7 @@ export default function SupplierChatPage() {
   ) => {
     setActiveId(conversationId)
     setError(null)
+    setOpenPanel(null)
 
     const summary = sourceConversations.find((conversation) => conversation.id === conversationId) ?? null
     setActiveConversation(
@@ -280,8 +282,31 @@ export default function SupplierChatPage() {
     }
   }, [activeMessages.length, activeId])
 
+  const appendSentMessage = (sent: SupplierChatMessage) => {
+    setActiveConversation((prev) =>
+      prev ? {
+        ...prev,
+        messages: [...(prev.messages ?? []), sent],
+        last_message: { id: sent.id, message: sent.attachment_url ? `[${sent.attachment_type ?? 'file'}]` : sent.message, sender_type: sent.sender_type, sent_at: sent.created_at },
+        last_message_at: sent.created_at,
+        message_count: prev.message_count + 1,
+        unread_count: 0,
+      } : prev,
+    )
+    setConversations((prev) =>
+      prev.map((c) => c.id === activeId ? {
+        ...c,
+        last_message: { id: sent.id, message: sent.attachment_url ? `[${sent.attachment_type ?? 'file'}]` : sent.message, sender_type: sent.sender_type, sent_at: sent.created_at },
+        last_message_at: sent.created_at,
+        message_count: c.message_count + 1,
+        unread_count: 0,
+      } : c)
+    )
+  }
+
   const handleSendMessage = async () => {
-    if (!input.trim() || isSending) return
+    if (!input.trim() && pendingAttachments.length === 0) return
+    if (isSending) return
 
     const trimmed = input.trim()
     setIsSending(true)
@@ -289,51 +314,22 @@ export default function SupplierChatPage() {
 
     try {
       if (!activeId) {
-        // No conversation yet — create one using the first message as the opening line
-        const created = await createSupplierChatConversation('Support', trimmed)
-        const conversation = { ...created, messages: created.messages ?? [] }
-        setActiveConversation(conversation)
+        const created = await createSupplierChatConversation('Support', trimmed || 'Hi')
+        setActiveConversation({ ...created, messages: created.messages ?? [] })
         setActiveId(created.id)
-        setConversations([conversation])
+        setConversations([{ ...created, messages: created.messages ?? [] }])
       } else {
-        const sent = await sendSupplierChatMessage(activeId, trimmed)
-
-        setActiveConversation((prev) =>
-          prev
-            ? {
-                ...prev,
-                messages: [...(prev.messages ?? []), sent],
-                last_message: {
-                  id: sent.id,
-                  message: sent.message,
-                  sender_type: sent.sender_type,
-                  sent_at: sent.created_at,
-                },
-                last_message_at: sent.created_at,
-                message_count: prev.message_count + 1,
-                unread_count: 0,
-              }
-            : prev,
-        )
-
-        setConversations((prev) =>
-          prev.map((conversation) =>
-            conversation.id === activeId
-              ? {
-                  ...conversation,
-                  last_message: {
-                    id: sent.id,
-                    message: sent.message,
-                    sender_type: sent.sender_type,
-                    sent_at: sent.created_at,
-                  },
-                  last_message_at: sent.created_at,
-                  message_count: conversation.message_count + 1,
-                  unread_count: 0,
-                }
-              : conversation
-          )
-        )
+        // Upload and send each attachment as its own message
+        for (const attachment of pendingAttachments) {
+          const uploaded = await uploadSupplierChatAttachment(attachment.file)
+          const sent = await sendSupplierChatMessage(activeId, '', uploaded)
+          appendSentMessage(sent)
+        }
+        // Send text message if present
+        if (trimmed) {
+          const sent = await sendSupplierChatMessage(activeId, trimmed)
+          appendSentMessage(sent)
+        }
       }
 
       setInput('')
@@ -390,10 +386,11 @@ export default function SupplierChatPage() {
     el.style.height = `${Math.min(el.scrollHeight, 120)}px`
   }, [input])
 
-  const activeSubtitle = activeConversation?.assigned_admin?.name
-    ? `Assigned to ${activeConversation.assigned_admin.name}`
-    : 'Supplier chat inbox'
   const activeStatus = activeConversation?.status ?? 'open'
+  const chatAdminName = activeConversation?.assigned_admin?.name ?? activeConversation?.counterpart_label ?? 'AF Home'
+  const chatAdminEmail = activeConversation?.assigned_admin?.email ?? ''
+  const chatAdminInitials = getInitials(chatAdminName)
+  const activeSubtitle = activeStatus === 'resolved' ? 'Resolved' : 'Admin · Active'
 
   return (
     <div className="flex h-[calc(100vh-104px)] flex-col gap-3 lg:h-[calc(100vh-120px)]">
@@ -417,17 +414,11 @@ export default function SupplierChatPage() {
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 lg:flex-row">
         {/* Chat header — always visible */}
         <div className="flex shrink-0 items-center gap-3 border-b border-slate-100 px-5 py-3.5 dark:border-slate-800 lg:hidden">
-          {supplierLogo ? (
-            <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full border border-slate-200 dark:border-slate-700">
-              <Image src={supplierLogo} alt={supplierName} fill className="object-cover" />
-            </div>
-          ) : (
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">
-              {getInitials(supplierName)}
-            </div>
-          )}
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">
+            {chatAdminInitials}
+          </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[14px] font-bold text-slate-900 dark:text-white">{supplierName}</p>
+            <p className="truncate text-[14px] font-bold text-slate-900 dark:text-white">{chatAdminName}</p>
             <p className={`text-[11px] font-medium ${activeStatus === 'resolved' ? 'text-slate-400' : 'text-emerald-500'}`}>
               {activeSubtitle}
             </p>
@@ -439,17 +430,11 @@ export default function SupplierChatPage() {
 
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="flex shrink-0 items-center gap-3 border-b border-slate-100 px-5 py-3.5 dark:border-slate-800">
-            {supplierLogo ? (
-              <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full border border-slate-200 dark:border-slate-700">
-                <Image src={supplierLogo} alt={supplierName} fill className="object-cover" />
-              </div>
-            ) : (
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">
-                {getInitials(supplierName)}
-              </div>
-            )}
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">
+              {chatAdminInitials}
+            </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[14px] font-bold text-slate-900 dark:text-white">{supplierName}</p>
+              <p className="truncate text-[14px] font-bold text-slate-900 dark:text-white">{chatAdminName}</p>
               <p className={`text-[11px] font-medium ${activeStatus === 'resolved' ? 'text-slate-400' : 'text-emerald-500'}`}>
                 {activeSubtitle}
               </p>
@@ -529,9 +514,29 @@ export default function SupplierChatPage() {
                       <div key={message.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
                         {!mine && <Avatar label="AD" color="bg-slate-500" size="sm" />}
                         <div className={`max-w-[72%] ${mine ? 'ml-0' : 'ml-2'}`}>
-                          <div className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${mine ? 'rounded-br-md bg-indigo-600 text-white' : 'rounded-bl-md bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100'}`}>
-                            {message.message}
-                          </div>
+                          {/* Attachment */}
+                          {message.attachment_url && (
+                            <div className="mb-1 overflow-hidden rounded-2xl">
+                              {message.attachment_type === 'image' ? (
+                                <a href={message.attachment_url} target="_blank" rel="noreferrer">
+                                  <img src={message.attachment_url} alt={message.attachment_name ?? 'image'} className="max-h-60 w-auto rounded-2xl object-cover" />
+                                </a>
+                              ) : message.attachment_type === 'video' ? (
+                                <video src={message.attachment_url} controls className="max-h-60 w-full rounded-2xl" />
+                              ) : (
+                                <a href={message.attachment_url} target="_blank" rel="noreferrer" className={`flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium ${mine ? 'bg-indigo-700 text-white' : 'bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-100'}`}>
+                                  <FileText className="h-4 w-4 shrink-0" />
+                                  <span className="truncate">{message.attachment_name ?? 'Download file'}</span>
+                                </a>
+                              )}
+                            </div>
+                          )}
+                          {/* Text */}
+                          {message.message && (
+                            <div className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${mine ? 'rounded-br-md bg-indigo-600 text-white' : 'rounded-bl-md bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100'}`}>
+                              {message.message}
+                            </div>
+                          )}
                           <div className={`mt-1 flex items-center gap-1 ${mine ? 'justify-end' : 'justify-start'}`}>
                             <span className="text-[10px] text-slate-400">{formatClock(message.created_at)}</span>
                             {mine && <CheckCheck className={`h-3 w-3 ${message.is_read ? 'text-indigo-500' : 'text-slate-400'}`} />}
@@ -632,16 +637,25 @@ export default function SupplierChatPage() {
                 >
                   <Paperclip className="h-4 w-4" />
                 </button>
-                <button
-                  type="button"
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200"
-                >
-                  <Smile className="h-4 w-4" />
-                </button>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowEmojiPicker((v) => !v)}
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+                  >
+                    <Smile className="h-4 w-4" />
+                  </button>
+                  {showEmojiPicker && (
+                    <EmojiPicker
+                      onSelect={(emoji) => setInput((prev) => prev + emoji)}
+                      onClose={() => setShowEmojiPicker(false)}
+                    />
+                  )}
+                </div>
                 <div className="flex-1" />
                 <button
                   onClick={() => void handleSendMessage()}
-                  disabled={!input.trim() || isSending || isLoading}
+                  disabled={(!input.trim() && pendingAttachments.length === 0) || isSending || isLoading}
                   className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <Send className="h-3.5 w-3.5" />
@@ -655,21 +669,18 @@ export default function SupplierChatPage() {
         <aside className="hidden w-115 shrink-0 border-l border-slate-100 bg-slate-50/70 px-4 py-4 dark:border-slate-800 dark:bg-slate-900/60 xl:flex xl:flex-col">
           <div className="flex h-full flex-col rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
 
-            {/* Company info — centered, matches admin sidebar */}
+            {/* Admin info */}
             <div className="flex shrink-0 flex-col items-center justify-center border-b border-slate-100 pb-4 text-center dark:border-slate-800">
-              {supplierLogo ? (
-                <div className="relative h-20 w-20 overflow-hidden rounded-full border border-slate-200 bg-white dark:border-slate-700">
-                  <Image src={supplierLogo} alt={supplierName} fill className="object-cover" />
-                </div>
-              ) : (
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-indigo-600 text-2xl font-bold text-white">
-                  {getInitials(supplierName)}
-                </div>
-              )}
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-indigo-600 text-2xl font-bold text-white">
+                {chatAdminInitials}
+              </div>
               <p className="mt-3 truncate text-[22px] font-bold leading-tight text-slate-900 dark:text-white">
-                {supplierName}
+                {chatAdminName}
               </p>
-              <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Supplier</p>
+              <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Admin</p>
+              {chatAdminEmail ? (
+                <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">{chatAdminEmail}</p>
+              ) : null}
             </div>
 
             {/* Search box */}
@@ -699,45 +710,126 @@ export default function SupplierChatPage() {
               </div>
             </div>
 
-            {/* Media / Files / Links stats grid */}
-            <div className="mt-4 grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-left shadow-sm transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800"
-              >
-                <p className="flex items-center gap-1 text-[13px] font-semibold text-slate-900 dark:text-white">
-                  <ImageIcon className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
-                  Media
-                </p>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                  {activeMessages.filter((message) => /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(message.message)).length} items
-                </p>
-              </button>
-              <button
-                type="button"
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-left shadow-sm transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800"
-              >
-                <p className="flex items-center gap-1 text-[13px] font-semibold text-slate-900 dark:text-white">
-                  <FileText className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
-                  Files
-                </p>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                  {activeMessages.filter((message) => /\.(pdf|doc|docx|xls|xlsx|csv|zip)$/i.test(message.message)).length} items
-                </p>
-              </button>
-              <button
-                type="button"
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-left shadow-sm transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800"
-              >
-                <p className="flex items-center gap-1 text-[13px] font-semibold text-slate-900 dark:text-white">
-                  <Link2 className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
-                  Links
-                </p>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                  {activeMessages.filter((message) => /https?:\/\/\S+/i.test(message.message)).length} items
-                </p>
-              </button>
-            </div>
+            {/* Media / Files / Links expandable panels */}
+            {(() => {
+              const mediaItems = activeMessages.filter((m) => m.attachment_type === 'image' || m.attachment_type === 'video')
+              const fileItems = activeMessages.filter((m) => m.attachment_type === 'file')
+              const linkItems = activeMessages.filter((m) => /https?:\/\/\S+/i.test(m.message))
+
+              const panels = [
+                { key: 'media' as const, label: 'Media', icon: <ImageIcon className="h-3.5 w-3.5" />, count: mediaItems.length },
+                { key: 'files' as const, label: 'Files',  icon: <FileText  className="h-3.5 w-3.5" />, count: fileItems.length  },
+                { key: 'links' as const, label: 'Links',  icon: <Link2     className="h-3.5 w-3.5" />, count: linkItems.length  },
+              ]
+
+              return (
+                <div className="mt-4 space-y-2">
+                  {/* Tab row */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {panels.map(({ key, label, icon, count }) => {
+                      const active = openPanel === key
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => setOpenPanel(active ? null : key)}
+                          className={`flex flex-col rounded-xl border px-3 py-2 text-left shadow-sm transition ${
+                            active
+                              ? 'border-indigo-300 bg-indigo-50 dark:border-indigo-700 dark:bg-indigo-950/40'
+                              : 'border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800'
+                          }`}
+                        >
+                          <p className={`flex items-center gap-1 text-[13px] font-semibold ${active ? 'text-indigo-600 dark:text-indigo-300' : 'text-slate-900 dark:text-white'}`}>
+                            {icon}{label}
+                          </p>
+                          <div className="mt-0.5 flex items-center justify-between">
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400">{count} items</p>
+                            <ChevronDown className={`h-3 w-3 text-slate-400 transition-transform duration-200 ${active ? 'rotate-180' : ''}`} />
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  {/* Slide-open panel */}
+                  <div className={`overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800 transition-all duration-300 ${openPanel ? 'max-h-72 opacity-100' : 'max-h-0 opacity-0 border-transparent'}`}>
+                    <div className="max-h-72 overflow-y-auto p-3 scrollbar-none [&::-webkit-scrollbar]:hidden">
+
+                      {/* Media panel */}
+                      {openPanel === 'media' && (
+                        mediaItems.length === 0 ? (
+                          <p className="py-4 text-center text-xs text-slate-400">No media shared yet.</p>
+                        ) : (
+                          <div className="grid grid-cols-3 gap-1.5">
+                            {mediaItems.map((m) => (
+                              <a key={m.id} href={m.attachment_url ?? '#'} target="_blank" rel="noreferrer" className="group relative block aspect-square overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800">
+                                {m.attachment_type === 'image' ? (
+                                  <img src={m.attachment_url ?? ''} alt={m.attachment_name ?? ''} className="h-full w-full object-cover transition group-hover:scale-105" />
+                                ) : (
+                                  <>
+                                    <video src={m.attachment_url ?? ''} className="h-full w-full object-cover" muted preload="metadata" />
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                      <Play className="h-5 w-5 fill-white text-white drop-shadow" />
+                                    </div>
+                                  </>
+                                )}
+                              </a>
+                            ))}
+                          </div>
+                        )
+                      )}
+
+                      {/* Files panel */}
+                      {openPanel === 'files' && (
+                        fileItems.length === 0 ? (
+                          <p className="py-4 text-center text-xs text-slate-400">No files shared yet.</p>
+                        ) : (
+                          <div className="space-y-1.5">
+                            {fileItems.map((m) => (
+                              <a key={m.id} href={m.attachment_url ?? '#'} target="_blank" rel="noreferrer"
+                                className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-white px-3 py-2.5 text-sm transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800">
+                                <FileText className="h-4 w-4 shrink-0 text-indigo-500" />
+                                <span className="min-w-0 flex-1 truncate text-[12px] font-medium text-slate-700 dark:text-slate-200">
+                                  {m.attachment_name ?? 'File'}
+                                </span>
+                                <ExternalLink className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                              </a>
+                            ))}
+                          </div>
+                        )
+                      )}
+
+                      {/* Links panel */}
+                      {openPanel === 'links' && (
+                        linkItems.length === 0 ? (
+                          <p className="py-4 text-center text-xs text-slate-400">No links shared yet.</p>
+                        ) : (
+                          <div className="space-y-1.5">
+                            {linkItems.map((m) => {
+                              const url = (m.message.match(/https?:\/\/\S+/i) ?? [])[0] ?? ''
+                              let host = ''
+                              try { host = new URL(url).hostname } catch { host = url }
+                              return (
+                                <a key={m.id} href={url} target="_blank" rel="noreferrer"
+                                  className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-white px-3 py-2.5 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800">
+                                  <Link2 className="h-4 w-4 shrink-0 text-indigo-500" />
+                                  <div className="min-w-0 flex-1">
+                                    <p className="truncate text-[12px] font-medium text-slate-700 dark:text-slate-200">{host}</p>
+                                    <p className="truncate text-[10px] text-slate-400">{url}</p>
+                                  </div>
+                                  <ExternalLink className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                                </a>
+                              )
+                            })}
+                          </div>
+                        )
+                      )}
+
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
           </div>
         </aside>
       </div>

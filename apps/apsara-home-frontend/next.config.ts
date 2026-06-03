@@ -42,7 +42,7 @@ const csp = [
   "img-src 'self' data: blob: https:",
   "font-src 'self' data: https:",
   "style-src 'self' 'unsafe-inline'",
-  `script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com${isDev ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://upload-widget.cloudinary.com${isDev ? " 'unsafe-eval'" : ""}`,
   "media-src 'self' blob: data: https:",
   "connect-src 'self' http://localhost:* http://127.0.0.1:* https: wss:",
   "frame-src 'self' https://upload-widget.cloudinary.com https://challenges.cloudflare.com https://www.youtube.com https://player.vimeo.com https://www.google.com https://maps.google.com",
