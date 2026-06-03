@@ -772,6 +772,7 @@ class MobilePaymentController extends Controller
                 $order->ch_checkout_id,
                 $groupId,
                 [
+                    'mobile_order_id' => $order->ch_mobile_order_id,
                     'title' => 'Order Placed ✓',
                     'message' => 'Your order has been created and is pending payment. Amount: ₱' . number_format($amount, 2),
                     'product_name' => $productName,

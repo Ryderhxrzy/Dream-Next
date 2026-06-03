@@ -79,6 +79,7 @@ class OrderNotification extends Model
             'on_customer_id' => $customerId,
             'on_checkout_id' => $checkoutId,
             'on_notification_group_id' => $groupId,
+            'on_mobile_order_id' => $data['mobile_order_id'] ?? null,
             'on_is_parent' => true,
             'on_type' => 'order_created',
             'on_event_type' => 'order_placed',
