@@ -1,0 +1,121 @@
+'use client'
+
+import { useEffect, useRef } from 'react'
+
+const EMOJI_GROUPS = [
+  {
+    label: 'Smileys',
+    emojis: [
+      '😀','😁','😂','🤣','😊','🥰','😍','😎','😢','😅','😆','😋','😜','🤔','😮','😡',
+      '🥺','😴','🤯','😏','🤗','😩','😤','🤩','🥳','😇','🙃','😌','🫡','🫠','🤐','😬',
+      '🤫','😶','😑','😐','🙄','😪','🤤','😓','🤧','🤒','🤕','🤑','😈','👿','💀','☠️',
+      '🤠','🥸','🥶','🥵','😵','🤪','😝','😛','😗','😙','😚','🥹','😻','🙈','🙉','🙊',
+    ],
+  },
+  {
+    label: 'Gestures & People',
+    emojis: [
+      '👍','👎','👋','🙏','🤝','✌️','🤞','👏','💪','🖐️','👌','🤌','🫶','🤙','☝️','👆',
+      '👇','👈','👉','🤘','🤟','🖖','✊','👊','🤛','🤜','🫱','🫲','🫳','🫴','💅','🤳',
+      '💁','🙋','🤷','🤦','🧑','👶','🧒','👦','👧','🧑','👩','👨','🧓','👴','👵','👮',
+      '🧑‍⚕️','👷','💂','🕵️','👩‍🍳','🧑‍🏫','🧑‍🌾','🧑‍🔧','🧑‍💻','🧑‍🎤','🧑‍🎨','🧑‍✈️',
+    ],
+  },
+  {
+    label: 'Hearts & Love',
+    emojis: [
+      '❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❤️‍🔥','❤️‍🩹','💕','💞','💓',
+      '💗','💖','💘','💝','💟','♥️','🫀','💌','💋','😘','😍','🥰','💑','👫','👬','👭',
+    ],
+  },
+  {
+    label: 'Animals & Nature',
+    emojis: [
+      '🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔',
+      '🐧','🐦','🦆','🦅','🦉','🦇','🐺','🐗','🐴','🦄','🐝','🐛','🦋','🐌','🐞','🐜',
+      '🌸','🌺','🌻','🌹','🌷','🌼','🌿','🍀','🍁','🍂','🍃','🌱','🌲','🌳','🌴','🌵',
+    ],
+  },
+  {
+    label: 'Food & Drink',
+    emojis: [
+      '🍎','🍊','🍋','🍇','🍓','🫐','🍈','🍑','🍒','🍍','🥭','🥥','🍅','🫒','🥝','🍆',
+      '🌽','🥕','🧄','🧅','🥔','🍠','🥜','🌰','🍞','🥐','🥖','🧀','🥚','🍳','🧈','🥞',
+      '🍔','🍟','🍕','🌮','🌯','🥗','🍜','🍣','🍱','🍛','🍲','🥘','🍝','🍤','🦐','🦑',
+      '☕','🍵','🧃','🥤','🍺','🍻','🥂','🍷','🥃','🍸','🍹','🧉','🥛','🍼','🫖',
+    ],
+  },
+  {
+    label: 'Travel & Places',
+    emojis: [
+      '🚀','✈️','🚂','🚗','🚕','🚙','🚌','🚎','🚓','🚑','🚒','🚐','🛻','🚚','🚛','🛵',
+      '🏍️','🚲','🛴','🛺','⛵','🚤','🛥️','🚢','🏠','🏡','🏢','🏣','🏤','🏥','🏦','🏨',
+      '⛰️','🏔️','🗻','🌋','🗼','🗽','🏰','🏯','🌁','🌃','🌄','🌅','🌆','🌇','🌉','🎡',
+    ],
+  },
+  {
+    label: 'Activities',
+    emojis: [
+      '⚽','🏀','🏈','⚾','🎾','🏐','🏉','🎱','🏓','🏸','🥊','🥋','🎯','⛳','🎮','🕹️',
+      '🎲','🎭','🎨','🖼️','🎤','🎧','🎵','🎶','🎷','🎸','🎹','🥁','🎺','🎻','🎬','📺',
+      '🏆','🥇','🥈','🥉','🎖️','🏅','🎗️','🎀','🎁','🎈','🎉','🎊','🎋','🎍','🎎','🎑',
+    ],
+  },
+  {
+    label: 'Symbols',
+    emojis: [
+      '✨','🔥','💯','⭐','🌟','💫','⚡','🌈','☀️','🌙','❄️','🌊','💥','🎆','🎇','🧨',
+      '✅','❌','⚠️','💡','📌','🔔','📅','⏰','🎯','💬','💭','🗨️','📎','📷','📸','🔍',
+      '🔒','🔓','🔑','🗝️','🛡️','⚙️','🔧','🔨','💊','🧪','🧬','💉','🩺','📱','💻','⌨️',
+      '🖥️','🖨️','📡','🔋','💾','💿','📀','📁','📂','📊','📈','📉','📋','📝','✏️','🖊️',
+    ],
+  },
+]
+
+type Props = {
+  onSelect: (emoji: string) => void
+  onClose: () => void
+}
+
+export default function EmojiPicker({ onSelect, onClose }: Props) {
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handle = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        onClose()
+      }
+    }
+    document.addEventListener('mousedown', handle)
+    return () => document.removeEventListener('mousedown', handle)
+  }, [onClose])
+
+  return (
+    <div
+      ref={ref}
+      className="absolute bottom-full left-0 z-50 mb-2 w-72 rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900"
+    >
+      <div className="max-h-60 overflow-y-auto p-2 scrollbar-none [&::-webkit-scrollbar]:hidden">
+        {EMOJI_GROUPS.map((group) => (
+          <div key={group.label} className="mb-2">
+            <p className="mb-1 px-1 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+              {group.label}
+            </p>
+            <div className="flex flex-wrap gap-0.5">
+              {group.emojis.map((emoji) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  onClick={() => { onSelect(emoji); onClose() }}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-lg transition hover:bg-slate-100 dark:hover:bg-slate-800"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}

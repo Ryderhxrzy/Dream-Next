@@ -5,6 +5,8 @@ import Image from 'next/image'
 import {
   ArrowLeft,
   CheckCheck,
+  ChevronDown,
+  ExternalLink,
   FileText,
   Hash,
   Image as ImageIcon,
@@ -27,9 +29,11 @@ import {
   fetchAdminSupplierChatConversation,
   fetchAdminSupplierChatConversations,
   sendAdminSupplierChatMessage,
+  uploadAdminChatAttachment,
   type SupplierChatConversation,
   type SupplierChatMessage,
 } from '@/libs/adminSupplierChat'
+import EmojiPicker from '@/components/ui/EmojiPicker'
 
 const AVATAR_COLORS = [
   'bg-rose-500',
@@ -196,9 +200,12 @@ export default function AdminChatPage() {
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isLoadingMessages, setIsLoadingMessages] = useState(false)
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [openPanel, setOpenPanel] = useState<'media' | 'files' | 'links' | null>(null)
   const conversationCacheRef = useRef<Map<number, SupplierChatConversation>>(new Map())
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const attachmentInputRef = useRef<HTMLInputElement>(null)
+  const imageInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const totalUnread = conversations.reduce((sum, c) => sum + c.unread_count, 0)
@@ -277,6 +284,7 @@ export default function AdminChatPage() {
   ) => {
     setActiveId(conversationId)
     setIsMobileOpen(true)
+    setOpenPanel(null)
     setError(null)
 
     setConversations((prev) =>
@@ -339,48 +347,46 @@ export default function AdminChatPage() {
     if (el) el.scrollTop = el.scrollHeight
   }, [activeMessages.length, activeId])
 
+  const appendSentMessage = (sent: SupplierChatMessage) => {
+    const preview = sent.attachment_url
+      ? `[${sent.attachment_type ?? 'file'}]`
+      : sent.message
+    setActiveConversation((prev) =>
+      prev ? {
+        ...prev,
+        messages: [...(prev.messages ?? []), sent],
+        last_message: { id: sent.id, message: preview, sender_type: sent.sender_type, sent_at: sent.created_at },
+        last_message_at: sent.created_at,
+        message_count: prev.message_count + 1,
+        unread_count: 0,
+      } : prev,
+    )
+    setConversations((prev) =>
+      prev.map((c) => c.id === activeId ? {
+        ...c,
+        last_message: { id: sent.id, message: preview, sender_type: sent.sender_type, sent_at: sent.created_at },
+        last_message_at: sent.created_at,
+        message_count: c.message_count + 1,
+        unread_count: 0,
+      } : c),
+    )
+  }
+
   const handleSendMessage = async () => {
-    if (!input.trim() || !activeId || isSending) return
+    if ((!input.trim() && pendingAttachments.length === 0) || !activeId || isSending) return
     const trimmed = input.trim()
     setIsSending(true)
     setError(null)
     try {
-      const sent = await sendAdminSupplierChatMessage(activeId, trimmed)
-      setActiveConversation((prev) =>
-        prev
-          ? {
-              ...prev,
-              messages: [...(prev.messages ?? []), sent],
-              last_message: {
-                id: sent.id,
-                message: sent.message,
-                sender_type: sent.sender_type,
-                sent_at: sent.created_at,
-              },
-              last_message_at: sent.created_at,
-              message_count: prev.message_count + 1,
-              unread_count: 0,
-            }
-          : prev,
-      )
-      setConversations((prev) =>
-        prev.map((c) =>
-          c.id === activeId
-            ? {
-                ...c,
-                last_message: {
-                  id: sent.id,
-                  message: sent.message,
-                  sender_type: sent.sender_type,
-                  sent_at: sent.created_at,
-                },
-                last_message_at: sent.created_at,
-                message_count: c.message_count + 1,
-                unread_count: 0,
-              }
-            : c,
-        ),
-      )
+      for (const attachment of pendingAttachments) {
+        const uploaded = await uploadAdminChatAttachment(attachment.file)
+        const sent = await sendAdminSupplierChatMessage(activeId, '', uploaded)
+        appendSentMessage(sent)
+      }
+      if (trimmed) {
+        const sent = await sendAdminSupplierChatMessage(activeId, trimmed)
+        appendSentMessage(sent)
+      }
       setInput('')
       pendingAttachments.forEach((a) => { if (a.previewUrl) URL.revokeObjectURL(a.previewUrl) })
       setPendingAttachments([])
@@ -773,15 +779,35 @@ export default function AdminChatPage() {
                             >
                               {!mine && <Avatar label="SP" color="bg-slate-500" size="sm" />}
                               <div className={`ml-2 max-w-[72%] ${mine ? 'ml-0 mr-0' : ''}`}>
-                                <div
-                                  className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-                                    mine
-                                      ? 'rounded-br-md bg-indigo-600 text-white'
-                                      : 'rounded-bl-md bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100'
-                                  }`}
-                                >
-                                  {message.message}
-                                </div>
+                                {/* Attachment */}
+                                {message.attachment_url && (
+                                  <div className="mb-1 overflow-hidden rounded-2xl">
+                                    {message.attachment_type === 'image' ? (
+                                      <a href={message.attachment_url} target="_blank" rel="noreferrer">
+                                        <img src={message.attachment_url} alt={message.attachment_name ?? 'image'} className="max-h-60 w-auto rounded-2xl object-cover" />
+                                      </a>
+                                    ) : message.attachment_type === 'video' ? (
+                                      <video src={message.attachment_url} controls className="max-h-60 w-full rounded-2xl" />
+                                    ) : (
+                                      <a href={message.attachment_url} target="_blank" rel="noreferrer" className={`flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium ${mine ? 'bg-indigo-700 text-white' : 'bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-100'}`}>
+                                        <FileText className="h-4 w-4 shrink-0" />
+                                        <span className="truncate">{message.attachment_name ?? 'Download file'}</span>
+                                      </a>
+                                    )}
+                                  </div>
+                                )}
+                                {/* Text */}
+                                {message.message && (
+                                  <div
+                                    className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                                      mine
+                                        ? 'rounded-br-md bg-indigo-600 text-white'
+                                        : 'rounded-bl-md bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100'
+                                    }`}
+                                  >
+                                    {message.message}
+                                  </div>
+                                )}
                                 <div
                                   className={`mt-1 flex items-center gap-1 ${
                                     mine ? 'justify-end' : 'justify-start'
@@ -887,11 +913,19 @@ export default function AdminChatPage() {
                     className="w-full resize-none bg-transparent py-1 text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100"
                     style={{ maxHeight: '120px' }}
                   />
-                  <div className="mt-2 flex items-center gap-1">
+                  <div className="relative mt-2 flex items-center gap-1">
                     <input
                       ref={attachmentInputRef}
                       type="file"
                       multiple
+                      onChange={handleAttachmentSelect}
+                      className="hidden"
+                    />
+                    <input
+                      ref={imageInputRef}
+                      type="file"
+                      multiple
+                      accept="image/*"
                       onChange={handleAttachmentSelect}
                       className="hidden"
                     />
@@ -904,21 +938,31 @@ export default function AdminChatPage() {
                     </button>
                     <button
                       type="button"
+                      onClick={() => imageInputRef.current?.click()}
                       className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200"
                     >
                       <ImageIcon className="h-4 w-4" />
                     </button>
-                    <button
-                      type="button"
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200"
-                    >
-                      <Smile className="h-4 w-4" />
-                    </button>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowEmojiPicker((v) => !v)}
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+                      >
+                        <Smile className="h-4 w-4" />
+                      </button>
+                      {showEmojiPicker && (
+                        <EmojiPicker
+                          onSelect={(emoji) => setInput((prev) => prev + emoji)}
+                          onClose={() => setShowEmojiPicker(false)}
+                        />
+                      )}
+                    </div>
                     <div className="flex-1" />
                     <button
                       type="button"
                       onClick={() => void handleSendMessage()}
-                      disabled={!input.trim() || isSending}
+                      disabled={(!input.trim() && pendingAttachments.length === 0) || isSending}
                       className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <Send className="h-3.5 w-3.5" />
@@ -999,52 +1043,121 @@ export default function AdminChatPage() {
               </div>
             </div>
 
-            {/* Stats grid */}
-            <div className="mt-3 grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left shadow-sm transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800"
-              >
-                <p className="flex items-center gap-1 text-[12px] font-semibold text-slate-900 dark:text-white">
-                  <ImageIcon className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
-                  Media
-                </p>
-                <p className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">
-                  {activeMessages.filter((m) =>
-                    /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(m.message),
-                  ).length}{' '}
-                  items
-                </p>
-              </button>
-              <button
-                type="button"
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left shadow-sm transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800"
-              >
-                <p className="flex items-center gap-1 text-[12px] font-semibold text-slate-900 dark:text-white">
-                  <FileText className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
-                  Files
-                </p>
-                <p className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">
-                  {activeMessages.filter((m) =>
-                    /\.(pdf|doc|docx|xls|xlsx|csv|zip)$/i.test(m.message),
-                  ).length}{' '}
-                  items
-                </p>
-              </button>
-              <button
-                type="button"
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left shadow-sm transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800"
-              >
-                <p className="flex items-center gap-1 text-[12px] font-semibold text-slate-900 dark:text-white">
-                  <Link2 className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
-                  Links
-                </p>
-                <p className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">
-                  {activeMessages.filter((m) => /https?:\/\/\S+/i.test(m.message)).length}{' '}
-                  items
-                </p>
-              </button>
-            </div>
+            {/* Stats grid — expandable */}
+            {(() => {
+              const mediaItems = activeMessages.filter((m) => m.attachment_type === 'image' || m.attachment_type === 'video')
+              const fileItems  = activeMessages.filter((m) => m.attachment_type === 'file')
+              const linkItems  = activeMessages.filter((m) => /https?:\/\/\S+/i.test(m.message))
+
+              const panels = [
+                { key: 'media' as const, label: 'Media', icon: <ImageIcon className="h-3.5 w-3.5" />, count: mediaItems.length },
+                { key: 'files' as const, label: 'Files',  icon: <FileText  className="h-3.5 w-3.5" />, count: fileItems.length  },
+                { key: 'links' as const, label: 'Links',  icon: <Link2     className="h-3.5 w-3.5" />, count: linkItems.length  },
+              ]
+
+              return (
+                <div className="mt-3 space-y-2">
+                  <div className="grid grid-cols-3 gap-2">
+                    {panels.map(({ key, label, icon, count }) => {
+                      const active = openPanel === key
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => setOpenPanel(active ? null : key)}
+                          className={`flex flex-col rounded-xl border px-3 py-2.5 text-left shadow-sm transition ${
+                            active
+                              ? 'border-indigo-300 bg-indigo-50 dark:border-indigo-700 dark:bg-indigo-950/40'
+                              : 'border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800'
+                          }`}
+                        >
+                          <p className={`flex items-center gap-1 text-[12px] font-semibold ${active ? 'text-indigo-600 dark:text-indigo-300' : 'text-slate-900 dark:text-white'}`}>
+                            {icon}{label}
+                          </p>
+                          <div className="mt-0.5 flex items-center justify-between">
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400">{count} items</p>
+                            <ChevronDown className={`h-3 w-3 text-slate-400 transition-transform duration-200 ${active ? 'rotate-180' : ''}`} />
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  <div className={`overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800 transition-all duration-300 ${openPanel ? 'max-h-72 opacity-100' : 'max-h-0 opacity-0 border-transparent'}`}>
+                    <div className="max-h-72 overflow-y-auto p-3 scrollbar-none [&::-webkit-scrollbar]:hidden">
+
+                      {openPanel === 'media' && (
+                        mediaItems.length === 0 ? (
+                          <p className="py-4 text-center text-xs text-slate-400">No media shared yet.</p>
+                        ) : (
+                          <div className="grid grid-cols-3 gap-1.5">
+                            {mediaItems.map((m) => (
+                              <a key={m.id} href={m.attachment_url ?? '#'} target="_blank" rel="noreferrer" className="group relative block aspect-square overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800">
+                                {m.attachment_type === 'image' ? (
+                                  <img src={m.attachment_url ?? ''} alt={m.attachment_name ?? ''} className="h-full w-full object-cover transition group-hover:scale-105" />
+                                ) : (
+                                  <>
+                                    <video src={m.attachment_url ?? ''} className="h-full w-full object-cover" muted preload="metadata" />
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                      <Play className="h-5 w-5 fill-white text-white drop-shadow" />
+                                    </div>
+                                  </>
+                                )}
+                              </a>
+                            ))}
+                          </div>
+                        )
+                      )}
+
+                      {openPanel === 'files' && (
+                        fileItems.length === 0 ? (
+                          <p className="py-4 text-center text-xs text-slate-400">No files shared yet.</p>
+                        ) : (
+                          <div className="space-y-1.5">
+                            {fileItems.map((m) => (
+                              <a key={m.id} href={m.attachment_url ?? '#'} target="_blank" rel="noreferrer"
+                                className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-white px-3 py-2.5 text-sm transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800">
+                                <FileText className="h-4 w-4 shrink-0 text-indigo-500" />
+                                <span className="min-w-0 flex-1 truncate text-[12px] font-medium text-slate-700 dark:text-slate-200">
+                                  {m.attachment_name ?? 'File'}
+                                </span>
+                                <ExternalLink className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                              </a>
+                            ))}
+                          </div>
+                        )
+                      )}
+
+                      {openPanel === 'links' && (
+                        linkItems.length === 0 ? (
+                          <p className="py-4 text-center text-xs text-slate-400">No links shared yet.</p>
+                        ) : (
+                          <div className="space-y-1.5">
+                            {linkItems.map((m) => {
+                              const url = (m.message.match(/https?:\/\/\S+/i) ?? [])[0] ?? ''
+                              let host = ''
+                              try { host = new URL(url).hostname } catch { host = url }
+                              return (
+                                <a key={m.id} href={url} target="_blank" rel="noreferrer"
+                                  className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-white px-3 py-2.5 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800">
+                                  <Link2 className="h-4 w-4 shrink-0 text-indigo-500" />
+                                  <div className="min-w-0 flex-1">
+                                    <p className="truncate text-[12px] font-medium text-slate-700 dark:text-slate-200">{host}</p>
+                                    <p className="truncate text-[10px] text-slate-400">{url}</p>
+                                  </div>
+                                  <ExternalLink className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                                </a>
+                              )
+                            })}
+                          </div>
+                        )
+                      )}
+
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
 
             {/* About supplier */}
             <div className="mt-5">

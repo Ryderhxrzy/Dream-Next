@@ -16,6 +16,9 @@ export type SupplierChatMessage = {
   sender_admin_id: number | null
   sender_supplier_user_id: number | null
   message: string
+  attachment_url: string | null
+  attachment_type: 'image' | 'video' | 'file' | null
+  attachment_name: string | null
   is_read: boolean
   read_at: string | null
   created_at: string
@@ -168,16 +171,38 @@ export async function fetchSupplierChatConversation(conversationId: number) {
   return response.data
 }
 
-export async function sendSupplierChatMessage(conversationId: number, message: string) {
+type AttachmentPayload = {
+  attachment_url: string
+  attachment_type: 'image' | 'video' | 'file'
+  attachment_name: string
+}
+
+export async function sendSupplierChatMessage(
+  conversationId: number,
+  message: string,
+  attachment?: AttachmentPayload,
+) {
   const response = await supplierChatRequest<{ data: SupplierChatMessage }>(
     `/api/supplier/chat/conversations/${conversationId}/messages`,
     {
       method: 'POST',
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ message: message || undefined, ...attachment }),
     },
   )
-
   return response.data
+}
+
+export async function uploadSupplierChatAttachment(file: File): Promise<AttachmentPayload> {
+  const form = new FormData()
+  form.append('file', file)
+  const res = await fetch('/api/supplier/upload', { method: 'POST', body: form })
+  const json = (await res.json()) as { url?: string; type?: string; name?: string; error?: string }
+  if (!res.ok || !json.url) throw new Error(json.error ?? 'Upload failed.')
+  return {
+    attachment_url: json.url,
+    attachment_type: (json.type ?? 'file') as 'image' | 'video' | 'file',
+    attachment_name: json.name ?? file.name,
+  }
 }
 
 export async function createSupplierChatConversation(subject: string, message: string) {
