@@ -95,6 +95,40 @@ class CategoryController extends Controller
         ]);
     }
 
+    public function shopByCategories(): JsonResponse
+    {
+        $productImages = DB::table('tbl_product')
+            ->select(['pd_catid as category_id', 'pd_image'])
+            ->whereIn('pd_status', [1, 2])
+            ->orderByDesc('pd_id')
+            ->get()
+            ->groupBy('category_id')
+            ->map(function ($rows) {
+                return collect($rows)
+                    ->pluck('pd_image')
+                    ->filter(fn ($image) => is_string($image) && trim($image) !== '')
+                    ->map(fn ($image) => $this->normalizeCategoryImage($image))
+                    ->filter()
+                    ->first();
+            });
+
+        $categories = Category::select(['cat_id', 'cat_name', 'cat_url', 'cat_image'])
+            ->orderBy('cat_order')
+            ->orderByDesc('cat_id')
+            ->get()
+            ->map(fn (Category $c) => [
+                'id'    => (int)    $c->cat_id,
+                'name'  => $this->normalizeText((string) ($c->cat_name ?? '')),
+                'url'   => (string) ($c->cat_url ?? ''),
+                'image' => $productImages[(int) $c->cat_id] ?? $this->normalizeCategoryImage($c->cat_image),
+            ])
+            ->values();
+
+        return response()->json([
+            'categories' => $categories,
+        ]);
+    }
+
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
