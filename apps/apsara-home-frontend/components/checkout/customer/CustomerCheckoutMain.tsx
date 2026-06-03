@@ -191,7 +191,10 @@ const CustomerCheckoutMain = ({
     const backToShopHref = isPartnerStorefront ? `/shop/${normalizedPartner}/product` : '/shop';
     const checkoutHeaderLabel = isPartnerStorefront ? `${partnerName} Secure Checkout` : 'AF Home Secure Checkout';
 
-    const checkoutData = useMemo(() => readCheckoutDraft(), [checkoutRefreshTrigger]);
+    const checkoutData = useMemo(() => {
+        void checkoutRefreshTrigger;
+        return readCheckoutDraft();
+    }, [checkoutRefreshTrigger]);
     const isZqCheckout = checkoutData?.sourceType === 'zq' || checkoutData?.product?.sourceType === 'zq';
     const storedReferral = useMemo(() => readStoredReferral(), []);
     const storefrontReferral = useMemo(() => extractReferralUsername(String(storefrontReferralCode ?? '')), [storefrontReferralCode]);
@@ -241,7 +244,7 @@ const CustomerCheckoutMain = ({
     const [notice, setNotice] = useState('');
     const [createCheckoutSession, { isLoading: loading }] = useCreateCheckoutSessionMutation();
     const [validateVoucher, { isLoading: voucherLoading }] = useValidateVoucherMutation();
-    const [voucherInfo, setVoucherInfo] = useState<{ code: string; amount: number; discount: number } | null>(null);
+    const [voucherInfo, setVoucherInfo] = useState<{ code: string; amount: number; discount: number; message?: string | null } | null>(null);
     const [voucherError, setVoucherError] = useState<string | null>(null);
     const [egcAmountInput, setEgcAmountInput] = useState('');
     const [appliedEgcAmount, setAppliedEgcAmount] = useState(0);
@@ -353,6 +356,11 @@ const CustomerCheckoutMain = ({
         return !isLoggedIn ? guestPricing.subtotal : toPositiveNumber(checkoutData.subtotal);
     }, [checkoutData, guestPricing.subtotal, isLoggedIn]);
 
+    const effectiveProductId = useMemo(() => {
+        const productId = Number(checkoutData?.product?.id ?? 0);
+        return Number.isFinite(productId) && productId > 0 ? productId : null;
+    }, [checkoutData?.product?.id]);
+
     const effectiveProductPv = useMemo(() => {
         if (!checkoutData) return 0;
         return !isLoggedIn ? guestPricing.productPv : toPositiveNumber(checkoutData.product.prodpv ?? 0);
@@ -367,33 +375,26 @@ const CustomerCheckoutMain = ({
         () => Math.max(0, Math.min(availableEgcBalance, effectiveSubtotal - voucherDiscount)),
         [availableEgcBalance, effectiveSubtotal, voucherDiscount]
     );
-    const effectiveSourceSlug = useMemo(() => {
-        const draftSlug = String(checkoutData?.sourceSlug ?? '').trim().toLowerCase();
-        if (draftSlug) return draftSlug;
-        return normalizedPartner || '';
-    }, [checkoutData?.sourceSlug, normalizedPartner]);
-    const effectiveSourceUrl = useMemo(() => {
+    const draftSourceSlug = String(checkoutData?.sourceSlug ?? '').trim().toLowerCase();
+    const effectiveSourceSlug = draftSourceSlug || normalizedPartner || '';
+    const effectiveSourceUrl = (() => {
         const draftUrl = String(checkoutData?.sourceUrl ?? '').trim();
         if (draftUrl) return draftUrl;
         if (typeof window === 'undefined') return null;
         if (!effectiveSourceSlug) return window.location.href;
         return `${window.location.origin}/shop/${effectiveSourceSlug}`;
-    }, [checkoutData?.sourceUrl, effectiveSourceSlug]);
+    })();
+    const manualCheckoutNotice = checkoutData?.product
+        && useManualCheckoutShipping
+        && checkoutData.product.manualCheckoutEnabled !== true
+        ? 'Some items may not support manual checkout. Please review your cart items before placing the order.'
+        : '';
+    const paymentNotice = notice || manualCheckoutNotice;
 
     useEffect(() => {
         if (checkoutData) return;
         router.replace(backToShopHref);
     }, [backToShopHref, checkoutData, router]);
-
-    useEffect(() => {
-        if (!checkoutData?.product) return;
-        if (!useManualCheckoutShipping) return;
-        if (checkoutData.product.manualCheckoutEnabled === true) {
-            return;
-        }
-
-        setNotice('Some items may not support manual checkout. Please review your cart items before placing the order.');
-    }, [checkoutData, useManualCheckoutShipping]);
 
     useEffect(() => {
         if (!checkoutData) return;
@@ -404,24 +405,14 @@ const CustomerCheckoutMain = ({
         const handle = setTimeout(async () => {
             try {
                 setVoucherError(null);
-                const res = await validateVoucher({ code, subtotal: effectiveSubtotal }).unwrap();
+                const res = await validateVoucher({ code, subtotal: effectiveSubtotal, product_id: effectiveProductId }).unwrap();
                 const voucherAmount = Number(res.voucher.amount ?? 0);
-                const requiredSubtotal = Math.max(0, voucherAmount * 2);
-                const stillNeeded = Math.max(0, requiredSubtotal - effectiveSubtotal);
-
-                if (stillNeeded > 0) {
-                    setVoucherInfo(null);
-                    setVoucherError(
-                        `Minimum purchase for this voucher is PHP ${requiredSubtotal.toLocaleString()}. ` +
-                        `You still need PHP ${stillNeeded.toLocaleString()}.`,
-                    );
-                    return;
-                }
 
                 setVoucherInfo({
                     code: res.voucher.code,
                     amount: voucherAmount,
                     discount: res.discount,
+                    message: res.message ?? null,
                 });
                 setVoucherError(null);
             } catch (error) {
@@ -432,7 +423,7 @@ const CustomerCheckoutMain = ({
         }, 450);
 
         return () => clearTimeout(handle);
-    }, [effectiveSubtotal, form.voucher_coupon, checkoutData, validateVoucher]);
+    }, [effectiveProductId, effectiveSubtotal, form.voucher_coupon, checkoutData, validateVoucher]);
 
     const setField = useCallback((key: keyof GuestForm, value: string) => {
         setFormOverrides(prev => ({ ...prev, [key]: value }))
@@ -735,6 +726,7 @@ const CustomerCheckoutMain = ({
                                     loading: voucherLoading,
                                     error: voucherError,
                                     appliedAmount: voucherInfo?.discount ?? 0,
+                                    message: voucherInfo?.message ?? null,
                                 }}
                                 egcStatus={{
                                     available: availableEgcBalance,
@@ -773,7 +765,7 @@ const CustomerCheckoutMain = ({
                                 onOnlineBankingProviderChange={setSelectedOnlineBankingProvider}
                                 showOnlineBankingProviderPicker={showOnlineBankingProviderPicker}
                                 paymentModeSource={isLocalPaymentHost ? 'local' : paymentModeEnabledByAdmin ? 'admin' : 'hidden'}
-                                notice={notice}
+                                notice={paymentNotice}
                             />
                         </div>
 

@@ -380,7 +380,17 @@ class PaymentController extends Controller
                 return response()->json(['message' => 'Voucher code is invalid or expired.'], 422);
             }
 
-            $voucherDiscount = min($subtotal, (float) ($voucher->avi_amount ?? 0));
+            $voucherValidation = $this->computeVoucherDiscountForProduct(
+                $voucher,
+                (int) ($resolvedOrderSnapshot['product_id'] ?? 0),
+                $subtotal
+            );
+
+            if (!$voucherValidation['valid']) {
+                return response()->json(['message' => $voucherValidation['message']], 422);
+            }
+
+            $voucherDiscount = (float) $voucherValidation['discount'];
         }
 
         $egcAmount = round(max(0, (float) ($validated['egc_amount'] ?? 0)), 2);
@@ -572,6 +582,7 @@ class PaymentController extends Controller
         $validated = $request->validate([
             'code' => 'required|string|max:80',
             'subtotal' => 'nullable|numeric|min:0',
+            'product_id' => 'nullable|integer|min:1',
         ]);
 
         $voucher = $this->resolveAffiliateVoucher((string) $validated['code']);
@@ -580,10 +591,21 @@ class PaymentController extends Controller
         }
 
         $subtotal = (float) ($validated['subtotal'] ?? ($voucher->avi_amount ?? 0));
-        $discount = min($subtotal, (float) ($voucher->avi_amount ?? 0));
+        $voucherValidation = $this->computeVoucherDiscountForProduct(
+            $voucher,
+            (int) ($validated['product_id'] ?? 0),
+            $subtotal
+        );
+
+        if (!$voucherValidation['valid']) {
+            return response()->json(['message' => $voucherValidation['message']], 422);
+        }
+
+        $discount = (float) $voucherValidation['discount'];
 
         return response()->json([
             'valid' => true,
+            'message' => $voucherValidation['message'],
             'voucher' => [
                 'id' => (int) $voucher->avi_id,
                 'code' => (string) ($voucher->avi_code ?? ''),
@@ -593,6 +615,7 @@ class PaymentController extends Controller
                 'expires_at' => $voucher->avi_expires_at,
             ],
             'discount' => round($discount, 2),
+            'rule' => $voucherValidation['rule'],
         ]);
     }
 
@@ -2186,6 +2209,88 @@ class PaymentController extends Controller
         }
 
         return $voucher;
+    }
+
+    private function computeVoucherDiscountForProduct(object $voucher, int $productId, float $subtotal): array
+    {
+        $voucherAmount = max(0, (float) ($voucher->avi_amount ?? 0));
+        $subtotal = max(0, $subtotal);
+
+        if ($productId <= 0 || !Schema::hasTable('tbl_affiliate_voucher_product_rules')) {
+            return [
+                'valid' => true,
+                'discount' => round(min($subtotal, $voucherAmount), 2),
+                'message' => null,
+                'rule' => null,
+            ];
+        }
+
+        $rule = DB::table('tbl_affiliate_voucher_product_rules')
+            ->where('avpr_product_id', $productId)
+            ->first();
+
+        if (!$rule || !(bool) ($rule->avpr_enabled ?? false)) {
+            return [
+                'valid' => false,
+                'discount' => 0.0,
+                'message' => 'This voucher is not available for this product.',
+                'rule' => [
+                    'product_id' => $productId,
+                    'enabled' => false,
+                ],
+            ];
+        }
+
+        $minSpend = $rule->avpr_min_spend !== null ? max(0, (float) $rule->avpr_min_spend) : 0.0;
+        if ($minSpend > 0 && $subtotal < $minSpend) {
+            return [
+                'valid' => false,
+                'discount' => 0.0,
+                'message' => sprintf('Minimum spend of PHP %s is required to use this voucher.', number_format($minSpend, 2)),
+                'rule' => [
+                    'product_id' => $productId,
+                    'enabled' => true,
+                    'max_discount' => $rule->avpr_max_discount !== null ? (float) $rule->avpr_max_discount : null,
+                    'min_spend' => $minSpend,
+                ],
+            ];
+        }
+
+        $maxDiscount = $rule->avpr_max_discount !== null ? max(0, (float) $rule->avpr_max_discount) : null;
+        if ($maxDiscount !== null && $maxDiscount <= 0) {
+            return [
+                'valid' => false,
+                'discount' => 0.0,
+                'message' => 'This product does not allow voucher discounts.',
+                'rule' => [
+                    'product_id' => $productId,
+                    'enabled' => true,
+                    'max_discount' => 0.0,
+                    'min_spend' => $minSpend,
+                ],
+            ];
+        }
+
+        $discount = min($subtotal, $voucherAmount);
+        $limitReached = false;
+        if ($maxDiscount !== null && $discount > $maxDiscount) {
+            $discount = $maxDiscount;
+            $limitReached = true;
+        }
+
+        return [
+            'valid' => $discount > 0,
+            'discount' => round($discount, 2),
+            'message' => $limitReached
+                ? sprintf('PHP %s discount applied. Product limit reached.', number_format($discount, 2))
+                : null,
+            'rule' => [
+                'product_id' => $productId,
+                'enabled' => true,
+                'max_discount' => $maxDiscount,
+                'min_spend' => $minSpend,
+            ],
+        ];
     }
 
     private function markAffiliateVoucherUsedIfNeeded(string $checkoutId, array $cached): void

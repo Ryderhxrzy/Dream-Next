@@ -14,6 +14,7 @@ interface CustomerCheckoutContactFormProps {
         loading?: boolean;
         error?: string | null;
         appliedAmount?: number | null;
+        message?: string | null;
     };
     egcStatus?: {
         available: number;
@@ -137,7 +138,7 @@ const CustomerCheckoutContactForm = ({
                         <p className="text-[11px] text-rose-500 dark:text-rose-400 mt-1.5">{voucherStatus.error}</p>
                     ) : (voucherStatus?.appliedAmount ?? 0) > 0 ? (
                         <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1.5">
-                            Voucher applied: -PHP {(voucherStatus?.appliedAmount ?? 0).toLocaleString()}
+                            {voucherStatus?.message || `Voucher applied: -PHP ${(voucherStatus?.appliedAmount ?? 0).toLocaleString()}`}
                         </p>
                     ) : (
                         <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5 flex items-center gap-1">
