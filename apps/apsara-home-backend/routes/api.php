@@ -212,6 +212,11 @@ Route::middleware('throttle:storefront-read')->group(function () {
     Route::get('/web-pages/{type}', [WebPageController::class, 'publicIndex']);
 });
 
+// Shop by endpoints
+Route::get('/shop/categories', [CategoryController::class, 'shopByCategories']);
+Route::get('/shop/rooms', [ProductController::class, 'shopByRooms']);
+Route::get('/shop/brands', [ProductBrandController::class, 'shopByBrands']);
+
 // Product brands endpoints (outside throttle to avoid Redis issues)
 Route::get('/product-brands', [ProductBrandController::class, 'publicIndex']);
 Route::get('/product-brands/with-products', [ProductBrandController::class, 'showAllWithProducts']);
