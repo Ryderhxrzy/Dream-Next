@@ -2225,8 +2225,19 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
 
     return null;
   }, [isDeletedWebstoreRequest, webstoreCheckoutId, webstorePaymentContextStorageKey]);
+  const resolvedWebstorePlan = selectedWebstorePlan
+    ?? webstorePaymentSubmissionSnapshot?.selectedWebstorePlan
+    ?? storedWebstorePaymentContext?.selectedWebstorePlan
+    ?? requestPlan
+    ?? null;
+  const resolvedWebstoreBillingOption = selectedBillingOption
+    ?? webstorePaymentSubmissionSnapshot?.selectedBillingOption
+    ?? storedWebstorePaymentContext?.selectedBillingOption
+    ?? activeWebstoreRequest?.billing_option
+    ?? null;
   const resolvedWebstorePaymentMethod = normalizeWebstorePaymentMethod(activeWebstoreRequest?.payment_method)
     ?? webstorePaymentMethodSnapshot
+    ?? storedWebstorePaymentContext?.paymentMethod
     ?? selectedPaymentMethod
     ?? null;
   const webstoreContactFullName = activeWebstoreRequest?.full_name?.trim()
@@ -2404,19 +2415,19 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       semiAnnual: { full: 90000, monthly: 15000 },
       annual: { full: 150000, monthly: 12500 },
     };
-    if (!selectedWebstorePlan || !selectedBillingOption) return null;
-    const baseAmount = planAmounts[selectedWebstorePlan]?.[selectedBillingOption === 'monthly' ? 'monthly' : 'full'];
+    if (!resolvedWebstorePlan || !resolvedWebstoreBillingOption) return null;
+    const baseAmount = planAmounts[resolvedWebstorePlan]?.[resolvedWebstoreBillingOption === 'monthly' ? 'monthly' : 'full'];
     const requestRemaining = Number(activeWebstoreRequest?.remaining_balance ?? NaN);
     if (
       activeWebstoreRequest?.status === 'approved'
-      && selectedBillingOption === 'full'
+      && resolvedWebstoreBillingOption === 'full'
       && Number.isFinite(requestRemaining)
       && requestRemaining > 0
     ) {
       return requestRemaining;
     }
     return typeof baseAmount === 'number' ? baseAmount : null;
-  }, [activeWebstoreRequest?.remaining_balance, activeWebstoreRequest?.status, selectedBillingOption, selectedWebstorePlan]);
+  }, [activeWebstoreRequest?.remaining_balance, activeWebstoreRequest?.status, resolvedWebstoreBillingOption, resolvedWebstorePlan]);
   const selectedWebstoreSubscriptionFee = useMemo(() => {
     const fullFees: Record<'test' | 'quarterly' | 'semiAnnual' | 'annual', number> = {
       test: 1,
@@ -2424,9 +2435,9 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       semiAnnual: 90000,
       annual: 150000,
     };
-    if (!selectedWebstorePlan) return null;
-    return fullFees[selectedWebstorePlan] ?? null;
-  }, [selectedWebstorePlan]);
+    if (!resolvedWebstorePlan) return null;
+    return fullFees[resolvedWebstorePlan] ?? null;
+  }, [resolvedWebstorePlan]);
   const webstoreRemainingBalance = useMemo(() => {
     const requestRemaining = Number(activeWebstoreRequest?.remaining_balance ?? NaN);
     if (Number.isFinite(requestRemaining)) {
@@ -2437,22 +2448,22 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
     }
     return 0;
   }, [activeWebstoreRequest?.remaining_balance, selectedWebstoreSubscriptionFee]);
-  const webstorePlanLabel = selectedWebstorePlan === 'test'
+  const webstorePlanLabel = resolvedWebstorePlan === 'test'
     ? 'Test'
-    : selectedWebstorePlan === 'quarterly'
+    : resolvedWebstorePlan === 'quarterly'
     ? 'Quarterly'
-    : selectedWebstorePlan === 'semiAnnual'
+    : resolvedWebstorePlan === 'semiAnnual'
       ? 'Semi-Annual'
-      : selectedWebstorePlan === 'annual'
+      : resolvedWebstorePlan === 'annual'
         ? 'Annual'
         : '-';
-  const webstoreTermLabel = selectedWebstorePlan === 'test'
+  const webstoreTermLabel = resolvedWebstorePlan === 'test'
     ? '2 days'
-    : selectedWebstorePlan === 'quarterly'
+    : resolvedWebstorePlan === 'quarterly'
     ? '3 months'
-    : selectedWebstorePlan === 'semiAnnual'
+    : resolvedWebstorePlan === 'semiAnnual'
       ? '6 months'
-      : selectedWebstorePlan === 'annual'
+      : resolvedWebstorePlan === 'annual'
         ? 'Yearly'
         : '-';
   const webstoreMonthlyPay = useMemo(() => {
@@ -2462,20 +2473,20 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       semiAnnual: 15000,
       annual: 12500,
     };
-    if (!selectedWebstorePlan) return null;
-    return monthlyFees[selectedWebstorePlan] ?? null;
-  }, [selectedWebstorePlan]);
-  const webstorePaymentBreakdownLabel = selectedBillingOption === 'monthly'
+    if (!resolvedWebstorePlan) return null;
+    return monthlyFees[resolvedWebstorePlan] ?? null;
+  }, [resolvedWebstorePlan]);
+  const webstorePaymentBreakdownLabel = resolvedWebstoreBillingOption === 'monthly'
     ? 'Monthly Pay'
-    : selectedBillingOption === 'full'
+    : resolvedWebstoreBillingOption === 'full'
       ? 'Amount Due'
       : 'Payment Due';
-  const webstorePaymentBreakdownValue = selectedBillingOption === 'full'
+  const webstorePaymentBreakdownValue = resolvedWebstoreBillingOption === 'full'
     ? webstoreRemainingBalance
     : webstoreMonthlyPay;
-  const webstoreBillingLabel = selectedBillingOption === 'monthly'
+  const webstoreBillingLabel = resolvedWebstoreBillingOption === 'monthly'
     ? 'Monthly Installment'
-    : selectedBillingOption === 'full'
+    : resolvedWebstoreBillingOption === 'full'
       ? 'Full Payment'
       : '-';
   const webstorePaymentMethodLabel = resolvedWebstorePaymentMethod

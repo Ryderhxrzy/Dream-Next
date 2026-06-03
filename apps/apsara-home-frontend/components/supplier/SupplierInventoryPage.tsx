@@ -188,6 +188,41 @@ function StatCard({ stat }: { stat: StatDef }) {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   MOVING BADGE
+═══════════════════════════════════════════════════════════ */
+
+function MovingBadge({ isMoving, lastSoldAt }: { isMoving?: boolean | null; lastSoldAt?: string | null }) {
+  if (isMoving === null || isMoving === undefined) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-500 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:ring-slate-700">
+        <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+        No sales yet
+      </span>
+    )
+  }
+  if (isMoving) {
+    const label = lastSoldAt
+      ? `Last sold ${new Date(lastSoldAt).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}`
+      : 'Moving'
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-cyan-50 px-3 py-1 text-[11px] font-bold text-cyan-700 ring-1 ring-cyan-100 dark:bg-cyan-500/10 dark:text-cyan-400 dark:ring-cyan-500/20">
+        <span className="h-1.5 w-1.5 rounded-full bg-cyan-500" />
+        Moving · {label}
+      </span>
+    )
+  }
+  const label = lastSoldAt
+    ? `Last sold ${new Date(lastSoldAt).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}`
+    : 'No recent sales'
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-[11px] font-bold text-amber-700 ring-1 ring-amber-100 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/20">
+      <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+      Non-moving · {label}
+    </span>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════
    STOCK BADGE
 ═══════════════════════════════════════════════════════════ */
 
@@ -484,6 +519,11 @@ function ProductInventoryRow({ product, localQtyOverride, onAddStock }: {
         <StockBadge qty={qty} />
       </td>
 
+      {/* Movement */}
+      <td className="px-6 py-4">
+        <MovingBadge isMoving={product.isMoving} lastSoldAt={product.lastSoldAt} />
+      </td>
+
       {/* Price SRP */}
       <td className="px-6 py-4">
         <p className="text-[13px] font-bold text-slate-900 dark:text-slate-100">
@@ -750,7 +790,7 @@ export default function SupplierInventoryPage() {
     },
   ]
 
-  const localCols = ['Product', 'Quantity', 'Stock Level', 'Price SRP', 'Stock Value', 'Status', 'Action']
+  const localCols = ['Product', 'Quantity', 'Stock Level', 'Movement', 'Price SRP', 'Stock Value', 'Status', 'Action']
   const zqCols    = ['Product', 'Category', 'Cached Stock', 'Live Check', 'Status', 'Last Synced']
   const cols      = isZqSupplier ? zqCols : localCols
 

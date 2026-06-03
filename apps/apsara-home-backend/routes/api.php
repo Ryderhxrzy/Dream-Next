@@ -437,6 +437,7 @@ Route::get('/admin/webpages/adds-content', [AddsContentController::class, 'index
     Route::get('/admin/suppliers/stats', [SupplierController::class, 'stats']);
     Route::get('/admin/suppliers', [SupplierController::class, 'index']);
     Route::get('/admin/suppliers/{id}/categories', [SupplierController::class, 'categories']);
+    Route::get('/admin/suppliers/{id}/warehouses', [SupplierWarehouseController::class, 'adminIndex']);
     Route::get('/admin/supplier-users', [SupplierUserController::class, 'index']);
     Route::post('/admin/supplier-users', [SupplierUserController::class, 'store']);
     Route::put('/admin/supplier-users/{id}', [SupplierUserController::class, 'update']);
