@@ -95,7 +95,9 @@ services:
       - community_backend_node_modules:/workspace/apps/community-backend/node_modules
 
   redis:
-    image: redis:7-alpine
+    build:
+      context: .
+      dockerfile: docker/redis.Dockerfile
     container_name: afhome-redis
     restart: unless-stopped
     command: redis-server --requirepass "local_redis_password" --appendonly yes
