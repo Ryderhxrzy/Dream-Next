@@ -200,7 +200,7 @@ class ProductBrandController extends Controller
     public function showAllWithProducts(Request $request): JsonResponse
     {
         $hasBrandImageColumn = $this->hasBrandImageColumn();
-        
+
         // Get all active brands
         $brands = ProductBrand::query()
             ->select(['pb_id', 'pb_name', 'pb_status'])
@@ -239,6 +239,36 @@ class ProductBrandController extends Controller
         return response()->json([
             'brands' => $brandsData,
             'total_brands' => $brandsData->count(),
+        ]);
+    }
+
+    public function shopByBrands(): JsonResponse
+    {
+        $hasBrandImageColumn = $this->hasBrandImageColumn();
+
+        $brands = ProductBrand::query()
+            ->select(['pb_id', 'pb_name'])
+            ->when($hasBrandImageColumn, function ($query) {
+                $query->addSelect('pb_image');
+            })
+            ->where('pb_status', 0)
+            ->orderBy('pb_name')
+            ->get()
+            ->map(function ($brand) use ($hasBrandImageColumn) {
+                $brandData = [
+                    'id' => (int) $brand->pb_id,
+                    'name' => (string) $brand->pb_name,
+                ];
+
+                if ($hasBrandImageColumn) {
+                    $brandData['image'] = $brand->pb_image ? (string) $brand->pb_image : null;
+                }
+
+                return $brandData;
+            });
+
+        return response()->json([
+            'brands' => $brands,
         ]);
     }
 
