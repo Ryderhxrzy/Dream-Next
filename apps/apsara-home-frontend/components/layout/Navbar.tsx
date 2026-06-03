@@ -238,7 +238,7 @@ function NavbarInner({
   const {
     data: wishlist = [],
   } = useGetWishlistQuery(undefined, {
-    skip: !isLoggedIn || hideSignIn,
+    skip: !isLoggedIn,
   })
   const [readCustomerNotificationKeys, setReadCustomerNotificationKeys] = useState<string[]>([])
   const [surfacedCustomerNotificationKeys, setSurfacedCustomerNotificationKeys] = useState<string[]>([])
@@ -988,7 +988,7 @@ function NavbarInner({
           {/* Icons */}
           <div className="flex items-center gap-1">
             {/* Auth actions */}
-            {isLoggedIn && !hideSignIn ? (
+            {isLoggedIn ? (
               <>
                 <button
                     onClick={() => setWishlistOpen(true)}
@@ -1709,7 +1709,7 @@ function NavbarInner({
             className="md:hidden border-t border-gray-100 dark:border-gray-800 !bg-white dark:!bg-gray-900 max-h-[70vh] overflow-y-auto"
           >
             <nav className="container mx-auto px-4 py-3 flex flex-col gap-0.5">
-              {isLoggedIn && !hideSignIn ? (
+              {isLoggedIn ? (
                 <div className="mb-3 rounded-2xl border border-sky-100 dark:border-sky-900/50 overflow-hidden shadow-sm dark:shadow-none">
                   {/* Profile header */}
                   {(() => {

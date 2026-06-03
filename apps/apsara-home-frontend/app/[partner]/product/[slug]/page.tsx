@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import ScrollToTop from "@/components/landing-page/ScrollToTop";
 import ProductPageClient from '@/components/product/ProductPageClient';
+import { serverFetch } from '@/libs/serverFetch';
 import ProductTabs from '@/components/product/ProductTabs';
 import ProductPageWrapper from '@/components/product/ProductPageWrapper';
 import RelatedProducts from '@/components/product/RelatedProduct';
@@ -139,7 +140,7 @@ export default async function PartnerProductDetailPage({ params }: PageProps) {
     const productResponses = await Promise.all(
       selectedProductIds.map(async (id) => {
         try {
-          const response = await fetch(`${apiUrl}/api/products/${id}`, {
+          const response = await serverFetch(`${apiUrl}/api/products/${id}`, {
             method: 'GET',
             headers: { Accept: 'application/json' },
             next: { revalidate: 60, tags: ['storefront:products'] },

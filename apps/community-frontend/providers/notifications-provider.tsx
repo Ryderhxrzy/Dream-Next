@@ -145,6 +145,31 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       addNotification("new_repost", payload);
     });
 
+    // Personal: someone sent YOU a connection request
+    socket.on("connect_request", (payload: Record<string, unknown>) => {
+      const author = payload.author as { name: string; avatarUrl?: string | null };
+      showNotificationToast({
+        author,
+        label: "sent you a connection request",
+        content: "",
+      });
+      addNotification("connect_request", payload);
+      queryClient.invalidateQueries({ queryKey: ["connection-requests"] });
+    });
+
+    // Personal: someone accepted YOUR connection request
+    socket.on("connect_accepted", (payload: Record<string, unknown>) => {
+      const author = payload.author as { name: string; avatarUrl?: string | null };
+      showNotificationToast({
+        author,
+        label: "accepted your connection request",
+        content: "",
+      });
+      addNotification("connect_accepted", payload);
+      queryClient.invalidateQueries({ queryKey: ["connections"] });
+      queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+    });
+
     // Direct message — TOAST ONLY (not in the notification bell)
     socket.on("new_message", (payload: { conversationId: string; message: { content: string; sender: NotificationAuthor } }) => {
       // Skip toast if the user is already viewing this conversation

@@ -3,6 +3,7 @@ import CategoryListProductMain from '@/components/category/CategoryListProductMa
 import type { Category } from '@/store/api/categoriesApi';
 import type { Product, ProductsResponse } from '@/store/api/productsApi';
 import { buildPageMetadata } from '@/app/seo';
+import { serverFetch } from '@/libs/serverFetch';
 import { getNavbarCategories } from '@/libs/serverStorefront';
 
 export const metadata = buildPageMetadata({ title: 'Category Details', description: 'Browse the Category Details page on AF Home.', path: '/category/[slug]' });
@@ -231,7 +232,7 @@ async function getCategoryProducts(slug: string): Promise<{ label?: string; prod
   if (!apiUrl) return { label: titleFromSlug(slug), products: [], totalProducts: 0 };
 
   try {
-    const categoriesRes = await fetch(`${apiUrl}/api/categories`, {
+    const categoriesRes = await serverFetch(`${apiUrl}/api/categories`, {
       method: 'GET',
       headers: { Accept: 'application/json' },
       cache: 'no-store',
@@ -293,7 +294,7 @@ async function getCategoryProducts(slug: string): Promise<{ label?: string; prod
         productsUrl.searchParams.set('per_page', String(perPage));
         productsUrl.searchParams.set('status', '1');
 
-        const productsRes = await fetch(productsUrl.toString(), {
+        const productsRes = await serverFetch(productsUrl.toString(), {
           method: 'GET',
           headers: { Accept: 'application/json' },
           cache: 'no-store',

@@ -69,6 +69,7 @@ const createPostSchema = z.object({
   image: z.instanceof(File).optional().nullable(),
   eventDate: z.date().optional().nullable(),
   eventTime: z.string().optional().nullable(),
+  eventEndTime: z.string().optional().nullable(),
   location: z.string().optional().nullable(),
   price: z.string().optional().nullable(),
   condition: z.string().optional().nullable(),
@@ -84,6 +85,7 @@ type EditPost = {
   imageUrl?: string | null;
   eventDate?: string | null;
   eventTime?: string | null;
+  eventEndTime?: string | null;
   location?: string | null;
   price?: string | null;
   condition?: string | null;
@@ -118,6 +120,7 @@ export function CreatePostModal({ open, onClose, editPost, presetCategory }: Cre
         image: null,
         eventDate: editPost.eventDate ? new Date(editPost.eventDate) : null,
         eventTime: editPost.eventTime ?? "",
+        eventEndTime: editPost.eventEndTime ?? "",
         location: editPost.location ?? "",
         price: editPost.price ?? "",
         condition: editPost.condition ?? "BRAND_NEW",
@@ -161,6 +164,7 @@ export function CreatePostModal({ open, onClose, editPost, presetCategory }: Cre
     form.setValue("image", null);
     form.setValue("eventDate", null);
     form.setValue("eventTime", "");
+    form.setValue("eventEndTime", "");
     form.setValue("location", "");
     form.setValue("price", "");
     form.setValue("condition", "BRAND_NEW");
@@ -278,47 +282,47 @@ export function CreatePostModal({ open, onClose, editPost, presetCategory }: Cre
                       transition={transition}
                       className="space-y-3 overflow-hidden"
                     >
+                      <div className="space-y-1.5">
+                        <Label className="text-sm font-medium text-foreground/90">
+                          Date
+                        </Label>
+                        <Controller
+                          control={form.control}
+                          name="eventDate"
+                          render={({ field }) => (
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  className={cn(
+                                    "w-full h-9 justify-start text-sm font-normal bg-muted border-border",
+                                    !field.value && "text-muted-foreground",
+                                  )}
+                                >
+                                  <CalendarIcon className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
+                                  {field.value
+                                    ? format(field.value, "MMM d, yyyy")
+                                    : "Pick a date"}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={field.value ?? undefined}
+                                  onSelect={(date) => field.onChange(date ?? null)}
+                                  disabled={{ before: new Date() }}
+                                />
+                              </PopoverContent>
+                            </Popover>
+                          )}
+                        />
+                      </div>
+
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
                           <Label className="text-sm font-medium text-foreground/90">
-                            Date
-                          </Label>
-                          <Controller
-                            control={form.control}
-                            name="eventDate"
-                            render={({ field }) => (
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    className={cn(
-                                      "w-full h-9 justify-start text-sm font-normal bg-muted border-border",
-                                      !field.value && "text-muted-foreground",
-                                    )}
-                                  >
-                                    <CalendarIcon className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
-                                    {field.value
-                                      ? format(field.value, "MMM d, yyyy")
-                                      : "Pick a date"}
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                  <Calendar
-                                    mode="single"
-                                    selected={field.value ?? undefined}
-                                    onSelect={(date) => field.onChange(date ?? null)}
-                                    disabled={{ before: new Date() }}
-                                  />
-                                </PopoverContent>
-                              </Popover>
-                            )}
-                          />
-                        </div>
-
-                        <div className="space-y-1.5">
-                          <Label className="text-sm font-medium text-foreground/90">
-                            Time
+                            Start Time
                           </Label>
                           <Controller
                             control={form.control}
@@ -327,7 +331,24 @@ export function CreatePostModal({ open, onClose, editPost, presetCategory }: Cre
                               <TimePicker
                                 value={field.value ?? ""}
                                 onChange={field.onChange}
-                                placeholder="Pick a time"
+                                placeholder="Start time"
+                              />
+                            )}
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-sm font-medium text-foreground/90">
+                            End Time
+                          </Label>
+                          <Controller
+                            control={form.control}
+                            name="eventEndTime"
+                            render={({ field }) => (
+                              <TimePicker
+                                value={field.value ?? ""}
+                                onChange={field.onChange}
+                                placeholder="End time"
                               />
                             )}
                           />
@@ -547,6 +568,7 @@ function getDefaultValues(): CreatePostValues {
     image: null,
     eventDate: null,
     eventTime: "",
+    eventEndTime: "",
     location: "",
     price: "",
     condition: "BRAND_NEW",

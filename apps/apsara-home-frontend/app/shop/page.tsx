@@ -8,6 +8,7 @@ import ShopPageClient from "@/components/shop/ShopPageClient"
 import ShopBuilderSections, { type ShopBuilderApiResponse } from "@/components/sections/ShopBuilderSections"
 import { getNavbarCategories } from '@/libs/serverStorefront'
 import { getPartnerStorefrontRecordByHost } from '@/libs/partnerStorefrontServer'
+import { serverFetch } from '@/libs/serverFetch'
 import type { TopBarConfig } from '@/components/layout/TopBar'
 import type { TrustBarConfig } from '@/components/layout/TrustBar'
 
@@ -87,17 +88,17 @@ async function getShopBuilderData(): Promise<ShopBuilderApiResponse | null> {
 
   try {
     const [webPagesRes, categoriesRes, productsRes] = await Promise.all([
-      fetch(`${apiUrl}/api/web-pages/shop-builder`, {
+      serverFetch(`${apiUrl}/api/web-pages/shop-builder`, {
         method: 'GET',
         headers: { Accept: 'application/json' },
         cache: 'no-store',
       }),
-      fetch(`${apiUrl}/api/categories?page=1&per_page=100&used_only=1`, {
+      serverFetch(`${apiUrl}/api/categories?page=1&per_page=100&used_only=1`, {
         method: 'GET',
         headers: { Accept: 'application/json' },
         cache: 'no-store',
       }),
-      fetch(`${apiUrl}/api/products?page=1&per_page=200&status=1`, {
+      serverFetch(`${apiUrl}/api/products?page=1&per_page=200&status=1`, {
         method: 'GET',
         headers: { Accept: 'application/json' },
         cache: 'no-store',

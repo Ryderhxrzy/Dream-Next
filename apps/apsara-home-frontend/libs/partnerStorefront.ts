@@ -158,7 +158,7 @@ export const getPartnerStorefrontConfig = (item: WebPageItem | undefined): Partn
     heroVideoUrl: String(fields.hero_video_url ?? '').trim() || null,
     logoVersion: String(fields.logo_version ?? '').trim(),
     referralLink: String(fields.referral_link ?? '').trim(),
-    shopUrl: String(fields.shop_url ?? fields.domain_link ?? '').trim(),
+    shopUrl: String(fields.shop_url ?? '').trim(),
     domainLink: String(fields.storefront_domain ?? '').trim(),
     heroTitle: String(fields.hero_title ?? item.subtitle ?? '').trim() || `Shop ${slug}`,
     heroSubtitle: String(fields.hero_subtitle ?? item.body ?? '').trim() || 'Curated products for your partner storefront.',
@@ -170,12 +170,11 @@ export const getPartnerStorefrontConfig = (item: WebPageItem | undefined): Partn
     enableAiSupport: toBoolean(fields.enable_ai_support),
     enableActivateDiscount: toBoolean(fields.activate_discount ?? fields.enable_activate_discount),
     publicShopUrl: buildPartnerStorefrontPublicUrl(
-      String(fields.shop_url ?? fields.domain_link ?? '').trim(),
+      String(fields.shop_url ?? '').trim(),
       String(fields.storefront_domain ?? '').trim(),
     ),
   }
 }
-
 
 export const filterPartnerCategories = (categories: Category[], config: PartnerStorefrontConfig | null) => {
   if (!config) return categories

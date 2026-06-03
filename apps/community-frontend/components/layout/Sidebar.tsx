@@ -6,10 +6,11 @@ import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import {
   Home, Bookmark, CalendarDays, Users, MessageCircle,
-  ShieldCheck, Settings, MapPin
+  ShieldCheck, Settings, MapPin, User
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useUnreadMessageCount } from "@/lib/hooks/use-messages"
+import { useCurrentUser, getFullName, getInitials } from "@/lib/hooks/use-current-user"
 
 const navItems = [
   { icon: Home,          label: "Home",     href: "/feed" },
@@ -23,6 +24,7 @@ const navItems = [
 export default function Sidebar() {
   const unreadMessages = useUnreadMessageCount()
   const pathname = usePathname()
+  const { data: user } = useCurrentUser()
 
   function isActive(href: string) {
     return pathname === href || pathname?.startsWith(href + "/")
@@ -70,6 +72,19 @@ export default function Sidebar() {
         </div>
 
         <Link
+          href="/profile"
+          className={cn(
+            "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+            isActive("/profile")
+              ? "bg-accent text-foreground"
+              : "text-muted-foreground hover:bg-accent hover:text-foreground"
+          )}
+        >
+          <User className="w-5 h-5 shrink-0" />
+          Profile
+        </Link>
+
+        <Link
           href="/settings"
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
         >
@@ -91,16 +106,21 @@ export default function Sidebar() {
         </div>
 
         {/* User */}
-        <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-accent cursor-pointer transition-colors">
+        <Link
+          href="/profile"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-accent cursor-pointer transition-colors"
+        >
           <Avatar className="w-8 h-8 shrink-0">
-            <AvatarImage src={undefined} />
-            <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">SJ</AvatarFallback>
+            <AvatarImage src={user?.avatarUrl ?? undefined} />
+            <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
+              {getInitials(user)}
+            </AvatarFallback>
           </Avatar>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-foreground truncate">Sarah Johnson</p>
-            <p className="text-xs text-muted-foreground">Member since 2021</p>
+            <p className="text-sm font-semibold text-foreground truncate">{getFullName(user) || "Member"}</p>
+            <p className="text-xs text-muted-foreground">View profile</p>
           </div>
-        </div>
+        </Link>
       </div>
 
     </aside>

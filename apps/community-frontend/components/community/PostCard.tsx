@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils"
 import { useCommunityUiStore } from "@/store/community-ui.store"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { Bookmark, EyeOff, Flag, Pencil, ThumbsUp, MessageCircle, MessageSquare, Share2, Repeat2, MoreHorizontal, Trash2, UserX } from "lucide-react"
 import type { CommunityPost } from "@/lib/hooks/use-community-posts"
 import { useStartConversation } from "@/lib/hooks/use-messages"
@@ -164,15 +165,19 @@ const PostCard = ({ post, postId, isOwner, rawPost }: PostCardProps) => {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2.5">
-          <Avatar className="w-9 h-9">
-            <AvatarImage src={post.author.avatar || undefined} />
-            <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
-              {post.author.initials}
-            </AvatarFallback>
-          </Avatar>
+          <Link href={`/profile/${rawPost.authorId}`}>
+            <Avatar className="w-9 h-9 transition-opacity hover:opacity-90">
+              <AvatarImage src={post.author.avatar || undefined} />
+              <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
+                {post.author.initials}
+              </AvatarFallback>
+            </Avatar>
+          </Link>
           <div>
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-sm font-semibold text-foreground">{post.author.name}</span>
+              <Link href={`/profile/${rawPost.authorId}`} className="text-sm font-semibold text-foreground hover:underline">
+                {post.author.name}
+              </Link>
               {post.author.isOfficial && (
                 <span className="text-xs text-blue-600 font-medium">✓ Official</span>
               )}

@@ -1527,7 +1527,7 @@ export default function PartnerStorefrontStudio() {
                       </div>
                     </div>
                     {draft.heroVideoUrl ? (
-                      <video src={draft.heroVideoUrl} controls className="mt-3 w-full max-h-56 rounded-xl border border-slate-200 bg-slate-900 dark:border-slate-700" />
+                      <video key={draft.heroVideoUrl} src={draft.heroVideoUrl} controls preload="metadata" className="mt-3 w-full max-h-56 rounded-xl border border-slate-200 bg-slate-900 dark:border-slate-700" />
                     ) : null}
                   </div>
                 </div>

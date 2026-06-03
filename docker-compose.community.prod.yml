@@ -6,7 +6,9 @@ services:
       args:
         APP_FILTER: community-backend
     restart: unless-stopped
+    mem_limit: 512m
     environment:
+      NODE_OPTIONS: "--max-old-space-size=384"
       PORT: "4000"
       DATABASE_URL: "${COMMUNITY_DATABASE_URL:-}"
       DATABASE_SCHEMA: community
@@ -37,6 +39,7 @@ services:
         NEXT_PUBLIC_COMMUNITY_API_URL: "${NEXT_PUBLIC_COMMUNITY_API_URL:-https://community-backend.afhome.ph}"
         NEXT_PUBLIC_REALTIME_URL: "${NEXT_PUBLIC_REALTIME_URL:-https://realtime.afhome.ph}"
     restart: unless-stopped
+    mem_limit: 768m
     environment:
       NODE_ENV: production
       NEXT_TELEMETRY_DISABLED: "1"
@@ -70,7 +73,9 @@ services:
       args:
         APP_FILTER: realtime-service
     restart: unless-stopped
+    mem_limit: 384m
     environment:
+      NODE_OPTIONS: "--max-old-space-size=256"
       PORT: "4001"
       REDIS_HOST: "${REDIS_HOST:-redis}"
       REDIS_PORT: "6379"

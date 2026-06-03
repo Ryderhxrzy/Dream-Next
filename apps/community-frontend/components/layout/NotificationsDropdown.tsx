@@ -1,7 +1,9 @@
 "use client"
 
+import { useState } from "react"
 import { formatDistanceToNowStrict } from "date-fns"
 import { Bell, Check } from "lucide-react"
+import { useConnectionActions } from "@/lib/hooks/use-connections"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,7 +39,45 @@ function getActionLabel(n: Notification): string {
   if (n.type === "new_reaction") return "liked your post"
   if (n.type === "new_rsvp") return "is going to your event"
   if (n.type === "new_repost") return "reposted your post"
+  if (n.type === "connect_request") return "sent you a connection request"
+  if (n.type === "connect_accepted") return "accepted your connection request"
   return "sent a notification"
+}
+
+function ConnectRequestActions({ userId }: { userId: string }) {
+  const { accept, remove } = useConnectionActions(userId)
+  const [done, setDone] = useState<null | "accepted" | "declined">(null)
+
+  if (done) {
+    return (
+      <p className="mt-1.5 text-xs font-medium text-muted-foreground">
+        {done === "accepted" ? "✓ Connected" : "Declined"}
+      </p>
+    )
+  }
+
+  const busy = accept.isPending || remove.isPending
+  return (
+    <div className="mt-2 flex items-center gap-2">
+      <Button
+        size="sm"
+        className="h-7 px-3 text-xs"
+        disabled={busy}
+        onClick={() => accept.mutate(undefined, { onSuccess: () => setDone("accepted") })}
+      >
+        Accept
+      </Button>
+      <Button
+        size="sm"
+        variant="outline"
+        className="h-7 px-3 text-xs"
+        disabled={busy}
+        onClick={() => remove.mutate(undefined, { onSuccess: () => setDone("declined") })}
+      >
+        Decline
+      </Button>
+    </div>
+  )
 }
 
 export function NotificationsDropdown() {
@@ -98,7 +138,7 @@ export function NotificationsDropdown() {
               const author = getAuthor(n.payload)
               const content = String(n.payload.content ?? "")
               return (
-                <button
+                <div
                   key={n.id}
                   className={cn(
                     "w-full flex items-start gap-3 px-4 py-3 text-left transition-colors border-b border-border last:border-0",
@@ -125,13 +165,18 @@ export function NotificationsDropdown() {
                     <p className="text-[11px] text-muted-foreground mt-0.5">
                       {formatDistanceToNowStrict(new Date(n.createdAt), { addSuffix: true })}
                     </p>
+
+                    {/* Connection request actions */}
+                    {n.type === "connect_request" && (
+                      <ConnectRequestActions userId={String(n.payload.userId ?? "")} />
+                    )}
                   </div>
 
                   {/* Unread dot */}
                   {!n.read && (
                     <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0 mt-1.5" />
                   )}
-                </button>
+                </div>
               )
             })
           )}

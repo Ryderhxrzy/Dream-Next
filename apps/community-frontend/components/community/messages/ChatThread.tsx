@@ -1,6 +1,7 @@
 "use client"
 
 import { format, isSameDay } from "date-fns"
+import { motion } from "framer-motion"
 import { Send, Loader2, MessageCircle, ArrowLeft, Smile, ImagePlus, X, MoreHorizontal } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -84,8 +85,8 @@ export function ChatThread({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-3">
-        <div className="space-y-1">
+      <div className="flex-1 overflow-y-auto px-6 py-3 flex flex-col">
+        <div className="space-y-1 mt-auto">
           {messages?.map((m, i) => {
             const mine = m.senderId === currentUserId
             const created = new Date(m.createdAt)
@@ -96,6 +97,7 @@ export function ChatThread({
 
             const lastMineIndex = messages.reduce((acc, mm, idx) => (mm.senderId === currentUserId ? idx : acc), -1)
             const isLastMine = mine && i === lastMineIndex
+            const isLast = i === messages.length - 1
             const seen = otherReadAt && new Date(otherReadAt) >= created
 
             return (
@@ -121,7 +123,12 @@ export function ChatThread({
                     </div>
                   )}
 
-                  <div className={cn("flex flex-col max-w-[70%]", mine ? "items-end" : "items-start")}>
+                  <motion.div
+                    initial={isLast ? { opacity: 0, y: 8, scale: 0.96 } : false}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                    className={cn("flex flex-col max-w-[70%]", mine ? "items-end" : "items-start")}
+                  >
                     <div
                       className={cn(
                         "overflow-hidden",
@@ -146,7 +153,7 @@ export function ChatThread({
                         <span className="text-[10px] text-muted-foreground font-medium">· {seen ? "Read" : "Sent"}</span>
                       )}
                     </div>
-                  </div>
+                  </motion.div>
                 </div>
               </div>
             )

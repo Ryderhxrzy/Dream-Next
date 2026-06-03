@@ -116,11 +116,11 @@ export function Topbar() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push("/feed")}>
+            <DropdownMenuItem onClick={() => router.push("/profile")}>
               <User className="h-4 w-4 text-muted-foreground" />
               Profile
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push("/saved")}>
               <Bookmark className="h-4 w-4 text-muted-foreground" />
               Saved posts
             </DropdownMenuItem>

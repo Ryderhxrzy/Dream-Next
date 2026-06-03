@@ -10,6 +10,7 @@ type CreatePostInput = {
   image?: File | null;
   eventDate?: Date | null;
   eventTime?: string | null;
+  eventEndTime?: string | null;
   location?: string | null;
   price?: string | null;
   condition?: string | null;
@@ -51,6 +52,7 @@ export function useCreateCommunityPost() {
           imageUrl,
           eventDate: input.eventDate,
           eventTime: input.eventTime,
+          eventEndTime: input.eventEndTime,
           location: input.location,
           price: input.price,
           condition: input.condition,

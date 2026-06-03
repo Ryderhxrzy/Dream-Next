@@ -4,6 +4,7 @@ services:
       context: .
       dockerfile: docker/backend.prod.Dockerfile
     restart: unless-stopped
+    mem_limit: 1g
     environment:
       APP_NAME: "${APP_NAME:-AF Home}"
       APP_ENV: production
@@ -179,6 +180,7 @@ services:
         USER_FORGOT_PASSWORD_CLOUDFLARE_SITE_KEY: "${USER_FORGOT_PASSWORD_CLOUDFLARE_SITE_KEY:-}"
         ADMIN_LOGIN_CLOUDFLARE_SITE_KEY: "${ADMIN_LOGIN_CLOUDFLARE_SITE_KEY:-}"
     restart: unless-stopped
+    mem_limit: 768m
     environment:
       NODE_ENV: production
       NEXT_TELEMETRY_DISABLED: "1"
@@ -234,6 +236,7 @@ services:
         NEXT_PUBLIC_PUSHER_KEY: "${NEXT_PUBLIC_PUSHER_KEY:-}"
         NEXT_PUBLIC_PUSHER_CLUSTER: "${NEXT_PUBLIC_PUSHER_CLUSTER:-ap1}"
     restart: unless-stopped
+    mem_limit: 512m
     environment:
       NODE_ENV: production
       NEXT_TELEMETRY_DISABLED: "1"
@@ -250,8 +253,11 @@ services:
       - default
 
   redis:
-    image: redis:7-alpine
+    build:
+      context: .
+      dockerfile: docker/redis.Dockerfile
     restart: unless-stopped
+    mem_limit: 384m
     command: redis-server --requirepass "${REDIS_PASSWORD:-local_redis_password}" --appendonly yes
     volumes:
       - redis_data:/data

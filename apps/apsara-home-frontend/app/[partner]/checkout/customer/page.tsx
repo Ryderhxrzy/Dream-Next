@@ -4,7 +4,6 @@ import CustomerCheckoutMain from '@/components/checkout/customer/CustomerCheckou
 import { getNavbarCategories } from '@/libs/serverStorefront';
 import { getPartnerStorefrontConfig } from '@/libs/partnerStorefront';
 import { getPartnerStorefrontBySlug } from '@/libs/partnerStorefrontServer';
-import { normalizeReferralCode } from '@/libs/referral';
 import type { WebPageItem } from '@/store/api/webPagesApi';
 
 export const dynamic = 'force-dynamic';
@@ -36,7 +35,7 @@ async function getStorefrontReferralCode(partnerSlug: string): Promise<string> {
       return config?.slug === partnerSlug;
     });
     const config = getPartnerStorefrontConfig(storefront);
-    return normalizeReferralCode(config?.domainLink ?? config?.referralLink ?? '');
+    return config?.publicShopUrl || config?.shopUrl || config?.referralLink || '';
   } catch {
     return '';
   }

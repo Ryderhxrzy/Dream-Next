@@ -7,6 +7,8 @@ import { communityCommentRoutes } from "./features/community-comments/community-
 import { communityPostRoutes } from "./features/community-posts/community-post.routes.js";
 import { notificationRoutes } from "./features/notifications/notification.routes.js";
 import { messageRoutes } from "./features/messages/message.routes.js";
+import { profileRoutes } from "./features/profile/profile.routes.js";
+import { connectionRoutes } from "./features/connections/connection.routes.js";
 
 export function createApp() {
   const app = new Hono();
@@ -37,4 +39,6 @@ function registerCommunityRoutes(app: Hono, prefix: string) {
   app.route(`${prefix}/posts`, communityCommentRoutes);
   app.route(`${prefix}/notifications`, notificationRoutes);
   app.route(`${prefix}/messages`, messageRoutes);
+  app.route(`${prefix}/profile`, profileRoutes);
+  app.route(`${prefix}/connections`, connectionRoutes);
 }

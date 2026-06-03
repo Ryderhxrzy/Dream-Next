@@ -33,14 +33,22 @@ async function getInitialProfile(): Promise<MeResponse | null> {
   if (!apiUrl) return null;
 
   try {
-    const res = await fetch(`${apiUrl}/api/auth/me`, {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-      },
-      cache: 'no-store',
-    });
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10_000)
+    let res: Response
+    try {
+      res = await fetch(`${apiUrl}/api/auth/me`, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        cache: 'no-store',
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId)
+    }
 
     if (!res.ok) return null;
 
