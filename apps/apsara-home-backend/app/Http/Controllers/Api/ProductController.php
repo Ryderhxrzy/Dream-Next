@@ -172,6 +172,60 @@ class ProductController extends Controller
         ]);
     }
 
+    public function shopByRooms(): JsonResponse
+    {
+        $roomLabels = [
+            1 => 'Bedroom',
+            2 => 'Kitchen',
+            3 => 'Living Room',
+            4 => 'Outdoor',
+            5 => 'Study & Office Room',
+            6 => 'Dining Room',
+            7 => 'Laundry Room',
+            8 => 'Bath Room',
+        ];
+
+        $roomImages = [];
+        foreach ($roomLabels as $roomId => $roomName) {
+            $image = DB::table('tbl_product')
+                ->select('pd_image')
+                ->where('pd_room_type', $roomId)
+                ->whereIn('pd_status', [1, 2])
+                ->whereNotNull('pd_image')
+                ->orderByDesc('pd_id')
+                ->first();
+
+            $roomImages[$roomId] = [
+                'id' => $roomId,
+                'name' => $roomName,
+                'image' => $image?->pd_image ? $this->normalizeProductImage($image->pd_image) : null,
+            ];
+        }
+
+        return response()->json([
+            'rooms' => array_values($roomImages),
+        ]);
+    }
+
+    private function normalizeProductImage(?string $image): ?string
+    {
+        if (!is_string($image)) {
+            return null;
+        }
+
+        $image = trim($image);
+        if ($image === '' || $image === '0') {
+            return null;
+        }
+
+        if (Str::startsWith($image, ['http://', 'https://', '//', 'data:'])) {
+            return $image;
+        }
+
+        $base = rtrim((string) config('app.url'), '/');
+        return $base !== '' ? $base . '/' . ltrim($image, '/') : $image;
+    }
+
     /**
      * Invalidate search history cache for a customer
      */
