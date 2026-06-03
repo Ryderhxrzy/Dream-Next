@@ -457,25 +457,17 @@ export async function proxy(req: NextRequest) {
     const role = String((partnerToken as { role?: string } | null)?.role ?? "").toLowerCase();
     const userLevelId = Number((partnerToken as { userLevelId?: number } | null)?.userLevelId ?? 0);
     const isWebContent = role === "web_content" || userLevelId === 4;
-    const tokenStorefrontIds = Array.isArray((partnerToken as { storefrontIds?: number[] } | null)?.storefrontIds)
-      ? ((partnerToken as { storefrontIds?: number[] } | null)?.storefrontIds ?? [])
+    const disabledStorefrontIds = Array.isArray((partnerToken as { disabledStorefrontIds?: number[] } | null)?.disabledStorefrontIds)
+      ? ((partnerToken as { disabledStorefrontIds?: number[] } | null)?.disabledStorefrontIds ?? [])
       : [];
-    const partnerAccessToken = String((partnerToken as { accessToken?: string } | null)?.accessToken ?? '');
-    const liveStorefrontIds = partnerAccessToken ? await fetchLivePartnerStorefrontIds(partnerAccessToken) : null;
-    const storefrontIds = liveStorefrontIds ?? (partnerAccessToken ? [] : tokenStorefrontIds);
-    const hasStorefrontAccess = storefrontIds.length > 0;
 
-    if (isWebContent && !hasStorefrontAccess) {
-      return redirectUnauthorized();
-    }
-
-    if (isWebContent && hasStorefrontAccess) {
+    if (isWebContent) {
       const segments = pathname.split('/').filter(Boolean);
       const partnerSlug = String(segments[1] ?? '').trim().toLowerCase();
       if (partnerSlug) {
         const slugToId = await resolveStorefrontSlugToIdMap();
         const targetStorefrontId = Number(slugToId.get(partnerSlug) ?? 0);
-        if (targetStorefrontId > 0 && !storefrontIds.includes(targetStorefrontId)) {
+        if (targetStorefrontId > 0 && disabledStorefrontIds.includes(targetStorefrontId)) {
           const partnerStoreName = partnerSlug
             .split('-')
             .filter(Boolean)
