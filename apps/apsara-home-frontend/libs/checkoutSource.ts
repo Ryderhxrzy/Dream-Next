@@ -43,13 +43,16 @@ export function resolveCheckoutSource(pathname?: string | null): CheckoutSourceM
     currentPath.match(/^\/([^/?#]+)\/(product|category)(?=\/|$)/i)
   const storefrontSlug = storefrontMatch?.[1]?.trim().toLowerCase() || null
   const currentUrl = window.location.href || null
+  const canonicalShopUrl = storefrontSlug
+    ? `${window.location.origin}/shop/${storefrontSlug}`
+    : currentUrl
 
   if (storefrontSlug) {
     return {
       sourceLabel: toDisplayLabel(storefrontSlug),
       sourceSlug: storefrontSlug,
       sourceHost: host,
-      sourceUrl: currentUrl,
+      sourceUrl: canonicalShopUrl,
     }
   }
 

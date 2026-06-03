@@ -359,7 +359,7 @@ const CustomerCheckoutMain = ({
         if (draftUrl) return draftUrl;
         if (typeof window === 'undefined') return null;
         if (!effectiveSourceSlug) return window.location.href;
-        return `${window.location.origin}/shop/${effectiveSourceSlug}/product`;
+        return `${window.location.origin}/shop/${effectiveSourceSlug}`;
     }, [checkoutData?.sourceUrl, effectiveSourceSlug]);
 
     useEffect(() => {
