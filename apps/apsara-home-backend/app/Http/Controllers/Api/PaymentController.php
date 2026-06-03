@@ -872,6 +872,27 @@ class PaymentController extends Controller
                     'checkout_id' => $checkoutId,
                 ]);
 
+                // Get the order to send FCM push notification with customized message from OrderNotification
+                $order = CheckoutHistory::query()
+                    ->where('ch_checkout_id', $checkoutId)
+                    ->first();
+
+                if ($order && $order->ch_customer_id) {
+                    $orderNotification = OrderNotification::query()
+                        ->where('on_checkout_id', $checkoutId)
+                        ->where('on_customer_id', $order->ch_customer_id)
+                        ->first();
+
+                    if ($orderNotification) {
+                        $this->notifyCustomerOrderStatusUpdate(
+                            $order,
+                            'payment_confirmed',
+                            $orderNotification->on_title ?? 'Payment Confirmed',
+                            $orderNotification->on_message ?? 'Your payment has been confirmed.'
+                        );
+                    }
+                }
+
                 // Remove cart items after successful payment
                 $this->removeOrderItemsFromCart($checkoutId);
 
@@ -946,7 +967,35 @@ class PaymentController extends Controller
                 'status' => 'paid',
             ]);
 
-            OrderNotification::updateStatusForCheckout($checkoutId, 'paid');
+            try {
+                OrderNotification::updateStatusForCheckout($checkoutId, 'paid');
+
+                // Get the order to send FCM push notification with customized message from OrderNotification
+                $order = CheckoutHistory::query()
+                    ->where('ch_checkout_id', $checkoutId)
+                    ->first();
+
+                if ($order && $order->ch_customer_id) {
+                    $orderNotification = OrderNotification::query()
+                        ->where('on_checkout_id', $checkoutId)
+                        ->where('on_customer_id', $order->ch_customer_id)
+                        ->first();
+
+                    if ($orderNotification) {
+                        $this->notifyCustomerOrderStatusUpdate(
+                            $order,
+                            'payment_confirmed',
+                            $orderNotification->on_title ?? 'Payment Confirmed',
+                            $orderNotification->on_message ?? 'Your payment has been confirmed.'
+                        );
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::error('Test webhook order notification update FAILED', [
+                    'checkout_id' => $checkoutId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
 
             Log::info('Order notification update completed from test webhook', [
                 'checkout_id' => $checkoutId,
