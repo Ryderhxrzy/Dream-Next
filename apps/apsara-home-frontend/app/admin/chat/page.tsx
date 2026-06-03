@@ -195,6 +195,8 @@ export default function AdminChatPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false)
+  const conversationCacheRef = useRef<Map<number, SupplierChatConversation>>(new Map())
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const attachmentInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -276,17 +278,34 @@ export default function AdminChatPage() {
     setActiveId(conversationId)
     setIsMobileOpen(true)
     setError(null)
-    const summary = sourceConversations.find((c) => c.id === conversationId) ?? null
-    setActiveConversation(summary ? { ...summary, messages: summary.messages ?? [] } : null)
+
     setConversations((prev) =>
       prev.map((c) => (c.id === conversationId ? { ...c, unread_count: 0 } : c)),
     )
+
+    // Serve from cache instantly, then refresh in the background
+    const cached = conversationCacheRef.current.get(conversationId)
+    if (cached) {
+      setActiveConversation(cached)
+    } else {
+      const summary = sourceConversations.find((c) => c.id === conversationId) ?? null
+      setActiveConversation(summary ? { ...summary, messages: summary.messages ?? [] } : null)
+      setIsLoadingMessages(true)
+    }
+
     try {
       const detailed = await fetchAdminSupplierChatConversation(conversationId)
-      setActiveConversation({ ...detailed, messages: detailed.messages ?? [] })
+      const full = { ...detailed, messages: detailed.messages ?? [] }
+      conversationCacheRef.current.set(conversationId, full)
+      setActiveConversation(full)
     } catch (fetchError) {
-      setActiveConversation(summary ? { ...summary, messages: summary.messages ?? [] } : null)
+      if (!cached) {
+        const summary = sourceConversations.find((c) => c.id === conversationId) ?? null
+        setActiveConversation(summary ? { ...summary, messages: summary.messages ?? [] } : null)
+      }
       setError(fetchError instanceof Error ? fetchError.message : 'Failed to load conversation.')
+    } finally {
+      setIsLoadingMessages(false)
     }
   }
 
@@ -301,10 +320,12 @@ export default function AdminChatPage() {
       if (typeof document !== 'undefined' && document.hidden) return
       try {
         const detailed = await fetchAdminSupplierChatConversation(activeId)
+        const full = { ...detailed, messages: detailed.messages ?? [] }
+        conversationCacheRef.current.set(activeId, full)
         setActiveConversation((prev) => {
           const prevLen = prev?.messages?.length ?? 0
-          const newLen = detailed.messages?.length ?? 0
-          if (newLen !== prevLen) return { ...detailed, messages: detailed.messages ?? [] }
+          const newLen = full.messages.length
+          if (newLen !== prevLen) return full
           return prev
         })
       } catch { /* silent */ }
@@ -705,7 +726,18 @@ export default function AdminChatPage() {
                 ref={messagesContainerRef}
                 className="flex-1 overflow-y-auto px-5 py-5"
               >
-                {messageGroups.length === 0 ? (
+                {isLoadingMessages ? (
+                  <div className="flex flex-col gap-4">
+                    {[72, 48, 64, 40, 56].map((w, i) => (
+                      <div key={i} className={`flex ${i % 2 === 0 ? 'justify-start' : 'justify-end'}`}>
+                        <div
+                          className="h-9 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800"
+                          style={{ width: `${w}%`, maxWidth: '72%' }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : messageGroups.length === 0 ? (
                   <div className="flex h-full items-center justify-center">
                     <div className="text-center">
                       <p className="mb-1 text-lg font-semibold text-slate-900 dark:text-slate-100">

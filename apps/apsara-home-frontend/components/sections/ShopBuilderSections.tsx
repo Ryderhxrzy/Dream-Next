@@ -270,7 +270,7 @@ export default function ShopBuilderSections({
   return (
     <>
       {announcements ? <AnnouncementsSection section={announcements} /> : null}
-      {campaignBanners ? (
+      {campaignBanners || partnerHeroVideoUrl ? (
         <CampaignBannersSection
           section={campaignBanners}
           categories={categories}
@@ -366,7 +366,7 @@ function CampaignBannersSection({
   partnerPublicShopUrl,
   partnerHeroVideoUrl,
 }: {
-  section: WebPageItem
+  section: WebPageItem | undefined
   categories: Category[]
   products: Product[]
   partnerSlug?: string
