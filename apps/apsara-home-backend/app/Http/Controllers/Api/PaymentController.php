@@ -3306,20 +3306,43 @@ class PaymentController extends Controller
                 ];
             })->toArray();
 
-            // Remove matching cart items
+            // Remove matching cart items - only exact matches
             foreach ($productVariantPairs as $pair) {
-                DB::table('tbl_add_to_cart')
+                $query = DB::table('tbl_add_to_cart')
                     ->where('crt_customer_id', $customerId)
                     ->where('crt_product_id', $pair['product_id'])
-                    ->where('crt_variant_id', $pair['variant_id'])
-                    ->where('crt_selected_color', $pair['selected_color'])
-                    ->where('crt_selected_size', $pair['selected_size'])
-                    ->where('crt_selected_type', $pair['selected_type'])
-                    ->where('crt_status', 'active')
-                    ->update([
-                        'crt_status' => 'completed',
-                        'crt_updated_at' => now(),
-                    ]);
+                    ->where('crt_status', 'active');
+
+                // Match variant only if it exists in the order
+                if (!is_null($pair['variant_id'])) {
+                    $query->where('crt_variant_id', $pair['variant_id']);
+                } else {
+                    $query->whereNull('crt_variant_id');
+                }
+
+                // Match selected options exactly (including NULL values)
+                if (!is_null($pair['selected_color'])) {
+                    $query->where('crt_selected_color', $pair['selected_color']);
+                } else {
+                    $query->whereNull('crt_selected_color');
+                }
+
+                if (!is_null($pair['selected_size'])) {
+                    $query->where('crt_selected_size', $pair['selected_size']);
+                } else {
+                    $query->whereNull('crt_selected_size');
+                }
+
+                if (!is_null($pair['selected_type'])) {
+                    $query->where('crt_selected_type', $pair['selected_type']);
+                } else {
+                    $query->whereNull('crt_selected_type');
+                }
+
+                $query->update([
+                    'crt_status' => 'completed',
+                    'crt_updated_at' => now(),
+                ]);
             }
 
             Log::info('Cart items removed after successful payment', [
