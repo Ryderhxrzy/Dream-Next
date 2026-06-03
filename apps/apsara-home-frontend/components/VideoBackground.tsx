@@ -20,12 +20,13 @@ const VideoBackground = ({ videoSrc = '/loginpageVideo/home-login.mp4' }: VideoB
         loop
         playsInline
         preload="auto"
+        aria-label="Partner storefront hero video"
         onCanPlay={() => setIsReady(true)}
         className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${
           isReady ? 'opacity-100' : 'opacity-0'
         }`}
       >
-        <source src={videoSrc} type="video/mp4" />
+        <source src={videoSrc} />
       </video>
     </div>
   )

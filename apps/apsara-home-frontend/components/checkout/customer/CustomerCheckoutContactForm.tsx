@@ -106,7 +106,8 @@ const CustomerCheckoutContactForm = ({
                         ) : lockReferralField && referralSourceCode ? (
                             <p className="text-[11px] text-emerald-700 dark:text-emerald-300 mt-1.5 flex items-center gap-1">
                                 <Check className="w-3 h-3 shrink-0" />
-                                Shared shopping link detected. Referral <span className="font-semibold">@{referralSourceCode}</span> is locked for this checkout.
+                                Shared shopping link detected. This checkout is locked to
+                                <span className="font-semibold break-all"> {referralSourceCode}</span>.
                             </p>
                         ) : (
                         <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5 flex items-center gap-1">

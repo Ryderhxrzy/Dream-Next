@@ -17,7 +17,6 @@ import { useGetWalletOverviewQuery } from "@/store/api/encashmentApi";
 import { useGetPublicGeneralSettingsQuery } from "@/store/api/adminSettingsApi";
 import { useGetPublicShippingRatesQuery } from "@/store/api/shippingRatesApi";
 import { getStoredReferralCode } from "@/libs/referral";
-import { normalizeReferralCode } from "@/libs/referral";
 import { useMeQuery } from "@/store/api/userApi";
 import { useLazyGetPublicProductQuery } from "@/store/api/productsApi";
 import type { Category } from '@/store/api/categoriesApi';
@@ -133,6 +132,25 @@ function readStoredReferral(): string {
     return getStoredReferralCode() || '';
 }
 
+const extractReferralUsername = (value: string): string => {
+    const trimmed = value.trim();
+    if (!trimmed) return '';
+    // Already a plain code/username — no URL
+    if (!trimmed.includes('://') && !trimmed.startsWith('www.')) return trimmed;
+    try {
+        const url = new URL(/^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`);
+        const refParam = url.searchParams.get('ref');
+        if (refParam?.trim()) return refParam.trim();
+        // /ref/username path pattern
+        const parts = url.pathname.split('/').filter(Boolean);
+        const idx = parts.findIndex((p) => p.toLowerCase() === 'ref');
+        if (idx !== -1 && parts[idx + 1]) return parts[idx + 1].trim();
+    } catch {
+        // ignore malformed URLs
+    }
+    return trimmed;
+};
+
 const toPositiveNumber = (value: unknown): number => {
     const parsed = Number(value);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
@@ -160,7 +178,7 @@ const CustomerCheckoutMain = ({
     const normalizedPartner = (storefrontPartner ?? '').trim().toLowerCase();
     const isPartnerStorefront = normalizedPartner.length > 0;
     const hasPartnerContext = isPartnerStorefront || Boolean(storefrontDisplayName?.trim());
-    const isLoggedIn = isPartnerStorefront ? false : isCustomerSession;
+    const isLoggedIn = isCustomerSession;
     const { data: meData } = useMeQuery(undefined, { skip: !isCustomerSession });
     const { data: publicSettingsData } = useGetPublicGeneralSettingsQuery();
     const { data: shippingRatesData, isLoading: shippingRatesLoading, isFetching: shippingRatesFetching } = useGetPublicShippingRatesQuery();
@@ -176,9 +194,9 @@ const CustomerCheckoutMain = ({
     const checkoutData = useMemo(() => readCheckoutDraft(), [checkoutRefreshTrigger]);
     const isZqCheckout = checkoutData?.sourceType === 'zq' || checkoutData?.product?.sourceType === 'zq';
     const storedReferral = useMemo(() => readStoredReferral(), []);
-    const storefrontReferral = useMemo(() => normalizeReferralCode(storefrontReferralCode ?? ''), [storefrontReferralCode]);
+    const storefrontReferral = useMemo(() => extractReferralUsername(String(storefrontReferralCode ?? '')), [storefrontReferralCode]);
     const memberReferral = (meData?.referrer_username ?? '').trim();
-    const effectiveReferral = memberReferral || storedReferral || storefrontReferral;
+    const effectiveReferral = storefrontReferral || memberReferral || storedReferral;
     const hasLockedReferral = effectiveReferral.trim() !== '';
     const shouldRequireReferral = !isLoggedIn && !hasLockedReferral;
 
