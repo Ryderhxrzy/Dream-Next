@@ -202,14 +202,27 @@ class SupplierChatController extends Controller
         }
 
         $validated = $request->validate([
-            'message' => 'required|string|min:1|max:5000',
+            'message'         => 'nullable|string|max:5000',
+            'attachment_url'  => 'nullable|url|max:2048',
+            'attachment_type' => 'nullable|in:image,video,file',
+            'attachment_name' => 'nullable|string|max:255',
         ]);
+
+        $messageText    = trim((string) ($validated['message'] ?? ''));
+        $attachmentUrl  = trim((string) ($validated['attachment_url'] ?? ''));
+
+        if ($messageText === '' && $attachmentUrl === '') {
+            return response()->json(['message' => 'A message or attachment is required.'], 422);
+        }
 
         $message = $this->sendMessageToConversation(
             conversation: $conversation,
             actorType: $actorInfo['actor_type'],
             actorId: $actorInfo['actor_id'],
-            message: (string) $validated['message'],
+            message: $messageText,
+            attachmentUrl: $attachmentUrl ?: null,
+            attachmentType: $attachmentUrl ? (trim((string) ($validated['attachment_type'] ?? '')) ?: null) : null,
+            attachmentName: $attachmentUrl ? (trim((string) ($validated['attachment_name'] ?? '')) ?: null) : null,
         );
 
         return response()->json([
@@ -328,12 +341,18 @@ class SupplierChatController extends Controller
         string $actorType,
         int $actorId,
         string $message,
+        ?string $attachmentUrl = null,
+        ?string $attachmentType = null,
+        ?string $attachmentName = null,
     ): SupplierChatMessage {
         $payload = [
             'conversation_id' => (int) $conversation->id,
-            'sender_type' => $actorType,
-            'message' => trim($message),
-            'read_at' => null,
+            'sender_type'     => $actorType,
+            'message'         => trim($message),
+            'attachment_url'  => $attachmentUrl,
+            'attachment_type' => $attachmentType,
+            'attachment_name' => $attachmentName,
+            'read_at'         => null,
         ];
 
         if ($actorType === 'supplier') {
@@ -444,16 +463,19 @@ class SupplierChatController extends Controller
     private function formatMessage(SupplierChatMessage $message): array
     {
         return [
-            'id' => (int) $message->id,
-            'conversation_id' => (int) $message->conversation_id,
-            'sender_type' => (string) $message->sender_type,
-            'sender_admin_id' => $message->sender_admin_id ? (int) $message->sender_admin_id : null,
+            'id'                      => (int) $message->id,
+            'conversation_id'         => (int) $message->conversation_id,
+            'sender_type'             => (string) $message->sender_type,
+            'sender_admin_id'         => $message->sender_admin_id ? (int) $message->sender_admin_id : null,
             'sender_supplier_user_id' => $message->sender_supplier_user_id ? (int) $message->sender_supplier_user_id : null,
-            'message' => (string) $message->message,
-            'is_read' => (bool) $message->read_at,
-            'read_at' => $message->read_at?->toDateTimeString(),
-            'created_at' => $message->created_at->toDateTimeString(),
-            'updated_at' => $message->updated_at->toDateTimeString(),
+            'message'                 => (string) $message->message,
+            'attachment_url'          => $message->attachment_url ? (string) $message->attachment_url : null,
+            'attachment_type'         => $message->attachment_type ? (string) $message->attachment_type : null,
+            'attachment_name'         => $message->attachment_name ? (string) $message->attachment_name : null,
+            'is_read'                 => (bool) $message->read_at,
+            'read_at'                 => $message->read_at?->toDateTimeString(),
+            'created_at'              => $message->created_at->toDateTimeString(),
+            'updated_at'              => $message->updated_at->toDateTimeString(),
         ];
     }
 

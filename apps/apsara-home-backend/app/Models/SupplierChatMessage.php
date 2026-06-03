@@ -18,6 +18,9 @@ class SupplierChatMessage extends Model
         'sender_admin_id',
         'sender_supplier_user_id',
         'message',
+        'attachment_url',
+        'attachment_type',
+        'attachment_name',
         'read_at',
     ];
 

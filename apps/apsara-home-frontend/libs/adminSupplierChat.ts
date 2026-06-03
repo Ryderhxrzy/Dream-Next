@@ -16,6 +16,9 @@ export type SupplierChatMessage = {
   sender_admin_id: number | null
   sender_supplier_user_id: number | null
   message: string
+  attachment_url: string | null
+  attachment_type: 'image' | 'video' | 'file' | null
+  attachment_name: string | null
   is_read: boolean
   read_at: string | null
   created_at: string
@@ -173,16 +176,39 @@ export async function fetchAdminSupplierChatConversation(conversationId: number)
   return response.data
 }
 
-export async function sendAdminSupplierChatMessage(conversationId: number, message: string) {
+type AttachmentPayload = {
+  attachment_url: string
+  attachment_type: 'image' | 'video' | 'file'
+  attachment_name: string
+}
+
+export async function sendAdminSupplierChatMessage(
+  conversationId: number,
+  message: string,
+  attachment?: AttachmentPayload,
+) {
   const response = await adminSupplierChatRequest<{ data: SupplierChatMessage }>(
     `/api/admin/supplier-chat/conversations/${conversationId}/messages`,
     {
       method: 'POST',
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ message: message || undefined, ...attachment }),
     },
   )
-
   return response.data
+}
+
+export async function uploadAdminChatAttachment(file: File): Promise<AttachmentPayload> {
+  const form = new FormData()
+  form.append('file', file)
+  form.append('folder', 'supplier-chat')
+  const assetType = file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : 'pdf'
+  form.append('asset_type', assetType)
+  const res = await fetch('/api/admin/upload', { method: 'POST', body: form })
+  const json = (await res.json()) as { url?: string; error?: string }
+  if (!res.ok || !json.url) throw new Error(json.error ?? 'Upload failed.')
+  const attachmentType: 'image' | 'video' | 'file' =
+    file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : 'file'
+  return { attachment_url: json.url, attachment_type: attachmentType, attachment_name: file.name }
 }
 
 export async function createAdminSupplierChatConversation(
