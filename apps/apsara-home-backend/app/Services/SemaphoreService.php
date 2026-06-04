@@ -58,6 +58,13 @@ class SemaphoreService
         }
     }
 
+    public function sendPasswordResetOtp(string $phoneNumber, string $otp, ?string $senderName = 'AFHome'): bool
+    {
+        $message = "AF Home Password Reset Code: {$otp}\nUse this code to reset your password. Do not share it with anyone.";
+
+        return $this->sendMessage($phoneNumber, $message, $senderName);
+    }
+
     public function sendMessage(string $phoneNumber, string $message, ?string $senderName = 'AFHome'): bool
     {
         try {
