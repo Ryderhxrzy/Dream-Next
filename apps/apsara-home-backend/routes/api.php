@@ -85,6 +85,7 @@ Route::prefix('auth')->group(function () {
         Route::post('/passkeys/login/options', [PasskeyAuthController::class, 'loginOptions']);
         Route::post('/passkeys/login/verify', [PasskeyAuthController::class, 'loginVerify']);
         Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+        Route::post('/verify-reset-otp', [AuthController::class, 'verifyResetOtp']);
         Route::post('/reset-password', [AuthController::class, 'resetPassword']);
         Route::post('/login/mfa/respond', [AuthController::class, 'respondLoginMfa']);
     });
