@@ -138,16 +138,25 @@ export default function AnnouncementsClient() {
     const q = recipientSearch.trim().toLowerCase()
     if (!q) return memberEmails
     const terms = q.split(/\s+/).filter(Boolean)
-    return memberEmails
+    const scoredMatches = memberEmails
       .map((item) => {
         const searchable = `${item.label} ${item.value} ${item.searchText ?? ''}`.toLowerCase()
         const matchedTerms = terms.filter((term) => searchable.includes(term)).length
+        const firstTermMatches = terms[0] ? searchable.includes(terms[0]) : false
         const score = searchable.includes(q) ? matchedTerms + terms.length + 1 : matchedTerms
 
-        return { item, score }
+        return { item, score, matchedTerms, firstTermMatches }
       })
       .filter(({ score }) => score > 0)
-      .sort((a, b) => b.score - a.score || a.item.label.localeCompare(b.item.label))
+
+    const strongMatches = scoredMatches.filter(({ firstTermMatches, matchedTerms }) => {
+      if (terms.length <= 1) return true
+      return firstTermMatches || matchedTerms >= 2
+    })
+    const matchesToShow = strongMatches.length > 0 ? strongMatches : scoredMatches
+
+    return matchesToShow
+      .sort((a, b) => b.score - a.score || b.matchedTerms - a.matchedTerms || a.item.label.localeCompare(b.item.label))
       .map(({ item }) => item)
   }, [memberEmails, recipientSearch])
 
