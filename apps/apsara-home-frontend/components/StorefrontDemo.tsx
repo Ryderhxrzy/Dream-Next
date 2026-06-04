@@ -6,7 +6,7 @@ import {
   Store, Palette, Package, Bell,
   BadgeDollarSign, ArrowRight, Sparkles, ShoppingBag,
   CheckCircle2, Zap, Users, TrendingUp, ChevronRight,
-  ArrowRightLeft, Tag, Layers,
+  ArrowRightLeft, Tag, Layers, User, Moon,
 } from 'lucide-react';
 
 /* ─── Data ──────────────────────────────────────────────────── */
@@ -290,6 +290,9 @@ function ProductCard({
 /* ─── Browser Mockup ────────────────────────────────────────── */
 function BrowserMockup({ sf }: { sf: typeof STOREFRONTS[0] }) {
   const products = sf.pickedProducts.map(i => AF_PRODUCTS[i]);
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+  const shopHref = `${origin}/shop/${sf.slug}`;
+  const loginHref = `${origin}/${sf.slug}/login`;
   return (
     <motion.div
       key={sf.name}
@@ -309,7 +312,7 @@ function BrowserMockup({ sf }: { sf: typeof STOREFRONTS[0] }) {
         </div>
         <div className="flex-1 bg-white/5 rounded-md px-3 py-1.5 text-xs text-white/30 font-mono flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-green-400/60" />
-          apsarahome.com/shop/{sf.slug}
+          http://localhost:3000/{sf.slug}
         </div>
       </div>
 
@@ -331,13 +334,33 @@ function BrowserMockup({ sf }: { sf: typeof STOREFRONTS[0] }) {
               {sf.badge}
             </span>
           </div>
-          <div className="flex items-center gap-4 text-white/30 text-xs">
-            <span>Shop</span><span>About</span>
-            <div className="relative">
-              <ShoppingBag size={15} className="text-white/50" />
-              <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full text-[8px] flex items-center justify-center font-bold text-white"
-                style={{ backgroundColor: sf.accent }}>2</div>
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex items-center gap-4 text-white/30 text-xs">
+              <a
+                href={loginHref}
+                target="_blank"
+                rel="noreferrer"
+                className="transition hover:text-white"
+                aria-label="Partner login"
+              >
+                <User size={15} className="text-white/60" />
+              </a>
+              <div className="relative">
+                <ShoppingBag size={15} className="text-white/50" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full text-[8px] flex items-center justify-center font-bold text-white"
+                  style={{ backgroundColor: sf.accent }}>2</div>
+              </div>
+              <div className="h-5 w-px bg-white/20" />
+              <Moon size={15} className="text-white/50" />
             </div>
+            <a
+              href={shopHref}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full bg-slate-800 px-3.5 py-1.5 text-[10px] font-semibold text-white shadow-sm transition hover:bg-slate-700"
+            >
+              Browse Shop
+            </a>
           </div>
         </div>
 
@@ -485,7 +508,7 @@ function ConceptScene() {
                 </div>
                 <div>
                   <p className="text-white text-xs font-bold">{sf.name}</p>
-                  <p className="text-white/30 text-[9px]">apsarahome.com/shop/{sf.slug}</p>
+                  <p className="text-white/30 text-[9px]">http://localhost:3000/{sf.slug}</p>
                 </div>
               </div>
               <div className="relative flex gap-1.5">

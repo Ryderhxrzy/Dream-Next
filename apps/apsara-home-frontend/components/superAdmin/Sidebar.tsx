@@ -13,6 +13,7 @@ import { baseApi, clearAccessTokenCache } from '@/store/api/baseApi'
 import { useAppDispatch } from '@/store/hooks'
 import { canAccessWebContentSection, normalizeAdminPermissions } from '@/libs/adminPermissions'
 import { clearAdminSession } from '@/libs/adminSession'
+import { fetchAdminSupplierChatConversations } from '@/libs/adminSupplierChat'
 
 interface SubItem { label: string; path: string; badge?: number }
 interface NavItem {
@@ -252,6 +253,7 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
   const { data: session, update } = useSession()
   const [openMenus, setOpenMenus] = useState<string[]>([])
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [unreadChatCount, setUnreadChatCount] = useState(0)
   const [logoutApi] = useLogoutMutation()
   const sessionRole = String(session?.user?.role ?? '').toLowerCase()
   const sessionUserLevelId = Number((session?.user as { userLevelId?: number } | undefined)?.userLevelId ?? 0)
@@ -345,6 +347,27 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
     })
   }, [adminMe, isAdminPortalRole, rawSessionPermissions, session?.user, sessionPermissions, sessionRole, update])
 
+  useEffect(() => {
+    if (!sessionAccessToken) return
+    const poll = async () => {
+      try {
+        const conversations = await fetchAdminSupplierChatConversations()
+        const total = conversations.reduce((sum, c) => sum + (c.unread_count ?? 0), 0)
+        setUnreadChatCount(total)
+      } catch {
+        // silently ignore — badge just won't update
+      }
+    }
+    void poll()
+    const id = window.setInterval(() => void poll(), 30_000)
+    return () => window.clearInterval(id)
+  }, [sessionAccessToken])
+
+  // Clear badge when already on the chat page
+  useEffect(() => {
+    if (pathname === '/admin/chat') setUnreadChatCount(0)
+  }, [pathname])
+
   const toggleMenu = (id: string) =>
     setOpenMenus(prev => prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id])
 
@@ -367,6 +390,10 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
 
   const visibleNavItems = navItems
     .map((item) => {
+      if (item.id === 'chat') {
+        return { ...item, badge: unreadChatCount }
+      }
+
       if (item.id === 'members') {
         return {
           ...item,
@@ -602,9 +629,25 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
                     `}
                   >
                     <span className={`shrink-0 flex items-center justify-center h-7 w-7 rounded-lg transition-colors ${active ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800 group-hover:bg-slate-200 dark:group-hover:bg-slate-700'}`}>{item.icon}</span>
-                    {!isCollapsed && <span className="font-medium">{item.label}</span>}
+                    {!isCollapsed && (
+                      <>
+                        <span className="flex-1 font-medium">{item.label}</span>
+                        {typeof item.badge === 'number' && item.badge > 0 && (
+                          <span className={`text-white text-xs px-1.5 py-0.5 rounded-full font-bold min-w-5 text-center ${item.id === 'chat' ? 'bg-red-500 animate-pulse' : 'bg-sky-500'}`}>
+                            {item.badge > 99 ? '99+' : item.badge}
+                          </span>
+                        )}
+                      </>
+                    )}
                     {isCollapsed && (
-                      <span className="absolute left-full ml-3 px-2.5 py-1.5 bg-slate-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">{item.label}</span>
+                      <>
+                        <span className="absolute left-full ml-3 px-2.5 py-1.5 bg-slate-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">{item.label}</span>
+                        {typeof item.badge === 'number' && item.badge > 0 && (
+                          <span className={`absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold text-white ${item.id === 'chat' ? 'bg-red-500' : 'bg-sky-500'}`}>
+                            {item.badge > 9 ? '9+' : item.badge}
+                          </span>
+                        )}
+                      </>
                     )}
                   </Link>
                 )}

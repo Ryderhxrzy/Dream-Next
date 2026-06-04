@@ -631,6 +631,7 @@ Route::middleware(['auth:sanctum', 'supplier.actor'])->group(function () {
     Route::get('/supplier/chat/conversations/{id}', [SupplierChatController::class, 'show']);
     Route::post('/supplier/chat/conversations/{id}/messages', [SupplierChatController::class, 'sendMessage']);
     Route::patch('/supplier/chat/conversations/{id}/status', [SupplierChatController::class, 'updateStatus']);
+    Route::post('/supplier/presence/heartbeat', [SupplierChatController::class, 'updatePresence']);
     Route::post('/supplier/realtime/pusher/auth', [SupplierOrderController::class, 'pusherAuth']);
     Route::get('/supplier/orders/notifications', [SupplierOrderController::class, 'notifications']);
     Route::get('/supplier/orders', [SupplierOrderController::class, 'index']);

@@ -231,6 +231,16 @@ class SupplierChatController extends Controller
         ], 201);
     }
 
+    public function updatePresence(Request $request): JsonResponse
+    {
+        $actor = $request->user();
+        if (! ($actor instanceof SupplierUser)) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        $actor->update(['su_last_logindate' => now()]);
+        return response()->json(['ok' => true]);
+    }
+
     public function updateStatus(Request $request, int $id): JsonResponse
     {
         $actor = $request->user();
@@ -425,6 +435,9 @@ class SupplierChatController extends Controller
                 'name' => (string) ($conversation->supplierUser->su_fullname ?: $conversation->supplierUser->su_username ?: 'Supplier'),
                 'username' => (string) ($conversation->supplierUser->su_username ?? ''),
                 'email' => (string) ($conversation->supplierUser->su_email ?? ''),
+                'last_seen_at' => $conversation->supplierUser->su_last_logindate
+                    ? \Carbon\Carbon::parse($conversation->supplierUser->su_last_logindate)->toIso8601String()
+                    : null,
             ] : null,
             'assigned_admin' => $conversation->assignedAdmin ? [
                 'id' => (int) $conversation->assignedAdmin->id,

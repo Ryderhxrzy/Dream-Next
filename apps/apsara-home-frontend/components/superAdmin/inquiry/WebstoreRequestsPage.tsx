@@ -1,6 +1,7 @@
 ﻿'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import {
   useApproveWebstoreRequestMutation,
   useApproveWebstoreReceiptMutation,
@@ -115,6 +116,7 @@ export default function WebstoreRequestsPage() {
     urls: string[]
     activeIndex: number
   }>({ open: false, label: null, urls: [], activeIndex: 0 })
+  const receiptSlideDir = useRef<1 | -1>(1)
 
   const openReceiptPreview = (urls: string[], label?: string | null, activeIndex?: number) => {
     const normalizedUrls = urls.map((url) => String(url ?? '').trim()).filter(Boolean)
@@ -122,6 +124,7 @@ export default function WebstoreRequestsPage() {
     const nextIndex = typeof activeIndex === 'number'
       ? Math.max(0, Math.min(activeIndex, normalizedUrls.length - 1))
       : normalizedUrls.length - 1
+    receiptSlideDir.current = 1
     setReceiptPreview({
       open: true,
       label: label ?? null,
@@ -138,6 +141,7 @@ export default function WebstoreRequestsPage() {
     setReceiptPreview((prev) => {
       if (!prev.open || prev.urls.length === 0) return prev
       const nextIndex = Math.max(0, Math.min(index, prev.urls.length - 1))
+      receiptSlideDir.current = nextIndex > prev.activeIndex ? 1 : -1
       return { ...prev, activeIndex: nextIndex }
     })
   }
@@ -1333,68 +1337,120 @@ export default function WebstoreRequestsPage() {
         </div>
       ) : null}
 
-      {receiptPreview.open ? (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm"
-          onClick={closeReceiptPreview}
-        >
-          <div
-            className="relative w-full max-w-4xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900"
-            onClick={(event) => event.stopPropagation()}
+      <AnimatePresence>
+        {receiptPreview.open ? (
+          <motion.div
+            key="receipt-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm"
+            onClick={closeReceiptPreview}
           >
-            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">Receipt Preview</p>
-                {receiptPreview.label ? (
-                  <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">{receiptPreview.label}</p>
-                ) : null}
-              </div>
-              <button
-                type="button"
-                onClick={closeReceiptPreview}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
-                aria-label="Close receipt preview"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="max-h-[78vh] overflow-auto bg-slate-50 p-4 dark:bg-slate-950/40">
-              <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
-                <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700">
-                  <img
-                    src={receiptPreview.urls[receiptPreview.activeIndex] ?? receiptPreview.urls[0]}
-                    alt={receiptPreview.label ?? `Receipt ${receiptPreview.activeIndex + 1}`}
-                    className="mx-auto h-auto max-w-full bg-white"
-                  />
+            <motion.div
+              key="receipt-modal"
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
+              transition={{ duration: 0.22, ease: 'easeOut' }}
+              className="relative w-full max-w-4xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900"
+              onClick={(event) => event.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">Receipt Preview</p>
+                  {receiptPreview.urls.length > 1 ? (
+                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                      {receiptPreview.activeIndex + 1} / {receiptPreview.urls.length}
+                    </p>
+                  ) : receiptPreview.label ? (
+                    <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">{receiptPreview.label}</p>
+                  ) : null}
                 </div>
+                <button
+                  type="button"
+                  onClick={closeReceiptPreview}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                  aria-label="Close receipt preview"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Carousel body */}
+              <div className="relative bg-slate-50 dark:bg-slate-950/40">
+                {/* Sliding image */}
+                <div className="flex max-h-[72vh] items-center justify-center overflow-hidden p-4">
+                  <AnimatePresence mode="popLayout" custom={receiptSlideDir.current}>
+                    <motion.img
+                      key={receiptPreview.activeIndex}
+                      custom={receiptSlideDir.current}
+                      variants={{
+                        enter: (dir: number) => ({ x: dir * 80, opacity: 0 }),
+                        center: { x: 0, opacity: 1 },
+                        exit: (dir: number) => ({ x: dir * -80, opacity: 0 }),
+                      }}
+                      initial="enter"
+                      animate="center"
+                      exit="exit"
+                      transition={{ duration: 0.28, ease: 'easeInOut' }}
+                      src={receiptPreview.urls[receiptPreview.activeIndex] ?? receiptPreview.urls[0]}
+                      alt={`Receipt ${receiptPreview.activeIndex + 1}`}
+                      className="mx-auto max-h-[68vh] w-auto max-w-full rounded-xl border border-slate-200 bg-white object-contain shadow-sm dark:border-slate-700"
+                    />
+                  </AnimatePresence>
+                </div>
+
+                {/* Prev / Next buttons */}
                 {receiptPreview.urls.length > 1 ? (
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {receiptPreview.urls.map((url, index) => (
-                      <button
-                        key={`${url}-${index}`}
-                        type="button"
-                        onClick={() => setActiveReceiptPreviewIndex(index)}
-                        className={`overflow-hidden rounded-lg border transition ${
-                          index === receiptPreview.activeIndex
-                            ? 'border-sky-400 ring-2 ring-sky-200'
-                            : 'border-slate-200 hover:border-sky-300'
-                        }`}
-                        aria-label={`Show receipt ${index + 1}`}
-                      >
-                        <img
-                          src={url}
-                          alt={`Receipt ${index + 1}`}
-                          className="h-16 w-16 object-cover"
-                        />
-                      </button>
-                    ))}
-                  </div>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setActiveReceiptPreviewIndex(receiptPreview.activeIndex - 1)}
+                      disabled={receiptPreview.activeIndex === 0}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-xl text-slate-700 shadow-md backdrop-blur-sm transition hover:scale-110 hover:bg-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 dark:border-slate-700 dark:bg-slate-800/90 dark:text-slate-200 dark:hover:bg-slate-800"
+                      aria-label="Previous receipt"
+                    >
+                      ‹
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveReceiptPreviewIndex(receiptPreview.activeIndex + 1)}
+                      disabled={receiptPreview.activeIndex === receiptPreview.urls.length - 1}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-xl text-slate-700 shadow-md backdrop-blur-sm transition hover:scale-110 hover:bg-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 dark:border-slate-700 dark:bg-slate-800/90 dark:text-slate-200 dark:hover:bg-slate-800"
+                      aria-label="Next receipt"
+                    >
+                      ›
+                    </button>
+                  </>
                 ) : null}
               </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
+
+              {/* Dot indicators */}
+              {receiptPreview.urls.length > 1 ? (
+                <div className="flex justify-center gap-2 border-t border-slate-100 py-3 dark:border-slate-800">
+                  {receiptPreview.urls.map((_, index) => (
+                    <motion.button
+                      key={index}
+                      type="button"
+                      onClick={() => setActiveReceiptPreviewIndex(index)}
+                      aria-label={`Go to receipt ${index + 1}`}
+                      animate={{
+                        width: index === receiptPreview.activeIndex ? 24 : 8,
+                        backgroundColor: index === receiptPreview.activeIndex ? '#0ea5e9' : '#cbd5e1',
+                      }}
+                      transition={{ duration: 0.2 }}
+                      className="h-2 rounded-full"
+                    />
+                  ))}
+                </div>
+              ) : null}
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   )
 }
