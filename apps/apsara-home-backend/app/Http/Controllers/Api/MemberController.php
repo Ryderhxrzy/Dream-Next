@@ -1853,4 +1853,130 @@ class MemberController extends Controller
             'total_members' => \App\Models\Customer::count(),
         ]);
     }
+
+    public function publicTopMembers(Request $request): JsonResponse
+    {
+        $perPage = (int) $request->query('per_page', 20);
+        $perPage = max(1, min($perPage, 100));
+        $page = (int) $request->query('page', 1);
+        $page = max(1, $page);
+        $sort = trim((string) $request->query('sort', 'referrals'));
+        $tier = trim((string) $request->query('tier', ''));
+
+        $allowedSorts = ['referrals', 'earnings'];
+        if (!in_array($sort, $allowedSorts, true)) {
+            $sort = 'referrals';
+        }
+
+        $cacheKey = 'public:members:top:v6:' . md5(json_encode([
+            'page' => $page,
+            'per_page' => $perPage,
+            'sort' => $sort,
+            'tier' => $tier,
+        ]));
+
+        $payloadBuilder = function () use ($perPage, $page, $sort, $tier) {
+            $query = Customer::query()
+                ->select([
+                    'tbl_customer.c_userid',
+                    'tbl_customer.c_username',
+                    'tbl_customer.c_fname',
+                    'tbl_customer.c_mname',
+                    'tbl_customer.c_lname',
+                    'tbl_customer.c_avatar_url',
+                    'tbl_customer.c_rank',
+                    'tbl_customer.c_totalincome',
+                    'tbl_customer.c_date_started',
+                    'tbl_customer.c_lockstatus',
+                    'tbl_customer.c_accnt_status',
+                ])
+                ->when($tier !== '', function ($query) use ($tier) {
+                    if ($tier === 'Lifestyle Elite') {
+                        $query->where('tbl_customer.c_rank', '>=', 5);
+                        return;
+                    }
+
+                    if ($tier === 'Lifestyle Consultant') {
+                        $query->where('tbl_customer.c_rank', 4);
+                        return;
+                    }
+
+                    if ($tier === 'Home Stylist') {
+                        $query->where('tbl_customer.c_rank', 3);
+                        return;
+                    }
+
+                    if ($tier === 'Home Builder') {
+                        $query->where('tbl_customer.c_rank', 2);
+                        return;
+                    }
+
+                    if ($tier === 'Home Starter') {
+                        $query->where('tbl_customer.c_rank', '<=', 1);
+                    }
+                });
+
+            if ($sort === 'earnings') {
+                $query->orderByDesc('tbl_customer.c_totalincome')
+                    ->orderByDesc('tbl_customer.c_userid');
+            } else {
+                $query->selectRaw('(
+                        SELECT COUNT(*)
+                        FROM tbl_customer AS referrals
+                        WHERE referrals.c_sponsor = tbl_customer.c_userid
+                    ) AS referral_sort_total')
+                    ->orderByDesc('referral_sort_total')
+                    ->orderByDesc('tbl_customer.c_userid');
+            }
+
+            $paginator = $query->paginate($perPage, ['*'], 'page', $page);
+
+            $pageUserIds = collect($paginator->items())->pluck('c_userid')->map(fn ($id) => (int) $id)->all();
+            $referralCounts = empty($pageUserIds)
+                ? collect()
+                : Customer::query()
+                    ->selectRaw('c_sponsor, COUNT(*) as total')
+                    ->whereIn('c_sponsor', $pageUserIds)
+                    ->groupBy('c_sponsor')
+                    ->pluck('total', 'c_sponsor');
+
+            $rows = collect($paginator->items())
+                ->map(function (Customer $customer) use ($referralCounts): array {
+                    $customerId = (int) $customer->c_userid;
+
+                    return [
+                        'id' => $customerId,
+                        'name' => $this->displayName($customer),
+                        'username' => (string) ($customer->c_username ?? ''),
+                        'avatar' => (string) ($customer->c_avatar_url ?? ''),
+                        'tier' => $this->mapTier((int) ($customer->c_rank ?? 0)),
+                        'referrals' => (int) ($referralCounts[$customerId] ?? 0),
+                        'earnings' => (float) ($customer->c_totalincome ?? 0),
+                        'joinedAt' => $this->formatDate($customer->c_date_started),
+                    ];
+                })
+                ->values();
+
+            return [
+                'data' => $rows->all(),
+                'meta' => [
+                    'current_page' => $paginator->currentPage(),
+                    'last_page' => $paginator->lastPage(),
+                    'per_page' => $paginator->perPage(),
+                    'total' => $paginator->total(),
+                    'from' => $paginator->firstItem(),
+                    'to' => $paginator->lastItem(),
+                ],
+                'sort' => $sort,
+            ];
+        };
+
+        try {
+            $payload = Cache::remember($cacheKey, now()->addMinutes(5), $payloadBuilder);
+        } catch (\Throwable $exception) {
+            $payload = $payloadBuilder();
+        }
+
+        return response()->json($payload);
+    }
 }

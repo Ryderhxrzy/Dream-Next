@@ -203,6 +203,7 @@ Route::middleware('throttle:public')->group(function () {
     Route::get('/settings/general', [AdminSettingsController::class, 'publicGeneral']);
     Route::get('/settings/security', [AdminSettingsController::class, 'publicSecurity']);
     Route::get('/public/community-stats', [MemberController::class, 'communityStats']);
+    Route::get('/public/top-members', [MemberController::class, 'publicTopMembers']);
 });
 
 // Storefront/public web-page endpoints: dedicated higher read limit.
