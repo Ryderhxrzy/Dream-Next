@@ -6,6 +6,7 @@ type TokenUser = {
     id?: string;
     accessToken?: string;
     role?: string;
+    username?: string;
     userLevelId?: number;
     adminPermissions?: string[];
     supplierId?: number | null;
@@ -320,6 +321,7 @@ export const authOptions: NextAuthOptions = {
                         email: data.user.email,
                         accessToken: data.token,
                         role: data.user.role,
+                        username: data.user.username ?? null,
                         supplierId: data.user.supplier_id ?? null,
                         supplierName: data.user.supplier_name ?? null,
                         supplierLevelType: data.user.level_type ?? null,
@@ -377,6 +379,7 @@ export const authOptions: NextAuthOptions = {
                 token.id = authUser.id;
                 token.accessToken = authUser.accessToken;
                 token.role = authUser.role;
+                token.username = authUser.username;
                 token.userLevelId = authUser.userLevelId;
                 token.adminPermissions = authUser.adminPermissions;
                 token.supplierId = authUser.supplierId;
@@ -418,6 +421,7 @@ export const authOptions: NextAuthOptions = {
                 sessionUser.id = authToken.id;
                 sessionUser.accessToken = authToken.accessToken;
                 sessionUser.role = authToken.role;
+                sessionUser.username = authToken.username;
                 sessionUser.userLevelId = authToken.userLevelId;
                 sessionUser.adminPermissions = authToken.adminPermissions;
                 sessionUser.supplierId = authToken.supplierId;

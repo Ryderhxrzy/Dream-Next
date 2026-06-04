@@ -10,6 +10,7 @@ import { Bell, LogOut, Menu, MoonStar, Sparkles, SunMedium } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import SupplierSidebar from './SupplierSidebar'
 import { clearAccessTokenCache } from '@/store/api/baseApi'
+import { sendSupplierPresenceHeartbeat } from '@/libs/supplierChat'
 import { useGetSupplierOrderNotificationsQuery, type SupplierNotificationItem } from '@/store/api/supplierOrdersApi'
 import { useSupplierRealtimeOrders } from '@/hooks/useSupplierRealtimeOrders'
 
@@ -28,6 +29,13 @@ function getInitials(name: string) {
 }
 
 export default function SupplierLayoutShell({ children }: { children: React.ReactNode }) {
+  // Presence heartbeat — fires every 30s while supplier is logged in anywhere in the app
+  useEffect(() => {
+    void sendSupplierPresenceHeartbeat()
+    const id = setInterval(() => void sendSupplierPresenceHeartbeat(), 30_000)
+    return () => clearInterval(id)
+  }, [])
+
   const [menuOpen, setMenuOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [readNotificationKeys, setReadNotificationKeys] = useState<string[]>([])

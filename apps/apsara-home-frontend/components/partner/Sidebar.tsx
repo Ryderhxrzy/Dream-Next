@@ -3,6 +3,8 @@
 import Link from 'next/link'
 
 import { usePathname } from 'next/navigation'
+import { useGetAdminWebPageItemsQuery, type WebPageItem } from '@/store/api/webPagesApi'
+import { getPartnerStorefrontConfig } from '@/libs/partnerStorefront'
 
 interface PartnerSidebarProps {
   isOpen: boolean
@@ -16,6 +18,7 @@ const links = [
     href: '/partner',
     label: 'Storefronts',
     description: 'Manage storefront content',
+    restricted: false,
     icon: (
       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9">
         <path d="M3 10l2-6h14l2 6" strokeLinecap="round" strokeLinejoin="round" />
@@ -29,9 +32,23 @@ const links = [
     ),
   },
   {
+    href: '/partner/webpages/partner-landing-page',
+    label: 'Landing Page',
+    description: 'Hero, colours & public URL',
+    restricted: true,
+    icon: (
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9">
+        <rect x="2" y="3" width="20" height="14" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M8 21h8M12 17v4" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M7 8h10M7 11h6" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
     href: '/partner/webpages/partner-orders',
     label: 'Orders',
     description: 'Track storefront transactions',
+    restricted: false,
     icon: (
       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9">
         <path d="M7 3h10l4 4v14H3V3h4z" strokeLinecap="round" strokeLinejoin="round" />
@@ -44,6 +61,7 @@ const links = [
     href: '/partner/webpages/partner-users',
     label: 'Partner Users',
     description: 'Control portal access',
+    restricted: false,
     icon: (
       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9">
         <path
@@ -59,7 +77,7 @@ const links = [
     href: '/partner/webpages/partner-members',
     label: 'Members',
     description: 'Member accounts',
-
+    restricted: false,
     icon: (
       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9">
         <path
@@ -78,6 +96,10 @@ const links = [
 
 export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: PartnerSidebarProps) {
   const pathname = usePathname()
+  const { data } = useGetAdminWebPageItemsQuery({ type: 'partner_storefront' } as never)
+  const items = (data as { items?: WebPageItem[] } | undefined)?.items ?? []
+  const slug = getPartnerStorefrontConfig(items[0])?.slug ?? ''
+  const visibleLinks = links.filter((link) => !link.restricted || slug === 'jujutsu-kaisen')
 
   return (
     <>
@@ -92,7 +114,7 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
 
       <aside
         className={[
-          'fixed left-0 top-0 z-40 h-screen border-r border-slate-200/80 bg-gradient-to-b from-white to-slate-50/90 shadow-xl shadow-slate-900/5 transition-all dark:border-slate-800 dark:from-slate-950 dark:to-slate-950 lg:static lg:translate-x-0 lg:shadow-none',
+          'fixed left-0 top-0 z-40 h-screen border-r border-slate-200/80 bg-linear-to-b from-white to-slate-50/90 shadow-xl shadow-slate-900/5 transition-all dark:border-slate-800 dark:from-slate-950 dark:to-slate-950 lg:static lg:translate-x-0 lg:shadow-none',
           isOpen ? 'translate-x-0' : '-translate-x-full',
           isCollapsed ? 'w-24' : 'w-80',
         ].join(' ')}
@@ -105,7 +127,7 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
           >
             <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between gap-3'}`}>
               <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-cyan-300 text-slate-900 shadow-sm">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-sky-400 to-cyan-300 text-slate-900 shadow-sm">
                   <span className="text-sm font-black">AF</span>
                 </div>
                 {!isCollapsed ? (
@@ -148,7 +170,7 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
         </div>
 
         <nav className="space-y-2 p-3">
-          {links.map((link) => {
+          {visibleLinks.map((link) => {
             const isActive = pathname === link.href || pathname?.startsWith(`${link.href}/`)
             return (
               <Link
@@ -159,7 +181,7 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
                   'group relative flex items-center rounded-2xl border px-3 py-2.5 text-sm transition-all duration-200',
                   isCollapsed ? 'justify-center' : 'gap-3',
                   isActive
-                    ? 'border-sky-200 bg-gradient-to-r from-sky-100 to-cyan-50 text-sky-900 shadow-sm dark:border-sky-800/60 dark:from-sky-900/30 dark:to-cyan-900/20 dark:text-sky-200'
+                    ? 'border-sky-200 bg-linear-to-r from-sky-100 to-cyan-50 text-sky-900 shadow-sm dark:border-sky-800/60 dark:from-sky-900/30 dark:to-cyan-900/20 dark:text-sky-200'
                     : 'border-transparent text-slate-700 hover:border-slate-200 hover:bg-white dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-900',
                 ].join(' ')}
                 title={isCollapsed ? link.label : undefined}

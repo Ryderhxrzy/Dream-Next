@@ -56,7 +56,7 @@ set_env_value() {
 for key in \
   APP_NAME APP_ENV APP_KEY APP_DEBUG APP_URL FRONTEND_URL \
   DB_CONNECTION DB_HOST DB_PORT DB_DATABASE DB_USERNAME DB_PASSWORD \
-  SESSION_DRIVER QUEUE_CONNECTION CACHE_STORE CACHE_DRIVER BROADCAST_CONNECTION FILESYSTEM_DISK \
+  SESSION_DRIVER QUEUE_CONNECTION DB_QUEUE_RETRY_AFTER CACHE_STORE CACHE_DRIVER BROADCAST_CONNECTION FILESYSTEM_DISK \
   REDIS_CLIENT REDIS_HOST REDIS_PASSWORD REDIS_PORT REDIS_DB REDIS_CACHE_DB \
   MAIL_MAILER RESEND_API_KEY MAIL_HOST MAIL_PORT MAIL_USERNAME MAIL_PASSWORD MAIL_SCHEME MAIL_FROM_ADDRESS MAIL_FROM_NAME \
   PUSHER_APP_ID PUSHER_APP_KEY PUSHER_APP_SECRET PUSHER_APP_CLUSTER PUSHER_APP_TLS \
@@ -88,10 +88,15 @@ if grep -q "^APP_KEY=$" .env 2>/dev/null; then
   php artisan key:generate --force >/dev/null 2>&1 || true
 fi
 
-php artisan optimize:clear >/dev/null 2>&1 || true
 php artisan config:clear >/dev/null 2>&1 || true
-php artisan cache:clear >/dev/null 2>&1 || true
 
-php artisan migrate --force || true
+# Cache clears and migrations run only for the web container. The queue worker
+# sets WORKER_MODE=true so its periodic restarts (via --max-time) never wipe the
+# shared application cache (rate limiters, OTP sessions) or race on migrations.
+if [ "${WORKER_MODE:-false}" != "true" ]; then
+  php artisan optimize:clear >/dev/null 2>&1 || true
+  php artisan cache:clear >/dev/null 2>&1 || true
+  php artisan migrate --force || true
+fi
 
 exec "$@"

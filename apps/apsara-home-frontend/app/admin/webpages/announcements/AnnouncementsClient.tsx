@@ -37,6 +37,7 @@ type SendTimingMode = 'now' | 'scheduled'
 type RecipientOption = {
   value: string
   label: string
+  searchText?: string
 }
 
 const VARIABLE_TOKENS: VariableToken[] = [
@@ -136,13 +137,33 @@ export default function AnnouncementsClient() {
   const filteredMemberEmails = useMemo(() => {
     const q = recipientSearch.trim().toLowerCase()
     if (!q) return memberEmails
-    return memberEmails.filter((item) => item.label.toLowerCase().includes(q) || item.value.toLowerCase().includes(q))
+    const terms = q.split(/\s+/).filter(Boolean)
+    const scoredMatches = memberEmails
+      .map((item) => {
+        const searchable = `${item.label} ${item.value} ${item.searchText ?? ''}`.toLowerCase()
+        const matchedTerms = terms.filter((term) => searchable.includes(term)).length
+        const firstTermMatches = terms[0] ? searchable.includes(terms[0]) : false
+        const score = searchable.includes(q) ? matchedTerms + terms.length + 1 : matchedTerms
+
+        return { item, score, matchedTerms, firstTermMatches }
+      })
+      .filter(({ score }) => score > 0)
+
+    const strongMatches = scoredMatches.filter(({ firstTermMatches, matchedTerms }) => {
+      if (terms.length <= 1) return true
+      return firstTermMatches || matchedTerms >= 2
+    })
+    const matchesToShow = strongMatches.length > 0 ? strongMatches : scoredMatches
+
+    return matchesToShow
+      .sort((a, b) => b.score - a.score || b.matchedTerms - a.matchedTerms || a.item.label.localeCompare(b.item.label))
+      .map(({ item }) => item)
   }, [memberEmails, recipientSearch])
 
   const recipientUnitLabel = deliveryChannel === 'sms' ? 'mobile number' : 'email'
   const recipientUnitLabelPlural = deliveryChannel === 'sms' ? 'mobile numbers' : 'emails'
   const recipientSearchPlaceholder =
-    deliveryChannel === 'sms' ? 'Search member mobile number' : 'Search member email'
+    deliveryChannel === 'sms' ? 'Search member name or mobile number' : 'Search member email'
 
   const isAllVisibleSelected = useMemo(() => {
     if (filteredMemberEmails.length === 0) return false
@@ -324,8 +345,18 @@ export default function AnnouncementsClient() {
                 if (deliveryChannel === 'sms' && item && typeof item === 'object') {
                   const phone = String((item as { phone?: unknown }).phone ?? '').trim()
                   const name = String((item as { name?: unknown }).name ?? '').trim() || 'Customer'
+                  const firstName = String((item as { first_name?: unknown }).first_name ?? '').trim()
+                  const middleName = String((item as { middle_name?: unknown }).middle_name ?? '').trim()
+                  const lastName = String((item as { last_name?: unknown }).last_name ?? '').trim()
+                  const username = String((item as { username?: unknown }).username ?? '').trim()
+                  const localPhone = phone.startsWith('63') ? `0${phone.slice(2)}` : phone
+                  const phoneWithoutCountryCode = phone.startsWith('63') ? phone.slice(2) : phone
                   return phone
-                    ? { value: phone, label: `+${phone} - ${name}` }
+                    ? {
+                        value: phone,
+                        label: `+${phone} - ${name}`,
+                        searchText: [phone, localPhone, phoneWithoutCountryCode, name, firstName, middleName, lastName, username].filter(Boolean).join(' '),
+                      }
                     : null
                 }
                 const value = String(item ?? '').trim()
@@ -343,6 +374,9 @@ export default function AnnouncementsClient() {
     }
 
     loadRecipients()
+  }, [baseUrl, accessToken, deliveryChannel])
+
+  useEffect(() => {
     setSelectedEmails([])
     setRecipientSearch('')
   }, [baseUrl, accessToken, deliveryChannel])
@@ -497,6 +531,27 @@ export default function AnnouncementsClient() {
         setPreviewOpen(false)
         setSendTimingMode('now')
         setScheduledFor('')
+        return
+      }
+
+      // "Send now" is processed in the background by the queue worker — the
+      // request returns immediately so it never times out on large lists.
+      if (data?.queued) {
+        const count = Number(data?.recipient_count ?? 0)
+        toast.success(
+          count > 0
+            ? `Announcement is being sent to ${count} ${recipientUnitLabelPlural} in the background. It may take a few minutes.`
+            : 'Announcement is being sent in the background. It may take a few minutes.'
+        )
+        setLastSendResult(null)
+        setSelectedEmails([])
+        setRecipientSearch('')
+        if (!isEmailMode) {
+          setSmsMessage('')
+          setSmsCharacterCount(0)
+          setSmsWordCount(0)
+        }
+        setPreviewOpen(false)
         return
       }
 

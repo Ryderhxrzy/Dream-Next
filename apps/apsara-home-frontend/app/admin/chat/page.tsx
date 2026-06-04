@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import {
   ArrowLeft,
   CheckCheck,
@@ -72,10 +73,41 @@ const AVATAR_COLORS = [
   'bg-indigo-500',
 ]
 
+type ChatRenderItem =
+  | { kind: 'single'; message: SupplierChatMessage }
+  | { kind: 'imageGroup'; messages: SupplierChatMessage[] }
+
+function buildRenderItems(messages: SupplierChatMessage[]): ChatRenderItem[] {
+  const items: ChatRenderItem[] = []
+  let i = 0
+  while (i < messages.length) {
+    const msg = messages[i]
+    if (msg.attachment_type === 'image' && msg.attachment_url && !msg.message.trim()) {
+      const group: SupplierChatMessage[] = [msg]
+      i++
+      while (
+        i < messages.length &&
+        messages[i].sender_type === msg.sender_type &&
+        messages[i].attachment_type === 'image' &&
+        messages[i].attachment_url &&
+        !messages[i].message.trim()
+      ) {
+        group.push(messages[i])
+        i++
+      }
+      items.push(group.length === 1 ? { kind: 'single', message: group[0] } : { kind: 'imageGroup', messages: group })
+    } else {
+      items.push({ kind: 'single', message: msg })
+      i++
+    }
+  }
+  return items
+}
+
 const MAX_ATTACHMENT_SIZE_BYTES = 25 * 1024 * 1024
 
 type ConversationTab = 'all' | 'unread' | 'archived'
-type MessageGroup = { dateLabel: string; messages: SupplierChatMessage[] }
+type MessageGroup = { dateLabel: string; displayLabel: string; messages: SupplierChatMessage[] }
 type FileKind = 'image' | 'video' | 'other'
 type PendingAttachment = { id: string; file: File; previewUrl: string | null; kind: FileKind }
 
@@ -205,10 +237,22 @@ function getDateLabel(dateStr: string): string {
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const startOfDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
   const diffDays = Math.round((startOfToday.getTime() - startOfDate.getTime()) / 86_400_000)
-  if (diffDays === 0) return 'Today'
-  if (diffDays === 1) return 'Yesterday'
-  if (diffDays < 7) return date.toLocaleDateString('en-PH', { weekday: 'long' })
-  return date.toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
+  if (diffDays === 0) return 'today'
+  if (diffDays === 1) return 'yesterday'
+  return startOfDate.toISOString().slice(0, 10)
+}
+
+function formatGroupLabel(dateStr: string): string {
+  const date = new Date(dateStr)
+  const now = new Date()
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const startOfDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  const diffDays = Math.round((startOfToday.getTime() - startOfDate.getTime()) / 86_400_000)
+  const timeStr = date.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit', hour12: true })
+  if (diffDays === 0) return `Today at ${timeStr}`
+  if (diffDays === 1) return `Yesterday at ${timeStr}`
+  const fullDate = date.toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+  return `${fullDate} at ${timeStr}`
 }
 
 function formatLastActive(dateStr: string | null): string {
@@ -286,12 +330,29 @@ export default function AdminChatPage() {
     url: string | null
     type: 'image' | 'video' | null
     name?: string
+    urls?: string[]
+    activeIndex?: number
   }>({ open: false, url: null, type: null })
+  const mediaSlideDir = useRef<1 | -1>(1)
 
   const closeMediaModal = () => setMediaModal({ open: false, url: null, type: null })
 
   const openMediaModal = (next: { url: string; type: 'image' | 'video'; name?: string }) =>
-    setMediaModal({ open: true, url: next.url, type: next.type, name: next.name })
+    setMediaModal({ open: true, url: next.url, type: next.type, name: next.name, urls: undefined, activeIndex: undefined })
+
+  const openImageGroupModal = (urls: string[], startIndex = 0) => {
+    mediaSlideDir.current = 1
+    setMediaModal({ open: true, url: urls[startIndex] ?? null, type: 'image', urls, activeIndex: startIndex })
+  }
+
+  const setMediaModalIndex = (next: number) => {
+    setMediaModal((prev) => {
+      if (!prev.urls) return prev
+      const idx = Math.max(0, Math.min(next, prev.urls.length - 1))
+      mediaSlideDir.current = idx > (prev.activeIndex ?? 0) ? 1 : -1
+      return { ...prev, url: prev.urls[idx], activeIndex: idx }
+    })
+  }
 
   const conversationCacheRef = useRef<Map<number, SupplierChatConversation>>(new Map())
   const activeIdRef = useRef<number | null>(null)
@@ -346,7 +407,7 @@ export default function AdminChatPage() {
       if (last?.dateLabel === label) {
         last.messages.push(message)
       } else {
-        groups.push({ dateLabel: label, messages: [message] })
+        groups.push({ dateLabel: label, displayLabel: formatGroupLabel(message.created_at), messages: [message] })
       }
     }
     return groups
@@ -425,14 +486,28 @@ export default function AdminChatPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Refresh conversation list every 30s to pick up supplier last_seen_at changes
+  useEffect(() => {
+    const refresh = async () => {
+      try {
+        const items = await fetchAdminSupplierChatConversations()
+        setConversations(items)
+      } catch { /* silent */ }
+    }
+    const id = setInterval(() => void refresh(), 30_000)
+    return () => clearInterval(id)
+  }, [])
+
   useEffect(() => {
     if (!mediaModal.open) return
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') closeMediaModal()
+      if (e.key === 'ArrowRight' && mediaModal.urls) setMediaModalIndex((mediaModal.activeIndex ?? 0) + 1)
+      if (e.key === 'ArrowLeft' && mediaModal.urls) setMediaModalIndex((mediaModal.activeIndex ?? 0) - 1)
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [mediaModal.open])
+  }, [mediaModal.open, mediaModal.activeIndex, mediaModal.urls])
 
   useEffect(() => {
     if (!activeId) return
@@ -446,9 +521,15 @@ export default function AdminChatPage() {
         setActiveConversation((prev) => {
           const prevLen = prev?.messages?.length ?? 0
           const newLen = full.messages.length
-          if (newLen !== prevLen) return full
+          const prevSeen = prev?.supplier_user?.last_seen_at ?? null
+          const newSeen = full.supplier_user?.last_seen_at ?? null
+          if (newLen !== prevLen || prevSeen !== newSeen) return full
           return prev
         })
+        // Also update the conversation list entry so the sidebar dot reflects the new status
+        setConversations((prev) =>
+          prev.map((c) => c.id === full.id ? { ...c, supplier_user: full.supplier_user } : c)
+        )
       } catch { /* silent */ }
     }
     const timer = setInterval(() => { void poll() }, 4000)
@@ -569,6 +650,12 @@ export default function AdminChatPage() {
     ? `@${activeConversation.supplier_user.username}`
     : '—'
   const lastActive = formatLastActive(activeConversation?.last_message_at ?? null)
+  const isSupplierOnline = (() => {
+    const ts = activeConversation?.supplier_user?.last_seen_at
+    if (!ts) return false
+    const diffMs = Date.now() - new Date(ts).getTime()
+    return diffMs < 2 * 60 * 1000 // online if heartbeat received within last 2 minutes
+  })()
 
   return (
     <div className="flex h-[calc(100vh-104px)] flex-col gap-3 lg:h-[calc(100vh-120px)]">
@@ -706,6 +793,10 @@ export default function AdminChatPage() {
                   const avatarColor = AVATAR_COLORS[index % AVATAR_COLORS.length]
                   const displayName = getConversationTitle(conversation)
                   const preview = getConversationPreview(conversation)
+                  const convLastSeen = conversation.supplier_user?.last_seen_at
+                  const convIsOnline = convLastSeen
+                    ? Date.now() - new Date(convLastSeen).getTime() < 2 * 60 * 1000
+                    : false
                   return (
                     <button
                       key={conversation.id}
@@ -741,7 +832,7 @@ export default function AdminChatPage() {
                           </div>
                           <span
                             className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white dark:border-slate-900 ${
-                              conversation.status !== 'resolved' ? 'bg-emerald-500' : 'bg-slate-300'
+                              convIsOnline ? 'bg-emerald-500' : 'bg-slate-300'
                             }`}
                           />
                         </div>
@@ -749,7 +840,7 @@ export default function AdminChatPage() {
                         <Avatar
                           label={getInitials(displayName)}
                           color={avatarColor}
-                          online={conversation.status !== 'resolved'}
+                          online={convIsOnline}
                         />
                       )}
 
@@ -806,10 +897,54 @@ export default function AdminChatPage() {
 
         {/* ── Main chat area ── */}
         <div
-          className={`flex flex-1 flex-col ${
+          className={`relative flex flex-1 flex-col ${
             !isMobileOpen && !activeConversation ? 'hidden md:flex' : 'flex'
           }`}
+          style={{ background: 'linear-gradient(145deg,#eef2ff 0%,#f0f4ff 40%,#e8eeff 100%)' }}
         >
+          {/* Fixed decorative background — sits behind scrollable content */}
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+            <svg className="h-full w-full opacity-[0.13]" xmlns="http://www.w3.org/2000/svg">
+              <g transform="translate(48,80)" fill="none" stroke="#6366f1" strokeWidth="1.4">
+                <rect x="0" y="14" width="56" height="36" rx="3"/><polyline points="0,14 28,0 56,14"/><rect x="18" y="28" width="20" height="22" rx="2"/>
+                <rect x="4" y="20" width="14" height="12" rx="1"/><rect x="38" y="20" width="14" height="12" rx="1"/>
+              </g>
+              <g transform="translate(520,60)" fill="none" stroke="#6366f1" strokeWidth="1.4">
+                <path d="M2 2h6l4 18h22l4-14H10"/><circle cx="16" cy="26" r="2"/><circle cx="32" cy="26" r="2"/>
+              </g>
+              <g transform="translate(260,40)" fill="none" stroke="#6366f1" strokeWidth="1.4">
+                <polyline points="0,12 22,0 44,12 44,36 22,48 0,36 0,12"/><polyline points="0,12 22,24 44,12"/><line x1="22" y1="24" x2="22" y2="48"/>
+              </g>
+              <g transform="translate(580,340)" fill="none" stroke="#6366f1" strokeWidth="1.4">
+                <rect x="0" y="6" width="38" height="28" rx="2"/><path d="M38,16 h14 l6,12 v6 h-20 z"/><circle cx="10" cy="38" r="5"/><circle cx="48" cy="38" r="5"/>
+              </g>
+              <g transform="translate(440,240)" fill="none" stroke="#6366f1" strokeWidth="1.4">
+                <rect x="0" y="0" width="52" height="38" rx="12"/><path d="M10,38 L6,52 L20,42"/>
+              </g>
+              <g transform="translate(60,400)" fill="none" stroke="#6366f1" strokeWidth="1.4">
+                <circle cx="28" cy="28" r="28"/><path d="M28,28 L28,0 A28,28 0 0,1 56,28 Z"/><line x1="28" y1="28" x2="28" y2="0"/>
+              </g>
+              <g transform="translate(620,460)" fill="none" stroke="#6366f1" strokeWidth="1.4">
+                <rect x="0" y="24" width="12" height="22" rx="2"/><rect x="18" y="12" width="12" height="34" rx="2"/><rect x="36" y="4" width="12" height="42" rx="2"/>
+              </g>
+              <g transform="translate(200,360)" fill="none" stroke="#6366f1" strokeWidth="1.4">
+                <circle cx="22" cy="10" r="10"/><path d="M0,46 C0,30 44,30 44,46"/>
+              </g>
+              <g transform="translate(340,200)" fill="none" stroke="#6366f1" strokeWidth="1.4">
+                <polyline points="0,8 16,0 32,8 32,26 16,34 0,26 0,8"/><polyline points="0,8 16,16 32,8"/><line x1="16" y1="16" x2="16" y2="34"/>
+              </g>
+              <circle cx="130" cy="140" r="2" fill="#6366f1"/><circle cx="148" cy="140" r="2" fill="#6366f1"/><circle cx="166" cy="140" r="2" fill="#6366f1"/><circle cx="184" cy="140" r="2" fill="#6366f1"/><circle cx="202" cy="140" r="2" fill="#6366f1"/>
+              <circle cx="130" cy="158" r="2" fill="#6366f1"/><circle cx="148" cy="158" r="2" fill="#6366f1"/><circle cx="166" cy="158" r="2" fill="#6366f1"/><circle cx="184" cy="158" r="2" fill="#6366f1"/><circle cx="202" cy="158" r="2" fill="#6366f1"/>
+              <circle cx="130" cy="176" r="2" fill="#6366f1"/><circle cx="148" cy="176" r="2" fill="#6366f1"/><circle cx="166" cy="176" r="2" fill="#6366f1"/><circle cx="184" cy="176" r="2" fill="#6366f1"/><circle cx="202" cy="176" r="2" fill="#6366f1"/>
+              <circle cx="130" cy="194" r="2" fill="#6366f1"/><circle cx="148" cy="194" r="2" fill="#6366f1"/><circle cx="166" cy="194" r="2" fill="#6366f1"/><circle cx="184" cy="194" r="2" fill="#6366f1"/><circle cx="202" cy="194" r="2" fill="#6366f1"/>
+              <circle cx="130" cy="212" r="2" fill="#6366f1"/><circle cx="148" cy="212" r="2" fill="#6366f1"/><circle cx="166" cy="212" r="2" fill="#6366f1"/><circle cx="184" cy="212" r="2" fill="#6366f1"/><circle cx="202" cy="212" r="2" fill="#6366f1"/>
+              <circle cx="130" cy="230" r="2" fill="#6366f1"/><circle cx="148" cy="230" r="2" fill="#6366f1"/><circle cx="166" cy="230" r="2" fill="#6366f1"/><circle cx="184" cy="230" r="2" fill="#6366f1"/><circle cx="202" cy="230" r="2" fill="#6366f1"/>
+            </svg>
+            <span className="absolute left-[38%] top-[22%] h-3 w-3 rounded-full bg-orange-400/60" />
+            <span className="absolute left-[62%] top-[55%] h-2.5 w-2.5 rounded-full bg-teal-400/50" />
+            <span className="absolute left-[20%] top-[68%] h-2 w-2 rounded-full bg-violet-400/50" />
+            <span className="absolute left-[75%] top-[30%] h-2 w-2 rounded-full bg-sky-400/50" />
+          </div>
           {activeConversation ? (
             <>
               {/* Chat header */}
@@ -837,14 +972,14 @@ export default function AdminChatPage() {
                       />
                     </div>
                     {activeStatus !== 'resolved' && (
-                      <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-emerald-500 dark:border-slate-900" />
+                      <span className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 ${isSupplierOnline ? 'bg-emerald-500' : 'bg-slate-400'}`} />
                     )}
                   </div>
                 ) : (
                   <Avatar
                     label={getInitials(activeConversationTitle)}
                     color={AVATAR_COLORS[0]}
-                    online={activeStatus !== 'resolved'}
+                    online={isSupplierOnline}
                     size="lg"
                   />
                 )}
@@ -854,14 +989,18 @@ export default function AdminChatPage() {
                   </p>
                   <p
                     className={`text-[11px] font-medium ${
-                      activeStatus !== 'resolved'
-                        ? 'text-emerald-500'
-                        : 'text-slate-400'
+                      activeStatus === 'resolved'
+                        ? 'text-slate-400'
+                        : isSupplierOnline
+                          ? 'text-emerald-500'
+                          : 'text-slate-500 dark:text-slate-400'
                     }`}
                   >
-                    {activeStatus !== 'resolved'
-                      ? `Online · ${lastActive}`
-                      : 'Resolved'}
+                    {activeStatus === 'resolved'
+                      ? 'Resolved'
+                      : isSupplierOnline
+                        ? `Online · ${lastActive}`
+                        : lastActive}
                   </p>
                 </div>
                 <button className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 dark:hover:bg-slate-800">
@@ -872,8 +1011,9 @@ export default function AdminChatPage() {
               {/* Messages */}
               <div
                 ref={messagesContainerRef}
-                className="flex-1 overflow-y-auto px-5 py-5 scrollbar-none [&::-webkit-scrollbar]:hidden"
+                className="relative flex-1 overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden"
               >
+                <div className="px-5 py-5">
                 {isLoadingMessages ? (
                   <div className="flex flex-col gap-4">
                     {[72, 48, 64, 40, 56].map((w, i) => (
@@ -905,14 +1045,79 @@ export default function AdminChatPage() {
                       <div className="my-6 flex items-center gap-3">
                         <div className="flex-1 border-t border-slate-200 dark:border-slate-700" />
                         <span className="shrink-0 text-[11px] font-medium text-slate-400 dark:text-slate-500">
-                          {group.dateLabel}
+                          {group.displayLabel}
                         </span>
                         <div className="flex-1 border-t border-slate-200 dark:border-slate-700" />
                       </div>
 
                       {/* Messages in this group */}
                       <div className="space-y-3">
-                        {group.messages.map((message) => {
+                        {buildRenderItems(group.messages).map((item) => {
+                          /* ── Image grid cluster ── */
+                          if (item.kind === 'imageGroup') {
+                            const mine = item.messages[0].sender_type === 'admin'
+                            const imgs = item.messages
+                            const lastMsg = imgs[imgs.length - 1]
+                            {/* Stacked card deck — show up to 3 behind, top card is clickable */}
+                            const stackVisible = imgs.slice(0, Math.min(imgs.length, 3))
+                            const cardTransforms = [
+                              'rotate(-11deg) translate(-14px, 10px)',
+                              'rotate(7deg) translate(10px, -6px)',
+                              'rotate(-2deg) translate(2px, 2px)',
+                            ]
+                            return (
+                              <div key={item.messages[0].id} className={`flex items-end gap-2 ${mine ? 'justify-end' : 'justify-start'}`}>
+                                {!mine && (
+                                  <Avatar
+                                    label={getInitials(activeConversationTitle)}
+                                    color="bg-slate-500"
+                                    src={companyLogo}
+                                    alt={activeConversationTitle}
+                                    size="sm"
+                                  />
+                                )}
+                                <div>
+                                  {/* Card stack — extra bottom margin clears rotated card overflow */}
+                                  <div className="relative" style={{ width: 190, height: 220, marginBottom: 28 }}>
+                                    {stackVisible.map((msg, idx) => {
+                                      const isTop = idx === stackVisible.length - 1
+                                      return (
+                                        <button
+                                          key={msg.id}
+                                          type="button"
+                                          onClick={isTop ? () => openImageGroupModal(imgs.map((m) => m.attachment_url ?? '').filter(Boolean)) : undefined}
+                                          style={{
+                                            position: 'absolute',
+                                            inset: 0,
+                                            zIndex: idx + 1,
+                                            transform: cardTransforms[stackVisible.length === 2 ? idx + 1 : idx] ?? cardTransforms[2],
+                                            cursor: isTop ? 'pointer' : 'default',
+                                          }}
+                                          className="overflow-hidden rounded-2xl shadow-lg"
+                                        >
+                                          <img src={msg.attachment_url ?? ''} alt="" className="h-full w-full object-cover" />
+                                          {isTop && imgs.length > 1 && (
+                                            <div className="absolute bottom-2 right-2 flex h-6 min-w-[24px] items-center justify-center rounded-full bg-black/60 px-1.5 text-[11px] font-bold text-white">
+                                              {imgs.length}
+                                            </div>
+                                          )}
+                                        </button>
+                                      )
+                                    })}
+                                  </div>
+                                  <div className={`flex items-center gap-1 ${mine ? 'justify-end' : 'justify-start'}`}>
+                                    <span className="text-[10px] text-slate-400">{formatClock(lastMsg.created_at)}</span>
+                                    {mine && (
+                                      <CheckCheck className={`h-3 w-3 ${lastMsg.is_read ? 'text-indigo-500' : 'text-slate-400'}`} />
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            )
+                          }
+
+                          /* ── Single message ── */
+                          const { message } = item
                           const mine = message.sender_type === 'admin'
                           return (
                             <div
@@ -1028,7 +1233,7 @@ export default function AdminChatPage() {
                                       className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
                                         mine
                                           ? 'rounded-br-md bg-indigo-600 text-white'
-                                          : 'rounded-bl-md bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100'
+                                          : 'rounded-bl-md bg-white text-slate-800 border border-slate-200 shadow-sm dark:bg-white dark:text-slate-800 dark:border-slate-200'
                                       }`}
                                     >
                                       {message.message}
@@ -1059,6 +1264,7 @@ export default function AdminChatPage() {
                     </div>
                   ))
                 )}
+                </div>{/* end relative px-5 py-5 */}
               </div>
 
               {/* Input */}
@@ -1242,14 +1448,14 @@ export default function AdminChatPage() {
                   </div>
                 )}
                 {activeStatus !== 'resolved' && (
-                  <span className="absolute bottom-1 right-1 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500 dark:border-slate-900" />
+                  <span className={`absolute bottom-1 right-1 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-slate-900 ${isSupplierOnline ? 'bg-emerald-500' : 'bg-slate-400'}`} />
                 )}
               </div>
               <p className="mt-3 truncate text-[20px] font-bold leading-tight text-slate-900 dark:text-white">
                 {companyName}
               </p>
-              <p className="mt-0.5 text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                Supplier
+              <p className={`mt-0.5 text-sm font-medium ${isSupplierOnline ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
+                {isSupplierOnline ? 'Online' : lastActive}
               </p>
             </div>
 
@@ -1327,40 +1533,53 @@ export default function AdminChatPage() {
                           <p className="py-4 text-center text-xs text-slate-400">No media shared yet.</p>
                         ) : (
                           <div className="grid grid-cols-3 gap-1.5">
-                            {mediaItems.map((m) => {
-                              const url = m.attachment_url ?? ''
-                              const type = m.attachment_type === 'video' ? 'video' : 'image'
-                              return (
-                                <button
-                                  key={m.id}
-                                  type="button"
-                                  onClick={() => setMediaModal({ open: true, url, type, name: m.attachment_name ?? undefined })}
-                                  className="group relative aspect-square overflow-hidden rounded-xl bg-slate-100 text-left dark:bg-slate-800"
-                                >
-                                  <div className="h-full w-full">
-                                    {type === 'image' ? (
-                                      <img
-                                        src={url}
-                                        alt={m.attachment_name ?? ''}
-                                        className="h-full w-full object-cover transition group-hover:scale-105"
-                                      />
-                                    ) : (
-                                      <>
-                                        <video
+                            {(() => {
+                              const imageUrls = mediaItems
+                                .filter((m) => m.attachment_type === 'image')
+                                .map((m) => m.attachment_url ?? '')
+                                .filter(Boolean)
+                              return mediaItems.map((m) => {
+                                const url = m.attachment_url ?? ''
+                                const type = m.attachment_type === 'video' ? 'video' : 'image'
+                                const imgIndex = imageUrls.indexOf(url)
+                                return (
+                                  <button
+                                    key={m.id}
+                                    type="button"
+                                    onClick={() => {
+                                      if (type === 'image' && imageUrls.length > 0) {
+                                        openImageGroupModal(imageUrls, imgIndex >= 0 ? imgIndex : 0)
+                                      } else {
+                                        openMediaModal({ url, type, name: m.attachment_name ?? undefined })
+                                      }
+                                    }}
+                                    className="group relative aspect-square overflow-hidden rounded-xl bg-slate-100 text-left dark:bg-slate-800"
+                                  >
+                                    <div className="h-full w-full">
+                                      {type === 'image' ? (
+                                        <img
                                           src={url}
-                                          className="h-full w-full object-cover"
-                                          muted
-                                          preload="metadata"
+                                          alt={m.attachment_name ?? ''}
+                                          className="h-full w-full object-cover transition group-hover:scale-105"
                                         />
-                                        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                                          <Play className="h-5 w-5 fill-white text-white drop-shadow" />
-                                        </div>
-                                      </>
-                                    )}
-                                  </div>
-                                </button>
-                              )
-                            })}
+                                      ) : (
+                                        <>
+                                          <video
+                                            src={url}
+                                            className="h-full w-full object-cover"
+                                            muted
+                                            preload="metadata"
+                                          />
+                                          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                            <Play className="h-5 w-5 fill-white text-white drop-shadow" />
+                                          </div>
+                                        </>
+                                      )}
+                                    </div>
+                                  </button>
+                                )
+                              })
+                            })()}
                           </div>
                         )
                       )}
@@ -1462,63 +1681,122 @@ export default function AdminChatPage() {
         </aside>
 
         {/* Media modal */}
-        {mediaModal.open && mediaModal.url && mediaModal.type && (
-          <div
-            className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/70 p-4"
-            role="dialog"
-            aria-modal="true"
-            onMouseDown={(e) => {
-              if (e.target === e.currentTarget) setMediaModal({ open: false, url: null, type: null })
-            }}
-          >
-            <div className="relative w-full max-w-3xl rounded-2xl bg-slate-950 shadow-xl">
-              {/* Top bar */}
-              <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-                <p className="truncate text-sm font-medium text-white/80">
-                  {mediaModal.name ?? 'Media'}
-                </p>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => void forceDownload(mediaModal.url ?? '', mediaModal.name ?? 'file')}
-                    className="flex items-center gap-1.5 rounded-xl bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/20"
-                    title="Download"
-                  >
-                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 4v11" />
-                    </svg>
-                    Download
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMediaModal({ open: false, url: null, type: null })}
-                    className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 text-white transition hover:bg-white/20"
-                    aria-label="Close"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
+        <AnimatePresence>
+          {mediaModal.open && mediaModal.url && mediaModal.type && (
+            <motion.div
+              key="media-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/80 p-4"
+              role="dialog"
+              aria-modal="true"
+              onMouseDown={(e) => { if (e.target === e.currentTarget) closeMediaModal() }}
+            >
+              <motion.div
+                key="media-panel"
+                initial={{ opacity: 0, scale: 0.94, y: 16 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.94, y: 16 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className="relative w-full max-w-3xl rounded-2xl bg-slate-950 shadow-xl"
+              >
+                {/* Top bar */}
+                <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+                  <p className="truncate text-sm font-medium text-white/80">
+                    {mediaModal.urls
+                      ? `Image ${(mediaModal.activeIndex ?? 0) + 1} of ${mediaModal.urls.length}`
+                      : (mediaModal.name ?? 'Media')}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void forceDownload(mediaModal.url ?? '', mediaModal.name ?? 'image')}
+                      className="flex items-center gap-1.5 rounded-xl bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/20"
+                    >
+                      <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 4v11" />
+                      </svg>
+                      Download
+                    </button>
+                    <button
+                      type="button"
+                      onClick={closeMediaModal}
+                      className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 text-white transition hover:bg-white/20"
+                      aria-label="Close"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex w-full items-center justify-center p-2">
-                {mediaModal.type === 'image' ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={mediaModal.url}
-                    alt={mediaModal.name ?? 'Media'}
-                    className="max-h-[80vh] w-full object-contain"
-                  />
-                ) : (
-                  <video
-                    src={mediaModal.url}
-                    controls
-                    className="max-h-[80vh] w-full object-contain"
-                  />
+                {/* Image / Video */}
+                <div className="relative flex w-full items-center justify-center overflow-hidden p-2">
+                  <AnimatePresence mode="popLayout" custom={mediaSlideDir.current}>
+                    {mediaModal.type === 'image' ? (
+                      <motion.img
+                        key={mediaModal.url}
+                        custom={mediaSlideDir.current}
+                        variants={{
+                          enter: (d: number) => ({ x: d * 80, opacity: 0 }),
+                          center: { x: 0, opacity: 1 },
+                          exit: (d: number) => ({ x: d * -80, opacity: 0 }),
+                        }}
+                        initial="enter"
+                        animate="center"
+                        exit="exit"
+                        transition={{ duration: 0.25, ease: 'easeInOut' }}
+                        src={mediaModal.url}
+                        alt={mediaModal.name ?? 'Media'}
+                        className="max-h-[78vh] w-full object-contain"
+                      />
+                    ) : (
+                      <video key={mediaModal.url} src={mediaModal.url} controls className="max-h-[78vh] w-full object-contain" />
+                    )}
+                  </AnimatePresence>
+
+                  {/* Prev / Next */}
+                  {mediaModal.urls && mediaModal.urls.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setMediaModalIndex((mediaModal.activeIndex ?? 0) - 1)}
+                        disabled={(mediaModal.activeIndex ?? 0) === 0}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-xl text-white transition hover:scale-110 hover:bg-black/70 disabled:opacity-30"
+                        aria-label="Previous"
+                      >‹</button>
+                      <button
+                        type="button"
+                        onClick={() => setMediaModalIndex((mediaModal.activeIndex ?? 0) + 1)}
+                        disabled={(mediaModal.activeIndex ?? 0) === (mediaModal.urls?.length ?? 1) - 1}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-xl text-white transition hover:scale-110 hover:bg-black/70 disabled:opacity-30"
+                        aria-label="Next"
+                      >›</button>
+                    </>
+                  )}
+                </div>
+
+                {/* Dot indicators */}
+                {mediaModal.urls && mediaModal.urls.length > 1 && (
+                  <div className="flex justify-center gap-2 border-t border-white/10 py-3">
+                    {mediaModal.urls.map((_, i) => (
+                      <motion.button
+                        key={i}
+                        type="button"
+                        onClick={() => setMediaModalIndex(i)}
+                        animate={{ width: i === mediaModal.activeIndex ? 24 : 8, backgroundColor: i === mediaModal.activeIndex ? '#6366f1' : '#ffffff40' }}
+                        transition={{ duration: 0.2 }}
+                        className="h-2 rounded-full"
+                        aria-label={`Go to image ${i + 1}`}
+                      />
+                    ))}
+                  </div>
                 )}
-              </div>
-            </div>
-          </div>
-        )}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   )
