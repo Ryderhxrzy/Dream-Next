@@ -143,11 +143,15 @@ class AdminSmsBlastController extends Controller
 
             $validated = $request->validate([
                 'recipient_type' => 'required|string|in:members,all',
+                'search' => 'nullable|string|max:255',
                 'page' => 'nullable|integer|min:1',
                 'per_page' => 'nullable|integer|min:1|max:100000',
             ]);
 
-            $phones = $this->getRecipientContacts($validated['recipient_type']);
+            $phones = $this->getRecipientContacts(
+                type: $validated['recipient_type'],
+                search: trim((string) ($validated['search'] ?? '')),
+            );
             $perPage = (int) ($validated['per_page'] ?? 50);
 
             return response()->json([
@@ -164,7 +168,7 @@ class AdminSmsBlastController extends Controller
     }
 
     /**
-     * @return array<int, array{phone:string,name:string,first_name:string,last_name:string,username:string,registered_at:string}>
+     * @return array<int, array{phone:string,name:string,first_name:string,middle_name:string,last_name:string,username:string,registered_at:string}>
      */
     private function resolveRecipientRows(string $type, array $providedPhones = []): array
     {
@@ -177,12 +181,13 @@ class AdminSmsBlastController extends Controller
         if ($normalizedProvidedPhones->isNotEmpty()) {
             $rows = Customer::query()
                 ->whereNotNull('c_mobile')
-                ->get(['c_mobile', 'c_fname', 'c_lname', 'c_username', 'c_date_started'])
+                ->get(['c_mobile', 'c_fname', 'c_mname', 'c_lname', 'c_username', 'c_date_started'])
                 ->map(function (Customer $customer): array {
                     $phone = $this->normalizePhoneNumber((string) ($customer->c_mobile ?? ''));
                     $firstName = trim((string) ($customer->c_fname ?? ''));
+                    $middleName = trim((string) ($customer->c_mname ?? ''));
                     $lastName = trim((string) ($customer->c_lname ?? ''));
-                    $fullName = trim($firstName . ' ' . $lastName);
+                    $fullName = trim(implode(' ', array_filter([$firstName, $middleName, $lastName])));
                     $username = trim((string) ($customer->c_username ?? ''));
                     $registeredAt = $customer->c_date_started ? Carbon::parse($customer->c_date_started)->toDateString() : '';
 
@@ -190,6 +195,7 @@ class AdminSmsBlastController extends Controller
                         'phone' => $phone,
                         'name' => $fullName !== '' ? $fullName : ($username !== '' ? $username : 'Customer'),
                         'first_name' => $firstName !== '' ? $firstName : 'Customer',
+                        'middle_name' => $middleName,
                         'last_name' => $lastName,
                         'username' => $username !== '' ? $username : 'member',
                         'registered_at' => $registeredAt,
@@ -209,6 +215,7 @@ class AdminSmsBlastController extends Controller
                         'phone' => $phone,
                         'name' => 'Customer',
                         'first_name' => 'Customer',
+                        'middle_name' => '',
                         'last_name' => '',
                         'username' => 'member',
                         'registered_at' => '',
@@ -224,12 +231,13 @@ class AdminSmsBlastController extends Controller
         return Customer::query()
             ->whereNotNull('c_mobile')
             ->where('c_mobile', '!=', '')
-            ->get(['c_mobile', 'c_fname', 'c_lname', 'c_username', 'c_date_started'])
+            ->get(['c_mobile', 'c_fname', 'c_mname', 'c_lname', 'c_username', 'c_date_started'])
             ->map(function (Customer $customer): array {
                 $phone = $this->normalizePhoneNumber((string) ($customer->c_mobile ?? ''));
                 $firstName = trim((string) ($customer->c_fname ?? ''));
+                $middleName = trim((string) ($customer->c_mname ?? ''));
                 $lastName = trim((string) ($customer->c_lname ?? ''));
-                $fullName = trim($firstName . ' ' . $lastName);
+                $fullName = trim(implode(' ', array_filter([$firstName, $middleName, $lastName])));
                 $username = trim((string) ($customer->c_username ?? ''));
                 $registeredAt = $customer->c_date_started ? Carbon::parse($customer->c_date_started)->toDateString() : '';
 
@@ -237,6 +245,7 @@ class AdminSmsBlastController extends Controller
                     'phone' => $phone,
                     'name' => $fullName !== '' ? $fullName : ($username !== '' ? $username : 'Customer'),
                     'first_name' => $firstName !== '' ? $firstName : 'Customer',
+                    'middle_name' => $middleName,
                     'last_name' => $lastName,
                     'username' => $username !== '' ? $username : 'member',
                     'registered_at' => $registeredAt,
@@ -249,7 +258,7 @@ class AdminSmsBlastController extends Controller
     }
 
     /**
-     * @param array{phone:string,name:string,first_name:string,last_name:string,username:string,registered_at:string} $recipient
+     * @param array{phone:string,name:string,first_name:string,middle_name?:string,last_name:string,username:string,registered_at:string} $recipient
      * @return array<string,string>
      */
     private function buildPersonalizationVariables(array $recipient): array
@@ -259,6 +268,7 @@ class AdminSmsBlastController extends Controller
         return [
             'customer_name' => (string) ($recipient['name'] ?? 'Customer'),
             'first_name' => (string) ($recipient['first_name'] ?? 'Customer'),
+            'middle_name' => (string) ($recipient['middle_name'] ?? ''),
             'last_name' => (string) ($recipient['last_name'] ?? ''),
             'username' => (string) ($recipient['username'] ?? 'member'),
             'customer_email' => '',
@@ -296,29 +306,75 @@ class AdminSmsBlastController extends Controller
         return in_array($actor->user_level_id, $allowedLevels);
     }
 
-    private function getRecipientContacts(string $type): array
+    private function getRecipientContacts(string $type, string $search = ''): array
     {
         if ($type !== 'members') {
             $type = 'members';
         }
 
+        $search = trim($search);
+        $searchTerms = collect(preg_split('/\s+/', mb_strtolower($search, 'UTF-8')) ?: [])
+            ->filter(fn (string $term) => $term !== '')
+            ->values();
+        $searchDigits = preg_replace('/[^0-9]/', '', $search) ?: '';
+        $searchPhoneCandidates = collect([
+            $searchDigits,
+            str_starts_with($searchDigits, '0') ? '63' . substr($searchDigits, 1) : null,
+            str_starts_with($searchDigits, '63') ? '0' . substr($searchDigits, 2) : null,
+            str_starts_with($searchDigits, '63') ? substr($searchDigits, 2) : null,
+        ])->filter(fn ($value): bool => is_string($value) && $value !== '')->unique()->values();
+
         return Customer::query()
             ->whereNotNull('c_mobile')
             ->where('c_mobile', '!=', '')
-            ->get(['c_mobile', 'c_fname', 'c_lname', 'c_username'])
+            ->get(['c_mobile', 'c_fname', 'c_mname', 'c_lname', 'c_username'])
             ->map(function (Customer $customer): array {
                 $phone = $this->normalizePhoneNumber((string) ($customer->c_mobile ?? ''));
                 $firstName = trim((string) ($customer->c_fname ?? ''));
+                $middleName = trim((string) ($customer->c_mname ?? ''));
                 $lastName = trim((string) ($customer->c_lname ?? ''));
-                $fullName = trim($firstName . ' ' . $lastName);
+                $fullName = trim(implode(' ', array_filter([$firstName, $middleName, $lastName])));
                 $username = trim((string) ($customer->c_username ?? ''));
 
                 return [
                     'phone' => $phone,
                     'name' => $fullName !== '' ? $fullName : ($username !== '' ? $username : 'Customer'),
+                    'first_name' => $firstName,
+                    'middle_name' => $middleName,
+                    'last_name' => $lastName,
+                    'username' => $username,
                 ];
             })
             ->filter(fn (array $row) => $row['phone'] !== '')
+            ->filter(function (array $row) use ($searchTerms, $searchPhoneCandidates): bool {
+                if ($searchTerms->isEmpty() && $searchPhoneCandidates->isEmpty()) {
+                    return true;
+                }
+
+                $searchable = mb_strtolower(trim(implode(' ', array_filter([
+                    (string) ($row['phone'] ?? ''),
+                    (string) ($row['name'] ?? ''),
+                    (string) ($row['first_name'] ?? ''),
+                    (string) ($row['middle_name'] ?? ''),
+                    (string) ($row['last_name'] ?? ''),
+                    (string) ($row['username'] ?? ''),
+                ]))), 'UTF-8');
+
+                $matchesText = $searchTerms->contains(fn (string $term): bool => str_contains($searchable, $term));
+                $phone = (string) ($row['phone'] ?? '');
+                $phoneVariants = collect([
+                    $phone,
+                    str_starts_with($phone, '63') ? '0' . substr($phone, 2) : null,
+                    str_starts_with($phone, '63') ? substr($phone, 2) : null,
+                ])->filter(fn ($value): bool => is_string($value) && $value !== '');
+                $matchesPhone = $searchPhoneCandidates->contains(
+                    fn (string $candidate): bool => $phoneVariants->contains(
+                        fn (string $variant): bool => str_contains($variant, $candidate)
+                    )
+                );
+
+                return $matchesText || $matchesPhone;
+            })
             ->unique('phone')
             ->values()
             ->all();
