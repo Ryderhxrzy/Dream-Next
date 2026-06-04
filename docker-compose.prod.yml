@@ -5,7 +5,7 @@ services:
       dockerfile: docker/backend.prod.Dockerfile
     restart: unless-stopped
     mem_limit: 1g
-    environment:
+    environment: &backend-env
       APP_NAME: "${APP_NAME:-AF Home}"
       APP_ENV: production
       APP_KEY: "${APP_KEY:-}"
@@ -20,6 +20,7 @@ services:
       DB_PASSWORD: "${DB_PASSWORD:-}"
       SESSION_DRIVER: "${SESSION_DRIVER:-database}"
       QUEUE_CONNECTION: "${QUEUE_CONNECTION:-database}"
+      DB_QUEUE_RETRY_AFTER: "${DB_QUEUE_RETRY_AFTER:-3600}"
       CACHE_STORE: "${CACHE_STORE:-database}"
       BROADCAST_CONNECTION: "${BROADCAST_CONNECTION:-log}"
       FILESYSTEM_DISK: "${FILESYSTEM_DISK:-local}"
@@ -153,6 +154,26 @@ services:
       MOBILE_PAYMENT_CANCEL_URL: "${MOBILE_PAYMENT_CANCEL_URL:-}"
     depends_on:
       - redis
+    networks:
+      - dokploy-network
+      - default
+
+  # Queue worker — processes database-queued jobs (scheduled + "send now"
+  # announcement blasts, notifications). WORKER_MODE=true skips migrations and
+  # cache clears so its periodic --max-time restarts never disturb the web app.
+  worker:
+    build:
+      context: .
+      dockerfile: docker/backend.prod.Dockerfile
+    restart: unless-stopped
+    mem_limit: 768m
+    environment:
+      <<: *backend-env
+      WORKER_MODE: "true"
+    command: ["php", "artisan", "queue:work", "database", "--queue=default", "--sleep=3", "--tries=3", "--timeout=3000", "--max-time=3600", "--memory=512", "--backoff=10"]
+    depends_on:
+      - redis
+      - backend
     networks:
       - dokploy-network
       - default

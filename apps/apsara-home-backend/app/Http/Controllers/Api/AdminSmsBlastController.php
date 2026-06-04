@@ -78,6 +78,22 @@ class AdminSmsBlastController extends Controller
                 ], 202);
             }
 
+            // "Send now" → dispatch to the queue so the request returns instantly
+            // and the worker sends in the background. Prevents request timeouts /
+            // OOM on large recipient lists.
+            SendSmsBlastJob::dispatch(
+                subject: $subject,
+                body: $body,
+                recipientRows: $recipientRows,
+                senderName: 'AFHome'
+            )->onConnection('database');
+
+            return response()->json([
+                'message' => 'SMS announcement is being sent in the background.',
+                'queued' => true,
+                'recipient_count' => count($recipientRows),
+            ], 202);
+
             $sentCount = 0;
             $failedCount = 0;
             $failedPhones = [];
