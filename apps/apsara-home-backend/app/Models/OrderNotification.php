@@ -175,12 +175,57 @@ class OrderNotification extends Model
         ]);
 
         if ($notifications->isEmpty()) {
-            Log::warning('No parent notifications found for checkout_id', [
+            Log::warning('No parent notifications found for checkout_id, checking if order exists', [
                 'checkout_id' => $checkoutId,
-                'all_notifications_count' => self::query()->count(),
-                'sample_checkout_ids' => self::query()->limit(3)->pluck('on_checkout_id')->toArray(),
             ]);
-            return;
+
+            // Try to create the notification if the order exists but notification doesn't
+            $order = CheckoutHistory::query()
+                ->where('ch_checkout_id', $checkoutId)
+                ->first();
+
+            if ($order && $order->ch_customer_id) {
+                Log::info('Order exists without notification, creating notification now', [
+                    'checkout_id' => $checkoutId,
+                    'customer_id' => $order->ch_customer_id,
+                    'order_status' => $order->ch_status,
+                ]);
+
+                // Create the missing parent notification
+                $groupId = 'order_' . $checkoutId;
+                $notification = self::createParentNotification(
+                    (int) $order->ch_customer_id,
+                    $checkoutId,
+                    $groupId,
+                    [
+                        'title' => 'Order Placed ✓',
+                        'message' => 'Your order has been created',
+                        'product_name' => $order->ch_product_name,
+                        'product_image' => $order->ch_product_image,
+                        'amount' => $order->ch_amount,
+                        'payment_method' => $order->ch_payment_method,
+                        'href' => 'purchases://pending/' . $checkoutId,
+                    ]
+                );
+
+                Log::info('Notification created successfully', [
+                    'notification_id' => $notification->on_id,
+                    'checkout_id' => $checkoutId,
+                ]);
+
+                // Re-fetch the notification to update it
+                $notifications = self::query()
+                    ->where('on_checkout_id', $checkoutId)
+                    ->orderByDesc('on_is_parent')
+                    ->orderByDesc('on_id')
+                    ->get();
+            } else {
+                Log::warning('No order found for checkout_id either', [
+                    'checkout_id' => $checkoutId,
+                    'all_notifications_count' => self::query()->count(),
+                ]);
+                return;
+            }
         }
 
         // Track customer IDs for broadcasting

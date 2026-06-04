@@ -66,6 +66,7 @@ class MobilePaymentController extends Controller
             'platform' => 'required|in:ios,android',
             'app_version' => 'required|string|max:50',
             'device_id' => 'nullable|string|max:255',
+            'payment_source' => 'nullable|in:app,browser', // 'app' for in-app payment, 'browser' for web browser payment
 
             // Customer info
             'customer' => 'nullable|array',
@@ -526,11 +527,24 @@ class MobilePaymentController extends Controller
     {
         try {
             $paymongoConfig = $this->getPaymongoConfig($validated['payment_mode'] ?? null);
-            
+
             $secretKey = $paymongoConfig['secret_key'];
             if (!$secretKey) {
                 throw new \RuntimeException(sprintf('PayMongo %s secret key is missing.', $paymongoConfig['mode']));
             }
+
+            // Determine redirect URLs based on payment source (app vs browser)
+            $paymentSource = trim((string) ($validated['payment_source'] ?? 'app'));
+            $isAppPayment = $paymentSource === 'app';
+
+            // If from browser, use website URL; if from app, use deep link
+            $frontendUrl = env('FRONTEND_URL', 'https://afhome.ph');
+            $successUrl = $isAppPayment
+                ? config('app.mobile_payment_success_url', 'apsarahome://payment/success')
+                : $frontendUrl . '/checkout/success';
+            $cancelUrl = $isAppPayment
+                ? config('app.mobile_payment_cancel_url', 'apsarahome://payment/cancel')
+                : $frontendUrl . '/checkout/failed';
 
             $payload = [
                 'data' => [
@@ -543,8 +557,8 @@ class MobilePaymentController extends Controller
                             'description' => "Mobile Order: {$mobileOrderId}",
                         ]],
                         'payment_method_types' => $this->mapPaymentMethods($validated['payment_method'], $validated['online_banking_provider'] ?? null),
-                        'success_url' => config('app.mobile_payment_success_url', 'apsarahome://payment/success'),
-                        'cancel_url' => config('app.mobile_payment_cancel_url', 'apsarahome://payment/cancel'),
+                        'success_url' => $successUrl,
+                        'cancel_url' => $cancelUrl,
                         'description' => "Mobile Order: {$mobileOrderId}",
                     ],
                 ],
