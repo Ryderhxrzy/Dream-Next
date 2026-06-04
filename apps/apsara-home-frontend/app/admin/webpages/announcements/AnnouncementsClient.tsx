@@ -534,6 +534,27 @@ export default function AnnouncementsClient() {
         return
       }
 
+      // "Send now" is processed in the background by the queue worker — the
+      // request returns immediately so it never times out on large lists.
+      if (data?.queued) {
+        const count = Number(data?.recipient_count ?? 0)
+        toast.success(
+          count > 0
+            ? `Announcement is being sent to ${count} ${recipientUnitLabelPlural} in the background. It may take a few minutes.`
+            : 'Announcement is being sent in the background. It may take a few minutes.'
+        )
+        setLastSendResult(null)
+        setSelectedEmails([])
+        setRecipientSearch('')
+        if (!isEmailMode) {
+          setSmsMessage('')
+          setSmsCharacterCount(0)
+          setSmsWordCount(0)
+        }
+        setPreviewOpen(false)
+        return
+      }
+
       const sent = Number(data?.sent_count ?? 0)
       const failed = Number(data?.failed_count ?? 0)
       setLastSendResult({ sent, failed })

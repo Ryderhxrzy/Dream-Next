@@ -16,6 +16,12 @@ class SendEmailBlastJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    // Never auto-retry a blast: a partial run that gets retried would re-send to
+    // recipients who already received the email. Keep timeout below the queue's
+    // retry_after (3600) so the job is never re-queued while still running.
+    public int $tries = 1;
+    public int $timeout = 3000;
+
     /**
      * @param array<int, array{email:string,name:string,first_name:string,last_name:string,username:string,registered_at:string}> $recipientRows
      * @param array<int, string> $attachments

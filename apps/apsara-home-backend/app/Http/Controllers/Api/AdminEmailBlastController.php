@@ -109,6 +109,28 @@ class AdminEmailBlastController extends Controller
                 ], 202);
             }
 
+            // "Send now" with no file attachments → dispatch to the queue so the
+            // request returns instantly and the worker sends in the background.
+            // This prevents request timeouts / OOM on large recipient lists.
+            // Blasts WITH attachments fall through to the synchronous path below,
+            // because uploaded temp files do not survive into a queued job.
+            if (empty($attachments)) {
+                SendEmailBlastJob::dispatch(
+                    subject: $subject,
+                    body: $body,
+                    recipientRows: $recipientRows,
+                    brandName: 'AF Home',
+                    bannerImageBase64: $bannerImageBase64,
+                    attachments: []
+                )->onConnection('database');
+
+                return response()->json([
+                    'message' => 'Email announcement is being sent in the background.',
+                    'queued' => true,
+                    'recipient_count' => count($recipientRows),
+                ], 202);
+            }
+
             $sentCount = 0;
             $failedCount = 0;
             $failedEmails = [];
