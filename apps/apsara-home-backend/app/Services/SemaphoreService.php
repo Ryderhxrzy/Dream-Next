@@ -28,7 +28,9 @@ class SemaphoreService
                 ]);
             }
 
-            $response = Http::timeout(10)->post(self::SEMAPHORE_API_URL . '/messages', [
+            // Registration OTP is time-sensitive (user is waiting at signup on
+            // web, mobile, or webstore) — send via the priority route for speed.
+            $response = Http::timeout(10)->post(self::SEMAPHORE_API_URL . '/priority', [
                 'apikey' => $this->apiKey,
                 'number' => $this->normalizePhoneNumber($phoneNumber),
                 'message' => $message,
@@ -62,7 +64,46 @@ class SemaphoreService
     {
         $message = "AF Home Password Reset Code: {$otp}\nUse this code to reset your password. Do not share it with anyone.";
 
-        return $this->sendMessage($phoneNumber, $message, $senderName);
+        // OTPs are time-sensitive — send via the priority route for instant delivery.
+        return $this->sendPriorityMessage($phoneNumber, $message, $senderName);
+    }
+
+    /**
+     * Send an SMS through Semaphore's PRIORITY route. This bypasses the regular
+     * queue for near-instant delivery, but costs 2 credits per message (vs 1 for
+     * the regular route). Use ONLY for time-sensitive messages such as OTPs —
+     * never for bulk/marketing blasts.
+     */
+    public function sendPriorityMessage(string $phoneNumber, string $message, ?string $senderName = 'AFHome'): bool
+    {
+        try {
+            $response = Http::post(self::SEMAPHORE_API_URL . '/priority', [
+                'apikey' => $this->apiKey,
+                'number' => $this->normalizePhoneNumber($phoneNumber),
+                'message' => $message,
+                'sendername' => $senderName,
+            ]);
+
+            if ($response->successful()) {
+                Log::info('Semaphore priority message sent successfully', [
+                    'phone' => $this->maskPhoneNumber($phoneNumber),
+                ]);
+                return true;
+            }
+
+            Log::error('Semaphore priority message send failed', [
+                'phone' => $this->maskPhoneNumber($phoneNumber),
+                'status' => $response->status(),
+                'response' => $response->json(),
+            ]);
+            return false;
+        } catch (\Exception $e) {
+            Log::error('Semaphore priority message exception', [
+                'phone' => $this->maskPhoneNumber($phoneNumber),
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
     }
 
     public function sendMessage(string $phoneNumber, string $message, ?string $senderName = 'AFHome'): bool
