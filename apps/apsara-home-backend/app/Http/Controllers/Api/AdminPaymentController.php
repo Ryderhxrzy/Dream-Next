@@ -253,10 +253,94 @@ class AdminPaymentController extends Controller
         ]);
     }
 
+    public function voucherProductRules(Request $request)
+    {
+        $admin = $this->resolveAdmin($request);
+        if (!$admin) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        if (!Schema::hasTable('tbl_affiliate_voucher_product_rules')) {
+            return response()->json(['rules' => []]);
+        }
+
+        $rules = DB::table('tbl_affiliate_voucher_product_rules')
+            ->orderBy('avpr_product_id')
+            ->get()
+            ->map(fn ($row) => $this->formatVoucherProductRule($row))
+            ->values();
+
+        return response()->json(['rules' => $rules]);
+    }
+
+    public function updateVoucherProductRules(Request $request)
+    {
+        $admin = $this->resolveAdmin($request);
+        if (!$admin) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        if (!Schema::hasTable('tbl_affiliate_voucher_product_rules')) {
+            return response()->json(['message' => 'Voucher product rules table is not available.'], 422);
+        }
+
+        $validated = $request->validate([
+            'rules' => ['required', 'array'],
+            'rules.*.product_id' => ['required', 'integer', 'min:1'],
+            'rules.*.enabled' => ['required', 'boolean'],
+            'rules.*.max_discount' => ['nullable', 'numeric', 'min:0'],
+            'rules.*.min_spend' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        $now = now();
+        $saved = collect($validated['rules'])
+            ->map(function (array $rule) use ($now) {
+                $productId = (int) $rule['product_id'];
+                $payload = [
+                    'avpr_enabled' => (bool) $rule['enabled'],
+                    'avpr_max_discount' => array_key_exists('max_discount', $rule) && $rule['max_discount'] !== null
+                        ? round((float) $rule['max_discount'], 2)
+                        : null,
+                    'avpr_min_spend' => array_key_exists('min_spend', $rule) && $rule['min_spend'] !== null
+                        ? round((float) $rule['min_spend'], 2)
+                        : null,
+                    'updated_at' => $now,
+                ];
+
+                DB::table('tbl_affiliate_voucher_product_rules')->updateOrInsert(
+                    ['avpr_product_id' => $productId],
+                    array_merge($payload, ['created_at' => $now])
+                );
+
+                return DB::table('tbl_affiliate_voucher_product_rules')
+                    ->where('avpr_product_id', $productId)
+                    ->first();
+            })
+            ->filter()
+            ->map(fn ($row) => $this->formatVoucherProductRule($row))
+            ->values();
+
+        return response()->json([
+            'message' => 'Voucher product rules saved.',
+            'rules' => $saved,
+        ]);
+    }
+
     private function resolveAdmin(Request $request): ?Admin
     {
         $user = $request->user();
         return $user instanceof Admin ? $user : null;
+    }
+
+    private function formatVoucherProductRule(object $row): array
+    {
+        return [
+            'product_id' => (int) ($row->avpr_product_id ?? 0),
+            'enabled' => (bool) ($row->avpr_enabled ?? false),
+            'max_discount' => $row->avpr_max_discount !== null ? (float) $row->avpr_max_discount : null,
+            'min_spend' => $row->avpr_min_spend !== null ? (float) $row->avpr_min_spend : null,
+            'updated_at' => $row->updated_at ?? null,
+        ];
     }
 
     private function formatPaymentMethod(string $method): string

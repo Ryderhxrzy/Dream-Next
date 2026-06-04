@@ -44,6 +44,8 @@ export interface Product {
   avgRating?: number
   createdAt: string | null
   updatedAt: string | null
+  lastSoldAt?: string | null
+  isMoving?: boolean | null
 }
 
 export interface ProductVariant {

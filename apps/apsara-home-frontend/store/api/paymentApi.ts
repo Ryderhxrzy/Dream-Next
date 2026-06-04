@@ -78,6 +78,7 @@ export interface VerifyCheckoutSessionResponse {
 
 export interface ValidateVoucherResponse {
   valid: boolean
+  message?: string | null
   voucher: {
     id: number
     code: string
@@ -87,6 +88,12 @@ export interface ValidateVoucherResponse {
     expires_at?: string | null
   }
   discount: number
+  rule?: {
+    product_id: number
+    enabled: boolean
+    max_discount?: number | null
+    min_spend?: number | null
+  } | null
 }
 
 export type CustomerOrderStatus =
@@ -170,7 +177,7 @@ export const paymentApi = baseApi.injectEndpoints({
         }
       },
     }),
-    validateVoucher: builder.mutation<ValidateVoucherResponse, { code: string; subtotal?: number }>({
+    validateVoucher: builder.mutation<ValidateVoucherResponse, { code: string; subtotal?: number; product_id?: number | null }>({
       query: (body) => ({
         url: '/api/payments/validate-voucher',
         method: 'POST',

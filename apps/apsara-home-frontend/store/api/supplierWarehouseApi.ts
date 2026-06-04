@@ -29,6 +29,13 @@ export const supplierWarehouseApi = baseApi.injectEndpoints({
       }),
       providesTags: ['Suppliers'],
     }),
+    getAdminSupplierWarehouses: builder.query<SupplierWarehousesResponse, number>({
+      query: (supplierId) => ({
+        url: `/api/admin/suppliers/${supplierId}/warehouses`,
+        method: 'GET',
+      }),
+      providesTags: ['Suppliers'],
+    }),
     createSupplierWarehouse: builder.mutation<SupplierWarehouseResponse, FormData>({
       query: (body) => ({
         url: '/api/supplier/warehouse',
@@ -57,6 +64,7 @@ export const supplierWarehouseApi = baseApi.injectEndpoints({
 
 export const {
   useGetSupplierWarehousesQuery,
+  useGetAdminSupplierWarehousesQuery,
   useCreateSupplierWarehouseMutation,
   useUpdateSupplierWarehouseMutation,
   useDeleteSupplierWarehouseMutation,

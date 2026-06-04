@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import Image from 'next/image'
 import {
   ArrowLeft,
   CheckCheck,
@@ -34,6 +33,34 @@ import {
   type SupplierChatMessage,
 } from '@/libs/adminSupplierChat'
 import EmojiPicker from '@/components/ui/EmojiPicker'
+import LinkPreview from '@/components/ui/LinkPreview'
+
+function LogoCircle({
+  src,
+  alt,
+  className,
+  fallback,
+}: {
+  src: string
+  alt: string
+  className?: string
+  fallback: React.ReactNode
+}) {
+  const [errored, setErrored] = useState(false)
+
+  if (errored) return <>{fallback}</>
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      onError={() => setErrored(true)}
+      className={className}
+      loading="lazy"
+      referrerPolicy="no-referrer"
+    />
+  )
+}
 
 const AVATAR_COLORS = [
   'bg-rose-500',
@@ -56,6 +83,23 @@ function fileKind(file: File): FileKind {
   if (file.type.startsWith('image/')) return 'image'
   if (file.type.startsWith('video/')) return 'video'
   return 'other'
+}
+
+async function forceDownload(url: string, filename: string) {
+  try {
+    const res = await fetch(url)
+    const blob = await res.blob()
+    const blobUrl = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = blobUrl
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(blobUrl)
+  } catch {
+    window.open(url, '_blank')
+  }
 }
 
 type FileBadge = { letter: string; sub: string; colors: string }
@@ -91,11 +135,15 @@ function getFileBadge(file: File): FileBadge | null {
 function Avatar({
   label,
   color,
+  src,
+  alt,
   online,
   size = 'md',
 }: {
   label: string
   color: string
+  src?: string | null
+  alt?: string
   online?: boolean
   size?: 'sm' | 'md' | 'lg'
 }) {
@@ -104,8 +152,20 @@ function Avatar({
   const dotClass = size === 'lg' ? 'h-3 w-3' : 'h-2.5 w-2.5'
   return (
     <div className="relative shrink-0">
-      <div className={`${sizeClass} ${color} flex items-center justify-center rounded-full font-bold text-white`}>
-        {label}
+      <div className={`${sizeClass} ${color} overflow-hidden rounded-full font-bold text-white`}>
+        {src ? (
+          <img
+            src={src}
+            alt={alt ?? label}
+            className="h-full w-full object-cover"
+            loading="lazy"
+            referrerPolicy="no-referrer"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
+            {label}
+          </div>
+        )}
       </div>
       {online !== undefined && (
         <span
@@ -175,6 +235,24 @@ function getConversationTitle(conversation: SupplierChatConversation): string {
   )
 }
 
+function getConversationPreview(conversation: SupplierChatConversation): string {
+  const lastMessage = conversation.last_message
+  if (!lastMessage) return 'No messages yet'
+
+  const body = lastMessage.message.trim()
+  const senderName =
+    lastMessage.sender_type === 'admin'
+      ? 'You'
+      : conversation.supplier_user?.name?.trim() || conversation.counterpart_label || 'Supplier'
+  const senderPrefix =
+    lastMessage.sender_type === 'admin'
+      ? 'You sent'
+      : `${senderName} sent`
+
+  if (!body) return `${senderPrefix} an attachment`
+  return `${senderPrefix}: ${body}`
+}
+
 function getInitials(value: string): string {
   const parts = value.split(' ').map((p) => p.trim()).filter(Boolean)
   if (parts.length === 0) return 'SP'
@@ -202,7 +280,22 @@ export default function AdminChatPage() {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [openPanel, setOpenPanel] = useState<'media' | 'files' | 'links' | null>(null)
+
+  const [mediaModal, setMediaModal] = useState<{
+    open: boolean
+    url: string | null
+    type: 'image' | 'video' | null
+    name?: string
+  }>({ open: false, url: null, type: null })
+
+  const closeMediaModal = () => setMediaModal({ open: false, url: null, type: null })
+
+  const openMediaModal = (next: { url: string; type: 'image' | 'video'; name?: string }) =>
+    setMediaModal({ open: true, url: next.url, type: next.type, name: next.name })
+
   const conversationCacheRef = useRef<Map<number, SupplierChatConversation>>(new Map())
+  const activeIdRef = useRef<number | null>(null)
+  const selectionRequestRef = useRef(0)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const attachmentInputRef = useRef<HTMLInputElement>(null)
   const imageInputRef = useRef<HTMLInputElement>(null)
@@ -235,6 +328,10 @@ export default function AdminChatPage() {
 
   const activeMessages = activeConversation?.messages ?? []
 
+  useEffect(() => {
+    activeIdRef.current = activeId
+  }, [activeId])
+
   const filteredMessages = useMemo(() => {
     const query = messageSearch.trim().toLowerCase()
     if (!query) return activeMessages
@@ -259,9 +356,11 @@ export default function AdminChatPage() {
     try {
       setIsLoading(true)
       setError(null)
+      const requestId = ++selectionRequestRef.current
       const items = await fetchAdminSupplierChatConversations()
       setConversations(items)
-      const nextActiveId = preferredId ?? activeId ?? items[0]?.id ?? null
+      const nextActiveId = preferredId ?? activeIdRef.current ?? items[0]?.id ?? null
+      if (requestId !== selectionRequestRef.current) return
       if (nextActiveId !== null) {
         void selectConversation(nextActiveId, items)
       } else {
@@ -282,6 +381,7 @@ export default function AdminChatPage() {
     conversationId: number,
     sourceConversations = conversations,
   ) => {
+    const requestId = ++selectionRequestRef.current
     setActiveId(conversationId)
     setIsMobileOpen(true)
     setOpenPanel(null)
@@ -303,16 +403,19 @@ export default function AdminChatPage() {
 
     try {
       const detailed = await fetchAdminSupplierChatConversation(conversationId)
+      if (requestId !== selectionRequestRef.current) return
       const full = { ...detailed, messages: detailed.messages ?? [] }
       conversationCacheRef.current.set(conversationId, full)
       setActiveConversation(full)
     } catch (fetchError) {
+      if (requestId !== selectionRequestRef.current) return
       if (!cached) {
         const summary = sourceConversations.find((c) => c.id === conversationId) ?? null
         setActiveConversation(summary ? { ...summary, messages: summary.messages ?? [] } : null)
       }
       setError(fetchError instanceof Error ? fetchError.message : 'Failed to load conversation.')
     } finally {
+      if (requestId !== selectionRequestRef.current) return
       setIsLoadingMessages(false)
     }
   }
@@ -323,11 +426,21 @@ export default function AdminChatPage() {
   }, [])
 
   useEffect(() => {
+    if (!mediaModal.open) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeMediaModal()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [mediaModal.open])
+
+  useEffect(() => {
     if (!activeId) return
     const poll = async () => {
       if (typeof document !== 'undefined' && document.hidden) return
       try {
         const detailed = await fetchAdminSupplierChatConversation(activeId)
+        if (activeIdRef.current !== activeId) return
         const full = { ...detailed, messages: detailed.messages ?? [] }
         conversationCacheRef.current.set(activeId, full)
         setActiveConversation((prev) => {
@@ -592,26 +705,40 @@ export default function AdminChatPage() {
                   const isActive = conversation.id === activeId
                   const avatarColor = AVATAR_COLORS[index % AVATAR_COLORS.length]
                   const displayName = getConversationTitle(conversation)
-                  const preview =
-                    conversation.last_message?.message ?? conversation.subject ?? 'No messages yet'
+                  const preview = getConversationPreview(conversation)
                   return (
                     <button
                       key={conversation.id}
                       onClick={() => void selectConversation(conversation.id, conversations)}
-                      className={`flex w-full items-center gap-3 px-4 py-3.5 text-left transition ${
+                      className={`relative flex w-full items-center gap-3 px-4 py-3.5 text-left transition ${
                         isActive
                           ? 'bg-indigo-50 dark:bg-indigo-500/10'
-                          : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                          : conversation.unread_count > 0
+                            ? 'bg-indigo-50/40 hover:bg-indigo-50 dark:bg-indigo-500/5 dark:hover:bg-indigo-500/10'
+                            : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'
                       }`}
                     >
+                      {/* Unread left accent bar */}
+                      {conversation.unread_count > 0 && !isActive && (
+                        <span className="absolute left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r-full bg-indigo-500" />
+                      )}
+
+                      {/* Avatar */}
                       {conversation.company?.logo ? (
-                        <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-slate-200 dark:border-slate-700">
-                          <Image
-                            src={conversation.company.logo}
-                            alt={displayName}
-                            fill
-                            className="object-cover"
-                          />
+                        <div className="relative shrink-0">
+                          <div className="h-10 w-10 overflow-hidden rounded-full border border-slate-200 dark:border-slate-700">
+                            <LogoCircle
+                              src={conversation.company.logo}
+                              alt={displayName}
+                              className="h-full w-full rounded-full object-contain bg-white p-1 dark:bg-slate-900"
+                              fallback={
+                                <Avatar
+                                  label={getInitials(displayName)}
+                                  color={avatarColor}
+                                />
+                              }
+                            />
+                          </div>
                           <span
                             className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white dark:border-slate-900 ${
                               conversation.status !== 'resolved' ? 'bg-emerald-500' : 'bg-slate-300'
@@ -625,29 +752,36 @@ export default function AdminChatPage() {
                           online={conversation.status !== 'resolved'}
                         />
                       )}
+
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-2">
                           <span
-                            className={`truncate text-[13px] font-semibold ${
+                            className={`truncate text-[13px] ${
                               isActive
-                                ? 'text-indigo-700 dark:text-indigo-300'
-                                : 'text-slate-800 dark:text-slate-100'
+                                ? 'font-bold text-indigo-700 dark:text-indigo-300'
+                                : conversation.unread_count > 0
+                                  ? 'font-bold text-slate-900 dark:text-white'
+                                  : 'font-semibold text-slate-700 dark:text-slate-300'
                             }`}
                           >
                             {displayName}
                           </span>
-                          <span className="shrink-0 text-[10px] text-slate-400">
-                            {formatRelativeTime(
-                              conversation.last_message_at ?? conversation.updated_at,
-                            )}
+                          <span className={`shrink-0 text-[10px] ${conversation.unread_count > 0 && !isActive ? 'font-semibold text-indigo-500' : 'text-slate-400'}`}>
+                            {formatRelativeTime(conversation.last_message_at ?? conversation.updated_at)}
                           </span>
                         </div>
                         <div className="mt-0.5 flex items-center justify-between gap-2">
-                          <p className="truncate text-[12px] text-slate-500 dark:text-slate-400">
+                          <p className={`truncate text-[12px] ${
+                            conversation.unread_count > 0 && !isActive
+                              ? 'font-semibold text-slate-700 dark:text-slate-200'
+                              : 'text-slate-500 dark:text-slate-400'
+                          }`}>
                             {preview}
                           </p>
                           {conversation.unread_count > 0 && (
-                            <span className="h-2 w-2 shrink-0 rounded-full bg-indigo-600" />
+                            <span className="ml-2 inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 px-1.5 text-[10px] font-bold text-white shadow-sm">
+                              {conversation.unread_count > 99 ? '99+' : conversation.unread_count}
+                            </span>
                           )}
                         </div>
                       </div>
@@ -687,13 +821,21 @@ export default function AdminChatPage() {
                   <ArrowLeft className="h-4 w-4" />
                 </button>
                 {companyLogo ? (
-                  <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full border border-slate-200 dark:border-slate-700">
-                    <Image
-                      src={companyLogo}
-                      alt={activeConversationTitle}
-                      fill
-                      className="object-cover"
-                    />
+                  <div className="relative h-11 w-11 shrink-0">
+                    <div className="h-11 w-11 overflow-hidden rounded-full border border-slate-200 dark:border-slate-700">
+                      <LogoCircle
+                        src={companyLogo}
+                        alt={activeConversationTitle}
+                        className="h-full w-full rounded-full object-contain bg-white p-1 dark:bg-slate-900"
+                        fallback={
+                          <Avatar
+                            label={getInitials(activeConversationTitle)}
+                            color={AVATAR_COLORS[0]}
+                            size="lg"
+                          />
+                        }
+                      />
+                    </div>
                     {activeStatus !== 'resolved' && (
                       <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-emerald-500 dark:border-slate-900" />
                     )}
@@ -730,7 +872,7 @@ export default function AdminChatPage() {
               {/* Messages */}
               <div
                 ref={messagesContainerRef}
-                className="flex-1 overflow-y-auto px-5 py-5"
+                className="flex-1 overflow-y-auto px-5 py-5 scrollbar-none [&::-webkit-scrollbar]:hidden"
               >
                 {isLoadingMessages ? (
                   <div className="flex flex-col gap-4">
@@ -777,37 +919,122 @@ export default function AdminChatPage() {
                               key={message.id}
                               className={`flex ${mine ? 'justify-end' : 'justify-start'}`}
                             >
-                              {!mine && <Avatar label="SP" color="bg-slate-500" size="sm" />}
+                              {!mine && (
+                                <Avatar
+                                  label={getInitials(activeConversationTitle)}
+                                  color="bg-slate-500"
+                                  src={companyLogo}
+                                  alt={activeConversationTitle}
+                                  size="sm"
+                                />
+                              )}
                               <div className={`ml-2 max-w-[72%] ${mine ? 'ml-0 mr-0' : ''}`}>
                                 {/* Attachment */}
                                 {message.attachment_url && (
                                   <div className="mb-1 overflow-hidden rounded-2xl">
                                     {message.attachment_type === 'image' ? (
-                                      <a href={message.attachment_url} target="_blank" rel="noreferrer">
-                                        <img src={message.attachment_url} alt={message.attachment_name ?? 'image'} className="max-h-60 w-auto rounded-2xl object-cover" />
-                                      </a>
+                                      <div className="group relative inline-block">
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            openMediaModal({
+                                              url: message.attachment_url ?? '',
+                                              type: 'image',
+                                              name: message.attachment_name ?? undefined,
+                                            })
+                                          }
+                                          className="block overflow-hidden rounded-2xl"
+                                        >
+                                          <img
+                                            src={message.attachment_url}
+                                            alt={message.attachment_name ?? 'image'}
+                                            className="max-h-64 max-w-[280px] w-auto object-contain"
+                                          />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => void forceDownload(message.attachment_url ?? '', message.attachment_name ?? 'image')}
+                                          className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition hover:bg-black/70 group-hover:opacity-100"
+                                          title="Download image"
+                                        >
+                                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 4v11" />
+                                          </svg>
+                                        </button>
+                                      </div>
                                     ) : message.attachment_type === 'video' ? (
-                                      <video src={message.attachment_url} controls className="max-h-60 w-full rounded-2xl" />
+                                      <div className="group relative inline-block">
+                                        <video
+                                          src={message.attachment_url}
+                                          controls
+                                          preload="metadata"
+                                          className="max-h-64 max-w-[280px] w-auto rounded-2xl object-contain"
+                                        />
+                                        <div className="absolute right-2 top-2 flex gap-1.5 opacity-0 transition group-hover:opacity-100">
+                                          <button
+                                            type="button"
+                                            onClick={() => void forceDownload(message.attachment_url ?? '', message.attachment_name ?? 'video')}
+                                            className="flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white transition hover:bg-black/70"
+                                            title="Download video"
+                                          >
+                                            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 4v11" />
+                                            </svg>
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              openMediaModal({
+                                                url: message.attachment_url ?? '',
+                                                type: 'video',
+                                                name: message.attachment_name ?? undefined,
+                                              })
+                                            }
+                                            className="flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white transition hover:bg-black/70"
+                                            title="Open in fullscreen"
+                                          >
+                                            <ExternalLink className="h-3.5 w-3.5" />
+                                          </button>
+                                        </div>
+                                      </div>
                                     ) : (
-                                      <a href={message.attachment_url} target="_blank" rel="noreferrer" className={`flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium ${mine ? 'bg-indigo-700 text-white' : 'bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-100'}`}>
+                                      <button
+                                        type="button"
+                                        onClick={() => void forceDownload(message.attachment_url ?? '', message.attachment_name ?? 'file')}
+                                        className={`flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium ${
+                                          mine
+                                            ? 'bg-indigo-700 text-white'
+                                            : 'bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-100'
+                                        }`}
+                                      >
                                         <FileText className="h-4 w-4 shrink-0" />
                                         <span className="truncate">{message.attachment_name ?? 'Download file'}</span>
-                                      </a>
+                                      </button>
                                     )}
                                   </div>
                                 )}
-                                {/* Text */}
-                                {message.message && (
-                                  <div
-                                    className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-                                      mine
-                                        ? 'rounded-br-md bg-indigo-600 text-white'
-                                        : 'rounded-bl-md bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100'
-                                    }`}
-                                  >
-                                    {message.message}
-                                  </div>
-                                )}
+                                {/* Text / Link preview */}
+                                {message.message && (() => {
+                                  const urlMatch = message.message.match(/^https?:\/\/\S+$/)
+                                  if (urlMatch) {
+                                    return (
+                                      <div className="max-w-[280px]">
+                                        <LinkPreview url={urlMatch[0]} mine={mine} />
+                                      </div>
+                                    )
+                                  }
+                                  return (
+                                    <div
+                                      className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                                        mine
+                                          ? 'rounded-br-md bg-indigo-600 text-white'
+                                          : 'rounded-bl-md bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100'
+                                      }`}
+                                    >
+                                      {message.message}
+                                    </div>
+                                  )
+                                })()}
                                 <div
                                   className={`mt-1 flex items-center gap-1 ${
                                     mine ? 'justify-end' : 'justify-start'
@@ -997,8 +1224,17 @@ export default function AdminChatPage() {
             <div className="flex shrink-0 flex-col items-center border-b border-slate-100 pb-5 text-center dark:border-slate-800">
               <div className="relative">
                 {companyLogo ? (
-                  <div className="relative h-20 w-20 overflow-hidden rounded-full border border-slate-200 bg-white dark:border-slate-700">
-                    <Image src={companyLogo} alt={companyName} fill className="object-cover" />
+                  <div className="h-20 w-20 overflow-hidden rounded-full border border-slate-200 bg-white dark:border-slate-700">
+                    <LogoCircle
+                      src={companyLogo}
+                      alt={companyName}
+                      className="h-full w-full rounded-full object-contain bg-white p-1 dark:bg-slate-900"
+                      fallback={
+                        <div className="flex h-full w-full items-center justify-center rounded-full bg-indigo-600 text-2xl font-bold text-white">
+                          {getInitials(companyName)}
+                        </div>
+                      }
+                    />
                   </div>
                 ) : (
                   <div className="flex h-20 w-20 items-center justify-center rounded-full bg-indigo-600 text-2xl font-bold text-white">
@@ -1091,20 +1327,40 @@ export default function AdminChatPage() {
                           <p className="py-4 text-center text-xs text-slate-400">No media shared yet.</p>
                         ) : (
                           <div className="grid grid-cols-3 gap-1.5">
-                            {mediaItems.map((m) => (
-                              <a key={m.id} href={m.attachment_url ?? '#'} target="_blank" rel="noreferrer" className="group relative block aspect-square overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800">
-                                {m.attachment_type === 'image' ? (
-                                  <img src={m.attachment_url ?? ''} alt={m.attachment_name ?? ''} className="h-full w-full object-cover transition group-hover:scale-105" />
-                                ) : (
-                                  <>
-                                    <video src={m.attachment_url ?? ''} className="h-full w-full object-cover" muted preload="metadata" />
-                                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                                      <Play className="h-5 w-5 fill-white text-white drop-shadow" />
-                                    </div>
-                                  </>
-                                )}
-                              </a>
-                            ))}
+                            {mediaItems.map((m) => {
+                              const url = m.attachment_url ?? ''
+                              const type = m.attachment_type === 'video' ? 'video' : 'image'
+                              return (
+                                <button
+                                  key={m.id}
+                                  type="button"
+                                  onClick={() => setMediaModal({ open: true, url, type, name: m.attachment_name ?? undefined })}
+                                  className="group relative aspect-square overflow-hidden rounded-xl bg-slate-100 text-left dark:bg-slate-800"
+                                >
+                                  <div className="h-full w-full">
+                                    {type === 'image' ? (
+                                      <img
+                                        src={url}
+                                        alt={m.attachment_name ?? ''}
+                                        className="h-full w-full object-cover transition group-hover:scale-105"
+                                      />
+                                    ) : (
+                                      <>
+                                        <video
+                                          src={url}
+                                          className="h-full w-full object-cover"
+                                          muted
+                                          preload="metadata"
+                                        />
+                                        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                          <Play className="h-5 w-5 fill-white text-white drop-shadow" />
+                                        </div>
+                                      </>
+                                    )}
+                                  </div>
+                                </button>
+                              )
+                            })}
                           </div>
                         )
                       )}
@@ -1114,16 +1370,24 @@ export default function AdminChatPage() {
                           <p className="py-4 text-center text-xs text-slate-400">No files shared yet.</p>
                         ) : (
                           <div className="space-y-1.5">
-                            {fileItems.map((m) => (
-                              <a key={m.id} href={m.attachment_url ?? '#'} target="_blank" rel="noreferrer"
-                                className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-white px-3 py-2.5 text-sm transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800">
-                                <FileText className="h-4 w-4 shrink-0 text-indigo-500" />
-                                <span className="min-w-0 flex-1 truncate text-[12px] font-medium text-slate-700 dark:text-slate-200">
-                                  {m.attachment_name ?? 'File'}
-                                </span>
-                                <ExternalLink className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                              </a>
-                            ))}
+                            {fileItems.map((m) => {
+                              const href = m.attachment_url ?? ''
+                              const fileName = m.attachment_name ?? undefined
+                              return (
+                                <button
+                                  key={m.id}
+                                  type="button"
+                                  onClick={() => void forceDownload(href, fileName ?? 'file')}
+                                  className="flex w-full items-center gap-2.5 rounded-xl border border-slate-100 bg-white px-3 py-2.5 text-sm transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800"
+                                >
+                                  <FileText className="h-4 w-4 shrink-0 text-indigo-500" />
+                                  <span className="min-w-0 flex-1 truncate text-left text-[12px] font-medium text-slate-700 dark:text-slate-200">
+                                    {m.attachment_name ?? 'File'}
+                                  </span>
+                                  <ExternalLink className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                                </button>
+                              )
+                            })}
                           </div>
                         )
                       )}
@@ -1196,6 +1460,65 @@ export default function AdminChatPage() {
             </div>
           </div>
         </aside>
+
+        {/* Media modal */}
+        {mediaModal.open && mediaModal.url && mediaModal.type && (
+          <div
+            className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/70 p-4"
+            role="dialog"
+            aria-modal="true"
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) setMediaModal({ open: false, url: null, type: null })
+            }}
+          >
+            <div className="relative w-full max-w-3xl rounded-2xl bg-slate-950 shadow-xl">
+              {/* Top bar */}
+              <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+                <p className="truncate text-sm font-medium text-white/80">
+                  {mediaModal.name ?? 'Media'}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void forceDownload(mediaModal.url ?? '', mediaModal.name ?? 'file')}
+                    className="flex items-center gap-1.5 rounded-xl bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/20"
+                    title="Download"
+                  >
+                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 4v11" />
+                    </svg>
+                    Download
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMediaModal({ open: false, url: null, type: null })}
+                    className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 text-white transition hover:bg-white/20"
+                    aria-label="Close"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex w-full items-center justify-center p-2">
+                {mediaModal.type === 'image' ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={mediaModal.url}
+                    alt={mediaModal.name ?? 'Media'}
+                    className="max-h-[80vh] w-full object-contain"
+                  />
+                ) : (
+                  <video
+                    src={mediaModal.url}
+                    controls
+                    className="max-h-[80vh] w-full object-contain"
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

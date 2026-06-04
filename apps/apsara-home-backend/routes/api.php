@@ -442,6 +442,7 @@ Route::get('/admin/webpages/adds-content', [AddsContentController::class, 'index
     Route::get('/admin/suppliers/stats', [SupplierController::class, 'stats']);
     Route::get('/admin/suppliers', [SupplierController::class, 'index']);
     Route::get('/admin/suppliers/{id}/categories', [SupplierController::class, 'categories']);
+    Route::get('/admin/suppliers/{id}/warehouses', [SupplierWarehouseController::class, 'adminIndex']);
     Route::get('/admin/supplier-users', [SupplierUserController::class, 'index']);
     Route::post('/admin/supplier-users', [SupplierUserController::class, 'store']);
     Route::put('/admin/supplier-users/{id}', [SupplierUserController::class, 'update']);
@@ -527,6 +528,8 @@ Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_a
 
 Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_admin,admin,accounting,finance_officer'])->group(function () {
     Route::get('/admin/payments/overview', [AdminPaymentController::class, 'overview']);
+    Route::get('/admin/payments/voucher-product-rules', [AdminPaymentController::class, 'voucherProductRules']);
+    Route::put('/admin/payments/voucher-product-rules', [AdminPaymentController::class, 'updateVoucherProductRules']);
     Route::get('/admin/encashment', [AdminEncashmentController::class, 'index']);
     Route::get('/admin/encashment/vouchers/all', [AdminEncashmentController::class, 'allAffiliateVouchers']);
     Route::patch('/admin/encashment/{id}/approve', [AdminEncashmentController::class, 'approve']);

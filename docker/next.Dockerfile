@@ -9,11 +9,11 @@ RUN corepack enable && corepack prepare pnpm@11.3.0 --activate
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/apsara-home-frontend/package.json apps/apsara-home-frontend/package.json
 COPY apps/Dreambuild-Landing-Page/package.json apps/Dreambuild-Landing-Page/package.json
-COPY apps/Apsara-Home-Mobile/package.json apps/Apsara-Home-Mobile/package.json
 COPY apps/apsara-home-backend/package.json apps/apsara-home-backend/package.json
 COPY apps/community-backend/package.json apps/community-backend/package.json
+COPY apps/community-frontend/package.json apps/community-frontend/package.json
 
-RUN CI=true pnpm install --frozen-lockfile --filter apsara-home-frontend --filter dreambuild --filter community-backend
+RUN CI=true pnpm install --frozen-lockfile --filter apsara-home-frontend --filter dreambuild --filter community-backend --filter community-frontend
 
 COPY . .
 

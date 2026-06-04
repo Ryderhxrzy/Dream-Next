@@ -1537,7 +1537,7 @@ class ProductController extends Controller
         }
     }
 
-    private function mapProduct(Product $p, int $soldCount = 0, float $avgRating = 0.0): array
+    private function mapProduct(Product $p, int $soldCount = 0, float $avgRating = 0.0, ?string $lastSoldAt = null): array
     {
         $images = $p->photos
             ->map(fn (ProductPhoto $photo) => trim((string) $photo->pp_filename))
@@ -1595,6 +1595,8 @@ class ProductController extends Controller
             'variants'    => $this->mapVariants($p),
             'createdAt'   => $p->pd_date ? $p->pd_date->format('Y-m-d H:i:s') : null,
             'updatedAt'   => $p->pd_last_update ? $p->pd_last_update->format('Y-m-d H:i:s') : null,
+            'lastSoldAt'  => $lastSoldAt,
+            'isMoving'    => $lastSoldAt !== null && \Carbon\Carbon::parse($lastSoldAt)->diffInDays(now()) <= 30,
         ];
     }
 
@@ -2087,8 +2089,21 @@ class ProductController extends Controller
                 ->selectRaw('pr_product_id, AVG(pr_rating) as avg_rating, COUNT(*) as review_count')
                 ->pluck('avg_rating', 'pr_product_id');
 
+            // Get last sold date for moving/non-moving classification
+            $lastSoldDates = DB::table('tbl_checkout_history')
+                ->whereIn('ch_product_id', $productIds)
+                ->whereIn('ch_status', ['paid', 'completed', 'shipped'])
+                ->groupBy('ch_product_id')
+                ->selectRaw('ch_product_id as product_id, MAX(ch_paid_at) as last_sold_at')
+                ->pluck('last_sold_at', 'product_id');
+
             $products = collect($paginator->items())
-                ->map(fn (Product $p) => $this->mapProduct($p, $soldCounts->get($p->pd_id, 0), $ratings->get($p->pd_id, 0)))
+                ->map(fn (Product $p) => $this->mapProduct(
+                    $p,
+                    $soldCounts->get($p->pd_id, 0),
+                    $ratings->get($p->pd_id, 0),
+                    $lastSoldDates->get($p->pd_id)
+                ))
                 ->values();
 
             return response()->json([

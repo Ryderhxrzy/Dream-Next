@@ -1,5 +1,5 @@
 import { buildPageMetadata } from '@/app/seo'
-import SuppliersPageMain from '@/components/superAdmin/suppliers/SuppliersPageMain'
+import SuppliersTabsWrapper from '@/components/superAdmin/suppliers/SuppliersTabsWrapper'
 
 export const metadata = buildPageMetadata({
   title: 'Admin Suppliers',
@@ -9,5 +9,5 @@ export const metadata = buildPageMetadata({
 })
 
 export default function AdminSuppliersPage() {
-  return <SuppliersPageMain />
+  return <SuppliersTabsWrapper />
 }

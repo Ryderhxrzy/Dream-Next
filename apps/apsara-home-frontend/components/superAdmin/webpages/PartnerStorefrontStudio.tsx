@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { showErrorToast, showSuccessToast } from '@/libs/toast'
-import { buildPartnerStorefrontPublicUrl, getPartnerStorefrontConfig, parseIdList } from '@/libs/partnerStorefront'
+import { buildPartnerStorefrontPublicUrl, getPartnerStorefrontConfig } from '@/libs/partnerStorefront'
 import { Loader2, Trash2 } from 'lucide-react'
 import { useGetCategoriesQuery } from '@/store/api/categoriesApi'
 import { type Product, useLazyGetProductsQuery, useLazyGetPublicProductQuery } from '@/store/api/productsApi'
@@ -120,6 +120,27 @@ const broadcastStorefrontUpdate = (slug: string) => {
     channel.postMessage(payload)
     channel.close()
   }
+}
+
+function OpenPreviewButton({ slug, displayName }: { slug: string; displayName: string }) {
+  const previewSlug = toSlug(slug || displayName)
+  if (!previewSlug) {
+    return (
+      <span className="pointer-events-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-300 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-600">
+        Open Preview
+      </span>
+    )
+  }
+  return (
+    <a
+      href={`/${previewSlug}`}
+      target="_blank"
+      rel="noreferrer"
+      className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+    >
+      Open Preview
+    </a>
+  )
 }
 
 export default function PartnerStorefrontStudio() {
@@ -1358,14 +1379,7 @@ export default function PartnerStorefrontStudio() {
             </h2>
           </div>
           <div className="flex items-center gap-2">
-            <a
-              href={draft.slug ? `/shop/${draft.slug}` : '#'}
-              target="_blank"
-              rel="noreferrer"
-              className={`rounded-xl border px-4 py-2.5 text-sm font-semibold transition ${draft.slug ? 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200' : 'pointer-events-none border-slate-200 bg-slate-50 text-slate-300 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-600'}`}
-            >
-              Open Preview
-            </a>
+            <OpenPreviewButton slug={draft.slug} displayName={draft.displayName} />
             <button
               type="button"
               onClick={() => void saveStorefront()}
@@ -1720,7 +1734,7 @@ export default function PartnerStorefrontStudio() {
         {activeTab === 'products' ? (
           <div className="grid gap-5 lg:grid-cols-2">
             {/* Product Helper */}
-            <div className={`flex h-[600px] flex-col ${panelClass}`}>
+            <div className={`flex h-150 flex-col ${panelClass}`}>
               <div>
                 <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Product Helper</h2>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Select products from an allowed category to feature.</p>
@@ -1778,7 +1792,7 @@ export default function PartnerStorefrontStudio() {
             </div>
 
             {/* Selected Products */}
-            <div className={`flex h-[600px] flex-col ${panelClass}`}>
+            <div className={`flex h-150 flex-col ${panelClass}`}>
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Selected Products</h2>
