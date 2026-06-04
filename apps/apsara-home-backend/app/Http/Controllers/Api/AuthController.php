@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -31,7 +32,6 @@ use App\Services\CloudinaryUploadService;
 use App\Mail\Auth\RegistrationOtpMail;
 use App\Mail\Auth\PortalLoginOtpMail;
 use App\Mail\Auth\PortalLoginApprovalMail;
-use App\Mail\Auth\CustomerPasswordResetMail;
 use App\Mail\Auth\UsernameChangeOtpMail;
 use App\Mail\Auth\ReferralRegistrationAlertMail;
 use App\Mail\Webstore\WebstoreReceiptMail;
@@ -41,6 +41,10 @@ use Laravel\Sanctum\PersonalAccessToken;
 class AuthController extends Controller
 {
     private const PASSWORD_RESET_TTL_MINUTES = 60;
+    // Per-identifier reset attempts allowed per minute (anti-enumeration).
+    private const FORGOT_PASSWORD_MAX_PER_MINUTE = 5;
+    // Per-account SMS OTP cap per day (protects Semaphore credits from drain).
+    private const FORGOT_PASSWORD_OTP_DAILY_CAP = 5;
     private const LOGIN_OTP_TTL_MINUTES = 10;
     private const LOGIN_OTP_MAX_ATTEMPTS = 5;
     private const LOGIN_APPROVAL_TTL_MINUTES = 10;
@@ -929,47 +933,151 @@ class AuthController extends Controller
 
     public function forgotPassword(Request $request)
     {
+        $existingResetToken = trim((string) $request->input('reset_token', ''));
+        if ($existingResetToken !== '') {
+            return $this->resendPasswordResetOtp($existingResetToken);
+        }
+
         $turnstileToken = trim((string) $request->input('cf_turnstile_response', ''));
         if (!(new \App\Services\TurnstileService())->verifyForgotPassword($turnstileToken, (string) $request->ip())) {
             return response()->json(['message' => 'Bot verification failed.'], 422);
         }
 
         $validated = $request->validate([
-            'email' => 'required|email',
+            'identifier' => 'nullable|string|max:255',
+            'email' => 'nullable|string|max:255',
         ]);
 
-        $customer = Customer::query()
-            ->where('c_email', trim((string) $validated['email']))
-            ->first();
-
-        if ($customer) {
-            $token = Str::random(64);
-            $expiresAt = now()->addMinutes(self::PASSWORD_RESET_TTL_MINUTES);
-            $payload = [
-                'customer_id' => (int) $customer->c_userid,
-                'email' => (string) $customer->c_email,
-                'name' => $this->fullName($customer),
-                'expires_at' => $expiresAt->toIso8601String(),
-            ];
-
-            Cache::put($this->passwordResetCacheKey($token), $payload, $expiresAt);
-
-            $resetUrl = sprintf(
-                '%s/reset-password?token=%s',
-                rtrim((string) env('FRONTEND_URL', config('app.url')), '/'),
-                urlencode($token)
-            );
-
-            Mail::mailer('resend')->to($payload['email'])->send(new CustomerPasswordResetMail(
-                name: $payload['name'],
-                email: $payload['email'],
-                resetUrl: $resetUrl,
-                expiresAt: $expiresAt->toDayDateTimeString(),
-            ));
+        $identifier = trim((string) ($validated['identifier'] ?? $validated['email'] ?? ''));
+        if ($identifier === '') {
+            throw ValidationException::withMessages([
+                'identifier' => ['Email, username, or mobile number is required.'],
+            ]);
         }
 
+        // Per-identifier throttle: blunts targeted account enumeration even when an
+        // attacker rotates IPs or solves the captcha. Applied BEFORE the lookup and
+        // keyed by the normalized identifier, so it behaves identically whether or
+        // not the account exists (no timing/behaviour leak from this guard itself).
+        $identifierThrottleKey = 'forgot-password|id:' . mb_strtolower($identifier, 'UTF-8');
+        if (RateLimiter::tooManyAttempts($identifierThrottleKey, self::FORGOT_PASSWORD_MAX_PER_MINUTE)) {
+            $retryAfter = RateLimiter::availableIn($identifierThrottleKey);
+
+            return response()->json([
+                'message' => 'Too many reset attempts for this account. Please wait ' . $retryAfter . ' seconds and try again.',
+            ], 429);
+        }
+        RateLimiter::hit($identifierThrottleKey, 60);
+
+        $customer = $this->findCustomerForPasswordReset($identifier);
+        $phone = $customer instanceof Customer ? trim((string) ($customer->c_mobile ?? '')) : '';
+
+        // No account, OR an account without a usable mobile number — return a single
+        // combined message so we never reveal which of the two is actually true.
+        if (! ($customer instanceof Customer) || ! $this->hasUsablePhoneNumber($phone)) {
+            return response()->json([
+                'message' => 'No account found with a registered mobile number. Please check your details and try again.',
+            ], 404);
+        }
+
+        // Per-account daily OTP cap — even a determined attacker (or a stuck client)
+        // cannot drain SMS credits by repeatedly requesting codes for a known account.
+        $otpCapKey = 'forgot-password-otp-cap|cust:' . (int) $customer->c_userid;
+        $otpSentToday = (int) Cache::get($otpCapKey, 0);
+        if ($otpSentToday >= self::FORGOT_PASSWORD_OTP_DAILY_CAP) {
+            return response()->json([
+                'message' => 'You have reached the maximum number of reset codes for today. Please try again tomorrow or contact support.',
+            ], 429);
+        }
+
+        $token = Str::random(64);
+        $otp = (string) random_int(1000, 9999);
+        $expiresAt = now()->addMinutes(self::PASSWORD_RESET_TTL_MINUTES);
+        $payload = [
+            'customer_id' => (int) $customer->c_userid,
+            'email' => (string) $customer->c_email,
+            'name' => $this->fullName($customer),
+            'phone' => $phone,
+            'otp_hash' => Hash::make($otp),
+            'expires_at' => $expiresAt->toIso8601String(),
+        ];
+
+        $sent = (new \App\Services\SemaphoreService())->sendPasswordResetOtp($phone, $otp);
+
+        if ($sent) {
+            Cache::put($this->passwordResetCacheKey($token), $payload, $expiresAt);
+            // Count this send toward the per-account daily cap (window resets after 24h).
+            Cache::put($otpCapKey, $otpSentToday + 1, now()->addDay());
+
+            return response()->json([
+                'message' => 'A password reset OTP has been sent to your registered mobile number.',
+                'requires_otp' => true,
+                'reset_token' => $token,
+                'phone' => $this->maskPhoneNumber($phone),
+                'expires_at' => $expiresAt->toIso8601String(),
+            ]);
+        }
+
+        Log::error('Password reset OTP send failed', [
+            'customer_id' => (int) $customer->c_userid,
+            'phone' => $this->maskPhoneNumber($phone),
+        ]);
+
         return response()->json([
-            'message' => 'If that email exists in our records, a reset link has been sent.',
+            'message' => 'We could not send the reset code right now. Please try again in a few minutes.',
+        ], 502);
+    }
+
+    private function resendPasswordResetOtp(string $token)
+    {
+        $cacheKey = $this->passwordResetCacheKey($token);
+        $payload = Cache::get($cacheKey);
+
+        if (! is_array($payload) || empty($payload['customer_id']) || empty($payload['phone'])) {
+            throw ValidationException::withMessages([
+                'token' => ['Password reset session is invalid or expired.'],
+            ]);
+        }
+
+        $phone = trim((string) $payload['phone']);
+        if (! $this->hasUsablePhoneNumber($phone)) {
+            throw ValidationException::withMessages([
+                'phone' => ['This account has no registered mobile number for password reset.'],
+            ]);
+        }
+
+        // Resends share the same per-account daily OTP cap as the initial send,
+        // so this path cannot be used to bypass the SMS credit protection.
+        $otpCapKey = 'forgot-password-otp-cap|cust:' . (int) $payload['customer_id'];
+        $otpSentToday = (int) Cache::get($otpCapKey, 0);
+        if ($otpSentToday >= self::FORGOT_PASSWORD_OTP_DAILY_CAP) {
+            return response()->json([
+                'message' => 'You have reached the maximum number of reset codes for today. Please try again tomorrow or contact support.',
+            ], 429);
+        }
+
+        $otp = (string) random_int(1000, 9999);
+        $expiresAt = now()->addMinutes(self::PASSWORD_RESET_TTL_MINUTES);
+        $payload['otp_hash'] = Hash::make($otp);
+        $payload['expires_at'] = $expiresAt->toIso8601String();
+
+        $sent = (new \App\Services\SemaphoreService())->sendPasswordResetOtp($phone, $otp);
+        if (! $sent) {
+            throw ValidationException::withMessages([
+                'otp' => ['Unable to send OTP right now. Please try again shortly.'],
+            ]);
+        }
+
+        Cache::put($cacheKey, $payload, $expiresAt);
+        Cache::put($otpCapKey, $otpSentToday + 1, now()->addDay());
+        Cache::forget($this->passwordResetAttemptsCacheKey($token));
+
+        return response()->json([
+            'message' => 'A new password reset OTP has been sent to your registered mobile number.',
+            'requires_otp' => true,
+            'reset_token' => $token,
+            'phone' => $this->maskPhoneNumber($phone),
+            'expires_at' => $expiresAt->toIso8601String(),
         ]);
     }
 
@@ -987,6 +1095,59 @@ class AuthController extends Controller
                 'expires_at' => (string) $payload['expires_at'],
             ],
         ]);
+    }
+
+    /**
+     * Verify a password-reset OTP without consuming the session, so the UI can
+     * advance to the new-password step. Shares the same per-token attempt cap as
+     * resetPassword(), so the 4-digit code cannot be brute-forced here either.
+     */
+    public function verifyResetOtp(Request $request)
+    {
+        $validated = $request->validate([
+            'token' => 'required|string',
+            'otp' => 'required|string|size:4',
+        ]);
+
+        $token = (string) $validated['token'];
+        $payload = Cache::get($this->passwordResetCacheKey($token));
+        if (! is_array($payload)) {
+            throw ValidationException::withMessages([
+                'token' => ['Password reset session is invalid or expired.'],
+            ]);
+        }
+
+        // Sessions without an OTP hash are already considered verified.
+        if (empty($payload['otp_hash'])) {
+            return response()->json(['verified' => true, 'message' => 'Code verified.']);
+        }
+
+        $attemptsKey = $this->passwordResetAttemptsCacheKey($token);
+        $attempts = (int) Cache::get($attemptsKey, 0);
+
+        if ($attempts >= 5) {
+            Cache::forget($this->passwordResetCacheKey($token));
+            Cache::forget($attemptsKey);
+
+            throw ValidationException::withMessages([
+                'otp' => ['Too many invalid OTP attempts. Please request a new code.'],
+            ]);
+        }
+
+        $otp = trim((string) $validated['otp']);
+        if (! Hash::check($otp, (string) $payload['otp_hash'])) {
+            Cache::put($attemptsKey, $attempts + 1, now()->addMinutes(self::PASSWORD_RESET_TTL_MINUTES));
+
+            throw ValidationException::withMessages([
+                'otp' => ['Invalid verification code.'],
+            ]);
+        }
+
+        // Valid code — clear the failed-attempt counter but keep the session intact;
+        // the OTP is re-checked when the password is actually submitted.
+        Cache::forget($attemptsKey);
+
+        return response()->json(['verified' => true, 'message' => 'Code verified.']);
     }
 
     public function resetPassword(Request $request)
@@ -1011,19 +1172,47 @@ class AuthController extends Controller
 
         $validated = $request->validate([
             'token' => 'required|string',
+            'otp' => 'nullable|string|size:4',
             'password' => $passwordRules,
         ], $passwordMessages);
 
-        $payload = Cache::get($this->passwordResetCacheKey((string) $validated['token']));
+        $token = (string) $validated['token'];
+        $payload = Cache::get($this->passwordResetCacheKey($token));
         if (!is_array($payload)) {
             throw ValidationException::withMessages([
-                'token' => ['Reset link is invalid or expired.'],
+                'token' => ['Password reset session is invalid or expired.'],
             ]);
+        }
+
+        if (! empty($payload['otp_hash'])) {
+            $attemptsKey = $this->passwordResetAttemptsCacheKey($token);
+            $attempts = (int) Cache::get($attemptsKey, 0);
+
+            if ($attempts >= 5) {
+                Cache::forget($this->passwordResetCacheKey($token));
+                Cache::forget($attemptsKey);
+
+                throw ValidationException::withMessages([
+                    'otp' => ['Too many invalid OTP attempts. Please request a new code.'],
+                ]);
+            }
+
+            $otp = trim((string) ($validated['otp'] ?? ''));
+            if ($otp === '' || ! Hash::check($otp, (string) $payload['otp_hash'])) {
+                $newAttempts = $attempts + 1;
+                Cache::put($attemptsKey, $newAttempts, now()->addMinutes(self::PASSWORD_RESET_TTL_MINUTES));
+
+                throw ValidationException::withMessages([
+                    'otp' => ['Invalid verification code.'],
+                ]);
+            }
+
+            Cache::forget($attemptsKey);
         }
 
         $customer = Customer::query()->where('c_userid', (int) $payload['customer_id'])->first();
         if (! $customer) {
-            Cache::forget($this->passwordResetCacheKey((string) $validated['token']));
+            Cache::forget($this->passwordResetCacheKey($token));
 
             throw ValidationException::withMessages([
                 'token' => ['Customer account could not be found.'],
@@ -1035,7 +1224,7 @@ class AuthController extends Controller
         $customer->c_password_pin = '';
         $customer->save();
 
-        Cache::forget($this->passwordResetCacheKey((string) $validated['token']));
+        Cache::forget($this->passwordResetCacheKey($token));
 
         return response()->json([
             'message' => 'Your password has been reset. You may now sign in.',
@@ -3768,6 +3957,71 @@ class AuthController extends Controller
     private function passwordResetCacheKey(string $token): string
     {
         return "customer_password_reset:{$token}";
+    }
+
+    private function passwordResetAttemptsCacheKey(string $token): string
+    {
+        return "customer_password_reset_attempts:{$token}";
+    }
+
+    private function findCustomerForPasswordReset(string $identifier): ?Customer
+    {
+        $normalized = trim($identifier);
+        if ($normalized === '') {
+            return null;
+        }
+
+        if (str_contains($normalized, '@')) {
+            return Customer::query()
+                ->whereRaw('LOWER(c_email) = ?', [mb_strtolower($normalized, 'UTF-8')])
+                ->first();
+        }
+
+        if (preg_match('/[A-Za-z]/', $normalized) === 1) {
+            return Customer::query()
+                ->whereRaw('LOWER(c_username) = ?', [mb_strtolower($normalized, 'UTF-8')])
+                ->first();
+        }
+
+        $phoneCandidates = $this->phoneNumberCandidates($normalized);
+        if ($phoneCandidates === []) {
+            return null;
+        }
+
+        return Customer::query()
+            ->whereIn('c_mobile', $phoneCandidates)
+            ->first();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function phoneNumberCandidates(string $phoneNumber): array
+    {
+        $digits = preg_replace('/[^0-9]/', '', $phoneNumber) ?: '';
+        if ($digits === '') {
+            return [];
+        }
+
+        $withoutCountryCode = str_starts_with($digits, '63') ? substr($digits, 2) : $digits;
+        $withoutLeadingZero = ltrim($withoutCountryCode, '0');
+
+        return array_values(array_unique(array_filter([
+            $phoneNumber,
+            $digits,
+            $withoutCountryCode,
+            $withoutLeadingZero,
+            $withoutLeadingZero !== '' ? '0' . $withoutLeadingZero : null,
+            $withoutLeadingZero !== '' ? '63' . $withoutLeadingZero : null,
+            $withoutLeadingZero !== '' ? '+63' . $withoutLeadingZero : null,
+        ], static fn ($value): bool => is_string($value) && trim($value) !== '')));
+    }
+
+    private function hasUsablePhoneNumber(string $phoneNumber): bool
+    {
+        $digits = preg_replace('/[^0-9]/', '', $phoneNumber) ?: '';
+
+        return strlen($digits) >= 10 && $digits !== str_repeat('0', strlen($digits));
     }
 
     private function sendRegistrationOtpEmail(string $email, string $otp, array $senderContext = []): void
