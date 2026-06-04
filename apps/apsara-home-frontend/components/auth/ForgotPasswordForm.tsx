@@ -1,6 +1,7 @@
 'use client';
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import VideoBackground from "@/components/VideoBackground";
 import { AnimatePresence, motion } from "framer-motion";
@@ -140,6 +141,7 @@ function getFirstApiError(value: unknown): string | null {
 }
 
 export default function ForgotPasswordForm({ turnstileSiteKey = '' }: Props) {
+  const router = useRouter()
   const apiUrl = (process.env.NEXT_PUBLIC_LARAVEL_API_URL ?? '').replace(/\/+$/, '')
   const [identifier, setIdentifier] = useState('')
   const [otp, setOtp] = useState('')
@@ -371,6 +373,8 @@ export default function ForgotPasswordForm({ turnstileSiteKey = '' }: Props) {
       setOtp('')
       setPassword('')
       setConfirmPassword('')
+      // Auto-redirect to login after a short delay so the user reads the confirmation.
+      setTimeout(() => router.push('/login'), 2000)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to reset password.')
     } finally {
@@ -578,14 +582,14 @@ export default function ForgotPasswordForm({ turnstileSiteKey = '' }: Props) {
 
                 {success && (
                   <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-700 shadow-sm dark:border-emerald-400/20 dark:bg-emerald-500/20 dark:text-emerald-300">
-                    {success}{' '}
-                    <Link href="/login" className="font-semibold underline">Go to login</Link>
+                    {success}{' '}Redirecting to login…{' '}
+                    <Link href="/login" className="font-semibold underline">Go now</Link>
                   </div>
                 )}
 
                 <PrimaryButton
                   type="submit"
-                  disabled={isResetting}
+                  disabled={isResetting || !!success}
                   className="w-full py-3 px-5 text-sm"
                 >
                   {isResetting ? (
