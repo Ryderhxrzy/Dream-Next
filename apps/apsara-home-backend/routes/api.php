@@ -176,7 +176,6 @@ Route::middleware('throttle:public')->group(function () {
 // Inbound webhooks: 30 requests/min per IP; POST-only
 Route::middleware('throttle:webhooks')->group(function () {
     Route::post('/payments/webhooks/paymongo', [PaymentController::class, 'handlePaymongoWebhook']);
-    Route::post('/payments/webhooks/test-paid', [PaymentController::class, 'handleTestPaidWebhook']);
     Route::post('/jnt/sandbox/logistics-trackback', [JntWebhookController::class, 'sandboxLogisticsTrackback']);
     Route::post('/jnt/sandbox/order-status', [JntWebhookController::class, 'sandboxOrderStatus']);
     Route::post('/jnt/webhook/logistics-trackback', [JntWebhookController::class, 'productionLogisticsTrackback']);

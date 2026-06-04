@@ -910,8 +910,8 @@ class PaymentController extends Controller
                         $this->notifyCustomerOrderStatusUpdate(
                             $order,
                             'payment_confirmed',
-                            $orderNotification->on_title ?? 'Payment Confirmed',
-                            $orderNotification->on_message ?? 'Your payment has been confirmed.'
+                            (string) ($orderNotification->on_title ?? 'Payment Confirmed'),
+                            (string) ($orderNotification->on_message ?? 'Your payment has been confirmed.')
                         );
                     }
                 }
@@ -952,98 +952,6 @@ class PaymentController extends Controller
         ]);
     }
 
-    public function handleTestPaidWebhook(Request $request)
-    {
-        if (!app()->environment('local') && !app()->environment('development')) {
-            return response()->json(['message' => 'Test webhook is only allowed in non-production environments.'], 403);
-        }
-
-        $validated = $request->validate([
-            'checkout_id' => 'required|string|max:255',
-            'status' => 'nullable|string|max:50',
-            'payment_intent_id' => 'nullable|string|max:255',
-        ]);
-
-        $checkoutId = (string) $validated['checkout_id'];
-        $attrs = [
-            'status' => (string) ($validated['status'] ?? 'paid'),
-            'payment_intent' => [
-                'id' => $validated['payment_intent_id'] ?? null,
-            ],
-        ];
-        $attrs = $this->hydrateCheckoutAttributesIfNeeded($checkoutId, $attrs);
-
-        $this->persistCheckoutHistoryIfNeeded($checkoutId, $attrs);
-
-        $isPaid = $this->isPaidStatus($attrs['status'] ?? 'paid');
-        Log::info('Test webhook payment check', [
-            'checkout_id' => $checkoutId,
-            'status' => $attrs['status'] ?? 'paid',
-            'is_paid' => $isPaid,
-        ]);
-
-        if ($isPaid) {
-            $this->sendCheckoutCompletedEmailIfNeeded($checkoutId, $attrs);
-
-            Log::info('Updating order notification from test webhook', [
-                'checkout_id' => $checkoutId,
-                'status' => 'paid',
-            ]);
-
-            try {
-                OrderNotification::updateStatusForCheckout($checkoutId, 'paid');
-
-                // Get the order to send FCM push notification with customized message from OrderNotification
-                $order = CheckoutHistory::query()
-                    ->where('ch_checkout_id', $checkoutId)
-                    ->first();
-
-                if ($order && $order->ch_customer_id) {
-                    $orderNotification = OrderNotification::query()
-                        ->where('on_checkout_id', $checkoutId)
-                        ->where('on_customer_id', $order->ch_customer_id)
-                        ->first();
-
-                    if ($orderNotification) {
-                        $this->notifyCustomerOrderStatusUpdate(
-                            $order,
-                            'payment_confirmed',
-                            $orderNotification->on_title ?? 'Payment Confirmed',
-                            $orderNotification->on_message ?? 'Your payment has been confirmed.'
-                        );
-                    }
-                }
-            } catch (\Throwable $e) {
-                Log::error('Test webhook order notification update FAILED', [
-                    'checkout_id' => $checkoutId,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-
-            Log::info('Order notification update completed from test webhook', [
-                'checkout_id' => $checkoutId,
-            ]);
-
-            // Send confirmation email for mobile orders after payment
-            $mobileOrder = CheckoutHistory::query()
-                ->where('ch_checkout_id', $checkoutId)
-                ->where('ch_is_mobile', true)
-                ->first();
-
-            if ($mobileOrder) {
-                MobilePaymentController::sendOrderConfirmationEmailAfterPayment($mobileOrder, $attrs['payment_method'] ?? '');
-            }
-        }
-
-        return response()->json([
-            'received' => true,
-            'processed' => true,
-            'mode' => 'test',
-            'checkout_id' => $checkoutId,
-            'status' => $attrs['status'] ?? null,
-            'payment_intent_id' => data_get($attrs, 'payment_intent.id'),
-        ]);
-    }
 
     private function sendCheckoutCompletedEmailIfNeeded(string $checkoutId, array $attrs): void
     {
@@ -2649,6 +2557,9 @@ class PaymentController extends Controller
                 'failed' => $result['failed'],
                 'product_image_included' => !empty($orderNotificationImage),
                 'image_url' => $orderNotificationImage ?? 'NONE',
+                'title' => $orderNotificationTitle,
+                'body' => $orderNotificationMessage,
+                'href' => $orderNotificationHref,
             ]);
         } catch (\Throwable $e) {
             Log::warning('Failed to send FCM push notification for order status update.', [
@@ -2657,6 +2568,9 @@ class PaymentController extends Controller
                 'event_type' => $eventType,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
+                'title' => $orderNotificationTitle,
+                'body' => $orderNotificationMessage,
+                'href' => $orderNotificationHref,
             ]);
         }
     }
