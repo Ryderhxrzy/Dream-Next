@@ -1,10 +1,14 @@
 'use client'
 
-import { useState } from 'react'
-import Link from 'next/link'
+import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useGetAdminPaymentsOverviewQuery } from '@/store/api/adminPaymentsApi'
+import {
+  useGetAdminPaymentsOverviewQuery,
+  useGetAdminVoucherProductRulesQuery,
+  useUpdateAdminVoucherProductRulesMutation,
+} from '@/store/api/adminPaymentsApi'
 import { useGetAdminAffiliateVouchersQuery } from '@/store/api/encashmentApi'
+import { useGetProductsQuery } from '@/store/api/productsApi'
 
 const formatMoney = (value: number) =>
   new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 2 }).format(value || 0)
@@ -45,10 +49,18 @@ const getGradientColor = (id: number | string) => {
   return colorGradients[index]
 }
 
+type VoucherAdminView = 'vouchers' | 'rules'
+type VoucherStatusFilter = 'all' | 'active' | 'redeemed' | 'expired'
+
 export default function PaymentsVouchersPageMain() {
+  const [activeView, setActiveView] = useState<VoucherAdminView>('vouchers')
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'redeemed' | 'expired'>('all')
+  const [productSearch, setProductSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<VoucherStatusFilter>('all')
   const [page, setPage] = useState(1)
+  const [rulesPage, setRulesPage] = useState(1)
+  const [draftRules, setDraftRules] = useState<Record<number, { enabled: boolean; maxDiscount: string; minSpend: string }>>({})
+  const [rulesNotice, setRulesNotice] = useState<string | null>(null)
 
   const { data: vouchersData, isLoading: vouchersLoading, isFetching: vouchersFetching, isError: vouchersError } =
     useGetAdminAffiliateVouchersQuery({
@@ -58,14 +70,63 @@ export default function PaymentsVouchersPageMain() {
       search: search.trim() || undefined,
     })
 
+  const { data: productsData, isLoading: productsLoading, isFetching: productsFetching, isError: productsError } =
+    useGetProductsQuery({
+      page: rulesPage,
+      perPage: 10,
+      search: productSearch.trim() || undefined,
+      status: '1',
+    }, {
+      skip: activeView !== 'rules',
+      refetchOnMountOrArgChange: true,
+    })
+  const { data: savedRulesData } = useGetAdminVoucherProductRulesQuery()
+  const [updateVoucherProductRules, { isLoading: savingRules }] = useUpdateAdminVoucherProductRulesMutation()
+
   // Keep existing query (payments overview) for parity if it is used elsewhere.
   // But this page only renders vouchers, so we don't depend on paymentsData.
   const { isLoading: paymentsLoading, isFetching: paymentsFetching, isError: paymentsError } =
     useGetAdminPaymentsOverviewQuery()
 
-  const isLoading = paymentsLoading || vouchersLoading
-  const isFetching = paymentsFetching || vouchersFetching
-  const isError = paymentsError || vouchersError
+  const isLoading = activeView === 'vouchers' ? paymentsLoading || vouchersLoading : productsLoading
+  const isFetching = activeView === 'vouchers' ? paymentsFetching || vouchersFetching : productsFetching
+  const isError = activeView === 'vouchers' ? paymentsError || vouchersError : productsError
+  const savedRulesMap = useMemo(
+    () => (savedRulesData?.rules ?? []).reduce<Record<number, { enabled: boolean; maxDiscount: string; minSpend: string }>>((acc, rule) => {
+      acc[rule.product_id] = {
+        enabled: Boolean(rule.enabled),
+        maxDiscount: rule.max_discount != null ? String(rule.max_discount) : '',
+        minSpend: rule.min_spend != null ? String(rule.min_spend) : '',
+      }
+      return acc
+    }, {}),
+    [savedRulesData?.rules]
+  )
+
+  const updateDraftRule = (productId: number, patch: Partial<{ enabled: boolean; maxDiscount: string; minSpend: string }>) => {
+    setDraftRules((prev) => {
+      const current = prev[productId] ?? savedRulesMap[productId] ?? { enabled: false, maxDiscount: '', minSpend: '' }
+      return { ...prev, [productId]: { ...current, ...patch } }
+    })
+    setRulesNotice(null)
+  }
+
+  const saveDraftRules = async () => {
+    const rules = Object.entries(draftRules).map(([productId, rule]) => ({
+      product_id: Number(productId),
+      enabled: rule.enabled,
+      max_discount: rule.maxDiscount.trim() === '' ? null : Number(rule.maxDiscount),
+      min_spend: rule.minSpend.trim() === '' ? null : Number(rule.minSpend),
+    }))
+
+    try {
+      const response = await updateVoucherProductRules({ rules }).unwrap()
+      setRulesNotice(response.message || 'Voucher product rules saved.')
+    } catch (error) {
+      const apiError = error as { data?: { message?: string } }
+      setRulesNotice(apiError?.data?.message || 'Failed to save voucher product rules.')
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -99,7 +160,224 @@ export default function PaymentsVouchersPageMain() {
 
       {isFetching ? <div className="google-loading-bar" /> : null}
 
-      {isError ? (
+      <div className="rounded-2xl border border-gray-200/70 bg-white p-1 dark:border-gray-800 dark:bg-gray-900">
+        <div className="grid grid-cols-2 gap-1">
+          <button
+            type="button"
+            onClick={() => setActiveView('vouchers')}
+            className={`rounded-xl px-4 py-3 text-sm font-semibold transition ${
+              activeView === 'vouchers'
+                ? 'bg-sky-500 text-white shadow-sm'
+                : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
+            }`}
+          >
+            Created Vouchers
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveView('rules')}
+            className={`rounded-xl px-4 py-3 text-sm font-semibold transition ${
+              activeView === 'rules'
+                ? 'bg-sky-500 text-white shadow-sm'
+                : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
+            }`}
+          >
+            Product Eligibility
+          </button>
+        </div>
+      </div>
+
+      {activeView === 'rules' ? (
+        <>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.03 }}
+            className="rounded-2xl border border-gray-200/70 bg-white p-5 dark:border-gray-800 dark:bg-gray-900"
+          >
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-sm font-bold text-gray-900 dark:text-white">Product Voucher Rules</p>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Draft list ng products kung saan puwedeng gamitin ang affiliate-created voucher.
+                </p>
+                {rulesNotice ? (
+                  <p className={`mt-2 text-xs font-semibold ${rulesNotice.toLowerCase().includes('failed') ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                    {rulesNotice}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="flex w-full flex-col gap-3 sm:flex-row md:max-w-xl">
+                <div className="relative flex-1">
+                  <svg
+                    className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
+                  <input
+                    value={productSearch}
+                    onChange={(e) => {
+                      setProductSearch(e.target.value)
+                      setRulesPage(1)
+                    }}
+                    placeholder="Search product..."
+                    className="w-full rounded-lg border border-gray-200/80 bg-gray-50/80 py-2.5 pl-10 pr-4 text-sm text-gray-800 placeholder-gray-400 transition focus:border-sky-500/50 focus:outline-none focus:ring-2 focus:ring-sky-500/30 dark:border-gray-800 dark:bg-gray-800/70 dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-sky-400/50 dark:focus:ring-sky-400/20"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={saveDraftRules}
+                  disabled={savingRules}
+                  className="rounded-lg bg-sky-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {savingRules ? 'Saving...' : 'Save Rules'}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+
+          <div className="overflow-x-auto rounded-2xl border border-gray-200/70 bg-white dark:border-gray-800 dark:bg-gray-900">
+            <div className="min-w-[820px]">
+              <div className="grid grid-cols-[minmax(280px,1.4fr)_120px_180px_180px] gap-4 border-b border-gray-200/70 bg-gray-50 px-5 py-3 text-[11px] font-bold uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-800/70 dark:text-gray-400">
+                <div>Product</div>
+                <div className="text-center">Allow</div>
+                <div>Max Discount</div>
+                <div>Min Spend</div>
+              </div>
+
+              {isError ? (
+                <div className="px-5 py-12 text-center">
+                  <p className="text-sm font-semibold text-red-700 dark:text-red-300">Failed to load products</p>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Please refresh or try another search.</p>
+                </div>
+              ) : isLoading ? (
+                <div className="divide-y divide-gray-200/70 dark:divide-gray-800">
+                  {Array.from({ length: 6 }).map((_, index) => (
+                    <div key={index} className="grid grid-cols-[minmax(280px,1.4fr)_120px_180px_180px] gap-4 px-5 py-4">
+                      <div className="space-y-2">
+                        <div className="h-4 w-56 animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
+                        <div className="h-3 w-72 animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
+                      </div>
+                      <div className="mx-auto h-8 w-14 animate-pulse rounded-full bg-gray-200 dark:bg-gray-800" />
+                      <div className="h-10 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-800" />
+                      <div className="h-10 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-800" />
+                    </div>
+                  ))}
+                </div>
+              ) : productsData?.products && productsData.products.length > 0 ? (
+                <div className="divide-y divide-gray-200/70 dark:divide-gray-800">
+                  {productsData.products.map((product) => {
+                    const rule = draftRules[product.id] ?? savedRulesMap[product.id] ?? { enabled: false, maxDiscount: '', minSpend: '' }
+                    const srp = Number(product.priceSrp ?? 0)
+                    const dealer = Number(product.priceDp ?? 0)
+                    const margin = Math.max(0, srp - dealer)
+
+                    return (
+                      <div
+                        key={product.id}
+                        className="grid grid-cols-[minmax(280px,1.4fr)_120px_180px_180px] gap-4 px-5 py-4 transition hover:bg-gray-50/70 dark:hover:bg-gray-800/40"
+                      >
+                        <div>
+                          <p className="text-sm font-bold text-gray-900 dark:text-white">{product.name}</p>
+                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            SRP {formatMoney(srp)} | Dealer {formatMoney(dealer)} | Margin {formatMoney(margin)}
+                          </p>
+                          <p className="mt-1 text-[11px] text-gray-400 dark:text-gray-500">SKU: {product.sku || 'N/A'}</p>
+                        </div>
+
+                        <div className="flex items-center justify-center">
+                          <button
+                            type="button"
+                            onClick={() => updateDraftRule(product.id, { enabled: !rule.enabled })}
+                            className={`relative h-8 w-14 rounded-full transition ${
+                              rule.enabled ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-700'
+                            }`}
+                            aria-pressed={rule.enabled}
+                          >
+                            <span
+                              className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition ${
+                                rule.enabled ? 'left-7' : 'left-1'
+                              }`}
+                            />
+                          </button>
+                        </div>
+
+                        <div>
+                          <input
+                            type="number"
+                            min="0"
+                            max={margin || undefined}
+                            value={rule.maxDiscount}
+                            onChange={(e) => updateDraftRule(product.id, { maxDiscount: e.target.value })}
+                            disabled={!rule.enabled}
+                            placeholder={margin > 0 ? String(margin.toFixed(2)) : '0.00'}
+                            className="w-full rounded-lg border border-gray-200/80 bg-gray-50/80 px-3 py-2.5 text-sm text-gray-800 transition focus:border-sky-500/50 focus:outline-none focus:ring-2 focus:ring-sky-500/30 disabled:cursor-not-allowed disabled:opacity-45 dark:border-gray-800 dark:bg-gray-800/70 dark:text-gray-100"
+                          />
+                          <p className="mt-1 text-[10px] text-gray-400 dark:text-gray-500">Cap per order</p>
+                        </div>
+
+                        <div>
+                          <input
+                            type="number"
+                            min="0"
+                            value={rule.minSpend}
+                            onChange={(e) => updateDraftRule(product.id, { minSpend: e.target.value })}
+                            disabled={!rule.enabled}
+                            placeholder={srp > 0 ? String(srp.toFixed(2)) : '0.00'}
+                            className="w-full rounded-lg border border-gray-200/80 bg-gray-50/80 px-3 py-2.5 text-sm text-gray-800 transition focus:border-sky-500/50 focus:outline-none focus:ring-2 focus:ring-sky-500/30 disabled:cursor-not-allowed disabled:opacity-45 dark:border-gray-800 dark:bg-gray-800/70 dark:text-gray-100"
+                          />
+                          <p className="mt-1 text-[10px] text-gray-400 dark:text-gray-500">Optional checkout floor</p>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="px-5 py-12 text-center">
+                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">No products found</p>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Try another product search.</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {productsData?.meta && productsData.meta.last_page > 1 ? (
+            <div className="flex items-center justify-between rounded-2xl border border-gray-200/70 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                Page <span className="font-semibold text-gray-700 dark:text-gray-200">{productsData.meta.current_page}</span> of{' '}
+                <span className="font-semibold text-gray-700 dark:text-gray-200">{productsData.meta.last_page}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRulesPage((current) => Math.max(1, current - 1))}
+                  disabled={rulesPage <= 1}
+                  className="rounded-lg border border-gray-200/80 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-40 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-800"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRulesPage((current) => current + 1)}
+                  disabled={rulesPage >= productsData.meta.last_page}
+                  className="rounded-lg border border-gray-200/80 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-40 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-800"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          ) : null}
+        </>
+      ) : isError ? (
         <div className="rounded-2xl border border-red-200/70 bg-red-50/80 dark:border-red-900/40 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-300">
           Failed to load vouchers.
         </div>
@@ -145,7 +423,7 @@ export default function PaymentsVouchersPageMain() {
                   <select
                     value={statusFilter}
                     onChange={(e) => {
-                      setStatusFilter(e.target.value as any)
+                      setStatusFilter(e.target.value as VoucherStatusFilter)
                       setPage(1)
                     }}
                     className="rounded-lg border border-gray-200/80 dark:border-gray-800 bg-gray-50/80 dark:bg-gray-800/70 px-3 py-2.5 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500/50 dark:focus:ring-orange-400/20 dark:focus:border-orange-400/50"
@@ -184,7 +462,7 @@ export default function PaymentsVouchersPageMain() {
           ) : vouchersData?.data && vouchersData.data.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <AnimatePresence>
-                {vouchersData.data.map((voucher, index) => {
+                {vouchersData.data.map((voucher) => {
                   const statusStyles = getStatusStyles(voucher.status)
                   const gradient = getGradientColor(voucher.id)
 

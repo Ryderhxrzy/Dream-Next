@@ -386,6 +386,13 @@ const formatPhpAmount = (amount: number | string | null | undefined) => {
   return `₱${value.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 };
 
+const formatExactJoinedDate = (value?: string | null) => {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
 const getWebstoreIntendedAmount = (tx: {
   billing_option?: 'full' | 'monthly' | null;
   subscription_fee?: number | null;
@@ -4457,7 +4464,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                     <div className="flex-1 text-center px-3 py-2">
                       <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Joined</p>
                       <p className="font-bold text-slate-700 dark:text-slate-200 text-xs mt-0.5">
-                        {new Date(accountSnapshot.loyalty.join_date).toLocaleDateString('en-PH', { month: 'short', year: 'numeric' })}
+                        {formatExactJoinedDate(accountSnapshot.loyalty.join_date)}
                       </p>
                     </div>
                   )}

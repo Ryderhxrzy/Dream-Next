@@ -90,6 +90,32 @@ export interface AdminPaymentsOverviewResponse {
   encashment_summary: AdminEncashmentSnapshot
 }
 
+export interface AdminVoucherProductRule {
+  product_id: number
+  enabled: boolean
+  max_discount?: number | null
+  min_spend?: number | null
+  updated_at?: string | null
+}
+
+export interface AdminVoucherProductRulesResponse {
+  rules: AdminVoucherProductRule[]
+}
+
+export interface UpdateAdminVoucherProductRulesPayload {
+  rules: Array<{
+    product_id: number
+    enabled: boolean
+    max_discount?: number | null
+    min_spend?: number | null
+  }>
+}
+
+export interface UpdateAdminVoucherProductRulesResponse {
+  message: string
+  rules: AdminVoucherProductRule[]
+}
+
 export const adminPaymentsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getAdminPaymentsOverview: builder.query<AdminPaymentsOverviewResponse, void>({
@@ -99,9 +125,26 @@ export const adminPaymentsApi = baseApi.injectEndpoints({
       }),
       providesTags: ['Orders', 'Encashment'],
     }),
+    getAdminVoucherProductRules: builder.query<AdminVoucherProductRulesResponse, void>({
+      query: () => ({
+        url: '/api/admin/payments/voucher-product-rules',
+        method: 'GET',
+      }),
+      providesTags: ['Encashment'],
+    }),
+    updateAdminVoucherProductRules: builder.mutation<UpdateAdminVoucherProductRulesResponse, UpdateAdminVoucherProductRulesPayload>({
+      query: (body) => ({
+        url: '/api/admin/payments/voucher-product-rules',
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: ['Encashment'],
+    }),
   }),
 })
 
 export const {
   useGetAdminPaymentsOverviewQuery,
+  useGetAdminVoucherProductRulesQuery,
+  useUpdateAdminVoucherProductRulesMutation,
 } = adminPaymentsApi
