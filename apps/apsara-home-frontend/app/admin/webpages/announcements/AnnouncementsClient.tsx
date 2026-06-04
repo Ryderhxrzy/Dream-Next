@@ -37,6 +37,7 @@ type SendTimingMode = 'now' | 'scheduled'
 type RecipientOption = {
   value: string
   label: string
+  searchText?: string
 }
 
 const VARIABLE_TOKENS: VariableToken[] = [
@@ -136,13 +137,24 @@ export default function AnnouncementsClient() {
   const filteredMemberEmails = useMemo(() => {
     const q = recipientSearch.trim().toLowerCase()
     if (!q) return memberEmails
-    return memberEmails.filter((item) => item.label.toLowerCase().includes(q) || item.value.toLowerCase().includes(q))
+    const terms = q.split(/\s+/).filter(Boolean)
+    return memberEmails
+      .map((item) => {
+        const searchable = `${item.label} ${item.value} ${item.searchText ?? ''}`.toLowerCase()
+        const matchedTerms = terms.filter((term) => searchable.includes(term)).length
+        const score = searchable.includes(q) ? matchedTerms + terms.length + 1 : matchedTerms
+
+        return { item, score }
+      })
+      .filter(({ score }) => score > 0)
+      .sort((a, b) => b.score - a.score || a.item.label.localeCompare(b.item.label))
+      .map(({ item }) => item)
   }, [memberEmails, recipientSearch])
 
   const recipientUnitLabel = deliveryChannel === 'sms' ? 'mobile number' : 'email'
   const recipientUnitLabelPlural = deliveryChannel === 'sms' ? 'mobile numbers' : 'emails'
   const recipientSearchPlaceholder =
-    deliveryChannel === 'sms' ? 'Search member mobile number' : 'Search member email'
+    deliveryChannel === 'sms' ? 'Search member name or mobile number' : 'Search member email'
 
   const isAllVisibleSelected = useMemo(() => {
     if (filteredMemberEmails.length === 0) return false
@@ -324,8 +336,18 @@ export default function AnnouncementsClient() {
                 if (deliveryChannel === 'sms' && item && typeof item === 'object') {
                   const phone = String((item as { phone?: unknown }).phone ?? '').trim()
                   const name = String((item as { name?: unknown }).name ?? '').trim() || 'Customer'
+                  const firstName = String((item as { first_name?: unknown }).first_name ?? '').trim()
+                  const middleName = String((item as { middle_name?: unknown }).middle_name ?? '').trim()
+                  const lastName = String((item as { last_name?: unknown }).last_name ?? '').trim()
+                  const username = String((item as { username?: unknown }).username ?? '').trim()
+                  const localPhone = phone.startsWith('63') ? `0${phone.slice(2)}` : phone
+                  const phoneWithoutCountryCode = phone.startsWith('63') ? phone.slice(2) : phone
                   return phone
-                    ? { value: phone, label: `+${phone} - ${name}` }
+                    ? {
+                        value: phone,
+                        label: `+${phone} - ${name}`,
+                        searchText: [phone, localPhone, phoneWithoutCountryCode, name, firstName, middleName, lastName, username].filter(Boolean).join(' '),
+                      }
                     : null
                 }
                 const value = String(item ?? '').trim()
@@ -343,6 +365,9 @@ export default function AnnouncementsClient() {
     }
 
     loadRecipients()
+  }, [baseUrl, accessToken, deliveryChannel])
+
+  useEffect(() => {
     setSelectedEmails([])
     setRecipientSearch('')
   }, [baseUrl, accessToken, deliveryChannel])
