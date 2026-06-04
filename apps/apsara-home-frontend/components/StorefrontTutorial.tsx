@@ -608,7 +608,7 @@ function Step2Screen({ playing }: { playing: boolean }) {
 
   // referral/shop typing starts after upload finishes (~5200ms)
   const referralLink = useTyping('https://www.afhome.ph/ref/livingco', 45, 5400, playing);
-  const shopUrl = useTyping('https://www.afhome.ph/shop?ref=livingco', 45, 6900, playing);
+  const shopUrl = useTyping('https://www.afhome.ph/jujutsu-kaisen?ref=livingco', 45, 6900, playing);
 
   useEffect(() => {
     if (!playing) return;
@@ -1044,7 +1044,7 @@ function Step5Screen({ onSaved, playing }: { onSaved: () => void; playing: boole
         {/* Summary */}
         <div className="grid grid-cols-3 gap-3 mb-5">
           {[
-            { label: 'Store URL', value: 'afhome.ph/shop/livingco' },
+            { label: 'Store URL', value: 'http://localhost:3000/jujutsu-kaisen' },
             { label: 'Display Name', value: 'LivingCo Philippines' },
             { label: 'Hero Title', value: 'Modern Living, Delivered.' },
             { label: 'Theme Color', value: '#1d4ed8', isColor: true },
@@ -1905,7 +1905,7 @@ export default function StorefrontTutorial() {
 
   const handleSaved = useCallback(() => {
     playSound('success');
-    setUrlBar('afhome.ph/shop/livingco');
+    setUrlBar('http://localhost:3000/jujutsu-kaisen');
     setTimeout(() => {
       if (timer.current) clearTimeout(timer.current);
       setStep('preview');

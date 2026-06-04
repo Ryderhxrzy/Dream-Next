@@ -1,10 +1,17 @@
-import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import LoginPageClient from '@/components/auth/LoginPageClient'
 import { getPartnerStorefrontBySlug } from '@/libs/partnerStorefrontServer'
 
 type PageProps = {
   params: Promise<{ partner: string }>
+}
+
+function formatPartnerName(value: string) {
+  return value
+    .split(/[\s-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
 }
 
 function extractReferralCode(referralLink: string | null | undefined): string {
@@ -31,7 +38,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { partner } = await params
   const normalizedPartner = partner.trim().toLowerCase()
   const storefront = await getPartnerStorefrontBySlug(normalizedPartner)
-  const displayName = storefront?.displayName?.trim() || normalizedPartner
+  const displayName = storefront?.displayName?.trim() || formatPartnerName(normalizedPartner) || normalizedPartner
   const apiBase = (process.env.LARAVEL_API_URL ?? process.env.NEXT_PUBLIC_LARAVEL_API_URL ?? '').replace(/\/+$/, '')
   const rawIcon = storefront?.tabLogoUrl || storefront?.logoUrl
   const resolvedIcon = (() => {
@@ -69,35 +76,34 @@ export default async function PartnerCustomerLoginPage({ params }: PageProps) {
   const { partner } = await params
   const normalizedPartner = partner.trim().toLowerCase()
   const storefront = await getPartnerStorefrontBySlug(normalizedPartner)
-
-  if (!storefront) {
-    notFound()
-  }
+  const displayName = storefront?.displayName?.trim() || formatPartnerName(normalizedPartner) || normalizedPartner
+  const headerLogoUrl = storefront?.logoUrl || '/Images/af_home_logo.png'
+  const footerLogoUrl = storefront?.logoUrl || ''
+  const referralCode = extractReferralCode(storefront?.referralLink)
 
   const turnstileSiteKey = process.env.USER_LOGIN_CLOUDFLARE_SITE_KEY ?? ''
   const signupTurnstileSiteKey = process.env.USER_SIGNUP_CLOUDFLARE_SITE_KEY ?? ''
-  const referralCode = extractReferralCode(storefront.referralLink)
 
   return (
     <LoginPageClient
       turnstileSiteKey={turnstileSiteKey}
       signupTurnstileSiteKey={signupTurnstileSiteKey}
       defaultCallbackPath={`/shop/${normalizedPartner}/product`}
-      accountLabel={storefront.displayName}
-      headerLogoUrl={storefront.logoUrl || '/Images/af_home_logo.png'}
-      headerLogoAlt={`${storefront.displayName} logo`}
+      accountLabel={displayName}
+      headerLogoUrl={headerLogoUrl}
+      headerLogoAlt={`${displayName} logo`}
       hideHeaderNavLinks
       headerLogoHref={`/shop/${normalizedPartner}`}
       headerShopHref={`/shop/${normalizedPartner}/product`}
       usePartnerFooter
-      partnerFooterName={storefront.displayName}
-      partnerFooterLogoUrl={storefront.logoUrl || ''}
-      partnerFooterLogoAlt={`${storefront.displayName} logo`}
+      partnerFooterName={displayName}
+      partnerFooterLogoUrl={footerLogoUrl}
+      partnerFooterLogoAlt={`${displayName} logo`}
       partnerFooterHomeHref={`/shop/${normalizedPartner}`}
-      backgroundVideoUrl={storefront.heroVideoUrl || '/loginpageVideo/home-login.mp4'}
+      backgroundVideoUrl={storefront?.heroVideoUrl || '/loginpageVideo/home-login.mp4'}
       signupInitialReferralCode={referralCode}
       signupPartnerSlug={normalizedPartner}
-      otpSenderName={storefront.displayName}
+      otpSenderName={displayName}
     />
   )
 }

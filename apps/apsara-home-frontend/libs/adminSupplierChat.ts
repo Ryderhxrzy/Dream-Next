@@ -39,6 +39,7 @@ export type SupplierChatConversation = {
     name: string
     username: string
     email: string
+    last_seen_at: string | null
   } | null
   assigned_admin: {
     id: number

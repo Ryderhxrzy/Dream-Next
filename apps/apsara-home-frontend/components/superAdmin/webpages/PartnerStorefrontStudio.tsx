@@ -124,16 +124,13 @@ const broadcastStorefrontUpdate = (slug: string) => {
 
 function OpenPreviewButton({ slug, displayName }: { slug: string; displayName: string }) {
   const previewSlug = toSlug(slug || displayName)
-  if (!previewSlug) {
-    return (
-      <span className="pointer-events-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-300 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-600">
-        Open Preview
-      </span>
-    )
-  }
+  const previewHref =
+    typeof window !== 'undefined'
+      ? `${window.location.origin}/${previewSlug}`
+      : `http://localhost:3000/${previewSlug}`
   return (
     <a
-      href={`/${previewSlug}`}
+      href={previewHref}
       target="_blank"
       rel="noreferrer"
       className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"

@@ -20,7 +20,11 @@ import HowItWorksSection from "@/components/landing-page/HowItWorksSection";
 import ScrollToTop from "@/components/landing-page/ScrollToTop";
 import type { Product } from "@/components/landing-page/ProductCard";
 
-export default function LandingPage() {
+type LandingPageProps = {
+  partnerSlug?: string;
+}
+
+export default function LandingPage({ partnerSlug }: LandingPageProps = {}) {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
@@ -39,7 +43,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-af-cream dark:bg-gray-950">
       <div className="fixed inset-0 noise-overlay pointer-events-none z-[100]" />
 
-      <Header cartCount={cartCount} />
+      <Header cartCount={cartCount} partnerSlug={partnerSlug} />
 
       <main>
         <HeroSection />

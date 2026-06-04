@@ -206,6 +206,14 @@ export async function uploadSupplierChatAttachment(file: File): Promise<Attachme
   }
 }
 
+export async function sendSupplierPresenceHeartbeat(): Promise<void> {
+  try {
+    await supplierChatRequest<{ ok: boolean }>('/api/supplier/presence/heartbeat', { method: 'POST' })
+  } catch {
+    // silently ignore — heartbeat failure should never break the UI
+  }
+}
+
 export async function createSupplierChatConversation(subject: string, message: string) {
   const response = await supplierChatRequest<{ data: SupplierChatConversation }>(
     '/api/supplier/chat/conversations',

@@ -15,6 +15,7 @@ interface HeaderProps {
   logoAlt?: string;
   logoHref?: string;
   shopHref?: string;
+  partnerSlug?: string;
 }
 
 export default function Header({
@@ -24,14 +25,21 @@ export default function Header({
   logoAlt = 'AFhome Logo',
   logoHref = '/',
   shopHref = '/shop',
+  partnerSlug,
 }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<string>('');
   const { status } = useSession();
   const pathname = usePathname();
+  const MotionLink = motion(Link);
   const isHome = pathname === '/';
-  const userHref = status === 'authenticated' ? '/profile' : '/login';
+  const normalizedPartnerSlug = String(partnerSlug ?? '').trim().replace(/^\/+|\/+$/g, '');
+  const userHref = normalizedPartnerSlug
+    ? `/${normalizedPartnerSlug}/login`
+    : (status === 'authenticated' ? '/profile' : '/login');
+  const effectiveLogoHref = normalizedPartnerSlug ? `/${normalizedPartnerSlug}` : logoHref;
+  const effectiveShopHref = normalizedPartnerSlug ? `/shop/${normalizedPartnerSlug}` : shopHref;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -104,7 +112,7 @@ export default function Header({
         <div className="flex items-center justify-between h-20 px-4">
           {/* Logo */}
           <motion.a
-            href={logoHref}
+            href={effectiveLogoHref}
             className="flex items-center shrink-0"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -151,15 +159,15 @@ export default function Header({
           <div className="flex items-center gap-4 shrink-0">
             {/* User Icon with href */}
             <div className="relative group">
-              <motion.div
+              <MotionLink
+                href={userHref}
+                aria-label="User account"
+                className={`inline-flex items-center justify-center rounded-full p-2 transition-colors ${(isScrolled || !isHome) ? 'text-black dark:text-white' : 'text-white'}`}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
-                className={`p-2 transition-colors ${(isScrolled || !isHome) ? 'text-black dark:text-white' : 'text-white'}`}
               >
-                <Link href={userHref} aria-label="User account">
-                  <User size={20} />
-                </Link>
-              </motion.div>
+                <User size={20} />
+              </MotionLink>
               <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2 whitespace-nowrap rounded-lg bg-gray-900/90 px-2.5 py-1 text-xs font-medium text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-lg">
                 {status === 'authenticated' ? 'My Account' : 'Login'}
               </span>
@@ -167,27 +175,27 @@ export default function Header({
 
             {/* Shopping Bag Icon with href */}
             <div className="relative group">
-              <motion.div
+              <MotionLink
+                href={effectiveShopHref}
+                aria-label="Browse shop"
+                className={`relative inline-flex items-center justify-center rounded-full p-2 transition-colors ${(isScrolled || !isHome) ? 'text-black dark:text-white' : 'text-white'}`}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
-                className={`relative p-2 transition-colors ${(isScrolled || !isHome) ? 'text-black dark:text-white' : 'text-white'}`}
               >
-                <Link href={shopHref} aria-label="Browse shop" className="block">
-                  <ShoppingBag size={20} />
-                  <AnimatePresence>
-                    {cartCount > 0 && (
-                      <motion.span
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        exit={{ scale: 0 }}
-                        className="absolute -top-1 -right-1 w-5 h-5 bg-af-brass text-white text-xs font-bold rounded-full flex items-center justify-center"
-                      >
-                        {cartCount}
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                </Link>
-              </motion.div>
+                <ShoppingBag size={20} />
+                <AnimatePresence>
+                  {cartCount > 0 && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      exit={{ scale: 0 }}
+                      className="absolute -top-1 -right-1 w-5 h-5 bg-af-brass text-white text-xs font-bold rounded-full flex items-center justify-center"
+                    >
+                      {cartCount}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </MotionLink>
               <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2 whitespace-nowrap rounded-lg bg-gray-900/90 px-2.5 py-1 text-xs font-medium text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-lg">
                 Browse Shop
               </span>
