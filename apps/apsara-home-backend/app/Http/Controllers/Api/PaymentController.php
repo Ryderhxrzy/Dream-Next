@@ -2527,7 +2527,7 @@ class PaymentController extends Controller
                         'orderId' => (int) $order->ch_id,
                         'checkoutId' => (string) $order->ch_checkout_id,
                     ]),
-                    'buttonText' => '👁️ View Order',
+                    'buttonText' => 'View Order',
                 ],
             ];
 
