@@ -2,6 +2,10 @@
 
 import { Fragment, useMemo, useState } from 'react'
 import { useSession } from 'next-auth/react'
+import {
+  Store, User, Building2, Mail, Phone, MapPin, CheckCircle2,
+  FolderOpen, UserPlus, AtSign, Send, Lock, ShieldCheck, Copy, Tag,
+} from 'lucide-react'
 import { useGetCategoriesQuery } from '@/store/api/categoriesApi'
 import {
   InviteSupplierUserResponse,
@@ -394,131 +398,206 @@ export default function SuppliersPageMain() {
 
   if (isSupplierAdmin) {
     const supplier = sortedSuppliers[0]
+    const isActive = supplier.status === 1
+
+    const INFO_ITEMS = [
+      { icon: <User className="h-4 w-4 text-sky-600 dark:text-sky-400" />, label: 'Display Name', value: supplier.name || '-' },
+      { icon: <Building2 className="h-4 w-4 text-sky-600 dark:text-sky-400" />, label: 'Company', value: supplier.company || '-' },
+      { icon: <Mail className="h-4 w-4 text-sky-600 dark:text-sky-400" />, label: 'Email', value: supplier.email || '-' },
+      { icon: <Phone className="h-4 w-4 text-sky-600 dark:text-sky-400" />, label: 'Contact', value: supplier.contact || '-' },
+      { icon: <MapPin className="h-4 w-4 text-sky-600 dark:text-sky-400" />, label: 'Address', value: supplier.address || '-' },
+      { icon: <CheckCircle2 className="h-4 w-4 text-sky-600 dark:text-sky-400" />, label: 'Status', value: null, isStatus: true },
+    ]
 
     return (
-      <div className="space-y-6">
-        <div className="rounded-3xl border border-cyan-100 bg-[linear-gradient(135deg,_#ecfeff,_#ffffff_55%,_#f0fdfa)] p-6 shadow-sm dark:border-cyan-500/20 dark:bg-[linear-gradient(135deg,rgba(8,47,73,0.92),rgba(2,6,23,0.98)_55%,rgba(6,78,59,0.55))]">
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-cyan-700">
-            Supplier Company
-          </p>
-          <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-            {supplier.company || supplier.name}
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-400">
-            Your supplier account is scoped to this company only. Products and dashboard
-            data stay limited to this profile.
-          </p>
+      <div className="space-y-5">
+
+        {/* ── Hero header ── */}
+        <div className="relative overflow-hidden rounded-3xl border border-sky-100 bg-linear-to-br from-sky-50 via-cyan-50/40 to-indigo-50/60 p-6 shadow-sm sm:p-8 dark:border-sky-900/30 dark:from-sky-900/20 dark:via-cyan-900/10 dark:to-indigo-900/20">
+          <div className="flex items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-sky-100/80 shadow-sm dark:bg-sky-900/40">
+                <Store className="h-7 w-7 text-sky-600 dark:text-sky-400" />
+              </div>
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-sky-700 dark:text-sky-400">Supplier Company</p>
+                <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                  {supplier.company || supplier.name}
+                </h1>
+                <p className="mt-1 max-w-xl text-sm text-slate-500 dark:text-slate-400">
+                  Your supplier account is scoped to this company only. Products and dashboard data stay limited to this profile.
+                </p>
+              </div>
+            </div>
+            {/* Decorative illustration */}
+            <div className="hidden shrink-0 sm:block">
+              <div className="relative w-40 h-28">
+                <svg className="absolute top-0 right-0 opacity-25" width="56" height="44" viewBox="0 0 56 44">
+                  {[0,1,2,3].map(r => [0,1,2,3,4].map(c => (
+                    <circle key={`${r}${c}`} cx={c*13+4} cy={r*11+4} r="1.8" fill="#64748b"/>
+                  )))}
+                </svg>
+                <div className="absolute bottom-0 right-4 w-32 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-md dark:border-slate-700 dark:bg-slate-800">
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-sky-100">
+                      <ShieldCheck className="h-3.5 w-3.5 text-sky-600" />
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <div className="h-1.5 w-16 rounded-full bg-slate-200" />
+                      <div className="h-1.5 w-10 rounded-full bg-slate-100" />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="h-1.5 w-full rounded-full bg-slate-100" />
+                    <div className="h-1.5 w-4/5 rounded-full bg-slate-100" />
+                  </div>
+                  <div className="mt-2.5 flex justify-end">
+                    <div className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-100">
+                      <svg className="h-2.5 w-2.5 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <InfoCard label="Display Name" value={supplier.name || '-'} />
-          <InfoCard label="Company" value={supplier.company || '-'} />
-          <InfoCard label="Email" value={supplier.email || '-'} />
-          <InfoCard label="Contact" value={supplier.contact || '-'} />
-          <InfoCard label="Address" value={supplier.address || '-'} />
-          <InfoCard
-            label="Status"
-            value={supplier.status === 1 ? 'Active' : 'Inactive'}
-          />
+        {/* ── Info grid ── */}
+        <div className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="grid grid-cols-1 divide-y divide-slate-100 sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-3 lg:divide-x dark:divide-slate-800">
+            {INFO_ITEMS.map((item, i) => (
+              <div key={i} className={`flex items-start gap-3 p-5 ${i >= 3 ? 'sm:border-t sm:border-slate-100 dark:sm:border-slate-800' : ''} ${i >= 2 && i < 4 ? 'lg:border-t-0' : ''}`}>
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-50 dark:bg-sky-900/30">
+                  {item.icon}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">{item.label}</p>
+                  {item.isStatus ? (
+                    <div className="mt-1 flex items-center gap-2">
+                      <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{isActive ? 'Active' : 'Inactive'}</p>
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${isActive ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                        {isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                  ) : (
+                    <p className="mt-1 truncate text-sm font-bold text-slate-900 dark:text-slate-100">{item.value}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400 dark:text-slate-500">
-            Allowed Categories
-          </p>
-          <h2 className="mt-2 text-lg font-bold text-slate-900 dark:text-slate-100">Assigned Product Categories</h2>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            These are the only categories this supplier portal can use when creating or editing products.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {(supplier.assigned_categories ?? []).length > 0 ? (
-              supplier.assigned_categories?.map((category) => (
-                <span
-                  key={category.id}
-                  className="inline-flex rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1.5 text-xs font-semibold text-cyan-700 dark:border-cyan-500/20 dark:bg-cyan-500/10 dark:text-cyan-200"
-                >
-                  {category.name}
+        {/* ── Categories ── */}
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-50 dark:bg-violet-900/20">
+                <FolderOpen className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+              </div>
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-violet-600 dark:text-violet-400">Allowed Categories</p>
+                <h2 className="mt-0.5 text-lg font-bold text-slate-900 dark:text-slate-100">Assigned Product Categories</h2>
+                <p className="mt-1 max-w-xs text-sm text-slate-500 dark:text-slate-400">
+                  These are the only categories this supplier portal can use when creating or editing products.
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2 sm:justify-end">
+              {(supplier.assigned_categories ?? []).length > 0 ? (
+                supplier.assigned_categories?.map((category) => (
+                  <span key={category.id}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 dark:border-sky-800 dark:bg-sky-900/20 dark:text-sky-300">
+                    <Tag className="h-3 w-3" />
+                    {category.name}
+                  </span>
+                ))
+              ) : (
+                <span className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+                  No categories assigned yet.
                 </span>
-              ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Invite section ── */}
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+            {/* Description */}
+            <div className="flex items-start gap-3 lg:w-64 lg:shrink-0">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-cyan-50 dark:bg-cyan-900/20">
+                <UserPlus className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
+              </div>
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-600 dark:text-cyan-400">Supplier Access</p>
+                <h2 className="mt-0.5 text-lg font-bold text-slate-900 dark:text-slate-100">
+                  {isMainSupplier ? 'Invite Sub-Supplier User' : 'Supplier Access'}
+                </h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  {isMainSupplier
+                    ? 'Give your staff their own supplier portal login. Email is optional, and you can copy the setup link manually after creating the invite.'
+                    : 'This account is a sub-supplier account. Only the main supplier owner can invite additional supplier users.'}
+                </p>
+              </div>
+            </div>
+
+            {/* Form */}
+            {isMainSupplier ? (
+              <form onSubmit={handleInviteSupplier} className="flex-1 space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <FormField label="Full Name">
+                    <div className="relative">
+                      <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <input value={supplierInviteForm.fullname} onChange={handleInviteInput('fullname')} required
+                        placeholder="Enter full name"
+                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-800 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100" />
+                    </div>
+                  </FormField>
+                  <FormField label="Username">
+                    <div className="relative">
+                      <AtSign className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <input value={supplierInviteForm.username} onChange={handleInviteInput('username')} required
+                        placeholder="Enter username"
+                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-800 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100" />
+                    </div>
+                  </FormField>
+                </div>
+
+                <FormField label="Email (Optional)">
+                  <div className="relative">
+                    <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <input type="email" value={supplierInviteForm.email} onChange={handleInviteInput('email')}
+                      placeholder="Leave blank if you will send the setup link manually"
+                      className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-800 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100" />
+                  </div>
+                </FormField>
+
+                {inviteFeedback && <FeedbackBanner type={inviteFeedback.type} message={inviteFeedback.message} />}
+                {latestInvite && <SetupLinkCard setupUrl={latestInvite.setup_url} delivery={latestInvite.delivery} />}
+
+                <button type="submit" disabled={isInvitingSupplierUser}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-linear-to-r from-cyan-500 to-teal-500 py-3 text-sm font-bold text-white shadow-md shadow-cyan-200/60 transition hover:from-cyan-600 hover:to-teal-600 disabled:opacity-60 dark:shadow-cyan-900/30">
+                  <Send className="h-4 w-4" />
+                  {isInvitingSupplierUser ? 'Creating invite…' : 'Create Supplier Invite Link'}
+                </button>
+
+                <p className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400 dark:text-slate-500">
+                  <Lock className="h-3 w-3" />
+                  A secure invite link will be generated for this user.
+                </p>
+              </form>
             ) : (
-              <span className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
-                No categories assigned yet. Ask admin to assign your allowed product categories.
-              </span>
+              <div className="flex-1 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+                Only the main supplier owner can invite sub-supplier users.
+              </div>
             )}
           </div>
-        </section>
+        </div>
 
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
-          <div className="mb-5">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400 dark:text-slate-500">
-              Supplier Access
-            </p>
-            <h2 className="mt-2 text-lg font-bold text-slate-900 dark:text-slate-100">
-              {isMainSupplier ? 'Invite Sub-Supplier User' : 'Supplier Access'}
-            </h2>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              {isMainSupplier
-                ? 'Give your staff their own supplier portal login. Email is optional, and you can copy the setup link manually after creating the invite.'
-                : 'This account is a sub-supplier account. Only the main supplier owner can invite additional supplier users.'}
-            </p>
-          </div>
-
-          {isMainSupplier ? (
-            <form onSubmit={handleInviteSupplier} className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <FormField label="Full Name">
-                  <input
-                    value={supplierInviteForm.fullname}
-                    onChange={handleInviteInput('fullname')}
-                    required
-                    className={inputClassName}
-                  />
-                </FormField>
-                <FormField label="Username">
-                  <input
-                    value={supplierInviteForm.username}
-                    onChange={handleInviteInput('username')}
-                    required
-                    className={inputClassName}
-                  />
-                </FormField>
-              </div>
-
-              <FormField label="Email (Optional)">
-                <input
-                  type="email"
-                  value={supplierInviteForm.email}
-                  onChange={handleInviteInput('email')}
-                  className={inputClassName}
-                  placeholder="Leave blank if you will send the setup link manually"
-                />
-              </FormField>
-
-              {inviteFeedback ? (
-                <FeedbackBanner
-                  type={inviteFeedback.type}
-                  message={inviteFeedback.message}
-                />
-              ) : null}
-
-              {latestInvite ? (
-                <SetupLinkCard setupUrl={latestInvite.setup_url} delivery={latestInvite.delivery} />
-              ) : null}
-
-              <button
-                type="submit"
-                disabled={isInvitingSupplierUser}
-                className="rounded-2xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isInvitingSupplierUser ? 'Creating invite...' : 'Create Supplier Invite Link'}
-              </button>
-            </form>
-          ) : (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
-              Main supplier owner only ang puwedeng mag-invite ng sub-supplier users.
-            </div>
-          )}
-        </section>
       </div>
     )
   }
@@ -1486,9 +1565,9 @@ function SetupLinkCard({
 
 function InfoCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-950">
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">{label}</p>
-      <p className="mt-3 text-sm font-medium leading-6 text-slate-700 dark:text-slate-200">{value}</p>
+    <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">{label}</p>
+      <p className="mt-2 text-sm font-bold text-slate-800 dark:text-slate-100">{value}</p>
     </div>
   )
 }

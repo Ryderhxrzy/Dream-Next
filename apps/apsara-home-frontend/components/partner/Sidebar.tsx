@@ -35,7 +35,7 @@ const links = [
     href: '/partner/webpages/partner-landing-page',
     label: 'Landing Page',
     description: 'Hero, colours & public URL',
-    restricted: true,
+    restricted: false,
     icon: (
       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9">
         <rect x="2" y="3" width="20" height="14" rx="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -54,6 +54,18 @@ const links = [
         <path d="M7 3h10l4 4v14H3V3h4z" strokeLinecap="round" strokeLinejoin="round" />
         <path d="M7 3v5h10" strokeLinecap="round" strokeLinejoin="round" />
         <path d="M8 13h8M8 17h5" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
+    href: '/partner/webpages/partner-subscriptions',
+    label: 'Subscriptions',
+    description: 'Manage webstore plans',
+    restricted: false,
+    icon: (
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9">
+        <rect x="3" y="4" width="18" height="16" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M7 8h10M7 12h6M7 16h4" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
   },

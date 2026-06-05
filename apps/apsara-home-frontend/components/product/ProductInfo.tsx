@@ -913,7 +913,12 @@ const ProductInfo = ({
             <div className="bg-gradient-to-r from-sky-50 to-sky-50 dark:from-sky-900/20 dark:to-sky-900/20 rounded-2xl p-6 border border-sky-100 dark:border-sky-900/30 mb-6">
                 <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
                     <div className="flex items-baseline gap-3 flex-wrap">
-                        <span className="text-3xl sm:text-4xl font-bold text-sky-600 dark:text-sky-400">{'\u20b1'}{displayPrice.toLocaleString()}</span>
+                        <span className="text-3xl sm:text-4xl font-bold text-sky-600 dark:text-sky-400">
+                          {'\u20b1'}{displayPrice.toLocaleString()}
+                          {!shouldDisplayMemberPrice && (
+                            <sup className="text-base font-bold text-sky-500 dark:text-sky-400 align-top">.00</sup>
+                          )}
+                        </span>
                         {displayOriginalPrice && (
                             <span className="text-lg text-gray-400 dark:text-gray-500 line-through">{'\u20b1'}{displayOriginalPrice.toLocaleString()}</span>
                         )}

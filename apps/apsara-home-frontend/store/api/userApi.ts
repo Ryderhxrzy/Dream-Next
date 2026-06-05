@@ -240,6 +240,8 @@ export interface WebstoreRequest {
     slug_name?: string | null;
     display_name?: string | null;
     plan?: 'test' | 'quarterly' | 'semi_annual' | 'annual' | null;
+    plan_term?: string | null;
+    plan_term_months?: number | null;
     billing_option?: 'full' | 'monthly' | null;
     payment_method?: 'gcash' | 'grab_pay' | 'maya' | 'card' | null;
     receipt_urls?: string[] | null;

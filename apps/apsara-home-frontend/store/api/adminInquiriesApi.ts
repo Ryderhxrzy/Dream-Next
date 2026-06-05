@@ -46,8 +46,10 @@ export interface AdminWebstoreRequest {
   email?: string | null;
   slug_name?: string | null;
   display_name?: string | null;
+  reference_no?: string | null;
   plan?: 'test' | 'quarterly' | 'semi_annual' | 'annual' | null;
   plan_term?: string | null;
+  plan_term_months?: number | null;
   subscription_fee?: number | null;
   effective_monthly?: number | null;
   billing_option?: string | null;
@@ -64,15 +66,25 @@ export interface AdminWebstoreRequest {
   payment_count?: number | null;
   total_paid_amount?: number | null;
   status: WebstoreRequestStatus;
+  created_at?: string | null;
+  reviewed_at?: string | null;
   submitted_at?: string | null;
   approved_at?: string | null;
+  latest_receipt_submitted_at?: string | null;
+  latest_receipt_status?: string | null;
+  latest_receipt_urls?: string[] | null;
 }
 
 export interface AdminWebstoreRequestsResponse {
   requests: AdminWebstoreRequest[];
 }
 
+export interface PartnerWebstoreRequestsResponse {
+  requests: AdminWebstoreRequest[];
+}
+
 export const adminInquiriesApi = baseApi.injectEndpoints({
+  overrideExisting: true,
   endpoints: (builder) => ({
     getUsernameChangeRequests: builder.query<AdminUsernameChangeRequestsResponse, void>({
       query: () => ({
@@ -98,6 +110,13 @@ export const adminInquiriesApi = baseApi.injectEndpoints({
     getWebstoreRequests: builder.query<AdminWebstoreRequestsResponse, void>({
       query: () => ({
         url: '/api/admin/inquiries/webstore-requests',
+        method: 'GET',
+      }),
+      providesTags: ['AdminNotifications', 'WebstoreRequests'],
+    }),
+    getPartnerWebstoreRequests: builder.query<PartnerWebstoreRequestsResponse, void>({
+      query: () => ({
+        url: '/api/admin/partner/webstore-requests',
         method: 'GET',
       }),
       providesTags: ['AdminNotifications', 'WebstoreRequests'],
@@ -145,6 +164,7 @@ export const {
   useApproveUsernameChangeMutation,
   useRejectUsernameChangeMutation,
   useGetWebstoreRequestsQuery,
+  useGetPartnerWebstoreRequestsQuery,
   useApproveWebstoreRequestMutation,
   useApproveWebstoreReceiptMutation,
   useRejectWebstoreReceiptMutation,

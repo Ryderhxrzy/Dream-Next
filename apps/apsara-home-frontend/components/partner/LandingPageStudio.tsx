@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import {
-  ArrowLeft, ArrowUp, ArrowDown, CheckCircle2,
-  Eye, ImageIcon, LayoutGrid, Loader2,
-  Monitor, Plus, Smartphone, Trash2, Type,
-  TrendingUp, Zap, Layout, X, GripVertical,
+  ArrowDown, ArrowLeft, ArrowUp, CheckCircle2, Eye,
+  GripVertical, ImageIcon, LayoutGrid, Loader2, Monitor,
+  Palette, Plus, Smartphone, Trash2, Type, X, Layout, Zap, TrendingUp,
 } from 'lucide-react'
 import { showErrorToast, showSuccessToast } from '@/libs/toast'
 import { getPartnerStorefrontConfig } from '@/libs/partnerStorefront'
@@ -15,205 +14,193 @@ import {
   type WebPageItem,
 } from '@/store/api/webPagesApi'
 
-/* ─────────────────────────────────────────────────────────────
-   Tiny ID util
-───────────────────────────────────────────────────────────── */
 const mkId = () => Date.now().toString(36) + Math.random().toString(36).slice(2)
 
 /* ─────────────────────────────────────────────────────────────
    Block type definitions
 ───────────────────────────────────────────────────────────── */
-interface HeroBlock {
-  id: string; type: 'hero'
-  navBrand: string; badge: string
-  title: string; subtitle: string
-  bgImage: string
-  overlayColor: string; overlayOpacity: number
-  ctaPrimary: string; ctaPrimaryUrl: string; ctaSecondary: string
-  align: 'left' | 'center'
-}
-interface TextBlock {
-  id: string; type: 'text'
-  title: string; body: string
-  align: 'left' | 'center'
-  bg: string; textColor: string
-}
+interface NavLink { label: string; href: string }
+interface NavBlock { id: string; type: 'nav'; storeName: string; logo: string; primaryColor: string; bg: string; textColor: string; links: NavLink[] }
+interface HeroBlock { id: string; type: 'hero'; tagline: string; description: string; bgImage: string; overlayColor: string; overlayOpacity: number; primaryColor: string; btnPrimary: string; btnSecondary: string; align: 'left' | 'center' | 'right'; badge: string }
+interface StatsBlock { id: string; type: 'stats'; items: { value: string; label: string }[]; bg: string; valueColor: string; labelColor: string }
 interface FeatureItem { icon: string; title: string; desc: string }
-interface FeaturesBlock {
-  id: string; type: 'features'
-  title: string; subtitle: string; columns: 2 | 3
-  items: FeatureItem[]
-  bg: string; cardBg: string; accentColor: string; textColor: string
-}
-interface ImageBlock {
-  id: string; type: 'image'
-  src: string; alt: string; fullWidth: boolean; caption: string
-}
-interface CtaBlock {
-  id: string; type: 'cta'
-  title: string; subtitle: string
-  btnText: string; btnUrl: string; btnColor: string
-  bg: string; textColor: string
-}
-interface StatsBlock {
-  id: string; type: 'stats'
-  items: { value: string; label: string }[]
-  bg: string; valueColor: string; labelColor: string
-}
-type Block = HeroBlock | TextBlock | FeaturesBlock | ImageBlock | CtaBlock | StatsBlock
+interface FeaturesBlock { id: string; type: 'features'; title: string; subtitle: string; items: FeatureItem[]; columns: 2 | 3; bg: string; cardBg: string; textColor: string; accentColor: string }
+interface TextBlock { id: string; type: 'text'; title: string; body: string; align: 'left' | 'center' | 'right'; bg: string; textColor: string }
+interface TestimonialBlock { id: string; type: 'testimonial'; text: string; author: string; bg: string; textColor: string }
+interface CtaBlock { id: string; type: 'cta'; title: string; subtitle: string; btnText: string; btnColor: string; bg: string; textColor: string }
+interface ImageBlock { id: string; type: 'image'; src: string; alt: string; caption: string; fullWidth: boolean }
+interface AboutHighlight { icon: string; text: string }
+interface AboutBlock { id: string; type: 'about'; heading: string; subheading: string; story: string; image: string; highlights: AboutHighlight[]; bg: string; textColor: string; accentColor: string }
+interface FooterLink { label: string; href: string }
+interface FooterBlock { id: string; type: 'footer'; storeName: string; tagline: string; copyrightText: string; email: string; phone: string; links: FooterLink[]; bg: string; textColor: string }
+type Block = NavBlock | HeroBlock | StatsBlock | FeaturesBlock | TextBlock | TestimonialBlock | CtaBlock | ImageBlock | AboutBlock | FooterBlock
 
 /* ─────────────────────────────────────────────────────────────
-   Block defaults
+   Block factories
 ───────────────────────────────────────────────────────────── */
-const mkHero = (o: Partial<Omit<HeroBlock, 'id' | 'type'>> = {}): HeroBlock => ({
-  id: mkId(), type: 'hero',
-  navBrand: 'AF Home', badge: 'Partner Storefront',
-  title: 'Sell Premium Furniture Under Your Brand',
-  subtitle: 'No inventory. No warehouse. Just your brand powered by Apsara Home.',
-  bgImage: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1400&q=80',
-  overlayColor: '#000000', overlayOpacity: 55,
-  ctaPrimary: 'Become a Partner', ctaPrimaryUrl: '',
-  ctaSecondary: 'Learn More', align: 'center', ...o,
-})
-const mkText = (o: Partial<Omit<TextBlock, 'id' | 'type'>> = {}): TextBlock => ({
-  id: mkId(), type: 'text',
-  title: 'Why Partner With Us',
-  body: 'Apsara Home provides everything you need to run a successful online furniture store. We handle logistics, inventory, and fulfillment — you focus on building your brand and earning commissions.',
-  align: 'center', bg: '#ffffff', textColor: '#1e293b', ...o,
-})
-const mkFeatures = (o: Partial<Omit<FeaturesBlock, 'id' | 'type'>> = {}): FeaturesBlock => ({
-  id: mkId(), type: 'features',
-  title: 'Everything Included', subtitle: 'Focus on selling. We handle the rest.', columns: 3,
-  items: [
-    { icon: '🛋️', title: 'AF Homes Catalog', desc: 'All products sourced and managed by AF Homes.' },
-    { icon: '🎨', title: 'Custom Branding', desc: 'Your logo, colors, and store name.' },
-    { icon: '📦', title: 'Zero Inventory', desc: 'No stock management — AF Homes handles it all.' },
-    { icon: '🔔', title: 'Instant Notifications', desc: 'Get notified on every order instantly.' },
-    { icon: '💰', title: 'Commission Earnings', desc: 'Earn on every delivered order.' },
-    { icon: '⚡', title: 'Launch Fast', desc: 'Your store goes live in days, not months.' },
+const DEFAULT_NAV_LINKS: NavLink[] = [
+  { label: 'Home', href: '#hero' },
+  { label: 'Products', href: '#features' },
+  { label: 'About', href: '#about' },
+  { label: 'Contact', href: '#cta' },
+]
+const mkNav = (o: Partial<Omit<NavBlock,'id'|'type'>> = {}): NavBlock => ({ id: mkId(), type: 'nav', storeName: 'Your Store', logo: '', primaryColor: '#6366f1', bg: '#0a0a0f', textColor: '#ffffff', links: DEFAULT_NAV_LINKS, ...o })
+const mkHero = (o: Partial<Omit<HeroBlock,'id'|'type'>> = {}): HeroBlock => ({ id: mkId(), type: 'hero', tagline: 'Sell Premium Furniture Under Your Brand', description: 'No inventory. No warehouse. Just your brand powered by Apsara Home.', bgImage: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1400&q=80', overlayColor: '#000000', overlayOpacity: 55, primaryColor: '#6366f1', btnPrimary: 'Browse Collection', btnSecondary: 'Learn More', align: 'center', badge: 'Partner Storefront', ...o })
+const mkStats = (o: Partial<Omit<StatsBlock,'id'|'type'>> = {}): StatsBlock => ({ id: mkId(), type: 'stats', items: [{ value: '500+', label: 'Products' }, { value: '98%', label: 'Satisfaction' }, { value: '₱0', label: 'Inventory Cost' }, { value: '24h', label: 'Support' }], bg: '#111827', valueColor: '#f59e0b', labelColor: '#6b7280', ...o })
+const mkFeatures = (o: Partial<Omit<FeaturesBlock,'id'|'type'>> = {}): FeaturesBlock => ({ id: mkId(), type: 'features', title: 'Why Choose Us', subtitle: "Everything you need, nothing you don't.", columns: 3, items: [{ icon: '🛋️', title: 'Curated Catalog', desc: 'Premium furniture sourced and quality-checked.' }, { icon: '🎨', title: 'Your Brand', desc: 'Your logo, your colors, your store.' }, { icon: '📦', title: 'Zero Logistics', desc: 'We handle storage, packing, and delivery.' }, { icon: '💰', title: 'Earn Commissions', desc: 'Get paid on every completed order.' }, { icon: '⚡', title: 'Launch in Days', desc: 'Go live fast. No technical setup required.' }, { icon: '📊', title: 'Live Dashboard', desc: 'Track orders and performance in real time.' }], bg: '#f8fafc', cardBg: '#ffffff', textColor: '#1e293b', accentColor: '#6366f1', ...o })
+const mkText = (o: Partial<Omit<TextBlock,'id'|'type'>> = {}): TextBlock => ({ id: mkId(), type: 'text', title: 'About Our Store', body: 'We provide everything you need to run a successful online furniture store.', align: 'center', bg: '#ffffff', textColor: '#1e293b', ...o })
+const mkAbout = (o: Partial<Omit<AboutBlock,'id'|'type'>> = {}): AboutBlock => ({
+  id: mkId(), type: 'about',
+  heading: 'About Us',
+  subheading: 'Who we are and what we stand for',
+  story: 'We are a passionate team dedicated to bringing beautiful, high-quality furniture to every home. Founded with a vision to make premium living accessible, we partner with Apsara Home to deliver the best products and service.',
+  image: 'https://images.unsplash.com/photo-1600210492493-0946911123ea?w=800&q=80',
+  highlights: [
+    { icon: '🏠', text: 'Family-owned and operated' },
+    { icon: '🌿', text: 'Committed to quality and sustainability' },
+    { icon: '🤝', text: 'Trusted by thousands of customers' },
   ],
-  bg: '#f8fafc', cardBg: '#ffffff', accentColor: '#6366f1', textColor: '#1e293b', ...o,
+  bg: '#ffffff', textColor: '#1e293b', accentColor: '#6366f1', ...o,
 })
-const mkImage = (o: Partial<Omit<ImageBlock, 'id' | 'type'>> = {}): ImageBlock => ({
-  id: mkId(), type: 'image',
-  src: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1400&q=80',
-  alt: 'Modern living room', fullWidth: true, caption: '', ...o,
-})
-const mkCta = (o: Partial<Omit<CtaBlock, 'id' | 'type'>> = {}): CtaBlock => ({
-  id: mkId(), type: 'cta',
-  title: 'Start Selling Under Your Brand',
-  subtitle: 'Join Apsara Home and launch your branded storefront — no inventory, no hassle.',
-  btnText: 'Become a Partner', btnUrl: '', btnColor: '#6366f1',
-  bg: '#0f172a', textColor: '#ffffff', ...o,
-})
-const mkStats = (o: Partial<Omit<StatsBlock, 'id' | 'type'>> = {}): StatsBlock => ({
-  id: mkId(), type: 'stats',
-  items: [
-    { value: '500+', label: 'Active Partners' },
-    { value: '₱2.4M', label: 'Monthly Revenue' },
-    { value: '10K+', label: 'Products Available' },
-    { value: '98%', label: 'Satisfaction Rate' },
+const mkTestimonial = (o: Partial<Omit<TestimonialBlock,'id'|'type'>> = {}): TestimonialBlock => ({ id: mkId(), type: 'testimonial', text: 'Launching my furniture store was a dream. With this platform, it became reality in less than a week.', author: 'Partner since 2024', bg: '#f97316', textColor: '#ffffff', ...o })
+const mkCta = (o: Partial<Omit<CtaBlock,'id'|'type'>> = {}): CtaBlock => ({ id: mkId(), type: 'cta', title: 'Ready to Start Selling?', subtitle: 'Join hundreds of partners already earning with us.', btnText: 'Become a Partner', btnColor: '#6366f1', bg: '#0f172a', textColor: '#ffffff', ...o })
+const mkImage = (o: Partial<Omit<ImageBlock,'id'|'type'>> = {}): ImageBlock => ({ id: mkId(), type: 'image', src: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1400&q=80', alt: 'Furniture showcase', caption: '', fullWidth: true, ...o })
+const mkFooter = (o: Partial<Omit<FooterBlock,'id'|'type'>> = {}): FooterBlock => ({
+  id: mkId(), type: 'footer',
+  storeName: 'Your Store',
+  tagline: 'Your trusted furniture partner.',
+  copyrightText: 'Powered by Apsara Home',
+  email: 'hello@yourstore.com',
+  phone: '+63 912 345 6789',
+  links: [
+    { label: 'Home', href: '#hero' },
+    { label: 'Products', href: '#features' },
+    { label: 'About', href: '#about' },
+    { label: 'Contact', href: '#cta' },
   ],
-  bg: '#1e293b', valueColor: '#f59e0b', labelColor: '#94a3b8', ...o,
+  bg: '#0a0a0f', textColor: '#ffffff', ...o,
 })
 
 /* ─────────────────────────────────────────────────────────────
-   Template presets
+   Template default block sets
 ───────────────────────────────────────────────────────────── */
-type TemplateId = 'classic-dark' | 'light-airy' | 'bold-gradient'
-
-const TEMPLATE_BLOCKS: Record<TemplateId, () => Block[]> = {
-  'classic-dark': () => [
-    mkHero({ overlayColor: '#000000', overlayOpacity: 60, align: 'center' }),
+const TEMPLATE_DEFAULTS: Record<string, () => Block[]> = {
+  template1: () => [
+    mkNav({ bg: '#0a0a0f', primaryColor: '#6366f1', textColor: '#ffffff' }),
+    mkHero({ primaryColor: '#6366f1', overlayColor: '#000000', overlayOpacity: 55, align: 'center' }),
+    mkAbout({ bg: '#0f172a', textColor: '#e2e8f0', accentColor: '#6366f1' }),
     mkStats({ bg: '#111827', valueColor: '#f59e0b', labelColor: '#6b7280' }),
-    mkFeatures({ bg: '#0f172a', cardBg: '#1e293b', textColor: '#e2e8f0', accentColor: '#f59e0b' }),
-    mkCta({ bg: '#1d1d2e', btnColor: '#f59e0b', textColor: '#ffffff' }),
+    mkFeatures({ bg: '#0f172a', cardBg: '#1e293b', textColor: '#e2e8f0', accentColor: '#6366f1' }),
+    mkCta({ bg: '#0f172a', btnColor: '#6366f1', textColor: '#ffffff' }),
+    mkFooter({ bg: '#0a0a0f', textColor: '#ffffff' }),
   ],
-  'light-airy': () => [
-    mkHero({ overlayColor: '#0f172a', overlayOpacity: 40, align: 'left' }),
-    mkText({ bg: '#faf7f3', textColor: '#1e293b' }),
-    mkFeatures({ bg: '#faf7f3', cardBg: '#ffffff', textColor: '#374151', accentColor: '#6366f1' }),
-    mkCta({ bg: '#6366f1', btnColor: '#f97316', textColor: '#ffffff' }),
+  template2: () => [
+    mkNav({ bg: '#ffffff', primaryColor: '#f97316', textColor: '#1e293b' }),
+    mkHero({ primaryColor: '#f97316', overlayColor: '#0f172a', overlayOpacity: 45, align: 'left' }),
+    mkAbout({ bg: '#faf7f3', textColor: '#1e293b', accentColor: '#f97316' }),
+    mkFeatures({ bg: '#ffffff', cardBg: '#f8fafc', textColor: '#1e293b', accentColor: '#f97316' }),
+    mkTestimonial({ bg: '#f97316', textColor: '#ffffff' }),
+    mkStats({ bg: '#ffffff', valueColor: '#f97316', labelColor: '#6b7280' }),
+    mkCta({ bg: '#fff7ed', btnColor: '#f97316', textColor: '#1e293b' }),
+    mkFooter({ bg: '#f1f5f9', textColor: '#64748b' }),
   ],
-  'bold-gradient': () => [
-    mkHero({ overlayColor: '#7c3aed', overlayOpacity: 75, align: 'center' }),
-    mkStats({ bg: '#ffffff', valueColor: '#7c3aed', labelColor: '#6b7280' }),
-    mkFeatures({ bg: '#f5f3ff', cardBg: '#ffffff', textColor: '#1e293b', accentColor: '#7c3aed' }),
+  template3: () => [
+    mkNav({ bg: '#0f0c29', primaryColor: '#7c3aed', textColor: '#ffffff' }),
+    mkHero({ primaryColor: '#7c3aed', overlayColor: '#7c3aed', overlayOpacity: 65, align: 'center' }),
+    mkAbout({ bg: '#1a1535', textColor: '#e2e8f0', accentColor: '#a78bfa' }),
+    mkStats({ bg: '#302b63', valueColor: '#a78bfa', labelColor: '#94a3b8' }),
+    mkFeatures({ bg: '#24243e', cardBg: '#302b63', textColor: '#e2e8f0', accentColor: '#a78bfa' }),
     mkCta({ bg: '#4c1d95', btnColor: '#a78bfa', textColor: '#ffffff' }),
+    mkFooter({ bg: '#0f0c29', textColor: '#ffffff' }),
   ],
 }
 
 /* ─────────────────────────────────────────────────────────────
    Block renderers
 ───────────────────────────────────────────────────────────── */
-function RenderHero({ b }: { b: HeroBlock }) {
+function RenderNav({ b, compact, shopSlug }: { b: NavBlock; compact?: boolean; shopSlug?: string }) {
   return (
-    <div className="relative overflow-hidden" style={{ minHeight: 520 }}>
-      <img
-        src={b.bgImage || 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1400&q=80'}
-        alt=""
-        className="absolute inset-0 h-full w-full object-cover object-center"
-        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-      />
+    <nav className={`flex items-center justify-between py-4 ${compact ? 'px-4' : 'px-4 md:px-10'}`} style={{ backgroundColor: b.bg, borderBottom: `1px solid ${b.textColor}20` }}>
+      <div className="flex items-center gap-2.5">
+        {b.logo && (
+          <img src={b.logo} alt="logo" className="h-12 w-12 rounded-2xl object-cover"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+        )}
+        <span className="text-lg font-black tracking-tight" style={{ color: b.textColor }}>{b.storeName}</span>
+      </div>
+      <div className={`items-center gap-6 text-sm ${compact ? 'hidden' : 'hidden md:flex'}`}>
+        {(b.links ?? DEFAULT_NAV_LINKS).map((link) => (
+          <a
+            key={link.label}
+            href={link.href}
+            className="cursor-pointer transition-opacity hover:opacity-100"
+            style={{ color: `${b.textColor}80` }}
+            onClick={(e) => {
+              e.preventDefault()
+              const target = document.querySelector(link.href)
+              target?.scrollIntoView({ behavior: 'smooth' })
+            }}
+          >
+            {link.label}
+          </a>
+        ))}
+      </div>
+      <a
+        href={shopSlug ? `/shop/${shopSlug}` : '#'}
+        className="rounded-full px-5 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+        style={{ backgroundColor: b.primaryColor }}
+      >Shop Now</a>
+    </nav>
+  )
+}
+function RenderHero({ b, compact, shopSlug }: { b: HeroBlock; compact?: boolean; shopSlug?: string }) {
+  return (
+    <section id="hero" className="relative overflow-hidden" style={{ minHeight: compact ? 400 : 520 }}>
+      <img src={b.bgImage} alt="" className="absolute inset-0 h-full w-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
       <div className="absolute inset-0" style={{ backgroundColor: b.overlayColor, opacity: b.overlayOpacity / 100 }} />
-      {/* Nav */}
-      <div className="relative z-10 flex items-center justify-between px-10 py-5" style={{ background: 'rgba(0,0,0,0.12)' }}>
-        <span className="text-lg font-bold text-white">{b.navBrand || 'AF Home'}</span>
-        <div className="hidden items-center gap-8 text-sm text-white/60 md:flex">
-          <span>Home</span><span>Ecosystem</span><span>Earnings</span><span>Benefits</span>
-        </div>
-        <span className="hidden rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white backdrop-blur md:block">
-          Login
-        </span>
-      </div>
-      {/* Content */}
-      <div className={`relative z-10 flex min-h-[440px] flex-col justify-center px-10 py-16 ${b.align === 'center' ? 'items-center text-center' : 'items-start'}`}>
-        <span className="mb-4 inline-block rounded-full border border-white/20 px-4 py-1 text-xs font-semibold uppercase tracking-widest text-white/70">
-          {b.badge}
-        </span>
-        <h1 className="max-w-3xl text-4xl font-black leading-tight text-white lg:text-5xl">
-          {b.title || 'Sell Premium Furniture Under Your Brand'}
-        </h1>
-        <p className="mt-5 max-w-xl text-base leading-relaxed text-white/60">
-          {b.subtitle}
-        </p>
-        <div className="mt-8 flex flex-wrap items-center gap-3">
-          <span className="rounded-full px-7 py-3 text-sm font-bold text-white shadow-xl" style={{ backgroundColor: '#6366f1' }}>
-            {b.ctaPrimary}
-          </span>
-          <span className="rounded-full border border-white/25 px-7 py-3 text-sm font-medium text-white/80">
-            {b.ctaSecondary}
-          </span>
+      <div className={`relative z-10 flex flex-col justify-center px-5 py-14 md:px-10 md:py-24 ${b.align === 'center' ? 'items-center text-center' : b.align === 'right' ? 'items-end text-right' : 'items-start'}`}>
+        {b.badge && <span className="mb-4 inline-block rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-widest" style={{ borderColor: `${b.primaryColor}60`, color: b.primaryColor }}>{b.badge}</span>}
+        <h1 className={`max-w-3xl font-black leading-tight text-white ${compact ? 'text-3xl' : 'text-3xl md:text-5xl lg:text-6xl'}`}>{b.tagline}</h1>
+        <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/60 md:text-base">{b.description}</p>
+        <div className={`mt-6 flex flex-wrap gap-3 ${b.align === 'center' ? 'justify-center' : b.align === 'right' ? 'justify-end' : ''}`}>
+          <a href={shopSlug ? `/shop/${shopSlug}` : '#'} className="rounded-full px-6 py-3 text-sm font-bold text-white transition hover:opacity-90" style={{ backgroundColor: b.primaryColor }}>{b.btnPrimary}</a>
+          <button type="button" className="rounded-full border border-white/25 px-6 py-3 text-sm font-medium text-white/80">{b.btnSecondary}</button>
         </div>
       </div>
-    </div>
+    </section>
   )
 }
-
-function RenderText({ b }: { b: TextBlock }) {
+function RenderStats({ b, compact }: { b: StatsBlock; compact?: boolean }) {
+  const cols = compact
+    ? 'grid-cols-2'
+    : b.items.length <= 2 ? 'grid-cols-2' : b.items.length === 3 ? 'grid-cols-3' : 'grid-cols-2 md:grid-cols-4'
   return (
-    <div style={{ backgroundColor: b.bg }} className="px-10 py-16">
-      <div className={`mx-auto max-w-3xl ${b.align === 'center' ? 'text-center' : ''}`}>
-        {b.title && <h2 className="text-3xl font-bold leading-snug" style={{ color: b.textColor }}>{b.title}</h2>}
-        {b.body && <p className="mt-4 text-base leading-relaxed opacity-70" style={{ color: b.textColor }}>{b.body}</p>}
+    <section id="stats" className="px-5 py-10 md:px-10 md:py-14" style={{ backgroundColor: b.bg }}>
+      <div className={`mx-auto max-w-4xl grid gap-6 md:gap-10 ${cols}`}>
+        {b.items.map((s, i) => (
+          <div key={i} className="text-center">
+            <p className="text-4xl font-black" style={{ color: b.valueColor }}>{s.value}</p>
+            <p className="mt-2 text-sm" style={{ color: b.labelColor }}>{s.label}</p>
+          </div>
+        ))}
       </div>
-    </div>
+    </section>
   )
 }
-
-function RenderFeatures({ b }: { b: FeaturesBlock }) {
+function RenderFeatures({ b, compact }: { b: FeaturesBlock; compact?: boolean }) {
+  const gridCols = compact ? 'grid-cols-1' : b.columns === 3 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'
   return (
-    <div style={{ backgroundColor: b.bg }} className="px-10 py-16">
+    <section id="features" className="px-5 py-12 md:px-10 md:py-16" style={{ backgroundColor: b.bg }}>
       <div className="mx-auto max-w-6xl">
         {(b.title || b.subtitle) && (
-          <div className="mb-12 text-center">
-            {b.title && <h2 className="text-3xl font-bold" style={{ color: b.textColor }}>{b.title}</h2>}
-            {b.subtitle && <p className="mt-2 text-base opacity-60" style={{ color: b.textColor }}>{b.subtitle}</p>}
+          <div className="mb-8 text-center md:mb-12">
+            {b.title && <h2 className="text-2xl font-bold md:text-3xl" style={{ color: b.textColor }}>{b.title}</h2>}
+            {b.subtitle && <p className="mt-2 text-sm opacity-60" style={{ color: b.textColor }}>{b.subtitle}</p>}
           </div>
         )}
-        <div className={`grid gap-6 ${b.columns === 3 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'}`}>
+        <div className={`grid gap-4 md:gap-6 ${gridCols}`}>
           {b.items.map((item, i) => (
-            <div key={i} style={{ backgroundColor: b.cardBg }} className="rounded-2xl border border-black/5 p-6 shadow-sm">
+            <div key={i} className="rounded-2xl border border-black/5 p-6 shadow-sm" style={{ backgroundColor: b.cardBg }}>
               <div className="mb-4 text-3xl">{item.icon}</div>
               <h3 className="mb-2 font-semibold" style={{ color: b.textColor }}>{item.title}</h3>
               <p className="text-sm leading-relaxed opacity-60" style={{ color: b.textColor }}>{item.desc}</p>
@@ -221,89 +208,165 @@ function RenderFeatures({ b }: { b: FeaturesBlock }) {
           ))}
         </div>
       </div>
-    </div>
+    </section>
   )
 }
-
+function RenderText({ b, compact }: { b: TextBlock; compact?: boolean }) {
+  return (
+    <section className={`${compact ? 'px-5 py-10' : 'px-5 py-12 md:px-10 md:py-16'}`} style={{ backgroundColor: b.bg }}>
+      <div className={`mx-auto max-w-3xl ${b.align === 'center' ? 'text-center' : b.align === 'right' ? 'text-right' : ''}`}>
+        {b.title && <h2 className="text-2xl font-bold md:text-3xl" style={{ color: b.textColor }}>{b.title}</h2>}
+        {b.body && <p className="mt-4 text-sm leading-relaxed opacity-70 md:text-base" style={{ color: b.textColor }}>{b.body}</p>}
+      </div>
+    </section>
+  )
+}
+function RenderTestimonial({ b, compact }: { b: TestimonialBlock; compact?: boolean }) {
+  return (
+    <section className={`${compact ? 'px-4 py-10' : 'px-4 py-12 md:px-10 md:py-16'}`}>
+      <div className="mx-auto max-w-3xl rounded-2xl p-6 text-center md:rounded-3xl md:p-10" style={{ backgroundColor: b.bg }}>
+        <p className="text-lg font-bold leading-relaxed md:text-2xl" style={{ color: b.textColor }}>"{b.text}"</p>
+        <p className="mt-4 text-sm font-semibold opacity-70" style={{ color: b.textColor }}>— {b.author}</p>
+      </div>
+    </section>
+  )
+}
+function RenderCta({ b, compact }: { b: CtaBlock; compact?: boolean }) {
+  return (
+    <section id="cta" className={`text-center ${compact ? 'px-5 py-14' : 'px-5 py-16 md:px-10 md:py-24'}`} style={{ backgroundColor: b.bg }}>
+      <div className="mx-auto max-w-2xl">
+        <h2 className="text-3xl font-black md:text-4xl" style={{ color: b.textColor }}>{b.title}</h2>
+        <p className="mt-3 text-sm opacity-60 md:mt-4 md:text-base" style={{ color: b.textColor }}>{b.subtitle}</p>
+        <button type="button" className="mt-8 rounded-2xl px-8 py-3.5 text-sm font-bold text-white shadow-xl md:mt-10 md:px-12 md:py-4" style={{ backgroundColor: b.btnColor }}>{b.btnText}</button>
+      </div>
+    </section>
+  )
+}
+function RenderAbout({ b, compact }: { b: AboutBlock; compact?: boolean }) {
+  return (
+    <section id="about" className={`${compact ? 'px-5 py-12' : 'px-5 py-14 md:px-10 md:py-20'}`} style={{ backgroundColor: b.bg }}>
+      <div className="mx-auto max-w-6xl">
+        <div className={`grid items-center gap-10 ${compact ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 md:gap-16'}`}>
+          {/* Image */}
+          {b.image && (
+            <div className="overflow-hidden rounded-3xl shadow-xl">
+              <img src={b.image} alt="About" className="h-72 w-full object-cover md:h-96"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+            </div>
+          )}
+          {/* Content */}
+          <div>
+            {b.subheading && (
+              <p className="mb-2 text-xs font-bold uppercase tracking-widest" style={{ color: b.accentColor }}>{b.subheading}</p>
+            )}
+            <h2 className={`font-black leading-tight ${compact ? 'text-3xl' : 'text-3xl md:text-4xl'}`} style={{ color: b.textColor }}>
+              {b.heading}
+            </h2>
+            {b.story && (
+              <p className="mt-4 text-sm leading-relaxed opacity-70 md:text-base" style={{ color: b.textColor }}>{b.story}</p>
+            )}
+            {b.highlights.length > 0 && (
+              <ul className="mt-6 space-y-3">
+                {b.highlights.map((h, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <span className="mt-0.5 text-xl">{h.icon}</span>
+                    <span className="text-sm leading-relaxed" style={{ color: b.textColor, opacity: 0.75 }}>{h.text}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
 function RenderImage({ b }: { b: ImageBlock }) {
   return (
     <div className={b.fullWidth ? 'w-full' : 'px-10 py-8'}>
-      {b.src ? (
-        <img
-          src={b.src}
-          alt={b.alt || ''}
-          className={`w-full object-cover ${b.fullWidth ? 'max-h-[500px]' : 'rounded-2xl shadow-lg'}`}
-          onError={(e) => { (e.target as HTMLImageElement).src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='300'%3E%3Crect width='800' height='300' fill='%23e2e8f0'/%3E%3Ctext x='400' y='155' text-anchor='middle' fill='%2394a3b8' font-size='16' font-family='sans-serif'%3EImage not found%3C/text%3E%3C/svg%3E" }}
-        />
-      ) : (
-        <div className="flex h-48 w-full items-center justify-center rounded-2xl bg-slate-100">
-          <ImageIcon className="h-10 w-10 text-slate-300" />
-        </div>
-      )}
+      {b.src
+        ? <img src={b.src} alt={b.alt} className={`w-full object-cover ${b.fullWidth ? 'max-h-96' : 'rounded-2xl shadow-lg'}`} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+        : <div className="flex h-48 items-center justify-center rounded-2xl bg-slate-100"><ImageIcon className="h-10 w-10 text-slate-300" /></div>
+      }
       {b.caption && <p className="mt-2 text-center text-xs text-slate-400">{b.caption}</p>}
     </div>
   )
 }
-
-function RenderCta({ b }: { b: CtaBlock }) {
+function RenderFooter({ b, compact }: { b: FooterBlock; compact?: boolean }) {
   return (
-    <div style={{ backgroundColor: b.bg }} className="px-10 py-20">
-      <div className="mx-auto max-w-2xl text-center">
-        <h2 className="text-4xl font-black leading-snug" style={{ color: b.textColor }}>{b.title}</h2>
-        <p className="mt-4 text-lg leading-relaxed opacity-60" style={{ color: b.textColor }}>{b.subtitle}</p>
-        <div className="mt-10">
-          <span className="inline-block rounded-2xl px-10 py-4 text-sm font-bold text-white shadow-xl" style={{ backgroundColor: b.btnColor }}>
-            {b.btnText}
-          </span>
+    <footer style={{ backgroundColor: b.bg, borderTop: `1px solid ${b.textColor}15`, color: b.textColor }}>
+      {/* Main footer content */}
+      <div className={`mx-auto max-w-6xl grid grid-cols-1 gap-8 py-10 ${compact ? 'px-5' : 'px-5 md:px-10 md:py-14 md:grid-cols-3 md:gap-10'}`}>
+        {/* Brand */}
+        <div>
+          <p className="text-xl font-black tracking-tight">{b.storeName}</p>
+          {b.tagline && <p className="mt-2 text-sm leading-relaxed" style={{ opacity: 0.55 }}>{b.tagline}</p>}
         </div>
-      </div>
-    </div>
-  )
-}
-
-function RenderStats({ b }: { b: StatsBlock }) {
-  const cols = b.items.length <= 2 ? 'grid-cols-2' : b.items.length === 3 ? 'grid-cols-3' : 'grid-cols-2 md:grid-cols-4'
-  return (
-    <div style={{ backgroundColor: b.bg }} className="px-10 py-14">
-      <div className={`mx-auto max-w-4xl grid gap-10 ${cols}`}>
-        {b.items.map((item, i) => (
-          <div key={i} className="text-center">
-            <p className="text-4xl font-black" style={{ color: b.valueColor }}>{item.value}</p>
-            <p className="mt-2 text-sm" style={{ color: b.labelColor }}>{item.label}</p>
+        {/* Quick links */}
+        {b.links.length > 0 && (
+          <div>
+            <p className="mb-4 text-[11px] font-bold uppercase tracking-widest" style={{ opacity: 0.4 }}>Quick Links</p>
+            <ul className="space-y-2">
+              {b.links.map((link, i) => (
+                <li key={i}>
+                  <a href={link.href} className="text-sm transition hover:opacity-100" style={{ opacity: 0.55 }}
+                    onClick={(e) => { e.preventDefault(); document.querySelector(link.href)?.scrollIntoView({ behavior: 'smooth' }) }}>
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
-        ))}
+        )}
+        {/* Contact */}
+        {(b.email || b.phone) && (
+          <div>
+            <p className="mb-4 text-[11px] font-bold uppercase tracking-widest" style={{ opacity: 0.4 }}>Contact</p>
+            <div className="space-y-2">
+              {b.email && <p className="text-sm" style={{ opacity: 0.55 }}>{b.email}</p>}
+              {b.phone && <p className="text-sm" style={{ opacity: 0.55 }}>{b.phone}</p>}
+            </div>
+          </div>
+        )}
       </div>
-    </div>
+      {/* Copyright bar */}
+      <div className="border-t px-5 py-4 text-center text-xs" style={{ borderColor: `${b.textColor}15`, opacity: 0.4 }}>
+        © {new Date().getFullYear()} {b.storeName} · {b.copyrightText}
+      </div>
+    </footer>
   )
 }
-
-function BlockCanvas({ block }: { block: Block }) {
+function BlockCanvas({ block, compact, shopSlug }: { block: Block; compact?: boolean; shopSlug?: string }) {
   switch (block.type) {
-    case 'hero': return <RenderHero b={block} />
-    case 'text': return <RenderText b={block} />
-    case 'features': return <RenderFeatures b={block} />
+    case 'nav': return <RenderNav b={block} compact={compact} shopSlug={shopSlug} />
+    case 'hero': return <RenderHero b={block} compact={compact} shopSlug={shopSlug} />
+    case 'stats': return <RenderStats b={block} compact={compact} />
+    case 'features': return <RenderFeatures b={block} compact={compact} />
+    case 'text': return <RenderText b={block} compact={compact} />
+    case 'testimonial': return <RenderTestimonial b={block} compact={compact} />
+    case 'cta': return <RenderCta b={block} compact={compact} />
     case 'image': return <RenderImage b={block} />
-    case 'cta': return <RenderCta b={block} />
-    case 'stats': return <RenderStats b={block} />
+    case 'about': return <RenderAbout b={block} compact={compact} />
+    case 'footer': return <RenderFooter b={block} compact={compact} />
   }
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Block type meta (for add panel)
+   Block meta
 ───────────────────────────────────────────────────────────── */
+const BLOCK_LABEL: Record<Block['type'], string> = { nav: 'Navigation', hero: 'Hero', stats: 'Stats Row', features: 'Features Grid', text: 'Text Section', testimonial: 'Testimonial', cta: 'CTA Banner', image: 'Image', about: 'About Us', footer: 'Footer' }
 const BLOCK_META = [
-  { type: 'hero' as const, label: 'Hero', icon: Layout, desc: 'Full-width hero with headline & CTA', mk: () => mkHero() },
-  { type: 'text' as const, label: 'Text', icon: Type, desc: 'Title and paragraph text', mk: () => mkText() },
-  { type: 'features' as const, label: 'Features', icon: LayoutGrid, desc: 'Grid of feature/benefit cards', mk: () => mkFeatures() },
-  { type: 'image' as const, label: 'Image', icon: ImageIcon, desc: 'Full-width or contained image', mk: () => mkImage() },
-  { type: 'cta' as const, label: 'CTA', icon: Zap, desc: 'Call to action banner with button', mk: () => mkCta() },
-  { type: 'stats' as const, label: 'Stats', icon: TrendingUp, desc: 'Row of statistic numbers', mk: () => mkStats() },
+  { type: 'nav' as const,         label: 'Navigation',    icon: Layout,     mk: () => mkNav() },
+  { type: 'hero' as const,        label: 'Hero',          icon: Layout,     mk: () => mkHero() },
+  { type: 'about' as const,       label: 'About Us',      icon: Type,       mk: () => mkAbout() },
+  { type: 'stats' as const,       label: 'Stats',         icon: TrendingUp, mk: () => mkStats() },
+  { type: 'features' as const,    label: 'Features Grid', icon: LayoutGrid, mk: () => mkFeatures() },
+  { type: 'text' as const,        label: 'Text Section',  icon: Type,       mk: () => mkText() },
+  { type: 'testimonial' as const, label: 'Testimonial',   icon: Type,       mk: () => mkTestimonial() },
+  { type: 'cta' as const,         label: 'CTA Banner',    icon: Zap,        mk: () => mkCta() },
+  { type: 'image' as const,       label: 'Image',         icon: ImageIcon,  mk: () => mkImage() },
+  { type: 'footer' as const,      label: 'Footer',        icon: Layout,     mk: () => mkFooter() },
 ]
-
-const BLOCK_LABEL: Record<Block['type'], string> = {
-  hero: 'Hero', text: 'Text Section', features: 'Features Grid',
-  image: 'Image', cta: 'CTA Banner', stats: 'Stats Row',
-}
 
 /* ─────────────────────────────────────────────────────────────
    Form helpers
@@ -314,7 +377,7 @@ const lCls = 'text-[10px] font-semibold uppercase tracking-wider text-slate-400'
 function F({ label, children }: { label: string; children: React.ReactNode }) {
   return <div className="space-y-1"><p className={lCls}>{label}</p>{children}</div>
 }
-function ColorRow({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <F label={label}>
       <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
@@ -331,15 +394,15 @@ function RangeRow({ label, value, onChange }: { label: string; value: number; on
     </F>
   )
 }
-function AlignPicker({ value, onChange }: { value: 'left' | 'center'; onChange: (v: 'left' | 'center') => void }) {
+function AlignPicker({ value, onChange }: { value: 'left' | 'center' | 'right'; onChange: (v: 'left' | 'center' | 'right') => void }) {
   return (
     <F label="Alignment">
       <div className="flex gap-2">
-        {(['left', 'center'] as const).map((a) => (
-          <button
-            key={a} type="button" onClick={() => onChange(a)}
-            className={`flex-1 rounded-xl border py-1.5 text-xs font-semibold capitalize transition ${value === a ? 'border-indigo-400 bg-indigo-50 text-indigo-600' : 'border-slate-200 text-slate-500 hover:border-slate-300'}`}
-          >{a}</button>
+        {(['left', 'center', 'right'] as const).map((a) => (
+          <button key={a} type="button" onClick={() => onChange(a)}
+            className={`flex-1 rounded-xl border py-1.5 text-xs font-semibold capitalize transition ${value === a ? 'border-indigo-400 bg-indigo-50 text-indigo-600' : 'border-slate-200 text-slate-500 hover:border-slate-300'}`}>
+            {a}
+          </button>
         ))}
       </div>
     </F>
@@ -347,165 +410,104 @@ function AlignPicker({ value, onChange }: { value: 'left' | 'center'; onChange: 
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Properties panels per block type
+   Properties panels
 ───────────────────────────────────────────────────────────── */
-function HeroProps({ block, onChange }: { block: HeroBlock; onChange: (b: HeroBlock) => void }) {
-  const set = <K extends keyof HeroBlock>(k: K, v: HeroBlock[K]) => onChange({ ...block, [k]: v })
+function NavProps({ b, onChange }: { b: NavBlock; onChange: (b: Block) => void }) {
+  const set = <K extends keyof NavBlock>(k: K, v: NavBlock[K]) => onChange({ ...b, [k]: v })
+  const links = b.links ?? DEFAULT_NAV_LINKS
+  const updateLink = (i: number, key: keyof NavLink, v: string) =>
+    set('links', links.map((l, idx) => idx === i ? { ...l, [key]: v } : l))
   return (
     <div className="space-y-3">
-      <F label="Brand Name"><input value={block.navBrand} onChange={(e) => set('navBrand', e.target.value)} className={iCls} placeholder="AF Home" /></F>
-      <F label="Badge Text"><input value={block.badge} onChange={(e) => set('badge', e.target.value)} className={iCls} placeholder="Partner Storefront" /></F>
-      <F label="Headline"><input value={block.title} onChange={(e) => set('title', e.target.value)} className={iCls} placeholder="Main headline…" /></F>
-      <F label="Subheading"><textarea value={block.subtitle} onChange={(e) => set('subtitle', e.target.value)} rows={3} className={iCls} placeholder="Supporting text…" /></F>
-      <F label="Background Image URL">
-        <input value={block.bgImage} onChange={(e) => set('bgImage', e.target.value)} className={iCls} placeholder="https://images.unsplash.com/…" />
-        {block.bgImage && (
-          <img src={block.bgImage} alt="" className="mt-1.5 h-20 w-full rounded-lg object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+      <F label="Logo Image URL">
+        <input value={b.logo} onChange={(e) => set('logo', e.target.value)} className={iCls} placeholder="https://… (leave empty for no logo)" />
+        {b.logo && (
+          <img src={b.logo} alt="logo preview" className="mt-1.5 h-12 w-12 rounded-xl object-contain border border-slate-200 bg-slate-50 p-1"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
         )}
       </F>
-      <ColorRow label="Overlay Color" value={block.overlayColor} onChange={(v) => set('overlayColor', v)} />
-      <RangeRow label="Overlay Opacity" value={block.overlayOpacity} onChange={(v) => set('overlayOpacity', v)} />
-      <AlignPicker value={block.align} onChange={(v) => set('align', v)} />
-      <F label="Primary Button"><input value={block.ctaPrimary} onChange={(e) => set('ctaPrimary', e.target.value)} className={iCls} placeholder="Become a Partner" /></F>
-      <F label="Primary Button URL"><input value={block.ctaPrimaryUrl} onChange={(e) => set('ctaPrimaryUrl', e.target.value)} className={iCls} placeholder="https://…" /></F>
-      <F label="Secondary Button"><input value={block.ctaSecondary} onChange={(e) => set('ctaSecondary', e.target.value)} className={iCls} placeholder="Learn More" /></F>
-    </div>
-  )
-}
-
-function TextProps({ block, onChange }: { block: TextBlock; onChange: (b: TextBlock) => void }) {
-  const set = <K extends keyof TextBlock>(k: K, v: TextBlock[K]) => onChange({ ...block, [k]: v })
-  return (
-    <div className="space-y-3">
-      <F label="Title"><input value={block.title} onChange={(e) => set('title', e.target.value)} className={iCls} placeholder="Section title…" /></F>
-      <F label="Body"><textarea value={block.body} onChange={(e) => set('body', e.target.value)} rows={5} className={iCls} placeholder="Paragraph text…" /></F>
-      <AlignPicker value={block.align} onChange={(v) => set('align', v)} />
-      <ColorRow label="Background" value={block.bg} onChange={(v) => set('bg', v)} />
-      <ColorRow label="Text Color" value={block.textColor} onChange={(v) => set('textColor', v)} />
-    </div>
-  )
-}
-
-function FeaturesProps({ block, onChange }: { block: FeaturesBlock; onChange: (b: FeaturesBlock) => void }) {
-  const set = <K extends keyof FeaturesBlock>(k: K, v: FeaturesBlock[K]) => onChange({ ...block, [k]: v })
-  const updateItem = (i: number, key: keyof FeatureItem, v: string) => {
-    const items = block.items.map((item, idx) => idx === i ? { ...item, [key]: v } : item)
-    set('items', items)
-  }
-  const addItem = () => set('items', [...block.items, { icon: '✨', title: 'New Feature', desc: 'Feature description.' }])
-  const removeItem = (i: number) => set('items', block.items.filter((_, idx) => idx !== i))
-
-  return (
-    <div className="space-y-3">
-      <F label="Section Title"><input value={block.title} onChange={(e) => set('title', e.target.value)} className={iCls} /></F>
-      <F label="Subtitle"><input value={block.subtitle} onChange={(e) => set('subtitle', e.target.value)} className={iCls} /></F>
-      <F label="Columns">
-        <div className="flex gap-2">
-          {([2, 3] as const).map((c) => (
-            <button key={c} type="button" onClick={() => set('columns', c)}
-              className={`flex-1 rounded-xl border py-1.5 text-xs font-semibold transition ${block.columns === c ? 'border-indigo-400 bg-indigo-50 text-indigo-600' : 'border-slate-200 text-slate-500'}`}
-            >{c} columns</button>
-          ))}
-        </div>
-      </F>
-      <ColorRow label="Background" value={block.bg} onChange={(v) => set('bg', v)} />
-      <ColorRow label="Card Background" value={block.cardBg} onChange={(v) => set('cardBg', v)} />
-      <ColorRow label="Accent Color" value={block.accentColor} onChange={(v) => set('accentColor', v)} />
-      <ColorRow label="Text Color" value={block.textColor} onChange={(v) => set('textColor', v)} />
+      <F label="Store Name"><input value={b.storeName} onChange={(e) => set('storeName', e.target.value)} className={iCls} /></F>
+      <ColorField label="Background" value={b.bg} onChange={(v) => set('bg', v)} />
+      <ColorField label="Text Color" value={b.textColor} onChange={(v) => set('textColor', v)} />
+      <ColorField label="Button Color" value={b.primaryColor} onChange={(v) => set('primaryColor', v)} />
       <div className="space-y-2">
-        <p className={lCls}>Feature Items</p>
-        {block.items.map((item, i) => (
-          <div key={i} className="rounded-xl border border-slate-200 bg-slate-50 p-2 space-y-1.5 dark:border-slate-700 dark:bg-slate-800">
-            <div className="flex items-center gap-1.5">
-              <input value={item.icon} onChange={(e) => updateItem(i, 'icon', e.target.value)}
-                className="w-12 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-center text-sm outline-none dark:border-slate-700 dark:bg-slate-900" placeholder="🎯" />
-              <input value={item.title} onChange={(e) => updateItem(i, 'title', e.target.value)}
-                className="flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs outline-none dark:border-slate-700 dark:bg-slate-900" placeholder="Title" />
-              <button type="button" onClick={() => removeItem(i)} className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500">
-                <X className="h-3 w-3" />
+        <p className={lCls}>Nav Links <span className="normal-case font-normal text-slate-400">(href = #section-id)</span></p>
+        {links.map((link, i) => (
+          <div key={i} className="rounded-xl border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-800">
+            <div className="mb-1.5 flex items-center justify-between">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Link {i + 1}</span>
+              <button type="button" onClick={() => set('links', links.filter((_, idx) => idx !== i))}
+                className="flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-600 transition hover:bg-rose-100 dark:border-rose-800/50 dark:bg-rose-950/30 dark:text-rose-400">
+                <Trash2 className="h-2.5 w-2.5" /> Remove
               </button>
             </div>
-            <input value={item.desc} onChange={(e) => updateItem(i, 'desc', e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs outline-none dark:border-slate-700 dark:bg-slate-900" placeholder="Description" />
+            <div className="flex gap-1.5">
+              <input value={link.label} onChange={(e) => updateLink(i, 'label', e.target.value)}
+                className="w-24 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs outline-none dark:border-slate-700 dark:bg-slate-900" placeholder="Label" />
+              <input value={link.href} onChange={(e) => updateLink(i, 'href', e.target.value)}
+                className="flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-mono outline-none dark:border-slate-700 dark:bg-slate-900" placeholder="#section" />
+            </div>
           </div>
         ))}
-        <button type="button" onClick={addItem}
+        <button type="button" onClick={() => set('links', [...links, { label: 'New Link', href: '#section' }])}
           className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 py-2 text-xs text-slate-400 transition hover:border-indigo-300 hover:text-indigo-500">
-          <Plus className="h-3 w-3" /> Add item
+          <Plus className="h-3 w-3" /> Add link
         </button>
       </div>
     </div>
   )
 }
-
-function ImageProps({ block, onChange }: { block: ImageBlock; onChange: (b: ImageBlock) => void }) {
-  const set = <K extends keyof ImageBlock>(k: K, v: ImageBlock[K]) => onChange({ ...block, [k]: v })
+function HeroProps({ b, onChange }: { b: HeroBlock; onChange: (b: Block) => void }) {
+  const set = <K extends keyof HeroBlock>(k: K, v: HeroBlock[K]) => onChange({ ...b, [k]: v })
   return (
     <div className="space-y-3">
-      <F label="Image URL">
-        <input value={block.src} onChange={(e) => set('src', e.target.value)} className={iCls} placeholder="https://images.unsplash.com/…" />
-        {block.src && (
-          <img src={block.src} alt="" className="mt-1.5 h-28 w-full rounded-lg object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
-        )}
+      <F label="Badge Text"><input value={b.badge} onChange={(e) => set('badge', e.target.value)} className={iCls} /></F>
+      <F label="Headline"><input value={b.tagline} onChange={(e) => set('tagline', e.target.value)} className={iCls} /></F>
+      <F label="Description"><textarea value={b.description} onChange={(e) => set('description', e.target.value)} rows={3} className={iCls} /></F>
+      <F label="Background Image URL">
+        <input value={b.bgImage} onChange={(e) => set('bgImage', e.target.value)} className={iCls} placeholder="https://…" />
+        {b.bgImage && <img src={b.bgImage} alt="" className="mt-1.5 h-20 w-full rounded-lg object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />}
       </F>
-      <F label="Alt Text"><input value={block.alt} onChange={(e) => set('alt', e.target.value)} className={iCls} placeholder="Describe the image…" /></F>
-      <F label="Caption"><input value={block.caption} onChange={(e) => set('caption', e.target.value)} className={iCls} placeholder="Optional caption…" /></F>
-      <F label="Width">
-        <div className="flex gap-2">
-          {[{ v: true, l: 'Full Width' }, { v: false, l: 'Contained' }].map(({ v, l }) => (
-            <button key={l} type="button" onClick={() => set('fullWidth', v)}
-              className={`flex-1 rounded-xl border py-1.5 text-xs font-semibold transition ${block.fullWidth === v ? 'border-indigo-400 bg-indigo-50 text-indigo-600' : 'border-slate-200 text-slate-500'}`}
-            >{l}</button>
-          ))}
-        </div>
-      </F>
+      <ColorField label="Overlay Color" value={b.overlayColor} onChange={(v) => set('overlayColor', v)} />
+      <RangeRow label="Overlay Opacity" value={b.overlayOpacity} onChange={(v) => set('overlayOpacity', v)} />
+      <ColorField label="Button Color" value={b.primaryColor} onChange={(v) => set('primaryColor', v)} />
+      <AlignPicker value={b.align} onChange={(v) => onChange({ ...b, align: v })} />
+      <F label="Primary Button"><input value={b.btnPrimary} onChange={(e) => set('btnPrimary', e.target.value)} className={iCls} /></F>
+      <F label="Secondary Button"><input value={b.btnSecondary} onChange={(e) => set('btnSecondary', e.target.value)} className={iCls} /></F>
     </div>
   )
 }
-
-function CtaProps({ block, onChange }: { block: CtaBlock; onChange: (b: CtaBlock) => void }) {
-  const set = <K extends keyof CtaBlock>(k: K, v: CtaBlock[K]) => onChange({ ...block, [k]: v })
+function StatsProps({ b, onChange }: { b: StatsBlock; onChange: (b: Block) => void }) {
+  const set = <K extends keyof StatsBlock>(k: K, v: StatsBlock[K]) => onChange({ ...b, [k]: v })
+  const updateItem = (i: number, key: 'value' | 'label', v: string) => set('items', b.items.map((it, idx) => idx === i ? { ...it, [key]: v } : it))
   return (
     <div className="space-y-3">
-      <F label="Headline"><input value={block.title} onChange={(e) => set('title', e.target.value)} className={iCls} /></F>
-      <F label="Subheading"><textarea value={block.subtitle} onChange={(e) => set('subtitle', e.target.value)} rows={3} className={iCls} /></F>
-      <F label="Button Text"><input value={block.btnText} onChange={(e) => set('btnText', e.target.value)} className={iCls} /></F>
-      <F label="Button URL"><input value={block.btnUrl} onChange={(e) => set('btnUrl', e.target.value)} className={iCls} placeholder="https://…" /></F>
-      <ColorRow label="Button Color" value={block.btnColor} onChange={(v) => set('btnColor', v)} />
-      <ColorRow label="Background" value={block.bg} onChange={(v) => set('bg', v)} />
-      <ColorRow label="Text Color" value={block.textColor} onChange={(v) => set('textColor', v)} />
-    </div>
-  )
-}
-
-function StatsProps({ block, onChange }: { block: StatsBlock; onChange: (b: StatsBlock) => void }) {
-  const set = <K extends keyof StatsBlock>(k: K, v: StatsBlock[K]) => onChange({ ...block, [k]: v })
-  const updateItem = (i: number, key: 'value' | 'label', v: string) => {
-    const items = block.items.map((item, idx) => idx === i ? { ...item, [key]: v } : item)
-    set('items', items)
-  }
-  const addItem = () => set('items', [...block.items, { value: '0', label: 'New Stat' }])
-  const removeItem = (i: number) => set('items', block.items.filter((_, idx) => idx !== i))
-
-  return (
-    <div className="space-y-3">
-      <ColorRow label="Background" value={block.bg} onChange={(v) => set('bg', v)} />
-      <ColorRow label="Value Color" value={block.valueColor} onChange={(v) => set('valueColor', v)} />
-      <ColorRow label="Label Color" value={block.labelColor} onChange={(v) => set('labelColor', v)} />
+      <ColorField label="Background" value={b.bg} onChange={(v) => set('bg', v)} />
+      <ColorField label="Value Color" value={b.valueColor} onChange={(v) => set('valueColor', v)} />
+      <ColorField label="Label Color" value={b.labelColor} onChange={(v) => set('labelColor', v)} />
       <div className="space-y-2">
         <p className={lCls}>Stats</p>
-        {block.items.map((item, i) => (
-          <div key={i} className="flex items-center gap-1.5">
-            <input value={item.value} onChange={(e) => updateItem(i, 'value', e.target.value)}
-              className="w-20 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold outline-none dark:border-slate-700 dark:bg-slate-800" placeholder="500+" />
-            <input value={item.label} onChange={(e) => updateItem(i, 'label', e.target.value)}
-              className="flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs outline-none dark:border-slate-700 dark:bg-slate-800" placeholder="Label" />
-            <button type="button" onClick={() => removeItem(i)} className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500">
-              <X className="h-3 w-3" />
-            </button>
+        {b.items.map((item, i) => (
+          <div key={i} className="rounded-xl border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-800">
+            <div className="flex items-center justify-between gap-1.5 mb-1.5">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Stat {i + 1}</span>
+              <button
+                type="button"
+                onClick={() => set('items', b.items.filter((_, idx) => idx !== i))}
+                className="flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-600 transition hover:bg-rose-100 dark:border-rose-800/50 dark:bg-rose-950/30 dark:text-rose-400"
+              >
+                <Trash2 className="h-2.5 w-2.5" /> Remove
+              </button>
+            </div>
+            <div className="flex gap-1.5">
+              <input value={item.value} onChange={(e) => updateItem(i, 'value', e.target.value)}
+                className="w-20 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold outline-none dark:border-slate-700 dark:bg-slate-900" placeholder="500+" />
+              <input value={item.label} onChange={(e) => updateItem(i, 'label', e.target.value)}
+                className="flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs outline-none dark:border-slate-700 dark:bg-slate-900" placeholder="Label" />
+            </div>
           </div>
         ))}
-        <button type="button" onClick={addItem}
+        <button type="button" onClick={() => set('items', [...b.items, { value: '0', label: 'New Stat' }])}
           className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 py-2 text-xs text-slate-400 transition hover:border-indigo-300 hover:text-indigo-500">
           <Plus className="h-3 w-3" /> Add stat
         </button>
@@ -513,21 +515,227 @@ function StatsProps({ block, onChange }: { block: StatsBlock; onChange: (b: Stat
     </div>
   )
 }
+function FeaturesProps({ b, onChange }: { b: FeaturesBlock; onChange: (b: Block) => void }) {
+  const set = <K extends keyof FeaturesBlock>(k: K, v: FeaturesBlock[K]) => onChange({ ...b, [k]: v })
+  const updateItem = (i: number, key: keyof FeatureItem, v: string) => set('items', b.items.map((it, idx) => idx === i ? { ...it, [key]: v } : it))
+  return (
+    <div className="space-y-3">
+      <F label="Section Title"><input value={b.title} onChange={(e) => set('title', e.target.value)} className={iCls} /></F>
+      <F label="Subtitle"><input value={b.subtitle} onChange={(e) => set('subtitle', e.target.value)} className={iCls} /></F>
+      <F label="Columns">
+        <div className="flex gap-2">
+          {([2, 3] as const).map((c) => (
+            <button key={c} type="button" onClick={() => set('columns', c)}
+              className={`flex-1 rounded-xl border py-1.5 text-xs font-semibold transition ${b.columns === c ? 'border-indigo-400 bg-indigo-50 text-indigo-600' : 'border-slate-200 text-slate-500'}`}>
+              {c} cols
+            </button>
+          ))}
+        </div>
+      </F>
+      <ColorField label="Background" value={b.bg} onChange={(v) => set('bg', v)} />
+      <ColorField label="Card Background" value={b.cardBg} onChange={(v) => set('cardBg', v)} />
+      <ColorField label="Text Color" value={b.textColor} onChange={(v) => set('textColor', v)} />
+      <ColorField label="Accent Color" value={b.accentColor} onChange={(v) => set('accentColor', v)} />
+      <div className="space-y-2">
+        <p className={lCls}>Feature Items</p>
+        {b.items.map((item, i) => (
+          <div key={i} className="space-y-1.5 rounded-xl border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-800">
+            <div className="mb-1.5 flex items-center justify-between">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Feature {i + 1}</span>
+              <button type="button" onClick={() => set('items', b.items.filter((_, idx) => idx !== i))}
+                className="flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-600 transition hover:bg-rose-100 dark:border-rose-800/50 dark:bg-rose-950/30 dark:text-rose-400">
+                <Trash2 className="h-2.5 w-2.5" /> Remove
+              </button>
+            </div>
+            <div className="flex gap-1.5">
+              <input value={item.icon} onChange={(e) => updateItem(i, 'icon', e.target.value)}
+                className="w-12 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-center text-sm outline-none dark:border-slate-700 dark:bg-slate-900" placeholder="🎯" />
+              <input value={item.title} onChange={(e) => updateItem(i, 'title', e.target.value)}
+                className="flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs outline-none dark:border-slate-700 dark:bg-slate-900" placeholder="Title" />
+            </div>
+            <input value={item.desc} onChange={(e) => updateItem(i, 'desc', e.target.value)}
+              className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs outline-none dark:border-slate-700 dark:bg-slate-900" placeholder="Description" />
+          </div>
+        ))}
+        <button type="button" onClick={() => set('items', [...b.items, { icon: '✨', title: 'New Feature', desc: 'Feature description.' }])}
+          className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 py-2 text-xs text-slate-400 transition hover:border-indigo-300 hover:text-indigo-500">
+          <Plus className="h-3 w-3" /> Add item
+        </button>
+      </div>
+    </div>
+  )
+}
+function TextProps({ b, onChange }: { b: TextBlock; onChange: (b: Block) => void }) {
+  const set = <K extends keyof TextBlock>(k: K, v: TextBlock[K]) => onChange({ ...b, [k]: v })
+  return (
+    <div className="space-y-3">
+      <F label="Title"><input value={b.title} onChange={(e) => set('title', e.target.value)} className={iCls} /></F>
+      <F label="Body"><textarea value={b.body} onChange={(e) => set('body', e.target.value)} rows={4} className={iCls} /></F>
+      <AlignPicker value={b.align} onChange={(v) => onChange({ ...b, align: v })} />
+      <ColorField label="Background" value={b.bg} onChange={(v) => set('bg', v)} />
+      <ColorField label="Text Color" value={b.textColor} onChange={(v) => set('textColor', v)} />
+    </div>
+  )
+}
+function TestimonialProps({ b, onChange }: { b: TestimonialBlock; onChange: (b: Block) => void }) {
+  const set = <K extends keyof TestimonialBlock>(k: K, v: TestimonialBlock[K]) => onChange({ ...b, [k]: v })
+  return (
+    <div className="space-y-3">
+      <F label="Quote"><textarea value={b.text} onChange={(e) => set('text', e.target.value)} rows={4} className={iCls} /></F>
+      <F label="Author"><input value={b.author} onChange={(e) => set('author', e.target.value)} className={iCls} /></F>
+      <ColorField label="Background" value={b.bg} onChange={(v) => set('bg', v)} />
+      <ColorField label="Text Color" value={b.textColor} onChange={(v) => set('textColor', v)} />
+    </div>
+  )
+}
+function CtaProps({ b, onChange }: { b: CtaBlock; onChange: (b: Block) => void }) {
+  const set = <K extends keyof CtaBlock>(k: K, v: CtaBlock[K]) => onChange({ ...b, [k]: v })
+  return (
+    <div className="space-y-3">
+      <F label="Headline"><input value={b.title} onChange={(e) => set('title', e.target.value)} className={iCls} /></F>
+      <F label="Subheading"><textarea value={b.subtitle} onChange={(e) => set('subtitle', e.target.value)} rows={2} className={iCls} /></F>
+      <F label="Button Text"><input value={b.btnText} onChange={(e) => set('btnText', e.target.value)} className={iCls} /></F>
+      <ColorField label="Button Color" value={b.btnColor} onChange={(v) => set('btnColor', v)} />
+      <ColorField label="Background" value={b.bg} onChange={(v) => set('bg', v)} />
+      <ColorField label="Text Color" value={b.textColor} onChange={(v) => set('textColor', v)} />
+    </div>
+  )
+}
+function ImageProps({ b, onChange }: { b: ImageBlock; onChange: (b: Block) => void }) {
+  const set = <K extends keyof ImageBlock>(k: K, v: ImageBlock[K]) => onChange({ ...b, [k]: v })
+  return (
+    <div className="space-y-3">
+      <F label="Image URL">
+        <input value={b.src} onChange={(e) => set('src', e.target.value)} className={iCls} placeholder="https://…" />
+        {b.src && <img src={b.src} alt="" className="mt-1.5 h-28 w-full rounded-lg object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />}
+      </F>
+      <F label="Alt Text"><input value={b.alt} onChange={(e) => set('alt', e.target.value)} className={iCls} /></F>
+      <F label="Caption"><input value={b.caption} onChange={(e) => set('caption', e.target.value)} className={iCls} /></F>
+      <F label="Width">
+        <div className="flex gap-2">
+          {[{ v: true, l: 'Full Width' }, { v: false, l: 'Contained' }].map(({ v, l }) => (
+            <button key={l} type="button" onClick={() => set('fullWidth', v)}
+              className={`flex-1 rounded-xl border py-1.5 text-xs font-semibold transition ${b.fullWidth === v ? 'border-indigo-400 bg-indigo-50 text-indigo-600' : 'border-slate-200 text-slate-500'}`}>
+              {l}
+            </button>
+          ))}
+        </div>
+      </F>
+    </div>
+  )
+}
+function AboutProps({ b, onChange }: { b: AboutBlock; onChange: (b: Block) => void }) {
+  const set = <K extends keyof AboutBlock>(k: K, v: AboutBlock[K]) => onChange({ ...b, [k]: v })
+  const updateHighlight = (i: number, key: keyof AboutHighlight, v: string) =>
+    set('highlights', b.highlights.map((h, idx) => idx === i ? { ...h, [key]: v } : h))
+  return (
+    <div className="space-y-3">
+      <F label="Section Heading"><input value={b.heading} onChange={(e) => set('heading', e.target.value)} className={iCls} placeholder="About Us" /></F>
+      <F label="Subheading"><input value={b.subheading} onChange={(e) => set('subheading', e.target.value)} className={iCls} placeholder="Who we are…" /></F>
+      <F label="Our Story">
+        <textarea value={b.story} onChange={(e) => set('story', e.target.value)} rows={5} className={iCls} placeholder="Tell your company story…" />
+      </F>
+      <F label="Photo URL">
+        <input value={b.image} onChange={(e) => set('image', e.target.value)} className={iCls} placeholder="https://…" />
+        {b.image && <img src={b.image} alt="" className="mt-1.5 h-24 w-full rounded-lg object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />}
+      </F>
+      <div className="space-y-2">
+        <p className={lCls}>Highlights</p>
+        {b.highlights.map((h, i) => (
+          <div key={i} className="rounded-xl border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-800">
+            <div className="mb-1.5 flex items-center justify-between">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Point {i + 1}</span>
+              <button type="button" onClick={() => set('highlights', b.highlights.filter((_, idx) => idx !== i))}
+                className="flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-600 transition hover:bg-rose-100 dark:border-rose-800/50 dark:bg-rose-950/30 dark:text-rose-400">
+                <Trash2 className="h-2.5 w-2.5" /> Remove
+              </button>
+            </div>
+            <div className="flex gap-1.5">
+              <input value={h.icon} onChange={(e) => updateHighlight(i, 'icon', e.target.value)}
+                className="w-12 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-center text-sm outline-none dark:border-slate-700 dark:bg-slate-900" placeholder="🏠" />
+              <input value={h.text} onChange={(e) => updateHighlight(i, 'text', e.target.value)}
+                className="flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs outline-none dark:border-slate-700 dark:bg-slate-900" placeholder="Key highlight…" />
+            </div>
+          </div>
+        ))}
+        <button type="button" onClick={() => set('highlights', [...b.highlights, { icon: '⭐', text: 'New highlight' }])}
+          className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 py-2 text-xs text-slate-400 transition hover:border-indigo-300 hover:text-indigo-500">
+          <Plus className="h-3 w-3" /> Add highlight
+        </button>
+      </div>
+      <ColorField label="Background" value={b.bg} onChange={(v) => set('bg', v)} />
+      <ColorField label="Text Color" value={b.textColor} onChange={(v) => set('textColor', v)} />
+      <ColorField label="Accent Color" value={b.accentColor} onChange={(v) => set('accentColor', v)} />
+    </div>
+  )
+}
+function FooterProps({ b, onChange }: { b: FooterBlock; onChange: (b: Block) => void }) {
+  const set = <K extends keyof FooterBlock>(k: K, v: FooterBlock[K]) => onChange({ ...b, [k]: v })
+  const updateLink = (i: number, key: keyof FooterLink, v: string) =>
+    set('links', b.links.map((l, idx) => idx === i ? { ...l, [key]: v } : l))
+  return (
+    <div className="space-y-3">
 
+      {/* Brand */}
+      <F label="Store Name"><input value={b.storeName} onChange={(e) => set('storeName', e.target.value)} className={iCls} /></F>
+      <F label="Tagline"><input value={b.tagline} onChange={(e) => set('tagline', e.target.value)} className={iCls} placeholder="Your trusted furniture partner." /></F>
+      <F label="Copyright Text"><input value={b.copyrightText} onChange={(e) => set('copyrightText', e.target.value)} className={iCls} placeholder="Powered by Apsara Home" /></F>
+
+      {/* Contact */}
+      <F label="Email"><input value={b.email} onChange={(e) => set('email', e.target.value)} className={iCls} placeholder="hello@yourstore.com" /></F>
+      <F label="Phone"><input value={b.phone} onChange={(e) => set('phone', e.target.value)} className={iCls} placeholder="+63 912 345 6789" /></F>
+
+      {/* Quick Links */}
+      <div className="space-y-2">
+        <p className={lCls}>Quick Links</p>
+        {b.links.map((link, i) => (
+          <div key={i} className="rounded-xl border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-800">
+            <div className="flex items-center justify-between gap-1.5 mb-1.5">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Link {i + 1}</span>
+              <button
+                type="button"
+                onClick={() => set('links', b.links.filter((_, idx) => idx !== i))}
+                className="flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-600 transition hover:bg-rose-100 dark:border-rose-800/50 dark:bg-rose-950/30 dark:text-rose-400"
+              >
+                <Trash2 className="h-2.5 w-2.5" /> Remove
+              </button>
+            </div>
+            <div className="flex gap-1.5">
+              <input value={link.label} onChange={(e) => updateLink(i, 'label', e.target.value)}
+                className="w-24 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs outline-none dark:border-slate-700 dark:bg-slate-900" placeholder="Label" />
+              <input value={link.href} onChange={(e) => updateLink(i, 'href', e.target.value)}
+                className="flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-mono outline-none dark:border-slate-700 dark:bg-slate-900" placeholder="#section" />
+            </div>
+          </div>
+        ))}
+        <button type="button" onClick={() => set('links', [...b.links, { label: 'New Link', href: '#section' }])}
+          className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 py-2 text-xs text-slate-400 transition hover:border-indigo-300 hover:text-indigo-500">
+          <Plus className="h-3 w-3" /> Add link
+        </button>
+      </div>
+
+      {/* Colors */}
+      <ColorField label="Background" value={b.bg} onChange={(v) => set('bg', v)} />
+      <ColorField label="Text Color" value={b.textColor} onChange={(v) => set('textColor', v)} />
+    </div>
+  )
+}
 function PropertiesPanel({ block, onChange }: { block: Block; onChange: (b: Block) => void }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <span className="rounded-lg bg-indigo-50 px-2.5 py-1 text-[11px] font-bold text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
-          {BLOCK_LABEL[block.type]}
-        </span>
+        <span className="rounded-lg bg-indigo-50 px-2.5 py-1 text-[11px] font-bold text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">{BLOCK_LABEL[block.type]}</span>
       </div>
-      {block.type === 'hero' && <HeroProps block={block} onChange={onChange as (b: HeroBlock) => void} />}
-      {block.type === 'text' && <TextProps block={block} onChange={onChange as (b: TextBlock) => void} />}
-      {block.type === 'features' && <FeaturesProps block={block} onChange={onChange as (b: FeaturesBlock) => void} />}
-      {block.type === 'image' && <ImageProps block={block} onChange={onChange as (b: ImageBlock) => void} />}
-      {block.type === 'cta' && <CtaProps block={block} onChange={onChange as (b: CtaBlock) => void} />}
-      {block.type === 'stats' && <StatsProps block={block} onChange={onChange as (b: StatsBlock) => void} />}
+      {block.type === 'nav' && <NavProps b={block} onChange={onChange} />}
+      {block.type === 'hero' && <HeroProps b={block} onChange={onChange} />}
+      {block.type === 'stats' && <StatsProps b={block} onChange={onChange} />}
+      {block.type === 'features' && <FeaturesProps b={block} onChange={onChange} />}
+      {block.type === 'text' && <TextProps b={block} onChange={onChange} />}
+      {block.type === 'testimonial' && <TestimonialProps b={block} onChange={onChange} />}
+      {block.type === 'cta' && <CtaProps b={block} onChange={onChange} />}
+      {block.type === 'image' && <ImageProps b={block} onChange={onChange} />}
+      {block.type === 'about' && <AboutProps b={block} onChange={onChange} />}
+      {block.type === 'footer' && <FooterProps b={block} onChange={onChange} />}
     </div>
   )
 }
@@ -538,22 +746,15 @@ function PropertiesPanel({ block, onChange }: { block: Block; onChange: (b: Bloc
 function AddBlockPanel({ onAdd }: { onAdd: (b: Block) => void }) {
   return (
     <div className="space-y-2">
-      <p className="text-[11px] text-slate-400 dark:text-slate-500">Click a block to add it below the current selection.</p>
+      <p className="text-[11px] text-slate-400">Click to insert below the selected block.</p>
       <div className="grid grid-cols-2 gap-2">
-        {BLOCK_META.map(({ type, label, icon: Icon, desc, mk }) => (
-          <button
-            key={type}
-            type="button"
-            onClick={() => onAdd(mk())}
-            className="group flex flex-col items-start gap-1.5 rounded-xl border border-slate-200 bg-white p-3 text-left transition hover:border-indigo-300 hover:shadow-sm dark:border-slate-700 dark:bg-slate-900"
-          >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition group-hover:bg-indigo-50 group-hover:text-indigo-600 dark:bg-slate-800 dark:text-slate-400">
+        {BLOCK_META.map(({ type, label, icon: Icon, mk }) => (
+          <button key={type} type="button" onClick={() => onAdd(mk())}
+            className="group flex flex-col items-start gap-1.5 rounded-xl border border-slate-200 bg-white p-3 text-left transition hover:border-indigo-300 hover:shadow-sm dark:border-slate-700 dark:bg-slate-900">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition group-hover:bg-indigo-50 group-hover:text-indigo-600 dark:bg-slate-800">
               <Icon className="h-4 w-4" />
             </div>
-            <div>
-              <p className="text-[12px] font-semibold text-slate-700 dark:text-slate-200">{label}</p>
-              <p className="text-[10px] leading-snug text-slate-400">{desc}</p>
-            </div>
+            <p className="text-[12px] font-semibold text-slate-700 dark:text-slate-200">{label}</p>
           </button>
         ))}
       </div>
@@ -564,134 +765,49 @@ function AddBlockPanel({ onAdd }: { onAdd: (b: Block) => void }) {
 /* ─────────────────────────────────────────────────────────────
    Template picker thumbnails
 ───────────────────────────────────────────────────────────── */
-function TemplateSVG({ id }: { id: TemplateId }) {
-  if (id === 'classic-dark') return (
-    <svg viewBox="0 0 320 200" className="w-full" xmlns="http://www.w3.org/2000/svg">
-      <rect width="320" height="200" fill="#0a0a0f" />
-      {/* hero bg */}
-      <rect width="320" height="118" fill="#111118" />
-      <rect width="320" height="118" fill="url(#hd1)" />
-      <defs>
-        <linearGradient id="hd1" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#000" stopOpacity="0.8"/>
-          <stop offset="100%" stopColor="#000" stopOpacity="0.1"/>
-        </linearGradient>
-      </defs>
-      {/* nav */}
-      <rect width="320" height="22" fill="#000" opacity="0.4"/>
-      <rect x="10" y="7" width="40" height="8" rx="3" fill="#fff" opacity="0.85"/>
-      <rect x="120" y="8" width="18" height="6" rx="2" fill="#fff" opacity="0.25"/>
-      <rect x="142" y="8" width="18" height="6" rx="2" fill="#fff" opacity="0.25"/>
-      <rect x="164" y="8" width="18" height="6" rx="2" fill="#fff" opacity="0.25"/>
-      <rect x="275" y="7" width="36" height="8" rx="4" fill="#6366f1"/>
-      {/* hero text */}
-      <rect x="80" y="38" width="160" height="12" rx="3" fill="#fff" opacity="0.9"/>
-      <rect x="95" y="55" width="130" height="7" rx="2" fill="#fff" opacity="0.4"/>
-      <rect x="105" y="66" width="110" height="6" rx="2" fill="#fff" opacity="0.3"/>
-      {/* ctas */}
-      <rect x="100" y="80" width="56" height="14" rx="7" fill="#6366f1"/>
-      <rect x="162" y="80" width="56" height="14" rx="7" fill="#fff" opacity="0.1"/>
-      {/* stats row */}
-      <rect y="118" width="320" height="30" fill="#111827"/>
-      <rect x="30" y="126" width="30" height="8" rx="2" fill="#f59e0b" opacity="0.8"/>
-      <rect x="30" y="136" width="24" height="5" rx="1" fill="#6b7280" opacity="0.6"/>
-      <rect x="110" y="126" width="30" height="8" rx="2" fill="#f59e0b" opacity="0.8"/>
-      <rect x="110" y="136" width="24" height="5" rx="1" fill="#6b7280" opacity="0.6"/>
-      <rect x="190" y="126" width="30" height="8" rx="2" fill="#f59e0b" opacity="0.8"/>
-      <rect x="190" y="136" width="24" height="5" rx="1" fill="#6b7280" opacity="0.6"/>
-      <rect x="270" y="126" width="30" height="8" rx="2" fill="#f59e0b" opacity="0.8"/>
-      <rect x="270" y="136" width="24" height="5" rx="1" fill="#6b7280" opacity="0.6"/>
-      {/* features */}
-      <rect y="148" width="320" height="52" fill="#0f172a"/>
-      <rect x="10" y="156" width="90" height="36" rx="6" fill="#1e293b"/>
-      <rect x="115" y="156" width="90" height="36" rx="6" fill="#1e293b"/>
-      <rect x="220" y="156" width="90" height="36" rx="6" fill="#1e293b"/>
-    </svg>
-  )
-  if (id === 'light-airy') return (
-    <svg viewBox="0 0 320 200" className="w-full" xmlns="http://www.w3.org/2000/svg">
-      <rect width="320" height="200" fill="#faf7f3"/>
-      {/* nav */}
-      <rect width="320" height="22" fill="#fff" opacity="0.95"/>
-      <rect x="10" y="7" width="40" height="8" rx="3" fill="#6366f1" opacity="0.85"/>
-      <rect x="120" y="8" width="18" height="6" rx="2" fill="#374151" opacity="0.4"/>
-      <rect x="142" y="8" width="18" height="6" rx="2" fill="#374151" opacity="0.4"/>
-      <rect x="275" y="7" width="36" height="8" rx="4" fill="#6366f1"/>
-      {/* hero — two col */}
-      <rect y="22" width="320" height="90" fill="#faf7f3"/>
-      <rect x="10" y="34" width="130" height="11" rx="3" fill="#1e293b" opacity="0.85"/>
-      <rect x="10" y="50" width="110" height="7" rx="2" fill="#374151" opacity="0.45"/>
-      <rect x="10" y="61" width="90" height="6" rx="2" fill="#374151" opacity="0.3"/>
-      <rect x="10" y="74" width="54" height="14" rx="7" fill="#6366f1"/>
-      <rect x="70" y="74" width="54" height="14" rx="7" fill="none" stroke="#6366f1" strokeWidth="1.2" opacity="0.6"/>
-      {/* image right */}
-      <rect x="165" y="26" width="145" height="82" rx="10" fill="#e8e0d4"/>
-      <rect x="178" y="36" width="119" height="62" rx="7" fill="#d9cfbf"/>
-      {/* text section */}
-      <rect y="112" width="320" height="36" fill="#fff"/>
-      <rect x="110" y="120" width="100" height="9" rx="3" fill="#1e293b" opacity="0.6"/>
-      <rect x="80" y="133" width="160" height="6" rx="2" fill="#94a3b8" opacity="0.5"/>
-      {/* features */}
-      <rect y="148" width="320" height="52" fill="#faf7f3"/>
-      <rect x="10" y="156" width="90" height="36" rx="6" fill="#fff"/>
-      <rect x="115" y="156" width="90" height="36" rx="6" fill="#fff"/>
-      <rect x="220" y="156" width="90" height="36" rx="6" fill="#fff"/>
-    </svg>
-  )
-  /* bold-gradient */
-  return (
-    <svg viewBox="0 0 320 200" className="w-full" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="bg3" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#7c3aed"/>
-          <stop offset="100%" stopColor="#0f172a"/>
-        </linearGradient>
-      </defs>
-      <rect width="320" height="200" fill="url(#bg3)"/>
-      {/* nav */}
-      <rect width="320" height="22" fill="#000" opacity="0.2"/>
-      <rect x="10" y="7" width="40" height="8" rx="3" fill="#fff" opacity="0.9"/>
-      <rect x="275" y="7" width="36" height="8" rx="4" fill="#fff" opacity="0.15"/>
-      {/* hero — centered */}
-      <rect x="60" y="40" width="200" height="14" rx="4" fill="#fff" opacity="0.95"/>
-      <rect x="80" y="59" width="160" height="8" rx="3" fill="#fff" opacity="0.45"/>
-      <rect x="98" y="71" width="124" height="6" rx="2" fill="#fff" opacity="0.3"/>
-      <rect x="88" y="86" width="64" height="16" rx="8" fill="#a78bfa"/>
-      <rect x="158" y="86" width="64" height="16" rx="8" fill="#fff" opacity="0.1"/>
-      {/* stats on white */}
-      <rect y="118" width="320" height="30" fill="#fff"/>
-      <rect x="30" y="126" width="30" height="8" rx="2" fill="#7c3aed" opacity="0.8"/>
-      <rect x="30" y="136" width="24" height="5" rx="1" fill="#6b7280" opacity="0.5"/>
-      <rect x="110" y="126" width="30" height="8" rx="2" fill="#7c3aed" opacity="0.8"/>
-      <rect x="110" y="136" width="24" height="5" rx="1" fill="#6b7280" opacity="0.5"/>
-      <rect x="190" y="126" width="30" height="8" rx="2" fill="#7c3aed" opacity="0.8"/>
-      <rect x="190" y="136" width="24" height="5" rx="1" fill="#6b7280" opacity="0.5"/>
-      <rect x="270" y="126" width="30" height="8" rx="2" fill="#7c3aed" opacity="0.8"/>
-      <rect x="270" y="136" width="24" height="5" rx="1" fill="#6b7280" opacity="0.5"/>
-      {/* features */}
-      <rect y="148" width="320" height="52" fill="#f5f3ff"/>
-      <rect x="10" y="156" width="90" height="36" rx="6" fill="#fff"/>
-      <rect x="115" y="156" width="90" height="36" rx="6" fill="#fff"/>
-      <rect x="220" y="156" width="90" height="36" rx="6" fill="#fff"/>
-    </svg>
-  )
-}
-
-const TEMPLATES: { id: TemplateId; name: string; tag: string; desc: string }[] = [
-  { id: 'classic-dark', name: 'Classic Dark', tag: 'Dark immersive', desc: 'Dark full-screen hero with amber accents, stats row, and feature grid.' },
-  { id: 'light-airy', name: 'Light & Airy', tag: 'Warm & clean', desc: 'Warm cream background, two-column hero layout, and minimal cards.' },
-  { id: 'bold-gradient', name: 'Bold Gradient', tag: 'Purple gradient', desc: 'Centered gradient hero with strong typography and vivid color palette.' },
+const TEMPLATE_META = [
+  { id: 'template1', name: 'Modern Dark',   tag: 'Dark & Immersive', desc: 'Dark hero, amber stats, indigo features.' },
+  { id: 'template2', name: 'Light & Clean', tag: 'Warm & Minimal',   desc: 'White cards, orange accents, testimonial.' },
+  { id: 'template3', name: 'Bold Gradient', tag: 'Purple Gradient',  desc: 'Deep purple gradient with glass cards.' },
+]
+/* ─────────────────────────────────────────────────────────────
+   Color themes
+───────────────────────────────────────────────────────────── */
+const COLOR_THEMES = [
+  { name: 'Indigo',   color: '#6366f1' },
+  { name: 'Violet',   color: '#7c3aed' },
+  { name: 'Orange',   color: '#f97316' },
+  { name: 'Emerald',  color: '#10b981' },
+  { name: 'Rose',     color: '#f43f5e' },
+  { name: 'Sky',      color: '#0ea5e9' },
+  { name: 'Amber',    color: '#f59e0b' },
+  { name: 'Pink',     color: '#ec4899' },
+  { name: 'Teal',     color: '#14b8a6' },
+  { name: 'Red',      color: '#ef4444' },
+  { name: 'Lime',     color: '#84cc16' },
+  { name: 'Cyan',     color: '#06b6d4' },
 ]
 
-/* ─────────────────────────────────────────────────────────────
-   Serialise / deserialise blocks for API
-───────────────────────────────────────────────────────────── */
-function blocksToPayload(blocks: Block[]): string {
-  return JSON.stringify(blocks)
+function applyColorTheme(blocks: Block[], color: string): Block[] {
+  return blocks.map((block) => {
+    switch (block.type) {
+      case 'nav':         return { ...block, primaryColor: color }
+      case 'hero':        return { ...block, primaryColor: color }
+      case 'stats':       return { ...block, valueColor: color }
+      case 'features':    return { ...block, accentColor: color }
+      case 'cta':         return { ...block, btnColor: color }
+      case 'testimonial': return { ...block, bg: color }
+      default:            return block
+    }
+  })
 }
-function blocksFromPayload(raw: string | undefined): Block[] | null {
-  if (!raw) return null
-  try { return JSON.parse(raw) as Block[] } catch { return null }
+
+function TemplateThumbnail({ blocks }: { blocks: Block[] }) {
+  return (
+    <div className="pointer-events-none absolute left-0 top-0 origin-top-left" style={{ width: '1280px', transform: 'scale(0.305)', transformOrigin: 'top left' }}>
+      {blocks.map((b) => <BlockCanvas key={b.id} block={b} />)}
+    </div>
+  )
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -701,30 +817,46 @@ export default function LandingPageStudio() {
   const { data, isLoading } = useGetAdminWebPageItemsQuery({ type: 'partner_storefront' } as never)
   const [updateItem, { isLoading: isSaving }] = useUpdateAdminWebPageItemMutation()
 
-  const [item, setItem] = useState<WebPageItem | null>(null)
-  const [template, setTemplate] = useState<TemplateId | null>(null)
-  const [blocks, setBlocks] = useState<Block[]>([])
+  const [item, setItem]           = useState<WebPageItem | null>(null)
+  const [templateId, setTemplateId] = useState<string | null>(null)
+  const [blocks, setBlocks]       = useState<Block[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [rightTab, setRightTab] = useState<'add' | 'props'>('add')
-  const [mobile, setMobile] = useState(false)
-
+  const [rightTab, setRightTab]   = useState<'add' | 'props' | 'theme'>('add')
+  const [mobile, setMobile]       = useState(false)
+  const [editing, setEditing]     = useState(false)
   const dragRef = { from: -1, to: -1 }
 
-  /* load */
   useEffect(() => {
     const items = (data as { items?: WebPageItem[] } | undefined)?.items ?? []
     const first = items[0]
     if (!first) return
     setItem(first)
     const fields = ((first.payload as { fields?: Record<string, string> } | null)?.fields) ?? {}
-    const t = fields.landing_template as TemplateId | undefined
-    if (t === 'classic-dark' || t === 'light-airy' || t === 'bold-gradient') setTemplate(t)
-    const saved = blocksFromPayload(fields.page_blocks)
-    if (saved && saved.length > 0) setBlocks(saved)
-    else if (t) setBlocks(TEMPLATE_BLOCKS[t]())
+    const tid = fields.landing_template_id as string | undefined
+    if (tid && TEMPLATE_DEFAULTS[tid]) {
+      setTemplateId(tid)
+      try {
+        const saved = JSON.parse(fields.page_blocks ?? '[]') as Block[]
+        if (saved.length === 0) {
+          setBlocks(TEMPLATE_DEFAULTS[tid]())
+        } else if (!saved.some((b) => b.type === 'about')) {
+          // Migrate: inject About block after the Hero (or after index 1)
+          const heroIdx = saved.findIndex((b) => b.type === 'hero')
+          const insertAt = heroIdx >= 0 ? heroIdx + 1 : Math.min(2, saved.length)
+          const next = [...saved]
+          next.splice(insertAt, 0, mkAbout())
+          setBlocks(next)
+        } else {
+          setBlocks(saved)
+        }
+      } catch {
+        setBlocks(TEMPLATE_DEFAULTS[tid]())
+      }
+    }
   }, [data])
 
   const selectedBlock = blocks.find((b) => b.id === selectedId) ?? null
+  const shopSlug = getPartnerStorefrontConfig(item ?? undefined)?.slug ?? ''
 
   const addBlock = (b: Block) => {
     const idx = blocks.findIndex((bl) => bl.id === selectedId)
@@ -734,27 +866,23 @@ export default function LandingPageStudio() {
     setSelectedId(b.id)
     setRightTab('props')
   }
-
-  const updateBlock = (updated: Block) =>
-    setBlocks((prev) => prev.map((b) => (b.id === updated.id ? updated : b)))
-
+  const updateBlock = (updated: Block) => setBlocks((prev) => prev.map((b) => b.id === updated.id ? updated : b))
   const deleteBlock = (id: string) => {
     setBlocks((prev) => prev.filter((b) => b.id !== id))
     if (selectedId === id) { setSelectedId(null); setRightTab('add') }
   }
-
   const moveBlock = (id: string, dir: -1 | 1) => {
     const i = blocks.findIndex((b) => b.id === id)
     if (i < 0) return
     const next = [...blocks]
     const j = i + dir
-    if (j < 0 || j >= next.length) return;
-    [next[i], next[j]] = [next[j], next[i]]
+    if (j < 0 || j >= next.length) return
+    ;[next[i], next[j]] = [next[j], next[i]]
     setBlocks(next)
   }
 
   const handleSave = async () => {
-    if (!item || !template) return
+    if (!item || !templateId) return
     const config = getPartnerStorefrontConfig(item)
     const existingFields = ((item.payload as { fields?: Record<string, string> } | null)?.fields) ?? {}
     try {
@@ -765,8 +893,8 @@ export default function LandingPageStudio() {
           payload: {
             fields: {
               ...existingFields,
-              landing_template: template,
-              page_blocks: blocksToPayload(blocks),
+              landing_template_id: templateId,
+              page_blocks: JSON.stringify(blocks),
               slug: config?.slug ?? existingFields.slug ?? '',
               display_name: config?.displayName ?? existingFields.display_name ?? '',
             },
@@ -779,96 +907,93 @@ export default function LandingPageStudio() {
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-indigo-500" />
-      </div>
-    )
-  }
+  if (isLoading) return <div className="flex h-64 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-indigo-500" /></div>
 
-  if (!item) {
-    return (
-      <div className="flex h-64 items-center justify-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
-        <p className="text-sm text-slate-400">No storefront found. Create one in the Storefronts page first.</p>
-      </div>
-    )
-  }
-
-  /* ── Step 1: Template picker ───────────────────────────────── */
-  if (!template) {
+  /* ── Template picker ─────────────────────────────────────── */
+  if (!editing || !templateId) {
     return (
       <div className="flex flex-col gap-6">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white">Choose a Template</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Pick a starting layout. You can add, remove, and rearrange every section after.
-          </p>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white">Landing Page Builder</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Choose a starting template. You can add, remove, and edit every section after.</p>
         </div>
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-          {TEMPLATES.map((tpl) => (
-            <button
-              key={tpl.id}
-              type="button"
-              onClick={() => { setTemplate(tpl.id); setBlocks(TEMPLATE_BLOCKS[tpl.id]()) }}
-              className="group flex flex-col overflow-hidden rounded-2xl border-2 border-slate-200 bg-white text-left shadow-sm transition-all hover:border-indigo-400 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900"
-            >
-              <div className="overflow-hidden">
-                <TemplateSVG id={tpl.id} />
-              </div>
-              <div className="flex flex-1 flex-col gap-1 px-4 py-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{tpl.name}</p>
-                  <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">{tpl.tag}</span>
-                </div>
-                <p className="text-[12px] leading-relaxed text-slate-500 dark:text-slate-400">{tpl.desc}</p>
-                <div className="mt-2 flex items-center gap-1 text-[12px] font-semibold text-indigo-600 opacity-0 transition-opacity group-hover:opacity-100">
-                  Use this template →
-                </div>
-              </div>
+
+        {templateId && (
+          <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3.5 dark:border-emerald-800/50 dark:bg-emerald-950/30">
+            <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
+            <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+              <span className="font-bold">{TEMPLATE_META.find((t) => t.id === templateId)?.name}</span> is your active template.
+            </p>
+            <button type="button" onClick={() => setEditing(true)}
+              className="ml-auto rounded-xl bg-emerald-600 px-4 py-1.5 text-xs font-bold text-white transition hover:bg-emerald-700">
+              Edit Page →
             </button>
-          ))}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+          {TEMPLATE_META.map((tpl) => {
+            const isActive = templateId === tpl.id
+            const thumbBlocks = isActive ? blocks : TEMPLATE_DEFAULTS[tpl.id]()
+            return (
+              <button key={tpl.id} type="button"
+                onClick={() => {
+                  if (!isActive) { setTemplateId(tpl.id); setBlocks(TEMPLATE_DEFAULTS[tpl.id]()) }
+                  setEditing(true)
+                }}
+                className={`group flex flex-col overflow-hidden rounded-2xl border-2 bg-white text-left shadow-sm transition-all hover:shadow-lg dark:bg-slate-900 ${isActive ? 'border-emerald-400' : 'border-slate-200 hover:border-indigo-400 dark:border-slate-700'}`}
+              >
+                <div className="relative h-52 overflow-hidden bg-slate-100 dark:bg-slate-800">
+                  <TemplateThumbnail blocks={thumbBlocks} />
+                  {isActive && <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-emerald-500 px-2.5 py-1 text-[11px] font-bold text-white shadow"><CheckCircle2 className="h-3 w-3" /> Active</div>}
+                </div>
+                <div className="flex flex-1 flex-col gap-1 px-4 py-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{tpl.name}</p>
+                    <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">{tpl.tag}</span>
+                  </div>
+                  <p className="text-[12px] leading-relaxed text-slate-500 dark:text-slate-400">{tpl.desc}</p>
+                  <p className="mt-1 text-[12px] font-semibold text-indigo-600 opacity-0 transition-opacity group-hover:opacity-100">{isActive ? 'Edit this template →' : 'Use this template →'}</p>
+                </div>
+              </button>
+            )
+          })}
         </div>
       </div>
     )
   }
 
-  const storeName = (blocks.find((b) => b.type === 'hero') as HeroBlock | undefined)?.navBrand?.toLowerCase().replace(/\s+/g, '-') || 'your-store'
-
-  /* ── Step 2: Page builder ─────────────────────────────────── */
+  /* ── Editor ──────────────────────────────────────────────── */
+  const meta = TEMPLATE_META.find((t) => t.id === templateId)
   return (
     <div className="flex h-[calc(100vh-140px)] flex-col overflow-hidden">
 
       {/* Top bar */}
       <div className="flex shrink-0 items-center justify-between gap-3 pb-3">
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => { setTemplate(null); setBlocks([]); setSelectedId(null) }}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-slate-300 hover:text-slate-700 dark:border-slate-700"
-            title="Change template"
-          >
+          <button type="button" onClick={() => { setEditing(false); setSelectedId(null) }}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-slate-300 hover:text-slate-700 dark:border-slate-700">
             <ArrowLeft className="h-4 w-4" />
           </button>
           <div>
-            <h1 className="text-base font-bold text-slate-900 dark:text-white">
-              Landing Page Builder
-            </h1>
-            <p className="text-[11px] text-slate-400">Click a section to edit · drag ↕ to reorder · add blocks from the right panel</p>
+            <h1 className="text-base font-bold text-slate-900 dark:text-white">{meta?.name} — Landing Page</h1>
+            <p className="text-[11px] text-slate-400">Click a section to edit · drag to reorder · add from the right panel</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <a href={`/${storeName}`} target="_blank" rel="noreferrer" title="Open live page"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition hover:border-slate-300 hover:text-slate-600">
-            <Eye className="h-4 w-4" />
-          </a>
-          <button type="button" onClick={() => setMobile(false)} title="Desktop"
-            className={`flex h-8 w-8 items-center justify-center rounded-lg border transition ${!mobile ? 'border-indigo-400 bg-indigo-50 text-indigo-600' : 'border-slate-200 text-slate-400'}`}>
+          <button type="button" onClick={() => setMobile(false)}
+            className={`flex h-8 w-8 items-center justify-center rounded-lg border transition ${!mobile ? 'border-indigo-400 bg-indigo-50 text-indigo-600' : 'border-slate-200 text-slate-400 dark:border-slate-700'}`}>
             <Monitor className="h-4 w-4" />
           </button>
-          <button type="button" onClick={() => setMobile(true)} title="Mobile"
-            className={`flex h-8 w-8 items-center justify-center rounded-lg border transition ${mobile ? 'border-indigo-400 bg-indigo-50 text-indigo-600' : 'border-slate-200 text-slate-400'}`}>
+          <button type="button" onClick={() => setMobile(true)}
+            className={`flex h-8 w-8 items-center justify-center rounded-lg border transition ${mobile ? 'border-indigo-400 bg-indigo-50 text-indigo-600' : 'border-slate-200 text-slate-400 dark:border-slate-700'}`}>
             <Smartphone className="h-4 w-4" />
+          </button>
+          <button type="button"
+            onClick={() => { if (blocks.length === 0 || window.confirm('Remove all blocks?')) { setBlocks([]); setSelectedId(null); setRightTab('add') } }}
+            disabled={blocks.length === 0}
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+            <Trash2 className="h-3.5 w-3.5" /> Clear
           </button>
           <button type="button" onClick={() => void handleSave()} disabled={isSaving}
             className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-60">
@@ -891,19 +1016,13 @@ export default function LandingPageStudio() {
               <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
             </div>
             <div className="flex-1 rounded-lg bg-slate-100 px-3 py-1 text-center text-[10px] text-slate-400 dark:bg-slate-800">
-              afhome.ph/{storeName}
+              your-store.afhome.ph
             </div>
           </div>
-
-          {/* Page canvas */}
-          <div className="flex min-h-0 flex-1 justify-center overflow-y-auto p-4">
-            <div
-              className="w-full overflow-hidden rounded-xl bg-white shadow-2xl"
-              style={{ maxWidth: mobile ? 390 : '100%' }}
-              onClick={(e) => {
-                if (e.target === e.currentTarget) { setSelectedId(null); setRightTab('add') }
-              }}
-            >
+          {/* Page — items-start so content grows to full height and is scrollable */}
+          <div className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto p-4">
+            <div className="w-full rounded-xl bg-white shadow-2xl" style={{ maxWidth: mobile ? 390 : '100%' }}
+              onClick={(e) => { if (e.target === e.currentTarget) { setSelectedId(null); setRightTab('add') } }}>
               {blocks.length === 0 && (
                 <div className="flex h-64 flex-col items-center justify-center gap-3 text-slate-400">
                   <LayoutGrid className="h-8 w-8 opacity-30" />
@@ -911,11 +1030,10 @@ export default function LandingPageStudio() {
                 </div>
               )}
               {blocks.map((block, i) => {
-                const selected = block.id === selectedId
+                const isSelected = block.id === selectedId
                 return (
-                  <div
-                    key={block.id}
-                    className={`group relative cursor-pointer outline-none transition-all ${selected ? 'ring-2 ring-inset ring-indigo-500' : 'hover:ring-1 hover:ring-inset hover:ring-indigo-300'}`}
+                  <div key={block.id}
+                    className={`group relative cursor-pointer outline-none transition-all ${isSelected ? 'ring-2 ring-inset ring-indigo-500' : 'hover:ring-1 hover:ring-inset hover:ring-indigo-300'}`}
                     onClick={(e) => { e.stopPropagation(); setSelectedId(block.id); setRightTab('props') }}
                     draggable
                     onDragStart={() => { dragRef.from = i }}
@@ -929,49 +1047,41 @@ export default function LandingPageStudio() {
                       dragRef.from = -1; dragRef.to = -1
                     }}
                   >
-                    {/* Block toolbar (shown when selected) */}
-                    {selected && (
-                      <div
-                        className="absolute left-2 top-2 z-30 flex items-center gap-1 rounded-xl bg-indigo-600 px-2 py-1 shadow-lg"
-                        onClick={(e) => e.stopPropagation()}
-                      >
+                    {/* Selected toolbar */}
+                    {isSelected && (
+                      <div className="absolute left-2 top-2 z-30 flex items-center gap-1 rounded-xl bg-indigo-600 px-2 py-1 shadow-lg"
+                        onClick={(e) => e.stopPropagation()}>
                         <GripVertical className="h-3.5 w-3.5 cursor-grab text-white/70" />
                         <span className="text-[11px] font-semibold text-white">{BLOCK_LABEL[block.type]}</span>
                         <div className="mx-1 h-3 w-px bg-white/25" />
-                        <button type="button" onClick={() => moveBlock(block.id, -1)} title="Move up"
-                          disabled={i === 0}
+                        <button type="button" onClick={() => moveBlock(block.id, -1)} disabled={i === 0}
                           className="rounded p-0.5 text-white/80 transition hover:bg-white/20 disabled:opacity-30">
                           <ArrowUp className="h-3 w-3" />
                         </button>
-                        <button type="button" onClick={() => moveBlock(block.id, 1)} title="Move down"
-                          disabled={i === blocks.length - 1}
+                        <button type="button" onClick={() => moveBlock(block.id, 1)} disabled={i === blocks.length - 1}
                           className="rounded p-0.5 text-white/80 transition hover:bg-white/20 disabled:opacity-30">
                           <ArrowDown className="h-3 w-3" />
                         </button>
-                        <button type="button" onClick={() => deleteBlock(block.id)} title="Delete block"
+                        <button type="button" onClick={() => deleteBlock(block.id)}
                           className="rounded p-0.5 text-white/80 transition hover:bg-red-500">
                           <Trash2 className="h-3 w-3" />
                         </button>
                       </div>
                     )}
-                    {/* Hover label when not selected */}
-                    {!selected && (
+                    {/* Hover label */}
+                    {!isSelected && (
                       <div className="pointer-events-none absolute left-2 top-2 z-20 rounded-lg bg-black/50 px-2 py-0.5 text-[10px] font-semibold text-white opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
                         {BLOCK_LABEL[block.type]}
                       </div>
                     )}
-                    <BlockCanvas block={block} />
+                    <BlockCanvas block={block} compact={mobile} shopSlug={shopSlug} />
                   </div>
                 )
               })}
-
-              {/* Add block button at bottom */}
+              {/* Add block at bottom */}
               <div className="flex items-center justify-center border-t border-dashed border-slate-200 py-4">
-                <button
-                  type="button"
-                  onClick={() => { setSelectedId(null); setRightTab('add') }}
-                  className="flex items-center gap-2 rounded-full border border-dashed border-indigo-300 px-5 py-2 text-xs font-semibold text-indigo-500 transition hover:bg-indigo-50"
-                >
+                <button type="button" onClick={() => { setSelectedId(null); setRightTab('add') }}
+                  className="flex items-center gap-2 rounded-full border border-dashed border-indigo-300 px-5 py-2 text-xs font-semibold text-indigo-500 transition hover:bg-indigo-50">
                   <Plus className="h-3.5 w-3.5" /> Add Block
                 </button>
               </div>
@@ -981,35 +1091,90 @@ export default function LandingPageStudio() {
 
         {/* Right panel */}
         <div className="flex w-72 shrink-0 flex-col gap-0 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-          {/* Tabs */}
           <div className="flex shrink-0 gap-0 border-b border-slate-100 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={() => setRightTab('add')}
-              className={`flex flex-1 items-center justify-center gap-1.5 py-3 text-xs font-semibold transition ${rightTab === 'add' ? 'border-b-2 border-indigo-500 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
-            >
-              <Plus className="h-3.5 w-3.5" /> Add Block
+            <button type="button" onClick={() => setRightTab('add')}
+              className={`flex flex-1 items-center justify-center gap-1 py-2.5 text-[11px] font-semibold transition ${rightTab === 'add' ? 'border-b-2 border-indigo-500 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
+              <Plus className="h-3 w-3" /> Add
             </button>
-            <button
-              type="button"
-              onClick={() => setRightTab('props')}
-              disabled={!selectedBlock}
-              className={`flex flex-1 items-center justify-center gap-1.5 py-3 text-xs font-semibold transition disabled:opacity-40 ${rightTab === 'props' ? 'border-b-2 border-indigo-500 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
-            >
-              <Type className="h-3.5 w-3.5" /> Properties
+            <button type="button" onClick={() => setRightTab('props')} disabled={!selectedBlock}
+              className={`flex flex-1 items-center justify-center gap-1 py-2.5 text-[11px] font-semibold transition disabled:opacity-40 ${rightTab === 'props' ? 'border-b-2 border-indigo-500 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
+              <Type className="h-3 w-3" /> Properties
+            </button>
+            <button type="button" onClick={() => setRightTab('theme')}
+              className={`flex flex-1 items-center justify-center gap-1 py-2.5 text-[11px] font-semibold transition ${rightTab === 'theme' ? 'border-b-2 border-indigo-500 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
+              <Palette className="h-3 w-3" /> Theme
             </button>
           </div>
-
-          {/* Panel content */}
           <div className="min-h-0 flex-1 overflow-y-auto p-3 [&::-webkit-scrollbar]:hidden">
             {rightTab === 'add' && <AddBlockPanel onAdd={addBlock} />}
-            {rightTab === 'props' && selectedBlock && (
-              <PropertiesPanel block={selectedBlock} onChange={updateBlock} />
-            )}
+            {rightTab === 'props' && selectedBlock && <PropertiesPanel block={selectedBlock} onChange={updateBlock} />}
             {rightTab === 'props' && !selectedBlock && (
               <div className="flex h-32 flex-col items-center justify-center gap-2 text-slate-400">
                 <LayoutGrid className="h-6 w-6 opacity-30" />
                 <p className="text-center text-xs">Click a block on the canvas to edit its properties.</p>
+              </div>
+            )}
+            {rightTab === 'theme' && (
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-200">Color Theme</p>
+                  <p className="mt-0.5 text-[11px] text-slate-400">Applies the chosen color to all blocks at once — buttons, accents, highlights, and stats.</p>
+                </div>
+
+                {/* Preset swatches */}
+                <div>
+                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Presets</p>
+                  <div className="grid grid-cols-6 gap-2">
+                    {COLOR_THEMES.map((theme) => (
+                      <button
+                        key={theme.color}
+                        type="button"
+                        title={theme.name}
+                        onClick={() => setBlocks(applyColorTheme(blocks, theme.color))}
+                        className="group relative flex h-8 w-8 items-center justify-center rounded-xl border-2 border-transparent transition hover:scale-110 hover:border-white hover:shadow-lg"
+                        style={{ backgroundColor: theme.color }}
+                      >
+                        <span className="pointer-events-none absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-slate-800 px-1.5 py-0.5 text-[9px] font-semibold text-white opacity-0 transition group-hover:opacity-100">
+                          {theme.name}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Custom color */}
+                <div>
+                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Custom Color</p>
+                  <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
+                    <input
+                      type="color"
+                      defaultValue="#6366f1"
+                      onChange={(e) => setBlocks(applyColorTheme(blocks, e.target.value))}
+                      className="h-8 w-8 cursor-pointer rounded-lg border-0"
+                    />
+                    <span className="text-xs text-slate-500">Pick any color</span>
+                  </div>
+                </div>
+
+                {/* What gets updated */}
+                <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/50">
+                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">What changes</p>
+                  <ul className="space-y-1">
+                    {[
+                      'Nav — Shop Now button',
+                      'Hero — badge, CTA buttons',
+                      'Stats — value numbers',
+                      'Features — accent color',
+                      'CTA — button color',
+                      'Testimonial — background',
+                    ].map((item) => (
+                      <li key={item} className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                        <span className="h-1 w-1 rounded-full bg-indigo-400" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             )}
           </div>
