@@ -497,9 +497,16 @@ const LoginForm = ({
                 return
             }
             const isBlockedError = BLOCKED_KEYWORDS.some((keyword) => rawError.toLowerCase().includes(keyword))
+            const friendlyAuthErrors: Record<string, string> = {
+                credentialssignin: 'The email or password you entered is incorrect. Please try again.',
+                configuration: 'We could not sign you in due to a server issue. Please try again shortly.',
+                accessdenied: 'Access denied. Please contact support if this keeps happening.',
+                verification: 'Your sign-in link is no longer valid. Please request a new one.',
+                default: 'Something went wrong while signing in. Please try again.',
+            }
             const message = isBlockedError
                 ? 'Your account has been banned. Please contact support for assistance.'
-                : (rawError || 'Invalid email or password. Please try again.')
+                : (friendlyAuthErrors[rawError.toLowerCase()] || rawError || 'Invalid email or password. Please try again.')
             setError(message)
             dynamicIsland.error(message)
             resetTurnstile()
@@ -954,17 +961,7 @@ const LoginForm = ({
                     disabled={isLoading || isPasskeyLoading || isGoogleLoading || lockoutSeconds > 0 || (isMounted && !!turnstileSiteKey && !turnstileToken && !mfaChallengeToken)}
                     className="w-full h-11 flex items-center justify-center gap-3 rounded-[14px] bg-sky-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-sky-600 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                    {isLoading ? (
-                        <>
-                            <svg className="animate-spin h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            <span>Signing in...</span>
-                        </>
-                    ) : (
-                        <span>{lockoutSeconds > 0 ? `Try again in ${lockoutSeconds}s` : mfaChallengeToken ? 'Continue Sign in' : showTotpField ? 'Verify & Sign in' : 'Sign in'}</span>
-                    )}
+                    <span>{lockoutSeconds > 0 ? `Try again in ${lockoutSeconds}s` : mfaChallengeToken ? 'Continue Sign in' : showTotpField ? 'Verify & Sign in' : 'Sign in'}</span>
                 </button>
 
                 {/* Social Login Options */}

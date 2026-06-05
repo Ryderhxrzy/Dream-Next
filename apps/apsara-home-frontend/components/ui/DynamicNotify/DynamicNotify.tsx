@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { createPortal } from 'react-dom'
+import { useTheme } from 'next-themes'
 
 /* ── Types ─────────────────────────────────────────────────────────
    A standalone, general-purpose toast system inspired by Apple's
@@ -186,21 +187,41 @@ function WarningIcon() {
 /* ── Status config ─────────────────────────────────────────────── */
 const CONFIG: Record<NotifyStatus, {
   icon: React.ReactNode
-  textColor: string
+  textDark: string
+  textLight: string
   dotColor: string
   glow: string
 }> = {
-  loading: { icon: <Spinner />,     textColor: '#ffffff', dotColor: '#a1a1aa', glow: 'rgba(161,161,170,0.16)' },
-  success: { icon: <CheckIcon />,   textColor: '#6ee7b7', dotColor: '#34d399', glow: 'rgba(52,211,153,0.22)'  },
-  error:   { icon: <XIcon />,       textColor: '#fca5a5', dotColor: '#f87171', glow: 'rgba(248,113,113,0.18)' },
-  info:    { icon: <InfoIcon />,    textColor: '#93c5fd', dotColor: '#60a5fa', glow: 'rgba(96,165,250,0.18)'  },
-  warning: { icon: <WarningIcon />, textColor: '#fcd34d', dotColor: '#fbbf24', glow: 'rgba(251,191,36,0.18)'  },
+  loading: { icon: <Spinner />,     textDark: '#ffffff', textLight: '#1f2937', dotColor: '#a1a1aa', glow: 'rgba(161,161,170,0.16)' },
+  success: { icon: <CheckIcon />,   textDark: '#6ee7b7', textLight: '#059669', dotColor: '#34d399', glow: 'rgba(52,211,153,0.22)'  },
+  error:   { icon: <XIcon />,       textDark: '#fca5a5', textLight: '#dc2626', dotColor: '#f87171', glow: 'rgba(248,113,113,0.18)' },
+  info:    { icon: <InfoIcon />,    textDark: '#93c5fd', textLight: '#2563eb', dotColor: '#60a5fa', glow: 'rgba(96,165,250,0.18)'  },
+  warning: { icon: <WarningIcon />, textDark: '#fcd34d', textLight: '#d97706', dotColor: '#fbbf24', glow: 'rgba(251,191,36,0.18)'  },
 }
 
 /* ── Single toast row ──────────────────────────────────────────── */
 function ToastPill({ toast, onClose }: { toast: Toast; onClose: () => void }) {
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme !== 'light'
   const cfg = CONFIG[toast.status]
+  const textColor = isDark ? cfg.textDark : cfg.textLight
   const hasDesc = Boolean(toast.description)
+
+  const surface = isDark
+    ? {
+        background: 'rgba(8, 8, 8, 0.9)',
+        border: '1px solid rgba(255,255,255,0.09)',
+        inset: 'inset 0 0 0 1px rgba(255,255,255,0.04)',
+        baseShadow: '0 14px 44px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.25)',
+        descColor: 'rgba(255,255,255,0.55)',
+      }
+    : {
+        background: 'rgba(255, 255, 255, 0.92)',
+        border: '1px solid rgba(15,23,42,0.08)',
+        inset: 'inset 0 0 0 1px rgba(255,255,255,0.7)',
+        baseShadow: '0 14px 44px rgba(15,23,42,0.16), 0 2px 8px rgba(15,23,42,0.08)',
+        descColor: 'rgba(15,23,42,0.55)',
+      }
 
   return (
     <motion.div
@@ -226,16 +247,15 @@ function ToastPill({ toast, onClose }: { toast: Toast; onClose: () => void }) {
         display: 'inline-flex',
         alignItems: hasDesc ? 'flex-start' : 'center',
         gap: 9,
-        background: 'rgba(8, 8, 8, 0.9)',
+        background: surface.background,
         backdropFilter: 'blur(24px) saturate(180%)',
         WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-        border: '1px solid rgba(255,255,255,0.09)',
+        border: surface.border,
         borderRadius: hasDesc ? 22 : 100,
         padding: hasDesc ? '12px 20px 12px 14px' : '10px 20px 10px 13px',
         boxShadow: [
-          '0 14px 44px rgba(0,0,0,0.5)',
-          '0 2px 8px rgba(0,0,0,0.25)',
-          'inset 0 0 0 1px rgba(255,255,255,0.04)',
+          surface.baseShadow,
+          surface.inset,
           `0 0 28px ${cfg.glow}`,
         ].join(', '),
         minWidth: 164,
@@ -273,7 +293,7 @@ function ToastPill({ toast, onClose }: { toast: Toast; onClose: () => void }) {
         style={{
           flexShrink: 0, display: 'flex', alignItems: 'center',
           marginTop: hasDesc ? 1 : 0,
-          color: cfg.textColor,
+          color: textColor,
           fontSize: 15, lineHeight: 1,
         }}
         initial={{ opacity: 0, scale: 0.5 }}
@@ -296,7 +316,7 @@ function ToastPill({ toast, onClose }: { toast: Toast; onClose: () => void }) {
               fontSize: 13.5,
               fontWeight: 500,
               letterSpacing: '-0.015em',
-              color: cfg.textColor,
+              color: textColor,
               whiteSpace: hasDesc ? 'normal' : 'nowrap',
               fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif',
             }}
@@ -311,7 +331,7 @@ function ToastPill({ toast, onClose }: { toast: Toast; onClose: () => void }) {
               fontSize: 12,
               fontWeight: 400,
               letterSpacing: '-0.01em',
-              color: 'rgba(255,255,255,0.55)',
+              color: surface.descColor,
               fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif',
             }}
           >

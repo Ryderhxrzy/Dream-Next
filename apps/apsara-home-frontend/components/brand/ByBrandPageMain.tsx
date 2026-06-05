@@ -581,13 +581,13 @@ export default function ByBrandPageMain() {
     skip: !selectedBrandItem,
   })
 
-  const { data: brandProductsData, isFetching: isFetchingProducts } = useGetPublicProductsQuery(
+  const { data: brandProductsData, isFetching: isFetchingProducts, isLoading: isLoadingProducts } = useGetPublicProductsQuery(
     selectedBrandItem
       ? { page: productPage, perPage: perPage, brandType: selectedBrandItem.id, includeAll: perPage >= 50 }
       : undefined,
     { skip: !selectedBrandItem },
   )
-  const { data: zqProductsData, isFetching: isFetchingZqProducts } = useGetPublicZqProductsQuery(
+  const { data: zqProductsData, isFetching: isFetchingZqProducts, isLoading: isLoadingZqProducts } = useGetPublicZqProductsQuery(
     selectedBrandItem && isGlobalSupplierBrand
       ? { page: productPage, perPage: perPage, search: filters.search || undefined }
       : undefined,
@@ -701,7 +701,6 @@ export default function ByBrandPageMain() {
       const searchTerm = filters.search.toLowerCase().trim()
       filtered = filtered.filter(product =>
         product.subject.toLowerCase().includes(searchTerm)
-        || (product.categoryName ?? '').toLowerCase().includes(searchTerm)
       )
     }
 
@@ -725,6 +724,7 @@ export default function ByBrandPageMain() {
   const productTotalCount = (productsMeta?.total ?? brandProducts.length) + (zqProductsMeta?.total ?? 0)
   const brandTotalProducts = Number(brandInfo?.totalProducts ?? productTotalCount)
   const isFetchingBrandProducts = isFetchingProducts || (isGlobalSupplierBrand && isFetchingZqProducts)
+  const isLoadingBrandProducts = isLoadingProducts || (isGlobalSupplierBrand && isLoadingZqProducts)
 
   const activeFilterCount = useMemo(() => {
     let count = 0
@@ -1148,7 +1148,7 @@ export default function ByBrandPageMain() {
           <div className="flex flex-col gap-6 lg:flex-row">
             {/* Left Sidebar - Filter (desktop only, mobile uses bottom drawer) */}
             <div className="hidden lg:block lg:w-72 shrink-0">
-              {isFetchingBrandProducts ? (
+              {isLoadingBrandProducts ? (
                 <ProductFilterSkeleton />
               ) : (
                 <ProductFilter
@@ -1172,7 +1172,7 @@ export default function ByBrandPageMain() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="inline-flex items-center rounded-full bg-sky-50 dark:bg-sky-500/10 px-3 py-1 text-xs font-semibold text-sky-600 dark:text-sky-400 ring-1 ring-sky-200 dark:ring-sky-500/30">
-                    {isFetchingBrandProducts ? 'Loading...' : `${productTotalCount} product${productTotalCount !== 1 ? 's' : ''}`}
+                    {isLoadingBrandProducts ? 'Loading...' : `${productTotalCount} product${productTotalCount !== 1 ? 's' : ''}`}
                   </span>
                   {/* Mobile filter button */}
                   <button
@@ -1196,7 +1196,7 @@ export default function ByBrandPageMain() {
 
               {/* Top Filters */}
               <div className="mt-6">
-                {isFetchingBrandProducts ? (
+                {isLoadingBrandProducts ? (
                   <TopFilterSkeleton />
                 ) : (
                   <TopFilter
@@ -1210,7 +1210,7 @@ export default function ByBrandPageMain() {
                     sortValue={sortBy}
                   />
                 )}
-                {!isFetchingBrandProducts && (
+                {!isLoadingBrandProducts && (
                   <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mt-4">
                     <span>
                       Showing <span className="font-semibold text-slate-700 dark:text-gray-200">{perPage}</span> per page of{' '}

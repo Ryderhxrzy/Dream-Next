@@ -521,7 +521,10 @@ Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_a
     Route::get('/admin/orders/{id}/shipping/xde/waybill', [XdeShippingController::class, 'waybillByOrder']);
     Route::post('/admin/orders/{id}/shipping/xde/cancel', [XdeShippingController::class, 'cancelByOrder']);
     Route::get('/admin/orders/{id}/shipping/xde/epod', [XdeShippingController::class, 'epodByOrder']);
+    Route::put('/admin/orders/{id}/shipping/xde/dimension', [XdeShippingController::class, 'updateDimensionByOrder']);
     Route::get('/admin/shipping/xde/track/{trackingNo}', [XdeShippingController::class, 'trackByTrackingNo']);
+    Route::get('/admin/shipping/xde/ports', [XdeShippingController::class, 'ports']);
+    Route::get('/admin/shipping/xde/reasons', [XdeShippingController::class, 'reasons']);
     Route::post('/admin/orders/{id}/shipping/jnt/book', [JntShippingController::class, 'bookForOrder']);
     Route::get('/admin/orders/{id}/shipping/jnt/track', [JntShippingController::class, 'trackByOrder']);
     Route::get('/admin/shipping/jnt/track/{trackingNo}', [JntShippingController::class, 'trackByTrackingNo']);
