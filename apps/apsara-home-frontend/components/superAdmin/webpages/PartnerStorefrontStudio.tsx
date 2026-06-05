@@ -124,10 +124,11 @@ const broadcastStorefrontUpdate = (slug: string) => {
 
 function OpenPreviewButton({ slug, displayName }: { slug: string; displayName: string }) {
   const previewSlug = toSlug(slug || displayName)
+  const previewPath = previewSlug === 'jujutsu-kaisen' ? `/${previewSlug}` : `/shop/${previewSlug}`
   const previewHref =
     typeof window !== 'undefined'
-      ? `${window.location.origin}/${previewSlug}`
-      : `http://localhost:3000/${previewSlug}`
+      ? `${window.location.origin}${previewPath}`
+      : `http://localhost:3000${previewPath}`
   return (
     <a
       href={previewHref}
