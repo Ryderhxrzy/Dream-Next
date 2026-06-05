@@ -4103,6 +4103,7 @@ class ProductController extends Controller
 
         return response()->json([
             'products' => $items->map(function (ZqProduct $product) use ($mappingLookup, $localCategoryLookup) {
+                $categoryName = $this->resolvedZqProductCategoryName($product);
                 $categoryKey = $this->zqCategoryKey($product->zqp_category_name, $product->zqp_category_id);
                 $mapping = $categoryKey ? $mappingLookup->get($categoryKey) : null;
                 $localCategory = $mapping?->local_category_id
@@ -4117,10 +4118,10 @@ class ProductController extends Controller
                     'zqCategoryId' => $product->zqp_category_id,
                     'subject' => (string) $product->zqp_subject,
                     'subjectCn' => $product->zqp_subject_cn,
-                    'categoryName' => $product->zqp_category_name,
+                    'categoryName' => $categoryName,
                     'localCategoryId' => $localCategory ? (int) $localCategory->cat_id : null,
                     'localCategoryName' => $localCategory ? (string) $localCategory->cat_name : null,
-                    'categoryMappingStatus' => $product->zqp_category_name
+                    'categoryMappingStatus' => $categoryName
                         ? ($localCategory ? 'mapped' : 'unmapped')
                         : 'missing',
                     'primaryImage' => $product->zqp_primary_image,
@@ -4251,6 +4252,7 @@ class ProductController extends Controller
         $specs = collect($product->zqp_specs ?? []);
         $minPrice = $product->zqp_price_min_cents !== null ? ((int) $product->zqp_price_min_cents) / 100 : 0;
         $maxPrice = $product->zqp_price_max_cents !== null ? ((int) $product->zqp_price_max_cents) / 100 : $minPrice;
+        $categoryName = $this->resolvedZqProductCategoryName($product);
 
         $payload = [
             'id' => (int) $product->zqp_id,
@@ -4260,7 +4262,7 @@ class ProductController extends Controller
             'zqCategoryId' => $product->zqp_category_id,
             'subject' => (string) $product->zqp_subject,
             'subjectCn' => $product->zqp_subject_cn,
-            'categoryName' => $product->zqp_category_name,
+            'categoryName' => $categoryName,
             'primaryImage' => $product->zqp_primary_image,
             'images' => $product->zqp_images ?? [],
             'sourceType' => $product->zqp_source_type,
@@ -4282,7 +4284,7 @@ class ProductController extends Controller
                 'id' => 'zq-' . (int) $product->zqp_id,
                 'name' => (string) $product->zqp_subject,
                 'brand' => 'AF HOME GLOBAL BRAND',
-                'category' => $product->zqp_category_name,
+                'category' => $categoryName,
                 'image' => $product->zqp_primary_image,
                 'images' => $product->zqp_images ?? [],
                 'price' => $minPrice,
@@ -4600,7 +4602,7 @@ class ProductController extends Controller
                 if ($displayName === '') {
                     $categoryId = $this->stringOrNull($row->zqp_category_id);
                     $displayName = $categoryId !== null
-                        ? ($rawPayloadCategoryNames->get($categoryId) ?? 'ZQ Category ' . $categoryId)
+                        ? ($rawPayloadCategoryNames->get($categoryId) ?? 'Uncategorized')
                         : 'Uncategorized';
                 }
 
@@ -5079,6 +5081,12 @@ class ProductController extends Controller
         return trim($key) !== '' ? trim($key) : null;
     }
 
+    private function resolvedZqProductCategoryName(ZqProduct $product): ?string
+    {
+        return $this->stringOrNull($product->zqp_category_name)
+            ?? $this->zqCategoryNameFromRawPayload($product->zqp_raw_payload);
+    }
+
     private function zqCategoryNameFromRawPayload(mixed $payload): ?string
     {
         if (! is_array($payload)) {
@@ -5091,13 +5099,40 @@ class ProductController extends Controller
                 continue;
             }
 
-            $name = $this->stringOrNull($row['categoryName'] ?? $row['category_name'] ?? null);
+            $name = $this->stringOrNull($row['categoryName'] ?? $row['category_name'] ?? null)
+                ?? $this->zqProductCategoryFromDescription($this->stringOrNull($row['description'] ?? null));
             if ($name !== null) {
                 return $name;
             }
         }
 
-        return $this->stringOrNull($payload['categoryName'] ?? $payload['category_name'] ?? null);
+        return $this->stringOrNull($payload['categoryName'] ?? $payload['category_name'] ?? null)
+            ?? $this->zqProductCategoryFromDescription($this->stringOrNull($payload['description'] ?? null));
+    }
+
+    private function zqProductCategoryFromDescription(?string $description): ?string
+    {
+        if ($description === null) {
+            return null;
+        }
+
+        $html = html_entity_decode($description, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $patterns = [
+            '/title\s*=\s*(["\'])\s*Product\s+Category\s*\1.*?<div\b[^>]*title\s*=\s*(["\'])(.*?)\2/is',
+            '/>\s*Product\s+Category\s*<.*?<div\b[^>]*title\s*=\s*(["\'])(.*?)\1/is',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $html, $matches)) {
+                $candidate = $matches[count($matches) - 1] ?? null;
+                $name = $this->stringOrNull(strip_tags(html_entity_decode((string) $candidate, ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+                if ($name !== null) {
+                    return $name;
+                }
+            }
+        }
+
+        return null;
     }
 
     private function stringOrNull(mixed $value): ?string

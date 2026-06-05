@@ -344,6 +344,14 @@ export interface WalletOverviewResponse {
     monthly_purchase_points?: number;
     total_bonus?: number;
     direct_referral_total_pv?: number;
+    performance_milestone?: {
+      pv_per_milestone: number;
+      cash_per_milestone: number;
+      milestones_reached: number;
+      cash_earned: number;
+      next_milestone_pv: number;
+      pv_to_next: number;
+    };
     cash_credits: number;
     cash_debits: number;
     pv_credits: number;

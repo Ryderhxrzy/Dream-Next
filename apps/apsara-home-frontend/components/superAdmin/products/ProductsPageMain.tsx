@@ -286,7 +286,7 @@ const exportToCSV = (products: Product[]) => {
 
 const exportZqToCSV = (products: ZqCachedProduct[]) => {
   if (products.length === 0) {
-    showErrorToast('No ZQ products to export')
+    showErrorToast('No AF HOME GLOBAL products to export')
     return
   }
 
@@ -417,13 +417,13 @@ const exportZqToCSV = (products: ZqCachedProduct[]) => {
   ]
 
   const wb = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(wb, ws, 'ZQ Products')
+  XLSX.utils.book_append_sheet(wb, ws, 'AF HOME GLOBAL Products')
 
   const now = new Date()
   const ts = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
   XLSX.writeFile(wb, `zq-products-${ts}.xlsx`)
 
-  showSuccessToast(`Exported ${products.length} ZQ products to Excel`)
+  showSuccessToast(`Exported ${products.length} AF HOME GLOBAL products to Excel`)
 }
 
 const mapCachedZqProductToLocalRow = (product: ZqCachedProduct): Product => ({
@@ -433,7 +433,7 @@ const mapCachedZqProductToLocalRow = (product: ZqCachedProduct): Product => ({
   name: product.subject,
   description: product.importStatus ? `Global Supplier import status: ${product.importStatus}` : null,
   specifications: product.localCategoryName
-    ? `${product.localCategoryName}${product.categoryName ? ` (ZQ: ${product.categoryName})` : ''}`
+    ? `${product.localCategoryName}${product.categoryName ? ` (AF HOME GLOBAL: ${product.categoryName})` : ''}`
     : product.categoryName ?? null,
   catid: product.localCategoryId ?? 0,
   catsubid: 0,
@@ -1004,10 +1004,10 @@ function ZqCategoryMappingPanel({
     <div className="rounded-2xl border border-sky-100 bg-white p-4 shadow-sm dark:border-slate-700/50 dark:bg-slate-900">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-sky-600">ZQ Category Mapping</p>
-          <h3 className="mt-1 text-base font-bold text-slate-900 dark:text-slate-100">Map ZQ categories to AF Home categories</h3>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-sky-600">AF HOME GLOBAL Category Mapping</p>
+          <h3 className="mt-1 text-base font-bold text-slate-900 dark:text-slate-100">Map AF HOME GLOBAL categories to AF Home categories</h3>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">
-            One mapping applies to all synced ZQ products under that category.
+            One mapping applies to all synced AF HOME GLOBAL products under that category.
           </p>
         </div>
 
@@ -1017,7 +1017,7 @@ function ZqCategoryMappingPanel({
             onChange={(event) => onSelectZq(event.target.value)}
             className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-sky-300 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
           >
-            <option value="">Select ZQ category</option>
+            <option value="">Select AF HOME GLOBAL category</option>
             {categories.map((category) => {
               const key = `${category.zqCategoryId ?? ''}::${category.zqCategoryName}`
               const suffix = category.localCategoryName ? ` -> ${category.localCategoryName}` : ' -> Needs review'
@@ -1050,7 +1050,7 @@ function ZqCategoryMappingPanel({
             <option value="">All mapping states</option>
             <option value="mapped">Mapped products</option>
             <option value="unmapped">Needs review</option>
-            <option value="missing">Missing ZQ category</option>
+            <option value="missing">Missing AF HOME GLOBAL category</option>
           </select>
 
           <button
@@ -1627,7 +1627,7 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
   const handleSaveZqCategoryMapping = async () => {
     const selected = zqCategoryMappings.find((category) => `${category.zqCategoryId ?? ''}::${category.zqCategoryName}` === selectedZqCategoryKey)
     if (!selected) {
-      showErrorToast('Select a ZQ category first.')
+      showErrorToast('Select an AF HOME GLOBAL category first.')
       return
     }
 
@@ -1638,12 +1638,12 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
         localCategoryId: selectedZqLocalCategoryId,
       }).unwrap()
 
-      showSuccessToast(result.message || 'ZQ category mapping saved.')
+      showSuccessToast(result.message || 'AF HOME GLOBAL category mapping saved.')
       await refetchZqCategoryMappings()
       await refetchZqCachedProducts()
     } catch (error) {
       const apiError = error as { data?: { message?: string } }
-      showErrorToast(apiError?.data?.message || 'Failed to save ZQ category mapping.')
+      showErrorToast(apiError?.data?.message || 'Failed to save AF HOME GLOBAL category mapping.')
     }
   }
 
@@ -1912,14 +1912,14 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
   const zqImportButtonLabel = isSyncingAllZq || isDiscoveringZqTotal
     ? 'Syncing Global Supplier Products...'
     : isSupplierPortal
-      ? (zqImportedCount > 0 ? 'Sync Latest Global Supplier Products' : 'Sync Products from ZQ')
+      ? (zqImportedCount > 0 ? 'Sync Latest Global Supplier Products' : 'Sync AF HOME GLOBAL Products')
     : zqImportedCount > 0
       ? 'Refresh Global Supplier Products'
       : 'Start AF HOME GLOBAL SUPPLIER Import'
   const zqImportButtonMobileLabel = isSyncingAllZq || isDiscoveringZqTotal
     ? 'Syncing...'
     : isSupplierPortal
-      ? (zqImportedCount > 0 ? 'Sync' : 'Sync ZQ')
+      ? (zqImportedCount > 0 ? 'Sync' : 'Sync AF HOME GLOBAL')
     : zqImportedCount > 0
       ? 'Refresh'
       : 'Start Import'
@@ -2560,7 +2560,7 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
                     disabled={isExportingZq}
                     className="!px-5 !py-2.5 !text-sm"
                   >
-                    {isExportingZq ? 'Exporting…' : 'Export ZQ Excel'}
+                    {isExportingZq ? 'Exporting…' : 'Export AF HOME GLOBAL Excel'}
                   </PrimaryButton>
                   <PrimaryButton
                     onClick={() => setShowImportZq(true)}
@@ -2600,7 +2600,7 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
                     </p>
                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">
                       {isSupplierPortal
-                        ? 'Sync products from ZQ to save them into tbl_zqproducts, then they will stay visible after refresh.'
+                        ? 'Sync AF HOME GLOBAL products to save them into tbl_zqproducts, then they will stay visible after refresh.'
                         : 'Start the import to fetch products from the Global Supplier API and save them into tbl_zqproducts.'}
                     </p>
                   </div>
@@ -2610,7 +2610,7 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
                     disabled={isSyncingAllZq || isDiscoveringZqTotal}
                     className="inline-flex items-center justify-center rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-sky-700"
                   >
-                    {isSupplierPortal ? 'Sync Products from ZQ' : 'Start AF HOME GLOBAL SUPPLIER Import'}
+                    {isSupplierPortal ? 'Sync AF HOME GLOBAL Products' : 'Start AF HOME GLOBAL SUPPLIER Import'}
                   </button>
                 </div>
               </div>

@@ -2232,6 +2232,12 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
 
     return null;
   }, [isDeletedWebstoreRequest, webstoreCheckoutId, webstorePaymentContextStorageKey]);
+  const requestPlan = latestWebstoreRequest?.plan === 'semi_annual'
+    ? 'semiAnnual'
+    : latestWebstoreRequest?.plan === 'quarterly' || latestWebstoreRequest?.plan === 'annual' || latestWebstoreRequest?.plan === 'test'
+      ? latestWebstoreRequest.plan
+      : null;
+
   const resolvedWebstorePlan = selectedWebstorePlan
     ?? webstorePaymentSubmissionSnapshot?.selectedWebstorePlan
     ?? storedWebstorePaymentContext?.selectedWebstorePlan
@@ -2307,12 +2313,6 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
     }) ?? null;
   }, [activeWebstoreRequest, webstoreForm.displayName, webstoreForm.slugName, webstoreHistoryData?.requests]);
   const shouldHideDeletedWebstoreFields = Boolean(hiddenWebstoreHistoryRequest);
-
-  const requestPlan = latestWebstoreRequest?.plan === 'semi_annual'
-    ? 'semiAnnual'
-    : latestWebstoreRequest?.plan === 'quarterly' || latestWebstoreRequest?.plan === 'annual' || latestWebstoreRequest?.plan === 'test'
-      ? latestWebstoreRequest.plan
-      : null;
 
   useEffect(() => {
     if (!latestWebstoreRequest) return;
