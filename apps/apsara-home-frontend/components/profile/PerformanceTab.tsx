@@ -153,10 +153,18 @@ const PerformanceTab = () => {
 
   const summary  = data?.summary;
   const ledger   = data?.ledger ?? [];
-  const goalPv   = 50000;
+  const milestone = summary?.performance_milestone;
+  const pvPerMilestone   = Number(milestone?.pv_per_milestone ?? 50000);
+  const cashPerMilestone = Number(milestone?.cash_per_milestone ?? 5000);
+  const milestonesReached = Number(milestone?.milestones_reached ?? 0);
+  const cashEarned        = Number(milestone?.cash_earned ?? 0);
   const current  = Number(summary?.direct_referral_total_pv ?? 0);
-  const progress = Math.min(100, Math.max(0, (current / goalPv) * 100));
-  const remaining = Math.max(0, goalPv - current);
+  // Progress is measured toward the *next* milestone (rewards repeat every tranche).
+  const nextMilestonePv = Number(milestone?.next_milestone_pv ?? pvPerMilestone);
+  const goalPv   = nextMilestonePv;
+  const tranchePv = current - (nextMilestonePv - pvPerMilestone);
+  const progress = Math.min(100, Math.max(0, (tranchePv / pvPerMilestone) * 100));
+  const remaining = Number(milestone?.pv_to_next ?? Math.max(0, goalPv - current));
 
   const totalReferrals    = Number(summary?.referrals?.total    ?? 0);
   const verifiedReferrals = Number(summary?.referrals?.verified ?? 0);
@@ -237,6 +245,42 @@ const PerformanceTab = () => {
           {/* Progress bar */}
           <div className="mt-6">
             <PvProgressBar pct={progress} />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Milestone Reward ── */}
+      <div className="relative overflow-hidden rounded-2xl border border-emerald-200 bg-linear-to-br from-emerald-50 to-teal-50/50 p-5 shadow-sm dark:border-emerald-800/50 dark:from-emerald-950/40 dark:to-teal-950/30">
+        <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-emerald-400/10" />
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-sm shadow-emerald-500/30">
+              <span className="text-lg">🏆</span>
+            </div>
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+                Performance Milestone Reward
+              </p>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                Every <span className="font-bold">{fmt(pvPerMilestone)} PV</span> earns{' '}
+                <span className="font-bold">₱{fmt(cashPerMilestone)} cash</span>, auto-credited to your encashment balance.
+              </p>
+              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                {remaining > 0
+                  ? `${fmt(remaining)} PV more to reach the next ₱${fmt(cashPerMilestone)} reward.`
+                  : 'Next reward unlocks as soon as more Performance Value posts.'}
+              </p>
+            </div>
+          </div>
+          <div className="flex shrink-0 gap-3">
+            <div className="rounded-xl border border-emerald-200/70 bg-white/70 px-4 py-3 text-center backdrop-blur-sm dark:border-emerald-800/40 dark:bg-white/5">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Milestones</p>
+              <p className="mt-1 text-2xl font-black tabular-nums text-slate-900 dark:text-white">{fmt(milestonesReached)}</p>
+            </div>
+            <div className="rounded-xl border border-emerald-200/70 bg-white/70 px-4 py-3 text-center backdrop-blur-sm dark:border-emerald-800/40 dark:bg-white/5">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Cash Earned</p>
+              <p className="mt-1 text-2xl font-black tabular-nums text-emerald-600 dark:text-emerald-300">₱{fmt(cashEarned)}</p>
+            </div>
           </div>
         </div>
       </div>

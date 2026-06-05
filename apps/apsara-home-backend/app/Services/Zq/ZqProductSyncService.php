@@ -232,7 +232,7 @@ class ZqProductSyncService
             'zqp_offer_id' => $this->stringOrNull($detail['offerId'] ?? null),
             'zqp_brand_type' => $brandType,
             'zqp_category_id' => $this->stringOrNull($detail['categoryId'] ?? $summary['categoryId'] ?? null),
-            'zqp_category_name' => $this->stringOrNull($detail['categoryName'] ?? $summary['categoryName'] ?? null),
+            'zqp_category_name' => $this->extractCategoryName($detail, $summary),
             'zqp_subject' => $this->stringOrNull($detail['subject'] ?? $summary['subject'] ?? '') ?? '',
             'zqp_subject_cn' => $this->stringOrNull($detail['subjectCn'] ?? null),
             'zqp_description' => $this->stringOrNull($detail['description'] ?? null),
@@ -324,6 +324,54 @@ class ZqProductSyncService
             ->filter(fn ($image) => is_string($image) && $image !== '')
             ->values()
             ->all();
+    }
+
+    /**
+     * @param array<string, mixed> $detail
+     * @param array<string, mixed> $summary
+     */
+    private function extractCategoryName(array $detail, array $summary = []): ?string
+    {
+        $directName = $this->stringOrNull(
+            $detail['categoryName']
+                ?? $detail['category_name']
+                ?? $summary['categoryName']
+                ?? $summary['category_name']
+                ?? null
+        );
+
+        if ($directName !== null) {
+            return $directName;
+        }
+
+        return $this->extractProductCategoryFromDescription(
+            $this->stringOrNull($detail['description'] ?? $summary['description'] ?? null)
+        );
+    }
+
+    private function extractProductCategoryFromDescription(?string $description): ?string
+    {
+        if ($description === null) {
+            return null;
+        }
+
+        $html = html_entity_decode($description, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $patterns = [
+            '/title\s*=\s*(["\'])\s*Product\s+Category\s*\1.*?<div\b[^>]*title\s*=\s*(["\'])(.*?)\2/is',
+            '/>\s*Product\s+Category\s*<.*?<div\b[^>]*title\s*=\s*(["\'])(.*?)\1/is',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $html, $matches)) {
+                $candidate = $matches[count($matches) - 1] ?? null;
+                $name = $this->stringOrNull(strip_tags(html_entity_decode((string) $candidate, ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+                if ($name !== null) {
+                    return $name;
+                }
+            }
+        }
+
+        return null;
     }
 
     private function stringOrNull(mixed $value): ?string

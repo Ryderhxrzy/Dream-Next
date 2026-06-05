@@ -18,6 +18,7 @@ use App\Support\CustomerCashWallet;
 use App\Support\DirectReferralCommission;
 use App\Support\MemberMonthlyActivation;
 use App\Support\OrderPvPosting;
+use App\Support\PerformanceMilestoneReward;
 use App\Support\PersonalPurchaseCashback;
 use Illuminate\Http\Request;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -38,6 +39,10 @@ class EncashmentController extends Controller
 
         $this->backfillApprovedPvForCustomer($customer);
         DirectReferralCommission::releasePendingForDeliveredOrders((int) $customer->c_userid);
+
+        // Catch-up: auto-credit any earned Performance Value milestone rewards
+        // (every 50,000 combined direct-referral PV = PHP 5,000 cash).
+        PerformanceMilestoneReward::evaluate($customer);
 
         $validated = $request->validate([
             'page' => 'nullable|integer|min:1',
@@ -277,6 +282,7 @@ class EncashmentController extends Controller
                 'monthly_purchase_points' => round((float) ($monthlyActivation['current_month_pv'] ?? 0), 2),
                 'total_bonus' => round($affiliateRetailProfit + $affiliatePerformanceBonus + $groupPurchaseBonus + $globalPurchaseBonus, 2),
                 'direct_referral_total_pv' => round($directReferralTotalPv, 2),
+                'performance_milestone' => PerformanceMilestoneReward::summary((int) $customer->c_userid),
                 'cash_credits' => round($cashCredits, 2),
                 'cash_debits' => round($cashDebits, 2),
                 'pv_credits' => round($pvCredits, 2),

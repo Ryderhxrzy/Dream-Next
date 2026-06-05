@@ -157,6 +157,26 @@ const formatDate = (value: string | null | undefined) => {
 const str = (v: unknown): string => (typeof v === 'string' ? v : '')
 const num = (v: unknown): number | null => (typeof v === 'number' ? v : null)
 
+const productCategoryFromDescription = (description: string): string => {
+  if (!description || typeof DOMParser === 'undefined') return ''
+
+  const doc = new DOMParser().parseFromString(description, 'text/html')
+  const nodes = Array.from(doc.querySelectorAll('[title], div'))
+  const labelIndex = nodes.findIndex((node) => (
+    (node.getAttribute('title') || node.textContent || '').trim().toLowerCase() === 'product category'
+  ))
+  if (labelIndex < 0) return ''
+
+  for (const node of nodes.slice(labelIndex + 1)) {
+    const value = (node.getAttribute('title') || node.textContent || '').trim().replace(/\s+/g, ' ')
+    if (value && value.toLowerCase() !== 'product category') {
+      return value
+    }
+  }
+
+  return ''
+}
+
 function parseDetail(raw: Record<string, unknown>): ZqDetail {
   const rawImages = Array.isArray(raw.images) ? raw.images : []
   const images: ZqImage[] = rawImages
@@ -181,7 +201,7 @@ function parseDetail(raw: Record<string, unknown>): ZqDetail {
   return {
     subject:        str(raw.subject),
     subjectCn:      str(raw.subjectCn) || null,
-    categoryName:   str(raw.categoryName) || null,
+    categoryName:   str(raw.categoryName) || productCategoryFromDescription(str(raw.description)) || null,
     sourceType:     str(raw.sourceType) || null,
     status:         str(raw.status) || null,
     importproStatus: str(raw.importproStatus) || null,
@@ -543,8 +563,8 @@ export default function EditZqPricingModal({ product, onClose, onSaved, showVari
                                     <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">Image</th>
                                     <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">Spec</th>
                                     <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">SKU ID</th>
-                                    <th className="px-3 py-2.5 text-right text-[11px] font-semibold uppercase tracking-wide text-slate-500">ZQ Cost</th>
-                                    <th className="px-3 py-2.5 text-right text-[11px] font-semibold uppercase tracking-wide text-slate-500">ZQ Price</th>
+                                    <th className="px-3 py-2.5 text-right text-[11px] font-semibold uppercase tracking-wide text-slate-500">AF HOME GLOBAL Cost</th>
+                                    <th className="px-3 py-2.5 text-right text-[11px] font-semibold uppercase tracking-wide text-slate-500">AF HOME GLOBAL Price</th>
                                     <th className="px-3 py-2.5 text-right text-[11px] font-semibold uppercase tracking-wide text-slate-500">Stock</th>
                                     <th className="px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-600 bg-emerald-50/60">Member (₱)</th>
                                     <th className="px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-600 bg-emerald-50/60">Dealer (₱)</th>

@@ -76,6 +76,13 @@ class OrderPvPosting
             GroupPurchaseBonus::awardForBuyer($customer, $lockedOrder, $actorAdminId ?? 0);
             TierEvaluator::evaluate($customer);
 
+            // The recipient's PV just increased, so their sponsor's combined
+            // direct-referral Performance Value may have crossed a milestone.
+            $sponsorId = (int) ($customer->c_sponsor ?? 0);
+            if ($sponsorId > 0) {
+                PerformanceMilestoneReward::evaluate($sponsorId, $actorAdminId);
+            }
+
             return true;
         });
     }
