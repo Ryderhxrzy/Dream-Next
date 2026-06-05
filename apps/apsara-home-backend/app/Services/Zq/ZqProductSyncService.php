@@ -62,14 +62,13 @@ class ZqProductSyncService
                 ->filter()
                 ->values()
                 ->all();
-            $existingExternalIds = $externalIds === []
-                ? []
+            $existingProducts = $externalIds === []
+                ? collect()
                 : ZqProduct::query()
+                    ->select(['zqp_id', 'zqp_external_id', 'zqp_category_name'])
                     ->whereIn('zqp_external_id', $externalIds)
-                    ->pluck('zqp_external_id')
-                    ->map(fn ($value) => (string) $value)
-                    ->all();
-            $existingExternalIdLookup = array_fill_keys($existingExternalIds, true);
+                    ->get()
+                    ->keyBy(fn (ZqProduct $product) => (string) $product->zqp_external_id);
 
             $pageSynced = 0;
             $pageSkipped = 0;
@@ -84,7 +83,9 @@ class ZqProductSyncService
                     continue;
                 }
 
-                if (isset($existingExternalIdLookup[(string) $externalId])) {
+                $existingProduct = $existingProducts->get((string) $externalId);
+                $existingCategoryName = $this->stringOrNull($existingProduct?->zqp_category_name);
+                if ($existingProduct && $existingCategoryName !== null) {
                     $pageSkipped++;
                     continue;
                 }
@@ -230,8 +231,8 @@ class ZqProductSyncService
         return [
             'zqp_offer_id' => $this->stringOrNull($detail['offerId'] ?? null),
             'zqp_brand_type' => $brandType,
-            'zqp_category_id' => $this->stringOrNull($detail['categoryId'] ?? null),
-            'zqp_category_name' => $this->stringOrNull($detail['categoryName'] ?? null),
+            'zqp_category_id' => $this->stringOrNull($detail['categoryId'] ?? $summary['categoryId'] ?? null),
+            'zqp_category_name' => $this->stringOrNull($detail['categoryName'] ?? $summary['categoryName'] ?? null),
             'zqp_subject' => $this->stringOrNull($detail['subject'] ?? $summary['subject'] ?? '') ?? '',
             'zqp_subject_cn' => $this->stringOrNull($detail['subjectCn'] ?? null),
             'zqp_description' => $this->stringOrNull($detail['description'] ?? null),

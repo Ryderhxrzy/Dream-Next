@@ -89,6 +89,45 @@ function filterTree(nodes: AdminReferralNode[], query: string): AdminReferralNod
     })
 }
 
+type ReferralSortKey =
+  | 'default'
+  | 'referrals_high_low'
+  | 'earnings_high_low'
+  | 'newest_registered'
+  | 'oldest_registered'
+
+const sortOptions: Array<{ value: ReferralSortKey; label: string }> = [
+  { value: 'default', label: 'Default Sort' },
+  { value: 'referrals_high_low', label: 'Highest Referral' },
+  { value: 'earnings_high_low', label: 'Highest Commission' },
+  { value: 'newest_registered', label: 'Newest Joined' },
+  { value: 'oldest_registered', label: 'Oldest Joined' },
+]
+
+function sortTree(nodes: AdminReferralNode[], sortKey: ReferralSortKey): AdminReferralNode[] {
+  if (sortKey === 'default') return nodes
+
+  const sorted = [...nodes].sort((a, b) => {
+    switch (sortKey) {
+      case 'referrals_high_low':
+        return b.referralCount - a.referralCount
+      case 'earnings_high_low':
+        return b.commissionEarned - a.commissionEarned
+      case 'newest_registered':
+        return new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime()
+      case 'oldest_registered':
+        return new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime()
+      default:
+        return 0
+    }
+  })
+
+  return sorted.map((node) => ({
+    ...node,
+    children: sortTree(node.children ?? [], sortKey),
+  }))
+}
+
 function buildReferralNodeMap(nodes: AdminReferralNode[], map = new Map<number, AdminReferralNode>()) {
   nodes.forEach((node) => {
     map.set(node.id, node)
@@ -387,6 +426,7 @@ export default function ReferralTreePageMain() {
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [listPage, setListPage] = useState(1)
   const [expandAll, setExpandAll] = useState(true)
+  const [sortBy, setSortBy] = useState<ReferralSortKey>('default')
   const perPage = 10
 
   const { data, isLoading, isFetching, isError } = useGetMembersReferralTreeQuery()
@@ -400,6 +440,7 @@ export default function ReferralTreePageMain() {
       page: listPage,
       perPage,
       search: debouncedSearch !== '' ? debouncedSearch : undefined,
+      sort: sortBy,
     },
     {
       skip: tab !== 'list',
@@ -416,8 +457,8 @@ export default function ReferralTreePageMain() {
 
   const normalizedSearch = search.trim().toLowerCase()
   const filteredTree = useMemo(
-    () => filterTree(data?.roots ?? [], normalizedSearch),
-    [data?.roots, normalizedSearch],
+    () => sortTree(filterTree(data?.roots ?? [], normalizedSearch), sortBy),
+    [data?.roots, normalizedSearch, sortBy],
   )
   const referralNodeMap = useMemo(
     () => buildReferralNodeMap(data?.roots ?? []),
@@ -467,21 +508,41 @@ export default function ReferralTreePageMain() {
         className="grid grid-cols-2 gap-4 xl:grid-cols-4"
       >
         {[
-          { label: 'Total Commission Paid', value: php(summary?.totalCommissionPaid ?? 0), accent: 'from-cyan-500 to-teal-500' },
-          { label: 'Active Members', value: String(summary?.activeMembers ?? 0), accent: 'from-blue-500 to-sky-500' },
-          { label: 'Total Referrals', value: String(summary?.totalReferrals ?? 0), accent: 'from-fuchsia-500 to-violet-500' },
-          { label: 'Avg. Commission/Member', value: php(summary?.avgCommissionPerMember ?? 0), accent: 'from-sky-500 to-sky-500' },
+          {
+            label: 'Total Commission Paid',
+            value: php(summary?.totalCommissionPaid ?? 0),
+            accent: 'from-cyan-500 to-teal-600',
+            icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />,
+          },
+          {
+            label: 'Active Members',
+            value: String(summary?.activeMembers ?? 0),
+            accent: 'from-blue-500 to-indigo-600',
+            icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />,
+          },
+          {
+            label: 'Total Referrals',
+            value: String(summary?.totalReferrals ?? 0),
+            accent: 'from-fuchsia-500 to-violet-600',
+            icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />,
+          },
+          {
+            label: 'Avg. Commission/Member',
+            value: php(summary?.avgCommissionPerMember ?? 0),
+            accent: 'from-amber-500 to-orange-600',
+            icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />,
+          },
         ].map((stat) => (
-          <div key={stat.label} className="group relative overflow-hidden rounded-[28px] border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <div key={stat.label} className="group relative overflow-hidden rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm ring-1 ring-slate-100 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:ring-slate-800">
             <div className="flex items-center gap-3">
-              <div className={`flex h-12 w-12 items-center justify-center rounded-2xl text-white ${stat.accent}`}>
+              <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br ${stat.accent} text-white shadow-sm ring-1 ring-white/20 transition-transform duration-300 group-hover:scale-105`}>
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  {stat.icon}
                 </svg>
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">{stat.label}</p>
-                <p className="mt-1 truncate text-xl font-black text-slate-900">{stat.value}</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">{stat.label}</p>
+                <p className="mt-1 whitespace-nowrap text-xl font-black tabular-nums text-slate-900 dark:text-white">{stat.value}</p>
               </div>
             </div>
           </div>
@@ -509,6 +570,24 @@ export default function ReferralTreePageMain() {
               }}
               className="h-11 w-full rounded-[18px] border border-gray-300 bg-white py-3 pl-10 pr-4 text-sm text-slate-900 outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-sky-400 focus:bg-white dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder:text-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
             />
+          </div>
+
+          <div className="relative">
+            <select
+              value={sortBy}
+              onChange={(event) => {
+                setSortBy(event.target.value as ReferralSortKey)
+                setListPage(1)
+              }}
+              className="h-11 cursor-pointer appearance-none rounded-[18px] border border-gray-300 bg-white py-2.5 pl-4 pr-10 text-sm font-semibold text-slate-600 outline-none transition-all duration-200 hover:border-slate-400 focus:border-sky-400 dark:border-white/18 dark:bg-white/12 dark:text-slate-200 dark:focus:border-sky-400/60"
+            >
+              {sortOptions.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+            <svg className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
           </div>
 
           <div className="flex items-center gap-2">

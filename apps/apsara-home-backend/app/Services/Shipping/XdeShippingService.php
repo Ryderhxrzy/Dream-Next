@@ -58,6 +58,24 @@ class XdeShippingService
         return $this->requestRaw('get', $path);
     }
 
+    public function updateDimension(array $payload): array
+    {
+        $path = (string) config('services.xde.dimension_path', '/dimension');
+        return $this->request('put', $path, $payload);
+    }
+
+    public function getPorts(): array
+    {
+        $path = (string) config('services.xde.ports_path', '/ports');
+        return $this->request('get', $path);
+    }
+
+    public function getReasons(): array
+    {
+        $path = (string) config('services.xde.reasons_path', '/reason');
+        return $this->request('get', $path);
+    }
+
     public function getEpod(string $trackingNo, ?string $type = null): Response
     {
         $pathTemplate = (string) config('services.xde.epod_path', '/epod.php?tracking_number={tracking_number}');
@@ -79,10 +97,13 @@ class XdeShippingService
     private function requestRaw(string $method, string $path, ?array $payload = null): Response
     {
         [$client, $url] = $this->makeClientAndUrl();
+        $fullUrl = $url . '/' . ltrim($path, '/');
 
-        return $method === 'get'
-            ? $client->get($url . '/' . ltrim($path, '/'))
-            : $client->post($url . '/' . ltrim($path, '/'), $payload ?? []);
+        return match ($method) {
+            'get' => $client->get($fullUrl),
+            'put' => $client->put($fullUrl, $payload ?? []),
+            default => $client->post($fullUrl, $payload ?? []),
+        };
     }
 
     private function requestRawWithoutAuth(string $method, string $path): Response
@@ -120,7 +141,7 @@ class XdeShippingService
             ->acceptJson()
             ->asJson()
             ->withHeaders([
-                'apikey' => $apiKey,
+                'api_key' => $apiKey,
                 'token' => $token,
                 'Content-Type' => 'application/json',
             ]);
