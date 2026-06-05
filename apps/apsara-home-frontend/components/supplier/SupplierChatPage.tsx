@@ -1,10 +1,12 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import {
   AlertCircle,
   CheckCheck,
   ChevronDown,
+  ChevronRight,
   ExternalLink,
   FileText,
   Image as ImageIcon,
@@ -14,6 +16,7 @@ import {
   Paperclip,
   Play,
   RefreshCw,
+  Reply,
   Search,
   Send,
   Smile,
@@ -24,6 +27,7 @@ import {
   fetchSupplierChatConversation,
   fetchSupplierChatConversations,
   sendSupplierChatMessage,
+  toggleSupplierChatReaction,
   uploadSupplierChatAttachment,
   type SupplierChatConversation,
   type SupplierChatMessage,
@@ -33,10 +37,42 @@ import LinkPreview from '@/components/ui/LinkPreview'
 
 
 const MAX_ATTACHMENT_SIZE_BYTES = 25 * 1024 * 1024
+const QUICK_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '😡'] as const
 
 type FileKind = 'image' | 'video' | 'other'
 type PendingAttachment = { id: string; file: File; previewUrl: string | null; kind: FileKind }
-type MessageGroup = { dateLabel: string; messages: SupplierChatMessage[] }
+type MessageGroup = { dateLabel: string; displayLabel: string; messages: SupplierChatMessage[] }
+
+type ChatRenderItem =
+  | { kind: 'single'; message: SupplierChatMessage }
+  | { kind: 'imageGroup'; messages: SupplierChatMessage[] }
+
+function buildRenderItems(messages: SupplierChatMessage[]): ChatRenderItem[] {
+  const items: ChatRenderItem[] = []
+  let i = 0
+  while (i < messages.length) {
+    const msg = messages[i]
+    if (msg.attachment_type === 'image' && msg.attachment_url && !msg.message.trim()) {
+      const group: SupplierChatMessage[] = [msg]
+      i++
+      while (
+        i < messages.length &&
+        messages[i].sender_type === msg.sender_type &&
+        messages[i].attachment_type === 'image' &&
+        messages[i].attachment_url &&
+        !messages[i].message.trim()
+      ) {
+        group.push(messages[i])
+        i++
+      }
+      items.push(group.length === 1 ? { kind: 'single', message: group[0] } : { kind: 'imageGroup', messages: group })
+    } else {
+      items.push({ kind: 'single', message: msg })
+      i++
+    }
+  }
+  return items
+}
 
 function getDateLabel(dateStr: string): string {
   const date = new Date(dateStr)
@@ -44,10 +80,22 @@ function getDateLabel(dateStr: string): string {
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const startOfDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
   const diffDays = Math.round((startOfToday.getTime() - startOfDate.getTime()) / 86_400_000)
-  if (diffDays === 0) return 'Today'
-  if (diffDays === 1) return 'Yesterday'
-  if (diffDays < 7) return date.toLocaleDateString('en-PH', { weekday: 'long' })
-  return date.toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
+  if (diffDays === 0) return 'today'
+  if (diffDays === 1) return 'yesterday'
+  return startOfDate.toISOString().slice(0, 10)
+}
+
+function formatGroupLabel(dateStr: string): string {
+  const date = new Date(dateStr)
+  const now = new Date()
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const startOfDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  const diffDays = Math.round((startOfToday.getTime() - startOfDate.getTime()) / 86_400_000)
+  const timeStr = date.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit', hour12: true })
+  if (diffDays === 0) return `Today at ${timeStr}`
+  if (diffDays === 1) return `Yesterday at ${timeStr}`
+  const fullDate = date.toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+  return `${fullDate} at ${timeStr}`
 }
 async function forceDownload(url: string, filename: string) {
   try {
@@ -163,7 +211,6 @@ function getInitials(value: string): string {
 }
 
 export default function SupplierChatPage() {
-
   const [conversations, setConversations] = useState<SupplierChatConversation[]>([])
   const [activeId, setActiveId] = useState<number | null>(null)
   const [activeConversation, setActiveConversation] = useState<SupplierChatConversation | null>(null)
@@ -175,16 +222,37 @@ export default function SupplierChatPage() {
   const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([])
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [openPanel, setOpenPanel] = useState<'media' | 'files' | 'links' | null>(null)
+  const [replyTo, setReplyTo] = useState<SupplierChatMessage | null>(null)
+  const [localReplyMap, setLocalReplyMap] = useState<Record<number, SupplierChatMessage>>({})
+  const [hoveredMsgId, setHoveredMsgId] = useState<number | null>(null)
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [mediaModal, setMediaModal] = useState<{
     open: boolean
     url: string | null
     type: 'image' | 'video' | null
     name?: string
+    urls?: string[]
+    activeIndex?: number
   }>({ open: false, url: null, type: null })
+  const mediaSlideDir = useRef<1 | -1>(1)
 
   const closeMediaModal = () => setMediaModal({ open: false, url: null, type: null })
   const openMediaModal = (next: { url: string; type: 'image' | 'video'; name?: string }) =>
-    setMediaModal({ open: true, ...next })
+    setMediaModal({ open: true, ...next, urls: undefined, activeIndex: undefined })
+
+  const openImageGroupModal = (urls: string[], startIndex = 0) => {
+    mediaSlideDir.current = 1
+    setMediaModal({ open: true, url: urls[startIndex] ?? null, type: 'image', urls, activeIndex: startIndex })
+  }
+
+  const setMediaModalIndex = (next: number) => {
+    setMediaModal((prev) => {
+      if (!prev.urls) return prev
+      const idx = Math.max(0, Math.min(next, prev.urls.length - 1))
+      mediaSlideDir.current = idx > (prev.activeIndex ?? 0) ? 1 : -1
+      return { ...prev, url: prev.urls[idx], activeIndex: idx }
+    })
+  }
 
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const attachmentInputRef = useRef<HTMLInputElement>(null)
@@ -208,7 +276,7 @@ export default function SupplierChatPage() {
       if (last?.dateLabel === label) {
         last.messages.push(message)
       } else {
-        groups.push({ dateLabel: label, messages: [message] })
+        groups.push({ dateLabel: label, displayLabel: formatGroupLabel(message.created_at), messages: [message] })
       }
     }
     return groups
@@ -365,10 +433,13 @@ export default function SupplierChatPage() {
           appendSentMessage(sent)
         }
         // Send text message if present
+        const pendingReply = replyTo
         if (trimmed) {
           const sent = await sendSupplierChatMessage(activeId, trimmed)
           appendSentMessage(sent)
+          if (pendingReply) setLocalReplyMap((prev) => ({ ...prev, [sent.id]: pendingReply }))
         }
+        setReplyTo(null)
       }
 
       setInput('')
@@ -417,9 +488,41 @@ export default function SupplierChatPage() {
     })
   }
 
+  const toggleReaction = (message: SupplierChatMessage, emoji: string) => {
+    const current = message.reactions?.['supplier'] ?? null
+    const optimistic = { ...(message.reactions ?? {}) }
+    if (current === emoji) delete optimistic['supplier']
+    else optimistic['supplier'] = emoji
+
+    const updateMessages = (msgs: SupplierChatMessage[]) =>
+      msgs.map((m) => m.id === message.id ? { ...m, reactions: Object.keys(optimistic).length ? optimistic : null } : m)
+
+    setActiveConversation((prev) => prev ? { ...prev, messages: updateMessages(prev.messages ?? []) } : prev)
+
+    toggleSupplierChatReaction(message.conversation_id, message.id, emoji)
+      .then((updated) => {
+        setActiveConversation((prev) => prev
+          ? { ...prev, messages: (prev.messages ?? []).map((m) => m.id === updated.id ? { ...m, reactions: updated.reactions } : m) }
+          : prev)
+      })
+      .catch(() => { /* poll will self-correct */ })
+  }
+
+  const enterMsg = (id: number) => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current)
+    setHoveredMsgId(id)
+  }
+  const leaveMsg = () => {
+    hoverTimeoutRef.current = setTimeout(() => setHoveredMsgId(null), 300)
+  }
+
   useEffect(() => {
     if (!mediaModal.open) return
-    const onKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') closeMediaModal() }
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeMediaModal()
+      if (e.key === 'ArrowRight' && mediaModal.urls) setMediaModalIndex((mediaModal.activeIndex ?? 0) + 1)
+      if (e.key === 'ArrowLeft' && mediaModal.urls) setMediaModalIndex((mediaModal.activeIndex ?? 0) - 1)
+    }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [mediaModal.open])
@@ -475,22 +578,77 @@ export default function SupplierChatPage() {
           </button>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col">
-          <div className="flex shrink-0 items-center gap-3 border-b border-slate-100 px-5 py-3.5 dark:border-slate-800">
-            <Avatar label={chatAdminInitials} color="bg-indigo-600" src={chatAdminAvatarUrl} alt={chatAdminName} size="md" />
+        <div
+          className="relative flex min-h-0 flex-1 flex-col"
+          style={{ background: 'linear-gradient(145deg,#eef2ff 0%,#f0f4ff 40%,#e8eeff 100%)' }}
+        >
+          {/* Fixed decorative background */}
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+            <svg className="h-full w-full opacity-[0.13]" xmlns="http://www.w3.org/2000/svg">
+              <g transform="translate(40,70)" fill="none" stroke="#6366f1" strokeWidth="1.4">
+                <rect x="0" y="14" width="56" height="36" rx="3"/><polyline points="0,14 28,0 56,14"/><rect x="18" y="28" width="20" height="22" rx="2"/>
+                <rect x="4" y="20" width="14" height="12" rx="1"/><rect x="38" y="20" width="14" height="12" rx="1"/>
+              </g>
+              <g transform="translate(480,55)" fill="none" stroke="#6366f1" strokeWidth="1.4">
+                <path d="M2 2h6l4 18h22l4-14H10"/><circle cx="16" cy="26" r="2"/><circle cx="32" cy="26" r="2"/>
+              </g>
+              <g transform="translate(240,36)" fill="none" stroke="#6366f1" strokeWidth="1.4">
+                <polyline points="0,12 22,0 44,12 44,36 22,48 0,36 0,12"/><polyline points="0,12 22,24 44,12"/><line x1="22" y1="24" x2="22" y2="48"/>
+              </g>
+              <g transform="translate(540,320)" fill="none" stroke="#6366f1" strokeWidth="1.4">
+                <rect x="0" y="6" width="38" height="28" rx="2"/><path d="M38,16 h14 l6,12 v6 h-20 z"/><circle cx="10" cy="38" r="5"/><circle cx="48" cy="38" r="5"/>
+              </g>
+              <g transform="translate(400,220)" fill="none" stroke="#6366f1" strokeWidth="1.4">
+                <rect x="0" y="0" width="52" height="38" rx="12"/><path d="M10,38 L6,52 L20,42"/>
+              </g>
+              <g transform="translate(50,380)" fill="none" stroke="#6366f1" strokeWidth="1.4">
+                <circle cx="28" cy="28" r="28"/><path d="M28,28 L28,0 A28,28 0 0,1 56,28 Z"/><line x1="28" y1="28" x2="28" y2="0"/>
+              </g>
+              <g transform="translate(580,440)" fill="none" stroke="#6366f1" strokeWidth="1.4">
+                <rect x="0" y="24" width="12" height="22" rx="2"/><rect x="18" y="12" width="12" height="34" rx="2"/><rect x="36" y="4" width="12" height="42" rx="2"/>
+              </g>
+              <g transform="translate(190,340)" fill="none" stroke="#6366f1" strokeWidth="1.4">
+                <circle cx="22" cy="10" r="10"/><path d="M0,46 C0,30 44,30 44,46"/>
+              </g>
+              <g transform="translate(320,185)" fill="none" stroke="#6366f1" strokeWidth="1.4">
+                <polyline points="0,8 16,0 32,8 32,26 16,34 0,26 0,8"/><polyline points="0,8 16,16 32,8"/><line x1="16" y1="16" x2="16" y2="34"/>
+              </g>
+              <circle cx="130" cy="140" r="2" fill="#6366f1"/><circle cx="148" cy="140" r="2" fill="#6366f1"/><circle cx="166" cy="140" r="2" fill="#6366f1"/><circle cx="184" cy="140" r="2" fill="#6366f1"/><circle cx="202" cy="140" r="2" fill="#6366f1"/>
+              <circle cx="130" cy="158" r="2" fill="#6366f1"/><circle cx="148" cy="158" r="2" fill="#6366f1"/><circle cx="166" cy="158" r="2" fill="#6366f1"/><circle cx="184" cy="158" r="2" fill="#6366f1"/><circle cx="202" cy="158" r="2" fill="#6366f1"/>
+              <circle cx="130" cy="176" r="2" fill="#6366f1"/><circle cx="148" cy="176" r="2" fill="#6366f1"/><circle cx="166" cy="176" r="2" fill="#6366f1"/><circle cx="184" cy="176" r="2" fill="#6366f1"/><circle cx="202" cy="176" r="2" fill="#6366f1"/>
+              <circle cx="130" cy="194" r="2" fill="#6366f1"/><circle cx="148" cy="194" r="2" fill="#6366f1"/><circle cx="166" cy="194" r="2" fill="#6366f1"/><circle cx="184" cy="194" r="2" fill="#6366f1"/><circle cx="202" cy="194" r="2" fill="#6366f1"/>
+              <circle cx="130" cy="212" r="2" fill="#6366f1"/><circle cx="148" cy="212" r="2" fill="#6366f1"/><circle cx="166" cy="212" r="2" fill="#6366f1"/><circle cx="184" cy="212" r="2" fill="#6366f1"/><circle cx="202" cy="212" r="2" fill="#6366f1"/>
+            </svg>
+            <span className="absolute left-[38%] top-[22%] h-3 w-3 rounded-full bg-orange-400/60" />
+            <span className="absolute left-[62%] top-[55%] h-2.5 w-2.5 rounded-full bg-teal-400/50" />
+            <span className="absolute left-[20%] top-[68%] h-2 w-2 rounded-full bg-violet-400/50" />
+            <span className="absolute left-[75%] top-[30%] h-2 w-2 rounded-full bg-sky-400/50" />
+          </div>
+          <div className="flex shrink-0 items-center gap-3 border-b border-slate-100 bg-white/80 px-5 py-3.5 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/80">
+            <Avatar label={chatAdminInitials} color="bg-indigo-600" src={chatAdminAvatarUrl} alt={chatAdminName} online={activeStatus !== 'resolved'} size="md" />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[14px] font-bold text-slate-900 dark:text-white">{chatAdminName}</p>
-              <p className={`text-[11px] font-medium ${activeStatus === 'resolved' ? 'text-slate-400' : 'text-emerald-500'}`}>
+              <p className="truncate text-[15px] font-black uppercase tracking-wide text-slate-900 dark:text-white">{chatAdminName}</p>
+              <p className={`text-[11px] font-semibold ${activeStatus === 'resolved' ? 'text-slate-400' : 'text-emerald-500'}`}>
                 {activeSubtitle}
               </p>
             </div>
-            <button className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 dark:hover:bg-slate-800">
-              <MoreVertical className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-0.5">
+              <button className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 dark:hover:bg-slate-800">
+                <Search className="h-4 w-4" />
+              </button>
+              <div className="mx-1 h-5 w-px bg-slate-200 dark:bg-slate-700" />
+              <button className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 dark:hover:bg-slate-800">
+                <MoreVertical className="h-4 w-4" />
+              </button>
+            </div>
           </div>
 
           {/* Messages area */}
-          <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-5 py-5 scrollbar-none [&::-webkit-scrollbar]:hidden">
+          <div
+            ref={messagesContainerRef}
+            className="relative flex-1 overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden"
+          >
+            <div className="px-5 py-5">
           {isLoading ? (
             <div className="flex h-full items-center justify-center">
               <div className="flex flex-col items-center gap-3 text-center">
@@ -546,29 +704,120 @@ export default function SupplierChatPage() {
                 <div className="my-6 flex items-center gap-3">
                   <div className="flex-1 border-t border-slate-200 dark:border-slate-700" />
                   <span className="shrink-0 text-[11px] font-medium text-slate-400 dark:text-slate-500">
-                    {group.dateLabel}
+                    {group.displayLabel}
                   </span>
                   <div className="flex-1 border-t border-slate-200 dark:border-slate-700" />
                 </div>
 
                 {/* Messages in this day group */}
                 <div className="space-y-3">
-                    {group.messages.map((message) => {
-                      const mine = message.sender_type === 'supplier'
+                  {buildRenderItems(group.messages).map((item) => {
+                    /* ── Image grid cluster ── */
+                    if (item.kind === 'imageGroup') {
+                      const mine = item.messages[0].sender_type === 'supplier'
                       const senderAvatarUrl = mine ? null : chatAdminAvatarUrl
                       const senderAvatarLabel = mine ? getInitials('Supplier') : chatAdminInitials
+                      const imgs = item.messages
+                      const lastMsg = imgs[imgs.length - 1]
+                      {/* Stacked card deck */}
+                      const stackVisible = imgs.slice(0, Math.min(imgs.length, 3))
+                      const cardTransforms = [
+                        'rotate(-11deg) translate(-14px, 10px)',
+                        'rotate(7deg) translate(10px, -6px)',
+                        'rotate(-2deg) translate(2px, 2px)',
+                      ]
                       return (
-                        <div key={message.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+                        <div key={item.messages[0].id} className={`flex items-end gap-2 ${mine ? 'justify-end' : 'justify-start'}`}>
                           {!mine && (
-                            <Avatar
-                              label={senderAvatarLabel}
-                              color="bg-slate-500"
-                              src={senderAvatarUrl}
-                              alt={chatAdminName}
-                              size="sm"
-                            />
+                            <Avatar label={senderAvatarLabel} color="bg-slate-500" src={senderAvatarUrl} alt={chatAdminName} size="sm" />
                           )}
-                        <div className={`max-w-[72%] ${mine ? 'ml-0' : 'ml-2'}`}>
+                          <div>
+                            {/* Card stack — extra bottom padding clears rotated card overflow */}
+                            <div className="relative" style={{ width: 190, height: 220, marginBottom: 28 }}>
+                              {stackVisible.map((msg, idx) => {
+                                const isTop = idx === stackVisible.length - 1
+                                return (
+                                  <button
+                                    key={msg.id}
+                                    type="button"
+                                    onClick={isTop ? () => openImageGroupModal(imgs.map((m) => m.attachment_url ?? '').filter(Boolean)) : undefined}
+                                    style={{
+                                      position: 'absolute',
+                                      inset: 0,
+                                      zIndex: idx + 1,
+                                      transform: cardTransforms[stackVisible.length === 2 ? idx + 1 : idx] ?? cardTransforms[2],
+                                      cursor: isTop ? 'pointer' : 'default',
+                                    }}
+                                    className="overflow-hidden rounded-2xl shadow-lg"
+                                  >
+                                    <img src={msg.attachment_url ?? ''} alt="" className="h-full w-full object-cover" />
+                                    {isTop && imgs.length > 1 && (
+                                      <div className="absolute bottom-2 right-2 flex h-6 min-w-[24px] items-center justify-center rounded-full bg-black/60 px-1.5 text-[11px] font-bold text-white">
+                                        {imgs.length}
+                                      </div>
+                                    )}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                            <div className={`flex items-center gap-1 ${mine ? 'justify-end' : 'justify-start'}`}>
+                              <span className="text-[10px] text-slate-400">{formatClock(lastMsg.created_at)}</span>
+                              {mine && <CheckCheck className={`h-3 w-3 ${lastMsg.is_read ? 'text-indigo-500' : 'text-slate-400'}`} />}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    }
+
+                    /* ── Single message ── */
+                    const { message } = item
+                    const mine = message.sender_type === 'supplier'
+                    const senderAvatarUrl = mine ? null : chatAdminAvatarUrl
+                    const senderAvatarLabel = mine ? getInitials('Supplier') : chatAdminInitials
+                    const replySource = localReplyMap[message.id]
+                    const isHovered = hoveredMsgId === message.id
+                    const myReaction = message.reactions?.['supplier'] ?? null
+                    const reactionCounts = Object.values(message.reactions ?? {}).reduce(
+                      (acc, e) => { acc[e] = (acc[e] ?? 0) + 1; return acc },
+                      {} as Record<string, number>,
+                    )
+                    const activeReactions = Object.entries(reactionCounts)
+                    return (
+                      <div
+                        key={message.id}
+                        className={`relative flex items-end gap-2 ${mine ? 'justify-end' : 'justify-start'} ${activeReactions.length > 0 ? 'mb-4' : ''}`}
+                      >
+                        {!mine && (
+                          <Avatar label={senderAvatarLabel} color="bg-slate-500" src={senderAvatarUrl} alt={chatAdminName} size="sm" />
+                        )}
+                        <div
+                          className={`relative max-w-[72%] ${mine ? '' : 'ml-0'}`}
+                          onMouseEnter={() => enterMsg(message.id)}
+                          onMouseLeave={leaveMsg}
+                        >
+                          {/* Hover action bar */}
+                          <div
+                            onMouseEnter={() => enterMsg(message.id)}
+                            className={`absolute -top-10 ${mine ? 'right-0' : 'left-0'} z-20 flex items-center gap-1 rounded-full border border-slate-100 bg-white px-3 py-1.5 shadow-xl transition-all duration-150 whitespace-nowrap ${isHovered ? 'opacity-100 pointer-events-auto scale-100' : 'opacity-0 pointer-events-none scale-95'}`}>
+                            {QUICK_EMOJIS.map((emoji) => (
+                              <button key={emoji} type="button" onClick={() => toggleReaction(message, emoji)}
+                                className={`text-2xl leading-none transition-all duration-150 hover:scale-150 hover:-translate-y-1 active:scale-90 ${myReaction === emoji ? 'opacity-100 scale-110' : 'opacity-70 hover:opacity-100'}`}>
+                                {emoji}
+                              </button>
+                            ))}
+                            <span className="mx-1 h-4 w-px bg-slate-200" />
+                            <button type="button" onClick={() => setReplyTo(message)}
+                              className="flex items-center justify-center text-slate-400 transition-colors hover:text-indigo-600">
+                              <Reply className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                          {/* Reply quote */}
+                          {replySource && (
+                            <div className={`mb-1 max-w-full rounded-t-xl border-l-4 px-3 py-1.5 text-xs ${mine ? 'border-indigo-300 bg-indigo-100/60 text-indigo-800' : 'border-slate-300 bg-slate-100 text-slate-600'}`}>
+                              <p className="font-semibold mb-0.5">{replySource.sender_type === 'supplier' ? 'You' : chatAdminName}</p>
+                              <p className="truncate">{replySource.message || '[attachment]'}</p>
+                            </div>
+                          )}
                           {/* Attachment */}
                           {message.attachment_url && (
                             <div className="mb-1 overflow-hidden rounded-2xl">
@@ -631,16 +880,31 @@ export default function SupplierChatPage() {
                           {/* Text / Link preview */}
                           {message.message && (() => {
                             const urlMatch = message.message.match(/^https?:\/\/\S+$/)
+                            const reactionBadge = activeReactions.length > 0 && (
+                              <div className={`absolute -bottom-3 ${mine ? 'left-1' : '-right-2'} flex items-center`}>
+                                {activeReactions.map(([emoji, count]) => (
+                                  <button key={emoji} type="button" onClick={() => toggleReaction(message, emoji)}
+                                    className="flex items-center text-base leading-none transition hover:scale-110 active:scale-95">
+                                    <span>{emoji}</span>
+                                    {count > 1 && <span className="text-[10px] font-bold text-slate-500">{count}</span>}
+                                  </button>
+                                ))}
+                              </div>
+                            )
                             if (urlMatch) {
                               return (
-                                <div className="max-w-70">
+                                <div className={`relative max-w-70 ${activeReactions.length > 0 ? 'mb-4' : ''}`}>
                                   <LinkPreview url={urlMatch[0]} mine={mine} />
+                                  {reactionBadge}
                                 </div>
                               )
                             }
                             return (
-                              <div className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${mine ? 'rounded-br-md bg-indigo-600 text-white' : 'rounded-bl-md bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100'}`}>
-                                {message.message}
+                              <div className={`relative ${activeReactions.length > 0 ? 'mb-4' : ''}`}>
+                                <div className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${mine ? 'rounded-br-md bg-indigo-600 text-white' : 'rounded-bl-md bg-white text-slate-800 border border-slate-200 shadow-sm'}`}>
+                                  {message.message}
+                                </div>
+                                {reactionBadge}
                               </div>
                             )
                           })()}
@@ -656,302 +920,262 @@ export default function SupplierChatPage() {
               </div>
             ))
           )}
+          </div>{/* end relative px-5 py-5 */}
           </div>
 
           {/* Input — always visible */}
-          <div className="shrink-0 border-t border-slate-100 px-4 py-3 dark:border-slate-800">
+          <div className="shrink-0 border-t border-slate-100 bg-white/80 px-4 py-3 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/80">
             {error && <p className="mb-2 text-xs font-medium text-rose-500 dark:text-rose-400">{error}</p>}
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-800">
-              {/* Attachment previews */}
-              {pendingAttachments.length > 0 && (
-                <div className="mb-2 flex flex-wrap gap-2">
-                  {pendingAttachments.map((attachment) => (
-                    <div key={attachment.id} className="relative shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => removeAttachment(attachment.id)}
-                        className="absolute -right-2 -top-2 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-white text-slate-500 shadow hover:text-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                      {attachment.kind === 'image' && attachment.previewUrl ? (
-                        <div className="h-20 w-20 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-sm dark:border-slate-700">
-                          <img src={attachment.previewUrl} alt="" className="h-full w-full object-cover" />
-                        </div>
-                      ) : attachment.kind === 'video' && attachment.previewUrl ? (
-                        <div className="relative h-20 w-20 overflow-hidden rounded-xl border border-slate-200 bg-slate-900 shadow-sm dark:border-slate-700">
-                          <video
-                            src={attachment.previewUrl}
-                            className="h-full w-full object-cover"
-                            muted
-                            playsInline
-                            preload="metadata"
-                            onLoadedMetadata={(e) => {
-                              const v = e.target as HTMLVideoElement
-                              v.currentTime = 0.1
-                            }}
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-black/60">
-                              <Play className="h-3.5 w-3.5 fill-white text-white" />
-                            </div>
+
+            {/* Attachment previews */}
+            {pendingAttachments.length > 0 && (
+              <div className="mb-2 flex flex-wrap gap-2">
+                {pendingAttachments.map((attachment) => (
+                  <div key={attachment.id} className="relative shrink-0">
+                    <button type="button" onClick={() => removeAttachment(attachment.id)}
+                      className="absolute -right-2 -top-2 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-white text-slate-500 shadow hover:text-slate-700 dark:bg-slate-800">
+                      <X className="h-3 w-3" />
+                    </button>
+                    {attachment.kind === 'image' && attachment.previewUrl ? (
+                      <div className="h-20 w-20 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-sm">
+                        <img src={attachment.previewUrl} alt="" className="h-full w-full object-cover" />
+                      </div>
+                    ) : attachment.kind === 'video' && attachment.previewUrl ? (
+                      <div className="relative h-20 w-20 overflow-hidden rounded-xl border border-slate-200 bg-slate-900 shadow-sm">
+                        <video src={attachment.previewUrl} className="h-full w-full object-cover" muted playsInline preload="metadata"
+                          onLoadedMetadata={(e) => { const v = e.target as HTMLVideoElement; v.currentTime = 0.1 }} />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-black/60">
+                            <Play className="h-3.5 w-3.5 fill-white text-white" />
                           </div>
                         </div>
-                      ) : (() => {
-                        const badge = getFileBadge(attachment.file)
-                        return badge ? (
-                          <div className={`flex h-20 w-20 flex-col items-center justify-center rounded-xl border shadow-sm ${badge.colors}`}>
-                            <span className="text-3xl font-black leading-none">{badge.letter}</span>
-                            <span className="mt-0.5 text-[9px] font-bold uppercase tracking-widest opacity-70">{badge.sub}</span>
-                          </div>
-                        ) : (
-                          <div className="flex h-20 w-20 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-                            <FileText className="h-6 w-6 text-slate-400" />
-                          </div>
-                        )
-                      })()}
-                    </div>
-                  ))}
-                </div>
-              )}
+                      </div>
+                    ) : (() => {
+                      const badge = getFileBadge(attachment.file)
+                      return badge ? (
+                        <div className={`flex h-20 w-20 flex-col items-center justify-center rounded-xl border shadow-sm ${badge.colors}`}>
+                          <span className="text-3xl font-black leading-none">{badge.letter}</span>
+                          <span className="mt-0.5 text-[9px] font-bold uppercase tracking-widest opacity-70">{badge.sub}</span>
+                        </div>
+                      ) : (
+                        <div className="flex h-20 w-20 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 shadow-sm">
+                          <FileText className="h-6 w-6 text-slate-400" />
+                        </div>
+                      )
+                    })()}
+                  </div>
+                ))}
+              </div>
+            )}
 
-              {/* Textarea */}
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(event) => setInput(event.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Type a message…"
-                disabled={isLoading}
-                rows={1}
-                className="w-full resize-none bg-transparent py-1 text-sm text-slate-800 outline-none placeholder:text-slate-400 disabled:cursor-not-allowed dark:text-slate-100"
-                style={{ maxHeight: '120px' }}
-              />
-
-              {/* Action row */}
-              <div className="mt-1.5 flex items-center gap-1">
-                <input
-                  ref={attachmentInputRef}
-                  type="file"
-                  multiple
-                  onChange={handleAttachmentSelect}
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  onClick={() => attachmentInputRef.current?.click()}
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200"
-                >
-                  <Paperclip className="h-4 w-4" />
-                </button>
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setShowEmojiPicker((v) => !v)}
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200"
-                  >
-                    <Smile className="h-4 w-4" />
-                  </button>
-                  {showEmojiPicker && (
-                    <EmojiPicker
-                      onSelect={(emoji) => setInput((prev) => prev + emoji)}
-                      onClose={() => setShowEmojiPicker(false)}
-                    />
-                  )}
+            {/* Reply preview */}
+            {replyTo && (
+              <div className="mb-2 flex items-start gap-2 rounded-xl border-l-4 border-indigo-500 bg-indigo-50 px-3 py-2 dark:bg-indigo-900/20">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
+                    Replying to {replyTo.sender_type === 'supplier' ? 'yourself' : chatAdminName}
+                  </p>
+                  <p className="mt-0.5 truncate text-xs text-slate-600 dark:text-slate-400">
+                    {replyTo.message || '[attachment]'}
+                  </p>
                 </div>
-                <div className="flex-1" />
-                <button
-                  onClick={() => void handleSendMessage()}
-                  disabled={(!input.trim() && pendingAttachments.length === 0) || isSending || isLoading}
-                  className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <Send className="h-3.5 w-3.5" />
-                  Send
+                <button type="button" onClick={() => setReplyTo(null)}
+                  className="shrink-0 text-slate-400 hover:text-slate-600">
+                  <X className="h-3.5 w-3.5" />
                 </button>
               </div>
+            )}
+            {/* Textarea */}
+            <textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(event) => setInput(event.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Type a message..."
+              disabled={isLoading}
+              rows={1}
+              className="w-full resize-none bg-transparent py-1 text-sm text-slate-800 outline-none placeholder:text-slate-400 disabled:cursor-not-allowed dark:text-slate-100"
+              style={{ maxHeight: '120px' }}
+            />
+
+            {/* Action row */}
+            <div className="mt-2 flex items-center gap-1">
+              <input ref={attachmentInputRef} type="file" multiple onChange={handleAttachmentSelect} className="hidden" />
+              <button type="button" onClick={() => attachmentInputRef.current?.click()}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800">
+                <Paperclip className="h-4 w-4" />
+              </button>
+              <div className="relative">
+                <button type="button" onClick={() => setShowEmojiPicker((v) => !v)}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800">
+                  <Smile className="h-4 w-4" />
+                </button>
+                {showEmojiPicker && (
+                  <EmojiPicker onSelect={(emoji) => setInput((prev) => prev + emoji)} onClose={() => setShowEmojiPicker(false)} />
+                )}
+              </div>
+              <div className="flex-1" />
+              <button
+                onClick={() => void handleSendMessage()}
+                disabled={(!input.trim() && pendingAttachments.length === 0) || isSending || isLoading}
+                className="flex items-center gap-2 rounded-2xl bg-linear-to-r from-indigo-500 to-violet-500 px-5 py-2 text-sm font-bold text-white shadow-md shadow-indigo-200/60 transition hover:from-indigo-600 hover:to-violet-600 disabled:cursor-not-allowed disabled:opacity-40 dark:shadow-indigo-900/30"
+              >
+                <Send className="h-3.5 w-3.5" />
+                Send
+              </button>
             </div>
           </div>
         </div>
 
-        <aside className="hidden w-115 shrink-0 border-l border-slate-100 bg-slate-50/70 px-4 py-4 dark:border-slate-800 dark:bg-slate-900/60 xl:flex xl:flex-col">
-          <div className="flex h-full flex-col rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <aside className="hidden w-72 shrink-0 border-l border-slate-100 bg-white dark:border-slate-800 dark:bg-slate-900 xl:flex xl:flex-col">
+          <div className="flex h-full flex-col overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden">
 
-            {/* Admin info */}
-            <div className="flex shrink-0 flex-col items-center justify-center border-b border-slate-100 pb-4 text-center dark:border-slate-800">
-              <div className="h-20 w-20 overflow-hidden rounded-full">
-                {chatAdminAvatarUrl ? (
-                  <img
-                    src={chatAdminAvatarUrl}
-                    alt={chatAdminName}
-                    className="h-full w-full object-cover"
-                    referrerPolicy="no-referrer"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-indigo-600 text-2xl font-bold text-white">
-                    {chatAdminInitials}
+            {/* Profile banner */}
+            <div className="relative shrink-0">
+              <div className="h-24 w-full rounded-none bg-linear-to-br from-indigo-100 via-violet-100 to-purple-100 dark:from-indigo-900/40 dark:via-violet-900/30 dark:to-purple-900/20" />
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2">
+                <div className="relative">
+                  <div className="h-20 w-20 overflow-hidden rounded-full border-4 border-white shadow-md dark:border-slate-900">
+                    {chatAdminAvatarUrl ? (
+                      <img src={chatAdminAvatarUrl} alt={chatAdminName} className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-indigo-600 text-2xl font-bold text-white">
+                        {chatAdminInitials}
+                      </div>
+                    )}
                   </div>
-                )}
+                  {activeStatus !== 'resolved' && (
+                    <span className="absolute bottom-1 right-1 h-4 w-4 rounded-full border-2 border-white bg-emerald-500 dark:border-slate-900" />
+                  )}
+                </div>
               </div>
-              <p className="mt-3 truncate text-[22px] font-bold leading-tight text-slate-900 dark:text-white">
-                {chatAdminName}
-              </p>
-              <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Admin</p>
-              {chatAdminEmail ? (
-                <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">{chatAdminEmail}</p>
-              ) : null}
             </div>
 
-            {/* Search box */}
-            <div className="mt-4 shrink-0 rounded-2xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/50">
-              <label className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
-                <Search className="h-3.5 w-3.5" />
-                Search conversation
-              </label>
+            {/* Admin name + role + email */}
+            <div className="mt-14 px-4 pb-4 text-center">
+              <p className="truncate text-xl font-black uppercase tracking-wide text-slate-900 dark:text-white">{chatAdminName}</p>
+              <p className="mt-0.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400">Admin</p>
+              {chatAdminEmail && <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">{chatAdminEmail}</p>}
+            </div>
+
+            <div className="mx-4 h-px bg-slate-100 dark:bg-slate-800" />
+
+            {/* Search */}
+            <div className="px-4 pt-4">
+              <p className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+                <Search className="h-3.5 w-3.5" /> Search conversation
+              </p>
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
                   value={messageSearch}
-                  onChange={(event) => setMessageSearch(event.target.value)}
+                  onChange={(e) => setMessageSearch(e.target.value)}
                   placeholder="Search messages..."
-                  className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-8 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                  className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-8 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 />
                 {messageSearch && (
-                  <button
-                    type="button"
-                    onClick={() => setMessageSearch('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  >
+                  <button type="button" onClick={() => setMessageSearch('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                     <X className="h-3.5 w-3.5" />
                   </button>
                 )}
               </div>
             </div>
 
-            {/* Media / Files / Links expandable panels */}
+            {/* Media / Files / Links */}
             {(() => {
               const mediaItems = activeMessages.filter((m) => m.attachment_type === 'image' || m.attachment_type === 'video')
-              const fileItems = activeMessages.filter((m) => m.attachment_type === 'file')
-              const linkItems = activeMessages.filter((m) => /https?:\/\/\S+/i.test(m.message))
-
+              const fileItems  = activeMessages.filter((m) => m.attachment_type === 'file')
+              const linkItems  = activeMessages.filter((m) => /https?:\/\/\S+/i.test(m.message))
               const panels = [
-                { key: 'media' as const, label: 'Media', icon: <ImageIcon className="h-3.5 w-3.5" />, count: mediaItems.length },
-                { key: 'files' as const, label: 'Files',  icon: <FileText  className="h-3.5 w-3.5" />, count: fileItems.length  },
-                { key: 'links' as const, label: 'Links',  icon: <Link2     className="h-3.5 w-3.5" />, count: linkItems.length  },
+                { key: 'media' as const, label: 'Media', icon: <ImageIcon className="h-4 w-4 text-indigo-500" />, count: mediaItems.length },
+                { key: 'files' as const, label: 'Files',  icon: <FileText  className="h-4 w-4 text-indigo-500" />, count: fileItems.length  },
+                { key: 'links' as const, label: 'Links',  icon: <Link2     className="h-4 w-4 text-indigo-500" />, count: linkItems.length  },
               ]
-
               return (
-                <div className="mt-4 space-y-2">
-                  {/* Tab row */}
+                <div className="mt-4 space-y-2 px-4 pb-4">
+                  {/* Summary row — always visible */}
                   <div className="grid grid-cols-3 gap-2">
-                    {panels.map(({ key, label, icon, count }) => {
-                      const active = openPanel === key
-                      return (
-                        <button
-                          key={key}
-                          type="button"
-                          onClick={() => setOpenPanel(active ? null : key)}
-                          className={`flex flex-col rounded-xl border px-3 py-2 text-left shadow-sm transition ${
-                            active
-                              ? 'border-indigo-300 bg-indigo-50 dark:border-indigo-700 dark:bg-indigo-950/40'
-                              : 'border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800'
-                          }`}
-                        >
-                          <p className={`flex items-center gap-1 text-[13px] font-semibold ${active ? 'text-indigo-600 dark:text-indigo-300' : 'text-slate-900 dark:text-white'}`}>
-                            {icon}{label}
-                          </p>
-                          <div className="mt-0.5 flex items-center justify-between">
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400">{count} items</p>
-                            <ChevronDown className={`h-3 w-3 text-slate-400 transition-transform duration-200 ${active ? 'rotate-180' : ''}`} />
+                    {panels.map(({ key, label, icon, count }) => (
+                      <button key={key} type="button" onClick={() => setOpenPanel(openPanel === key ? null : key)}
+                        className={`flex items-center justify-between rounded-xl border px-2 py-2 shadow-sm transition ${
+                          openPanel === key
+                            ? 'border-indigo-200 bg-indigo-50 dark:border-indigo-800 dark:bg-indigo-900/30'
+                            : 'border-slate-100 bg-white hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-800/50'
+                        }`}>
+                        <div className="flex min-w-0 flex-col items-start gap-0.5">
+                          <div className="flex items-center gap-1">
+                            {icon}
+                            <span className="whitespace-nowrap text-[11px] font-semibold text-slate-800 dark:text-slate-100">{label}</span>
                           </div>
-                        </button>
-                      )
-                    })}
+                          <span className="whitespace-nowrap text-[10px] text-slate-400 dark:text-slate-500">{count} {count === 1 ? 'item' : 'items'}</span>
+                        </div>
+                        <ChevronRight className={`h-3 w-3 shrink-0 text-slate-300 transition-transform duration-200 ${openPanel === key ? 'rotate-90' : ''}`} />
+                      </button>
+                    ))}
                   </div>
 
-                  {/* Slide-open panel */}
-                  <div className={`overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800 transition-all duration-300 ${openPanel ? 'max-h-72 opacity-100' : 'max-h-0 opacity-0 border-transparent'}`}>
-                    <div className="max-h-72 overflow-y-auto p-3 scrollbar-none [&::-webkit-scrollbar]:hidden">
-
-                      {/* Media panel */}
+                  {/* Expand panel */}
+                  <div className={`overflow-hidden rounded-2xl border transition-all duration-300 ${openPanel ? 'max-h-64 border-slate-100 opacity-100 dark:border-slate-800' : 'max-h-0 border-transparent opacity-0'}`}>
+                    <div className="max-h-64 overflow-y-auto p-3 scrollbar-none [&::-webkit-scrollbar]:hidden">
                       {openPanel === 'media' && (
-                        mediaItems.length === 0 ? (
-                          <p className="py-4 text-center text-xs text-slate-400">No media shared yet.</p>
-                        ) : (
-                          <div className="grid grid-cols-3 gap-1.5">
-                            {mediaItems.map((m) => {
-                              const type = m.attachment_type === 'video' ? 'video' : 'image'
-                              return (
-                                <button
-                                  key={m.id}
-                                  type="button"
-                                  onClick={() => openMediaModal({ url: m.attachment_url ?? '', type, name: m.attachment_name ?? undefined })}
-                                  className="group relative aspect-square overflow-hidden rounded-xl bg-slate-100 text-left dark:bg-slate-800"
-                                >
-                                  {type === 'image' ? (
-                                    <img src={m.attachment_url ?? ''} alt={m.attachment_name ?? ''} className="h-full w-full object-cover transition group-hover:scale-105" />
-                                  ) : (
-                                    <>
-                                      <video src={m.attachment_url ?? ''} className="h-full w-full object-cover" muted preload="metadata" />
-                                      <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                                        <Play className="h-5 w-5 fill-white text-white drop-shadow" />
-                                      </div>
-                                    </>
-                                  )}
-                                </button>
-                              )
-                            })}
-                          </div>
-                        )
+                        mediaItems.length === 0
+                          ? <p className="py-4 text-center text-xs text-slate-400">No media shared yet.</p>
+                          : <div className="grid grid-cols-3 gap-1.5">
+                              {(() => {
+                                const imgUrls = mediaItems.filter((m) => m.attachment_type === 'image').map((m) => m.attachment_url ?? '').filter(Boolean)
+                                return mediaItems.map((m) => {
+                                  const url = m.attachment_url ?? ''
+                                  const type = m.attachment_type === 'video' ? 'video' : 'image'
+                                  return (
+                                    <button key={m.id} type="button"
+                                      onClick={() => type === 'image' ? openImageGroupModal(imgUrls, imgUrls.indexOf(url)) : openMediaModal({ url, type, name: m.attachment_name ?? undefined })}
+                                      className="group relative aspect-square overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800">
+                                      {type === 'image'
+                                        ? <img src={url} alt="" className="h-full w-full object-cover transition group-hover:scale-105" />
+                                        : <><video src={url} className="h-full w-full object-cover" muted preload="metadata" /><div className="absolute inset-0 flex items-center justify-center bg-black/30"><Play className="h-5 w-5 fill-white text-white" /></div></>}
+                                    </button>
+                                  )
+                                })
+                              })()}
+                            </div>
                       )}
-
-                      {/* Files panel */}
                       {openPanel === 'files' && (
-                        fileItems.length === 0 ? (
-                          <p className="py-4 text-center text-xs text-slate-400">No files shared yet.</p>
-                        ) : (
-                          <div className="space-y-1.5">
-                            {fileItems.map((m) => (
-                              <button key={m.id} type="button"
-                                onClick={() => void forceDownload(m.attachment_url ?? '', m.attachment_name ?? 'file')}
-                                className="flex w-full items-center gap-2.5 rounded-xl border border-slate-100 bg-white px-3 py-2.5 text-sm transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800">
-                                <FileText className="h-4 w-4 shrink-0 text-indigo-500" />
-                                <span className="min-w-0 flex-1 truncate text-left text-[12px] font-medium text-slate-700 dark:text-slate-200">
-                                  {m.attachment_name ?? 'File'}
-                                </span>
-                                <ExternalLink className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                              </button>
-                            ))}
-                          </div>
-                        )
-                      )}
-
-                      {/* Links panel */}
-                      {openPanel === 'links' && (
-                        linkItems.length === 0 ? (
-                          <p className="py-4 text-center text-xs text-slate-400">No links shared yet.</p>
-                        ) : (
-                          <div className="space-y-1.5">
-                            {linkItems.map((m) => {
-                              const url = (m.message.match(/https?:\/\/\S+/i) ?? [])[0] ?? ''
-                              let host = ''
-                              try { host = new URL(url).hostname } catch { host = url }
-                              return (
-                                <a key={m.id} href={url} target="_blank" rel="noreferrer"
-                                  className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-white px-3 py-2.5 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800">
-                                  <Link2 className="h-4 w-4 shrink-0 text-indigo-500" />
-                                  <div className="min-w-0 flex-1">
-                                    <p className="truncate text-[12px] font-medium text-slate-700 dark:text-slate-200">{host}</p>
-                                    <p className="truncate text-[10px] text-slate-400">{url}</p>
-                                  </div>
+                        fileItems.length === 0
+                          ? <p className="py-4 text-center text-xs text-slate-400">No files shared yet.</p>
+                          : <div className="space-y-1.5">
+                              {fileItems.map((m) => (
+                                <button key={m.id} type="button" onClick={() => void forceDownload(m.attachment_url ?? '', m.attachment_name ?? 'file')}
+                                  className="flex w-full items-center gap-2 rounded-xl border border-slate-100 bg-white px-3 py-2 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900">
+                                  <FileText className="h-4 w-4 shrink-0 text-indigo-500" />
+                                  <span className="min-w-0 flex-1 truncate text-left text-[11px] font-medium text-slate-700 dark:text-slate-200">{m.attachment_name ?? 'File'}</span>
                                   <ExternalLink className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                                </a>
-                              )
-                            })}
-                          </div>
-                        )
+                                </button>
+                              ))}
+                            </div>
                       )}
-
+                      {openPanel === 'links' && (
+                        linkItems.length === 0
+                          ? <p className="py-4 text-center text-xs text-slate-400">No links shared yet.</p>
+                          : <div className="space-y-1.5">
+                              {linkItems.map((m) => {
+                                const url = (m.message.match(/https?:\/\/\S+/i) ?? [])[0] ?? ''
+                                let host = ''; try { host = new URL(url).hostname } catch { host = url }
+                                return (
+                                  <a key={m.id} href={url} target="_blank" rel="noreferrer"
+                                    className="flex items-center gap-2 rounded-xl border border-slate-100 bg-white px-3 py-2 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900">
+                                    <Link2 className="h-4 w-4 shrink-0 text-indigo-500" />
+                                    <div className="min-w-0 flex-1">
+                                      <p className="truncate text-[11px] font-medium text-slate-700 dark:text-slate-200">{host}</p>
+                                      <p className="truncate text-[10px] text-slate-400">{url}</p>
+                                    </div>
+                                    <ExternalLink className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                                  </a>
+                                )
+                              })}
+                            </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -961,59 +1185,122 @@ export default function SupplierChatPage() {
         </aside>
 
         {/* Media modal */}
-        {mediaModal.open && mediaModal.url && mediaModal.type && (
-          <div
-            className="fixed inset-0 z-1000 flex items-center justify-center bg-black/70 p-4"
-            role="dialog"
-            aria-modal="true"
-            onMouseDown={(e) => { if (e.target === e.currentTarget) closeMediaModal() }}
-          >
-            <div className="relative w-full max-w-3xl rounded-2xl bg-slate-950 shadow-xl">
-              {/* Top bar */}
-              <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-                <p className="truncate text-sm font-medium text-white/80">
-                  {mediaModal.name ?? 'Media'}
-                </p>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => void forceDownload(mediaModal.url ?? '', mediaModal.name ?? 'file')}
-                    className="flex items-center gap-1.5 rounded-xl bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/20"
-                  >
-                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 4v11" />
-                    </svg>
-                    Download
-                  </button>
-                  <button
-                    type="button"
-                    onClick={closeMediaModal}
-                    className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 text-white transition hover:bg-white/20"
-                    aria-label="Close"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
+        <AnimatePresence>
+          {mediaModal.open && mediaModal.url && mediaModal.type && (
+            <motion.div
+              key="media-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              className="fixed inset-0 z-1000 flex items-center justify-center bg-black/80 p-4"
+              role="dialog"
+              aria-modal="true"
+              onMouseDown={(e: React.MouseEvent) => { if (e.target === e.currentTarget) closeMediaModal() }}
+            >
+              <motion.div
+                key="media-panel"
+                initial={{ opacity: 0, scale: 0.94, y: 16 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.94, y: 16 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className="relative w-full max-w-3xl rounded-2xl bg-slate-950 shadow-xl"
+              >
+                {/* Top bar */}
+                <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+                  <p className="truncate text-sm font-medium text-white/80">
+                    {mediaModal.urls
+                      ? `Image ${(mediaModal.activeIndex ?? 0) + 1} of ${mediaModal.urls.length}`
+                      : (mediaModal.name ?? 'Media')}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void forceDownload(mediaModal.url ?? '', mediaModal.name ?? 'image')}
+                      className="flex items-center gap-1.5 rounded-xl bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/20"
+                    >
+                      <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 4v11" />
+                      </svg>
+                      Download
+                    </button>
+                    <button
+                      type="button"
+                      onClick={closeMediaModal}
+                      className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 text-white transition hover:bg-white/20"
+                      aria-label="Close"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex w-full items-center justify-center p-2">
-                {mediaModal.type === 'image' ? (
-                  <img
-                    src={mediaModal.url}
-                    alt={mediaModal.name ?? 'Media'}
-                    className="max-h-[80vh] w-full object-contain"
-                  />
-                ) : (
-                  <video
-                    src={mediaModal.url}
-                    controls
-                    className="max-h-[80vh] w-full object-contain"
-                  />
+                {/* Image / Video */}
+                <div className="relative flex w-full items-center justify-center overflow-hidden p-2">
+                  <AnimatePresence mode="popLayout" custom={mediaSlideDir.current}>
+                    {mediaModal.type === 'image' ? (
+                      <motion.img
+                        key={mediaModal.url}
+                        custom={mediaSlideDir.current}
+                        variants={{
+                          enter: (d: number) => ({ x: d * 80, opacity: 0 }),
+                          center: { x: 0, opacity: 1 },
+                          exit: (d: number) => ({ x: d * -80, opacity: 0 }),
+                        }}
+                        initial="enter"
+                        animate="center"
+                        exit="exit"
+                        transition={{ duration: 0.25, ease: 'easeInOut' }}
+                        src={mediaModal.url}
+                        alt={mediaModal.name ?? 'Media'}
+                        className="max-h-[78vh] w-full object-contain"
+                      />
+                    ) : (
+                      <video key={mediaModal.url} src={mediaModal.url} controls className="max-h-[78vh] w-full object-contain" />
+                    )}
+                  </AnimatePresence>
+
+                  {/* Prev / Next */}
+                  {mediaModal.urls && mediaModal.urls.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setMediaModalIndex((mediaModal.activeIndex ?? 0) - 1)}
+                        disabled={(mediaModal.activeIndex ?? 0) === 0}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-xl text-white transition hover:scale-110 hover:bg-black/70 disabled:opacity-30"
+                        aria-label="Previous"
+                      >‹</button>
+                      <button
+                        type="button"
+                        onClick={() => setMediaModalIndex((mediaModal.activeIndex ?? 0) + 1)}
+                        disabled={(mediaModal.activeIndex ?? 0) === (mediaModal.urls?.length ?? 1) - 1}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-xl text-white transition hover:scale-110 hover:bg-black/70 disabled:opacity-30"
+                        aria-label="Next"
+                      >›</button>
+                    </>
+                  )}
+                </div>
+
+                {/* Dot indicators */}
+                {mediaModal.urls && mediaModal.urls.length > 1 && (
+                  <div className="flex justify-center gap-2 border-t border-white/10 py-3">
+                    {mediaModal.urls.map((_, i) => (
+                      <motion.button
+                        key={i}
+                        type="button"
+                        onClick={() => setMediaModalIndex(i)}
+                        animate={{ width: i === mediaModal.activeIndex ? 24 : 8, backgroundColor: i === mediaModal.activeIndex ? '#6366f1' : '#ffffff40' }}
+                        transition={{ duration: 0.2 }}
+                        className="h-2 rounded-full"
+                        aria-label={`Go to image ${i + 1}`}
+                      />
+                    ))}
+                  </div>
                 )}
-              </div>
-            </div>
-          </div>
-        )}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   )

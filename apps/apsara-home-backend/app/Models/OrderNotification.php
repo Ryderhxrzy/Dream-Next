@@ -162,24 +162,70 @@ class OrderNotification extends Model
             default => 'info',
         };
 
-        // Find parent notifications by checkout_id
-        $parentNotifications = self::query()
+        // Update all rows for this checkout so the visible card and its timeline stay aligned
+        $notifications = self::query()
             ->where('on_checkout_id', $checkoutId)
-            ->where('on_is_parent', true)
+            ->orderByDesc('on_is_parent')
+            ->orderByDesc('on_id')
             ->get();
 
         Log::info('Found parent notifications to update', [
             'checkout_id' => $checkoutId,
-            'count' => $parentNotifications->count(),
+            'count' => $notifications->count(),
         ]);
 
-        if ($parentNotifications->isEmpty()) {
-            Log::warning('No parent notifications found for checkout_id', [
+        if ($notifications->isEmpty()) {
+            Log::warning('No parent notifications found for checkout_id, checking if order exists', [
                 'checkout_id' => $checkoutId,
-                'all_notifications_count' => self::query()->count(),
-                'sample_checkout_ids' => self::query()->limit(3)->pluck('on_checkout_id')->toArray(),
             ]);
-            return;
+
+            // Try to create the notification if the order exists but notification doesn't
+            $order = CheckoutHistory::query()
+                ->where('ch_checkout_id', $checkoutId)
+                ->first();
+
+            if ($order && $order->ch_customer_id) {
+                Log::info('Order exists without notification, creating notification now', [
+                    'checkout_id' => $checkoutId,
+                    'customer_id' => $order->ch_customer_id,
+                    'order_status' => $order->ch_status,
+                ]);
+
+                // Create the missing parent notification
+                $groupId = 'order_' . $checkoutId;
+                $notification = self::createParentNotification(
+                    (int) $order->ch_customer_id,
+                    $checkoutId,
+                    $groupId,
+                    [
+                        'title' => 'Order Placed ✓',
+                        'message' => 'Your order has been created',
+                        'product_name' => $order->ch_product_name,
+                        'product_image' => $order->ch_product_image,
+                        'amount' => $order->ch_amount,
+                        'payment_method' => $order->ch_payment_method,
+                        'href' => 'purchases://pending/' . $checkoutId,
+                    ]
+                );
+
+                Log::info('Notification created successfully', [
+                    'notification_id' => $notification->on_id,
+                    'checkout_id' => $checkoutId,
+                ]);
+
+                // Re-fetch the notification to update it
+                $notifications = self::query()
+                    ->where('on_checkout_id', $checkoutId)
+                    ->orderByDesc('on_is_parent')
+                    ->orderByDesc('on_id')
+                    ->get();
+            } else {
+                Log::warning('No order found for checkout_id either', [
+                    'checkout_id' => $checkoutId,
+                    'all_notifications_count' => self::query()->count(),
+                ]);
+                return;
+            }
         }
 
         // Track customer IDs for broadcasting
@@ -221,14 +267,14 @@ class OrderNotification extends Model
             default => 'status_updated',
         };
 
-        // Update each parent notification
+        // Update each notification row for this checkout
         $statusChanged = false;
 
-        foreach ($parentNotifications as $parentNotification) {
+        foreach ($notifications as $notification) {
             // Check if status actually changed
-            if ($parentNotification->on_status === $status) {
+            if ($notification->on_status === $status) {
                 Log::info('Order notification status unchanged, skipping broadcast', [
-                    'notification_id' => $parentNotification->on_id,
+                    'notification_id' => $notification->on_id,
                     'checkout_id' => $checkoutId,
                     'current_status' => $status,
                 ]);
@@ -237,14 +283,14 @@ class OrderNotification extends Model
 
             $statusChanged = true;
 
-            $href = $parentNotification->on_checkout_id
-                ? $hrefPrefix . '/' . $parentNotification->on_checkout_id
+            $href = $notification->on_checkout_id
+                ? $hrefPrefix . '/' . $notification->on_checkout_id
                 : $hrefPrefix;
 
             // Build dynamic message based on status and notification details
-            $productName = $parentNotification->on_product_name ?? 'your item';
-            $amount = number_format((float) ($parentNotification->on_amount ?? 0), 2);
-            $paymentMethod = ucfirst($parentNotification->on_payment_method ?? 'the payment method');
+            $productName = $notification->on_product_name ?? 'your item';
+            $amount = number_format((float) ($notification->on_amount ?? 0), 2);
+            $paymentMethod = ucfirst($notification->on_payment_method ?? 'the payment method');
 
             $title = "Order: {$statusLabel} {$statusEmoji}";
 
@@ -278,10 +324,10 @@ class OrderNotification extends Model
                 $updateData['on_message'] = is_callable($message) ? $message() : $message;
             }
 
-            $updated = $parentNotification->update($updateData);
+            $updated = $notification->update($updateData);
 
             Log::info('Order notification update result', [
-                'notification_id' => $parentNotification->on_id,
+                'notification_id' => $notification->on_id,
                 'checkout_id' => $checkoutId,
                 'update_success' => $updated,
                 'update_data' => $updateData,
@@ -291,7 +337,7 @@ class OrderNotification extends Model
             // Not from automatic payment confirmation webhook
             // See: createChildNotificationFromAdminUpdate()
 
-            $customerIds[] = (int) $parentNotification->on_customer_id;
+            $customerIds[] = (int) $notification->on_customer_id;
         }
 
         // Only broadcast if status actually changed

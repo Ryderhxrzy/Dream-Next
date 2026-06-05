@@ -177,7 +177,6 @@ Route::middleware('throttle:public')->group(function () {
 // Inbound webhooks: 30 requests/min per IP; POST-only
 Route::middleware('throttle:webhooks')->group(function () {
     Route::post('/payments/webhooks/paymongo', [PaymentController::class, 'handlePaymongoWebhook']);
-    Route::post('/payments/webhooks/test-paid', [PaymentController::class, 'handleTestPaidWebhook']);
     Route::post('/jnt/sandbox/logistics-trackback', [JntWebhookController::class, 'sandboxLogisticsTrackback']);
     Route::post('/jnt/sandbox/order-status', [JntWebhookController::class, 'sandboxOrderStatus']);
     Route::post('/jnt/webhook/logistics-trackback', [JntWebhookController::class, 'productionLogisticsTrackback']);
@@ -204,6 +203,7 @@ Route::middleware('throttle:public')->group(function () {
     Route::get('/settings/general', [AdminSettingsController::class, 'publicGeneral']);
     Route::get('/settings/security', [AdminSettingsController::class, 'publicSecurity']);
     Route::get('/public/community-stats', [MemberController::class, 'communityStats']);
+    Route::get('/public/top-members', [MemberController::class, 'publicTopMembers']);
 });
 
 // Storefront/public web-page endpoints: dedicated higher read limit.
@@ -411,6 +411,10 @@ Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_a
     // Admin: Member Activity Logs
     Route::get('/admin/activity-logs', [MemberActivityLogController::class, 'allLogs']);
     Route::get('/admin/members/{id}/activity-logs', [MemberActivityLogController::class, 'memberLogs']);
+});
+
+Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_admin,admin,merchant_admin,web_content'])->group(function () {
+    Route::get('/admin/partner/webstore-requests', [AdminInquiryController::class, 'partnerWebstoreRequests']);
 });
 
 Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.or_supplier'])->group(function () {
@@ -634,7 +638,9 @@ Route::middleware(['auth:sanctum', 'supplier.actor'])->group(function () {
     Route::post('/supplier/chat/conversations', [SupplierChatController::class, 'store']);
     Route::get('/supplier/chat/conversations/{id}', [SupplierChatController::class, 'show']);
     Route::post('/supplier/chat/conversations/{id}/messages', [SupplierChatController::class, 'sendMessage']);
+    Route::post('/supplier/chat/conversations/{conversationId}/messages/{messageId}/react', [SupplierChatController::class, 'react']);
     Route::patch('/supplier/chat/conversations/{id}/status', [SupplierChatController::class, 'updateStatus']);
+    Route::post('/supplier/presence/heartbeat', [SupplierChatController::class, 'updatePresence']);
     Route::post('/supplier/realtime/pusher/auth', [SupplierOrderController::class, 'pusherAuth']);
     Route::get('/supplier/orders/notifications', [SupplierOrderController::class, 'notifications']);
     Route::get('/supplier/orders', [SupplierOrderController::class, 'index']);
@@ -669,6 +675,7 @@ Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.actor'])->gr
     Route::post('/admin/supplier-chat/conversations', [SupplierChatController::class, 'store']);
     Route::get('/admin/supplier-chat/conversations/{id}', [SupplierChatController::class, 'show']);
     Route::post('/admin/supplier-chat/conversations/{id}/messages', [SupplierChatController::class, 'sendMessage']);
+    Route::post('/admin/supplier-chat/conversations/{conversationId}/messages/{messageId}/react', [SupplierChatController::class, 'react']);
     Route::patch('/admin/supplier-chat/conversations/{id}/status', [SupplierChatController::class, 'updateStatus']);
 });
 

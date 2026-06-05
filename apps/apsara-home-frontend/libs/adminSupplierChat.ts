@@ -21,6 +21,7 @@ export type SupplierChatMessage = {
   attachment_name: string | null
   is_read: boolean
   read_at: string | null
+  reactions: Record<string, string> | null
   created_at: string
   updated_at: string
 }
@@ -39,6 +40,7 @@ export type SupplierChatConversation = {
     name: string
     username: string
     email: string
+    last_seen_at: string | null
   } | null
   assigned_admin: {
     id: number
@@ -209,6 +211,18 @@ export async function uploadAdminChatAttachment(file: File): Promise<AttachmentP
   const attachmentType: 'image' | 'video' | 'file' =
     file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : 'file'
   return { attachment_url: json.url, attachment_type: attachmentType, attachment_name: file.name }
+}
+
+export async function toggleAdminChatReaction(
+  conversationId: number,
+  messageId: number,
+  emoji: string,
+): Promise<SupplierChatMessage> {
+  const response = await adminSupplierChatRequest<{ data: SupplierChatMessage }>(
+    `/api/admin/supplier-chat/conversations/${conversationId}/messages/${messageId}/react`,
+    { method: 'POST', body: JSON.stringify({ emoji }) },
+  )
+  return response.data
 }
 
 export async function createAdminSupplierChatConversation(

@@ -146,7 +146,7 @@ export default function ImportImagePageMain() {
           'unsplash',
         ],
         resourceType: 'image',
-        clientAllowedFormats: ['jpg', 'jpeg', 'png', 'webp', 'gif'],
+        clientAllowedFormats: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic', 'heif', 'bmp', 'tiff', 'tif', 'svg', 'ico', 'avif'],
         maxFileSize: 5_000_000,
         transformation: [
           { width: 1200, height: 1200, crop: 'limit' },

@@ -7,6 +7,7 @@ use App\Mail\Checkout\CheckoutCompletedMail;
 use App\Models\CheckoutHistory;
 use App\Models\Customer;
 use App\Models\OrderNotification;
+use App\Services\FirebaseMessagingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -65,6 +66,7 @@ class MobilePaymentController extends Controller
             'platform' => 'required|in:ios,android',
             'app_version' => 'required|string|max:50',
             'device_id' => 'nullable|string|max:255',
+            'payment_source' => 'nullable|in:app,browser', // 'app' for in-app payment, 'browser' for web browser payment
 
             // Customer info
             'customer' => 'nullable|array',
@@ -525,11 +527,24 @@ class MobilePaymentController extends Controller
     {
         try {
             $paymongoConfig = $this->getPaymongoConfig($validated['payment_mode'] ?? null);
-            
+
             $secretKey = $paymongoConfig['secret_key'];
             if (!$secretKey) {
                 throw new \RuntimeException(sprintf('PayMongo %s secret key is missing.', $paymongoConfig['mode']));
             }
+
+            // Determine redirect URLs based on payment source (app vs browser)
+            $paymentSource = trim((string) ($validated['payment_source'] ?? 'app'));
+            $isAppPayment = $paymentSource === 'app';
+
+            // If from browser, use website URL; if from app, use deep link
+            $frontendUrl = env('FRONTEND_URL', 'https://afhome.ph');
+            $successUrl = $isAppPayment
+                ? config('app.mobile_payment_success_url', 'apsarahome://payment/success')
+                : $frontendUrl . '/checkout/success';
+            $cancelUrl = $isAppPayment
+                ? config('app.mobile_payment_cancel_url', 'apsarahome://payment/cancel')
+                : $frontendUrl . '/checkout/failed';
 
             $payload = [
                 'data' => [
@@ -542,8 +557,8 @@ class MobilePaymentController extends Controller
                             'description' => "Mobile Order: {$mobileOrderId}",
                         ]],
                         'payment_method_types' => $this->mapPaymentMethods($validated['payment_method'], $validated['online_banking_provider'] ?? null),
-                        'success_url' => config('app.mobile_payment_success_url', 'https://yourapp.com/payment/success'),
-                        'cancel_url' => config('app.mobile_payment_cancel_url', 'https://yourapp.com/payment/cancel'),
+                        'success_url' => $successUrl,
+                        'cancel_url' => $cancelUrl,
                         'description' => "Mobile Order: {$mobileOrderId}",
                     ],
                 ],
@@ -1051,17 +1066,16 @@ class MobilePaymentController extends Controller
     private function broadcastOrderNotification(int $customerId, string $checkoutId): void
     {
         try {
-            $key = (string) config('services.pusher.key', '');
-            $secret = (string) config('services.pusher.secret', '');
-            $appId = (string) config('services.pusher.app_id', '');
-            $cluster = (string) config('services.pusher.cluster', 'ap1');
+            $notification = OrderNotification::query()
+                ->where('on_customer_id', $customerId)
+                ->where('on_checkout_id', $checkoutId)
+                ->where('on_is_parent', true)
+                ->first();
 
-            if ($key === '' || $secret === '' || $appId === '') {
-                return;
-            }
-
-            $pusher = new Pusher($key, $secret, $appId, ['cluster' => $cluster, 'useTLS' => true]);
-            $channelName = 'private-customer-' . $customerId;
+            $title = (string) ($notification?->on_title ?? 'Order Placed');
+            $message = (string) ($notification?->on_message ?? 'Your order has been placed and is pending payment.');
+            $image = (string) ($notification?->on_product_image ?? '');
+            $href = (string) ($notification?->on_href ?? ('purchases://pending/' . $checkoutId));
 
             // Get unread count
             $unreadCount = OrderNotification::query()
@@ -1069,10 +1083,40 @@ class MobilePaymentController extends Controller
                 ->where('on_is_read', false)
                 ->count();
 
-            $pusher->trigger($channelName, 'order.notification.created', [
+            try {
+                $fcmService = new FirebaseMessagingService();
+                $fcmPayload = [
+                    'title' => $title,
+                    'body' => $message,
+                    'sound' => 'default',
+                    'badge' => 1,
+                    'mutableContent' => true,
+                    'data' => [
+                        'checkout_id' => $checkoutId,
+                        'type' => 'order_created',
+                        'status' => 'pending',
+                        'href' => $href,
+                        'screen' => 'OrderDetail',
+                    ],
+                ];
+
+                if ($image !== '') {
+                    $fcmPayload['image'] = $image;
+                }
+
+                $fcmService->sendToCustomer($customerId, $fcmPayload);
+            } catch (\Throwable $e) {
+                Log::warning('Failed to send FCM order-created notification.', [
+                    'customer_id' => $customerId,
+                    'checkout_id' => $checkoutId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            Log::info('Sent pending order notification', [
+                'customer_id' => $customerId,
                 'checkout_id' => $checkoutId,
-                'unread_count' => (int) $unreadCount,
-                'created_at' => now()->toDateTimeString(),
+                'unread_count' => $unreadCount,
             ]);
         } catch (\Throwable $e) {
             Log::error('Failed to broadcast order notification', [

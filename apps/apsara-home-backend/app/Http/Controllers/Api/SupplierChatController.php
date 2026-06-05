@@ -231,6 +231,56 @@ class SupplierChatController extends Controller
         ], 201);
     }
 
+    public function react(Request $request, int $conversationId, int $messageId): JsonResponse
+    {
+        $actor = $request->user();
+        $actorInfo = $this->resolveActor($actor);
+
+        if (! $actorInfo) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $conversation = $this->queryForActor($actorInfo)->where('id', $conversationId)->first();
+        if (! $conversation) {
+            return response()->json(['message' => 'Conversation not found.'], 404);
+        }
+
+        $message = $conversation->messages()->where('id', $messageId)->first();
+        if (! $message) {
+            return response()->json(['message' => 'Message not found.'], 404);
+        }
+
+        $validated = $request->validate([
+            'emoji' => 'required|string|max:10',
+        ]);
+
+        $actorType = $actorInfo['actor_type'];
+        $emoji     = $validated['emoji'];
+        $reactions = $message->reactions ?? [];
+
+        if (isset($reactions[$actorType]) && $reactions[$actorType] === $emoji) {
+            unset($reactions[$actorType]);
+        } else {
+            $reactions[$actorType] = $emoji;
+        }
+
+        $message->update(['reactions' => empty($reactions) ? null : $reactions]);
+
+        return response()->json([
+            'data' => $this->formatMessage($message->fresh()),
+        ]);
+    }
+
+    public function updatePresence(Request $request): JsonResponse
+    {
+        $actor = $request->user();
+        if (! ($actor instanceof SupplierUser)) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        $actor->update(['su_last_logindate' => now()]);
+        return response()->json(['ok' => true]);
+    }
+
     public function updateStatus(Request $request, int $id): JsonResponse
     {
         $actor = $request->user();
@@ -425,6 +475,9 @@ class SupplierChatController extends Controller
                 'name' => (string) ($conversation->supplierUser->su_fullname ?: $conversation->supplierUser->su_username ?: 'Supplier'),
                 'username' => (string) ($conversation->supplierUser->su_username ?? ''),
                 'email' => (string) ($conversation->supplierUser->su_email ?? ''),
+                'last_seen_at' => $conversation->supplierUser->su_last_logindate
+                    ? \Carbon\Carbon::parse($conversation->supplierUser->su_last_logindate)->toIso8601String()
+                    : null,
             ] : null,
             'assigned_admin' => $conversation->assignedAdmin ? [
                 'id' => (int) $conversation->assignedAdmin->id,
@@ -475,6 +528,7 @@ class SupplierChatController extends Controller
             'attachment_name'         => $message->attachment_name ? (string) $message->attachment_name : null,
             'is_read'                 => (bool) $message->read_at,
             'read_at'                 => $message->read_at?->toDateTimeString(),
+            'reactions'               => $message->reactions ?? null,
             'created_at'              => $message->created_at->toDateTimeString(),
             'updated_at'              => $message->updated_at->toDateTimeString(),
         ];

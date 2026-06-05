@@ -35,14 +35,22 @@ async function fetchAdminJson<T>(path: string, accessToken: string): Promise<T |
   }
 
   try {
-    const response = await fetch(`${baseUrl}${path}`, {
-      method: 'GET',
-      cache: 'no-store',
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10_000);
+    let response: Response;
+    try {
+      response = await fetch(`${baseUrl}${path}`, {
+        method: 'GET',
+        cache: 'no-store',
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
       return null;
