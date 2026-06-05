@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\CustomerNotification;
 use App\Models\WebPageContent;
 use App\Mail\Webstore\WebstoreReceiptMail;
+use App\Support\PartnerStorefrontAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -16,6 +17,27 @@ use Illuminate\Support\Facades\Mail;
 class AdminInquiryController extends Controller
 {
     public function webstoreRequests(Request $request)
+    {
+        return response()->json([
+            'requests' => $this->buildWebstoreRequestRows(),
+        ]);
+    }
+
+    public function partnerWebstoreRequests(Request $request)
+    {
+        $admin = $request->user();
+        $allowedStorefrontSlugs = $this->resolvePartnerStorefrontSlugs($admin instanceof Admin ? $admin : null);
+
+        if (empty($allowedStorefrontSlugs)) {
+            return response()->json(['requests' => []]);
+        }
+
+        return response()->json([
+            'requests' => $this->buildWebstoreRequestRows($allowedStorefrontSlugs),
+        ]);
+    }
+
+    private function buildWebstoreRequestRows(array $allowedStorefrontSlugs = []): array
     {
         $subject = mb_strtolower($this->webstoreRequestTicketSubject(), 'UTF-8');
         $tickets = DB::table('tbl_tickets')
@@ -65,6 +87,12 @@ class AdminInquiryController extends Controller
                 $activePayload = $payload;
             }
             $slugName = (string) ($payload['slug_name'] ?? '');
+            if (! empty($allowedStorefrontSlugs)) {
+                $normalizedSlug = mb_strtolower(trim($slugName), 'UTF-8');
+                if (! in_array($normalizedSlug, $allowedStorefrontSlugs, true)) {
+                    return null;
+                }
+            }
             $approvedAt = $this->webstoreApprovedAt((int) $ticket->t_id);
             $receiptItems = $this->collectWebstoreReceiptItems((int) $ticket->t_id);
             $subscriptionProgress = $this->calculateWebstoreSubscriptionProgress((int) $ticket->t_id);
@@ -104,7 +132,42 @@ class AdminInquiryController extends Controller
             ];
         })->values();
 
-        return response()->json(['requests' => $rows]);
+        return $rows->filter()->values()->all();
+    }
+
+    private function resolvePartnerStorefrontSlugs(?Admin $admin): array
+    {
+        if (! $admin) {
+            return [];
+        }
+
+        $access = new PartnerStorefrontAccess();
+        $storefrontIds = $access->resolveActiveStorefrontIds($admin);
+        if (empty($storefrontIds)) {
+            return [];
+        }
+
+        $storefronts = WebPageContent::query()
+            ->whereIn('wpc_id', $storefrontIds)
+            ->whereIn('wpc_type', ['partner-storefront', 'partner-storefronts'])
+            ->get();
+
+        $slugs = [];
+        foreach ($storefronts as $storefront) {
+            $keys = [
+                strtolower(trim((string) ($storefront->wpc_key ?? ''))),
+                strtolower(trim((string) data_get($storefront->wpc_payload, 'fields.slug', ''))),
+            ];
+
+            foreach ($keys as $slug) {
+                if ($slug === '') {
+                    continue;
+                }
+                $slugs[] = $slug;
+            }
+        }
+
+        return array_values(array_unique(array_filter($slugs)));
     }
 
     public function usernameChangeRequests(Request $request)

@@ -16,6 +16,7 @@ import {
   MessageSquare,
   MoreVertical,
   Paperclip,
+  Reply,
   Phone,
   Search,
   Send,
@@ -29,6 +30,7 @@ import {
   fetchAdminSupplierChatConversation,
   fetchAdminSupplierChatConversations,
   sendAdminSupplierChatMessage,
+  toggleAdminChatReaction,
   uploadAdminChatAttachment,
   type SupplierChatConversation,
   type SupplierChatMessage,
@@ -105,6 +107,7 @@ function buildRenderItems(messages: SupplierChatMessage[]): ChatRenderItem[] {
 }
 
 const MAX_ATTACHMENT_SIZE_BYTES = 25 * 1024 * 1024
+const QUICK_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '😡'] as const
 
 type ConversationTab = 'all' | 'unread' | 'archived'
 type MessageGroup = { dateLabel: string; displayLabel: string; messages: SupplierChatMessage[] }
@@ -324,6 +327,10 @@ export default function AdminChatPage() {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [openPanel, setOpenPanel] = useState<'media' | 'files' | 'links' | null>(null)
+  const [replyTo, setReplyTo] = useState<SupplierChatMessage | null>(null)
+  const [localReplyMap, setLocalReplyMap] = useState<Record<number, SupplierChatMessage>>({})
+  const [hoveredMsgId, setHoveredMsgId] = useState<number | null>(null)
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [mediaModal, setMediaModal] = useState<{
     open: boolean
@@ -577,11 +584,14 @@ export default function AdminChatPage() {
         const sent = await sendAdminSupplierChatMessage(activeId, '', uploaded)
         appendSentMessage(sent)
       }
+      const pendingReply = replyTo
       if (trimmed) {
         const sent = await sendAdminSupplierChatMessage(activeId, trimmed)
         appendSentMessage(sent)
+        if (pendingReply) setLocalReplyMap((prev) => ({ ...prev, [sent.id]: pendingReply }))
       }
       setInput('')
+      setReplyTo(null)
       pendingAttachments.forEach((a) => { if (a.previewUrl) URL.revokeObjectURL(a.previewUrl) })
       setPendingAttachments([])
     } catch (sendError) {
@@ -633,6 +643,34 @@ export default function AdminChatPage() {
       if (removed?.previewUrl) URL.revokeObjectURL(removed.previewUrl)
       return prev.filter((a) => a.id !== attachmentId)
     })
+  }
+
+  const toggleReaction = (message: SupplierChatMessage, emoji: string) => {
+    const current = message.reactions?.['admin'] ?? null
+    const optimistic = { ...(message.reactions ?? {}) }
+    if (current === emoji) delete optimistic['admin']
+    else optimistic['admin'] = emoji
+
+    const updateMessages = (msgs: SupplierChatMessage[]) =>
+      msgs.map((m) => m.id === message.id ? { ...m, reactions: Object.keys(optimistic).length ? optimistic : null } : m)
+
+    setActiveConversation((prev) => prev ? { ...prev, messages: updateMessages(prev.messages ?? []) } : prev)
+
+    toggleAdminChatReaction(message.conversation_id, message.id, emoji)
+      .then((updated) => {
+        setActiveConversation((prev) => prev
+          ? { ...prev, messages: (prev.messages ?? []).map((m) => m.id === updated.id ? { ...m, reactions: updated.reactions } : m) }
+          : prev)
+      })
+      .catch(() => { /* poll will self-correct */ })
+  }
+
+  const enterMsg = (id: number) => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current)
+    setHoveredMsgId(id)
+  }
+  const leaveMsg = () => {
+    hoverTimeoutRef.current = setTimeout(() => setHoveredMsgId(null), 300)
   }
 
   const activeConversationTitle = activeConversation
@@ -1119,10 +1157,18 @@ export default function AdminChatPage() {
                           /* ── Single message ── */
                           const { message } = item
                           const mine = message.sender_type === 'admin'
+                          const replySource = localReplyMap[message.id]
+                          const isHovered = hoveredMsgId === message.id
+                          const myReaction = message.reactions?.['admin'] ?? null
+                          const reactionCounts = Object.values(message.reactions ?? {}).reduce(
+                            (acc, e) => { acc[e] = (acc[e] ?? 0) + 1; return acc },
+                            {} as Record<string, number>,
+                          )
+                          const activeReactions = Object.entries(reactionCounts)
                           return (
                             <div
                               key={message.id}
-                              className={`flex ${mine ? 'justify-end' : 'justify-start'}`}
+                              className={`relative flex items-end gap-2 ${mine ? 'justify-end' : 'justify-start'} ${activeReactions.length > 0 ? 'mb-4' : ''}`}
                             >
                               {!mine && (
                                 <Avatar
@@ -1133,7 +1179,34 @@ export default function AdminChatPage() {
                                   size="sm"
                                 />
                               )}
-                              <div className={`ml-2 max-w-[72%] ${mine ? 'ml-0 mr-0' : ''}`}>
+                              <div
+                                className={`relative max-w-[72%] ${mine ? '' : 'ml-0'}`}
+                                onMouseEnter={() => enterMsg(message.id)}
+                                onMouseLeave={leaveMsg}
+                              >
+                                {/* Hover action bar */}
+                                <div
+                                  onMouseEnter={() => enterMsg(message.id)}
+                                  className={`absolute -top-10 ${mine ? 'right-0' : 'left-0'} z-20 flex items-center gap-1 rounded-full border border-slate-100 bg-white px-3 py-1.5 shadow-xl transition-all duration-150 whitespace-nowrap ${isHovered ? 'opacity-100 pointer-events-auto scale-100' : 'opacity-0 pointer-events-none scale-95'}`}>
+                                  {QUICK_EMOJIS.map((emoji) => (
+                                    <button key={emoji} type="button" onClick={() => toggleReaction(message, emoji)}
+                                      className={`text-2xl leading-none transition-all duration-150 hover:scale-150 hover:-translate-y-1 active:scale-90 ${myReaction === emoji ? 'opacity-100 scale-110' : 'opacity-70 hover:opacity-100'}`}>
+                                      {emoji}
+                                    </button>
+                                  ))}
+                                  <span className="mx-1 h-4 w-px bg-slate-200" />
+                                  <button type="button" onClick={() => setReplyTo(message)}
+                                    className="flex items-center justify-center text-slate-400 transition-colors hover:text-indigo-600">
+                                    <Reply className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
+                                {/* Reply quote */}
+                                {replySource && (
+                                  <div className={`mb-1 max-w-full rounded-t-xl border-l-4 px-3 py-1.5 text-xs ${mine ? 'border-indigo-300 bg-indigo-100/60 text-indigo-800' : 'border-slate-300 bg-slate-100 text-slate-600'}`}>
+                                    <p className="font-semibold mb-0.5">{replySource.sender_type === 'admin' ? 'You' : activeConversationTitle}</p>
+                                    <p className="truncate">{replySource.message || '[attachment]'}</p>
+                                  </div>
+                                )}
                                 {/* Attachment */}
                                 {message.attachment_url && (
                                   <div className="mb-1 overflow-hidden rounded-2xl">
@@ -1221,40 +1294,43 @@ export default function AdminChatPage() {
                                 {/* Text / Link preview */}
                                 {message.message && (() => {
                                   const urlMatch = message.message.match(/^https?:\/\/\S+$/)
+                                  const reactionBadge = activeReactions.length > 0 && (
+                                    <div className={`absolute -bottom-3 ${mine ? 'left-1' : '-right-2'} flex items-center`}>
+                                      {activeReactions.map(([emoji, count]) => (
+                                        <button key={emoji} type="button" onClick={() => toggleReaction(message, emoji)}
+                                          className="flex items-center text-base leading-none transition hover:scale-110 active:scale-95">
+                                          <span>{emoji}</span>
+                                          {count > 1 && <span className="text-[10px] font-bold text-slate-500">{count}</span>}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  )
                                   if (urlMatch) {
                                     return (
-                                      <div className="max-w-[280px]">
+                                      <div className={`relative max-w-[280px] ${activeReactions.length > 0 ? 'mb-4' : ''}`}>
                                         <LinkPreview url={urlMatch[0]} mine={mine} />
+                                        {reactionBadge}
                                       </div>
                                     )
                                   }
                                   return (
-                                    <div
-                                      className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-                                        mine
-                                          ? 'rounded-br-md bg-indigo-600 text-white'
-                                          : 'rounded-bl-md bg-white text-slate-800 border border-slate-200 shadow-sm dark:bg-white dark:text-slate-800 dark:border-slate-200'
-                                      }`}
-                                    >
-                                      {message.message}
+                                    <div className={`relative ${activeReactions.length > 0 ? 'mb-4' : ''}`}>
+                                      <div
+                                        className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                                          mine
+                                            ? 'rounded-br-md bg-indigo-600 text-white'
+                                            : 'rounded-bl-md bg-white text-slate-800 border border-slate-200 shadow-sm'
+                                        }`}
+                                      >
+                                        {message.message}
+                                      </div>
+                                      {reactionBadge}
                                     </div>
                                   )
                                 })()}
-                                <div
-                                  className={`mt-1 flex items-center gap-1 ${
-                                    mine ? 'justify-end' : 'justify-start'
-                                  }`}
-                                >
-                                  <span className="text-[10px] text-slate-400">
-                                    {formatClock(message.created_at)}
-                                  </span>
-                                  {mine && (
-                                    <CheckCheck
-                                      className={`h-3 w-3 ${
-                                        message.is_read ? 'text-indigo-500' : 'text-slate-400'
-                                      }`}
-                                    />
-                                  )}
+                                <div className={`mt-1 flex items-center gap-1 ${mine ? 'justify-end' : 'justify-start'}`}>
+                                  <span className="text-[10px] text-slate-400">{formatClock(message.created_at)}</span>
+                                  {mine && <CheckCheck className={`h-3 w-3 ${message.is_read ? 'text-indigo-500' : 'text-slate-400'}`} />}
                                 </div>
                               </div>
                             </div>
@@ -1336,6 +1412,23 @@ export default function AdminChatPage() {
                       ))}
                     </div>
                   )}
+                  {/* Reply preview */}
+                  {replyTo && (
+                    <div className="mb-2 flex items-start gap-2 rounded-xl border-l-4 border-indigo-500 bg-indigo-50 px-3 py-2 dark:bg-indigo-900/20">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
+                          Replying to {replyTo.sender_type === 'admin' ? 'yourself' : activeConversationTitle}
+                        </p>
+                        <p className="mt-0.5 truncate text-xs text-slate-600 dark:text-slate-400">
+                          {replyTo.message || '[attachment]'}
+                        </p>
+                      </div>
+                      <button type="button" onClick={() => setReplyTo(null)}
+                        className="shrink-0 text-slate-400 hover:text-slate-600">
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
                   <textarea
                     ref={textareaRef}
                     value={input}
@@ -1396,7 +1489,7 @@ export default function AdminChatPage() {
                       type="button"
                       onClick={() => void handleSendMessage()}
                       disabled={(!input.trim() && pendingAttachments.length === 0) || isSending}
-                      className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="flex items-center gap-2 rounded-2xl bg-linear-to-r from-indigo-500 to-violet-500 px-5 py-2 text-sm font-bold text-white shadow-md shadow-indigo-200/60 transition hover:from-indigo-600 hover:to-violet-600 disabled:cursor-not-allowed disabled:opacity-40 dark:shadow-indigo-900/30"
                     >
                       <Send className="h-3.5 w-3.5" />
                       Send
@@ -1423,11 +1516,11 @@ export default function AdminChatPage() {
         </div>
 
         {/* ── Right sidebar ── */}
-        <aside className="hidden w-[460px] shrink-0 border-l border-slate-100 bg-slate-50/70 px-4 py-4 dark:border-slate-800 dark:bg-slate-900/60 xl:flex xl:flex-col">
-          <div className="flex h-full flex-col rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <aside className="hidden w-72 shrink-0 flex-col border-l border-slate-100 bg-white dark:border-slate-800 dark:bg-slate-900 xl:flex">
+          <div className="flex h-full flex-col overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden">
 
             {/* Company info */}
-            <div className="flex shrink-0 flex-col items-center border-b border-slate-100 pb-5 text-center dark:border-slate-800">
+            <div className="flex shrink-0 flex-col items-center border-b border-slate-100 px-4 pb-5 pt-6 text-center dark:border-slate-800">
               <div className="relative">
                 {companyLogo ? (
                   <div className="h-20 w-20 overflow-hidden rounded-full border border-slate-200 bg-white dark:border-slate-700">
@@ -1460,11 +1553,11 @@ export default function AdminChatPage() {
             </div>
 
             {/* Search */}
-            <div className="mt-4 shrink-0">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
+            <div className="shrink-0 px-4 pt-4">
+              <p className="mb-2 text-xs font-semibold text-slate-800 dark:text-slate-100">
                 Search conversation
               </p>
-              <div className="relative mt-2">
+              <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
@@ -1485,175 +1578,116 @@ export default function AdminChatPage() {
               </div>
             </div>
 
-            {/* Stats grid — expandable */}
+            {/* Media / Files / Links — vertical list */}
             {(() => {
               const mediaItems = activeMessages.filter((m) => m.attachment_type === 'image' || m.attachment_type === 'video')
               const fileItems  = activeMessages.filter((m) => m.attachment_type === 'file')
               const linkItems  = activeMessages.filter((m) => /https?:\/\/\S+/i.test(m.message))
-
               const panels = [
-                { key: 'media' as const, label: 'Media', icon: <ImageIcon className="h-3.5 w-3.5" />, count: mediaItems.length },
-                { key: 'files' as const, label: 'Files',  icon: <FileText  className="h-3.5 w-3.5" />, count: fileItems.length  },
-                { key: 'links' as const, label: 'Links',  icon: <Link2     className="h-3.5 w-3.5" />, count: linkItems.length  },
+                { key: 'media' as const, label: 'Media', icon: <ImageIcon className="h-4 w-4 text-indigo-500" />, count: mediaItems.length },
+                { key: 'files' as const, label: 'Files',  icon: <FileText  className="h-4 w-4 text-indigo-500" />, count: fileItems.length  },
+                { key: 'links' as const, label: 'Links',  icon: <Link2     className="h-4 w-4 text-indigo-500" />, count: linkItems.length  },
               ]
-
               return (
-                <div className="mt-3 space-y-2">
-                  <div className="grid grid-cols-3 gap-2">
-                    {panels.map(({ key, label, icon, count }) => {
-                      const active = openPanel === key
-                      return (
-                        <button
-                          key={key}
-                          type="button"
-                          onClick={() => setOpenPanel(active ? null : key)}
-                          className={`flex flex-col rounded-xl border px-3 py-2.5 text-left shadow-sm transition ${
-                            active
-                              ? 'border-indigo-300 bg-indigo-50 dark:border-indigo-700 dark:bg-indigo-950/40'
-                              : 'border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800'
-                          }`}
-                        >
-                          <p className={`flex items-center gap-1 text-[12px] font-semibold ${active ? 'text-indigo-600 dark:text-indigo-300' : 'text-slate-900 dark:text-white'}`}>
-                            {icon}{label}
-                          </p>
-                          <div className="mt-0.5 flex items-center justify-between">
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400">{count} items</p>
-                            <ChevronDown className={`h-3 w-3 text-slate-400 transition-transform duration-200 ${active ? 'rotate-180' : ''}`} />
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </div>
+                <div className="mt-4 space-y-1 px-4">
+                  {panels.map(({ key, label, icon, count }) => (
+                    <div key={key}>
+                      <button
+                        type="button"
+                        onClick={() => setOpenPanel(openPanel === key ? null : key)}
+                        className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 transition ${
+                          openPanel === key
+                            ? 'border-indigo-100 bg-indigo-50 dark:border-indigo-900/40 dark:bg-indigo-900/20'
+                            : 'border-slate-100 bg-white hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900'
+                        }`}
+                      >
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-900/30">
+                          {icon}
+                        </div>
+                        <div className="min-w-0 flex-1 text-left">
+                          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{label}</p>
+                          <p className="text-[11px] text-slate-400 dark:text-slate-500">{count} {count === 1 ? 'item' : 'items'}</p>
+                        </div>
+                        <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 ${openPanel === key ? 'rotate-180' : ''}`} />
+                      </button>
 
-                  <div className={`overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800 transition-all duration-300 ${openPanel ? 'max-h-72 opacity-100' : 'max-h-0 opacity-0 border-transparent'}`}>
-                    <div className="max-h-72 overflow-y-auto p-3 scrollbar-none [&::-webkit-scrollbar]:hidden">
-
-                      {openPanel === 'media' && (
-                        mediaItems.length === 0 ? (
-                          <p className="py-4 text-center text-xs text-slate-400">No media shared yet.</p>
-                        ) : (
-                          <div className="grid grid-cols-3 gap-1.5">
-                            {(() => {
-                              const imageUrls = mediaItems
-                                .filter((m) => m.attachment_type === 'image')
-                                .map((m) => m.attachment_url ?? '')
-                                .filter(Boolean)
-                              return mediaItems.map((m) => {
-                                const url = m.attachment_url ?? ''
-                                const type = m.attachment_type === 'video' ? 'video' : 'image'
-                                const imgIndex = imageUrls.indexOf(url)
-                                return (
-                                  <button
-                                    key={m.id}
-                                    type="button"
-                                    onClick={() => {
-                                      if (type === 'image' && imageUrls.length > 0) {
-                                        openImageGroupModal(imageUrls, imgIndex >= 0 ? imgIndex : 0)
-                                      } else {
-                                        openMediaModal({ url, type, name: m.attachment_name ?? undefined })
-                                      }
-                                    }}
-                                    className="group relative aspect-square overflow-hidden rounded-xl bg-slate-100 text-left dark:bg-slate-800"
-                                  >
-                                    <div className="h-full w-full">
-                                      {type === 'image' ? (
-                                        <img
-                                          src={url}
-                                          alt={m.attachment_name ?? ''}
-                                          className="h-full w-full object-cover transition group-hover:scale-105"
-                                        />
-                                      ) : (
-                                        <>
-                                          <video
-                                            src={url}
-                                            className="h-full w-full object-cover"
-                                            muted
-                                            preload="metadata"
-                                          />
-                                          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                                            <Play className="h-5 w-5 fill-white text-white drop-shadow" />
-                                          </div>
-                                        </>
-                                      )}
-                                    </div>
-                                  </button>
-                                )
-                              })
-                            })()}
-                          </div>
-                        )
-                      )}
-
-                      {openPanel === 'files' && (
-                        fileItems.length === 0 ? (
-                          <p className="py-4 text-center text-xs text-slate-400">No files shared yet.</p>
-                        ) : (
-                          <div className="space-y-1.5">
-                            {fileItems.map((m) => {
-                              const href = m.attachment_url ?? ''
-                              const fileName = m.attachment_name ?? undefined
-                              return (
-                                <button
-                                  key={m.id}
-                                  type="button"
-                                  onClick={() => void forceDownload(href, fileName ?? 'file')}
-                                  className="flex w-full items-center gap-2.5 rounded-xl border border-slate-100 bg-white px-3 py-2.5 text-sm transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800"
-                                >
-                                  <FileText className="h-4 w-4 shrink-0 text-indigo-500" />
-                                  <span className="min-w-0 flex-1 truncate text-left text-[12px] font-medium text-slate-700 dark:text-slate-200">
-                                    {m.attachment_name ?? 'File'}
-                                  </span>
-                                  <ExternalLink className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                                </button>
-                              )
-                            })}
-                          </div>
-                        )
-                      )}
-
-                      {openPanel === 'links' && (
-                        linkItems.length === 0 ? (
-                          <p className="py-4 text-center text-xs text-slate-400">No links shared yet.</p>
-                        ) : (
-                          <div className="space-y-1.5">
-                            {linkItems.map((m) => {
-                              const url = (m.message.match(/https?:\/\/\S+/i) ?? [])[0] ?? ''
-                              let host = ''
-                              try { host = new URL(url).hostname } catch { host = url }
-                              return (
-                                <a key={m.id} href={url} target="_blank" rel="noreferrer"
-                                  className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-white px-3 py-2.5 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800">
-                                  <Link2 className="h-4 w-4 shrink-0 text-indigo-500" />
-                                  <div className="min-w-0 flex-1">
-                                    <p className="truncate text-[12px] font-medium text-slate-700 dark:text-slate-200">{host}</p>
-                                    <p className="truncate text-[10px] text-slate-400">{url}</p>
-                                  </div>
-                                  <ExternalLink className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                                </a>
-                              )
-                            })}
-                          </div>
-                        )
-                      )}
-
+                      {/* Expand */}
+                      <div className={`overflow-hidden transition-all duration-300 ${openPanel === key ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0'}`}>
+                        <div className="max-h-64 overflow-y-auto rounded-b-xl border border-t-0 border-slate-100 p-2 scrollbar-none dark:border-slate-800 [&::-webkit-scrollbar]:hidden">
+                          {key === 'media' && (
+                            mediaItems.length === 0
+                              ? <p className="py-3 text-center text-xs text-slate-400">No media shared yet.</p>
+                              : <div className="grid grid-cols-3 gap-1.5">
+                                  {(() => {
+                                    const imgUrls = mediaItems.filter((m) => m.attachment_type === 'image').map((m) => m.attachment_url ?? '').filter(Boolean)
+                                    return mediaItems.map((m) => {
+                                      const url = m.attachment_url ?? ''
+                                      const type = m.attachment_type === 'video' ? 'video' : 'image'
+                                      return (
+                                        <button key={m.id} type="button"
+                                          onClick={() => type === 'image' ? openImageGroupModal(imgUrls, imgUrls.indexOf(url)) : openMediaModal({ url, type, name: m.attachment_name ?? undefined })}
+                                          className="group relative aspect-square overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
+                                          {type === 'image'
+                                            ? <img src={url} alt="" className="h-full w-full object-cover transition group-hover:scale-105" />
+                                            : <><video src={url} className="h-full w-full object-cover" muted preload="metadata"/><div className="absolute inset-0 flex items-center justify-center bg-black/30"><Play className="h-4 w-4 fill-white text-white"/></div></>}
+                                        </button>
+                                      )
+                                    })
+                                  })()}
+                                </div>
+                          )}
+                          {key === 'files' && (
+                            fileItems.length === 0
+                              ? <p className="py-3 text-center text-xs text-slate-400">No files shared yet.</p>
+                              : <div className="space-y-1">
+                                  {fileItems.map((m) => (
+                                    <button key={m.id} type="button" onClick={() => void forceDownload(m.attachment_url ?? '', m.attachment_name ?? 'file')}
+                                      className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800">
+                                      <FileText className="h-3.5 w-3.5 shrink-0 text-indigo-500"/>
+                                      <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-slate-700 dark:text-slate-200">{m.attachment_name ?? 'File'}</span>
+                                      <ExternalLink className="h-3 w-3 shrink-0 text-slate-400"/>
+                                    </button>
+                                  ))}
+                                </div>
+                          )}
+                          {key === 'links' && (
+                            linkItems.length === 0
+                              ? <p className="py-3 text-center text-xs text-slate-400">No links shared yet.</p>
+                              : <div className="space-y-1">
+                                  {linkItems.map((m) => {
+                                    const url = (m.message.match(/https?:\/\/\S+/i) ?? [])[0] ?? ''
+                                    let host = ''; try { host = new URL(url).hostname } catch { host = url }
+                                    return (
+                                      <a key={m.id} href={url} target="_blank" rel="noreferrer"
+                                        className="flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-slate-50 dark:hover:bg-slate-800">
+                                        <Link2 className="h-3.5 w-3.5 shrink-0 text-indigo-500"/>
+                                        <div className="min-w-0 flex-1">
+                                          <p className="truncate text-[11px] font-medium text-slate-700 dark:text-slate-200">{host}</p>
+                                          <p className="truncate text-[10px] text-slate-400">{url}</p>
+                                        </div>
+                                      </a>
+                                    )
+                                  })}
+                                </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
               )
             })()}
 
             {/* About supplier */}
-            <div className="mt-5">
-              <p className="text-[13px] font-bold text-slate-900 dark:text-white">About supplier</p>
-              <div className="mt-3 space-y-3.5">
-                <div className="flex items-center justify-between">
+            <div className="mt-4 px-4 pb-5">
+              <p className="mb-3 text-sm font-bold text-slate-800 dark:text-slate-100">About supplier</p>
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                     <Hash className="h-3.5 w-3.5 shrink-0" />
                     <span className="text-xs">Supplier ID</span>
                   </div>
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    {supplierId}
-                  </span>
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">{supplierId}</span>
                 </div>
                 {supplierEmail && (
                   <div className="flex items-center justify-between gap-2">
@@ -1661,19 +1695,15 @@ export default function AdminChatPage() {
                       <Mail className="h-3.5 w-3.5 shrink-0" />
                       <span className="text-xs">Email</span>
                     </div>
-                    <span className="max-w-[58%] truncate text-right text-xs font-semibold text-slate-700 dark:text-slate-300">
-                      {supplierEmail}
-                    </span>
+                    <span className="max-w-[55%] truncate text-right text-xs font-semibold text-slate-700 dark:text-slate-200">{supplierEmail}</span>
                   </div>
                 )}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                     <Phone className="h-3.5 w-3.5 shrink-0" />
                     <span className="text-xs">Username</span>
                   </div>
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    {supplierUsername}
-                  </span>
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">{supplierUsername}</span>
                 </div>
               </div>
             </div>

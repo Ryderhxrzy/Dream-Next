@@ -21,6 +21,7 @@ export type SupplierChatMessage = {
   attachment_name: string | null
   is_read: boolean
   read_at: string | null
+  reactions: Record<string, string> | null
   created_at: string
   updated_at: string
 }
@@ -212,6 +213,18 @@ export async function sendSupplierPresenceHeartbeat(): Promise<void> {
   } catch {
     // silently ignore — heartbeat failure should never break the UI
   }
+}
+
+export async function toggleSupplierChatReaction(
+  conversationId: number,
+  messageId: number,
+  emoji: string,
+): Promise<SupplierChatMessage> {
+  const response = await supplierChatRequest<{ data: SupplierChatMessage }>(
+    `/api/supplier/chat/conversations/${conversationId}/messages/${messageId}/react`,
+    { method: 'POST', body: JSON.stringify({ emoji }) },
+  )
+  return response.data
 }
 
 export async function createSupplierChatConversation(subject: string, message: string) {

@@ -22,10 +22,12 @@ class SupplierChatMessage extends Model
         'attachment_type',
         'attachment_name',
         'read_at',
+        'reactions',
     ];
 
     protected $casts = [
         'read_at' => 'datetime',
+        'reactions' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

@@ -427,6 +427,37 @@ const getWebstoreHistoricalPaymentAmount = (request: {
   return Number.isFinite(subscriptionFee) && subscriptionFee > 0 ? subscriptionFee : effectiveMonthly;
 };
 
+const getWebstoreSubscriptionExpiry = (tx: {
+  plan?: string | null;
+  plan_term?: string | null;
+  plan_term_months?: number | null;
+  reviewed_at?: string | null;
+  created_at?: string | null;
+}): Date | null => {
+  const startStr = (tx.reviewed_at?.trim() || tx.created_at?.trim()) ?? null;
+  if (!startStr) return null;
+  const d = new Date(startStr);
+  if (isNaN(d.getTime())) return null;
+  const plan = String(tx.plan ?? '').toLowerCase().trim();
+  const planTerm = String(tx.plan_term ?? '').toLowerCase().trim();
+  const planTermMonths = Number(tx.plan_term_months ?? 0);
+  if (plan === 'test' || planTerm.includes('day')) {
+    const days = planTerm.match(/(\d+)\s*day/)?.[1];
+    d.setDate(d.getDate() + (days ? parseInt(days, 10) : 2));
+  } else if (plan === 'quarterly' || planTermMonths === 3) {
+    d.setMonth(d.getMonth() + 3);
+  } else if (plan === 'semi_annual' || planTermMonths === 6) {
+    d.setMonth(d.getMonth() + 6);
+  } else if (plan === 'annual' || planTermMonths === 12) {
+    d.setFullYear(d.getFullYear() + 1);
+  } else if (planTermMonths > 0) {
+    d.setMonth(d.getMonth() + planTermMonths);
+  } else {
+    return null;
+  }
+  return d;
+};
+
 const getWebstoreHistoryRows = (requests: Array<WebstoreRequest | null | undefined>) => {
   const rows: Array<WebstoreRequest & { row_label?: string | null }> = [];
   const seenRequestKeys = new Set<string>();
@@ -894,6 +925,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
   const [webstoreTermsOpen, setWebstoreTermsOpen] = useState(false);
   const [webstoreMsg, setWebstoreMsg] = useState<AlertMsg | null>(null);
   const [webstoreHistoryPage, setWebstoreHistoryPage] = useState(1);
+  const [webstoreReceiptCarouselIdx, setWebstoreReceiptCarouselIdx] = useState<Record<string, number>>({});
   useEffect(() => {
     if (!webstoreMsg || webstoreMsg.type !== 'success') return;
 
@@ -938,7 +970,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
   const [webstoreSuccessModalOpen, setWebstoreSuccessModalOpen] = useState(false);
   const [webstoreReceiptUploadModalOpen, setWebstoreReceiptUploadModalOpen] = useState(false);
   const [webstoreReceiptFiles, setWebstoreReceiptFiles] = useState<Array<{ name: string; preview: string; file: File }>>([]);
-  const [webstoreReceiptPreview, setWebstoreReceiptPreview] = useState<{ name: string; src: string } | null>(null);
+  const [webstoreReceiptPreview, setWebstoreReceiptPreview] = useState<{ name: string; urls: string[]; idx: number } | null>(null);
   const [isDraggingReceipt, setIsDraggingReceipt] = useState(false);
   const [dismissedRejectedReceiptKeys, setDismissedRejectedReceiptKeys] = useState<string[]>([]);
   const [webstoreInvalidFields, setWebstoreInvalidFields] = useState<Record<string, boolean>>({});
@@ -7439,7 +7471,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                           <table className="w-full min-w-[760px] border-collapse text-sm">
                             <thead>
                               <tr className="border-b border-[#e7efff] bg-[#f4f8ff]">
-                                {['#', 'Reference No.', 'Date', 'Plan / Term', 'Payment Method', 'Amount Paid', 'Remaining', 'Status', 'Receipt'].map((col) => (
+                                {['#', 'Reference No.', 'Start / End', 'Plan / Term', 'Payment Method', 'Amount Paid', 'Remaining', 'Status', 'Receipt'].map((col) => (
                                   <th key={col} className="px-4 py-3 text-left text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#6d82ab] first:pl-6 last:pr-6">
                                     {col}
                                   </th>
@@ -7454,25 +7486,28 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                                   {/* Reference No. */}
                                   <td className="px-4 py-4">
                                     <p className="font-mono text-xs font-semibold text-[#0f1f44]">{tx.reference_no || '—'}</p>
-                                    {tx.row_label ? (
-                                      <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#6d82ab]">{tx.row_label}</p>
-                                    ) : null}
                                     {tx.payment_reference ? (
                                       <p className="mt-0.5 text-[10px] text-[#8a9ec0]">Ref: {tx.payment_reference}</p>
                                     ) : null}
                                   </td>
-                                  {/* Date */}
+                                  {/* Start / End */}
                                   <td className="px-4 py-4">
                                     {tx.created_at ? (
                                       <>
-                                        <p className="text-xs font-semibold text-[#0f1f44]">
-                                          {new Date(tx.created_at).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })}
-                                        </p>
-                                        {tx.reviewed_at ? (
-                                          <p className="mt-0.5 text-[10px] text-[#8a9ec0]">
-                                            Reviewed: {new Date(tx.reviewed_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                          </p>
-                                        ) : null}
+                                        {(() => {
+                                          const expiry = getWebstoreSubscriptionExpiry(tx);
+                                          const startLabel = new Date(tx.created_at).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' });
+                                          const endLabel = expiry ? expiry.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : null;
+                                          return endLabel ? (
+                                            <p className="text-xs font-semibold text-[#0f1f44]">
+                                              {startLabel}
+                                              <span className="mx-1 text-[#8a9ec0]">/</span>
+                                              <span className="text-emerald-600">{endLabel}</span>
+                                            </p>
+                                          ) : (
+                                            <p className="text-xs font-semibold text-[#0f1f44]">{startLabel}</p>
+                                          );
+                                        })()}
                                       </>
                                     ) : <span className="text-xs text-[#8a9ec0]">—</span>}
                                   </td>
@@ -7482,7 +7517,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                                       {tx.plan === 'test' ? 'Test' : tx.plan === 'quarterly' ? 'Quarterly' : tx.plan === 'semi_annual' ? 'Semi-Annual' : tx.plan === 'annual' ? 'Annual' : '—'}
                                     </p>
                                     <p className="mt-0.5 text-[10px] text-[#8a9ec0]">
-                                      {tx.billing_option === 'full' ? 'Full payment' : tx.billing_option === 'monthly' ? 'Monthly installment' : '—'}
+                                      {tx.plan === 'test' ? '2 days' : tx.plan === 'quarterly' ? '3 months' : tx.plan === 'semi_annual' ? '6 months' : tx.plan === 'annual' ? '1 year' : '—'}
                                     </p>
                                   </td>
                                   {/* Payment Method */}
@@ -7498,8 +7533,10 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                                         ? formatPhpAmount(getWebstoreIntendedAmount(tx))
                                         : formatPhpAmount(tx.total_paid_amount ?? 0)}
                                     </p>
-                                    {tx.row_label ? (
-                                      <p className="mt-0.5 text-[10px] text-[#8a9ec0]">{tx.row_label}</p>
+                                    {tx.billing_option ? (
+                                      <p className="mt-0.5 text-[10px] text-[#8a9ec0]">
+                                        {tx.billing_option === 'full' ? 'Full payment' : 'Monthly installment'}
+                                      </p>
                                     ) : (tx.payment_count ?? 0) > 0 ? (
                                       <p className="mt-0.5 text-[10px] text-[#8a9ec0]">{tx.payment_count} payment{tx.payment_count !== 1 ? 's' : ''}</p>
                                     ) : null}
@@ -7514,15 +7551,24 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                                   </td>
                                   {/* Status */}
                                   <td className="px-4 py-4">
-                                    <span className={`inline-flex min-w-[78px] items-center justify-center rounded-full px-3 py-1 text-center text-[11px] font-bold uppercase tracking-wide whitespace-nowrap leading-none ${
-                                      tx.status === 'approved'
-                                        ? 'bg-emerald-100 text-emerald-700'
-                                        : tx.status === 'rejected'
-                                          ? 'bg-rose-100 text-rose-700'
-                                          : 'bg-amber-100 text-amber-700'
-                                    }`}>
-                                      {tx.status === 'approved' ? 'Approved' : tx.status === 'rejected' ? 'Rejected' : 'Pending'}
-                                    </span>
+                                    {(() => {
+                                      const isApproved = tx.status === 'approved';
+                                      const expiry = isApproved ? getWebstoreSubscriptionExpiry(tx) : null;
+                                      const isExpired = isApproved && expiry !== null && expiry < new Date();
+                                      const label = isExpired ? 'Expired' : isApproved ? 'Approved' : tx.status === 'rejected' ? 'Rejected' : 'Pending';
+                                      const cls = isExpired
+                                        ? 'bg-slate-100 text-slate-500'
+                                        : isApproved
+                                          ? 'bg-emerald-100 text-emerald-700'
+                                          : tx.status === 'rejected'
+                                            ? 'bg-rose-100 text-rose-700'
+                                            : 'bg-amber-100 text-amber-700';
+                                      return (
+                                        <span className={`inline-flex min-w-[78px] items-center justify-center rounded-full px-3 py-1 text-center text-[11px] font-bold uppercase tracking-wide whitespace-nowrap leading-none ${cls}`}>
+                                          {label}
+                                        </span>
+                                      );
+                                    })()}
                                   </td>
                                   {/* Receipt */}
                                   <td className="py-4 pl-4 pr-6">
@@ -7531,30 +7577,58 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                                       if (receiptUrls.length === 0) {
                                         return <span className="text-xs text-[#8a9ec0]">—</span>;
                                       }
-
+                                      const carouselKey = String(tx.id);
+                                      const currentIdx = Math.min(webstoreReceiptCarouselIdx[carouselKey] ?? 0, receiptUrls.length - 1);
                                       return (
-                                        <div className="flex flex-wrap gap-2">
-                                          {receiptUrls.map((url, receiptIndex) => (
-                                            <button
-                                              key={`${tx.id}-${receiptIndex}-${url}`}
-                                              type="button"
-                                              onClick={() => setWebstoreReceiptPreview({
-                                                name: `Receipt ${receiptIndex + 1} - ${tx.reference_no || tx.id}`,
-                                                src: url,
-                                              })}
-                                              className="group relative overflow-hidden rounded-lg border border-[#d5def1] bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                                              aria-label={`View receipt ${receiptIndex + 1}`}
-                                            >
-                                              <img
-                                                src={url}
-                                                alt={`Receipt ${receiptIndex + 1}`}
-                                                className="h-12 w-12 object-cover"
-                                              />
-                                              <span className="absolute inset-x-0 bottom-0 bg-slate-950/60 px-1 py-0.5 text-[9px] font-bold text-white opacity-0 transition group-hover:opacity-100">
-                                                {receiptIndex + 1}
-                                              </span>
-                                            </button>
-                                          ))}
+                                        <div className="flex flex-col items-start gap-1">
+                                          <button
+                                            type="button"
+                                            onClick={() => setWebstoreReceiptPreview({
+                                              name: tx.reference_no || String(tx.id),
+                                              urls: receiptUrls,
+                                              idx: currentIdx,
+                                            })}
+                                            className="group relative overflow-hidden rounded-lg border border-[#d5def1] bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                                            aria-label={`View receipt ${currentIdx + 1}`}
+                                          >
+                                            <img
+                                              src={receiptUrls[currentIdx]}
+                                              alt={`Receipt ${currentIdx + 1}`}
+                                              className="h-12 w-12 object-cover"
+                                            />
+                                            <span className="absolute inset-x-0 bottom-0 bg-slate-950/60 px-1 py-0.5 text-[9px] font-bold text-white opacity-0 transition group-hover:opacity-100">
+                                              View
+                                            </span>
+                                          </button>
+                                          {receiptUrls.length > 1 && (
+                                            <div className="flex items-center gap-1">
+                                              <button
+                                                type="button"
+                                                onClick={() => setWebstoreReceiptCarouselIdx((prev) => ({
+                                                  ...prev,
+                                                  [carouselKey]: Math.max(0, (prev[carouselKey] ?? 0) - 1),
+                                                }))}
+                                                disabled={currentIdx === 0}
+                                                className="flex h-4 w-4 items-center justify-center rounded-full bg-[#eef3ff] text-[10px] font-bold text-[#1d4ed8] transition hover:bg-[#dce8ff] disabled:opacity-30"
+                                                aria-label="Previous receipt"
+                                              >
+                                                ‹
+                                              </button>
+                                              <span className="text-[9px] text-[#8a9ec0]">{currentIdx + 1}/{receiptUrls.length}</span>
+                                              <button
+                                                type="button"
+                                                onClick={() => setWebstoreReceiptCarouselIdx((prev) => ({
+                                                  ...prev,
+                                                  [carouselKey]: Math.min(receiptUrls.length - 1, (prev[carouselKey] ?? 0) + 1),
+                                                }))}
+                                                disabled={currentIdx === receiptUrls.length - 1}
+                                                className="flex h-4 w-4 items-center justify-center rounded-full bg-[#eef3ff] text-[10px] font-bold text-[#1d4ed8] transition hover:bg-[#dce8ff] disabled:opacity-30"
+                                                aria-label="Next receipt"
+                                              >
+                                                ›
+                                              </button>
+                                            </div>
+                                          )}
                                         </div>
                                       );
                                     })()}
@@ -8008,25 +8082,56 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
               <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-white backdrop-blur-sm">
                 <div className="min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/60">Receipt Preview</p>
-                  <p className="truncate text-sm font-bold">{webstoreReceiptPreview.name}</p>
+                  <p className="truncate text-sm font-bold">
+                    {webstoreReceiptPreview.name}
+                    {webstoreReceiptPreview.urls.length > 1 && (
+                      <span className="ml-2 text-xs font-normal text-white/60">
+                        {webstoreReceiptPreview.idx + 1} / {webstoreReceiptPreview.urls.length}
+                      </span>
+                    )}
+                  </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setWebstoreReceiptPreview(null)}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white/80 transition hover:bg-white/20 hover:text-white"
-                  aria-label="Close receipt preview"
-                >
-                  <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M6 18 18 6" />
-                    <path d="M6 6l12 12" />
-                  </svg>
-                </button>
+                <div className="flex items-center gap-2">
+                  {webstoreReceiptPreview.urls.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setWebstoreReceiptPreview((prev) => prev && prev.idx > 0 ? { ...prev, idx: prev.idx - 1 } : prev)}
+                        disabled={webstoreReceiptPreview.idx === 0}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white/80 transition hover:bg-white/20 hover:text-white disabled:opacity-30"
+                        aria-label="Previous receipt"
+                      >
+                        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setWebstoreReceiptPreview((prev) => prev && prev.idx < prev.urls.length - 1 ? { ...prev, idx: prev.idx + 1 } : prev)}
+                        disabled={webstoreReceiptPreview.idx === webstoreReceiptPreview.urls.length - 1}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white/80 transition hover:bg-white/20 hover:text-white disabled:opacity-30"
+                        aria-label="Next receipt"
+                      >
+                        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
+                      </button>
+                    </>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setWebstoreReceiptPreview(null)}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white/80 transition hover:bg-white/20 hover:text-white"
+                    aria-label="Close receipt preview"
+                  >
+                    <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M6 18 18 6" />
+                      <path d="M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               </div>
 
               <div className="overflow-hidden rounded-[28px] border border-white/10 bg-white shadow-[0_28px_80px_rgba(0,0,0,0.35)]">
                 <img
-                  src={webstoreReceiptPreview.src}
-                  alt={webstoreReceiptPreview.name}
+                  src={webstoreReceiptPreview.urls[webstoreReceiptPreview.idx]}
+                  alt={`${webstoreReceiptPreview.name} — receipt ${webstoreReceiptPreview.idx + 1}`}
                   className="max-h-[78vh] w-full object-contain bg-[#f8fbff]"
                 />
               </div>
@@ -8150,13 +8255,13 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                             {webstoreReceiptGalleryItems.map((item, index) => (
                               <div
                                 key={item.key}
-                                onClick={() => setWebstoreReceiptPreview({ name: item.name, src: item.src })}
+                                onClick={() => setWebstoreReceiptPreview({ name: item.name, urls: [item.src], idx: 0 })}
                                 role="button"
                                 tabIndex={0}
                                 onKeyDown={(event) => {
                                   if (event.key === 'Enter' || event.key === ' ') {
                                     event.preventDefault()
-                                    setWebstoreReceiptPreview({ name: item.name, src: item.src })
+                                    setWebstoreReceiptPreview({ name: item.name, urls: [item.src], idx: 0 })
                                   }
                                 }}
                                 className={`overflow-hidden rounded-2xl text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 ${
