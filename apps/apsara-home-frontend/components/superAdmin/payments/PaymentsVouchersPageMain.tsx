@@ -9,6 +9,7 @@ import {
 } from '@/store/api/adminPaymentsApi'
 import { useGetAdminAffiliateVouchersQuery } from '@/store/api/encashmentApi'
 import { useGetProductsQuery } from '@/store/api/productsApi'
+import { notify } from '@/components/ui/DynamicNotify/DynamicNotify'
 
 const formatMoney = (value: number) =>
   new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 2 }).format(value || 0)
@@ -60,7 +61,6 @@ export default function PaymentsVouchersPageMain() {
   const [page, setPage] = useState(1)
   const [rulesPage, setRulesPage] = useState(1)
   const [draftRules, setDraftRules] = useState<Record<number, { enabled: boolean; maxDiscount: string; minSpend: string }>>({})
-  const [rulesNotice, setRulesNotice] = useState<string | null>(null)
 
   const { data: vouchersData, isLoading: vouchersLoading, isFetching: vouchersFetching, isError: vouchersError } =
     useGetAdminAffiliateVouchersQuery({
@@ -91,6 +91,7 @@ export default function PaymentsVouchersPageMain() {
   const isLoading = activeView === 'vouchers' ? paymentsLoading || vouchersLoading : productsLoading
   const isFetching = activeView === 'vouchers' ? paymentsFetching || vouchersFetching : productsFetching
   const isError = activeView === 'vouchers' ? paymentsError || vouchersError : productsError
+  const hasDraftRuleChanges = Object.keys(draftRules).length > 0
   const savedRulesMap = useMemo(
     () => (savedRulesData?.rules ?? []).reduce<Record<number, { enabled: boolean; maxDiscount: string; minSpend: string }>>((acc, rule) => {
       acc[rule.product_id] = {
@@ -108,7 +109,6 @@ export default function PaymentsVouchersPageMain() {
       const current = prev[productId] ?? savedRulesMap[productId] ?? { enabled: false, maxDiscount: '', minSpend: '' }
       return { ...prev, [productId]: { ...current, ...patch } }
     })
-    setRulesNotice(null)
   }
 
   const saveDraftRules = async () => {
@@ -121,10 +121,12 @@ export default function PaymentsVouchersPageMain() {
 
     try {
       const response = await updateVoucherProductRules({ rules }).unwrap()
-      setRulesNotice(response.message || 'Voucher product rules saved.')
+      notify.success(response.message || 'Voucher product rules saved.')
     } catch (error) {
       const apiError = error as { data?: { message?: string } }
-      setRulesNotice(apiError?.data?.message || 'Failed to save voucher product rules.')
+      notify.error('Failed to save voucher product rules.', {
+        description: apiError?.data?.message || 'Please try again.',
+      })
     }
   }
 
@@ -201,11 +203,6 @@ export default function PaymentsVouchersPageMain() {
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   Draft list ng products kung saan puwedeng gamitin ang affiliate-created voucher.
                 </p>
-                {rulesNotice ? (
-                  <p className={`mt-2 text-xs font-semibold ${rulesNotice.toLowerCase().includes('failed') ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400'}`}>
-                    {rulesNotice}
-                  </p>
-                ) : null}
               </div>
 
               <div className="flex w-full flex-col gap-3 sm:flex-row md:max-w-xl">
@@ -236,10 +233,21 @@ export default function PaymentsVouchersPageMain() {
                 <button
                   type="button"
                   onClick={saveDraftRules}
-                  disabled={savingRules}
-                  className="rounded-lg bg-sky-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={savingRules || !hasDraftRuleChanges}
+                  className={`inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-bold shadow-sm transition ${
+                    hasDraftRuleChanges
+                      ? 'bg-sky-500 text-white hover:bg-sky-600'
+                      : 'bg-gray-200 text-gray-400 dark:bg-gray-800 dark:text-gray-500'
+                  } disabled:cursor-not-allowed disabled:opacity-70`}
                 >
-                  {savingRules ? 'Saving...' : 'Save Rules'}
+                  {savingRules ? (
+                    <>
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Rules'
+                  )}
                 </button>
               </div>
             </div>

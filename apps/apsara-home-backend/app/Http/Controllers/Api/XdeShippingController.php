@@ -235,10 +235,107 @@ class XdeShippingController extends Controller
         ]);
     }
 
+    public function updateDimensionByOrder(Request $request, int $id)
+    {
+        $admin = $this->resolveAdmin($request);
+        if (!$admin) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        if (!$this->canManageShipping($admin)) {
+            return response()->json(['message' => 'Forbidden: shipping access is limited.'], 403);
+        }
+
+        $validated = $request->validate([
+            'weight' => 'nullable|numeric|min:0',
+            'length' => 'nullable|numeric|min:1',
+            'width' => 'nullable|numeric|min:1',
+            'height' => 'nullable|numeric|min:1',
+            'package_size' => 'nullable|string|max:255',
+        ]);
+
+        $order = CheckoutHistory::query()->where('ch_id', $id)->firstOrFail();
+        $trackingNo = $this->resolveTrackableTrackingNo($order);
+        if ($trackingNo === '') {
+            return response()->json(['message' => 'Order has no tracking number yet.'], 422);
+        }
+
+        $record = [
+            'tracking_number' => $trackingNo,
+            'weight' => (float) ($validated['weight'] ?? config('services.xde.default_weight', 1)),
+            'length' => (float) ($validated['length'] ?? config('services.xde.default_length', 10)),
+            'width' => (float) ($validated['width'] ?? config('services.xde.default_width', 10)),
+            'height' => (float) ($validated['height'] ?? config('services.xde.default_height', 10)),
+        ];
+        if (!empty($validated['package_size'])) {
+            $record['package_size'] = (string) $validated['package_size'];
+        }
+
+        try {
+            $response = $this->xdeShippingService->updateDimension([$record]);
+        } catch (RuntimeException $e) {
+            return response()->json([
+                'message' => 'Failed to update XDE dimension and weight.',
+                'error' => $e->getMessage(),
+            ], 422);
+        }
+
+        return response()->json([
+            'message' => 'XDE dimension and weight updated.',
+            'tracking_no' => $trackingNo,
+            'payload' => $response,
+        ]);
+    }
+
+    public function ports(Request $request)
+    {
+        $admin = $this->resolveAdmin($request);
+        if (!$admin) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        if (!$this->canManageShipping($admin)) {
+            return response()->json(['message' => 'Forbidden: shipping access is limited.'], 403);
+        }
+
+        try {
+            $response = $this->xdeShippingService->getPorts();
+        } catch (RuntimeException $e) {
+            return response()->json([
+                'message' => 'Failed to fetch XDE ports.',
+                'error' => $e->getMessage(),
+            ], 422);
+        }
+
+        return response()->json(['payload' => $response]);
+    }
+
+    public function reasons(Request $request)
+    {
+        $admin = $this->resolveAdmin($request);
+        if (!$admin) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        if (!$this->canManageShipping($admin)) {
+            return response()->json(['message' => 'Forbidden: shipping access is limited.'], 403);
+        }
+
+        try {
+            $response = $this->xdeShippingService->getReasons();
+        } catch (RuntimeException $e) {
+            return response()->json([
+                'message' => 'Failed to fetch XDE reasons.',
+                'error' => $e->getMessage(),
+            ], 422);
+        }
+
+        return response()->json(['payload' => $response]);
+    }
+
     private function payloadFromOrder(CheckoutHistory $order): array
     {
         $quantity = max(1, (int) ($order->ch_quantity ?? 1));
         $amount = max(0, (float) ($order->ch_amount ?? 0));
+        $isCod = strtoupper((string) ($order->ch_payment_method ?? '')) === 'COD';
+        $codAmount = $isCod ? $amount : 0.0;
         $referenceNo = (string) ($order->ch_checkout_id ?? '');
         $xdeTrackingNo = $this->generateXdeTrackingNumber($order);
         $productName = trim((string) ($order->ch_product_name ?? 'Order Item')) ?: 'Order Item';
@@ -253,8 +350,8 @@ class XdeShippingController extends Controller
                     'order_no' => $referenceNo,
                     'serial_number' => $referenceNo,
                     'asset_number' => $referenceNo,
-                    'payment_type' => strtoupper((string) ($order->ch_payment_method ?? 'Prepaid')) === 'COD' ? 'COD' : 'Prepaid',
-                    'total_price' => $amount,
+                    'payment_type' => $isCod ? 'COD' : 'NONCOD',
+                    'total_price' => $codAmount,
                     'declared_value' => $amount,
                     'package_size' => (string) config('services.xde.package_size', 'Bulky'),
                     'total_quantity' => $quantity,

@@ -4535,11 +4535,44 @@ class ProductController extends Controller
                 'zqp_category_name',
             ])
             ->selectRaw('COUNT(*) as product_count')
-            ->whereNotNull('zqp_category_name')
-            ->where('zqp_category_name', '<>', '')
+            ->where(function ($q) {
+                $q->where(function ($inner) {
+                    $inner->whereNotNull('zqp_category_name')
+                        ->where('zqp_category_name', '<>', '');
+                })->orWhere(function ($inner) {
+                    $inner->whereNotNull('zqp_category_id')
+                        ->where('zqp_category_id', '<>', '');
+                });
+            })
             ->groupBy('zqp_category_id', 'zqp_category_name')
             ->orderBy('zqp_category_name')
             ->get();
+
+        $blankCategoryIds = $zqCategoryRows
+            ->filter(fn ($row) => trim((string) ($row->zqp_category_name ?? '')) === '')
+            ->map(fn ($row) => $this->stringOrNull($row->zqp_category_id))
+            ->filter()
+            ->unique()
+            ->values();
+
+        $rawPayloadCategoryNames = collect();
+        if ($blankCategoryIds->isNotEmpty()) {
+            ZqProduct::query()
+                ->select(['zqp_category_id', 'zqp_raw_payload'])
+                ->whereIn('zqp_category_id', $blankCategoryIds->all())
+                ->get()
+                ->each(function (ZqProduct $product) use ($rawPayloadCategoryNames) {
+                    $categoryId = $this->stringOrNull($product->zqp_category_id);
+                    if ($categoryId === null || $rawPayloadCategoryNames->has($categoryId)) {
+                        return;
+                    }
+
+                    $categoryName = $this->zqCategoryNameFromRawPayload($product->zqp_raw_payload);
+                    if ($categoryName !== null) {
+                        $rawPayloadCategoryNames->put($categoryId, $categoryName);
+                    }
+                });
+        }
 
         $mappingKeys = $zqCategoryRows
             ->map(fn ($row) => $this->zqCategoryKey($row->zqp_category_name, $row->zqp_category_id))
@@ -4557,15 +4590,23 @@ class ProductController extends Controller
         $localCategoryLookup = collect($localCategories)->keyBy('id');
 
         return response()->json([
-            'zqCategories' => $zqCategoryRows->map(function ($row) use ($mappings, $localCategoryLookup) {
+            'zqCategories' => $zqCategoryRows->map(function ($row) use ($mappings, $localCategoryLookup, $rawPayloadCategoryNames) {
                 $key = $this->zqCategoryKey($row->zqp_category_name, $row->zqp_category_id);
                 $mapping = $key ? $mappings->get($key) : null;
                 $localCategoryId = $mapping?->local_category_id ? (int) $mapping->local_category_id : null;
                 $localCategory = $localCategoryId ? $localCategoryLookup->get($localCategoryId) : null;
 
+                $displayName = trim((string) ($row->zqp_category_name ?? ''));
+                if ($displayName === '') {
+                    $categoryId = $this->stringOrNull($row->zqp_category_id);
+                    $displayName = $categoryId !== null
+                        ? ($rawPayloadCategoryNames->get($categoryId) ?? 'ZQ Category ' . $categoryId)
+                        : 'Uncategorized';
+                }
+
                 return [
                     'zqCategoryId' => $row->zqp_category_id,
-                    'zqCategoryName' => (string) $row->zqp_category_name,
+                    'zqCategoryName' => $displayName,
                     'productCount' => (int) $row->product_count,
                     'localCategoryId' => $localCategoryId,
                     'localCategoryName' => is_array($localCategory) ? ($localCategory['name'] ?? null) : null,
@@ -5036,6 +5077,27 @@ class ProductController extends Controller
         $key = strtolower(preg_replace('/\s+/', ' ', $name) ?? $name);
 
         return trim($key) !== '' ? trim($key) : null;
+    }
+
+    private function zqCategoryNameFromRawPayload(mixed $payload): ?string
+    {
+        if (! is_array($payload)) {
+            return null;
+        }
+
+        foreach (['detail', 'summary'] as $section) {
+            $row = $payload[$section] ?? null;
+            if (! is_array($row)) {
+                continue;
+            }
+
+            $name = $this->stringOrNull($row['categoryName'] ?? $row['category_name'] ?? null);
+            if ($name !== null) {
+                return $name;
+            }
+        }
+
+        return $this->stringOrNull($payload['categoryName'] ?? $payload['category_name'] ?? null);
     }
 
     private function stringOrNull(mixed $value): ?string

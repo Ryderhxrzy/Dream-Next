@@ -28,6 +28,17 @@ const periodOptions: Array<{ value: MembersStatsPeriod; label: string }> = [
   { value: '3m', label: '3 Months' },
 ]
 
+const cardGradients: Record<MembersStatCardKey, string> = {
+  total_members: 'from-slate-500 to-slate-700',
+  active: 'from-emerald-500 to-green-600',
+  pending: 'from-sky-500 to-blue-600',
+  blocked: 'from-rose-500 to-red-600',
+  new_members: 'from-blue-500 to-indigo-600',
+  total_spent: 'from-teal-500 to-emerald-600',
+  total_earnings: 'from-cyan-500 to-sky-600',
+  total_referrals: 'from-indigo-500 to-violet-600',
+}
+
 export default function MembersStats({ stats, selectedPeriod, onPeriodChange, onCardClick }: MembersStatsProps) {
   const cards = [
     {
@@ -150,18 +161,16 @@ export default function MembersStats({ stats, selectedPeriod, onPeriodChange, on
         })}
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
       {cards.map((card, index) => {
         const inner = (
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-300">{card.label}</p>
-              <p className={`mt-2 text-2xl font-bold ${card.val}`}>{card.value}</p>
-              {card.sub ? <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-300">{card.sub}</p> : null}
-            </div>
-            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${card.bg} ${card.text}`}>
+          <div className="flex h-full flex-col">
+            <div className={`mb-3.5 flex h-11 w-11 items-center justify-center rounded-xl bg-linear-to-br ${cardGradients[card.key]} text-white shadow-sm ring-1 ring-white/20 transition-transform duration-300 group-hover:scale-105`}>
               {card.icon}
             </div>
+            <p className="truncate text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-300">{card.label}</p>
+            <p className={`mt-1 whitespace-nowrap text-lg font-extrabold tracking-tight tabular-nums sm:text-xl ${card.val}`}>{card.value}</p>
+            {card.sub ? <p className="mt-auto pt-2 line-clamp-1 text-[11px] text-slate-400 dark:text-slate-300">{card.sub}</p> : null}
           </div>
         )
 
@@ -172,13 +181,13 @@ export default function MembersStats({ stats, selectedPeriod, onPeriodChange, on
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.04 }}
           >
-            <Card className={`h-full border ${card.border} bg-white shadow-none transition-all duration-300 hover:-translate-y-0.5 dark:bg-slate-900/95 dark:hover:bg-slate-900`}>
+            <Card className={`group h-full rounded-2xl border ${card.border} bg-white shadow-sm ring-1 ring-slate-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-md dark:bg-slate-900/95 dark:ring-slate-800 dark:hover:bg-slate-900`}>
               <Card.Content className="p-4">
                 <button
                   type="button"
                   onClick={() => onCardClick?.(card.key)}
                   disabled={!onCardClick}
-                  className="w-full text-left disabled:cursor-default"
+                  className="flex h-full w-full text-left disabled:cursor-default"
                 >
                   {inner}
                 </button>
