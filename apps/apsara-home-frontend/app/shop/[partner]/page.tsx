@@ -7,7 +7,7 @@ import {
   filterPartnerProducts,
   resolvePartnerStorefrontPublicUrl,
 } from '@/libs/partnerStorefront'
-import { getPartnerStorefrontBySlug } from '@/libs/partnerStorefrontServer'
+import { getPartnerStorefrontBySlug, isStorefrontSubscriptionExpired } from '@/libs/partnerStorefrontServer'
 import type { Category } from '@/store/api/categoriesApi'
 import type { Product } from '@/store/api/productsApi'
 import type { WebPageItem } from '@/store/api/webPagesApi'
@@ -199,6 +199,12 @@ export default async function PartnerShopPage({ params, searchParams }: PageProp
   const selectedCategoryId = Number.parseInt(String(resolvedSearchParams?.category ?? ''), 10)
   const requestHeaders = await headers()
   const requestHost = requestHeaders.get('x-forwarded-host') ?? requestHeaders.get('host') ?? ''
+
+  const expired = await isStorefrontSubscriptionExpired(resolved.partner)
+  if (expired) {
+    notFound()
+  }
+
   const payload = await getPartnerStorefrontData(
     resolved.partner,
     Number.isFinite(selectedCategoryId) && selectedCategoryId > 0 ? selectedCategoryId : undefined,

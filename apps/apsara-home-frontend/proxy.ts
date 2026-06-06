@@ -294,6 +294,12 @@ export async function proxy(req: NextRequest) {
   }
 
   if (isPartnerLoginPage) {
+    // Always show the login page when redirected here for expiry — prevents redirect loops.
+    const reason = req.nextUrl.searchParams.get("reason");
+    if (reason === "subscription_expired") {
+      return NextResponse.next();
+    }
+
     const role = String((partnerToken as { role?: string } | null)?.role ?? "").toLowerCase();
     const userLevelId = Number((partnerToken as { userLevelId?: number } | null)?.userLevelId ?? 0);
     const isWebContent = role === "web_content" || userLevelId === 4;
@@ -438,7 +444,7 @@ export async function proxy(req: NextRequest) {
     }
 
     if (!hasStorefrontAccess) {
-      return redirectUnauthorized();
+      return NextResponse.redirect(new URL("/partner/login?reason=subscription_expired", req.url));
     }
 
     const allowed =
@@ -468,12 +474,8 @@ export async function proxy(req: NextRequest) {
         const slugToId = await resolveStorefrontSlugToIdMap();
         const targetStorefrontId = Number(slugToId.get(partnerSlug) ?? 0);
         if (targetStorefrontId > 0 && disabledStorefrontIds.includes(targetStorefrontId)) {
-          const partnerStoreName = partnerSlug
-            .split('-')
-            .filter(Boolean)
-            .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-            .join(' ');
-          return redirectUnauthorized(partnerStoreName || "Partner Store");
+          // Let the request reach the shop layout which will call notFound() → 404.
+          return NextResponse.next();
         }
       }
     }

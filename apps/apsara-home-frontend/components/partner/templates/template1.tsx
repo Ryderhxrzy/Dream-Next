@@ -17,6 +17,7 @@ export interface Template1Props {
   stat2Value?: string; stat2Label?: string
   stat3Value?: string; stat3Label?: string
   stat4Value?: string; stat4Label?: string
+  shopSlug?: string
 }
 
 export default function Template1({
@@ -36,6 +37,7 @@ export default function Template1({
   stat2Value = '98%',  stat2Label = 'Satisfaction',
   stat3Value = '0',    stat3Label = 'Inventory Needed',
   stat4Value = '24h',  stat4Label = 'Support',
+  shopSlug,
 }: Template1Props) {
   const stats = [
     { value: stat1Value, label: stat1Label },
@@ -55,9 +57,9 @@ export default function Template1({
           <span className="cursor-pointer transition hover:text-white">About</span>
           <span className="cursor-pointer transition hover:text-white">Contact</span>
         </div>
-        <button type="button" className="rounded-full px-5 py-2 text-sm font-semibold text-white transition hover:opacity-90" style={{ backgroundColor: primaryColor }}>
+        <a href={shopSlug ? `/shop/${shopSlug}` : '#'} className="rounded-full px-5 py-2 text-sm font-semibold text-white transition hover:opacity-90" style={{ backgroundColor: primaryColor }}>
           Shop Now
-        </button>
+        </a>
       </nav>
 
       {/* Hero */}

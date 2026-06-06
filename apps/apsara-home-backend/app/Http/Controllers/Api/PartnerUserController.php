@@ -12,9 +12,11 @@ use Laravel\Sanctum\PersonalAccessToken;
 
 class PartnerUserController extends Controller
 {
+    private ?PartnerStorefrontAccess $storefrontAccessInstance = null;
+
     private function storefrontAccess(): PartnerStorefrontAccess
     {
-        return new PartnerStorefrontAccess();
+        return $this->storefrontAccessInstance ??= new PartnerStorefrontAccess();
     }
 
     private function canManagePartnerUsers(mixed $actor): bool
@@ -308,6 +310,8 @@ class PartnerUserController extends Controller
             $admin->partner_disabled_storefront_ids ?? [],
             $assignedStorefrontIds,
         );
+        // Pass null so expiry is computed across all storefronts, not just assigned ones.
+        $expiredStorefrontIds = $storefrontAccess->mergeDisabledStorefrontIds([], null);
 
         return [
             'id' => (int) $admin->id,
@@ -317,6 +321,7 @@ class PartnerUserController extends Controller
             'user_level_id' => (int) $admin->user_level_id,
             'storefront_ids' => $assignedStorefrontIds,
             'disabled_storefront_ids' => $disabledStorefrontIds,
+            'expired_storefront_ids' => $expiredStorefrontIds,
             'is_banned' => (bool) $admin->is_banned,
         ];
     }

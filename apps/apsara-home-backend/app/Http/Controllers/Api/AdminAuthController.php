@@ -104,10 +104,21 @@ class AdminAuthController extends Controller
             );
         }
 
-        $token = $admin->createToken('admin_auth_token')->plainTextToken;
         $role = AdminAccess::roleFromLevel((int) $admin->user_level_id);
         $storefrontIds = $this->resolveStorefrontIds($admin);
         $disabledStorefrontIds = $this->resolveDisabledStorefrontIds($admin);
+
+        // Block partner users (level 4) when every assigned storefront is expired/disabled.
+        if ((int) $admin->user_level_id === 4
+            && ! empty($storefrontIds)
+            && empty(array_diff($storefrontIds, $disabledStorefrontIds))
+        ) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'email' => ['Your storefront subscription has expired. Please renew to regain access.'],
+            ]);
+        }
+
+        $token = $admin->createToken('admin_auth_token')->plainTextToken;
 
         return response()->json([
             'user' => [

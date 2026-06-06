@@ -93,6 +93,28 @@ export async function getPartnerStorefrontRecordBySlug(
   return null
 }
 
+export async function isStorefrontSubscriptionExpired(slug: string): Promise<boolean> {
+  const normalized = String(slug ?? '').trim().toLowerCase()
+  if (!normalized) return false
+
+  // Prefer 127.0.0.1 over localhost to avoid IPv6 resolution issues on Windows.
+  const apiUrl = (process.env.LARAVEL_API_URL ?? process.env.NEXT_PUBLIC_LARAVEL_API_URL ?? '')
+    .replace(/^http:\/\/localhost\b/, 'http://127.0.0.1')
+  if (!apiUrl) return false
+
+  try {
+    const response = await fetch(
+      `${apiUrl}/api/storefront-subscriptions/${encodeURIComponent(normalized)}`,
+      { method: 'GET', headers: { Accept: 'application/json' }, cache: 'no-store' },
+    )
+    if (!response.ok) return false
+    const json = (await response.json()) as { is_expired?: boolean }
+    return json.is_expired === true
+  } catch {
+    return false
+  }
+}
+
 export async function getPartnerStorefrontRecordByHost(
   requestHost: string,
   options: StorefrontFetchOptions = { fresh: true },

@@ -54,6 +54,25 @@ final class PartnerStorefrontAccess
         return $this->normalizeStorefrontIds(array_merge($storedDisabledIds, $expiredIds));
     }
 
+    public function isStorefrontSlugExpired(string $slug): bool
+    {
+        $normalizedSlug = $this->normalizeStorefrontSlug($slug);
+        if ($normalizedSlug === '') {
+            return false;
+        }
+
+        $slugMap = $this->resolveStorefrontSlugMap();
+        $storefrontId = $slugMap[$normalizedSlug] ?? null;
+
+        if (! is_int($storefrontId) || $storefrontId <= 0) {
+            return false;
+        }
+
+        $expiredIds = $this->expiredStorefrontIds ??= $this->computeExpiredStorefrontIds();
+
+        return in_array($storefrontId, $expiredIds, true);
+    }
+
     public function mergeDisabledStorefrontIds(array $storedDisabledIds, ?array $assignedStorefrontIds = null): array
     {
         $assignedIds = is_array($assignedStorefrontIds)
@@ -101,7 +120,7 @@ final class PartnerStorefrontAccess
                 continue;
             }
 
-            if ($now->greaterThan($endDate->copy()->endOfDay())) {
+            if ($now->greaterThan($endDate)) {
                 $expiredIds[] = (int) $storefrontId;
             }
         }

@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
-import { getPartnerStorefrontBySlug, getPartnerStorefrontRecordBySlug } from '@/libs/partnerStorefrontServer'
+import { getPartnerStorefrontBySlug, getPartnerStorefrontRecordBySlug, isStorefrontSubscriptionExpired } from '@/libs/partnerStorefrontServer'
 import { getServerSession } from 'next-auth'
-import { redirect } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { partnerAuthOptions } from '@/libs/partnerAuth'
 import { adminAuthOptions } from '@/libs/adminAuth'
 
@@ -47,11 +47,22 @@ export default async function PartnerShopLayout({ children, params }: LayoutProp
     return children
   }
 
+  // Block everyone when the subscription is expired — admin sessions do not bypass this.
+  const [record, expired] = await Promise.all([
+    getPartnerStorefrontRecordBySlug(normalizedPartner, { fresh: true }),
+    isStorefrontSubscriptionExpired(normalizedPartner),
+  ])
+
+  if (expired) {
+    notFound()
+  }
+
   const adminSession = await getServerSession(adminAuthOptions)
   if (adminSession?.user) {
     return children
   }
 
+  // Also block a logged-in partner user if their session marks this storefront disabled.
   const session = await getServerSession(partnerAuthOptions)
   const user = session?.user
 
@@ -65,16 +76,13 @@ export default async function PartnerShopLayout({ children, params }: LayoutProp
       return children
     }
 
-    const record = await getPartnerStorefrontRecordBySlug(normalizedPartner, { fresh: true })
     if (record) {
       const disabledStorefrontIds = (user.disabledStorefrontIds ?? [])
         .map((id) => Number(id))
         .filter((id) => Number.isFinite(id))
 
-      const isDisabled = disabledStorefrontIds.includes(record.id)
-
-      if (isDisabled) {
-        redirect(`/unauthorized?store=${encodeURIComponent(record.config.displayName)}`)
+      if (disabledStorefrontIds.includes(record.id)) {
+        notFound()
       }
     }
   }

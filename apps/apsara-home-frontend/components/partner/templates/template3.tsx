@@ -18,6 +18,7 @@ export interface Template3Props {
   stat2Value?: string; stat2Label?: string
   stat3Value?: string; stat3Label?: string
   stat4Value?: string; stat4Label?: string
+  shopSlug?: string
 }
 
 export default function Template3({
@@ -38,6 +39,7 @@ export default function Template3({
   stat2Value = '10K+', stat2Label = 'Products',
   stat3Value = '₱2.4M', stat3Label = 'Monthly Revenue',
   stat4Value = '98%',   stat4Label = 'Satisfaction',
+  shopSlug,
 }: Template3Props) {
   const stats = [
     { value: stat1Value, label: stat1Label },
@@ -57,10 +59,10 @@ export default function Template3({
           <span className="cursor-pointer transition hover:text-white">About</span>
           <span className="cursor-pointer transition hover:text-white">Contact</span>
         </div>
-        <button type="button" className="rounded-full px-5 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+        <a href={shopSlug ? `/shop/${shopSlug}` : '#'} className="rounded-full px-5 py-2 text-sm font-semibold text-white transition hover:opacity-90"
           style={{ background: `linear-gradient(135deg, ${primaryColor}, ${accentColor})` }}>
-          Get Started
-        </button>
+          Shop Now
+        </a>
       </nav>
 
       {/* Hero */}

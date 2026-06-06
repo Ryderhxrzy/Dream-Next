@@ -1,10 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useRouter } from 'next/navigation'
+import { useGetAdminMeQuery } from '@/store/api/authApi'
 import {
   ArrowDown, ArrowLeft, ArrowUp, CheckCircle2, Eye,
   GripVertical, ImageIcon, LayoutGrid, Loader2, Monitor,
-  Palette, Plus, Smartphone, Trash2, Type, X, Layout, Zap, TrendingUp,
+  Palette, Plus, Smartphone, Trash2, Type, Upload, X, Layout, Zap, TrendingUp,
 } from 'lucide-react'
 import { showErrorToast, showSuccessToast } from '@/libs/toast'
 import { getPartnerStorefrontConfig } from '@/libs/partnerStorefront'
@@ -13,6 +16,7 @@ import {
   useUpdateAdminWebPageItemMutation,
   type WebPageItem,
 } from '@/store/api/webPagesApi'
+import Template4Component from '@/components/partner/templates/template4'
 
 const mkId = () => Date.now().toString(36) + Math.random().toString(36).slice(2)
 
@@ -21,7 +25,7 @@ const mkId = () => Date.now().toString(36) + Math.random().toString(36).slice(2)
 ───────────────────────────────────────────────────────────── */
 interface NavLink { label: string; href: string }
 interface NavBlock { id: string; type: 'nav'; storeName: string; logo: string; primaryColor: string; bg: string; textColor: string; links: NavLink[] }
-interface HeroBlock { id: string; type: 'hero'; tagline: string; description: string; bgImage: string; overlayColor: string; overlayOpacity: number; primaryColor: string; btnPrimary: string; btnSecondary: string; align: 'left' | 'center' | 'right'; badge: string }
+interface HeroBlock { id: string; type: 'hero'; tagline: string; description: string; bgImage: string; overlayColor: string; overlayOpacity: number; primaryColor: string; btnPrimary: string; btnSecondary: string; align: 'left' | 'center' | 'right'; badge: string; badge1?: string; badge2?: string; badge3?: string }
 interface StatsBlock { id: string; type: 'stats'; items: { value: string; label: string }[]; bg: string; valueColor: string; labelColor: string }
 interface FeatureItem { icon: string; title: string; desc: string }
 interface FeaturesBlock { id: string; type: 'features'; title: string; subtitle: string; items: FeatureItem[]; columns: 2 | 3; bg: string; cardBg: string; textColor: string; accentColor: string }
@@ -32,7 +36,7 @@ interface ImageBlock { id: string; type: 'image'; src: string; alt: string; capt
 interface AboutHighlight { icon: string; text: string }
 interface AboutBlock { id: string; type: 'about'; heading: string; subheading: string; story: string; image: string; highlights: AboutHighlight[]; bg: string; textColor: string; accentColor: string }
 interface FooterLink { label: string; href: string }
-interface FooterBlock { id: string; type: 'footer'; storeName: string; tagline: string; copyrightText: string; email: string; phone: string; links: FooterLink[]; bg: string; textColor: string }
+interface FooterBlock { id: string; type: 'footer'; storeName: string; tagline: string; copyrightText: string; email: string; phone: string; address?: string; socialFacebook?: string; socialInstagram?: string; socialX?: string; links: FooterLink[]; bg: string; textColor: string }
 type Block = NavBlock | HeroBlock | StatsBlock | FeaturesBlock | TextBlock | TestimonialBlock | CtaBlock | ImageBlock | AboutBlock | FooterBlock
 
 /* ─────────────────────────────────────────────────────────────
@@ -112,6 +116,43 @@ const TEMPLATE_DEFAULTS: Record<string, () => Block[]> = {
     mkFeatures({ bg: '#24243e', cardBg: '#302b63', textColor: '#e2e8f0', accentColor: '#a78bfa' }),
     mkCta({ bg: '#4c1d95', btnColor: '#a78bfa', textColor: '#ffffff' }),
     mkFooter({ bg: '#0f0c29', textColor: '#ffffff' }),
+  ],
+  template4: () => [
+    mkNav({ bg: '#ffffff', primaryColor: '#2563eb', textColor: '#1e293b' }),
+    mkHero({ primaryColor: '#2563eb', overlayColor: '#1e293b', overlayOpacity: 35, align: 'left',
+      bgImage: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1400&q=80',
+      badge1: 'Customer-first approach', badge2: 'Innovative & scalable solutions', badge3: 'Secure & reliable technology' }),
+    mkStats({ bg: '#f8fafc', valueColor: '#2563eb', labelColor: '#64748b', items: [
+      { value: '10,000+', label: 'Happy Customers' },
+      { value: '500,000+', label: 'Orders Processed' },
+      { value: '99.9%', label: 'System Uptime' },
+      { value: '50+', label: 'Countries Served' },
+      { value: '24/7', label: 'Customer Support' },
+    ]}),
+    mkAbout({ bg: '#ffffff', textColor: '#1e293b', accentColor: '#2563eb',
+      heading: "We're on a mission to empower businesses",
+      story: 'We are a technology company focused on providing innovative and scalable solutions that help businesses succeed in the digital era.',
+      image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80',
+      highlights: [
+        { icon: '🎯', text: 'Customer-first approach' },
+        { icon: '🚀', text: 'Innovative & scalable solutions' },
+        { icon: '🔒', text: 'Secure & reliable technology' },
+        { icon: '🤝', text: 'Dedicated support, always' },
+      ],
+    }),
+    mkFeatures({ bg: '#f8fafc', cardBg: '#ffffff', textColor: '#1e293b', accentColor: '#2563eb', columns: 3,
+      title: 'Why Choose Us',
+      subtitle: "Everything you need, nothing you don't.",
+      items: [
+        { icon: '🛒', title: 'E-Commerce Platform', desc: 'Create seamless shopping experiences and grow your online business.' },
+        { icon: '📦', title: 'Inventory Management', desc: 'Track inventory in real-time and manage stock across multiple locations.' },
+        { icon: '📊', title: 'Analytics & Insights', desc: 'Make data-driven decisions with powerful analytics and custom reports.' },
+        { icon: '👥', title: 'Customer Engagement', desc: 'Build lasting relationships with powerful tools across multiple channels.' },
+        { icon: '⚡', title: 'Automation Tools', desc: 'Automate workflows and save time with smart automation.' },
+      ],
+    }),
+    mkCta({ bg: '#eff6ff', btnColor: '#2563eb', textColor: '#1e293b' }),
+    mkFooter({ bg: '#0f172a', textColor: '#94a3b8' }),
   ],
 }
 
@@ -319,12 +360,13 @@ function RenderFooter({ b, compact }: { b: FooterBlock; compact?: boolean }) {
           </div>
         )}
         {/* Contact */}
-        {(b.email || b.phone) && (
+        {(b.email || b.phone || b.address) && (
           <div>
             <p className="mb-4 text-[11px] font-bold uppercase tracking-widest" style={{ opacity: 0.4 }}>Contact</p>
             <div className="space-y-2">
-              {b.email && <p className="text-sm" style={{ opacity: 0.55 }}>{b.email}</p>}
-              {b.phone && <p className="text-sm" style={{ opacity: 0.55 }}>{b.phone}</p>}
+              {b.email   && <p className="text-sm" style={{ opacity: 0.55 }}>{b.email}</p>}
+              {b.phone   && <p className="text-sm" style={{ opacity: 0.55 }}>{b.phone}</p>}
+              {b.address && <p className="text-sm" style={{ opacity: 0.55 }}>{b.address}</p>}
             </div>
           </div>
         )}
@@ -377,6 +419,63 @@ const lCls = 'text-[10px] font-semibold uppercase tracking-wider text-slate-400'
 function F({ label, children }: { label: string; children: React.ReactNode }) {
   return <div className="space-y-1"><p className={lCls}>{label}</p>{children}</div>
 }
+function ImageField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  const [uploading, setUploading] = useState(false)
+  const [localPreview, setLocalPreview] = useState<string | null>(null)
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const objectUrl = URL.createObjectURL(file)
+    setLocalPreview(objectUrl)
+    setUploading(true)
+
+    try {
+      const form = new FormData()
+      form.append('file', file)
+      form.append('folder', 'partner-storefronts')
+      const res = await fetch('/api/admin/upload', { method: 'POST', body: form })
+      const json = await res.json() as { url?: string; error?: string }
+      if (json.url) {
+        onChange(json.url)
+      } else {
+        showErrorToast(json.error ?? 'Upload failed.')
+      }
+    } catch {
+      showErrorToast('Upload failed.')
+    } finally {
+      setUploading(false)
+      setLocalPreview(null)
+      URL.revokeObjectURL(objectUrl)
+      e.target.value = ''
+    }
+  }
+
+  const thumbSrc = localPreview ?? value
+
+  return (
+    <F label={label}>
+      <div className="flex gap-1.5">
+        <input value={value} onChange={(e) => onChange(e.target.value)} className={`${iCls} min-w-0 flex-1`} placeholder="https://…" />
+        <label className={`flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-indigo-300 hover:text-indigo-500 dark:border-slate-700 dark:bg-slate-800 ${uploading ? 'pointer-events-none opacity-50' : ''}`} title="Upload image">
+          {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+          <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="sr-only" onChange={handleFile} disabled={uploading} />
+        </label>
+      </div>
+      {thumbSrc && (
+        <div className="relative mt-1.5">
+          <img src={thumbSrc} alt="" className="h-20 w-full rounded-lg object-cover" />
+          {uploading && (
+            <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/40">
+              <Loader2 className="h-5 w-5 animate-spin text-white" />
+            </div>
+          )}
+        </div>
+      )}
+    </F>
+  )
+}
 function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <F label={label}>
@@ -419,13 +518,7 @@ function NavProps({ b, onChange }: { b: NavBlock; onChange: (b: Block) => void }
     set('links', links.map((l, idx) => idx === i ? { ...l, [key]: v } : l))
   return (
     <div className="space-y-3">
-      <F label="Logo Image URL">
-        <input value={b.logo} onChange={(e) => set('logo', e.target.value)} className={iCls} placeholder="https://… (leave empty for no logo)" />
-        {b.logo && (
-          <img src={b.logo} alt="logo preview" className="mt-1.5 h-12 w-12 rounded-xl object-contain border border-slate-200 bg-slate-50 p-1"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
-        )}
-      </F>
+      <ImageField label="Logo Image URL" value={b.logo} onChange={(v) => set('logo', v)} />
       <F label="Store Name"><input value={b.storeName} onChange={(e) => set('storeName', e.target.value)} className={iCls} /></F>
       <ColorField label="Background" value={b.bg} onChange={(v) => set('bg', v)} />
       <ColorField label="Text Color" value={b.textColor} onChange={(v) => set('textColor', v)} />
@@ -464,16 +557,21 @@ function HeroProps({ b, onChange }: { b: HeroBlock; onChange: (b: Block) => void
       <F label="Badge Text"><input value={b.badge} onChange={(e) => set('badge', e.target.value)} className={iCls} /></F>
       <F label="Headline"><input value={b.tagline} onChange={(e) => set('tagline', e.target.value)} className={iCls} /></F>
       <F label="Description"><textarea value={b.description} onChange={(e) => set('description', e.target.value)} rows={3} className={iCls} /></F>
-      <F label="Background Image URL">
-        <input value={b.bgImage} onChange={(e) => set('bgImage', e.target.value)} className={iCls} placeholder="https://…" />
-        {b.bgImage && <img src={b.bgImage} alt="" className="mt-1.5 h-20 w-full rounded-lg object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />}
-      </F>
+      <ImageField label="Background Image URL" value={b.bgImage} onChange={(v) => set('bgImage', v)} />
       <ColorField label="Overlay Color" value={b.overlayColor} onChange={(v) => set('overlayColor', v)} />
       <RangeRow label="Overlay Opacity" value={b.overlayOpacity} onChange={(v) => set('overlayOpacity', v)} />
       <ColorField label="Button Color" value={b.primaryColor} onChange={(v) => set('primaryColor', v)} />
       <AlignPicker value={b.align} onChange={(v) => onChange({ ...b, align: v })} />
       <F label="Primary Button"><input value={b.btnPrimary} onChange={(e) => set('btnPrimary', e.target.value)} className={iCls} /></F>
       <F label="Secondary Button"><input value={b.btnSecondary} onChange={(e) => set('btnSecondary', e.target.value)} className={iCls} /></F>
+      {(b.badge1 !== undefined || b.badge2 !== undefined || b.badge3 !== undefined) && (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5 space-y-2 dark:border-slate-700 dark:bg-slate-800">
+          <p className={lCls}>Trust Badges</p>
+          <F label="Badge 1"><input value={b.badge1 ?? ''} onChange={(e) => set('badge1', e.target.value)} className={iCls} /></F>
+          <F label="Badge 2"><input value={b.badge2 ?? ''} onChange={(e) => set('badge2', e.target.value)} className={iCls} /></F>
+          <F label="Badge 3"><input value={b.badge3 ?? ''} onChange={(e) => set('badge3', e.target.value)} className={iCls} /></F>
+        </div>
+      )}
     </div>
   )
 }
@@ -605,10 +703,7 @@ function ImageProps({ b, onChange }: { b: ImageBlock; onChange: (b: Block) => vo
   const set = <K extends keyof ImageBlock>(k: K, v: ImageBlock[K]) => onChange({ ...b, [k]: v })
   return (
     <div className="space-y-3">
-      <F label="Image URL">
-        <input value={b.src} onChange={(e) => set('src', e.target.value)} className={iCls} placeholder="https://…" />
-        {b.src && <img src={b.src} alt="" className="mt-1.5 h-28 w-full rounded-lg object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />}
-      </F>
+      <ImageField label="Image URL" value={b.src} onChange={(v) => set('src', v)} />
       <F label="Alt Text"><input value={b.alt} onChange={(e) => set('alt', e.target.value)} className={iCls} /></F>
       <F label="Caption"><input value={b.caption} onChange={(e) => set('caption', e.target.value)} className={iCls} /></F>
       <F label="Width">
@@ -635,10 +730,7 @@ function AboutProps({ b, onChange }: { b: AboutBlock; onChange: (b: Block) => vo
       <F label="Our Story">
         <textarea value={b.story} onChange={(e) => set('story', e.target.value)} rows={5} className={iCls} placeholder="Tell your company story…" />
       </F>
-      <F label="Photo URL">
-        <input value={b.image} onChange={(e) => set('image', e.target.value)} className={iCls} placeholder="https://…" />
-        {b.image && <img src={b.image} alt="" className="mt-1.5 h-24 w-full rounded-lg object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />}
-      </F>
+      <ImageField label="Photo URL" value={b.image} onChange={(v) => set('image', v)} />
       <div className="space-y-2">
         <p className={lCls}>Highlights</p>
         {b.highlights.map((h, i) => (
@@ -684,6 +776,7 @@ function FooterProps({ b, onChange }: { b: FooterBlock; onChange: (b: Block) => 
       {/* Contact */}
       <F label="Email"><input value={b.email} onChange={(e) => set('email', e.target.value)} className={iCls} placeholder="hello@yourstore.com" /></F>
       <F label="Phone"><input value={b.phone} onChange={(e) => set('phone', e.target.value)} className={iCls} placeholder="+63 912 345 6789" /></F>
+      <F label="Address"><input value={b.address ?? ''} onChange={(e) => set('address', e.target.value)} className={iCls} placeholder="123 Main St, City, Country" /></F>
 
       {/* Quick Links */}
       <div className="space-y-2">
@@ -763,12 +856,63 @@ function AddBlockPanel({ onAdd }: { onAdd: (b: Block) => void }) {
 }
 
 /* ─────────────────────────────────────────────────────────────
+   Template4 — map block data to Template4 props so the live
+   component reflects edits made through the block panel
+───────────────────────────────────────────────────────────── */
+function mapBlocksToT4Props(blocks: Block[]) {
+  const nav      = blocks.find((b) => b.type === 'nav')      as NavBlock | undefined
+  const hero     = blocks.find((b) => b.type === 'hero')     as HeroBlock | undefined
+  const about    = blocks.find((b) => b.type === 'about')    as AboutBlock | undefined
+  const statsBlk = blocks.find((b) => b.type === 'stats')    as StatsBlock | undefined
+  const feat     = blocks.find((b) => b.type === 'features') as FeaturesBlock | undefined
+  const cta      = blocks.find((b) => b.type === 'cta')      as CtaBlock | undefined
+  const footer   = blocks.find((b) => b.type === 'footer')   as FooterBlock | undefined
+  const items    = statsBlk?.items ?? []
+  return {
+    storeName:        nav?.storeName,
+    primaryColor:     nav?.primaryColor,
+    navLogo:          nav?.logo,
+    navLinks:         nav?.links,
+    tagline:          hero?.tagline,
+    description:      hero?.description,
+    heroImage:        hero?.bgImage,
+    heroAlign:        hero?.align,
+    heroBtnPrimary:   hero?.btnPrimary,
+    heroBtnSecondary: hero?.btnSecondary,
+    heroBadge1:       hero?.badge1,
+    heroBadge2:       hero?.badge2,
+    heroBadge3:       hero?.badge3,
+    aboutTitle:       about?.heading,
+    aboutBody:        about?.story,
+    aboutImage:       about?.image,
+    aboutHighlights:  about?.highlights,
+    featuresTitle:    feat?.title,
+    featuresSubtitle: feat?.subtitle,
+    ctaTitle:         cta?.title,
+    ctaSubtitle:      cta?.subtitle,
+    ctaBtnText:       cta?.btnText,
+    ctaEmail:         footer?.email,
+    ctaPhone:         footer?.phone,
+    ctaAddress:       footer?.address,
+    socialFacebook:   footer?.socialFacebook,
+    socialInstagram:  footer?.socialInstagram,
+    socialX:          footer?.socialX,
+    stat1Value: items[0]?.value, stat1Label: items[0]?.label,
+    stat2Value: items[1]?.value, stat2Label: items[1]?.label,
+    stat3Value: items[2]?.value, stat3Label: items[2]?.label,
+    stat4Value: items[3]?.value, stat4Label: items[3]?.label,
+    stat5Value: items[4]?.value, stat5Label: items[4]?.label,
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
    Template picker thumbnails
 ───────────────────────────────────────────────────────────── */
 const TEMPLATE_META = [
   { id: 'template1', name: 'Modern Dark',   tag: 'Dark & Immersive', desc: 'Dark hero, amber stats, indigo features.' },
   { id: 'template2', name: 'Light & Clean', tag: 'Warm & Minimal',   desc: 'White cards, orange accents, testimonial.' },
   { id: 'template3', name: 'Bold Gradient', tag: 'Purple Gradient',  desc: 'Deep purple gradient with glass cards.' },
+  { id: 'template4', name: 'SaaS Business', tag: 'Clean & Modern',   desc: 'Split hero with dashboard mockup, blue accent, light layout.' },
 ]
 /* ─────────────────────────────────────────────────────────────
    Color themes
@@ -814,8 +958,20 @@ function TemplateThumbnail({ blocks }: { blocks: Block[] }) {
    Main
 ───────────────────────────────────────────────────────────── */
 export default function LandingPageStudio() {
+  const router = useRouter()
   const { data, isLoading } = useGetAdminWebPageItemsQuery({ type: 'partner_storefront' } as never)
   const [updateItem, { isLoading: isSaving }] = useUpdateAdminWebPageItemMutation()
+  const { data: me, isLoading: isMeLoading } = useGetAdminMeQuery()
+
+  const items = (data as { items?: WebPageItem[] } | undefined)?.items ?? []
+  const slug = getPartnerStorefrontConfig(items[0])?.slug ?? ''
+  const canAccess = slug === 'jujutsu-kaisen' || me?.username === 'try'
+
+  useEffect(() => {
+    if (!isLoading && !isMeLoading && !canAccess) {
+      router.replace('/partner')
+    }
+  }, [isLoading, isMeLoading, canAccess, router])
 
   const [item, setItem]           = useState<WebPageItem | null>(null)
   const [templateId, setTemplateId] = useState<string | null>(null)
@@ -824,6 +980,8 @@ export default function LandingPageStudio() {
   const [rightTab, setRightTab]   = useState<'add' | 'props' | 'theme'>('add')
   const [mobile, setMobile]       = useState(false)
   const [editing, setEditing]     = useState(false)
+  const [carouselIdx, setCarouselIdx] = useState(0)
+  const [carouselDir, setCarouselDir] = useState(1)
   const dragRef = { from: -1, to: -1 }
 
   useEffect(() => {
@@ -907,7 +1065,8 @@ export default function LandingPageStudio() {
     }
   }
 
-  if (isLoading) return <div className="flex h-64 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-indigo-500" /></div>
+  if (isLoading || isMeLoading) return <div className="flex h-64 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-indigo-500" /></div>
+  if (!canAccess) return null
 
   /* ── Template picker ─────────────────────────────────────── */
   if (!editing || !templateId) {
@@ -931,20 +1090,49 @@ export default function LandingPageStudio() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-          {TEMPLATE_META.map((tpl) => {
+        {/* Carousel — infinite loop, center focused, sides blurred */}
+        {(() => {
+          const total = TEMPLATE_META.length
+          const wrap = (i: number) => ((i % total) + total) % total
+          const slots = [-1, 0, 1]
+
+          const slideVariants = {
+            enter: (dir: number) => ({ x: dir > 0 ? '100%' : '-100%', opacity: 1 }),
+            center: { x: 0, opacity: 1 },
+            exit:  (dir: number) => ({
+              x: dir > 0 ? '-40%' : '40%',
+              opacity: 0,
+              transition: { duration: 0.22, ease: 'easeIn' },
+            }),
+          }
+
+          const renderCard = (tpl: typeof TEMPLATE_META[number], isCenter: boolean, offset: number) => {
             const isActive = templateId === tpl.id
             const thumbBlocks = isActive ? blocks : TEMPLATE_DEFAULTS[tpl.id]()
             return (
-              <button key={tpl.id} type="button"
+              <button type="button"
                 onClick={() => {
-                  if (!isActive) { setTemplateId(tpl.id); setBlocks(TEMPLATE_DEFAULTS[tpl.id]()) }
-                  setEditing(true)
+                  if (isCenter) {
+                    if (!isActive) { setTemplateId(tpl.id); setBlocks(TEMPLATE_DEFAULTS[tpl.id]()) }
+                    setEditing(true)
+                  } else {
+                    setCarouselDir(offset)
+                    setCarouselIdx(TEMPLATE_META.indexOf(tpl))
+                  }
                 }}
-                className={`group flex flex-col overflow-hidden rounded-2xl border-2 bg-white text-left shadow-sm transition-all hover:shadow-lg dark:bg-slate-900 ${isActive ? 'border-emerald-400' : 'border-slate-200 hover:border-indigo-400 dark:border-slate-700'}`}
+                className={`group w-full flex flex-col overflow-hidden rounded-2xl border-2 bg-white text-left dark:bg-slate-900
+                  ${isCenter
+                    ? `shadow-2xl ${isActive ? 'border-emerald-400' : 'border-indigo-400'}`
+                    : `shadow-sm cursor-pointer ${isActive ? 'border-emerald-300' : 'border-slate-200 dark:border-slate-700'}`
+                  }`}
               >
                 <div className="relative h-52 overflow-hidden bg-slate-100 dark:bg-slate-800">
-                  <TemplateThumbnail blocks={thumbBlocks} />
+                  {tpl.id === 'template4'
+                    ? <div className="pointer-events-none absolute left-0 top-0 origin-top-left" style={{ width: '1280px', transform: 'scale(0.305)', transformOrigin: 'top left' }}>
+                        <Template4Component {...mapBlocksToT4Props(thumbBlocks)} />
+                      </div>
+                    : <TemplateThumbnail blocks={thumbBlocks} />
+                  }
                   {isActive && <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-emerald-500 px-2.5 py-1 text-[11px] font-bold text-white shadow"><CheckCircle2 className="h-3 w-3" /> Active</div>}
                 </div>
                 <div className="flex flex-1 flex-col gap-1 px-4 py-3">
@@ -953,12 +1141,87 @@ export default function LandingPageStudio() {
                     <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">{tpl.tag}</span>
                   </div>
                   <p className="text-[12px] leading-relaxed text-slate-500 dark:text-slate-400">{tpl.desc}</p>
-                  <p className="mt-1 text-[12px] font-semibold text-indigo-600 opacity-0 transition-opacity group-hover:opacity-100">{isActive ? 'Edit this template →' : 'Use this template →'}</p>
+                  {isCenter && <p className="mt-1 text-[12px] font-semibold text-indigo-600 opacity-0 transition-opacity group-hover:opacity-100">{isActive ? 'Edit this template →' : 'Use this template →'}</p>}
                 </div>
               </button>
             )
-          })}
-        </div>
+          }
+
+          return (
+            <div className="relative px-2">
+              <div className="flex items-stretch gap-4">
+                {slots.map((offset) => {
+                  const tpl = TEMPLATE_META[wrap(carouselIdx + offset)]
+                  const isCenter = offset === 0
+                  return (
+                    <div
+                      className="flex-1 overflow-hidden transition-all duration-300 ease-out"
+                      style={{
+                        zIndex: isCenter ? 10 : 1,
+                        transform: `scale(${isCenter ? 1.04 : 0.94}) translateY(${isCenter ? -4 : 0}px)`,
+                        opacity: isCenter ? 1 : 0.55,
+                        filter: isCenter ? 'none' : 'blur(2px)',
+                      }}
+                    >
+                      <AnimatePresence initial={false} mode="wait" custom={carouselDir}>
+                        <motion.div
+                          key={tpl.id}
+                          custom={carouselDir}
+                          variants={slideVariants}
+                          initial="enter"
+                          animate="center"
+                          exit="exit"
+                          transition={{ type: 'spring', stiffness: 180, damping: 26 }}
+                        >
+                          {renderCard(tpl, isCenter, offset)}
+                        </motion.div>
+                      </AnimatePresence>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Prev arrow */}
+              <motion.button type="button"
+                whileHover={{ scale: 1.15 }}
+                whileTap={{ scale: 0.88 }}
+                onClick={() => { setCarouselDir(-1); setCarouselIdx((i) => wrap(i - 1)) }}
+                className="absolute -left-3 top-[calc(50%-32px)] -translate-y-1/2 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white shadow-md dark:border-slate-700 dark:bg-slate-800">
+                <svg viewBox="0 0 24 24" className="h-4 w-4 text-slate-600" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </motion.button>
+
+              {/* Next arrow */}
+              <motion.button type="button"
+                whileHover={{ scale: 1.15 }}
+                whileTap={{ scale: 0.88 }}
+                onClick={() => { setCarouselDir(1); setCarouselIdx((i) => wrap(i + 1)) }}
+                className="absolute -right-3 top-[calc(50%-32px)] -translate-y-1/2 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white shadow-md dark:border-slate-700 dark:bg-slate-800">
+                <svg viewBox="0 0 24 24" className="h-4 w-4 text-slate-600" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </motion.button>
+
+              {/* Dot indicators */}
+              <div className="mt-5 flex items-center justify-center gap-2">
+                {TEMPLATE_META.map((tpl, idx) => (
+                  <motion.button
+                    key={tpl.id}
+                    type="button"
+                    onClick={() => { setCarouselDir(idx > carouselIdx ? 1 : -1); setCarouselIdx(idx) }}
+                    animate={{
+                      width: idx === carouselIdx ? 24 : 8,
+                      backgroundColor: idx === carouselIdx ? '#4f46e5' : '#cbd5e1',
+                    }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                    className="h-2 rounded-full"
+                  />
+                ))}
+              </div>
+            </div>
+          )
+        })()}
       </div>
     )
   }
@@ -1021,71 +1284,86 @@ export default function LandingPageStudio() {
           </div>
           {/* Page — items-start so content grows to full height and is scrollable */}
           <div className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto p-4">
-            <div className="w-full rounded-xl bg-white shadow-2xl" style={{ maxWidth: mobile ? 390 : '100%' }}
-              onClick={(e) => { if (e.target === e.currentTarget) { setSelectedId(null); setRightTab('add') } }}>
-              {blocks.length === 0 && (
-                <div className="flex h-64 flex-col items-center justify-center gap-3 text-slate-400">
-                  <LayoutGrid className="h-8 w-8 opacity-30" />
-                  <p className="text-sm">No blocks yet. Add one from the right panel.</p>
-                </div>
-              )}
-              {blocks.map((block, i) => {
-                const isSelected = block.id === selectedId
-                return (
-                  <div key={block.id}
-                    className={`group relative cursor-pointer outline-none transition-all ${isSelected ? 'ring-2 ring-inset ring-indigo-500' : 'hover:ring-1 hover:ring-inset hover:ring-indigo-300'}`}
-                    onClick={(e) => { e.stopPropagation(); setSelectedId(block.id); setRightTab('props') }}
-                    draggable
-                    onDragStart={() => { dragRef.from = i }}
-                    onDragOver={(e) => { e.preventDefault(); dragRef.to = i }}
-                    onDrop={() => {
-                      if (dragRef.from === dragRef.to || dragRef.from < 0) return
-                      const next = [...blocks]
-                      const [moved] = next.splice(dragRef.from, 1)
-                      next.splice(dragRef.to, 0, moved)
-                      setBlocks(next)
-                      dragRef.from = -1; dragRef.to = -1
-                    }}
-                  >
-                    {/* Selected toolbar */}
-                    {isSelected && (
-                      <div className="absolute left-2 top-2 z-30 flex items-center gap-1 rounded-xl bg-indigo-600 px-2 py-1 shadow-lg"
-                        onClick={(e) => e.stopPropagation()}>
-                        <GripVertical className="h-3.5 w-3.5 cursor-grab text-white/70" />
-                        <span className="text-[11px] font-semibold text-white">{BLOCK_LABEL[block.type]}</span>
-                        <div className="mx-1 h-3 w-px bg-white/25" />
-                        <button type="button" onClick={() => moveBlock(block.id, -1)} disabled={i === 0}
-                          className="rounded p-0.5 text-white/80 transition hover:bg-white/20 disabled:opacity-30">
-                          <ArrowUp className="h-3 w-3" />
-                        </button>
-                        <button type="button" onClick={() => moveBlock(block.id, 1)} disabled={i === blocks.length - 1}
-                          className="rounded p-0.5 text-white/80 transition hover:bg-white/20 disabled:opacity-30">
-                          <ArrowDown className="h-3 w-3" />
-                        </button>
-                        <button type="button" onClick={() => deleteBlock(block.id)}
-                          className="rounded p-0.5 text-white/80 transition hover:bg-red-500">
-                          <Trash2 className="h-3 w-3" />
-                        </button>
-                      </div>
-                    )}
-                    {/* Hover label */}
-                    {!isSelected && (
-                      <div className="pointer-events-none absolute left-2 top-2 z-20 rounded-lg bg-black/50 px-2 py-0.5 text-[10px] font-semibold text-white opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
-                        {BLOCK_LABEL[block.type]}
-                      </div>
-                    )}
-                    <BlockCanvas block={block} compact={mobile} shopSlug={shopSlug} />
-                  </div>
-                )
-              })}
-              {/* Add block at bottom */}
-              <div className="flex items-center justify-center border-t border-dashed border-slate-200 py-4">
-                <button type="button" onClick={() => { setSelectedId(null); setRightTab('add') }}
-                  className="flex items-center gap-2 rounded-full border border-dashed border-indigo-300 px-5 py-2 text-xs font-semibold text-indigo-500 transition hover:bg-indigo-50">
-                  <Plus className="h-3.5 w-3.5" /> Add Block
-                </button>
+            {templateId === 'template4' ? (
+              /* Template4 renders its own complete design with per-section click-to-edit */
+              <div className="w-full rounded-xl bg-white shadow-2xl overflow-hidden" style={{ maxWidth: mobile ? 390 : '100%' }}>
+                <Template4Component
+                  {...mapBlocksToT4Props(blocks)}
+                  shopSlug={slug}
+                  selectedSection={blocks.find((b) => b.id === selectedId)?.type ?? null}
+                  onSectionClick={(section) => {
+                    const block = blocks.find((b) => b.type === section)
+                    if (block) { setSelectedId(block.id); setRightTab('props') }
+                  }}
+                />
               </div>
-            </div>
+            ) : (
+              <div className="w-full rounded-xl bg-white shadow-2xl" style={{ maxWidth: mobile ? 390 : '100%' }}
+                onClick={(e) => { if (e.target === e.currentTarget) { setSelectedId(null); setRightTab('add') } }}>
+                {blocks.length === 0 && (
+                  <div className="flex h-64 flex-col items-center justify-center gap-3 text-slate-400">
+                    <LayoutGrid className="h-8 w-8 opacity-30" />
+                    <p className="text-sm">No blocks yet. Add one from the right panel.</p>
+                  </div>
+                )}
+                {blocks.map((block, i) => {
+                  const isSelected = block.id === selectedId
+                  return (
+                    <div key={block.id}
+                      className={`group relative cursor-pointer outline-none transition-all ${isSelected ? 'ring-2 ring-inset ring-indigo-500' : 'hover:ring-1 hover:ring-inset hover:ring-indigo-300'}`}
+                      onClick={(e) => { e.stopPropagation(); setSelectedId(block.id); setRightTab('props') }}
+                      draggable
+                      onDragStart={() => { dragRef.from = i }}
+                      onDragOver={(e) => { e.preventDefault(); dragRef.to = i }}
+                      onDrop={() => {
+                        if (dragRef.from === dragRef.to || dragRef.from < 0) return
+                        const next = [...blocks]
+                        const [moved] = next.splice(dragRef.from, 1)
+                        next.splice(dragRef.to, 0, moved)
+                        setBlocks(next)
+                        dragRef.from = -1; dragRef.to = -1
+                      }}
+                    >
+                      {/* Selected toolbar */}
+                      {isSelected && (
+                        <div className="absolute left-2 top-2 z-30 flex items-center gap-1 rounded-xl bg-indigo-600 px-2 py-1 shadow-lg"
+                          onClick={(e) => e.stopPropagation()}>
+                          <GripVertical className="h-3.5 w-3.5 cursor-grab text-white/70" />
+                          <span className="text-[11px] font-semibold text-white">{BLOCK_LABEL[block.type]}</span>
+                          <div className="mx-1 h-3 w-px bg-white/25" />
+                          <button type="button" onClick={() => moveBlock(block.id, -1)} disabled={i === 0}
+                            className="rounded p-0.5 text-white/80 transition hover:bg-white/20 disabled:opacity-30">
+                            <ArrowUp className="h-3 w-3" />
+                          </button>
+                          <button type="button" onClick={() => moveBlock(block.id, 1)} disabled={i === blocks.length - 1}
+                            className="rounded p-0.5 text-white/80 transition hover:bg-white/20 disabled:opacity-30">
+                            <ArrowDown className="h-3 w-3" />
+                          </button>
+                          <button type="button" onClick={() => deleteBlock(block.id)}
+                            className="rounded p-0.5 text-white/80 transition hover:bg-red-500">
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+                      )}
+                      {/* Hover label */}
+                      {!isSelected && (
+                        <div className="pointer-events-none absolute left-2 top-2 z-20 rounded-lg bg-black/50 px-2 py-0.5 text-[10px] font-semibold text-white opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
+                          {BLOCK_LABEL[block.type]}
+                        </div>
+                      )}
+                      <BlockCanvas block={block} compact={mobile} shopSlug={shopSlug} />
+                    </div>
+                  )
+                })}
+                {/* Add block at bottom */}
+                <div className="flex items-center justify-center border-t border-dashed border-slate-200 py-4">
+                  <button type="button" onClick={() => { setSelectedId(null); setRightTab('add') }}
+                    className="flex items-center gap-2 rounded-full border border-dashed border-indigo-300 px-5 py-2 text-xs font-semibold text-indigo-500 transition hover:bg-indigo-50">
+                    <Plus className="h-3.5 w-3.5" /> Add Block
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
