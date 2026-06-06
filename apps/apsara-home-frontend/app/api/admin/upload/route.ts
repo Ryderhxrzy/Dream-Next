@@ -4,6 +4,7 @@ import type { UploadApiOptions, UploadApiResponse } from 'cloudinary'
 import { getServerSession } from 'next-auth'
 import { adminAuthOptions } from '@/libs/adminAuth'
 import { authOptions } from '@/libs/auth'
+import { partnerAuthOptions } from '@/libs/partnerAuth'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -48,8 +49,9 @@ function uploadBuffer(
 export async function POST(req: NextRequest) {
   try {
     const adminSession = await getServerSession(adminAuthOptions)
-    const customerSession = adminSession ? null : await getServerSession(authOptions)
-    const session = adminSession ?? customerSession
+    const partnerSession = adminSession ? null : await getServerSession(partnerAuthOptions)
+    const customerSession = (!adminSession && !partnerSession) ? await getServerSession(authOptions) : null
+    const session = adminSession ?? partnerSession ?? customerSession
     const role = String((session?.user as { role?: string } | undefined)?.role ?? '').toLowerCase()
 
     if (!cloudinaryCloudName || !cloudinaryApiKey || !cloudinaryApiSecret) {
@@ -66,7 +68,8 @@ export async function POST(req: NextRequest) {
 
     const isAdminUpload = ['super_admin', 'admin', 'web_content', 'accounting', 'finance_officer'].includes(role)
     const isCustomerProfileUpload = role === 'customer' && folderType === 'profile'
-    if (!session?.user || (!isAdminUpload && !isCustomerProfileUpload)) {
+    const isPartnerUpload = !!partnerSession?.user && folderType === 'partner-storefronts'
+    if (!session?.user || (!isAdminUpload && !isCustomerProfileUpload && !isPartnerUpload)) {
       return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })
     }
 

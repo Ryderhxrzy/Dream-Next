@@ -4,6 +4,7 @@ import Link from 'next/link'
 
 import { usePathname } from 'next/navigation'
 import { useGetAdminWebPageItemsQuery, type WebPageItem } from '@/store/api/webPagesApi'
+import { useGetAdminMeQuery } from '@/store/api/authApi'
 import { getPartnerStorefrontConfig } from '@/libs/partnerStorefront'
 
 interface PartnerSidebarProps {
@@ -35,7 +36,7 @@ const links = [
     href: '/partner/webpages/partner-landing-page',
     label: 'Landing Page',
     description: 'Hero, colours & public URL',
-    restricted: false,
+    restricted: true,
     icon: (
       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9">
         <rect x="2" y="3" width="20" height="14" rx="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -111,7 +112,9 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
   const { data } = useGetAdminWebPageItemsQuery({ type: 'partner_storefront' } as never)
   const items = (data as { items?: WebPageItem[] } | undefined)?.items ?? []
   const slug = getPartnerStorefrontConfig(items[0])?.slug ?? ''
-  const visibleLinks = links.filter((link) => !link.restricted || slug === 'jujutsu-kaisen')
+  const { data: me } = useGetAdminMeQuery()
+  const canAccessLandingPage = slug === 'jujutsu-kaisen' || me?.username === 'try'
+  const visibleLinks = links.filter((link) => !link.restricted || canAccessLandingPage)
 
   return (
     <>

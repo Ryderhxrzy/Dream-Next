@@ -2271,6 +2271,10 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
     setWebstoreHistoryPage((current) => Math.min(current, webstoreHistoryTotalPages));
   }, [webstoreHistoryTotalPages]);
   const isApprovedWebstoreRequest = activeWebstoreRequest?.status === 'approved';
+  const isWebstoreExpired = isApprovedWebstoreRequest && (() => {
+    const expiry = getWebstoreSubscriptionExpiry(activeWebstoreRequest!)
+    return expiry !== null && expiry < new Date()
+  })();
   const storedWebstorePaymentContext = useMemo<{
     checkoutId?: string | null;
     paymentMethod?: WebstorePaymentMethod | null;
@@ -2529,15 +2533,18 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
     return fullFees[resolvedWebstorePlan] ?? null;
   }, [resolvedWebstorePlan]);
   const webstoreRemainingBalance = useMemo(() => {
-    const requestRemaining = Number(activeWebstoreRequest?.remaining_balance ?? NaN);
-    if (Number.isFinite(requestRemaining)) {
-      return Math.max(0, requestRemaining);
+    // For expired subscriptions with renewal enabled, ignore the old paid balance and use the new plan's fee.
+    if (!(isWebstoreExpired && webstoreRenewalEnabled)) {
+      const requestRemaining = Number(activeWebstoreRequest?.remaining_balance ?? NaN);
+      if (Number.isFinite(requestRemaining)) {
+        return Math.max(0, requestRemaining);
+      }
     }
     if (selectedWebstoreSubscriptionFee != null) {
       return Math.max(0, selectedWebstoreSubscriptionFee);
     }
     return 0;
-  }, [activeWebstoreRequest?.remaining_balance, selectedWebstoreSubscriptionFee]);
+  }, [isWebstoreExpired, activeWebstoreRequest?.remaining_balance, selectedWebstoreSubscriptionFee]);
   const webstorePlanLabel = resolvedWebstorePlan === 'test'
     ? 'Test'
     : resolvedWebstorePlan === 'quarterly'
@@ -2584,7 +2591,8 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
     : '-';
   const isAfuser = (profileData?.username ?? '').trim().toLowerCase() === 'afuser';
   const webstorePaymentCompleted = Boolean(webstorePaymentReferenceId || webstorePaymentProofUrl);
-  const isWebstoreSubscriptionLocked = hasExistingWebstoreRequest;
+  const isRenewalToggleLocked = hasExistingWebstoreRequest && !isWebstoreExpired;
+  const isWebstoreSubscriptionLocked = hasExistingWebstoreRequest && !(isWebstoreExpired && webstoreRenewalEnabled);
   const hasWebstorePaymentHistory = Number(activeWebstoreRequest?.payment_count ?? 0) > 0
     || Number(activeWebstoreRequest?.total_paid_amount ?? 0) > 0;
   const resolvedWebstoreSubmissionForm = useMemo<WebstoreRequestFormState>(() => ({
@@ -6959,6 +6967,25 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                       </div>
                     ) : null}
 
+                    {isWebstoreExpired && (
+                      <div className="mb-4 rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 shadow-sm">
+                        <div className="flex items-start gap-3">
+                          <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-100 text-orange-500">
+                            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              <circle cx="12" cy="12" r="10" />
+                              <polyline points="12 6 12 12 16 14" />
+                            </svg>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-orange-800">Your subscription has expired.</p>
+                            <p className="mt-0.5 text-xs leading-5 text-orange-700">
+                              Renew your plan to maintain uninterrupted access to your account and services.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {webstoreMsg && (
                       <div className={`mb-4 rounded-xl px-3.5 py-2.5 text-xs font-semibold ${webstoreMsg.type === 'success' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-700' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 border border-rose-100 dark:border-rose-700'}`}>
                         {webstoreMsg.text}
@@ -7190,26 +7217,26 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                             </div>
                             <button
                               type="button"
-                              disabled={isWebstoreSubscriptionLocked}
+                              disabled={isRenewalToggleLocked}
                               onClick={() => {
-                                if (isWebstoreSubscriptionLocked) return;
+                                if (isRenewalToggleLocked) return;
                                 const next = !webstoreRenewalEnabled;
                                 setWebstoreRenewalEnabled(next);
                                 saveWebstoreDraft({ webstoreRenewalEnabled: next });
                               }}
                               className={`relative inline-flex h-8 w-14 items-center rounded-full px-1 transition ${
-                                isWebstoreSubscriptionLocked
+                                isRenewalToggleLocked
                                   ? 'cursor-not-allowed bg-slate-200 opacity-70'
                                   : webstoreRenewalEnabled
                                     ? 'bg-emerald-500'
                                     : 'bg-slate-300'
                               }`}
                               aria-pressed={webstoreRenewalEnabled}
-                              aria-label={isWebstoreSubscriptionLocked ? 'Renewal locked while request is under review' : webstoreRenewalEnabled ? 'Disable renewal' : 'Enable renewal'}
+                              aria-label={isRenewalToggleLocked ? 'Renewal locked while request is under review' : webstoreRenewalEnabled ? 'Disable renewal' : 'Enable renewal'}
                             >
                               <span
                                 className={`inline-block h-6 w-6 rounded-full bg-white shadow transition-transform ${
-                                  isWebstoreSubscriptionLocked
+                                  isRenewalToggleLocked
                                     ? 'translate-x-0'
                                     : webstoreRenewalEnabled
                                       ? 'translate-x-6'

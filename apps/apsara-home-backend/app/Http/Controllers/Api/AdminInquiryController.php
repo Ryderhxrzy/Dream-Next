@@ -673,7 +673,7 @@ class AdminInquiryController extends Controller
                 'wpc_key' => $normalizedSlug,
                 'wpc_title' => $resolvedDisplayName,
                 'wpc_subtitle' => 'Shop ' . $resolvedDisplayName,
-                'wpc_body' => 'Curated products for your partner storefront.',
+                'wpc_body' => '',
                 'wpc_payload' => [
                     'fields' => $payloadFields,
                 ],
@@ -688,7 +688,7 @@ class AdminInquiryController extends Controller
         $storefront->wpc_key = $normalizedSlug;
         $storefront->wpc_title = $resolvedDisplayName;
         $storefront->wpc_subtitle = trim((string) ($storefront->wpc_subtitle ?? '')) !== '' ? $storefront->wpc_subtitle : ('Shop ' . $resolvedDisplayName);
-        $storefront->wpc_body = trim((string) ($storefront->wpc_body ?? '')) !== '' ? $storefront->wpc_body : 'Curated products for your partner storefront.';
+        $storefront->wpc_body = trim((string) ($storefront->wpc_body ?? ''));
         $storefront->wpc_status = true;
         $storefront->wpc_payload = [
             ...$existingPayload,

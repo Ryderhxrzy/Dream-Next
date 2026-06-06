@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { usePathname } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { useGetAdminMeQuery } from '@/store/api/authApi'
 import { useHeartbeatAdminPresenceMutation } from '@/store/api/adminUsersApi'
@@ -15,7 +15,8 @@ interface PartnerDashboardLayoutProps {
 const PartnerDashboardLayout = ({ children }: PartnerDashboardLayoutProps) => {
     const [sidebarOpen, setSidebarOpen] = useState(false)
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-    const { data: session } = useSession()
+    const { data: session, update: updateSession } = useSession()
+    const router = useRouter()
     const [heartbeatAdminPresence] = useHeartbeatAdminPresenceMutation()
     const pathname = usePathname()
     const isBanned = (session?.user as { isBanned?: boolean } | undefined)?.isBanned === true
@@ -25,7 +26,35 @@ const PartnerDashboardLayout = ({ children }: PartnerDashboardLayoutProps) => {
         : undefined
 
     // Poll /me every 12 seconds
-    useGetAdminMeQuery(adminIdentityKey, { pollingInterval: 12_000, skip: isBanned || !sessionAccessToken })
+    const { data: meData } = useGetAdminMeQuery(adminIdentityKey, { pollingInterval: 12_000, skip: isBanned || !sessionAccessToken })
+
+    // Keep a ref of the last known disabled IDs to avoid redundant session updates
+    const lastDisabledIdsRef = useRef<string>('')
+
+    useEffect(() => {
+        if (!meData) return
+
+        const freshDisabled: number[] = Array.isArray(meData.disabled_storefront_ids)
+            ? meData.disabled_storefront_ids.map(Number).filter(Number.isFinite)
+            : []
+        const freshStorefrontIds: number[] = Array.isArray(meData.storefront_ids)
+            ? meData.storefront_ids.map(Number).filter(Number.isFinite)
+            : []
+
+        const disabledKey = [...freshDisabled].sort().join(',')
+        if (disabledKey === lastDisabledIdsRef.current) return
+        lastDisabledIdsRef.current = disabledKey
+
+        // Sync the NextAuth session with fresh disabled IDs from the server.
+        void updateSession({ disabledStorefrontIds: freshDisabled, storefrontIds: freshStorefrontIds })
+
+        // When every assigned storefront is disabled/expired, kick the partner out.
+        const allExpired = freshStorefrontIds.length > 0
+            && freshStorefrontIds.every((id) => freshDisabled.includes(id))
+        if (allExpired) {
+            router.replace('/partner/login?reason=subscription_expired')
+        }
+    }, [meData, updateSession, router])
 
     useEffect(() => {
         if (!sessionAccessToken || isBanned) {

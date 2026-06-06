@@ -212,6 +212,7 @@ Route::middleware('throttle:storefront-read')->group(function () {
     Route::get('/web-pages/home', [WebPageController::class, 'home']);
     Route::get('/web-pages/adds-content', [AddsContentController::class, 'publicIndex']);
     Route::get('/web-pages/{type}', [WebPageController::class, 'publicIndex']);
+    Route::get('/storefront-subscriptions/{slug}', [\App\Http\Controllers\Api\StorefrontSubscriptionController::class, 'show']);
 });
 
 // Shop by endpoints

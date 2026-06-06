@@ -132,7 +132,6 @@ export default function PartnerStorefrontPage({ partner, data, publicShopUrl }: 
                 )}
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Partner Store</p>
                 <h1
                   className="text-2xl font-bold tracking-tight sm:text-3xl"
                   style={{ color: titleColor }}

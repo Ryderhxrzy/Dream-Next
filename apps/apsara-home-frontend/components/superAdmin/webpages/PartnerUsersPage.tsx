@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { showErrorToast, showSuccessToast } from '@/libs/toast'
 import { getPartnerStorefrontConfig } from '@/libs/partnerStorefront'
+import { isWebstoreRequestExpired } from '@/libs/webstoreExpiry'
 import { Pencil, Trash2 } from 'lucide-react'
 import {
   useCreatePartnerUserMutation,
@@ -11,6 +12,7 @@ import {
   useUpdatePartnerUserMutation,
   type PartnerUserItem,
 } from '@/store/api/partnerUsersApi'
+import { useGetWebstoreRequestsQuery } from '@/store/api/adminInquiriesApi'
 import { useGetAdminWebPageItemsQuery } from '@/store/api/webPagesApi'
 
 type FormState = {
@@ -68,6 +70,23 @@ export default function PartnerUsersPage({ showStorefrontFilter = true }: { show
     storefronts.forEach((s) => map.set(s.id, s.name))
     return map
   }, [storefronts])
+
+  const { data: webstoreRequestsData } = useGetWebstoreRequestsQuery()
+
+  // Compute expired storefront IDs purely on the frontend — same logic as the inquiry page —
+  // so both pages always agree on expiry without relying on backend timing or slug DB lookups.
+  const globalExpiredStorefrontIds = useMemo(() => {
+    const expiredSlugs = new Set<string>()
+    for (const req of webstoreRequestsData?.requests ?? []) {
+      const slug = String(req.slug_name ?? '').trim().toLowerCase()
+      if (slug && isWebstoreRequestExpired(req)) {
+        expiredSlugs.add(slug)
+      }
+    }
+    return storefronts
+      .filter((s) => expiredSlugs.has(s.slug.toLowerCase()))
+      .map((s) => s.id)
+  }, [webstoreRequestsData?.requests, storefronts])
 
   const { data, isLoading, isError, error: loadError, refetch } = useGetPartnerUsersQuery(
     { search },
@@ -198,6 +217,8 @@ export default function PartnerUsersPage({ showStorefrontFilter = true }: { show
     if (!targetAccessUser) return []
     return (targetAccessUser.storefront_ids ?? []).map((id) => Number(id)).filter((id) => Number.isFinite(id))
   }, [targetAccessUser])
+
+  const currentExpiredIds = globalExpiredStorefrontIds
 
   const saveStorefrontAccess = async (targetUser: PartnerUserItem, nextDisabledIds: number[]) => {
     setIsSavingStorefrontAccess(true)
@@ -549,42 +570,48 @@ export default function PartnerUsersPage({ showStorefrontFilter = true }: { show
                 <div className="space-y-2">
                   {storefronts.map((store) => {
                     const isAssigned = currentAssignedAccessIds.includes(store.id)
-                    const isDisabled = currentAccessIds.includes(store.id)
+                    const isExpired = currentExpiredIds.includes(store.id)
+                    const isDisabled = isExpired || currentAccessIds.includes(store.id)
+                    const toggleLocked = isSavingStorefrontAccess || !targetAccessUser || !isAssigned || isExpired
                     return (
                       <div
                         key={`toggle-${store.id}`}
                         className={`flex items-center justify-between rounded-xl border px-4 py-3 transition ${
-                          !isAssigned
-                            ? 'border-slate-200 bg-slate-50 opacity-50 dark:border-slate-700 dark:bg-slate-800/40'
-                            : isDisabled
-                              ? 'border-rose-200 bg-rose-50/60 dark:border-rose-900/50 dark:bg-rose-950/20'
-                              : 'border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/40 dark:bg-emerald-950/20'
+                          isExpired
+                            ? 'border-orange-200 bg-orange-50/60 dark:border-orange-900/50 dark:bg-orange-950/20'
+                            : !isAssigned
+                              ? 'border-slate-200 bg-slate-50 opacity-50 dark:border-slate-700 dark:bg-slate-800/40'
+                              : isDisabled
+                                ? 'border-rose-200 bg-rose-50/60 dark:border-rose-900/50 dark:bg-rose-950/20'
+                                : 'border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/40 dark:bg-emerald-950/20'
                         }`}
                       >
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
                             <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{store.name}</p>
-                            {!isAssigned ? (
+                            {isExpired ? (
+                              <span className="rounded-full bg-orange-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-orange-600 dark:bg-orange-950/50 dark:text-orange-400">Expired</span>
+                            ) : !isAssigned ? (
                               <span className="rounded-full bg-slate-200 px-1.5 py-0.5 text-[9px] font-bold uppercase text-slate-500 dark:bg-slate-700 dark:text-slate-400">Not Assigned</span>
                             ) : null}
                           </div>
                           <p className="text-xs text-slate-400 dark:text-slate-500">/{store.slug}</p>
                         </div>
                         <div className="flex shrink-0 items-center gap-3 pl-4">
-                          {isAssigned ? (
-                            <span className={`text-xs font-semibold ${isDisabled ? 'text-rose-500 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-                              {isDisabled ? 'Disabled' : 'Enabled'}
+                          {isAssigned || isExpired ? (
+                            <span className={`text-xs font-semibold ${isExpired ? 'text-orange-500 dark:text-orange-400' : isDisabled ? 'text-rose-500 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                              {isExpired ? 'Expired' : isDisabled ? 'Disabled' : 'Enabled'}
                             </span>
                           ) : null}
-                          <label className="relative inline-flex cursor-pointer items-center">
+                          <label className={`relative inline-flex items-center ${toggleLocked ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
                             <input
                               type="checkbox"
                               checked={isDisabled}
                               onChange={() => void toggleStorefrontAccess(store.id)}
-                              disabled={isSavingStorefrontAccess || !targetAccessUser || !isAssigned}
+                              disabled={toggleLocked}
                               className="peer sr-only"
                             />
-                            <div className={`peer h-6 w-11 rounded-full border transition ${isDisabled ? '!border-rose-500 !bg-rose-500' : 'border-slate-300 bg-slate-300 dark:border-slate-600 dark:bg-slate-700'} ${(isSavingStorefrontAccess || !targetAccessUser || !isAssigned) ? 'opacity-40' : ''}`} />
+                            <div className={`peer h-6 w-11 rounded-full border transition ${isExpired ? 'border-orange-500! bg-orange-500!' : isDisabled ? 'border-rose-500! bg-rose-500!' : 'border-slate-300 bg-slate-300 dark:border-slate-600 dark:bg-slate-700'} ${toggleLocked ? 'opacity-40' : ''}`} />
                             <div className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${isDisabled ? 'translate-x-5' : 'translate-x-0'}`} />
                           </label>
                         </div>

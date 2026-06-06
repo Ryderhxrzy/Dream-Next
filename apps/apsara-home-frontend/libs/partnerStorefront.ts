@@ -161,7 +161,7 @@ export const getPartnerStorefrontConfig = (item: WebPageItem | undefined): Partn
     shopUrl: String(fields.shop_url ?? '').trim(),
     domainLink: String(fields.storefront_domain ?? '').trim(),
     heroTitle: String(fields.hero_title ?? item.subtitle ?? '').trim() || `Shop ${slug}`,
-    heroSubtitle: String(fields.hero_subtitle ?? item.body ?? '').trim() || 'Curated products for your partner storefront.',
+    heroSubtitle: String(fields.hero_subtitle ?? item.body ?? '').trim(),
     themeColor: String(fields.theme_color ?? defaultThemeColor).trim() || defaultThemeColor,
     accentColor: String(fields.accent_color ?? defaultAccentColor).trim() || defaultAccentColor,
     allowedCategoryIds: parseIdList(String(fields.allowed_category_ids ?? '')),

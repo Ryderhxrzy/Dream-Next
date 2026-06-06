@@ -18,6 +18,7 @@ export interface Template2Props {
   stat2Value?: string; stat2Label?: string
   stat3Value?: string; stat3Label?: string
   stat4Value?: string; stat4Label?: string
+  shopSlug?: string
 }
 
 export default function Template2({
@@ -38,6 +39,7 @@ export default function Template2({
   stat2Value = '10K+', stat2Label = 'Products',
   stat3Value = '98%',  stat3Label = 'Satisfaction',
   stat4Value = '₱0',   stat4Label = 'Inventory Cost',
+  shopSlug,
 }: Template2Props) {
   const stats = [
     { value: stat1Value, label: stat1Label },
@@ -57,9 +59,9 @@ export default function Template2({
           <span className="cursor-pointer transition hover:text-slate-900">About</span>
           <span className="cursor-pointer transition hover:text-slate-900">Contact</span>
         </div>
-        <button type="button" className="rounded-full px-5 py-2 text-sm font-semibold text-white transition hover:opacity-90" style={{ backgroundColor: primaryColor }}>
+        <a href={shopSlug ? `/shop/${shopSlug}` : '#'} className="rounded-full px-5 py-2 text-sm font-semibold text-white transition hover:opacity-90" style={{ backgroundColor: primaryColor }}>
           Shop Now
-        </button>
+        </a>
       </nav>
 
       {/* Hero — two column */}

@@ -13,8 +13,9 @@ import {
 import { useDeleteAdminWebPageItemMutation, useGetAdminWebPageItemsQuery } from '@/store/api/webPagesApi'
 import { getPartnerStorefrontConfig } from '@/libs/partnerStorefront'
 import { showErrorToast } from '@/libs/toast'
+import { computeEndDateRaw, isWebstoreRequestExpired } from '@/libs/webstoreExpiry'
 
-type RequestStatus = 'all' | 'pending_review' | 'approved' | 'rejected' | 'deleted'
+type RequestStatus = 'all' | 'pending_review' | 'approved' | 'rejected' | 'deleted' | 'expired'
 type StatusKey = Exclude<RequestStatus, 'all'>
 
 type StatusStyleMap = Record<StatusKey, string>
@@ -28,14 +29,19 @@ const statusStyles: StatusStyleMap = {
     'border border-rose-200/80 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200',
   deleted:
     'border border-slate-300/80 bg-slate-100 text-slate-700 dark:border-slate-600/60 dark:bg-slate-700/30 dark:text-slate-200',
+  expired:
+    'border border-orange-200/80 bg-orange-50 text-orange-700 dark:border-orange-500/30 dark:bg-orange-500/10 dark:text-orange-200',
 }
 
 const prettyStatus = (status: StatusKey) => {
   if (status === 'pending_review') return 'Pending'
   if (status === 'approved') return 'Approved'
   if (status === 'deleted') return 'Deleted'
+  if (status === 'expired') return 'Expired'
   return 'Rejected'
 }
+
+const isExpiredItem = isWebstoreRequestExpired
 
 export default function WebstoreRequestsPage() {
   const { data, isLoading, isError } = useGetWebstoreRequestsQuery()
@@ -151,7 +157,12 @@ export default function WebstoreRequestsPage() {
     const q = search.trim().toLowerCase()
 
     return source.filter((item) => {
-      if (statusFilter !== 'all' && item.status !== statusFilter) return false
+      if (statusFilter !== 'all') {
+        const expired = isExpiredItem(item)
+        if (statusFilter === 'expired' && !(item.status === 'approved' && expired)) return false
+        if (statusFilter === 'approved' && !(item.status === 'approved' && !expired)) return false
+        if (statusFilter !== 'expired' && statusFilter !== 'approved' && item.status !== statusFilter) return false
+      }
       if (!q) return true
 
       const haystack = [
@@ -174,10 +185,11 @@ export default function WebstoreRequestsPage() {
   const counts = useMemo(() => {
     const all = data?.requests ?? []
     const pending = all.filter((r) => r.status === 'pending_review').length
-    const approved = all.filter((r) => r.status === 'approved').length
+    const expired = all.filter((r) => isExpiredItem(r)).length
+    const approved = all.filter((r) => r.status === 'approved' && !isExpiredItem(r)).length
     const rejected = all.filter((r) => r.status === 'rejected').length
     const deleted = all.filter((r) => r.status === 'deleted').length
-    return { all: all.length, pending, approved, rejected, deleted }
+    return { all: all.length, pending, approved, rejected, deleted, expired }
   }, [data?.requests])
 
   const openConfirm = (
@@ -640,6 +652,7 @@ export default function WebstoreRequestsPage() {
               <option value="all">All Status ({counts.all})</option>
               <option value="pending_review">Pending ({counts.pending})</option>
               <option value="approved">Approved ({counts.approved})</option>
+              <option value="expired">Expired ({counts.expired})</option>
               <option value="rejected">Rejected ({counts.rejected})</option>
               <option value="deleted">Deleted ({counts.deleted})</option>
             </select>
@@ -652,6 +665,7 @@ export default function WebstoreRequestsPage() {
               { key: 'all' as const, label: 'All', count: counts.all },
               { key: 'pending_review' as const, label: 'Pending', count: counts.pending },
               { key: 'approved' as const, label: 'Approved', count: counts.approved },
+              { key: 'expired' as const, label: 'Expired', count: counts.expired },
               { key: 'rejected' as const, label: 'Rejected', count: counts.rejected },
               { key: 'deleted' as const, label: 'Deleted', count: counts.deleted },
             ] as const
@@ -720,7 +734,8 @@ export default function WebstoreRequestsPage() {
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {rows.map((item) => {
                   const submitted = item.submitted_at ? new Date(item.submitted_at).toLocaleString() : '-'
-                  const status = item.status as StatusKey
+                  const rawStatus = item.status as StatusKey
+                  const status: StatusKey = rawStatus === 'approved' && isExpiredItem(item) ? 'expired' : rawStatus
                   const statusClass = statusStyles[status] ?? statusStyles.pending_review
 
                   return (

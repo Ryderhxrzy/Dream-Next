@@ -8,6 +8,7 @@ export interface PartnerUserItem {
   user_level_id: number
   storefront_ids: number[]
   disabled_storefront_ids?: number[]
+  expired_storefront_ids?: number[]
   is_banned?: boolean
 }
 
