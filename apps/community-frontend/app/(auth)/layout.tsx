@@ -1,8 +1,12 @@
 async function getCommunityStats() {
   try {
+    const fetchOptions: RequestInit & { next: { revalidate: number } } = {
+      next: { revalidate: 300 },
+    }
+
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_AFHOME_API_URL}/api/public/community-stats`,
-      { next: { revalidate: 300 } }
+      fetchOptions
     )
     const data = await res.json()
     return data.total_members ?? 0

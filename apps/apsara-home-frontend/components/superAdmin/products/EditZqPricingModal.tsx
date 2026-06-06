@@ -811,7 +811,7 @@ function PricingSummaryPanel({ summary }: { summary: PricingSummary }) {
             </div>
           </div>
         </div>
-
+        
         <div className="px-4 py-3">
           <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-2">Price Breakdown</p>
           <div className="rounded-xl bg-white border border-slate-100 overflow-hidden divide-y divide-slate-100">

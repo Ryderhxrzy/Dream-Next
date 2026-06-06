@@ -27,6 +27,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
 use App\Support\MemberMonthlyActivation;
 use App\Support\MemberActivityLogger;
+use App\Support\ProfileCompletionReward;
 use App\Support\TierEvaluator;
 use App\Services\CloudinaryUploadService;
 use App\Mail\Auth\RegistrationOtpMail;
@@ -1300,6 +1301,10 @@ class AuthController extends Controller
             report($e);
         }
 
+        $this->creditProfileCompletionRewardIfEligible($customer);
+        $customer->refresh();
+        $customer->loadMissing('sponsor:c_userid,c_username,c_fname,c_mname,c_lname');
+
         return response()->json($this->transformCustomer($customer));
     }
 
@@ -1885,6 +1890,9 @@ class AuthController extends Controller
         }
 
         $customer->save();
+        $this->creditProfileCompletionRewardIfEligible($customer);
+        $customer->refresh();
+        $customer->loadMissing('sponsor:c_userid,c_username,c_fname,c_mname,c_lname');
 
         return response()->json($this->transformCustomer($customer));
     }
@@ -1917,6 +1925,9 @@ class AuthController extends Controller
                 $customer->c_avatar_original_url = $avatarOriginalUrl !== '' ? $avatarOriginalUrl : null;
             }
             $customer->save();
+            $this->creditProfileCompletionRewardIfEligible($customer);
+            $customer->refresh();
+            $customer->loadMissing('sponsor:c_userid,c_username,c_fname,c_mname,c_lname');
 
             return response()->json([
                 'message' => 'Profile photo updated successfully.',
@@ -3522,6 +3533,7 @@ class AuthController extends Controller
         $phone = trim((string) ($customer->c_mobile ?? ''));
 
         $checks = [
+            trim((string) ($customer->c_avatar_url ?? '')) !== '',
             trim($this->fullName($customer)) !== '',
             trim((string) ($customer->c_email ?? '')) !== '',
             $phone !== '' && $phone !== '0',
@@ -3545,6 +3557,11 @@ class AuthController extends Controller
     private function isCustomerProfileComplete(Customer $customer): bool
     {
         return $this->customerProfileCompletionPercentage($customer) >= 100;
+    }
+
+    private function creditProfileCompletionRewardIfEligible(?Customer $customer): bool
+    {
+        return ProfileCompletionReward::creditIfEligible($customer);
     }
 
     private function validateNoBadWords(array $values): void

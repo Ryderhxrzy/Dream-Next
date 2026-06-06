@@ -233,7 +233,7 @@ export interface SubmitWebstoreRequestResponse {
 export interface WebstoreRequest {
     id: number;
     reference_no: string;
-    status: 'pending_review' | 'approved' | 'rejected';
+    status: 'pending_review' | 'approved' | 'rejected' | 'deleted';
     full_name?: string | null;
     username?: string | null;
     email?: string | null;
@@ -437,7 +437,7 @@ export const userApi = baseApi.injectEndpoints({
                 method: 'PUT',
                 body,
             }),
-            invalidatesTags: ['User', 'AccountSnapshot'],
+            invalidatesTags: ['User', 'AccountSnapshot', 'Encashment'],
         }),
 
         uploadAvatar: builder.mutation<UploadAvatarResponse, FormData>({
@@ -446,7 +446,7 @@ export const userApi = baseApi.injectEndpoints({
                 method: 'POST',
                 body,
             }),
-            invalidatesTags: ['User', 'AccountSnapshot'],
+            invalidatesTags: ['User', 'AccountSnapshot', 'Encashment'],
         }),
 
         changePassword: builder.mutation<{ message: string; user: MeResponse }, ChangePasswordPayload>({

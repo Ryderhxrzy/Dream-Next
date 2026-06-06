@@ -35,6 +35,7 @@ export const getProfileCompletion = (profile?: Partial<MeResponse> | null) => {
 
   const workLocation = profile.work_location ?? inferWorkLocation(profile.country)
   const checks = [
+    isFilled(profile.avatar_url),
     isFilled(profile.name),
     isFilled(profile.email),
     isFilled(profile.phone),

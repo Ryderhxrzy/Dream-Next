@@ -20,6 +20,7 @@ use App\Support\MemberMonthlyActivation;
 use App\Support\OrderPvPosting;
 use App\Support\PerformanceMilestoneReward;
 use App\Support\PersonalPurchaseCashback;
+use App\Support\ProfileCompletionReward;
 use Illuminate\Http\Request;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\DB;
@@ -37,6 +38,8 @@ class EncashmentController extends Controller
             return response()->json(['message' => 'Only customer accounts can view wallet data.'], 403);
         }
 
+        ProfileCompletionReward::creditIfEligible($customer);
+        $customer->refresh();
         $this->backfillApprovedPvForCustomer($customer);
         DirectReferralCommission::releasePendingForDeliveredOrders((int) $customer->c_userid);
 
@@ -238,7 +241,11 @@ class EncashmentController extends Controller
                 ]);
         }
 
-        $afVoucherBalance = max(0, (float) ($customer->c_WP ?? $customer->c_wp ?? 0));
+        $afVoucherBalance = max(
+            0,
+            (float) ($customer->c_WP ?? $customer->c_wp ?? 0),
+            ProfileCompletionReward::voucherLedgerBalance($customer)
+        );
         $availableEgcBalance = max(0, (float) ($customer->c_AP ?? $customer->c_ap ?? 0));
         if (Schema::hasTable('tbl_customer_wallet_ledger')) {
             $egcCredits = (float) CustomerWalletLedger::query()

@@ -369,6 +369,32 @@ const WEBSTORE_AVAILABLE_PAYMENT_METHODS: Array<{
   { label: 'Bank Transfer', logo: '/payment-logos/online-banking.svg' },
 ];
 
+const COUNTRY_REGION_CODES = [
+  'AF', 'AX', 'AL', 'DZ', 'AS', 'AD', 'AO', 'AI', 'AQ', 'AG', 'AR', 'AM', 'AW', 'AU', 'AT', 'AZ',
+  'BS', 'BH', 'BD', 'BB', 'BY', 'BE', 'BZ', 'BJ', 'BM', 'BT', 'BO', 'BQ', 'BA', 'BW', 'BV', 'BR',
+  'IO', 'BN', 'BG', 'BF', 'BI', 'KH', 'CM', 'CA', 'CV', 'KY', 'CF', 'TD', 'CL', 'CN', 'CX', 'CC',
+  'CO', 'KM', 'CG', 'CD', 'CK', 'CR', 'CI', 'HR', 'CU', 'CW', 'CY', 'CZ', 'DK', 'DJ', 'DM', 'DO',
+  'EC', 'EG', 'SV', 'GQ', 'ER', 'EE', 'SZ', 'ET', 'FK', 'FO', 'FJ', 'FI', 'FR', 'GF', 'PF', 'TF',
+  'GA', 'GM', 'GE', 'DE', 'GH', 'GI', 'GR', 'GL', 'GD', 'GP', 'GU', 'GT', 'GG', 'GN', 'GW', 'GY',
+  'HT', 'HM', 'VA', 'HN', 'HK', 'HU', 'IS', 'IN', 'ID', 'IR', 'IQ', 'IE', 'IM', 'IL', 'IT', 'JM',
+  'JP', 'JE', 'JO', 'KZ', 'KE', 'KI', 'KP', 'KR', 'KW', 'KG', 'LA', 'LV', 'LB', 'LS', 'LR', 'LY',
+  'LI', 'LT', 'LU', 'MO', 'MG', 'MW', 'MY', 'MV', 'ML', 'MT', 'MH', 'MQ', 'MR', 'MU', 'YT', 'MX',
+  'FM', 'MD', 'MC', 'MN', 'ME', 'MS', 'MA', 'MZ', 'MM', 'NA', 'NR', 'NP', 'NL', 'NC', 'NZ', 'NI',
+  'NE', 'NG', 'NU', 'NF', 'MK', 'MP', 'NO', 'OM', 'PK', 'PW', 'PS', 'PA', 'PG', 'PY', 'PE', 'PH',
+  'PN', 'PL', 'PT', 'PR', 'QA', 'RE', 'RO', 'RU', 'RW', 'BL', 'SH', 'KN', 'LC', 'MF', 'PM', 'VC',
+  'WS', 'SM', 'ST', 'SA', 'SN', 'RS', 'SC', 'SL', 'SG', 'SX', 'SK', 'SI', 'SB', 'SO', 'ZA', 'GS',
+  'SS', 'ES', 'LK', 'SD', 'SR', 'SJ', 'SE', 'CH', 'SY', 'TW', 'TJ', 'TZ', 'TH', 'TL', 'TG', 'TK',
+  'TO', 'TT', 'TN', 'TR', 'TM', 'TC', 'TV', 'UG', 'UA', 'AE', 'GB', 'US', 'UM', 'UY', 'UZ', 'VU',
+  'VE', 'VN', 'VG', 'VI', 'WF', 'EH', 'YE', 'ZM', 'ZW',
+] as const;
+
+const regionDisplayNames = new Intl.DisplayNames(['en'], { type: 'region' });
+
+const OVERSEAS_COUNTRIES = COUNTRY_REGION_CODES
+  .map((code) => regionDisplayNames.of(code))
+  .filter((country): country is string => Boolean(country) && country !== 'Philippines')
+  .sort((a, b) => a.localeCompare(b));
+
 const getWebstorePaymentMethodConfig = (method: WebstorePaymentMethod | null | undefined) =>
   WEBSTORE_PAYMENT_METHODS.find((item) => item.value === method) ?? WEBSTORE_PAYMENT_METHODS[0];
 
@@ -969,6 +995,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
   } | null>(null);
   const [webstoreSuccessModalOpen, setWebstoreSuccessModalOpen] = useState(false);
   const [webstoreReceiptUploadModalOpen, setWebstoreReceiptUploadModalOpen] = useState(false);
+  const [profileRewardModalOpen, setProfileRewardModalOpen] = useState(false);
   const [webstoreReceiptFiles, setWebstoreReceiptFiles] = useState<Array<{ name: string; preview: string; file: File }>>([]);
   const [webstoreReceiptPreview, setWebstoreReceiptPreview] = useState<{ name: string; urls: string[]; idx: number } | null>(null);
   const [isDraggingReceipt, setIsDraggingReceipt] = useState(false);
@@ -978,25 +1005,9 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
   const webstorePaymentMethodTouchedRef = useRef(false);
   const webstoreDraftHydratedRef = useRef(false);
   const webstoreStorefrontFieldsEditedRef = useRef(false);
-  const [webstoreLatestRequestPreview, setWebstoreLatestRequestPreview] = useState<{
-    id: number
-    reference_no?: string
-    status: 'pending_review' | 'approved' | 'rejected'
-    full_name?: string | null
-    username?: string | null
-    email?: string | null
-    slug_name?: string | null
-    display_name?: string | null
-    created_at?: string | null
-    billing_option?: 'full' | 'monthly' | null
-    payment_method?: WebstorePaymentMethod | null
-    latest_receipt_status?: 'pending_review' | 'approved' | 'rejected' | null
-    latest_receipt_message?: string | null
-    latest_receipt_detail_id?: number | null
-    latest_receipt_submitted_at?: string | null
-    latest_receipt_urls?: string[] | null
-    webstoreRenewalEnabled?: boolean
-  } | null>(null);
+  const [webstoreLatestRequestPreview, setWebstoreLatestRequestPreview] = useState<(WebstoreRequest & {
+    webstoreRenewalEnabled?: boolean;
+  }) | null>(null);
   const webstoreReceiptInputRef = useRef<HTMLInputElement | null>(null);
   const webstorePlanSectionRef = useRef<HTMLDivElement | null>(null);
   const webstoreSlugInputRef = useRef<HTMLInputElement | null>(null);
@@ -1060,6 +1071,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
   const usernameMsgTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const referralMsgTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mainContentRef = useRef<HTMLDivElement | null>(null);
+  const avatarSectionRef = useRef<HTMLDivElement | null>(null);
   const completeInformationRef = useRef<HTMLDivElement | null>(null);
   const phAddress = usePhAddress({ source: 'auto' });
   const profileData = data ?? initialProfile;
@@ -1410,11 +1422,32 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
     }).percentage;
   }, [form, isVerified, profileData]);
 
+  const profileRewardModalStorageKey = useMemo(() => {
+    const profileId = profileData?.id;
+    return profileId ? `apsara.profileCompletionRewardModal.dismissed.${profileId}` : null;
+  }, [profileData?.id]);
+
+  useEffect(() => {
+    if (completion < 100 || !profileRewardModalStorageKey || typeof window === 'undefined') return;
+    if (window.localStorage.getItem(profileRewardModalStorageKey) === '1') return;
+
+    const timeoutId = window.setTimeout(() => {
+      setProfileRewardModalOpen(true);
+    }, 550);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [completion, profileRewardModalStorageKey]);
+
   const completionItems = useMemo(() => ([
     {
       label: 'Full Name',
       done: Boolean(form.name.trim()),
       hint: 'Shown on your account and address records.',
+    },
+    {
+      label: 'Profile Photo',
+      done: Boolean(effectiveAvatarUrl),
+      hint: 'Upload a clear photo so your account and referrals are easy to recognize.',
     },
     {
       label: 'Username',
@@ -1465,6 +1498,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
     form.phone,
     form.username,
     form.work_location,
+    effectiveAvatarUrl,
     profileData?.address,
     profileData?.barangay,
     profileData?.city,
@@ -1486,6 +1520,23 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
     profileDraftDirtyRef.current = true;
     return { ...prev, [field]: e.target.value as ProfileFormState[typeof field] };
   });
+
+  const onWorkLocationChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    const nextWorkLocation = e.target.value as ProfileFormState['work_location'];
+
+    setForm((prev) => {
+      profileDraftDirtyRef.current = true;
+      return {
+        ...prev,
+        work_location: nextWorkLocation,
+        country: nextWorkLocation === 'local'
+          ? 'Philippines'
+          : prev.country === 'Philippines'
+            ? ''
+            : prev.country,
+      };
+    });
+  };
 
   const togglePref = (field: keyof PreferencesState) =>
     setPrefs((prev) => (typeof prev[field] === 'boolean' ? { ...prev, [field]: !prev[field] } : prev));
@@ -2089,11 +2140,6 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       if (partnerSlug) {
         formData.append('require_cloudinary', '1');
       }
-      if (avatarOriginalPreviewUrl?.startsWith('blob:')) {
-        const originalResponse = await fetch(avatarOriginalPreviewUrl);
-        const originalBlob = await originalResponse.blob();
-        formData.append('original_file', originalBlob, 'avatar-original.jpg');
-      }
       const uploadResult = await uploadAvatar(formData).unwrap();
       setAvatarPreviewUrl((current) => {
         if (current?.startsWith('blob:')) URL.revokeObjectURL(current);
@@ -2115,9 +2161,14 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
         if (current?.startsWith('blob:')) URL.revokeObjectURL(current);
         return null;
       });
-      const error = err as { message?: string; data?: { message?: string; errors?: Record<string, string[]> } };
+      const error = err as { message?: string; error?: string; data?: { message?: string; errors?: Record<string, string[]> } };
       const firstValidation = error?.data?.errors ? Object.values(error.data.errors)[0]?.[0] : undefined;
-      setProfileMsg({ type: 'error', text: firstValidation || error?.data?.message || error?.message || 'Failed to upload profile photo.' });
+      const errorText = firstValidation
+        || error?.data?.message
+        || error?.error?.replace(/^TypeError:\s*/i, '')
+        || error?.message
+        || 'Failed to upload profile photo.';
+      setProfileMsg({ type: 'error', text: errorText });
     } finally {
       setIsUploadingAvatar(false);
     }
@@ -2692,6 +2743,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       !draftForm.email ? 'email' : null,
       !draftForm.slugName ? 'slug_name' : null,
       !draftForm.displayName ? 'display_name' : null,
+      !draftPaymentMethod ? 'payment_method' : null,
     ].filter(Boolean) as string[];
 
     if (missingSubmissionFields.length > 0) {
@@ -2714,19 +2766,21 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       throw new Error(detailMessage);
     }
 
-    if (draftPaymentMethod) {
-      setWebstorePaymentMethodSnapshot(draftPaymentMethod);
-    }
+    const submissionPlan = draftPlan as NonNullable<typeof draftPlan>;
+    const submissionBilling = draftBilling as NonNullable<typeof draftBilling>;
+    const submissionPaymentMethod = draftPaymentMethod as NonNullable<typeof draftPaymentMethod>;
+
+    setWebstorePaymentMethodSnapshot(submissionPaymentMethod);
     saveWebstorePaymentContext({
       checkoutId: resolvedCheckoutId,
-      paymentMethod: draftPaymentMethod,
+      paymentMethod: submissionPaymentMethod,
       fullName: draftForm.fullName,
       username: draftForm.username,
       email: draftForm.email,
       slugName: draftForm.slugName,
       displayName: draftForm.displayName,
-      selectedWebstorePlan: draftPlan,
-      selectedBillingOption: draftBilling,
+      selectedWebstorePlan: submissionPlan,
+      selectedBillingOption: submissionBilling,
       webstoreRenewalEnabled: draftRenewalEnabled,
     });
 
@@ -2752,9 +2806,9 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       email: draftForm.email.trim(),
       slug_name: draftForm.slugName.trim().toLowerCase(),
       display_name: draftForm.displayName.trim(),
-      plan: planMap[draftPlan],
-      billing_option: draftBilling,
-      payment_method: draftPaymentMethod,
+      plan: planMap[submissionPlan],
+      billing_option: submissionBilling,
+      payment_method: submissionPaymentMethod,
       receipt_urls: receiptPayloadUrls,
       checkout_id: resolvedCheckoutId,
       payment_reference: paymentReference || `WEB-${Date.now()}`,
@@ -2770,7 +2824,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
     setWebstoreLatestRequestPreview({
       id: Number(submitResponse?.request?.id ?? Date.now()),
       reference_no: submitResponse?.request?.reference_no
-        ?? (submitResponse?.request?.id ? `WR-${submitResponse.request.id}` : undefined),
+        ?? (submitResponse?.request?.id ? `WR-${submitResponse.request.id}` : `WEB-${Date.now()}`),
       status: (submitResponse?.request?.status as 'pending_review' | 'approved' | 'rejected' | undefined) ?? 'pending_review',
       slug_name: draftForm.slugName.trim().toLowerCase(),
       display_name: draftForm.displayName.trim(),
@@ -2909,11 +2963,12 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
         webstoreRenewalEnabled?: boolean;
       };
       if (draft.webstoreForm) {
+        const draftWebstoreForm = draft.webstoreForm;
         setWebstoreForm((prev) => ({
           ...prev,
-          ...draft.webstoreForm,
-          slugName: shouldHideDeletedWebstoreFields ? '' : (draft.webstoreForm.slugName ?? prev.slugName),
-          displayName: shouldHideDeletedWebstoreFields ? '' : (draft.webstoreForm.displayName ?? prev.displayName),
+          ...draftWebstoreForm,
+          slugName: shouldHideDeletedWebstoreFields ? '' : (draftWebstoreForm.slugName ?? prev.slugName),
+          displayName: shouldHideDeletedWebstoreFields ? '' : (draftWebstoreForm.displayName ?? prev.displayName),
         }));
       }
       if (draft.selectedWebstorePlan) setSelectedWebstorePlan(draft.selectedWebstorePlan);
@@ -3255,6 +3310,16 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       return;
     }
 
+    if (!selectedWebstorePlan || !selectedBillingOption || !paymentMethod) {
+      setWebstoreMsg({ type: 'error', text: 'Please complete the plan, billing option, and payment method first.' });
+      showErrorToast('Please complete the plan, billing option, and payment method first.');
+      return;
+    }
+
+    const checkoutPlan = selectedWebstorePlan;
+    const checkoutBillingOption = selectedBillingOption;
+    const checkoutPaymentMethod = paymentMethod;
+
     const planMap: Record<'test' | 'quarterly' | 'semiAnnual' | 'annual', 'test' | 'quarterly' | 'semi_annual' | 'annual'> = {
       test: 'test',
       quarterly: 'quarterly',
@@ -3268,39 +3333,39 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       }
       setWebstorePaymentSubmissionSnapshot({
         webstoreForm: resolvedWebstoreSubmissionForm,
-        selectedWebstorePlan,
-        selectedBillingOption,
-        selectedPaymentMethod: paymentMethod,
+        selectedWebstorePlan: checkoutPlan,
+        selectedBillingOption: checkoutBillingOption,
+        selectedPaymentMethod: checkoutPaymentMethod,
         webstoreAcceptedTerms,
         webstoreRenewalEnabled,
       });
       saveWebstorePaymentContext({
-        paymentMethod,
+        paymentMethod: checkoutPaymentMethod,
         fullName: resolvedWebstoreSubmissionForm.fullName,
         username: resolvedWebstoreSubmissionForm.username,
         email: resolvedWebstoreSubmissionForm.email,
         slugName: resolvedWebstoreSubmissionForm.slugName,
         displayName: resolvedWebstoreSubmissionForm.displayName,
-        selectedWebstorePlan,
-        selectedBillingOption,
+        selectedWebstorePlan: checkoutPlan,
+        selectedBillingOption: checkoutBillingOption,
         webstoreRenewalEnabled,
       });
 
       if (typeof window !== 'undefined') {
         window.sessionStorage.setItem(webstorePaymentSessionStorageKey, JSON.stringify({
           webstoreForm: resolvedWebstoreSubmissionForm,
-          selectedWebstorePlan,
-          selectedBillingOption,
-          selectedPaymentMethod: paymentMethod,
+          selectedWebstorePlan: checkoutPlan,
+          selectedBillingOption: checkoutBillingOption,
+          selectedPaymentMethod: checkoutPaymentMethod,
           webstoreAcceptedTerms,
           webstoreRenewalEnabled,
         }));
       }
 
       const data = await createWebstorePaymentSession({
-        plan: planMap[selectedWebstorePlan],
-        billing_option: selectedBillingOption,
-        payment_method: paymentMethod,
+        plan: planMap[checkoutPlan],
+        billing_option: checkoutBillingOption,
+        payment_method: checkoutPaymentMethod,
         payment_mode: resolveWebstorePaymentMode(),
       }).unwrap();
 
@@ -3440,7 +3505,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       return;
     }
 
-    await handleStartWebstorePayment(selectedPaymentMethod);
+    await handleStartWebstorePayment(selectedPaymentMethod ?? undefined);
   };
 
   const handleSubmitWebstoreReceiptUpload = async () => {
@@ -3928,6 +3993,16 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       nextParams.delete('focus');
     }
     router.replace(`${profileBasePath}?${nextParams.toString()}${options?.focus ? '#verification-form' : ''}`, { scroll: false });
+  };
+
+  const dismissProfileRewardModal = (nextTab?: Tab) => {
+    if (profileRewardModalStorageKey && typeof window !== 'undefined') {
+      window.localStorage.setItem(profileRewardModalStorageKey, '1');
+    }
+    setProfileRewardModalOpen(false);
+    if (nextTab) {
+      handleTabChange(nextTab);
+    }
   };
 
   const dismissLevelUpCelebration = useCallback(() => {
@@ -4422,7 +4497,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
 
               {/* Avatar - centered, floating over banner */}
               <div className="flex flex-col items-center -mt-14 pb-5 px-5">
-                <div className="relative mb-4">
+                <div ref={avatarSectionRef} className="relative mb-4">
                   {/* Tier-colored ring behind avatar */}
                   <div className={`absolute -inset-1 rounded-full bg-gradient-to-br ${TIER_COVER[loyaltyTier].gradient} opacity-80 blur-[2px]`} />
 
@@ -4886,6 +4961,112 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                       </div>
                     </div>
 
+                    <AnimatePresence mode="wait">
+                      {completion >= 100 ? (
+                        <motion.div
+                          key="profile-reward-achieved"
+                          initial={{ opacity: 0, y: 14, scale: 0.98 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                          transition={{ duration: 0.35, ease: 'easeOut' }}
+                          className="relative mt-5 overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-sky-50 px-4 py-4 text-emerald-900 shadow-sm dark:border-emerald-900/50 dark:from-emerald-950/30 dark:via-slate-950 dark:to-sky-950/30 dark:text-emerald-100"
+                        >
+                          <motion.span
+                            aria-hidden="true"
+                            className="absolute right-6 top-4 h-2 w-2 rounded-full bg-amber-300"
+                            animate={{ scale: [1, 1.8, 1], opacity: [0.45, 1, 0.45] }}
+                            transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+                          />
+                          <motion.span
+                            aria-hidden="true"
+                            className="absolute right-16 top-10 h-1.5 w-1.5 rounded-full bg-sky-300"
+                            animate={{ scale: [1, 1.7, 1], opacity: [0.35, 1, 0.35] }}
+                            transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut', delay: 0.25 }}
+                          />
+                          <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                            <div className="min-w-0">
+                              <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-200">
+                                <Icon.Trophy className="h-3.5 w-3.5" />
+                                Rewards achieved
+                              </div>
+                              <h4 className="mt-3 text-lg font-black text-slate-950 dark:text-white">
+                                Profile complete reward unlocked
+                              </h4>
+                              <p className="mt-1 text-sm font-medium leading-6 text-slate-600 dark:text-slate-300">
+                                You qualified for the one-time profile completion reward. Check your wallet and E-Voucher activity after rewards are credited.
+                              </p>
+                            </div>
+
+                            <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[320px]">
+                              {[
+                                { label: 'E-Voucher', value: '50', Icon: Icon.Star, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-950/30', border: 'border-amber-200 dark:border-amber-900/50' },
+                                { label: 'PV Reward', value: '20', Icon: Icon.Activity, color: 'text-sky-600', bg: 'bg-sky-50 dark:bg-sky-950/30', border: 'border-sky-200 dark:border-sky-900/50' },
+                              ].map((reward, index) => (
+                                <motion.div
+                                  key={reward.label}
+                                  initial={{ opacity: 0, y: 12, scale: 0.94 }}
+                                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                                  transition={{ delay: 0.15 + index * 0.1, duration: 0.35, type: 'spring', stiffness: 180, damping: 18 }}
+                                  className={`rounded-2xl border ${reward.border} ${reward.bg} p-4 shadow-sm`}
+                                >
+                                  <div className="flex items-center justify-between gap-3">
+                                    <div>
+                                      <p className="text-[11px] font-black uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                        {reward.label}
+                                      </p>
+                                      <motion.p
+                                        initial={{ scale: 0.8 }}
+                                        animate={{ scale: [1, 1.08, 1] }}
+                                        transition={{ delay: 0.35 + index * 0.1, duration: 0.45 }}
+                                        className="mt-1 text-3xl font-black tabular-nums text-slate-950 dark:text-white"
+                                      >
+                                        {reward.value}
+                                      </motion.p>
+                                    </div>
+                                    <motion.div
+                                      animate={{ rotate: [0, -8, 8, 0] }}
+                                      transition={{ delay: 0.45 + index * 0.1, duration: 0.55 }}
+                                      className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-sm dark:bg-slate-950 ${reward.color}`}
+                                    >
+                                      <reward.Icon className="h-5 w-5" />
+                                    </motion.div>
+                                  </div>
+                                </motion.div>
+                              ))}
+                            </div>
+                          </div>
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="profile-reward-preview"
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -8 }}
+                          transition={{ duration: 0.22 }}
+                          className="mt-5 rounded-2xl border border-amber-200 bg-white/70 px-4 py-3 text-amber-800 dark:border-amber-900/50 dark:bg-slate-900/50 dark:text-amber-200"
+                        >
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                              <p className="text-xs font-black uppercase tracking-[0.18em]">
+                                Profile completion reward
+                              </p>
+                              <p className="mt-1 text-sm font-semibold leading-6">
+                                Complete all required sections to qualify for a one-time 50 E-Voucher and 20 PV reward.
+                              </p>
+                            </div>
+                            <div className="flex shrink-0 gap-2">
+                              <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-amber-700 shadow-sm dark:bg-slate-950 dark:text-amber-200">
+                                50 E-Voucher
+                              </span>
+                              <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-sky-700 shadow-sm dark:bg-slate-950 dark:text-sky-200">
+                                20 PV
+                              </span>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
                     <div className="mt-5 grid gap-3 md:grid-cols-2">
                       {completionItems.map((item) => {
                         const isSavingAddressItem = item.label === 'Address' && isSavingAddressDetails;
@@ -4897,6 +5078,9 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                             disabled={isSavingAddressItem}
                             onClick={() => {
                               if (item.label === 'Address') setIsAddressModalOpen(true);
+                              if (item.label === 'Profile Photo') {
+                                avatarSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                              }
                               if (item.label === 'Username') setActiveTab('change-username');
                               if (item.label === 'Personal Details') {
                                 completeInformationRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -5122,7 +5306,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                           <label className="text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wide">Work Location <span className="text-red-500">*</span></label>
                           <select
                             value={form.work_location}
-                            onChange={onOptionalChange('work_location')}
+                            onChange={onWorkLocationChange}
                             className="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-sm text-slate-800 dark:text-gray-200 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-sky-200 dark:focus:ring-sky-800/50 focus:border-sky-300 dark:focus:border-sky-600 hover:border-slate-300 dark:hover:border-slate-600"
                           >
                             <option value="local">Local</option>
@@ -5132,18 +5316,29 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
 
                         <div className="space-y-1.5">
                           <label className="text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wide">Country <span className="text-red-500">*</span></label>
-                          <input
-                            type="text"
+                          <select
                             value={form.country}
                             onChange={onOptionalChange('country')}
                             disabled={form.work_location === 'local'}
-                            placeholder="Country"
                             className={`w-full rounded-xl border px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-200 dark:focus:ring-sky-800/50 focus:border-sky-300 dark:focus:border-sky-600 ${
                               form.work_location === 'local'
                                 ? 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-gray-800 text-slate-400 dark:text-gray-500 cursor-not-allowed'
                                 : 'border-slate-200 dark:border-slate-700 text-slate-800 dark:text-gray-200 dark:bg-gray-900 hover:border-slate-300 dark:hover:border-slate-600'
                             }`}
-                          />
+                          >
+                            {form.work_location === 'local' ? (
+                              <option value="Philippines">Philippines</option>
+                            ) : (
+                              <>
+                                <option value="">Select country</option>
+                                {OVERSEAS_COUNTRIES.map((country) => (
+                                  <option key={country} value={country}>
+                                    {country}
+                                  </option>
+                                ))}
+                              </>
+                            )}
+                          </select>
                         </div>
                       </div>
                     </div>
@@ -7818,6 +8013,130 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                   className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(37,99,235,0.35)] hover:from-[#1d4ed8] hover:to-[#1e40af]"
                 >
                   Go to Partner Login
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {profileRewardModalOpen && (
+          <motion.div
+            key="profile-reward-modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[230] flex items-center justify-center bg-slate-950/60 px-3 py-4 backdrop-blur-sm"
+            onClick={() => dismissProfileRewardModal()}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 24, scale: 0.94 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 18, scale: 0.96 }}
+              transition={{ type: 'spring', stiffness: 230, damping: 23 }}
+              onClick={(event) => event.stopPropagation()}
+              className="relative w-full max-w-2xl overflow-hidden rounded-[28px] border border-emerald-200 bg-white shadow-[0_30px_90px_rgba(15,23,42,0.35)] dark:border-emerald-900/60 dark:bg-slate-950"
+            >
+              <button
+                type="button"
+                onClick={() => dismissProfileRewardModal()}
+                className="absolute right-4 top-4 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-white/20 text-white backdrop-blur-sm transition hover:bg-white/30"
+                aria-label="Close reward modal"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M6 6l12 12M18 6l-12 12" />
+                </svg>
+              </button>
+
+              <div className="relative overflow-hidden bg-gradient-to-br from-emerald-500 via-teal-500 to-sky-500 px-6 pb-8 pt-9 text-center text-white md:px-9">
+                <motion.span
+                  aria-hidden="true"
+                  className="absolute left-8 top-8 h-3 w-3 rounded-full bg-white/60"
+                  animate={{ y: [0, -12, 0], opacity: [0.45, 1, 0.45], scale: [1, 1.35, 1] }}
+                  transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+                />
+                <motion.span
+                  aria-hidden="true"
+                  className="absolute right-16 bottom-8 h-2.5 w-2.5 rounded-full bg-amber-200"
+                  animate={{ y: [0, -14, 0], opacity: [0.35, 1, 0.35], scale: [1, 1.5, 1] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut', delay: 0.25 }}
+                />
+                <motion.div
+                  initial={{ scale: 0.7, rotate: -10 }}
+                  animate={{ scale: [1, 1.08, 1], rotate: [0, -4, 4, 0] }}
+                  transition={{ delay: 0.12, duration: 0.7, ease: 'easeOut' }}
+                  className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/20 text-white shadow-lg shadow-emerald-900/20"
+                >
+                  <Icon.Trophy className="h-9 w-9" />
+                </motion.div>
+                <p className="text-xs font-black uppercase tracking-[0.24em] text-white/80">Profile completed</p>
+                <h3 className="mt-2 text-3xl font-black tracking-tight md:text-4xl">
+                  Congratulations!
+                </h3>
+                <p className="mx-auto mt-2 max-w-lg text-sm font-medium leading-6 text-white/90 md:text-base">
+                  Your profile is now 100% complete. Your one-time completion rewards are unlocked and ready to appear in your wallet.
+                </p>
+              </div>
+
+              <div className="px-5 py-5 md:px-7 md:py-6">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {[
+                    { label: 'E-Voucher Reward', value: '50', Icon: Icon.Star, color: 'text-amber-600', bg: 'from-amber-50 to-orange-50', border: 'border-amber-200' },
+                    { label: 'PV Reward', value: '20', Icon: Icon.Activity, color: 'text-sky-600', bg: 'from-sky-50 to-indigo-50', border: 'border-sky-200' },
+                  ].map((reward, index) => (
+                    <motion.div
+                      key={reward.label}
+                      initial={{ opacity: 0, y: 16, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ delay: 0.2 + index * 0.1, type: 'spring', stiffness: 180, damping: 18 }}
+                      className={`rounded-2xl border ${reward.border} bg-gradient-to-br ${reward.bg} p-4 shadow-sm dark:border-slate-800 dark:from-slate-900 dark:to-slate-950`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-[11px] font-black uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                            {reward.label}
+                          </p>
+                          <motion.p
+                            initial={{ scale: 0.85 }}
+                            animate={{ scale: [1, 1.12, 1] }}
+                            transition={{ delay: 0.35 + index * 0.1, duration: 0.45 }}
+                            className="mt-1 text-4xl font-black tabular-nums text-slate-950 dark:text-white"
+                          >
+                            {reward.value}
+                          </motion.p>
+                        </div>
+                        <motion.div
+                          animate={{ rotate: [0, -8, 8, 0] }}
+                          transition={{ delay: 0.42 + index * 0.1, duration: 0.55 }}
+                          className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm dark:bg-slate-900 ${reward.color}`}
+                        >
+                          <reward.Icon className="h-5 w-5" />
+                        </motion.div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+
+                <div className="mt-5 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-semibold leading-6 text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-100">
+                  Reward credit is one-time only. You can review the balance and transaction history in the E-Voucher tab.
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-end dark:border-slate-800 dark:bg-slate-900/80 md:px-7">
+                <button
+                  type="button"
+                  onClick={() => dismissProfileRewardModal()}
+                  className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-slate-900"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={() => dismissProfileRewardModal('pv')}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 px-5 py-2.5 text-sm font-black text-white shadow-[0_10px_24px_rgba(37,99,235,0.35)] transition hover:from-sky-600 hover:to-blue-700"
+                >
+                  <Icon.Star className="h-4 w-4" />
+                  View E-Voucher
                 </button>
               </div>
             </motion.div>

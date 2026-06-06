@@ -233,7 +233,7 @@ export type WalletTypeFilter = 'all' | 'cash' | 'pv' | 'rewards';
 
 export interface WalletLedgerItem {
   id: number;
-  wallet_type: 'cash' | 'pv';
+  wallet_type: 'cash' | 'pv' | 'egc' | 'voucher';
   entry_type: 'credit' | 'debit';
   amount: number;
   source_type?: string | null;
