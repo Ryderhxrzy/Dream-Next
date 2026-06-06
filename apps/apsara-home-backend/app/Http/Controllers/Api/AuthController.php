@@ -2753,6 +2753,7 @@ class AuthController extends Controller
     private function transformCustomer(Customer $customer): array
     {
         $fullName = $this->fullName($customer);
+        $primaryAddress = $this->primaryAddressSnapshot($customer);
 
         $accountStatus = (int) ($customer->c_accnt_status ?? 0);
         $lockStatus = (int) ($customer->c_lockstatus ?? 0);
@@ -2777,17 +2778,17 @@ class AuthController extends Controller
             'referrer_id' => (int) ($customer->c_sponsor ?? 0),
             'referrer_username' => $customer->sponsor?->c_username ? (string) $customer->sponsor->c_username : null,
             'referrer_name' => $customer->sponsor instanceof Customer ? $this->fullName($customer->sponsor) : null,
-            'phone' => $customer->c_mobile,
-            'address' => (string) ($customer->c_address ?? ''),
-            'barangay' => (string) ($customer->c_barangay ?? ''),
-            'city' => (string) ($customer->c_city ?? ''),
-            'province' => (string) ($customer->c_province ?? ''),
-            'region' => (string) ($customer->c_region ?? ''),
+            'phone' => $this->filledCustomerValue($customer->c_mobile ?? null, $primaryAddress['phone'] ?? ''),
+            'address' => $this->filledCustomerValue($customer->c_address ?? null, $primaryAddress['address'] ?? ''),
+            'barangay' => $this->filledCustomerValue($customer->c_barangay ?? null, $primaryAddress['barangay'] ?? ''),
+            'city' => $this->filledCustomerValue($customer->c_city ?? null, $primaryAddress['city'] ?? ''),
+            'province' => $this->filledCustomerValue($customer->c_province ?? null, $primaryAddress['province'] ?? ''),
+            'region' => $this->filledCustomerValue($customer->c_region ?? null, $primaryAddress['region'] ?? ''),
             'barangay_code' => (string) ($customer->c_barangay_code ?? ''),
             'city_code' => (string) ($customer->c_city_code ?? ''),
             'province_code' => (string) ($customer->c_province_code ?? ''),
             'region_code' => (string) ($customer->c_region_code ?? ''),
-            'zip_code' => (string) ($customer->c_zipcode ?? ''),
+            'zip_code' => $this->filledCustomerValue($customer->c_zipcode ?? null, $primaryAddress['zip_code'] ?? ''),
             'middle_name' => ($middleName = trim((string) ($customer->c_mname ?? ''))) !== '' ? $middleName : null,
             'birth_date' => $this->formatNullableDate($customer->c_bdate ?? null),
             'gender' => $this->mapIntToGender((int) ($customer->c_gender ?? 0)),
@@ -3528,9 +3529,16 @@ class AuthController extends Controller
 
     private function customerProfileCompletionPercentage(Customer $customer): int
     {
+        $primaryAddress = $this->primaryAddressSnapshot($customer);
         $country = trim((string) ($customer->c_country ?? ''));
         $occupation = trim((string) ($customer->c_occupation ?? ''));
-        $phone = trim((string) ($customer->c_mobile ?? ''));
+        $phone = trim($this->filledCustomerValue($customer->c_mobile ?? null, $primaryAddress['phone'] ?? ''));
+        $address = trim($this->filledCustomerValue($customer->c_address ?? null, $primaryAddress['address'] ?? ''));
+        $barangay = trim($this->filledCustomerValue($customer->c_barangay ?? null, $primaryAddress['barangay'] ?? ''));
+        $city = trim($this->filledCustomerValue($customer->c_city ?? null, $primaryAddress['city'] ?? ''));
+        $province = trim($this->filledCustomerValue($customer->c_province ?? null, $primaryAddress['province'] ?? ''));
+        $region = trim($this->filledCustomerValue($customer->c_region ?? null, $primaryAddress['region'] ?? ''));
+        $zipCode = trim($this->filledCustomerValue($customer->c_zipcode ?? null, $primaryAddress['zip_code'] ?? ''));
 
         $checks = [
             trim((string) ($customer->c_avatar_url ?? '')) !== '',
@@ -3543,12 +3551,12 @@ class AuthController extends Controller
             $occupation !== '' && strcasecmp($occupation, 'none') !== 0,
             $this->inferWorkLocation($country) !== null,
             $country !== '',
-            trim((string) ($customer->c_address ?? '')) !== '',
-            trim((string) ($customer->c_barangay ?? '')) !== '',
-            trim((string) ($customer->c_city ?? '')) !== '',
-            trim((string) ($customer->c_province ?? '')) !== '',
-            trim((string) ($customer->c_region ?? '')) !== '',
-            trim((string) ($customer->c_zipcode ?? '')) !== '',
+            $address !== '',
+            $barangay !== '',
+            $city !== '',
+            $province !== '',
+            $region !== '',
+            $zipCode !== '',
         ];
 
         return (int) round((count(array_filter($checks)) / count($checks)) * 100);
@@ -3562,6 +3570,44 @@ class AuthController extends Controller
     private function creditProfileCompletionRewardIfEligible(?Customer $customer): bool
     {
         return ProfileCompletionReward::creditIfEligible($customer);
+    }
+
+    private function primaryAddressSnapshot(Customer $customer): ?array
+    {
+        if (!Schema::hasTable('tbl_customer_address')) {
+            return null;
+        }
+
+        /** @var CustomerAddress|null $address */
+        $address = CustomerAddress::query()
+            ->where('a_cid', (int) $customer->c_userid)
+            ->orderByDesc('a_shipping_status')
+            ->orderByDesc('a_id')
+            ->first();
+
+        if (!$address) {
+            return null;
+        }
+
+        return [
+            'phone' => (string) ($address->a_mobile ?? ''),
+            'address' => (string) ($address->a_address ?? ''),
+            'barangay' => (string) ($address->a_barangay ?? ''),
+            'city' => (string) ($address->a_city ?? ''),
+            'province' => (string) ($address->a_province ?? ''),
+            'region' => (string) ($address->a_region ?? ''),
+            'zip_code' => (string) ($address->a_postcode ?? ''),
+        ];
+    }
+
+    private function filledCustomerValue(mixed $primary, mixed $fallback): string
+    {
+        $primaryValue = trim((string) ($primary ?? ''));
+        if ($primaryValue !== '' && $primaryValue !== '0') {
+            return $primaryValue;
+        }
+
+        return trim((string) ($fallback ?? ''));
     }
 
     private function validateNoBadWords(array $values): void

@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Customer;
+use App\Models\CustomerAddress;
 use App\Models\CustomerWalletLedger;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -135,9 +136,16 @@ class ProfileCompletionReward
 
     private static function isComplete(Customer $customer): bool
     {
+        $primaryAddress = self::primaryAddressSnapshot($customer);
         $country = trim((string) ($customer->c_country ?? ''));
         $occupation = trim((string) ($customer->c_occupation ?? ''));
-        $phone = trim((string) ($customer->c_mobile ?? ''));
+        $phone = trim(self::filledCustomerValue($customer->c_mobile ?? null, $primaryAddress['phone'] ?? ''));
+        $address = trim(self::filledCustomerValue($customer->c_address ?? null, $primaryAddress['address'] ?? ''));
+        $barangay = trim(self::filledCustomerValue($customer->c_barangay ?? null, $primaryAddress['barangay'] ?? ''));
+        $city = trim(self::filledCustomerValue($customer->c_city ?? null, $primaryAddress['city'] ?? ''));
+        $province = trim(self::filledCustomerValue($customer->c_province ?? null, $primaryAddress['province'] ?? ''));
+        $region = trim(self::filledCustomerValue($customer->c_region ?? null, $primaryAddress['region'] ?? ''));
+        $zipCode = trim(self::filledCustomerValue($customer->c_zipcode ?? null, $primaryAddress['zip_code'] ?? ''));
 
         $checks = [
             trim((string) ($customer->c_avatar_url ?? '')) !== '',
@@ -150,15 +158,53 @@ class ProfileCompletionReward
             $occupation !== '' && strcasecmp($occupation, 'none') !== 0,
             self::inferWorkLocation($country) !== null,
             $country !== '',
-            trim((string) ($customer->c_address ?? '')) !== '',
-            trim((string) ($customer->c_barangay ?? '')) !== '',
-            trim((string) ($customer->c_city ?? '')) !== '',
-            trim((string) ($customer->c_province ?? '')) !== '',
-            trim((string) ($customer->c_region ?? '')) !== '',
-            trim((string) ($customer->c_zipcode ?? '')) !== '',
+            $address !== '',
+            $barangay !== '',
+            $city !== '',
+            $province !== '',
+            $region !== '',
+            $zipCode !== '',
         ];
 
         return count(array_filter($checks)) === count($checks);
+    }
+
+    private static function primaryAddressSnapshot(Customer $customer): ?array
+    {
+        if (!Schema::hasTable('tbl_customer_address')) {
+            return null;
+        }
+
+        /** @var CustomerAddress|null $address */
+        $address = CustomerAddress::query()
+            ->where('a_cid', (int) $customer->c_userid)
+            ->orderByDesc('a_shipping_status')
+            ->orderByDesc('a_id')
+            ->first();
+
+        if (!$address) {
+            return null;
+        }
+
+        return [
+            'phone' => (string) ($address->a_mobile ?? ''),
+            'address' => (string) ($address->a_address ?? ''),
+            'barangay' => (string) ($address->a_barangay ?? ''),
+            'city' => (string) ($address->a_city ?? ''),
+            'province' => (string) ($address->a_province ?? ''),
+            'region' => (string) ($address->a_region ?? ''),
+            'zip_code' => (string) ($address->a_postcode ?? ''),
+        ];
+    }
+
+    private static function filledCustomerValue(mixed $primary, mixed $fallback): string
+    {
+        $primaryValue = trim((string) ($primary ?? ''));
+        if ($primaryValue !== '' && $primaryValue !== '0') {
+            return $primaryValue;
+        }
+
+        return trim((string) ($fallback ?? ''));
     }
 
     private static function fullName(Customer $customer): string
