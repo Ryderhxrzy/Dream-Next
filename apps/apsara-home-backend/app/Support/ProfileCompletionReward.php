@@ -37,10 +37,14 @@ class ProfileCompletionReward
             $awarded = false;
 
             if (!self::hasLedgerCredit($customerId, 'voucher') && self::E_VOUCHER_REWARD > 0) {
-                if (Schema::hasColumn('tbl_customer', 'c_WP')) {
-                    $lockedCustomer->c_WP = (float) ($lockedCustomer->c_WP ?? 0) + self::E_VOUCHER_REWARD;
-                } elseif (Schema::hasColumn('tbl_customer', 'c_wp')) {
+                // Prefer the lowercase `c_wp` column. PostgreSQL treats quoted
+                // identifiers as case-sensitive, and Schema::hasColumn() matches
+                // case-insensitively — so checking `c_WP` first would pass but the
+                // resulting `update ... set "c_WP"` query fails (column is `c_wp`).
+                if (Schema::hasColumn('tbl_customer', 'c_wp')) {
                     $lockedCustomer->c_wp = (float) ($lockedCustomer->c_wp ?? 0) + self::E_VOUCHER_REWARD;
+                } elseif (Schema::hasColumn('tbl_customer', 'c_WP')) {
+                    $lockedCustomer->c_WP = (float) ($lockedCustomer->c_WP ?? 0) + self::E_VOUCHER_REWARD;
                 }
 
                 CustomerWalletLedger::create([
