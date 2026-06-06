@@ -195,6 +195,7 @@ Route::get('/products/{id}/summary', [ProductController::class, 'showSummary']);
 Route::get('/products/{id}', [ProductController::class, 'show']);
 Route::get('/products/{id}/brand', [ProductController::class, 'brand']);
 Route::get('/products', [ProductController::class, 'index']);
+Route::get('/wishlist/count/{productId}', [WishlistController::class, 'countByProduct']);
 
 // Other public reads stay rate-limited.
 Route::middleware('throttle:public')->group(function () {

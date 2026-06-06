@@ -295,4 +295,15 @@ class WishlistController extends Controller
 
         return response()->json(['message' => 'Removed from wishlist']);
     }
+
+    public function countByProduct(int $productId)
+    {
+        $count = Wishlist::where('cw_product_id', $productId)
+            ->count();
+
+        return response()->json([
+            'product_id' => $productId,
+            'wishlist_count' => $count,
+        ]);
+    }
 }
