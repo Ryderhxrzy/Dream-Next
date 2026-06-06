@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { MeResponse, ReferralTreeNode, AccountSnapshot, useChangePasswordMutation, useMeQuery, useAccountSnapshotQuery, useReferralTreeQuery, useUpdateProfileMutation, useUploadAvatarMutation, useSendUsernameChangeOtpMutation, useSubmitUsernameChangeRequestMutation, useSubmitWebstoreRequestMutation, useUploadWebstoreReceiptMutation, useCreateWebstorePaymentSessionMutation, useLazyVerifyWebstorePaymentSessionQuery, useUsernameChangeLatestQuery, useWebstoreRequestLatestQuery, useWebstoreRequestHistoryQuery, useSyncWebstorePartnerAccountMutation, useMemberActivityQuery, useMemberSessionsQuery, useRevokeMemberSessionMutation, useLinkedAccountsQuery, useLinkGoogleAccountMutation, useUnlinkGoogleAccountMutation, useLinkFacebookAccountMutation, useUnlinkFacebookAccountMutation, LinkedAccount, useSetupTotpMutation, useEnableTotpMutation, useDisableTotpMutation, SetupTotpResponse, WebstoreRequest } from '@/store/api/userApi';
+import { MeResponse, ReferralTreeNode, AccountSnapshot, useChangePasswordMutation, useMeQuery, useAccountSnapshotQuery, useReferralTreeQuery, useUpdateProfileMutation, useUploadAvatarMutation, useDismissProfileRewardModalMutation, useSendUsernameChangeOtpMutation, useSubmitUsernameChangeRequestMutation, useSubmitWebstoreRequestMutation, useUploadWebstoreReceiptMutation, useCreateWebstorePaymentSessionMutation, useLazyVerifyWebstorePaymentSessionQuery, useUsernameChangeLatestQuery, useWebstoreRequestLatestQuery, useWebstoreRequestHistoryQuery, useSyncWebstorePartnerAccountMutation, useMemberActivityQuery, useMemberSessionsQuery, useRevokeMemberSessionMutation, useLinkedAccountsQuery, useLinkGoogleAccountMutation, useUnlinkGoogleAccountMutation, useLinkFacebookAccountMutation, useUnlinkFacebookAccountMutation, LinkedAccount, useSetupTotpMutation, useEnableTotpMutation, useDisableTotpMutation, SetupTotpResponse, WebstoreRequest } from '@/store/api/userApi';
 import { signOut, useSession } from 'next-auth/react';
 import { ChangeEvent, DragEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Loading from '../Loading';
@@ -886,6 +886,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
   });
   const [updateProfile, { isLoading: isSaving }] = useUpdateProfileMutation();
   const [uploadAvatar] = useUploadAvatarMutation();
+  const [dismissProfileRewardModalRequest] = useDismissProfileRewardModalMutation();
   const [changePassword, { isLoading: isChangingPassword }] = useChangePasswordMutation();
   const [sendUsernameChangeOtp, { isLoading: isSendingUsernameOtp }] = useSendUsernameChangeOtpMutation();
   const [submitUsernameChangeRequest, { isLoading: isSubmittingUsernameChange }] = useSubmitUsernameChangeRequestMutation();
@@ -1429,6 +1430,9 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
 
   useEffect(() => {
     if (completion < 100 || !profileRewardModalStorageKey || typeof window === 'undefined') return;
+    // Server-side flag is the source of truth so the modal never reappears on
+    // any device once seen. localStorage is kept as an offline/legacy fallback.
+    if (profileData?.profile_reward_modal_seen) return;
     if (window.localStorage.getItem(profileRewardModalStorageKey) === '1') return;
 
     const timeoutId = window.setTimeout(() => {
@@ -1436,7 +1440,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
     }, 550);
 
     return () => window.clearTimeout(timeoutId);
-  }, [completion, profileRewardModalStorageKey]);
+  }, [completion, profileRewardModalStorageKey, profileData?.profile_reward_modal_seen]);
 
   const completionItems = useMemo(() => ([
     {
@@ -4000,6 +4004,12 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       window.localStorage.setItem(profileRewardModalStorageKey, '1');
     }
     setProfileRewardModalOpen(false);
+    // Persist the dismissal server-side so it never reappears on other devices.
+    if (!profileData?.profile_reward_modal_seen) {
+      dismissProfileRewardModalRequest().unwrap().catch(() => {
+        // Non-blocking: localStorage already prevents re-show on this device.
+      });
+    }
     if (nextTab) {
       handleTabChange(nextTab);
     }

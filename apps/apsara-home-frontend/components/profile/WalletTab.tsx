@@ -28,6 +28,41 @@ const formatDate = (value?: string | null) => {
   });
 };
 
+// Human-friendly labels for the raw `wl_source_type` values stored in the DB.
+const LEDGER_SOURCE_LABELS: Record<string, string> = {
+  order: 'Order Purchase',
+  checkout_egc: 'E-GC Used at Checkout',
+  referral_earning: 'Referral Earning',
+  group_purchase_bonus: 'Group Purchase Bonus',
+  direct_affiliate_performance_bonus: 'Affiliate Performance Bonus',
+  yearly_global_purchase_bonus: 'Yearly Global Purchase Bonus',
+  performance_milestone: 'Performance Milestone',
+  profile_completion_reward: 'Profile Completion Reward',
+  encashment: 'Encashment (Withdrawal)',
+};
+
+const formatLedgerSource = (sourceType?: string | null) => {
+  const raw = (sourceType ?? '').trim();
+  if (!raw) return '-';
+  // Fall back to a title-cased version so future source types still read cleanly.
+  return (
+    LEDGER_SOURCE_LABELS[raw] ??
+    raw.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
+  );
+};
+
+// Tidy up references. PayMongo checkout-session ids (cs_...) are long and opaque,
+// so we show a short uppercase transaction code; readable refs (ENC-, PERF-MS-,
+// PROFILE-COMPLETE-) are kept as-is. The full value stays in the hover tooltip.
+const formatLedgerReference = (referenceNo?: string | null, notes?: string | null) => {
+  const raw = (referenceNo ?? '').trim();
+  if (!raw) return (notes ?? '').trim() || '-';
+  if (/^cs_/i.test(raw)) {
+    return `TXN-${raw.replace(/^cs_/i, '').slice(-8).toUpperCase()}`;
+  }
+  return raw;
+};
+
 // "Cash" tab removed — "All Wallets" is now the unified cash overview + ledger
 type WalletViewType = WalletTypeFilter | 'network' | 'performance' | 'egc';
 
@@ -515,10 +550,13 @@ export default function WalletTab({ initialWalletType = 'all' }: WalletTabProps)
                             {isCredit ? 'Credit' : 'Debit'}
                           </span>
                         </td>
-                        <td className="px-4 py-3.5 text-xs text-slate-500 dark:text-slate-400">{row.source_type ?? '-'}</td>
+                        <td className="px-4 py-3.5 text-xs font-medium text-slate-700 dark:text-slate-300">{formatLedgerSource(row.source_type)}</td>
                         <td className="px-4 py-3.5 max-w-[180px]">
-                          <p className="truncate text-xs text-slate-600 dark:text-slate-300" title={row.reference_no ?? ''}>
-                            {row.reference_no || row.notes || '-'}
+                          <p
+                            className="truncate font-mono text-xs text-slate-600 dark:text-slate-300"
+                            title={row.reference_no || row.notes || ''}
+                          >
+                            {formatLedgerReference(row.reference_no, row.notes)}
                           </p>
                         </td>
                         <td className={`px-4 py-3.5 last:pr-5 md:last:pr-6 text-right text-sm font-bold tabular-nums ${isCredit ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
