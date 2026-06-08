@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { useSession } from 'next-auth/react'
 import {
   ArrowLeft,
   CheckCheck,
@@ -24,9 +25,11 @@ import {
   SlidersHorizontal,
   Smile,
   SquarePen,
+  Trash2,
   X,
 } from 'lucide-react'
 import {
+  deleteAdminSupplierChatMessage,
   fetchAdminSupplierChatConversation,
   fetchAdminSupplierChatConversations,
   sendAdminSupplierChatMessage,
@@ -312,6 +315,7 @@ function formatSupplierId(id: number | undefined): string {
 }
 
 export default function AdminChatPage() {
+  const { data: session } = useSession()
   const [conversations, setConversations] = useState<SupplierChatConversation[]>([])
   const [activeId, setActiveId] = useState<number | null>(null)
   const [activeConversation, setActiveConversation] = useState<SupplierChatConversation | null>(null)
@@ -331,6 +335,7 @@ export default function AdminChatPage() {
   const [localReplyMap, setLocalReplyMap] = useState<Record<number, SupplierChatMessage>>({})
   const [hoveredMsgId, setHoveredMsgId] = useState<number | null>(null)
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const currentAdminId = Number((session?.user as { id?: number | string } | undefined)?.id ?? 0)
 
   const [mediaModal, setMediaModal] = useState<{
     open: boolean
@@ -405,6 +410,23 @@ export default function AdminChatPage() {
     if (!query) return activeMessages
     return activeMessages.filter((m) => m.message.toLowerCase().includes(query))
   }, [activeMessages, messageSearch])
+
+  const handleDeleteMessage = async (message: SupplierChatMessage) => {
+    if (!activeConversation) return
+    if (message.sender_type !== 'admin' || message.sender_admin_id !== currentAdminId) {
+      setError('You can only delete your own messages.')
+      return
+    }
+    if (typeof window !== 'undefined' && !window.confirm('Delete this message?')) return
+
+    try {
+      setError(null)
+      await deleteAdminSupplierChatMessage(activeConversation.id, message.id)
+      await loadConversations(activeId ?? activeConversation.id)
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : 'Failed to delete message.')
+    }
+  }
 
   const messageGroups = useMemo<MessageGroup[]>(() => {
     const groups: MessageGroup[] = []
@@ -1117,31 +1139,46 @@ export default function AdminChatPage() {
                                 <div>
                                   {/* Card stack — extra bottom margin clears rotated card overflow */}
                                   <div className="relative" style={{ width: 190, height: 220, marginBottom: 28 }}>
-                                    {stackVisible.map((msg, idx) => {
-                                      const isTop = idx === stackVisible.length - 1
-                                      return (
-                                        <button
-                                          key={msg.id}
-                                          type="button"
-                                          onClick={isTop ? () => openImageGroupModal(imgs.map((m) => m.attachment_url ?? '').filter(Boolean)) : undefined}
-                                          style={{
-                                            position: 'absolute',
-                                            inset: 0,
-                                            zIndex: idx + 1,
-                                            transform: cardTransforms[stackVisible.length === 2 ? idx + 1 : idx] ?? cardTransforms[2],
-                                            cursor: isTop ? 'pointer' : 'default',
-                                          }}
-                                          className="overflow-hidden rounded-2xl shadow-lg"
-                                        >
-                                          <img src={msg.attachment_url ?? ''} alt="" className="h-full w-full object-cover" />
-                                          {isTop && imgs.length > 1 && (
-                                            <div className="absolute bottom-2 right-2 flex h-6 min-w-[24px] items-center justify-center rounded-full bg-black/60 px-1.5 text-[11px] font-bold text-white">
-                                              {imgs.length}
-                                            </div>
-                                          )}
-                                        </button>
-                                      )
-                                    })}
+                              {stackVisible.map((msg, idx) => {
+                                const isTop = idx === stackVisible.length - 1
+                                const canDelete = msg.sender_type === 'admin' && msg.sender_admin_id === currentAdminId
+                                return (
+                                  <div
+                                    key={msg.id}
+                                    style={{
+                                      position: 'absolute',
+                                      inset: 0,
+                                      zIndex: idx + 1,
+                                      transform: cardTransforms[stackVisible.length === 2 ? idx + 1 : idx] ?? cardTransforms[2],
+                                    }}
+                                    className="overflow-hidden rounded-2xl shadow-lg"
+                                  >
+                                    <button
+                                      type="button"
+                                      onClick={isTop ? () => openImageGroupModal(imgs.map((m) => m.attachment_url ?? '').filter(Boolean)) : undefined}
+                                      className="block h-full w-full"
+                                      style={{ cursor: isTop ? 'pointer' : 'default' }}
+                                    >
+                                      <img src={msg.attachment_url ?? ''} alt="" className="h-full w-full object-cover" />
+                                    </button>
+                                    {canDelete ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => void handleDeleteMessage(msg)}
+                                        className="absolute right-2 top-2 z-30 flex h-7 w-7 items-center justify-center rounded-full bg-black/55 text-white transition hover:bg-rose-600"
+                                        title="Delete image"
+                                      >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                      </button>
+                                    ) : null}
+                                    {isTop && imgs.length > 1 && (
+                                      <div className="absolute bottom-2 right-2 flex h-6 min-w-[24px] items-center justify-center rounded-full bg-black/60 px-1.5 text-[11px] font-bold text-white">
+                                        {imgs.length}
+                                      </div>
+                                    )}
+                                  </div>
+                                )
+                              })}
                                   </div>
                                   <div className={`flex items-center gap-1 ${mine ? 'justify-end' : 'justify-start'}`}>
                                     <span className="text-[10px] text-slate-400">{formatClock(lastMsg.created_at)}</span>
@@ -1185,21 +1222,34 @@ export default function AdminChatPage() {
                                 onMouseLeave={leaveMsg}
                               >
                                 {/* Hover action bar */}
-                                <div
-                                  onMouseEnter={() => enterMsg(message.id)}
-                                  className={`absolute -top-10 ${mine ? 'right-0' : 'left-0'} z-20 flex items-center gap-1 rounded-full border border-slate-100 bg-white px-3 py-1.5 shadow-xl transition-all duration-150 whitespace-nowrap ${isHovered ? 'opacity-100 pointer-events-auto scale-100' : 'opacity-0 pointer-events-none scale-95'}`}>
-                                  {QUICK_EMOJIS.map((emoji) => (
-                                    <button key={emoji} type="button" onClick={() => toggleReaction(message, emoji)}
+                          <div
+                            onMouseEnter={() => enterMsg(message.id)}
+                            className={`absolute -top-10 ${mine ? 'right-0' : 'left-0'} z-20 flex items-center gap-1 rounded-full border border-slate-100 bg-white px-3 py-1.5 shadow-xl transition-all duration-150 whitespace-nowrap ${isHovered ? 'opacity-100 pointer-events-auto scale-100' : 'opacity-0 pointer-events-none scale-95'}`}>
+                            {QUICK_EMOJIS.map((emoji) => (
+                              <button key={emoji} type="button" onClick={() => toggleReaction(message, emoji)}
                                       className={`text-2xl leading-none transition-all duration-150 hover:scale-150 hover:-translate-y-1 active:scale-90 ${myReaction === emoji ? 'opacity-100 scale-110' : 'opacity-70 hover:opacity-100'}`}>
                                       {emoji}
                                     </button>
                                   ))}
-                                  <span className="mx-1 h-4 w-px bg-slate-200" />
-                                  <button type="button" onClick={() => setReplyTo(message)}
-                                    className="flex items-center justify-center text-slate-400 transition-colors hover:text-indigo-600">
-                                    <Reply className="h-3.5 w-3.5" />
-                                  </button>
-                                </div>
+                            <span className="mx-1 h-4 w-px bg-slate-200" />
+                            <button type="button" onClick={() => setReplyTo(message)}
+                              className="flex items-center justify-center text-slate-400 transition-colors hover:text-indigo-600">
+                              <Reply className="h-3.5 w-3.5" />
+                            </button>
+                            {message.sender_type === 'admin' && message.sender_admin_id === currentAdminId ? (
+                              <>
+                                <span className="mx-1 h-4 w-px bg-slate-200" />
+                                <button
+                                  type="button"
+                                  onClick={() => void handleDeleteMessage(message)}
+                                  className="flex items-center justify-center text-slate-400 transition-colors hover:text-rose-600"
+                                  title="Delete message"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              </>
+                            ) : null}
+                          </div>
                                 {/* Reply quote */}
                                 {replySource && (
                                   <div className={`mb-1 max-w-full rounded-t-xl border-l-4 px-3 py-1.5 text-xs ${mine ? 'border-indigo-300 bg-indigo-100/60 text-indigo-800' : 'border-slate-300 bg-slate-100 text-slate-600'}`}>

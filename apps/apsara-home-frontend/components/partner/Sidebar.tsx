@@ -61,7 +61,7 @@ const links = [
   {
     href: '/partner/webpages/partner-subscriptions',
     label: 'Subscriptions',
-    description: 'Manage webstore plans',
+    description: 'Manage webstore plan history',
     restricted: false,
     icon: (
       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9">
@@ -101,6 +101,19 @@ const links = [
         <circle cx="9" cy="7" r="4" />
         <path d="M23 20v-2a4 4 0 0 0-3-3.87" strokeLinecap="round" strokeLinejoin="round" />
         <path d="M16 3.13a4 4 0 0 1 0 7.75" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    href: '/partner/webpages/renewal',
+    label: 'Renewal',
+    description: 'Renew expired webstores',
+    restricted: false,
+    icon: (
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9">
+        <path d="M12 5v4l3-3-3-3" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M7 7.5A8 8 0 1 1 5 12" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M5 12H1m4 0v4" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
   },

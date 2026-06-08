@@ -8,6 +8,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
 import { useGetAdminMeQuery, useLogoutMutation } from '@/store/api/authApi'
 import { useGetAdminOrdersQuery } from '@/store/api/adminOrdersApi'
+import { useGetUsernameChangeRequestsQuery, useGetWebstoreRequestsQuery } from '@/store/api/adminInquiriesApi'
 import { membersApi, useGetMembersStatsQuery } from '@/store/api/membersApi'
 import { baseApi, clearAccessTokenCache } from '@/store/api/baseApi'
 import { useAppDispatch } from '@/store/hooks'
@@ -15,13 +16,13 @@ import { canAccessWebContentSection, normalizeAdminPermissions } from '@/libs/ad
 import { clearAdminSession } from '@/libs/adminSession'
 import { fetchAdminSupplierChatConversations } from '@/libs/adminSupplierChat'
 
-interface SubItem { label: string; path: string; badge?: number }
+interface SubItem { label: string; path: string; badge?: number | string }
 interface NavItem {
   id: string
   label: string
   path?: string
   icon: React.ReactNode
-  badge?: number
+  badge?: number | string
   children?: SubItem[]
   sectionLabel?: string
 }
@@ -287,6 +288,14 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
   const isMerchantAdmin = effectiveRole === 'merchant_admin' || effectiveUserLevelId === 7
   const isSupplierAdmin = effectiveRole === 'supplier_admin' || effectiveUserLevelId === 8
   const isAdminPortalRole = isSuperAdmin || isAdmin || isWebContent || isAccounting || isFinanceOfficer || isMerchantAdmin || isSupplierAdmin
+  const inquiryQueryOptions = {
+    skip: !sessionAccessToken || !isAdminPortalRole,
+    pollingInterval: 30_000,
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+  }
+  const { data: usernameChangeRequests } = useGetUsernameChangeRequestsQuery(undefined, inquiryQueryOptions)
+  const { data: webstoreRequests } = useGetWebstoreRequestsQuery(undefined, inquiryQueryOptions)
   const rawEffectivePermissions = ((resolvedAdminMe?.admin_permissions ?? rawSessionPermissions) as string[])
     .filter((permission): permission is string => typeof permission === 'string')
   const effectiveAdminPermissions = normalizeAdminPermissions(rawEffectivePermissions)
@@ -308,6 +317,11 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
       : formatRole(resolvedAdminMe?.role)
   const displayInitials = getInitials(displayName)
   const avatarSrc = resolvedAdminMe?.avatar_url || session?.user?.image
+  const pendingInquiryCount = useMemo(() => {
+    const usernamePending = usernameChangeRequests?.requests?.filter((request) => request.status === 'pending_review').length ?? 0
+    const webstorePending = webstoreRequests?.requests?.filter((request) => request.status === 'pending_review').length ?? 0
+    return usernamePending + webstorePending
+  }, [usernameChangeRequests?.requests, webstoreRequests?.requests])
 
   useEffect(() => {
     if (!adminMe || !isAdminPortalRole) return
@@ -363,11 +377,6 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
     return () => window.clearInterval(id)
   }, [sessionAccessToken])
 
-  // Clear badge when already on the chat page
-  useEffect(() => {
-    if (pathname === '/admin/chat') setUnreadChatCount(0)
-  }, [pathname])
-
   const toggleMenu = (id: string) =>
     setOpenMenus(prev => prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id])
 
@@ -387,11 +396,12 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
   const isActive = (path: string) => pathname === path || pathname.startsWith(`${path}/`)
   const isChildActive = (children?: SubItem[]) => Boolean(children?.some((c) => pathname === c.path))
   const isExactActive = (path: string) => pathname === path
+  const effectiveUnreadChatCount = pathname === '/admin/chat' ? 0 : unreadChatCount
 
   const visibleNavItems = navItems
     .map((item) => {
       if (item.id === 'chat') {
-        return { ...item, badge: unreadChatCount }
+        return { ...item, badge: effectiveUnreadChatCount }
       }
 
       if (item.id === 'members') {
@@ -405,6 +415,13 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
         return {
           ...item,
           badge: allOrdersData?.meta.total ?? 0,
+        }
+      }
+
+      if (item.id === 'inquiry') {
+        return {
+          ...item,
+          badge: pendingInquiryCount > 0 ? 'NEW' : undefined,
         }
       }
 
@@ -609,6 +626,11 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
                             {item.badge}
                           </span>
                         )}
+                        {typeof item.badge === 'string' && item.badge && (
+                          <span className="inline-flex items-center rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm animate-pulse">
+                            {item.badge}
+                          </span>
+                        )}
                         {!isAccounting && !isFinanceOfficer && (
                           <svg className={`w-4 h-4 shrink-0 transition-transform duration-200 ${menuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                         )}
@@ -635,6 +657,11 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
                         {typeof item.badge === 'number' && item.badge > 0 && (
                           <span className={`text-white text-xs px-1.5 py-0.5 rounded-full font-bold min-w-5 text-center ${item.id === 'chat' ? 'bg-red-500 animate-pulse' : 'bg-sky-500'}`}>
                             {item.badge > 99 ? '99+' : item.badge}
+                          </span>
+                        )}
+                        {typeof item.badge === 'string' && item.badge && (
+                          <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold uppercase tracking-wide text-white shadow-sm animate-pulse">
+                            N
                           </span>
                         )}
                       </>

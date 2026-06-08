@@ -271,6 +271,44 @@ class SupplierChatController extends Controller
         ]);
     }
 
+    public function deleteMessage(Request $request, int $conversationId, int $messageId): JsonResponse
+    {
+        $actor = $request->user();
+        $actorInfo = $this->resolveActor($actor);
+
+        if (! $actorInfo) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $conversation = $this->queryForActor($actorInfo)->where('id', $conversationId)->first();
+        if (! $conversation) {
+            return response()->json(['message' => 'Conversation not found.'], 404);
+        }
+
+        $message = $conversation->messages()->where('id', $messageId)->first();
+        if (! $message) {
+            return response()->json(['message' => 'Message not found.'], 404);
+        }
+
+        $actorType = (string) $actorInfo['actor_type'];
+        $actorId = (int) $actorInfo['actor_id'];
+
+        $isOwner = $actorType === 'admin'
+            ? ((string) $message->sender_type === 'admin' && (int) $message->sender_admin_id === $actorId)
+            : ((string) $message->sender_type === 'supplier' && (int) $message->sender_supplier_user_id === $actorId);
+
+        if (! $isOwner) {
+            return response()->json(['message' => 'You can only delete your own messages.'], 403);
+        }
+
+        $message->delete();
+        $this->refreshConversationLastMessageAt($conversation);
+
+        return response()->json([
+            'message' => 'Message deleted successfully.',
+        ]);
+    }
+
     public function updatePresence(Request $request): JsonResponse
     {
         $actor = $request->user();
@@ -436,6 +474,14 @@ class SupplierChatController extends Controller
         }
 
         $query->whereNull('read_at')->update(['read_at' => now()]);
+    }
+
+    private function refreshConversationLastMessageAt(SupplierChatConversation $conversation): void
+    {
+        $latestMessage = $conversation->messages()->latest('created_at')->first();
+        $conversation->update([
+            'last_message_at' => $latestMessage?->created_at,
+        ]);
     }
 
     private function formatConversationSummary(SupplierChatConversation $conversation, string $actorType, ?\Illuminate\Support\Collection $brands = null): array

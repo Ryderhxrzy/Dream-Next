@@ -156,6 +156,20 @@ export const adminInquiriesApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['AdminNotifications', 'WebstoreRequests', 'User'],
     }),
+    deletePartnerWebstoreRequest: builder.mutation<{ message: string }, { id: number }>({
+      query: ({ id }) => ({
+        url: `/api/admin/partner/webstore-requests/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['WebstoreRequests'],
+    }),
+    deletePartnerWebstoreReceiptItem: builder.mutation<{ message: string }, { id: number }>({
+      query: ({ id }) => ({
+        url: `/api/admin/partner/webstore-receipt-items/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['WebstoreRequests'],
+    }),
   }),
 });
 
@@ -170,4 +184,6 @@ export const {
   useRejectWebstoreReceiptMutation,
   useRejectWebstoreRequestMutation,
   useDeleteWebstoreRequestMutation,
+  useDeletePartnerWebstoreRequestMutation,
+  useDeletePartnerWebstoreReceiptItemMutation,
 } = adminInquiriesApi;

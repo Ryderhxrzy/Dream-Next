@@ -225,6 +225,13 @@ export async function toggleAdminChatReaction(
   return response.data
 }
 
+export async function deleteAdminSupplierChatMessage(conversationId: number, messageId: number): Promise<void> {
+  await adminSupplierChatRequest<{ message?: string }>(
+    `/api/admin/supplier-chat/conversations/${conversationId}/messages/${messageId}`,
+    { method: 'DELETE' },
+  )
+}
+
 export async function createAdminSupplierChatConversation(
   supplierUserId: number,
   subject: string,

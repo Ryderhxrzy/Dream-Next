@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   useApproveWebstoreRequestMutation,
@@ -75,6 +75,7 @@ export default function WebstoreRequestsPage() {
   }>({ open: false, receiptId: null, action: 'approve', label: null })
   const [approveReceipt, { isLoading: isApprovingReceipt }] = useApproveWebstoreReceiptMutation()
   const [rejectReceipt, { isLoading: isRejectingReceipt }] = useRejectWebstoreReceiptMutation()
+  const autoProcessedReceiptIds = useRef<Set<number>>(new Set())
   const [details, setDetails] = useState<{
     open: boolean
     id: number | null
@@ -433,17 +434,79 @@ export default function WebstoreRequestsPage() {
     }
   }
 
+  // Find the single latest receipt item (newest-first) that has a paymentReference.
+  // Prefer real PayMongo references (pay_/pi_/cs_) over WEB- fallbacks.
+  // Track its original index so only that specific card shows "Matches ref".
+  const receiptItems = details.receiptItems ?? []
+  const isPayMongoRef = (v?: string | null) => Boolean(v && /^(pay_|pi_|cs_)/.test(String(v).trim()))
+  const reversed = [...receiptItems].reverse()
+  const latestReceiptItem =
+    reversed.find((r) => isPayMongoRef(r.paymentReference))
+    ?? reversed.find((r) => isPayMongoRef(r.paymentIntentId))
+    ?? reversed.find((r) => String(r.paymentReference ?? '').trim())
+    ?? reversed.find((r) => String(r.paymentIntentId ?? '').trim())
+    ?? null
   const latestReceiptReferenceId = String(
-    [...(details.receiptItems ?? [])]
-      .reverse()
-      .find((receipt) => String(receipt.paymentReference ?? receipt.paymentIntentId ?? '').trim())?.paymentReference
-    ?? [...(details.receiptItems ?? [])]
-      .reverse()
-      .find((receipt) => String(receipt.paymentReference ?? receipt.paymentIntentId ?? '').trim())?.paymentIntentId
+    latestReceiptItem?.paymentReference
+    ?? latestReceiptItem?.paymentIntentId
+    ?? (isPayMongoRef(details.paymentReference) ? details.paymentReference : null)
+    ?? (isPayMongoRef(details.paymentIntentId) ? details.paymentIntentId : null)
     ?? details.paymentReference
     ?? details.paymentIntentId
     ?? '',
   ).trim()
+  const confirmedCheckoutId = String(details.checkoutId ?? '').trim()
+  const confirmedPaymentRef = String(details.paymentReference ?? details.paymentIntentId ?? '').trim()
+
+  // Auto-approve or auto-reject pending continuation receipts based on filename match.
+  // This handles receipts submitted before backend auto-processing was deployed.
+  useEffect(() => {
+    if (!details.open || !details.id || !Array.isArray(details.receiptItems) || !latestReceiptReferenceId) return
+
+    const getFilename = (url: string) => {
+      try { return decodeURIComponent(new URL(url).pathname.split('/').pop() ?? '').toLowerCase() }
+      catch { return decodeURIComponent(url.split('/').pop()?.split('?')[0] ?? '').toLowerCase() }
+    }
+
+    for (const receipt of details.receiptItems) {
+      if (!receipt.id) continue
+      if (receipt.type !== 'webstore_payment_continuation') continue
+      const status = String(receipt.approvalStatus ?? '').trim().toLowerCase()
+      if (status === 'approved' || status === 'rejected') continue
+      if (autoProcessedReceiptIds.current.has(receipt.id)) continue
+
+      const cardUrls = Array.isArray(receipt.receiptUrls) ? receipt.receiptUrls : []
+      const matches = latestReceiptReferenceId.length > 0 &&
+        cardUrls.some(url => getFilename(url).includes(latestReceiptReferenceId.toLowerCase()))
+
+      const receiptId = receipt.id
+      const ticketId = details.id
+      autoProcessedReceiptIds.current.add(receiptId)
+
+      if (matches) {
+        approveReceipt({ id: ticketId, detailId: receiptId })
+          .unwrap()
+          .then(() => setDetails(prev => ({
+            ...prev,
+            receiptItems: (prev.receiptItems ?? []).map(r =>
+              r.id === receiptId ? { ...r, approvalStatus: 'approved', approvedAt: new Date().toISOString() } : r
+            ),
+          })))
+          .catch(() => { autoProcessedReceiptIds.current.delete(receiptId) })
+      } else {
+        rejectReceipt({ id: ticketId, detailId: receiptId })
+          .unwrap()
+          .then(() => setDetails(prev => ({
+            ...prev,
+            receiptItems: (prev.receiptItems ?? []).map(r =>
+              r.id === receiptId ? { ...r, approvalStatus: 'rejected', approvedAt: null } : r
+            ),
+          })))
+          .catch(() => { autoProcessedReceiptIds.current.delete(receiptId) })
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [details.open, details.id, details.receiptItems, latestReceiptReferenceId])
 
   const parseDateSafe = (value?: string | null): Date | null => {
     if (!value) return null
@@ -564,14 +627,37 @@ export default function WebstoreRequestsPage() {
       return format(endDate)
     }
 
+    // For full/one-time billing: if there is a later approved continuation receipt,
+    // use that receipt's approvedAt as the renewal base for the end date.
+    const latestContinuationApprovedAt = Array.isArray(receiptItems)
+      ? receiptItems.reduce<Date | null>((latest, r) => {
+          if (r?.type !== 'webstore_payment_continuation') return latest
+          if (r?.approvalStatus !== 'approved' && !r?.approvedAt) return latest
+          const t = parseDateSafe(r?.approvedAt)
+          return t && (!latest || t > latest) ? t : latest
+        }, null)
+      : null
+
     const duration = planTermDuration(plan, term)
     if (duration.days > 0) {
-      endDate.setDate(endDate.getDate() + duration.days)
-      return format(endDate)
+      const initialEnd = new Date(startDate)
+      initialEnd.setDate(initialEnd.getDate() + duration.days)
+      if (latestContinuationApprovedAt) {
+        const renewalEnd = new Date(latestContinuationApprovedAt)
+        renewalEnd.setDate(renewalEnd.getDate() + duration.days)
+        if (renewalEnd > initialEnd) return format(renewalEnd)
+      }
+      return format(initialEnd)
     }
     if (duration.months <= 0) return '-'
-    endDate.setMonth(endDate.getMonth() + duration.months)
-    return format(endDate)
+    const initialEnd = new Date(startDate)
+    initialEnd.setMonth(initialEnd.getMonth() + duration.months)
+    if (latestContinuationApprovedAt) {
+      const renewalEnd = new Date(latestContinuationApprovedAt)
+      renewalEnd.setMonth(renewalEnd.getMonth() + duration.months)
+      if (renewalEnd > initialEnd) return format(renewalEnd)
+    }
+    return format(initialEnd)
   }
 
   const getReceiptStatus = (receipt?: {
@@ -1080,7 +1166,17 @@ export default function WebstoreRequestsPage() {
                             <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">Start Date</p>
                           </div>
                           <p className="mt-1 max-w-full break-words text-center text-sm font-semibold leading-tight text-[#163060]">
-                            {formatDate(details.approvedAt)}
+                            {formatDate(
+                              String(details.billingOption ?? '').toLowerCase() !== 'monthly'
+                                ? (details.receiptItems ?? []).reduce<string | null | undefined>((latest, r) => {
+                                    if (r?.type !== 'webstore_payment_continuation') return latest
+                                    if (r?.approvalStatus !== 'approved' && !r?.approvedAt) return latest
+                                    const t = parseDateSafe(r?.approvedAt)
+                                    const l = parseDateSafe(latest)
+                                    return t && (!l || t > l) ? r.approvedAt : latest
+                                  }, null) || details.approvedAt
+                                : details.approvedAt
+                            )}
                           </p>
                         </div>
 
@@ -1171,10 +1267,53 @@ export default function WebstoreRequestsPage() {
                                         </div>
                                       </div>
                                     </button>
-                                    <div className="px-3 py-2">
+                                    <div className="px-3 py-2 space-y-1.5">
                                       <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
                                         {formatDateTime(receipt.submittedAt)}
                                       </p>
+                                      {(() => {
+                                        // Prefer the checkout/session ID because that is what PayMongo
+                                        // prints on the receipt image — it is unique per payment attempt.
+                                        // paymentReference can be shared across continuation payments,
+                                        // which would cause false "Matches" badges.
+                                        const getCardFilename = (url: string) => {
+                                          try { return decodeURIComponent(new URL(url).pathname.split('/').pop() ?? '').toLowerCase() }
+                                          catch { return decodeURIComponent(url.split('/').pop()?.split('?')[0] ?? '').toLowerCase() }
+                                        }
+                                        const cardUrls = Array.isArray(receipt.receiptUrls) ? receipt.receiptUrls : []
+                                        const refMatch = latestReceiptReferenceId.length > 0 && cardUrls.some(url => getCardFilename(url).includes(latestReceiptReferenceId.toLowerCase()))
+                                        if (isApproved) {
+                                          return (
+                                            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[9px] font-bold text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
+                                              <svg className="h-2.5 w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/></svg>
+                                              Approved
+                                            </span>
+                                          )
+                                        }
+                                        if (isRejected) {
+                                          return (
+                                            <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[9px] font-bold text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
+                                              <svg className="h-2.5 w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+                                              Rejected
+                                            </span>
+                                          )
+                                        }
+                                        return (
+                                          <div className="space-y-0.5">
+                                            {refMatch ? (
+                                              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[9px] font-bold text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
+                                                <svg className="h-2.5 w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/></svg>
+                                                Matches ref
+                                              </span>
+                                            ) : (
+                                              <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[9px] font-bold text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
+                                                <svg className="h-2.5 w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+                                                No match
+                                              </span>
+                                            )}
+                                          </div>
+                                        )
+                                      })()}
                                     </div>
                                     <div className="mt-1.5 flex flex-col gap-1">
                                       {canReview ? (
@@ -1240,9 +1379,37 @@ export default function WebstoreRequestsPage() {
                           <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">Payment Reference No.</p>
                         </div>
                         {latestReceiptReferenceId ? (
-                          <p className="mt-1 break-words text-sm font-semibold leading-tight text-[#163060]">
-                            {latestReceiptReferenceId}
-                          </p>
+                          <>
+                            <p className="mt-1 break-words text-sm font-semibold leading-tight text-[#163060]">
+                              {latestReceiptReferenceId}
+                            </p>
+                            {(() => {
+                              // Check if the reference appears in the filename of ANY receipt image.
+                              const getFilename = (url: string) => {
+                                try {
+                                  return decodeURIComponent(new URL(url).pathname.split('/').pop() ?? '')
+                                } catch {
+                                  return decodeURIComponent(url.split('/').pop()?.split('?')[0] ?? '')
+                                }
+                              }
+                              const allUrls = receiptItems[receiptItems.length - 1]?.receiptUrls ?? []
+                              const filenameMatch = latestReceiptReferenceId.length > 0 && allUrls.some(url => {
+                                const filename = getFilename(url).toLowerCase()
+                                return filename.includes(latestReceiptReferenceId.toLowerCase())
+                              })
+                              return filenameMatch ? (
+                                <span className="mt-1.5 inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
+                                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/></svg>
+                                  Verified
+                                </span>
+                              ) : (
+                                <span className="mt-1.5 inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
+                                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+                                  No receipt match
+                                </span>
+                              )
+                            })()}
+                          </>
                         ) : (
                           <span className="mt-1 inline-flex rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-bold text-orange-700 dark:border-orange-500/20 dark:bg-orange-500/10 dark:text-orange-200">
                             Not provided

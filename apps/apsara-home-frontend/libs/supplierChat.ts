@@ -227,6 +227,13 @@ export async function toggleSupplierChatReaction(
   return response.data
 }
 
+export async function deleteSupplierChatMessage(conversationId: number, messageId: number): Promise<void> {
+  await supplierChatRequest<{ message?: string }>(
+    `/api/supplier/chat/conversations/${conversationId}/messages/${messageId}`,
+    { method: 'DELETE' },
+  )
+}
+
 export async function createSupplierChatConversation(subject: string, message: string) {
   const response = await supplierChatRequest<{ data: SupplierChatConversation }>(
     '/api/supplier/chat/conversations',

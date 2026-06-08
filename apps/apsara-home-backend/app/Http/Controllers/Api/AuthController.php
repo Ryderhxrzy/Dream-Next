@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AdminNotification;
 use App\Models\Admin;
 use App\Models\Customer;
+use App\Models\CustomerNotification;
 use App\Models\CustomerLoginSession;
 use App\Models\CustomerAddress;
 use App\Models\MemberActivityLog;
@@ -2299,7 +2300,7 @@ class AuthController extends Controller
                 'type' => 'webstore_payment_continuation',
             ]);
 
-            DB::table('tbl_tickets_details')->insert([
+            $newDetailId = DB::table('tbl_tickets_details')->insertGetId([
                 't_id' => (int) $latest->t_id,
                 'td_content' => json_encode($continuationPayload, JSON_THROW_ON_ERROR),
                 'td_attachment' => null,
@@ -2309,7 +2310,124 @@ class AuthController extends Controller
                 'td_replystat' => 0,
                 'td_viewstat' => '1',
                 'td_ip' => (string) $request->ip(),
-            ]);
+            ], 'td_id');
+
+            // Auto-approve or auto-reject based on whether any receipt URL filename
+            // contains the payment reference (set by use_filename=true on Cloudinary upload).
+            $paymentRef = strtolower(trim((string) ($continuationPayload['payment_reference'] ?? '')));
+            $filenameMatch = false;
+            if ($paymentRef !== '') {
+                foreach (($continuationPayload['receipt_urls'] ?? []) as $receiptUrl) {
+                    try {
+                        $filename = strtolower(rawurldecode((string) basename(parse_url((string) $receiptUrl, PHP_URL_PATH))));
+                    } catch (\Throwable) {
+                        $filename = strtolower(rawurldecode((string) basename(explode('?', (string) $receiptUrl)[0])));
+                    }
+                    if (str_contains($filename, $paymentRef)) {
+                        $filenameMatch = true;
+                        break;
+                    }
+                }
+            }
+
+            $reviewedAt = now('Asia/Manila');
+            if ($filenameMatch) {
+                $autoApprovedPayload = array_merge($continuationPayload, [
+                    'approval_status' => 'approved',
+                    'approved_at'     => $reviewedAt->toDateTimeString(),
+                    'approved_by'     => 0,
+                ]);
+                DB::table('tbl_tickets_details')
+                    ->where('td_id', $newDetailId)
+                    ->update(['td_content' => json_encode($autoApprovedPayload, JSON_THROW_ON_ERROR)]);
+
+                DB::table('tbl_tickets_details')->insert([
+                    't_id'          => (int) $latest->t_id,
+                    'td_content'    => json_encode([
+                        'type'              => 'webstore_receipt_decision',
+                        'decision'          => 'approved',
+                        'receipt_detail_id' => $newDetailId,
+                        'reviewed_by'       => null,
+                        'reviewed_at'       => $reviewedAt->toDateTimeString(),
+                        'auto_processed'    => true,
+                    ], JSON_THROW_ON_ERROR),
+                    'td_attachment' => null,
+                    'td_datetime'   => $reviewedAt,
+                    'td_rate'       => 0,
+                    'td_eid'        => 0,
+                    'td_replystat'  => 1,
+                    'td_viewstat'   => '1',
+                    'td_ip'         => (string) $request->ip(),
+                ]);
+
+                CustomerNotification::query()->create([
+                    'cn_customer_id'  => (int) $customer->c_userid,
+                    'cn_type'         => 'webstore_request',
+                    'cn_severity'     => 'success',
+                    'cn_title'        => 'Webstore Receipt Approved',
+                    'cn_message'      => sprintf('Your webstore receipt has been automatically approved (%s).', $reviewedAt->format('F j, Y g:i A')),
+                    'cn_href'         => '/profile?tab=webstore',
+                    'cn_payload'      => [
+                        'ticket_id'         => (int) $latest->t_id,
+                        'receipt_detail_id' => $newDetailId,
+                        'approved_at'       => $reviewedAt->toDateTimeString(),
+                    ],
+                    'cn_source_type'  => 'webstore_receipt',
+                    'cn_source_id'    => $newDetailId,
+                    'cn_created_at'   => $reviewedAt,
+                ]);
+            } else {
+                $rejectionReason = 'Receipt does not match the payment reference.';
+                $autoRejectedPayload = array_merge($continuationPayload, [
+                    'approval_status' => 'rejected',
+                    'approved_at'     => null,
+                    'rejected_at'     => $reviewedAt->toDateTimeString(),
+                    'approved_by'     => 0,
+                    'rejection_reason' => $rejectionReason,
+                    'review_note'     => $rejectionReason,
+                ]);
+                DB::table('tbl_tickets_details')
+                    ->where('td_id', $newDetailId)
+                    ->update(['td_content' => json_encode($autoRejectedPayload, JSON_THROW_ON_ERROR)]);
+
+                DB::table('tbl_tickets_details')->insert([
+                    't_id'          => (int) $latest->t_id,
+                    'td_content'    => json_encode([
+                        'type'              => 'webstore_receipt_decision',
+                        'decision'          => 'rejected',
+                        'receipt_detail_id' => $newDetailId,
+                        'reason'            => $rejectionReason,
+                        'reviewed_by'       => null,
+                        'reviewed_at'       => $reviewedAt->toDateTimeString(),
+                        'auto_processed'    => true,
+                    ], JSON_THROW_ON_ERROR),
+                    'td_attachment' => null,
+                    'td_datetime'   => $reviewedAt,
+                    'td_rate'       => 0,
+                    'td_eid'        => 0,
+                    'td_replystat'  => 2,
+                    'td_viewstat'   => '1',
+                    'td_ip'         => (string) $request->ip(),
+                ]);
+
+                CustomerNotification::query()->create([
+                    'cn_customer_id'  => (int) $customer->c_userid,
+                    'cn_type'         => 'webstore_request',
+                    'cn_severity'     => 'error',
+                    'cn_title'        => 'Webstore Receipt Rejected',
+                    'cn_message'      => $rejectionReason,
+                    'cn_href'         => '/profile?tab=webstore',
+                    'cn_payload'      => [
+                        'ticket_id'         => (int) $latest->t_id,
+                        'receipt_detail_id' => $newDetailId,
+                        'reason'            => $rejectionReason,
+                        'rejected_at'       => $reviewedAt->toDateTimeString(),
+                    ],
+                    'cn_source_type'  => 'webstore_receipt',
+                    'cn_source_id'    => $newDetailId,
+                    'cn_created_at'   => $reviewedAt,
+                ]);
+            }
 
             AdminNotification::query()->firstOrCreate(
                 [
@@ -2594,7 +2712,7 @@ class AuthController extends Controller
         ]);
 
         try {
-            $upload = $cloudinary->uploadImage($validated['file'], 'apsara/webstore/receipts', true);
+            $upload = $cloudinary->uploadImage($validated['file'], 'apsara/webstore/receipts', true, true);
             $url = (string) ($upload['secure_url'] ?? '');
             if ($url === '') {
                 return response()->json(['message' => 'Receipt upload returned no image URL.'], 422);
