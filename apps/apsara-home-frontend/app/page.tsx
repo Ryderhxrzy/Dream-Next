@@ -7,6 +7,7 @@ export const metadata = buildPageMetadata({
   path: '/',
 });
 
+//trigger test 
 export default function Home() {
   return <LandingPage />;
 }
