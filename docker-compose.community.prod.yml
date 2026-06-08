@@ -1,10 +1,6 @@
 services:
   community-backend:
-    build:
-      context: .
-      dockerfile: docker/node.prod.Dockerfile
-      args:
-        APP_FILTER: community-backend
+    image: ghcr.io/dreamnext-af-home/community-backend:${IMAGE_TAG:-latest}
     restart: unless-stopped
     mem_limit: 512m
     environment:
@@ -30,14 +26,8 @@ services:
       - dokploy-network
 
   community-frontend:
-    build:
-      context: .
-      dockerfile: docker/next.prod.Dockerfile
-      args:
-        APP_FILTER: community-frontend
-        NEXT_PUBLIC_AFHOME_API_URL: "${NEXT_PUBLIC_AFHOME_API_URL:-https://backend.afhome.ph}"
-        NEXT_PUBLIC_COMMUNITY_API_URL: "${NEXT_PUBLIC_COMMUNITY_API_URL:-https://community-backend.afhome.ph}"
-        NEXT_PUBLIC_REALTIME_URL: "${NEXT_PUBLIC_REALTIME_URL:-https://realtime.afhome.ph}"
+    # NEXT_PUBLIC_* values are baked into this image at BUILD time in CI.
+    image: ghcr.io/dreamnext-af-home/community-frontend:${IMAGE_TAG:-latest}
     restart: unless-stopped
     mem_limit: 768m
     environment:
@@ -67,11 +57,7 @@ services:
       - dokploy-network
 
   realtime-service:
-    build:
-      context: .
-      dockerfile: docker/node.prod.Dockerfile
-      args:
-        APP_FILTER: realtime-service
+    image: ghcr.io/dreamnext-af-home/realtime-service:${IMAGE_TAG:-latest}
     restart: unless-stopped
     mem_limit: 384m
     environment:

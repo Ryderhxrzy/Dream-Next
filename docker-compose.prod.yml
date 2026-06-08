@@ -1,8 +1,6 @@
 services:
   backend:
-    build:
-      context: .
-      dockerfile: docker/backend.prod.Dockerfile
+    image: ghcr.io/dreamnext-af-home/afhome-backend:${IMAGE_TAG:-latest}
     restart: unless-stopped
     mem_limit: 1g
     environment: &backend-env
@@ -162,9 +160,7 @@ services:
   # announcement blasts, notifications). WORKER_MODE=true skips migrations and
   # cache clears so its periodic --max-time restarts never disturb the web app.
   worker:
-    build:
-      context: .
-      dockerfile: docker/backend.prod.Dockerfile
+    image: ghcr.io/dreamnext-af-home/afhome-backend:${IMAGE_TAG:-latest}
     restart: unless-stopped
     mem_limit: 768m
     environment:
@@ -179,27 +175,8 @@ services:
       - default
 
   frontend:
-    build:
-      context: .
-      dockerfile: docker/next.prod.Dockerfile
-      args:
-        APP_FILTER: apsara-home-frontend
-        NEXTAUTH_URL: "${NEXTAUTH_URL:-}"
-        NEXTAUTH_SECRET: "${NEXTAUTH_SECRET:-}"
-        NEXT_PUBLIC_LARAVEL_API_URL: "${NEXT_PUBLIC_LARAVEL_API_URL:-}"
-        NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-}"
-        NEXT_PUBLIC_BASE_URL: "${NEXT_PUBLIC_BASE_URL:-}"
-        NEXT_PUBLIC_SITE_URL: "${NEXT_PUBLIC_SITE_URL:-}"
-        NEXT_PUBLIC_APP_URL: "${NEXT_PUBLIC_APP_URL:-}"
-        NEXT_PUBLIC_PUSHER_KEY: "${NEXT_PUBLIC_PUSHER_KEY:-}"
-        NEXT_PUBLIC_PUSHER_CLUSTER: "${NEXT_PUBLIC_PUSHER_CLUSTER:-ap1}"
-        NEXT_PUBLIC_TAWK_PROPERTY_ID: "${NEXT_PUBLIC_TAWK_PROPERTY_ID:-}"
-        NEXT_PUBLIC_TAWK_WIDGET_ID: "${NEXT_PUBLIC_TAWK_WIDGET_ID:-}"
-        NEXT_PUBLIC_GOOGLE_CLIENT_ID: "${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}"
-        USER_LOGIN_CLOUDFLARE_SITE_KEY: "${USER_LOGIN_CLOUDFLARE_SITE_KEY:-}"
-        USER_SIGNUP_CLOUDFLARE_SITE_KEY: "${USER_SIGNUP_CLOUDFLARE_SITE_KEY:-}"
-        USER_FORGOT_PASSWORD_CLOUDFLARE_SITE_KEY: "${USER_FORGOT_PASSWORD_CLOUDFLARE_SITE_KEY:-}"
-        ADMIN_LOGIN_CLOUDFLARE_SITE_KEY: "${ADMIN_LOGIN_CLOUDFLARE_SITE_KEY:-}"
+    # NEXT_PUBLIC_* values are baked into this image at BUILD time in CI.
+    image: ghcr.io/dreamnext-af-home/afhome-frontend:${IMAGE_TAG:-latest}
     restart: unless-stopped
     mem_limit: 768m
     environment:
@@ -247,15 +224,7 @@ services:
       - default
 
   dreambuild:
-    build:
-      context: .
-      dockerfile: docker/next.prod.Dockerfile
-      args:
-        APP_FILTER: dreambuild
-        NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-}"
-        NEXT_PUBLIC_LARAVEL_API_URL: "${NEXT_PUBLIC_LARAVEL_API_URL:-}"
-        NEXT_PUBLIC_PUSHER_KEY: "${NEXT_PUBLIC_PUSHER_KEY:-}"
-        NEXT_PUBLIC_PUSHER_CLUSTER: "${NEXT_PUBLIC_PUSHER_CLUSTER:-ap1}"
+    image: ghcr.io/dreamnext-af-home/afhome-dreambuild:${IMAGE_TAG:-latest}
     restart: unless-stopped
     mem_limit: 512m
     environment:
@@ -274,9 +243,7 @@ services:
       - default
 
   redis:
-    build:
-      context: .
-      dockerfile: docker/redis.Dockerfile
+    image: redis:7-alpine
     restart: unless-stopped
     mem_limit: 384m
     command: redis-server --requirepass "${REDIS_PASSWORD:-local_redis_password}" --appendonly yes
