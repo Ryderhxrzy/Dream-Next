@@ -119,10 +119,14 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+    # `secrets` can't be used in `if:` — map them to env first, then gate on env.
+    env:
+      DOKPLOY_WEBHOOK_URL_MAIN: ${{ secrets.DOKPLOY_WEBHOOK_URL_MAIN }}
+      DOKPLOY_WEBHOOK_URL_COMMUNITY: ${{ secrets.DOKPLOY_WEBHOOK_URL_COMMUNITY }}
     steps:
       - name: Trigger Dokploy redeploy (main stack)
-        if: ${{ secrets.DOKPLOY_WEBHOOK_URL_MAIN != '' }}
-        run: curl -fsSL -X POST "${{ secrets.DOKPLOY_WEBHOOK_URL_MAIN }}"
+        if: ${{ env.DOKPLOY_WEBHOOK_URL_MAIN != '' }}
+        run: curl -fsSL -X POST "$DOKPLOY_WEBHOOK_URL_MAIN"
       - name: Trigger Dokploy redeploy (community stack)
-        if: ${{ secrets.DOKPLOY_WEBHOOK_URL_COMMUNITY != '' }}
-        run: curl -fsSL -X POST "${{ secrets.DOKPLOY_WEBHOOK_URL_COMMUNITY }}"
+        if: ${{ env.DOKPLOY_WEBHOOK_URL_COMMUNITY != '' }}
+        run: curl -fsSL -X POST "$DOKPLOY_WEBHOOK_URL_COMMUNITY"
