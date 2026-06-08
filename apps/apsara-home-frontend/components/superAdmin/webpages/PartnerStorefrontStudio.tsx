@@ -2,6 +2,7 @@
 
 import type { ReactNode } from 'react'
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
+import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { showErrorToast, showSuccessToast } from '@/libs/toast'
 import { buildPartnerStorefrontPublicUrl, getPartnerStorefrontConfig } from '@/libs/partnerStorefront'
@@ -227,6 +228,17 @@ export default function PartnerStorefrontStudio() {
 
     return scoped.sort((a, b) => a.config.displayName.localeCompare(b.config.displayName))
   }, [data?.items, allowedStorefrontIds, hasSpecificStorefrontIds])
+  const selectedStorefrontItem = useMemo(
+    () => (typeof selectedId === 'number' ? storefronts.find((entry) => entry.item.id === selectedId)?.item ?? null : null),
+    [selectedId, storefronts],
+  )
+  const renewalHref = useMemo(() => {
+    const storefrontKey = selectedStorefrontItem
+      ? getPartnerStorefrontConfig(selectedStorefrontItem)?.slug || String(selectedStorefrontItem.id)
+      : ''
+    if (!storefrontKey) return '/partner/webpages/renewal'
+    return `/partner/webpages/renewal?storefront=${encodeURIComponent(storefrontKey)}`
+  }, [selectedStorefrontItem])
 
   const categories = categoriesData?.categories ?? []
   const allowedCategoryOptions = useMemo(
@@ -1378,6 +1390,18 @@ export default function PartnerStorefrontStudio() {
           </div>
           <div className="flex items-center gap-2">
             <OpenPreviewButton slug={draft.slug} displayName={draft.displayName} />
+            <Link
+              href={renewalHref}
+              className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold shadow-sm transition ${
+                selectedStorefrontItem
+                  ? 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:border-indigo-700/60 dark:bg-indigo-900/30 dark:text-indigo-200 dark:hover:bg-indigo-900/50'
+                  : 'pointer-events-none cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500'
+              }`}
+              aria-disabled={!selectedStorefrontItem}
+              tabIndex={selectedStorefrontItem ? 0 : -1}
+            >
+              Renewal
+            </Link>
             <button
               type="button"
               onClick={() => void saveStorefront()}

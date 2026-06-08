@@ -12,6 +12,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/landing-page/Footer';
 import { showErrorToast, showSuccessToast } from '@/libs/toast';
 import { extractPartnerSlugFromPath } from '@/libs/storefrontRouting';
+import { computeEndDateRaw } from '@/libs/webstoreExpiry';
 import { useGetPublicWebPageItemsQuery } from '@/store/api/webPagesApi';
 import { getPartnerStorefrontConfig } from '@/libs/partnerStorefront';
 import Icon from './Icons';
@@ -457,31 +458,30 @@ const getWebstoreSubscriptionExpiry = (tx: {
   plan?: string | null;
   plan_term?: string | null;
   plan_term_months?: number | null;
+  billing_option?: string | null;
+  status?: string | null;
   reviewed_at?: string | null;
   created_at?: string | null;
+  receipt_items?: Array<{
+    type?: string | null;
+    approval_status?: string | null;
+    approved_at?: string | null;
+  }> | null;
 }): Date | null => {
-  const startStr = (tx.reviewed_at?.trim() || tx.created_at?.trim()) ?? null;
-  if (!startStr) return null;
-  const d = new Date(startStr);
-  if (isNaN(d.getTime())) return null;
-  const plan = String(tx.plan ?? '').toLowerCase().trim();
-  const planTerm = String(tx.plan_term ?? '').toLowerCase().trim();
-  const planTermMonths = Number(tx.plan_term_months ?? 0);
-  if (plan === 'test' || planTerm.includes('day')) {
-    const days = planTerm.match(/(\d+)\s*day/)?.[1];
-    d.setDate(d.getDate() + (days ? parseInt(days, 10) : 2));
-  } else if (plan === 'quarterly' || planTermMonths === 3) {
-    d.setMonth(d.getMonth() + 3);
-  } else if (plan === 'semi_annual' || planTermMonths === 6) {
-    d.setMonth(d.getMonth() + 6);
-  } else if (plan === 'annual' || planTermMonths === 12) {
-    d.setFullYear(d.getFullYear() + 1);
-  } else if (planTermMonths > 0) {
-    d.setMonth(d.getMonth() + planTermMonths);
-  } else {
-    return null;
-  }
-  return d;
+  const mappedReceipts = (tx.receipt_items ?? []).map((r) => ({
+    type: r.type ?? null,
+    approvalStatus: r.approval_status ?? null,
+    approvedAt: r.approved_at ?? null,
+  }))
+  return computeEndDateRaw(
+    tx.reviewed_at?.trim() || tx.created_at?.trim() || null,
+    tx.billing_option ?? null,
+    tx.plan ?? null,
+    tx.plan_term ?? null,
+    tx.status ?? null,
+    mappedReceipts,
+    tx.plan_term_months ?? null,
+  )
 };
 
 const getWebstoreHistoryRows = (requests: Array<WebstoreRequest | null | undefined>) => {
@@ -867,9 +867,10 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
   });
   const { data: webstoreRequestLatest, refetch: refetchWebstoreRequestLatest } = useWebstoreRequestLatestQuery(undefined, {
     skip: !isCustomerSession || !isWebstoreTab,
-    refetchOnMountOrArgChange: false,
-    refetchOnFocus: false,
-    refetchOnReconnect: false,
+    pollingInterval: 15000,
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
   });
   const { data: webstoreHistoryData, isLoading: isWebstoreHistoryLoading } = useWebstoreRequestHistoryQuery(undefined, {
     skip: !isCustomerSession || !isWebstoreTab,
@@ -1000,6 +1001,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
   const [webstoreReceiptFiles, setWebstoreReceiptFiles] = useState<Array<{ name: string; preview: string; file: File }>>([]);
   const [webstoreReceiptPreview, setWebstoreReceiptPreview] = useState<{ name: string; urls: string[]; idx: number } | null>(null);
   const [isDraggingReceipt, setIsDraggingReceipt] = useState(false);
+  const [isSubmittingReceipt, setIsSubmittingReceipt] = useState(false);
   const [dismissedRejectedReceiptKeys, setDismissedRejectedReceiptKeys] = useState<string[]>([]);
   const [webstoreInvalidFields, setWebstoreInvalidFields] = useState<Record<string, boolean>>({});
   const processedWebstoreCheckoutRef = useRef<string | null>(null);
@@ -2597,6 +2599,19 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
   const webstorePaymentCompleted = Boolean(webstorePaymentReferenceId || webstorePaymentProofUrl);
   const isRenewalToggleLocked = hasExistingWebstoreRequest && !isWebstoreExpired;
   const isWebstoreSubscriptionLocked = hasExistingWebstoreRequest && !(isWebstoreExpired && webstoreRenewalEnabled);
+  const currentPlanKey = activeWebstoreRequest?.plan === 'semi_annual'
+    ? ('semiAnnual' as const)
+    : (activeWebstoreRequest?.plan ?? null) as 'test' | 'quarterly' | 'annual' | null;
+  const isRenewalMode = Boolean(isWebstoreExpired && webstoreRenewalEnabled);
+  const isSamePlanRenewal = isRenewalMode && Boolean(currentPlanKey) && resolvedWebstorePlan === currentPlanKey;
+  const isPlanChangeRenewal = isRenewalMode && resolvedWebstorePlan !== null && resolvedWebstorePlan !== currentPlanKey;
+  const planDisplayName = (key: string | null) => {
+    if (key === 'test') return 'Test';
+    if (key === 'quarterly') return 'Quarterly';
+    if (key === 'semiAnnual') return 'Semi-Annual';
+    if (key === 'annual') return 'Annual';
+    return key ?? '-';
+  };
   const hasWebstorePaymentHistory = Number(activeWebstoreRequest?.payment_count ?? 0) > 0
     || Number(activeWebstoreRequest?.total_paid_amount ?? 0) > 0;
   const resolvedWebstoreSubmissionForm = useMemo<WebstoreRequestFormState>(() => ({
@@ -3222,7 +3237,8 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       const pngUrl = canvas.toDataURL('image/png');
       const downloadLink = document.createElement('a');
       downloadLink.href = pngUrl;
-      downloadLink.download = `webstore-payment-success-${checkoutId}.png`;
+      const fileRef = (webstorePaymentReferenceId || checkoutId || 'receipt').replace(/[^a-zA-Z0-9_\-]/g, '-')
+      downloadLink.download = `webstore-payment-success-${fileRef}.png`;
       document.body.appendChild(downloadLink);
       downloadLink.click();
       downloadLink.remove();
@@ -3535,6 +3551,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       return;
     }
 
+    setIsSubmittingReceipt(true);
     try {
       const uploadedReceiptUrls = await uploadSelectedWebstoreReceiptUrls();
 
@@ -3542,12 +3559,58 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
         throw new Error('Please upload your payment receipt before submitting the webstore request.');
       }
 
+      // For a rejection re-upload, find the original PayMongo reference (pay_/pi_/cs_)
+      // so a WEB-timestamp is never used as the payment_reference.
+      // Priority: real PayMongo ref from receipt_items > base fields > request fields.
+      const existingReceiptItems = activeWebstoreRequest?.receipt_items ?? []
+      const isPayMongoRef = (v?: string | null) =>
+        Boolean(v && /^(pay_|pi_|cs_)/.test(v.trim()))
+
+      let latestItemRef: string | null = null
+      let existingCheckoutId: string | null = null
+      let existingIntentId: string | null = null
+
+      if (isWebstoreReceiptRejected) {
+        // Collect all candidate refs in preference order, prefer pay_/pi_/cs_ over WEB-
+        const refCandidates = [
+          ...[...existingReceiptItems].reverse().map(r => r.payment_reference).filter(Boolean) as string[],
+          activeWebstoreRequest?.base_payment_reference,
+          activeWebstoreRequest?.payment_reference,
+        ].filter(Boolean) as string[]
+
+        latestItemRef =
+          refCandidates.find(isPayMongoRef) ||
+          refCandidates[0] ||
+          null
+
+        const intentCandidates = [
+          ...[...existingReceiptItems].reverse().map(r => r.payment_intent_id).filter(Boolean) as string[],
+          activeWebstoreRequest?.payment_intent_id,
+        ].filter(Boolean) as string[]
+        existingIntentId = intentCandidates[0] || null
+
+        existingCheckoutId =
+          activeWebstoreRequest?.base_checkout_id ||
+          activeWebstoreRequest?.checkout_id ||
+          null
+      }
+
+      const resolvedRef = isWebstoreReceiptRejected
+        ? (latestItemRef || existingCheckoutId || `WEB-${Date.now()}`)
+        : (webstorePaymentCheckoutId || webstoreCheckoutId || webstorePaymentReferenceId || `WEB-${Date.now()}`)
+
       await finalizeWebstorePaymentSubmission({
-        resolvedCheckoutId: webstorePaymentCheckoutId || webstoreCheckoutId || webstorePaymentReferenceId || `WEB-${Date.now()}`,
+        resolvedCheckoutId: resolvedRef,
         verified: {
-          payment_reference: webstorePaymentReferenceId || webstorePaymentIntentId || webstorePaymentCheckoutId || webstoreCheckoutId,
-          payment_intent_id: webstorePaymentIntentId,
-          checkout_id: webstorePaymentCheckoutId || webstoreCheckoutId || null,
+          payment_reference: isWebstoreReceiptRejected
+            ? latestItemRef
+            : (webstorePaymentReferenceId || webstorePaymentIntentId || webstorePaymentCheckoutId || webstoreCheckoutId),
+          payment_intent_id: isWebstoreReceiptRejected
+            ? existingIntentId
+            : webstorePaymentIntentId,
+          checkout_id: isWebstoreReceiptRejected
+            ? existingCheckoutId
+            : (webstorePaymentCheckoutId || webstoreCheckoutId || null),
           proof_url: webstorePaymentProofUrl,
         },
         receiptUrls: uploadedReceiptUrls,
@@ -3565,6 +3628,8 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       const message = apiErr?.data?.message || apiErr?.message || 'Failed to submit the webstore request.';
       setWebstoreMsg({ type: 'error', text: message });
       showErrorToast(message);
+    } finally {
+      setIsSubmittingReceipt(false);
     }
   };
 
@@ -4987,68 +5052,118 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: -8, scale: 0.98 }}
                           transition={{ duration: 0.35, ease: 'easeOut' }}
-                          className="relative mt-5 overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-sky-50 px-4 py-4 text-emerald-900 shadow-sm dark:border-emerald-900/50 dark:from-emerald-950/30 dark:via-slate-950 dark:to-sky-950/30 dark:text-emerald-100"
+                          className="relative mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5 shadow-sm dark:border-slate-700 dark:bg-slate-900/50"
                         >
-                          <motion.span
-                            aria-hidden="true"
-                            className="absolute right-6 top-4 h-2 w-2 rounded-full bg-amber-300"
-                            animate={{ scale: [1, 1.8, 1], opacity: [0.45, 1, 0.45] }}
-                            transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
-                          />
-                          <motion.span
-                            aria-hidden="true"
-                            className="absolute right-16 top-10 h-1.5 w-1.5 rounded-full bg-sky-300"
-                            animate={{ scale: [1, 1.7, 1], opacity: [0.35, 1, 0.35] }}
-                            transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut', delay: 0.25 }}
-                          />
-                          <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                            <div className="min-w-0">
-                              <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-200">
+                          {/* Decorative rays top-right */}
+                          <span aria-hidden="true" className="absolute right-4 top-3 flex flex-col items-end gap-0.5">
+                            {[14, 10, 7].map((w, i) => (
+                              <span key={i} className="block h-0.5 rounded-full bg-emerald-400/70" style={{ width: w }} />
+                            ))}
+                          </span>
+
+                          <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
+                            {/* Left: text */}
+                            <div className="min-w-0 flex-1">
+                              <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
                                 <Icon.Trophy className="h-3.5 w-3.5" />
                                 Rewards achieved
                               </div>
-                              <h4 className="mt-3 text-lg font-black text-slate-950 dark:text-white">
-                                Profile complete reward unlocked
+                              <h4 className="mt-3 text-xl font-black leading-snug text-slate-900 dark:text-white">
+                                Profile complete<br />reward unlocked 🎉
                               </h4>
-                              <p className="mt-1 text-sm font-medium leading-6 text-slate-600 dark:text-slate-300">
+                              <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
                                 You qualified for the one-time profile completion reward. Check your wallet and E-Voucher activity after rewards are credited.
                               </p>
                             </div>
 
-                            <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[320px]">
+                            {/* Right: reward cards */}
+                            <div className="grid grid-cols-2 gap-3 lg:min-w-[320px]">
                               {[
-                                { label: 'E-Voucher', value: '50', Icon: Icon.Star, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-950/30', border: 'border-amber-200 dark:border-amber-900/50' },
-                                { label: 'PV Reward', value: '20', Icon: Icon.Activity, color: 'text-sky-600', bg: 'bg-sky-50 dark:bg-sky-950/30', border: 'border-sky-200 dark:border-sky-900/50' },
+                                {
+                                  label: 'E-VOUCHER',
+                                  value: '50',
+                                  unit: 'Credits',
+                                  labelColor: 'text-amber-500',
+                                  border: 'border-amber-200 dark:border-amber-900/50',
+                                  bg: 'bg-amber-50/80 dark:bg-amber-950/20',
+                                  iconBg: 'bg-amber-100 dark:bg-amber-900/40',
+                                  iconColor: 'text-amber-500',
+                                  badgeBg: 'bg-white dark:bg-slate-900',
+                                  badgeColor: 'text-amber-400',
+                                  dotColor: 'bg-amber-200/70 dark:bg-amber-800/40',
+                                  mainIcon: (
+                                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                      <path d="M20 12a2 2 0 0 0-2-2V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2zm-2 5H4v-2.268A2 2 0 0 0 4 10.268V8h12v2.268A2 2 0 0 0 16 14.732V17z"/>
+                                      <polygon points="9,9 10.5,12 9,15 15,12"/>
+                                    </svg>
+                                  ),
+                                  badgeIcon: (
+                                    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                                    </svg>
+                                  ),
+                                },
+                                {
+                                  label: 'PV REWARD',
+                                  value: '20',
+                                  unit: 'Points',
+                                  labelColor: 'text-sky-500',
+                                  border: 'border-sky-200 dark:border-sky-900/50',
+                                  bg: 'bg-sky-50/80 dark:bg-sky-950/20',
+                                  iconBg: 'bg-sky-500',
+                                  iconColor: 'text-white',
+                                  badgeBg: 'bg-white dark:bg-slate-900',
+                                  badgeColor: 'text-sky-400',
+                                  dotColor: 'bg-sky-200/70 dark:bg-sky-800/40',
+                                  mainIcon: (
+                                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                                    </svg>
+                                  ),
+                                  badgeIcon: (
+                                    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                                    </svg>
+                                  ),
+                                },
                               ].map((reward, index) => (
                                 <motion.div
                                   key={reward.label}
                                   initial={{ opacity: 0, y: 12, scale: 0.94 }}
                                   animate={{ opacity: 1, y: 0, scale: 1 }}
                                   transition={{ delay: 0.15 + index * 0.1, duration: 0.35, type: 'spring', stiffness: 180, damping: 18 }}
-                                  className={`rounded-2xl border ${reward.border} ${reward.bg} p-4 shadow-sm`}
+                                  className={`relative overflow-hidden rounded-2xl border ${reward.border} ${reward.bg} p-4 shadow-sm`}
                                 >
-                                  <div className="flex items-center justify-between gap-3">
-                                    <div>
-                                      <p className="text-[11px] font-black uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                                        {reward.label}
-                                      </p>
-                                      <motion.p
-                                        initial={{ scale: 0.8 }}
-                                        animate={{ scale: [1, 1.08, 1] }}
-                                        transition={{ delay: 0.35 + index * 0.1, duration: 0.45 }}
-                                        className="mt-1 text-3xl font-black tabular-nums text-slate-950 dark:text-white"
-                                      >
-                                        {reward.value}
-                                      </motion.p>
+                                  {/* Top row: main icon + badge icon */}
+                                  <div className="flex items-start justify-between">
+                                    <div className={`flex h-11 w-11 items-center justify-center rounded-full ${reward.iconBg} ${reward.iconColor} shadow-sm`}>
+                                      {reward.mainIcon}
                                     </div>
-                                    <motion.div
-                                      animate={{ rotate: [0, -8, 8, 0] }}
-                                      transition={{ delay: 0.45 + index * 0.1, duration: 0.55 }}
-                                      className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-sm dark:bg-slate-950 ${reward.color}`}
-                                    >
-                                      <reward.Icon className="h-5 w-5" />
-                                    </motion.div>
+                                    <div className={`flex h-8 w-8 items-center justify-center rounded-full ${reward.badgeBg} ${reward.badgeColor} shadow-sm`}>
+                                      {reward.badgeIcon}
+                                    </div>
                                   </div>
+                                  {/* Label */}
+                                  <p className={`mt-3 text-[11px] font-black uppercase tracking-widest ${reward.labelColor}`}>
+                                    {reward.label}
+                                  </p>
+                                  {/* Number */}
+                                  <motion.p
+                                    initial={{ scale: 0.8 }}
+                                    animate={{ scale: [1, 1.08, 1] }}
+                                    transition={{ delay: 0.35 + index * 0.1, duration: 0.45 }}
+                                    className="mt-0.5 text-4xl font-black tabular-nums text-slate-900 dark:text-white"
+                                  >
+                                    {reward.value}
+                                  </motion.p>
+                                  {/* Unit */}
+                                  <p className="mt-0.5 text-xs font-medium text-slate-400 dark:text-slate-500">{reward.unit}</p>
+                                  {/* Decorative dots bottom-right */}
+                                  <span aria-hidden="true" className="absolute bottom-2 right-2 grid grid-cols-3 gap-0.5 opacity-50">
+                                    {Array.from({ length: 9 }).map((_, i) => (
+                                      <span key={i} className={`h-1 w-1 rounded-full ${reward.dotColor}`} />
+                                    ))}
+                                  </span>
                                 </motion.div>
                               ))}
                             </div>
@@ -6977,7 +7092,37 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                       </div>
                     ) : null}
 
-                    {isWebstoreExpired && (
+                    {isWebstoreReceiptRejected ? (
+                      <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 shadow-sm">
+                        <div className="flex items-start gap-3">
+                          <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+                            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              <path d="M12 9v4" />
+                              <path d="M12 17h.01" />
+                              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3l-8.47-14.14a2 2 0 0 0-3.42 0Z" />
+                            </svg>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-bold text-rose-800">Receipt Rejected</p>
+                            <p className="mt-0.5 text-xs leading-5 text-rose-700">
+                              {activeWebstoreRequest?.latest_receipt_message || 'Your payment receipt was rejected. Please upload a new receipt to continue.'}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => openWebstoreReceiptUpload()}
+                              className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-rose-700"
+                            >
+                              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="M4 7a2 2 0 0 1 2-2h6l2 2h6a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7z" />
+                                <path d="m12 11v5" />
+                                <path d="m9.5 13.5 2.5-2.5 2.5 2.5" />
+                              </svg>
+                              Re-upload Receipt
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : isWebstoreExpired ? (
                       <div className="mb-4 rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 shadow-sm">
                         <div className="flex items-start gap-3">
                           <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-100 text-orange-500">
@@ -6994,7 +7139,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                           </div>
                         </div>
                       </div>
-                    )}
+                    ) : null}
 
                     {webstoreMsg && (
                       <div className={`mb-4 rounded-xl px-3.5 py-2.5 text-xs font-semibold ${webstoreMsg.type === 'success' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-700' : 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 border border-rose-100 dark:border-rose-700'}`}>
@@ -7112,7 +7257,12 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                                   </span>
                                   <div>
                                     <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6d82ab] md:hidden">Plan</p>
-                                    <p className="text-sm font-bold text-[#163060]">Quarterly</p>
+                                    <div className="flex items-center gap-1.5">
+                                      <p className="text-sm font-bold text-[#163060]">Quarterly</p>
+                                      {isRenewalMode && currentPlanKey === 'quarterly' && (
+                                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">Current</span>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               </div>
@@ -7149,7 +7299,12 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                                   </span>
                                   <div>
                                     <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6d82ab] md:hidden">Plan</p>
-                                    <p className="text-sm font-bold text-[#163060]">Semi-Annual</p>
+                                    <div className="flex items-center gap-1.5">
+                                      <p className="text-sm font-bold text-[#163060]">Semi-Annual</p>
+                                      {isRenewalMode && currentPlanKey === 'semiAnnual' && (
+                                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">Current</span>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               </div>
@@ -7192,6 +7347,9 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                                     <span className="rounded-full bg-[#e8f0ff] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#2f5bd8]">
                                       Best Value
                                     </span>
+                                    {isRenewalMode && currentPlanKey === 'annual' && (
+                                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">Current</span>
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -7213,16 +7371,22 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                       </div>
                       <div className="border-t border-[#dce8ff] bg-white/80 px-4 py-3 md:px-5">
                         <p className="mt-1 text-xs font-semibold text-[#2f5bd8]">
-                          Selected plan: {selectedWebstorePlan ? (selectedWebstorePlan === 'test' ? 'Test' : selectedWebstorePlan === 'quarterly' ? 'Quarterly' : selectedWebstorePlan === 'semiAnnual' ? 'Semi-Annual' : 'Annual') : 'None selected'}
+                          {isSamePlanRenewal
+                            ? `Renewing: ${planDisplayName(selectedWebstorePlan)}`
+                            : isPlanChangeRenewal
+                              ? `Changing: ${planDisplayName(currentPlanKey)} → ${planDisplayName(selectedWebstorePlan)}`
+                              : `Selected plan: ${selectedWebstorePlan ? planDisplayName(selectedWebstorePlan) : 'None selected'}`}
                         </p>
                         <div className="mt-3 rounded-2xl border border-[#d7e4fb] bg-[#f8fbff] px-4 py-3">
                           <div className="flex items-center justify-between gap-4">
                             <div className="min-w-0">
                               <p className="text-sm font-bold text-[#163060]">Renewal</p>
                               <p className="text-xs text-[#7d8fb0]">
-                                {webstoreRenewalEnabled
-                                  ? 'Enabled for the next term when renewal is available.'
-                                  : 'Disabled. You can turn it on for future renewal tracking.'}
+                                {isRenewalMode
+                                  ? 'Select the same plan to renew, or choose a different plan to change your subscription.'
+                                  : webstoreRenewalEnabled
+                                    ? 'Enabled for the next term when renewal is available.'
+                                    : 'Disabled. You can turn it on for future renewal tracking.'}
                               </p>
                             </div>
                             <button
@@ -7258,6 +7422,33 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                         </div>
                       </div>
                     </div>
+
+                    {isSamePlanRenewal && (
+                      <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                        <svg className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
+                        </svg>
+                        <div>
+                          <p className="text-sm font-bold text-emerald-800">Renewing your current subscription</p>
+                          <p className="mt-0.5 text-xs text-emerald-700">
+                            Your <strong>{planDisplayName(currentPlanKey)}</strong> plan will be extended for another term once payment is confirmed.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {isPlanChangeRenewal && (
+                      <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                        <svg className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="m7 16 4-4-4-4"/><path d="m11 16 4-4-4-4"/>
+                        </svg>
+                        <div>
+                          <p className="text-sm font-bold text-amber-800">Plan change detected</p>
+                          <p className="mt-0.5 text-xs text-amber-700">
+                            Changing from <strong>{planDisplayName(currentPlanKey)}</strong> to <strong>{planDisplayName(selectedWebstorePlan)}</strong>. Your subscription record will be updated when the renewal payment is processed.
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
                     <form onSubmit={handleSubmitWebstoreRequest} className="space-y-5">
                       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -7468,12 +7659,32 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                               if (isWebstoreRequestPendingReview || webstoreRemainingBalance <= 0) return;
                               void handleStartWebstorePayment(selectedPaymentMethod)
                             }}
-                            className="mt-4 inline-flex items-center justify-center gap-3 rounded-[18px] bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] px-6 py-3.5 text-[15px] font-semibold text-white shadow-[0_12px_28px_rgba(37,99,235,0.38)] transition hover:from-[#1d4ed8] hover:to-[#1e40af] disabled:cursor-not-allowed disabled:opacity-70"
+                            className={`mt-4 inline-flex items-center justify-center gap-3 rounded-[18px] px-6 py-3.5 text-[15px] font-semibold text-white shadow-[0_12px_28px_rgba(37,99,235,0.38)] transition disabled:cursor-not-allowed disabled:opacity-70 ${
+                              isSamePlanRenewal
+                                ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-[0_12px_28px_rgba(5,150,105,0.35)]'
+                                : isPlanChangeRenewal
+                                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-[0_12px_28px_rgba(217,119,6,0.35)]'
+                                  : 'bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] hover:from-[#1d4ed8] hover:to-[#1e40af]'
+                            }`}
                           >
-                            <Icon.Package className="h-5 w-5" />
-                            {hasWebstorePaymentHistory
-                              ? `Pay Again with ${getWebstorePaymentMethodConfig(selectedPaymentMethod).label}`
-                              : `Pay with ${getWebstorePaymentMethodConfig(selectedPaymentMethod).label}`}
+                            {isSamePlanRenewal ? (
+                              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
+                              </svg>
+                            ) : isPlanChangeRenewal ? (
+                              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="m7 16 4-4-4-4"/><path d="m11 16 4-4-4-4"/>
+                              </svg>
+                            ) : (
+                              <Icon.Package className="h-5 w-5" />
+                            )}
+                            {isSamePlanRenewal
+                              ? `Renew Subscription`
+                              : isPlanChangeRenewal
+                                ? `Change Plan & Subscribe`
+                                : hasWebstorePaymentHistory
+                                  ? `Pay Again with ${getWebstorePaymentMethodConfig(selectedPaymentMethod).label}`
+                                  : `Pay with ${getWebstorePaymentMethodConfig(selectedPaymentMethod).label}`}
                             <span aria-hidden>→</span>
                           </button>
                         ) : null}
@@ -8072,108 +8283,173 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
               exit={{ opacity: 0, y: 18, scale: 0.96 }}
               transition={{ type: 'spring', stiffness: 230, damping: 23 }}
               onClick={(event) => event.stopPropagation()}
-              className="relative w-full max-w-2xl overflow-hidden rounded-[28px] border border-emerald-200 bg-white shadow-[0_30px_90px_rgba(15,23,42,0.35)] dark:border-emerald-900/60 dark:bg-slate-950"
+              className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-[0_30px_90px_rgba(15,23,42,0.25)] dark:bg-slate-950"
             >
+              {/* Close button */}
               <button
                 type="button"
                 onClick={() => dismissProfileRewardModal()}
-                className="absolute right-4 top-4 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-white/20 text-white backdrop-blur-sm transition hover:bg-white/30"
+                className="absolute right-4 top-4 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
                 aria-label="Close reward modal"
               >
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M6 6l12 12M18 6l-12 12" />
                 </svg>
               </button>
 
-              <div className="relative overflow-hidden bg-gradient-to-br from-emerald-500 via-teal-500 to-sky-500 px-6 pb-8 pt-9 text-center text-white md:px-9">
+              {/* Confetti dots */}
+              {[
+                { className: 'absolute left-6 top-10 h-2.5 w-2.5 rounded-full bg-yellow-400', delay: 0 },
+                { className: 'absolute left-14 top-6 h-2 w-2 rounded-full bg-emerald-400', delay: 0.15 },
+                { className: 'absolute right-20 top-8 h-2 w-2 rounded-full bg-purple-400', delay: 0.08 },
+                { className: 'absolute right-8 top-14 h-2.5 w-2.5 rounded-full bg-blue-400', delay: 0.22 },
+                { className: 'absolute left-10 top-20 h-1.5 w-1.5 rounded-full bg-pink-400', delay: 0.3 },
+                { className: 'absolute right-14 top-20 h-1.5 w-1.5 rounded-full bg-amber-400', delay: 0.1 },
+              ].map((dot, i) => (
                 <motion.span
+                  key={i}
                   aria-hidden="true"
-                  className="absolute left-8 top-8 h-3 w-3 rounded-full bg-white/60"
-                  animate={{ y: [0, -12, 0], opacity: [0.45, 1, 0.45], scale: [1, 1.35, 1] }}
-                  transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+                  className={dot.className}
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: [0, 1, 1, 0.6], scale: [0, 1.2, 1, 1], y: [0, -6, -3, 0] }}
+                  transition={{ delay: dot.delay, duration: 0.6, ease: 'easeOut' }}
                 />
-                <motion.span
-                  aria-hidden="true"
-                  className="absolute right-16 bottom-8 h-2.5 w-2.5 rounded-full bg-amber-200"
-                  animate={{ y: [0, -14, 0], opacity: [0.35, 1, 0.35], scale: [1, 1.5, 1] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut', delay: 0.25 }}
-                />
+              ))}
+
+              {/* Header */}
+              <div className="px-6 pb-4 pt-10 text-center">
+                {/* Checkmark circle */}
                 <motion.div
-                  initial={{ scale: 0.7, rotate: -10 }}
-                  animate={{ scale: [1, 1.08, 1], rotate: [0, -4, 4, 0] }}
-                  transition={{ delay: 0.12, duration: 0.7, ease: 'easeOut' }}
-                  className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/20 text-white shadow-lg shadow-emerald-900/20"
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.1, type: 'spring', stiffness: 260, damping: 20 }}
+                  className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500 shadow-lg shadow-emerald-200 dark:shadow-emerald-900/30"
                 >
-                  <Icon.Trophy className="h-9 w-9" />
+                  <svg className="h-8 w-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
                 </motion.div>
-                <p className="text-xs font-black uppercase tracking-[0.24em] text-white/80">Profile completed</p>
-                <h3 className="mt-2 text-3xl font-black tracking-tight md:text-4xl">
-                  Congratulations!
+                <h3 className="text-2xl font-black text-emerald-700 dark:text-emerald-400">
+                  Profile Complete!
                 </h3>
-                <p className="mx-auto mt-2 max-w-lg text-sm font-medium leading-6 text-white/90 md:text-base">
-                  Your profile is now 100% complete. Your one-time completion rewards are unlocked and ready to appear in your wallet.
+                <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
+                  You did it! Your profile is 100% complete.
                 </p>
               </div>
 
-              <div className="px-5 py-5 md:px-7 md:py-6">
-                <div className="grid gap-3 sm:grid-cols-2">
+              <div className="px-5 pb-5">
+                {/* Thank-you reward notice */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="mb-4 flex items-start gap-3 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3.5 dark:border-emerald-900/40 dark:bg-emerald-950/30"
+                >
+                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white">
+                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <polyline points="20 12 20 22 4 22 4 12" /><rect x="2" y="7" width="20" height="5" /><line x1="12" y1="22" x2="12" y2="7" /><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" /><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
+                    </svg>
+                  </span>
+                  <div>
+                    <p className="text-sm font-bold text-emerald-800 dark:text-emerald-200">As a thank you, here&apos;s your reward</p>
+                    <p className="mt-0.5 text-xs text-emerald-700/80 dark:text-emerald-300/70">Your rewards have been added to your wallet.</p>
+                  </div>
+                </motion.div>
+
+                {/* Reward cards */}
+                <div className="grid grid-cols-2 gap-3">
                   {[
-                    { label: 'E-Voucher Reward', value: '50', Icon: Icon.Star, color: 'text-amber-600', bg: 'from-amber-50 to-orange-50', border: 'border-amber-200' },
-                    { label: 'PV Reward', value: '20', Icon: Icon.Activity, color: 'text-sky-600', bg: 'from-sky-50 to-indigo-50', border: 'border-sky-200' },
+                    {
+                      label: 'E-VOUCHER REWARD',
+                      value: '50',
+                      unit: 'Credits',
+                      icon: (
+                        <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <rect x="1" y="4" width="22" height="16" rx="2" ry="2" /><line x1="1" y1="10" x2="23" y2="10" />
+                        </svg>
+                      ),
+                      labelColor: 'text-emerald-600 dark:text-emerald-400',
+                      iconBg: 'bg-emerald-500 text-white',
+                      border: 'border-slate-200 dark:border-slate-700',
+                    },
+                    {
+                      label: 'PV REWARD',
+                      value: '20',
+                      unit: 'Points',
+                      icon: (
+                        <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                        </svg>
+                      ),
+                      labelColor: 'text-sky-600 dark:text-sky-400',
+                      iconBg: 'bg-sky-500 text-white',
+                      border: 'border-slate-200 dark:border-slate-700',
+                    },
                   ].map((reward, index) => (
                     <motion.div
                       key={reward.label}
-                      initial={{ opacity: 0, y: 16, scale: 0.95 }}
+                      initial={{ opacity: 0, y: 14, scale: 0.96 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{ delay: 0.2 + index * 0.1, type: 'spring', stiffness: 180, damping: 18 }}
-                      className={`rounded-2xl border ${reward.border} bg-gradient-to-br ${reward.bg} p-4 shadow-sm dark:border-slate-800 dark:from-slate-900 dark:to-slate-950`}
+                      transition={{ delay: 0.28 + index * 0.1, type: 'spring', stiffness: 200, damping: 20 }}
+                      className={`flex flex-col items-center rounded-2xl border ${reward.border} bg-white px-4 py-4 shadow-sm dark:bg-slate-900`}
                     >
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <p className="text-[11px] font-black uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                            {reward.label}
-                          </p>
-                          <motion.p
-                            initial={{ scale: 0.85 }}
-                            animate={{ scale: [1, 1.12, 1] }}
-                            transition={{ delay: 0.35 + index * 0.1, duration: 0.45 }}
-                            className="mt-1 text-4xl font-black tabular-nums text-slate-950 dark:text-white"
-                          >
-                            {reward.value}
-                          </motion.p>
-                        </div>
-                        <motion.div
-                          animate={{ rotate: [0, -8, 8, 0] }}
-                          transition={{ delay: 0.42 + index * 0.1, duration: 0.55 }}
-                          className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm dark:bg-slate-900 ${reward.color}`}
-                        >
-                          <reward.Icon className="h-5 w-5" />
-                        </motion.div>
-                      </div>
+                      <motion.div
+                        className={`mb-3 flex h-12 w-12 items-center justify-center rounded-full ${reward.iconBg} shadow-md`}
+                        animate={{ rotate: [0, -6, 6, 0] }}
+                        transition={{ delay: 0.5 + index * 0.1, duration: 0.5 }}
+                      >
+                        {reward.icon}
+                      </motion.div>
+                      <p className={`text-[10px] font-black uppercase tracking-widest ${reward.labelColor}`}>
+                        {reward.label}
+                      </p>
+                      <motion.p
+                        initial={{ scale: 0.7 }}
+                        animate={{ scale: [1, 1.15, 1] }}
+                        transition={{ delay: 0.4 + index * 0.1, duration: 0.4 }}
+                        className="mt-1 text-4xl font-black tabular-nums text-slate-900 dark:text-white"
+                      >
+                        {reward.value}
+                      </motion.p>
+                      <p className="mt-0.5 text-xs font-semibold text-slate-400 dark:text-slate-500">{reward.unit}</p>
                     </motion.div>
                   ))}
                 </div>
 
-                <div className="mt-5 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-semibold leading-6 text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-100">
-                  Reward credit is one-time only. You can review the balance and transaction history in the E-Voucher tab.
-                </div>
+                {/* Fine-print note */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="mt-4 flex items-start gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3.5 py-3 dark:border-slate-800 dark:bg-slate-900/60"
+                >
+                  <svg className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  </svg>
+                  <p className="text-[11px] leading-5 text-slate-500 dark:text-slate-400">
+                    Reward credit is one-time only. You can review your balance and transaction history in the E-Voucher tab.
+                  </p>
+                </motion.div>
               </div>
 
-              <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-end dark:border-slate-800 dark:bg-slate-900/80 md:px-7">
+              {/* Footer buttons */}
+              <div className="flex items-center gap-3 border-t border-slate-100 px-5 py-4 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => dismissProfileRewardModal()}
-                  className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-slate-900"
+                  className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
                 >
-                  Close
+                  Maybe Later
                 </button>
                 <button
                   type="button"
-                  onClick={() => dismissProfileRewardModal('pv')}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 px-5 py-2.5 text-sm font-black text-white shadow-[0_10px_24px_rgba(37,99,235,0.35)] transition hover:from-sky-600 hover:to-blue-700"
+                  onClick={() => dismissProfileRewardModal('wallet')}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-emerald-200 transition hover:bg-emerald-600 dark:shadow-emerald-900/30"
                 >
-                  <Icon.Star className="h-4 w-4" />
-                  View E-Voucher
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polyline points="20 12 20 22 4 22 4 12" /><rect x="2" y="7" width="20" height="5" /><line x1="12" y1="22" x2="12" y2="7" /><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" /><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
+                  </svg>
+                  View My Rewards
                 </button>
               </div>
             </motion.div>
@@ -8725,10 +9001,18 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                   <button
                     type="button"
                     onClick={() => void handleSubmitWebstoreReceiptUpload()}
-                    disabled={isWebstoreReceiptPendingReview || webstoreReceiptFiles.length === 0}
-                    className="rounded-xl border border-sky-200 bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={isWebstoreReceiptPendingReview || webstoreReceiptFiles.length === 0 || isSubmittingReceipt}
+                    className="inline-flex items-center gap-2 rounded-xl border border-sky-200 bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Submit Receipt
+                    {isSubmittingReceipt ? (
+                      <>
+                        <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                        </svg>
+                        Submitting…
+                      </>
+                    ) : 'Submit Receipt'}
                   </button>
                 </div>
               </div>

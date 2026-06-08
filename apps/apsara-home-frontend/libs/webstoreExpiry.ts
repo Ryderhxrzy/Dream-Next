@@ -57,13 +57,37 @@ export function computeEndDateRaw(
     days = 2
   }
 
+  // For full/one-time billing: find the latest approved continuation receipt.
+  // If its approved_at is newer than the initial end date, use it as the renewal base.
+  const latestContinuationApprovedAt = Array.isArray(receiptItems)
+    ? receiptItems.reduce<Date | null>((latest, r) => {
+        if (r?.type !== 'webstore_payment_continuation') return latest
+        if (r?.approvalStatus !== 'approved' && !r?.approvedAt) return latest
+        const t = r?.approvedAt ? new Date(r.approvedAt) : null
+        if (!t || Number.isNaN(t.getTime())) return latest
+        return !latest || t > latest ? t : latest
+      }, null)
+    : null
+
   if (days > 0) {
-    endDate.setDate(endDate.getDate() + days)
-    return endDate
+    const initialEnd = new Date(startDate)
+    initialEnd.setDate(initialEnd.getDate() + days)
+    if (latestContinuationApprovedAt) {
+      const renewalEnd = new Date(latestContinuationApprovedAt)
+      renewalEnd.setDate(renewalEnd.getDate() + days)
+      if (renewalEnd > initialEnd) return renewalEnd
+    }
+    return initialEnd
   }
   if (months <= 0) return null
-  endDate.setMonth(endDate.getMonth() + months)
-  return endDate
+  const initialEnd = new Date(startDate)
+  initialEnd.setMonth(initialEnd.getMonth() + months)
+  if (latestContinuationApprovedAt) {
+    const renewalEnd = new Date(latestContinuationApprovedAt)
+    renewalEnd.setMonth(renewalEnd.getMonth() + months)
+    if (renewalEnd > initialEnd) return renewalEnd
+  }
+  return initialEnd
 }
 
 export function isWebstoreRequestExpired(item: {

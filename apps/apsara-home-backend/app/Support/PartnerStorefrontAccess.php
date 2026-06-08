@@ -246,16 +246,53 @@ final class PartnerStorefrontAccess
             return $approvedAt->copy()->addMonthsNoOverflow($monthsPaid);
         }
 
+        // For full/one-time billing: find the latest approved continuation receipt.
+        // If it was approved after the initial subscription ended, use it as the new base.
+        $latestReceiptApprovedAt = null;
+        foreach ($payloads as $payload) {
+            $type = strtolower(trim((string) ($payload['type'] ?? '')));
+            if ($type !== 'webstore_payment_continuation') {
+                continue;
+            }
+            if (! $this->isApprovedReceiptPayload($payload)) {
+                continue;
+            }
+            $raw = trim((string) ($payload['approved_at'] ?? ''));
+            if ($raw === '') {
+                continue;
+            }
+            $receiptApprovedAt = Carbon::parse($raw, 'Asia/Manila');
+            if ($latestReceiptApprovedAt === null || $receiptApprovedAt->greaterThan($latestReceiptApprovedAt)) {
+                $latestReceiptApprovedAt = $receiptApprovedAt;
+            }
+        }
+
         if ($planTermMonths <= 0) {
             $planTermDays = $this->resolvePlanTermDays($planTerm, $plan);
             if ($planTermDays <= 0) {
                 return null;
             }
 
-            return $approvedAt->copy()->addDays($planTermDays);
+            $initialEnd = $approvedAt->copy()->addDays($planTermDays);
+            if ($latestReceiptApprovedAt !== null) {
+                $renewalEnd = $latestReceiptApprovedAt->copy()->addDays($planTermDays);
+                if ($renewalEnd->greaterThan($initialEnd)) {
+                    return $renewalEnd;
+                }
+            }
+
+            return $initialEnd;
         }
 
-        return $approvedAt->copy()->addMonthsNoOverflow($planTermMonths);
+        $initialEnd = $approvedAt->copy()->addMonthsNoOverflow($planTermMonths);
+        if ($latestReceiptApprovedAt !== null) {
+            $renewalEnd = $latestReceiptApprovedAt->copy()->addMonthsNoOverflow($planTermMonths);
+            if ($renewalEnd->greaterThan($initialEnd)) {
+                return $renewalEnd;
+            }
+        }
+
+        return $initialEnd;
     }
 
     private function resolveTicketApproval(int $ticketId): array

@@ -142,7 +142,9 @@ class AdminInquiryController extends Controller
         }
 
         $access = new PartnerStorefrontAccess();
-        $storefrontIds = $access->resolveActiveStorefrontIds($admin);
+        // Use all assigned IDs (including expired) so partners can always
+        // view their subscription history, even after expiry.
+        $storefrontIds = $access->normalizeStorefrontIds($admin->admin_permissions ?? []);
         if (empty($storefrontIds)) {
             return [];
         }
@@ -1068,6 +1070,89 @@ class AdminInquiryController extends Controller
         });
 
         return response()->json(['message' => 'Webstore request deleted.']);
+    }
+
+    public function destroyPartnerWebstoreRequest(Request $request, int $id)
+    {
+        $admin = $request->user();
+        $allowedSlugs = $this->resolvePartnerStorefrontSlugs($admin instanceof Admin ? $admin : null);
+
+        if (empty($allowedSlugs)) {
+            return response()->json(['message' => 'Access denied.'], 403);
+        }
+
+        $ticket = DB::table('tbl_tickets')->where('t_id', $id)->first();
+        if (! $ticket) {
+            return response()->json(['message' => 'Webstore request not found.'], 404);
+        }
+
+        $detail = DB::table('tbl_tickets_details')
+            ->where('t_id', (int) $ticket->t_id)
+            ->where('td_replystat', 0)
+            ->orderBy('td_id')
+            ->first();
+
+        $payload = $this->decodeWebstorePayload($detail->td_content ?? null);
+        $slugName = mb_strtolower(trim((string) ($payload['slug_name'] ?? '')), 'UTF-8');
+
+        if (! in_array($slugName, $allowedSlugs, true)) {
+            return response()->json(['message' => 'Access denied.'], 403);
+        }
+
+        DB::transaction(function () use ($ticket): void {
+            DB::table('tbl_tickets_details')->where('t_id', (int) $ticket->t_id)->delete();
+            DB::table('tbl_tickets')->where('t_id', (int) $ticket->t_id)->delete();
+
+            DB::table('tbl_admin_notifications')
+                ->where('an_source_type', 'ticket')
+                ->where('an_source_id', (int) $ticket->t_id)
+                ->where('an_type', 'webstore_request')
+                ->delete();
+
+            DB::table('tbl_customer_notifications')
+                ->where('cn_source_type', 'webstore_request')
+                ->where('cn_source_id', (int) $ticket->t_id)
+                ->delete();
+        });
+
+        return response()->json(['message' => 'Webstore request deleted.']);
+    }
+
+    public function destroyPartnerWebstoreReceiptItem(Request $request, int $id)
+    {
+        $admin = $request->user();
+        $allowedSlugs = $this->resolvePartnerStorefrontSlugs($admin instanceof Admin ? $admin : null);
+
+        if (empty($allowedSlugs)) {
+            return response()->json(['message' => 'Access denied.'], 403);
+        }
+
+        $detail = DB::table('tbl_tickets_details')->where('td_id', $id)->first();
+        if (! $detail) {
+            return response()->json(['message' => 'Receipt item not found.'], 404);
+        }
+
+        $ticket = DB::table('tbl_tickets')->where('t_id', (int) $detail->t_id)->first();
+        if (! $ticket) {
+            return response()->json(['message' => 'Webstore request not found.'], 404);
+        }
+
+        $firstDetail = DB::table('tbl_tickets_details')
+            ->where('t_id', (int) $ticket->t_id)
+            ->where('td_replystat', 0)
+            ->orderBy('td_id')
+            ->first();
+
+        $payload = $this->decodeWebstorePayload($firstDetail->td_content ?? null);
+        $slugName = mb_strtolower(trim((string) ($payload['slug_name'] ?? '')), 'UTF-8');
+
+        if (! in_array($slugName, $allowedSlugs, true)) {
+            return response()->json(['message' => 'Access denied.'], 403);
+        }
+
+        DB::table('tbl_tickets_details')->where('td_id', $id)->delete();
+
+        return response()->json(['message' => 'Receipt item deleted.']);
     }
 
     private function fullName(Customer $customer): string

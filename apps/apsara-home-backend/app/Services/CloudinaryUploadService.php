@@ -11,17 +11,17 @@ use Throwable;
 
 class CloudinaryUploadService
 {
-    public function uploadImage(UploadedFile $file, string $folder = 'afhome/expenses/invoices', bool $requireCloudinary = false): array
+    public function uploadImage(UploadedFile $file, string $folder = 'afhome/expenses/invoices', bool $requireCloudinary = false, bool $useOriginalFilename = false): array
     {
-        return $this->uploadFile($file, $folder, 'image', $requireCloudinary);
+        return $this->uploadFile($file, $folder, 'image', $requireCloudinary, $useOriginalFilename);
     }
 
-    public function uploadVideo(UploadedFile $file, string $folder = 'afhome/reviews/videos', bool $requireCloudinary = false): array
+    public function uploadVideo(UploadedFile $file, string $folder = 'afhome/reviews/videos', bool $requireCloudinary = false, bool $useOriginalFilename = false): array
     {
-        return $this->uploadFile($file, $folder, 'video', $requireCloudinary);
+        return $this->uploadFile($file, $folder, 'video', $requireCloudinary, $useOriginalFilename);
     }
 
-    private function uploadFile(UploadedFile $file, string $folder, string $resourceType, bool $requireCloudinary = false): array
+    private function uploadFile(UploadedFile $file, string $folder, string $resourceType, bool $requireCloudinary = false, bool $useOriginalFilename = false): array
     {
         $cloudName = trim((string) config('services.cloudinary.cloud_name', env('CLOUDINARY_CLOUD_NAME', '')));
         $apiKey = trim((string) config('services.cloudinary.api_key', env('CLOUDINARY_API_KEY', '')));
@@ -37,7 +37,12 @@ class CloudinaryUploadService
         $timestamp = time();
         $folder = trim($folder, '/');
 
-        $signatureBase = "folder={$folder}&timestamp={$timestamp}{$apiSecret}";
+        // Build signature — params must be sorted alphabetically (excluding api_key, file, resource_type)
+        if ($useOriginalFilename) {
+            $signatureBase = "folder={$folder}&timestamp={$timestamp}&unique_filename=0&use_filename=1{$apiSecret}";
+        } else {
+            $signatureBase = "folder={$folder}&timestamp={$timestamp}{$apiSecret}";
+        }
         $signature = sha1($signatureBase);
 
         $endpoint = "https://api.cloudinary.com/v1_1/{$cloudName}/{$resourceType}/upload";
@@ -49,6 +54,18 @@ class CloudinaryUploadService
                 throw new RuntimeException('Failed to read upload file stream.');
             }
 
+            $postParams = [
+                'api_key' => $apiKey,
+                'timestamp' => (string) $timestamp,
+                'folder' => $folder,
+                'signature' => $signature,
+            ];
+
+            if ($useOriginalFilename) {
+                $postParams['use_filename'] = '1';
+                $postParams['unique_filename'] = '0';
+            }
+
             $response = Http::timeout($timeoutSeconds)
                 ->connectTimeout(20)
                 ->attach(
@@ -57,12 +74,7 @@ class CloudinaryUploadService
                     $file->getClientOriginalName()
                 )
                 ->asMultipart()
-                ->post($endpoint, [
-                    'api_key' => $apiKey,
-                    'timestamp' => (string) $timestamp,
-                    'folder' => $folder,
-                    'signature' => $signature,
-                ]);
+                ->post($endpoint, $postParams);
         } catch (Throwable $exception) {
             if ($requireCloudinary) {
                 throw new RuntimeException('Cloudinary upload failed: ' . $exception->getMessage());

@@ -38,7 +38,12 @@ export default function AdminInquiryPage() {
         </div>
       </div>
 
-      {tab === 'username' ? <UsernameChangeRequestsPage /> : <WebstoreRequestsPage />}
+      <div className={tab === 'username' ? 'block' : 'hidden'}>
+        <UsernameChangeRequestsPage />
+      </div>
+      <div className={tab === 'webstore' ? 'block' : 'hidden'}>
+        <WebstoreRequestsPage />
+      </div>
     </div>
   )
 }

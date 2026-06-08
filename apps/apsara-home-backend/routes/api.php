@@ -418,6 +418,8 @@ Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_a
 
 Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_admin,admin,merchant_admin,web_content'])->group(function () {
     Route::get('/admin/partner/webstore-requests', [AdminInquiryController::class, 'partnerWebstoreRequests']);
+    Route::delete('/admin/partner/webstore-requests/{id}', [AdminInquiryController::class, 'destroyPartnerWebstoreRequest']);
+    Route::delete('/admin/partner/webstore-receipt-items/{id}', [AdminInquiryController::class, 'destroyPartnerWebstoreReceiptItem']);
 });
 
 Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.or_supplier'])->group(function () {
@@ -642,6 +644,7 @@ Route::middleware(['auth:sanctum', 'supplier.actor'])->group(function () {
     Route::get('/supplier/chat/conversations/{id}', [SupplierChatController::class, 'show']);
     Route::post('/supplier/chat/conversations/{id}/messages', [SupplierChatController::class, 'sendMessage']);
     Route::post('/supplier/chat/conversations/{conversationId}/messages/{messageId}/react', [SupplierChatController::class, 'react']);
+    Route::delete('/supplier/chat/conversations/{conversationId}/messages/{messageId}', [SupplierChatController::class, 'deleteMessage']);
     Route::patch('/supplier/chat/conversations/{id}/status', [SupplierChatController::class, 'updateStatus']);
     Route::post('/supplier/presence/heartbeat', [SupplierChatController::class, 'updatePresence']);
     Route::post('/supplier/realtime/pusher/auth', [SupplierOrderController::class, 'pusherAuth']);
@@ -679,6 +682,7 @@ Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.actor'])->gr
     Route::get('/admin/supplier-chat/conversations/{id}', [SupplierChatController::class, 'show']);
     Route::post('/admin/supplier-chat/conversations/{id}/messages', [SupplierChatController::class, 'sendMessage']);
     Route::post('/admin/supplier-chat/conversations/{conversationId}/messages/{messageId}/react', [SupplierChatController::class, 'react']);
+    Route::delete('/admin/supplier-chat/conversations/{conversationId}/messages/{messageId}', [SupplierChatController::class, 'deleteMessage']);
     Route::patch('/admin/supplier-chat/conversations/{id}/status', [SupplierChatController::class, 'updateStatus']);
 });
 
