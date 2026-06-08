@@ -1,3 +1,4 @@
+import path from "path";
 import type { NextConfig } from "next";
 import withSerwist from "@serwist/next";
 
@@ -50,8 +51,15 @@ const csp = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  // Produce a self-contained server bundle (.next/standalone) for small,
+  // low-RAM production images. Set via Docker/CI; harmless for local dev.
+  output: "standalone",
+  // Monorepo: trace files from the workspace root so standalone includes the
+  // correct (minimal) node_modules instead of guessing the root.
+  outputFileTracingRoot: path.join(__dirname, "../../"),
   // Workaround for Windows file locking issues on `.next` (EPERM unlink build-manifest.json).
   // Using a separate build directory avoids touching a locked `.next` folder.
+  // In CI/Docker we force NEXT_DIST_DIR=.next so standalone paths are predictable.
   distDir: process.env.NEXT_DIST_DIR || ".next_build",
   async headers() {
     return [

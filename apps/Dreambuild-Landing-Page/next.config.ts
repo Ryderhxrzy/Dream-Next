@@ -1,3 +1,4 @@
+import path from "path";
 import withPWAInit from "next-pwa";
 import type { NextConfig } from "next";
 
@@ -9,6 +10,9 @@ const withPWA = withPWAInit({
 });
 
 const nextConfig: NextConfig = {
+  // Self-contained server bundle for small, low-RAM production images.
+  output: "standalone",
+  outputFileTracingRoot: path.join(__dirname, "../../"),
   images: {
     remotePatterns: [
       {
