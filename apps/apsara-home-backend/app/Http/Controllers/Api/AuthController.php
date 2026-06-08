@@ -1308,6 +1308,25 @@ class AuthController extends Controller
         return response()->json($this->transformCustomer($customer));
     }
 
+    /**
+     * Persist that the member has seen and dismissed the one-time profile
+     * completion reward modal, so it never reappears on any device.
+     */
+    public function dismissProfileRewardModal(Request $request)
+    {
+        /** @var Customer $customer */
+        $customer = $request->user();
+
+        if ($customer instanceof Customer && Schema::hasColumn('tbl_customer', 'c_profile_reward_modal_seen')) {
+            if (!(bool) ($customer->c_profile_reward_modal_seen ?? false)) {
+                $customer->c_profile_reward_modal_seen = true;
+                $customer->save();
+            }
+        }
+
+        return response()->json($this->transformCustomer($customer));
+    }
+
     public function activity(Request $request)
     {
         /** @var Customer $customer */
@@ -2812,6 +2831,7 @@ class AuthController extends Controller
             'password_change_required' => $this->customerRequiresPasswordChange($customer),
             'two_factor_enabled' => (bool) ($customer->c_two_factor_enabled ?? false),
             'totp_enabled' => (bool) ($customer->c_totp_enabled ?? false),
+            'profile_reward_modal_seen' => (bool) ($customer->c_profile_reward_modal_seen ?? false),
         ];
     }
 

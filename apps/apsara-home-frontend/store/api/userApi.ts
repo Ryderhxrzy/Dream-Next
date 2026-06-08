@@ -52,6 +52,7 @@ export interface MeResponse {
     profile_completion_percentage?: number;
     two_factor_enabled?: boolean;
     totp_enabled?: boolean;
+    profile_reward_modal_seen?: boolean;
 }
 
 export interface CustomerAddress {
@@ -449,6 +450,14 @@ export const userApi = baseApi.injectEndpoints({
             invalidatesTags: ['User', 'AccountSnapshot', 'Encashment'],
         }),
 
+        dismissProfileRewardModal: builder.mutation<MeResponse, void>({
+            query: () => ({
+                url: '/api/me/dismiss-reward-modal',
+                method: 'POST',
+            }),
+            invalidatesTags: ['User'],
+        }),
+
         changePassword: builder.mutation<{ message: string; user: MeResponse }, ChangePasswordPayload>({
             query: (body) => ({
                 url: '/api/auth/change-password',
@@ -686,6 +695,7 @@ export const {
     useSetDefaultCustomerAddressMutation,
     useUpdateProfileMutation,
     useUploadAvatarMutation,
+    useDismissProfileRewardModalMutation,
     useChangePasswordMutation,
     useSendUsernameChangeOtpMutation,
     useSubmitUsernameChangeRequestMutation,
