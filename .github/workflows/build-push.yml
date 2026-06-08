@@ -6,8 +6,12 @@ name: Build & Push Images (GHCR)
 
 on:
   push:
+    # NOTE: `feature/cicd-ghcr` is TEMPORARY — it lets us validate the build on
+    # the branch before merge. Remove it once this is merged to main.
+    branches: [main, feature/cicd-ghcr]
+  pull_request:
     branches: [main]
-  workflow_dispatch: {}   # allow manual "rebuild all" from the Actions tab
+  workflow_dispatch: {}   # manual "rebuild all" (only shows once on main)
 
 concurrency:
   group: build-push-${{ github.ref }}
