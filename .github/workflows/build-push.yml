@@ -23,6 +23,9 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # NEXT_PUBLIC_* build vars live in this GitHub Environment; referencing it
+    # makes them available to the `vars` context during the build.
+    environment: "AF HOME ENV URL"
     permissions:
       contents: read
       packages: write   # required to push to GHCR with GITHUB_TOKEN
