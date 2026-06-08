@@ -12,6 +12,7 @@ use App\Http\Middleware\EnsureCustomerActor;
 use App\Http\Middleware\EnsureSupplierActor;
 use App\Http\Middleware\JsonAuthentication;
 use App\Http\Middleware\AdminTokenValidation;
+use App\Http\Middleware\MediaCacheHeaders;
 use App\Http\Middleware\RequestAbuseGuard;
 use App\Http\Middleware\SecurityHeaders;
 
@@ -44,6 +45,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prepend(HandleCors::class);
         $middleware->append(RequestAbuseGuard::class);
         $middleware->append(SecurityHeaders::class);
+        $middleware->append(MediaCacheHeaders::class);
 
         $middleware->alias([
             'admin.actor' => EnsureAdminActor::class,
