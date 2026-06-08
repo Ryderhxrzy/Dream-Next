@@ -23,7 +23,7 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 COPY apps/apsara-home-backend/ /app/
 
 RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader \
-    && npm ci \
+    && npm install \
     && npm run build \
     && chmod -R ug+rwx storage bootstrap/cache
 
