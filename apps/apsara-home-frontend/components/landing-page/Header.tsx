@@ -125,7 +125,7 @@ export default function Header({
           </motion.a>
 
           {/* Desktop Navigation - Centered */}
-          <nav className={`${hideNavLinks ? 'hidden' : 'hidden md:flex'} items-center gap-8 absolute left-1/2 -translate-x-1/2`}>
+          <nav className={`${hideNavLinks ? 'hidden' : 'hidden lg:flex'} items-center gap-6 xl:gap-8 absolute left-1/2 -translate-x-1/2`}>
             {navLinks.map((link, index) => {
               const sectionId = link.href.replace(/^\/?#/, '');
               const isActive = link.href === '/'
@@ -212,7 +212,7 @@ export default function Header({
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className={`md:hidden p-2 transition-colors ${(isScrolled || !isHome) ? 'text-black dark:text-white' : 'text-white'}`}
+              className={`lg:hidden p-2 transition-colors ${(isScrolled || !isHome) ? 'text-black dark:text-white' : 'text-white'}`}
             >
               {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </motion.button>
@@ -228,7 +228,7 @@ export default function Header({
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="md:hidden bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-t border-af-cream dark:border-gray-700"
+            className="lg:hidden bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-t border-af-cream dark:border-gray-700"
           >
             <nav className="flex flex-col p-6 gap-4">
               {navLinks.map((link, index) => {
