@@ -1,6 +1,7 @@
 services:
   backend:
     image: ghcr.io/dreamnext-af-home/afhome-backend:${IMAGE_TAG:-latest}
+    pull_policy: always
     restart: unless-stopped
     mem_limit: 1g
     environment: &backend-env
@@ -161,6 +162,7 @@ services:
   # cache clears so its periodic --max-time restarts never disturb the web app.
   worker:
     image: ghcr.io/dreamnext-af-home/afhome-backend:${IMAGE_TAG:-latest}
+    pull_policy: always
     restart: unless-stopped
     mem_limit: 768m
     environment:
@@ -177,6 +179,7 @@ services:
   frontend:
     # NEXT_PUBLIC_* values are baked into this image at BUILD time in CI.
     image: ghcr.io/dreamnext-af-home/afhome-frontend:${IMAGE_TAG:-latest}
+    pull_policy: always
     restart: unless-stopped
     mem_limit: 768m
     environment:
@@ -225,6 +228,7 @@ services:
 
   dreambuild:
     image: ghcr.io/dreamnext-af-home/afhome-dreambuild:${IMAGE_TAG:-latest}
+    pull_policy: always
     restart: unless-stopped
     mem_limit: 512m
     environment:
