@@ -6,7 +6,7 @@ name: Build & Push Images (GHCR)
 
 on:
   push:
-    branches: [main]
+    branches: [main, feature/renewal]
   pull_request:
     branches: [main]
   workflow_dispatch: {}   # manual "rebuild all" from the Actions tab
@@ -100,7 +100,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.name }}
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/renewal' || github.event_name == 'workflow_dispatch' }}
             type=sha,prefix=,format=long
 
       - name: Build & push ${{ matrix.name }}
@@ -148,7 +148,7 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/renewal'
     # `secrets` can't be used in `if:` — map them to env first, then gate on env.
     env:
       DOKPLOY_WEBHOOK_URL_MAIN: ${{ secrets.DOKPLOY_WEBHOOK_URL_MAIN }}
