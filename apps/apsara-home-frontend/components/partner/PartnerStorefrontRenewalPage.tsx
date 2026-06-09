@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { AlertTriangle, CheckCircle2, ChevronDown, Clock3, Loader2, ShieldCheck, Store, RotateCcw } from 'lucide-react'
+import { AlertTriangle, Calendar, CheckCircle2, ChevronDown, Clock3, FileText, Loader2, Lock, RotateCcw, ShieldCheck, Star, Store, Users } from 'lucide-react'
 import { useGetAdminMeQuery } from '@/store/api/authApi'
 import { useGetAdminWebPageItemsQuery } from '@/store/api/webPagesApi'
 import { useGetPartnerWebstoreRequestsQuery } from '@/store/api/adminInquiriesApi'
@@ -54,6 +54,37 @@ const paymentMethods: Array<{ value: PaymentMethod; label: string }> = [
   { value: 'maya', label: 'Maya' },
   { value: 'card', label: 'Card' },
 ]
+
+const planStyleMap: Record<PlanKey, { iconBg: string; iconText: string; activeBorder: string; activeBg: string; priceText: string }> = {
+  test: {
+    iconBg: 'bg-violet-100 dark:bg-violet-500/20',
+    iconText: 'text-violet-600 dark:text-violet-400',
+    activeBorder: 'border-violet-400 dark:border-violet-400/70',
+    activeBg: 'bg-violet-50/80 dark:bg-violet-500/5',
+    priceText: 'text-violet-700 dark:text-violet-300',
+  },
+  quarterly: {
+    iconBg: 'bg-blue-100 dark:bg-blue-500/20',
+    iconText: 'text-blue-600 dark:text-blue-400',
+    activeBorder: 'border-blue-400 dark:border-blue-400/70',
+    activeBg: 'bg-blue-50/80 dark:bg-blue-500/5',
+    priceText: 'text-blue-700 dark:text-blue-300',
+  },
+  semiAnnual: {
+    iconBg: 'bg-emerald-100 dark:bg-emerald-500/20',
+    iconText: 'text-emerald-600 dark:text-emerald-400',
+    activeBorder: 'border-emerald-400 dark:border-emerald-400/70',
+    activeBg: 'bg-emerald-50/80 dark:bg-emerald-500/5',
+    priceText: 'text-emerald-700 dark:text-emerald-300',
+  },
+  annual: {
+    iconBg: 'bg-amber-100 dark:bg-amber-500/20',
+    iconText: 'text-amber-600 dark:text-amber-400',
+    activeBorder: 'border-amber-400 dark:border-amber-400/70',
+    activeBg: 'bg-amber-50/80 dark:bg-amber-500/5',
+    priceText: 'text-amber-700 dark:text-amber-300',
+  },
+}
 
 const resolvePaymentMode = (): PaymentMode => {
   if (typeof window === 'undefined') return 'live'
@@ -381,57 +412,80 @@ export default function PartnerStorefrontRenewalPage() {
   const expiryText = expiryDate ? expiryDate.toLocaleDateString() : 'Not available'
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Hero Header */}
-      <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 px-8 py-8 shadow-lg dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -left-8 -top-8 h-56 w-56 rounded-full bg-cyan-500/20 blur-3xl" />
-          <div className="absolute -bottom-8 right-8 h-56 w-56 rounded-full bg-violet-500/15 blur-3xl" />
+      <div className="relative overflow-hidden rounded-3xl border border-slate-100 bg-linear-to-br from-white via-blue-50/50 to-violet-100/70 px-8 py-7 shadow-sm dark:border-slate-800 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/40">
+        <div className="pointer-events-none absolute right-0 top-0 h-full w-2/5">
+          <div className="absolute right-16 top-3 h-14 w-14 rounded-full bg-violet-300/50 blur-sm dark:bg-violet-500/20" />
+          <div className="absolute right-6 top-10 h-20 w-20 rounded-full bg-blue-300/40 blur-sm dark:bg-blue-500/15" />
+          <div className="absolute bottom-3 right-24 h-8 w-8 rounded-full bg-indigo-400/40 dark:bg-indigo-500/20" />
+          <div className="absolute right-10 top-6 flex h-20 w-20 items-center justify-center rounded-2xl border border-white/60 bg-white/50 shadow-lg backdrop-blur-sm dark:border-slate-700/40 dark:bg-slate-900/50">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-indigo-500 to-violet-600 shadow-md">
+              <Store className="h-6 w-6 text-white" />
+            </div>
+          </div>
         </div>
-        <div className="relative">
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-300 backdrop-blur">
-            <ShieldCheck className="h-3.5 w-3.5 text-cyan-400" />
+        <div className="relative max-w-[60%]">
+          <span className="inline-flex items-center gap-2 rounded-full bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
+            <ShieldCheck className="h-3.5 w-3.5" />
             Partner Renewal
           </span>
-          <h1 className="mt-4 text-4xl font-black tracking-tight text-white">Renew your storefront</h1>
-          <p className="mt-2 text-sm text-slate-400">Keep your partner storefront active with a new subscription plan.</p>
+          <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-900 dark:text-white">Renew your storefront</h1>
+          <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">Keep your partner storefront active with a new subscription plan.</p>
         </div>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+      <div className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+        {/* Left Column */}
         <div className="space-y-5">
-          {/* Storefront Info */}
+          {/* Storefront Card */}
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800">
-                  <Store className="h-5 w-5 text-slate-700 dark:text-slate-200" />
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-100 dark:bg-indigo-500/10">
+                  <Store className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Storefront</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Storefront</p>
                   <h2 className="text-xl font-bold text-slate-900 dark:text-white">{title}</h2>
                   <p className="text-xs text-slate-500 dark:text-slate-400">/{selectedStorefrontSlug || 'select-storefront'}</p>
                 </div>
               </div>
-              <span className={`inline-flex shrink-0 items-center rounded-full px-3 py-1 text-xs font-bold ${isExpired ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300' : latestApprovedRequest ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'}`}>
+              <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${isExpired ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300' : latestApprovedRequest ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'}`}>
+                {latestApprovedRequest && !isExpired && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}
                 {statusLabel}
               </span>
             </div>
 
             <div className="mt-5 grid grid-cols-3 gap-3">
-              <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Current plan</p>
-                <p className="mt-1.5 text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  {currentStorefrontPlan ? planOptions.find((plan) => plan.key === currentStorefrontPlan)?.title ?? '-' : 'None'}
-                </p>
+              <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-700/50 dark:bg-slate-800/60">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm dark:bg-slate-900">
+                  <Clock3 className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Current plan</p>
+                  <p className="mt-0.5 truncate text-sm font-bold text-slate-900 dark:text-slate-100">
+                    {currentStorefrontPlan ? planOptions.find((p) => p.key === currentStorefrontPlan)?.title ?? '-' : 'None'}
+                  </p>
+                </div>
               </div>
-              <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Expires</p>
-                <p className="mt-1.5 text-sm font-semibold text-slate-900 dark:text-slate-100">{expiryText}</p>
+              <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-700/50 dark:bg-slate-800/60">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm dark:bg-slate-900">
+                  <Calendar className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Expires</p>
+                  <p className="mt-0.5 truncate text-sm font-bold text-slate-900 dark:text-slate-100">{expiryText}</p>
+                </div>
               </div>
-              <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Requests</p>
-                <p className="mt-1.5 text-sm font-semibold text-slate-900 dark:text-slate-100">{selectedStorefrontRequests.length}</p>
+              <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-700/50 dark:bg-slate-800/60">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm dark:bg-slate-900">
+                  <Users className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Requests</p>
+                  <p className="mt-0.5 text-sm font-bold text-slate-900 dark:text-slate-100">{selectedStorefrontRequests.length}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -457,88 +511,124 @@ export default function PartnerStorefrontRenewalPage() {
 
           {/* Plan Selection */}
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
               <div>
-                <div className="inline-flex items-center gap-2 rounded-full bg-cyan-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-300">
-                  <Clock3 className="h-3.5 w-3.5" />
+                <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-blue-600 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-400">
+                  <Calendar className="h-3.5 w-3.5" />
                   Renewal plan
                 </div>
                 <h3 className="mt-2 text-xl font-bold text-slate-900 dark:text-white">Choose your renewal term</h3>
               </div>
-              <div className="flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                 <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-50" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-500" />
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-60" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-500" />
                 </span>
                 {selectedPlanData.term}
               </div>
             </div>
 
-            <div className={`mt-5 grid gap-3 ${visiblePlanOptions.length > 3 ? 'md:grid-cols-2 xl:grid-cols-4' : 'md:grid-cols-3'}`}>
+            <div className={`grid gap-3 ${visiblePlanOptions.length > 3 ? 'grid-cols-2 xl:grid-cols-4' : 'grid-cols-3'}`}>
               {visiblePlanOptions.map((plan) => {
                 const active = selectedPlan === plan.key
+                const style = planStyleMap[plan.key]
+                const PlanIcon = plan.key === 'test' ? Clock3 : plan.key === 'annual' ? Star : Calendar
                 return (
                   <button
                     key={plan.key}
                     type="button"
                     onClick={() => setSelectedPlan(plan.key)}
-                    className={`group relative overflow-hidden rounded-2xl border p-4 text-left transition-all duration-200 ${active ? 'border-cyan-400 bg-linear-to-br from-cyan-50 to-sky-50 shadow-md shadow-cyan-100 dark:border-cyan-500/60 dark:from-cyan-500/10 dark:to-sky-500/5 dark:shadow-none' : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900/40 dark:hover:border-slate-700'}`}
+                    className={`relative rounded-2xl border p-4 text-left transition-all duration-150 ${active ? `${style.activeBorder} ${style.activeBg} shadow-sm` : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900/60 dark:hover:border-slate-700'}`}
                   >
-                    <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                      <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-cyan-500/10 blur-2xl" />
-                    </div>
-
-                    <div className="relative flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors ${active ? style.iconBg : 'bg-slate-100 dark:bg-slate-800'}`}>
+                        {active
+                          ? <CheckCircle2 className={`h-4 w-4 ${style.iconText}`} />
+                          : <PlanIcon className={`h-4 w-4 ${style.iconText}`} />
+                        }
+                      </div>
                       <div>
-                        <p className={`text-sm font-bold ${active ? 'text-cyan-800 dark:text-cyan-200' : 'text-slate-900 dark:text-slate-100'}`}>{plan.title}</p>
-                        <p className={`mt-0.5 text-xs ${active ? 'text-cyan-600/80 dark:text-cyan-300/70' : 'text-slate-500 dark:text-slate-400'}`}>{plan.term}</p>
+                        <p className={`text-sm font-bold leading-tight ${active ? style.priceText : 'text-slate-900 dark:text-slate-100'}`}>{plan.title}</p>
+                        <p className={`text-xs ${active ? style.iconText : 'text-slate-500 dark:text-slate-400'}`}>{plan.term}</p>
                       </div>
-                      {active ? <CheckCircle2 className="h-4 w-4 shrink-0 text-cyan-600 dark:text-cyan-400" /> : null}
                     </div>
 
-                    <p className={`relative mt-3 text-xs leading-relaxed ${active ? 'text-cyan-700/70 dark:text-cyan-200/60' : 'text-slate-500 dark:text-slate-400'}`}>{plan.description}</p>
+                    <p className="mt-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{plan.description}</p>
 
-                    <div className="relative mt-3 space-y-1.5">
-                      <div className={`rounded-xl px-2.5 py-1.5 text-xs font-semibold ${active ? 'bg-white/70 text-cyan-800 dark:bg-slate-900/60 dark:text-cyan-200' : 'bg-slate-50 text-slate-700 dark:bg-slate-900 dark:text-slate-300'}`}>
-                        <span className="text-[10px] text-slate-400 dark:text-slate-500">Full </span>PHP {plan.full.toLocaleString()}
-                      </div>
-                      <div className={`rounded-xl px-2.5 py-1.5 text-xs font-semibold ${active ? 'bg-white/70 text-cyan-800 dark:bg-slate-900/60 dark:text-cyan-200' : 'bg-slate-50 text-slate-700 dark:bg-slate-900 dark:text-slate-300'}`}>
-                        <span className="text-[10px] text-slate-400 dark:text-slate-500">Monthly </span>PHP {plan.monthly.toLocaleString()}
-                      </div>
+                    <div className="mt-3 space-y-1">
+                      <p className={`text-xs font-semibold ${active ? style.priceText : 'text-slate-700 dark:text-slate-300'}`}>
+                        <span className="font-normal text-slate-400 dark:text-slate-500">Full </span>PHP {plan.full.toLocaleString()}
+                      </p>
+                      <p className={`text-xs font-semibold ${active ? style.priceText : 'text-slate-700 dark:text-slate-300'}`}>
+                        <span className="font-normal text-slate-400 dark:text-slate-500">Monthly </span>PHP {plan.monthly.toLocaleString()}
+                      </p>
                     </div>
                   </button>
                 )
               })}
             </div>
           </div>
+        </div>
 
-          {/* Billing & Payment */}
+        {/* Right Sidebar */}
+        <aside className="space-y-5">
+          {/* Selected Storefront Card */}
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-indigo-100 dark:bg-indigo-500/10">
+                <Store className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Selected storefront</p>
+                <p className="truncate font-bold text-slate-900 dark:text-white">{selectedStorefrontName}</p>
+              </div>
+            </div>
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-2.5 dark:bg-slate-800/60">
+                <Store className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
+                <span className="flex-1 text-sm text-slate-500 dark:text-slate-400">Slug</span>
+                <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">/{selectedStorefrontSlug || '-'}</span>
+              </div>
+              <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-2.5 dark:bg-slate-800/60">
+                <Users className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
+                <span className="flex-1 text-sm text-slate-500 dark:text-slate-400">Assigned users</span>
+                <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">{storefrontIds.length}</span>
+              </div>
+              <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-2.5 dark:bg-slate-800/60">
+                <FileText className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
+                <span className="flex-1 text-sm text-slate-500 dark:text-slate-400">Request records</span>
+                <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">{selectedStorefrontRequests.length}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Billing Details Card */}
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Payment</p>
-                <h3 className="mt-1 text-xl font-bold text-slate-900 dark:text-white">Billing details</h3>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Payment</p>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Billing details</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setRenewalEnabled((current) => !current)}
-                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${renewalEnabled ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300' : 'border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'}`}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors ${renewalEnabled ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300' : 'border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'}`}
               >
-                <RotateCcw className="h-3.5 w-3.5" />
+                <RotateCcw className="h-3 w-3" />
                 Renewal {renewalEnabled ? 'On' : 'Off'}
               </button>
             </div>
 
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Billing option</p>
-                <div className="grid grid-cols-2 gap-2">
+            <div className="mt-4 grid grid-cols-2 items-end gap-3">
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Billing option</p>
+                <div className="flex gap-1.5">
                   {(['full', 'monthly'] as BillingOption[]).map((option) => (
                     <button
                       key={option}
                       type="button"
                       onClick={() => setSelectedBillingOption(option)}
-                      className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition-all ${selectedBillingOption === option ? 'border-cyan-300 bg-cyan-50 text-cyan-700 shadow-sm dark:border-cyan-500/40 dark:bg-cyan-500/10 dark:text-cyan-200' : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-300'}`}
+                      className={`flex-1 rounded-xl border py-2.5 text-xs font-semibold transition-all ${selectedBillingOption === option ? 'border-blue-500 bg-blue-500 text-white shadow-sm dark:border-blue-600 dark:bg-blue-600' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-300'}`}
                     >
                       {option === 'full' ? 'Full payment' : 'Monthly'}
                     </button>
@@ -546,41 +636,39 @@ export default function PartnerStorefrontRenewalPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Payment method</p>
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Payment method</p>
                 <div className="relative">
                   <select
                     value={selectedPaymentMethod}
                     onChange={(event) => setSelectedPaymentMethod(event.target.value as PaymentMethod)}
-                    className="w-full appearance-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-cyan-400 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                    className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-3 pr-8 text-xs font-semibold text-slate-800 outline-none transition focus:border-blue-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   >
                     {paymentMethods.map((method) => (
                       <option key={method.value} value={method.value}>{method.label}</option>
                     ))}
                   </select>
-                  <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
                 </div>
               </div>
             </div>
 
-            <div className="mt-5 rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/50">
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500 dark:text-slate-400">Plan</span>
-                  <span className="font-semibold text-slate-900 dark:text-slate-100">{selectedPlanData.title}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500 dark:text-slate-400">Amount</span>
-                  <span className="font-bold text-slate-900 dark:text-slate-100">PHP {(selectedBillingOption === 'monthly' ? selectedPlanData.monthly : selectedPlanData.full).toLocaleString()}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500 dark:text-slate-400">Method</span>
-                  <span className="font-semibold text-slate-900 dark:text-slate-100">{paymentMethods.find((method) => method.value === selectedPaymentMethod)?.label ?? '-'}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500 dark:text-slate-400">Auto-renew</span>
-                  <span className={`font-semibold ${renewalEnabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-slate-100'}`}>{renewalEnabled ? 'Enabled' : 'Disabled'}</span>
-                </div>
+            <div className="mt-4 space-y-2.5 rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/50">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-500 dark:text-slate-400">Plan</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">{selectedPlanData.title}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-500 dark:text-slate-400">Amount</span>
+                <span className="font-bold text-slate-900 dark:text-slate-100">
+                  PHP {(selectedBillingOption === 'monthly' ? selectedPlanData.monthly : selectedPlanData.full).toLocaleString()}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-500 dark:text-slate-400">Auto-renew</span>
+                <span className={`font-semibold ${renewalEnabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
+                  {renewalEnabled ? 'Enabled' : 'Disabled'}
+                </span>
               </div>
             </div>
 
@@ -588,39 +676,14 @@ export default function PartnerStorefrontRenewalPage() {
               type="button"
               onClick={() => void handleStartPayment()}
               disabled={isCreatingPayment || isSubmitting || !selectedStorefrontEntry || accessBlocked}
-              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-linear-to-r from-cyan-600 to-cyan-500 px-5 py-4 text-sm font-bold text-white shadow-sm shadow-cyan-200 transition hover:from-cyan-700 hover:to-cyan-600 disabled:cursor-not-allowed disabled:opacity-60 dark:shadow-none"
+              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-linear-to-r from-indigo-600 to-violet-600 px-5 py-3.5 text-sm font-bold text-white shadow-sm shadow-indigo-200/60 transition hover:from-indigo-700 hover:to-violet-700 disabled:cursor-not-allowed disabled:opacity-60 dark:shadow-none"
             >
-              {isCreatingPayment || isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              {isCreatingPayment || isSubmitting
+                ? <Loader2 className="h-4 w-4 animate-spin" />
+                : <Lock className="h-4 w-4" />
+              }
               Start renewal payment
             </button>
-          </div>
-        </div>
-
-        <aside className="space-y-5">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700">
-                <Store className="h-5 w-5 text-slate-600 dark:text-slate-200" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Selected storefront</p>
-                <p className="truncate text-base font-bold text-slate-900 dark:text-white">{selectedStorefrontName}</p>
-              </div>
-            </div>
-            <div className="mt-4 space-y-2">
-              <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-2.5 text-sm dark:bg-slate-800/60">
-                <span className="text-slate-500 dark:text-slate-400">Slug</span>
-                <span className="font-semibold text-slate-900 dark:text-slate-100">/{selectedStorefrontSlug || '-'}</span>
-              </div>
-              <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-2.5 text-sm dark:bg-slate-800/60">
-                <span className="text-slate-500 dark:text-slate-400">Assigned users</span>
-                <span className="font-semibold text-slate-900 dark:text-slate-100">{storefrontIds.length}</span>
-              </div>
-              <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-2.5 text-sm dark:bg-slate-800/60">
-                <span className="text-slate-500 dark:text-slate-400">Request records</span>
-                <span className="font-semibold text-slate-900 dark:text-slate-100">{selectedStorefrontRequests.length}</span>
-              </div>
-            </div>
           </div>
 
           {isLoading ? (

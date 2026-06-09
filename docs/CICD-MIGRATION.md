@@ -61,8 +61,10 @@ git push → GitHub Actions → build all images (parallel, cached)
 
 ## 2. Run the first build
 
-- Merge this branch (`feature/cicd-ghcr`) to `main`, **or** trigger
+- Merge this branch to `main`, **or** trigger
   **Actions → Build & Push Images (GHCR) → Run workflow** manually.
+- This repo also allows `feature/renewal` to publish `latest` and trigger the
+  main stack redeploy while that branch is being validated.
 - Watch the 6 services build in parallel. First run is slower (cold cache);
   later runs are fast.
 - After success, the images appear under **GitHub → org → Packages**.
