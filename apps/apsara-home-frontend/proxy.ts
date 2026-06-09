@@ -201,6 +201,13 @@ const canAccessWebContentPath = (permissions: string[], pathname: string): boole
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const isUnauthorizedPage = pathname === "/unauthorized";
+  const normalizedPathname = pathname.replace(/\/{2,}/g, "/");
+
+  if (normalizedPathname !== pathname) {
+    const normalizedUrl = req.nextUrl.clone();
+    normalizedUrl.pathname = normalizedPathname;
+    return NextResponse.redirect(normalizedUrl);
+  }
 
   const redirectUnauthorized = (storeName?: string) => {
     if (isUnauthorizedPage) return NextResponse.next();
