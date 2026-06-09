@@ -12,6 +12,7 @@ import { Product, ZqCachedProduct, ZqCategoryMappingItem, ZqSyncProductsPayload,
 import { useGetAdminGeneralSettingsQuery, useUpdateAdminGeneralSettingsMutation } from "@/store/api/adminSettingsApi";
 import { useGetPublicProductBrandsQuery } from "@/store/api/productBrandsApi";
 import { useGetSuppliersQuery } from "@/store/api/suppliersApi";
+import { useGetCategoriesQuery } from "@/store/api/categoriesApi";
 import ProductsToolbar from './ProductsToolbar'
 import ProductsTable from './ProductsTable'
 import DataTableShell from '../DataTableShell'
@@ -1159,6 +1160,14 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
   const perPage = debouncedSearch ? searchPerPage : (userPerPage === 'all' ? 10000 : userPerPage)
   const canShowZqSupplierSide = !isSupplierPortal || isZqSupplierAccount
   const zqInlineActive = canShowZqSupplierSide && (showZqSupplierInline || isSupplierPortal)
+
+  const { data: allCategoriesData } = useGetCategoriesQuery(undefined)
+  const allCategories = useMemo(() => allCategoriesData?.categories ?? [], [allCategoriesData?.categories])
+  const servicesCategoryId = useMemo(
+    () => allCategories.find(c => c.name?.toLowerCase() === 'services')?.id,
+    [allCategories],
+  )
+  const isServicesView = typeof catId === 'number' && catId > 0 && catId === servicesCategoryId
   const { data: adminGeneralSettingsData } = useGetAdminGeneralSettingsQuery(undefined, { skip: isSupplierPortal })
   const manualHeaderToggle = Boolean(adminGeneralSettingsData?.settings?.enable_manual_checkout_mode)
 
@@ -1466,10 +1475,13 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
     }
 
     const baseProducts = status === 'new' ? products.filter(isNewProduct) : products
+    const servicesExcluded = servicesCategoryId && !isServicesView
+      ? baseProducts.filter((p) => Number(p.catid ?? 0) !== servicesCategoryId)
+      : baseProducts
     const categoryFiltered =
       typeof catId === 'number' && catId > 0
-        ? baseProducts.filter((product) => Number(product.catid ?? 0) === catId)
-        : baseProducts
+        ? servicesExcluded.filter((product) => Number(product.catid ?? 0) === catId)
+        : servicesExcluded
     const duplicateFiltered = showDuplicateOnly
       ? categoryFiltered.filter((product) => duplicateProductIds.has(product.id))
       : categoryFiltered
@@ -1499,7 +1511,7 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
 
       return terms.every((term) => haystacks.some((value) => value.includes(term)))
     })
-  }, [catId, debouncedSearch, products, showDuplicateOnly, status, zqInlineActive, zqRows])
+  }, [catId, debouncedSearch, isServicesView, products, servicesCategoryId, showDuplicateOnly, status, zqInlineActive, zqRows])
 
   const selectableProducts = useMemo(() => {
     const selectionSource = selectionData?.products
@@ -2658,6 +2670,7 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
               readOnly={zqInlineActive}
               isLoading={zqInlineActive && (isLoadingZqCached || isFetchingZqCached)}
               tableMode={zqInlineActive ? 'zq' : 'local'}
+              isServicesView={isServicesView}
             />
           </DataTableShell>
         </div>

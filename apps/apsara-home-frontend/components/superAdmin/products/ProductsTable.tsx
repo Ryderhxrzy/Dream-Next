@@ -25,6 +25,7 @@ interface ProductsTableProps {
   readOnly?: boolean
   isLoading?: boolean
   tableMode?: 'local' | 'zq'
+  isServicesView?: boolean
 }
 
 type SortableProductColumn =
@@ -358,6 +359,7 @@ export default function ProductsTable({
   readOnly = false,
   isLoading = false,
   tableMode = 'local',
+  isServicesView = false,
 }: ProductsTableProps) {
   const [confirmId, setConfirmId] = useState<number | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -395,7 +397,7 @@ export default function ProductsTable({
   const isDeleting = (id: number) => isDeletingIds.includes(id)
   const paginationPages = useMemo(() => getPaginationPages(currentPage, totalPages), [currentPage, totalPages])
   const isZqMode = tableMode === 'zq'
-  const columnCount = isZqMode ? 12 : 14
+  const columnCount = isServicesView ? 8 : (isZqMode ? 12 : 14)
   const allVisibleSelected = rows.length > 0 && rows.every((row) => selectedIds.includes(row.id))
 
   const sortedRows = useMemo(() => {
@@ -471,8 +473,29 @@ export default function ProductsTable({
         onMouseUp={stopDrag}
         onMouseLeave={stopDrag}
       >
-        <table className={cn('w-full border-separate border-spacing-0 text-sm text-slate-700 dark:text-slate-200', isZqMode ? 'min-w-[1240px]' : 'min-w-[1540px]')}>
+        <table className={cn('w-full border-separate border-spacing-0 text-sm text-slate-700 dark:text-slate-200', isServicesView ? 'min-w-[900px]' : isZqMode ? 'min-w-[1240px]' : 'min-w-[1540px]')}>
           <thead className="bg-slate-50/95 dark:bg-slate-900">
+            {isServicesView ? (
+              <tr>
+                <th className="w-12 min-w-12 border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                  {!readOnly ? (
+                    <input type="checkbox" aria-label="Select all" checked={allVisibleSelected} onChange={onToggleSelectAll}
+                      className="h-4 w-4 rounded border-slate-300 bg-white text-sky-600 focus:ring-sky-500 dark:border-slate-600 dark:bg-slate-900" />
+                  ) : null}
+                </th>
+                <th className="w-20 min-w-20 border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">Image</th>
+                <th className="min-w-[200px] border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                  {renderSortableHeader('Company Name', 'name')}
+                </th>
+                <th className="min-w-[200px] border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">Type of Services</th>
+                <th className="min-w-[160px] border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">Contact</th>
+                <th className="min-w-[200px] border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">Description</th>
+                <th className="min-w-[120px] border-b border-slate-200 px-4 py-4 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                  {renderSortableHeader('Status', 'status', 'center')}
+                </th>
+                <th className="sticky right-0 z-20 min-w-[150px] border-b border-l border-slate-200 bg-slate-50/95 px-4 py-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 shadow-[-4px_0_8px_-2px_rgba(15,23,42,0.06)] dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.25)]">Actions</th>
+              </tr>
+            ) : (
             <tr>
               <th className="w-12 min-w-12 border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
                 {!readOnly ? (
@@ -525,6 +548,7 @@ export default function ProductsTable({
               </th>
               <th className="sticky right-0 z-20 min-w-[150px] border-b border-l border-slate-200 bg-slate-50/95 px-4 py-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 shadow-[-4px_0_8px_-2px_rgba(15,23,42,0.06)] dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.25)]">Actions</th>
             </tr>
+            )}
           </thead>
 
           <tbody>
@@ -546,6 +570,110 @@ export default function ProductsTable({
                   const isSelected = selectedIds.includes(product.id)
                   const variantCount = getVariantCount(product)
                   const statusLabel = isActiveStatus(product.status) ? 'Active' : isPendingStatus(product.status) ? 'Pending' : 'Inactive'
+
+                  if (isServicesView) {
+                    const serviceTypes = (product.material ?? '').split(',').map(s => s.trim()).filter(Boolean)
+                    const contact = product.warranty ?? ''
+                    const rawDesc = product.description ?? ''
+                    const plainDesc = rawDesc.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+                    return (
+                      <tr
+                        key={product.id}
+                        className={cn(
+                          'border-b border-slate-200 transition-colors hover:bg-white dark:border-slate-700 dark:hover:bg-slate-900',
+                          isSelected ? 'bg-teal-50/40 dark:bg-teal-500/10' : '',
+                        )}
+                      >
+                        <td className="w-12 border-b border-slate-100 px-4 py-4 pr-0 dark:border-slate-800/70">
+                          {!readOnly ? (
+                            <input type="checkbox" aria-label={`Select ${product.name}`} checked={isSelected}
+                              onChange={() => onToggleSelect(product.id)}
+                              className="h-4 w-4 rounded border-slate-300 bg-white text-sky-600 focus:ring-sky-500 dark:border-slate-600 dark:bg-slate-900" />
+                          ) : null}
+                        </td>
+                        <td className="border-b border-slate-100 px-4 py-4 dark:border-slate-800/70">
+                          <div className="relative h-11 w-11 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-800">
+                            {product.image ? (
+                              <Image src={product.image} alt={product.name} fill className="object-contain p-0.5" unoptimized />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center">
+                                <svg className="h-5 w-5 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        {/* Company Name */}
+                        <td className="border-b border-slate-100 px-4 py-4 dark:border-slate-800/70">
+                          <p className="line-clamp-1 font-medium text-slate-800 dark:text-slate-100">{product.name || '—'}</p>
+                          <p className="mt-0.5 font-mono text-[10px] text-slate-400">#{product.id}</p>
+                        </td>
+                        {/* Type of Services */}
+                        <td className="border-b border-slate-100 px-4 py-4 dark:border-slate-800/70">
+                          {serviceTypes.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {serviceTypes.map((t, i) => (
+                                <span key={i} className="inline-flex items-center rounded-full border border-teal-200 bg-teal-50 px-2 py-0.5 text-[11px] font-medium text-teal-700 dark:border-teal-700 dark:bg-teal-900/30 dark:text-teal-300">
+                                  {t}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-slate-300 dark:text-slate-600">—</span>
+                          )}
+                        </td>
+                        {/* Contact */}
+                        <td className="border-b border-slate-100 px-4 py-4 dark:border-slate-800/70">
+                          <p className="text-sm text-slate-700 dark:text-slate-200">{contact || '—'}</p>
+                        </td>
+                        {/* Description */}
+                        <td className="border-b border-slate-100 px-4 py-4 dark:border-slate-800/70">
+                          <p className="line-clamp-2 text-xs text-slate-500 dark:text-slate-400">{plainDesc || '—'}</p>
+                        </td>
+                        {/* Status */}
+                        <td className="min-w-[120px] whitespace-nowrap border-b border-slate-100 px-4 py-4 text-center dark:border-slate-800/70">
+                          <span className={cn(
+                            'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold',
+                            statusLabel === 'Active' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/12 dark:text-emerald-200'
+                              : statusLabel === 'Pending' ? 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
+                              : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
+                          )}>
+                            {statusLabel}
+                          </span>
+                        </td>
+                        {/* Actions */}
+                        <td className={cn(
+                          'sticky right-0 z-10 min-w-[150px] border-b border-l border-slate-100 px-4 py-4 shadow-[-4px_0_8px_-2px_rgba(15,23,42,0.06)] dark:border-slate-800/70 dark:shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.25)]',
+                          isSelected ? 'bg-teal-50/40 dark:bg-teal-500/10' : 'bg-white dark:bg-slate-950',
+                        )}>
+                          <div className="flex items-center justify-end gap-1">
+                            <ActionButton ariaLabel={`View ${product.name}`} onClick={() => { setConfirmId(null); onViewProduct(product) }}>
+                              <Eye className="h-4 w-4" />
+                            </ActionButton>
+                            {!readOnly ? (
+                              <>
+                                <ActionButton ariaLabel={`Edit ${product.name}`} onClick={() => { setConfirmId(null); onEdit(product) }}>
+                                  <Pencil className="h-4 w-4" />
+                                </ActionButton>
+                                {confirmId === product.id ? (
+                                  <button type="button" aria-label={`Confirm delete ${product.name}`} disabled={isDeleting(product.id)}
+                                    onClick={() => handleDeleteClick(product.id)}
+                                    className="inline-flex h-9 items-center justify-center rounded-xl bg-red-600 px-3 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-400">
+                                    {isDeleting(product.id) ? 'Deleting...' : 'Confirm'}
+                                  </button>
+                                ) : (
+                                  <ActionButton ariaLabel={`Delete ${product.name}`} variant="danger" onClick={() => handleDeleteClick(product.id)}>
+                                    <Trash2 className="h-4 w-4" />
+                                  </ActionButton>
+                                )}
+                              </>
+                            ) : null}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  }
 
                   return (
                     <tr

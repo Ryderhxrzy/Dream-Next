@@ -162,8 +162,12 @@ const navItems: NavItem[] = [
     icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M7 8h10M7 12h6m-6 4h8M5 4h14a2 2 0 012 2v11a2 2 0 01-2 2H9l-4 3v-3H5a2 2 0 01-2-2V6a2 2 0 012-2z" /></svg>,
   },
   {
-    id: 'project', label: 'Project', path: '/admin/project',
+    id: 'project', label: 'Project',
     icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>,
+    children: [
+      { label: 'Project Gallery', path: '/admin/project/gallery' },
+      { label: 'Merchant Catalogue', path: '/admin/project/merchant-catalogue' },
+    ],
   },
   {
     id: 'webpages', label: 'Web Content',

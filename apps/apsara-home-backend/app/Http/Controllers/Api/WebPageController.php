@@ -618,6 +618,7 @@ class WebPageController extends Controller
             'dreambuild-process', 'dreambuild_process' => 'dreambuild-process',
             'dreambuild-contact', 'dreambuild_contact' => 'dreambuild-contact',
             'terms-and-conditions', 'terms_and_conditions', 'terms-condition', 'terms_condition', 'terms' => 'terms-and-conditions',
+            'merchant-catalogue', 'merchant_catalogue', 'merchant-catalogs', 'merchant_catalog' => 'merchant-catalogue',
             default => null,
         };
     }

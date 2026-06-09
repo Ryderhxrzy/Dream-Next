@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth'
 import { adminAuthOptions } from '@/libs/adminAuth'
 import { authOptions } from '@/libs/auth'
 import { partnerAuthOptions } from '@/libs/partnerAuth'
+import { supplierAuthOptions } from '@/libs/supplierAuth'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -50,8 +51,9 @@ export async function POST(req: NextRequest) {
   try {
     const adminSession = await getServerSession(adminAuthOptions)
     const partnerSession = adminSession ? null : await getServerSession(partnerAuthOptions)
-    const customerSession = (!adminSession && !partnerSession) ? await getServerSession(authOptions) : null
-    const session = adminSession ?? partnerSession ?? customerSession
+    const supplierSession = (!adminSession && !partnerSession) ? await getServerSession(supplierAuthOptions) : null
+    const customerSession = (!adminSession && !partnerSession && !supplierSession) ? await getServerSession(authOptions) : null
+    const session = adminSession ?? partnerSession ?? supplierSession ?? customerSession
     const role = String((session?.user as { role?: string } | undefined)?.role ?? '').toLowerCase()
 
     if (!cloudinaryCloudName || !cloudinaryApiKey || !cloudinaryApiSecret) {
@@ -69,7 +71,8 @@ export async function POST(req: NextRequest) {
     const isAdminUpload = ['super_admin', 'admin', 'web_content', 'accounting', 'finance_officer'].includes(role)
     const isCustomerProfileUpload = role === 'customer' && folderType === 'profile'
     const isPartnerUpload = !!partnerSession?.user && folderType === 'partner-storefronts'
-    if (!session?.user || (!isAdminUpload && !isCustomerProfileUpload && !isPartnerUpload)) {
+    const isSupplierCatalogueUpload = !!supplierSession?.user && folderType === 'merchant-catalogues'
+    if (!session?.user || (!isAdminUpload && !isCustomerProfileUpload && !isPartnerUpload && !isSupplierCatalogueUpload)) {
       return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })
     }
 
@@ -112,17 +115,17 @@ export async function POST(req: NextRequest) {
     // - PROJECT GALLERY (folderType === 'project-gallery'):
     //   - images: 10MB, videos: 15MB
     const isProjectGallery = folderType === 'project-gallery'
+    const isMerchantCatalogue = folderType === 'merchant-catalogues'
 
     const maxSizeBytes = isPdf
       ? 20 * 1024 * 1024
       : isVideo
-        ? (isProjectGallery ? 15 * 1024 * 1024 : 150 * 1024 * 1024)
+        ? (isProjectGallery ? 15 * 1024 * 1024 : isMerchantCatalogue ? 25 * 1024 * 1024 : 150 * 1024 * 1024)
         : (isProjectGallery ? 10 * 1024 * 1024 : 5 * 1024 * 1024)
 
-    // For project-gallery uploads, only enforce max size (not a min size).
-    // Other folders keep the original minimum size rule.
+    // No minimum video size for project-gallery or merchant-catalogues.
     const minVideoSizeBytes = 5 * 1024 * 1024
-    if (isVideo && !isProjectGallery && file.size < minVideoSizeBytes) {
+    if (isVideo && !isProjectGallery && !isMerchantCatalogue && file.size < minVideoSizeBytes) {
       return NextResponse.json({
         error: 'Video file is too small. Minimum size is 5MB.',
       }, { status: 400 })
@@ -133,7 +136,7 @@ export async function POST(req: NextRequest) {
         error: isPdf
           ? 'File too large. Maximum size is 20MB for PDF files.'
           : isVideo
-            ? `File too large. Maximum size is ${isProjectGallery ? '15MB' : '150MB'} for video files.`
+            ? `File too large. Maximum size is ${isProjectGallery ? '15MB' : isMerchantCatalogue ? '25MB' : '150MB'} for video files.`
             : `File too large. Maximum size is ${isProjectGallery ? '10MB' : '5MB'}.`,
       }, { status: 400 })
     }
@@ -150,6 +153,7 @@ export async function POST(req: NextRequest) {
       'web-content': 'apsara/web-content',
       'project-gallery': 'apsara/project-gallery',
       'partner-storefronts': 'apsara/partner-storefronts',
+      'merchant-catalogues': 'apsara/merchant-catalogues',
     }
     const folder = folderMap[folderType] ?? folderMap.products
 

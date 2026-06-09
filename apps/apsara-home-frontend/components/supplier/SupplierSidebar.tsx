@@ -8,6 +8,7 @@ import Image from 'next/image'
 import {
   BarChart3,
   Bell,
+  BookOpen,
   Box,
   Building2,
   ChevronDown,
@@ -30,6 +31,7 @@ const mainItems = [
   { label: 'Products', href: '/supplier/products', icon: Package },
   { label: 'Orders', href: '/supplier/orders', icon: ClipboardList },
   { label: 'Inventory', href: '/supplier/inventory', icon: Warehouse },
+  { label: 'Catalogue', href: '/supplier/catalogue', icon: BookOpen },
 ]
 
 const reportItems = [

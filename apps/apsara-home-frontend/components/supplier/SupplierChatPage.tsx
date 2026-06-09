@@ -21,11 +21,9 @@ import {
   Search,
   Send,
   Smile,
-  Trash2,
   X,
 } from 'lucide-react'
 import {
-  deleteSupplierChatMessage,
   createSupplierChatConversation,
   fetchSupplierChatConversation,
   fetchSupplierChatConversations,
@@ -272,23 +270,6 @@ export default function SupplierChatPage() {
 
     return activeMessages.filter((message) => message.message.toLowerCase().includes(query))
   }, [activeMessages, messageSearch])
-
-  const handleDeleteMessage = async (message: SupplierChatMessage) => {
-    if (!activeConversation) return
-    if (message.sender_type !== 'supplier' || message.sender_supplier_user_id !== currentSupplierUserId) {
-      setError('You can only delete your own messages.')
-      return
-    }
-    if (typeof window !== 'undefined' && !window.confirm('Delete this message?')) return
-
-    try {
-      setError(null)
-      await deleteSupplierChatMessage(activeConversation.id, message.id)
-      await loadConversations(activeId ?? activeConversation.id)
-    } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : 'Failed to delete message.')
-    }
-  }
 
   const messageGroups = useMemo<MessageGroup[]>(() => {
     const groups: MessageGroup[] = []
@@ -758,7 +739,6 @@ export default function SupplierChatPage() {
                             <div className="relative" style={{ width: 190, height: 220, marginBottom: 28 }}>
                               {stackVisible.map((msg, idx) => {
                                 const isTop = idx === stackVisible.length - 1
-                                const canDelete = msg.sender_type === 'supplier' && msg.sender_supplier_user_id === currentSupplierUserId
                                 return (
                                   <div
                                     key={msg.id}
@@ -778,16 +758,6 @@ export default function SupplierChatPage() {
                                     >
                                       <img src={msg.attachment_url ?? ''} alt="" className="h-full w-full object-cover" />
                                     </button>
-                                    {canDelete ? (
-                                      <button
-                                        type="button"
-                                        onClick={() => void handleDeleteMessage(msg)}
-                                        className="absolute right-2 top-2 z-30 flex h-7 w-7 items-center justify-center rounded-full bg-black/55 text-white transition hover:bg-rose-600"
-                                        title="Delete image"
-                                      >
-                                        <Trash2 className="h-3.5 w-3.5" />
-                                      </button>
-                                    ) : null}
                                     {isTop && imgs.length > 1 && (
                                       <div className="absolute bottom-2 right-2 flex h-6 min-w-[24px] items-center justify-center rounded-full bg-black/60 px-1.5 text-[11px] font-bold text-white">
                                         {imgs.length}
@@ -847,19 +817,6 @@ export default function SupplierChatPage() {
                               className="flex items-center justify-center text-slate-400 transition-colors hover:text-indigo-600">
                               <Reply className="h-3.5 w-3.5" />
                             </button>
-                            {message.sender_type === 'supplier' && message.sender_supplier_user_id === currentSupplierUserId ? (
-                              <>
-                                <span className="mx-1 h-4 w-px bg-slate-200" />
-                                <button
-                                  type="button"
-                                  onClick={() => void handleDeleteMessage(message)}
-                                  className="flex items-center justify-center text-slate-400 transition-colors hover:text-rose-600"
-                                  title="Delete message"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </button>
-                              </>
-                            ) : null}
                           </div>
                           {/* Reply quote */}
                           {replySource && (
