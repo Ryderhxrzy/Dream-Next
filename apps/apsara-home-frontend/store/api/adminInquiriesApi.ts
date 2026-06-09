@@ -170,6 +170,50 @@ export const adminInquiriesApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['WebstoreRequests'],
     }),
+    createPartnerWebstorePaymentSession: builder.mutation<
+      { checkout_id: string; checkout_url: string; payment_mode: string },
+      { plan: string; billing_option: string; payment_method: string; payment_mode?: string; slug_name?: string }
+    >({
+      query: (body) => ({
+        url: '/api/admin/partner/webstore-requests/payment-session',
+        method: 'POST',
+        body,
+      }),
+    }),
+    verifyPartnerWebstorePaymentSession: builder.query<
+      {
+        checkout_id: string; status: string; is_paid: boolean; payment_mode: string;
+        payment_method: string; proof_url: string; payment_intent_id: string;
+        payment_reference: string; raw?: Record<string, unknown>;
+      },
+      string | { checkoutId: string; paymentMode?: 'test' | 'live' }
+    >({
+      query: (arg) => {
+        const checkoutId = typeof arg === 'string' ? arg : arg.checkoutId;
+        const paymentMode = typeof arg === 'string' ? undefined : arg.paymentMode;
+        return {
+          url: `/api/admin/partner/webstore-requests/payment-session/${checkoutId}`,
+          method: 'GET',
+          params: paymentMode ? { payment_mode: paymentMode } : undefined,
+        };
+      },
+    }),
+    submitPartnerWebstoreRequest: builder.mutation<
+      { message: string; request: { id: number; submitted_at?: string } },
+      {
+        full_name: string; username: string; email: string; slug_name: string; display_name: string;
+        plan: string; billing_option: string; payment_method: string;
+        receipt_urls: string[]; checkout_id?: string | null; payment_reference: string;
+        payment_intent_id?: string | null; accepted_terms: boolean; renewal_enabled?: boolean;
+      }
+    >({
+      query: (body) => ({
+        url: '/api/admin/partner/webstore-requests/submit',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['WebstoreRequests'],
+    }),
   }),
 });
 
@@ -186,4 +230,7 @@ export const {
   useDeleteWebstoreRequestMutation,
   useDeletePartnerWebstoreRequestMutation,
   useDeletePartnerWebstoreReceiptItemMutation,
+  useCreatePartnerWebstorePaymentSessionMutation,
+  useLazyVerifyPartnerWebstorePaymentSessionQuery,
+  useSubmitPartnerWebstoreRequestMutation,
 } = adminInquiriesApi;

@@ -970,6 +970,8 @@ export default function AddProductModal({ isOpen, onClose, onSaved, isSupplierPo
   const [newStyleInputs, setNewStyleInputs] = useState<Record<number, string>>({})
   const [roomTouched, setRoomTouched] = useState(false)
   const [brandText, setBrandText] = useState('')
+  const [serviceTypes, setServiceTypes] = useState<string[]>([])
+  const [serviceTypeInput, setServiceTypeInput] = useState('')
   const [draftRestored, setDraftRestored] = useState(false)
   const [activeImageAdjustIndex, setActiveImageAdjustIndex] = useState<number | null>(null)
   const activeImagePointerIndexRef = useRef<number | null>(null)
@@ -1016,6 +1018,10 @@ export default function AddProductModal({ isOpen, onClose, onSaved, isSupplierPo
   const selectedCategory = useMemo(
     () => categories.find((category) => String(category.id) === form.pd_catid),
     [categories, form.pd_catid],
+  )
+  const isServicesCategory = useMemo(
+    () => selectedCategory?.name?.toLowerCase() === 'services',
+    [selectedCategory],
   )
   const selectedBrand = useMemo(
     () => brands.find((brand) => String(brand.id) === form.pd_brand_type),
@@ -1086,6 +1092,8 @@ export default function AddProductModal({ isOpen, onClose, onSaved, isSupplierPo
     setRoomTouched(false)
     setDraftRestored(false)
     setActiveImageAdjustIndex(null)
+    setServiceTypes([])
+    setServiceTypeInput('')
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -1612,7 +1620,9 @@ export default function AddProductModal({ isOpen, onClose, onSaved, isSupplierPo
       pd_pswidth:     form.pd_pswidth   ? Number(form.pd_pswidth)   : undefined,
       pd_pslenght:    form.pd_pslenght  ? Number(form.pd_pslenght)  : undefined,
       pd_psheight:    form.pd_psheight  ? Number(form.pd_psheight)  : undefined,
-      pd_material:    form.pd_material.trim()  || undefined,
+      pd_material:    isServicesCategory
+        ? (serviceTypes.length > 0 ? serviceTypes.join(', ') : undefined)
+        : (form.pd_material.trim() || undefined),
       pd_warranty:    form.pd_warranty.trim()   || undefined,
       pd_assembly_required: form.pd_assembly_required,
       pd_parent_sku:  form.pd_parent_sku.trim() || generatedParentSku || undefined,
@@ -2179,144 +2189,267 @@ export default function AddProductModal({ isOpen, onClose, onSaved, isSupplierPo
                   <SectionLabel>Product Information</SectionLabel>
                   <Card variant="default" className={sectionCardCls}>
                     <Card.Content className={`${sectionCardBodyCls} space-y-5`}>
-                  <Field label="Product Name" required error={errors.pd_name}>
-                    <input
-                      type="text"
-                      value={form.pd_name}
-                      onChange={e => {
-                        const value = e.target.value
-                        setForm(prev => ({
-                          ...prev,
-                          pd_name: value,
-                          pd_parent_sku: prev.pd_parent_sku.trim() ? prev.pd_parent_sku : '',
-                        }))
-                        setErrors(prev => ({ ...prev, pd_name: undefined }))
-                      }}
-                      placeholder="e.g. Apsara Sofa 3-Seater"
-                      className={inputCls(!!errors.pd_name)}
-                    />
-                  </Field>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <Field label="Category" required error={errors.pd_catid}>
-                      <ModalSelectField
-                        ariaLabel="Select product category"
-                        value={form.pd_catid}
-                        hasError={!!errors.pd_catid}
-                        searchable
-                        searchPlaceholder="Search categories..."
-                        onChange={(value) => {
-                          set('pd_catid', value)
-                          if (!roomTouched) {
-                            const selectedCategory = categories.find((category) => String(category.id) === value)
-                            const inferredRoomType = inferRoomTypeFromCategory(selectedCategory)
-                            set('pd_room_type', inferredRoomType ? String(inferredRoomType) : '')
-                          }
-                        }}
-                        options={[
-                          { value: EMPTY_SELECT_KEYS.category, label: 'Select category...' },
-                          ...categories.map((cat) => ({ value: String(cat.id), label: cat.name })),
-                        ]}
-                      />
-                    </Field>
-
-                    <Field label="Shop By Room">
-                      <div className="space-y-1">
+                  {isServicesCategory ? (
+                    <>
+                      {/* Category — stays visible so the user can switch back */}
+                      <Field label="Category" required error={errors.pd_catid}>
                         <ModalSelectField
-                          ariaLabel="Select room type"
-                          value={form.pd_room_type}
+                          ariaLabel="Select product category"
+                          value={form.pd_catid}
+                          hasError={!!errors.pd_catid}
+                          searchable
+                          searchPlaceholder="Search categories..."
                           onChange={(value) => {
-                            setRoomTouched(true)
-                            set('pd_room_type', value === EMPTY_SELECT_KEYS.room ? '' : value)
+                            set('pd_catid', value)
+                            if (!roomTouched) {
+                              const cat = categories.find((c) => String(c.id) === value)
+                              const inferredRoomType = inferRoomTypeFromCategory(cat)
+                              set('pd_room_type', inferredRoomType ? String(inferredRoomType) : '')
+                            }
                           }}
                           options={[
-                            { value: EMPTY_SELECT_KEYS.room, label: 'Auto / Not assigned' },
-                            ...ROOM_OPTIONS.map((room) => ({ value: String(room.id), label: room.label })),
+                            { value: EMPTY_SELECT_KEYS.category, label: 'Select category...' },
+                            ...categories.map((cat) => ({ value: String(cat.id), label: cat.name })),
                           ]}
                         />
-                        <p className="text-[11px] text-slate-500">Auto-filled from category when possible, but you can override it before saving.</p>
-                      </div>
-                    </Field>
+                      </Field>
 
-                    <Field label="Brand" error={errors.pd_brand_type}>
-                      <ModalSelectField
-                        ariaLabel="Select brand"
-                        value={form.pd_brand_type}
-                        searchable
-                        searchPlaceholder="Search brands..."
-                        onChange={(value) => {
-                          set('pd_brand_type', value === EMPTY_SELECT_KEYS.brand ? '' : value)
-                          setErrors((prev) => ({ ...prev, pd_brand_type: undefined }))
-                        }}
-                        options={[
-                          { value: EMPTY_SELECT_KEYS.brand, label: 'Not assigned' },
-                          ...brands.map((brand) => ({ value: String(brand.id), label: brand.name })),
-                        ]}
-                      />
-                      <div className="mt-2">
+                      {/* Company Name */}
+                      <Field label="Company Name" required error={errors.pd_name}>
                         <input
                           type="text"
-                          list="brand-options-add"
-                          value={brandText}
-                          onChange={(event) => {
-                            const next = event.target.value
-                            setBrandText(next)
-                            const matchId = resolveBrandIdByName(next)
-                            if (matchId) {
-                              set('pd_brand_type', matchId)
-                              setErrors((prev) => ({ ...prev, pd_brand_type: undefined }))
-                            } else if (!next.trim()) {
-                              set('pd_brand_type', '')
-                              setErrors((prev) => ({ ...prev, pd_brand_type: undefined }))
-                            }
+                          value={form.pd_name}
+                          onChange={e => {
+                            setForm(prev => ({ ...prev, pd_name: e.target.value }))
+                            setErrors(prev => ({ ...prev, pd_name: undefined }))
                           }}
-                          onBlur={() => {
-                            if (!brandText.trim()) return
-                            const matchId = resolveBrandIdByName(brandText)
-                            if (!matchId) {
-                              setErrors((prev) => ({ ...prev, pd_brand_type: 'Brand not found. Add it in Brands first.' }))
-                            }
-                          }}
-                          placeholder="Type brand name"
-                          className={inputCls(!!errors.pd_brand_type)}
+                          placeholder="e.g. Apsara Interior Services"
+                          className={inputCls(!!errors.pd_name)}
                         />
-                        <datalist id="brand-options-add">
-                          {brands.map((brand) => (
-                            <option key={brand.id} value={brand.name} />
-                          ))}
-                        </datalist>
-                        <p className="mt-1 text-[11px] text-slate-500">You can type a brand name to auto-match.</p>
-                      </div>
-                    </Field>
+                      </Field>
 
-                    <Field label="Subcategory ID">
-                      <input
-                        type="number"
-                        min="0"
-                        value={form.pd_catsubid}
-                        onChange={e => set('pd_catsubid', e.target.value)}
-                        placeholder="Numeric subcategory ID (optional)"
-                        className={inputCls()}
-                      />
-                    </Field>
+                      {/* Type of Services — multi-tag input */}
+                      <Field label="Type of Services">
+                        <div className="space-y-2">
+                          {serviceTypes.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {serviceTypes.map((type, i) => (
+                                <span
+                                  key={i}
+                                  className="inline-flex items-center gap-1.5 rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-sm text-teal-700 dark:border-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
+                                >
+                                  {type}
+                                  <button
+                                    type="button"
+                                    onClick={() => setServiceTypes(prev => prev.filter((_, idx) => idx !== i))}
+                                    className="text-teal-400 transition hover:text-teal-700 dark:hover:text-teal-200"
+                                  >
+                                    <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  </button>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={serviceTypeInput}
+                              onChange={e => setServiceTypeInput(e.target.value)}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault()
+                                  const v = serviceTypeInput.trim()
+                                  if (v && !serviceTypes.includes(v)) {
+                                    setServiceTypes(prev => [...prev, v])
+                                    setServiceTypeInput('')
+                                  }
+                                }
+                              }}
+                              placeholder="e.g. Interior Design, Installation..."
+                              className={inputCls()}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const v = serviceTypeInput.trim()
+                                if (v && !serviceTypes.includes(v)) {
+                                  setServiceTypes(prev => [...prev, v])
+                                  setServiceTypeInput('')
+                                }
+                              }}
+                              className="shrink-0 rounded-2xl bg-teal-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-teal-700"
+                            >
+                              Add
+                            </button>
+                          </div>
+                          <p className="text-[11px] text-slate-500">Press Enter or click Add to include a service type.</p>
+                        </div>
+                      </Field>
 
-                    <Field label="SKU">
-                      <div className="space-y-1">
+                      {/* Contact */}
+                      <Field label="Contact">
                         <input
                           type="text"
-                          value={form.pd_parent_sku}
-                          onChange={e => set('pd_parent_sku', e.target.value.toUpperCase())}
-                          placeholder={generatedParentSku || 'Auto-generated from product name'}
+                          value={form.pd_warranty}
+                          onChange={e => set('pd_warranty', e.target.value)}
+                          placeholder="e.g. +63 912 345 6789 or hello@company.com"
                           className={inputCls()}
                         />
-                        <p className="text-[11px] text-slate-500">
-                          Leave this blank to auto-generate: <span className="font-mono">{generatedParentSku || 'Waiting for product name'}</span>
-                        </p>
+                      </Field>
+
+                      {/* Description */}
+                      <Field label="Description">
+                        <RichTextEditor
+                          value={form.pd_description}
+                          onChange={html => set('pd_description', html)}
+                        />
+                      </Field>
+                    </>
+                  ) : (
+                    <>
+                      <Field label="Product Name" required error={errors.pd_name}>
+                        <input
+                          type="text"
+                          value={form.pd_name}
+                          onChange={e => {
+                            const value = e.target.value
+                            setForm(prev => ({
+                              ...prev,
+                              pd_name: value,
+                              pd_parent_sku: prev.pd_parent_sku.trim() ? prev.pd_parent_sku : '',
+                            }))
+                            setErrors(prev => ({ ...prev, pd_name: undefined }))
+                          }}
+                          placeholder="e.g. Apsara Sofa 3-Seater"
+                          className={inputCls(!!errors.pd_name)}
+                        />
+                      </Field>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <Field label="Category" required error={errors.pd_catid}>
+                          <ModalSelectField
+                            ariaLabel="Select product category"
+                            value={form.pd_catid}
+                            hasError={!!errors.pd_catid}
+                            searchable
+                            searchPlaceholder="Search categories..."
+                            onChange={(value) => {
+                              set('pd_catid', value)
+                              if (!roomTouched) {
+                                const cat = categories.find((c) => String(c.id) === value)
+                                const inferredRoomType = inferRoomTypeFromCategory(cat)
+                                set('pd_room_type', inferredRoomType ? String(inferredRoomType) : '')
+                              }
+                            }}
+                            options={[
+                              { value: EMPTY_SELECT_KEYS.category, label: 'Select category...' },
+                              ...categories.map((cat) => ({ value: String(cat.id), label: cat.name })),
+                            ]}
+                          />
+                        </Field>
+
+                        <Field label="Shop By Room">
+                          <div className="space-y-1">
+                            <ModalSelectField
+                              ariaLabel="Select room type"
+                              value={form.pd_room_type}
+                              onChange={(value) => {
+                                setRoomTouched(true)
+                                set('pd_room_type', value === EMPTY_SELECT_KEYS.room ? '' : value)
+                              }}
+                              options={[
+                                { value: EMPTY_SELECT_KEYS.room, label: 'Auto / Not assigned' },
+                                ...ROOM_OPTIONS.map((room) => ({ value: String(room.id), label: room.label })),
+                              ]}
+                            />
+                            <p className="text-[11px] text-slate-500">Auto-filled from category when possible, but you can override it before saving.</p>
+                          </div>
+                        </Field>
+
+                        <Field label="Brand" error={errors.pd_brand_type}>
+                          <ModalSelectField
+                            ariaLabel="Select brand"
+                            value={form.pd_brand_type}
+                            searchable
+                            searchPlaceholder="Search brands..."
+                            onChange={(value) => {
+                              set('pd_brand_type', value === EMPTY_SELECT_KEYS.brand ? '' : value)
+                              setErrors((prev) => ({ ...prev, pd_brand_type: undefined }))
+                            }}
+                            options={[
+                              { value: EMPTY_SELECT_KEYS.brand, label: 'Not assigned' },
+                              ...brands.map((brand) => ({ value: String(brand.id), label: brand.name })),
+                            ]}
+                          />
+                          <div className="mt-2">
+                            <input
+                              type="text"
+                              list="brand-options-add"
+                              value={brandText}
+                              onChange={(event) => {
+                                const next = event.target.value
+                                setBrandText(next)
+                                const matchId = resolveBrandIdByName(next)
+                                if (matchId) {
+                                  set('pd_brand_type', matchId)
+                                  setErrors((prev) => ({ ...prev, pd_brand_type: undefined }))
+                                } else if (!next.trim()) {
+                                  set('pd_brand_type', '')
+                                  setErrors((prev) => ({ ...prev, pd_brand_type: undefined }))
+                                }
+                              }}
+                              onBlur={() => {
+                                if (!brandText.trim()) return
+                                const matchId = resolveBrandIdByName(brandText)
+                                if (!matchId) {
+                                  setErrors((prev) => ({ ...prev, pd_brand_type: 'Brand not found. Add it in Brands first.' }))
+                                }
+                              }}
+                              placeholder="Type brand name"
+                              className={inputCls(!!errors.pd_brand_type)}
+                            />
+                            <datalist id="brand-options-add">
+                              {brands.map((brand) => (
+                                <option key={brand.id} value={brand.name} />
+                              ))}
+                            </datalist>
+                            <p className="mt-1 text-[11px] text-slate-500">You can type a brand name to auto-match.</p>
+                          </div>
+                        </Field>
+
+                        <Field label="Subcategory ID">
+                          <input
+                            type="number"
+                            min="0"
+                            value={form.pd_catsubid}
+                            onChange={e => set('pd_catsubid', e.target.value)}
+                            placeholder="Numeric subcategory ID (optional)"
+                            className={inputCls()}
+                          />
+                        </Field>
+
+                        <Field label="SKU">
+                          <div className="space-y-1">
+                            <input
+                              type="text"
+                              value={form.pd_parent_sku}
+                              onChange={e => set('pd_parent_sku', e.target.value.toUpperCase())}
+                              placeholder={generatedParentSku || 'Auto-generated from product name'}
+                              className={inputCls()}
+                            />
+                            <p className="text-[11px] text-slate-500">
+                              Leave this blank to auto-generate: <span className="font-mono">{generatedParentSku || 'Waiting for product name'}</span>
+                            </p>
+                          </div>
+                        </Field>
                       </div>
-                    </Field>
-                  </div>
+                    </>
+                  )}
                     </Card.Content>
                   </Card>
+                  {!isServicesCategory && (
                   <Field label="Description">
                     <div className="space-y-3">
                       <ProductDescriptionGenerator
@@ -2360,7 +2493,9 @@ export default function AddProductModal({ isOpen, onClose, onSaved, isSupplierPo
                       />
                     </div>
                   </Field>
+                  )}
 
+                  {!isServicesCategory && (<>
                   {/* -- Section: Product Details -- */}
                   <SectionLabel>Product Details</SectionLabel>
                   <div className="grid grid-cols-2 gap-3">
@@ -2611,6 +2746,7 @@ export default function AddProductModal({ isOpen, onClose, onSaved, isSupplierPo
                       )
                     })}
                   </div>
+                  </>)}
 
                   {/* -- Section: Variants -- */}
                   {hasVariants && (

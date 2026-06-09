@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
+use App\Models\AdminNotification;
 use App\Models\Customer;
 use App\Models\CustomerNotification;
 use App\Models\WebPageContent;
@@ -11,8 +12,11 @@ use App\Mail\Webstore\WebstoreReceiptMail;
 use App\Support\PartnerStorefrontAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class AdminInquiryController extends Controller
 {
@@ -1260,5 +1264,438 @@ class AdminInquiryController extends Controller
         }
 
         return null;
+    }
+
+    // ─── Partner payment endpoints ────────────────────────────────────────────
+
+    public function createPartnerWebstorePaymentSession(Request $request)
+    {
+        $admin = $request->user();
+        if (! $admin instanceof Admin) {
+            return response()->json(['message' => 'Forbidden.'], 403);
+        }
+
+        $allowedStorefrontSlugs = $this->resolvePartnerStorefrontSlugs($admin);
+        if (empty($allowedStorefrontSlugs)) {
+            return response()->json(['message' => 'No storefronts assigned to this account.'], 403);
+        }
+
+        $validated = $request->validate([
+            'plan'           => ['required', Rule::in(['test', 'quarterly', 'semi_annual', 'annual'])],
+            'billing_option' => ['required', Rule::in(['full', 'monthly'])],
+            'payment_method' => ['required', Rule::in(['gcash', 'grab_pay', 'maya', 'card'])],
+            'payment_mode'   => ['nullable', Rule::in(['test', 'live'])],
+            'slug_name'      => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $slugName = strtolower(trim((string) ($validated['slug_name'] ?? '')));
+        if ($slugName !== '' && ! in_array($slugName, $allowedStorefrontSlugs, true)) {
+            return response()->json(['message' => 'Access to this storefront is denied.'], 403);
+        }
+
+        $planMatrix = [
+            'test'        => ['label' => 'Test',        'full_amount' => 1,      'monthly_amount' => 1],
+            'quarterly'   => ['label' => 'Quarterly',   'full_amount' => 48000,  'monthly_amount' => 16000],
+            'semi_annual' => ['label' => 'Semi-Annual', 'full_amount' => 90000,  'monthly_amount' => 15000],
+            'annual'      => ['label' => 'Annual',      'full_amount' => 150000, 'monthly_amount' => 12500],
+        ];
+        $planKey = (string) $validated['plan'];
+        $plan    = $planMatrix[$planKey] ?? $planMatrix['quarterly'];
+        $amount  = (int) (($validated['billing_option'] === 'monthly' ? $plan['monthly_amount'] : $plan['full_amount']) ?? $plan['full_amount']);
+
+        $paymongo = $this->resolveWebstorePaymongoConfig($request, $validated['payment_mode'] ?? null);
+        if ($paymongo['secret_key'] === '') {
+            return response()->json(['message' => sprintf('PayMongo %s secret key is missing.', $paymongo['mode'])], 500);
+        }
+
+        $frontendBase  = $this->resolveWebstoreFrontendBaseUrl($request);
+        $methodTypes   = $this->mapWebstorePaymentMethodTypes((string) $validated['payment_method'], $paymongo['mode']);
+        $returnSlug    = $slugName !== '' ? $slugName : ($allowedStorefrontSlugs[0] ?? '');
+        $storefrontParam = $returnSlug !== '' ? ('&storefront=' . urlencode($returnSlug)) : '';
+
+        $payload = [
+            'data' => [
+                'attributes' => [
+                    'description'          => sprintf('Partner Webstore Renewal (%s)', (string) $plan['label']),
+                    'line_items'           => [[
+                        'currency' => 'PHP',
+                        'amount'   => $amount * 100,
+                        'name'     => sprintf(
+                            'Webstore Renewal - %s (%s)',
+                            (string) $plan['label'],
+                            $validated['billing_option'] === 'monthly' ? 'Monthly Installment' : 'Full Payment'
+                        ),
+                        'quantity' => 1,
+                    ]],
+                    'payment_method_types' => $methodTypes,
+                    'send_email_receipt'   => true,
+                    'show_description'     => true,
+                    'show_line_items'      => true,
+                    'reference_number'     => 'PWS-' . strtoupper(Str::random(10)),
+                    'success_url'          => $frontendBase . '/partner/webpages/renewal?webstore_payment=success',
+                    'cancel_url'           => $frontendBase . '/partner/webpages/renewal?webstore_payment=cancelled',
+                    'metadata'             => [
+                        'flow'           => 'partner_webstore_renewal',
+                        'admin_id'       => (int) $admin->id,
+                        'plan'           => $planKey,
+                        'billing_option' => (string) $validated['billing_option'],
+                        'payment_method' => (string) $validated['payment_method'],
+                        'slug_name'      => $returnSlug,
+                    ],
+                ],
+            ],
+        ];
+
+        $response = Http::withBasicAuth($paymongo['secret_key'], '')
+            ->withHeaders(['Accept' => 'application/json'])
+            ->post($paymongo['api_base_url'] . '/v1/checkout_sessions', $payload);
+
+        if (! $response->successful()) {
+            return response()->json([
+                'message' => data_get($response->json(), 'errors.0.detail')
+                    ?: data_get($response->json(), 'errors.0.title')
+                    ?: 'Failed to create webstore payment session.',
+            ], $response->status() > 0 ? $response->status() : 422);
+        }
+
+        $data        = (array) $response->json();
+        $checkoutId  = (string) data_get($data, 'data.id', '');
+        $checkoutUrl = (string) data_get($data, 'data.attributes.checkout_url', '');
+
+        if ($checkoutId === '' || $checkoutUrl === '') {
+            return response()->json(['message' => 'Checkout session created but missing checkout URL.'], 422);
+        }
+
+        $successUrl = $frontendBase . '/partner/webpages/renewal?webstore_payment=success&checkout_id=' . urlencode($checkoutId) . '&payment_mode=' . urlencode($paymongo['mode']) . $storefrontParam;
+        $cancelUrl  = $frontendBase . '/partner/webpages/renewal?webstore_payment=cancelled&checkout_id=' . urlencode($checkoutId) . '&payment_mode=' . urlencode($paymongo['mode']) . $storefrontParam;
+
+        $patchResponse = Http::withBasicAuth($paymongo['secret_key'], '')
+            ->withHeaders(['Accept' => 'application/json'])
+            ->put($paymongo['api_base_url'] . '/v1/checkout_sessions/' . $checkoutId, [
+                'data' => ['attributes' => ['success_url' => $successUrl, 'cancel_url' => $cancelUrl]],
+            ]);
+        if ($patchResponse->successful()) {
+            $patchedData = (array) $patchResponse->json();
+            $checkoutUrl = (string) data_get($patchedData, 'data.attributes.checkout_url', $checkoutUrl);
+        }
+
+        return response()->json([
+            'checkout_id'  => $checkoutId,
+            'checkout_url' => $checkoutUrl,
+            'payment_mode' => $paymongo['mode'],
+        ]);
+    }
+
+    public function verifyPartnerWebstorePaymentSession(Request $request, string $checkoutId)
+    {
+        $admin = $request->user();
+        if (! $admin instanceof Admin) {
+            return response()->json(['message' => 'Forbidden.'], 403);
+        }
+
+        $mode     = strtolower(trim((string) $request->query('payment_mode', '')));
+        $paymongo = $this->resolveWebstorePaymongoConfig($request, in_array($mode, ['test', 'live'], true) ? $mode : null);
+        if ($paymongo['secret_key'] === '') {
+            return response()->json(['message' => sprintf('PayMongo %s secret key is missing.', $paymongo['mode'])], 500);
+        }
+
+        $response = Http::withBasicAuth($paymongo['secret_key'], '')
+            ->withHeaders(['Accept' => 'application/json'])
+            ->get($paymongo['api_base_url'] . '/v1/checkout_sessions/' . $checkoutId);
+
+        if (! $response->successful()) {
+            return response()->json([
+                'message' => data_get($response->json(), 'errors.0.detail')
+                    ?: data_get($response->json(), 'errors.0.title')
+                    ?: 'Failed to verify webstore payment session.',
+            ], $response->status() > 0 ? $response->status() : 422);
+        }
+
+        $data   = (array) $response->json();
+        $status = strtolower((string) data_get($data, 'data.attributes.payments.0.attributes.status', data_get($data, 'data.attributes.status', '')));
+        $isPaid = in_array($status, ['paid', 'succeeded'], true);
+
+        return response()->json([
+            'checkout_id'       => (string) data_get($data, 'data.id', $checkoutId),
+            'status'            => $status,
+            'is_paid'           => $isPaid,
+            'payment_mode'      => $paymongo['mode'],
+            'payment_method'    => (string) data_get($data, 'data.attributes.metadata.payment_method', ''),
+            'proof_url'         => (string) data_get($data, 'data.attributes.checkout_url', ''),
+            'payment_intent_id' => (string) data_get($data, 'data.attributes.payments.0.attributes.payment_intent_id', ''),
+            'payment_reference' => (string) (
+                data_get($data, 'data.attributes.payments.0.id')
+                ?: data_get($data, 'data.attributes.payments.0.attributes.payment_intent_id')
+                ?: data_get($data, 'data.attributes.reference_number')
+                ?: data_get($data, 'data.id')
+            ),
+            'raw' => $data,
+        ]);
+    }
+
+    public function submitPartnerWebstoreRequest(Request $request)
+    {
+        $admin = $request->user();
+        if (! $admin instanceof Admin) {
+            return response()->json(['message' => 'Forbidden.'], 403);
+        }
+
+        $allowedStorefrontSlugs = $this->resolvePartnerStorefrontSlugs($admin);
+        if (empty($allowedStorefrontSlugs)) {
+            return response()->json(['message' => 'No storefronts assigned to this account.'], 403);
+        }
+
+        $validated = $request->validate([
+            'full_name'         => 'required|string|max:255',
+            'username'          => 'required|string|max:255',
+            'email'             => 'required|email|max:255',
+            'slug_name'         => ['required', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
+            'display_name'      => 'required|string|max:255',
+            'plan'              => ['required', Rule::in(['test', 'quarterly', 'semi_annual', 'annual'])],
+            'billing_option'    => ['required', Rule::in(['full', 'monthly'])],
+            'payment_method'    => ['required', Rule::in(['gcash', 'grab_pay', 'maya', 'card'])],
+            'receipt_urls'      => 'required|array|min:1|max:5',
+            'receipt_urls.*'    => 'required|url|max:2048',
+            'checkout_id'       => ['nullable', 'string', 'max:255'],
+            'payment_reference' => ['required', 'string', 'max:255'],
+            'payment_intent_id' => ['nullable', 'string', 'max:255'],
+            'accepted_terms'    => 'required|boolean|accepted',
+        ]);
+
+        $slugName = mb_strtolower(trim((string) $validated['slug_name']), 'UTF-8');
+        if (! in_array($slugName, $allowedStorefrontSlugs, true)) {
+            return response()->json(['message' => 'Access to this storefront is denied.'], 403);
+        }
+
+        $submittedAt = now();
+
+        $subscriptionMatrix = [
+            'test'        => ['term' => '2 days',   'term_months' => 0,  'subscription_fee' => 1,      'effective_monthly' => 1],
+            'quarterly'   => ['term' => '3 months', 'term_months' => 3,  'subscription_fee' => 48000,  'effective_monthly' => 16000],
+            'semi_annual' => ['term' => '6 months', 'term_months' => 6,  'subscription_fee' => 90000,  'effective_monthly' => 15000],
+            'annual'      => ['term' => 'Yearly',   'term_months' => 12, 'subscription_fee' => 150000, 'effective_monthly' => 12500],
+        ];
+        $selectedPlan     = (string) $validated['plan'];
+        $subscriptionMeta = $subscriptionMatrix[$selectedPlan] ?? $subscriptionMatrix['quarterly'];
+
+        $requestPayload = [
+            'type'               => 'webstore_request',
+            'full_name'          => trim((string) $validated['full_name']),
+            'username'           => trim((string) $validated['username']),
+            'email'              => trim((string) $validated['email']),
+            'slug_name'          => trim((string) $validated['slug_name']),
+            'display_name'       => trim((string) $validated['display_name']),
+            'plan'               => $selectedPlan,
+            'plan_term'          => (string) ($subscriptionMeta['term'] ?? ''),
+            'plan_term_months'   => (int) ($subscriptionMeta['term_months'] ?? 0),
+            'subscription_fee'   => (int) ($subscriptionMeta['subscription_fee'] ?? 0),
+            'effective_monthly'  => (int) ($subscriptionMeta['effective_monthly'] ?? 0),
+            'billing_option'     => (string) $validated['billing_option'],
+            'payment_method'     => (string) $validated['payment_method'],
+            'checkout_id'        => trim((string) ($validated['checkout_id'] ?? '')),
+            'payment_reference'  => trim((string) ($validated['payment_reference'] ?? '')),
+            'payment_intent_id'  => trim((string) ($validated['payment_intent_id'] ?? '')),
+            'receipt_urls'       => array_values(array_unique(array_map(static fn ($url) => trim((string) $url), (array) $validated['receipt_urls']))),
+            'accepted_terms'     => true,
+            'submitted_at'       => $submittedAt->toDateTimeString(),
+            'submitted_by_admin' => (int) $admin->id,
+        ];
+
+        // Find the latest ticket for this storefront slug
+        $subject    = mb_strtolower($this->webstoreRequestTicketSubject(), 'UTF-8');
+        $allTickets = DB::table('tbl_tickets')
+            ->where(function ($q) use ($subject) {
+                $q->whereRaw('LOWER(TRIM(t_subject)) = ?', [$subject])
+                  ->orWhereRaw('LOWER(TRIM(t_subject)) = ?', ['webstore request'])
+                  ->orWhereRaw('LOWER(TRIM(t_subject)) = ?', ['partner webstore request']);
+            })
+            ->orderByDesc('t_id')
+            ->get();
+
+        $latest = $allTickets->first(function ($ticket) use ($slugName): bool {
+            $detail = DB::table('tbl_tickets_details')
+                ->where('t_id', (int) $ticket->t_id)
+                ->where('td_replystat', 0)
+                ->orderBy('td_id')
+                ->first();
+            $payload = $this->decodeWebstorePayload($detail?->td_content ?? null);
+            return mb_strtolower(trim((string) ($payload['slug_name'] ?? '')), 'UTF-8') === $slugName;
+        });
+
+        $latestStatus = $latest
+            ? $this->mapWebstoreRequestStatus((int) $latest->t_status, (int) $latest->t_id, $slugName)
+            : '';
+
+        if ($latest && $latestStatus === 'approved') {
+            $continuationPayload = array_merge($requestPayload, ['type' => 'webstore_payment_continuation']);
+
+            $newDetailId = DB::table('tbl_tickets_details')->insertGetId([
+                't_id'          => (int) $latest->t_id,
+                'td_content'    => json_encode($continuationPayload, JSON_THROW_ON_ERROR),
+                'td_attachment' => null,
+                'td_datetime'   => $submittedAt,
+                'td_rate'       => 0,
+                'td_eid'        => (int) $admin->id,
+                'td_replystat'  => 0,
+                'td_viewstat'   => '1',
+                'td_ip'         => (string) $request->ip(),
+            ], 'td_id');
+
+            $paymentRef    = strtolower(trim((string) ($continuationPayload['payment_reference'] ?? '')));
+            $filenameMatch = false;
+            if ($paymentRef !== '') {
+                foreach (($continuationPayload['receipt_urls'] ?? []) as $receiptUrl) {
+                    try {
+                        $filename = strtolower(rawurldecode((string) basename(parse_url((string) $receiptUrl, PHP_URL_PATH))));
+                    } catch (\Throwable) {
+                        $filename = strtolower(rawurldecode((string) basename(explode('?', (string) $receiptUrl)[0])));
+                    }
+                    if (str_contains($filename, $paymentRef)) {
+                        $filenameMatch = true;
+                        break;
+                    }
+                }
+            }
+
+            if ($filenameMatch) {
+                $reviewedAt = now('Asia/Manila');
+                DB::table('tbl_tickets_details')
+                    ->where('td_id', $newDetailId)
+                    ->update(['td_content' => json_encode(array_merge($continuationPayload, [
+                        'approval_status' => 'approved',
+                        'approved_at'     => $reviewedAt->toDateTimeString(),
+                        'approved_by'     => 0,
+                    ]), JSON_THROW_ON_ERROR)]);
+            }
+
+            AdminNotification::query()->firstOrCreate(
+                ['an_type' => 'webstore_payment_continuation', 'an_source_type' => 'ticket', 'an_source_id' => (int) $latest->t_id],
+                [
+                    'an_severity'   => 'info',
+                    'an_title'      => 'Partner Webstore Renewal Payment',
+                    'an_message'    => sprintf('Partner submitted renewal payment for "%s" (%s).', trim((string) $validated['display_name']), trim((string) $validated['slug_name'])),
+                    'an_href'       => '/admin/inquiry',
+                    'an_payload'    => ['ticket_id' => (int) $latest->t_id, 'admin_id' => (int) $admin->id, 'request' => $continuationPayload, 'submitted_at' => $submittedAt->toDateTimeString()],
+                    'an_created_at' => $submittedAt,
+                ]
+            );
+
+            return response()->json([
+                'message' => 'Webstore receipt uploaded successfully.',
+                'request' => ['id' => (int) $latest->t_id, 'submitted_at' => $submittedAt->toDateTimeString()],
+            ]);
+        }
+
+        $ticketId = DB::table('tbl_tickets')->insertGetId([
+            't_bid'         => 0,
+            't_eid'         => 0,
+            't_department'  => 1,
+            't_subject'     => $this->webstoreRequestTicketSubject(),
+            't_urgency'     => 2,
+            't_related'     => 0,
+            't_view_status' => 1,
+            't_status'      => 1,
+            't_date'        => $submittedAt,
+            't_archive'     => 0,
+            't_category'    => 0,
+        ], 't_id');
+
+        DB::table('tbl_tickets_details')->insert([
+            't_id'          => (int) $ticketId,
+            'td_content'    => json_encode($requestPayload, JSON_THROW_ON_ERROR),
+            'td_attachment' => null,
+            'td_datetime'   => $submittedAt,
+            'td_rate'       => 0,
+            'td_eid'        => (int) $admin->id,
+            'td_replystat'  => 0,
+            'td_viewstat'   => '1',
+            'td_ip'         => (string) $request->ip(),
+        ]);
+
+        AdminNotification::query()->firstOrCreate(
+            ['an_type' => 'webstore_request', 'an_source_type' => 'ticket', 'an_source_id' => (int) $ticketId],
+            [
+                'an_severity'   => 'info',
+                'an_title'      => 'Partner Webstore Request',
+                'an_message'    => sprintf('Partner submitted a Webstore Request for "%s" (%s).', trim((string) $validated['display_name']), trim((string) $validated['slug_name'])),
+                'an_href'       => '/admin/inquiry',
+                'an_payload'    => ['ticket_id' => (int) $ticketId, 'admin_id' => (int) $admin->id, 'request' => $requestPayload, 'submitted_at' => $submittedAt->toDateTimeString()],
+                'an_created_at' => $submittedAt,
+            ]
+        );
+
+        return response()->json([
+            'message' => 'Webstore request submitted successfully.',
+            'request' => ['id' => (int) $ticketId, 'submitted_at' => $submittedAt->toDateTimeString()],
+        ]);
+    }
+
+    // ─── Payment helpers ──────────────────────────────────────────────────────
+
+    private function resolveWebstorePaymongoConfig(Request $request, ?string $requestedMode = null): array
+    {
+        $mode   = $this->resolveWebstorePaymongoMode($request, $requestedMode);
+        $config = (array) config("services.paymongo.modes.{$mode}", []);
+        return [
+            'mode'         => $mode,
+            'secret_key'   => (string) ($config['secret_key'] ?? ''),
+            'api_base_url' => rtrim((string) config('services.paymongo.api_base_url', 'https://api.paymongo.com'), '/'),
+        ];
+    }
+
+    private function resolveWebstorePaymongoMode(Request $request, ?string $requestedMode = null): string
+    {
+        $requestedMode  = strtolower(trim((string) $requestedMode));
+        $localHosts     = ['localhost', '127.0.0.1', '::1'];
+        $hostCandidates = [
+            $request->getHost(),
+            parse_url((string) $request->headers->get('origin', ''), PHP_URL_HOST),
+            parse_url((string) $request->headers->get('referer', ''), PHP_URL_HOST),
+        ];
+
+        $isLocal = app()->environment(['local', 'development', 'dev']);
+        foreach ($hostCandidates as $candidate) {
+            $normalized = strtolower(trim((string) $candidate));
+            if (in_array($normalized, $localHosts, true) || str_ends_with($normalized, '.local')) {
+                $isLocal = true;
+                break;
+            }
+        }
+
+        if ($isLocal) {
+            return $requestedMode === 'live' ? 'live' : 'test';
+        }
+
+        return 'live';
+    }
+
+    private function resolveWebstoreFrontendBaseUrl(Request $request): string
+    {
+        $fallback  = rtrim((string) env('FRONTEND_URL', 'http://localhost:3000'), '/');
+        $sourceUrl = trim((string) (
+            $request->headers->get('origin')
+            ?: $request->headers->get('referer')
+            ?: $fallback
+        ));
+        $parts  = parse_url($sourceUrl);
+        $scheme = strtolower((string) ($parts['scheme'] ?? ''));
+        $host   = strtolower((string) ($parts['host'] ?? ''));
+        $port   = isset($parts['port']) ? (int) $parts['port'] : null;
+        if (! in_array($scheme, ['http', 'https'], true) || $host === '') {
+            return $fallback;
+        }
+        $portSegment = ($port && ! in_array($port, [80, 443], true)) ? ':' . $port : '';
+        return $scheme . '://' . $host . $portSegment;
+    }
+
+    private function mapWebstorePaymentMethodTypes(string $method, string $mode): array
+    {
+        return match ($method) {
+            'gcash'    => ['gcash'],
+            'grab_pay' => ['grab_pay'],
+            'maya'     => ['paymaya'],
+            'card'     => ['card'],
+            default    => ['card'],
+        };
     }
 }

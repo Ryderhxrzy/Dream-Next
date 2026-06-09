@@ -418,6 +418,9 @@ Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_a
 
 Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_admin,admin,merchant_admin,web_content'])->group(function () {
     Route::get('/admin/partner/webstore-requests', [AdminInquiryController::class, 'partnerWebstoreRequests']);
+    Route::post('/admin/partner/webstore-requests/payment-session', [AdminInquiryController::class, 'createPartnerWebstorePaymentSession']);
+    Route::get('/admin/partner/webstore-requests/payment-session/{checkoutId}', [AdminInquiryController::class, 'verifyPartnerWebstorePaymentSession']);
+    Route::post('/admin/partner/webstore-requests/submit', [AdminInquiryController::class, 'submitPartnerWebstoreRequest']);
     Route::delete('/admin/partner/webstore-requests/{id}', [AdminInquiryController::class, 'destroyPartnerWebstoreRequest']);
     Route::delete('/admin/partner/webstore-receipt-items/{id}', [AdminInquiryController::class, 'destroyPartnerWebstoreReceiptItem']);
 });
@@ -457,6 +460,10 @@ Route::get('/admin/webpages/adds-content', [AddsContentController::class, 'index
     Route::post('/admin/supplier-users', [SupplierUserController::class, 'store']);
     Route::put('/admin/supplier-users/{id}', [SupplierUserController::class, 'update']);
     Route::delete('/admin/supplier-users/{id}', [SupplierUserController::class, 'destroy']);
+    // Merchant catalogue: suppliers may read and write their own brand's catalogue.
+    Route::get('/admin/web-pages/{type}', [WebPageController::class, 'adminIndex'])->where('type', 'merchant-catalogue');
+    Route::post('/admin/web-pages/{type}', [WebPageController::class, 'adminStore'])->where('type', 'merchant-catalogue')->middleware('throttle:admin-write');
+    Route::put('/admin/web-pages/{type}/{id}', [WebPageController::class, 'adminUpdate'])->where('type', 'merchant-catalogue')->middleware('throttle:admin-write');
 });
 
 Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_admin,admin,merchant_admin,web_content'])->group(function () {

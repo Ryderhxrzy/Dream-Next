@@ -19,6 +19,7 @@ export type WebPageType =
   | 'dreambuild-contact'
   | 'terms-and-conditions'
   | 'home-blogs'
+  | 'merchant-catalogue'
 
 export interface WebPageItem {
   id: number

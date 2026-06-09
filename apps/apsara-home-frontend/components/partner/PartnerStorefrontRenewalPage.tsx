@@ -6,14 +6,13 @@ import { useSession } from 'next-auth/react'
 import { AlertTriangle, Calendar, CheckCircle2, ChevronDown, Clock3, FileText, Loader2, Lock, RotateCcw, ShieldCheck, Star, Store, Users } from 'lucide-react'
 import { useGetAdminMeQuery } from '@/store/api/authApi'
 import { useGetAdminWebPageItemsQuery } from '@/store/api/webPagesApi'
-import { useGetPartnerWebstoreRequestsQuery } from '@/store/api/adminInquiriesApi'
 import {
-  useCreateWebstorePaymentSessionMutation,
-  useLazyVerifyWebstorePaymentSessionQuery,
-  useSubmitWebstoreRequestMutation,
-  type SubmitWebstoreRequestPayload,
-  type WebstoreRequest,
-} from '@/store/api/userApi'
+  useGetPartnerWebstoreRequestsQuery,
+  useCreatePartnerWebstorePaymentSessionMutation,
+  useLazyVerifyPartnerWebstorePaymentSessionQuery,
+  useSubmitPartnerWebstoreRequestMutation,
+} from '@/store/api/adminInquiriesApi'
+import { type SubmitWebstoreRequestPayload, type WebstoreRequest } from '@/store/api/userApi'
 import { getPartnerStorefrontConfig } from '@/libs/partnerStorefront'
 import { computeEndDateRaw, isWebstoreRequestExpired } from '@/libs/webstoreExpiry'
 import { showErrorToast, showSuccessToast } from '@/libs/toast'
@@ -120,9 +119,9 @@ export default function PartnerStorefrontRenewalPage() {
     refetchOnMountOrArgChange: true,
     refetchOnFocus: true,
   })
-  const [createPaymentSession, { isLoading: isCreatingPayment }] = useCreateWebstorePaymentSessionMutation()
-  const [verifyPaymentSession] = useLazyVerifyWebstorePaymentSessionQuery()
-  const [submitWebstoreRequest, { isLoading: isSubmitting }] = useSubmitWebstoreRequestMutation()
+  const [createPaymentSession, { isLoading: isCreatingPayment }] = useCreatePartnerWebstorePaymentSessionMutation()
+  const [verifyPaymentSession] = useLazyVerifyPartnerWebstorePaymentSessionQuery()
+  const [submitWebstoreRequest, { isLoading: isSubmitting }] = useSubmitPartnerWebstoreRequestMutation()
 
   const [selectedPlan, setSelectedPlan] = useState<PlanKey>('annual')
   const [selectedBillingOption, setSelectedBillingOption] = useState<BillingOption>('full')
@@ -349,7 +348,7 @@ export default function PartnerStorefrontRenewalPage() {
       ? 'Expired'
       : 'Active'
     : 'No history yet'
-  const accessBlocked = !canAccessTestRenewal
+  const accessBlocked = !selectedStorefrontEntry
 
   const handleStorefrontChange = useCallback((value: string) => {
     const params = new URLSearchParams(searchParams.toString())
@@ -389,6 +388,7 @@ export default function PartnerStorefrontRenewalPage() {
         billing_option: selectedBillingOption,
         payment_method: selectedPaymentMethod,
         payment_mode: paymentMode,
+        slug_name: selectedStorefrontSlug || undefined,
       }).unwrap()
 
       if (!checkout.checkout_url) {
@@ -665,7 +665,7 @@ export default function PartnerStorefrontRenewalPage() {
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-500 dark:text-slate-400">Auto-renew</span>
+                <span className="text-slate-500 dark:text-slate-400">Renewal</span>
                 <span className={`font-semibold ${renewalEnabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
                   {renewalEnabled ? 'Enabled' : 'Disabled'}
                 </span>
@@ -675,7 +675,7 @@ export default function PartnerStorefrontRenewalPage() {
             <button
               type="button"
               onClick={() => void handleStartPayment()}
-              disabled={isCreatingPayment || isSubmitting || !selectedStorefrontEntry || accessBlocked}
+              disabled={isCreatingPayment || isSubmitting || !selectedStorefrontEntry || accessBlocked || !renewalEnabled}
               className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-linear-to-r from-indigo-600 to-violet-600 px-5 py-3.5 text-sm font-bold text-white shadow-sm shadow-indigo-200/60 transition hover:from-indigo-700 hover:to-violet-700 disabled:cursor-not-allowed disabled:opacity-60 dark:shadow-none"
             >
               {isCreatingPayment || isSubmitting
