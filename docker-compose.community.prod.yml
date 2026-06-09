@@ -1,6 +1,7 @@
 services:
   community-backend:
     image: ghcr.io/dreamnext-af-home/community-backend:${IMAGE_TAG:-latest}
+    pull_policy: always
     restart: unless-stopped
     mem_limit: 512m
     environment:
@@ -28,6 +29,7 @@ services:
   community-frontend:
     # NEXT_PUBLIC_* values are baked into this image at BUILD time in CI.
     image: ghcr.io/dreamnext-af-home/community-frontend:${IMAGE_TAG:-latest}
+    pull_policy: always
     restart: unless-stopped
     mem_limit: 768m
     environment:
@@ -58,6 +60,7 @@ services:
 
   realtime-service:
     image: ghcr.io/dreamnext-af-home/realtime-service:${IMAGE_TAG:-latest}
+    pull_policy: always
     restart: unless-stopped
     mem_limit: 384m
     environment:
