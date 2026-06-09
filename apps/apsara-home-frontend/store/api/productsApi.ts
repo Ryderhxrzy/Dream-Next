@@ -434,6 +434,8 @@ export interface ZqPublicProductResponse {
       sku: string
       name: string
       priceCents?: number | null
+      /** Member price for this variant (cents). Shown to logged-in members; falls back to SRP. */
+      priceMemberCents?: number | null
       stock: number
       image?: string | null
     }>
