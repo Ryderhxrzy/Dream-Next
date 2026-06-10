@@ -46,6 +46,22 @@ const NAV: NavItem[] = [
   },
   { id: 'integrations', label: 'Integrations', icon: Zap },
   {
+    id: 'api-endpoints', label: 'API Endpoints', icon: Server,
+    sub: [
+      { id: 'api-auth', label: 'Auth & Account' },
+      { id: 'api-catalog', label: 'Products & Search' },
+      { id: 'api-cart', label: 'Cart, Checkout & Pay' },
+      { id: 'api-orders', label: 'Orders & Shipping' },
+      { id: 'api-mlm', label: 'Member & MLM' },
+      { id: 'api-supplier', label: 'Supplier & Partner' },
+      { id: 'api-admin', label: 'Admin & Content' },
+      { id: 'api-webhooks', label: 'Webhooks & Notifs' },
+      { id: 'api-guards', label: 'Guards & Rate Limits' },
+      { id: 'api-fields', label: 'Request Fields & Types' },
+      { id: 'api-responses', label: 'Query & Responses' },
+    ],
+  },
+  {
     id: 'code-standards', label: 'Code Standards', icon: Code2,
     sub: [
       { id: 'cs-frontend', label: 'Frontend' },
@@ -581,10 +597,10 @@ const D = {
 
   sessionRoute: `flowchart TD
   Req[Frontend API request] --> Check{window.location.pathname}
-  Check -->|/admin or /super_admin| AS[/api/admin/auth/session]
-  Check -->|/partner| PS[/api/partner/auth/session]
-  Check -->|/supplier| SS[/api/supplier/auth/session]
-  Check -->|other| CS[/api/auth/session]
+  Check -->|admin / super_admin| AS["/api/admin/auth/session"]
+  Check -->|partner| PS["/api/partner/auth/session"]
+  Check -->|supplier| SS["/api/supplier/auth/session"]
+  Check -->|other| CS["/api/auth/session"]
   AS --> AT[Admin Sanctum token]
   PS --> PT[Partner admin token]
   SS --> ST[Supplier Sanctum token]
@@ -676,11 +692,11 @@ const D = {
   Rate --> R6[Admin write endpoints]`,
 
   knownRisks: `flowchart TD
-  Risks[Known Risks] --> R1[CRITICAL: Real OpenAI key in .env.example\nRotate immediately — treat as compromised]
-  Risks --> R2[HIGH: Hardcoded localhost URLs in chat proxy\nReplace with process.env.LARAVEL_API_URL]
-  Risks --> R3[HIGH: typescript.ignoreBuildErrors true\nFix type errors and remove bypass]
-  Risks --> R4[MEDIUM: Cloudinary signing endpoints\nVerify all require session and role checks]
-  Risks --> R5[MEDIUM: PayMongo webhook handlers\nConfirm signature validation enforced]`,
+  Risks[Known Risks] --> R1["CRITICAL: Real OpenAI key in .env.example<br/>Rotate immediately — treat as compromised"]
+  Risks --> R2["HIGH: Hardcoded localhost URLs in chat proxy<br/>Replace with process.env.LARAVEL_API_URL"]
+  Risks --> R3["HIGH: typescript.ignoreBuildErrors true<br/>Fix type errors and remove bypass"]
+  Risks --> R4["MEDIUM: Cloudinary signing endpoints<br/>Verify all require session and role checks"]
+  Risks --> R5["MEDIUM: PayMongo webhook handlers<br/>Confirm signature validation enforced"]`,
 
   scalability: `flowchart TD
   Scale[Scalability Path] --> S1[Short-term: RTK Query consolidation]
@@ -700,6 +716,22 @@ const D = {
 };
 
 // ── Main Component ─────────────────────────────────────────────────────────────
+// Print/export styles — neutralize the app's fixed-height scroll shell so the
+// whole document flows across pages, and hide chrome (sidebar, nav, buttons).
+const PRINT_CSS = `
+@media print {
+  @page { margin: 12mm; }
+  html, body { height: auto !important; overflow: visible !important; background: #fff !important; }
+  .docs-root { display: block !important; height: auto !important; overflow: visible !important; }
+  .docs-scroll { height: auto !important; overflow: visible !important; }
+  .docs-content { max-width: 100% !important; padding-top: 0 !important; padding-bottom: 0 !important; }
+  .docs-print-hide { display: none !important; }
+  section, table, pre, figure, .docs-no-break { break-inside: avoid; }
+  h2, h3 { break-after: avoid; }
+  a { text-decoration: none !important; color: inherit !important; }
+}
+`;
+
 export default function Docs() {
   const [activeSection, setActiveSection] = useState('overview');
   const [activeId, setActiveId] = useState('');
@@ -801,8 +833,9 @@ export default function Docs() {
   );
 
   return (
-    <div className="flex h-screen bg-white overflow-hidden">
-      <div className="hidden lg:block w-64 shrink-0 h-full">{SidebarContent}</div>
+    <div className="docs-root flex h-screen bg-white overflow-hidden">
+      <style>{PRINT_CSS}</style>
+      <div className="docs-print-hide hidden lg:block w-64 shrink-0 h-full">{SidebarContent}</div>
 
       <AnimatePresence>
         {mobileOpen && (
@@ -815,13 +848,13 @@ export default function Docs() {
         )}
       </AnimatePresence>
 
-      <div className="flex-1 h-full overflow-y-auto">
-        <div className="lg:hidden sticky top-0 z-30 bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3">
+      <div className="docs-scroll flex-1 h-full overflow-y-auto">
+        <div className="docs-print-hide lg:hidden sticky top-0 z-30 bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3">
           <button onClick={() => setMobileOpen(true)} className="text-gray-500"><Menu size={20} /></button>
           <span className="text-sm font-semibold text-gray-800">AF Home Docs</span>
         </div>
 
-        <div className="max-w-3xl mx-auto px-6 py-10 pb-24 space-y-0">
+        <div className="docs-content max-w-3xl mx-auto px-6 py-10 pb-24 space-y-0">
 
           {/* ── Project Overview ─────────────────────────────────── */}
           <section id="overview" data-section>
@@ -1022,6 +1055,664 @@ composer dev        # Full dev: server + queue + logs + Vite`} />
               ['Serwist', 'Service worker / PWA', 'Frontend production'],
               ['Neon', 'Serverless PostgreSQL hosting', 'Backend production'],
             ]} />
+          </section>
+
+          <Divider />
+
+          {/* ── API Endpoints ──────────────────────────────────────── */}
+          <section id="api-endpoints" data-section>
+            <SectionTag color="text-violet-700 bg-violet-50" icon={<Server size={11} />}>API Reference</SectionTag>
+            <SectionHeading>API Endpoints</SectionHeading>
+            <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+              All routes live in <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[13px]">apps/apsara-home-backend/routes/api.php</code> and
+              are served under the <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[13px]">/api</code> prefix on the Laravel app
+              (<code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[13px]">LARAVEL_API_URL</code>, e.g. <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[13px]">http://localhost:8000</code>).
+              Protected endpoints use a Sanctum bearer token. Paths below omit the <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[13px]">/api</code> prefix; · separates related routes.
+            </p>
+          </section>
+
+          <section id="api-auth" data-section className="pt-2">
+            <SubHeading id="api-auth">Auth &amp; Account</SubHeading>
+            <InfoTable headers={['Method', 'Endpoint', 'Purpose']} rows={[
+              ['POST', '/auth/register · /auth/mobile/register', 'Register (web Turnstile, throttle 10/min) / mobile'],
+              ['POST', '/auth/login · /auth/mobile/login', 'Login — throttle member-login 3/min'],
+              ['GET', '/auth/register/check-email · check-username · check-referral', 'Live availability / referral validation'],
+              ['POST', '/auth/register/verify-otp · resend-otp', 'Registration OTP (resend throttle otp 5/min)'],
+              ['POST', '/auth/send-sms-otp · verify-sms-otp', 'SMS OTP send / verify'],
+              ['POST', '/auth/login/mfa/status · /mfa/respond · /2fa/resend', 'Login 2FA gate'],
+              ['POST', '/auth/forgot-password · verify-reset-otp · reset-password', 'Password reset flow'],
+              ['POST/GET', '/auth/passkeys/{login|register}/{options|verify}', 'Passkey (WebAuthn)'],
+              ['POST', '/auth/totp/setup · enable · disable', 'TOTP 2FA'],
+              ['POST/GET', '/auth/qr/generate · /qr/{id}/status · /qr/complete', 'QR login (desktop ↔ mobile)'],
+              ['POST', '/auth/callback/google · /callback/facebook', 'OAuth callbacks'],
+              ['POST/GET', '/auth/link/{provider} · /unlink/{provider} · /linked-accounts', 'Social account linking'],
+              ['POST', '/auth/logout', 'Logout (revoke token)'],
+              ['GET/PUT', '/auth/me · /me', 'Current profile'],
+              ['POST', '/me/avatar', 'Avatar upload — throttle uploads 20/min'],
+              ['GET/DELETE', '/sessions · /login-history · /sessions/{id}', 'Session list / revoke'],
+              ['POST/GET', '/username-change/send-otp · /submit · /latest', 'Username change request'],
+            ]} />
+          </section>
+
+          <section id="api-catalog" data-section className="pt-2">
+            <SubHeading id="api-catalog">Products, Categories &amp; Search</SubHeading>
+            <InfoTable headers={['Method', 'Endpoint', 'Purpose']} rows={[
+              ['GET', '/products', 'List + filters (category, price, keyword)'],
+              ['GET', '/products/{id} · /summary · /reviews · /brand', 'Product detail data'],
+              ['GET', '/products/slug/{slug} · /products/cards', 'By slug / card list'],
+              ['GET', '/categories · /rooms · /product-brands', 'Taxonomy'],
+              ['GET', '/product-brands/{id}/profile · /with-products', 'Brand storefront'],
+              ['GET', '/search · /search/live · /search/recommendations', 'Search (authenticated)'],
+              ['GET/POST/DELETE', '/search/history', 'Recent search history'],
+              ['GET', '/meilisearch/search', 'Meilisearch (public)'],
+              ['GET', '/products/zq/cached · /zq/cached/{id}', 'Cached supplier (ZQ) products'],
+              ['POST', '/products/{id}/viewers/heartbeat', 'Live viewer tracking'],
+            ]} />
+          </section>
+
+          <section id="api-cart" data-section className="pt-2">
+            <SubHeading id="api-cart">Cart, Wishlist, Checkout &amp; Payment</SubHeading>
+            <InfoTable headers={['Method', 'Endpoint', 'Purpose']} rows={[
+              ['POST', '/cart/add · /cart/bulk-add', 'Add to cart'],
+              ['GET', '/cart', 'Cart contents'],
+              ['PUT', '/cart/{id} · /cart/{id}/variant', 'Update qty / variant'],
+              ['DELETE', '/cart/{id} · /cart', 'Remove item / clear cart'],
+              ['GET/POST/DELETE', '/wishlist · /wishlist/{productId}', 'Wishlist'],
+              ['POST', '/payments/checkout-session', 'PayMongo session — throttle checkout 20/min'],
+              ['GET', '/payments/checkout-session/{id}', 'Verify checkout session'],
+              ['POST', '/payments/validate-voucher', 'Validate voucher code'],
+              ['POST/GET', '/mobile/payments/create · /{id}/status', 'Mobile payments — throttle 10/min'],
+            ]} />
+          </section>
+
+          <section id="api-orders" data-section className="pt-2">
+            <SubHeading id="api-orders">Orders &amp; Shipping</SubHeading>
+            <InfoTable headers={['Method', 'Endpoint', 'Purpose']} rows={[
+              ['GET', '/orders/history · /orders/counts', 'Customer order history + counts'],
+              ['POST', '/orders/{id}/confirm · /orders/{id}/refund', 'Confirm receipt / request refund'],
+              ['GET', '/orders/track', 'Guest order tracking (public)'],
+              ['GET', '/admin/orders · /admin/orders/counts', 'Admin order list'],
+              ['PATCH', '/admin/orders/{id}/approve · reject · status', 'Order status transitions'],
+              ['PATCH', '/admin/orders/{id}/fulfillment-mode · shipment-status', 'Fulfillment'],
+              ['POST/GET', '/admin/orders/{id}/shipping/jnt/book · track', 'J&T booking / tracking'],
+              ['POST/GET', '/admin/orders/{id}/shipping/xde/book · track · waybill · epod', 'XDE booking / waybill / POD'],
+              ['GET/POST/PUT/DELETE', '/admin/shipping/rates', 'Shipping rates CRUD (public read /shipping-rates)'],
+              ['POST/GET', '/admin/orders/{id}/zq/push · detail · tracking', 'Supplier (ZQ) order sync'],
+            ]} />
+          </section>
+
+          <section id="api-mlm" data-section className="pt-2">
+            <SubHeading id="api-mlm">Member, Commission &amp; Encashment</SubHeading>
+            <InfoTable headers={['Method', 'Endpoint', 'Purpose']} rows={[
+              ['GET', '/account/snapshot · /referral-tree', 'Tier, PV, wallet summary + downline'],
+              ['GET', '/public/community-stats · /public/top-members', 'Public stats / leaderboard'],
+              ['GET', '/encashment/wallet', 'Balance, ledger, vouchers, unilevel'],
+              ['POST/GET', '/encashment/requests', 'Submit / list encashment requests'],
+              ['POST/DELETE', '/encashment/payout-methods · /{id}', 'Manage payout methods'],
+              ['POST', '/encashment/vouchers', 'Create affiliate voucher'],
+              ['POST', '/encashment/verification-request[-with-payout]', 'KYC verify + payout'],
+              ['GET', '/admin/encashment', 'Admin request list'],
+              ['PATCH', '/admin/encashment/{id}/approve · reject · release', 'Encashment workflow'],
+              ['CRUD', '/admin/member-tiers[/{id}]', 'Member tier management'],
+              ['GET', '/admin/members · stats · referrals · top-earners', 'Member admin'],
+              ['PATCH/POST', '/admin/members/{id}/assign-sponsor · temporary-password', 'Member ops'],
+            ]} />
+          </section>
+
+          <section id="api-supplier" data-section className="pt-2">
+            <SubHeading id="api-supplier">Supplier &amp; Partner</SubHeading>
+            <InfoTable headers={['Method', 'Endpoint', 'Purpose']} rows={[
+              ['POST/GET', '/supplier/auth/login · forgot-password · reset-password · me · logout', 'Supplier auth (throttle auth)'],
+              ['CRUD', '/supplier/warehouse[/{id}]', 'Supplier warehouse'],
+              ['GET/PATCH/POST', '/supplier/orders · /{id}/fulfillment · tracking · approve · push-to-zq', 'Supplier order fulfillment'],
+              ['POST/GET/PATCH', '/supplier/products/zq/* (fetch · sync · pricing · mappings)', 'ZQ catalog & pricing (variant / bulk)'],
+              ['GET/POST', '/supplier/chat/conversations[...]', 'Supplier ↔ admin chat'],
+              ['POST/GET', '/supplier/push-notifications/send · history', 'Supplier push notifications'],
+              ['CRUD', '/admin/suppliers[/{id}] · /admin/supplier-users', 'Supplier management (admin)'],
+              ['CRUD', '/admin/partner-users · /admin/partner-members', 'Partner users (admin, web_content)'],
+              ['POST/GET', '/webstore-requests · receipt · payment-session · latest · sync-account', 'Webstore / storefront requests'],
+              ['GET/PATCH/DELETE', '/admin/partner/webstore-requests[...]', 'Admin webstore review + renewal'],
+            ]} />
+          </section>
+
+          <section id="api-admin" data-section className="pt-2">
+            <SubHeading id="api-admin">Admin &amp; Content</SubHeading>
+            <InfoTable headers={['Method', 'Endpoint', 'Purpose']} rows={[
+              ['POST', '/admin/auth/login · /login/2fa/resend', 'Admin login — throttle admin-login 3/min'],
+              ['GET/PUT', '/admin/auth/me', 'Admin profile'],
+              ['CRUD', '/admin/users[/{id}] · /{id}/ban · /unban', 'Admin user mgmt (super_admin, admin)'],
+              ['GET/POST', '/admin/settings/general · security · notifications', 'System settings'],
+              ['CRUD', '/admin/products[/{id}] · /export · /import', 'Product CRUD + CSV'],
+              ['POST', '/admin/products/bulk-price · bulk-update (preview/apply)', 'Bulk product ops'],
+              ['CRUD', '/admin/categories · /admin/product-brands', 'Catalog admin'],
+              ['GET/PATCH', '/admin/members/kyc · /{id}/approve · reject', 'KYC review'],
+              ['POST', '/admin/email-blast/send · /admin/sms-blast/send', 'Email / SMS blast'],
+              ['CRUD', '/admin/web-pages/{type}[/{id}]', 'CMS pages — throttle admin-write'],
+              ['GET/PATCH', '/admin/interior-requests · /{id}', 'Interior service requests'],
+              ['GET/POST', '/admin/conversations[...]', 'CSR conversations'],
+              ['GET/PUT/DELETE', '/admin/qa/test-statuses', 'QA Testing board persistence (admin.actor)'],
+            ]} />
+          </section>
+
+          <section id="api-webhooks" data-section className="pt-2">
+            <SubHeading id="api-webhooks">Webhooks, Notifications &amp; Misc</SubHeading>
+            <InfoTable headers={['Method', 'Endpoint', 'Purpose']} rows={[
+              ['POST', '/payments/webhooks/paymongo', 'PayMongo webhook — throttle 30/min'],
+              ['POST', '/jnt/webhook/logistics-trackback · order-status (+ sandbox)', 'J&T shipping webhooks'],
+              ['POST/GET', '/notifications/{fcm|expo|onesignal} (register · send)', 'Push notification tokens & send'],
+              ['POST', '/realtime/pusher/auth · /broadcasting/auth', 'Pusher channel auth'],
+              ['POST/GET', '/ai-support · /gemini/chat · /gemini/models', 'AI support / Gemini (throttle auth)'],
+              ['POST', '/meilisearch/sync-products · sync-product/{id} · clear-index', 'Search index (admin only)'],
+              ['POST', '/leads · /leads/batch', 'Lead capture — throttle auth'],
+              ['GET', '/address/regions · provinces · cities · barangays', 'PH address data (public)'],
+            ]} />
+          </section>
+
+          <section id="api-guards" data-section className="pt-2">
+            <SubHeading id="api-guards">Guards &amp; Rate Limits</SubHeading>
+            <InfoTable headers={['Type', 'Name', 'Notes']} rows={[
+              ['Guard', 'auth:sanctum', 'Bearer token required on all protected endpoints'],
+              ['Guard', 'customer.actor / admin.actor / supplier.actor', 'Restrict a route to one actor type (else 403)'],
+              ['Guard', 'admin.role:…', 'super_admin, admin, csr, merchant_admin, web_content, accounting, finance_officer'],
+              ['Guard', 'admin.token.validation', 'Rejects revoked admin tokens'],
+              ['Rate', 'member-login / admin-login', '3 / min per IP + identifier'],
+              ['Rate', 'auth / otp', '10 / min · 5 / min'],
+              ['Rate', 'checkout / webhooks', '20 / min · 30 / min'],
+              ['Rate', 'public / storefront-read', '120 / min · 600 / min'],
+              ['Rate', 'admin-write / uploads', '60 / min · 20 / min'],
+              ['Global', 'CORS · RequestAbuseGuard · SecurityHeaders · MediaCacheHeaders', 'Applied to every request'],
+            ]} />
+          </section>
+
+          <section id="api-fields" data-section className="pt-2">
+            <SubHeading id="api-fields">Request Fields &amp; Types</SubHeading>
+            <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+              Request body fields for the main write endpoints, taken verbatim from each controller&apos;s
+              <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[13px]">$request-&gt;validate()</code> rules.
+              &quot;Req&quot; = required. Password rules marked &quot;strict&quot; only apply when the
+              <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[13px]">strict_password_policy</code> setting is on.
+            </p>
+
+            <div className="text-sm font-semibold text-gray-800 mt-6 mb-2 font-mono">POST /auth/register</div>
+            <InfoTable headers={['Field', 'Type / Rules', 'Req']} rows={[
+              ['first_name · last_name', 'string, max:255', 'Yes'],
+              ['name', 'string, max:255', 'Yes'],
+              ['username', 'string, max:255, alphanumeric, unique', 'Yes'],
+              ['referred_by', 'string, max:255 (referral code)', 'Yes'],
+              ['password', 'string, confirmed; strict: min:8 + upper/lower/digit/special (else min:6)', 'Yes'],
+              ['email', 'email, unique', '—'],
+              ['middle_name · phone · partner_slug', 'string', '—'],
+              ['birth_date · gender · occupation · work_location · country', 'date · in:male,female,other · string · in:local,overseas · string', '—'],
+              ['address · barangay · city · province · region (+ *_code, zip_code)', 'string — PH address parts', '—'],
+            ]} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">POST /auth/login</div>
+            <InfoTable headers={['Field', 'Type / Rules', 'Req']} rows={[
+              ['email', 'string — accepts email OR username', 'Yes'],
+              ['password', 'string', 'Yes'],
+              ['otp', 'string, size:6 (when 2FA challenged)', '—'],
+              ['otp_challenge_token · mfa_challenge_token', 'string', '—'],
+            ]} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">POST /auth/register/verify-otp · /username-change/submit</div>
+            <InfoTable headers={['Field', 'Type / Rules', 'Req']} rows={[
+              ['verification_token', 'string', 'Yes'],
+              ['otp', 'string, size:4', 'Yes'],
+            ]} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">POST /auth/forgot-password · /auth/reset-password</div>
+            <InfoTable headers={['Field', 'Type / Rules', 'Req']} rows={[
+              ['identifier OR email', 'string, max:255 (one required) — forgot-password', 'Yes*'],
+              ['token', 'string — reset-password', 'Yes'],
+              ['otp', 'string, size:4 — reset-password', '—'],
+              ['password', 'string, confirmed (same policy as register) — reset-password', 'Yes'],
+            ]} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">POST /auth/change-password</div>
+            <InfoTable headers={['Field', 'Type / Rules', 'Req']} rows={[
+              ['current_password', 'string (nullable only when a forced change is required)', 'Yes'],
+              ['new_password', 'string, confirmed (same policy as register)', 'Yes'],
+            ]} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">PUT /auth/me</div>
+            <InfoTable headers={['Field', 'Type / Rules', 'Req']} rows={[
+              ['name', 'string, max:255', 'Yes'],
+              ['username', 'string, unique (ignores self)', '—'],
+              ['first_name · middle_name · last_name · phone', 'string', '—'],
+              ['avatar_url · avatar_original_url', 'url, max:1200', '—'],
+              ['two_factor_enabled', 'boolean', '—'],
+              ['birth_date · gender · occupation · address parts', 'same as register', '—'],
+            ]} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">POST /cart/add · PUT /cart/&#123;id&#125;</div>
+            <InfoTable headers={['Field', 'Type / Rules', 'Req']} rows={[
+              ['product_id', 'integer', 'Yes'],
+              ['quantity', 'integer, min:1', 'Yes'],
+              ['variant_id', 'integer', '—'],
+              ['selected_color · selected_size · selected_type', 'string, max:100', '—'],
+              ['(PUT /cart/{id}) quantity', 'integer, min:1', 'Yes'],
+            ]} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">POST /payments/checkout-session</div>
+            <InfoTable headers={['Field', 'Type / Rules', 'Req']} rows={[
+              ['amount', 'numeric, min:1', 'Yes'],
+              ['description', 'string, max:255', 'Yes'],
+              ['payment_method', 'in: online_banking, card, gcash, maya', 'Yes'],
+              ['payment_mode', 'in: test, live', '—'],
+              ['online_banking_provider', 'in: dob, ubp', '—'],
+              ['voucher_code · egc_amount', 'string max:80 · numeric min:0', '—'],
+              ['customer{}', 'object: name, email, phone, address, referred_by, is_member', '—'],
+              ['order{}', 'object: product_name, product_id, product_sku, product_pv, quantity (1–1000), selected_*, subtotal, handling_fee, source_type (local|zq), zq_*', '—'],
+            ]} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">POST /payments/validate-voucher</div>
+            <InfoTable headers={['Field', 'Type / Rules', 'Req']} rows={[
+              ['code', 'string, max:80', 'Yes'],
+              ['subtotal', 'numeric, min:0', '—'],
+              ['product_id', 'integer, min:1', '—'],
+            ]} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">POST /orders/&#123;id&#125;/refund · PATCH /admin/orders/&#123;id&#125;/status</div>
+            <InfoTable headers={['Field', 'Type / Rules', 'Req']} rows={[
+              ['reason', 'string, min:3, max:2000 (refund)', 'Yes'],
+              ['refund_images[]', 'image, max:10MB each, up to 10', '—'],
+              ['refund_videos[]', 'mp4/mov/webm, max:100MB each, up to 5', '—'],
+              ['status', 'in: pending, processing, packed, shipped, out_for_delivery, delivered, cancelled, refunded', 'Yes'],
+            ]} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">POST /encashment/requests · /payout-methods</div>
+            <InfoTable headers={['Field', 'Type / Rules', 'Req']} rows={[
+              ['amount', 'numeric, min:1 (requests)', 'Yes'],
+              ['channel', 'in: bank, gcash, maya (requests)', 'Yes'],
+              ['label', 'string, 2–120 (payout-methods)', 'Yes'],
+              ['method_type', 'in: gcash, maya, online_banking, card', 'Yes'],
+              ['account_name · account_number · mobile_number · email_address', 'string / email', '—'],
+              ['bank_name · bank_code · account_type', 'string · string · in: savings, checking', '—'],
+              ['card_holder_name · card_brand · card_last4', 'string · in: visa,mastercard,jcb,amex,other · max:4', '—'],
+              ['is_default · notes', 'boolean · string max:1000', '—'],
+            ]} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">POST /encashment/verification-request</div>
+            <InfoTable headers={['Field', 'Type / Rules', 'Req']} rows={[
+              ['full_name', 'string, 3–255', 'Yes'],
+              ['birth_date', 'date', 'Yes'],
+              ['id_type · id_number', 'string', 'Yes'],
+              ['contact_number · address_line · city · province · postal_code · country', 'string', 'Yes'],
+              ['id_front_url · id_back_url · selfie_url', 'url, max:1200', 'Yes'],
+              ['profile_photo_url · notes', 'url · string max:1000', '—'],
+            ]} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">POST /auth/addresses</div>
+            <InfoTable headers={['Field', 'Type / Rules', 'Req']} rows={[
+              ['full_name', 'string, max:85', 'Yes'],
+              ['phone', 'string, max:25', 'Yes'],
+              ['address', 'string, max:255', 'Yes'],
+              ['region · city · barangay', 'string (max 35 / 55 / 55)', 'Yes'],
+              ['province · zip_code · address_type · notes', 'string', '—'],
+              ['set_default', 'boolean', '—'],
+            ]} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">POST /admin/products · PUT /admin/products/&#123;id&#125;</div>
+            <InfoTable headers={['Field', 'Type / Rules', 'Req']} rows={[
+              ['pd_name', 'string, max:255', 'Yes'],
+              ['pd_catid', 'integer (category id)', 'Yes'],
+              ['pd_price_srp', 'numeric, min:0', 'Yes'],
+              ['pd_price_dp · pd_price_member · pd_prodpv · pd_qty', 'numeric, min:0', '—'],
+              ['pd_room_type · pd_brand_type · pd_catsubid · pd_type', 'integer', '—'],
+              ['pd_weight · pd_psweight · pd_pslenght · pd_psheight · pd_pswidth', 'numeric (dimensions)', '—'],
+              ['pd_description · pd_specifications · pd_material · pd_warranty', 'string', '—'],
+              ['pd_assembly_required · pd_musthave · pd_bestseller · pd_salespromo · pd_manual_checkout_enabled', 'boolean', '—'],
+              ['pd_status', 'integer, in: 0,1,2,3', '—'],
+              ['pd_image · pd_images[]', 'string url(s), max:1000', '—'],
+              ['pd_variants[]', 'array: pv_sku, pv_name, pv_color (+hex), pv_size, pv_style, pv_price_srp/dp/member, pv_prodpv, pv_qty, pv_status, pv_images[]', '—'],
+            ]} />
+            <p className="text-xs text-gray-500 -mt-3 mb-6">PUT (update) is identical, except <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[12px]">pd_name</code>, <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[12px]">pd_catid</code>, <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[12px]">pd_price_srp</code> become <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[12px]">sometimes|required</code>.</p>
+
+            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">POST /admin/member-tiers · /admin/shipping/rates</div>
+            <InfoTable headers={['Field', 'Type / Rules', 'Req']} rows={[
+              ['name', 'string, 2–100, unique (member-tiers)', 'Yes'],
+              ['rank', 'integer, min:1, unique', 'Yes'],
+              ['min_pv', 'numeric, min:0', 'Yes'],
+              ['min_direct_referrals · min_group_volume', 'integer, min:0', 'Yes'],
+              ['description · is_active · sort_order', 'string · boolean · integer', '—'],
+              ['province · city · fee', 'string · string · numeric 0–999999 (shipping rate)', 'Yes'],
+              ['status', 'boolean (shipping rate)', '—'],
+            ]} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">PATCH /supplier/products/zq/pricing/&#123;externalId&#125;</div>
+            <InfoTable headers={['Field', 'Type / Rules', 'Req']} rows={[
+              ['dealer_price · member_price', 'integer, min:0', '—'],
+              ['pv', 'numeric, min:0', '—'],
+              ['pv_tier', 'in: low_end, high_end', '—'],
+              ['reversed_pv_multiplier', 'numeric, min:0', '—'],
+            ]} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">POST /webstore-requests</div>
+            <InfoTable headers={['Field', 'Type / Rules', 'Req']} rows={[
+              ['full_name · username · display_name', 'string, max:255', 'Yes'],
+              ['email', 'email, max:255', 'Yes'],
+              ['slug_name', 'string — lowercase slug (a-z0-9-)', 'Yes'],
+              ['plan', 'in: test, quarterly, semi_annual, annual', 'Yes'],
+              ['billing_option', 'in: full, monthly', 'Yes'],
+              ['payment_method', 'in: gcash, grab_pay, maya, card', 'Yes'],
+              ['receipt_urls[]', 'url, 1–5 items', 'Yes'],
+              ['payment_reference', 'string, max:255', 'Yes'],
+              ['accepted_terms', 'boolean, must be accepted', 'Yes'],
+              ['checkout_id · payment_intent_id', 'string', '—'],
+            ]} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">POST /interior-requests</div>
+            <InfoTable headers={['Field', 'Type / Rules', 'Req']} rows={[
+              ['service_type · project_type', 'string, max:120', 'Yes'],
+              ['preferred_date · preferred_time', 'date · string max:80', 'Yes'],
+              ['first_name · last_name', 'string, max:120', 'Yes'],
+              ['email', 'email, max:255', 'Yes'],
+              ['property_type · project_scope · budget · style_preference · flexibility · target_timeline', 'string', '—'],
+              ['phone · notes · referral', 'string', '—'],
+              ['inspiration_files[]', 'array of string url, up to 20', '—'],
+            ]} />
+          </section>
+
+          <section id="api-responses" data-section className="pt-2">
+            <SubHeading id="api-responses">Query Params &amp; 200 Responses</SubHeading>
+            <p className="text-sm text-gray-600 mb-5 leading-relaxed">
+              Query parameters and the JSON returned on a <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[13px]">200</code> (or
+              <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[13px]">201</code>) success, read straight from the controllers.
+              <span className="font-semibold"> Bold</span> query params are required; the rest are optional. List endpoints that paginate return a
+              <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[13px]">meta</code> object (<code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[12px]">current_page, last_page, per_page, total, from, to</code>).
+            </p>
+
+            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">GET /products · GET /admin/products</div>
+            <p className="text-xs text-gray-500 mb-1.5"><span className="font-semibold text-gray-700">Query:</span> per_page (default 25, &quot;all&quot; = unlimited) · q · status · cat_id · room_type · brand_type · supplier_id (admins only) · sort (random | bestseller | newest | price_asc | price_desc) — all optional</p>
+            <CodeBlock lang="json" code={`{
+  products: [
+    {
+      id, name, description, priceSrp, priceDp, priceMember, prodpv,
+      qty, brand, image, images[], variants[], soldCount, avgRating,
+      status, sku, supplierName, createdAt
+    }
+  ],
+  meta: { current_page, last_page, per_page, total, from, to }
+}`} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">GET /products/&#123;id&#125; · /products/slug/&#123;slug&#125;</div>
+            <CodeBlock lang="json" code={`{
+  product: {
+    id, name, description, specifications, material, warranty,
+    priceSrp, priceDp, priceMember, prodpv, qty, brand, image,
+    images[], variants[], soldCount, avgRating, status, sku
+  }
+}
+
+// 404 -> { message }   if not found / not visible`} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">GET /products/cards</div>
+            <p className="text-xs text-gray-500 mb-1.5"><span className="font-semibold text-gray-700">Query:</span> per_page · q · cat_id · room_type · brand_type · include_all (bool, default false)</p>
+            <CodeBlock lang="json" code={`{
+  products: [
+    {
+      id, name, image, soldCount, originalPrice, discountedPrice,
+      pv, brandName, variantCount,
+      badges: { musthave, bestseller, salespromo }
+    }
+  ],
+  meta: { current_page, last_page, per_page, total, from, to }
+}`} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">GET /categories · /rooms · /product-brands</div>
+            <p className="text-xs text-gray-500 mb-1.5"><span className="font-semibold text-gray-700">Query:</span> q (categories &amp; brands) · supplier_id, used_only (categories)</p>
+            <CodeBlock lang="json" code={`// GET /categories
+{
+  categories: [
+    { id, name, description, url, image, images[], order, product_count }
+  ],
+  total
+}
+
+// GET /rooms
+{ rooms: [ { id, name } ], total: 8 }
+
+// GET /product-brands
+{ brands: [ { id, name, image, status } ], total }`} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">GET /search · /search/live  (auth)</div>
+            <p className="text-xs text-gray-500 mb-1.5"><span className="font-semibold text-gray-700">Query:</span> <span className="font-semibold">q (required, 1–255)</span> · page · limit (1–50, def 20) · category · brand · min_price · max_price · sort. Live: <span className="font-semibold">q (2–255)</span> · limit (1–20, def 10)</p>
+            <CodeBlock lang="json" code={`{
+  success: true,
+  data: [
+    {
+      id, name, original_price, discounted_price, pv, image, stock,
+      brand_name, category_name, has_discount, discount_percentage, in_stock
+    }
+  ],
+  pagination: { current_page, per_page, total, total_pages, has_more },
+  filters: {
+    applied,
+    available: { categories[], brands[], price_ranges[] }
+  },
+  query
+}`} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">GET /cart · /wishlist  (auth)</div>
+            <CodeBlock lang="json" code={`// GET /cart
+{
+  cart_items: [
+    {
+      product_name, product_image,
+      product_price_srp, product_price_dp, product_price_member,
+      brand_name, variant_id, variant_name, variant_price,
+      variant_color, variant_size
+    }
+  ],
+  total_amount, total_items
+}
+
+// GET /wishlist
+{
+  data: [
+    { wishlist_id, product_id, date_added, product: { ... } }
+  ]
+}`} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">POST /cart/add · /payments/checkout-session · /payments/validate-voucher</div>
+            <CodeBlock lang="json" code={`// POST /cart/add
+201 { message, cart_item: { ... } }
+
+// POST /payments/checkout-session
+200 { checkout_id, checkout_url, payment_mode }
+
+// POST /payments/validate-voucher
+200 {
+  valid, message, discount, rule,
+  voucher: { id, code, amount, max_uses, used_count, expires_at }
+}
+// 422 { message }   if invalid`} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">GET /payments/checkout-session/&#123;checkoutId&#125;</div>
+            <p className="text-xs text-gray-500 mb-1.5"><span className="font-semibold text-gray-700">Query:</span> payment_mode (test | live, optional)</p>
+            <CodeBlock lang="json" code={`{
+  checkout_id, payment_intent_id, status, payment_mode,
+  customer: { name, email, phone, address },
+  order_summary: {
+    description, amount, shipping_fee, payment_method,
+    product_name, product_sku, quantity
+  }
+}`} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">GET /orders/history · /orders/counts  (auth)</div>
+            <CodeBlock lang="json" code={`// GET /orders/history
+{
+  orders: [
+    {
+      id, order_number, status, payment_status, fulfillment_status,
+      items: [
+        {
+          id, product_id, name, image, quantity, price,
+          selected_color, selected_size, selected_type
+        }
+      ],
+      total_amount, shipping_fee, payment_method, courier,
+      shipment_status, tracking_no, refund_reason,
+      refund_image_urls[], created_at
+    }
+  ],
+  total
+}
+
+// GET /orders/counts
+{
+  all, pending, processing, shipped, to_receive,
+  out_for_delivery, delivered, cancelled, completed, paid
+}`} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">GET /orders/track  (public)</div>
+            <p className="text-xs text-gray-500 mb-1.5"><span className="font-semibold text-gray-700">Query:</span> <span className="font-semibold">order_number (required)</span> · <span className="font-semibold">contact (required — email or phone)</span></p>
+            <CodeBlock lang="json" code={`{
+  order: {
+    id, order_number, status, total, shipping_fee, payment_method,
+    shipping_address, courier, tracking_no, shipment_status,
+    created_at, estimated_delivery, customer_name,
+    items: [ { ... } ]
+  }
+}
+
+// 404 { message }   on no match`} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">GET /admin/orders</div>
+            <p className="text-xs text-gray-500 mb-1.5"><span className="font-semibold text-gray-700">Query:</span> filter (default all) · q · page · per_page (1–100, def 20)</p>
+            <CodeBlock lang="json" code={`{
+  orders: [
+    {
+      id, customer_id, checkout_id, payment_status, approval_status,
+      fulfillment_status, fulfillment_mode, courier, tracking_no,
+      shipment_status, zq_status, product_name, product_id, quantity,
+      amount, payment_method, customer_name, customer_email,
+      refund_reason, created_at, sla
+    }
+  ],
+  meta: { ... },
+  counts: { ... }
+}`} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">GET /account/snapshot · /referral-tree  (auth)</div>
+            <CodeBlock lang="json" code={`// GET /account/snapshot
+{
+  profile: {
+    id, username, first_name, last_name, email, phone,
+    avatar_url, verification_status, account_status
+  },
+  loyalty: {
+    tier, rank, badge_name, pv_balance, cash_balance, personal_pv,
+    referral_count, active_members_count, direct_referrals[], join_date
+  },
+  orders: {
+    total, pending, paid, shipped, delivered, completed,
+    total_spent, recent_orders[]
+  },
+  wishlist: { total_items },
+  reviews: { ... },
+  snapshot_date
+}
+
+// GET /referral-tree
+{
+  root,
+  summary: { direct_count, second_level_count, total_network, total_pv },
+  children: [ { ...node, children_count, children[] } ]
+}`} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">GET /encashment/wallet · /encashment/requests  (auth)</div>
+            <p className="text-xs text-gray-500 mb-1.5"><span className="font-semibold text-gray-700">Query (wallet):</span> page · per_page (1–100, def 20) · wallet_type (all | cash | pv | rewards)</p>
+            <CodeBlock lang="json" code={`// GET /encashment/wallet
+{
+  summary: {
+    cash_balance, pv_balance, current_pv, group_pv,
+    encashment_available, available_egc_balance,
+    cashback_balance, cashback_rate,
+    referrals: { total, verified, active }
+  },
+  ledger: [
+    {
+      id, wallet_type, entry_type, amount, source_type,
+      reference_no, notes, created_at
+    }
+  ],
+  meta: { ... },
+  affiliate_vouchers: [],
+  unilevel_awards: []
+}
+
+// GET /encashment/requests
+{
+  requests[], payout_methods[], meta,
+  eligibility, policy, verification, monthly_activation
+}
+
+// POST /encashment/requests
+201 { message, request: { ... }, eligibility, policy }`} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">GET /admin/encashment · /admin/members</div>
+            <p className="text-xs text-gray-500 mb-1.5"><span className="font-semibold text-gray-700">Query (encashment):</span> filter · q · released_from · released_to · page · per_page. <span className="font-semibold text-gray-700">Query (members):</span> per_page (1–100, def 25) · page · q · status (blocked|pending|kyc_review|active) · tier · registration (new|referred|direct) · profile_photo · sort</p>
+            <CodeBlock lang="json" code={`// GET /admin/encashment
+{ requests[], meta, counts }
+
+// GET /admin/members
+{
+  members: [
+    {
+      id, name, username, email, tier, orders, totalSpent,
+      earnings, walletCashBalance, walletPvBalance, referrals,
+      verificationStatus, status, joinedAt, fullAddress
+    }
+  ],
+  meta: { ... }
+}`} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">GET /address/* · /auth/addresses</div>
+            <p className="text-xs text-gray-500 mb-1.5"><span className="font-semibold text-gray-700">Query:</span> provinces ← region_code · cities ← province_code | region_code · barangays ← city_code (all optional)</p>
+            <CodeBlock lang="json" code={`// GET /address/regions
+{ data: [ { id, code, name } ] }
+
+// GET /address/provinces
+{ data: [ { id, code, name, region_code } ] }
+
+// GET /address/cities
+{ data: [ { id, code, name, region_code, prov_code } ] }
+
+// GET /address/barangays
+{ data: [ { id, code, name, city_code, prov_code, region_code } ] }
+
+// GET /auth/addresses
+{
+  addresses: [
+    {
+      id, full_name, phone, address, region, province, city,
+      barangay, zip_code, address_type, is_default, full_address
+    }
+  ]
+}`} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">POST /auth/login · /auth/register · GET /auth/me</div>
+            <CodeBlock lang="json" code={`// POST /auth/login
+200 { user: { ...customer }, token, message }
+//   MFA    -> { requires_mfa_approval, mfa_challenge_token }
+//   banned -> 403
+
+// POST /auth/register
+//   OTP off -> 201 { message, requires_otp: false, user: { ...customer } }
+//   OTP on  -> 200 { message, requires_otp: true, verification_token, email }
+
+// GET /auth/me
+200 customer object DIRECTLY (not wrapped in "user")
+
+// customer:
+{
+  id, name, first_name, last_name, email, username, phone, address,
+  region, city, province, barangay, avatar_url, rank, badge_name,
+  account_status, verification_status, email_verified,
+  two_factor_enabled, totp_enabled, password_change_required,
+  profile_completion_percentage
+}`} />
           </section>
 
           <Divider />

@@ -231,9 +231,10 @@ type FloatingInputProps = {
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     autoComplete?: string;
     endContent?: React.ReactNode;
+    error?: string;
 }
 
-function FloatingInput({ id, type = 'text', label, value, onChange, autoComplete, endContent }: FloatingInputProps) {
+function FloatingInput({ id, type = 'text', label, value, onChange, autoComplete, endContent, error }: FloatingInputProps) {
     return (
         <div className="w-full">
             <label htmlFor={id} className="block text-xs font-semibold text-gray-600 dark:text-white/80 mb-1.5">
@@ -247,7 +248,13 @@ function FloatingInput({ id, type = 'text', label, value, onChange, autoComplete
                     onChange={onChange}
                     placeholder=""
                     autoComplete={autoComplete}
-                    className="h-11 w-full rounded-[18px] border border-gray-300 dark:border-white/18 bg-white dark:bg-white/12 px-4 text-sm text-gray-900 dark:text-white outline-none transition-all duration-200 focus:border-sky-400 dark:focus:border-sky-400/60 focus:bg-white dark:focus:bg-white/18"
+                    aria-invalid={Boolean(error)}
+                    aria-describedby={error ? `${id}-error` : undefined}
+                    className={`h-11 w-full rounded-[18px] border bg-white dark:bg-white/12 px-4 text-sm text-gray-900 dark:text-white outline-none transition-all duration-200 focus:bg-white dark:focus:bg-white/18 ${
+                        error
+                            ? 'border-red-400 focus:border-red-500 dark:border-red-400/70 dark:focus:border-red-300'
+                            : 'border-gray-300 dark:border-white/18 focus:border-sky-400 dark:focus:border-sky-400/60'
+                    }`}
                 />
                 {endContent ? (
                     <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/60">
@@ -255,6 +262,11 @@ function FloatingInput({ id, type = 'text', label, value, onChange, autoComplete
                     </div>
                 ) : null}
             </div>
+            {error ? (
+                <p id={`${id}-error`} className="mt-1.5 text-xs font-medium text-red-600 dark:text-red-300">
+                    {error}
+                </p>
+            ) : null}
         </div>
     )
 }
@@ -281,6 +293,7 @@ const LoginForm = ({
     const [isLoading, setIsLoading] = useState(false);
     const [isPasskeyLoading, setIsPasskeyLoading] = useState(false);
     const [error, setError] = useState('');
+    const [fieldErrors, setFieldErrors] = useState({ email: '', password: '' });
     const [mfaChallengeToken, setMfaChallengeToken] = useState('');
     const [isMounted, setIsMounted] = useState(false);
     const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -350,8 +363,12 @@ const LoginForm = ({
         generateQrInBackground()
     }, [apiBaseUrl])
 
-    const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    const set = (field: 'email' | 'password') => (e: React.ChangeEvent<HTMLInputElement>) => {
         setForm(f => ({ ...f, [field]: e.target.value }))
+        if (fieldErrors[field]) {
+            setFieldErrors((prev) => ({ ...prev, [field]: '' }))
+        }
+    }
 
     useEffect(() => {
         const rememberedEmail = getRememberedUserEmail().trim()
@@ -417,6 +434,7 @@ const LoginForm = ({
 
     const attemptSignIn = useCallback(async (source: 'manual' | 'auto' = 'manual') => {
         setError('');
+        setFieldErrors({ email: '', password: '' });
         setIsLoading(true);
         dynamicIsland.loading('Logging in…')
 
@@ -516,6 +534,18 @@ const LoginForm = ({
     const handleSignIn = async (e: React.FormEvent) => {
         e.preventDefault();
         if (lockoutSeconds > 0) return
+
+        const nextFieldErrors = {
+            email: form.email.trim() ? '' : 'Username or Email is required.',
+            password: form.password ? '' : 'Password is required.',
+        }
+
+        if (nextFieldErrors.email || nextFieldErrors.password) {
+            setError('')
+            setFieldErrors(nextFieldErrors)
+            return
+        }
+
         await attemptSignIn('manual')
     };
 
@@ -819,6 +849,7 @@ const LoginForm = ({
                             value={form.email}
                             onChange={set('email')}
                             autoComplete="username email"
+                            error={fieldErrors.email}
                         />
 
                         <div>
@@ -829,6 +860,7 @@ const LoginForm = ({
                                 value={form.password}
                                 onChange={set('password')}
                                 autoComplete="current-password"
+                                error={fieldErrors.password}
                                 endContent={(
                                     <button
                                         type="button"

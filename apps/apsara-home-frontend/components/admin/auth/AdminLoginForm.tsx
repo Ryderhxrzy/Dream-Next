@@ -214,8 +214,23 @@ const AdminLoginForm = ({ turnstileSiteKey = '' }: { turnstileSiteKey?: string }
             dispatch(baseApi.util.resetApiState())
             clearAccessTokenCache()
 
+            // Admin only: honor a safe internal callbackUrl (e.g. redirected here from /testing),
+            // otherwise fall back to the dashboard. Rejects external/open-redirect and API targets.
+            // Partner login behavior is intentionally left unchanged.
+            const rawCallback = searchParams?.get('callbackUrl') ?? null
+            const safeCallback = rawCallback
+                && rawCallback.startsWith('/')
+                && !rawCallback.startsWith('//')
+                && !rawCallback.startsWith('/api')
+                && !rawCallback.startsWith('/admin/login')
+                && !rawCallback.startsWith('/partner/login')
+                ? rawCallback
+                : null
+
             if (isPartnerLogin) {
                 router.replace('/partner/webpages/partner-storefronts')
+            } else if (safeCallback) {
+                router.replace(safeCallback)
             } else {
                 router.replace('/admin')
             }
