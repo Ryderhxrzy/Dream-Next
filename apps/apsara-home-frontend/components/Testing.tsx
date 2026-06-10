@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useQaBoardRealtime, type QaStatusUpdate } from '@/hooks/useQaBoardRealtime';
 
 type TestStatus = 'pending' | 'pass' | 'bug' | 'skip';
 type FilterCategory = 'all' | 'frontend' | 'backend';
@@ -658,7 +659,7 @@ const COLUMNS: { id: TestStatus; label: string; color: string; bg: string; borde
   { id: 'skip',    label: 'Skip',    color: 'text-amber-700 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-200 dark:border-amber-800', dot: 'bg-amber-500' },
 ];
 
-function StatusDropdown({ status, onChange }: { status: TestStatus; onChange: (s: TestStatus) => void }) {
+function StatusDropdown({ status, onChange, onEditing }: { status: TestStatus; onChange: (s: TestStatus) => void; onEditing?: (active: boolean) => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const col = COLUMNS.find(c => c.id === status)!;
@@ -670,6 +671,9 @@ function StatusDropdown({ status, onChange }: { status: TestStatus; onChange: (s
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  // Let the board know this card is being touched while the picker is open.
+  useEffect(() => { onEditing?.(open); }, [open, onEditing]);
 
   return (
     <div ref={ref} className="relative">
@@ -706,7 +710,7 @@ function StatusDropdown({ status, onChange }: { status: TestStatus; onChange: (s
   );
 }
 
-function NoteEditor({ note, status, onSave }: { note: string; status: TestStatus; onSave: (note: string) => void }) {
+function NoteEditor({ note, status, onSave, onEditing }: { note: string; status: TestStatus; onSave: (note: string) => void; onEditing?: (active: boolean) => void }) {
   const isBug = status === 'bug';
   const [draft, setDraft] = useState(note);
   // Auto-open for bugs or when a comment already exists; otherwise stay collapsed.
@@ -738,6 +742,8 @@ function NoteEditor({ note, status, onSave }: { note: string; status: TestStatus
       <textarea
         value={draft}
         onChange={e => setDraft(e.target.value)}
+        onFocus={() => onEditing?.(true)}
+        onBlur={() => onEditing?.(false)}
         rows={isBug ? 3 : 2}
         placeholder={isBug ? 'What is the bug? How to reproduce? (steps, expected vs actual)…' : 'Add a comment…'}
         className={`w-full text-[11px] leading-relaxed px-2.5 py-2 rounded-lg border resize-y focus:outline-none focus:ring-2 transition-colors ${
@@ -766,22 +772,35 @@ function NoteEditor({ note, status, onSave }: { note: string; status: TestStatus
   );
 }
 
-function TestCard({ test, status, note, meta, onChange, onSaveNote }: {
+function TestCard({ test, status, note, meta, editors, onChange, onSaveNote, onEditing }: {
   test: TestCase;
   status: TestStatus;
   note?: string;
   meta?: StatusMeta;
+  editors?: string[];
   onChange: (s: TestStatus) => void;
   onSaveNote: (note: string) => void;
+  onEditing?: (active: boolean) => void;
 }) {
   const isBug = status === 'bug';
+  const beingEdited = (editors?.length ?? 0) > 0;
   return (
     <div className={`bg-white dark:bg-gray-900 border rounded-xl p-3.5 shadow-sm hover:shadow-md transition-shadow ${
-      isBug ? 'border-red-200 dark:border-red-900/50' : 'border-gray-200 dark:border-gray-800'
+      beingEdited ? 'border-sky-300 dark:border-sky-700 ring-2 ring-sky-200 dark:ring-sky-900/50'
+        : isBug ? 'border-red-200 dark:border-red-900/50' : 'border-gray-200 dark:border-gray-800'
     }`}>
+      {beingEdited && (
+        <div className="flex items-center gap-1.5 mb-2 text-[10px] font-semibold text-sky-600 dark:text-sky-400">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500" />
+          </span>
+          <span className="truncate">{editors!.join(', ')} {editors!.length > 1 ? 'are' : 'is'} editing…</span>
+        </div>
+      )}
       <div className="flex items-start justify-between gap-2 mb-2">
         <span className="text-[10px] font-mono text-gray-400 dark:text-gray-600 shrink-0 mt-0.5">{test.id}</span>
-        <StatusDropdown status={status} onChange={onChange} />
+        <StatusDropdown status={status} onChange={onChange} onEditing={onEditing} />
       </div>
       <p className="text-sm font-medium leading-snug text-gray-800 dark:text-gray-200 mb-2">{test.title}</p>
       <p className="text-[11px] text-gray-400 dark:text-gray-600 leading-relaxed line-clamp-2">✓ {test.expected}</p>
@@ -798,7 +817,48 @@ function TestCard({ test, status, note, meta, onChange, onSaveNote }: {
           <span className="ml-auto text-[9px] text-gray-300 dark:text-gray-700 truncate shrink-0">· {meta.updated_by}</span>
         )}
       </div>
-      <NoteEditor note={note ?? ''} status={status} onSave={onSaveNote} />
+      <NoteEditor note={note ?? ''} status={status} onSave={onSaveNote} onEditing={onEditing} />
+    </div>
+  );
+}
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+const AVATAR_COLORS = [
+  'bg-rose-500', 'bg-orange-500', 'bg-amber-500', 'bg-emerald-500',
+  'bg-teal-500', 'bg-sky-500', 'bg-indigo-500', 'bg-fuchsia-500',
+];
+
+function PresenceBar({ members, myId }: { members: { id: string; name: string }[]; myId: string | null }) {
+  if (members.length === 0) return null;
+  const shown = members.slice(0, 6);
+  const extra = members.length - shown.length;
+  return (
+    <div className="flex items-center gap-2" title={members.map(m => m.name + (m.id === myId ? ' (you)' : '')).join(', ')}>
+      <div className="flex -space-x-2">
+        {shown.map((m, i) => (
+          <span
+            key={m.id}
+            className={`inline-flex items-center justify-center h-7 w-7 rounded-full text-[10px] font-bold text-white ring-2 ring-white dark:ring-gray-900 ${AVATAR_COLORS[i % AVATAR_COLORS.length]} ${m.id === myId ? 'ring-emerald-400 dark:ring-emerald-500' : ''}`}
+            title={m.name + (m.id === myId ? ' (you)' : '')}
+          >
+            {initials(m.name)}
+          </span>
+        ))}
+        {extra > 0 && (
+          <span className="inline-flex items-center justify-center h-7 w-7 rounded-full text-[10px] font-bold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 ring-2 ring-white dark:ring-gray-900">
+            +{extra}
+          </span>
+        )}
+      </div>
+      <span className="text-[11px] text-gray-400 hidden sm:inline">
+        {members.length} online
+      </span>
     </div>
   );
 }
@@ -925,6 +985,45 @@ export default function Testing() {
     }
   }, [statuses, notes, meta]);
 
+  // ── Realtime collaboration (Pusher presence channel) ──
+  // Tracks which card THIS browser is editing, so an incoming remote note
+  // change never clobbers what the local tester is currently typing.
+  const localEditingRef = useRef<string | null>(null);
+
+  const applyRemote = useCallback((u: QaStatusUpdate) => {
+    setStatuses(s => ({ ...s, [u.test_id]: u.status }));
+    setMeta(m => ({ ...m, [u.test_id]: { updated_by: u.updated_by ?? null, updated_at: u.updated_at ?? null } }));
+    if (localEditingRef.current !== u.test_id) {
+      setNotes(n => {
+        const next = { ...n };
+        if (u.note) next[u.test_id] = u.note; else delete next[u.test_id];
+        return next;
+      });
+    }
+  }, []);
+
+  const applyReset = useCallback(() => {
+    setStatuses({});
+    setNotes({});
+    setMeta({});
+  }, []);
+
+  const { members, myId, editorsByTest, setEditing } = useQaBoardRealtime({
+    enabled: !loading,
+    onStatusUpdate: applyRemote,
+    onReset: applyReset,
+  });
+
+  const handleEditing = useCallback((testId: string, active: boolean) => {
+    if (active) {
+      localEditingRef.current = testId;
+      setEditing(testId);
+    } else if (localEditingRef.current === testId) {
+      localEditingRef.current = null;
+      setEditing(null);
+    }
+  }, [setEditing]);
+
   const groupsForCategory = useMemo(
     () => GROUP_ORDER.filter(g =>
       SECTIONS.some(s => s.group === g && (categoryFilter === 'all' || s.category === categoryFilter))
@@ -971,12 +1070,15 @@ export default function Testing() {
                 {saving && <span className="ml-2 text-emerald-500">· Saving…</span>}
               </p>
             </div>
-            <button
-              onClick={resetAll}
-              className="text-xs text-gray-400 hover:text-red-500 transition-colors px-3 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
-            >
-              Reset all
-            </button>
+            <div className="flex items-center gap-4">
+              <PresenceBar members={members} myId={myId} />
+              <button
+                onClick={resetAll}
+                className="text-xs text-gray-400 hover:text-red-500 transition-colors px-3 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+              >
+                Reset all
+              </button>
+            </div>
           </div>
 
           {error && (
@@ -1119,8 +1221,10 @@ export default function Testing() {
                             status={getStatus(test.id)}
                             note={notes[test.id]}
                             meta={meta[test.id]}
+                            editors={editorsByTest[test.id]}
                             onChange={s => setStatus(test.id, s)}
                             onSaveNote={n => saveNote(test.id, n)}
+                            onEditing={active => handleEditing(test.id, active)}
                           />
                         ))}
                       </div>
