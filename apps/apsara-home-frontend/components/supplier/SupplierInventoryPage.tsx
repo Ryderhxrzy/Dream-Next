@@ -701,7 +701,17 @@ export default function SupplierInventoryPage() {
   const dragState  = useRef({ isDragging: false, startX: 0, scrollLeft: 0 })
   const [isDrag, setIsDrag] = useState(false)
 
-  const isZqSupplier = zqBrandId > 0 && brandType === zqBrandId
+  // Detect the AF Home Global / ZQ supplier by name (consistent with ProductsPageMain),
+  // falling back to brand-id matching. The hardcoded brand-name keys alone miss
+  // "AF HOME GLOBAL SUPPLIER", so name detection is the primary signal.
+  const isZqSupplier = useMemo(() => {
+    const normName = String(supplierName ?? '').toLowerCase().replace(/[^a-z0-9]/g, '')
+    const byName = normName.includes('zqsupplier')
+      || normName.includes('afhomeglobalsupplier')
+      || normName.includes('globalsupplier')
+      || normName.includes('afhomeglobal')
+    return byName || (zqBrandId > 0 && brandType === zqBrandId)
+  }, [supplierName, zqBrandId, brandType])
 
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button,input,a,[role="button"]')) return

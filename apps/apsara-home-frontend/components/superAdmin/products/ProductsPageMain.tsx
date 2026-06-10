@@ -21,6 +21,7 @@ import EditProductModal from './EditProductModal'
 import BulkEditProductsModal from './BulkEditProductsModal'
 import ProductActivityLogsModal from './ProductActivityLogsModal'
 import EditZqPricingModal from '@/components/superAdmin/products/EditZqPricingModal'
+import SupplierZqPricingModal from '@/components/supplier/SupplierZqPricingModal'
 import ImportZqPricingModal from '@/components/superAdmin/products/ImportZqPricingModal'
 import * as XLSX from 'xlsx'
 import PrimaryButton from '@/components/ui/buttons/PrimaryButton'
@@ -1022,9 +1023,12 @@ function ZqCategoryMappingPanel({
             {categories.map((category) => {
               const key = `${category.zqCategoryId ?? ''}::${category.zqCategoryName}`
               const suffix = category.localCategoryName ? ` -> ${category.localCategoryName}` : ' -> Needs review'
+              // ZQ often returns a blank categoryName (only categoryId) — fall back to the ID so the option is still readable/selectable.
+              const label = category.zqCategoryName?.trim()
+                || (category.zqCategoryId ? `ZQ Category ${category.zqCategoryId}` : 'Uncategorized')
               return (
                 <option key={key} value={key}>
-                  {category.zqCategoryName} ({category.productCount}){suffix}
+                  {label} ({category.productCount}){suffix}
                 </option>
               )
             })}
@@ -2689,11 +2693,19 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
       />
       <ProductActivityLogsModal isOpen={showActivityLogs} onClose={() => setShowActivityLogs(false)} />
       <EditProductModal product={editProduct} onClose={() => setEditProduct(null)} onSaved={handleProductsSaved}/>
-      <EditZqPricingModal
-        product={editZqPricing}
-        onClose={() => setEditZqPricing(null)}
-        showVariantReversedMultiplier={isSupplierPortal}
-      />
+      {isSupplierPortal ? (
+        <SupplierZqPricingModal
+          product={editZqPricing}
+          onClose={() => setEditZqPricing(null)}
+          showVariantReversedMultiplier={isSupplierPortal}
+        />
+      ) : (
+        <EditZqPricingModal
+          product={editZqPricing}
+          onClose={() => setEditZqPricing(null)}
+          showVariantReversedMultiplier={isSupplierPortal}
+        />
+      )}
       <ImportZqPricingModal
         isOpen={showImportZq}
         onClose={() => setShowImportZq(false)}

@@ -108,11 +108,16 @@ function ZqBrandProductCard({ product, brandName }: { product: ZqCachedProduct; 
   )
 }
 
-function ZqBrandItemCard({ product, brandName }: { product: ZqCachedProduct; brandName: string }) {
-  const price = zqPrice(product)
-  const comparePrice = zqComparePrice(product)
+function ZqBrandItemCard({ product, brandName, isLoggedIn = false }: { product: ZqCachedProduct; brandName: string; isLoggedIn?: boolean }) {
   const image = product.primaryImage || product.images?.[0] || '/Images/af_home_logo.png'
-  const discount = comparePrice > price ? Math.max(1, Math.round(((comparePrice - price) / comparePrice) * 100)) : 6
+
+  // SRP = public price. Member price shown only to logged-in members. No synthetic min/max "discount".
+  const srp = zqPrice(product)
+  const memberPrice = isLoggedIn ? Number(product.memberPrice ?? 0) / 100 : 0
+  const showMemberPrice = memberPrice > 0 && memberPrice < srp
+  const price = showMemberPrice ? memberPrice : srp
+  const comparePrice = showMemberPrice ? srp : null
+  const discount = showMemberPrice ? Math.max(1, Math.round(((srp - memberPrice) / srp) * 100)) : 6
 
   return (
     <Link href={`/global-product/${product.id}`} className="flex flex-col group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:border-sky-500 dark:hover:border-sky-400 transition-colors cursor-pointer">
@@ -158,8 +163,8 @@ function ZqBrandItemCard({ product, brandName }: { product: ZqCachedProduct; bra
         <Image src={image} alt={product.subject} fill className="object-cover" unoptimized />
 
         <div className="absolute top-0 left-0 flex flex-col">
-          <div className="bg-sky-500 text-white text-xs font-bold px-2 py-1">
-            Register to get {discount}% discount
+          <div className={`text-white text-xs font-bold px-2 py-1 ${showMemberPrice ? 'bg-green-500' : 'bg-sky-500'}`}>
+            {showMemberPrice ? `Member price · ${discount}% off` : 'Register to get 6% discount'}
           </div>
         </div>
 
@@ -186,7 +191,7 @@ function ZqBrandItemCard({ product, brandName }: { product: ZqCachedProduct; bra
             <span className="text-sm sm:text-base font-bold text-sky-500 dark:text-sky-400">
               {formatPeso(price)}
             </span>
-            {comparePrice > price && (
+            {comparePrice && comparePrice > price && (
               <span className="text-xs sm:text-sm text-gray-400 dark:text-gray-500 line-through">
                 {formatPeso(comparePrice)}
               </span>
@@ -1395,7 +1400,7 @@ export default function ByBrandPageMain() {
                     ))}
                     {zqBrandProducts.map((product) => (
                       viewType === 'grid' ? (
-                        <ZqBrandItemCard key={`zq-${product.id}`} product={product} brandName={selectedBrandItem.name} />
+                        <ZqBrandItemCard key={`zq-${product.id}`} product={product} brandName={selectedBrandItem.name} isLoggedIn={isLoggedIn} />
                       ) : (
                         <Link
                           key={`zq-${product.id}`}

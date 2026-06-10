@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { useCallback, useMemo, useState } from 'react'
+import { useSession } from 'next-auth/react'
 import { Package, Truck, CheckCircle, Eye } from 'lucide-react'
 import StarRating from '@/components/ui/StarRating'
 import OutlineButton from '@/components/ui/buttons/OutlineButton'
@@ -57,15 +58,29 @@ export default function GlobalProductInfo({ product, onVariantChange }: GlobalPr
     onVariantChange?.(spec)
   }
 
+  // Login state — members see member pricing, guests see SRP only
+  const { data: session, status } = useSession()
+  const role = String(session?.user?.role ?? '').toLowerCase()
+  const isLoggedIn = status === 'authenticated' && (role === 'customer' || role === '')
+
   // Price logic
   const priceMinCents = Number(product.priceMinCents ?? 0)
   const priceMaxCents = Number(product.priceMaxCents ?? 0)
-  const displayPriceCents = selectedSpec?.priceCents != null ? Number(selectedSpec.priceCents) : (priceMinCents || priceMaxCents)
+
+  // SRP = the public price (selected variant sales price, or the product range)
+  const srpCents = selectedSpec?.priceCents != null ? Number(selectedSpec.priceCents) : (priceMinCents || priceMaxCents)
+
+  // Member price — per-variant if available, else product-level. Only used when logged in.
+  const memberCents = isLoggedIn
+    ? Number(selectedSpec?.priceMemberCents ?? product.memberPrice ?? 0)
+    : 0
+  const showMemberPrice = memberCents > 0 && memberCents < srpCents
+
+  const displayPriceCents = showMemberPrice ? memberCents : srpCents
   const displayPrice = displayPriceCents / 100
 
-  const comparePriceCents = selectedSpec?.priceCents != null && priceMaxCents > Number(selectedSpec.priceCents)
-    ? priceMaxCents
-    : priceMaxCents > priceMinCents ? priceMaxCents : null
+  // Only show a struck-through price for a real member discount — no synthetic min/max "discount".
+  const comparePriceCents = showMemberPrice ? srpCents : null
   const comparePrice = comparePriceCents ? comparePriceCents / 100 : null
   const savings = comparePrice && comparePrice > displayPrice ? comparePrice - displayPrice : null
 
@@ -88,8 +103,8 @@ export default function GlobalProductInfo({ product, onVariantChange }: GlobalPr
     image: selectedSpec?.image || product.primaryImage || product.images?.[0] || '',
     images: product.images ?? [],
     price: displayPrice,
-    priceSrp: displayPrice,
-    priceMember: displayPrice,
+    priceSrp: srpCents / 100,
+    priceMember: showMemberPrice ? displayPrice : (memberCents > 0 ? memberCents / 100 : displayPrice),
     priceDp: displayPrice,
     originalPrice: comparePrice ?? undefined,
     prodpv: 0,
@@ -105,21 +120,22 @@ export default function GlobalProductInfo({ product, onVariantChange }: GlobalPr
     description: product.description ?? undefined,
     specifications: product.categoryName ?? undefined,
     variants: specs.map((spec, index) => {
-      const variantPrice = Number(spec.priceCents ?? displayPriceCents) / 100
+      const variantSrp = Number(spec.priceCents ?? displayPriceCents) / 100
+      const variantMember = spec.priceMemberCents != null ? Number(spec.priceMemberCents) / 100 : variantSrp
       return {
         id: index + 1,
         sku: spec.sku,
         name: spec.name,
-        priceSrp: variantPrice,
-        priceMember: variantPrice,
-        priceDp: variantPrice,
+        priceSrp: variantSrp,
+        priceMember: variantMember,
+        priceDp: variantSrp,
         prodpv: 0,
         qty: getSpecStock(spec),
         status: getSpecStock(spec) > 0 ? 1 : 0,
         images: spec.image ? [spec.image] : undefined,
       }
     }),
-  }), [comparePrice, currentStock, displayPrice, displayPriceCents, displaySku, getSpecStock, product, selectedSpec?.image, specs])
+  }), [comparePrice, currentStock, displayPrice, displayPriceCents, displaySku, getSpecStock, memberCents, product, selectedSpec?.image, showMemberPrice, specs, srpCents])
 
   const checkoutSelectedVariant = useMemo(
     () => checkoutProduct.variants?.find((variant) => variant.sku === selectedSpec?.sku),
@@ -231,15 +247,23 @@ export default function GlobalProductInfo({ product, onVariantChange }: GlobalPr
           )}
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="inline-flex items-center rounded-full border border-sky-200 dark:border-sky-900/50 bg-sky-50 dark:bg-sky-900/20 px-3 py-1 text-[11px] font-semibold text-sky-700 dark:text-sky-400">
-            Register to get 6% discount!
-          </span>
+          {showMemberPrice ? (
+            <span className="inline-flex items-center rounded-full border border-green-200 dark:border-green-900/50 bg-green-50 dark:bg-green-900/20 px-3 py-1 text-[11px] font-semibold text-green-700 dark:text-green-400">
+              Member price applied
+            </span>
+          ) : (
+            <span className="inline-flex items-center rounded-full border border-sky-200 dark:border-sky-900/50 bg-sky-50 dark:bg-sky-900/20 px-3 py-1 text-[11px] font-semibold text-sky-700 dark:text-sky-400">
+              Register to get 6% discount!
+            </span>
+          )}
         </div>
-        <div className="mt-2 p-3 bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-900/50 rounded-lg">
-          <p className="text-xs text-sky-800 dark:text-sky-700">
-            <span className="font-semibold">Note:</span> Sign in or create an account to enjoy exclusive member pricing at checkout.
-          </p>
-        </div>
+        {!showMemberPrice && (
+          <div className="mt-2 p-3 bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-900/50 rounded-lg">
+            <p className="text-xs text-sky-800 dark:text-sky-700">
+              <span className="font-semibold">Note:</span> Sign in or create an account to enjoy exclusive member pricing at checkout.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Product Details */}
