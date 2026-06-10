@@ -55,6 +55,7 @@ use App\Http\Controllers\MeilisearchController;
 use App\Http\Controllers\Api\MobilePaymentController;
 use App\Http\Controllers\Api\FollowerController;
 use App\Http\Controllers\Api\UserBehaviorController;
+use App\Http\Controllers\Api\QaTestStatusController;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Http\Request;
 
@@ -698,6 +699,13 @@ Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.actor'])->gr
     Route::post('/admin/supplier-chat/conversations/{conversationId}/messages/{messageId}/react', [SupplierChatController::class, 'react']);
     Route::delete('/admin/supplier-chat/conversations/{conversationId}/messages/{messageId}', [SupplierChatController::class, 'deleteMessage']);
     Route::patch('/admin/supplier-chat/conversations/{id}/status', [SupplierChatController::class, 'updateStatus']);
+});
+
+// QA Testing Board — internal tool, any authenticated admin can read/update.
+Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.actor'])->group(function () {
+    Route::get('/admin/qa/test-statuses', [QaTestStatusController::class, 'index']);
+    Route::put('/admin/qa/test-statuses', [QaTestStatusController::class, 'upsert']);
+    Route::delete('/admin/qa/test-statuses', [QaTestStatusController::class, 'reset']);
 });
 
 // Supplier Cloudinary Signing (requires supplier auth)
