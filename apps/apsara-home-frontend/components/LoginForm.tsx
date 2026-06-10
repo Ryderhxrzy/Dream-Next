@@ -84,7 +84,36 @@ function syncCommunityAuthCookie(accessToken: string | null | undefined) {
 
 function getRememberedUserEmail() {
     if (typeof window === 'undefined') return ''
-    return window.localStorage.getItem(REMEMBER_USER_EMAIL_KEY) ?? ''
+    try {
+        return window.localStorage.getItem(REMEMBER_USER_EMAIL_KEY) ?? ''
+    } catch {
+        return ''
+    }
+}
+
+function setRememberedUserEmail(value: string) {
+    if (typeof window === 'undefined') return
+
+    const nextValue = value.trim()
+    try {
+        if (nextValue) {
+            window.localStorage.setItem(REMEMBER_USER_EMAIL_KEY, nextValue)
+        } else {
+            window.localStorage.removeItem(REMEMBER_USER_EMAIL_KEY)
+        }
+    } catch {
+        // Ignore localStorage failures, such as private browsing restrictions.
+    }
+}
+
+function clearRememberedUserEmail() {
+    if (typeof window === 'undefined') return
+
+    try {
+        window.localStorage.removeItem(REMEMBER_USER_EMAIL_KEY)
+    } catch {
+        // Ignore localStorage failures, such as private browsing restrictions.
+    }
 }
 
 async function waitForAuthenticatedSession(maxAttempts = 12, delayMs = 150): Promise<boolean> {
@@ -385,6 +414,14 @@ const LoginForm = ({
     }, [])
 
     useEffect(() => {
+        if (form.rememberMe) {
+            setRememberedUserEmail(form.email)
+        } else {
+            clearRememberedUserEmail()
+        }
+    }, [form.email, form.rememberMe])
+
+    useEffect(() => {
         if (!turnstileSiteKey || !isMounted) return
 
         let cancelled = false
@@ -458,9 +495,9 @@ const LoginForm = ({
         if (result?.ok) {
             if (typeof window !== 'undefined') {
                 if (form.rememberMe) {
-                    window.localStorage.setItem(REMEMBER_USER_EMAIL_KEY, form.email.trim())
+                    setRememberedUserEmail(form.email)
                 } else {
-                    window.localStorage.removeItem(REMEMBER_USER_EMAIL_KEY)
+                    clearRememberedUserEmail()
                 }
             }
 
@@ -642,9 +679,9 @@ const LoginForm = ({
 
             if (typeof window !== 'undefined') {
                 if (form.rememberMe) {
-                    window.localStorage.setItem(REMEMBER_USER_EMAIL_KEY, identifier)
+                    setRememberedUserEmail(identifier)
                 } else {
-                    window.localStorage.removeItem(REMEMBER_USER_EMAIL_KEY)
+                    clearRememberedUserEmail()
                 }
             }
 

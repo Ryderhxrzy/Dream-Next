@@ -699,6 +699,8 @@ Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.actor'])->gr
     Route::get('/admin/qa/test-statuses', [QaTestStatusController::class, 'index']);
     Route::put('/admin/qa/test-statuses', [QaTestStatusController::class, 'upsert']);
     Route::delete('/admin/qa/test-statuses', [QaTestStatusController::class, 'reset']);
+    Route::post('/admin/qa/realtime/auth', [QaTestStatusController::class, 'realtimeAuth']);
+    Route::post('/admin/qa/editing', [QaTestStatusController::class, 'editing']);
 });
 
 // Supplier Cloudinary Signing (no auth required - Cloudinary validates the signature)
