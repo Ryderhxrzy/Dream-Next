@@ -11,7 +11,7 @@ import { Product, ZqCachedProduct, ZqCategoryMappingItem, ZqSyncProductsPayload,
 
 import { useGetAdminGeneralSettingsQuery, useUpdateAdminGeneralSettingsMutation } from "@/store/api/adminSettingsApi";
 import { useGetPublicProductBrandsQuery } from "@/store/api/productBrandsApi";
-import { useGetSuppliersQuery } from "@/store/api/suppliersApi";
+import { useGetSuppliersQuery, useGetSupplierCategoriesQuery } from "@/store/api/suppliersApi";
 import { useGetCategoriesQuery } from "@/store/api/categoriesApi";
 import ProductsToolbar from './ProductsToolbar'
 import ProductsTable from './ProductsTable'
@@ -1097,6 +1097,12 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
   const role = String(adminMe?.role ?? session?.user?.role ?? '').toLowerCase()
   const isSupplierPortal = role === 'supplier' || pathname.startsWith('/supplier')
   const linkedSupplierId = Number(adminMe?.supplier_id ?? session?.user?.supplierId ?? 0)
+  const { data: supplierCategoriesData } = useGetSupplierCategoriesQuery(linkedSupplierId, {
+    skip: !isSupplierPortal || linkedSupplierId <= 0,
+  })
+  const isSupplierServicesPortal = isSupplierPortal && (supplierCategoriesData?.categories ?? []).some(
+    (c) => c.name.toLowerCase() === 'services',
+  )
   const normalizedSupplierName = supplierName.toLowerCase().replace(/[^a-z0-9]/g, '')
   const isZqSupplierAccount = normalizedSupplierName.includes('zqsupplier')
     || normalizedSupplierName.includes('afhomeglobalsupplier')
@@ -1171,7 +1177,7 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
     () => allCategories.find(c => c.name?.toLowerCase() === 'services')?.id,
     [allCategories],
   )
-  const isServicesView = typeof catId === 'number' && catId > 0 && catId === servicesCategoryId
+  const isServicesView = isSupplierServicesPortal || (typeof catId === 'number' && catId > 0 && catId === servicesCategoryId)
   const { data: adminGeneralSettingsData } = useGetAdminGeneralSettingsQuery(undefined, { skip: isSupplierPortal })
   const manualHeaderToggle = Boolean(adminGeneralSettingsData?.settings?.enable_manual_checkout_mode)
 
@@ -1315,6 +1321,12 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
     supplierId: isSupplierPortal && linkedSupplierId > 0 ? linkedSupplierId : supplierFilterId,
     brandType: isSupplierPortal ? undefined : brandType,
   }
+  const newCountArgs = {
+    perPage: 1,
+    status: 'new',
+    supplierId: isSupplierPortal && linkedSupplierId > 0 ? linkedSupplierId : supplierFilterId,
+    brandType: isSupplierPortal ? undefined : brandType,
+  }
 
   const countQueryOpts = { refetchOnMountOrArgChange: true, pollingInterval: 2000, refetchOnFocus: true, refetchOnReconnect: true }
 
@@ -1330,6 +1342,10 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
     pendingCountArgs,
     countQueryOpts,
   )
+  const { data: adminNewCountData } = useGetProductsQuery(
+    newCountArgs,
+    countQueryOpts,
+  )
   // Keep hook calls stable — all count queries now use the authenticated endpoint (admin.or_supplier)
   useGetPublicProductsQuery(undefined, { skip: true })
   useGetPublicProductsQuery(undefined, { skip: true })
@@ -1338,6 +1354,7 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
   const activeCountData = adminActiveCountData
   const inactiveCountData = adminInactiveCountData
   const pendingCountData = adminPendingCountData
+  const newCountData = adminNewCountData
   const refetchActiveCount = refetchAdminActiveCount
   const refetchInactiveCount = refetchAdminInactiveCount
   const refetchPendingCount = refetchAdminPendingCount
@@ -2258,12 +2275,13 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
         className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-slate-800">Products</h1>
+          <h1 className="text-xl font-bold text-slate-800">{isSupplierServicesPortal ? 'Services' : 'Products'}</h1>
           <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-300">
-            {manualHeaderToggle ? 'Viewing products assigned to manual checkout.' : 'Manage your product catalog'}
+            {manualHeaderToggle ? 'Viewing products assigned to manual checkout.' : isSupplierServicesPortal ? 'Manage your service offerings' : 'Manage your product catalog'}
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          {!isSupplierServicesPortal && (
             <button
               type="button"
               onClick={handleToggleManualCheckoutMode}
@@ -2286,6 +2304,7 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
               </span>
               <span className="sm:hidden">Manual</span>
             </button>
+          )}
           {canShowZqSupplierSide ? (
             <button
               type="button"
@@ -2306,36 +2325,40 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
               <span className="sm:hidden">{zqImportButtonMobileLabel}</span>
             </button>
           ) : null}
-          <button
-            onClick={() => setShowActivityLogs(true)}
-            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m-6 9 2 2 4-4"/>
-            </svg>
-            <span className="hidden sm:inline">Upload History</span>
-          </button>
-          <button
-            onClick={handleSyncMeilisearch}
-            disabled={isSyncingMeilisearch}
-            className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-60 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-300 dark:hover:bg-amber-900/30"
-          >
-            {isSyncingMeilisearch ? (
-              <>
-                <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                </svg>
-                <span className="hidden sm:inline">Syncing...</span>
-              </>
-            ) : (
-              <>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                </svg>
-                <span className="hidden sm:inline">Sync Search</span>
-              </>
-            )}
-          </button>
+          {!isSupplierServicesPortal && (
+            <button
+              onClick={() => setShowActivityLogs(true)}
+              className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m-6 9 2 2 4-4"/>
+              </svg>
+              <span className="hidden sm:inline">Upload History</span>
+            </button>
+          )}
+          {!isSupplierServicesPortal && (
+            <button
+              onClick={handleSyncMeilisearch}
+              disabled={isSyncingMeilisearch}
+              className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-60 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-300 dark:hover:bg-amber-900/30"
+            >
+              {isSyncingMeilisearch ? (
+                <>
+                  <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                  </svg>
+                  <span className="hidden sm:inline">Syncing...</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                  </svg>
+                  <span className="hidden sm:inline">Sync Search</span>
+                </>
+              )}
+            </button>
+          )}
           <button
             onClick={() => setShowAddModal(true)}
             className="flex items-center gap-2 px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-semibold transition-colors shrink-0"
@@ -2343,18 +2366,18 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
             </svg>
-            <span className="hidden sm:inline">Add Product</span>
+            <span className="hidden sm:inline">{isSupplierServicesPortal ? 'Add Service' : 'Add Product'}</span>
           </button>
         </div>
       </motion.div>
 
       {/* ── Stats strip ── */}
-      <motion.div
+      {!isSupplierServicesPortal && <motion.div
         initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 }}
         className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3"
       >
         <StatCard
-          label="Total Products"
+          label={isSupplierServicesPortal ? 'Total Services' : 'Total Products'}
           value={zqInlineActive ? (zqSummaryData?.total ?? visibleMeta?.total ?? 0).toLocaleString() : (isLoading ? '—' : (meta?.total ?? products.length).toLocaleString())}
           colorClass="bg-teal-100"
           icon={
@@ -2364,7 +2387,7 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
           }
         />
         <StatCard
-          label="Active"
+          label={isSupplierServicesPortal ? 'Complete' : 'Active'}
           value={zqInlineActive ? (zqSummaryData?.active ?? 0).toLocaleString() : (activeCountData ? (activeCountData.meta?.total ?? 0).toLocaleString() : '—')}
           colorClass="bg-emerald-100"
           icon={
@@ -2374,7 +2397,7 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
           }
         />
         <StatCard
-          label="Inactive"
+          label={isSupplierServicesPortal ? 'In Progress' : 'Inactive'}
           value={zqInlineActive ? (zqSummaryData?.inactive ?? 0).toLocaleString() : (inactiveCountData ? (inactiveCountData.meta?.total ?? 0).toLocaleString() : '—')}
           colorClass="bg-slate-100"
           icon={
@@ -2383,20 +2406,33 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
             </svg>
           }
         />
+        {isSupplierServicesPortal ? (
+          <StatCard
+            label="New"
+            value={newCountData ? (newCountData.meta?.total ?? 0).toLocaleString() : '—'}
+            colorClass="bg-sky-100"
+            icon={
+              <svg className="w-5 h-5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
+              </svg>
+            }
+          />
+        ) : (
+          <StatCard
+            label="Pending"
+            value={pendingCountData ? ((pendingCountData.meta?.total ?? 0) + localPendingCount).toLocaleString() : localPendingCount.toLocaleString()}
+            colorClass="bg-amber-100"
+            icon={
+              <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            }
+          />
+        )}
         <StatCard
-          label="Pending"
-          value={pendingCountData ? ((pendingCountData.meta?.total ?? 0) + localPendingCount).toLocaleString() : localPendingCount.toLocaleString()}
-          colorClass="bg-amber-100"
-          icon={
-            <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-          }
-        />
-        <StatCard
-          label="Low Stock"
+          label={isSupplierServicesPortal ? 'Low Availability' : 'Low Stock'}
           value={zqInlineActive ? (zqSummaryData?.low_stock ?? lowStockCount) : (isLoading ? '—' : lowStockCount)}
-          sub="on this page (qty ≤ 5)"
+          sub={isSupplierServicesPortal ? 'on this page (slots ≤ 5)' : 'on this page (qty ≤ 5)'}
           colorClass={lowStockCount > 0 ? 'bg-orange-100' : 'bg-slate-100'}
           icon={
             <svg className={`w-5 h-5 ${lowStockCount > 0 ? 'text-orange-500' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2404,7 +2440,7 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
             </svg>
           }
         />
-      </motion.div>
+      </motion.div>}
 
       {/* ── Toolbar ── */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
@@ -2412,6 +2448,7 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
           search={search} onSearch={handleSearch}
           status={status} onStatus={handleStatus}
           catId={catId}   onCatId={handleCatId}
+          isServicesView={isSupplierServicesPortal}
           brandType={brandType} onBrandType={handleBrandType}
           showBrandFilter={!isSupplierPortal}
           resultCount={visibleMeta?.total ?? visibleProducts.length}
@@ -2421,11 +2458,11 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
           supplierOptions={!isSupplierPortal ? supplierOptions : undefined}
           selectedCount={selectedIds.length}
           onViewSelected={() => openManualSelectionModal(selectedProducts)}
-          isDuplicateFilterActive={showDuplicateOnly}
-          duplicateCount={duplicateProductIds.size}
-          onToggleDuplicateFilter={handleToggleDuplicateFilter}
-          manualCheckoutCount={manualCheckoutProducts.length}
-          onViewManualCheckout={() => openManualSelectionModal(manualCheckoutProducts, 'view')}
+          isDuplicateFilterActive={isSupplierServicesPortal ? false : showDuplicateOnly}
+          duplicateCount={isSupplierServicesPortal ? 0 : duplicateProductIds.size}
+          onToggleDuplicateFilter={isSupplierServicesPortal ? undefined : handleToggleDuplicateFilter}
+          manualCheckoutCount={isSupplierServicesPortal ? 0 : manualCheckoutProducts.length}
+          onViewManualCheckout={isSupplierServicesPortal ? undefined : () => openManualSelectionModal(manualCheckoutProducts, 'view')}
         />
       </motion.div>
 
@@ -2525,7 +2562,7 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
           )}
 
           {/* Export section */}
-          <div className="flex items-center justify-between gap-6 rounded-lg border border-slate-200 bg-white px-6 py-4 dark:border-slate-700/50 dark:bg-slate-900">
+          {!isSupplierServicesPortal && <div className="flex items-center justify-between gap-6 rounded-lg border border-slate-200 bg-white px-6 py-4 dark:border-slate-700/50 dark:bg-slate-900">
             <div className="flex items-center gap-4">
               <div className="flex h-6 w-6 items-center justify-center rounded bg-slate-100 dark:bg-slate-800">
                 <svg className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2596,7 +2633,7 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
                 </>
               )}
             </div>
-          </div>
+          </div>}
 
           <DataTableShell
             title={zqInlineActive ? 'Global Supplier Product Table' : undefined}
@@ -2690,9 +2727,10 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
         }}
         onSaved={handleProductsSaved}
         isSupplierPortal={isSupplierPortal}
+        isServicesView={isSupplierServicesPortal}
       />
       <ProductActivityLogsModal isOpen={showActivityLogs} onClose={() => setShowActivityLogs(false)} />
-      <EditProductModal product={editProduct} onClose={() => setEditProduct(null)} onSaved={handleProductsSaved}/>
+      <EditProductModal product={editProduct} onClose={() => setEditProduct(null)} onSaved={handleProductsSaved} isServicesView={isSupplierServicesPortal || (editProduct !== null && servicesCategoryId !== undefined && Number(editProduct.catid ?? 0) === servicesCategoryId)}/>
       {isSupplierPortal ? (
         <SupplierZqPricingModal
           product={editZqPricing}

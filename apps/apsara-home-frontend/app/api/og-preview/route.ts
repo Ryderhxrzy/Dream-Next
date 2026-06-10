@@ -1,6 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server'
+import net from 'net'
 
 export const runtime = 'nodejs'
+
+const BLOCKED_HOSTS = new Set([
+  'localhost',
+  'localhost.localdomain',
+  '127.0.0.1',
+  '::1',
+])
+
+const PRIVATE_IPV4_RANGES = [
+  /^0\./,
+  /^10\./,
+  /^127\./,
+  /^169\.254\./,
+  /^192\.168\./,
+  /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./,
+  /^198\.(1[89])\./,
+  /^172\.(1[6-9]|2\d|3[0-1])\./,
+]
+
+function isPrivateHostname(hostname: string): boolean {
+  const normalized = hostname.trim().toLowerCase()
+  if (!normalized) return true
+  if (BLOCKED_HOSTS.has(normalized)) return true
+
+  const ipVersion = net.isIP(normalized)
+  if (ipVersion === 4) {
+    return PRIVATE_IPV4_RANGES.some((pattern) => pattern.test(normalized))
+  }
+
+  if (ipVersion === 6) {
+    return normalized === '::1' || normalized.startsWith('::ffff:') || normalized.startsWith('fe80:') || normalized.startsWith('fc') || normalized.startsWith('fd')
+  }
+
+  return normalized.endsWith('.local') || normalized.endsWith('.internal')
+}
 
 function decodeEntities(str: string): string {
   return str
@@ -55,6 +91,10 @@ export async function GET(req: NextRequest) {
     const parsed = new URL(url)
     if (!['http:', 'https:'].includes(parsed.protocol)) {
       return NextResponse.json({ error: 'Invalid URL' }, { status: 400 })
+    }
+
+    if (isPrivateHostname(parsed.hostname)) {
+      return NextResponse.json({ error: 'Blocked URL' }, { status: 400 })
     }
 
     const res = await fetch(url, {

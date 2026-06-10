@@ -397,7 +397,7 @@ export default function ProductsTable({
   const isDeleting = (id: number) => isDeletingIds.includes(id)
   const paginationPages = useMemo(() => getPaginationPages(currentPage, totalPages), [currentPage, totalPages])
   const isZqMode = tableMode === 'zq'
-  const columnCount = isServicesView ? 8 : (isZqMode ? 12 : 14)
+  const columnCount = isServicesView ? 7 : (isZqMode ? 12 : 14)
   const allVisibleSelected = rows.length > 0 && rows.every((row) => selectedIds.includes(row.id))
 
   const sortedRows = useMemo(() => {
@@ -489,7 +489,6 @@ export default function ProductsTable({
                 </th>
                 <th className="min-w-[200px] border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">Type of Services</th>
                 <th className="min-w-[160px] border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">Contact</th>
-                <th className="min-w-[200px] border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">Description</th>
                 <th className="min-w-[120px] border-b border-slate-200 px-4 py-4 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
                   {renderSortableHeader('Status', 'status', 'center')}
                 </th>
@@ -574,8 +573,6 @@ export default function ProductsTable({
                   if (isServicesView) {
                     const serviceTypes = (product.material ?? '').split(',').map(s => s.trim()).filter(Boolean)
                     const contact = product.warranty ?? ''
-                    const rawDesc = product.description ?? ''
-                    const plainDesc = rawDesc.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
                     return (
                       <tr
                         key={product.id}
@@ -626,10 +623,6 @@ export default function ProductsTable({
                         {/* Contact */}
                         <td className="border-b border-slate-100 px-4 py-4 dark:border-slate-800/70">
                           <p className="text-sm text-slate-700 dark:text-slate-200">{contact || '—'}</p>
-                        </td>
-                        {/* Description */}
-                        <td className="border-b border-slate-100 px-4 py-4 dark:border-slate-800/70">
-                          <p className="line-clamp-2 text-xs text-slate-500 dark:text-slate-400">{plainDesc || '—'}</p>
                         </td>
                         {/* Status */}
                         <td className="min-w-[120px] whitespace-nowrap border-b border-slate-100 px-4 py-4 text-center dark:border-slate-800/70">

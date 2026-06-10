@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
@@ -332,15 +331,15 @@ export default function AssemblyGuidesPageClient({ localGuides = [], initialCate
                   )
 
                   return item.link_url ? (
-                    <Link
+                    <a
                       key={item.id}
                       href={item.link_url}
-                      target={item.link_url.startsWith('http') ? '_blank' : undefined}
-                      rel={item.link_url.startsWith('http') ? 'noreferrer' : undefined}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="block h-full"
                     >
                       {card}
-                    </Link>
+                    </a>
                   ) : (
                     <div key={item.id} className="h-full">
                       {card}

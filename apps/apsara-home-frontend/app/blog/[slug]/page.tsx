@@ -3,14 +3,13 @@ import { getBlogsContent } from '@/lib/blogs-cms'
 import { notFound } from 'next/navigation'
 
 type BlogPageProps = {
-  params: {
-    slug: string
-  }
+  params: Promise<{ slug: string }>
 }
 
 export async function generateMetadata({ params }: BlogPageProps) {
+  const { slug } = await params
   const blogs = await getBlogsContent()
-  const blog = blogs.find(b => b.slug === params.slug)
+  const blog = blogs.find(b => b.slug === slug)
 
   if (!blog) {
     return {
@@ -21,13 +20,14 @@ export async function generateMetadata({ params }: BlogPageProps) {
   return buildPageMetadata({
     title: blog.title,
     description: blog.subtitle || blog.body || '',
-    path: `/blog/${params.slug}`,
+    path: `/blog/${slug}`,
   })
 }
 
 export default async function BlogPage({ params }: BlogPageProps) {
+  const { slug } = await params
   const blogs = await getBlogsContent()
-  const blog = blogs.find(b => b.slug === params.slug)
+  const blog = blogs.find(b => b.slug === slug)
 
   if (!blog) {
     notFound()

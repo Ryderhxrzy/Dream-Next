@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation'
 import LandingPage from '@/components/landing-page/LandingPage'
 import type { Metadata } from 'next'
 import { getPartnerStorefrontBySlug } from '@/libs/partnerStorefrontServer'
@@ -67,5 +68,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function PartnerLandingPage({ params }: PageProps) {
   const { partner } = await params
+  const normalizedPartner = partner.trim().toLowerCase()
+  const storefront = await getPartnerStorefrontBySlug(normalizedPartner)
+  if (storefront) {
+    redirect(`/shop/${normalizedPartner}`)
+  }
   return <LandingPage partnerSlug={partner} />
 }

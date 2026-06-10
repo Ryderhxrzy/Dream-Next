@@ -82,7 +82,20 @@ class SupplierUploadController extends Controller
 
     public function generateCloudinarySignature(Request $request)
     {
+        $supplierUser = $this->resolveSupplierUser($request);
+        if (!$supplierUser) {
+            return response()->json([
+                'message' => 'Only suppliers can access this.',
+            ], 403);
+        }
+
         $paramsToSign = $request->input('params_to_sign', []);
+        if (!is_array($paramsToSign)) {
+            return response()->json([
+                'message' => 'Invalid signature payload.',
+            ], 422);
+        }
+
         $apiSecret = config('services.cloudinary.api_secret');
 
         if (!$apiSecret) {

@@ -11,10 +11,12 @@ import {
   BadgeCheck,
   Box,
   Building2,
+  CalendarDays,
   CheckCircle2,
   Clock3,
   Eye,
   Layers3,
+  MessageSquare,
   Settings,
   Package,
   RefreshCw,
@@ -152,6 +154,11 @@ export default function SupplierDashboardHome() {
 
   const { data: supplierCategoriesData } = useGetSupplierCategoriesQuery(effectiveSupplierId, { skip })
   const { data: supplierUsersData } = useGetSupplierUsersQuery(effectiveSupplierId, { skip })
+
+  const isServicesView = useMemo(
+    () => (supplierCategoriesData?.categories ?? []).some((c) => c.name.toLowerCase() === 'services'),
+    [supplierCategoriesData?.categories],
+  )
 
   /* ── Orders queries ──────────────────────────────────────────── */
 
@@ -296,8 +303,8 @@ export default function SupplierDashboardHome() {
             {/* Quick stat pills */}
             <div className="mt-4 flex flex-wrap gap-3">
               {[
-                { label: 'Total Orders', value: ordersLoading ? '…' : String(totalOrders) },
-                { label: 'Products', value: String(effectiveProductsData?.meta?.total ?? 0) },
+                { label: isServicesView ? 'Total Bookings' : 'Total Orders', value: ordersLoading ? '…' : String(totalOrders) },
+                { label: isServicesView ? 'Services' : 'Products', value: String(effectiveProductsData?.meta?.total ?? 0) },
                 { label: 'Categories', value: String(supplierCategoriesData?.categories?.length ?? 0) },
               ].map((s) => (
                 <div key={s.label} className="rounded-xl bg-white/15 px-4 py-2.5 backdrop-blur-sm">
@@ -310,12 +317,17 @@ export default function SupplierDashboardHome() {
 
           {/* Quick actions */}
           <div className="flex flex-wrap gap-2 lg:flex-col">
-            {[
+            {(isServicesView ? [
+              { label: 'Manage Bookings', href: '/supplier/orders', icon: CalendarDays },
+              { label: 'My Services', href: '/supplier/products', icon: MessageSquare },
+              { label: 'Reports', href: '/supplier/reports/orders', icon: TrendingUp },
+              { label: 'Company', href: '/supplier/company', icon: Building2 },
+            ] : [
               { label: 'Manage Orders', href: '/supplier/orders', icon: ShoppingCart },
               { label: 'View Products', href: '/supplier/products', icon: Package },
               { label: 'Reports', href: '/supplier/reports/orders', icon: TrendingUp },
               { label: 'Company', href: '/supplier/company', icon: Building2 },
-            ].map(({ label, href, icon: Icon }) => (
+            ]).map(({ label, href, icon: Icon }) => (
               <Link
                 key={label}
                 href={href}
@@ -334,14 +346,16 @@ export default function SupplierDashboardHome() {
           Order KPI cards
       ════════════════════════════════════════════════════════ */}
       <div>
-        <SectionLabel icon={ShoppingCart} color="text-blue-500">Order Analytics</SectionLabel>
+        <SectionLabel icon={isServicesView ? CalendarDays : ShoppingCart} color="text-blue-500">
+          {isServicesView ? 'Booking Analytics' : 'Order Analytics'}
+        </SectionLabel>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-          <StatCard label="Total Orders"     value={ordersLoading ? '—' : String(totalOrders)}                      icon={ShoppingCart}  gradient="from-blue-500 to-indigo-500"   href="/supplier/orders" />
-          <StatCard label="Pending Payment"  value={ordersLoading ? '—' : String(orderCounts?.to_pay     ?? 0)}     icon={Clock3}        gradient="from-amber-400 to-orange-500"  href="/supplier/orders?filter=to_pay"     alert={(orderCounts?.to_pay ?? 0) > 0} />
-          <StatCard label="To Ship"          value={ordersLoading ? '—' : String(orderCounts?.to_ship    ?? 0)}     icon={Package}       gradient="from-sky-400 to-cyan-500"      href="/supplier/orders?filter=to_ship" />
-          <StatCard label="To Receive"       value={ordersLoading ? '—' : String(orderCounts?.to_receive ?? 0)}     icon={Truck}         gradient="from-violet-500 to-purple-600" href="/supplier/orders?filter=to_receive" />
-          <StatCard label="Completed"        value={ordersLoading ? '—' : String(orderCounts?.completed  ?? 0)}     icon={CheckCircle2}  gradient="from-emerald-400 to-teal-500"  href="/supplier/orders?filter=completed" />
-          <StatCard label="Cancelled"        value={ordersLoading ? '—' : String(orderCounts?.cancelled  ?? 0)}     icon={XCircle}       gradient="from-rose-400 to-red-500"      href="/supplier/orders?filter=cancelled" />
+          <StatCard label={isServicesView ? 'Total Bookings'   : 'Total Orders'}     value={ordersLoading ? '—' : String(totalOrders)}                  icon={isServicesView ? CalendarDays : ShoppingCart} gradient="from-blue-500 to-indigo-500"   href="/supplier/orders" />
+          <StatCard label={isServicesView ? 'New Requests'     : 'Pending Payment'}  value={ordersLoading ? '—' : String(orderCounts?.to_pay     ?? 0)} icon={isServicesView ? MessageSquare : Clock3}       gradient="from-amber-400 to-orange-500"  href="/supplier/orders?filter=to_pay"     alert={(orderCounts?.to_pay ?? 0) > 0} />
+          <StatCard label={isServicesView ? 'In Progress'      : 'To Ship'}          value={ordersLoading ? '—' : String(orderCounts?.to_ship    ?? 0)} icon={isServicesView ? Settings : Package}           gradient="from-sky-400 to-cyan-500"      href="/supplier/orders?filter=to_ship" />
+          <StatCard label={isServicesView ? 'Awaiting'         : 'To Receive'}       value={ordersLoading ? '—' : String(orderCounts?.to_receive ?? 0)} icon={Truck}                                         gradient="from-violet-500 to-purple-600" href="/supplier/orders?filter=to_receive" />
+          <StatCard label="Completed"                                                 value={ordersLoading ? '—' : String(orderCounts?.completed  ?? 0)} icon={CheckCircle2}                                  gradient="from-emerald-400 to-teal-500"  href="/supplier/orders?filter=completed" />
+          <StatCard label="Cancelled"                                                 value={ordersLoading ? '—' : String(orderCounts?.cancelled  ?? 0)} icon={XCircle}                                       gradient="from-rose-400 to-red-500"      href="/supplier/orders?filter=cancelled" />
         </div>
       </div>
 
@@ -350,14 +364,14 @@ export default function SupplierDashboardHome() {
       ════════════════════════════════════════════════════════ */}
       <div className="grid gap-5 xl:grid-cols-[1.5fr_1fr]">
 
-        {/* Order trend — area chart */}
+        {/* Order/Booking trend — area chart */}
         <ChartCard
-          title="Order Trend"
-          subtitle="Daily orders & revenue — last 14 days"
+          title={isServicesView ? 'Booking Trend' : 'Order Trend'}
+          subtitle={isServicesView ? 'Daily bookings & revenue — last 14 days' : 'Daily orders & revenue — last 14 days'}
           loading={!mounted || trendLoading}
           empty={orderTrendData.every((d) => d.Orders === 0 && d.Revenue === 0)}
-          emptyMessage="No order history yet"
-          action={{ href: '/supplier/orders', label: 'All orders' }}
+          emptyMessage={isServicesView ? 'No booking history yet' : 'No order history yet'}
+          action={{ href: '/supplier/orders', label: isServicesView ? 'All bookings' : 'All orders' }}
         >
           <ResponsiveContainer width="100%" height={230}>
             <AreaChart data={orderTrendData} margin={{ top: 4, right: 8, left: -14, bottom: 0 }}>
@@ -383,14 +397,14 @@ export default function SupplierDashboardHome() {
           </ResponsiveContainer>
         </ChartCard>
 
-        {/* Order status trend — multi-line */}
+        {/* Order/Booking status trend — multi-line */}
         <ChartCard
-          title="Order Status Trend"
-          subtitle="Fulfillment stages over last 14 days"
+          title={isServicesView ? 'Booking Status Trend' : 'Order Status Trend'}
+          subtitle={isServicesView ? 'Progress stages over last 14 days' : 'Fulfillment stages over last 14 days'}
           loading={!mounted || trendLoading}
           empty={statusTrendEmpty}
-          emptyMessage="No order status data yet"
-          action={{ href: '/supplier/orders', label: 'View orders' }}
+          emptyMessage={isServicesView ? 'No booking status data yet' : 'No order status data yet'}
+          action={{ href: '/supplier/orders', label: isServicesView ? 'View bookings' : 'View orders' }}
         >
           <ResponsiveContainer width="100%" height={230}>
             <LineChart data={statusTrendData} margin={{ top: 4, right: 8, left: -14, bottom: 0 }}>
@@ -412,12 +426,18 @@ export default function SupplierDashboardHome() {
           Product KPI cards
       ════════════════════════════════════════════════════════ */}
       <div>
-        <SectionLabel icon={Package} color="text-sky-500">Product Overview</SectionLabel>
+        <SectionLabel icon={isServicesView ? MessageSquare : Package} color="text-sky-500">
+          {isServicesView ? 'Services Overview' : 'Product Overview'}
+        </SectionLabel>
         <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-          <StatCard label="Total Products" value={String(effectiveProductsData?.meta?.total ?? 0)}          icon={Layers3}    gradient="from-sky-400 to-blue-500"      href="/supplier/products"  description="All catalog items" />
-          <StatCard label="Active"         value={String(effectiveActiveProductsData?.meta?.total ?? 0)}    icon={TrendingUp}  gradient="from-emerald-400 to-teal-500"  href="/supplier/products"  description="Live in catalog" />
-          <StatCard label="Inactive"       value={String(effectiveInactiveProductsData?.meta?.total ?? 0)}  icon={Clock3}      gradient="from-slate-400 to-slate-500"    href="/supplier/products"  description="Needs attention" alert={(effectiveInactiveProductsData?.meta?.total ?? 0) > 0} />
-          <StatCard label="Low Stock"      value={String(lowStockCount)}                                    icon={Box}         gradient="from-amber-400 to-orange-500"  href="/supplier/inventory" description="Qty 1–5 remaining" alert={lowStockCount > 0} />
+          <StatCard label={isServicesView ? 'Total Services' : 'Total Products'} value={String(effectiveProductsData?.meta?.total ?? 0)}         icon={isServicesView ? MessageSquare : Layers3} gradient="from-sky-400 to-blue-500"      href="/supplier/products"  description={isServicesView ? 'All service listings' : 'All catalog items'} />
+          <StatCard label="Active"                                                value={String(effectiveActiveProductsData?.meta?.total ?? 0)}   icon={TrendingUp}                               gradient="from-emerald-400 to-teal-500"  href="/supplier/products"  description={isServicesView ? 'Live & bookable' : 'Live in catalog'} />
+          <StatCard label="Inactive"                                              value={String(effectiveInactiveProductsData?.meta?.total ?? 0)} icon={Clock3}                                   gradient="from-slate-400 to-slate-500"    href="/supplier/products"  description="Needs attention" alert={(effectiveInactiveProductsData?.meta?.total ?? 0) > 0} />
+          {isServicesView ? (
+            <StatCard label="Needs Update" value={String(lowStockCount)} icon={Box} gradient="from-amber-400 to-orange-500" href="/supplier/products" description="Flagged for review" alert={lowStockCount > 0} />
+          ) : (
+            <StatCard label="Low Stock"    value={String(lowStockCount)} icon={Box} gradient="from-amber-400 to-orange-500" href="/supplier/inventory" description="Qty 1–5 remaining" alert={lowStockCount > 0} />
+          )}
         </div>
       </div>
 
@@ -426,13 +446,13 @@ export default function SupplierDashboardHome() {
       ════════════════════════════════════════════════════════ */}
       <div className="grid gap-5 xl:grid-cols-[1.5fr_1fr]">
 
-        {/* Product analytics — line chart */}
+        {/* Product/Services analytics — line chart */}
         <ChartCard
-          title="Product Analytics"
-          subtitle="Current snapshot across your catalog"
+          title={isServicesView ? 'Services Analytics' : 'Product Analytics'}
+          subtitle={isServicesView ? 'Current snapshot across your services' : 'Current snapshot across your catalog'}
           loading={!mounted}
           empty={productLineData.every((d) => d.value === 0)}
-          emptyMessage="No products added yet"
+          emptyMessage={isServicesView ? 'No services added yet' : 'No products added yet'}
           action={{ href: '/supplier/products', label: 'Manage' }}
         >
           <ResponsiveContainer width="100%" height={200}>
@@ -454,10 +474,10 @@ export default function SupplierDashboardHome() {
           {/* Metric strip */}
           <div className="mt-4 grid grid-cols-4 divide-x divide-slate-100 border-t border-slate-100 pt-4 dark:divide-slate-800 dark:border-slate-800">
             {[
-              { label: 'Total',     value: effectiveProductsData?.meta?.total ?? 0,          color: '#0ea5e9' },
-              { label: 'Active',    value: effectiveActiveProductsData?.meta?.total ?? 0,    color: '#10b981' },
-              { label: 'Inactive',  value: effectiveInactiveProductsData?.meta?.total ?? 0,  color: '#94a3b8' },
-              { label: 'Low Stock', value: lowStockCount,                                     color: '#f59e0b' },
+              { label: 'Total',                                      value: effectiveProductsData?.meta?.total ?? 0,         color: '#0ea5e9' },
+              { label: 'Active',                                     value: effectiveActiveProductsData?.meta?.total ?? 0,   color: '#10b981' },
+              { label: 'Inactive',                                   value: effectiveInactiveProductsData?.meta?.total ?? 0, color: '#94a3b8' },
+              { label: isServicesView ? 'Needs Update' : 'Low Stock', value: lowStockCount,                                  color: '#f59e0b' },
             ].map((m) => (
               <div key={m.label} className="flex flex-col items-center gap-1 px-2">
                 <span className="text-xl font-bold text-slate-900 dark:text-white">{m.value}</span>
@@ -468,13 +488,13 @@ export default function SupplierDashboardHome() {
           </div>
         </ChartCard>
 
-        {/* Order status donut */}
+        {/* Order/Booking status donut */}
         <ChartCard
-          title="Order Distribution"
-          subtitle="Current orders by status"
+          title={isServicesView ? 'Booking Distribution' : 'Order Distribution'}
+          subtitle={isServicesView ? 'Current bookings by status' : 'Current orders by status'}
           loading={!mounted || ordersLoading}
           empty={donutData.length === 0}
-          emptyMessage="No orders to display"
+          emptyMessage={isServicesView ? 'No bookings to display' : 'No orders to display'}
           action={{ href: '/supplier/orders', label: 'View all' }}
         >
           <div className="flex flex-col items-center gap-4">
@@ -515,12 +535,12 @@ export default function SupplierDashboardHome() {
               <ShoppingCart className="h-4 w-4" />
             </span>
             <div>
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Recent Orders</h2>
-              <p className="text-[11px] text-slate-400 dark:text-slate-500">Latest incoming from your storefront</p>
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">{isServicesView ? 'Recent Bookings' : 'Recent Orders'}</h2>
+              <p className="text-[11px] text-slate-400 dark:text-slate-500">{isServicesView ? 'Latest booking requests from your clients' : 'Latest incoming from your storefront'}</p>
             </div>
           </div>
-          <Link href="/supplier/orders" className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:from-sky-600 hover:to-blue-700">
-            View all orders <ArrowRight className="h-3.5 w-3.5" />
+          <Link href="/supplier/orders" className="inline-flex items-center gap-1.5 rounded-xl bg-linear-to-r from-sky-500 to-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:from-sky-600 hover:to-blue-700">
+            {isServicesView ? 'View all bookings' : 'View all orders'} <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
 
@@ -531,14 +551,14 @@ export default function SupplierDashboardHome() {
             </div>
           ) : recentOrders.length === 0 ? (
             <div className="p-5">
-              <EmptyState icon={ShoppingCart} message="No orders yet" sub="Orders from your storefront will appear here" />
+              <EmptyState icon={isServicesView ? CalendarDays : ShoppingCart} message={isServicesView ? 'No bookings yet' : 'No orders yet'} sub={isServicesView ? 'Booking requests from clients will appear here' : 'Orders from your storefront will appear here'} />
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-800/50">
-                    {['Order ID', 'Product', 'Customer', 'Date', 'Status', 'Amount', 'Actions'].map((h) => (
+                    {[isServicesView ? 'Booking ID' : 'Order ID', isServicesView ? 'Service' : 'Product', 'Customer', 'Date', 'Status', 'Amount', 'Actions'].map((h) => (
                       <th key={h} className={`px-4 py-3 text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500 ${h === 'Amount' ? 'text-right' : h === 'Actions' ? 'text-center' : 'text-left'}`}>
                         {h}
                       </th>
@@ -617,26 +637,30 @@ export default function SupplierDashboardHome() {
       ════════════════════════════════════════════════════════ */}
       <div className="grid gap-5 xl:grid-cols-2">
 
-        {/* Inventory Attention */}
+        {/* Inventory Attention / Services Status */}
         <div className="rounded-2xl border border-slate-200/80 bg-white/95 shadow-sm dark:border-slate-700/50 dark:bg-slate-900">
           <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
             <div className="flex items-center gap-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-500 dark:bg-amber-500/10 dark:text-amber-400">
-                <Box className="h-4.5 w-4.5" />
+              <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${isServicesView ? 'bg-teal-50 text-teal-500 dark:bg-teal-500/10 dark:text-teal-400' : 'bg-amber-50 text-amber-500 dark:bg-amber-500/10 dark:text-amber-400'}`}>
+                {isServicesView ? <MessageSquare className="h-4.5 w-4.5" /> : <Box className="h-4.5 w-4.5" />}
               </span>
               <div>
-                <h2 className="text-sm font-bold text-slate-900 dark:text-white">Inventory Attention</h2>
-                <p className="text-[11px] text-slate-400 dark:text-slate-500">Products that may need review</p>
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white">{isServicesView ? 'Services Status' : 'Inventory Attention'}</h2>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500">{isServicesView ? 'Overview of your service listings' : 'Products that may need review'}</p>
               </div>
             </div>
-            <Link href="/supplier/inventory" className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-semibold text-slate-500 transition hover:border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:text-amber-400">
+            <Link href={isServicesView ? '/supplier/products' : '/supplier/inventory'} className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-semibold text-slate-500 transition hover:border-amber-200 hover:bg-amber-50 hover:text-amber-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:text-amber-400">
               Review
             </Link>
           </div>
           <div className="space-y-3 p-5">
-            <InventoryBar label="Active Products"   value={effectiveActiveProductsData?.meta?.total ?? 0}   total={effectiveProductsData?.meta?.total ?? 0} tone="sky"     note="Currently live" />
-            <InventoryBar label="Inactive Products" value={effectiveInactiveProductsData?.meta?.total ?? 0} total={effectiveProductsData?.meta?.total ?? 0} tone={(effectiveInactiveProductsData?.meta?.total ?? 0) > 0 ? 'rose' : 'emerald'} note={(effectiveInactiveProductsData?.meta?.total ?? 0) > 0 ? 'Not currently live' : 'All products active'} />
-            <InventoryBar label="Low Stock"         value={lowStockCount}                                    total={effectiveProductsData?.meta?.total ?? 0} tone="amber"   note={lowStockCount > 0 ? 'Needs restock' : 'No low stock alerts'} />
+            <InventoryBar label={isServicesView ? 'Active Services'   : 'Active Products'}   value={effectiveActiveProductsData?.meta?.total ?? 0}   total={effectiveProductsData?.meta?.total ?? 0} tone="sky"     note={isServicesView ? 'Currently bookable' : 'Currently live'} />
+            <InventoryBar label={isServicesView ? 'Inactive Services' : 'Inactive Products'} value={effectiveInactiveProductsData?.meta?.total ?? 0} total={effectiveProductsData?.meta?.total ?? 0} tone={(effectiveInactiveProductsData?.meta?.total ?? 0) > 0 ? 'rose' : 'emerald'} note={(effectiveInactiveProductsData?.meta?.total ?? 0) > 0 ? (isServicesView ? 'Not currently bookable' : 'Not currently live') : (isServicesView ? 'All services active' : 'All products active')} />
+            {isServicesView ? (
+              <InventoryBar label="Needs Update" value={lowStockCount} total={effectiveProductsData?.meta?.total ?? 0} tone="amber" note={lowStockCount > 0 ? 'Flagged for review' : 'All listings up to date'} />
+            ) : (
+              <InventoryBar label="Low Stock"    value={lowStockCount} total={effectiveProductsData?.meta?.total ?? 0} tone="amber" note={lowStockCount > 0 ? 'Needs restock' : 'No low stock alerts'} />
+            )}
           </div>
         </div>
 
@@ -677,20 +701,20 @@ export default function SupplierDashboardHome() {
       ════════════════════════════════════════════════════════ */}
       <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
 
-        {/* Recent Products */}
+        {/* Recent Products / My Services */}
         <div className="rounded-2xl border border-slate-200/80 bg-white/95 shadow-sm dark:border-slate-700/50 dark:bg-slate-900">
           <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
             <div className="flex items-center gap-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-50 text-sky-500 dark:bg-sky-500/10 dark:text-sky-400">
-                <Package className="h-4.5 w-4.5" />
+              <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${isServicesView ? 'bg-teal-50 text-teal-500 dark:bg-teal-500/10 dark:text-teal-400' : 'bg-sky-50 text-sky-500 dark:bg-sky-500/10 dark:text-sky-400'}`}>
+                {isServicesView ? <MessageSquare className="h-4.5 w-4.5" /> : <Package className="h-4.5 w-4.5" />}
               </span>
               <div>
-                <h2 className="text-sm font-bold text-slate-900 dark:text-white">Recent Products</h2>
-                <p className="text-[11px] text-slate-400 dark:text-slate-500">Latest from your supplier catalog</p>
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white">{isServicesView ? 'My Services' : 'Recent Products'}</h2>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500">{isServicesView ? 'Your listed services available for booking' : 'Latest from your supplier catalog'}</p>
               </div>
             </div>
-            <Link href="/supplier/products" className="inline-flex items-center gap-1.5 rounded-xl bg-linear-to-r from-violet-500 to-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:from-violet-600 hover:to-indigo-700">
-              <Settings className="h-3.5 w-3.5" /> Manage Products
+            <Link href="/supplier/products" className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-sm transition ${isServicesView ? 'bg-linear-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700' : 'bg-linear-to-r from-violet-500 to-indigo-600 hover:from-violet-600 hover:to-indigo-700'}`}>
+              <Settings className="h-3.5 w-3.5" /> {isServicesView ? 'Manage Services' : 'Manage Products'}
             </Link>
           </div>
           <div>
@@ -698,7 +722,7 @@ export default function SupplierDashboardHome() {
               <div className="p-5">
                 <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-400/20 dark:bg-amber-500/10">
                   <span className="mt-0.5 text-amber-500">⚠</span>
-                  <p className="text-sm text-amber-700 dark:text-amber-300">No products yet. Start by adding your first supplier product.</p>
+                  <p className="text-sm text-amber-700 dark:text-amber-300">{isServicesView ? 'No services yet. Start by adding your first service listing.' : 'No products yet. Start by adding your first supplier product.'}</p>
                 </div>
               </div>
             ) : (
@@ -706,15 +730,15 @@ export default function SupplierDashboardHome() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-800/50">
-                      {['Product', 'SKU', 'Quantity', 'Status', 'Updated', 'Actions'].map((h) => (
-                        <th key={h} className={`px-4 py-3 text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500 ${h === 'Actions' || h === 'Quantity' ? 'text-center' : 'text-left'}`}>
+                      {[isServicesView ? 'Service' : 'Product', 'SKU', isServicesView ? 'Slots' : 'Quantity', 'Status', 'Updated', 'Actions'].map((h) => (
+                        <th key={h} className={`px-4 py-3 text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500 ${h === 'Actions' || h === 'Quantity' || h === 'Slots' ? 'text-center' : 'text-left'}`}>
                           {h}
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {recentProducts.map((product) => <ProductRow key={product.id} product={product} />)}
+                    {recentProducts.map((product) => <ProductRow key={product.id} product={product} isServicesView={isServicesView} />)}
                   </tbody>
                 </table>
               </div>
@@ -731,7 +755,7 @@ export default function SupplierDashboardHome() {
               </span>
               <div>
                 <h2 className="text-sm font-bold text-slate-900 dark:text-white">Assigned Categories</h2>
-                <p className="text-[11px] text-slate-400 dark:text-slate-500">For product posting</p>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500">{isServicesView ? 'For service listings' : 'For product posting'}</p>
               </div>
             </div>
             <Link href="/supplier/categories" className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-semibold text-slate-500 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:text-violet-400">
@@ -742,7 +766,7 @@ export default function SupplierDashboardHome() {
             {(supplierCategoriesData?.categories?.length ?? 0) === 0 ? (
               <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-400/20 dark:bg-amber-500/10">
                 <span className="mt-0.5 text-amber-500">⚠</span>
-                <p className="text-sm text-amber-700 dark:text-amber-300">No categories assigned yet. Ask the admin team.</p>
+                <p className="text-sm text-amber-700 dark:text-amber-300">{isServicesView ? 'No categories assigned yet. Ask the admin team.' : 'No categories assigned yet. Ask the admin team.'}</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -974,7 +998,7 @@ function SnapCard({ label, value, icon: Icon, accent = 'sky' }: { label: string;
   )
 }
 
-function ProductRow({ product }: { product: Product }) {
+function ProductRow({ product, isServicesView = false }: { product: Product; isServicesView?: boolean }) {
   const active = Number(product.status) === 1 || Number(product.status) === 2
   return (
     <tr className="group transition hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
@@ -985,14 +1009,14 @@ function ProductRow({ product }: { product: Product }) {
               <Image src={product.image} alt={product.name} fill className="object-cover" />
             </div>
           ) : (
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-sky-100 to-cyan-100 dark:from-sky-500/15 dark:to-cyan-500/10">
-              <Package className="h-5 w-5 text-sky-600 dark:text-sky-400" />
+            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${isServicesView ? 'bg-linear-to-br from-teal-100 to-cyan-100 dark:from-teal-500/15 dark:to-cyan-500/10' : 'bg-linear-to-br from-sky-100 to-cyan-100 dark:from-sky-500/15 dark:to-cyan-500/10'}`}>
+              {isServicesView ? <MessageSquare className="h-5 w-5 text-teal-600 dark:text-teal-400" /> : <Package className="h-5 w-5 text-sky-600 dark:text-sky-400" />}
             </div>
           )}
           <div className="min-w-0">
-            <p className="max-w-[220px] truncate text-[13px] font-bold text-slate-800 dark:text-slate-100">{product.name}</p>
+            <p className="max-w-55 truncate text-[13px] font-bold text-slate-800 dark:text-slate-100">{product.name}</p>
             {product.description ? (
-              <p className="max-w-[220px] truncate text-[11px] text-slate-400 dark:text-slate-500">{product.description}</p>
+              <p className="max-w-55 truncate text-[11px] text-slate-400 dark:text-slate-500">{product.description}</p>
             ) : null}
           </div>
         </div>
@@ -1003,7 +1027,7 @@ function ProductRow({ product }: { product: Product }) {
         </span>
       </td>
       <td className="px-4 py-3.5 text-center text-[13px] font-semibold text-slate-700 dark:text-slate-200">
-        {Number(product.qty ?? 0)}
+        {isServicesView ? (Number(product.qty ?? 0) > 0 ? Number(product.qty) : '—') : Number(product.qty ?? 0)}
       </td>
       <td className="px-4 py-3.5">
         <span className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1 text-[10px] font-bold uppercase tracking-wide ${active ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'}`}>
@@ -1017,7 +1041,7 @@ function ProductRow({ product }: { product: Product }) {
       <td className="px-4 py-3.5 text-center">
         <Link
           href="/supplier/products"
-          className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-violet-100 hover:text-violet-600 dark:hover:bg-violet-500/10 dark:hover:text-violet-400"
+          className={`inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition ${isServicesView ? 'hover:bg-teal-100 hover:text-teal-600 dark:hover:bg-teal-500/10 dark:hover:text-teal-400' : 'hover:bg-violet-100 hover:text-violet-600 dark:hover:bg-violet-500/10 dark:hover:text-violet-400'}`}
         >
           <Eye className="h-4 w-4" />
         </Link>

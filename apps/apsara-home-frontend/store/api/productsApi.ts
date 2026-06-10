@@ -952,6 +952,18 @@ export const normalizeProduct = (input: Product & Record<string, unknown>): Prod
             : (typeof input.rating === 'number'
               ? input.rating
               : (typeof input.rating === 'string' ? Number(input.rating) : undefined)))),
+    material:
+      typeof input.material === 'string'
+        ? input.material
+        : (typeof (input as Record<string, unknown>).pd_material === 'string' ? (input as Record<string, unknown>).pd_material as string : null),
+    warranty:
+      typeof input.warranty === 'string'
+        ? input.warranty
+        : (typeof (input as Record<string, unknown>).pd_warranty === 'string' ? (input as Record<string, unknown>).pd_warranty as string : null),
+    description:
+      typeof input.description === 'string'
+        ? input.description
+        : (typeof (input as Record<string, unknown>).pd_description === 'string' ? (input as Record<string, unknown>).pd_description as string : null),
     createdAt: typeof input.createdAt === 'string' ? input.createdAt : (typeof (input as Record<string, unknown>).created_at === 'string' ? (input as Record<string, unknown>).created_at as string : null),
     updatedAt: typeof input.updatedAt === 'string' ? input.updatedAt : (typeof (input as Record<string, unknown>).updated_at === 'string' ? (input as Record<string, unknown>).updated_at as string : null),
   }

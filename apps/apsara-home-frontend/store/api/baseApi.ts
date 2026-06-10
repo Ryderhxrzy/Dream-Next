@@ -181,6 +181,6 @@ export const baseApi = createApi({
     refetchOnMountOrArgChange: false,
     refetchOnFocus: false,
     refetchOnReconnect: false,
-    tagTypes: ['User', 'AccountSnapshot', 'Members', 'Products', 'Categories', 'Brands', 'Orders', 'Encashment', 'AdminUsers', 'AdminNotifications', 'CustomerNotifications', 'SupplierNotifications', 'PushNotifications', 'Wishlist', 'WebPages', 'Suppliers', 'InteriorRequests', 'AdminSettings', 'ExpenseCategories', 'Expenses', 'Cart', 'SearchHistory', 'ActivityLogs', 'ShippingRates', 'WebstoreRequests'],
+    tagTypes: ['User', 'AccountSnapshot', 'Members', 'Products', 'Categories', 'Brands', 'Orders', 'Encashment', 'AdminUsers', 'AdminNotifications', 'CustomerNotifications', 'SupplierNotifications', 'PushNotifications', 'Wishlist', 'WebPages', 'Suppliers', 'InteriorRequests', 'AdminSettings', 'ExpenseCategories', 'Expenses', 'Cart', 'SearchHistory', 'ActivityLogs', 'ShippingRates', 'WebstoreRequests', 'ServiceInquiries'],
     endpoints: () => ({}),
 })

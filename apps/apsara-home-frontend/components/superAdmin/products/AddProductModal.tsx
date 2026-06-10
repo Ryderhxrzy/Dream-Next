@@ -29,6 +29,7 @@ interface AddProductModalProps {
   onClose: () => void
   onSaved?: (createdProduct?: Product) => void
   isSupplierPortal?: boolean
+  isServicesView?: boolean
 }
 
 interface FormState {
@@ -949,7 +950,7 @@ const scrollToFirstErrorField = (container: HTMLElement | null) => {
 
 /* --- main component --------------------------------------- */
 
-export default function AddProductModal({ isOpen, onClose, onSaved, isSupplierPortal = false }: AddProductModalProps) {
+export default function AddProductModal({ isOpen, onClose, onSaved, isSupplierPortal = false, isServicesView = false }: AddProductModalProps) {
   const [entryMode, setEntryMode] = useState<'manual' | 'csv' | 'api'>('manual')
   const [form,         setForm]         = useState<FormState>(defaultForm)
   const [errors,       setErrors]       = useState<Errors>({})
@@ -1476,7 +1477,7 @@ export default function AddProductModal({ isOpen, onClose, onSaved, isSupplierPo
     const e: Errors = {}
     if (!form.pd_name.trim())                                              e.pd_name      = 'Product name is required'
     if (!form.pd_catid.trim())                                             e.pd_catid     = 'Category is required'
-    if (!form.pd_price_srp.trim() || isNaN(Number(form.pd_price_srp)))    e.pd_price_srp = 'Valid SRP price is required'
+    if (!isServicesView && (!form.pd_price_srp.trim() || isNaN(Number(form.pd_price_srp)))) e.pd_price_srp = 'Valid SRP price is required'
     if (form.pd_price_dp  && isNaN(Number(form.pd_price_dp)))             e.pd_price_dp  = 'Must be a valid number'
     if (form.pd_price_member && isNaN(Number(form.pd_price_member)))      e.pd_price_member = 'Must be a valid number'
     if (form.pd_reversed_pv_multiplier && isNaN(Number(form.pd_reversed_pv_multiplier))) e.pd_prodpv = 'Multiplier must be a valid number'
@@ -1608,7 +1609,7 @@ export default function AddProductModal({ isOpen, onClose, onSaved, isSupplierPo
       pd_room_type:   form.pd_room_type.trim() ? Number(form.pd_room_type) : undefined,
       pd_brand_type:  form.pd_brand_type.trim() ? Number(form.pd_brand_type) : undefined,
       pd_manual_checkout_enabled: form.pd_manual_checkout_enabled || undefined,
-      pd_price_srp:   Number(form.pd_price_srp),
+      pd_price_srp:   isServicesView ? 0 : Number(form.pd_price_srp),
       pd_description: form.pd_description.trim() || undefined,
       pd_specifications: nextSpecifications,
       pd_price_dp:    form.pd_price_dp  ? Number(form.pd_price_dp)  : undefined,
@@ -1631,7 +1632,7 @@ export default function AddProductModal({ isOpen, onClose, onSaved, isSupplierPo
       pd_bestseller:  form.pd_bestseller,
       pd_salespromo:  form.pd_salespromo,
       pd_verified:    form.pd_verified,
-      pd_status:      isSupplierPortal ? 3 : Number(form.pd_status),
+      pd_status:      isServicesView ? 1 : isSupplierPortal ? 3 : Number(form.pd_status),
       pd_image:           finalImageUrls[0] ?? undefined,
       pd_images:          finalImageUrls.length > 0 ? finalImageUrls : undefined,
       pd_variants:        hasVariants ? expandedVariants : [],
@@ -1759,11 +1760,12 @@ export default function AddProductModal({ isOpen, onClose, onSaved, isSupplierPo
                     </svg>
                   </div>
                   <div>
-                    <h2 className="text-sm font-bold leading-none text-slate-800 dark:text-slate-100 sm:text-base">Add New Product</h2>
+                    <h2 className="text-sm font-bold leading-none text-slate-800 dark:text-slate-100 sm:text-base">{isServicesView ? 'Add New Service' : 'Add New Product'}</h2>
                     <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">Choose manual entry, bulk CSV import, or API import.</p>
                   </div>
                 </div>
                   <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                  {!isServicesView && (
                   <div className="flex max-w-full flex-wrap rounded-xl border border-slate-200 bg-slate-100 p-1 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                     {[
                       { value: 'manual', label: 'Manual' },
@@ -1785,6 +1787,7 @@ export default function AddProductModal({ isOpen, onClose, onSaved, isSupplierPo
                       </Button>
                     ))}
                   </div>
+                  )}
                   <button
                     type="button"
                     onClick={handleClose}
@@ -3320,7 +3323,7 @@ export default function AddProductModal({ isOpen, onClose, onSaved, isSupplierPo
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
                         </svg>
-                        Add Product
+                        {isServicesView ? 'Add Service' : 'Add Product'}
                       </>
                     )}
                   </Button>

@@ -93,6 +93,13 @@ class AppServiceProvider extends ServiceProvider
             Limit::perMinute(20)->by($req->ip())
         );
 
+        // Cart mutations are user-driven but can be spammed to generate DB/cache load.
+        RateLimiter::for('cart-write', fn (Request $req) =>
+            Limit::perMinute(30)->by(
+                ($req->user()?->id ? 'u:' . $req->user()->id . '|' : '') . 'ip:' . $req->ip()
+            )
+        );
+
         // Inbound webhooks from external services
         RateLimiter::for('webhooks', fn (Request $req) =>
             Limit::perMinute(30)->by($req->ip())

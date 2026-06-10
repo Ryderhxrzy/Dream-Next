@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useSession } from 'next-auth/react'
 import { showErrorToast, showSuccessToast } from '@/libs/toast'
 import {
   type SupplierFulfillmentStatus,
@@ -10,6 +11,7 @@ import {
   usePushSupplierOrderToZqMutation,
   useUpdateSupplierOrderFulfillmentMutation,
 } from '@/store/api/supplierOrdersApi'
+import { useGetSupplierCategoriesQuery } from '@/store/api/suppliersApi'
 
 
 /* ─── Sparkline paths (decorative, 7-point normalised to 60×28 viewBox) ─── */
@@ -106,6 +108,16 @@ const ORDER_FILTER_OPTIONS = [
   { value: 'return',     label: 'Return' },
 ]
 
+const INQUIRY_FILTER_OPTIONS = [
+  { value: 'all',        label: 'All Inquiries' },
+  { value: 'to_pay',     label: 'Pending' },
+  { value: 'to_ship',    label: 'In Progress' },
+  { value: 'to_receive', label: 'Awaiting' },
+  { value: 'completed',  label: 'Completed' },
+  { value: 'cancelled',  label: 'Cancelled' },
+  { value: 'return',     label: 'Rejected' },
+]
+
 const FULFILLMENT_OPTIONS: Array<{ value: SupplierFulfillmentStatus; label: string }> = [
   { value: 'processing',       label: 'Processing' },
   { value: 'packed',           label: 'Packed' },
@@ -115,6 +127,19 @@ const FULFILLMENT_OPTIONS: Array<{ value: SupplierFulfillmentStatus; label: stri
   { value: 'cancelled',        label: 'Cancelled' },
   { value: 'returned',         label: 'Returned' },
 ]
+
+const INQUIRY_FULFILLMENT_OPTIONS: Array<{ value: SupplierFulfillmentStatus; label: string }> = [
+  { value: 'processing',       label: 'Reviewing' },
+  { value: 'packed',           label: 'Confirmed' },
+  { value: 'shipped',          label: 'Ongoing' },
+  { value: 'out_for_delivery', label: 'Completing' },
+  { value: 'delivered',        label: 'Completed' },
+  { value: 'cancelled',        label: 'Cancelled' },
+  { value: 'returned',         label: 'Rejected' },
+]
+
+const SERVICES_STAT_LABELS = ['Total Inquiries', 'Total New', 'In Progress', 'Awaiting', 'Completed', 'Cancelled', 'Rejected']
+const SERVICES_VISIBLE_KEYS = ['total', 'toPay', 'completed']
 
 /* avatar gradient colours cycling by index */
 const AVATAR_GRADIENTS = [
@@ -194,14 +219,14 @@ function ChangePill({ value }: { value: number }) {
 }
 
 /* ── Status chips matching the screenshot ── */
-function ApprovalChip({ status }: { status: string }) {
+function ApprovalChip({ status, isServicesView = false }: { status: string; isServicesView?: boolean }) {
   if (status === 'approved') {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-600 ring-1 ring-emerald-200">
         <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        Approved
+        {isServicesView ? 'Accepted' : 'Approved'}
       </span>
     )
   }
@@ -211,7 +236,7 @@ function ApprovalChip({ status }: { status: string }) {
         <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        Rejected
+        {isServicesView ? 'Declined' : 'Rejected'}
       </span>
     )
   }
@@ -220,12 +245,23 @@ function ApprovalChip({ status }: { status: string }) {
       <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
-      Pending
+      {isServicesView ? 'Pending Review' : 'Pending'}
     </span>
   )
 }
 
-function FulfillmentChip({ status }: { status: string }) {
+const INQUIRY_FULFILLMENT_LABELS: Record<string, string> = {
+  pending:          'New',
+  processing:       'Reviewing',
+  packed:           'Confirmed',
+  shipped:          'Ongoing',
+  out_for_delivery: 'Completing',
+  delivered:        'Completed',
+  cancelled:        'Cancelled',
+  returned:         'Rejected',
+}
+
+function FulfillmentChip({ status, isServicesView = false }: { status: string; isServicesView?: boolean }) {
   const map: Record<string, { dot: string; text: string; bg: string; ring: string }> = {
     pending:          { dot: 'bg-slate-400',   text: 'text-slate-500',   bg: 'bg-slate-50',   ring: 'ring-slate-200' },
     processing:       { dot: 'bg-blue-500',    text: 'text-blue-600',    bg: 'bg-blue-50',    ring: 'ring-blue-200' },
@@ -237,10 +273,13 @@ function FulfillmentChip({ status }: { status: string }) {
     returned:         { dot: 'bg-orange-500',  text: 'text-orange-600',  bg: 'bg-orange-50',  ring: 'ring-orange-200' },
   }
   const s = map[status] ?? map.pending
+  const label = isServicesView
+    ? (INQUIRY_FULFILLMENT_LABELS[status] ?? status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))
+    : status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ${s.bg} ${s.text} ${s.ring}`}>
       <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
-      {status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+      {label}
     </span>
   )
 }
@@ -255,6 +294,19 @@ function Spinner() {
 }
 
 export default function SupplierOrdersPage({ initialData }: { initialData?: SupplierOrdersResponse }) {
+  const { data: session } = useSession()
+  const supplierId = Number(session?.user?.supplierId ?? 0)
+  const { data: supplierCategoriesData } = useGetSupplierCategoriesQuery(supplierId, {
+    skip: !session || supplierId <= 0,
+  })
+  const isServicesView = useMemo(
+    () => (supplierCategoriesData?.categories ?? []).some((c) => c.name.toLowerCase() === 'services'),
+    [supplierCategoriesData?.categories],
+  )
+
+  const activeFilterOptions  = isServicesView ? INQUIRY_FILTER_OPTIONS  : ORDER_FILTER_OPTIONS
+  const activeFulfillOptions = isServicesView ? INQUIRY_FULFILLMENT_OPTIONS : FULFILLMENT_OPTIONS
+
   const [search, setSearch]           = useState('')
   const [debouncedSearch, setDebounced] = useState('')
   const [filter, setFilter]           = useState('all')
@@ -327,75 +379,113 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
     finally { setBusyId(null) }
   }
 
-  const activeLabel = ORDER_FILTER_OPTIONS.find(o => o.value === filter)?.label ?? 'All Orders'
+  const activeLabel = activeFilterOptions.find(o => o.value === filter)?.label ?? (isServicesView ? 'All Inquiries' : 'All Orders')
 
   return (
     <div className="space-y-5 pb-10">
 
       {/* ── Stat Cards ── */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {STAT_CONFIG.slice(0, 4).map(stat => {
-          const count  = counts[stat.key as keyof typeof counts]
-          const active = filter === stat.filterVal
-          return (
-            <button
-              key={stat.key}
-              type="button"
-              onClick={() => setFilter(stat.filterVal)}
-              className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white p-5 text-left shadow-sm ring-1 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
-                active ? 'ring-2 ring-indigo-400 shadow-md -translate-y-0.5' : 'ring-slate-100 hover:ring-slate-200'
-              }`}
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${stat.iconBg} ${stat.iconColor} mb-3`}>
-                    {stat.icon}
+      {isServicesView ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {STAT_CONFIG.filter(stat => SERVICES_VISIBLE_KEYS.includes(stat.key)).map((stat) => {
+            const count  = counts[stat.key as keyof typeof counts]
+            const active = filter === stat.filterVal
+            const idx    = STAT_CONFIG.findIndex(s => s.key === stat.key)
+            const label  = SERVICES_STAT_LABELS[idx]
+            return (
+              <button
+                key={stat.key}
+                type="button"
+                onClick={() => setFilter(stat.filterVal)}
+                className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white p-5 text-left shadow-sm ring-1 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
+                  active ? 'ring-2 ring-indigo-400 shadow-md -translate-y-0.5' : 'ring-slate-100 hover:ring-slate-200'
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${stat.iconBg} ${stat.iconColor} mb-3`}>
+                      {stat.icon}
+                    </div>
+                    <p className="text-sm font-medium text-slate-500">{label}</p>
+                    <p className="mt-0.5 text-3xl font-bold text-slate-900">{count}</p>
                   </div>
-                  <p className="text-sm font-medium text-slate-500">{stat.label}</p>
-                  <p className="mt-0.5 text-3xl font-bold text-slate-900">{count}</p>
+                  <Sparkline path={SPARKLINES[stat.key]} color={stat.lineColor} />
                 </div>
-                <Sparkline path={SPARKLINES[stat.key]} color={stat.lineColor} />
-              </div>
-              <div className="mt-4 flex items-center gap-1.5">
-                <ChangePill value={count > 0 ? 100 : 0} />
-                <span className="text-[11px] text-slate-400">vs yesterday</span>
-              </div>
-            </button>
-          )
-        })}
-      </div>
+                <div className="mt-4 flex items-center gap-1.5">
+                  <ChangePill value={count > 0 ? 100 : 0} />
+                  <span className="text-[11px] text-slate-400">vs yesterday</span>
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {STAT_CONFIG.slice(0, 4).map((stat) => {
+              const count  = counts[stat.key as keyof typeof counts]
+              const active = filter === stat.filterVal
+              return (
+                <button
+                  key={stat.key}
+                  type="button"
+                  onClick={() => setFilter(stat.filterVal)}
+                  className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white p-5 text-left shadow-sm ring-1 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
+                    active ? 'ring-2 ring-indigo-400 shadow-md -translate-y-0.5' : 'ring-slate-100 hover:ring-slate-200'
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${stat.iconBg} ${stat.iconColor} mb-3`}>
+                        {stat.icon}
+                      </div>
+                      <p className="text-sm font-medium text-slate-500">{stat.label}</p>
+                      <p className="mt-0.5 text-3xl font-bold text-slate-900">{count}</p>
+                    </div>
+                    <Sparkline path={SPARKLINES[stat.key]} color={stat.lineColor} />
+                  </div>
+                  <div className="mt-4 flex items-center gap-1.5">
+                    <ChangePill value={count > 0 ? 100 : 0} />
+                    <span className="text-[11px] text-slate-400">vs yesterday</span>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {STAT_CONFIG.slice(4).map(stat => {
-          const count  = counts[stat.key as keyof typeof counts]
-          const active = filter === stat.filterVal
-          return (
-            <button
-              key={stat.key}
-              type="button"
-              onClick={() => setFilter(stat.filterVal)}
-              className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white p-5 text-left shadow-sm ring-1 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
-                active ? 'ring-2 ring-indigo-400 shadow-md -translate-y-0.5' : 'ring-slate-100 hover:ring-slate-200'
-              }`}
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${stat.iconBg} ${stat.iconColor} mb-3`}>
-                    {stat.icon}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {STAT_CONFIG.slice(4).map((stat) => {
+              const count  = counts[stat.key as keyof typeof counts]
+              const active = filter === stat.filterVal
+              return (
+                <button
+                  key={stat.key}
+                  type="button"
+                  onClick={() => setFilter(stat.filterVal)}
+                  className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white p-5 text-left shadow-sm ring-1 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
+                    active ? 'ring-2 ring-indigo-400 shadow-md -translate-y-0.5' : 'ring-slate-100 hover:ring-slate-200'
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${stat.iconBg} ${stat.iconColor} mb-3`}>
+                        {stat.icon}
+                      </div>
+                      <p className="text-sm font-medium text-slate-500">{stat.label}</p>
+                      <p className="mt-0.5 text-3xl font-bold text-slate-900">{count}</p>
+                    </div>
+                    <Sparkline path={SPARKLINES[stat.key]} color={stat.lineColor} />
                   </div>
-                  <p className="text-sm font-medium text-slate-500">{stat.label}</p>
-                  <p className="mt-0.5 text-3xl font-bold text-slate-900">{count}</p>
-                </div>
-                <Sparkline path={SPARKLINES[stat.key]} color={stat.lineColor} />
-              </div>
-              <div className="mt-4 flex items-center gap-1.5">
-                <ChangePill value={0} />
-                <span className="text-[11px] text-slate-400">vs yesterday</span>
-              </div>
-            </button>
-          )
-        })}
-      </div>
+                  <div className="mt-4 flex items-center gap-1.5">
+                    <ChangePill value={0} />
+                    <span className="text-[11px] text-slate-400">vs yesterday</span>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </>
+      )}
 
       {/* ── Order Fulfillment Panel ── */}
       <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
@@ -403,8 +493,8 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
         {/* Panel header */}
         <div className="flex flex-col gap-3 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-lg font-bold text-slate-900">Order Fulfillment</h2>
-            <p className="text-sm text-slate-400">Manage and track supplier orders</p>
+            <h2 className="text-lg font-bold text-slate-900">{isServicesView ? 'Inquiry Management' : 'Order Fulfillment'}</h2>
+            <p className="text-sm text-slate-400">{isServicesView ? 'Manage and respond to service inquiries' : 'Manage and track supplier orders'}</p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -417,7 +507,7 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                 type="text"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Search orders..."
+                placeholder={isServicesView ? 'Search inquiries…' : 'Search orders...'}
                 className="h-10 w-48 rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 transition-all focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100"
               />
             </div>
@@ -439,7 +529,7 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
               </button>
               {filterOpen && (
                 <div className="absolute right-0 top-12 z-20 min-w-[160px] overflow-hidden rounded-xl border border-slate-100 bg-white py-1 shadow-lg">
-                  {ORDER_FILTER_OPTIONS.map(opt => (
+                  {activeFilterOptions.map(opt => (
                     <button
                       key={opt.value}
                       type="button"
@@ -461,7 +551,7 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
         {isLoading && !initialData ? (
           <div className="flex items-center justify-center gap-2.5 py-20 text-slate-400">
             <Spinner />
-            <span className="text-sm">Loading orders…</span>
+            <span className="text-sm">{isServicesView ? 'Loading inquiries…' : 'Loading orders…'}</span>
           </div>
         ) : isError ? (
           <div className="flex flex-col items-center gap-2 py-20 text-center">
@@ -470,7 +560,7 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9.303 3.376c.866 1.5-.217 3.374-1.948 3.374H4.645c-1.73 0-2.813-1.874-1.948-3.374l7.5-13c.866-1.5 3.032-1.5 3.898 0l7.206 12.374zM12 15.75h.007v.008H12v-.008z" />
               </svg>
             </div>
-            <p className="text-sm font-semibold text-slate-700">Failed to load orders</p>
+            <p className="text-sm font-semibold text-slate-700">{isServicesView ? 'Failed to load inquiries' : 'Failed to load orders'}</p>
           </div>
         ) : orders.length === 0 ? (
           <div className="flex flex-col items-center gap-3 border-t border-slate-100 py-20 text-center">
@@ -480,7 +570,7 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
               </svg>
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-700">No orders found</p>
+              <p className="text-sm font-semibold text-slate-700">{isServicesView ? 'No inquiries found' : 'No orders found'}</p>
               <p className="mt-0.5 text-xs text-slate-400">Try adjusting your search or filter.</p>
             </div>
           </div>
@@ -489,7 +579,10 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-y border-slate-100 bg-slate-50/60">
-                  {['Order', 'Date', 'Supplier', 'Amount', 'Status', 'Actions'].map(col => (
+                  {(isServicesView
+                    ? ['Inquiry', 'Date', 'Client', 'Amount', 'Status', 'Actions']
+                    : ['Order', 'Date', 'Supplier', 'Amount', 'Status', 'Actions']
+                  ).map(col => (
                     <th key={col} className="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                       {col}
                     </th>
@@ -538,9 +631,13 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                                 {order.product_name}
                               </p>
                               <p className="mt-0.5 text-[11px] text-slate-400">
-                                Qty {order.quantity}
-                                {order.checkout_id && (
-                                  <span className="ml-1.5">• #{order.checkout_id.slice(-8)}</span>
+                                {isServicesView ? (
+                                  order.checkout_id && <span>Ref #{order.checkout_id.slice(-8)}</span>
+                                ) : (
+                                  <>
+                                    Qty {order.quantity}
+                                    {order.checkout_id && <span className="ml-1.5">• #{order.checkout_id.slice(-8)}</span>}
+                                  </>
                                 )}
                               </p>
                             </div>
@@ -583,8 +680,8 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                         {/* Status */}
                         <td className="px-6 py-4">
                           <div className="flex flex-col gap-1.5">
-                            <ApprovalChip status={approvalStatus} />
-                            <FulfillmentChip status={fulfillStatus} />
+                            <ApprovalChip status={approvalStatus} isServicesView={isServicesView} />
+                            <FulfillmentChip status={fulfillStatus} isServicesView={isServicesView} />
                           </div>
                         </td>
 
@@ -596,18 +693,18 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                                 type="button"
                                 disabled={busy}
                                 onClick={() => handleApprove(order.id)}
-                                className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-4 text-xs font-semibold text-white shadow-sm shadow-emerald-500/20 transition-all hover:from-emerald-600 hover:to-teal-600 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-linear-to-r from-emerald-500 to-teal-500 px-4 text-xs font-semibold text-white shadow-sm shadow-emerald-500/20 transition-all hover:from-emerald-600 hover:to-teal-600 disabled:cursor-not-allowed disabled:opacity-60"
                               >
                                 {busy ? <Spinner /> : (
                                   <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                   </svg>
                                 )}
-                                Approve
+                                {isServicesView ? 'Accept' : 'Approve'}
                               </button>
                             )}
 
-                            {approvalStatus === 'approved' && !order.zq_platform_order_id && (
+                            {!isServicesView && approvalStatus === 'approved' && !order.zq_platform_order_id && (
                               <button
                                 type="button"
                                 disabled={busy}
@@ -643,13 +740,13 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                           <td colSpan={6} className="border-t border-slate-100 bg-slate-50/70 px-6 py-5">
                             <div className="grid gap-6 sm:grid-cols-3">
 
-                              {/* Order details */}
+                              {/* Inquiry / Order details */}
                               <div>
-                                <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">Order Details</p>
+                                <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">{isServicesView ? 'Inquiry Details' : 'Order Details'}</p>
                                 <dl className="space-y-2">
                                   {((): Array<[string, string]> => {
                                     const rows: Array<[string, string]> = [
-                                      ['Checkout ID', order.checkout_id || `#${order.id}`],
+                                      [isServicesView ? 'Reference' : 'Checkout ID', order.checkout_id || `#${order.id}`],
                                       ['Date', `${fmtDate(order.created_at)} ${fmtTime(order.created_at)}`],
                                       ['Amount', formatMoney(order.amount)],
                                     ]
@@ -664,11 +761,11 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                                 </dl>
                               </div>
 
-                              {/* Customer info */}
+                              {/* Client / Customer info */}
                               <div>
-                                <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">Customer</p>
+                                <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">{isServicesView ? 'Client' : 'Customer'}</p>
                                 <div className="flex items-center gap-2.5">
-                                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${AVATAR_GRADIENTS[0]} text-sm font-bold text-white shadow-sm`}>
+                                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-linear-to-br ${AVATAR_GRADIENTS[0]} text-sm font-bold text-white shadow-sm`}>
                                     {getInitials(order.customer_name)}
                                   </div>
                                   <div>
@@ -684,9 +781,9 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                                 )}
                               </div>
 
-                              {/* Fulfillment */}
+                              {/* Status Update / Fulfillment */}
                               <div>
-                                <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">Fulfillment</p>
+                                <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">{isServicesView ? 'Status Update' : 'Fulfillment'}</p>
                                 {canManage ? (
                                   <div className="space-y-2.5">
                                     <div className="relative">
@@ -696,7 +793,7 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                                         onChange={e => setFulfillDrafts(cur => ({ ...cur, [order.id]: e.target.value as SupplierFulfillmentStatus }))}
                                         className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-3 pr-8 text-sm font-medium text-slate-700 outline-none transition-all focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 disabled:opacity-60"
                                       >
-                                        {FULFILLMENT_OPTIONS.map(o => (
+                                        {activeFulfillOptions.map(o => (
                                           <option key={o.value} value={o.value}>{o.label}</option>
                                         ))}
                                       </select>
@@ -711,9 +808,9 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                                       className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-2.5 text-sm font-semibold text-white transition-all hover:bg-indigo-700 disabled:opacity-60"
                                     >
                                       {busy ? <Spinner /> : null}
-                                      Save Status
+                                      {isServicesView ? 'Update Status' : 'Save Status'}
                                     </button>
-                                    {order.tracking_no && (
+                                    {!isServicesView && order.tracking_no && (
                                       <div className="rounded-xl bg-white p-3 ring-1 ring-slate-200">
                                         <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Tracking</p>
                                         <p className="mt-1 font-mono text-[12px] font-semibold text-slate-800">{order.tracking_no}</p>
@@ -726,7 +823,7 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                                     <svg className="h-4 w-4 shrink-0 text-amber-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
                                     </svg>
-                                    <p className="text-[11px] font-medium text-amber-700">Approve the order first to manage fulfillment.</p>
+                                    <p className="text-[11px] font-medium text-amber-700">{isServicesView ? 'Accept the inquiry first to update its status.' : 'Approve the order first to manage fulfillment.'}</p>
                                   </div>
                                 )}
                               </div>

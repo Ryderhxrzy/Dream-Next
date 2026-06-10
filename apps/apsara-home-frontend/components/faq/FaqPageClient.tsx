@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import TopBar from '@/components/layout/TopBar';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/landing-page/Footer';
+import type { Category } from '@/store/api/categoriesApi';
 
 const FAQ_CATEGORIES = [
   {
@@ -107,7 +108,7 @@ function ChevronIcon({ isOpen }: { isOpen: boolean }) {
   );
 }
 
-export default function FaqPageClient() {
+export default function FaqPageClient({ initialCategories = [] }: { initialCategories?: Category[] }) {
   const [openKey, setOpenKey] = useState<string | null>('0-0');
   const [activeCategory, setActiveCategory] = useState<number>(0);
 
@@ -118,7 +119,7 @@ export default function FaqPageClient() {
   return (
     <>
       <TopBar />
-      <Navbar />
+      <Navbar initialCategories={initialCategories} />
 
       <main className="min-h-screen bg-slate-50 dark:bg-slate-950">
         {/* Hero */}

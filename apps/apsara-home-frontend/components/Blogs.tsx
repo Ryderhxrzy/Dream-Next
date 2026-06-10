@@ -85,14 +85,10 @@ const Blogs = ({ initialCategories }: BlogsProps) => {
                   )}
                   <div className="mt-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-3 text-xs text-slate-500 dark:text-gray-400">
                     {post.date && <span>{post.date}</span>}
-                    {post.slug ? (
+                    {post.slug && (
                       <a href={`/blog/${post.slug}`} className="font-semibold text-cyan-700 dark:text-cyan-400 hover:text-cyan-800 dark:hover:text-cyan-300">
                         Read article
                       </a>
-                    ) : (
-                      <button type="button" className="font-semibold text-cyan-700 dark:text-cyan-400 hover:text-cyan-800 dark:hover:text-cyan-300">
-                        Read article
-                      </button>
                     )}
                   </div>
                 </div>

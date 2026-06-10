@@ -17,6 +17,15 @@ use Illuminate\Support\Facades\Cache;
 
 class CartController extends Controller
 {
+    private function availableStock(object $product, ?object $variant = null): int
+    {
+        if ($variant) {
+            return max(0, (int) ($variant->pv_qty ?? 0));
+        }
+
+        return max(0, (int) ($product->pd_qty ?? 0));
+    }
+
     public function addToCart(Request $request)
     {
         try {
@@ -105,7 +114,10 @@ class CartController extends Controller
                 return response()->json(['message' => 'Product price not available'], 400);
             }
             
-            $totalPrice = $unitPrice * $validated['quantity'];
+            $availableStock = $this->availableStock($product, $variant);
+            if ($availableStock <= 0) {
+                return response()->json(['message' => 'This product is out of stock.'], 422);
+            }
 
             // Check if item already exists in cart
             $existingCartItem = DB::table('tbl_add_to_cart')
@@ -118,9 +130,24 @@ class CartController extends Controller
                 ->where('crt_status', 'active')
                 ->first();
 
+            $requestedQuantity = (int) $validated['quantity'];
+            $currentQuantity = (int) ($existingCartItem->crt_quantity ?? 0);
+            $newQuantity = $existingCartItem
+                ? $currentQuantity + $requestedQuantity
+                : $requestedQuantity;
+
+            if ($newQuantity > $availableStock) {
+                return response()->json([
+                    'message' => 'Requested quantity exceeds available stock.',
+                    'available_stock' => $availableStock,
+                    'current_quantity' => $currentQuantity,
+                ], 422);
+            }
+
+            $totalPrice = $unitPrice * $newQuantity;
+
             if ($existingCartItem) {
                 // Update quantity if item exists
-                $newQuantity = $existingCartItem->crt_quantity + $validated['quantity'];
                 $newTotalPrice = $unitPrice * $newQuantity;
 
                 DB::table('tbl_add_to_cart')
@@ -138,7 +165,7 @@ class CartController extends Controller
                     'crt_customer_id' => $customer->c_userid,
                     'crt_product_id' => $validated['product_id'],
                     'crt_variant_id' => $validated['variant_id'] ?? null,
-                    'crt_quantity' => $validated['quantity'],
+                    'crt_quantity' => $newQuantity,
                     'crt_selected_color' => $validated['selected_color'] ?? null,
                     'crt_selected_size' => $validated['selected_size'] ?? null,
                     'crt_selected_type' => $validated['selected_type'] ?? null,
@@ -275,8 +302,6 @@ class CartController extends Controller
                         continue;
                     }
 
-                    $totalPrice = $unitPrice * $item['quantity'];
-
                     $existingCartItem = DB::table('tbl_add_to_cart')
                         ->where('crt_customer_id', $customer->c_userid)
                         ->where('crt_product_id', $item['product_id'])
@@ -287,8 +312,35 @@ class CartController extends Controller
                         ->where('crt_status', 'active')
                         ->first();
 
+                    $availableStock = $this->availableStock($product, $variant);
+                    if ($availableStock <= 0) {
+                        $failedItems[] = [
+                            'index' => $index,
+                            'product_id' => $item['product_id'],
+                            'message' => 'This product is out of stock.',
+                        ];
+                        continue;
+                    }
+
+                    $requestedQuantity = (int) $item['quantity'];
+                    $currentQuantity = (int) ($existingCartItem->crt_quantity ?? 0);
+                    $newQuantity = $existingCartItem
+                        ? $currentQuantity + $requestedQuantity
+                        : $requestedQuantity;
+
+                    if ($newQuantity > $availableStock) {
+                        $failedItems[] = [
+                            'index' => $index,
+                            'product_id' => $item['product_id'],
+                            'message' => 'Requested quantity exceeds available stock.',
+                            'available_stock' => $availableStock,
+                        ];
+                        continue;
+                    }
+
+                    $totalPrice = $unitPrice * $newQuantity;
+
                     if ($existingCartItem) {
-                        $newQuantity = $existingCartItem->crt_quantity + $item['quantity'];
                         $newTotalPrice = $unitPrice * $newQuantity;
 
                         DB::table('tbl_add_to_cart')
@@ -305,7 +357,7 @@ class CartController extends Controller
                             'crt_customer_id' => $customer->c_userid,
                             'crt_product_id' => $item['product_id'],
                             'crt_variant_id' => $item['variant_id'] ?? null,
-                            'crt_quantity' => $item['quantity'],
+                            'crt_quantity' => $newQuantity,
                             'crt_selected_color' => $item['selected_color'] ?? null,
                             'crt_selected_size' => $item['selected_size'] ?? null,
                             'crt_selected_type' => $item['selected_type'] ?? null,
@@ -324,6 +376,7 @@ class CartController extends Controller
                         'product_id' => $item['product_id'],
                         'cart_item' => $cartItem,
                         'message' => 'Added successfully',
+                        'available_stock' => $availableStock,
                     ];
 
                     Log::info('Bulk Cart: Item added', [
@@ -411,6 +464,7 @@ class CartController extends Controller
                 'tbl_product.pd_price_dp as product_price_dp',
                 'tbl_product.pd_price_member as product_price_member',
                 'tbl_product.pd_prodpv as product_prodpv',
+                'tbl_product.pd_qty as product_stock',
                 'tbl_product_brand.pb_name as brand_name',
                 'tbl_product_variant.pv_id as variant_id',
                 'tbl_product_variant.pv_name as variant_name',
@@ -418,11 +472,31 @@ class CartController extends Controller
                 'tbl_product_variant.pv_price_dp as variant_price_dp',
                 'tbl_product_variant.pv_price_member as variant_price_member',
                 'tbl_product_variant.pv_prodpv as variant_prodpv',
+                'tbl_product_variant.pv_qty as variant_stock',
                 'tbl_product_variant.pv_color as variant_color',
                 'tbl_product_variant.pv_size as variant_size',
                 'tbl_product_variant.pv_status as variant_status'
             )
-            ->get();
+            ->get()
+            ->map(function ($item) {
+                $availableStock = (int) ($item->variant_id ? ($item->variant_stock ?? 0) : ($item->product_stock ?? 0));
+                $currentQuantity = (int) ($item->crt_quantity ?? 0);
+
+                if ($availableStock > 0 && $currentQuantity > $availableStock) {
+                    DB::table('tbl_add_to_cart')
+                        ->where('crt_id', $item->crt_id)
+                        ->update([
+                            'crt_quantity' => $availableStock,
+                            'crt_total_price' => ((float) ($item->crt_unit_price ?? 0)) * $availableStock,
+                            'crt_updated_at' => now(),
+                        ]);
+
+                    $item->crt_quantity = $availableStock;
+                    $item->crt_total_price = ((float) ($item->crt_unit_price ?? 0)) * $availableStock;
+                }
+
+                return $item;
+            });
 
         $totalAmount = $cartItems->sum('crt_total_price');
         $totalItems = $cartItems->sum('crt_quantity');
@@ -456,12 +530,42 @@ class CartController extends Controller
             return response()->json(['message' => 'Cart item not found'], 404);
         }
 
-        $newTotalPrice = $cartItem->crt_unit_price * $validated['quantity'];
+        $product = DB::table('tbl_product')
+            ->where('pd_id', $cartItem->crt_product_id)
+            ->first();
+
+        if (!$product) {
+            return response()->json(['message' => 'Product not found'], 404);
+        }
+
+        $variant = null;
+        if (!empty($cartItem->crt_variant_id)) {
+            $variant = ProductVariant::query()
+                ->where('pv_id', $cartItem->crt_variant_id)
+                ->where('pv_pdid', $cartItem->crt_product_id)
+                ->where('pv_status', 1)
+                ->first();
+        }
+
+        $availableStock = $this->availableStock($product, $variant);
+        if ($availableStock <= 0) {
+            return response()->json(['message' => 'This product is out of stock.'], 422);
+        }
+
+        $requestedQuantity = (int) $validated['quantity'];
+        if ($requestedQuantity > $availableStock) {
+            return response()->json([
+                'message' => 'Requested quantity exceeds available stock.',
+                'available_stock' => $availableStock,
+            ], 422);
+        }
+
+        $newTotalPrice = $cartItem->crt_unit_price * $requestedQuantity;
 
         DB::table('tbl_add_to_cart')
             ->where('crt_id', $id)
             ->update([
-                'crt_quantity' => $validated['quantity'],
+                'crt_quantity' => $requestedQuantity,
                 'crt_total_price' => $newTotalPrice,
                 'crt_updated_at' => now(),
             ]);
@@ -537,8 +641,19 @@ class CartController extends Controller
                 }
             }
 
+            $availableStock = $this->availableStock($product, isset($variant) ? $variant : null);
+            if ($availableStock <= 0) {
+                return response()->json(['message' => 'This product is out of stock.'], 422);
+            }
+
             // Use current quantity if not provided
             $newQuantity = $validated['quantity'] ?? $cartItem->crt_quantity;
+            if ($newQuantity > $availableStock) {
+                return response()->json([
+                    'message' => 'Requested quantity exceeds available stock.',
+                    'available_stock' => $availableStock,
+                ], 422);
+            }
             $newTotalPrice = $unitPrice * $newQuantity;
 
             // Prepare update data

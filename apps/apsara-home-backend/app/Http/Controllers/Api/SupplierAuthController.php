@@ -332,7 +332,7 @@ class SupplierAuthController extends Controller
             }
         }
 
-        // Fuzzy match if exact match fails
+        // Fuzzy match if exact match fails — require at least 80% similarity to avoid false positives
         $bestScore = 0;
         $bestBrand = null;
         foreach ($brands as $brand) {
@@ -350,7 +350,7 @@ class SupplierAuthController extends Controller
             }
         }
 
-        return $bestBrand;
+        return ($bestScore >= 80) ? $bestBrand : null;
     }
 
     private function isLoginTwoFactorEnabled(): bool

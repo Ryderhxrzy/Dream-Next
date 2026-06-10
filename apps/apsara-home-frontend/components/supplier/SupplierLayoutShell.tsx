@@ -10,6 +10,7 @@ import { Bell, LogOut, Menu, MoonStar, Sparkles, SunMedium } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import SupplierSidebar from './SupplierSidebar'
 import { clearAccessTokenCache } from '@/store/api/baseApi'
+import { useGetSupplierMeQuery } from '@/store/api/suppliersApi'
 import { sendSupplierPresenceHeartbeat } from '@/libs/supplierChat'
 import { useGetSupplierOrderNotificationsQuery, type SupplierNotificationItem } from '@/store/api/supplierOrdersApi'
 import { useSupplierRealtimeOrders } from '@/hooks/useSupplierRealtimeOrders'
@@ -46,7 +47,9 @@ export default function SupplierLayoutShell({ children }: { children: React.Reac
 
   const accessToken = (session?.user as { accessToken?: string } | undefined)?.accessToken
   const supplierId = (session?.user as { supplierId?: number | null } | undefined)?.supplierId
-  const supplierLogo = (session?.user as { supplierLogo?: string | null } | undefined)?.supplierLogo || null
+
+  const { data: supplierMe } = useGetSupplierMeQuery(undefined, { skip: status !== 'authenticated' })
+  const supplierLogo = supplierMe?.supplier_logo ?? null
 
   const supplierName = session?.user?.supplierName || session?.user?.name || 'Supplier Account'
   const isMainSupplier = Boolean(session?.user?.isMainSupplier)

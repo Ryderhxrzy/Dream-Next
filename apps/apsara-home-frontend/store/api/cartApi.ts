@@ -23,6 +23,8 @@ export interface CartItem {
   product_prodpv?: number
   brand_name?: string
   product_manual_checkout_enabled?: boolean
+  product_stock?: number
+  variant_stock?: number
 }
 
 export interface CartResponse {
@@ -89,15 +91,22 @@ const normalizeCartItem = (rowInput: unknown): CartItem | null => {
   const product_manual_checkout_enabled = Boolean(
     row.product_manual_checkout_enabled ?? row.manualCheckoutEnabled ?? row.pd_manual_checkout_enabled,
   )
+  const product_stock = asNumber(row.product_stock) ?? undefined
+  const variant_stock = asNumber(row.variant_stock) ?? undefined
+  const availableStock = variant_stock ?? product_stock
 
   if (!crt_id || !crt_product_id) return null
+
+  const normalizedQuantity = availableStock && availableStock > 0
+    ? Math.min(crt_quantity, availableStock)
+    : crt_quantity
 
   return {
     crt_id,
     crt_customer_id,
     crt_product_id,
     crt_variant_id,
-    crt_quantity,
+    crt_quantity: normalizedQuantity,
     crt_selected_color,
     crt_selected_size,
     crt_selected_type,
@@ -114,6 +123,8 @@ const normalizeCartItem = (rowInput: unknown): CartItem | null => {
     product_prodpv,
     brand_name,
     product_manual_checkout_enabled,
+    product_stock,
+    variant_stock,
   }
 }
 

@@ -1520,6 +1520,20 @@ function FeedbackBanner({ type, message }: { type: 'success' | 'error'; message:
   )
 }
 
+function localizeSetupUrl(url: string): string {
+  if (typeof window === 'undefined') return url
+  if (window.location.hostname !== 'localhost') return url
+  try {
+    const parsed = new URL(url)
+    parsed.protocol = window.location.protocol
+    parsed.hostname = window.location.hostname
+    parsed.port = window.location.port
+    return parsed.toString()
+  } catch {
+    return url
+  }
+}
+
 function SetupLinkCard({
   setupUrl,
   delivery,
@@ -1528,10 +1542,11 @@ function SetupLinkCard({
   delivery: 'link_only' | 'email_and_link'
 }) {
   const [copied, setCopied] = useState(false)
+  const displayUrl = localizeSetupUrl(setupUrl)
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(setupUrl)
+      await navigator.clipboard.writeText(displayUrl)
       setCopied(true)
       window.setTimeout(() => setCopied(false), 1800)
     } catch {
@@ -1550,7 +1565,7 @@ function SetupLinkCard({
           : 'No email was sent. Copy this setup link and send it manually to your supplier user.'}
       </p>
       <div className="mt-3 break-all rounded-2xl border border-cyan-100 bg-white px-4 py-3 text-sm text-slate-700 dark:border-cyan-500/20 dark:bg-slate-950 dark:text-slate-200">
-        {setupUrl}
+        {displayUrl}
       </div>
       <button
         type="button"

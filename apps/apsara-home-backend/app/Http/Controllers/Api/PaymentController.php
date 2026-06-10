@@ -811,9 +811,10 @@ class PaymentController extends Controller
         }
 
         $eventType = strtolower((string) data_get($payload, 'data.attributes.type', ''));
-        $paidEventTypes = ['checkout_session.payment.paid', 'checkout_session.paid', 'payment.paid'];
+        $paidEventTypes   = ['checkout_session.payment.paid', 'checkout_session.paid', 'payment.paid'];
+        $failedEventTypes = ['checkout_session.payment.failed', 'payment.failed'];
 
-        if (!in_array($eventType, $paidEventTypes, true)) {
+        if (!in_array($eventType, $paidEventTypes, true) && !in_array($eventType, $failedEventTypes, true)) {
             Log::info('PayMongo webhook ignored: unsupported event type.', [
                 'event_type' => $eventType ?: 'unknown',
             ]);
@@ -839,6 +840,25 @@ class PaymentController extends Controller
                 'processed' => false,
                 'reason' => 'missing_checkout_id',
             ], 202);
+        }
+
+        if (in_array($eventType, $failedEventTypes, true)) {
+            CheckoutHistory::where('ch_checkout_id', $checkoutId)
+                ->update(['ch_status' => 'failed']);
+
+            OrderNotification::updateStatusForCheckout($checkoutId, 'cancelled');
+
+            Log::info('PayMongo webhook processed: payment failed.', [
+                'checkout_id' => $checkoutId,
+                'event_type'  => $eventType,
+            ]);
+
+            return response()->json([
+                'received'    => true,
+                'processed'   => true,
+                'checkout_id' => $checkoutId,
+                'status'      => 'failed',
+            ]);
         }
 
         $attrs = $this->extractCheckoutAttributesFromWebhook($payload);
