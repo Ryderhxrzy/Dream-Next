@@ -168,6 +168,11 @@ export default function CartDrawer() {
     router.push(targetPath)
   }
 
+  const isAtMaxStock = (item: CartItem) =>
+    typeof item.availableStock === 'number' &&
+    item.availableStock > 0 &&
+    item.quantity >= item.availableStock
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -342,7 +347,8 @@ export default function CartDrawer() {
             event.stopPropagation()
             updateQuantity(item.id, item.quantity + 1)
           }}
-          className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-lg font-bold leading-none transition-colors hover:border-sky-400 hover:text-sky-500 dark:hover:border-sky-500 dark:hover:text-sky-400 text-slate-700 dark:text-gray-300"
+          disabled={isAtMaxStock(item)}
+          className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-lg font-bold leading-none transition-colors hover:border-sky-400 hover:text-sky-500 dark:hover:border-sky-500 dark:hover:text-sky-400 text-slate-700 dark:text-gray-300 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:text-slate-700 dark:disabled:hover:border-gray-600 dark:disabled:hover:text-gray-300"
         >
           +
         </button>

@@ -48,6 +48,7 @@ use App\Http\Controllers\Api\ShippingRateController;
 use App\Http\Controllers\Api\PasskeyAuthController;
 use App\Http\Controllers\Api\ProductViewerController;
 use App\Http\Controllers\Api\SearchController;
+use App\Http\Controllers\Api\ServiceInquiryController;
 use App\Http\Controllers\Api\TotpController;
 use App\Http\Controllers\Api\GeminiController;
 use App\Http\Controllers\MeilisearchController;
@@ -56,23 +57,14 @@ use App\Http\Controllers\Api\FollowerController;
 use App\Http\Controllers\Api\UserBehaviorController;
 use App\Http\Controllers\Api\QaTestStatusController;
 use Illuminate\Support\Facades\Broadcast;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 
 Route::middleware(['auth:sanctum'])->post('/broadcasting/auth', function (Request $request) {
-    Log::info('Broadcast auth request', [
-        'authorization' => $request->header('authorization'),
-        'channel_name' => $request->channel_name,
-        'socket_id' => $request->socket_id,
-        'user_id' => optional($request->user())->c_userid,
-        'user' => optional($request->user())->toArray(),
-    ]);
-
     return Broadcast::auth($request);
 });
 
 // Public endpoints - no authentication required
-Route::get('/public/profile/{username}', [AuthController::class, 'publicProfile']);
+Route::middleware('throttle:public')->get('/public/profile/{username}', [AuthController::class, 'publicProfile']);
 
 // Public auth routes
 Route::prefix('auth')->group(function () {
@@ -99,9 +91,11 @@ Route::prefix('auth')->group(function () {
         Route::post('/verify-sms-otp', [AuthController::class, 'verifySmsOtp']);
     });
     // Low-risk read/check endpoints
-    Route::get('/register/check-email', [AuthController::class, 'checkEmailAvailability']);
-    Route::get('/register/check-username', [AuthController::class, 'checkUsernameAvailability']);
-    Route::get('/register/check-referral', [AuthController::class, 'checkReferralAvailability']);
+    Route::middleware('throttle:auth')->group(function () {
+        Route::get('/register/check-email', [AuthController::class, 'checkEmailAvailability']);
+        Route::get('/register/check-username', [AuthController::class, 'checkUsernameAvailability']);
+        Route::get('/register/check-referral', [AuthController::class, 'checkReferralAvailability']);
+    });
     Route::post('/register/verify-otp', [AuthController::class, 'verifyRegistrationOtp']);
     Route::post('/login/mfa/status', [AuthController::class, 'loginMfaStatus']);
     Route::get('/reset-password/{token}', [AuthController::class, 'showResetToken']);
@@ -163,8 +157,10 @@ Route::middleware('throttle:checkout')->group(function () {
     Route::post('/payments/checkout-session', [PaymentController::class, 'createCheckoutSession']);
     Route::post('/payments/validate-voucher', [PaymentController::class, 'validateVoucher']);
 });
-Route::get('/payments/checkout-session/{checkoutId}', [PaymentController::class, 'verifyCheckoutSession']);
-Route::get('/orders/track', [PaymentController::class, 'trackGuestOrder']);
+Route::middleware('throttle:checkout')->group(function () {
+    Route::get('/payments/checkout-session/{checkoutId}', [PaymentController::class, 'verifyCheckoutSession']);
+    Route::get('/orders/track', [PaymentController::class, 'trackGuestOrder']);
+});
 
 // AI support is expensive — same strict limit as auth
 Route::middleware('throttle:auth')->post('/ai-support', [\App\Http\Controllers\Api\AiSupportController::class, 'handle']);
@@ -225,7 +221,7 @@ Route::get('/home/shop/brands', [ProductBrandController::class, 'shopByBrands'])
 Route::get('/product-brands', [ProductBrandController::class, 'publicIndex']);
 Route::get('/product-brands/with-products', [ProductBrandController::class, 'showAllWithProducts']);
 Route::get('/product-brands/{id}/profile', [ProductBrandController::class, 'profile']);
-Route::get('/product-brands/{id}/debug', [ProductBrandController::class, 'debugBrandImages']);
+Route::middleware(['auth:sanctum', 'admin.actor'])->get('/product-brands/{id}/debug', [ProductBrandController::class, 'debugBrandImages']);
 
 Route::middleware('throttle:public')->group(function () {
     Route::get('/address/regions', [AddressController::class, 'regions']);
@@ -236,6 +232,9 @@ Route::middleware('throttle:public')->group(function () {
     Route::post('/products/{id}/viewers/heartbeat', [ProductViewerController::class, 'heartbeat']);
 });
 
+
+// Service Inquiries — public (guests allowed; auth optional for customer_id linking)
+Route::middleware('throttle:public')->post('/service-inquiries', [ServiceInquiryController::class, 'store']);
 
 // Protected routes (requires Sanctum token)
 Route::middleware(['auth:sanctum', 'customer.actor'])->group(function () {
@@ -316,13 +315,15 @@ Route::middleware(['auth:sanctum', 'customer.actor'])->group(function () {
     Route::get('/wishlist', [WishlistController::class, 'index']);
     Route::post('/wishlist', [WishlistController::class, 'store']);
     Route::delete('/wishlist/{productId}', [WishlistController::class, 'destroy']);
-    Route::post('/cart/add', [CartController::class, 'addToCart']);
-    Route::post('/cart/bulk-add', [CartController::class, 'bulkAddToCart']);
+    Route::middleware('throttle:cart-write')->group(function () {
+        Route::post('/cart/add', [CartController::class, 'addToCart']);
+        Route::post('/cart/bulk-add', [CartController::class, 'bulkAddToCart']);
+        Route::put('/cart/{id}', [CartController::class, 'updateCartItem']);
+        Route::put('/cart/{id}/variant', [CartController::class, 'updateCartItemVariant']);
+        Route::delete('/cart/{id}', [CartController::class, 'removeCartItem']);
+        Route::delete('/cart', [CartController::class, 'clearCart']);
+    });
     Route::get('/cart', [CartController::class, 'getCart']);
-    Route::put('/cart/{id}', [CartController::class, 'updateCartItem']);
-    Route::put('/cart/{id}/variant', [CartController::class, 'updateCartItemVariant']);
-    Route::delete('/cart/{id}', [CartController::class, 'removeCartItem']);
-    Route::delete('/cart', [CartController::class, 'clearCart']);
     // Search endpoints
     Route::get('/search/live', [SearchController::class, 'liveSearch']);
     Route::get('/search/recommendations', [SearchController::class, 'recommendations']);
@@ -390,6 +391,8 @@ Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_a
     Route::get('/admin/members/kyc', [AdminMemberKycController::class, 'index']);
     Route::patch('/admin/members/kyc/{id}/approve', [AdminMemberKycController::class, 'approve']);
     Route::patch('/admin/members/kyc/{id}/reject', [AdminMemberKycController::class, 'reject']);
+    Route::get('/admin/service-inquiries', [ServiceInquiryController::class, 'adminIndex']);
+    Route::patch('/admin/service-inquiries/{id}', [ServiceInquiryController::class, 'adminUpdateStatus']);
     Route::get('/admin/inquiries/username-changes', [AdminInquiryController::class, 'usernameChangeRequests']);
     Route::patch('/admin/inquiries/username-changes/{id}/approve', [AdminInquiryController::class, 'approveUsernameChange']);
     Route::patch('/admin/inquiries/username-changes/{id}/reject', [AdminInquiryController::class, 'rejectUsernameChange']);
@@ -682,6 +685,10 @@ Route::middleware(['auth:sanctum', 'supplier.actor'])->group(function () {
     Route::get('/supplier/push-notifications/history', [SupplierPushNotificationController::class, 'getHistory']);
     Route::get('/supplier/push-notifications/available-customers', [SupplierPushNotificationController::class, 'getAvailableCustomers']);
 
+    // Service Inquiries
+    Route::get('/supplier/service-inquiries', [ServiceInquiryController::class, 'index']);
+    Route::patch('/supplier/service-inquiries/{id}', [ServiceInquiryController::class, 'updateStatus']);
+
 });
 
 Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.actor'])->group(function () {
@@ -701,8 +708,8 @@ Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.actor'])->gr
     Route::delete('/admin/qa/test-statuses', [QaTestStatusController::class, 'reset']);
 });
 
-// Supplier Cloudinary Signing (no auth required - Cloudinary validates the signature)
-Route::post('/supplier/cloudinary-sign', [SupplierUploadController::class, 'generateCloudinarySignature']);
+// Supplier Cloudinary Signing (requires supplier auth)
+Route::middleware(['auth:sanctum', 'supplier.actor'])->post('/supplier/cloudinary-sign', [SupplierUploadController::class, 'generateCloudinarySignature']);
 
 // Leads: same strict limit as auth to prevent spam submissions
 Route::prefix('leads')->middleware('throttle:auth')->group(function () {

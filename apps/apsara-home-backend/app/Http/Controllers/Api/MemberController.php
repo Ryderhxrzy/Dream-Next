@@ -1790,7 +1790,7 @@ class MemberController extends Controller
         ]);
 
         $channelName = (string) $validated['channel_name'];
-        $expectedChannel = 'private-customer.' . $customer->c_userid;
+        $expectedChannel = 'private-customer-' . $customer->c_userid;
 
         if ($channelName !== $expectedChannel) {
             return response()->json(['message' => 'Forbidden channel.'], 403);

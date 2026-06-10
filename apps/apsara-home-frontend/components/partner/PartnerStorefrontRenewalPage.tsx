@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { AlertTriangle, Calendar, CheckCircle2, ChevronDown, Clock3, FileText, Loader2, Lock, RotateCcw, ShieldCheck, Star, Store, Users } from 'lucide-react'
@@ -256,13 +256,27 @@ export default function PartnerStorefrontRenewalPage() {
 
   useEffect(() => {
     const paymentStatus = String(searchParams.get('webstore_payment') ?? '').toLowerCase()
-    const checkoutId = String(searchParams.get('checkout_id') ?? '').trim()
+    const checkoutIdFromUrl = String(searchParams.get('checkout_id') ?? '').trim()
+    const checkoutIdFromStorage = typeof window !== 'undefined' ? (window.localStorage.getItem(LAST_CHECKOUT_KEY) ?? '') : ''
+    const checkoutId = checkoutIdFromUrl || checkoutIdFromStorage
     if (paymentStatus !== 'success' || !checkoutId) return
+    if (!selectedStorefrontSlug) return
     if (finalizingCheckoutRef.current === checkoutId) return
     finalizingCheckoutRef.current = checkoutId
 
     const finalize = async () => {
       try {
+        let draft: { selectedPlan?: PlanKey; selectedBillingOption?: BillingOption; selectedPaymentMethod?: PaymentMethod; renewalEnabled?: boolean; storefrontKey?: string } | null = null
+        try {
+          const raw = typeof window !== 'undefined' ? window.localStorage.getItem(DRAFT_STORAGE_KEY) : null
+          draft = raw ? (JSON.parse(raw) as typeof draft) : null
+        } catch { draft = null }
+
+        const effectivePlan = draft?.selectedPlan ?? selectedPlan
+        const effectiveBillingOption = draft?.selectedBillingOption ?? selectedBillingOption
+        const effectivePaymentMethod = draft?.selectedPaymentMethod ?? selectedPaymentMethod
+        const effectiveRenewalEnabled = typeof draft?.renewalEnabled === 'boolean' ? draft.renewalEnabled : renewalEnabled
+
         const paymentMode = (() => {
           const raw = String(searchParams.get('payment_mode') ?? '').toLowerCase()
           return raw === 'test' || raw === 'live' ? (raw as PaymentMode) : resolvePaymentMode()
@@ -271,6 +285,10 @@ export default function PartnerStorefrontRenewalPage() {
         let verified = await verifyPaymentSession({ checkoutId, paymentMode }).unwrap()
         if (!verified?.payment_reference && paymentMode) {
           verified = await verifyPaymentSession({ checkoutId }).unwrap()
+        }
+
+        if (!verified.is_paid) {
+          throw new Error('Payment has not been completed. Please complete the payment before proceeding.')
         }
 
         const proofUrl = String(verified?.proof_url ?? '').trim()
@@ -284,15 +302,15 @@ export default function PartnerStorefrontRenewalPage() {
           email: String(adminMe?.email ?? '').trim() || '',
           slug_name: selectedStorefrontSlug,
           display_name: selectedStorefrontName,
-          plan: planMap[selectedPlan],
-          billing_option: selectedBillingOption,
-          payment_method: selectedPaymentMethod,
+          plan: planMap[effectivePlan],
+          billing_option: effectiveBillingOption,
+          payment_method: effectivePaymentMethod,
           receipt_urls: [proofUrl],
           checkout_id: verified.checkout_id ?? checkoutId,
           payment_reference: verified.payment_reference || verified.payment_intent_id || verified.checkout_id || checkoutId,
           payment_intent_id: verified.payment_intent_id || null,
           accepted_terms: true,
-          renewal_enabled: renewalEnabled,
+          renewal_enabled: effectiveRenewalEnabled,
         }
 
         await submitWebstoreRequest(payload).unwrap()
@@ -348,15 +366,6 @@ export default function PartnerStorefrontRenewalPage() {
       ? 'Expired'
       : 'Active'
     : 'No history yet'
-  const accessBlocked = !selectedStorefrontEntry
-
-  const handleStorefrontChange = useCallback((value: string) => {
-    const params = new URLSearchParams(searchParams.toString())
-    if (value) params.set('storefront', value)
-    else params.delete('storefront')
-    const query = params.toString()
-    router.replace(`/partner/webpages/renewal${query ? `?${query}` : ''}`)
-  }, [router, searchParams])
 
   const handleStartPayment = async () => {
     if (!selectedStorefrontEntry) {
@@ -675,7 +684,7 @@ export default function PartnerStorefrontRenewalPage() {
             <button
               type="button"
               onClick={() => void handleStartPayment()}
-              disabled={isCreatingPayment || isSubmitting || !selectedStorefrontEntry || accessBlocked || !renewalEnabled}
+              disabled={isCreatingPayment || isSubmitting || !selectedStorefrontEntry || !renewalEnabled}
               className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-linear-to-r from-indigo-600 to-violet-600 px-5 py-3.5 text-sm font-bold text-white shadow-sm shadow-indigo-200/60 transition hover:from-indigo-700 hover:to-violet-700 disabled:cursor-not-allowed disabled:opacity-60 dark:shadow-none"
             >
               {isCreatingPayment || isSubmitting

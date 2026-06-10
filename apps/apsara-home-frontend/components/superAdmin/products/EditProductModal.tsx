@@ -27,6 +27,7 @@ interface EditProductModalProps {
   product: Product | null
   onClose: () => void
   onSaved?: (updatedProduct?: Product) => void
+  isServicesView?: boolean
 }
 
 interface FormState {
@@ -1192,7 +1193,7 @@ const scrollToFirstErrorField = (container: HTMLElement | null) => {
 
 /* ─── main component ─────────────────────────────────────── */
 
-export default function EditProductModal({ product, onClose, onSaved }: EditProductModalProps) {
+export default function EditProductModal({ product, onClose, onSaved, isServicesView = false }: EditProductModalProps) {
   const isOpen = product !== null
 
   const [form, setForm] = useState<FormState>({
@@ -1223,6 +1224,8 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
   const [roomTouched,        setRoomTouched]        = useState(false)
   const [brandText,          setBrandText]          = useState('')
   const [draftRestored,      setDraftRestored]      = useState(false)
+  const [serviceTypes,       setServiceTypes]       = useState<string[]>([])
+  const [serviceTypeInput,   setServiceTypeInput]   = useState('')
   const [activeNewImageAdjustId, setActiveNewImageAdjustId] = useState<string | null>(null)
   const activeImageDragIndexRef = useRef<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -1309,7 +1312,7 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
   }
   const openedProduct = openedProductRef.current
   const currentProductStatus = Number(openedProduct?.status ?? product?.status ?? form.pd_status ?? 0)
-  const canEditProductStatus = currentProductStatus !== 3
+  const canEditProductStatus = !isSupplierScopedActor || isServicesView || currentProductStatus !== 3
 
   /* Populate form when product changes — only re-initialize when a different product is opened,
      not when RTK Query returns an updated reference for the same product (which would reset
@@ -1352,6 +1355,11 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
     }
     setForm(nextForm)
     setInitialForm(nextForm)
+    if (isServicesView) {
+      const rawMaterial = String(row.material ?? row.pd_material ?? '')
+      setServiceTypes(rawMaterial ? rawMaterial.split(',').map((s: string) => s.trim()).filter(Boolean) : [])
+      setServiceTypeInput('')
+    }
     const existing = dedupeImageUrls(Array.isArray(openedProduct.images) && openedProduct.images.length > 0
       ? openedProduct.images.filter((img): img is string => Boolean(img))
       : (openedProduct.image ? [openedProduct.image] : []))
@@ -1889,7 +1897,7 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
       pd_catid:       Number(form.pd_catid),
       pd_room_type:   form.pd_room_type.trim() ? Number(form.pd_room_type) : undefined,
       pd_brand_type:  form.pd_brand_type.trim() ? Number(form.pd_brand_type) : undefined,
-      pd_price_srp:   Number(form.pd_price_srp),
+      pd_price_srp:   isServicesView ? 0 : Number(form.pd_price_srp),
       pd_description: form.pd_description.trim() || undefined,
       pd_specifications: nextSpecifications,
       pd_price_dp:    form.pd_price_dp  ? Number(form.pd_price_dp)  : undefined,
@@ -1901,7 +1909,9 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
       pd_pswidth:     form.pd_pswidth   ? Number(form.pd_pswidth)   : undefined,
       pd_pslenght:    form.pd_pslenght  ? Number(form.pd_pslenght)  : undefined,
       pd_psheight:    form.pd_psheight  ? Number(form.pd_psheight)  : undefined,
-      pd_material:    form.pd_material.trim()  || undefined,
+      pd_material:    isServicesView
+        ? (serviceTypes.length > 0 ? serviceTypes.join(', ') : undefined)
+        : (form.pd_material.trim() || undefined),
       pd_warranty:    form.pd_warranty.trim()  || undefined,
       pd_assembly_required: form.pd_assembly_required,
       pd_parent_sku:  form.pd_parent_sku.trim() || generatedParentSku || undefined,
@@ -2054,7 +2064,7 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
                   </div>
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-600 dark:text-blue-300">Catalog Workspace</p>
-                    <h2 className="mt-1 text-lg font-bold leading-none text-slate-900 dark:text-slate-100">Edit Product</h2>
+                    <h2 className="mt-1 text-lg font-bold leading-none text-slate-900 dark:text-slate-100">{isServicesView ? 'Edit Service' : 'Edit Product'}</h2>
                     <p className="mt-1 max-w-xl truncate text-xs text-slate-500 dark:text-slate-400">
                       ID #{product?.id} · {product?.name}
                     </p>
@@ -2237,7 +2247,7 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
                       <p className="text-xs text-red-600">{serverError}</p>
                     </div>
                   )}
-                  <SectionLabel>Product Information</SectionLabel>
+                  <SectionLabel>{isServicesView ? 'Service Information' : 'Product Information'}</SectionLabel>
                   <Card variant="default" className={sectionCardCls}>
                     <Card.Content className={`${sectionCardBodyCls} space-y-5`}>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -2259,7 +2269,7 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
                     </div>
                   </div>
 
-                  <Field label="Product Name" required error={errors.pd_name}>
+                  <Field label={isServicesView ? 'Company Name' : 'Product Name'} required error={errors.pd_name}>
                     <input
                       type="text"
                       value={form.pd_name}
@@ -2272,12 +2282,63 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
                         }))
                         setErrors(prev => ({ ...prev, pd_name: undefined }))
                       }}
-                      placeholder="Product name"
+                      placeholder={isServicesView ? 'e.g. Apsara Interior Services' : 'Product name'}
                       className={inputCls(!!errors.pd_name)}
                     />
                   </Field>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  {isServicesView && (
+                    <>
+                      {/* Type of Services */}
+                      <div className="space-y-2">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">Type of Services</p>
+                        {serviceTypes.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            {serviceTypes.map((type, i) => (
+                              <span key={i} className="inline-flex items-center gap-1.5 rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-sm text-teal-700 dark:border-teal-700 dark:bg-teal-900/30 dark:text-teal-300">
+                                {type}
+                                <button type="button" onClick={() => setServiceTypes(prev => prev.filter((_, idx) => idx !== i))} className="text-teal-400 transition hover:text-teal-700 dark:hover:text-teal-200">
+                                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={serviceTypeInput}
+                            onChange={e => setServiceTypeInput(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault()
+                                const v = serviceTypeInput.trim()
+                                if (v && !serviceTypes.includes(v)) { setServiceTypes(prev => [...prev, v]); setServiceTypeInput('') }
+                              }
+                            }}
+                            placeholder="e.g. Interior Design, Installation..."
+                            className={inputCls()}
+                          />
+                          <button type="button" onClick={() => { const v = serviceTypeInput.trim(); if (v && !serviceTypes.includes(v)) { setServiceTypes(prev => [...prev, v]); setServiceTypeInput('') } }} className="shrink-0 rounded-2xl bg-teal-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-teal-700">Add</button>
+                        </div>
+                        <p className="text-[11px] text-slate-500">Press Enter or click Add to include a service type.</p>
+                      </div>
+
+                      {/* Contact */}
+                      <div>
+                        <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">Contact</p>
+                        <input
+                          type="text"
+                          value={form.pd_warranty}
+                          onChange={e => setForm(prev => ({ ...prev, pd_warranty: e.target.value }))}
+                          placeholder="e.g. +63 912 345 6789 or hello@company.com"
+                          className={inputCls()}
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  <div className={isServicesView ? 'grid grid-cols-1 gap-3' : 'grid grid-cols-2 gap-3'}>
                     <Field label="Category" required error={errors.pd_catid}>
                       <ModalSelectField
                         ariaLabel="Select product category"
@@ -2300,7 +2361,7 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
                       />
                     </Field>
 
-                    <Field label="Shop By Room">
+                    {!isServicesView && <Field label="Shop By Room">
                       <div className="space-y-1">
                         <ModalSelectField
                           ariaLabel="Select room type"
@@ -2316,9 +2377,9 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
                         />
                         <p className="text-[11px] text-slate-500">Auto-filled from category when possible, but still editable here.</p>
                       </div>
-                    </Field>
+                    </Field>}
 
-                    <Field label="Brand" error={errors.pd_brand_type}>
+                    {!isServicesView && <Field label="Brand" error={errors.pd_brand_type}>
                       <ModalSelectField
                         ariaLabel="Select brand"
                         value={form.pd_brand_type}
@@ -2367,9 +2428,9 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
                         </datalist>
                         <p className="mt-1 text-[11px] text-slate-500">You can type a brand name to auto-match.</p>
                       </div>
-                    </Field>
+                    </Field>}
 
-                    <Field label="SKU">
+                    {!isServicesView && <Field label="SKU">
                       <div className="space-y-1">
                         <input
                           type="text"
@@ -2382,12 +2443,13 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
                           Leave this blank to auto-generate: <span className="font-mono">{generatedParentSku || 'Waiting for product name'}</span>
                         </p>
                       </div>
-                    </Field>
+                    </Field>}
                   </div>
                     </Card.Content>
                   </Card>
                   <Field label="Description">
                     <div className="space-y-3">
+                      {!isServicesView && (
                       <ProductDescriptionGenerator
                         input={{
                           productName: form.pd_name,
@@ -2404,6 +2466,7 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
                         disabled={isLoading}
                         onGenerate={(html) => set('pd_description', html)}
                       />
+                      )}
                       <RichTextEditor
                         value={form.pd_description}
                         onChange={html => set('pd_description', html)}
@@ -2411,6 +2474,32 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
                     </div>
                   </Field>
 
+                  {isServicesView && (
+                    <Field label="Status">
+                      <div className="flex items-center p-1 bg-slate-100 rounded-xl gap-0.5">
+                        {[{ value: '1', label: 'Active' }, { value: '0', label: 'Inactive (Draft)' }].map(opt => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            disabled={!canEditProductStatus}
+                            onClick={canEditProductStatus ? () => set('pd_status', opt.value) : undefined}
+                            className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                              form.pd_status === opt.value
+                                ? 'bg-white text-slate-700 shadow-sm'
+                                : 'text-slate-500 hover:text-slate-700'
+                            } ${!canEditProductStatus ? 'cursor-not-allowed opacity-60 hover:text-slate-500' : ''}`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                      {!canEditProductStatus && (
+                        <p className="mt-1 text-[11px] text-slate-400">Status is locked while the service is pending review.</p>
+                      )}
+                    </Field>
+                  )}
+
+                  {!isServicesView && <>
                   {/* ── Section: Product Details ── */}
                   <SectionLabel>Product Details</SectionLabel>
                   <div className="grid grid-cols-2 gap-3">
@@ -3167,6 +3256,7 @@ export default function EditProductModal({ product, onClose, onSaved }: EditProd
                       </div>
                     </>
                   )}
+                  </>}
                 </div>
 
                 {/* Sticky footer */}

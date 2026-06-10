@@ -35,6 +35,9 @@ interface DisplayProduct {
   soldCount?: number;
   avgRating?: number;
   rating?: number;
+  material?: string;
+  warranty?: string;
+  description?: string;
 }
 
 const slugify = (value: string) =>
@@ -224,6 +227,9 @@ const mapProductToDisplay = (product: Product | LooseRecord, apiUrl?: string): D
     soldCount,
     avgRating,
     rating: avgRating,
+    material: typeof row.material === 'string' ? row.material : (typeof row.pd_material === 'string' ? row.pd_material : undefined),
+    warranty: typeof row.warranty === 'string' ? row.warranty : (typeof row.pd_warranty === 'string' ? row.pd_warranty : undefined),
+    description: typeof row.description === 'string' ? row.description : (typeof row.pd_description === 'string' ? row.pd_description : undefined),
   };
 };
 

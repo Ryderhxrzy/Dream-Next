@@ -1568,17 +1568,17 @@ class AdminInquiryController extends Controller
                     ]), JSON_THROW_ON_ERROR)]);
             }
 
-            AdminNotification::query()->firstOrCreate(
-                ['an_type' => 'webstore_payment_continuation', 'an_source_type' => 'ticket', 'an_source_id' => (int) $latest->t_id],
-                [
-                    'an_severity'   => 'info',
-                    'an_title'      => 'Partner Webstore Renewal Payment',
-                    'an_message'    => sprintf('Partner submitted renewal payment for "%s" (%s).', trim((string) $validated['display_name']), trim((string) $validated['slug_name'])),
-                    'an_href'       => '/admin/inquiry',
-                    'an_payload'    => ['ticket_id' => (int) $latest->t_id, 'admin_id' => (int) $admin->id, 'request' => $continuationPayload, 'submitted_at' => $submittedAt->toDateTimeString()],
-                    'an_created_at' => $submittedAt,
-                ]
-            );
+            AdminNotification::query()->create([
+                'an_type'       => 'webstore_payment_continuation',
+                'an_source_type' => 'ticket',
+                'an_source_id'  => (int) $latest->t_id,
+                'an_severity'   => 'info',
+                'an_title'      => 'Partner Webstore Renewal Payment',
+                'an_message'    => sprintf('Partner submitted renewal payment for "%s" (%s).', trim((string) $validated['display_name']), trim((string) $validated['slug_name'])),
+                'an_href'       => '/admin/inquiry',
+                'an_payload'    => ['ticket_id' => (int) $latest->t_id, 'admin_id' => (int) $admin->id, 'request' => $continuationPayload, 'submitted_at' => $submittedAt->toDateTimeString()],
+                'an_created_at' => $submittedAt,
+            ]);
 
             return response()->json([
                 'message' => 'Webstore receipt uploaded successfully.',

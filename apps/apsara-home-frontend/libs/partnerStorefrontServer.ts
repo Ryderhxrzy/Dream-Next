@@ -79,7 +79,7 @@ export async function getPartnerStorefrontRecordBySlug(
         return config?.slug === normalized
       })
       const config = getPartnerStorefrontConfig(storefrontItem)
-      if (!config || !storefrontItem) return null
+      if (!config || !storefrontItem) continue
 
       return {
         id: storefrontItem.id,
@@ -147,7 +147,7 @@ export async function getPartnerStorefrontRecordByHost(
         return normalizeStorefrontHost(config?.domainLink ?? '') === normalizedHost
       })
       const config = getPartnerStorefrontConfig(storefrontItem)
-      if (!config || !storefrontItem) return null
+      if (!config || !storefrontItem) continue
 
       return {
         id: storefrontItem.id,

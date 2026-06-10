@@ -36,6 +36,7 @@ export interface CartItem {
   selectedSize?: string | null
   selectedType?: string | null
   selectedSku?: string | null
+  availableStock?: number | null
 }
 
 interface CartContextType {
@@ -120,6 +121,7 @@ export function useCart(): CartContextType {
         selectedSize: item.crt_selected_size || null,
         selectedType: item.crt_selected_type || null,
         selectedSku: null,
+        availableStock: Number(item.variant_stock ?? item.product_stock ?? 0) || null,
       }))
       dispatch(setCartItems(backendItems))
     }
@@ -168,17 +170,22 @@ export function useCart(): CartContextType {
   }
 
   const updateQuantity = (id: string, qty: number) => {
-    if (qty <= 0) {
+    const currentItem = items.find((item) => item.id === id)
+    const cappedQuantity = typeof currentItem?.availableStock === 'number' && currentItem.availableStock > 0
+      ? Math.min(qty, currentItem.availableStock)
+      : qty
+
+    if (cappedQuantity <= 0) {
       removeFromCart(id)
       return
     }
 
-    dispatch(updateQuantityAction({ id, quantity: qty }))
+    dispatch(updateQuantityAction({ id, quantity: cappedQuantity }))
 
     if (isLoggedIn) {
       const cartItemId = items.find((item) => item.id === id)?.cartItemId ?? Number(id)
       if (Number.isFinite(cartItemId)) {
-        void updateCartItemApi({ id: cartItemId, quantity: qty }).unwrap().catch(() => {
+        void updateCartItemApi({ id: cartItemId, quantity: cappedQuantity }).unwrap().catch(() => {
           // RTK Query invalidation will restore the server state if the request fails.
         })
       }

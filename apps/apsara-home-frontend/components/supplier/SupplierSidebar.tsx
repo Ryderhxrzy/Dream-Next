@@ -15,6 +15,7 @@ import {
   ClipboardList,
   FileText,
   Home,
+  Inbox,
   LogOut,
   MessageSquare,
   Package,
@@ -24,6 +25,7 @@ import {
 } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
 import { clearAccessTokenCache } from '@/store/api/baseApi'
+import { useGetSupplierCategoriesQuery, useGetSupplierMeQuery } from '@/store/api/suppliersApi'
 
 const mainItems = [
   { label: 'Dashboard', href: '/supplier/dashboard', icon: BarChart3 },
@@ -32,6 +34,13 @@ const mainItems = [
   { label: 'Orders', href: '/supplier/orders', icon: ClipboardList },
   { label: 'Inventory', href: '/supplier/inventory', icon: Warehouse },
   { label: 'Catalogue', href: '/supplier/catalogue', icon: BookOpen },
+]
+
+const servicesMainItems = [
+  { label: 'Dashboard', href: '/supplier/dashboard', icon: BarChart3 },
+  { label: 'Chats', href: '/supplier/chat', icon: MessageSquare },
+  { label: 'Inquiry', href: '/supplier/orders', icon: Inbox },
+  { label: 'Services', href: '/supplier/products', icon: Package },
 ]
 
 const reportItems = [
@@ -85,8 +94,19 @@ export default function SupplierSidebar({
   const supplierName = session?.user?.supplierName || session?.user?.name || 'Supplier'
   const isMainSupplier = Boolean(session?.user?.isMainSupplier)
   const userEmail = session?.user?.email || ''
-  const supplierLogo = (session?.user as { supplierLogo?: string | null } | undefined)?.supplierLogo || null
   const displayRole = formatRole(isMainSupplier)
+
+  const { data: supplierMe } = useGetSupplierMeQuery(undefined, { skip: !session })
+  const supplierLogo = supplierMe?.supplier_logo ?? null
+
+  const supplierId = Number(session?.user?.supplierId ?? 0)
+  const { data: supplierCategoriesData } = useGetSupplierCategoriesQuery(supplierId, {
+    skip: !session || supplierId <= 0,
+  })
+  const isServicesView = (supplierCategoriesData?.categories ?? []).some(
+    (c) => c.name.toLowerCase() === 'services',
+  )
+  const visibleMainItems = isServicesView ? servicesMainItems : mainItems
 
   const toggleMenu = (id: string) =>
     setOpenMenus(prev => prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id])
@@ -151,9 +171,9 @@ export default function SupplierSidebar({
             <div className="flex-1 h-px bg-slate-100 dark:bg-slate-700/60" />
           </div>
           <div className="space-y-0.5">
-            {mainItems.map((item) => {
-              const Icon = item.icon
+            {visibleMainItems.map((item) => {
               const active = isActive(item.href)
+              const Icon = item.icon as React.ComponentType<{ className?: string }>
               return (
                 <Link
                   key={item.href}
@@ -166,22 +186,15 @@ export default function SupplierSidebar({
                     }
                   `}
                 >
-                  {item.icon ? (
-                    <span
-                      className={`flex items-center justify-center h-7 w-7 rounded-lg shrink-0 transition-colors ${
-                        active
-                          ? 'bg-white/20'
-                          : 'bg-slate-100 dark:bg-slate-800 group-hover:bg-slate-200 dark:group-hover:bg-slate-700'
-                      }`}
-                    >
-                      <span className="flex items-center justify-center">
-                        {(() => {
-                          const Icon = item.icon as unknown as React.ComponentType<{ className?: string }>
-                          return <Icon className="w-5 h-5" />
-                        })()}
-                      </span>
-                    </span>
-                  ) : null}
+                  <span
+                    className={`flex items-center justify-center h-7 w-7 rounded-lg shrink-0 transition-colors ${
+                      active
+                        ? 'bg-white/20'
+                        : 'bg-slate-100 dark:bg-slate-800 group-hover:bg-slate-200 dark:group-hover:bg-slate-700'
+                    }`}
+                  >
+                    <Icon className="w-5 h-5" />
+                  </span>
                   <span className="font-medium flex-1">{item.label}</span>
                 </Link>
               )
@@ -189,8 +202,8 @@ export default function SupplierSidebar({
           </div>
         </div>
 
-        {/* Reports Section */}
-        <div>
+        {/* Reports Section — hidden for services suppliers */}
+        {!isServicesView && <div>
           <div className="flex items-center gap-2 px-2 pb-1.5 pt-4">
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Analytics</span>
             <div className="flex-1 h-px bg-slate-100 dark:bg-slate-700/60" />
@@ -249,7 +262,7 @@ export default function SupplierSidebar({
               </motion.div>
             ) : null}
           </AnimatePresence>
-        </div>
+        </div>}
 
         {/* Mobile Section */}
         <div>

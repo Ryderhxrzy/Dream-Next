@@ -90,8 +90,27 @@ export interface UpdateSupplierUserPayload {
   password?: string
 }
 
+export interface SupplierMeResponse {
+  id: number
+  name: string
+  email: string
+  role: string
+  supplier_id: number
+  supplier_name: string | null
+  supplier_logo: string | null
+  username: string
+  level_type: number
+  is_main_supplier: boolean
+}
+
 export const suppliersApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
+    getSupplierMe: builder.query<SupplierMeResponse, void>({
+      query: () => ({
+        url: '/api/supplier/auth/me',
+        method: 'GET',
+      }),
+    }),
     getSuppliers: builder.query<{ suppliers: SupplierItem[] }, void>({
       query: () => ({
         url: '/api/admin/suppliers',
@@ -186,6 +205,7 @@ export const suppliersApi = baseApi.injectEndpoints({
 })
 
 export const {
+  useGetSupplierMeQuery,
   useGetSuppliersQuery,
   useGetSupplierStatsQuery,
   useCreateSupplierMutation,

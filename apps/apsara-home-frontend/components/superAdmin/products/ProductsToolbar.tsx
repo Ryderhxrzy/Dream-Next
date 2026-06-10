@@ -34,6 +34,7 @@ interface ProductsToolbarProps {
   onToggleDuplicateFilter?: () => void
   manualCheckoutCount?: number
   onViewManualCheckout?: () => void
+  isServicesView?: boolean
 }
 
 const STATUS_TABS = [
@@ -41,6 +42,13 @@ const STATUS_TABS = [
   { value: '1', label: 'Active' },
   { value: '0', label: 'Inactive' },
   { value: '3', label: 'Pending' },
+  { value: 'new', label: 'New' },
+]
+
+const SERVICES_STATUS_TABS = [
+  { value: '', label: 'All' },
+  { value: '1', label: 'Complete' },
+  { value: '0', label: 'In Progress' },
   { value: 'new', label: 'New' },
 ]
 
@@ -110,7 +118,9 @@ export default function ProductsToolbar({
   onToggleDuplicateFilter,
   manualCheckoutCount = 0,
   onViewManualCheckout,
+  isServicesView = false,
 }: ProductsToolbarProps) {
+  const activeTabs = isServicesView ? SERVICES_STATUS_TABS : STATUS_TABS
   const { data: categoriesData } = useGetCategoriesQuery(
     supplierId && supplierId > 0
       ? { supplier_id: supplierId }
@@ -153,8 +163,8 @@ export default function ProductsToolbar({
     <Card className="border border-slate-200 bg-white shadow-none dark:border-slate-800 dark:bg-slate-900">
       <Card.Content className="space-y-4 p-4 sm:p-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-          <div className="flex flex-wrap items-center gap-2">
-            {STATUS_TABS.map((tab) => (
+          {!isServicesView && <div className="flex flex-wrap items-center gap-2">
+            {activeTabs.map((tab) => (
               <Button
                 key={tab.value}
                 size="sm"
@@ -185,10 +195,10 @@ export default function ProductsToolbar({
                 ) : null}
               </Button>
             ) : null}
-          </div>
+          </div>}
 
-          <div className="flex w-full max-w-4xl flex-col gap-3 lg:flex-row lg:items-center lg:justify-end">
-            <div className="w-full lg:max-w-xl">
+          <div className={`flex flex-col gap-3 lg:flex-row lg:items-center ${isServicesView ? 'w-full' : 'w-full max-w-4xl lg:justify-end'}`}>
+            <div className={isServicesView ? 'w-full' : 'w-full lg:max-w-xl'}>
               <SearchField
                 aria-label="Search products"
                 value={search}

@@ -747,6 +747,7 @@ export default function CategoryListProductMain({
                                                     forceRealPrice={forceRealPriceForPartner}
                                                     allowGuestAddToCart={isPartnerStorefrontRoute}
                                                     allowGuestWishlist={isPartnerStorefrontRoute}
+                                                    isServicesCategory={slug.toLowerCase() === 'services'}
                                                 />
                                             ) : (
                                                 <ListViewProduct

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import TopBar from '@/components/layout/TopBar';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/landing-page/Footer';
+import { getNavbarCategories } from '@/libs/serverStorefront';
 
 type LegalPageShellProps = {
   title: string;
@@ -10,11 +11,12 @@ type LegalPageShellProps = {
   children: ReactNode;
 };
 
-export default function LegalPageShell({ title, subtitle, children }: LegalPageShellProps) {
+export default async function LegalPageShell({ title, subtitle, children }: LegalPageShellProps) {
+  const navbarCategories = await getNavbarCategories()
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-gray-950 text-gray-900 dark:text-white">
       <TopBar />
-      <Navbar />
+      <Navbar initialCategories={navbarCategories} />
 
       {/* Page header band */}
       <div className="bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 pt-8 pb-8">

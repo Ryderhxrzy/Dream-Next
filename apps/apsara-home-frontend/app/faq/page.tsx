@@ -1,5 +1,6 @@
 import { buildPageMetadata } from '@/app/seo';
 import FaqPageClient from '@/components/faq/FaqPageClient';
+import { getNavbarCategories } from '@/libs/serverStorefront';
 
 export const metadata = buildPageMetadata({
   title: 'FAQ',
@@ -7,6 +8,7 @@ export const metadata = buildPageMetadata({
   path: '/faq',
 });
 
-export default function FaqPage() {
-  return <FaqPageClient />;
+export default async function FaqPage() {
+  const navbarCategories = await getNavbarCategories()
+  return <FaqPageClient initialCategories={navbarCategories} />;
 }
