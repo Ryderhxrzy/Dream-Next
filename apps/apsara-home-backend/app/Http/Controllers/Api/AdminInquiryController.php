@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\CloudinaryUploadService;
 use App\Models\Admin;
 use App\Models\AdminNotification;
 use App\Models\Customer;
@@ -1428,6 +1429,7 @@ class AdminInquiryController extends Controller
                 ?: data_get($data, 'data.attributes.payments.0.attributes.payment_intent_id')
                 ?: data_get($data, 'data.attributes.reference_number')
                 ?: data_get($data, 'data.id')
+                ?: $checkoutId
             ),
             'raw' => $data,
         ]);
@@ -1526,7 +1528,7 @@ class AdminInquiryController extends Controller
             ? $this->mapWebstoreRequestStatus((int) $latest->t_status, (int) $latest->t_id, $slugName)
             : '';
 
-        if ($latest && $latestStatus === 'approved') {
+        if ($latest && ($latestStatus === 'approved' || $latestStatus === 'pending_review')) {
             $continuationPayload = array_merge($requestPayload, ['type' => 'webstore_payment_continuation']);
 
             $newDetailId = DB::table('tbl_tickets_details')->insertGetId([
@@ -1541,31 +1543,34 @@ class AdminInquiryController extends Controller
                 'td_ip'         => (string) $request->ip(),
             ], 'td_id');
 
-            $paymentRef    = strtolower(trim((string) ($continuationPayload['payment_reference'] ?? '')));
-            $filenameMatch = false;
-            if ($paymentRef !== '') {
-                foreach (($continuationPayload['receipt_urls'] ?? []) as $receiptUrl) {
-                    try {
-                        $filename = strtolower(rawurldecode((string) basename(parse_url((string) $receiptUrl, PHP_URL_PATH))));
-                    } catch (\Throwable) {
-                        $filename = strtolower(rawurldecode((string) basename(explode('?', (string) $receiptUrl)[0])));
-                    }
-                    if (str_contains($filename, $paymentRef)) {
-                        $filenameMatch = true;
-                        break;
+            // Auto-approve only for approved tickets with matching receipt filenames
+            if ($latestStatus === 'approved') {
+                $paymentRef    = strtolower(trim((string) ($continuationPayload['payment_reference'] ?? '')));
+                $filenameMatch = false;
+                if ($paymentRef !== '') {
+                    foreach (($continuationPayload['receipt_urls'] ?? []) as $receiptUrl) {
+                        try {
+                            $filename = strtolower(rawurldecode((string) basename(parse_url((string) $receiptUrl, PHP_URL_PATH))));
+                        } catch (\Throwable) {
+                            $filename = strtolower(rawurldecode((string) basename(explode('?', (string) $receiptUrl)[0])));
+                        }
+                        if (str_contains($filename, $paymentRef)) {
+                            $filenameMatch = true;
+                            break;
+                        }
                     }
                 }
-            }
 
-            if ($filenameMatch) {
-                $reviewedAt = now('Asia/Manila');
-                DB::table('tbl_tickets_details')
-                    ->where('td_id', $newDetailId)
-                    ->update(['td_content' => json_encode(array_merge($continuationPayload, [
-                        'approval_status' => 'approved',
-                        'approved_at'     => $reviewedAt->toDateTimeString(),
-                        'approved_by'     => 0,
-                    ]), JSON_THROW_ON_ERROR)]);
+                if ($filenameMatch) {
+                    $reviewedAt = now('Asia/Manila');
+                    DB::table('tbl_tickets_details')
+                        ->where('td_id', $newDetailId)
+                        ->update(['td_content' => json_encode(array_merge($continuationPayload, [
+                            'approval_status' => 'approved',
+                            'approved_at'     => $reviewedAt->toDateTimeString(),
+                            'approved_by'     => 0,
+                        ]), JSON_THROW_ON_ERROR)]);
+                }
             }
 
             AdminNotification::query()->create([
@@ -1697,5 +1702,35 @@ class AdminInquiryController extends Controller
             'card'     => ['card'],
             default    => ['card'],
         };
+    }
+
+    public function uploadPartnerWebstoreReceipt(Request $request, CloudinaryUploadService $cloudinary)
+    {
+        $admin = $request->user();
+        if (! $admin instanceof Admin) {
+            return response()->json(['message' => 'Forbidden.'], 403);
+        }
+
+        $validated = $request->validate([
+            'file' => 'required|file|mimes:jpg,jpeg,png,webp|max:10240',
+        ]);
+
+        try {
+            $upload = $cloudinary->uploadImage($validated['file'], 'apsara/webstore/receipts', true, true);
+            $url = (string) ($upload['secure_url'] ?? '');
+            if ($url === '') {
+                return response()->json(['message' => 'Receipt upload returned no image URL.'], 422);
+            }
+
+            return response()->json([
+                'message' => 'Receipt uploaded successfully.',
+                'url' => $url,
+                'public_id' => (string) ($upload['public_id'] ?? ''),
+            ]);
+        } catch (\Throwable $exception) {
+            return response()->json([
+                'message' => $exception->getMessage() ?: 'Failed to upload receipt image.',
+            ], 422);
+        }
     }
 }

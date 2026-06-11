@@ -57,37 +57,38 @@ export function computeEndDateRaw(
     days = 2
   }
 
-  // For full/one-time billing: find the latest approved continuation receipt.
-  // If its approved_at is newer than the initial end date, use it as the renewal base.
-  const latestContinuationApprovedAt = Array.isArray(receiptItems)
-    ? receiptItems.reduce<Date | null>((latest, r) => {
-        if (r?.type !== 'webstore_payment_continuation') return latest
-        if (r?.approvalStatus !== 'approved' && !r?.approvedAt) return latest
-        const t = r?.approvedAt ? new Date(r.approvedAt) : null
-        if (!t || Number.isNaN(t.getTime())) return latest
-        return !latest || t > latest ? t : latest
-      }, null)
-    : null
+  // For full/one-time billing: chain approved continuations — each one extends
+  // from the current end date (or the continuation date if later), so same-day
+  // renewals properly push the end date forward by a full period.
+  const approvedContinuations = Array.isArray(receiptItems)
+    ? receiptItems
+        .filter((r) => r?.type === 'webstore_payment_continuation' && (r?.approvalStatus === 'approved' || Boolean(r?.approvedAt)))
+        .map((r) => { const t = r?.approvedAt ? new Date(r.approvedAt) : null; return t && !Number.isNaN(t.getTime()) ? t : null })
+        .filter((d): d is Date => d !== null)
+        .sort((a, b) => a.getTime() - b.getTime())
+    : []
 
   if (days > 0) {
-    const initialEnd = new Date(startDate)
-    initialEnd.setDate(initialEnd.getDate() + days)
-    if (latestContinuationApprovedAt) {
-      const renewalEnd = new Date(latestContinuationApprovedAt)
-      renewalEnd.setDate(renewalEnd.getDate() + days)
-      if (renewalEnd > initialEnd) return renewalEnd
+    let currentEnd = new Date(startDate)
+    currentEnd.setDate(currentEnd.getDate() + days)
+    for (const contDate of approvedContinuations) {
+      const base = contDate > currentEnd ? contDate : currentEnd
+      const next = new Date(base)
+      next.setDate(next.getDate() + days)
+      currentEnd = next
     }
-    return initialEnd
+    return currentEnd
   }
   if (months <= 0) return null
-  const initialEnd = new Date(startDate)
-  initialEnd.setMonth(initialEnd.getMonth() + months)
-  if (latestContinuationApprovedAt) {
-    const renewalEnd = new Date(latestContinuationApprovedAt)
-    renewalEnd.setMonth(renewalEnd.getMonth() + months)
-    if (renewalEnd > initialEnd) return renewalEnd
+  let currentEnd = new Date(startDate)
+  currentEnd.setMonth(currentEnd.getMonth() + months)
+  for (const contDate of approvedContinuations) {
+    const base = contDate > currentEnd ? contDate : currentEnd
+    const next = new Date(base)
+    next.setMonth(next.getMonth() + months)
+    currentEnd = next
   }
-  return initialEnd
+  return currentEnd
 }
 
 export function isWebstoreRequestExpired(item: {

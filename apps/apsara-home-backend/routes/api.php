@@ -430,6 +430,7 @@ Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_a
     Route::post('/admin/partner/webstore-requests/payment-session', [AdminInquiryController::class, 'createPartnerWebstorePaymentSession']);
     Route::get('/admin/partner/webstore-requests/payment-session/{checkoutId}', [AdminInquiryController::class, 'verifyPartnerWebstorePaymentSession']);
     Route::post('/admin/partner/webstore-requests/submit', [AdminInquiryController::class, 'submitPartnerWebstoreRequest']);
+    Route::post('/admin/partner/webstore-requests/receipt-upload', [AdminInquiryController::class, 'uploadPartnerWebstoreReceipt']);
     Route::delete('/admin/partner/webstore-requests/{id}', [AdminInquiryController::class, 'destroyPartnerWebstoreRequest']);
     Route::delete('/admin/partner/webstore-receipt-items/{id}', [AdminInquiryController::class, 'destroyPartnerWebstoreReceiptItem']);
 });

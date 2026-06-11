@@ -350,18 +350,19 @@ export default function SupplierDashboardHome() {
           {isServicesView ? 'Booking Analytics' : 'Order Analytics'}
         </SectionLabel>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-          <StatCard label={isServicesView ? 'Total Bookings'   : 'Total Orders'}     value={ordersLoading ? '—' : String(totalOrders)}                  icon={isServicesView ? CalendarDays : ShoppingCart} gradient="from-blue-500 to-indigo-500"   href="/supplier/orders" />
-          <StatCard label={isServicesView ? 'New Requests'     : 'Pending Payment'}  value={ordersLoading ? '—' : String(orderCounts?.to_pay     ?? 0)} icon={isServicesView ? MessageSquare : Clock3}       gradient="from-amber-400 to-orange-500"  href="/supplier/orders?filter=to_pay"     alert={(orderCounts?.to_pay ?? 0) > 0} />
-          <StatCard label={isServicesView ? 'In Progress'      : 'To Ship'}          value={ordersLoading ? '—' : String(orderCounts?.to_ship    ?? 0)} icon={isServicesView ? Settings : Package}           gradient="from-sky-400 to-cyan-500"      href="/supplier/orders?filter=to_ship" />
-          <StatCard label={isServicesView ? 'Awaiting'         : 'To Receive'}       value={ordersLoading ? '—' : String(orderCounts?.to_receive ?? 0)} icon={Truck}                                         gradient="from-violet-500 to-purple-600" href="/supplier/orders?filter=to_receive" />
+          <StatCard label={isServicesView ? 'Total Inquiries' : 'Total Orders'}     value={ordersLoading ? '—' : String(totalOrders)}                  icon={isServicesView ? CalendarDays : ShoppingCart} gradient="from-blue-500 to-indigo-500"   href="/supplier/orders" />
+          <StatCard label={isServicesView ? 'New'            : 'Pending Payment'}  value={ordersLoading ? '—' : String(orderCounts?.to_pay     ?? 0)} icon={isServicesView ? MessageSquare : Clock3}       gradient="from-amber-400 to-orange-500"  href="/supplier/orders?filter=to_pay"     alert={(orderCounts?.to_pay ?? 0) > 0} />
+          <StatCard label={isServicesView ? 'pending'       : 'To Ship'}          value={ordersLoading ? '—' : String(orderCounts?.to_ship    ?? 0)} icon={isServicesView ? Settings : Package}           gradient="from-sky-400 to-cyan-500"      href="/supplier/orders?filter=to_ship" />
+          <StatCard label={isServicesView ? 'complete'      : 'To Receive'}       value={ordersLoading ? '—' : String(orderCounts?.to_receive ?? 0)} icon={Truck}                                         gradient="from-violet-500 to-purple-600" href="/supplier/orders?filter=to_receive" />
           <StatCard label="Completed"                                                 value={ordersLoading ? '—' : String(orderCounts?.completed  ?? 0)} icon={CheckCircle2}                                  gradient="from-emerald-400 to-teal-500"  href="/supplier/orders?filter=completed" />
           <StatCard label="Cancelled"                                                 value={ordersLoading ? '—' : String(orderCounts?.cancelled  ?? 0)} icon={XCircle}                                       gradient="from-rose-400 to-red-500"      href="/supplier/orders?filter=cancelled" />
         </div>
-      </div>
 
       {/* ════════════════════════════════════════════════════════
           Charts row 1 — Order Trend (area) + Status Trend (multi-line)
       ════════════════════════════════════════════════════════ */}
+      </div>
+
       <div className="grid gap-5 xl:grid-cols-[1.5fr_1fr]">
 
         {/* Order/Booking trend — area chart */}

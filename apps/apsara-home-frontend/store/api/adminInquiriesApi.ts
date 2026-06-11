@@ -170,6 +170,13 @@ export const adminInquiriesApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['WebstoreRequests'],
     }),
+    uploadPartnerWebstoreReceipt: builder.mutation<{ message: string; url: string; public_id: string }, FormData>({
+      query: (body) => ({
+        url: '/api/admin/partner/webstore-requests/receipt-upload',
+        method: 'POST',
+        body,
+      }),
+    }),
     createPartnerWebstorePaymentSession: builder.mutation<
       { checkout_id: string; checkout_url: string; payment_mode: string },
       { plan: string; billing_option: string; payment_method: string; payment_mode?: string; slug_name?: string }
@@ -230,6 +237,7 @@ export const {
   useDeleteWebstoreRequestMutation,
   useDeletePartnerWebstoreRequestMutation,
   useDeletePartnerWebstoreReceiptItemMutation,
+  useUploadPartnerWebstoreReceiptMutation,
   useCreatePartnerWebstorePaymentSessionMutation,
   useLazyVerifyPartnerWebstorePaymentSessionQuery,
   useSubmitPartnerWebstoreRequestMutation,
