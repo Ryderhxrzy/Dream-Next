@@ -64,6 +64,8 @@ storefront link to share with customers while AF Home handles the backend.
   scratch.
 - **Ready-made operations.** Tap into AF Home's catalog, secure payments, and
   shipping right away.
+- **Choose your landing page.** Select a ready-made landing page design for your
+  webstore so it looks exactly how you want.
 - **Grow your income.** Earn from every referral and scale your store anytime.
 
 #### Why join — the benefits
@@ -199,21 +201,27 @@ soft emerald/teal accent color, light background. Keep it crisp and premium.
 STRUCTURE (follow this order):
 1. Hook — what an AF Home Partner Webstore is and that you can launch fast.
 2. Advantages of availing a webstore — open 24/7, nationwide reach, no website
-   to build, low cost to start, ready-made operations, grow your income.
+   to build, low cost to start, ready-made operations, choose your own landing
+   page, and grow your income.
 3. Benefits — your own branded store, instant launch, earn from referrals,
    curate your products, AF Home handles payments/shipping, easy renewal.
 4. The step-by-step walkthrough, grouped in 4 phases:
    • Phase 1 — Request a Webstore (Step 1).
    • Phase 2 — Review & Approval (Steps 2–3).
    • Phase 3 — Build the Storefront (Steps 4–6).
-   • Phase 4 — Partner Portal (Steps 7–13: login, manage, orders, subscriptions,
-     partner users, members, renewal).
+   • Phase 4 — Partner Portal (Steps 7–14: login, manage storefront, build your
+     landing page from a template, orders, subscriptions, partner users, members,
+     renewal).
 5. Closing call to action — "Request your webstore today and start selling."
 
 IMAGES: I will send the screenshots separately, in numbered order (01 to 14).
 Use them in that exact sequence — each screenshot is the visual for its matching
-step in the PDF. Animate each screenshot with a subtle zoom/pan and highlight
-the key area being described. Image 07 and 08 are both for the login step.
+step in the PDF. IMPORTANT: the screenshots are full dashboard/page captures with
+small text, so do NOT show them fully zoomed out. Instead, zoom IN (close-up) on
+the specific field, button, or area being described so the content is clearly
+readable, then slowly pan/zoom across it (Ken Burns) for a motion-graphics feel.
+Add an animated highlight or arrow on the exact element to click. Image 07 and 08
+are both for the login step.
 
 PACING: short, concrete narration per step — tell the viewer exactly what to do.
 Add a one-line on-screen caption per scene. Keep the whole video under ~4 minutes.

@@ -1,13 +1,28 @@
 'use client';
 
-import { type ReactNode, useCallback, useState } from 'react';
-import { motion } from 'framer-motion';
+import { type ReactNode, useCallback, useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Store, FileText, ShieldCheck, Palette, ListChecks, UserPlus, LogIn,
   LayoutDashboard, ShoppingBag, ReceiptText, Users, UserCog, RefreshCw,
   Download, ArrowRight, CheckCircle2, Sparkles, Rocket, Wallet, BadgeCheck,
-  Globe, Clock, TrendingUp, Building2,
+  Globe, Clock, TrendingUp, Building2, ZoomIn, X,
+  Play, Pause, ChevronLeft, ChevronRight, RotateCcw, Film, LayoutTemplate,
 } from 'lucide-react';
+
+type LightboxImage = { src: string; alt: string };
+type Scene = {
+  phase: string;
+  accent: string;
+  kicker: string;
+  n: number;
+  part: number; // 0 = single image, otherwise 1..N
+  title: string;
+  body: string;
+  src: string;
+  alt: string;
+};
+const SCENE_MS = 9000;
 
 /* ─── Tutorial data ──────────────────────────────────────────── */
 type Phase = {
@@ -133,6 +148,17 @@ const PHASES: Phase[] = [
       },
       {
         n: 9,
+        icon: <LayoutTemplate size={20} />,
+        title: 'Build your landing page',
+        body:
+          'In the Landing Page tab, the partner picks a starting template (e.g. SaaS Business, Modern Dark, or Light & Clean), then customizes it in the builder — hero text, images, colors, and sections. Click a section to edit, drag to reorder, add sections from the right panel, then Save.',
+        images: [
+          { src: `${IMG}/09b-landing-page-select.jpg`, alt: 'Landing Page Builder — choose a starting template' },
+          { src: `${IMG}/09c-landing-page-builder.jpg`, alt: 'Landing Page builder editor with live customization' },
+        ],
+      },
+      {
+        n: 10,
         icon: <ShoppingBag size={20} />,
         title: 'Track Orders',
         body:
@@ -140,7 +166,7 @@ const PHASES: Phase[] = [
         images: [{ src: `${IMG}/10-partner-orders.jpg`, alt: 'Partner Orders page' }],
       },
       {
-        n: 10,
+        n: 11,
         icon: <ReceiptText size={20} />,
         title: 'View Subscriptions',
         body:
@@ -148,7 +174,7 @@ const PHASES: Phase[] = [
         images: [{ src: `${IMG}/11-subscriptions.jpg`, alt: 'Subscriptions transactions dashboard' }],
       },
       {
-        n: 11,
+        n: 12,
         icon: <UserCog size={20} />,
         title: 'Manage Partner Users',
         body:
@@ -156,7 +182,7 @@ const PHASES: Phase[] = [
         images: [{ src: `${IMG}/12-partner-users.jpg`, alt: 'Partner User Accounts management' }],
       },
       {
-        n: 12,
+        n: 13,
         icon: <Users size={20} />,
         title: 'Manage Members',
         body:
@@ -164,7 +190,7 @@ const PHASES: Phase[] = [
         images: [{ src: `${IMG}/13-members.jpg`, alt: 'Members management page' }],
       },
       {
-        n: 13,
+        n: 14,
         icon: <RefreshCw size={20} />,
         title: 'Renew the storefront',
         body:
@@ -181,6 +207,7 @@ const ADVANTAGES = [
   { icon: <Building2 size={18} />, title: 'No website to build', body: 'Get a professional online store without coding, hosting, or maintenance.' },
   { icon: <Wallet size={18} />, title: 'Low cost to start', body: 'Far cheaper than building your own e-commerce site from scratch.' },
   { icon: <ShieldCheck size={18} />, title: 'Ready-made operations', body: 'Tap into AF Home’s catalog, secure payments, and shipping right away.' },
+  { icon: <LayoutTemplate size={18} />, title: 'Choose your landing page', body: 'Select a ready-made landing page design for your webstore — make it look exactly how you want.' },
   { icon: <TrendingUp size={18} />, title: 'Grow your income', body: 'Earn from every referral and scale your store anytime you want.' },
 ];
 
@@ -194,21 +221,274 @@ const BENEFITS = [
 ];
 
 /* ─── Reusable bits ──────────────────────────────────────────── */
-function StepImage({ src, alt }: { src: string; alt: string }) {
+function StepImage({ src, alt, onOpen }: { src: string; alt: string; onOpen: (img: LightboxImage) => void }) {
   return (
-    /* eslint-disable-next-line @next/next/no-img-element */
-    <img
-      src={src}
-      alt={alt}
-      loading="eager"
-      className="w-full h-auto rounded-xl border border-zinc-200 bg-white shadow-sm"
-    />
+    <button
+      type="button"
+      onClick={() => onOpen({ src, alt })}
+      className="group relative block w-full cursor-zoom-in overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm"
+      aria-label={`Zoom in: ${alt}`}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={alt}
+        loading="eager"
+        className="h-auto w-full origin-center transition-transform duration-900 ease-out group-hover:scale-[1.55]"
+      />
+      <span className="no-print pointer-events-none absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-zinc-900/75 px-2.5 py-1 text-[11px] font-semibold text-white opacity-0 backdrop-blur transition-opacity duration-200 group-hover:opacity-100">
+        <ZoomIn size={12} /> Click to zoom
+      </span>
+    </button>
+  );
+}
+
+/* ─── Lightbox ───────────────────────────────────────────────── */
+function Lightbox({ image, onClose }: { image: LightboxImage; onClose: () => void }) {
+  const [actualSize, setActualSize] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [onClose]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+      className="no-print fixed inset-0 z-200 flex flex-col bg-black/90 backdrop-blur-sm"
+    >
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-5 py-3 text-white" onClick={(e) => e.stopPropagation()}>
+        <span className="truncate pr-4 text-sm font-medium text-white/70">{image.alt}</span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setActualSize((v) => !v)}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-semibold transition hover:bg-white/20"
+          >
+            <ZoomIn size={13} /> {actualSize ? 'Fit to screen' : 'Actual size'}
+          </button>
+          <button
+            onClick={onClose}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 transition hover:bg-white/20"
+            aria-label="Close"
+          >
+            <X size={18} />
+          </button>
+        </div>
+      </div>
+
+      {/* Image area */}
+      <div
+        className={`flex flex-1 overflow-auto p-4 ${actualSize ? 'cursor-zoom-out items-start justify-start' : 'cursor-zoom-in items-center justify-center'}`}
+        onClick={(e) => { e.stopPropagation(); setActualSize((v) => !v); }}
+      >
+        <motion.img
+          key={actualSize ? 'actual' : 'fit'}
+          initial={{ scale: 0.98, opacity: 0.6 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.25 }}
+          src={image.src}
+          alt={image.alt}
+          className={actualSize ? 'h-auto w-auto max-w-none' : 'mx-auto max-h-[85vh] max-w-full object-contain'}
+        />
+      </div>
+
+      <p className="no-print pb-3 text-center text-xs text-white/40" onClick={(e) => e.stopPropagation()}>
+        Click image to toggle actual size · Esc to close
+      </p>
+    </motion.div>
+  );
+}
+
+/* ─── Cinematic walkthrough (record this for a video) ────────── */
+const SCENES: Scene[] = PHASES.flatMap((p) =>
+  p.steps.flatMap((s) =>
+    s.images.map((img, i) => ({
+      phase: p.title,
+      accent: p.accent,
+      kicker: p.kicker,
+      n: s.n,
+      part: s.images.length > 1 ? i + 1 : 0,
+      title: s.title,
+      body: s.body,
+      src: img.src,
+      alt: img.alt,
+    })),
+  ),
+);
+
+function CinematicPlayer({ onClose }: { onClose: () => void }) {
+  const [index, setIndex] = useState(0);
+  const [playing, setPlaying] = useState(true);
+  const scene = SCENES[index];
+  const isLast = index === SCENES.length - 1;
+
+  const next = useCallback(() => setIndex((i) => Math.min(i + 1, SCENES.length - 1)), []);
+  const prev = useCallback(() => setIndex((i) => Math.max(i - 1, 0)), []);
+  const restart = useCallback(() => { setIndex(0); setPlaying(true); }, []);
+
+  // Auto-advance while playing
+  useEffect(() => {
+    if (!playing) return;
+    if (isLast) { setPlaying(false); return; }
+    const t = setTimeout(() => setIndex((i) => i + 1), SCENE_MS);
+    return () => clearTimeout(t);
+  }, [playing, index, isLast]);
+
+  // Keyboard controls
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+      else if (e.code === 'Space') { e.preventDefault(); setPlaying((p) => !p); }
+      else if (e.key === 'ArrowRight') next();
+      else if (e.key === 'ArrowLeft') prev();
+    };
+    window.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [onClose, next, prev]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="no-print fixed inset-0 z-300 flex flex-col bg-zinc-950 text-white"
+    >
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-5 py-3">
+        <div className="flex items-center gap-2.5">
+          <span className={`flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-br ${scene.accent} text-white`}>
+            <Film size={15} />
+          </span>
+          <div className="leading-tight">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/45">{scene.kicker} · {scene.phase}</p>
+            <p className="text-sm font-bold text-white">AF Home — Partner Webstore Walkthrough</p>
+          </div>
+        </div>
+        <button onClick={onClose} className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 transition hover:bg-white/20" aria-label="Close">
+          <X size={18} />
+        </button>
+      </div>
+
+      {/* Stage */}
+      <div className="grid flex-1 gap-6 overflow-hidden px-6 pb-2 lg:grid-cols-[1.55fr_1fr]">
+        {/* Zooming screenshot */}
+        <div className="relative flex items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-black shadow-2xl">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={scene.src}
+              className="absolute inset-0"
+              style={{
+                backgroundImage: `url(${scene.src})`,
+                backgroundRepeat: 'no-repeat',
+              }}
+              initial={{ backgroundSize: '152%', backgroundPosition: '0% 0%', opacity: 0 }}
+              animate={{
+                backgroundSize: ['152%', '178%'],
+                backgroundPosition: ['0% 0%', '100% 100%'],
+                opacity: 1,
+              }}
+              exit={{ opacity: 0 }}
+              transition={{
+                backgroundSize: { duration: SCENE_MS / 1000, ease: 'linear' },
+                backgroundPosition: { duration: SCENE_MS / 1000, ease: 'linear' },
+                opacity: { duration: 0.5 },
+              }}
+            />
+          </AnimatePresence>
+          <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/5" />
+          <span className={`absolute left-4 top-4 rounded-full bg-linear-to-br ${scene.accent} px-3 py-1 text-[11px] font-black uppercase tracking-wider text-white shadow`}>
+            Step {scene.n}{scene.part ? `.${scene.part}` : ''}
+          </span>
+        </div>
+
+        {/* Caption */}
+        <div className="flex flex-col justify-center">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, x: 24 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -16 }}
+              transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+            >
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/60">
+                {scene.kicker} · {scene.phase}
+              </span>
+              <h2 className="mt-4 text-3xl font-black leading-tight tracking-tight sm:text-4xl">{scene.title}</h2>
+              <p className="mt-4 max-w-md text-base leading-relaxed text-white/70">{scene.body}</p>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div className="px-6 pb-5 pt-2">
+        {/* Progress segments */}
+        <div className="mb-3 flex gap-1">
+          {SCENES.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setIndex(i)}
+              className="group h-1.5 flex-1 overflow-hidden rounded-full bg-white/12"
+              aria-label={`Go to scene ${i + 1}`}
+            >
+              <span
+                className="block h-full rounded-full bg-emerald-400 transition-all"
+                style={{ width: i < index ? '100%' : i === index ? '100%' : '0%', opacity: i === index ? 1 : i < index ? 0.5 : 0 }}
+              />
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center justify-between gap-4">
+          <span className="min-w-15 font-mono text-xs text-white/40">{index + 1} / {SCENES.length}</span>
+
+          <div className="flex items-center gap-2">
+            <button onClick={prev} disabled={index === 0} className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 transition hover:bg-white/20 disabled:opacity-30" aria-label="Previous">
+              <ChevronLeft size={18} />
+            </button>
+            {isLast ? (
+              <button onClick={restart} className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow transition hover:bg-emerald-400" aria-label="Replay">
+                <RotateCcw size={20} />
+              </button>
+            ) : (
+              <button onClick={() => setPlaying((p) => !p)} className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow transition hover:bg-emerald-400" aria-label={playing ? 'Pause' : 'Play'}>
+                {playing ? <Pause size={20} /> : <Play size={20} className="ml-0.5" />}
+              </button>
+            )}
+            <button onClick={next} disabled={isLast} className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 transition hover:bg-white/20 disabled:opacity-30" aria-label="Next">
+              <ChevronRight size={18} />
+            </button>
+          </div>
+
+          <span className="hidden min-w-15 text-right text-xs text-white/40 sm:block">Space · ← →</span>
+        </div>
+      </div>
+    </motion.div>
   );
 }
 
 /* ─── Main ───────────────────────────────────────────────────── */
 export default function WebstoreTutorial() {
   const [printing, setPrinting] = useState(false);
+  const [lightbox, setLightbox] = useState<LightboxImage | null>(null);
+  const [cinematic, setCinematic] = useState(false);
+
+  const openLightbox = useCallback((img: LightboxImage) => setLightbox(img), []);
+  const closeLightbox = useCallback(() => setLightbox(null), []);
 
   const handleSavePdf = useCallback(() => {
     setPrinting(true);
@@ -245,14 +525,22 @@ export default function WebstoreTutorial() {
               <p className="text-sm font-bold text-zinc-800">Partner Webstore Guide</p>
             </div>
           </div>
-          <button
-            onClick={handleSavePdf}
-            disabled={printing}
-            className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 disabled:opacity-60"
-          >
-            <Download size={16} />
-            {printing ? 'Preparing…' : 'Save as PDF'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCinematic(true)}
+              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500"
+            >
+              <Play size={15} className="ml-0.5" /> Play walkthrough
+            </button>
+            <button
+              onClick={handleSavePdf}
+              disabled={printing}
+              className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 disabled:opacity-60"
+            >
+              <Download size={16} />
+              {printing ? 'Preparing…' : 'Save as PDF'}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -275,11 +563,17 @@ export default function WebstoreTutorial() {
               <span className="font-semibold text-white">4 phases</span>.
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
-              <a
-                href="#phase-request"
+              <button
+                onClick={() => setCinematic(true)}
                 className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400"
               >
-                Get started <ArrowRight size={16} />
+                <Play size={16} className="ml-0.5" /> Play walkthrough
+              </button>
+              <a
+                href="#phase-request"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+              >
+                Read the steps <ArrowRight size={16} />
               </a>
               <button
                 onClick={handleSavePdf}
@@ -379,7 +673,7 @@ export default function WebstoreTutorial() {
                     {/* Screenshot(s) */}
                     <div className={step.images.length > 1 ? 'grid gap-4 sm:grid-cols-2' : ''}>
                       {step.images.map((img) => (
-                        <StepImage key={img.src} src={img.src} alt={img.alt} />
+                        <StepImage key={img.src} src={img.src} alt={img.alt} onOpen={openLightbox} />
                       ))}
                     </div>
                   </div>
@@ -408,6 +702,14 @@ export default function WebstoreTutorial() {
 
         <p className="mt-10 text-center text-xs text-zinc-400">© AF Home — Partner Webstore Guide</p>
       </main>
+
+      <AnimatePresence>
+        {lightbox && <Lightbox image={lightbox} onClose={closeLightbox} />}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {cinematic && <CinematicPlayer onClose={() => setCinematic(false)} />}
+      </AnimatePresence>
     </div>
   );
 }
