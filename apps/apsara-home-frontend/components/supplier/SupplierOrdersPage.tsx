@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useSession } from 'next-auth/react'
+import { RefreshCw } from 'lucide-react'
 import { showErrorToast, showSuccessToast } from '@/libs/toast'
 import {
   type SupplierFulfillmentStatus,
@@ -11,6 +12,12 @@ import {
   usePushSupplierOrderToZqMutation,
   useUpdateSupplierOrderFulfillmentMutation,
 } from '@/store/api/supplierOrdersApi'
+import {
+  type ServiceInquiryItem,
+  type ServiceInquiryStatus,
+  useGetSupplierServiceInquiriesQuery,
+  useUpdateServiceInquiryStatusMutation,
+} from '@/store/api/serviceInquiriesApi'
 import { useGetSupplierCategoriesQuery } from '@/store/api/suppliersApi'
 
 
@@ -141,6 +148,30 @@ const INQUIRY_FULFILLMENT_OPTIONS: Array<{ value: SupplierFulfillmentStatus; lab
 const SERVICES_STAT_LABELS = ['Total Inquiries', 'Total New', 'In Progress', 'Awaiting', 'Completed', 'Cancelled', 'Rejected']
 const SERVICES_VISIBLE_KEYS = ['total', 'toPay', 'completed']
 
+const SERVICE_INQUIRY_FILTER_MAP: Record<string, ServiceInquiryStatus | undefined> = {
+  all: undefined,
+  to_pay: 'new',
+  to_ship: 'viewed',
+  to_receive: 'responded',
+  completed: 'closed',
+  cancelled: undefined,
+  return: undefined,
+}
+
+const SERVICE_INQUIRY_STATUS_LABELS: Record<ServiceInquiryStatus, string> = {
+  new: 'New',
+  viewed: 'Viewed',
+  responded: 'Responded',
+  closed: 'Closed',
+}
+
+const SERVICE_INQUIRY_STATUS_STYLES: Record<ServiceInquiryStatus, string> = {
+  new: 'border border-blue-200/80 bg-blue-50 text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-200',
+  viewed: 'border border-amber-200/80 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300',
+  responded: 'border border-emerald-200/80 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200',
+  closed: 'border border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200',
+}
+
 /* avatar gradient colours cycling by index */
 const AVATAR_GRADIENTS = [
   'from-violet-500 to-indigo-500',
@@ -174,6 +205,11 @@ function getInitials(name?: string | null) {
 function isNew(v?: string | null) {
   const d = parseDate(v)
   return d ? Date.now() - d.getTime() < 86_400_000 : false
+}
+function formatInquiryDate(value: string | null | undefined) {
+  if (!value) return '—'
+  const d = parseDate(value)
+  return d ? d.toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', month: 'short', day: 'numeric', year: 'numeric' }) : '—'
 }
 function getApiError(err: unknown, fallback: string) {
   return (err as { data?: { message?: string } })?.data?.message || fallback
@@ -296,13 +332,18 @@ function Spinner() {
 export default function SupplierOrdersPage({ initialData }: { initialData?: SupplierOrdersResponse }) {
   const { data: session } = useSession()
   const supplierId = Number(session?.user?.supplierId ?? 0)
+  const supplierName = session?.user?.supplierName ?? null
   const { data: supplierCategoriesData } = useGetSupplierCategoriesQuery(supplierId, {
     skip: !session || supplierId <= 0,
   })
-  const isServicesView = useMemo(
-    () => (supplierCategoriesData?.categories ?? []).some((c) => c.name.toLowerCase() === 'services'),
-    [supplierCategoriesData?.categories],
-  )
+  const isServicesView = useMemo(() => {
+    const cats = supplierCategoriesData?.categories
+    if (cats != null) {
+      if (cats.some((c) => String(c.name ?? '').toLowerCase().includes('service'))) return true
+      if (cats.length > 0) return false
+    }
+    return String(supplierName ?? '').toLowerCase().includes('service')
+  }, [supplierCategoriesData?.categories, supplierName])
 
   const activeFilterOptions  = isServicesView ? INQUIRY_FILTER_OPTIONS  : ORDER_FILTER_OPTIONS
   const activeFulfillOptions = isServicesView ? INQUIRY_FULFILLMENT_OPTIONS : FULFILLMENT_OPTIONS
@@ -314,6 +355,7 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
   const [fulfillDrafts, setFulfillDrafts] = useState<Record<number, SupplierFulfillmentStatus>>({})
   const [expandedId, setExpandedId]   = useState<number | null>(null)
   const [filterOpen, setFilterOpen]   = useState(false)
+  const [selectedInquiry, setSelectedInquiry] = useState<ServiceInquiryItem | null>(null)
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(search.trim()), 350)
@@ -322,11 +364,24 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
 
   const { data, isLoading, isError } = useGetSupplierOrdersQuery(
     { filter, search: debouncedSearch || undefined, page: 1, perPage: 20 },
+    { skip: isServicesView },
+  )
+
+  const inquiryStatus = SERVICE_INQUIRY_FILTER_MAP[filter]
+  const {
+    data: inquiryData,
+    isLoading: inquiryLoading,
+    isError: inquiryError,
+    refetch: refetchInquiries,
+  } = useGetSupplierServiceInquiriesQuery(
+    { status: inquiryStatus, per_page: 100 },
+    { skip: !isServicesView, refetchOnMountOrArgChange: true },
   )
 
   const [updateFulfillment] = useUpdateSupplierOrderFulfillmentMutation()
   const [approveOrder]      = useApproveSupplierOrderMutation()
   const [pushToZq]          = usePushSupplierOrderToZqMutation()
+  const [updateInquiryStatus, { isLoading: isUpdatingInquiry }] = useUpdateServiceInquiryStatusMutation()
 
   const effectiveData = data ?? initialData ?? null
   const orders = useMemo(() => effectiveData?.orders ?? [], [effectiveData])
@@ -349,6 +404,33 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
     cancelled: effectiveData?.counts?.cancelled  ?? 0,
     return:    effectiveData?.counts?.return      ?? 0,
   }), [effectiveData, orders.length])
+
+  const inquiryRows = useMemo(() => {
+    let source = inquiryData?.inquiries ?? []
+    const q = debouncedSearch.trim().toLowerCase()
+    if (q) {
+      source = source.filter((item) =>
+        [item.fullname, item.email, item.contact, item.address, item.product?.pd_name]
+          .some((value) => value?.toLowerCase().includes(q)),
+      )
+    }
+    return source
+  }, [debouncedSearch, inquiryData?.inquiries])
+
+  const inquiryCounts = inquiryData?.counts
+
+  async function handleInquiryStatusChange(id: number, status: ServiceInquiryStatus) {
+    try {
+      await updateInquiryStatus({ id, status }).unwrap()
+      showSuccessToast('Inquiry status updated.')
+      if (selectedInquiry?.id === id) {
+        setSelectedInquiry((prev) => (prev ? { ...prev, status } : prev))
+      }
+      await refetchInquiries()
+    } catch (e) {
+      showErrorToast(getApiError(e, 'Failed to update inquiry status.'))
+    }
+  }
 
   async function handleApprove(id: number) {
     setBusyId(id)
@@ -381,17 +463,251 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
 
   const activeLabel = activeFilterOptions.find(o => o.value === filter)?.label ?? (isServicesView ? 'All Inquiries' : 'All Orders')
 
+  if (isServicesView) {
+    const serviceCards = [
+      { key: 'total', label: 'Total Inquiries', count: inquiryCounts?.total ?? inquiryRows.length, filterVal: 'all' },
+      { key: 'new', label: 'New', count: inquiryCounts?.new ?? 0, filterVal: 'to_pay' },
+      { key: 'viewed', label: 'Viewed', count: inquiryCounts?.viewed ?? 0, filterVal: 'to_ship' },
+      { key: 'responded', label: 'Responded', count: inquiryCounts?.responded ?? 0, filterVal: 'to_receive' },
+    ] as const
+
+    return (
+      <div className="space-y-5 pb-10">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {serviceCards.map((card) => {
+            const active = filter === card.filterVal
+            return (
+              <button
+                key={card.key}
+                type="button"
+                onClick={() => setFilter(card.filterVal)}
+                className={`rounded-2xl border p-4 text-left transition-all ${
+                  active ? 'border-indigo-300 bg-indigo-50/80 shadow-sm dark:border-indigo-700 dark:bg-indigo-900/20' : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'
+                }`}
+              >
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">{card.count}</p>
+                <p className="mt-0.5 text-xs font-medium text-slate-500 dark:text-slate-400">{card.label}</p>
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Inquiry Management</h2>
+              <p className="text-sm text-slate-400">
+                {supplierName ? (
+                  <><span className="font-medium text-slate-600 dark:text-slate-200">{supplierName}</span> - all company inquiries</>
+                ) : (
+                  'Manage and respond to service inquiries'
+                )}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative">
+                <svg className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.35-4.35" />
+                </svg>
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search inquiries..."
+                  className="h-10 w-56 rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 transition-all focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </div>
+              <select
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 outline-none focus:border-indigo-400 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              >
+                <option value="all">All Inquiries</option>
+                <option value="to_pay">New</option>
+                <option value="to_ship">Viewed</option>
+                <option value="to_receive">Responded</option>
+                <option value="completed">Closed</option>
+              </select>
+              <button
+                type="button"
+                onClick={() => refetchInquiries()}
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-3 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Refresh
+              </button>
+            </div>
+          </div>
+
+          {inquiryLoading ? (
+            <div className="flex items-center justify-center gap-2.5 py-20 text-slate-400">
+              <Spinner />
+              <span className="text-sm">Loading inquiries...</span>
+            </div>
+          ) : inquiryError ? (
+            <div className="flex flex-col items-center gap-2 py-20 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-50">
+                <svg className="h-6 w-6 text-rose-500" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9.303 3.376c.866 1.5-.217 3.374-1.948 3.374H4.645c-1.73 0-2.813-1.874-1.948-3.374l7.5-13c.866-1.5 3.032-1.5 3.898 0l7.206 12.374zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
+              </div>
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Failed to load inquiries</p>
+            </div>
+          ) : inquiryRows.length === 0 ? (
+            <div className="flex flex-col items-center gap-3 border-t border-slate-100 py-20 text-center dark:border-slate-800">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800">
+                <svg className="h-7 w-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">No inquiries found</p>
+                <p className="mt-0.5 text-xs text-slate-400">Try adjusting your search or filter.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-y border-slate-100 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-800/50">
+                    {['Inquirer', 'Service', 'Contact', 'Status', 'Date', 'Actions'].map((col) => (
+                      <th key={col} className="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                        {col}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {inquiryRows.map((inquiry) => (
+                    <tr key={inquiry.id} className="transition-colors hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+                      <td className="px-6 py-4">
+                        <p className="text-[13px] font-semibold text-slate-900 dark:text-slate-100">{inquiry.fullname}</p>
+                        <p className="mt-0.5 text-[11px] text-slate-400">{inquiry.email}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="text-[13px] font-medium text-slate-700 dark:text-slate-200">{inquiry.product?.pd_name ?? '—'}</p>
+                      </td>
+                      <td className="px-6 py-4 text-[13px] text-slate-600 dark:text-slate-300">{inquiry.contact || '—'}</td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${SERVICE_INQUIRY_STATUS_STYLES[inquiry.status]}`}>
+                          {SERVICE_INQUIRY_STATUS_LABELS[inquiry.status]}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-[12px] text-slate-400">{formatInquiryDate(inquiry.created_at)}</td>
+                      <td className="px-6 py-4">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedInquiry(inquiry)}
+                          className="rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                        >
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {selectedInquiry && (
+          <div
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4"
+            onClick={() => setSelectedInquiry(null)}
+          >
+            <div
+              className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-500">Service Inquiry</p>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">{selectedInquiry.fullname}</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedInquiry(null)}
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-400 hover:bg-slate-50 dark:border-slate-700"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M18 6 6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="space-y-4 px-5 py-5">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800/60">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Service</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100">{selectedInquiry.product?.pd_name ?? '—'}</p>
+                  </div>
+                  <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800/60">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Status</p>
+                    <p className="mt-1">
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${SERVICE_INQUIRY_STATUS_STYLES[selectedInquiry.status]}`}>
+                        {SERVICE_INQUIRY_STATUS_LABELS[selectedInquiry.status]}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-200 p-3 text-sm text-slate-600 dark:border-slate-700 dark:text-slate-300">
+                  <p><span className="font-semibold">Email:</span> {selectedInquiry.email}</p>
+                  <p><span className="font-semibold">Contact:</span> {selectedInquiry.contact || '—'}</p>
+                  <p><span className="font-semibold">Address:</span> {selectedInquiry.address || '—'}</p>
+                  <p><span className="font-semibold">Date:</span> {formatInquiryDate(selectedInquiry.created_at)}</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={isUpdatingInquiry || selectedInquiry.status === 'viewed'}
+                    onClick={() => handleInquiryStatusChange(selectedInquiry.id, 'viewed')}
+                    className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                  >
+                    Mark Viewed
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isUpdatingInquiry || selectedInquiry.status === 'responded'}
+                    onClick={() => handleInquiryStatusChange(selectedInquiry.id, 'responded')}
+                    className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-emerald-700/40 dark:bg-emerald-500/10 dark:text-emerald-200"
+                  >
+                    Mark Responded
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isUpdatingInquiry || selectedInquiry.status === 'closed'}
+                    onClick={() => handleInquiryStatusChange(selectedInquiry.id, 'closed')}
+                    className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                  >
+                    Close Inquiry
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-5 pb-10">
 
       {/* ── Stat Cards ── */}
       {isServicesView ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {STAT_CONFIG.filter(stat => SERVICES_VISIBLE_KEYS.includes(stat.key)).map((stat) => {
-            const count  = counts[stat.key as keyof typeof counts]
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {([
+            { key: 'total',     filterVal: 'all',       label: 'Total Inquiries', sparkKey: 'total',     lineColor: '#818cf8', iconBg: 'bg-indigo-50',  iconColor: 'text-indigo-500',  count: counts.total,
+              icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg> },
+            { key: 'toPay',     filterVal: 'to_pay',    label: 'New',              sparkKey: 'toPay',     lineColor: '#fb923c', iconBg: 'bg-orange-50',  iconColor: 'text-orange-500', count: counts.toPay,
+              icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg> },
+            { key: 'pending',   filterVal: 'to_ship',   label: 'pending',         sparkKey: 'toShip',    lineColor: '#38bdf8', iconBg: 'bg-sky-50',     iconColor: 'text-sky-500',     count: counts.toShip,
+              icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
+            { key: 'completed', filterVal: 'completed', label: 'complete',        sparkKey: 'completed', lineColor: '#34d399', iconBg: 'bg-emerald-50', iconColor: 'text-emerald-500', count: counts.completed,
+              icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
+          ]).map((stat) => {
             const active = filter === stat.filterVal
-            const idx    = STAT_CONFIG.findIndex(s => s.key === stat.key)
-            const label  = SERVICES_STAT_LABELS[idx]
             return (
               <button
                 key={stat.key}
@@ -406,13 +722,13 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                     <div className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${stat.iconBg} ${stat.iconColor} mb-3`}>
                       {stat.icon}
                     </div>
-                    <p className="text-sm font-medium text-slate-500">{label}</p>
-                    <p className="mt-0.5 text-3xl font-bold text-slate-900">{count}</p>
+                    <p className="text-sm font-medium text-slate-500">{stat.label}</p>
+                    <p className="mt-0.5 text-3xl font-bold text-slate-900">{stat.count}</p>
                   </div>
-                  <Sparkline path={SPARKLINES[stat.key]} color={stat.lineColor} />
+                  <Sparkline path={SPARKLINES[stat.sparkKey]} color={stat.lineColor} />
                 </div>
                 <div className="mt-4 flex items-center gap-1.5">
-                  <ChangePill value={count > 0 ? 100 : 0} />
+                  <ChangePill value={stat.count > 0 ? 100 : 0} />
                   <span className="text-[11px] text-slate-400">vs yesterday</span>
                 </div>
               </button>
@@ -494,7 +810,22 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
         <div className="flex flex-col gap-3 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-lg font-bold text-slate-900">{isServicesView ? 'Inquiry Management' : 'Order Fulfillment'}</h2>
-            <p className="text-sm text-slate-400">{isServicesView ? 'Manage and respond to service inquiries' : 'Manage and track supplier orders'}</p>
+            {isServicesView ? (
+              <div className="flex items-center gap-2 mt-0.5">
+                <svg className="h-3.5 w-3.5 shrink-0 text-indigo-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                <p className="text-sm text-slate-400">
+                  {supplierName ? (
+                    <><span className="font-medium text-slate-600">{supplierName}</span> — all company inquiries</>
+                  ) : (
+                    'Manage and respond to service inquiries'
+                  )}
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-slate-400">Manage and track supplier orders</p>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -528,7 +859,7 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                 </svg>
               </button>
               {filterOpen && (
-                <div className="absolute right-0 top-12 z-20 min-w-[160px] overflow-hidden rounded-xl border border-slate-100 bg-white py-1 shadow-lg">
+                <div className="absolute right-0 top-12 z-20 min-w-40 overflow-hidden rounded-xl border border-slate-100 bg-white py-1 shadow-lg">
                   {activeFilterOptions.map(opt => (
                     <button
                       key={opt.value}
@@ -660,7 +991,7 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                         {/* Supplier / Customer */}
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2.5">
-                            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${gradient} text-[11px] font-bold text-white shadow-sm`}>
+                            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br ${gradient} text-[11px] font-bold text-white shadow-sm`}>
                               {getInitials(order.customer_name)}
                             </div>
                             <div className="min-w-0">

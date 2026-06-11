@@ -2550,7 +2550,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       return Math.max(0, selectedWebstoreSubscriptionFee);
     }
     return 0;
-  }, [isWebstoreExpired, activeWebstoreRequest?.remaining_balance, selectedWebstoreSubscriptionFee]);
+  }, [isWebstoreExpired, webstoreRenewalEnabled, activeWebstoreRequest?.remaining_balance, selectedWebstoreSubscriptionFee]);
   const webstorePlanLabel = resolvedWebstorePlan === 'test'
     ? 'Test'
     : resolvedWebstorePlan === 'quarterly'
@@ -3238,10 +3238,17 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
       const downloadLink = document.createElement('a');
       downloadLink.href = pngUrl;
       const fileRef = (webstorePaymentReferenceId || checkoutId || 'receipt').replace(/[^a-zA-Z0-9_\-]/g, '-')
-      downloadLink.download = `webstore-payment-success-${fileRef}.png`;
+      const fileName = `webstore-payment-success-${fileRef}`;
+      downloadLink.download = fileName;
       document.body.appendChild(downloadLink);
       downloadLink.click();
       downloadLink.remove();
+      const imageFile = await new Promise<File | null>((resolve) => {
+        canvas.toBlob((blob) => {
+          resolve(blob ? new File([blob], fileName, { type: 'image/png' }) : null);
+        }, 'image/png');
+      });
+      return imageFile ?? undefined;
     } finally {
       URL.revokeObjectURL(svgUrl);
     }
@@ -8789,6 +8796,17 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
               onClick={(event) => event.stopPropagation()}
               className="relative flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-[30px] border border-sky-200 bg-white shadow-[0_28px_90px_rgba(15,23,42,0.35)]"
             >
+              <button
+                type="button"
+                aria-label="Close"
+                disabled={isSubmittingReceipt}
+                onClick={() => setWebstoreReceiptUploadModalOpen(false)}
+                className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white transition hover:bg-white/35 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+              </button>
               <div className="bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-500 px-6 py-8 text-center text-white md:px-10">
                 <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/18">
                   <svg viewBox="0 0 24 24" className="h-9 w-9" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -9133,7 +9151,10 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                 <button
                   type="button"
                   onClick={async () => {
-                    await handleDownloadWebstoreSuccessImage();
+                    const imageFile = await handleDownloadWebstoreSuccessImage();
+                    if (imageFile) {
+                      processWebstoreReceiptFiles([imageFile]);
+                    }
                     setWebstoreSuccessModalOpen(false);
                     openWebstoreReceiptUpload();
                   }}

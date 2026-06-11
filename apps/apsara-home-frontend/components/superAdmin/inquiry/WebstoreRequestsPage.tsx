@@ -293,9 +293,9 @@ export default function WebstoreRequestsPage() {
       effectiveMonthly: item.effective_monthly ?? null,
       billingOption: item.billing_option ?? null,
       paymentMethod: item.payment_method ?? null,
-      checkoutId: approvedReceipt?.baseCheckoutId ?? item.base_checkout_id ?? item.checkout_id ?? null,
-      paymentReference: approvedReceipt?.basePaymentReference ?? item.base_payment_reference ?? item.payment_reference ?? null,
-      paymentIntentId: approvedReceipt?.basePaymentIntentId ?? item.base_payment_intent_id ?? item.payment_intent_id ?? null,
+      checkoutId: approvedReceipt?.baseCheckoutId || item.base_checkout_id || item.checkout_id || null,
+      paymentReference: approvedReceipt?.basePaymentReference || item.base_payment_reference || item.payment_reference || null,
+      paymentIntentId: approvedReceipt?.basePaymentIntentId || item.base_payment_intent_id || item.payment_intent_id || null,
       remainingBalance: item.remaining_balance ?? null,
       receiptUrls: item.receipt_urls ?? [],
       receiptItems: mappedReceiptItems,
@@ -448,12 +448,12 @@ export default function WebstoreRequestsPage() {
     ?? null
   const latestReceiptReferenceId = String(
     latestReceiptItem?.paymentReference
-    ?? latestReceiptItem?.paymentIntentId
-    ?? (isPayMongoRef(details.paymentReference) ? details.paymentReference : null)
-    ?? (isPayMongoRef(details.paymentIntentId) ? details.paymentIntentId : null)
-    ?? details.paymentReference
-    ?? details.paymentIntentId
-    ?? '',
+    || latestReceiptItem?.paymentIntentId
+    || (isPayMongoRef(details.paymentReference) ? details.paymentReference : null)
+    || (isPayMongoRef(details.paymentIntentId) ? details.paymentIntentId : null)
+    || details.paymentReference
+    || details.paymentIntentId
+    || '',
   ).trim()
   const confirmedCheckoutId = String(details.checkoutId ?? '').trim()
   const confirmedPaymentRef = String(details.paymentReference ?? details.paymentIntentId ?? '').trim()
@@ -627,37 +627,39 @@ export default function WebstoreRequestsPage() {
       return format(endDate)
     }
 
-    // For full/one-time billing: if there is a later approved continuation receipt,
-    // use that receipt's approvedAt as the renewal base for the end date.
-    const latestContinuationApprovedAt = Array.isArray(receiptItems)
-      ? receiptItems.reduce<Date | null>((latest, r) => {
-          if (r?.type !== 'webstore_payment_continuation') return latest
-          if (r?.approvalStatus !== 'approved' && !r?.approvedAt) return latest
-          const t = parseDateSafe(r?.approvedAt)
-          return t && (!latest || t > latest) ? t : latest
-        }, null)
-      : null
+    // For full/one-time billing: chain approved continuations — each one extends
+    // from the current end date (or the continuation date if later), so same-day
+    // renewals properly push the end date forward by a full period.
+    const approvedContinuations = Array.isArray(receiptItems)
+      ? receiptItems
+          .filter((r) => r?.type === 'webstore_payment_continuation' && (r?.approvalStatus === 'approved' || Boolean(r?.approvedAt)))
+          .map((r) => parseDateSafe(r?.approvedAt))
+          .filter((d): d is Date => d !== null)
+          .sort((a, b) => a.getTime() - b.getTime())
+      : []
 
     const duration = planTermDuration(plan, term)
     if (duration.days > 0) {
-      const initialEnd = new Date(startDate)
-      initialEnd.setDate(initialEnd.getDate() + duration.days)
-      if (latestContinuationApprovedAt) {
-        const renewalEnd = new Date(latestContinuationApprovedAt)
-        renewalEnd.setDate(renewalEnd.getDate() + duration.days)
-        if (renewalEnd > initialEnd) return format(renewalEnd)
+      let currentEnd = new Date(startDate)
+      currentEnd.setDate(currentEnd.getDate() + duration.days)
+      for (const contDate of approvedContinuations) {
+        const base = contDate > currentEnd ? contDate : currentEnd
+        const next = new Date(base)
+        next.setDate(next.getDate() + duration.days)
+        currentEnd = next
       }
-      return format(initialEnd)
+      return format(currentEnd)
     }
     if (duration.months <= 0) return '-'
-    const initialEnd = new Date(startDate)
-    initialEnd.setMonth(initialEnd.getMonth() + duration.months)
-    if (latestContinuationApprovedAt) {
-      const renewalEnd = new Date(latestContinuationApprovedAt)
-      renewalEnd.setMonth(renewalEnd.getMonth() + duration.months)
-      if (renewalEnd > initialEnd) return format(renewalEnd)
+    let currentEnd = new Date(startDate)
+    currentEnd.setMonth(currentEnd.getMonth() + duration.months)
+    for (const contDate of approvedContinuations) {
+      const base = contDate > currentEnd ? contDate : currentEnd
+      const next = new Date(base)
+      next.setMonth(next.getMonth() + duration.months)
+      currentEnd = next
     }
-    return format(initialEnd)
+    return format(currentEnd)
   }
 
   const getReceiptStatus = (receipt?: {
@@ -1218,7 +1220,7 @@ export default function WebstoreRequestsPage() {
                             {Array.isArray(details.receiptItems) && details.receiptItems.length > 0 ? (
                               [...details.receiptItems].reverse().map((receipt, index) => {
                                 const urls = Array.isArray(receipt.receiptUrls) ? receipt.receiptUrls : []
-                                const primaryUrl = urls.length > 0 ? urls[urls.length - 1] : null
+                                const primaryUrl = urls.find(u => /\.(png|jpg|jpeg|webp|gif)(\?.*)?$/i.test(u) || u.includes('res.cloudinary.com')) ?? null
                                 const receiptId = receipt.id ?? null
                                 const requestStatus = String(details.status ?? '').toLowerCase()
                                 const receiptStatus =
