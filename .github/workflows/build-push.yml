@@ -148,15 +148,45 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    environment: "AF HOME ENV URL"
     if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/renewal'
     # `secrets` can't be used in `if:` — map them to env first, then gate on env.
     env:
       DOKPLOY_WEBHOOK_URL_MAIN: ${{ secrets.DOKPLOY_WEBHOOK_URL_MAIN }}
       DOKPLOY_WEBHOOK_URL_COMMUNITY: ${{ secrets.DOKPLOY_WEBHOOK_URL_COMMUNITY }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect deploy targets
+        uses: dorny/paths-filter@v3
+        id: deploy_changed
+        with:
+          filters: |
+            main_stack:
+              - 'apps/apsara-home-frontend/**'
+              - 'apps/apsara-home-backend/**'
+              - 'apps/Dreambuild-Landing-Page/**'
+              - 'docker-compose.prod.yml'
+              - 'docker/**'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'package.json'
+              - '.github/workflows/build-push.yml'
+            community_stack:
+              - 'apps/community-frontend/**'
+              - 'apps/community-backend/**'
+              - 'apps/realtime-service/**'
+              - 'docker-compose.community.prod.yml'
+              - 'docker/**'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'package.json'
+              - '.github/workflows/build-push.yml'
+
       - name: Trigger Dokploy redeploy (main stack)
-        if: ${{ env.DOKPLOY_WEBHOOK_URL_MAIN != '' }}
+        if: ${{ env.DOKPLOY_WEBHOOK_URL_MAIN != '' && (github.event_name == 'workflow_dispatch' || steps.deploy_changed.outputs.main_stack == 'true') }}
         run: curl -fsSL -X POST "$DOKPLOY_WEBHOOK_URL_MAIN"
       - name: Trigger Dokploy redeploy (community stack)
-        if: ${{ env.DOKPLOY_WEBHOOK_URL_COMMUNITY != '' }}
+        if: ${{ env.DOKPLOY_WEBHOOK_URL_COMMUNITY != '' && (github.event_name == 'workflow_dispatch' || steps.deploy_changed.outputs.community_stack == 'true') }}
         run: curl -fsSL -X POST "$DOKPLOY_WEBHOOK_URL_COMMUNITY"
