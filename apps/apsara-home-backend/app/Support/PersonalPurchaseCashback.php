@@ -37,15 +37,29 @@ class PersonalPurchaseCashback
             ? (int) $customer->c_userid
             : (int) $customer;
 
-        if ($customerId <= 0 || !Schema::hasTable('tbl_affiliate_voucher_issuances')) {
+        if ($customerId <= 0) {
             return 0.0;
         }
 
-        return (float) DB::table('tbl_affiliate_voucher_issuances')
-            ->where('avi_customer_id', $customerId)
-            ->where('avi_status', 'active')
-            ->selectRaw('SUM(avi_amount * COALESCE(avi_max_uses, 1)) as total_reserved')
-            ->value('total_reserved') ?? 0;
+        $voucherReserved = 0.0;
+        if (Schema::hasTable('tbl_affiliate_voucher_issuances')) {
+            $voucherReserved = (float) DB::table('tbl_affiliate_voucher_issuances')
+                ->where('avi_customer_id', $customerId)
+                ->where('avi_status', 'active')
+                ->selectRaw('SUM(avi_amount * COALESCE(avi_max_uses, 1)) as total_reserved')
+                ->value('total_reserved') ?? 0;
+        }
+
+        $checkoutUsed = 0.0;
+        if (Schema::hasTable('tbl_customer_wallet_ledger')) {
+            $checkoutUsed = (float) DB::table('tbl_customer_wallet_ledger')
+                ->where('wl_customer_id', $customerId)
+                ->where('wl_entry_type', 'debit')
+                ->where('wl_source_type', 'personal_cashback_checkout')
+                ->sum('wl_amount');
+        }
+
+        return $voucherReserved + $checkoutUsed;
     }
 
     public static function availableBalance(Customer|int $customer): float

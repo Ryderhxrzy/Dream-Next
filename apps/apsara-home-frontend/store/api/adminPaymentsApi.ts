@@ -140,6 +140,21 @@ export const adminPaymentsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Encashment'],
     }),
+    getSupplierVoucherProductRules: builder.query<AdminVoucherProductRulesResponse, void>({
+      query: () => ({
+        url: '/api/supplier/payments/voucher-product-rules',
+        method: 'GET',
+      }),
+      providesTags: ['Encashment'],
+    }),
+    updateSupplierVoucherProductRules: builder.mutation<UpdateAdminVoucherProductRulesResponse, UpdateAdminVoucherProductRulesPayload>({
+      query: (body) => ({
+        url: '/api/supplier/payments/voucher-product-rules',
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: ['Encashment'],
+    }),
   }),
 })
 
@@ -147,4 +162,6 @@ export const {
   useGetAdminPaymentsOverviewQuery,
   useGetAdminVoucherProductRulesQuery,
   useUpdateAdminVoucherProductRulesMutation,
+  useGetSupplierVoucherProductRulesQuery,
+  useUpdateSupplierVoucherProductRulesMutation,
 } = adminPaymentsApi

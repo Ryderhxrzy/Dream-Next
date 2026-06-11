@@ -19,6 +19,7 @@ use App\Services\FirebaseMessagingService;
 use App\Services\QueryOptimizerService;
 use App\Support\DirectReferralCommission;
 use App\Support\OrderPvPosting;
+use App\Support\PersonalPurchaseCashback;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -256,6 +257,7 @@ class PaymentController extends Controller
             'payment_mode' => 'nullable|in:test,live',
             'online_banking_provider' => 'nullable|in:dob,ubp',
             'voucher_code' => 'nullable|string|max:80',
+            'cashback_amount' => 'nullable|numeric|min:0',
             'egc_amount' => 'nullable|numeric|min:0',
             'source_label' => 'nullable|string|max:255',
             'source_slug' => 'nullable|string|max:255',
@@ -393,6 +395,37 @@ class PaymentController extends Controller
             $voucherDiscount = (float) $voucherValidation['discount'];
         }
 
+        $cashbackAmount = round(max(0, (float) ($validated['cashback_amount'] ?? 0)), 2);
+        if ($cashbackAmount > 0) {
+            if (!$customerId) {
+                return response()->json(['message' => 'Please sign in to use personal cashback.'], 422);
+            }
+
+            $availableCashbackBalance = PersonalPurchaseCashback::availableBalance((int) $customerId);
+            $maxCashbackAmount = round(max(0, $subtotal - $voucherDiscount), 2);
+            if ($cashbackAmount > $availableCashbackBalance) {
+                return response()->json(['message' => 'Personal cashback amount exceeds available balance.'], 422);
+            }
+            if ($cashbackAmount > $maxCashbackAmount) {
+                return response()->json(['message' => 'Personal cashback amount exceeds the remaining product subtotal.'], 422);
+            }
+
+            $cashbackValidation = $this->computeStoreCreditDiscountForProduct(
+                $cashbackAmount,
+                (int) ($resolvedOrderSnapshot['product_id'] ?? 0),
+                $maxCashbackAmount,
+                'personal cashback'
+            );
+
+            if (!$cashbackValidation['valid']) {
+                return response()->json(['message' => $cashbackValidation['message']], 422);
+            }
+
+            if (round((float) $cashbackValidation['discount'], 2) < $cashbackAmount) {
+                return response()->json(['message' => 'Personal cashback amount exceeds the allowed discount for this product.'], 422);
+            }
+        }
+
         $egcAmount = round(max(0, (float) ($validated['egc_amount'] ?? 0)), 2);
         if ($egcAmount > 0) {
             if (!$customerId) {
@@ -400,16 +433,30 @@ class PaymentController extends Controller
             }
 
             $availableEgcBalance = $this->customerEgcBalance((int) $customerId);
-            $maxEgcAmount = round(max(0, $subtotal - $voucherDiscount), 2);
+            $maxEgcAmount = round(max(0, $subtotal - $voucherDiscount - $cashbackAmount), 2);
             if ($egcAmount > $availableEgcBalance) {
                 return response()->json(['message' => 'E-GC amount exceeds available balance.'], 422);
             }
             if ($egcAmount > $maxEgcAmount) {
                 return response()->json(['message' => 'E-GC amount exceeds the remaining product subtotal.'], 422);
             }
+
+            $egcValidation = $this->computeStoreCreditDiscountForProduct(
+                $egcAmount,
+                (int) ($resolvedOrderSnapshot['product_id'] ?? 0),
+                $maxEgcAmount
+            );
+
+            if (!$egcValidation['valid']) {
+                return response()->json(['message' => $egcValidation['message']], 422);
+            }
+
+            if (round((float) $egcValidation['discount'], 2) < $egcAmount) {
+                return response()->json(['message' => 'E-GC amount exceeds the allowed discount for this product.'], 422);
+            }
         }
 
-        $computedAmount = max(0, $subtotal - $voucherDiscount - $egcAmount) + $handlingFee;
+        $computedAmount = max(0, $subtotal - $voucherDiscount - $cashbackAmount - $egcAmount) + $handlingFee;
 
         $payload = [
             'data' => [
@@ -547,6 +594,9 @@ class PaymentController extends Controller
                     'amount' => (float) ($voucher->avi_amount ?? 0),
                     'discount' => (float) $voucherDiscount,
                 ] : null,
+                'cashback' => $cashbackAmount > 0 ? [
+                    'amount' => (float) $cashbackAmount,
+                ] : null,
                 'egc' => $egcAmount > 0 ? [
                     'amount' => (float) $egcAmount,
                 ] : null,
@@ -610,12 +660,122 @@ class PaymentController extends Controller
                 'id' => (int) $voucher->avi_id,
                 'code' => (string) ($voucher->avi_code ?? ''),
                 'amount' => (float) ($voucher->avi_amount ?? 0),
+                'source_type' => 'personal_cashback',
                 'max_uses' => $voucher->avi_max_uses !== null ? (int) $voucher->avi_max_uses : null,
                 'used_count' => $voucher->avi_used_count !== null ? (int) $voucher->avi_used_count : null,
                 'expires_at' => $voucher->avi_expires_at,
             ],
             'discount' => round($discount, 2),
             'rule' => $voucherValidation['rule'],
+        ]);
+    }
+
+    public function validateEgc(Request $request)
+    {
+        $validated = $request->validate([
+            'subtotal' => 'nullable|numeric|min:0',
+            'product_id' => 'nullable|integer|min:1',
+            'voucher_discount' => 'nullable|numeric|min:0',
+        ]);
+
+        $authenticatedRequestUser = $request->user();
+        $customerId = $authenticatedRequestUser instanceof \App\Models\Customer
+            ? (int) $authenticatedRequestUser->getAuthIdentifier()
+            : (auth('sanctum')->id() ? (int) auth('sanctum')->id() : null);
+
+        if (!$customerId) {
+            return response()->json([
+                'valid' => true,
+                'message' => 'Please sign in to use E-GC.',
+                'available_balance' => 0.0,
+                'discount' => 0.0,
+                'rule' => null,
+            ]);
+        }
+
+        $subtotal = (float) ($validated['subtotal'] ?? 0);
+        $voucherDiscount = (float) ($validated['voucher_discount'] ?? 0);
+        $remainingSubtotal = round(max(0, $subtotal - $voucherDiscount), 2);
+        $availableEgcBalance = $this->customerEgcBalance((int) $customerId);
+        $requestedAmount = round(min($availableEgcBalance, $remainingSubtotal), 2);
+
+        if ($requestedAmount <= 0) {
+            return response()->json([
+                'valid' => true,
+                'message' => null,
+                'available_balance' => $availableEgcBalance,
+                'discount' => 0.0,
+                'rule' => null,
+            ]);
+        }
+
+        $egcValidation = $this->computeStoreCreditDiscountForProduct(
+            $requestedAmount,
+            (int) ($validated['product_id'] ?? 0),
+            $remainingSubtotal
+        );
+
+        return response()->json([
+            'valid' => (bool) $egcValidation['valid'],
+            'message' => $egcValidation['message'],
+            'available_balance' => $availableEgcBalance,
+            'discount' => round((float) $egcValidation['discount'], 2),
+            'rule' => $egcValidation['rule'],
+        ]);
+    }
+
+    public function validateCashback(Request $request)
+    {
+        $validated = $request->validate([
+            'subtotal' => 'nullable|numeric|min:0',
+            'product_id' => 'nullable|integer|min:1',
+            'voucher_discount' => 'nullable|numeric|min:0',
+        ]);
+
+        $authenticatedRequestUser = $request->user();
+        $customerId = $authenticatedRequestUser instanceof \App\Models\Customer
+            ? (int) $authenticatedRequestUser->getAuthIdentifier()
+            : (auth('sanctum')->id() ? (int) auth('sanctum')->id() : null);
+
+        if (!$customerId) {
+            return response()->json([
+                'valid' => true,
+                'message' => 'Please sign in to use personal cashback.',
+                'available_balance' => 0.0,
+                'discount' => 0.0,
+                'rule' => null,
+            ]);
+        }
+
+        $subtotal = (float) ($validated['subtotal'] ?? 0);
+        $voucherDiscount = (float) ($validated['voucher_discount'] ?? 0);
+        $remainingSubtotal = round(max(0, $subtotal - $voucherDiscount), 2);
+        $availableCashbackBalance = PersonalPurchaseCashback::availableBalance((int) $customerId);
+        $requestedAmount = round(min($availableCashbackBalance, $remainingSubtotal), 2);
+
+        if ($requestedAmount <= 0) {
+            return response()->json([
+                'valid' => true,
+                'message' => null,
+                'available_balance' => $availableCashbackBalance,
+                'discount' => 0.0,
+                'rule' => null,
+            ]);
+        }
+
+        $cashbackValidation = $this->computeStoreCreditDiscountForProduct(
+            $requestedAmount,
+            (int) ($validated['product_id'] ?? 0),
+            $remainingSubtotal,
+            'personal cashback'
+        );
+
+        return response()->json([
+            'valid' => (bool) $cashbackValidation['valid'],
+            'message' => $cashbackValidation['message'],
+            'available_balance' => $availableCashbackBalance,
+            'discount' => round((float) $cashbackValidation['discount'], 2),
+            'rule' => $cashbackValidation['rule'],
         ]);
     }
 
@@ -1836,6 +1996,7 @@ class PaymentController extends Controller
             );
             DirectReferralCommission::releaseAvailableForOrder($history, null);
             $this->markAffiliateVoucherUsedIfNeeded($checkoutId, is_array($cached) ? $cached : []);
+            $this->debitCashbackIfNeeded($checkoutId, is_array($cached) ? $cached : []);
             $this->debitEgcIfNeeded($checkoutId, is_array($cached) ? $cached : []);
         }
     }
@@ -2221,6 +2382,19 @@ class PaymentController extends Controller
         ];
     }
 
+    private function computeStoreCreditDiscountForProduct(float $amount, int $productId, float $subtotal, string $label = 'E-GC'): array
+    {
+        $result = $this->computeVoucherDiscountForProduct((object) [
+            'avi_amount' => max(0, $amount),
+        ], $productId, $subtotal);
+
+        if (is_string($result['message'] ?? null)) {
+            $result['message'] = str_replace('voucher', $label, (string) $result['message']);
+        }
+
+        return $result;
+    }
+
     private function markAffiliateVoucherUsedIfNeeded(string $checkoutId, array $cached): void
     {
         $voucher = $cached['voucher'] ?? null;
@@ -2349,6 +2523,58 @@ class PaymentController extends Controller
                 'wl_source_id' => null,
                 'wl_reference_no' => $checkoutId,
                 'wl_notes' => 'E-GC store credit applied to checkout.',
+                'wl_created_by' => null,
+            ]);
+        });
+
+        Cache::put($cacheKey, true, now()->addDays(7));
+    }
+
+    private function debitCashbackIfNeeded(string $checkoutId, array $cached): void
+    {
+        $cashback = $cached['cashback'] ?? null;
+        $amount = is_array($cashback) ? round(max(0, (float) ($cashback['amount'] ?? 0)), 2) : 0.0;
+        $customerId = (int) ($cached['customer_id'] ?? 0);
+
+        if ($amount <= 0 || $customerId <= 0 || !Schema::hasTable('tbl_customer_wallet_ledger')) {
+            return;
+        }
+
+        $cacheKey = "checkout_cashback_debited:{$checkoutId}";
+        if (Cache::has($cacheKey)) {
+            return;
+        }
+
+        DB::transaction(function () use ($amount, $customerId, $checkoutId) {
+            $alreadyDebited = CustomerWalletLedger::query()
+                ->where('wl_wallet_type', 'voucher')
+                ->where('wl_entry_type', 'debit')
+                ->where('wl_source_type', 'personal_cashback_checkout')
+                ->where('wl_reference_no', $checkoutId)
+                ->exists();
+
+            if ($alreadyDebited) {
+                return;
+            }
+
+            if (PersonalPurchaseCashback::availableBalance($customerId) < $amount) {
+                Log::warning('Skipping personal cashback debit because balance is insufficient at payment confirmation.', [
+                    'checkout_id' => $checkoutId,
+                    'customer_id' => $customerId,
+                    'amount' => $amount,
+                ]);
+                return;
+            }
+
+            CustomerWalletLedger::create([
+                'wl_customer_id' => $customerId,
+                'wl_wallet_type' => 'voucher',
+                'wl_entry_type' => 'debit',
+                'wl_amount' => $amount,
+                'wl_source_type' => 'personal_cashback_checkout',
+                'wl_source_id' => null,
+                'wl_reference_no' => $checkoutId,
+                'wl_notes' => 'Personal cashback discount applied to checkout.',
                 'wl_created_by' => null,
             ]);
         });

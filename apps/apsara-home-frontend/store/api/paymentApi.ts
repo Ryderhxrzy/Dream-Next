@@ -20,6 +20,7 @@ export interface CreateCheckoutSessionPayload {
   payment_mode?: CheckoutPaymentMode
   online_banking_provider?: CheckoutOnlineBankingProvider
   voucher_code?: string
+  cashback_amount?: number
   egc_amount?: number
   source_label?: string | null
   source_slug?: string | null
@@ -83,6 +84,7 @@ export interface ValidateVoucherResponse {
     id: number
     code: string
     amount: number
+    source_type?: 'personal_cashback' | string | null
     max_uses?: number | null
     used_count?: number | null
     expires_at?: string | null
@@ -95,6 +97,21 @@ export interface ValidateVoucherResponse {
     min_spend?: number | null
   } | null
 }
+
+export interface ValidateEgcResponse {
+  valid: boolean
+  message?: string | null
+  available_balance: number
+  discount: number
+  rule?: {
+    product_id: number
+    enabled: boolean
+    max_discount?: number | null
+    min_spend?: number | null
+  } | null
+}
+
+export type ValidateCashbackResponse = ValidateEgcResponse
 
 export type CustomerOrderStatus =
   | 'pending'
@@ -180,6 +197,20 @@ export const paymentApi = baseApi.injectEndpoints({
     validateVoucher: builder.mutation<ValidateVoucherResponse, { code: string; subtotal?: number; product_id?: number | null }>({
       query: (body) => ({
         url: '/api/payments/validate-voucher',
+        method: 'POST',
+        body,
+      }),
+    }),
+    validateEgc: builder.mutation<ValidateEgcResponse, { subtotal?: number; product_id?: number | null; voucher_discount?: number }>({
+      query: (body) => ({
+        url: '/api/payments/validate-egc',
+        method: 'POST',
+        body,
+      }),
+    }),
+    validateCashback: builder.mutation<ValidateCashbackResponse, { subtotal?: number; product_id?: number | null; voucher_discount?: number }>({
+      query: (body) => ({
+        url: '/api/payments/validate-cashback',
         method: 'POST',
         body,
       }),
@@ -286,6 +317,8 @@ export const {
   useCreateCheckoutSessionMutation,
   useLazyVerifyCheckoutSessionQuery,
   useValidateVoucherMutation,
+  useValidateCashbackMutation,
+  useValidateEgcMutation,
   useGetCheckoutHistoryQuery,
   useLazyTrackGuestOrderQuery,
   useConfirmOrderMutation,

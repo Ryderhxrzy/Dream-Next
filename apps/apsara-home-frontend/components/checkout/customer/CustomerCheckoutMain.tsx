@@ -12,7 +12,7 @@ import CustomerCheckoutContactForm from "./CustomerCheckoutContactForm";
 import CustomerCheckoutAddressForm from "./CustomerCheckoutAddressForm";
 import CustomerCheckoutPaymentMethod from "./CustomerCheckoutPaymentMethod";
 import CustomerCheckoutOrderSummary from "./CustomerCheckoutOrderSummary";
-import { CheckoutOnlineBankingProvider, useCreateCheckoutSessionMutation, useValidateVoucherMutation } from "@/store/api/paymentApi";
+import { CheckoutOnlineBankingProvider, useCreateCheckoutSessionMutation, useValidateCashbackMutation, useValidateEgcMutation, useValidateVoucherMutation } from "@/store/api/paymentApi";
 import { useGetWalletOverviewQuery } from "@/store/api/encashmentApi";
 import { useGetPublicGeneralSettingsQuery } from "@/store/api/adminSettingsApi";
 import { useGetPublicShippingRatesQuery } from "@/store/api/shippingRatesApi";
@@ -244,9 +244,12 @@ const CustomerCheckoutMain = ({
     const [notice, setNotice] = useState('');
     const [createCheckoutSession, { isLoading: loading }] = useCreateCheckoutSessionMutation();
     const [validateVoucher, { isLoading: voucherLoading }] = useValidateVoucherMutation();
-    const [voucherInfo, setVoucherInfo] = useState<{ code: string; amount: number; discount: number; message?: string | null } | null>(null);
+    const [validateCashback, { isLoading: cashbackLoading }] = useValidateCashbackMutation();
+    const [validateEgc, { isLoading: egcLoading }] = useValidateEgcMutation();
+    const [voucherInfo, setVoucherInfo] = useState<{ code: string; amount: number; discount: number; sourceType?: string | null; message?: string | null } | null>(null);
     const [voucherError, setVoucherError] = useState<string | null>(null);
-    const [egcAmountInput, setEgcAmountInput] = useState('');
+    const [appliedCashbackAmount, setAppliedCashbackAmount] = useState(0);
+    const [cashbackError, setCashbackError] = useState<string | null>(null);
     const [appliedEgcAmount, setAppliedEgcAmount] = useState(0);
     const [egcError, setEgcError] = useState<string | null>(null);
     const { data: walletOverview } = useGetWalletOverviewQuery({ page: 1, perPage: 1, walletType: 'all' }, {
@@ -290,6 +293,7 @@ const CustomerCheckoutMain = ({
     const resolvedShippingFee = shippingFee ?? 0;
 
     const voucherDiscount = useMemo(() => Math.max(0, Number(voucherInfo?.discount ?? 0)), [voucherInfo?.discount]);
+    const availableCashbackBalance = useMemo(() => Math.max(0, Number(walletOverview?.summary?.personal_cashback_balance ?? walletOverview?.summary?.cashback_balance ?? 0)), [walletOverview?.summary?.cashback_balance, walletOverview?.summary?.personal_cashback_balance]);
     const availableEgcBalance = useMemo(() => Math.max(0, Number(walletOverview?.summary?.available_egc_balance ?? 0)), [walletOverview?.summary?.available_egc_balance]);
     const hasMultiItemsCheckout = Boolean((checkoutData?.items?.length ?? 0) > 0);
     const guestPricing = useMemo(() => {
@@ -368,12 +372,17 @@ const CustomerCheckoutMain = ({
 
     const computedTotal = useMemo(() => {
         if (!checkoutData) return 0;
-        const effectiveEgcAmount = Math.min(appliedEgcAmount, Math.max(0, effectiveSubtotal - voucherDiscount));
-        return Math.max(0, effectiveSubtotal - voucherDiscount - effectiveEgcAmount) + resolvedShippingFee;
-    }, [appliedEgcAmount, checkoutData, effectiveSubtotal, resolvedShippingFee, voucherDiscount]);
+        const effectiveCashbackAmount = Math.min(appliedCashbackAmount, Math.max(0, effectiveSubtotal - voucherDiscount));
+        const effectiveEgcAmount = Math.min(appliedEgcAmount, Math.max(0, effectiveSubtotal - voucherDiscount - effectiveCashbackAmount));
+        return Math.max(0, effectiveSubtotal - voucherDiscount - effectiveCashbackAmount - effectiveEgcAmount) + resolvedShippingFee;
+    }, [appliedCashbackAmount, appliedEgcAmount, checkoutData, effectiveSubtotal, resolvedShippingFee, voucherDiscount]);
+    const maxApplicableCashback = useMemo(
+        () => Math.max(0, Math.min(availableCashbackBalance, effectiveSubtotal - voucherDiscount)),
+        [availableCashbackBalance, effectiveSubtotal, voucherDiscount]
+    );
     const maxApplicableEgc = useMemo(
-        () => Math.max(0, Math.min(availableEgcBalance, effectiveSubtotal - voucherDiscount)),
-        [availableEgcBalance, effectiveSubtotal, voucherDiscount]
+        () => Math.max(0, Math.min(availableEgcBalance, effectiveSubtotal - voucherDiscount - appliedCashbackAmount)),
+        [appliedCashbackAmount, availableEgcBalance, effectiveSubtotal, voucherDiscount]
     );
     const draftSourceSlug = String(checkoutData?.sourceSlug ?? '').trim().toLowerCase();
     const effectiveSourceSlug = draftSourceSlug || normalizedPartner || '';
@@ -412,6 +421,7 @@ const CustomerCheckoutMain = ({
                     code: res.voucher.code,
                     amount: voucherAmount,
                     discount: res.discount,
+                    sourceType: res.voucher.source_type ?? null,
                     message: res.message ?? null,
                 });
                 setVoucherError(null);
@@ -425,54 +435,74 @@ const CustomerCheckoutMain = ({
         return () => clearTimeout(handle);
     }, [effectiveProductId, effectiveSubtotal, form.voucher_coupon, checkoutData, validateVoucher]);
 
+    useEffect(() => {
+        const handle = setTimeout(async () => {
+            if (!checkoutData || !isLoggedIn || availableCashbackBalance <= 0 || effectiveSubtotal <= 0) {
+                setAppliedCashbackAmount(0);
+                setCashbackError(null);
+                return;
+            }
+
+            try {
+                const res = await validateCashback({
+                    subtotal: effectiveSubtotal,
+                    product_id: effectiveProductId,
+                    voucher_discount: voucherDiscount,
+                }).unwrap();
+                const discount = Math.max(0, Number(res.discount ?? 0));
+
+                setAppliedCashbackAmount(Number(discount.toFixed(2)));
+                setCashbackError(discount > 0 ? null : (res.message ?? null));
+            } catch (error) {
+                const apiError = error as { data?: { message?: string } };
+                setAppliedCashbackAmount(0);
+                setCashbackError(apiError?.data?.message || 'Personal cashback is not available for this order.');
+            }
+        }, 300);
+
+        return () => clearTimeout(handle);
+    }, [availableCashbackBalance, checkoutData, effectiveProductId, effectiveSubtotal, isLoggedIn, validateCashback, voucherDiscount]);
+
+    useEffect(() => {
+        const handle = setTimeout(async () => {
+            if (!checkoutData || !isLoggedIn || availableEgcBalance <= 0 || effectiveSubtotal <= 0) {
+                setAppliedEgcAmount(0);
+                setEgcError(null);
+                return;
+            }
+
+            try {
+                const res = await validateEgc({
+                    subtotal: effectiveSubtotal,
+                    product_id: effectiveProductId,
+                    voucher_discount: voucherDiscount + appliedCashbackAmount,
+                }).unwrap();
+                const discount = Math.max(0, Number(res.discount ?? 0));
+
+                setAppliedEgcAmount(Number(discount.toFixed(2)));
+                setEgcError(discount > 0 ? null : (res.message ?? null));
+            } catch (error) {
+                const apiError = error as { data?: { message?: string } };
+                setAppliedEgcAmount(0);
+                setEgcError(apiError?.data?.message || 'E-GC is not available for this order.');
+            }
+        }, 300);
+
+        return () => clearTimeout(handle);
+    }, [appliedCashbackAmount, availableEgcBalance, checkoutData, effectiveProductId, effectiveSubtotal, isLoggedIn, validateEgc, voucherDiscount]);
+
     const setField = useCallback((key: keyof GuestForm, value: string) => {
         setFormOverrides(prev => ({ ...prev, [key]: value }))
         setErrors(prev => ({ ...prev, [key]: undefined }))
         if (key === 'voucher_coupon') {
             setVoucherInfo(null)
             setVoucherError(null)
+            setAppliedCashbackAmount(0)
+            setCashbackError(null)
             setAppliedEgcAmount(0)
             setEgcError(null)
         }
-    }, [setAppliedEgcAmount, setEgcError])
-
-    const handleApplyEgc = useCallback(() => {
-        setEgcError(null);
-
-        if (!isLoggedIn) {
-            setEgcError('Please sign in to use E-GC.');
-            return;
-        }
-
-        const amount = Number(egcAmountInput);
-        if (!Number.isFinite(amount) || amount <= 0) {
-            setEgcError('Enter an E-GC amount greater than zero.');
-            return;
-        }
-
-        if (availableEgcBalance <= 0) {
-            setEgcError('No E-GC balance available.');
-            return;
-        }
-
-        if (amount > availableEgcBalance) {
-            setEgcError('Amount exceeds your available E-GC balance.');
-            return;
-        }
-
-        if (amount > maxApplicableEgc) {
-            setEgcError('E-GC cannot exceed the remaining product subtotal.');
-            return;
-        }
-
-        setAppliedEgcAmount(Number(amount.toFixed(2)));
-    }, [availableEgcBalance, egcAmountInput, isLoggedIn, maxApplicableEgc, setAppliedEgcAmount, setEgcError]);
-
-    const handleClearEgc = useCallback(() => {
-        setAppliedEgcAmount(0);
-        setEgcAmountInput('');
-        setEgcError(null);
-    }, [setAppliedEgcAmount, setEgcAmountInput, setEgcError]);
+    }, [setAppliedCashbackAmount, setAppliedEgcAmount, setCashbackError, setEgcError])
 
     const validate = (): FormErrors => {
         const e: FormErrors = {};
@@ -556,6 +586,12 @@ const CustomerCheckoutMain = ({
             });
             return;
         }
+        if (appliedCashbackAmount > maxApplicableCashback) {
+            const message = 'Personal cashback amount exceeds the available discount for this order.';
+            setCashbackError(message);
+            notify.error(message);
+            return;
+        }
         if (appliedEgcAmount > maxApplicableEgc) {
             const message = 'E-GC amount exceeds the available discount for this order.';
             setEgcError(message);
@@ -574,6 +610,7 @@ const CustomerCheckoutMain = ({
                     ? selectedOnlineBankingProvider
                     : undefined,
                 voucher_code: voucherInfo?.code,
+                cashback_amount: appliedCashbackAmount > 0 ? appliedCashbackAmount : undefined,
                 egc_amount: appliedEgcAmount > 0 ? appliedEgcAmount : undefined,
                 source_label: checkoutData.sourceLabel ?? null,
                 source_slug: effectiveSourceSlug || null,
@@ -730,18 +767,18 @@ const CustomerCheckoutMain = ({
                                 }}
                                 egcStatus={{
                                     available: availableEgcBalance,
-                                    amount: egcAmountInput,
                                     appliedAmount: appliedEgcAmount,
                                     error: egcError,
+                                    loading: egcLoading,
                                     disabled: !isLoggedIn || availableEgcBalance <= 0,
                                 }}
-                                onEgcAmountChange={(value) => {
-                                    setEgcAmountInput(value);
-                                    setEgcError(null);
-                                    if (appliedEgcAmount > 0) setAppliedEgcAmount(0);
+                                cashbackStatus={{
+                                    available: availableCashbackBalance,
+                                    appliedAmount: appliedCashbackAmount,
+                                    error: cashbackError,
+                                    loading: cashbackLoading,
+                                    disabled: !isLoggedIn || availableCashbackBalance <= 0,
                                 }}
-                                onApplyEgc={handleApplyEgc}
-                                onClearEgc={handleClearEgc}
                             />
                             <CustomerCheckoutAddressForm
                                 form={form}
@@ -774,7 +811,8 @@ const CustomerCheckoutMain = ({
                                 checkoutData={checkoutData}
                                 loading={loading}
                                 onSubmit={handleSubmit}
-                                voucher={voucherInfo ? { code: voucherInfo.code, discount: voucherInfo.discount } : null}
+                                voucher={voucherInfo ? { code: voucherInfo.code, discount: voucherInfo.discount, sourceType: voucherInfo.sourceType } : null}
+                                cashbackApplied={appliedCashbackAmount}
                                 egcApplied={appliedEgcAmount}
                                 computedTotal={computedTotal}
                                 subtotalOverride={effectiveSubtotal}

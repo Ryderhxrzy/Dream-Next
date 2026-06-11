@@ -1121,6 +1121,8 @@ composer dev        # Full dev: server + queue + logs + Vite`} />
               ['POST', '/payments/checkout-session', 'PayMongo session — throttle checkout 20/min'],
               ['GET', '/payments/checkout-session/{id}', 'Verify checkout session'],
               ['POST', '/payments/validate-voucher', 'Validate voucher code'],
+              ['POST', '/payments/validate-cashback', 'Validate auto-applied personal cashback discount'],
+              ['POST', '/payments/validate-egc', 'Validate auto-applied E-GC store credit'],
               ['POST/GET', '/mobile/payments/create · /{id}/status', 'Mobile payments — throttle 10/min'],
             ]} />
           </section>
@@ -1173,6 +1175,7 @@ composer dev        # Full dev: server + queue + logs + Vite`} />
               ['POST/GET', '/webstore-requests · receipt · payment-session · latest · sync-account', 'Webstore / storefront requests'],
               ['GET/PATCH/DELETE', '/admin/partner/webstore-requests[...]', 'Admin webstore review + renewal'],
             ]} />
+            <Note type="info">Supplier voucher eligibility is managed through <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[12px]">GET/PUT /supplier/payments/voucher-product-rules</code>. Supplier accounts only see products assigned to their supplier; admin voucher rules remain visible in the super admin payments voucher page.</Note>
           </section>
 
           <section id="api-admin" data-section className="pt-2">
@@ -1300,7 +1303,7 @@ composer dev        # Full dev: server + queue + logs + Vite`} />
               ['payment_method', 'in: online_banking, card, gcash, maya', 'Yes'],
               ['payment_mode', 'in: test, live', '—'],
               ['online_banking_provider', 'in: dob, ubp', '—'],
-              ['voucher_code · egc_amount', 'string max:80 · numeric min:0', '—'],
+              ['voucher_code · cashback_amount · egc_amount', 'string max:80 · numeric min:0 · numeric min:0', '—'],
               ['customer{}', 'object: name, email, phone, address, referred_by, is_member', '—'],
               ['order{}', 'object: product_name, product_id, product_sku, product_pv, quantity (1–1000), selected_*, subtotal, handling_fee, source_type (local|zq), zq_*', '—'],
             ]} />
@@ -1310,6 +1313,13 @@ composer dev        # Full dev: server + queue + logs + Vite`} />
               ['code', 'string, max:80', 'Yes'],
               ['subtotal', 'numeric, min:0', '—'],
               ['product_id', 'integer, min:1', '—'],
+            ]} />
+
+            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">POST /payments/validate-cashback · /payments/validate-egc</div>
+            <InfoTable headers={['Field', 'Type / Rules', 'Req']} rows={[
+              ['subtotal', 'numeric, min:0', '—'],
+              ['product_id', 'integer, min:1', '—'],
+              ['voucher_discount', 'numeric, min:0', '—'],
             ]} />
 
             <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">POST /orders/&#123;id&#125;/refund · PATCH /admin/orders/&#123;id&#125;/status</div>
@@ -1524,7 +1534,12 @@ composer dev        # Full dev: server + queue + logs + Vite`} />
 // POST /payments/validate-voucher
 200 {
   valid, message, discount, rule,
-  voucher: { id, code, amount, max_uses, used_count, expires_at }
+  voucher: { id, code, amount, source_type, max_uses, used_count, expires_at }
+}
+
+// POST /payments/validate-cashback or /payments/validate-egc
+200 {
+  valid, message, available_balance, discount, rule
 }
 // 422 { message }   if invalid`} />
 
@@ -1628,7 +1643,8 @@ composer dev        # Full dev: server + queue + logs + Vite`} />
   summary: {
     cash_balance, pv_balance, current_pv, group_pv,
     encashment_available, available_egc_balance,
-    cashback_balance, cashback_rate,
+    personal_cashback_balance, personal_cashback_source_balance,
+    personal_cashback_reserved_balance, cashback_rate,
     referrals: { total, verified, active }
   },
   ledger: [

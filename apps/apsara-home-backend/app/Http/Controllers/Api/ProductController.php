@@ -2024,6 +2024,11 @@ class ProductController extends Controller
                 } elseif ($sort === 'newest') {
                     // Sort by newest products
                     $query->orderByDesc('pd_date')->orderByDesc('pd_id');
+                } elseif ($sort === 'id_desc') {
+                    // Stable admin listing order for paginated management screens.
+                    $query->orderByDesc('pd_id');
+                } elseif ($sort === 'name_asc') {
+                    $query->orderBy('pd_name')->orderByDesc('pd_id');
                 } elseif ($sort === 'price_asc') {
                     // Sort by price ascending
                     $query->orderBy('pd_price_member')->orderByDesc('pd_id');

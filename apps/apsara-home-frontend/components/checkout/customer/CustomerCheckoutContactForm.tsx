@@ -18,14 +18,18 @@ interface CustomerCheckoutContactFormProps {
     };
     egcStatus?: {
         available: number;
-        amount: string;
         appliedAmount: number;
         error?: string | null;
+        loading?: boolean;
         disabled?: boolean;
     };
-    onEgcAmountChange?: (value: string) => void;
-    onApplyEgc?: () => void;
-    onClearEgc?: () => void;
+    cashbackStatus?: {
+        available: number;
+        appliedAmount: number;
+        error?: string | null;
+        loading?: boolean;
+        disabled?: boolean;
+    };
 }
 
 const Field = ({ label, value, onChange, placeholder, type = 'text', required = false, error, fieldKey }: {
@@ -55,9 +59,7 @@ const CustomerCheckoutContactForm = ({
     showReferral = true,
     voucherStatus,
     egcStatus,
-    onEgcAmountChange,
-    onApplyEgc,
-    onClearEgc,
+    cashbackStatus,
 }: CustomerCheckoutContactFormProps) => {
     return (
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
@@ -148,57 +150,77 @@ const CustomerCheckoutContactForm = ({
                     )}
                 </div>
 
+                {cashbackStatus && !cashbackStatus.disabled ? (
+                    <div>
+                        <div className="mb-1.5 flex items-center justify-between gap-3">
+                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">Personal Cashback Discount</label>
+                            <span className="text-[11px] font-semibold text-rose-600 dark:text-rose-400">
+                                Balance: PHP {cashbackStatus.available.toLocaleString()}
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-3 rounded-xl border border-rose-100 bg-rose-50/70 px-3.5 py-2.5 dark:border-rose-900/50 dark:bg-rose-950/20">
+                            <WalletCards className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" />
+                            <div className="min-w-0 flex-1">
+                                <p className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                                    {cashbackStatus.loading
+                                        ? 'Checking available cashback...'
+                                        : cashbackStatus.appliedAmount > 0
+                                            ? `Auto-applied: -PHP ${cashbackStatus.appliedAmount.toLocaleString()}`
+                                            : 'No cashback discount applied'}
+                                </p>
+                                <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                                    Personal cashback is auto-deducted only when this product passes supplier discount rules.
+                                </p>
+                            </div>
+                        </div>
+                        {cashbackStatus.error ? (
+                            <p className="mt-1.5 text-[11px] text-rose-500 dark:text-rose-400">{cashbackStatus.error}</p>
+                        ) : cashbackStatus.appliedAmount > 0 ? (
+                            <p className="mt-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
+                                Personal cashback will be deducted automatically after payment is confirmed.
+                            </p>
+                        ) : (
+                            <p className="mt-1.5 flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
+                                <AlertCircle className="h-3 w-3 shrink-0" />
+                                Available cashback stays unused when this order has no eligible cashback discount.
+                            </p>
+                        )}
+                    </div>
+                ) : null}
+
                 {egcStatus ? (
                     <div>
                         <div className="mb-1.5 flex items-center justify-between gap-3">
-                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">Use E-GC</label>
+                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">E-GC Store Credit</label>
                             <span className="text-[11px] font-semibold text-fuchsia-600 dark:text-fuchsia-400">
                                 Balance: PHP {egcStatus.available.toLocaleString()}
                             </span>
                         </div>
-                        <div className="flex gap-2">
-                            <div className="relative flex-1">
-                                <WalletCards className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
-                                <input
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    value={egcStatus.amount}
-                                    onChange={(event) => onEgcAmountChange?.(event.target.value)}
-                                    placeholder="0.00"
-                                    disabled={egcStatus.disabled}
-                                    className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm font-semibold text-slate-700 outline-none transition-all placeholder:text-slate-300 focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:placeholder:text-slate-500 dark:focus:border-fuchsia-500 dark:focus:ring-fuchsia-900"
-                                />
+                        <div className="flex items-center gap-3 rounded-xl border border-fuchsia-100 bg-fuchsia-50/70 px-3.5 py-2.5 dark:border-fuchsia-900/50 dark:bg-fuchsia-950/20">
+                            <WalletCards className="h-4 w-4 shrink-0 text-fuchsia-600 dark:text-fuchsia-400" />
+                            <div className="min-w-0 flex-1">
+                                <p className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                                    {egcStatus.loading
+                                        ? 'Checking available E-GC...'
+                                        : egcStatus.appliedAmount > 0
+                                            ? `Auto-applied: -PHP ${egcStatus.appliedAmount.toLocaleString()}`
+                                            : 'No E-GC applied'}
+                                </p>
+                                <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                                    E-GC is auto-deducted only when this product passes admin discount rules.
+                                </p>
                             </div>
-                            {egcStatus.appliedAmount > 0 ? (
-                                <button
-                                    type="button"
-                                    onClick={onClearEgc}
-                                    className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-                                >
-                                    Clear
-                                </button>
-                            ) : (
-                                <button
-                                    type="button"
-                                    onClick={onApplyEgc}
-                                    disabled={egcStatus.disabled}
-                                    className="rounded-xl bg-fuchsia-600 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-fuchsia-700 disabled:cursor-not-allowed disabled:opacity-50"
-                                >
-                                    Apply
-                                </button>
-                            )}
                         </div>
                         {egcStatus.error ? (
                             <p className="mt-1.5 text-[11px] text-rose-500 dark:text-rose-400">{egcStatus.error}</p>
                         ) : egcStatus.appliedAmount > 0 ? (
                             <p className="mt-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
-                                E-GC applied: -PHP {egcStatus.appliedAmount.toLocaleString()}
+                                E-GC will be deducted automatically after payment is confirmed.
                             </p>
                         ) : (
                             <p className="mt-1.5 flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
                                 <AlertCircle className="h-3 w-3 shrink-0" />
-                                Apply your E-GC balance as store credit.
+                                Available balance stays unused when this order has no eligible E-GC discount.
                             </p>
                         )}
                     </div>

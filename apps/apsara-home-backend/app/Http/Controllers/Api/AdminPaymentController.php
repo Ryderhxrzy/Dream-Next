@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Admin;
 use App\Models\CheckoutHistory;
 use App\Models\EncashmentRequest;
+use App\Models\SupplierUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -273,6 +274,32 @@ class AdminPaymentController extends Controller
         return response()->json(['rules' => $rules]);
     }
 
+    public function supplierVoucherProductRules(Request $request)
+    {
+        $supplierUser = $this->resolveSupplierUser($request);
+        if (!$supplierUser) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        if (!Schema::hasTable('tbl_affiliate_voucher_product_rules')) {
+            return response()->json(['rules' => []]);
+        }
+
+        $productIds = $this->supplierProductIds((int) $supplierUser->su_supplier);
+        if (empty($productIds)) {
+            return response()->json(['rules' => []]);
+        }
+
+        $rules = DB::table('tbl_affiliate_voucher_product_rules')
+            ->whereIn('avpr_product_id', $productIds)
+            ->orderBy('avpr_product_id')
+            ->get()
+            ->map(fn ($row) => $this->formatVoucherProductRule($row))
+            ->values();
+
+        return response()->json(['rules' => $rules]);
+    }
+
     public function updateVoucherProductRules(Request $request)
     {
         $admin = $this->resolveAdmin($request);
@@ -326,10 +353,186 @@ class AdminPaymentController extends Controller
         ]);
     }
 
+    public function updateSupplierVoucherProductRules(Request $request)
+    {
+        $supplierUser = $this->resolveSupplierUser($request);
+        if (!$supplierUser) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        if (!Schema::hasTable('tbl_affiliate_voucher_product_rules')) {
+            return response()->json(['message' => 'Voucher product rules table is not available.'], 422);
+        }
+
+        $validated = $request->validate([
+            'rules' => ['required', 'array'],
+            'rules.*.product_id' => ['required', 'integer', 'min:1'],
+            'rules.*.enabled' => ['required', 'boolean'],
+            'rules.*.max_discount' => ['nullable', 'numeric', 'min:0'],
+            'rules.*.min_spend' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        $allowedProductIds = $this->supplierProductIds((int) $supplierUser->su_supplier);
+        $submittedProductIds = collect($validated['rules'])->pluck('product_id')->map(fn ($id) => (int) $id)->all();
+        $unauthorizedProductIds = array_values(array_diff($submittedProductIds, $allowedProductIds));
+
+        if (!empty($unauthorizedProductIds)) {
+            return response()->json([
+                'message' => 'One or more products are not assigned to this supplier.',
+                'product_ids' => $unauthorizedProductIds,
+            ], 403);
+        }
+
+        $saved = $this->saveVoucherProductRules($validated['rules']);
+
+        return response()->json([
+            'message' => 'Supplier voucher product rules saved.',
+            'rules' => $saved,
+        ]);
+    }
+
+    private function saveVoucherProductRules(array $rules)
+    {
+        $now = now();
+
+        return collect($rules)
+            ->map(function (array $rule) use ($now) {
+                $productId = (int) $rule['product_id'];
+                $payload = [
+                    'avpr_enabled' => (bool) $rule['enabled'],
+                    'avpr_max_discount' => array_key_exists('max_discount', $rule) && $rule['max_discount'] !== null
+                        ? round((float) $rule['max_discount'], 2)
+                        : null,
+                    'avpr_min_spend' => array_key_exists('min_spend', $rule) && $rule['min_spend'] !== null
+                        ? round((float) $rule['min_spend'], 2)
+                        : null,
+                    'updated_at' => $now,
+                ];
+
+                DB::table('tbl_affiliate_voucher_product_rules')->updateOrInsert(
+                    ['avpr_product_id' => $productId],
+                    array_merge($payload, ['created_at' => $now])
+                );
+
+                return DB::table('tbl_affiliate_voucher_product_rules')
+                    ->where('avpr_product_id', $productId)
+                    ->first();
+            })
+            ->filter()
+            ->map(fn ($row) => $this->formatVoucherProductRule($row))
+            ->values();
+    }
+
     private function resolveAdmin(Request $request): ?Admin
     {
         $user = $request->user();
         return $user instanceof Admin ? $user : null;
+    }
+
+    private function resolveSupplierUser(Request $request): ?SupplierUser
+    {
+        $user = $request->user();
+        return $user instanceof SupplierUser ? $user : null;
+    }
+
+    private function supplierProductIds(int $supplierId): array
+    {
+        if ($supplierId <= 0 || !Schema::hasTable('tbl_product')) {
+            return [];
+        }
+
+        $brandType = $this->resolveSupplierBrandType($supplierId);
+
+        return DB::table('tbl_product')
+            ->where(function ($query) use ($supplierId, $brandType) {
+                $query->where('pd_supplier', $supplierId);
+
+                if ($brandType > 0) {
+                    $query->orWhere('pd_brand_type', $brandType);
+                }
+            })
+            ->pluck('pd_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+    }
+
+    private function resolveSupplierBrandType(int $supplierId): int
+    {
+        if (
+            $supplierId <= 0
+            || !Schema::hasTable('tbl_supplier')
+            || !Schema::hasTable('tbl_product_brand')
+        ) {
+            return 0;
+        }
+
+        $supplier = DB::table('tbl_supplier')
+            ->where('s_id', $supplierId)
+            ->first(['s_company', 's_name']);
+
+        if (!$supplier) {
+            return 0;
+        }
+
+        $normalizedCandidates = collect([
+            (string) ($supplier->s_company ?? ''),
+            (string) ($supplier->s_name ?? ''),
+        ])
+            ->map(fn ($value) => strtolower(preg_replace('/[^a-z0-9]/i', '', trim($value)) ?? ''))
+            ->filter(fn ($value) => $value !== '')
+            ->values();
+
+        if ($normalizedCandidates->isEmpty()) {
+            return 0;
+        }
+
+        $brands = DB::table('tbl_product_brand')
+            ->get(['pb_id', 'pb_name']);
+
+        foreach ($brands as $brand) {
+            $brandKey = strtolower(preg_replace('/[^a-z0-9]/i', '', (string) ($brand->pb_name ?? '')) ?? '');
+            if ($brandKey === '') {
+                continue;
+            }
+
+            foreach ($normalizedCandidates as $candidate) {
+                if ($candidate === $brandKey) {
+                    return (int) $brand->pb_id;
+                }
+            }
+        }
+
+        $bestId = 0;
+        $bestScore = 0;
+        $bestLen = 0;
+        foreach ($brands as $brand) {
+            $brandKey = strtolower(preg_replace('/[^a-z0-9]/i', '', (string) ($brand->pb_name ?? '')) ?? '');
+            if ($brandKey === '' || strlen($brandKey) < 2) {
+                continue;
+            }
+
+            foreach ($normalizedCandidates as $candidate) {
+                $score = 0;
+                if ($candidate === $brandKey) {
+                    $score = 3;
+                } elseif (str_contains($candidate, $brandKey)) {
+                    $score = 2;
+                } elseif (str_contains($brandKey, $candidate)) {
+                    $score = 1;
+                }
+
+                if ($score > 0) {
+                    $len = strlen($brandKey);
+                    if ($score > $bestScore || ($score === $bestScore && $len > $bestLen)) {
+                        $bestScore = $score;
+                        $bestLen = $len;
+                        $bestId = (int) $brand->pb_id;
+                    }
+                }
+            }
+        }
+
+        return $bestId;
     }
 
     private function formatVoucherProductRule(object $row): array
