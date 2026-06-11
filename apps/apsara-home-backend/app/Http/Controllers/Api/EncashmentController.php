@@ -213,9 +213,7 @@ class EncashmentController extends Controller
             ->count();
 
         $activeReferrals = $verifiedReferrals;
-        $directReferralTotalPv = (float) Customer::query()
-            ->where('c_sponsor', (int) $customer->c_userid)
-            ->sum('c_gpv');
+        $directReferralTotalPv = PerformanceMilestoneReward::directReferralTotalPv((int) $customer->c_userid);
 
         $reservedAffiliateVoucherAmount = 0.0;
         $affiliateVouchers = collect();
