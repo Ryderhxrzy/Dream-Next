@@ -43,6 +43,7 @@ use App\Http\Controllers\Api\CustomerConversationController;
 use App\Http\Controllers\Api\AdminConversationController;
 use App\Http\Controllers\Api\MemberTierController;
 use App\Http\Controllers\Api\MemberActivityLogController;
+use App\Http\Controllers\Api\RewardCheckinController;
 use App\Http\Controllers\Api\LeadController;
 use App\Http\Controllers\Api\ShippingRateController;
 use App\Http\Controllers\Api\PasskeyAuthController;
@@ -261,6 +262,10 @@ Route::middleware(['auth:sanctum', 'customer.actor'])->group(function () {
     Route::get('/webstore-requests/latest', [AuthController::class, 'latestWebstoreRequest']);
     Route::post('/webstore-requests/sync-account', [AuthController::class, 'syncWebstorePartnerAccount']);
     Route::get('/account/snapshot', [AuthController::class, 'accountSnapshot']);
+    // Rewards — daily check-in (earns Personal PV)
+    Route::get('/rewards/check-in', [RewardCheckinController::class, 'status']);
+    Route::post('/rewards/check-in', [RewardCheckinController::class, 'checkIn'])->middleware('throttle:30,1');
+    Route::get('/rewards/check-in/history', [RewardCheckinController::class, 'history']);
     Route::get('/auth/addresses', [CustomerAddressController::class, 'index']);
     Route::post('/auth/addresses', [CustomerAddressController::class, 'store']);
     Route::patch('/auth/addresses/{id}/default', [CustomerAddressController::class, 'setDefault']);

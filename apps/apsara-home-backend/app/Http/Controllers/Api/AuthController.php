@@ -6334,6 +6334,18 @@ class AuthController extends Controller
                 ->whereNotNull('ch_pv_posted_at')
                 ->sum('ch_earned_pv');
 
+            // Include reward PV (daily check-in / missions) so earned points
+            // reflect in the customer's Personal PV. Tracked separately in the
+            // wallet ledger under reward source types.
+            if (Schema::hasTable('tbl_customer_wallet_ledger')) {
+                $personalPv += (float) DB::table('tbl_customer_wallet_ledger')
+                    ->where('wl_customer_id', $customerId)
+                    ->where('wl_wallet_type', 'pv')
+                    ->where('wl_entry_type', 'credit')
+                    ->whereIn('wl_source_type', ['daily_checkin', 'daily_mission', 'weekly_mission', 'monthly_mission'])
+                    ->sum('wl_amount');
+            }
+
             $directIds = $directReferralMembers->pluck('c_userid')->map(fn ($id) => (int) $id)->toArray();
             $activeMembersCount = 0;
             if (!empty($directIds)) {
