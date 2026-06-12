@@ -141,9 +141,8 @@ jobs:
             ADMIN_LOGIN_CLOUDFLARE_SITE_KEY=${{ vars.ADMIN_LOGIN_CLOUDFLARE_SITE_KEY }}
 
   # ───────────────────────────────────────────────────────────────────────────
-  # Optional: tell Dokploy to pull the new images and redeploy.
-  # Fires ONLY if you set the webhook secrets. Leave them unset to deploy
-  # manually from the Dokploy dashboard (recommended while validating).
+  # Tell Dokploy to pull the GHCR images and redeploy after GitHub Actions builds.
+  # Uses the Dokploy API instead of Git webhooks so deployment waits for CI.
   # ───────────────────────────────────────────────────────────────────────────
   deploy:
     needs: build
@@ -152,8 +151,10 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/renewal'
     # `secrets` can't be used in `if:` — map them to env first, then gate on env.
     env:
-      DOKPLOY_WEBHOOK_URL_MAIN: ${{ secrets.DOKPLOY_WEBHOOK_URL_MAIN || vars.DOKPLOY_WEBHOOK_URL_MAIN }}
-      DOKPLOY_WEBHOOK_URL_COMMUNITY: ${{ secrets.DOKPLOY_WEBHOOK_URL_COMMUNITY || vars.DOKPLOY_WEBHOOK_URL_COMMUNITY }}
+      DOKPLOY_API_URL: ${{ secrets.DOKPLOY_API_URL || vars.DOKPLOY_API_URL }}
+      DOKPLOY_API_TOKEN: ${{ secrets.DOKPLOY_API_TOKEN }}
+      DOKPLOY_COMPOSE_ID_MAIN: ${{ secrets.DOKPLOY_COMPOSE_ID_MAIN || vars.DOKPLOY_COMPOSE_ID_MAIN }}
+      DOKPLOY_COMPOSE_ID_COMMUNITY: ${{ secrets.DOKPLOY_COMPOSE_ID_COMMUNITY || vars.DOKPLOY_COMPOSE_ID_COMMUNITY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -185,22 +186,24 @@ jobs:
           echo "main_stack=${{ steps.deploy_changed.outputs.main_stack }}"
           echo "community_stack=${{ steps.deploy_changed.outputs.community_stack }}"
           echo "shared_deploy=${{ steps.deploy_changed.outputs.shared_deploy }}"
-          echo "has_main_webhook=${{ env.DOKPLOY_WEBHOOK_URL_MAIN != '' }}"
-          echo "has_community_webhook=${{ env.DOKPLOY_WEBHOOK_URL_COMMUNITY != '' }}"
+          echo "has_dokploy_api_url=${{ env.DOKPLOY_API_URL != '' }}"
+          echo "has_dokploy_api_token=${{ env.DOKPLOY_API_TOKEN != '' }}"
+          echo "has_main_compose_id=${{ env.DOKPLOY_COMPOSE_ID_MAIN != '' }}"
+          echo "has_community_compose_id=${{ env.DOKPLOY_COMPOSE_ID_COMMUNITY != '' }}"
 
       - name: Trigger Dokploy redeploy (main stack)
-        if: ${{ env.DOKPLOY_WEBHOOK_URL_MAIN != '' && (github.event_name == 'workflow_dispatch' || steps.deploy_changed.outputs.main_stack == 'true' || steps.deploy_changed.outputs.shared_deploy == 'true') }}
+        if: ${{ env.DOKPLOY_API_URL != '' && env.DOKPLOY_API_TOKEN != '' && env.DOKPLOY_COMPOSE_ID_MAIN != '' && (github.event_name == 'workflow_dispatch' || steps.deploy_changed.outputs.main_stack == 'true' || steps.deploy_changed.outputs.shared_deploy == 'true') }}
         run: |
           curl --fail-with-body -sS -w '\nHTTP_STATUS:%{http_code}\n' -X POST \
             -H "Content-Type: application/json" \
-            -H "X-GitHub-Event: push" \
-            -d "{\"ref\":\"refs/heads/${GITHUB_REF_NAME}\",\"repository\":{\"full_name\":\"${GITHUB_REPOSITORY}\"},\"head_commit\":{\"id\":\"${GITHUB_SHA}\",\"message\":\"${GITHUB_REF_NAME}\"}}" \
-            "$DOKPLOY_WEBHOOK_URL_MAIN"
+            -H "x-api-key: ${DOKPLOY_API_TOKEN}" \
+            -d "{\"composeId\":\"${DOKPLOY_COMPOSE_ID_MAIN}\",\"title\":\"GitHub Actions ${GITHUB_SHA}\",\"description\":\"${GITHUB_REPOSITORY}@${GITHUB_SHA}\"}" \
+            "${DOKPLOY_API_URL%/}/compose.deploy"
       - name: Trigger Dokploy redeploy (community stack)
-        if: ${{ env.DOKPLOY_WEBHOOK_URL_COMMUNITY != '' && (github.event_name == 'workflow_dispatch' || steps.deploy_changed.outputs.community_stack == 'true') }}
+        if: ${{ env.DOKPLOY_API_URL != '' && env.DOKPLOY_API_TOKEN != '' && env.DOKPLOY_COMPOSE_ID_COMMUNITY != '' && (github.event_name == 'workflow_dispatch' || steps.deploy_changed.outputs.community_stack == 'true') }}
         run: |
           curl --fail-with-body -sS -w '\nHTTP_STATUS:%{http_code}\n' -X POST \
             -H "Content-Type: application/json" \
-            -H "X-GitHub-Event: push" \
-            -d "{\"ref\":\"refs/heads/${GITHUB_REF_NAME}\",\"repository\":{\"full_name\":\"${GITHUB_REPOSITORY}\"},\"head_commit\":{\"id\":\"${GITHUB_SHA}\",\"message\":\"${GITHUB_REF_NAME}\"}}" \
-            "$DOKPLOY_WEBHOOK_URL_COMMUNITY"
+            -H "x-api-key: ${DOKPLOY_API_TOKEN}" \
+            -d "{\"composeId\":\"${DOKPLOY_COMPOSE_ID_COMMUNITY}\",\"title\":\"GitHub Actions ${GITHUB_SHA}\",\"description\":\"${GITHUB_REPOSITORY}@${GITHUB_SHA}\"}" \
+            "${DOKPLOY_API_URL%/}/compose.deploy"
