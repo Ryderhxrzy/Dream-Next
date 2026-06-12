@@ -191,8 +191,8 @@ jobs:
       - name: Trigger Dokploy redeploy (main stack)
         if: ${{ env.DOKPLOY_WEBHOOK_URL_MAIN != '' && (github.event_name == 'workflow_dispatch' || steps.deploy_changed.outputs.main_stack == 'true' || steps.deploy_changed.outputs.shared_deploy == 'true') }}
         run: |
-          curl --fail-with-body -sS -w '\nHTTP_STATUS:%{http_code}\n' -X POST -H "Content-Type: application/json" -d "{\"ref\":\"${GITHUB_REF}\"}" "$DOKPLOY_WEBHOOK_URL_MAIN"
+          curl --fail-with-body -sS -w '\nHTTP_STATUS:%{http_code}\n' -X POST -H "Content-Type: application/json" -d "{\"ref\":\"${GITHUB_REF_NAME}\",\"branch\":\"${GITHUB_REF_NAME}\",\"ref_name\":\"${GITHUB_REF_NAME}\"}" "$DOKPLOY_WEBHOOK_URL_MAIN"
       - name: Trigger Dokploy redeploy (community stack)
         if: ${{ env.DOKPLOY_WEBHOOK_URL_COMMUNITY != '' && (github.event_name == 'workflow_dispatch' || steps.deploy_changed.outputs.community_stack == 'true') }}
         run: |
-          curl --fail-with-body -sS -w '\nHTTP_STATUS:%{http_code}\n' -X POST -H "Content-Type: application/json" -d "{\"ref\":\"${GITHUB_REF}\"}" "$DOKPLOY_WEBHOOK_URL_COMMUNITY"
+          curl --fail-with-body -sS -w '\nHTTP_STATUS:%{http_code}\n' -X POST -H "Content-Type: application/json" -d "{\"ref\":\"${GITHUB_REF_NAME}\",\"branch\":\"${GITHUB_REF_NAME}\",\"ref_name\":\"${GITHUB_REF_NAME}\"}" "$DOKPLOY_WEBHOOK_URL_COMMUNITY"
