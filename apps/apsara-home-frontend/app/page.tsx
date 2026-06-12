@@ -6,7 +6,7 @@ export const metadata = buildPageMetadata({
   description: 'Discover premium furniture, appliances, and inspired spaces on AF Home.',
   path: '/',
 });
- 
+ /// test
 export default function Home() {
   return <LandingPage />;
 }
