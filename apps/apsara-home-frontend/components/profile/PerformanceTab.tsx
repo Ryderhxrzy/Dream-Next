@@ -152,19 +152,19 @@ const PerformanceTab = () => {
   });
 
   const summary  = data?.summary;
-  const ledger   = data?.ledger ?? [];
+  const ledger   = data?.ledger;
   const milestone = summary?.performance_milestone;
   const pvPerMilestone   = Number(milestone?.pv_per_milestone ?? 50000);
   const cashPerMilestone = Number(milestone?.cash_per_milestone ?? 5000);
   const milestonesReached = Number(milestone?.milestones_reached ?? 0);
   const cashEarned        = Number(milestone?.cash_earned ?? 0);
   const current  = Number(summary?.direct_referral_total_pv ?? 0);
-  // Progress is measured toward the *next* milestone (rewards repeat every tranche).
-  const nextMilestonePv = Number(milestone?.next_milestone_pv ?? pvPerMilestone);
-  const goalPv   = nextMilestonePv;
-  const tranchePv = current - (nextMilestonePv - pvPerMilestone);
+  // Progress is measured inside the current 50,000 PV monthly tranche.
+  const goalPv = Number(milestone?.next_milestone_pv ?? pvPerMilestone);
+  const rawTranchePv = current % pvPerMilestone;
+  const tranchePv = current > 0 && rawTranchePv === 0 ? pvPerMilestone : rawTranchePv;
   const progress = Math.min(100, Math.max(0, (tranchePv / pvPerMilestone) * 100));
-  const remaining = Number(milestone?.pv_to_next ?? Math.max(0, goalPv - current));
+  const remaining = Number(milestone?.pv_to_next ?? Math.max(0, pvPerMilestone - tranchePv));
 
   const totalReferrals    = Number(summary?.referrals?.total    ?? 0);
   const verifiedReferrals = Number(summary?.referrals?.verified ?? 0);
@@ -172,7 +172,7 @@ const PerformanceTab = () => {
   const maxRef = Math.max(totalReferrals, 1);
 
   const pvHistory = useMemo<PvHistoryItem[]>(() =>
-    ledger
+    (ledger ?? [])
       .filter(r => r.wallet_type === 'pv')
       .map(r => ({
         id:          r.id,
@@ -220,13 +220,13 @@ const PerformanceTab = () => {
           <div className="mt-3 flex items-end justify-between gap-4 flex-wrap">
             <div>
               <p className="text-4xl font-black tabular-nums text-slate-900 dark:text-white leading-none">
-                {fmt(current)}
+                {fmt(tranchePv)}
                 <span className="ml-2 text-lg font-semibold text-slate-400 dark:text-slate-500">
                   / {fmt(goalPv)} PV
                 </span>
               </p>
               <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-                Track referral performance and PV progress toward your goals.
+                Track this month&apos;s direct-referral PV progress toward the next reward.
               </p>
             </div>
 

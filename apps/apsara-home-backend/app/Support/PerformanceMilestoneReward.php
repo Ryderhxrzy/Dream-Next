@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\Customer;
 use App\Models\CustomerWalletLedger;
+use App\Models\CheckoutHistory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -31,9 +32,25 @@ class PerformanceMilestoneReward
             return 0.0;
         }
 
-        return (float) Customer::query()
+        $directIds = Customer::query()
             ->where('c_sponsor', $sponsorCustomerId)
-            ->sum('c_gpv');
+            ->pluck('c_userid');
+
+        if ($directIds->isEmpty()) {
+            return 0.0;
+        }
+
+        $tz = 'Asia/Manila';
+        $monthStart = now($tz)->startOfMonth();
+        $monthEnd = now($tz)->endOfMonth();
+
+        return (float) CheckoutHistory::query()
+            ->whereIn('ch_customer_id', $directIds)
+            ->where('ch_earned_pv', '>', 0)
+            ->whereNotNull('ch_pv_posted_at')
+            ->whereNotIn('ch_status', ['failed', 'cancelled', 'expired'])
+            ->whereBetween('ch_pv_posted_at', [$monthStart->toDateTimeString(), $monthEnd->toDateTimeString()])
+            ->sum('ch_earned_pv');
     }
 
     /**
@@ -45,11 +62,16 @@ class PerformanceMilestoneReward
             return 0;
         }
 
+        $tz = 'Asia/Manila';
+        $monthStart = now($tz)->startOfMonth();
+        $monthEnd = now($tz)->endOfMonth();
+
         return (int) CustomerWalletLedger::query()
             ->where('wl_customer_id', $sponsorCustomerId)
             ->where('wl_wallet_type', 'cash')
             ->where('wl_entry_type', 'credit')
             ->where('wl_source_type', self::SOURCE_TYPE)
+            ->whereBetween('created_at', [$monthStart->toDateTimeString(), $monthEnd->toDateTimeString()])
             ->count();
     }
 
@@ -96,6 +118,10 @@ class PerformanceMilestoneReward
                     ->where('wl_entry_type', 'credit')
                     ->where('wl_source_type', self::SOURCE_TYPE)
                     ->where('wl_source_id', $milestone)
+                    ->whereBetween('created_at', [
+                        now('Asia/Manila')->startOfMonth()->toDateTimeString(),
+                        now('Asia/Manila')->endOfMonth()->toDateTimeString(),
+                    ])
                     ->exists();
 
                 if ($exists) {
@@ -157,15 +183,16 @@ class PerformanceMilestoneReward
     {
         $totalPv = self::directReferralTotalPv($sponsorCustomerId);
         $milestonesReached = (int) floor($totalPv / self::PV_PER_MILESTONE);
-        $nextMilestonePv = ($milestonesReached + 1) * self::PV_PER_MILESTONE;
+        $tranchePv = fmod($totalPv, self::PV_PER_MILESTONE);
+        $pvToNext = self::PV_PER_MILESTONE - $tranchePv;
 
         return [
             'pv_per_milestone' => self::PV_PER_MILESTONE,
             'cash_per_milestone' => self::CASH_PER_MILESTONE,
             'milestones_reached' => $milestonesReached,
             'cash_earned' => round($milestonesReached * self::CASH_PER_MILESTONE, 2),
-            'next_milestone_pv' => $nextMilestonePv,
-            'pv_to_next' => round(max(0, $nextMilestonePv - $totalPv), 2),
+            'next_milestone_pv' => self::PV_PER_MILESTONE,
+            'pv_to_next' => round(max(0, $pvToNext), 2),
         ];
     }
 }

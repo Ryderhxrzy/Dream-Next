@@ -683,6 +683,7 @@ interface ProductsQueryParams {
   brandType?: number
   supplierId?: number
   includeAll?: boolean
+  sort?: string
 }
 
 interface ProductActivityLogsQueryParams {
@@ -1109,6 +1110,7 @@ export const productsApi = baseApi.injectEndpoints({
           room_type: params?.roomType,
           brand_type: params?.brandType,
           supplier_id: params?.supplierId,
+          sort: params?.sort,
         }),
       }),
       transformResponse: (response: ProductsResponse) => normalizeProductsResponse(response),

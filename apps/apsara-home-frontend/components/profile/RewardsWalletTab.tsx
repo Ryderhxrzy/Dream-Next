@@ -7,6 +7,9 @@ import { BadgePercent, CalendarDays, Hash, Sparkles, TicketPercent } from 'lucid
 interface RewardsWalletTabProps {
   afVoucherBalance: number;
   afVoucherSourceBalance: number;
+  personalCashbackBalance: number;
+  personalCashbackSourceBalance: number;
+  personalCashbackReservedBalance: number;
   cashbackRate?: number;
   vouchers: AffiliateVoucherItem[];
   isCreatingVoucher?: boolean;
@@ -137,6 +140,9 @@ function CopyButton({ text }: { text: string }) {
 export default function RewardsWalletTab({
   afVoucherBalance,
   afVoucherSourceBalance,
+  personalCashbackBalance,
+  personalCashbackSourceBalance,
+  personalCashbackReservedBalance,
   cashbackRate = 0,
   vouchers,
   isCreatingVoucher = false,
@@ -171,6 +177,15 @@ export default function RewardsWalletTab({
       return;
     }
 
+    const requiredBalance = amount * (uses ?? 1);
+    if (requiredBalance > personalCashbackBalance) {
+      setMessage({
+        type: 'error',
+        text: `Insufficient personal cashback balance. Available: ${peso(personalCashbackBalance)}.`,
+      });
+      return;
+    }
+
     try {
       await onCreateVoucher({
         amount,
@@ -181,9 +196,9 @@ export default function RewardsWalletTab({
       setVoucherAmount('');
       setExpiresAt('');
       setMaxUses('');
-      setMessage({ type: 'success', text: 'Affiliate voucher created and reserved from cashback successfully.' });
+      setMessage({ type: 'success', text: 'Personal cashback discount created successfully.' });
     } catch (error) {
-      const fallback = 'Failed to create affiliate voucher.';
+      const fallback = 'Failed to create personal cashback discount.';
       const text =
         typeof error === 'object' && error && 'data' in error
           ? ((error as { data?: { message?: string } }).data?.message ?? fallback)
@@ -195,22 +210,61 @@ export default function RewardsWalletTab({
 
   return (
     <div className="space-y-6">
-      <div className="relative overflow-hidden rounded-2xl border border-amber-200/70 bg-white shadow-sm dark:border-amber-800/40 dark:bg-gray-900">
-        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-400 via-orange-500 to-sky-500" />
-        <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-orange-200/60 dark:shadow-orange-950/30">
-              <TicketPercent className="h-6 w-6" strokeWidth={2.3} />
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+        <div className="relative overflow-hidden rounded-2xl border border-amber-200/70 bg-white shadow-sm dark:border-amber-800/40 dark:bg-gray-900">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-400 via-orange-500 to-sky-500" />
+          <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-orange-200/60 dark:shadow-orange-950/30">
+                <TicketPercent className="h-6 w-6" strokeWidth={2.3} />
+              </div>
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-amber-600 dark:text-amber-300">E Voucher Balance</p>
+                <p className="mt-1 text-3xl font-black tracking-tight text-slate-950 dark:text-white">{peso(afVoucherBalance)}</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">Profile rewards and existing E Voucher credits.</p>
+              </div>
             </div>
-            <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-amber-600 dark:text-amber-300">E Voucher Balance</p>
-              <p className="mt-1 text-3xl font-black tracking-tight text-slate-950 dark:text-white">{peso(afVoucherBalance)}</p>
-              <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">Reward vouchers available in your account.</p>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left dark:border-slate-700 dark:bg-slate-800 sm:min-w-32 sm:text-center">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Active Codes</p>
+              <p className="mt-1 text-2xl font-black text-slate-900 dark:text-white">{activeVoucherCount}</p>
             </div>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left dark:border-slate-700 dark:bg-slate-800 sm:min-w-32 sm:text-center">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Active Codes</p>
-            <p className="mt-1 text-2xl font-black text-slate-900 dark:text-white">{activeVoucherCount}</p>
+        </div>
+
+        <div className="relative overflow-hidden rounded-2xl border border-rose-200/70 bg-white shadow-sm dark:border-rose-800/40 dark:bg-gray-900">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-rose-400 via-pink-500 to-orange-500" />
+          <div className="p-5">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-500 to-orange-500 text-white shadow-lg shadow-rose-200/60 dark:shadow-rose-950/30">
+                <BadgePercent className="h-6 w-6" strokeWidth={2.3} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-rose-600 dark:text-rose-300">Personal Cashback Balance</p>
+                <p className="mt-1 text-3xl font-black tracking-tight text-slate-950 dark:text-white">{peso(personalCashbackBalance)}</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                  Available cashback from your own delivered or completed purchase PV.
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 grid gap-2 sm:grid-cols-3">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Earned</p>
+                <p className="mt-1 text-sm font-black text-slate-900 dark:text-white">{peso(personalCashbackSourceBalance)}</p>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Reserved</p>
+                <p className="mt-1 text-sm font-black text-slate-900 dark:text-white">{peso(personalCashbackReservedBalance)}</p>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Rate</p>
+                <p className="mt-1 text-sm font-black text-slate-900 dark:text-white">
+                  {displayCashbackRate.toLocaleString('en-PH', {
+                    minimumFractionDigits: displayCashbackRate % 1 === 0 ? 0 : 2,
+                    maximumFractionDigits: 2,
+                  })}%
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -225,8 +279,8 @@ export default function RewardsWalletTab({
                 <BadgePercent className="h-5 w-5" strokeWidth={2.3} />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Create Affiliate Voucher</h3>
-                <p className="text-xs text-slate-400 dark:text-slate-500">Reserve cashback into a shareable promo code</p>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Create Personal Cashback Discount</h3>
+                <p className="text-xs text-slate-400 dark:text-slate-500">Reserve available cashback into a shareable discount code</p>
               </div>
             </div>
             <div className="inline-flex shrink-0 items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
@@ -240,7 +294,7 @@ export default function RewardsWalletTab({
             <form className="space-y-5" onSubmit={handleCreateVoucher}>
               <div>
                 <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1.5">
-                  Voucher Amount <span className="text-rose-500">*</span>
+                  Discount Amount <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400 dark:text-slate-500">₱</span>
@@ -307,11 +361,11 @@ export default function RewardsWalletTab({
                 className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-sm font-black text-white shadow-lg shadow-orange-200/60 transition hover:from-amber-600 hover:to-orange-600 disabled:cursor-not-allowed disabled:opacity-60 dark:shadow-orange-950/30"
               >
                 <Sparkles className="h-4 w-4" />
-                {isCreatingVoucher ? 'Creating...' : 'Create Voucher'}
+                {isCreatingVoucher ? 'Creating...' : 'Create Discount'}
               </button>
 
               <p className="rounded-2xl border border-amber-100 bg-amber-50/70 px-4 py-3 text-[11px] leading-5 text-amber-800 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-200">
-                The reserved amount is deducted from your available cashback balance immediately and returned if the code is cancelled.
+                The reserved amount is deducted from your available personal cashback balance immediately and returned if the code is cancelled.
               </p>
             </form>
           </div>
@@ -332,7 +386,7 @@ export default function RewardsWalletTab({
                 })}%
               </p>
               <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                Current program cashback percentage from migrated rewards settings.
+                Current personal cashback percentage from your own delivered or completed purchase PV.
               </p>
             </div>
 
@@ -347,7 +401,7 @@ export default function RewardsWalletTab({
             <div className="space-y-3 rounded-2xl border border-dashed border-slate-200 px-4 py-4 dark:border-slate-700">
               <p className="text-xs font-bold text-slate-700 dark:text-slate-300">How voucher creation works</p>
               {[
-                'Create a voucher from your available cashback balance.',
+                'Create a discount code from your available personal cashback balance.',
                 'Set an optional expiry date and usage limit.',
                 'Share the generated code with your customer.',
                 'The amount stays reserved until redeemed, cancelled, or expired.',

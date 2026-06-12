@@ -38,6 +38,8 @@ const LEDGER_SOURCE_LABELS: Record<string, string> = {
   yearly_global_purchase_bonus: 'Yearly Global Purchase Bonus',
   performance_milestone: 'Performance Milestone',
   profile_completion_reward: 'Profile Completion Reward',
+  personal_cashback_voucher: 'Cashback Reserved for Voucher',
+  personal_cashback_checkout: 'Personal Cashback Used at Checkout',
   encashment: 'Encashment (Withdrawal)',
 };
 
@@ -279,6 +281,9 @@ export default function WalletTab({ initialWalletType = 'all' }: WalletTabProps)
                   <RewardsWalletTab
                     afVoucherBalance={Number(summary?.af_voucher_balance ?? 0)}
                     afVoucherSourceBalance={Number(summary?.af_voucher_source_balance ?? 0)}
+                    personalCashbackBalance={Number(summary?.personal_cashback_balance ?? summary?.cashback_balance ?? 0)}
+                    personalCashbackSourceBalance={Number(summary?.personal_cashback_source_balance ?? summary?.cashback_source_balance ?? 0)}
+                    personalCashbackReservedBalance={Number(summary?.personal_cashback_reserved_balance ?? summary?.cashback_reserved_balance ?? 0)}
                     cashbackRate={Number(summary?.cashback_rate ?? 0)}
                     vouchers={data?.affiliate_vouchers ?? []}
                     isCreatingVoucher={isCreatingVoucher}

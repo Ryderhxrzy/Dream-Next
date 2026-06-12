@@ -213,9 +213,7 @@ class EncashmentController extends Controller
             ->count();
 
         $activeReferrals = $verifiedReferrals;
-        $directReferralTotalPv = (float) Customer::query()
-            ->where('c_sponsor', (int) $customer->c_userid)
-            ->sum('c_gpv');
+        $directReferralTotalPv = PerformanceMilestoneReward::directReferralTotalPv((int) $customer->c_userid);
 
         $reservedAffiliateVoucherAmount = 0.0;
         $affiliateVouchers = collect();
@@ -466,6 +464,33 @@ class EncashmentController extends Controller
                 'created_at' => now(),
                 'updated_at' => now(),
             ], 'avi_id');
+
+            if (Schema::hasTable('tbl_customer_wallet_ledger')) {
+                $alreadyLogged = CustomerWalletLedger::query()
+                    ->where('wl_wallet_type', 'voucher')
+                    ->where('wl_entry_type', 'debit')
+                    ->where('wl_source_type', 'personal_cashback_voucher')
+                    ->where('wl_source_id', $id)
+                    ->exists();
+
+                if (!$alreadyLogged) {
+                    CustomerWalletLedger::create([
+                        'wl_customer_id' => (int) $customer->c_userid,
+                        'wl_wallet_type' => 'voucher',
+                        'wl_entry_type' => 'debit',
+                        'wl_amount' => round($requiredBalance, 2),
+                        'wl_source_type' => 'personal_cashback_voucher',
+                        'wl_source_id' => $id,
+                        'wl_reference_no' => $code,
+                        'wl_notes' => sprintf(
+                            'Personal cashback reserved for voucher %s%s.',
+                            $code,
+                            $maxUses && $maxUses > 1 ? " ({$maxUses} uses)" : ''
+                        ),
+                        'wl_created_by' => null,
+                    ]);
+                }
+            }
 
             return DB::table('tbl_affiliate_voucher_issuances')
                 ->where('avi_id', $id)

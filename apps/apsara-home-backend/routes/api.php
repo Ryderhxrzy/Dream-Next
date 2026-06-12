@@ -157,6 +157,8 @@ Route::prefix('auth')->group(function () {
 Route::middleware('throttle:checkout')->group(function () {
     Route::post('/payments/checkout-session', [PaymentController::class, 'createCheckoutSession']);
     Route::post('/payments/validate-voucher', [PaymentController::class, 'validateVoucher']);
+    Route::post('/payments/validate-cashback', [PaymentController::class, 'validateCashback']);
+    Route::post('/payments/validate-egc', [PaymentController::class, 'validateEgc']);
 });
 Route::middleware('throttle:checkout')->group(function () {
     Route::get('/payments/checkout-session/{checkoutId}', [PaymentController::class, 'verifyCheckoutSession']);
@@ -685,6 +687,8 @@ Route::middleware(['auth:sanctum', 'supplier.actor'])->group(function () {
     Route::post('/supplier/products/zq/pricing/{externalId}/variants', [ProductController::class, 'updateZqVariantPricing']);
     Route::patch('/supplier/products/zq/pricing/{externalId}', [ProductController::class, 'updateZqProductPricing']);
     Route::post('/supplier/products/zq/pricing/bulk-update', [ProductController::class, 'bulkUpdateZqProductPricing']);
+    Route::get('/supplier/payments/voucher-product-rules', [AdminPaymentController::class, 'supplierVoucherProductRules']);
+    Route::put('/supplier/payments/voucher-product-rules', [AdminPaymentController::class, 'updateSupplierVoucherProductRules']);
 
     // Push Notifications
     Route::post('/supplier/push-notifications/send', [SupplierPushNotificationController::class, 'send']);

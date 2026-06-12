@@ -17,7 +17,8 @@ interface Props {
   checkoutData: CustomerCheckoutData | null;
   loading: boolean;
   onSubmit: () => void;
-  voucher?: { code: string; discount: number } | null;
+  voucher?: { code: string; discount: number; sourceType?: string | null } | null;
+  cashbackApplied?: number;
   egcApplied?: number;
   computedTotal?: number;
   subtotalOverride?: number;
@@ -35,6 +36,7 @@ export default function CustomerCheckoutOrderSummary({
   loading,
   onSubmit,
   voucher,
+  cashbackApplied = 0,
   egcApplied = 0,
   computedTotal,
   subtotalOverride,
@@ -78,7 +80,12 @@ export default function CustomerCheckoutOrderSummary({
   const displayUnitPrice = typeof unitPriceOverride === 'number' ? unitPriceOverride : product.price;
   const displaySubtotal = typeof subtotalOverride === 'number' ? subtotalOverride : subtotal;
   const voucherDiscount = Math.max(0, Number(voucher?.discount ?? 0));
+  const cashbackDiscount = Math.max(0, Number(cashbackApplied ?? 0));
   const egcDiscount = Math.max(0, Number(egcApplied ?? 0));
+  const isPersonalCashbackDiscount = isLoggedIn && voucher?.sourceType === 'personal_cashback';
+  const voucherDiscountLabel = isPersonalCashbackDiscount
+    ? 'Personal Cashback Discount'
+    : `Voucher (${voucher?.code ?? 'Applied'})`;
   const displayTotal = typeof computedTotal === 'number' ? computedTotal : total;
   const displayShippingFee = typeof shippingFee === 'number' ? shippingFee : Number(handlingFee ?? 0);
   const isCheckoutDisabled = loading || Boolean(checkoutDisabledReason);
@@ -268,8 +275,14 @@ export default function CustomerCheckoutOrderSummary({
           </div>
           {voucherDiscount > 0 ? (
             <div className="flex justify-between text-emerald-600">
-              <span>Voucher ({voucher?.code ?? 'Applied'})</span>
+              <span>{voucherDiscountLabel}</span>
               <span className="font-semibold">-PHP {voucherDiscount.toLocaleString()}</span>
+            </div>
+          ) : null}
+          {cashbackDiscount > 0 ? (
+            <div className="flex justify-between text-rose-600">
+              <span>Personal Cashback Discount</span>
+              <span className="font-semibold">-PHP {cashbackDiscount.toLocaleString()}</span>
             </div>
           ) : null}
           {egcDiscount > 0 ? (

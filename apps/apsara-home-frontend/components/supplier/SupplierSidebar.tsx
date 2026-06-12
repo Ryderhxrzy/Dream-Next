@@ -20,6 +20,7 @@ import {
   MessageSquare,
   Package,
   Smartphone,
+  TicketPercent,
   Users,
   Warehouse,
 } from 'lucide-react'
@@ -31,6 +32,7 @@ const mainItems = [
   { label: 'Dashboard', href: '/supplier/dashboard', icon: BarChart3 },
   { label: 'Chats', href: '/supplier/chat', icon: MessageSquare },
   { label: 'Products', href: '/supplier/products', icon: Package },
+  { label: 'Vouchers', href: '/supplier/vouchers', icon: TicketPercent },
   { label: 'Orders', href: '/supplier/orders', icon: ClipboardList },
   { label: 'Inventory', href: '/supplier/inventory', icon: Warehouse },
   { label: 'Catalogue', href: '/supplier/catalogue', icon: BookOpen },
@@ -41,6 +43,7 @@ const servicesMainItems = [
   { label: 'Chats', href: '/supplier/chat', icon: MessageSquare },
   { label: 'Inquiry', href: '/supplier/orders', icon: Inbox },
   { label: 'Services', href: '/supplier/products', icon: Package },
+  { label: 'Vouchers', href: '/supplier/vouchers', icon: TicketPercent },
 ]
 
 const reportItems = [
@@ -93,7 +96,6 @@ export default function SupplierSidebar({
 
   const supplierName = session?.user?.supplierName || session?.user?.name || 'Supplier'
   const isMainSupplier = Boolean(session?.user?.isMainSupplier)
-  const userEmail = session?.user?.email || ''
   const displayRole = formatRole(isMainSupplier)
 
   const { data: supplierMe } = useGetSupplierMeQuery(undefined, { skip: !session })
@@ -110,6 +112,17 @@ export default function SupplierSidebar({
 
   const toggleMenu = (id: string) =>
     setOpenMenus(prev => prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id])
+
+  const navigateTo = (href: string) => {
+    onClose?.()
+
+    if (href === '/supplier/vouchers') {
+      window.location.assign(href)
+      return
+    }
+
+    router.push(href)
+  }
 
   const isActive = (href: string) => pathname === href
   const isChildActive = (items: typeof reportItems) => items.some((item) => pathname === item.href)
@@ -178,7 +191,10 @@ export default function SupplierSidebar({
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={() => onClose?.()}
+                  onClick={(event) => {
+                    event.preventDefault()
+                    navigateTo(item.href)
+                  }}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-200 group relative
                     ${active
                       ? 'bg-sky-500 text-white dark:bg-sky-600'

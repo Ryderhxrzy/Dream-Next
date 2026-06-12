@@ -2281,6 +2281,19 @@ export default function ProductsPageMain({ initialData = null, initialBrandType 
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          {isSupplierPortal && !isSupplierServicesPortal ? (
+            <button
+              type="button"
+              onClick={() => router.push('/supplier/vouchers')}
+              className="flex items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 py-2.5 text-sm font-semibold text-sky-700 transition-colors hover:bg-sky-100 dark:border-sky-900/40 dark:bg-sky-900/20 dark:text-sky-300 dark:hover:bg-sky-900/30"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5h14a2 2 0 0 1 2 2v3a2 2 0 1 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 1 0 0-4V7a2 2 0 0 1 2-2Z" />
+              </svg>
+              <span className="hidden sm:inline">Voucher Rules</span>
+              <span className="sm:hidden">Vouchers</span>
+            </button>
+          ) : null}
           {!isSupplierServicesPortal && (
             <button
               type="button"

@@ -223,11 +223,11 @@ const PvWalletTab = ({
       >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <PvStatCard
-          label="Cashback / e-GC"
+          label="Personal Cashback"
           value={currentPv}
           accent="blue"
           icon={<Gift className="h-4 w-4" />}
-          helper="4% cashback from delivered personal purchase PV, issued as e-GC"
+          helper="4% cashback from your own delivered personal purchase PV"
         />
         <PvStatCard
           label="Yearly Personal PV"

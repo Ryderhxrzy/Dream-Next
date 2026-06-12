@@ -76,6 +76,7 @@ const SUPPLIER_ALLOWED_PREFIXES = [
   "/supplier/catalogue",
   "/supplier/chat",
   "/supplier/products",
+  "/supplier/vouchers",
   "/supplier/orders",
   "/supplier/inventory",
   "/supplier/warehouse",

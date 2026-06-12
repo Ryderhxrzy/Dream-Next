@@ -59,7 +59,7 @@ const NAV: NavItem[] = [
       { id: 'affiliate-milestones', label: 'Milestone Table' },
     ],
   },
-  { id: 'cashback', label: 'Personal Cashback (e-GC)', icon: Gift },
+  { id: 'cashback', label: 'Personal Cashback Discount', icon: Gift },
   { id: 'global', label: 'Yearly Global Bonus', icon: TrendingUp },
   { id: 'rules', label: 'Key Business Rules', icon: BookOpen },
   {
@@ -78,7 +78,7 @@ const D = {
   Order([Member Places Order]) --> Delivered{Order Successfully\nDelivered?}
   Delivered -->|No — Cancelled / Pending| NoEarn[No PV Earned\nNo Bonus Distributed]
   Delivered -->|Yes| PV[PV Credited to Member]
-  PV --> C1["4% → Personal e-GC Cashback\nAutomatically issued · Valid 60 days\nAll members · No activation needed"]
+  PV --> C1["4% → Personal Cashback Balance\nCredits after delivery\nAuto-applies at checkout when product rules allow"]
   PV --> C2["6% → Group Purchase Bonus\nDistributed to up to 10 active uplines\n0.6% per active level · Inactive = skipped"]
   PV --> C3["2.9% → Affiliate Performance Meter\nAdded to sponsor's cumulative total\nEvery 50,000 PV = ₱5,000 bonus\nSponsor must be active that month"]
   PV --> C4["1% → Yearly Global Bonus Pool\nAll members contribute annually\nTop 10 earners split at year-end"]`,
@@ -583,7 +583,7 @@ export default function CommissionDocs() {
             <InfoTable
               headers={['Bonus Pool', 'Allocation', 'What It Funds']}
               rows={[
-                [<span key="a" className="font-semibold text-amber-700">Personal Cashback</span>, <Badge label="4%" />, 'e-GC (gift certificate) given back to the buyer'],
+                [<span key="a" className="font-semibold text-amber-700">Personal Cashback</span>, <Badge label="4%" />, 'Personal checkout discount balance earned by the buyer'],
                 [<span key="b" className="font-semibold text-amber-700">Group Purchase Bonus</span>, <Badge label="6%" />, 'Distributed to up to 10 levels of uplines'],
                 [<span key="c" className="font-semibold text-amber-700">Affiliate Performance</span>, <Badge label="2.9%" />, "Funds milestone bonuses for the buyer's direct sponsor"],
                 [<span key="d" className="font-semibold text-amber-700">Yearly Global Bonus</span>, <Badge label="1%" />, 'Year-end reward for top PV earners'],
@@ -623,7 +623,7 @@ export default function CommissionDocs() {
               rows={[
                 ['Unilevel (Group Purchase Bonus)', <Badge key="a" label="Receives their share" color="green" />, <Badge key="b" label="Skipped — bonus passes up" color="gray" />],
                 ['Affiliate Performance Bonus', <Badge key="c" label="Eligible on milestone" color="green" />, <Badge key="d" label="Does not receive" color="gray" />],
-                ['Personal Cashback (e-GC)', <Badge key="e" label="Always received" color="green" />, <Badge key="f" label="Always received" color="green" />],
+                ['Personal Cashback Discount', <Badge key="e" label="Always received" color="green" />, <Badge key="f" label="Always received" color="green" />],
                 ['Direct Referral Commission', <Badge key="g" label="Always received" color="green" />, <Badge key="h" label="Always received" color="green" />],
               ]}
             />
@@ -781,6 +781,8 @@ Resets to 0 every 1st of the month — earnable again each month.`}</FormulaBloc
             <Note type="warning">The PV counter resets every 1st of the month. Only the current month's direct PV counts toward milestones — previous months do not carry over.</Note>
           </section>
 
+          <Note type="info">The threshold is fixed at 50,000 PV. When the sponsor reaches it, PHP 5,000 is credited and the visible progress meter resets to 0 for the next 50,000 PV cycle within the same month.</Note>
+
           <section id="affiliate-milestones" data-section className="pt-2">
             <SubHeading id="affiliate-milestones">Milestone Table (per month)</SubHeading>
             <InfoTable
@@ -802,27 +804,29 @@ Resets to 0 every 1st of the month — earnable again each month.`}</FormulaBloc
           {/* ── Cashback ─────────────────────────────────────── */}
           <section id="cashback" data-section>
             <SectionTag icon={<Gift size={11} />}>Personal Cashback</SectionTag>
-            <SectionHeading>Personal Purchase Cashback (e-GC)</SectionHeading>
+            <SectionHeading>Personal Purchase Cashback Discount</SectionHeading>
             <p className="text-gray-600 text-[15px] leading-relaxed mb-5">
-              Every member receives <strong>4% cashback</strong> on their own purchases in the form of an <strong>electronic Gift Certificate (e-GC)</strong>, usable for future purchases.
+              Every member receives <strong>4% cashback</strong> from their own delivered purchase PV. It is stored as a separate <strong>Personal Cashback Balance</strong>, not as E-GC cash, and can auto-apply as a checkout discount on eligible products.
             </p>
             <InfoTable
               headers={['Detail', 'Value']}
               rows={[
                 ['Cashback rate', '4% of order PV value'],
-                ['When issued', 'Automatically on order delivery'],
-                ['Validity', '60 days from date of issuance'],
+                ['When credited', 'After the member order is delivered / completed'],
+                ['How it is used', 'Auto-applied at checkout as Personal Cashback Discount when product rules allow it'],
+                ['Product limits', 'Supplier/admin voucher product rules control allow, max discount, and minimum spend'],
                 ['Who gets it', 'All members — no activation required'],
               ]}
             />
             <InfoTable
-              headers={['Order PV Value', 'Cashback (4%)', 'Validity']}
+              headers={['Order PV Value', 'Cashback (4%)', 'Checkout Use']}
               rows={[
-                ['₱500', '₱20 e-GC', '60 days'],
-                ['₱1,000', '₱40 e-GC', '60 days'],
-                ['₱3,000', '₱120 e-GC', '60 days'],
+                ['500 PV', 'PHP 20 cashback balance', 'Auto-applies up to product max discount'],
+                ['1,000 PV', 'PHP 40 cashback balance', 'Auto-applies up to product max discount'],
+                ['3,000 PV', 'PHP 120 cashback balance', 'Auto-applies up to product max discount'],
               ]}
             />
+            <Note type="info">E-GC and Personal Cashback are separate balances. E-GC is electronic gift credit from commission programs; Personal Cashback is the buyer&apos;s own 4% cashback discount balance.</Note>
           </section>
 
           <Divider />
@@ -867,7 +871,7 @@ Resets to 0 every 1st of the month — earnable again each month.`}</FormulaBloc
                 [<span key="r1" className="font-medium">PV credited on delivery only</span>, 'No PV is earned for undelivered, cancelled, or pending orders'],
                 [<span key="r2" className="font-medium">Monthly activation for unilevel</span>, 'Must meet the monthly PV threshold to receive group purchase bonuses'],
                 [<span key="r3" className="font-medium">Inactive uplines are skipped — not removed</span>, 'Their position is filled by the next active upline above them'],
-                [<span key="r4" className="font-medium">Cashback is always earned</span>, 'e-GC is given for every delivered order, no activation needed'],
+                [<span key="r4" className="font-medium">Cashback is always earned</span>, 'Personal cashback balance is credited for every delivered member order, no activation needed'],
                 [<span key="r5" className="font-medium">Rank does not restrict unilevel</span>, 'Any active member earns from all 10 levels — rank is for tier promotion only'],
                 [<span key="r6" className="font-medium">All rank criteria must be met together</span>, 'Meeting only some requirements does not qualify a member for that rank'],
                 [<span key="r7" className="font-medium">Group PV includes the full downline</span>, 'Not just directs — the entire network tree counts toward Group PV'],
@@ -906,7 +910,7 @@ Resets to 0 every 1st of the month — earnable again each month.`}</FormulaBloc
           </section>
 
           <div className="pt-10 pb-4 text-center text-xs text-gray-400">
-            Last updated: 2026-05-11 · Apsara Home Commission & Bonus System
+            Last updated: 2026-06-11 · Apsara Home Commission & Bonus System
           </div>
 
         </div>
