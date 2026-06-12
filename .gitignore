@@ -26,11 +26,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Playwright
+# Test output
 test-results/
-playwright-report/
 apps/test-results/
-apps/playwright-report/
 storage/logs/
 
 # Laravel/runtime generated files

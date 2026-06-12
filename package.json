@@ -17,15 +17,9 @@
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f",
     "build": "pnpm -r build",
-    "lint": "pnpm -r lint",
-    "test:e2e": "playwright test --config apps/playwright.config.ts",
-    "test:e2e:existing": "cross-env PLAYWRIGHT_SKIP_WEB_SERVER=1 playwright test --config apps/playwright.config.ts",
-    "test:e2e:ui": "playwright test --config apps/playwright.config.ts --ui",
-    "test:e2e:headed": "playwright test --config apps/playwright.config.ts --headed"
+    "lint": "pnpm -r lint"
   },
   "devDependencies": {
-    "@playwright/test": "^1.60.0",
-    "@types/node": "^25.9.2",
-    "cross-env": "^7.0.3"
+    "@types/node": "^25.9.2"
   }
 }

@@ -168,16 +168,12 @@ jobs:
               - 'apps/apsara-home-backend/**'
               - 'apps/Dreambuild-Landing-Page/**'
               - 'docker-compose.prod.yml'
-              - 'docker/**'
-              - 'pnpm-lock.yaml'
-              - 'pnpm-workspace.yaml'
-              - 'package.json'
-              - '.github/workflows/build-push.yml'
             community_stack:
               - 'apps/community-frontend/**'
               - 'apps/community-backend/**'
               - 'apps/realtime-service/**'
               - 'docker-compose.community.prod.yml'
+            shared_deploy:
               - 'docker/**'
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
@@ -185,7 +181,7 @@ jobs:
               - '.github/workflows/build-push.yml'
 
       - name: Trigger Dokploy redeploy (main stack)
-        if: ${{ env.DOKPLOY_WEBHOOK_URL_MAIN != '' && (github.event_name == 'workflow_dispatch' || steps.deploy_changed.outputs.main_stack == 'true') }}
+        if: ${{ env.DOKPLOY_WEBHOOK_URL_MAIN != '' && (github.event_name == 'workflow_dispatch' || steps.deploy_changed.outputs.main_stack == 'true' || steps.deploy_changed.outputs.shared_deploy == 'true') }}
         run: curl -fsSL -X POST "$DOKPLOY_WEBHOOK_URL_MAIN"
       - name: Trigger Dokploy redeploy (community stack)
         if: ${{ env.DOKPLOY_WEBHOOK_URL_COMMUNITY != '' && (github.event_name == 'workflow_dispatch' || steps.deploy_changed.outputs.community_stack == 'true') }}
