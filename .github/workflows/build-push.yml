@@ -1,8 +1,156 @@
+name: Build & Push Images (GHCR)
+
+# Builds every service in PARALLEL on GitHub's runners (not the VPS), pushes to
+# GitHub Container Registry tagged with `latest` and the full git SHA.
+# The VPS (Dokploy) then just PULLS these images — no building, low RAM.
+
+on:
+  push:
+    branches: [main, feature/renewal]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}   # manual "rebuild all" from the Actions tab
+
+concurrency:
+  group: build-push-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # NEXT_PUBLIC_* build vars live in this GitHub Environment; referencing it
+    # makes them available to the `vars` context during the build.
+    environment: "AF HOME ENV URL"
+    permissions:
+      contents: read
+      packages: write   # required to push to GHCR with GITHUB_TOKEN
+    strategy:
+      fail-fast: false   # one service failing must not cancel the others
+      matrix:
+        include:
+          - name: afhome-frontend
+            dockerfile: docker/next.prod.Dockerfile
+            app_filter: apsara-home-frontend
+            app_dir: apps/apsara-home-frontend
+            app_path: apps/apsara-home-frontend
+          - name: afhome-dreambuild
+            dockerfile: docker/next.prod.Dockerfile
+            app_filter: dreambuild
+            app_dir: apps/Dreambuild-Landing-Page
+            app_path: apps/Dreambuild-Landing-Page
+          - name: community-frontend
+            dockerfile: docker/next.prod.Dockerfile
+            app_filter: community-frontend
+            app_dir: apps/community-frontend
+            app_path: apps/community-frontend
+          - name: afhome-backend
+            dockerfile: docker/backend.prod.Dockerfile
+            app_filter: ""
+            app_dir: ""
+            app_path: apps/apsara-home-backend
+          - name: community-backend
+            dockerfile: docker/node.prod.Dockerfile
+            app_filter: community-backend
+            app_dir: apps/community-backend
+            app_path: apps/community-backend
+          - name: realtime-service
+            dockerfile: docker/node.prod.Dockerfile
+            app_filter: realtime-service
+            app_dir: apps/realtime-service
+            app_path: apps/realtime-service
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Only rebuild a service when ITS files change — or when something shared
+      # (Dockerfiles, lockfile, workspace config, this workflow) changes.
+      - name: Detect changes
+        uses: dorny/paths-filter@v3
+        id: changed
+        with:
+          filters: |
+            build:
+              - '${{ matrix.app_path }}/**'
+              - 'docker/**'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'package.json'
+              - '.github/workflows/build-push.yml'
+
+      - name: Set up Docker Buildx
+        if: steps.changed.outputs.build == 'true' || github.event_name == 'workflow_dispatch'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: steps.changed.outputs.build == 'true' || github.event_name == 'workflow_dispatch'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute image tags & labels
+        if: steps.changed.outputs.build == 'true' || github.event_name == 'workflow_dispatch'
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.name }}
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/renewal' || github.event_name == 'workflow_dispatch' }}
+            type=sha,prefix=,format=long
+
+      - name: Build & push ${{ matrix.name }}
+        if: steps.changed.outputs.build == 'true' || github.event_name == 'workflow_dispatch'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Layer cache stored in GitHub Actions cache → fast incremental builds.
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+          # APP_FILTER/APP_DIR drive the parameterized Dockerfiles.
+          # NEXT_PUBLIC_* are baked into the client bundle here in CI (Next.js
+          # inlines them at build time). Non-Next builds simply ignore them.
+          build-args: |
+            APP_FILTER=${{ matrix.app_filter }}
+            APP_DIR=${{ matrix.app_dir }}
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_LARAVEL_API_URL=${{ vars.NEXT_PUBLIC_LARAVEL_API_URL }}
+            NEXT_PUBLIC_AFHOME_API_URL=${{ vars.NEXT_PUBLIC_AFHOME_API_URL }}
+            NEXT_PUBLIC_COMMUNITY_API_URL=${{ vars.NEXT_PUBLIC_COMMUNITY_API_URL }}
+            NEXT_PUBLIC_REALTIME_URL=${{ vars.NEXT_PUBLIC_REALTIME_URL }}
+            NEXT_PUBLIC_BASE_URL=${{ vars.NEXT_PUBLIC_BASE_URL }}
+            NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}
+            NEXT_PUBLIC_APP_URL=${{ vars.NEXT_PUBLIC_APP_URL }}
+            NEXT_PUBLIC_PUSHER_KEY=${{ vars.NEXT_PUBLIC_PUSHER_KEY }}
+            NEXT_PUBLIC_PUSHER_CLUSTER=${{ vars.NEXT_PUBLIC_PUSHER_CLUSTER }}
+            NEXT_PUBLIC_TAWK_PROPERTY_ID=${{ vars.NEXT_PUBLIC_TAWK_PROPERTY_ID }}
+            NEXT_PUBLIC_TAWK_WIDGET_ID=${{ vars.NEXT_PUBLIC_TAWK_WIDGET_ID }}
+            NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ vars.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
+            USER_LOGIN_CLOUDFLARE_SITE_KEY=${{ vars.USER_LOGIN_CLOUDFLARE_SITE_KEY }}
+            USER_SIGNUP_CLOUDFLARE_SITE_KEY=${{ vars.USER_SIGNUP_CLOUDFLARE_SITE_KEY }}
+            USER_FORGOT_PASSWORD_CLOUDFLARE_SITE_KEY=${{ vars.USER_FORGOT_PASSWORD_CLOUDFLARE_SITE_KEY }}
+            ADMIN_LOGIN_CLOUDFLARE_SITE_KEY=${{ vars.ADMIN_LOGIN_CLOUDFLARE_SITE_KEY }}
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Optional: tell Dokploy to pull the new images and redeploy.
+  # Fires ONLY if you set the webhook secrets. Leave them unset to deploy
+  # manually from the Dokploy dashboard (recommended while validating).
+  # ───────────────────────────────────────────────────────────────────────────
   deploy:
     needs: build
     runs-on: ubuntu-latest
     environment: "AF HOME ENV URL"
-    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/renewal'
+    # `secrets` can't be used in `if:` — map them to env first, then gate on env.
     env:
       DOKPLOY_WEBHOOK_URL_MAIN: ${{ secrets.DOKPLOY_WEBHOOK_URL_MAIN || vars.DOKPLOY_WEBHOOK_URL_MAIN }}
       DOKPLOY_WEBHOOK_URL_COMMUNITY: ${{ secrets.DOKPLOY_WEBHOOK_URL_COMMUNITY || vars.DOKPLOY_WEBHOOK_URL_COMMUNITY }}
@@ -37,24 +185,22 @@
           echo "main_stack=${{ steps.deploy_changed.outputs.main_stack }}"
           echo "community_stack=${{ steps.deploy_changed.outputs.community_stack }}"
           echo "shared_deploy=${{ steps.deploy_changed.outputs.shared_deploy }}"
-          echo "branch=${GITHUB_REF_NAME}"
           echo "has_main_webhook=${{ env.DOKPLOY_WEBHOOK_URL_MAIN != '' }}"
           echo "has_community_webhook=${{ env.DOKPLOY_WEBHOOK_URL_COMMUNITY != '' }}"
 
       - name: Trigger Dokploy redeploy (main stack)
-        if: ${{ env.DOKPLOY_WEBHOOK_URL_MAIN != '' && github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || steps.deploy_changed.outputs.main_stack == 'true' || steps.deploy_changed.outputs.shared_deploy == 'true') }}
+        if: ${{ env.DOKPLOY_WEBHOOK_URL_MAIN != '' && (github.event_name == 'workflow_dispatch' || steps.deploy_changed.outputs.main_stack == 'true' || steps.deploy_changed.outputs.shared_deploy == 'true') }}
         run: |
-          curl -L --fail-with-body -sS -w '\nHTTP_STATUS:%{http_code}\n' -X POST \
+          curl --fail-with-body -sS -w '\nHTTP_STATUS:%{http_code}\n' -X POST \
             -H "Content-Type: application/json" \
             -H "X-GitHub-Event: push" \
-            -d "{\"ref\":\"refs/heads/main\",\"repository\":{\"full_name\":\"${GITHUB_REPOSITORY}\"},\"head_commit\":{\"id\":\"${GITHUB_SHA}\",\"message\":\"${GITHUB_REF_NAME}\"}}" \
+            -d "{\"ref\":\"refs/heads/${GITHUB_REF_NAME}\",\"repository\":{\"full_name\":\"${GITHUB_REPOSITORY}\"},\"head_commit\":{\"id\":\"${GITHUB_SHA}\",\"message\":\"${GITHUB_REF_NAME}\"}}" \
             "$DOKPLOY_WEBHOOK_URL_MAIN"
-
       - name: Trigger Dokploy redeploy (community stack)
-        if: ${{ env.DOKPLOY_WEBHOOK_URL_COMMUNITY != '' && github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || steps.deploy_changed.outputs.community_stack == 'true' || steps.deploy_changed.outputs.shared_deploy == 'true') }}
+        if: ${{ env.DOKPLOY_WEBHOOK_URL_COMMUNITY != '' && (github.event_name == 'workflow_dispatch' || steps.deploy_changed.outputs.community_stack == 'true') }}
         run: |
-          curl -L --fail-with-body -sS -w '\nHTTP_STATUS:%{http_code}\n' -X POST \
+          curl --fail-with-body -sS -w '\nHTTP_STATUS:%{http_code}\n' -X POST \
             -H "Content-Type: application/json" \
             -H "X-GitHub-Event: push" \
-            -d "{\"ref\":\"refs/heads/main\",\"repository\":{\"full_name\":\"${GITHUB_REPOSITORY}\"},\"head_commit\":{\"id\":\"${GITHUB_SHA}\",\"message\":\"${GITHUB_REF_NAME}\"}}" \
+            -d "{\"ref\":\"refs/heads/${GITHUB_REF_NAME}\",\"repository\":{\"full_name\":\"${GITHUB_REPOSITORY}\"},\"head_commit\":{\"id\":\"${GITHUB_SHA}\",\"message\":\"${GITHUB_REF_NAME}\"}}" \
             "$DOKPLOY_WEBHOOK_URL_COMMUNITY"
