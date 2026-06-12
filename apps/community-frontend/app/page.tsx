@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 
-// TEST LANG
 export default function Home() {
   useEffect(() => {
     window.location.replace("/feed");
