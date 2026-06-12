@@ -152,8 +152,8 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/renewal'
     # `secrets` can't be used in `if:` — map them to env first, then gate on env.
     env:
-      DOKPLOY_WEBHOOK_URL_MAIN: ${{ secrets.DOKPLOY_WEBHOOK_URL_MAIN }}
-      DOKPLOY_WEBHOOK_URL_COMMUNITY: ${{ secrets.DOKPLOY_WEBHOOK_URL_COMMUNITY }}
+      DOKPLOY_WEBHOOK_URL_MAIN: ${{ secrets.DOKPLOY_WEBHOOK_URL_MAIN || vars.DOKPLOY_WEBHOOK_URL_MAIN }}
+      DOKPLOY_WEBHOOK_URL_COMMUNITY: ${{ secrets.DOKPLOY_WEBHOOK_URL_COMMUNITY || vars.DOKPLOY_WEBHOOK_URL_COMMUNITY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
