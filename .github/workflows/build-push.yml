@@ -195,17 +195,19 @@ jobs:
         if: ${{ env.DOKPLOY_API_URL != '' && env.DOKPLOY_API_TOKEN != '' && env.DOKPLOY_COMPOSE_ID_MAIN != '' && (github.event_name == 'workflow_dispatch' || steps.deploy_changed.outputs.main_stack == 'true' || steps.deploy_changed.outputs.shared_deploy == 'true') }}
         run: |
           DOKPLOY_API_URL_CLEAN="$(printf '%s' "$DOKPLOY_API_URL" | tr -d '\r\n' | sed 's:/*$::')"
+          DOKPLOY_COMPOSE_ID_MAIN_CLEAN="$(printf '%s' "$DOKPLOY_COMPOSE_ID_MAIN" | tr -d '\r\n[:space:]')"
           curl --fail-with-body -sS -w '\nHTTP_STATUS:%{http_code}\n' -X POST \
             -H "Content-Type: application/json" \
             -H "x-api-key: ${DOKPLOY_API_TOKEN}" \
-            -d "{\"composeId\":\"${DOKPLOY_COMPOSE_ID_MAIN}\",\"title\":\"GitHub Actions ${GITHUB_SHA}\",\"description\":\"${GITHUB_REPOSITORY}@${GITHUB_SHA}\"}" \
+            -d "{\"composeId\":\"${DOKPLOY_COMPOSE_ID_MAIN_CLEAN}\",\"title\":\"GitHub Actions ${GITHUB_SHA}\",\"description\":\"${GITHUB_REPOSITORY}@${GITHUB_SHA}\"}" \
             "${DOKPLOY_API_URL_CLEAN}/compose.deploy"
       - name: Trigger Dokploy redeploy (community stack)
         if: ${{ env.DOKPLOY_API_URL != '' && env.DOKPLOY_API_TOKEN != '' && env.DOKPLOY_COMPOSE_ID_COMMUNITY != '' && (github.event_name == 'workflow_dispatch' || steps.deploy_changed.outputs.community_stack == 'true') }}
         run: |
           DOKPLOY_API_URL_CLEAN="$(printf '%s' "$DOKPLOY_API_URL" | tr -d '\r\n' | sed 's:/*$::')"
+          DOKPLOY_COMPOSE_ID_COMMUNITY_CLEAN="$(printf '%s' "$DOKPLOY_COMPOSE_ID_COMMUNITY" | tr -d '\r\n[:space:]')"
           curl --fail-with-body -sS -w '\nHTTP_STATUS:%{http_code}\n' -X POST \
             -H "Content-Type: application/json" \
             -H "x-api-key: ${DOKPLOY_API_TOKEN}" \
-            -d "{\"composeId\":\"${DOKPLOY_COMPOSE_ID_COMMUNITY}\",\"title\":\"GitHub Actions ${GITHUB_SHA}\",\"description\":\"${GITHUB_REPOSITORY}@${GITHUB_SHA}\"}" \
+            -d "{\"composeId\":\"${DOKPLOY_COMPOSE_ID_COMMUNITY_CLEAN}\",\"title\":\"GitHub Actions ${GITHUB_SHA}\",\"description\":\"${GITHUB_REPOSITORY}@${GITHUB_SHA}\"}" \
             "${DOKPLOY_API_URL_CLEAN}/compose.deploy"
