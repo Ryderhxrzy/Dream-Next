@@ -182,7 +182,7 @@ jobs:
 
       - name: Trigger Dokploy redeploy (main stack)
         if: ${{ env.DOKPLOY_WEBHOOK_URL_MAIN != '' && (github.event_name == 'workflow_dispatch' || steps.deploy_changed.outputs.main_stack == 'true' || steps.deploy_changed.outputs.shared_deploy == 'true') }}
-        run: curl -fsSL -X POST "$DOKPLOY_WEBHOOK_URL_MAIN"
+        run: curl --fail-with-body -sS -X POST -H "Content-Type: application/json" -d '{}' "$DOKPLOY_WEBHOOK_URL_MAIN"
       - name: Trigger Dokploy redeploy (community stack)
         if: ${{ env.DOKPLOY_WEBHOOK_URL_COMMUNITY != '' && (github.event_name == 'workflow_dispatch' || steps.deploy_changed.outputs.community_stack == 'true') }}
-        run: curl -fsSL -X POST "$DOKPLOY_WEBHOOK_URL_COMMUNITY"
+        run: curl --fail-with-body -sS -X POST -H "Content-Type: application/json" -d '{}' "$DOKPLOY_WEBHOOK_URL_COMMUNITY"
