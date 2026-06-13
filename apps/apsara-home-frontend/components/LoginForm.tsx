@@ -542,6 +542,7 @@ const LoginForm = ({
                 setMfaChallengeToken(mfaApproval.token)
                 setError(mfaApproval.message)
                 setIsLoading(false)
+                dynamicIsland.dismiss()
                 return
             }
             const twoFactor = parseTwoFactorError(rawError)
@@ -549,6 +550,7 @@ const LoginForm = ({
                 setMfaChallengeToken(twoFactor.token)
                 setError(twoFactor.message)
                 setIsLoading(false)
+                dynamicIsland.dismiss()
                 return
             }
             const isBlockedError = BLOCKED_KEYWORDS.some((keyword) => rawError.toLowerCase().includes(keyword))
@@ -826,8 +828,11 @@ const LoginForm = ({
                 if (status === 'approved') {
                     autoLoginInFlightRef.current = true
                     setError('Approval confirmed. Signing you in automatically...')
-                    await attemptSignIn('auto')
-                    autoLoginInFlightRef.current = false
+                    try {
+                        await attemptSignIn('auto')
+                    } finally {
+                        autoLoginInFlightRef.current = false
+                    }
                     return
                 }
 

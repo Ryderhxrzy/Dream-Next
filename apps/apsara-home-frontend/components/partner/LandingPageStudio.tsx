@@ -1,13 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
-import { useGetAdminMeQuery } from '@/store/api/authApi'
 import {
-  ArrowDown, ArrowLeft, ArrowUp, CheckCircle2, Eye,
+  ArrowDown, ArrowLeft, ArrowUp, CheckCircle2,
   GripVertical, ImageIcon, LayoutGrid, Loader2, Monitor,
-  Palette, Plus, Smartphone, Trash2, Type, Upload, X, Layout, Zap, TrendingUp,
+  Palette, Plus, Smartphone, Trash2, Type, Upload, Layout, Zap, TrendingUp,
 } from 'lucide-react'
 import { showErrorToast, showSuccessToast } from '@/libs/toast'
 import { getPartnerStorefrontConfig } from '@/libs/partnerStorefront'
@@ -25,7 +24,7 @@ const mkId = () => Date.now().toString(36) + Math.random().toString(36).slice(2)
 ───────────────────────────────────────────────────────────── */
 interface NavLink { label: string; href: string }
 interface NavBlock { id: string; type: 'nav'; storeName: string; logo: string; primaryColor: string; bg: string; textColor: string; links: NavLink[] }
-interface HeroBlock { id: string; type: 'hero'; tagline: string; description: string; bgImage: string; overlayColor: string; overlayOpacity: number; primaryColor: string; btnPrimary: string; btnSecondary: string; align: 'left' | 'center' | 'right'; badge: string; badge1?: string; badge2?: string; badge3?: string }
+interface HeroBlock { id: string; type: 'hero'; tagline: string; description: string; bgImage: string; overlayColor: string; overlayOpacity: number; primaryColor: string; btnPrimary: string; btnSecondary: string; btnSecondaryHref?: string; align: 'left' | 'center' | 'right'; badge: string; badge1?: string; badge2?: string; badge3?: string }
 interface StatsBlock { id: string; type: 'stats'; items: { value: string; label: string }[]; bg: string; valueColor: string; labelColor: string }
 interface FeatureItem { icon: string; title: string; desc: string }
 interface FeaturesBlock { id: string; type: 'features'; title: string; subtitle: string; items: FeatureItem[]; columns: 2 | 3; bg: string; cardBg: string; textColor: string; accentColor: string }
@@ -161,7 +160,7 @@ const TEMPLATE_DEFAULTS: Record<string, () => Block[]> = {
 ───────────────────────────────────────────────────────────── */
 function RenderNav({ b, compact, shopSlug }: { b: NavBlock; compact?: boolean; shopSlug?: string }) {
   return (
-    <nav className={`flex items-center justify-between py-4 ${compact ? 'px-4' : 'px-4 md:px-10'}`} style={{ backgroundColor: b.bg, borderBottom: `1px solid ${b.textColor}20` }}>
+    <nav className={`sticky top-0 z-50 flex items-center justify-between py-4 ${compact ? 'px-4' : 'px-4 md:px-10'}`} style={{ backgroundColor: b.bg, borderBottom: `1px solid ${b.textColor}20` }}>
       <div className="flex items-center gap-2.5">
         {b.logo && (
           <img src={b.logo} alt="logo" className="h-12 w-12 rounded-2xl object-cover"
@@ -205,7 +204,11 @@ function RenderHero({ b, compact, shopSlug }: { b: HeroBlock; compact?: boolean;
         <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/60 md:text-base">{b.description}</p>
         <div className={`mt-6 flex flex-wrap gap-3 ${b.align === 'center' ? 'justify-center' : b.align === 'right' ? 'justify-end' : ''}`}>
           <a href={shopSlug ? `/shop/${shopSlug}` : '#'} className="rounded-full px-6 py-3 text-sm font-bold text-white transition hover:opacity-90" style={{ backgroundColor: b.primaryColor }}>{b.btnPrimary}</a>
-          <button type="button" className="rounded-full border border-white/25 px-6 py-3 text-sm font-medium text-white/80">{b.btnSecondary}</button>
+          {b.btnSecondaryHref !== '' && (
+            b.btnSecondaryHref
+              ? <a href={b.btnSecondaryHref} className="rounded-full border border-white/25 px-6 py-3 text-sm font-medium text-white/80">{b.btnSecondary}</a>
+              : <button type="button" className="rounded-full border border-white/25 px-6 py-3 text-sm font-medium text-white/80">{b.btnSecondary}</button>
+          )}
         </div>
       </div>
     </section>
@@ -562,8 +565,28 @@ function HeroProps({ b, onChange }: { b: HeroBlock; onChange: (b: Block) => void
       <RangeRow label="Overlay Opacity" value={b.overlayOpacity} onChange={(v) => set('overlayOpacity', v)} />
       <ColorField label="Button Color" value={b.primaryColor} onChange={(v) => set('primaryColor', v)} />
       <AlignPicker value={b.align} onChange={(v) => onChange({ ...b, align: v })} />
-      <F label="Primary Button"><input value={b.btnPrimary} onChange={(e) => set('btnPrimary', e.target.value)} className={iCls} /></F>
-      <F label="Secondary Button"><input value={b.btnSecondary} onChange={(e) => set('btnSecondary', e.target.value)} className={iCls} /></F>
+      <F label="Primary Button">
+        <input value={b.btnPrimary} onChange={(e) => set('btnPrimary', e.target.value)} className={iCls} />
+        <p className="mt-1 text-[10px] text-slate-400">Always links to your shop collection page.</p>
+      </F>
+      {b.btnSecondaryHref !== '' ? (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-2 space-y-1.5 dark:border-slate-700 dark:bg-slate-800">
+          <div className="flex items-center justify-between mb-1">
+            <span className={lCls}>Secondary Button</span>
+            <button type="button" onClick={() => set('btnSecondaryHref', '')}
+              className="flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-600 transition hover:bg-rose-100 dark:border-rose-800/50 dark:bg-rose-950/30 dark:text-rose-400">
+              <Trash2 className="h-2.5 w-2.5" /> Remove
+            </button>
+          </div>
+          <input value={b.btnSecondary} onChange={(e) => set('btnSecondary', e.target.value)} className={iCls} placeholder="Button label" />
+          <input value={b.btnSecondaryHref ?? ''} onChange={(e) => set('btnSecondaryHref', e.target.value)} className={iCls} placeholder="https://... link (optional)" />
+        </div>
+      ) : (
+        <button type="button" onClick={() => set('btnSecondaryHref', undefined)}
+          className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 py-2 text-xs text-slate-400 transition hover:border-indigo-300 hover:text-indigo-500">
+          <Plus className="h-3 w-3" /> Add Secondary Button
+        </button>
+      )}
       {(b.badge1 !== undefined || b.badge2 !== undefined || b.badge3 !== undefined) && (
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5 space-y-2 dark:border-slate-700 dark:bg-slate-800">
           <p className={lCls}>Trust Badges</p>
@@ -961,17 +984,16 @@ export default function LandingPageStudio() {
   const router = useRouter()
   const { data, isLoading } = useGetAdminWebPageItemsQuery({ type: 'partner_storefront' } as never)
   const [updateItem, { isLoading: isSaving }] = useUpdateAdminWebPageItemMutation()
-  const { data: me, isLoading: isMeLoading } = useGetAdminMeQuery()
 
   const items = (data as { items?: WebPageItem[] } | undefined)?.items ?? []
   const slug = getPartnerStorefrontConfig(items[0])?.slug ?? ''
-  const canAccess = slug === 'jujutsu-kaisen' || me?.username === 'try'
+  const canAccess = !isLoading && items.length > 0 && Boolean(slug)
 
   useEffect(() => {
-    if (!isLoading && !isMeLoading && !canAccess) {
+    if (!isLoading && !canAccess) {
       router.replace('/partner')
     }
-  }, [isLoading, isMeLoading, canAccess, router])
+  }, [isLoading, canAccess, router])
 
   const [item, setItem]           = useState<WebPageItem | null>(null)
   const [templateId, setTemplateId] = useState<string | null>(null)
@@ -983,33 +1005,55 @@ export default function LandingPageStudio() {
   const [carouselIdx, setCarouselIdx] = useState(0)
   const [carouselDir, setCarouselDir] = useState(1)
   const dragRef = { from: -1, to: -1 }
+  // State (not ref) so thumbnail re-renders immediately when saved data loads
+  const [savedSnapshot, setSavedSnapshot] = useState<{ templateId: string; blocks: Block[] } | null>(null)
+  // Prevent useLayoutEffect from re-running on RTK Query refetches (e.g. after save)
+  const hasInitialized = useRef(false)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (hasInitialized.current) return
     const items = (data as { items?: WebPageItem[] } | undefined)?.items ?? []
     const first = items[0]
     if (!first) return
+    hasInitialized.current = true
     setItem(first)
     const fields = ((first.payload as { fields?: Record<string, string> } | null)?.fields) ?? {}
     const tid = fields.landing_template_id as string | undefined
     if (tid && TEMPLATE_DEFAULTS[tid]) {
       setTemplateId(tid)
+      const config = getPartnerStorefrontConfig(first)
+      const storefrontName = config?.displayName?.trim() || ''
+      const storefrontLogo = config?.logoUrl?.trim() || ''
+      let resolvedBlocks: Block[]
       try {
         const saved = JSON.parse(fields.page_blocks ?? '[]') as Block[]
         if (saved.length === 0) {
-          setBlocks(TEMPLATE_DEFAULTS[tid]())
+          resolvedBlocks = TEMPLATE_DEFAULTS[tid]()
         } else if (!saved.some((b) => b.type === 'about')) {
-          // Migrate: inject About block after the Hero (or after index 1)
           const heroIdx = saved.findIndex((b) => b.type === 'hero')
           const insertAt = heroIdx >= 0 ? heroIdx + 1 : Math.min(2, saved.length)
           const next = [...saved]
           next.splice(insertAt, 0, mkAbout())
-          setBlocks(next)
+          resolvedBlocks = next
         } else {
-          setBlocks(saved)
+          resolvedBlocks = saved
         }
       } catch {
-        setBlocks(TEMPLATE_DEFAULTS[tid]())
+        resolvedBlocks = TEMPLATE_DEFAULTS[tid]()
       }
+      // Sync nav/footer store name and logo from storefront config so thumbnail matches live page
+      if (storefrontName) {
+        resolvedBlocks = resolvedBlocks.map((b) => {
+          if (b.type === 'nav') return { ...b, storeName: storefrontName, logo: storefrontLogo || b.logo }
+          if (b.type === 'footer') return { ...b, storeName: storefrontName }
+          return b
+        })
+      }
+      setBlocks(resolvedBlocks)
+      setSavedSnapshot({ templateId: tid, blocks: resolvedBlocks })
+      const activeIdx = TEMPLATE_META.findIndex((t) => t.id === tid)
+      if (activeIdx >= 0) setCarouselIdx(activeIdx)
+      setEditing(true)
     }
   }, [data])
 
@@ -1059,13 +1103,14 @@ export default function LandingPageStudio() {
           },
         },
       }).unwrap()
+      setSavedSnapshot({ templateId, blocks })
       showSuccessToast('Landing page saved.')
     } catch {
       showErrorToast('Failed to save. Please try again.')
     }
   }
 
-  if (isLoading || isMeLoading) return <div className="flex h-64 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-indigo-500" /></div>
+  if (isLoading) return <div className="flex h-64 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-indigo-500" /></div>
   if (!canAccess) return null
 
   /* ── Template picker ─────────────────────────────────────── */
@@ -1102,18 +1147,29 @@ export default function LandingPageStudio() {
             exit:  (dir: number) => ({
               x: dir > 0 ? '-40%' : '40%',
               opacity: 0,
-              transition: { duration: 0.22, ease: 'easeIn' },
+              transition: { duration: 0.22, ease: 'easeIn' as const },
             }),
           }
 
           const renderCard = (tpl: typeof TEMPLATE_META[number], isCenter: boolean, offset: number) => {
             const isActive = templateId === tpl.id
-            const thumbBlocks = isActive ? blocks : TEMPLATE_DEFAULTS[tpl.id]()
+            const isSavedTemplate = savedSnapshot?.templateId === tpl.id
+            const thumbBlocks = isSavedTemplate
+              ? savedSnapshot!.blocks
+              : isActive ? blocks : TEMPLATE_DEFAULTS[tpl.id]()
             return (
               <button type="button"
                 onClick={() => {
                   if (isCenter) {
-                    if (!isActive) { setTemplateId(tpl.id); setBlocks(TEMPLATE_DEFAULTS[tpl.id]()) }
+                    if (!isActive) {
+                      setTemplateId(tpl.id)
+                      // Restore saved blocks if the user returns to their saved template
+                      setBlocks(
+                        savedSnapshot?.templateId === tpl.id
+                          ? savedSnapshot.blocks
+                          : TEMPLATE_DEFAULTS[tpl.id]()
+                      )
+                    }
                     setEditing(true)
                   } else {
                     setCarouselDir(offset)
@@ -1234,7 +1290,16 @@ export default function LandingPageStudio() {
       {/* Top bar */}
       <div className="flex shrink-0 items-center justify-between gap-3 pb-3">
         <div className="flex items-center gap-3">
-          <button type="button" onClick={() => { setEditing(false); setSelectedId(null) }}
+          <button type="button" onClick={() => {
+            setEditing(false)
+            setSelectedId(null)
+            if (savedSnapshot) {
+              setTemplateId(savedSnapshot.templateId)
+              setBlocks(savedSnapshot.blocks)
+              const activeIdx = TEMPLATE_META.findIndex((t) => t.id === savedSnapshot.templateId)
+              if (activeIdx >= 0) setCarouselIdx(activeIdx)
+            }
+          }}
             className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-slate-300 hover:text-slate-700 dark:border-slate-700">
             <ArrowLeft className="h-4 w-4" />
           </button>

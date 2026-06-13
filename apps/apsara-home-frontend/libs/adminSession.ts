@@ -1,6 +1,6 @@
 'use client'
 
-async function getPortalCsrfToken(portal: 'admin' | 'partner'): Promise<string | null> {
+async function getPortalCsrfToken(portal: 'admin' | 'partner' | 'supplier'): Promise<string | null> {
   try {
     const response = await fetch(`/api/${portal}/auth/csrf`, {
       method: 'GET',
@@ -22,7 +22,7 @@ async function getPortalCsrfToken(portal: 'admin' | 'partner'): Promise<string |
   }
 }
 
-async function clearPortalSession(portal: 'admin' | 'partner', callbackUrl: string): Promise<void> {
+async function clearPortalSession(portal: 'admin' | 'partner' | 'supplier', callbackUrl: string): Promise<void> {
   const csrfToken = await getPortalCsrfToken(portal)
   if (!csrfToken) return
 
@@ -53,4 +53,8 @@ export async function clearAdminSession(callbackUrl: string = '/admin/login'): P
 
 export async function clearPartnerSession(callbackUrl: string = '/partner/login'): Promise<void> {
   await clearPortalSession('partner', callbackUrl)
+}
+
+export async function clearSupplierSession(callbackUrl: string = '/supplier/login'): Promise<void> {
+  await clearPortalSession('supplier', callbackUrl)
 }

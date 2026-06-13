@@ -13,19 +13,13 @@ class EnsureAdminRole
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         $user = $request->user();
-        \Log::info('EnsureAdminRole - User check', ['user' => $user ? get_class($user) : 'null', 'path' => $request->path()]);
 
         if (! $user) {
-            \Log::error('EnsureAdminRole - No user');
             return response()->json(['message' => 'Unauthenticated.'], 401);
         }
 
         // Check by class name instead of instanceof due to Sanctum deserialization
-        $userClass = get_class($user);
-        \Log::info('EnsureAdminRole - User class', ['class' => $userClass, 'is_admin' => $userClass === Admin::class]);
-
-        if ($userClass !== Admin::class) {
-            \Log::error('EnsureAdminRole - Not Admin', ['class' => $userClass]);
+        if (get_class($user) !== Admin::class) {
             return response()->json(['message' => 'Forbidden: admin access required.'], 403);
         }
 
@@ -40,6 +34,13 @@ class EnsureAdminRole
             && ! AdminAccess::hasPermission($user, $requiredPermission)
         ) {
             return response()->json(['message' => 'Forbidden: this admin account does not have access to this section.'], 403);
+        }
+
+        if ((int) $user->user_level_id === 4) {
+            $requiredWcPermission = AdminAccess::webContentSectionPermissionForPath($request->path());
+            if ($requiredWcPermission !== null && ! AdminAccess::hasPermission($user, $requiredWcPermission)) {
+                return response()->json(['message' => 'Forbidden: this admin account does not have access to this section.'], 403);
+            }
         }
 
         return $next($request);

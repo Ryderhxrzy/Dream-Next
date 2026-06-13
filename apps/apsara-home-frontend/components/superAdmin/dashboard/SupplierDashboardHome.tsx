@@ -46,6 +46,7 @@ import { useGetProductsQuery, type Product } from '@/store/api/productsApi'
 import { useGetPublicProductBrandsQuery } from '@/store/api/productBrandsApi'
 import { useGetSupplierCategoriesQuery, useGetSupplierUsersQuery, useGetSuppliersQuery } from '@/store/api/suppliersApi'
 import { useGetSupplierOrdersQuery } from '@/store/api/supplierOrdersApi'
+import { useGetSupplierServiceInquiriesQuery } from '@/store/api/serviceInquiriesApi'
 
 /* ── Formatters ─────────────────────────────────────────────────── */
 
@@ -141,16 +142,15 @@ export default function SupplierDashboardHome() {
     [brandType, effectiveSupplierId],
   )
 
-  const { data: productsData } = useGetProductsQuery({ ...productQueryBase, perPage: 6 }, { skip, refetchOnMountOrArgChange: true })
+  // perPage:100 serves both the recent-6 display and the full inventory list — one query instead of two.
+  const { data: productsData } = useGetProductsQuery({ ...productQueryBase, perPage: 100 }, { skip, refetchOnMountOrArgChange: true })
   const { data: activeProductsData } = useGetProductsQuery({ ...productQueryBase, perPage: 1, status: '1' }, { skip, refetchOnMountOrArgChange: true })
   const { data: inactiveProductsData } = useGetProductsQuery({ ...productQueryBase, perPage: 1, status: '0' }, { skip, refetchOnMountOrArgChange: true })
-  const { data: inventoryData } = useGetProductsQuery({ ...productQueryBase, perPage: 100 }, { skip, refetchOnMountOrArgChange: true })
 
   const brandOnlySkip = skip || brandType <= 0
-  const { data: brandProductsData } = useGetProductsQuery({ brandType, perPage: 6 }, { skip: brandOnlySkip, refetchOnMountOrArgChange: true })
+  const { data: brandProductsData } = useGetProductsQuery({ brandType, perPage: 100 }, { skip: brandOnlySkip, refetchOnMountOrArgChange: true })
   const { data: brandActiveProductsData } = useGetProductsQuery({ brandType, perPage: 1, status: '1' }, { skip: brandOnlySkip, refetchOnMountOrArgChange: true })
   const { data: brandInactiveProductsData } = useGetProductsQuery({ brandType, perPage: 1, status: '0' }, { skip: brandOnlySkip, refetchOnMountOrArgChange: true })
-  const { data: brandInventoryData } = useGetProductsQuery({ brandType, perPage: 100 }, { skip: brandOnlySkip, refetchOnMountOrArgChange: true })
 
   const { data: supplierCategoriesData } = useGetSupplierCategoriesQuery(effectiveSupplierId, { skip })
   const { data: supplierUsersData } = useGetSupplierUsersQuery(effectiveSupplierId, { skip })
@@ -160,29 +160,90 @@ export default function SupplierDashboardHome() {
     [supplierCategoriesData?.categories],
   )
 
+  /* ── Service inquiry queries (services view only) ───────────── */
+
+  const categoriesKnown = supplierCategoriesData !== undefined
+  const { data: inquiryData, isLoading: inquiryLoading } = useGetSupplierServiceInquiriesQuery(
+    { per_page: 100 },
+    { skip: status !== 'authenticated' || (categoriesKnown && !isServicesView), refetchOnMountOrArgChange: true },
+  )
+
+  const allInquiries = useMemo(() => inquiryData?.inquiries ?? [], [inquiryData?.inquiries])
+
+  const inqIsToday = (dateStr?: string | null) => {
+    if (!dateStr) return false
+    const d = new Date(dateStr), now = new Date()
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate()
+  }
+
+  const inquiryNewCount      = useMemo(() => allInquiries.filter(i => i.status === 'new' && inqIsToday(i.created_at)).length, [allInquiries])
+  const inquiryPendingCount  = useMemo(() => allInquiries.filter(i => i.status === 'new' && !inqIsToday(i.created_at)).length, [allInquiries])
+  const inquiryCompleteCount = useMemo(() => allInquiries.filter(i => i.status === 'responded' || i.status === 'closed').length, [allInquiries])
+  const inquiryTotalCount    = inquiryData?.counts?.total ?? allInquiries.length
+  const recentInquiries      = useMemo(() => allInquiries.slice(0, 6), [allInquiries])
+
+  const inquiryTrendData = useMemo(() => {
+    const days = lastNDays(14)
+    const cnts: Record<string, number> = {}
+    days.forEach(d => { cnts[d] = 0 })
+    for (const i of allInquiries) {
+      const day = (i.created_at ?? '').slice(0, 10)
+      if (day in cnts) cnts[day]++
+    }
+    return days.map(day => ({
+      date: new Date(`${day}T00:00:00`).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' }),
+      Inquiries: cnts[day],
+    }))
+  }, [allInquiries])
+
+  const inquiryStatusTrendData = useMemo(() => {
+    const days = lastNDays(14)
+    type Row = { New: number; Pending: number; Complete: number }
+    const map: Record<string, Row> = {}
+    days.forEach(d => { map[d] = { New: 0, Pending: 0, Complete: 0 } })
+    for (const i of allInquiries) {
+      const day = (i.created_at ?? '').slice(0, 10)
+      if (!(day in map)) continue
+      if (i.status === 'new' && inqIsToday(i.created_at))       map[day].New++
+      else if (i.status === 'new' && !inqIsToday(i.created_at)) map[day].Pending++
+      else if (i.status === 'responded' || i.status === 'closed') map[day].Complete++
+    }
+    return days.map(day => ({
+      date: new Date(`${day}T00:00:00`).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' }),
+      ...map[day],
+    }))
+  }, [allInquiries])
+
+  const inquiryDonutData = useMemo(() => [
+    { name: 'New',      value: inquiryNewCount,     fill: '#3b82f6' },
+    { name: 'Pending',  value: inquiryPendingCount, fill: '#f59e0b' },
+    { name: 'Complete', value: inquiryCompleteCount, fill: '#10b981' },
+  ].filter(d => d.value > 0), [inquiryNewCount, inquiryPendingCount, inquiryCompleteCount])
+
   /* ── Orders queries ──────────────────────────────────────────── */
 
-  const { data: ordersData, isLoading: ordersLoading } = useGetSupplierOrdersQuery(
-    { perPage: 6 },
-    { skip: status !== 'authenticated', refetchOnMountOrArgChange: true },
-  )
-  const { data: trendOrdersData, isLoading: trendLoading } = useGetSupplierOrdersQuery(
+  // perPage:100 carries both counts (aggregate, not page-size-dependent) and enough
+  // orders for trend charts; slice(0,6) replaces the separate perPage:6 query.
+  const { data: trendOrdersData, isLoading: ordersLoading } = useGetSupplierOrdersQuery(
     { perPage: 100 },
     { skip: status !== 'authenticated', refetchOnMountOrArgChange: true },
   )
+  const trendLoading = ordersLoading
+  const ordersData = trendOrdersData
 
   /* ── Brand fallback ──────────────────────────────────────────── */
 
   const useBrandFallback = useMemo(() => brandType > 0 && (productsData?.meta?.total ?? 0) <= 0, [brandType, productsData?.meta?.total])
 
-  const effectiveProductsData       = useBrandFallback ? brandProductsData       : productsData
-  const effectiveActiveProductsData = useBrandFallback ? brandActiveProductsData : activeProductsData
+  const effectiveProductsData         = useBrandFallback ? brandProductsData         : productsData
+  const effectiveActiveProductsData   = useBrandFallback ? brandActiveProductsData   : activeProductsData
   const effectiveInactiveProductsData = useBrandFallback ? brandInactiveProductsData : inactiveProductsData
-  const effectiveInventoryData      = useBrandFallback ? brandInventoryData      : inventoryData
+  // inventoryData was a duplicate perPage:100 query — productsData now serves both roles.
+  const effectiveInventoryData        = effectiveProductsData
 
   /* ── Derived counts ──────────────────────────────────────────── */
 
-  const recentProducts = useMemo(() => effectiveProductsData?.products ?? [], [effectiveProductsData?.products])
+  const recentProducts = useMemo(() => (effectiveProductsData?.products ?? []).slice(0, 6), [effectiveProductsData?.products])
 
   const lowStockCount = useMemo(
     () => (effectiveInventoryData?.products ?? []).filter((p) => Number(p.qty ?? 0) > 0 && Number(p.qty ?? 0) <= 5).length,
@@ -199,7 +260,7 @@ export default function SupplierDashboardHome() {
   )
 
   const orderCounts  = ordersData?.counts
-  const recentOrders = ordersData?.orders ?? []
+  const recentOrders = (ordersData?.orders ?? []).slice(0, 6)
   const totalOrders  = orderCounts?.total ?? 0
 
   /* ── Chart data: order trend (area) ─────────────────────────── */
@@ -303,7 +364,7 @@ export default function SupplierDashboardHome() {
             {/* Quick stat pills */}
             <div className="mt-4 flex flex-wrap gap-3">
               {[
-                { label: isServicesView ? 'Total Bookings' : 'Total Orders', value: ordersLoading ? '…' : String(totalOrders) },
+                { label: isServicesView ? 'Total Bookings' : 'Total Orders', value: (isServicesView ? inquiryLoading : ordersLoading) ? '…' : String(isServicesView ? inquiryTotalCount : totalOrders) },
                 { label: isServicesView ? 'Services' : 'Products', value: String(effectiveProductsData?.meta?.total ?? 0) },
                 { label: 'Categories', value: String(supplierCategoriesData?.categories?.length ?? 0) },
               ].map((s) => (
@@ -349,13 +410,13 @@ export default function SupplierDashboardHome() {
         <SectionLabel icon={isServicesView ? CalendarDays : ShoppingCart} color="text-blue-500">
           {isServicesView ? 'Booking Analytics' : 'Order Analytics'}
         </SectionLabel>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-          <StatCard label={isServicesView ? 'Total Inquiries' : 'Total Orders'}     value={ordersLoading ? '—' : String(totalOrders)}                  icon={isServicesView ? CalendarDays : ShoppingCart} gradient="from-blue-500 to-indigo-500"   href="/supplier/orders" />
-          <StatCard label={isServicesView ? 'New'            : 'Pending Payment'}  value={ordersLoading ? '—' : String(orderCounts?.to_pay     ?? 0)} icon={isServicesView ? MessageSquare : Clock3}       gradient="from-amber-400 to-orange-500"  href="/supplier/orders?filter=to_pay"     alert={(orderCounts?.to_pay ?? 0) > 0} />
-          <StatCard label={isServicesView ? 'pending'       : 'To Ship'}          value={ordersLoading ? '—' : String(orderCounts?.to_ship    ?? 0)} icon={isServicesView ? Settings : Package}           gradient="from-sky-400 to-cyan-500"      href="/supplier/orders?filter=to_ship" />
-          <StatCard label={isServicesView ? 'complete'      : 'To Receive'}       value={ordersLoading ? '—' : String(orderCounts?.to_receive ?? 0)} icon={Truck}                                         gradient="from-violet-500 to-purple-600" href="/supplier/orders?filter=to_receive" />
-          <StatCard label="Completed"                                                 value={ordersLoading ? '—' : String(orderCounts?.completed  ?? 0)} icon={CheckCircle2}                                  gradient="from-emerald-400 to-teal-500"  href="/supplier/orders?filter=completed" />
-          <StatCard label="Cancelled"                                                 value={ordersLoading ? '—' : String(orderCounts?.cancelled  ?? 0)} icon={XCircle}                                       gradient="from-rose-400 to-red-500"      href="/supplier/orders?filter=cancelled" />
+        <div className={`grid grid-cols-2 gap-3 sm:grid-cols-3 ${isServicesView ? 'xl:grid-cols-4' : 'xl:grid-cols-6'}`}>
+          <StatCard label={isServicesView ? 'Total Inquiries' : 'Total Orders'}    value={(isServicesView ? inquiryLoading : ordersLoading) ? '—' : String(isServicesView ? inquiryTotalCount    : totalOrders)}                  icon={isServicesView ? CalendarDays : ShoppingCart} gradient="from-blue-500 to-indigo-500"   href="/supplier/orders" />
+          <StatCard label={isServicesView ? 'New'            : 'Pending Payment'} value={(isServicesView ? inquiryLoading : ordersLoading) ? '—' : String(isServicesView ? inquiryNewCount     : (orderCounts?.to_pay     ?? 0))} icon={isServicesView ? MessageSquare : Clock3}       gradient="from-amber-400 to-orange-500"  href="/supplier/orders?filter=to_pay"     alert={isServicesView ? inquiryNewCount > 0 : (orderCounts?.to_pay ?? 0) > 0} />
+          <StatCard label={isServicesView ? 'Pending'        : 'To Ship'}         value={(isServicesView ? inquiryLoading : ordersLoading) ? '—' : String(isServicesView ? inquiryPendingCount : (orderCounts?.to_ship    ?? 0))} icon={isServicesView ? Settings : Package}           gradient="from-sky-400 to-cyan-500"      href="/supplier/orders?filter=to_ship" />
+          {!isServicesView && <StatCard label="To Receive"   value={ordersLoading ? '—' : String(orderCounts?.to_receive ?? 0)} icon={Truck}       gradient="from-violet-500 to-purple-600" href="/supplier/orders?filter=to_receive" />}
+          <StatCard label={isServicesView ? 'Complete' : 'Completed'}              value={(isServicesView ? inquiryLoading : ordersLoading) ? '—' : String(isServicesView ? inquiryCompleteCount : (orderCounts?.completed  ?? 0))} icon={CheckCircle2}                                  gradient="from-emerald-400 to-teal-500"  href="/supplier/orders?filter=completed" />
+          {!isServicesView && <StatCard label="Cancelled"    value={ordersLoading ? '—' : String(orderCounts?.cancelled  ?? 0)} icon={XCircle}     gradient="from-rose-400 to-red-500"      href="/supplier/orders?filter=cancelled" />}
         </div>
 
       {/* ════════════════════════════════════════════════════════
@@ -366,61 +427,113 @@ export default function SupplierDashboardHome() {
       <div className="grid gap-5 xl:grid-cols-[1.5fr_1fr]">
 
         {/* Order/Booking trend — area chart */}
-        <ChartCard
-          title={isServicesView ? 'Booking Trend' : 'Order Trend'}
-          subtitle={isServicesView ? 'Daily bookings & revenue — last 14 days' : 'Daily orders & revenue — last 14 days'}
-          loading={!mounted || trendLoading}
-          empty={orderTrendData.every((d) => d.Orders === 0 && d.Revenue === 0)}
-          emptyMessage={isServicesView ? 'No booking history yet' : 'No order history yet'}
-          action={{ href: '/supplier/orders', label: isServicesView ? 'All bookings' : 'All orders' }}
-        >
-          <ResponsiveContainer width="100%" height={230}>
-            <AreaChart data={orderTrendData} margin={{ top: 4, right: 8, left: -14, bottom: 0 }}>
-              <defs>
-                <linearGradient id="gOrders" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="10%" stopColor="#0ea5e9" stopOpacity={0.22} />
-                  <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="gRevenue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="10%" stopColor="#10b981" stopOpacity={0.18} />
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 4" stroke="rgba(148,163,184,0.15)" />
-              <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} interval={1} />
-              <YAxis yAxisId="l" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} allowDecimals={false} />
-              <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={fmtK} />
-              <Tooltip contentStyle={ttStyle} formatter={(v, n) => n === 'Revenue' ? [fmtMoney(Number(v)), 'Revenue'] : [v, 'Orders']} />
-              <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: '11px', paddingTop: '10px', color: '#64748b' }} />
-              <Area yAxisId="l" type="monotone" dataKey="Orders" stroke="#0ea5e9" strokeWidth={2.5} fill="url(#gOrders)" dot={false} activeDot={{ r: 4, strokeWidth: 0, fill: '#0ea5e9' }} />
-              <Area yAxisId="r" type="monotone" dataKey="Revenue" stroke="#10b981" strokeWidth={2.5} fill="url(#gRevenue)" dot={false} activeDot={{ r: 4, strokeWidth: 0, fill: '#10b981' }} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </ChartCard>
+        {isServicesView ? (
+          <ChartCard
+            title="Inquiry Trend"
+            subtitle="Daily inquiries received — last 14 days"
+            loading={!mounted || inquiryLoading}
+            empty={inquiryTrendData.every(d => d.Inquiries === 0)}
+            emptyMessage="No inquiry history yet"
+            action={{ href: '/supplier/orders', label: 'All inquiries' }}
+          >
+            <ResponsiveContainer width="100%" height={230}>
+              <AreaChart data={inquiryTrendData} margin={{ top: 4, right: 8, left: -14, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gInquiries" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="10%" stopColor="#6366f1" stopOpacity={0.22} />
+                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 4" stroke="rgba(148,163,184,0.15)" />
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} interval={1} />
+                <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip contentStyle={ttStyle} />
+                <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: '11px', paddingTop: '10px', color: '#64748b' }} />
+                <Area type="monotone" dataKey="Inquiries" stroke="#6366f1" strokeWidth={2.5} fill="url(#gInquiries)" dot={false} activeDot={{ r: 4, strokeWidth: 0, fill: '#6366f1' }} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        ) : (
+          <ChartCard
+            title="Order Trend"
+            subtitle="Daily orders & revenue — last 14 days"
+            loading={!mounted || trendLoading}
+            empty={orderTrendData.every((d) => d.Orders === 0 && d.Revenue === 0)}
+            emptyMessage="No order history yet"
+            action={{ href: '/supplier/orders', label: 'All orders' }}
+          >
+            <ResponsiveContainer width="100%" height={230}>
+              <AreaChart data={orderTrendData} margin={{ top: 4, right: 8, left: -14, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gOrders" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="10%" stopColor="#0ea5e9" stopOpacity={0.22} />
+                    <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="gRevenue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="10%" stopColor="#10b981" stopOpacity={0.18} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 4" stroke="rgba(148,163,184,0.15)" />
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} interval={1} />
+                <YAxis yAxisId="l" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={fmtK} />
+                <Tooltip contentStyle={ttStyle} formatter={(v, n) => n === 'Revenue' ? [fmtMoney(Number(v)), 'Revenue'] : [v, 'Orders']} />
+                <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: '11px', paddingTop: '10px', color: '#64748b' }} />
+                <Area yAxisId="l" type="monotone" dataKey="Orders" stroke="#0ea5e9" strokeWidth={2.5} fill="url(#gOrders)" dot={false} activeDot={{ r: 4, strokeWidth: 0, fill: '#0ea5e9' }} />
+                <Area yAxisId="r" type="monotone" dataKey="Revenue" stroke="#10b981" strokeWidth={2.5} fill="url(#gRevenue)" dot={false} activeDot={{ r: 4, strokeWidth: 0, fill: '#10b981' }} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        )}
 
-        {/* Order/Booking status trend — multi-line */}
-        <ChartCard
-          title={isServicesView ? 'Booking Status Trend' : 'Order Status Trend'}
-          subtitle={isServicesView ? 'Progress stages over last 14 days' : 'Fulfillment stages over last 14 days'}
-          loading={!mounted || trendLoading}
-          empty={statusTrendEmpty}
-          emptyMessage={isServicesView ? 'No booking status data yet' : 'No order status data yet'}
-          action={{ href: '/supplier/orders', label: isServicesView ? 'View bookings' : 'View orders' }}
-        >
-          <ResponsiveContainer width="100%" height={230}>
-            <LineChart data={statusTrendData} margin={{ top: 4, right: 8, left: -14, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 4" stroke="rgba(148,163,184,0.15)" />
-              <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} interval={2} />
-              <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} allowDecimals={false} />
-              <Tooltip contentStyle={ttStyle} />
-              <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: '11px', paddingTop: '10px', color: '#64748b' }} />
-              <Line type="monotone" dataKey="Processing"  stroke="#3b82f6" strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
-              <Line type="monotone" dataKey="Shipped"     stroke="#8b5cf6" strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
-              <Line type="monotone" dataKey="Delivered"   stroke="#10b981" strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
-              <Line type="monotone" dataKey="Cancelled"   stroke="#ef4444" strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} strokeDasharray="5 3" />
-            </LineChart>
-          </ResponsiveContainer>
-        </ChartCard>
+        {/* Status trend */}
+        {isServicesView ? (
+          <ChartCard
+            title="Inquiry Status Trend"
+            subtitle="New / Pending / Complete — last 14 days"
+            loading={!mounted || inquiryLoading}
+            empty={inquiryStatusTrendData.every(d => d.New === 0 && d.Pending === 0 && d.Complete === 0)}
+            emptyMessage="No inquiry status data yet"
+            action={{ href: '/supplier/orders', label: 'View inquiries' }}
+          >
+            <ResponsiveContainer width="100%" height={230}>
+              <LineChart data={inquiryStatusTrendData} margin={{ top: 4, right: 8, left: -14, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 4" stroke="rgba(148,163,184,0.15)" />
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} interval={2} />
+                <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip contentStyle={ttStyle} />
+                <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: '11px', paddingTop: '10px', color: '#64748b' }} />
+                <Line type="monotone" dataKey="New"      stroke="#3b82f6" strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
+                <Line type="monotone" dataKey="Pending"  stroke="#f59e0b" strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
+                <Line type="monotone" dataKey="Complete" stroke="#10b981" strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        ) : (
+          <ChartCard
+            title="Order Status Trend"
+            subtitle="Fulfillment stages over last 14 days"
+            loading={!mounted || trendLoading}
+            empty={statusTrendEmpty}
+            emptyMessage="No order status data yet"
+            action={{ href: '/supplier/orders', label: 'View orders' }}
+          >
+            <ResponsiveContainer width="100%" height={230}>
+              <LineChart data={statusTrendData} margin={{ top: 4, right: 8, left: -14, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 4" stroke="rgba(148,163,184,0.15)" />
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} interval={2} />
+                <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip contentStyle={ttStyle} />
+                <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: '11px', paddingTop: '10px', color: '#64748b' }} />
+                <Line type="monotone" dataKey="Processing"  stroke="#3b82f6" strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
+                <Line type="monotone" dataKey="Shipped"     stroke="#8b5cf6" strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
+                <Line type="monotone" dataKey="Delivered"   stroke="#10b981" strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
+                <Line type="monotone" dataKey="Cancelled"   stroke="#ef4444" strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} strokeDasharray="5 3" />
+              </LineChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        )}
       </div>
 
       {/* ════════════════════════════════════════════════════════
@@ -430,16 +543,14 @@ export default function SupplierDashboardHome() {
         <SectionLabel icon={isServicesView ? MessageSquare : Package} color="text-sky-500">
           {isServicesView ? 'Services Overview' : 'Product Overview'}
         </SectionLabel>
-        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-          <StatCard label={isServicesView ? 'Total Services' : 'Total Products'} value={String(effectiveProductsData?.meta?.total ?? 0)}         icon={isServicesView ? MessageSquare : Layers3} gradient="from-sky-400 to-blue-500"      href="/supplier/products"  description={isServicesView ? 'All service listings' : 'All catalog items'} />
-          <StatCard label="Active"                                                value={String(effectiveActiveProductsData?.meta?.total ?? 0)}   icon={TrendingUp}                               gradient="from-emerald-400 to-teal-500"  href="/supplier/products"  description={isServicesView ? 'Live & bookable' : 'Live in catalog'} />
-          <StatCard label="Inactive"                                              value={String(effectiveInactiveProductsData?.meta?.total ?? 0)} icon={Clock3}                                   gradient="from-slate-400 to-slate-500"    href="/supplier/products"  description="Needs attention" alert={(effectiveInactiveProductsData?.meta?.total ?? 0) > 0} />
-          {isServicesView ? (
-            <StatCard label="Needs Update" value={String(lowStockCount)} icon={Box} gradient="from-amber-400 to-orange-500" href="/supplier/products" description="Flagged for review" alert={lowStockCount > 0} />
-          ) : (
-            <StatCard label="Low Stock"    value={String(lowStockCount)} icon={Box} gradient="from-amber-400 to-orange-500" href="/supplier/inventory" description="Qty 1–5 remaining" alert={lowStockCount > 0} />
-          )}
-        </div>
+        {!isServicesView && (
+          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+            <StatCard label="Total Products" value={String(effectiveProductsData?.meta?.total ?? 0)}         icon={Layers3}    gradient="from-sky-400 to-blue-500"      href="/supplier/products"  description="All catalog items" />
+            <StatCard label="Active"         value={String(effectiveActiveProductsData?.meta?.total ?? 0)}   icon={TrendingUp} gradient="from-emerald-400 to-teal-500"  href="/supplier/products"  description="Live in catalog" />
+            <StatCard label="Inactive"       value={String(effectiveInactiveProductsData?.meta?.total ?? 0)} icon={Clock3}     gradient="from-slate-400 to-slate-500"    href="/supplier/products"  description="Needs attention" alert={(effectiveInactiveProductsData?.meta?.total ?? 0) > 0} />
+            <StatCard label="Low Stock"      value={String(lowStockCount)}                                   icon={Box}        gradient="from-amber-400 to-orange-500"  href="/supplier/inventory" description="Qty 1–5 remaining" alert={lowStockCount > 0} />
+          </div>
+        )}
       </div>
 
       {/* ════════════════════════════════════════════════════════
@@ -489,41 +600,76 @@ export default function SupplierDashboardHome() {
           </div>
         </ChartCard>
 
-        {/* Order/Booking status donut */}
-        <ChartCard
-          title={isServicesView ? 'Booking Distribution' : 'Order Distribution'}
-          subtitle={isServicesView ? 'Current bookings by status' : 'Current orders by status'}
-          loading={!mounted || ordersLoading}
-          empty={donutData.length === 0}
-          emptyMessage={isServicesView ? 'No bookings to display' : 'No orders to display'}
-          action={{ href: '/supplier/orders', label: 'View all' }}
-        >
-          <div className="flex flex-col items-center gap-4">
-            <div className="relative">
-              <PieChart width={160} height={160}>
-                <Pie data={donutData} cx={76} cy={76} innerRadius={46} outerRadius={72} paddingAngle={3} dataKey="value" />
-                <Tooltip contentStyle={ttStyle} />
-              </PieChart>
-              {/* center label */}
-              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-2xl font-bold text-slate-900 dark:text-white">{totalOrders}</span>
-                <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">total</span>
+        {/* Distribution donut */}
+        {isServicesView ? (
+          <ChartCard
+            title="Inquiry Distribution"
+            subtitle="Current inquiries by status"
+            loading={!mounted || inquiryLoading}
+            empty={inquiryDonutData.length === 0}
+            emptyMessage="No inquiries to display"
+            action={{ href: '/supplier/orders', label: 'View all' }}
+          >
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative">
+                <PieChart width={160} height={160}>
+                  <Pie data={inquiryDonutData} cx={76} cy={76} innerRadius={46} outerRadius={72} paddingAngle={3} dataKey="value" />
+                  <Tooltip contentStyle={ttStyle} />
+                </PieChart>
+                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-2xl font-bold text-slate-900 dark:text-white">{inquiryTotalCount}</span>
+                  <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">total</span>
+                </div>
+              </div>
+              <div className="w-full space-y-1.5">
+                {inquiryDonutData.map(item => (
+                  <div key={item.name} className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.fill }} />
+                    <span className="flex-1 text-[11.5px] text-slate-600 dark:text-slate-300">{item.name}</span>
+                    <span className="text-[11.5px] font-bold text-slate-800 dark:text-slate-100">{item.value}</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                      {inquiryTotalCount > 0 ? `${Math.round((item.value / inquiryTotalCount) * 100)}%` : '—'}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
-            <div className="w-full space-y-1.5">
-              {donutData.map((item) => (
-                <div key={item.name} className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                  <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.fill }} />
-                  <span className="flex-1 text-[11.5px] text-slate-600 dark:text-slate-300">{item.name}</span>
-                  <span className="text-[11.5px] font-bold text-slate-800 dark:text-slate-100">{item.value}</span>
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                    {totalOrders > 0 ? `${Math.round((item.value / totalOrders) * 100)}%` : '—'}
-                  </span>
+          </ChartCard>
+        ) : (
+          <ChartCard
+            title="Order Distribution"
+            subtitle="Current orders by status"
+            loading={!mounted || ordersLoading}
+            empty={donutData.length === 0}
+            emptyMessage="No orders to display"
+            action={{ href: '/supplier/orders', label: 'View all' }}
+          >
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative">
+                <PieChart width={160} height={160}>
+                  <Pie data={donutData} cx={76} cy={76} innerRadius={46} outerRadius={72} paddingAngle={3} dataKey="value" />
+                  <Tooltip contentStyle={ttStyle} />
+                </PieChart>
+                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-2xl font-bold text-slate-900 dark:text-white">{totalOrders}</span>
+                  <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">total</span>
                 </div>
-              ))}
+              </div>
+              <div className="w-full space-y-1.5">
+                {donutData.map(item => (
+                  <div key={item.name} className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.fill }} />
+                    <span className="flex-1 text-[11.5px] text-slate-600 dark:text-slate-300">{item.name}</span>
+                    <span className="text-[11.5px] font-bold text-slate-800 dark:text-slate-100">{item.value}</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                      {totalOrders > 0 ? `${Math.round((item.value / totalOrders) * 100)}%` : '—'}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        </ChartCard>
+          </ChartCard>
+        )}
       </div>
 
       {/* ════════════════════════════════════════════════════════
@@ -546,77 +692,123 @@ export default function SupplierDashboardHome() {
         </div>
 
         <div>
-          {ordersLoading ? (
-            <div className="space-y-2.5 p-5">
-              {Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-14 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />)}
-            </div>
-          ) : recentOrders.length === 0 ? (
-            <div className="p-5">
-              <EmptyState icon={isServicesView ? CalendarDays : ShoppingCart} message={isServicesView ? 'No bookings yet' : 'No orders yet'} sub={isServicesView ? 'Booking requests from clients will appear here' : 'Orders from your storefront will appear here'} />
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-800/50">
-                    {[isServicesView ? 'Booking ID' : 'Order ID', isServicesView ? 'Service' : 'Product', 'Customer', 'Date', 'Status', 'Amount', 'Actions'].map((h) => (
-                      <th key={h} className={`px-4 py-3 text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500 ${h === 'Amount' ? 'text-right' : h === 'Actions' ? 'text-center' : 'text-left'}`}>
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {recentOrders.map((order) => (
-                    <tr key={order.id} className="group transition hover:bg-sky-50/50 dark:hover:bg-sky-500/5">
-                      <td className="px-4 py-3.5 text-[13px] font-bold text-sky-600 dark:text-sky-400">
-                        #{order.id}
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <div className="flex items-center gap-3">
-                          {order.product_image ? (
-                            <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
-                              <Image src={order.product_image} alt={order.product_name} fill className="object-cover" />
-                            </div>
-                          ) : (
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-100 dark:bg-sky-500/10">
-                              <Package className="h-5 w-5 text-sky-500 dark:text-sky-400" />
-                            </div>
-                          )}
-                          <div className="min-w-0">
-                            <p className="max-w-[200px] truncate text-[13px] font-semibold text-slate-800 dark:text-slate-100">{order.product_name}</p>
-                            {order.product_description ? (
-                              <p className="max-w-[200px] truncate text-[11px] text-slate-400 dark:text-slate-500">{order.product_description}</p>
-                            ) : null}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <p className="text-[13px] font-medium text-slate-700 dark:text-slate-200">{order.customer_name ?? 'Customer'}</p>
-                        <p className="text-[11px] text-slate-400 dark:text-slate-500">Qty {order.quantity}</p>
-                      </td>
-                      <td className="px-4 py-3.5 text-[13px] text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                        {fmtDate(order.created_at ?? null)}
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <FulfillmentBadge status={order.fulfillment_status} />
-                      </td>
-                      <td className="px-4 py-3.5 text-right text-[13px] font-bold text-slate-700 dark:text-slate-200 whitespace-nowrap">
-                        {fmtMoney(Number(order.amount))}
-                      </td>
-                      <td className="px-4 py-3.5 text-center">
-                        <Link
-                          href="/supplier/orders"
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-sky-100 hover:text-sky-600 dark:hover:bg-sky-500/10 dark:hover:text-sky-400"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Link>
-                      </td>
+          {isServicesView ? (
+            inquiryLoading ? (
+              <div className="space-y-2.5 p-5">
+                {Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-14 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />)}
+              </div>
+            ) : recentInquiries.length === 0 ? (
+              <div className="p-5">
+                <EmptyState icon={CalendarDays} message="No inquiries yet" sub="Inquiry requests from clients will appear here" />
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-800/50">
+                      {['ID', 'Inquirer', 'Service', 'Contact', 'Status', 'Date', 'Actions'].map(h => (
+                        <th key={h} className={`px-4 py-3 text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500 ${h === 'Actions' ? 'text-center' : 'text-left'}`}>{h}</th>
+                      ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {recentInquiries.map(inq => {
+                      const isToday = inqIsToday(inq.created_at)
+                      const dispStatus = (inq.status === 'responded' || inq.status === 'closed') ? 'Complete' : isToday ? 'New' : 'Pending'
+                      const statusStyle = dispStatus === 'New' ? 'border-blue-200/80 bg-blue-50 text-blue-700' : dispStatus === 'Pending' ? 'border-amber-200/80 bg-amber-50 text-amber-700' : 'border-emerald-200/80 bg-emerald-50 text-emerald-700'
+                      const dotColor   = dispStatus === 'New' ? 'bg-blue-500' : dispStatus === 'Pending' ? 'bg-amber-500' : 'bg-emerald-500'
+                      return (
+                        <tr key={inq.id} className="group transition hover:bg-sky-50/50 dark:hover:bg-sky-500/5">
+                          <td className="px-4 py-3.5 text-[13px] font-bold text-indigo-500 dark:text-indigo-400">#{inq.id}</td>
+                          <td className="px-4 py-3.5">
+                            <p className="text-[13px] font-semibold text-slate-800 dark:text-slate-100">{inq.fullname}</p>
+                            <p className="text-[11px] text-slate-400">{inq.email}</p>
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <span className="inline-flex rounded-full bg-indigo-50 px-2.5 py-1 text-[12px] font-medium text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">
+                              {inq.product?.pd_name ?? '—'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3.5 text-[13px] text-slate-600 dark:text-slate-300">{inq.contact || '—'}</td>
+                          <td className="px-4 py-3.5">
+                            <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${statusStyle}`}>
+                              <span className={`h-1.5 w-1.5 rounded-full ${dotColor}`} />
+                              {dispStatus}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3.5 text-[13px] text-slate-500 dark:text-slate-400 whitespace-nowrap">{fmtDate(inq.created_at ?? null)}</td>
+                          <td className="px-4 py-3.5 text-center">
+                            <Link href="/supplier/orders" className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-sky-100 hover:text-sky-600 dark:hover:bg-sky-500/10 dark:hover:text-sky-400">
+                              <Eye className="h-4 w-4" />
+                            </Link>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )
+          ) : (
+            ordersLoading ? (
+              <div className="space-y-2.5 p-5">
+                {Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-14 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />)}
+              </div>
+            ) : recentOrders.length === 0 ? (
+              <div className="p-5">
+                <EmptyState icon={ShoppingCart} message="No orders yet" sub="Orders from your storefront will appear here" />
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-800/50">
+                      {['Order ID', 'Product', 'Customer', 'Date', 'Status', 'Amount', 'Actions'].map((h) => (
+                        <th key={h} className={`px-4 py-3 text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500 ${h === 'Amount' ? 'text-right' : h === 'Actions' ? 'text-center' : 'text-left'}`}>
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {recentOrders.map((order) => (
+                      <tr key={order.id} className="group transition hover:bg-sky-50/50 dark:hover:bg-sky-500/5">
+                        <td className="px-4 py-3.5 text-[13px] font-bold text-sky-600 dark:text-sky-400">#{order.id}</td>
+                        <td className="px-4 py-3.5">
+                          <div className="flex items-center gap-3">
+                            {order.product_image ? (
+                              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                                <Image src={order.product_image} alt={order.product_name} fill className="object-cover" />
+                              </div>
+                            ) : (
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-100 dark:bg-sky-500/10">
+                                <Package className="h-5 w-5 text-sky-500 dark:text-sky-400" />
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <p className="max-w-[200px] truncate text-[13px] font-semibold text-slate-800 dark:text-slate-100">{order.product_name}</p>
+                              {order.product_description ? <p className="max-w-[200px] truncate text-[11px] text-slate-400 dark:text-slate-500">{order.product_description}</p> : null}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <p className="text-[13px] font-medium text-slate-700 dark:text-slate-200">{order.customer_name ?? 'Customer'}</p>
+                          <p className="text-[11px] text-slate-400 dark:text-slate-500">Qty {order.quantity}</p>
+                        </td>
+                        <td className="px-4 py-3.5 text-[13px] text-slate-500 dark:text-slate-400 whitespace-nowrap">{fmtDate(order.created_at ?? null)}</td>
+                        <td className="px-4 py-3.5"><FulfillmentBadge status={order.fulfillment_status} /></td>
+                        <td className="px-4 py-3.5 text-right text-[13px] font-bold text-slate-700 dark:text-slate-200 whitespace-nowrap">{fmtMoney(Number(order.amount))}</td>
+                        <td className="px-4 py-3.5 text-center">
+                          <Link href="/supplier/orders" className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-sky-100 hover:text-sky-600 dark:hover:bg-sky-500/10 dark:hover:text-sky-400">
+                            <Eye className="h-4 w-4" />
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
           )}
 
           {(orderCounts?.return ?? 0) > 0 && (

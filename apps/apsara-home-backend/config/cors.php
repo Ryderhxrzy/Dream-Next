@@ -27,11 +27,16 @@ return [
         'http://localhost:8080',
         'http://127.0.0.1:8080',
         'http://localhost:8081',
-        'null', // React Native apps send Origin: null
+        // 'null' removed: React Native uses bearer tokens in Authorization headers,
+        // so CORS (browser-only) does not apply to it. Allowing null origin with
+        // supports_credentials=true enables sandboxed-iframe CSRF attacks.
     ],
 
     'allowed_origins_patterns' => [
-        '#^https://.*\\.vercel\\.app$#',
+        // Scoped to this project's Vercel preview deployments only.
+        // The previous wildcard (.*\.vercel\.app) allowed any attacker-owned
+        // Vercel subdomain to make credentialed cross-origin requests.
+        '#^https://apsara-home-frontend(-[a-z0-9]+)*\.vercel\.app$#',
         '#^https://([a-z0-9-]+\\.)?afhome\\.ph$#',
     ],
 

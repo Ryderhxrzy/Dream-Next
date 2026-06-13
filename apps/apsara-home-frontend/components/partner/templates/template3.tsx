@@ -51,7 +51,7 @@ export default function Template3({
   return (
     <div className="font-sans" style={{ background: 'linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)' }}>
       {/* Nav */}
-      <nav className="flex items-center justify-between px-10 py-6">
+      <nav className="sticky top-0 z-50 flex items-center justify-between px-10 py-6">
         <span className="text-xl font-black tracking-tight text-white">{storeName}</span>
         <div className="hidden items-center gap-8 text-sm text-white/50 md:flex">
           <span className="cursor-pointer transition hover:text-white">Home</span>

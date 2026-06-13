@@ -3,6 +3,7 @@
 import { CategoryProduct } from "@/libs/CategoryData";
 import { displayColorName } from "@/libs/colorUtils";
 import { motion } from "framer-motion";
+import DOMPurify from 'isomorphic-dompurify';
 import StarRating from "../ui/StarRating";
 import type { ProductReview, ProductReviewSummary } from "@/store/api/productsApi";
 
@@ -71,9 +72,7 @@ const sanitizeProductDescriptionHtml = (value: string) => {
         decoded = next;
     }
 
-    return normalizeMojibake(decoded)
-        .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
-        .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '');
+    return DOMPurify.sanitize(normalizeMojibake(decoded));
 };
 
 const ProductTabs = ({ product, reviews = [], reviewSummary }: ProductTabsProps) => {

@@ -11,7 +11,6 @@ use App\Http\Middleware\EnsureAdminRole;
 use App\Http\Middleware\EnsureCustomerActor;
 use App\Http\Middleware\EnsureSupplierActor;
 use App\Http\Middleware\JsonAuthentication;
-use App\Http\Middleware\AdminTokenValidation;
 use App\Http\Middleware\MediaCacheHeaders;
 use App\Http\Middleware\RequestAbuseGuard;
 use App\Http\Middleware\SecurityHeaders;
@@ -54,7 +53,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'customer.actor' => EnsureCustomerActor::class,
             'supplier.actor' => EnsureSupplierActor::class,
             'auth.json' => JsonAuthentication::class,
-            'admin.token.validation' => AdminTokenValidation::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

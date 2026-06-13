@@ -551,7 +551,10 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $mfaChallengeToken = trim((string) $request->input('mfa_challenge_token', ''));
-        $isMfaContinuation = $mfaChallengeToken !== '';
+        // Only skip Turnstile when the token maps to a real pending challenge in cache.
+        // A missing or garbage value would otherwise let callers bypass CAPTCHA entirely.
+        $isMfaContinuation = $mfaChallengeToken !== ''
+            && Cache::has($this->loginApprovalCacheKey($mfaChallengeToken));
 
         if (! $isMfaContinuation) {
             $turnstileToken = trim((string) $request->input('cf_turnstile_response', ''));
@@ -715,7 +718,7 @@ class AuthController extends Controller
             }
         }
 
-        $tokenResult = $customer->createToken('auth_token');
+        $tokenResult = $customer->createToken('auth_token', ['*'], now()->addDays(30));
         $token = $tokenResult->plainTextToken;
         $plainTokenId = (int) ($tokenResult->accessToken->id ?? 0);
         try {
@@ -820,7 +823,7 @@ class AuthController extends Controller
             }
         }
 
-        $tokenResult = $customer->createToken('auth_token');
+        $tokenResult = $customer->createToken('auth_token', ['*'], now()->addDays(30));
         $token = $tokenResult->plainTextToken;
         $plainTokenId = (int) ($tokenResult->accessToken->id ?? 0);
         try {
@@ -936,7 +939,9 @@ class AuthController extends Controller
     public function forgotPassword(Request $request)
     {
         $existingResetToken = trim((string) $request->input('reset_token', ''));
-        if ($existingResetToken !== '') {
+        // Only skip Turnstile when the token maps to a real active session in cache.
+        // A garbage or expired token must still pass CAPTCHA before we process anything.
+        if ($existingResetToken !== '' && Cache::has($this->passwordResetCacheKey($existingResetToken))) {
             return $this->resendPasswordResetOtp($existingResetToken);
         }
 
@@ -4928,7 +4933,7 @@ class AuthController extends Controller
             ], 403);
         }
 
-        $tokenResult = $customer->createToken('auth_token');
+        $tokenResult = $customer->createToken('auth_token', ['*'], now()->addDays(30));
         $token = $tokenResult->plainTextToken;
         $plainTokenId = (int) ($tokenResult->accessToken->id ?? 0);
 
@@ -5440,7 +5445,7 @@ class AuthController extends Controller
             Log::info('[Biometric Login] Updated last_used_at');
 
             // Create auth token
-            $token = $customer->createToken('mobile-biometric')->plainTextToken;
+            $token = $customer->createToken('mobile-biometric', ['*'], now()->addDays(30))->plainTextToken;
 
             Log::info('[Biometric Login] Auth token created successfully', [
                 'customer_id' => $customer->c_userid,
@@ -5918,7 +5923,7 @@ class AuthController extends Controller
         }
 
         // Create API token
-        $tokenResult = $customer->createToken('google-login-mobile');
+        $tokenResult = $customer->createToken('google-login-mobile', ['*'], now()->addDays(30));
         $token = $tokenResult->plainTextToken;
 
         // Log the login activity
@@ -6301,33 +6306,34 @@ class AuthController extends Controller
                 'c_gpv',
                 'c_date_started',
                 'c_sponsor',
+                'c_rank',
             ];
-            $referralMembers = Customer::query()
+            // Load only direct referrals of this customer — avoids full-table scan
+            $directReferralMembers = Customer::query()
                 ->select($referralColumns)
-                ->orderBy('c_userid')
+                ->where('c_sponsor', $customerId)
+                ->orderByDesc('c_userid')
                 ->get();
-            $referralMembersBySponsor = $referralMembers
-                ->filter(fn (Customer $member) => (int) ($member->c_sponsor ?? 0) > 0)
-                ->groupBy(fn (Customer $member) => (int) ($member->c_sponsor ?? 0));
-            $buildReferralSnapshotNode = function (Customer $member, array $path = []) use (&$buildReferralSnapshotNode, $referralMembersBySponsor): array {
+
+            $directIds = $directReferralMembers->pluck('c_userid')->map(fn ($id) => (int) $id)->toArray();
+
+            // Count each direct referral's children in one query (depth=2 only; full tree is in referralTree endpoint)
+            $grandchildCounts = !empty($directIds)
+                ? DB::table('tbl_customer')
+                    ->whereIn('c_sponsor', $directIds)
+                    ->groupBy('c_sponsor')
+                    ->selectRaw('c_sponsor, COUNT(*) as cnt')
+                    ->get()
+                    ->keyBy('c_sponsor')
+                : collect();
+
+            $buildReferralSnapshotNode = function (Customer $member) use ($grandchildCounts): array {
                 $memberId = (int) $member->c_userid;
-                $nextPath = [...$path, $memberId];
-
-                $children = collect($referralMembersBySponsor->get($memberId, []))
-                    ->reject(fn (Customer $child) => in_array((int) $child->c_userid, $nextPath, true))
-                    ->sortByDesc('c_userid')
-                    ->map(fn (Customer $child): array => $buildReferralSnapshotNode($child, $nextPath))
-                    ->values();
-
                 $node = $this->transformReferralNode($member);
-                $node['children_count'] = $children->count();
-                $node['children'] = $children->all();
-
+                $node['children_count'] = (int) ($grandchildCounts->get($memberId)?->cnt ?? 0);
+                $node['children'] = [];
                 return $node;
             };
-            $directReferralMembers = collect($referralMembersBySponsor->get($customerId, []))
-                ->sortByDesc('c_userid')
-                ->values();
 
             $personalPv = (float) DB::table('tbl_checkout_history')
                 ->where('ch_customer_id', $customerId)
@@ -6337,7 +6343,7 @@ class AuthController extends Controller
             // Include reward PV (daily check-in / missions) so earned points
             // reflect in the customer's Personal PV. Tracked separately in the
             // wallet ledger under reward source types.
-            if (Schema::hasTable('tbl_customer_wallet_ledger')) {
+            if (Cache::remember('schema.has.wallet_ledger', 3600, fn () => Schema::hasTable('tbl_customer_wallet_ledger'))) {
                 $personalPv += (float) DB::table('tbl_customer_wallet_ledger')
                     ->where('wl_customer_id', $customerId)
                     ->where('wl_wallet_type', 'pv')
@@ -6346,7 +6352,6 @@ class AuthController extends Controller
                     ->sum('wl_amount');
             }
 
-            $directIds = $directReferralMembers->pluck('c_userid')->map(fn ($id) => (int) $id)->toArray();
             $activeMembersCount = 0;
             if (!empty($directIds)) {
                 $directPvSums = DB::table('tbl_checkout_history')
@@ -6627,7 +6632,7 @@ class AuthController extends Controller
         }
 
         // Generate token
-        $token = $customer->createToken('web-qr-login')->plainTextToken;
+        $token = $customer->createToken('web-qr-login', ['*'], now()->addDays(30))->plainTextToken;
 
         // Clear the cache after successful login
         Cache::forget($cacheKey);

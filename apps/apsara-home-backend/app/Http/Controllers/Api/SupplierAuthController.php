@@ -120,7 +120,7 @@ class SupplierAuthController extends Controller
             ]);
         }
 
-        $token = $supplierUser->createToken('supplier_auth_token')->plainTextToken;
+        $token = $supplierUser->createToken('supplier_auth_token', ['*'], now()->addDay())->plainTextToken;
 
         return response()->json([
             'user' => array_merge($this->transform($supplierUser), [

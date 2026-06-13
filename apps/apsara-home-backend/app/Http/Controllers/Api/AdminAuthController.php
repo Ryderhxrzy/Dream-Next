@@ -118,7 +118,7 @@ class AdminAuthController extends Controller
             ]);
         }
 
-        $token = $admin->createToken('admin_auth_token')->plainTextToken;
+        $token = $admin->createToken('admin_auth_token', ['*'], now()->addDay())->plainTextToken;
 
         return response()->json([
             'user' => [
