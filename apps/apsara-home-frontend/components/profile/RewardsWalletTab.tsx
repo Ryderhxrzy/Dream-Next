@@ -219,9 +219,9 @@ export default function RewardsWalletTab({
                 <TicketPercent className="h-6 w-6" strokeWidth={2.3} />
               </div>
               <div>
-                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-amber-600 dark:text-amber-300">E Voucher Balance</p>
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-amber-600 dark:text-amber-300">AF-Voucher Balance</p>
                 <p className="mt-1 text-3xl font-black tracking-tight text-slate-950 dark:text-white">{peso(afVoucherBalance)}</p>
-                <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">Profile rewards and existing E Voucher credits.</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">Profile rewards and existing AF-Voucher credits.</p>
               </div>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left dark:border-slate-700 dark:bg-slate-800 sm:min-w-32 sm:text-center">
@@ -391,10 +391,10 @@ export default function RewardsWalletTab({
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 dark:border-slate-700 dark:bg-gray-950">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">E Voucher Pool</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">AF-Voucher Pool</p>
               <p className="mt-1 text-2xl font-black text-slate-900 dark:text-white">{peso(afVoucherSourceBalance)}</p>
               <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                Existing E Voucher rewards, separate from cashback-backed voucher creation.
+                Existing AF-Voucher rewards, separate from cashback-backed voucher creation.
               </p>
             </div>
 

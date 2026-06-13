@@ -213,7 +213,7 @@ const PerformanceTab = () => {
         <div className="relative p-6">
           {/* Label */}
           <p className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.18em] text-sky-500 dark:text-sky-400">
-            <span className="text-xl">⚡</span> Performance Value
+            <span className="text-xl">⚡</span> Direct Affiliate Performance Bonus
           </p>
 
           {/* Numbers row */}
@@ -259,7 +259,7 @@ const PerformanceTab = () => {
             </div>
             <div>
               <p className="text-[11px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
-                Performance Milestone Reward
+                Direct Affiliate Performance Bonus
               </p>
               <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
                 Every <span className="font-bold">{fmt(pvPerMilestone)} PV</span> earns{' '}
@@ -268,7 +268,7 @@ const PerformanceTab = () => {
               <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                 {remaining > 0
                   ? `${fmt(remaining)} PV more to reach the next ₱${fmt(cashPerMilestone)} reward.`
-                  : 'Next reward unlocks as soon as more Performance Value posts.'}
+                  : 'Next reward unlocks as soon as more direct affiliate PV posts.'}
               </p>
             </div>
           </div>
@@ -392,7 +392,7 @@ const PerformanceTab = () => {
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
               ◆ Transaction History
             </p>
-            <p className="mt-0.5 text-base font-bold text-slate-800 dark:text-white">Performance Value Log</p>
+            <p className="mt-0.5 text-base font-bold text-slate-800 dark:text-white">Direct Affiliate Performance Bonus Log</p>
           </div>
           <button
             type="button"

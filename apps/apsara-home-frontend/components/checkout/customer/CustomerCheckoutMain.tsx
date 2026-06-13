@@ -484,7 +484,7 @@ const CustomerCheckoutMain = ({
             } catch (error) {
                 const apiError = error as { data?: { message?: string } };
                 setAppliedEgcAmount(0);
-                setEgcError(apiError?.data?.message || 'E-GC is not available for this order.');
+                setEgcError(apiError?.data?.message || 'AF-GC is not available for this order.');
             }
         }, 300);
 
@@ -593,7 +593,7 @@ const CustomerCheckoutMain = ({
             return;
         }
         if (appliedEgcAmount > maxApplicableEgc) {
-            const message = 'E-GC amount exceeds the available discount for this order.';
+            const message = 'AF-GC amount exceeds the available discount for this order.';
             setEgcError(message);
             notify.error(message);
             return;
