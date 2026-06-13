@@ -16,9 +16,22 @@ use Illuminate\Support\Facades\Log;
 
 class WishlistController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $wishlistItems = Wishlist::query()
+        $validated = $request->validate([
+            'search'   => ['nullable', 'string', 'max:255'],
+            'q'        => ['nullable', 'string', 'max:255'],
+            'page'     => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+
+        $search = trim((string) ($validated['search'] ?? $validated['q'] ?? ''));
+        $perPage = (int) ($validated['per_page'] ?? 12);
+        // Pagination is opt-in: callers that pass neither page nor per_page keep
+        // receiving the full list (backward compatible with existing wishlist views).
+        $shouldPaginate = $request->filled('page') || $request->filled('per_page');
+
+        $baseQuery = Wishlist::query()
             ->with(['product' => function ($query) {
                 $query->select([
                     'pd_id', 'pd_name', 'pd_description', 'pd_specifications', 'pd_material', 'pd_warranty',
@@ -39,11 +52,48 @@ class WishlistController extends Controller
                 ->whereIn('pd_status', [1, 2]); // Apply public visibility
             }])
             ->where('cw_customer_id', Auth::id())
-            ->orderByDesc('cw_id')
-            ->get()
-            ->filter(function ($wishlistItem) {
-                return $wishlistItem->product !== null;
-            });
+            // Only keep wishlist rows whose product is public-visible and matches the search.
+            ->whereHas('product', function ($query) use ($search) {
+                $query->whereIn('pd_status', [1, 2]);
+
+                if ($search !== '') {
+                    $like = '%' . $search . '%';
+                    $query->where(function ($inner) use ($like) {
+                        $inner->where('pd_name', 'like', $like)
+                            ->orWhere('pd_parent_sku', 'like', $like)
+                            ->orWhere('pd_description', 'like', $like);
+                    });
+                }
+            })
+            ->orderByDesc('cw_id');
+
+        if ($shouldPaginate) {
+            $paginator = $baseQuery->paginate($perPage);
+            $wishlistItems = collect($paginator->items());
+            $meta = [
+                'current_page' => $paginator->currentPage(),
+                'last_page'    => $paginator->lastPage(),
+                'per_page'     => $paginator->perPage(),
+                'total'        => $paginator->total(),
+                'from'         => $paginator->firstItem(),
+                'to'           => $paginator->lastItem(),
+            ];
+        } else {
+            $wishlistItems = $baseQuery->get();
+            $count = $wishlistItems->count();
+            $meta = [
+                'current_page' => 1,
+                'last_page'    => 1,
+                'per_page'     => $count,
+                'total'        => $count,
+                'from'         => $count > 0 ? 1 : null,
+                'to'           => $count > 0 ? $count : null,
+            ];
+        }
+
+        $wishlistItems = $wishlistItems->filter(function ($wishlistItem) {
+            return $wishlistItem->product !== null;
+        });
 
         // Pre-load sold counts for all products in single query (N+1 fix)
         $productIds = $wishlistItems->pluck('product.pd_id')->filter()->unique();
@@ -72,7 +122,7 @@ class WishlistController extends Controller
         }
 
         return response()->json([
-            'data' => $wishlistItems->map(function ($wishlistItem) use ($soldCounts, $avgRatings) {
+            'data' => $wishlistItems->values()->map(function ($wishlistItem) use ($soldCounts, $avgRatings) {
                 $product = $wishlistItem->product;
                 
                 // Use pre-loaded data instead of individual queries
@@ -89,6 +139,9 @@ class WishlistController extends Controller
                     'product' => $mappedProduct,
                 ];
             }),
+            'meta' => array_merge($meta, [
+                'search' => $search !== '' ? $search : null,
+            ]),
         ]);
     }
 
