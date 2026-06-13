@@ -4017,7 +4017,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
     { key: 'security', label: 'Security', Icon: Icon.Shield },
     { key: 'preferences', label: 'Preferences', Icon: Icon.Bell },
     { key: 'wallet', label: 'Wallet', Icon: Icon.Wallet },
-    { key: 'pv', label: 'E-Voucher', Icon: Icon.Star },
+    { key: 'pv', label: 'AF-Voucher', Icon: Icon.Star },
     { key: 'encashment', label: 'Encashment', Icon: Icon.Bag },
     { key: 'interior-requests', label: 'Interior Requests', Icon: Icon.Package },
     { key: 'activity', label: 'Activity', Icon: Icon.Activity },
@@ -5079,7 +5079,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                                 Profile complete<br />reward unlocked 🎉
                               </h4>
                               <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
-                                You qualified for the one-time profile completion reward. Check your wallet and E-Voucher activity after rewards are credited.
+                                You qualified for the one-time profile completion reward. Check your wallet and AF-Voucher activity after rewards are credited.
                               </p>
                             </div>
 
@@ -5191,12 +5191,12 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                                 Profile completion reward
                               </p>
                               <p className="mt-1 text-sm font-semibold leading-6">
-                                Complete all required sections to qualify for a one-time 50 E-Voucher and 20 PV reward.
+                                Complete all required sections to qualify for a one-time 50 AF-Voucher and 20 PV reward.
                               </p>
                             </div>
                             <div className="flex shrink-0 gap-2">
                               <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-amber-700 shadow-sm dark:bg-slate-950 dark:text-amber-200">
-                                50 E-Voucher
+                                50 AF-Voucher
                               </span>
                               <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-sky-700 shadow-sm dark:bg-slate-950 dark:text-sky-200">
                                 20 PV
@@ -8434,7 +8434,7 @@ const ProfilePage = ({ initialProfile = null, initialCategories = [] }: ProfileP
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                   </svg>
                   <p className="text-[11px] leading-5 text-slate-500 dark:text-slate-400">
-                    Reward credit is one-time only. You can review your balance and transaction history in the E-Voucher tab.
+                    Reward credit is one-time only. You can review your balance and transaction history in the AF-Voucher tab.
                   </p>
                 </motion.div>
               </div>

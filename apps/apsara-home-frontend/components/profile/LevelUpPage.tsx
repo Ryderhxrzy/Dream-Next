@@ -263,7 +263,7 @@ export default function LevelUpPage({
             <div className="px-2">
               <p className="text-sm font-bold text-slate-800 dark:text-white">Ready to continue?</p>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                Review your profile or check your E Voucher progress.
+                Review your profile or check your AF-Voucher progress.
               </p>
             </div>
 
@@ -278,7 +278,7 @@ export default function LevelUpPage({
                 href={`${profileBasePath}?tab=pv`}
                 className="rounded-2xl border border-slate-300 bg-white px-5 py-3 text-center text-sm font-bold text-slate-700 transition hover:-translate-y-0.5 hover:border-slate-400 hover:bg-slate-100 dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/15"
               >
-                View E Voucher
+                View AF-Voucher
               </Link>
             </div>
           </div>
