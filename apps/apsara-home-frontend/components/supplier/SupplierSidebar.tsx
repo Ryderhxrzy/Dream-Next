@@ -43,7 +43,6 @@ const servicesMainItems = [
   { label: 'Chats', href: '/supplier/chat', icon: MessageSquare },
   { label: 'Inquiry', href: '/supplier/orders', icon: Inbox },
   { label: 'Services', href: '/supplier/products', icon: Package },
-  { label: 'Vouchers', href: '/supplier/vouchers', icon: TicketPercent },
 ]
 
 const reportItems = [
@@ -131,7 +130,7 @@ export default function SupplierSidebar({
     <aside className={`sticky top-0 h-screen flex w-64 shrink-0 flex-col bg-white/95 dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-700/50 backdrop-blur-xl ${className}`}>
       {/* Logo */}
       <div className="flex items-center h-16 px-3 border-b border-slate-200/80 dark:border-slate-700/50 shrink-0 gap-2">
-        <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-orange-50 to-cyan-50 ring-1 ring-slate-200 dark:bg-transparent dark:ring-0">
+        <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-xl bg-linear-to-br from-orange-50 to-cyan-50 ring-1 ring-slate-200 dark:bg-transparent dark:ring-0">
           <Image
             src="/af_home_logo.png"
             alt="AF Home"
@@ -280,8 +279,8 @@ export default function SupplierSidebar({
           </AnimatePresence>
         </div>}
 
-        {/* Mobile Section */}
-        <div>
+        {/* Mobile Section — hidden for services suppliers */}
+        {!isServicesView && <div>
           <div className="flex items-center gap-2 px-2 pb-1.5 pt-4">
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Mobile</span>
             <div className="flex-1 h-px bg-slate-100 dark:bg-slate-700/60" />
@@ -340,7 +339,7 @@ export default function SupplierSidebar({
               </motion.div>
             ) : null}
           </AnimatePresence>
-        </div>
+        </div>}
 
         {/* Settings Section */}
         <div>
@@ -364,13 +363,13 @@ export default function SupplierSidebar({
                     }
                   `}
                 >
-                  {item.icon ? (
+                  {item.icon && (
                     <span
                       className={`flex items-center justify-center h-7 w-7 rounded-lg shrink-0 transition-colors ${active ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800 group-hover:bg-slate-200 dark:group-hover:bg-slate-700'}`}
                     >
                       <Icon className="w-5 h-5" />
                     </span>
-                  ) : null}
+                  )}
                   <span className="font-medium flex-1">{item.label}</span>
                 </Link>
               )

@@ -186,16 +186,29 @@ class ProductController extends Controller
             8 => 'Bath Room',
         ];
 
+        // One query per room type was 8 round-trips. Fetch the latest pd_id per room
+        // in a single GROUP BY query, then hydrate images in one IN() query.
+        $maxIds = DB::table('tbl_product')
+            ->selectRaw('MAX(pd_id) as max_id')
+            ->whereIn('pd_status', [1, 2])
+            ->whereNotNull('pd_image')
+            ->whereIn('pd_room_type', array_keys($roomLabels))
+            ->groupBy('pd_room_type')
+            ->pluck('max_id')
+            ->filter()
+            ->values();
+
+        $imagesByRoom = $maxIds->isNotEmpty()
+            ? DB::table('tbl_product')
+                ->select(['pd_room_type', 'pd_image'])
+                ->whereIn('pd_id', $maxIds)
+                ->get()
+                ->keyBy('pd_room_type')
+            : collect();
+
         $roomImages = [];
         foreach ($roomLabels as $roomId => $roomName) {
-            $image = DB::table('tbl_product')
-                ->select('pd_image')
-                ->where('pd_room_type', $roomId)
-                ->whereIn('pd_status', [1, 2])
-                ->whereNotNull('pd_image')
-                ->orderByDesc('pd_id')
-                ->first();
-
+            $image = $imagesByRoom->get($roomId);
             $roomImages[$roomId] = [
                 'id' => $roomId,
                 'name' => $roomName,
@@ -3421,7 +3434,7 @@ class ProductController extends Controller
                     'message' => $loggingError->getMessage(),
                 ]);
             }
-            return response()->json(['message' => 'Server error: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'An unexpected error occurred. Please try again.'], 500);
         }
 
         try {
@@ -4432,7 +4445,7 @@ class ProductController extends Controller
             ]);
         } catch (\Throwable $e) {
             Log::warning('ZQ live stock check failed for sku ' . $sku . ': ' . $e->getMessage());
-            return response()->json(['message' => 'Failed to fetch ZQ inventory: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'Failed to fetch ZQ inventory.'], 500);
         }
     }
 

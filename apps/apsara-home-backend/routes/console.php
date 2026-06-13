@@ -710,6 +710,10 @@ Artisan::command('psgc:import-addresses {--truncate : Truncate address tables be
     return self::SUCCESS;
 })->purpose('Import PSGC regions, provinces, cities, and barangays into backend address tables');
 
+Schedule::command('sanctum:prune-expired --hours=0')
+    ->daily()
+    ->withoutOverlapping();
+
 Schedule::command('payments:sync-pending --limit=25')
     ->everyFiveMinutes()
     ->withoutOverlapping();

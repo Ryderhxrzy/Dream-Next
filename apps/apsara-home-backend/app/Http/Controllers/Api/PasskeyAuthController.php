@@ -234,7 +234,7 @@ class PasskeyAuthController extends Controller
         $passkey->cp_last_used_at = now();
         $passkey->save();
 
-        $tokenResult = $customer->createToken('auth_token');
+        $tokenResult = $customer->createToken('auth_token', ['*'], now()->addDays(30));
         $token = $tokenResult->plainTextToken;
         $plainTokenId = (int) ($tokenResult->accessToken->id ?? 0);
 

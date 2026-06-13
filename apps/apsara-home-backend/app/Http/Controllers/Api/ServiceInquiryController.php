@@ -25,6 +25,7 @@ class ServiceInquiryController extends Controller
             'email'      => 'required|email|max:255',
             'contact'    => 'required|string|max:50',
             'address'    => 'required|string|max:1000',
+            'intent'     => 'required|string|max:2000',
         ]);
 
         $product = Product::query()->findOrFail((int) $validated['product_id']);
@@ -41,6 +42,7 @@ class ServiceInquiryController extends Controller
             'email'       => $validated['email'],
             'contact'     => $validated['contact'],
             'address'     => $validated['address'],
+            'intent'      => $validated['intent'],
             'status'      => 'new',
         ]);
 
@@ -121,7 +123,7 @@ class ServiceInquiryController extends Controller
 
         $query = ServiceInquiry::query()
             ->where('supplier_id', $supplierId)
-            ->with(['product:pd_id,pd_name,pd_image'])
+            ->with(['product:pd_id,pd_name,pd_image', 'customer:c_userid,c_avatar_url'])
             ->orderByDesc('created_at');
 
         if ($status && in_array($status, ['new', 'viewed', 'responded', 'closed'], true)) {
@@ -130,8 +132,31 @@ class ServiceInquiryController extends Controller
 
         $paginated = $query->paginate($perPage);
 
+        // Resolve avatar for guest-submitted inquiries (customer_id is null)
+        // by looking up the customer record via their email address.
+        $emailsNeedingLookup = collect($paginated->items())
+            ->filter(fn($i) => $i->customer === null && $i->email)
+            ->pluck('email')
+            ->unique()
+            ->values();
+
+        $customersByEmail = $emailsNeedingLookup->isNotEmpty()
+            ? Customer::whereIn('c_email', $emailsNeedingLookup)
+                ->get(['c_userid', 'c_email', 'c_avatar_url'])
+                ->keyBy('c_email')
+            : collect();
+
+        $inquiries = collect($paginated->items())->map(function ($inquiry) use ($customersByEmail) {
+            $data = $inquiry->toArray();
+            if ($inquiry->customer === null && isset($customersByEmail[$inquiry->email])) {
+                $c = $customersByEmail[$inquiry->email];
+                $data['customer'] = ['c_userid' => $c->c_userid, 'c_avatar_url' => $c->c_avatar_url];
+            }
+            return $data;
+        })->values()->toArray();
+
         return response()->json([
-            'inquiries' => $paginated->items(),
+            'inquiries' => $inquiries,
             'meta' => [
                 'current_page' => $paginated->currentPage(),
                 'last_page'    => $paginated->lastPage(),
@@ -198,5 +223,29 @@ class ServiceInquiryController extends Controller
             'message' => 'Inquiry status updated.',
             'inquiry' => $inquiry->only(['id', 'status', 'updated_at']),
         ]);
+    }
+
+    /**
+     * Supplier deletes an inquiry.
+     * Route: DELETE /api/supplier/service-inquiries/{id}
+     * Middleware: auth:sanctum, supplier.actor
+     */
+    public function destroy(Request $request, int $id): JsonResponse
+    {
+        $supplierUser = $request->user();
+        if (! $supplierUser instanceof SupplierUser) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $supplierId = (int) $supplierUser->su_supplier;
+
+        $inquiry = ServiceInquiry::query()
+            ->where('id', $id)
+            ->where('supplier_id', $supplierId)
+            ->firstOrFail();
+
+        $inquiry->delete();
+
+        return response()->json(['message' => 'Inquiry deleted.']);
     }
 }

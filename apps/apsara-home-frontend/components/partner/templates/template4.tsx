@@ -198,12 +198,10 @@ export default function Template4({
   ]
 
   return (
-    /* @container so all breakpoints respond to THIS element's width, not the viewport */
-    <div className="@container bg-white font-sans text-[#1e293b] overflow-x-hidden" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-
-      {/* ── Nav ─────────────────────────────────────────────── */}
+    <>
+      {/* ── Nav (outside @container so sticky is not trapped by layout containment) ── */}
       <S id="nav" label="Nav" selected={sel('nav')} onClick={onSectionClick}>
-        <nav className="relative border-b border-slate-100 bg-white px-5 py-4 @md:px-16">
+        <nav className="sticky top-0 z-50 border-b border-slate-100 bg-white px-5 py-4 md:px-16" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
           <div className="flex items-center justify-between gap-3">
             {/* Logo */}
             <div className="flex min-w-0 items-center gap-2">
@@ -217,7 +215,7 @@ export default function Template4({
             </div>
 
             {/* Desktop nav links */}
-            <div className="hidden items-center gap-8 text-sm text-slate-600 @md:flex">
+            <div className="hidden items-center gap-8 text-sm text-slate-600 md:flex">
               {navLinks.map((l, i) => (
                 <a key={l.label} href={l.href}
                   onClick={(e) => scrollTo(e, l.href)}
@@ -235,7 +233,7 @@ export default function Template4({
               </a>
               <button
                 type="button"
-                className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-50 @md:hidden"
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-50 md:hidden"
                 onClick={() => setMobileOpen((o) => !o)}
                 aria-label="Toggle menu"
               >
@@ -249,7 +247,7 @@ export default function Template4({
 
           {/* Mobile dropdown */}
           {mobileOpen && (
-            <div className="mt-4 flex flex-col gap-1 border-t border-slate-100 pt-4 @md:hidden">
+            <div className="mt-4 flex flex-col gap-1 border-t border-slate-100 pt-4 md:hidden">
               {navLinks.map((l) => (
                 <a key={l.label} href={l.href}
                   onClick={(e) => scrollTo(e, l.href)}
@@ -261,6 +259,9 @@ export default function Template4({
           )}
         </nav>
       </S>
+
+      {/* @container so all breakpoints respond to THIS element's width, not the viewport */}
+      <div className="@container bg-white font-sans text-[#1e293b] overflow-x-clip" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
 
       {/* ── Hero ─────────────────────────────────────────────── */}
       <S id="hero" label="Hero" selected={sel('hero')} onClick={onSectionClick}>
@@ -527,6 +528,7 @@ export default function Template4({
         </footer>
       </S>
 
-    </div>
+      </div>
+    </>
   )
 }

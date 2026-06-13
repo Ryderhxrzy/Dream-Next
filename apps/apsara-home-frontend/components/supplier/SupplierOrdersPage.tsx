@@ -17,6 +17,7 @@ import {
   type ServiceInquiryStatus,
   useGetSupplierServiceInquiriesQuery,
   useUpdateServiceInquiryStatusMutation,
+  useDeleteServiceInquiryMutation,
 } from '@/store/api/serviceInquiriesApi'
 import { useGetSupplierCategoriesQuery } from '@/store/api/suppliersApi'
 
@@ -170,6 +171,23 @@ const SERVICE_INQUIRY_STATUS_STYLES: Record<ServiceInquiryStatus, string> = {
   viewed: 'border border-amber-200/80 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300',
   responded: 'border border-emerald-200/80 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200',
   closed: 'border border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200',
+}
+
+function isCreatedToday(dateStr?: string | null): boolean {
+  if (!dateStr) return false
+  const d = new Date(dateStr)
+  const now = new Date()
+  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate()
+}
+
+function getInquiryStatusLabel(status: ServiceInquiryStatus, createdAt?: string | null): string {
+  if (status === 'new') return isCreatedToday(createdAt) ? 'New' : 'pending'
+  return SERVICE_INQUIRY_STATUS_LABELS[status]
+}
+
+function getInquiryStatusStyle(status: ServiceInquiryStatus, createdAt?: string | null): string {
+  if (status === 'new' && !isCreatedToday(createdAt)) return SERVICE_INQUIRY_STATUS_STYLES.viewed
+  return SERVICE_INQUIRY_STATUS_STYLES[status]
 }
 
 /* avatar gradient colours cycling by index */
@@ -356,6 +374,7 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
   const [expandedId, setExpandedId]   = useState<number | null>(null)
   const [filterOpen, setFilterOpen]   = useState(false)
   const [selectedInquiry, setSelectedInquiry] = useState<ServiceInquiryItem | null>(null)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null)
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(search.trim()), 350)
@@ -367,14 +386,13 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
     { skip: isServicesView },
   )
 
-  const inquiryStatus = SERVICE_INQUIRY_FILTER_MAP[filter]
   const {
     data: inquiryData,
     isLoading: inquiryLoading,
     isError: inquiryError,
     refetch: refetchInquiries,
   } = useGetSupplierServiceInquiriesQuery(
-    { status: inquiryStatus, per_page: 100 },
+    { per_page: 100 },
     { skip: !isServicesView, refetchOnMountOrArgChange: true },
   )
 
@@ -382,6 +400,7 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
   const [approveOrder]      = useApproveSupplierOrderMutation()
   const [pushToZq]          = usePushSupplierOrderToZqMutation()
   const [updateInquiryStatus, { isLoading: isUpdatingInquiry }] = useUpdateServiceInquiryStatusMutation()
+  const [deleteInquiry] = useDeleteServiceInquiryMutation()
 
   const effectiveData = data ?? initialData ?? null
   const orders = useMemo(() => effectiveData?.orders ?? [], [effectiveData])
@@ -407,6 +426,11 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
 
   const inquiryRows = useMemo(() => {
     let source = inquiryData?.inquiries ?? []
+    // Client-side filter using date logic for services view
+    if (filter === 'to_pay')    source = source.filter(i => i.status === 'new' && isCreatedToday(i.created_at))
+    else if (filter === 'to_ship')    source = source.filter(i => i.status === 'new' && !isCreatedToday(i.created_at))
+    else if (filter === 'to_receive') source = source.filter(i => i.status === 'responded')
+    else if (filter === 'completed')  source = source.filter(i => i.status === 'closed')
     const q = debouncedSearch.trim().toLowerCase()
     if (q) {
       source = source.filter((item) =>
@@ -415,7 +439,7 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
       )
     }
     return source
-  }, [debouncedSearch, inquiryData?.inquiries])
+  }, [debouncedSearch, inquiryData?.inquiries, filter])
 
   const inquiryCounts = inquiryData?.counts
 
@@ -429,6 +453,18 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
       await refetchInquiries()
     } catch (e) {
       showErrorToast(getApiError(e, 'Failed to update inquiry status.'))
+    }
+  }
+
+  async function handleDeleteInquiry(id: number) {
+    setDeleteConfirmId(null)
+    try {
+      await deleteInquiry(id).unwrap()
+      showSuccessToast('Inquiry deleted.')
+      if (selectedInquiry?.id === id) setSelectedInquiry(null)
+      await refetchInquiries()
+    } catch (e) {
+      showErrorToast(getApiError(e, 'Failed to delete inquiry.'))
     }
   }
 
@@ -464,41 +500,81 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
   const activeLabel = activeFilterOptions.find(o => o.value === filter)?.label ?? (isServicesView ? 'All Inquiries' : 'All Orders')
 
   if (isServicesView) {
-    const serviceCards = [
-      { key: 'total', label: 'Total Inquiries', count: inquiryCounts?.total ?? inquiryRows.length, filterVal: 'all' },
-      { key: 'new', label: 'New', count: inquiryCounts?.new ?? 0, filterVal: 'to_pay' },
-      { key: 'viewed', label: 'Viewed', count: inquiryCounts?.viewed ?? 0, filterVal: 'to_ship' },
-      { key: 'responded', label: 'Responded', count: inquiryCounts?.responded ?? 0, filterVal: 'to_receive' },
-    ] as const
+    const allInquiries = inquiryData?.inquiries ?? []
+    const newCount      = allInquiries.filter(i => i.status === 'new' && isCreatedToday(i.created_at)).length
+    const pendingCount  = allInquiries.filter(i => i.status === 'new' && !isCreatedToday(i.created_at)).length
+    const completeCount = allInquiries.filter(i => i.status === 'responded').length
+    const totalCount    = inquiryCounts?.total ?? allInquiries.length
+
+    const statCards = [
+      {
+        key: 'total', label: 'Total Inquiries', count: totalCount, filterVal: 'all',
+        icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>,
+        iconBg: 'bg-indigo-100 dark:bg-indigo-500/20', iconColor: 'text-indigo-600 dark:text-indigo-400',
+        labelColor: 'text-indigo-600 dark:text-indigo-400', activeBorder: 'border-indigo-300 bg-indigo-50/60 dark:border-indigo-600 dark:bg-indigo-900/20',
+      },
+      {
+        key: 'new', label: 'New', count: newCount, filterVal: 'to_pay',
+        icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>,
+        iconBg: 'bg-emerald-100 dark:bg-emerald-500/20', iconColor: 'text-emerald-600 dark:text-emerald-400',
+        labelColor: 'text-emerald-600 dark:text-emerald-400', activeBorder: 'border-emerald-300 bg-emerald-50/60 dark:border-emerald-600 dark:bg-emerald-900/20',
+      },
+      {
+        key: 'viewed', label: 'Pending', count: pendingCount, filterVal: 'to_ship',
+        icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+        iconBg: 'bg-amber-100 dark:bg-amber-500/20', iconColor: 'text-amber-600 dark:text-amber-400',
+        labelColor: 'text-amber-600 dark:text-amber-400', activeBorder: 'border-amber-300 bg-amber-50/60 dark:border-amber-600 dark:bg-amber-900/20',
+      },
+      {
+        key: 'responded', label: 'Complete', count: completeCount, filterVal: 'to_receive',
+        icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+        iconBg: 'bg-violet-100 dark:bg-violet-500/20', iconColor: 'text-violet-600 dark:text-violet-400',
+        labelColor: 'text-violet-600 dark:text-violet-400', activeBorder: 'border-violet-300 bg-violet-50/60 dark:border-violet-600 dark:bg-violet-900/20',
+      },
+    ]
+
+    const totalInquiries = filter === 'all' ? totalCount : inquiryRows.length
 
     return (
       <div className="space-y-5 pb-10">
+
+        {/* ── Stat Cards ── */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {serviceCards.map((card) => {
+          {statCards.map((card) => {
             const active = filter === card.filterVal
             return (
               <button
                 key={card.key}
                 type="button"
                 onClick={() => setFilter(card.filterVal)}
-                className={`rounded-2xl border p-4 text-left transition-all ${
-                  active ? 'border-indigo-300 bg-indigo-50/80 shadow-sm dark:border-indigo-700 dark:bg-indigo-900/20' : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'
+                className={`rounded-2xl border bg-white p-4 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:bg-slate-900 ${
+                  active ? `border-2 ${card.activeBorder} -translate-y-0.5 shadow-md` : 'border-slate-200 dark:border-slate-800'
                 }`}
               >
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">{card.count}</p>
-                <p className="mt-0.5 text-xs font-medium text-slate-500 dark:text-slate-400">{card.label}</p>
+                <div className="flex items-center gap-3">
+                  <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${card.iconBg} ${card.iconColor}`}>
+                    {card.icon}
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-slate-900 dark:text-white">{card.count}</p>
+                    <p className={`text-xs font-semibold ${card.labelColor}`}>{card.label}</p>
+                  </div>
+                </div>
               </button>
             )
           })}
         </div>
 
-        <div className="rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        {/* ── Inquiry Management Panel ── */}
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+
+          {/* Panel header */}
           <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800">
             <div>
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">Inquiry Management</h2>
               <p className="text-sm text-slate-400">
                 {supplierName ? (
-                  <><span className="font-medium text-slate-600 dark:text-slate-200">{supplierName}</span> - all company inquiries</>
+                  <><span className="font-medium text-slate-600 dark:text-slate-200">{supplierName}</span>{' · All company inquiries'}</>
                 ) : (
                   'Manage and respond to service inquiries'
                 )}
@@ -507,8 +583,7 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative">
                 <svg className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="11" cy="11" r="8" />
-                  <path d="m21 21-4.35-4.35" />
+                  <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
                 </svg>
                 <input
                   type="text"
@@ -525,8 +600,8 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
               >
                 <option value="all">All Inquiries</option>
                 <option value="to_pay">New</option>
-                <option value="to_ship">Viewed</option>
-                <option value="to_receive">Responded</option>
+                <option value="to_ship">Pending</option>
+                <option value="to_receive">Complete</option>
                 <option value="completed">Closed</option>
               </select>
               <button
@@ -540,10 +615,10 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
             </div>
           </div>
 
+          {/* Table */}
           {inquiryLoading ? (
             <div className="flex items-center justify-center gap-2.5 py-20 text-slate-400">
-              <Spinner />
-              <span className="text-sm">Loading inquiries...</span>
+              <Spinner /><span className="text-sm">Loading inquiries...</span>
             </div>
           ) : inquiryError ? (
             <div className="flex flex-col items-center gap-2 py-20 text-center">
@@ -561,10 +636,8 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                 </svg>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">No inquiries found</p>
-                <p className="mt-0.5 text-xs text-slate-400">Try adjusting your search or filter.</p>
-              </div>
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">No inquiries found</p>
+              <p className="text-xs text-slate-400">Try adjusting your search or filter.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -572,117 +645,270 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                 <thead>
                   <tr className="border-y border-slate-100 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-800/50">
                     {['Inquirer', 'Service', 'Contact', 'Status', 'Date', 'Actions'].map((col) => (
-                      <th key={col} className="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                        {col}
-                      </th>
+                      <th key={col} className="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">{col}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {inquiryRows.map((inquiry) => (
-                    <tr key={inquiry.id} className="transition-colors hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
-                      <td className="px-6 py-4">
-                        <p className="text-[13px] font-semibold text-slate-900 dark:text-slate-100">{inquiry.fullname}</p>
-                        <p className="mt-0.5 text-[11px] text-slate-400">{inquiry.email}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="text-[13px] font-medium text-slate-700 dark:text-slate-200">{inquiry.product?.pd_name ?? '—'}</p>
-                      </td>
-                      <td className="px-6 py-4 text-[13px] text-slate-600 dark:text-slate-300">{inquiry.contact || '—'}</td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${SERVICE_INQUIRY_STATUS_STYLES[inquiry.status]}`}>
-                          {SERVICE_INQUIRY_STATUS_LABELS[inquiry.status]}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-[12px] text-slate-400">{formatInquiryDate(inquiry.created_at)}</td>
-                      <td className="px-6 py-4">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedInquiry(inquiry)}
-                          className="rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-                        >
-                          View
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {inquiryRows.map((inquiry, idx) => {
+                    const initials = (inquiry.fullname ?? '')
+                      .split(' ').slice(0, 2).map((w: string) => w[0]?.toUpperCase() ?? '').join('')
+                    const gradient = AVATAR_GRADIENTS[idx % AVATAR_GRADIENTS.length]
+                    return (
+                      <tr key={inquiry.id} className="transition-colors hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            {inquiry.customer?.c_avatar_url ? (
+                              <img
+                                src={inquiry.customer.c_avatar_url}
+                                alt={inquiry.fullname}
+                                className="h-9 w-9 shrink-0 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br ${gradient} text-xs font-bold text-white`}>
+                                {initials || '?'}
+                              </div>
+                            )}
+                            <div>
+                              <p className="text-[13px] font-semibold text-slate-900 dark:text-slate-100">{inquiry.fullname}</p>
+                              <p className="mt-0.5 text-[11px] text-slate-400">{inquiry.email}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-[12px] font-medium text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">
+                            {inquiry.product?.pd_name ?? '—'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-1.5 text-[13px] text-slate-600 dark:text-slate-300">
+                            <svg className="h-3.5 w-3.5 shrink-0 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+                            </svg>
+                            {inquiry.contact || '—'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${getInquiryStatusStyle(inquiry.status, inquiry.created_at)}`}>
+                            {getInquiryStatusLabel(inquiry.status, inquiry.created_at)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-1.5 text-[12px] text-slate-400">
+                            <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 9v7.5" />
+                            </svg>
+                            {formatInquiryDate(inquiry.created_at)}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedInquiry(inquiry)}
+                              className="rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                            >
+                              View
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDeleteConfirmId(inquiry.id)}
+                              className="flex h-7 w-7 items-center justify-center rounded-xl border border-rose-100 text-rose-400 transition-colors hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 dark:border-rose-900/40 dark:hover:border-rose-700 dark:hover:bg-rose-900/20"
+                              title="Delete inquiry"
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-3.5 w-3.5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                              </svg>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
           )}
+
+          {/* Footer */}
+          {!inquiryLoading && !inquiryError && inquiryRows.length > 0 && (
+            <div className="border-t border-slate-100 px-6 py-4 dark:border-slate-800">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Showing 1 to {inquiryRows.length} of {totalInquiries} {totalInquiries === 1 ? 'inquiry' : 'inquiries'}
+              </p>
+            </div>
+          )}
         </div>
 
+        {/* ── Delete confirmation modal ── */}
+        {deleteConfirmId !== null && (
+          <div
+            className="fixed inset-0 z-210 flex items-center justify-center bg-black/50 p-4"
+            onClick={() => setDeleteConfirmId(null)}
+          >
+            <div
+              className="w-full max-w-sm overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-slate-900"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex flex-col items-center px-6 pt-8 pb-6 text-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-50 dark:bg-rose-500/20">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-8 w-8 text-rose-500">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                  </svg>
+                </div>
+                <h3 className="mt-4 text-lg font-bold text-slate-900 dark:text-white">Delete Inquiry</h3>
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                  Are you sure you want to delete this inquiry? This action cannot be undone.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-3 border-t border-slate-100 px-6 py-4 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setDeleteConfirmId(null)}
+                  className="rounded-2xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteInquiry(deleteConfirmId)}
+                  className="rounded-2xl bg-rose-500 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-rose-600"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Selected inquiry modal ── */}
         {selectedInquiry && (
           <div
-            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4"
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-4"
             onClick={() => setSelectedInquiry(null)}
           >
             <div
-              className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900"
+              className="w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-slate-900"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-start justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-500">Service Inquiry</p>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white">{selectedInquiry.fullname}</h3>
+              {/* Header */}
+              <div className="flex items-start justify-between px-6 pt-6 pb-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-500/20">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-7 w-7 text-indigo-500">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-500">Service Inquiry</p>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">{selectedInquiry.fullname}</h3>
+                  </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setSelectedInquiry(null)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-400 hover:bg-slate-50 dark:border-slate-700"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 text-slate-400 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M18 6 6 18M6 6l12 12" />
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="h-4 w-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
-              <div className="space-y-4 px-5 py-5">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800/60">
+
+              {/* Service + Status cards */}
+              <div className="grid grid-cols-2 gap-3 px-6 pb-4">
+                <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 p-4 dark:border-slate-700 dark:bg-slate-800/60">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-500 dark:bg-indigo-500/20">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-5 w-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+                    </svg>
+                  </div>
+                  <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Service</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100">{selectedInquiry.product?.pd_name ?? '—'}</p>
+                    <p className="mt-0.5 text-sm font-semibold text-slate-800 dark:text-slate-100">{selectedInquiry.product?.pd_name ?? '—'}</p>
                   </div>
-                  <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800/60">
+                </div>
+                <div className="flex items-center gap-3 rounded-2xl border border-amber-100 bg-amber-50/60 p-4 dark:border-amber-700/30 dark:bg-amber-500/10">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-500 dark:bg-amber-500/20">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-5 w-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Status</p>
-                    <p className="mt-1">
-                      <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${SERVICE_INQUIRY_STATUS_STYLES[selectedInquiry.status]}`}>
-                        {SERVICE_INQUIRY_STATUS_LABELS[selectedInquiry.status]}
-                      </span>
-                    </p>
+                    <span className={`mt-0.5 inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${getInquiryStatusStyle(selectedInquiry.status, selectedInquiry.created_at)}`}>
+                      {getInquiryStatusLabel(selectedInquiry.status, selectedInquiry.created_at)}
+                    </span>
                   </div>
                 </div>
-                <div className="rounded-xl border border-slate-200 p-3 text-sm text-slate-600 dark:border-slate-700 dark:text-slate-300">
-                  <p><span className="font-semibold">Email:</span> {selectedInquiry.email}</p>
-                  <p><span className="font-semibold">Contact:</span> {selectedInquiry.contact || '—'}</p>
-                  <p><span className="font-semibold">Address:</span> {selectedInquiry.address || '—'}</p>
-                  <p><span className="font-semibold">Date:</span> {formatInquiryDate(selectedInquiry.created_at)}</p>
+              </div>
+
+              {/* Details rows */}
+              <div className="mx-6 mb-4 divide-y divide-slate-100 rounded-2xl border border-slate-100 dark:divide-slate-800 dark:border-slate-700">
+                <div className="flex items-center gap-3 px-4 py-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-500 dark:bg-indigo-500/20">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                    </svg>
+                  </div>
+                  <span className="w-20 text-xs font-semibold text-slate-400">Email</span>
+                  <span className="text-sm text-slate-700 dark:text-slate-200">{selectedInquiry.email}</span>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    disabled={isUpdatingInquiry || selectedInquiry.status === 'viewed'}
-                    onClick={() => handleInquiryStatusChange(selectedInquiry.id, 'viewed')}
-                    className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-                  >
-                    Mark Viewed
-                  </button>
-                  <button
-                    type="button"
-                    disabled={isUpdatingInquiry || selectedInquiry.status === 'responded'}
-                    onClick={() => handleInquiryStatusChange(selectedInquiry.id, 'responded')}
-                    className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-emerald-700/40 dark:bg-emerald-500/10 dark:text-emerald-200"
-                  >
-                    Mark Responded
-                  </button>
-                  <button
-                    type="button"
-                    disabled={isUpdatingInquiry || selectedInquiry.status === 'closed'}
-                    onClick={() => handleInquiryStatusChange(selectedInquiry.id, 'closed')}
-                    className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-                  >
-                    Close Inquiry
-                  </button>
+                <div className="flex items-center gap-3 px-4 py-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-500 dark:bg-emerald-500/20">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+                    </svg>
+                  </div>
+                  <span className="w-20 text-xs font-semibold text-slate-400">Contact</span>
+                  <span className="text-sm text-slate-700 dark:text-slate-200">{selectedInquiry.contact || '—'}</span>
                 </div>
+                <div className="flex items-center gap-3 px-4 py-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-500 dark:bg-violet-500/20">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                    </svg>
+                  </div>
+                  <span className="w-20 text-xs font-semibold text-slate-400">Address</span>
+                  <span className="text-sm text-slate-700 dark:text-slate-200">{selectedInquiry.address || '—'}</span>
+                </div>
+                <div className="flex items-center gap-3 px-4 py-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-500 dark:bg-blue-500/20">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 9v7.5" />
+                    </svg>
+                  </div>
+                  <span className="w-20 text-xs font-semibold text-slate-400">Date</span>
+                  <span className="text-sm text-slate-700 dark:text-slate-200">{formatInquiryDate(selectedInquiry.created_at)}</span>
+                </div>
+                {selectedInquiry.intent && (
+                  <div className="flex items-start gap-3 px-4 py-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-50 text-rose-500 dark:bg-rose-500/20">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                      </svg>
+                    </div>
+                    <span className="w-20 shrink-0 text-xs font-semibold text-slate-400">Intent</span>
+                    <span className="text-sm text-slate-700 dark:text-slate-200">{selectedInquiry.intent}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer — single Complete button */}
+              <div className="grid grid-cols-1 gap-3 border-t border-slate-100 px-6 py-4 dark:border-slate-800">
+                <button
+                  type="button"
+                  disabled={isUpdatingInquiry || selectedInquiry.status === 'responded' || selectedInquiry.status === 'closed'}
+                  onClick={() => handleInquiryStatusChange(selectedInquiry.id, 'responded')}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 py-3 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-emerald-700/40 dark:bg-emerald-500/10 dark:text-emerald-300"
+                >
+                  {isUpdatingInquiry ? <Spinner /> : (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  )}
+                  Complete
+                </button>
               </div>
             </div>
           </div>

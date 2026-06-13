@@ -16,6 +16,11 @@ class AdminAccess
         'suppliers',
         'web_content',
         'settings_users',
+        'payments',
+        'expenses',
+        'email_blast',
+        'conversations',
+        'settings',
     ];
 
     public const WEB_CONTENT_SECTION_PERMISSIONS = [
@@ -81,7 +86,7 @@ class AdminAccess
     {
         return match ($level) {
             1 => self::PERMISSIONS,
-            2 => ['dashboard', 'orders', 'interior_requests', 'products', 'shipping', 'web_content', 'settings_users'],
+            2 => ['dashboard', 'orders', 'interior_requests', 'products', 'shipping', 'web_content', 'settings_users', 'payments', 'expenses', 'email_blast', 'conversations', 'settings'],
             3 => ['dashboard', 'members', 'orders', 'interior_requests'],
             4 => ['dashboard', 'products', 'web_content'],
             7 => ['dashboard', 'orders', 'interior_requests', 'products', 'shipping'],
@@ -158,6 +163,11 @@ class AdminAccess
             $normalized === '/admin',
             str_starts_with($normalized, '/admin/dashboard') => 'dashboard',
             str_starts_with($normalized, '/admin/members') => 'members',
+            str_starts_with($normalized, '/admin/member-tiers') => 'members',
+            str_starts_with($normalized, '/admin/service-inquiries') => 'members',
+            str_starts_with($normalized, '/admin/inquiries') => 'members',
+            str_starts_with($normalized, '/admin/activity-logs') => 'members',
+            str_starts_with($normalized, '/admin/partner/webstore-requests') => 'web_content',
             str_starts_with($normalized, '/admin/orders') => 'orders',
             str_starts_with($normalized, '/admin/interior-requests') => 'interior_requests',
             str_starts_with($normalized, '/admin/products'),
@@ -169,6 +179,32 @@ class AdminAccess
             str_starts_with($normalized, '/admin/webpages') => 'web_content',
             str_starts_with($normalized, '/admin/users'),
             str_starts_with($normalized, '/admin/settings/users') => 'settings_users',
+            str_starts_with($normalized, '/admin/payments'),
+            str_starts_with($normalized, '/admin/encashment') => 'payments',
+            str_starts_with($normalized, '/admin/expenses') => 'expenses',
+            str_starts_with($normalized, '/admin/email-blast'),
+            str_starts_with($normalized, '/admin/sms-blast') => 'email_blast',
+            str_starts_with($normalized, '/admin/conversations') => 'conversations',
+            str_starts_with($normalized, '/admin/settings') => 'settings',
+            default => null,
+        };
+    }
+
+    public static function webContentSectionPermissionForPath(string $path): ?string
+    {
+        $normalized = '/' . ltrim($path, '/');
+        if (str_starts_with($normalized, '/api/')) {
+            $normalized = substr($normalized, 4);
+            $normalized = $normalized === '' ? '/' : $normalized;
+        }
+
+        return match (true) {
+            str_starts_with($normalized, '/admin/web-pages/shop-builder'),
+            str_starts_with($normalized, '/admin/webpages/shop-builder') => 'wc:shop-builder',
+            str_starts_with($normalized, '/admin/web-pages/dreambuild-'),
+            str_starts_with($normalized, '/admin/webpages/dreambuild-') => 'wc:dreambuild',
+            str_starts_with($normalized, '/admin/web-pages/partner-storefront'),
+            str_starts_with($normalized, '/admin/webpages/partner-storefront') => 'wc:partner-storefronts',
             default => null,
         };
     }

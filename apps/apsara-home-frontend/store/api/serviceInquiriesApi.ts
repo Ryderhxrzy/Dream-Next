@@ -11,6 +11,7 @@ export interface ServiceInquiryItem {
   email: string
   contact: string
   address: string
+  intent: string | null
   status: ServiceInquiryStatus
   created_at: string | null
   updated_at: string | null
@@ -18,6 +19,10 @@ export interface ServiceInquiryItem {
     pd_id: number
     pd_name: string
     pd_image: string | null
+  } | null
+  customer?: {
+    c_userid: number
+    c_avatar_url: string | null
   } | null
 }
 
@@ -46,6 +51,7 @@ export interface SubmitInquiryPayload {
   email: string
   contact: string
   address: string
+  intent: string
 }
 
 export interface SubmitInquiryResponse {
@@ -66,6 +72,7 @@ export const serviceInquiriesApi = baseApi.injectEndpoints({
         method: 'POST',
         body,
       }),
+      invalidatesTags: ['ServiceInquiries'],
     }),
     getSupplierServiceInquiries: builder.query<ServiceInquiriesResponse, { status?: string; per_page?: number } | void>({
       query: (params) => ({
@@ -99,6 +106,13 @@ export const serviceInquiriesApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['ServiceInquiries'],
     }),
+    deleteServiceInquiry: builder.mutation<{ message: string }, number>({
+      query: (id) => ({
+        url: `/api/supplier/service-inquiries/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['ServiceInquiries'],
+    }),
   }),
 })
 
@@ -108,4 +122,5 @@ export const {
   useUpdateServiceInquiryStatusMutation,
   useGetAdminServiceInquiriesQuery,
   useUpdateAdminServiceInquiryStatusMutation,
+  useDeleteServiceInquiryMutation,
 } = serviceInquiriesApi

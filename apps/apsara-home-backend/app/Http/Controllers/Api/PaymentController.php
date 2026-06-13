@@ -902,6 +902,18 @@ class PaymentController extends Controller
             ->where('ch_checkout_id', $checkoutId)
             ->first();
 
+        // Block cross-user PII access: an authenticated user must own this checkout.
+        // Guest checkouts (ch_customer_id = 0/null) are exempt — the checkout ID is their proof.
+        $requestUser = $request->user();
+        if (
+            $order !== null
+            && $requestUser !== null
+            && (int) ($order->ch_customer_id ?? 0) > 0
+            && (int) $order->ch_customer_id !== (int) $requestUser->getAuthIdentifier()
+        ) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
         $customerPayload = [
             'name' => is_array($cachedCustomer) ? ($cachedCustomer['name'] ?? null) : null,
             'email' => is_array($cachedCustomer) ? ($cachedCustomer['email'] ?? null) : null,

@@ -228,7 +228,7 @@ const getWebstoreHistoryRows = (requests: Array<AdminWebstoreRequest | null | un
   return dedupedRows.sort((a, b) => {
     const aTime = new Date(a.latest_receipt_submitted_at ?? a.reviewed_at ?? a.created_at ?? 0).getTime()
     const bTime = new Date(b.latest_receipt_submitted_at ?? b.reviewed_at ?? b.created_at ?? 0).getTime()
-    return aTime - bTime
+    return bTime - aTime
   })
 }
 

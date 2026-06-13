@@ -51,7 +51,7 @@ export default function Template2({
   return (
     <div className="bg-[#faf7f3] font-sans text-[#1e293b]">
       {/* Nav */}
-      <nav className="flex items-center justify-between bg-white px-10 py-5 shadow-sm">
+      <nav className="sticky top-0 z-50 flex items-center justify-between bg-white px-10 py-5 shadow-sm">
         <span className="text-xl font-black tracking-tight" style={{ color: primaryColor }}>{storeName}</span>
         <div className="hidden items-center gap-8 text-sm text-slate-500 md:flex">
           <span className="cursor-pointer transition hover:text-slate-900">Home</span>

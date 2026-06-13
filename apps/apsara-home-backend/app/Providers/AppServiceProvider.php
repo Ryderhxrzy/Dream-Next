@@ -94,9 +94,10 @@ class AppServiceProvider extends ServiceProvider
         );
 
         // Cart mutations are user-driven but can be spammed to generate DB/cache load.
+        // Use getKey() — models like Customer have a non-standard primary key (c_userid), so ->id returns null.
         RateLimiter::for('cart-write', fn (Request $req) =>
             Limit::perMinute(30)->by(
-                ($req->user()?->id ? 'u:' . $req->user()->id . '|' : '') . 'ip:' . $req->ip()
+                ($req->user()?->getKey() !== null ? 'u:' . $req->user()->getKey() . '|' : '') . 'ip:' . $req->ip()
             )
         );
 
@@ -118,12 +119,12 @@ class AppServiceProvider extends ServiceProvider
 
         // Admin or authenticated write-heavy endpoints
         RateLimiter::for('admin-write', fn (Request $req) =>
-            Limit::perMinute(60)->by(($req->user()?->id ? 'u:' . $req->user()->id . '|' : '') . 'ip:' . $req->ip())
+            Limit::perMinute(60)->by(($req->user()?->getKey() !== null ? 'u:' . $req->user()->getKey() . '|' : '') . 'ip:' . $req->ip())
         );
 
         // File upload endpoints (larger body / higher abuse risk)
         RateLimiter::for('uploads', fn (Request $req) =>
-            Limit::perMinute(20)->by(($req->user()?->id ? 'u:' . $req->user()->id . '|' : '') . 'ip:' . $req->ip())
+            Limit::perMinute(20)->by(($req->user()?->getKey() !== null ? 'u:' . $req->user()->getKey() . '|' : '') . 'ip:' . $req->ip())
         );
     }
 }
