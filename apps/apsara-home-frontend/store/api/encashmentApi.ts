@@ -275,6 +275,61 @@ export interface UnilevelAwardItem {
   awarded_at?: string | null;
 }
 
+export interface DownlineActivityItem {
+  id: number;
+  checkout_id: string;
+  customer_id: number;
+  buyer_name?: string | null;
+  buyer_username?: string | null;
+  buyer_email?: string | null;
+  level_no: number;
+  product_name?: string | null;
+  product_sku?: string | null;
+  product_image?: string | null;
+  quantity: number;
+  amount: number;
+  earned_pv: number;
+  payment_status?: string | null;
+  approval_status?: string | null;
+  fulfillment_status?: string | null;
+  shipment_status?: string | null;
+  bonus_amount: number;
+  bonus_rate?: number | null;
+  bonus_awarded_at?: string | null;
+  created_at?: string | null;
+  paid_at?: string | null;
+  pv_posted_at?: string | null;
+}
+
+export interface DownlineActivityResponse {
+  summary: {
+    total_orders: number;
+    total_pv: number;
+    total_amount: number;
+    total_bonus: number;
+    active_downlines: number;
+  };
+  activities: DownlineActivityItem[];
+  levels: number[];
+  meta: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    from: number | null;
+    to: number | null;
+  };
+}
+
+interface DownlineActivityQuery {
+  page?: number;
+  perPage?: number;
+  level?: number | null;
+  status?: string;
+  search?: string;
+  refreshKey?: number;
+}
+
 export interface CreateAffiliateVoucherPayload {
   amount: number;
   expires_at?: string;
@@ -348,9 +403,17 @@ export interface WalletOverviewResponse {
       pv_per_milestone: number;
       cash_per_milestone: number;
       milestones_reached: number;
+      credited_milestones?: number;
+      locked_milestones?: number;
       cash_earned: number;
+      potential_cash_earned?: number;
       next_milestone_pv: number;
+      current_cycle_pv?: number;
       pv_to_next: number;
+      is_qualified?: boolean;
+      activation_required_pv?: number | null;
+      activation_current_pv?: number | null;
+      activation_remaining_pv?: number | null;
     };
     cash_credits: number;
     cash_debits: number;
@@ -453,6 +516,21 @@ export const encashmentApi = baseApi.injectEndpoints({
       }),
       providesTags: ['Encashment'],
     }),
+    getDownlineActivity: builder.query<DownlineActivityResponse, DownlineActivityQuery | void>({
+      query: (params) => ({
+        url: '/api/encashment/downline-activity',
+        method: 'GET',
+        params: {
+          page: params?.page ?? 1,
+          per_page: params?.perPage ?? 15,
+          level: params?.level || undefined,
+          status: params?.status && params.status !== 'all' ? params.status : undefined,
+          q: params?.search || undefined,
+          _refresh: params?.refreshKey,
+        },
+      }),
+      providesTags: ['Encashment'],
+    }),
     createAffiliateVoucher: builder.mutation<CreateAffiliateVoucherResponse, CreateAffiliateVoucherPayload>({
       query: (body) => ({
         url: '/api/encashment/vouchers',
@@ -527,6 +605,7 @@ export const {
   useSubmitEncashmentVerificationRequestMutation,
   useSubmitEncashmentVerificationWithPayoutMutation,
   useGetWalletOverviewQuery,
+  useGetDownlineActivityQuery,
   useCreateAffiliateVoucherMutation,
   useGetAdminEncashmentRequestsQuery,
   useApproveAdminEncashmentMutation,
