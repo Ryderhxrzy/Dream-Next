@@ -1,7 +1,6 @@
-import { redirect } from 'next/navigation'
-import LandingPage from '@/components/landing-page/LandingPage'
+import LandingPageView from '@/components/partner/PartnerLandingPageView'
 import type { Metadata } from 'next'
-import { getPartnerStorefrontBySlug } from '@/libs/partnerStorefrontServer'
+import { getPartnerStorefrontBySlug, getPartnerStorefrontItemBySlug } from '@/libs/partnerStorefrontServer'
 
 type PageProps = {
   params: Promise<{ partner: string }>
@@ -59,19 +58,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title: displayName,
       description: `Discover premium furniture, appliances, and inspired spaces on ${displayName}.`,
     },
-    robots: {
-      index: false,
-      follow: false,
-    },
   }
 }
 
 export default async function PartnerLandingPage({ params }: PageProps) {
   const { partner } = await params
   const normalizedPartner = partner.trim().toLowerCase()
-  const storefront = await getPartnerStorefrontBySlug(normalizedPartner)
-  if (storefront) {
-    redirect(`/shop/${normalizedPartner}`)
-  }
-  return <LandingPage partnerSlug={partner} />
+  const storefrontItem = await getPartnerStorefrontItemBySlug(normalizedPartner)
+
+  return <LandingPageView partnerSlug={normalizedPartner} storefrontItem={storefrontItem ?? undefined} />
 }

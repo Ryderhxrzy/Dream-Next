@@ -165,7 +165,7 @@ Route::middleware('throttle:checkout')->group(function () {
     Route::get('/orders/track', [PaymentController::class, 'trackGuestOrder']);
 });
 
-// AI support is expensive — same strict limit as auth
+// AI support is expensive â€” same strict limit as auth
 Route::middleware('throttle:auth')->post('/ai-support', [\App\Http\Controllers\Api\AiSupportController::class, 'handle']);
 
 // Gemini Chat API - for mobile app chatbot with custom training data
@@ -236,7 +236,7 @@ Route::middleware('throttle:public')->group(function () {
 });
 
 
-// Service Inquiries — public (guests allowed; auth optional for customer_id linking)
+// Service Inquiries â€” public (guests allowed; auth optional for customer_id linking)
 Route::middleware('throttle:public')->post('/service-inquiries', [ServiceInquiryController::class, 'store']);
 
 // Protected routes (requires Sanctum token)
@@ -264,7 +264,7 @@ Route::middleware(['auth:sanctum', 'customer.actor'])->group(function () {
     Route::get('/webstore-requests/latest', [AuthController::class, 'latestWebstoreRequest']);
     Route::post('/webstore-requests/sync-account', [AuthController::class, 'syncWebstorePartnerAccount']);
     Route::get('/account/snapshot', [AuthController::class, 'accountSnapshot']);
-    // Rewards — daily check-in (earns Personal PV)
+    // Rewards â€” daily check-in (earns Personal PV)
     Route::get('/rewards/check-in', [RewardCheckinController::class, 'status']);
     Route::post('/rewards/check-in', [RewardCheckinController::class, 'checkIn'])->middleware('throttle:30,1');
     Route::get('/rewards/check-in/history', [RewardCheckinController::class, 'history']);
@@ -291,6 +291,7 @@ Route::middleware(['auth:sanctum', 'customer.actor'])->group(function () {
     Route::post('/encashment/payout-methods', [EncashmentController::class, 'storePayoutMethod']);
     Route::delete('/encashment/payout-methods/{id}', [EncashmentController::class, 'destroyPayoutMethod']);
     Route::get('/encashment/wallet', [EncashmentController::class, 'walletOverview']);
+    Route::get('/encashment/downline-activity', [EncashmentController::class, 'downlineActivity']);
     Route::post('/encashment/vouchers', [EncashmentController::class, 'createAffiliateVoucher']);
     Route::post('/encashment/verification-request', [EncashmentController::class, 'submitVerificationRequest']);
     Route::post('/encashment/verification-request-with-payout', [EncashmentController::class, 'submitVerificationRequestWithPayout']);
@@ -384,7 +385,7 @@ Route::middleware(['auth:sanctum', 'customer.actor'])->group(function () {
     Route::delete('/user-behavior', [UserBehaviorController::class, 'clearBehavior']);
 });
 
-Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_admin,admin,csr'])->group(function () {
+Route::middleware(['auth:sanctum', 'admin.role:super_admin,admin,csr'])->group(function () {
     Route::get('/admin/members', [MemberController::class, 'index']);
     Route::get('/admin/members/emails', [MemberController::class, 'getEmails']);
     Route::get('/admin/members/top-earners', [MemberController::class, 'topEarners']);
@@ -427,7 +428,7 @@ Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_a
     Route::get('/admin/members/{id}/activity-logs', [MemberActivityLogController::class, 'memberLogs']);
 });
 
-Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_admin,admin,merchant_admin,web_content'])->group(function () {
+Route::middleware(['auth:sanctum', 'admin.role:super_admin,admin,merchant_admin,web_content'])->group(function () {
     Route::get('/admin/partner/webstore-requests', [AdminInquiryController::class, 'partnerWebstoreRequests']);
     Route::post('/admin/partner/webstore-requests/payment-session', [AdminInquiryController::class, 'createPartnerWebstorePaymentSession']);
     Route::get('/admin/partner/webstore-requests/payment-session/{checkoutId}', [AdminInquiryController::class, 'verifyPartnerWebstorePaymentSession']);
@@ -437,7 +438,7 @@ Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_a
     Route::delete('/admin/partner/webstore-receipt-items/{id}', [AdminInquiryController::class, 'destroyPartnerWebstoreReceiptItem']);
 });
 
-Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.or_supplier'])->group(function () {
+Route::middleware(['auth:sanctum', 'admin.or_supplier'])->group(function () {
     Route::get('/admin/products', [ProductController::class, 'index']);
     Route::get('/admin/products/export', [ProductController::class, 'exportCsv']);
     Route::get('/admin/products/activity-logs', [ProductController::class, 'activityLogs']);
@@ -478,14 +479,14 @@ Route::get('/admin/webpages/adds-content', [AddsContentController::class, 'index
     Route::put('/admin/web-pages/{type}/{id}', [WebPageController::class, 'adminUpdate'])->where('type', 'merchant-catalogue')->middleware('throttle:admin-write');
 });
 
-Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_admin,admin,merchant_admin,web_content'])->group(function () {
+Route::middleware(['auth:sanctum', 'admin.role:super_admin,admin,merchant_admin,web_content'])->group(function () {
     Route::get('/admin/categories', [CategoryController::class, 'index']);
     Route::post('/admin/categories', [CategoryController::class, 'store']);
     Route::put('/admin/categories/{id}', [CategoryController::class, 'update']);
     Route::delete('/admin/categories/{id}', [CategoryController::class, 'destroy']);
 });
 
-Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_admin,admin'])->group(function () {
+Route::middleware(['auth:sanctum', 'admin.role:super_admin,admin'])->group(function () {
     Route::get('/admin/shipping/rates', [ShippingRateController::class, 'adminIndex']);
     Route::post('/admin/shipping/rates', [ShippingRateController::class, 'store']);
     Route::delete('/admin/shipping/rates', [ShippingRateController::class, 'bulkDestroy']);
@@ -522,13 +523,13 @@ Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_a
     Route::get('/admin/sms-blast/recipients', [\App\Http\Controllers\Api\AdminSmsBlastController::class, 'getRecipients']);
 });
 
-Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_admin,admin,csr,merchant_admin,web_content'])->group(function () {
+Route::middleware(['auth:sanctum', 'admin.role:super_admin,admin,csr,merchant_admin,web_content'])->group(function () {
     Route::get('/admin/orders', [AdminOrderController::class, 'index']);
     Route::get('/admin/orders/counts', [AdminOrderController::class, 'counts']);
     Route::delete('/admin/orders/{id}', [AdminOrderController::class, 'destroy']);
 });
 
-Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_admin,admin,csr,merchant_admin'])->group(function () {
+Route::middleware(['auth:sanctum', 'admin.role:super_admin,admin,csr,merchant_admin'])->group(function () {
     Route::get('/admin/interior-requests', [InteriorRequestController::class, 'adminIndex']);
     Route::patch('/admin/interior-requests/{id}', [InteriorRequestController::class, 'adminUpdate']);
     Route::post('/admin/interior-requests/{id}/updates', [InteriorRequestController::class, 'adminStoreUpdate']);
@@ -558,7 +559,7 @@ Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_a
     Route::get('/admin/shipping/jnt/track/{trackingNo}', [JntShippingController::class, 'trackByTrackingNo']);
 });
 
-Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_admin,admin,accounting,finance_officer'])->group(function () {
+Route::middleware(['auth:sanctum', 'admin.role:super_admin,admin,accounting,finance_officer'])->group(function () {
     Route::get('/admin/payments/overview', [AdminPaymentController::class, 'overview']);
     Route::get('/admin/payments/voucher-product-rules', [AdminPaymentController::class, 'voucherProductRules']);
     Route::put('/admin/payments/voucher-product-rules', [AdminPaymentController::class, 'updateVoucherProductRules']);
@@ -579,7 +580,7 @@ Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_a
     Route::delete('/admin/expenses/{id}', [ExpenseController::class, 'destroy']);
 });
 
-Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_admin,admin'])->group(function () {
+Route::middleware(['auth:sanctum', 'admin.role:super_admin,admin'])->group(function () {
     Route::get('/admin/users', [AdminUserController::class, 'index']);
     Route::get('/admin/users/{id}/activity', [AdminUserController::class, 'activity']);
     Route::post('/admin/users/presence/heartbeat', [AdminUserController::class, 'heartbeat']);
@@ -590,21 +591,21 @@ Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_a
     Route::put('/admin/users/{id}/unban', [AdminUserController::class, 'unban']);
 });
 
-Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_admin'])->group(function () {
+Route::middleware(['auth:sanctum', 'admin.role:super_admin'])->group(function () {
     Route::get('/admin/web-pages/database/exports', [WebPageController::class, 'listDatabaseExports']);
     Route::post('/admin/web-pages/database/exports', [WebPageController::class, 'exportDatabase']);
     Route::post('/admin/web-pages/database/exports/download', [WebPageController::class, 'downloadDatabaseExport']);
     Route::delete('/admin/web-pages/database/exports', [WebPageController::class, 'deleteDatabaseExport']);
 });
 
-Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_admin,admin,web_content'])->group(function () {
+Route::middleware(['auth:sanctum', 'admin.role:super_admin,admin,web_content'])->group(function () {
     Route::get('/admin/web-pages/{type}', [WebPageController::class, 'adminIndex']);
     Route::post('/admin/web-pages/{type}', [WebPageController::class, 'adminStore'])->middleware('throttle:admin-write');
     Route::put('/admin/web-pages/{type}/{id}', [WebPageController::class, 'adminUpdate'])->middleware('throttle:admin-write');
     Route::delete('/admin/web-pages/{type}/{id}', [WebPageController::class, 'adminDestroy'])->middleware('throttle:admin-write');
 });
 
-Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.role:super_admin,admin,web_content'])->group(function () {
+Route::middleware(['auth:sanctum', 'admin.role:super_admin,admin,web_content'])->group(function () {
     Route::get('/admin/partner-users', [PartnerUserController::class, 'index']);
     Route::post('/admin/partner-users', [PartnerUserController::class, 'store']);
     Route::put('/admin/partner-users/{id}', [PartnerUserController::class, 'update']);
@@ -637,13 +638,13 @@ Route::prefix('supplier/invites')->group(function () {
     Route::post('/accept', [SupplierUserController::class, 'acceptInvite']);
 });
 
-Route::middleware(['auth:sanctum', 'admin.actor', 'admin.token.validation'])->prefix('admin/auth')->group(function () {
+Route::middleware(['auth:sanctum', 'admin.actor'])->prefix('admin/auth')->group(function () {
     Route::post('/logout', [AdminAuthController::class, 'logout']);
     Route::get('/me', [AdminAuthController::class, 'me']);
     Route::put('/me', [AdminAuthController::class, 'updateMe']);
 });
 
-Route::middleware(['auth:sanctum', 'admin.actor', 'admin.token.validation'])->group(function () {
+Route::middleware(['auth:sanctum', 'admin.actor'])->group(function () {
     // Read-only storefront orders endpoint for partner storefront dashboards.
     Route::get('/admin/storefront-orders', [AdminOrderController::class, 'index']);
 });
@@ -698,10 +699,11 @@ Route::middleware(['auth:sanctum', 'supplier.actor'])->group(function () {
     // Service Inquiries
     Route::get('/supplier/service-inquiries', [ServiceInquiryController::class, 'index']);
     Route::patch('/supplier/service-inquiries/{id}', [ServiceInquiryController::class, 'updateStatus']);
+    Route::delete('/supplier/service-inquiries/{id}', [ServiceInquiryController::class, 'destroy']);
 
 });
 
-Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.actor'])->group(function () {
+Route::middleware(['auth:sanctum', 'admin.actor'])->group(function () {
     Route::get('/admin/supplier-chat/conversations', [SupplierChatController::class, 'index']);
     Route::post('/admin/supplier-chat/conversations', [SupplierChatController::class, 'store']);
     Route::get('/admin/supplier-chat/conversations/{id}', [SupplierChatController::class, 'show']);
@@ -711,8 +713,8 @@ Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.actor'])->gr
     Route::patch('/admin/supplier-chat/conversations/{id}/status', [SupplierChatController::class, 'updateStatus']);
 });
 
-// QA Testing Board — internal tool, any authenticated admin can read/update.
-Route::middleware(['auth:sanctum', 'admin.token.validation', 'admin.actor'])->group(function () {
+// QA Testing Board â€” internal tool, any authenticated admin can read/update.
+Route::middleware(['auth:sanctum', 'admin.actor'])->group(function () {
     Route::get('/admin/qa/test-statuses', [QaTestStatusController::class, 'index']);
     Route::put('/admin/qa/test-statuses', [QaTestStatusController::class, 'upsert']);
     Route::delete('/admin/qa/test-statuses', [QaTestStatusController::class, 'reset']);
@@ -741,3 +743,5 @@ Route::prefix('meilisearch')->group(function () {
         Route::post('/clear-index', [MeilisearchController::class, 'clearIndex']);
     });
 });
+
+

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useId, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   TrendingUp, Users, Award, Zap, Gift, Star, BarChart3,
-  BookOpen, Download, Search, ChevronDown, X, Menu, Copy, Check,
+  BookOpen, Download, Search, ChevronDown, X, Menu,
 } from 'lucide-react';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -235,7 +235,7 @@ function DiagramLightbox({ svg, onClose }: { svg: string; onClose: () => void })
   const reset = () => setVb(origVB);
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col bg-black/95">
+    <div className="commission-docs-lightbox fixed inset-0 z-[100] flex flex-col bg-black/95">
       <div className="flex items-center justify-between px-5 py-3 bg-[#1a1205] border-b border-[#3d2e0a] shrink-0">
         <div className="flex items-center gap-3">
           <span className="text-xs text-[#a07830] font-mono">{Math.round(scale * 100)}% · scroll to zoom · drag to pan</span>
@@ -274,7 +274,6 @@ function MermaidDiagram({ code }: { code: string }) {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true); setSvg('');
     import('mermaid').then(({ default: mermaid }) => {
       mermaid.initialize({
         startOnLoad: false,
@@ -312,7 +311,7 @@ function MermaidDiagram({ code }: { code: string }) {
         onClick={() => !loading && svg && setOpen(true)}
         title="Click to expand"
       >
-        <div className="flex items-center justify-between px-4 py-2 border-b border-[#3d2e0a] bg-[#1a1205]">
+        <div className="commission-docs-diagram-toolbar flex items-center justify-between px-4 py-2 border-b border-[#3d2e0a] bg-[#1a1205]">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#f85149]/80" />
             <span className="w-2.5 h-2.5 rounded-full bg-[#3fb950]/80" />
@@ -392,10 +391,6 @@ function SubHeading({ id, children }: { id?: string; children: React.ReactNode }
 
 function Divider() { return <hr className="border-amber-100 my-10" />; }
 
-function Pill({ children }: { children: React.ReactNode }) {
-  return <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">{children}</span>;
-}
-
 function SectionTag({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full mb-3 text-amber-800 bg-amber-100">
@@ -406,7 +401,7 @@ function SectionTag({ icon, children }: { icon: React.ReactNode; children: React
 
 function FormulaBlock({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 mb-5 font-mono text-sm text-amber-900 whitespace-pre leading-relaxed">
+    <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 mb-5 font-mono text-sm text-amber-900 whitespace-pre leading-relaxed print:whitespace-pre-wrap">
       {children}
     </div>
   );
@@ -513,28 +508,120 @@ export default function CommissionDocs() {
   );
 
   return (
-    <div className="flex h-screen bg-white overflow-hidden">
-      <div className="hidden lg:block w-64 shrink-0 h-full">{SidebarContent}</div>
+    <div className="commission-docs-root flex h-screen bg-white overflow-hidden">
+      <style jsx global>{`
+        @media print {
+          @page {
+            size: A4;
+            margin: 12mm;
+          }
+
+          html,
+          body {
+            height: auto !important;
+            overflow: visible !important;
+            background: #ffffff !important;
+          }
+
+          body * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+
+          .commission-docs-root {
+            display: block !important;
+            height: auto !important;
+            min-height: 0 !important;
+            overflow: visible !important;
+            background: #ffffff !important;
+          }
+
+          .commission-docs-sidebar,
+          .commission-docs-mobile-header,
+          .commission-docs-lightbox,
+          .commission-docs-diagram-toolbar {
+            display: none !important;
+          }
+
+          .commission-docs-scroll,
+          .commission-docs-content {
+            display: block !important;
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
+          }
+
+          .commission-docs-hero {
+            background: #8a6a18 !important;
+            color: #ffffff !important;
+          }
+
+          .commission-docs-content {
+            max-width: none !important;
+            width: 100% !important;
+            padding: 12mm 0 0 !important;
+          }
+
+          .commission-docs-content table,
+          .commission-docs-content tr,
+          .commission-docs-content .print-avoid-break {
+            break-inside: avoid;
+            page-break-inside: avoid;
+          }
+
+          .commission-docs-content section {
+            padding-top: 0 !important;
+          }
+
+          .commission-docs-content h2,
+          .commission-docs-content h3 {
+            break-after: avoid;
+            page-break-after: avoid;
+          }
+
+          .commission-docs-content .overflow-x-auto {
+            overflow: visible !important;
+          }
+
+          .commission-docs-content table {
+            width: 100% !important;
+            table-layout: auto !important;
+            font-size: 11px !important;
+          }
+
+          .commission-docs-content th,
+          .commission-docs-content td {
+            padding: 8px 10px !important;
+            vertical-align: top !important;
+          }
+
+          .commission-docs-content svg {
+            max-width: 100% !important;
+            height: auto !important;
+          }
+        }
+      `}</style>
+      <div className="commission-docs-sidebar hidden lg:block w-64 shrink-0 h-full">{SidebarContent}</div>
 
       <AnimatePresence>
         {mobileOpen && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-40 bg-black/40 lg:hidden" onClick={() => setMobileOpen(false)} />
-            <motion.div initial={{ x: -280 }} animate={{ x: 0 }} exit={{ x: -280 }} transition={{ type: 'spring', damping: 30, stiffness: 300 }} className="fixed left-0 top-0 bottom-0 z-50 w-72 lg:hidden">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="commission-docs-lightbox fixed inset-0 z-40 bg-black/40 lg:hidden" onClick={() => setMobileOpen(false)} />
+            <motion.div initial={{ x: -280 }} animate={{ x: 0 }} exit={{ x: -280 }} transition={{ type: 'spring', damping: 30, stiffness: 300 }} className="commission-docs-lightbox fixed left-0 top-0 bottom-0 z-50 w-72 lg:hidden">
               {SidebarContent}
             </motion.div>
           </>
         )}
       </AnimatePresence>
 
-      <div className="flex-1 h-full overflow-y-auto">
-        <div className="lg:hidden sticky top-0 z-30 bg-white border-b border-amber-100 px-4 py-3 flex items-center gap-3">
+      <div className="commission-docs-scroll flex-1 h-full overflow-y-auto">
+        <div className="commission-docs-mobile-header lg:hidden sticky top-0 z-30 bg-white border-b border-amber-100 px-4 py-3 flex items-center gap-3">
           <button onClick={() => setMobileOpen(true)} className="text-amber-600"><Menu size={20} /></button>
           <span className="text-sm font-semibold text-gray-800">Commission System Docs</span>
         </div>
 
         {/* Hero Banner */}
-        <div className="bg-gradient-to-br from-[#b8952a] via-[#9a7a22] to-[#7a6018] text-white px-6 py-10">
+        <div className="commission-docs-hero bg-gradient-to-br from-[#b8952a] via-[#9a7a22] to-[#7a6018] text-white px-6 py-10">
           <div className="max-w-3xl mx-auto">
             <div className="flex items-center gap-2 text-amber-200 text-xs font-semibold uppercase tracking-widest mb-3">
               <TrendingUp size={13} />Apsara Home — Business Rules
@@ -551,14 +638,14 @@ export default function CommissionDocs() {
           </div>
         </div>
 
-        <div className="max-w-3xl mx-auto px-6 py-10 pb-24 space-y-0">
+        <div className="commission-docs-content max-w-3xl mx-auto px-6 py-10 pb-24 space-y-0">
 
           {/* ── PV ───────────────────────────────────────────── */}
           <section id="pv" data-section>
             <SectionTag icon={<TrendingUp size={11} />}>Performance Value</SectionTag>
             <SectionHeading>Performance Value (PV)</SectionHeading>
             <p className="text-gray-600 text-[15px] leading-relaxed mb-5">
-              <strong>Performance Value (PV)</strong> is the core unit used to measure a member's purchasing activity. Each product carries a set PV value. PV is only credited <strong>after an order has been delivered</strong> — never on payment alone.
+              <strong>Performance Value (PV)</strong> is the core unit used to measure a member&apos;s purchasing activity. Each product carries a set PV value. PV is only credited <strong>after an order has been delivered</strong> — never on payment alone.
             </p>
             <Note type="info">PV is only earned on delivery. This prevents PV from being granted for orders that are cancelled, returned, or never received.</Note>
           </section>
@@ -583,11 +670,11 @@ export default function CommissionDocs() {
             <InfoTable
               headers={['Bonus Pool', 'Allocation', 'What It Funds']}
               rows={[
-                [<span key="a" className="font-semibold text-amber-700">Personal Cashback</span>, <Badge label="4%" />, 'Personal checkout discount balance earned by the buyer'],
-                [<span key="b" className="font-semibold text-amber-700">Group Purchase Bonus</span>, <Badge label="6%" />, 'Distributed to up to 10 levels of uplines'],
-                [<span key="c" className="font-semibold text-amber-700">Affiliate Performance</span>, <Badge label="2.9%" />, "Funds milestone bonuses for the buyer's direct sponsor"],
-                [<span key="d" className="font-semibold text-amber-700">Yearly Global Bonus</span>, <Badge label="1%" />, 'Year-end reward for top PV earners'],
-                [<span key="e" className="font-semibold text-amber-700">Product Purchase Points</span>, <Badge label="86.1%" color="gray" />, 'Points credited to the buyer'],
+                [<span key="a" className="font-semibold text-amber-700">Personal Cashback</span>, <Badge key="b" label="4%" />, 'Personal checkout discount balance earned by the buyer'],
+                [<span key="c" className="font-semibold text-amber-700">Group Purchase Bonus</span>, <Badge key="d" label="6%" />, 'Distributed to up to 10 levels of uplines'],
+                [<span key="e" className="font-semibold text-amber-700">Affiliate Performance</span>, <Badge key="f" label="2.9%" />, "Funds milestone bonuses for the buyer's direct sponsor"],
+                [<span key="g" className="font-semibold text-amber-700">Yearly Global Bonus</span>, <Badge key="h" label="1%" />, 'Year-end reward for top PV earners'],
+                [<span key="i" className="font-semibold text-amber-700">Product Purchase Points</span>, <Badge key="j" label="86.1%" color="gray" />, 'Points credited to the buyer'],
               ]}
             />
             <Note type="tip">The full 100% of PV is always accounted for — nothing is lost or unallocated.</Note>
@@ -600,7 +687,7 @@ export default function CommissionDocs() {
             <SectionTag icon={<Zap size={11} />}>Monthly Activation</SectionTag>
             <SectionHeading>Monthly Activation</SectionHeading>
             <p className="text-gray-600 text-[15px] leading-relaxed mb-5">
-              Activation is a monthly status that determines whether a member can <strong>receive</strong> unilevel and affiliate performance bonuses from their network. It does <strong>not</strong> affect a member's own cashback or direct referral commission.
+              Activation is a monthly status that determines whether a member can <strong>receive</strong> unilevel and affiliate performance bonuses from their network. It does <strong>not</strong> affect a member&apos;s own cashback or direct referral commission.
             </p>
           </section>
 
@@ -627,7 +714,7 @@ export default function CommissionDocs() {
                 ['Direct Referral Commission', <Badge key="g" label="Always received" color="green" />, <Badge key="h" label="Always received" color="green" />],
               ]}
             />
-            <Note type="warning">If a member is inactive, they are "invisible" in the unilevel chain that month. Their downline's PV still flows upward, but the bonus goes to the next active person above them.</Note>
+            <Note type="warning">If a member is inactive, they are &quot;invisible&quot; in the unilevel chain that month. Their downline&apos;s PV still flows upward, but the bonus goes to the next active person above them.</Note>
           </section>
 
           <Divider />
@@ -681,14 +768,14 @@ export default function CommissionDocs() {
             <SectionTag icon={<Users size={11} />}>Direct Referral</SectionTag>
             <SectionHeading>Direct Referral Commission</SectionHeading>
             <p className="text-gray-600 text-[15px] leading-relaxed mb-5">
-              When a <strong>new member makes their first SRP purchase</strong> through a member's referral link, that member earns a <strong>Direct Referral Commission</strong> — on the first purchase only.
+              When a <strong>new member makes their first SRP purchase</strong> through a member&apos;s referral link, that member earns a <strong>Direct Referral Commission</strong> — on the first purchase only.
             </p>
           </section>
 
           <section id="referral-how" data-section className="pt-2">
             <SubHeading id="referral-how">How It Works</SubHeading>
             <p className="text-sm text-gray-600 mb-4">
-              The commission is computed from the product's commission-eligible amount and split equally between cash and e-GC.
+              The commission is computed from the product&apos;s commission-eligible amount and split equally between cash and e-GC.
               Both portions are held pending on payment and released once the order is delivered.
             </p>
             <InfoTable
@@ -723,7 +810,7 @@ Order Delivered → Both portions released (Available)`}</FormulaBlock>
             <SectionTag icon={<BarChart3 size={11} />}>Group Purchase Bonus</SectionTag>
             <SectionHeading>Unilevel — Group Purchase Bonus</SectionHeading>
             <p className="text-gray-600 text-[15px] leading-relaxed mb-5">
-              The <strong>Group Purchase Bonus</strong> is the main network earning. Every time any member in a person's network receives a delivered order, that purchase generates a bonus that flows <strong>upward</strong> through the sponsor chain.
+              The <strong>Group Purchase Bonus</strong> is the main network earning. Every time any member in a person&apos;s network receives a delivered order, that purchase generates a bonus that flows <strong>upward</strong> through the sponsor chain.
             </p>
           </section>
 
@@ -778,7 +865,7 @@ Order Delivered → Both portions released (Available)`}</FormulaBlock>
 → Sponsor earns ₱5,000
 
 Resets to 0 every 1st of the month — earnable again each month.`}</FormulaBlock>
-            <Note type="warning">The PV counter resets every 1st of the month. Only the current month's direct PV counts toward milestones — previous months do not carry over.</Note>
+            <Note type="warning">The PV counter resets every 1st of the month. Only the current month&apos;s direct PV counts toward milestones — previous months do not carry over.</Note>
           </section>
 
           <Note type="info">The threshold is fixed at 50,000 PV. When the sponsor reaches it, PHP 5,000 is credited and the visible progress meter resets to 0 for the next 50,000 PV cycle within the same month.</Note>
@@ -905,7 +992,7 @@ Resets to 0 every 1st of the month — earnable again each month.`}</FormulaBloc
 
           <section id="diagram-rank" data-section className="pt-2">
             <SubHeading id="diagram-rank">Rank Determination</SubHeading>
-            <p className="text-sm text-gray-600 mb-1">How the system evaluates all rank criteria simultaneously to assign or maintain a member's tier.</p>
+            <p className="text-sm text-gray-600 mb-1">How the system evaluates all rank criteria simultaneously to assign or maintain a member&apos;s tier.</p>
             <MermaidDiagram code={D.rankDetermination} />
           </section>
 

@@ -89,6 +89,7 @@ const baseQuery = fetchBaseQuery({
 
 let banSignOutInFlight = false
 let adminSessionRecoveryInFlight = false
+let expiredSessionSignOutInFlight = false
 
 const baseQueryWithBanCheck: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
     args,
@@ -168,6 +169,48 @@ const baseQueryWithBanCheck: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQ
             clearAccessTokenCache()
             await clearAdminSession('/admin/login?session=expired')
             window.location.replace('/admin/login?session=expired')
+        }
+    }
+
+    if (
+        result.error?.status === 401 &&
+        typeof window !== 'undefined' &&
+        !expiredSessionSignOutInFlight &&
+        !banSignOutInFlight &&
+        !adminSessionRecoveryInFlight &&
+        !requestUrl.includes('/auth/session')
+    ) {
+        try {
+            const { getSession, signOut } = await import('next-auth/react')
+            const session = await getSession()
+            if (session) {
+                expiredSessionSignOutInFlight = true
+                const pathname = window.location.pathname || ''
+                const isAdminRoute = pathname.startsWith('/admin')
+                const isSupplierRoute = pathname.startsWith('/supplier')
+                const isPartnerRoute = pathname.startsWith('/partner')
+                const loginPath = isAdminRoute
+                    ? '/admin/login?session=expired'
+                    : isSupplierRoute
+                      ? '/supplier/login?session=expired'
+                      : isPartnerRoute
+                        ? '/partner/login?session=expired'
+                        : '/login?session=expired'
+                const { clearAdminSession, clearSupplierSession, clearPartnerSession } = await import('@/libs/adminSession')
+                if (isAdminRoute) {
+                    await clearAdminSession(loginPath)
+                } else if (isSupplierRoute) {
+                    await clearSupplierSession(loginPath)
+                } else if (isPartnerRoute) {
+                    await clearPartnerSession(loginPath)
+                } else {
+                    await signOut({ redirect: false })
+                }
+                clearAccessTokenCache()
+                window.location.replace(loginPath)
+            }
+        } catch {
+            // session check failed — don't block the response
         }
     }
 

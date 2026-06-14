@@ -180,7 +180,7 @@ export default function ItemCard({
   const [openCartAfterVariantPicker, setOpenCartAfterVariantPicker] = useState(false)
   const [serviceModalOpen, setServiceModalOpen] = useState(false)
   const [inquireModalOpen, setInquireModalOpen] = useState(false)
-  const [inquireForm, setInquireForm] = useState({ fullname: '', email: '', contact: '', address: '' })
+  const [inquireForm, setInquireForm] = useState({ fullname: '', email: '', contact: '', address: '', intent: '' })
   const [inquireSubmitted, setInquireSubmitted] = useState(false)
   const serviceTypes = useMemo(
     () => isServicesCategory && product.material
@@ -811,6 +811,7 @@ export default function ItemCard({
                           email: meData?.email ?? '',
                           contact: meData?.phone ?? '',
                           address: [meData?.address, meData?.barangay, meData?.city, meData?.province].filter(Boolean).join(', '),
+                          intent: '',
                         })
                         setInquireModalOpen(true)
                       }}
@@ -923,87 +924,108 @@ export default function ItemCard({
               </div>
             ) : (
               <>
-                <div className="space-y-4 px-5 py-5">
+                <div className="space-y-4 px-6 py-5">
                   {/* Full Name */}
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-sky-50 dark:bg-sky-900/30">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-sky-500">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">
-                        Full Name <span className="text-rose-500">*</span>
-                      </label>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">
+                      Full Name <span className="text-rose-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-300">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                        </svg>
+                      </span>
                       <input
                         type="text"
                         value={inquireForm.fullname}
                         onChange={(e) => setInquireForm(f => ({ ...f, fullname: e.target.value }))}
                         placeholder="Enter your full name"
-                        className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-800 outline-none placeholder:text-gray-300 transition-all focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-600 dark:focus:border-sky-500"
+                        className="w-full rounded-xl border border-gray-200 py-2.5 pl-9 pr-4 text-sm text-gray-800 outline-none placeholder:text-gray-300 transition-all focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-600 dark:focus:border-sky-500"
                       />
                     </div>
                   </div>
 
                   {/* Email */}
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-sky-50 dark:bg-sky-900/30">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-sky-500">
-                        <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">
-                        Email <span className="text-rose-500">*</span>
-                      </label>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">
+                      Email <span className="text-rose-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-300">
+                          <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                        </svg>
+                      </span>
                       <input
                         type="email"
                         value={inquireForm.email}
                         onChange={(e) => setInquireForm(f => ({ ...f, email: e.target.value }))}
                         placeholder="Enter your email"
-                        className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-800 outline-none placeholder:text-gray-300 transition-all focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-600 dark:focus:border-sky-500"
+                        className="w-full rounded-xl border border-gray-200 py-2.5 pl-9 pr-4 text-sm text-gray-800 outline-none placeholder:text-gray-300 transition-all focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-600 dark:focus:border-sky-500"
                       />
                     </div>
                   </div>
 
                   {/* Contact */}
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-sky-50 dark:bg-sky-900/30">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-sky-500">
-                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.6 19.79 19.79 0 0 1 1.6 5.06 2 2 0 0 1 3.58 2.87h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 10.5a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">
-                        Contact Number <span className="text-rose-500">*</span>
-                      </label>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">
+                      Contact Number <span className="text-rose-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-300">
+                          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.6 19.79 19.79 0 0 1 1.6 5.06 2 2 0 0 1 3.58 2.87h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 10.5a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                        </svg>
+                      </span>
                       <input
                         type="tel"
                         value={inquireForm.contact}
                         onChange={(e) => setInquireForm(f => ({ ...f, contact: e.target.value }))}
                         placeholder="Enter your contact number"
-                        className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-800 outline-none placeholder:text-gray-300 transition-all focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-600 dark:focus:border-sky-500"
+                        className="w-full rounded-xl border border-gray-200 py-2.5 pl-9 pr-4 text-sm text-gray-800 outline-none placeholder:text-gray-300 transition-all focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-600 dark:focus:border-sky-500"
                       />
                     </div>
                   </div>
 
                   {/* Address */}
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-sky-50 dark:bg-sky-900/30">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-sky-500">
-                        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">
-                        Address <span className="text-rose-500">*</span>
-                      </label>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">
+                      Address <span className="text-rose-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <span className="pointer-events-none absolute left-3 top-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-300">
+                          <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+                        </svg>
+                      </span>
                       <textarea
                         value={inquireForm.address}
                         onChange={(e) => setInquireForm(f => ({ ...f, address: e.target.value }))}
                         placeholder="Enter your address"
                         rows={3}
-                        className="w-full resize-none rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-800 outline-none placeholder:text-gray-300 transition-all focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-600 dark:focus:border-sky-500"
+                        className="w-full resize-none rounded-xl border border-gray-200 py-2.5 pl-9 pr-4 text-sm text-gray-800 outline-none placeholder:text-gray-300 transition-all focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-600 dark:focus:border-sky-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Intent */}
+                  <div>
+                    <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">
+                      Intent / Message <span className="text-rose-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <span className="pointer-events-none absolute left-3 top-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-300">
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                      </span>
+                      <textarea
+                        value={inquireForm.intent}
+                        onChange={(e) => setInquireForm(f => ({ ...f, intent: e.target.value }))}
+                        placeholder="Describe what you need or your purpose for this inquiry..."
+                        rows={3}
+                        className="w-full resize-none rounded-xl border border-gray-200 py-2.5 pl-9 pr-4 text-sm text-gray-800 outline-none placeholder:text-gray-300 transition-all focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-600 dark:focus:border-sky-500"
                       />
                     </div>
                   </div>
@@ -1033,7 +1055,7 @@ export default function ItemCard({
                   </button>
                   <button
                     type="button"
-                    disabled={isSubmittingInquiry || !inquireForm.fullname.trim() || !inquireForm.email.trim() || !inquireForm.contact.trim() || !inquireForm.address.trim()}
+                    disabled={isSubmittingInquiry || !inquireForm.fullname.trim() || !inquireForm.email.trim() || !inquireForm.contact.trim() || !inquireForm.address.trim() || !inquireForm.intent.trim()}
                     onClick={async () => {
                       try {
                         await submitInquiry({
@@ -1042,6 +1064,7 @@ export default function ItemCard({
                           email: inquireForm.email.trim(),
                           contact: inquireForm.contact.trim(),
                           address: inquireForm.address.trim(),
+                          intent: inquireForm.intent.trim(),
                         }).unwrap()
                         setInquireSubmitted(true)
                       } catch {

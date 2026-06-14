@@ -17,6 +17,7 @@ class ServiceInquiry extends Model
         'email',
         'contact',
         'address',
+        'intent',
         'status',
     ];
 

@@ -287,7 +287,7 @@ export default function CustomerCheckoutOrderSummary({
           ) : null}
           {egcDiscount > 0 ? (
             <div className="flex justify-between text-fuchsia-600">
-              <span>E-GC Applied</span>
+              <span>AF-GC Applied</span>
               <span className="font-semibold">-PHP {egcDiscount.toLocaleString()}</span>
             </div>
           ) : null}

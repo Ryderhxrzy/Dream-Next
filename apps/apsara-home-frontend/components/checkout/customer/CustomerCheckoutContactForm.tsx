@@ -191,7 +191,7 @@ const CustomerCheckoutContactForm = ({
                 {egcStatus ? (
                     <div>
                         <div className="mb-1.5 flex items-center justify-between gap-3">
-                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">E-GC Store Credit</label>
+                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">AF-GC Store Credit</label>
                             <span className="text-[11px] font-semibold text-fuchsia-600 dark:text-fuchsia-400">
                                 Balance: PHP {egcStatus.available.toLocaleString()}
                             </span>
@@ -201,13 +201,13 @@ const CustomerCheckoutContactForm = ({
                             <div className="min-w-0 flex-1">
                                 <p className="text-xs font-bold text-slate-700 dark:text-slate-200">
                                     {egcStatus.loading
-                                        ? 'Checking available E-GC...'
+                                        ? 'Checking available AF-GC...'
                                         : egcStatus.appliedAmount > 0
                                             ? `Auto-applied: -PHP ${egcStatus.appliedAmount.toLocaleString()}`
-                                            : 'No E-GC applied'}
+                                            : 'No AF-GC applied'}
                                 </p>
                                 <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                                    E-GC is auto-deducted only when this product passes admin discount rules.
+                                    AF-GC is auto-deducted only when this product passes admin discount rules.
                                 </p>
                             </div>
                         </div>
@@ -215,12 +215,12 @@ const CustomerCheckoutContactForm = ({
                             <p className="mt-1.5 text-[11px] text-rose-500 dark:text-rose-400">{egcStatus.error}</p>
                         ) : egcStatus.appliedAmount > 0 ? (
                             <p className="mt-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
-                                E-GC will be deducted automatically after payment is confirmed.
+                                AF-GC will be deducted automatically after payment is confirmed.
                             </p>
                         ) : (
                             <p className="mt-1.5 flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
                                 <AlertCircle className="h-3 w-3 shrink-0" />
-                                Available balance stays unused when this order has no eligible E-GC discount.
+                                Available balance stays unused when this order has no eligible AF-GC discount.
                             </p>
                         )}
                     </div>
