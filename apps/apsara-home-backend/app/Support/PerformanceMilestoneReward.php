@@ -101,6 +101,11 @@ class PerformanceMilestoneReward
                 return 0;
             }
 
+            $activation = MemberMonthlyActivation::summary($lockedSponsor);
+            if (($activation['status'] ?? 'inactive') !== 'active') {
+                return 0;
+            }
+
             $totalPv = self::directReferralTotalPv($sponsorId);
             $earnedMilestones = (int) floor($totalPv / self::PV_PER_MILESTONE);
             $alreadyCredited = self::creditedMilestones($sponsorId);
@@ -177,7 +182,7 @@ class PerformanceMilestoneReward
     /**
      * Summary block for the wallet/performance API response.
      *
-     * @return array<string, float|int>
+     * @return array<string, float|int|bool|null>
      */
     public static function summary(int $sponsorCustomerId): array
     {
@@ -185,14 +190,31 @@ class PerformanceMilestoneReward
         $milestonesReached = (int) floor($totalPv / self::PV_PER_MILESTONE);
         $tranchePv = fmod($totalPv, self::PV_PER_MILESTONE);
         $pvToNext = self::PV_PER_MILESTONE - $tranchePv;
+        $creditedMilestones = self::creditedMilestones($sponsorCustomerId);
+
+        /** @var Customer|null $sponsor */
+        $sponsor = Customer::query()
+            ->where('c_userid', $sponsorCustomerId)
+            ->first();
+        $activation = $sponsor ? MemberMonthlyActivation::summary($sponsor) : null;
+        $isQualified = ($activation['status'] ?? 'inactive') === 'active';
+        $lockedMilestones = max(0, $milestonesReached - $creditedMilestones);
 
         return [
             'pv_per_milestone' => self::PV_PER_MILESTONE,
             'cash_per_milestone' => self::CASH_PER_MILESTONE,
             'milestones_reached' => $milestonesReached,
-            'cash_earned' => round($milestonesReached * self::CASH_PER_MILESTONE, 2),
+            'credited_milestones' => $creditedMilestones,
+            'locked_milestones' => $lockedMilestones,
+            'cash_earned' => round($creditedMilestones * self::CASH_PER_MILESTONE, 2),
+            'potential_cash_earned' => round($milestonesReached * self::CASH_PER_MILESTONE, 2),
             'next_milestone_pv' => self::PV_PER_MILESTONE,
+            'current_cycle_pv' => round($tranchePv, 2),
             'pv_to_next' => round(max(0, $pvToNext), 2),
+            'is_qualified' => $isQualified,
+            'activation_required_pv' => $activation ? (float) ($activation['threshold_pv'] ?? 0) : null,
+            'activation_current_pv' => $activation ? (float) ($activation['qualifying_pv'] ?? 0) : null,
+            'activation_remaining_pv' => $activation ? (float) ($activation['remaining_pv'] ?? 0) : null,
         ];
     }
 }

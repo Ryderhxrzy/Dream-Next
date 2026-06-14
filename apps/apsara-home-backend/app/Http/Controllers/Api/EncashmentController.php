@@ -375,6 +375,225 @@ class EncashmentController extends Controller
         ]);
     }
 
+    public function downlineActivity(Request $request)
+    {
+        $customer = $request->user();
+        if (!$customer instanceof Customer) {
+            return response()->json(['message' => 'Only customer accounts can view downline activity.'], 403);
+        }
+
+        $validated = $request->validate([
+            'page' => 'nullable|integer|min:1',
+            'per_page' => 'nullable|integer|min:1|max:50',
+            'level' => 'nullable|integer|min:1|max:10',
+            'status' => 'nullable|string|max:40',
+            'q' => 'nullable|string|max:120',
+        ]);
+
+        $perPage = (int) ($validated['per_page'] ?? 15);
+        $requestedLevel = isset($validated['level']) ? (int) $validated['level'] : null;
+        $status = trim((string) ($validated['status'] ?? 'all'));
+        $search = trim((string) ($validated['q'] ?? ''));
+
+        $downlines = $this->collectDownlineIdsByLevel((int) $customer->c_userid, 10);
+        $downlineIds = collect($downlines)->pluck('customer_id')->map(fn ($id) => (int) $id)->values();
+
+        if ($requestedLevel !== null) {
+            $downlineIds = collect($downlines)
+                ->filter(fn ($row) => (int) $row['level'] === $requestedLevel)
+                ->pluck('customer_id')
+                ->map(fn ($id) => (int) $id)
+                ->values();
+        }
+
+        $emptyMeta = [
+            'current_page' => 1,
+            'last_page' => 1,
+            'per_page' => $perPage,
+            'total' => 0,
+            'from' => null,
+            'to' => null,
+        ];
+
+        if ($downlineIds->isEmpty()) {
+            return response()->json([
+                'summary' => [
+                    'total_orders' => 0,
+                    'total_pv' => 0,
+                    'total_amount' => 0,
+                    'total_bonus' => 0,
+                    'active_downlines' => 0,
+                ],
+                'activities' => [],
+                'levels' => collect($downlines)->pluck('level')->unique()->sort()->values(),
+                'meta' => $emptyMeta,
+            ]);
+        }
+
+        $downlineLevelMap = collect($downlines)->mapWithKeys(function (array $row) {
+            return [(int) $row['customer_id'] => (int) $row['level']];
+        });
+
+        $bonusByOrder = collect();
+        if (Schema::hasTable('tbl_group_purchase_bonus_awards')) {
+            $bonusByOrder = DB::table('tbl_group_purchase_bonus_awards')
+                ->where('gpba_customer_id', (int) $customer->c_userid)
+                ->whereNotNull('gpba_reference_order_id')
+                ->get([
+                    'gpba_reference_order_id',
+                    'gpba_bonus_amount',
+                    'gpba_bonus_rate',
+                    'gpba_level_no',
+                    'gpba_awarded_at',
+                ])
+                ->keyBy(fn ($row) => (int) $row->gpba_reference_order_id);
+        }
+
+        $ordersQuery = CheckoutHistory::query()
+            ->leftJoin('tbl_customer as buyer', 'buyer.c_userid', '=', 'tbl_checkout_history.ch_customer_id')
+            ->whereIn('tbl_checkout_history.ch_customer_id', $downlineIds->all())
+            ->when($status !== '' && $status !== 'all', function ($query) use ($status) {
+                $query->where(function ($statusQuery) use ($status) {
+                    $statusQuery->where('tbl_checkout_history.ch_status', $status)
+                        ->orWhere('tbl_checkout_history.ch_fulfillment_status', $status)
+                        ->orWhere('tbl_checkout_history.ch_approval_status', $status)
+                        ->orWhere('tbl_checkout_history.ch_shipment_status', $status);
+                });
+            })
+            ->when($search !== '', function ($query) use ($search) {
+                $like = '%' . str_replace(['%', '_'], ['\%', '\_'], $search) . '%';
+                $query->where(function ($searchQuery) use ($like) {
+                    $searchQuery
+                        ->where('tbl_checkout_history.ch_checkout_id', 'like', $like)
+                        ->orWhere('tbl_checkout_history.ch_product_name', 'like', $like)
+                        ->orWhere('tbl_checkout_history.ch_product_sku', 'like', $like)
+                        ->orWhere('buyer.c_username', 'like', $like)
+                        ->orWhere('buyer.c_email', 'like', $like)
+                        ->orWhere('buyer.c_fname', 'like', $like)
+                        ->orWhere('buyer.c_lname', 'like', $like);
+                });
+            });
+
+        $summaryQuery = clone $ordersQuery;
+        $summaryRows = $summaryQuery->get([
+            'tbl_checkout_history.ch_id',
+            'tbl_checkout_history.ch_customer_id',
+            'tbl_checkout_history.ch_amount',
+            'tbl_checkout_history.ch_earned_pv',
+        ]);
+
+        $orders = $ordersQuery
+            ->orderByDesc('tbl_checkout_history.created_at')
+            ->orderByDesc('tbl_checkout_history.ch_id')
+            ->paginate($perPage, [
+                'tbl_checkout_history.ch_id',
+                'tbl_checkout_history.ch_customer_id',
+                'tbl_checkout_history.ch_checkout_id',
+                'tbl_checkout_history.ch_status',
+                'tbl_checkout_history.ch_approval_status',
+                'tbl_checkout_history.ch_fulfillment_status',
+                'tbl_checkout_history.ch_shipment_status',
+                'tbl_checkout_history.ch_amount',
+                'tbl_checkout_history.ch_quantity',
+                'tbl_checkout_history.ch_product_name',
+                'tbl_checkout_history.ch_product_sku',
+                'tbl_checkout_history.ch_product_image',
+                'tbl_checkout_history.ch_earned_pv',
+                'tbl_checkout_history.ch_paid_at',
+                'tbl_checkout_history.ch_pv_posted_at',
+                'tbl_checkout_history.created_at',
+                'buyer.c_fname as buyer_first_name',
+                'buyer.c_lname as buyer_last_name',
+                'buyer.c_username as buyer_username',
+                'buyer.c_email as buyer_email',
+            ]);
+
+        $summaryBonus = $bonusByOrder
+            ->filter(fn ($row, $orderId) => $summaryRows->contains(fn ($order) => (int) $order->ch_id === (int) $orderId))
+            ->sum(fn ($row) => (float) $row->gpba_bonus_amount);
+
+        return response()->json([
+            'summary' => [
+                'total_orders' => (int) $summaryRows->count(),
+                'total_pv' => round((float) $summaryRows->sum('ch_earned_pv'), 2),
+                'total_amount' => round((float) $summaryRows->sum('ch_amount'), 2),
+                'total_bonus' => round((float) $summaryBonus, 2),
+                'active_downlines' => (int) $summaryRows->pluck('ch_customer_id')->unique()->count(),
+            ],
+            'activities' => collect($orders->items())->map(function ($row) use ($downlineLevelMap, $bonusByOrder) {
+                $buyerName = trim((string) ($row->buyer_first_name ?? '') . ' ' . (string) ($row->buyer_last_name ?? ''));
+                $bonus = $bonusByOrder->get((int) $row->ch_id);
+
+                return [
+                    'id' => (int) $row->ch_id,
+                    'checkout_id' => (string) ($row->ch_checkout_id ?? ''),
+                    'customer_id' => (int) ($row->ch_customer_id ?? 0),
+                    'buyer_name' => $buyerName !== '' ? $buyerName : null,
+                    'buyer_username' => $row->buyer_username,
+                    'buyer_email' => $row->buyer_email,
+                    'level_no' => (int) ($downlineLevelMap->get((int) $row->ch_customer_id) ?? 0),
+                    'product_name' => $row->ch_product_name,
+                    'product_sku' => $row->ch_product_sku,
+                    'product_image' => $row->ch_product_image,
+                    'quantity' => (int) ($row->ch_quantity ?? 1),
+                    'amount' => (float) ($row->ch_amount ?? 0),
+                    'earned_pv' => (float) ($row->ch_earned_pv ?? 0),
+                    'payment_status' => $row->ch_status,
+                    'approval_status' => $row->ch_approval_status,
+                    'fulfillment_status' => $row->ch_fulfillment_status,
+                    'shipment_status' => $row->ch_shipment_status,
+                    'bonus_amount' => $bonus ? (float) $bonus->gpba_bonus_amount : 0.0,
+                    'bonus_rate' => $bonus ? (float) $bonus->gpba_bonus_rate : null,
+                    'bonus_awarded_at' => $bonus?->gpba_awarded_at,
+                    'created_at' => optional($row->created_at)->toDateTimeString(),
+                    'paid_at' => optional($row->ch_paid_at)->toDateTimeString(),
+                    'pv_posted_at' => optional($row->ch_pv_posted_at)->toDateTimeString(),
+                ];
+            })->values(),
+            'levels' => collect($downlines)->pluck('level')->unique()->sort()->values(),
+            'meta' => [
+                'current_page' => $orders->currentPage(),
+                'last_page' => $orders->lastPage(),
+                'per_page' => $orders->perPage(),
+                'total' => $orders->total(),
+                'from' => $orders->firstItem(),
+                'to' => $orders->lastItem(),
+            ],
+        ]);
+    }
+
+    private function collectDownlineIdsByLevel(int $rootCustomerId, int $maxLevel = 10): array
+    {
+        $results = [];
+        $currentSponsorIds = [$rootCustomerId];
+
+        for ($level = 1; $level <= $maxLevel; $level++) {
+            $members = Customer::query()
+                ->whereIn('c_sponsor', $currentSponsorIds)
+                ->get(['c_userid']);
+
+            if ($members->isEmpty()) {
+                break;
+            }
+
+            $currentSponsorIds = [];
+            foreach ($members as $member) {
+                $memberId = (int) $member->c_userid;
+                if ($memberId <= 0) {
+                    continue;
+                }
+
+                $results[] = [
+                    'customer_id' => $memberId,
+                    'level' => $level,
+                ];
+                $currentSponsorIds[] = $memberId;
+            }
+        }
+
+        return $results;
+    }
+
     private function backfillApprovedPvForCustomer(Customer $customer): void
     {
         CheckoutHistory::query()

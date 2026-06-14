@@ -291,6 +291,7 @@ Route::middleware(['auth:sanctum', 'customer.actor'])->group(function () {
     Route::post('/encashment/payout-methods', [EncashmentController::class, 'storePayoutMethod']);
     Route::delete('/encashment/payout-methods/{id}', [EncashmentController::class, 'destroyPayoutMethod']);
     Route::get('/encashment/wallet', [EncashmentController::class, 'walletOverview']);
+    Route::get('/encashment/downline-activity', [EncashmentController::class, 'downlineActivity']);
     Route::post('/encashment/vouchers', [EncashmentController::class, 'createAffiliateVoucher']);
     Route::post('/encashment/verification-request', [EncashmentController::class, 'submitVerificationRequest']);
     Route::post('/encashment/verification-request-with-payout', [EncashmentController::class, 'submitVerificationRequestWithPayout']);

@@ -157,14 +157,19 @@ const PerformanceTab = () => {
   const pvPerMilestone   = Number(milestone?.pv_per_milestone ?? 50000);
   const cashPerMilestone = Number(milestone?.cash_per_milestone ?? 5000);
   const milestonesReached = Number(milestone?.milestones_reached ?? 0);
+  const creditedMilestones = Number(milestone?.credited_milestones ?? milestonesReached);
+  const lockedMilestones = Number(milestone?.locked_milestones ?? 0);
   const cashEarned        = Number(milestone?.cash_earned ?? 0);
+  const isQualified = milestone?.is_qualified ?? true;
   const current  = Number(summary?.direct_referral_total_pv ?? 0);
   // Progress is measured inside the current 50,000 PV monthly tranche.
   const goalPv = Number(milestone?.next_milestone_pv ?? pvPerMilestone);
   const rawTranchePv = current % pvPerMilestone;
-  const tranchePv = current > 0 && rawTranchePv === 0 ? pvPerMilestone : rawTranchePv;
+  const tranchePv = Number(milestone?.current_cycle_pv ?? rawTranchePv);
   const progress = Math.min(100, Math.max(0, (tranchePv / pvPerMilestone) * 100));
   const remaining = Number(milestone?.pv_to_next ?? Math.max(0, pvPerMilestone - tranchePv));
+  const activationRemainingPv = Number(milestone?.activation_remaining_pv ?? summary?.monthly_activation?.remaining_pv ?? 0);
+  const activationRequiredPv = Number(milestone?.activation_required_pv ?? summary?.monthly_activation?.threshold_pv ?? 0);
 
   const totalReferrals    = Number(summary?.referrals?.total    ?? 0);
   const verifiedReferrals = Number(summary?.referrals?.verified ?? 0);
@@ -226,7 +231,7 @@ const PerformanceTab = () => {
                 </span>
               </p>
               <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-                Track this month&apos;s direct-referral PV progress toward the next reward.
+                Tracks delivered PV from your Level 1/direct referrals only. Repeat purchases count; personal and Level 2 purchases do not.
               </p>
             </div>
 
@@ -247,6 +252,11 @@ const PerformanceTab = () => {
             <PvProgressBar pct={progress} />
           </div>
         </div>
+        {!isQualified && (
+          <div className="relative mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-300">
+            Activation required: reach {fmt(activationRequiredPv)} personal PV this month before Direct Affiliate Performance Bonus cash can be credited.
+          </div>
+        )}
       </div>
 
       {/* ── Milestone Reward ── */}
@@ -263,10 +273,12 @@ const PerformanceTab = () => {
               </p>
               <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
                 Every <span className="font-bold">{fmt(pvPerMilestone)} PV</span> earns{' '}
-                <span className="font-bold">₱{fmt(cashPerMilestone)} cash</span>, auto-credited to your encashment balance.
+                <span className="font-bold">₱{fmt(cashPerMilestone)} cash</span> once your monthly personal PV qualification is active.
               </p>
               <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                {remaining > 0
+                {!isQualified && lockedMilestones > 0
+                  ? `${fmt(lockedMilestones)} reward milestone${lockedMilestones > 1 ? 's' : ''} locked. Add ${fmt(activationRemainingPv)} personal PV to unlock.`
+                  : remaining > 0
                   ? `${fmt(remaining)} PV more to reach the next ₱${fmt(cashPerMilestone)} reward.`
                   : 'Next reward unlocks as soon as more direct affiliate PV posts.'}
               </p>
@@ -275,7 +287,7 @@ const PerformanceTab = () => {
           <div className="flex shrink-0 gap-3">
             <div className="rounded-xl border border-emerald-200/70 bg-white/70 px-4 py-3 text-center backdrop-blur-sm dark:border-emerald-800/40 dark:bg-white/5">
               <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Milestones</p>
-              <p className="mt-1 text-2xl font-black tabular-nums text-slate-900 dark:text-white">{fmt(milestonesReached)}</p>
+              <p className="mt-1 text-2xl font-black tabular-nums text-slate-900 dark:text-white">{fmt(creditedMilestones)}</p>
             </div>
             <div className="rounded-xl border border-emerald-200/70 bg-white/70 px-4 py-3 text-center backdrop-blur-sm dark:border-emerald-800/40 dark:bg-white/5">
               <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Cash Earned</p>
