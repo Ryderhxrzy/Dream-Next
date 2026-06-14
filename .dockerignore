@@ -6,6 +6,9 @@
 # ── Dependencies (reinstalled inside the image) ───────────────────────
 node_modules
 **/node_modules
+**/node_modules/
+apps/Apsara-Home-Mobile
+apps/Apsara-Home-Mobile/**
 .pnpm-store
 **/vendor
 
@@ -45,3 +48,10 @@ package-lock.json
 .idea
 .DS_Store
 Thumbs.db
+
+# Hard excludes last: later negation rules can otherwise make BuildKit walk these.
+node_modules
+**/node_modules
+**/node_modules/
+apps/Apsara-Home-Mobile
+apps/Apsara-Home-Mobile/**

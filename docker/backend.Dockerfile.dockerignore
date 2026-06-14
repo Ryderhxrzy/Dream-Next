@@ -1,0 +1,7 @@
+*
+
+!apps
+!apps/apsara-home-backend
+!apps/apsara-home-backend/docker
+!apps/apsara-home-backend/docker/backend
+!apps/apsara-home-backend/docker/backend/entrypoint.sh
