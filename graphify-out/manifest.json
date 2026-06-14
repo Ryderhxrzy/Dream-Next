@@ -1,0 +1,1652 @@
+{
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\AuthTabs.tsx": {
+    "mtime": 1779622717.3382864,
+    "ast_hash": "5f392aa6efeb380ed6a3d5f9c928127b",
+    "semantic_hash": "5f392aa6efeb380ed6a3d5f9c928127b"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\Blogs.tsx": {
+    "mtime": 1781229524.5592651,
+    "ast_hash": "adfb8bf4c8ec0291e0e44770bf46af70",
+    "semantic_hash": "adfb8bf4c8ec0291e0e44770bf46af70"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ChatModal.tsx": {
+    "mtime": 1779622717.3402987,
+    "ast_hash": "5092326ecaec6895665071f897323db7",
+    "semantic_hash": "5092326ecaec6895665071f897323db7"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\Comission-docs.tsx": {
+    "mtime": 1781229524.560266,
+    "ast_hash": "20255849947eabe0923157d5f0cc76b0",
+    "semantic_hash": "20255849947eabe0923157d5f0cc76b0"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\CustomerServiceButton.tsx": {
+    "mtime": 1779622717.3402987,
+    "ast_hash": "a4410d77f8c526b2ffa19d07e49c87ec",
+    "semantic_hash": "a4410d77f8c526b2ffa19d07e49c87ec"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\Docs.tsx": {
+    "mtime": 1781229524.563267,
+    "ast_hash": "d959dc834f7dd688e53a2802fab54163",
+    "semantic_hash": "d959dc834f7dd688e53a2802fab54163"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\Loading.tsx": {
+    "mtime": 1779622717.3444703,
+    "ast_hash": "e0bd3ba5a7e0fac768867ee818aefacd",
+    "semantic_hash": "e0bd3ba5a7e0fac768867ee818aefacd"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\LoginForm.tsx": {
+    "mtime": 1781229524.565264,
+    "ast_hash": "5007b615540222a416623ca29e2997ec",
+    "semantic_hash": "5007b615540222a416623ca29e2997ec"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\Providers.tsx": {
+    "mtime": 1779622717.346467,
+    "ast_hash": "557e64523446a2b0e918c38bb1a6f7f5",
+    "semantic_hash": "557e64523446a2b0e918c38bb1a6f7f5"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\QrModal.tsx": {
+    "mtime": 1779622717.3474715,
+    "ast_hash": "4d6ce082d83f13339afb4c67ac9bc5f6",
+    "semantic_hash": "4d6ce082d83f13339afb4c67ac9bc5f6"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\SignUpForm.tsx": {
+    "mtime": 1779978660.8944893,
+    "ast_hash": "3b650ca029cad01e509b1607c15d96f0",
+    "semantic_hash": "3b650ca029cad01e509b1607c15d96f0"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\StorefrontDemo.tsx": {
+    "mtime": 1780758989.013702,
+    "ast_hash": "d3b40393bf5daa0351dab6493a9891f8",
+    "semantic_hash": "d3b40393bf5daa0351dab6493a9891f8"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\StorefrontTutorial.tsx": {
+    "mtime": 1780758989.0177047,
+    "ast_hash": "40ba422f16606529dc6fcd26f3e20ad1",
+    "semantic_hash": "40ba422f16606529dc6fcd26f3e20ad1"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\SupplierDemo.tsx": {
+    "mtime": 1779977075.3392277,
+    "ast_hash": "bf015f17740f4ede5c9a66a749dcd307",
+    "semantic_hash": "bf015f17740f4ede5c9a66a749dcd307"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\Testing.tsx": {
+    "mtime": 1781229524.5672624,
+    "ast_hash": "30042a8af04fdad6b8aeede6cb96ee29",
+    "semantic_hash": "30042a8af04fdad6b8aeede6cb96ee29"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\VideoBackground.tsx": {
+    "mtime": 1780758989.0197017,
+    "ast_hash": "9b5f43d031087501a4266f6136b03b23",
+    "semantic_hash": "9b5f43d031087501a4266f6136b03b23"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\WebstoreTutorial.tsx": {
+    "mtime": 1781229524.5682645,
+    "ast_hash": "19c5c4863f08ad07c70d9308790f2393",
+    "semantic_hash": "19c5c4863f08ad07c70d9308790f2393"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\Wishlist.tsx": {
+    "mtime": 1779622717.3534703,
+    "ast_hash": "7f3097a4f9682aa8ca867446a62e9d6a",
+    "semantic_hash": "7f3097a4f9682aa8ca867446a62e9d6a"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\admin\\auth\\AdminInviteSetupForm.tsx": {
+    "mtime": 1779622717.3544717,
+    "ast_hash": "ec0b9c75c2f6ccb68f7c53abe354f73a",
+    "semantic_hash": "ec0b9c75c2f6ccb68f7c53abe354f73a"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\admin\\auth\\AdminLoginForm.tsx": {
+    "mtime": 1781229524.5702643,
+    "ast_hash": "4a843c2e5ec6d774fbd314fe32e96c06",
+    "semantic_hash": "4a843c2e5ec6d774fbd314fe32e96c06"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ai-support\\AiSupport.tsx": {
+    "mtime": 1779622717.3564684,
+    "ast_hash": "4fefe2b1f8b121dac542dd6f20260133",
+    "semantic_hash": "4fefe2b1f8b121dac542dd6f20260133"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ai-support\\AiSupportBody.tsx": {
+    "mtime": 1779622717.3574677,
+    "ast_hash": "09bb90153c5ae7d7c0ad2c64ae1c3b3c",
+    "semantic_hash": "09bb90153c5ae7d7c0ad2c64ae1c3b3c"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ai-support\\AiSupportFooter.tsx": {
+    "mtime": 1779622717.3584704,
+    "ast_hash": "5edfa3fe7b1c27e2b199c45e0f68ed61",
+    "semantic_hash": "5edfa3fe7b1c27e2b199c45e0f68ed61"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ai-support\\AiSupportHeader.tsx": {
+    "mtime": 1779622717.3584704,
+    "ast_hash": "8621358c014894adff6781b79045be89",
+    "semantic_hash": "8621358c014894adff6781b79045be89"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ai-support\\AiSupportPanel.tsx": {
+    "mtime": 1779622717.360401,
+    "ast_hash": "9a1309b1e4c1e028e1f09e8ee6764320",
+    "semantic_hash": "9a1309b1e4c1e028e1f09e8ee6764320"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ai-support\\AiSupportQuickReplies.tsx": {
+    "mtime": 1779622717.360401,
+    "ast_hash": "5a8524394c2152f630ba06c1940135dd",
+    "semantic_hash": "5a8524394c2152f630ba06c1940135dd"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ai-support\\AiSupportToggle.tsx": {
+    "mtime": 1779622717.360401,
+    "ast_hash": "61f4e9529e4fb1982f43dc470349eefe",
+    "semantic_hash": "61f4e9529e4fb1982f43dc470349eefe"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ai-support\\ShopAiSupportGate.tsx": {
+    "mtime": 1779622717.3624122,
+    "ast_hash": "699f2917d12bf4cdaa0e8d5aa9431cb6",
+    "semantic_hash": "699f2917d12bf4cdaa0e8d5aa9431cb6"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ai-support\\hooks\\useAiSupport.ts": {
+    "mtime": 1779622717.3624122,
+    "ast_hash": "3b203a1419a43c29bddb60f36c98c8e5",
+    "semantic_hash": "3b203a1419a43c29bddb60f36c98c8e5"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ai-support\\index.ts": {
+    "mtime": 1779622717.3644235,
+    "ast_hash": "f5e4970377ea69ecce9b9362631d3834",
+    "semantic_hash": "f5e4970377ea69ecce9b9362631d3834"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ai-support\\messages\\BrandCards.tsx": {
+    "mtime": 1779622717.3644235,
+    "ast_hash": "999511db08655be83283a8e38cacb29b",
+    "semantic_hash": "999511db08655be83283a8e38cacb29b"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ai-support\\messages\\CategoryCards.tsx": {
+    "mtime": 1779622717.3644235,
+    "ast_hash": "e51eaa8c8b5750eb408a769bfc3ad1e4",
+    "semantic_hash": "e51eaa8c8b5750eb408a769bfc3ad1e4"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ai-support\\messages\\ImageMessage.tsx": {
+    "mtime": 1779622717.3664348,
+    "ast_hash": "ad3844052abdbdb1539f03fe8d0541b9",
+    "semantic_hash": "ad3844052abdbdb1539f03fe8d0541b9"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ai-support\\messages\\ProductCards.tsx": {
+    "mtime": 1779622717.3664348,
+    "ast_hash": "8b194c154c694411a73c4f803e9cdf45",
+    "semantic_hash": "8b194c154c694411a73c4f803e9cdf45"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ai-support\\messages\\StepImages.tsx": {
+    "mtime": 1779622717.3664348,
+    "ast_hash": "ffc0515239b5e17f2d47f64606299f82",
+    "semantic_hash": "ffc0515239b5e17f2d47f64606299f82"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ai-support\\messages\\TextMessage.tsx": {
+    "mtime": 1779622717.36875,
+    "ast_hash": "6a7e50c1964255d9d85571c4de7be34d",
+    "semantic_hash": "6a7e50c1964255d9d85571c4de7be34d"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ai-support\\types.ts": {
+    "mtime": 1779622717.36875,
+    "ast_hash": "3b1316562ce747abdb718d176bd8c71c",
+    "semantic_hash": "3b1316562ce747abdb718d176bd8c71c"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\assembly\\AssemblyGuidesPageClient.tsx": {
+    "mtime": 1781229524.572265,
+    "ast_hash": "ddfd7392555ddb3f01ff161689c9dc62",
+    "semantic_hash": "ddfd7392555ddb3f01ff161689c9dc62"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\auth\\ForcedPasswordChangeForm.tsx": {
+    "mtime": 1779979448.2903602,
+    "ast_hash": "bfdb521001276bcacaa57f7e86d6da2c",
+    "semantic_hash": "bfdb521001276bcacaa57f7e86d6da2c"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\auth\\ForgotPasswordForm.tsx": {
+    "mtime": 1780758989.0217156,
+    "ast_hash": "c397fdaf277a7b3d11a293f0c3c9c045",
+    "semantic_hash": "c397fdaf277a7b3d11a293f0c3c9c045"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\auth\\LoginPageClient.tsx": {
+    "mtime": 1780758989.0237222,
+    "ast_hash": "ce74da4d8c3082921fa59b1eef0b8424",
+    "semantic_hash": "ce74da4d8c3082921fa59b1eef0b8424"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\auth\\OtpInput.tsx": {
+    "mtime": 1779622717.377205,
+    "ast_hash": "51cb7675a9f4adbb113cd5f7973256f5",
+    "semantic_hash": "51cb7675a9f4adbb113cd5f7973256f5"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\auth\\OtpVerification.tsx": {
+    "mtime": 1779622717.377205,
+    "ast_hash": "b785ec373e34217af9d347f753c5eb9a",
+    "semantic_hash": "b785ec373e34217af9d347f753c5eb9a"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\auth\\ResetPasswordForm.tsx": {
+    "mtime": 1779622717.377205,
+    "ast_hash": "3c8b1f1c65ce9bfb1f8cd79da0b1f806",
+    "semantic_hash": "3c8b1f1c65ce9bfb1f8cd79da0b1f806"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\branches\\CompanyBranchesPageMain.tsx": {
+    "mtime": 1780155770.3804157,
+    "ast_hash": "c338dac05c4b83beef287d3a7371c11f",
+    "semantic_hash": "c338dac05c4b83beef287d3a7371c11f"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\brand\\ByBrandPageMain.tsx": {
+    "mtime": 1781229524.5742679,
+    "ast_hash": "e678443ee6b63a38bfd3ad18cdde6492",
+    "semantic_hash": "e678443ee6b63a38bfd3ad18cdde6492"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\category\\CategoryCard.tsx": {
+    "mtime": 1780758989.0287151,
+    "ast_hash": "b0b2e9379977a4269e89623006e4898e",
+    "semantic_hash": "b0b2e9379977a4269e89623006e4898e"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\category\\CategoryListProductMain.tsx": {
+    "mtime": 1781229524.5762653,
+    "ast_hash": "6f1555cc6290ea5d7870950609f03cc7",
+    "semantic_hash": "6f1555cc6290ea5d7870950609f03cc7"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\category\\CategoryProductModal.tsx": {
+    "mtime": 1779622717.3901732,
+    "ast_hash": "a76251717466e13bb1831462970054db",
+    "semantic_hash": "a76251717466e13bb1831462970054db"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\chat\\Chat.tsx": {
+    "mtime": 1779622717.393971,
+    "ast_hash": "816b22496d5a08e40eefc76681566091",
+    "semantic_hash": "816b22496d5a08e40eefc76681566091"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\chat\\ConversationList.tsx": {
+    "mtime": 1779622717.393971,
+    "ast_hash": "ff3d52f2496de08f38463111e949ed50",
+    "semantic_hash": "ff3d52f2496de08f38463111e949ed50"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\checkout\\customer\\CustomerCheckoutAddressForm.tsx": {
+    "mtime": 1779622717.393971,
+    "ast_hash": "9c6c759847b6ea04ca99b7ce2a459216",
+    "semantic_hash": "9c6c759847b6ea04ca99b7ce2a459216"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\checkout\\customer\\CustomerCheckoutContactForm.tsx": {
+    "mtime": 1781229524.5772657,
+    "ast_hash": "b59bb507bf41f4b700a3e101371af456",
+    "semantic_hash": "b59bb507bf41f4b700a3e101371af456"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\checkout\\customer\\CustomerCheckoutMain.tsx": {
+    "mtime": 1781229524.5792637,
+    "ast_hash": "b4abec5bd1cf2909ff8b385e2ee75c39",
+    "semantic_hash": "b4abec5bd1cf2909ff8b385e2ee75c39"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\checkout\\customer\\CustomerCheckoutOrderSummary.tsx": {
+    "mtime": 1781229524.5802655,
+    "ast_hash": "dd6aa6d67282505c3b9707b74b0fb62d",
+    "semantic_hash": "dd6aa6d67282505c3b9707b74b0fb62d"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\checkout\\customer\\CustomerCheckoutPaymentMethod.tsx": {
+    "mtime": 1779622717.4061632,
+    "ast_hash": "8ed62cd69caeb4929c8fedddd898679e",
+    "semantic_hash": "8ed62cd69caeb4929c8fedddd898679e"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\faq\\FaqPageClient.tsx": {
+    "mtime": 1781229524.583269,
+    "ast_hash": "1527d487b628f64660fd2247acf4df15",
+    "semantic_hash": "1527d487b628f64660fd2247acf4df15"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\globalProduct\\GlobalProductDetail.tsx": {
+    "mtime": 1779622717.4061632,
+    "ast_hash": "e1e87546fd384019e651d56cfdaf7f9b",
+    "semantic_hash": "e1e87546fd384019e651d56cfdaf7f9b"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\globalProduct\\GlobalProductImageGallery.tsx": {
+    "mtime": 1779622717.4114325,
+    "ast_hash": "ad0f4bab3c58bb9942b6d27acbbab019",
+    "semantic_hash": "ad0f4bab3c58bb9942b6d27acbbab019"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\globalProduct\\GlobalProductInfo.tsx": {
+    "mtime": 1781229524.5852637,
+    "ast_hash": "09521379fba2aad76df91d2aa36f842f",
+    "semantic_hash": "09521379fba2aad76df91d2aa36f842f"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\integrations\\TawkToWidget.tsx": {
+    "mtime": 1779622717.4114325,
+    "ast_hash": "6b600ab5eb099feedee245df3a0913a7",
+    "semantic_hash": "6b600ab5eb099feedee245df3a0913a7"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\interior-services\\InteriorServicesPageMain.tsx": {
+    "mtime": 1779622717.4140327,
+    "ast_hash": "705b3024582047fe68f2cb824c62c989",
+    "semantic_hash": "705b3024582047fe68f2cb824c62c989"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\interior-services\\ServiceCard.tsx": {
+    "mtime": 1779622717.4140327,
+    "ast_hash": "69db0f2d4ce16afcfd77275baa2232d6",
+    "semantic_hash": "69db0f2d4ce16afcfd77275baa2232d6"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\interior-services\\StepContact.tsx": {
+    "mtime": 1779622717.4140327,
+    "ast_hash": "65f2787494be6c5061d517ac0a06d764",
+    "semantic_hash": "65f2787494be6c5061d517ac0a06d764"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\interior-services\\StepIndicator.tsx": {
+    "mtime": 1779622717.4140327,
+    "ast_hash": "9c60bb4674ea114bc3f92fede2832da2",
+    "semantic_hash": "9c60bb4674ea114bc3f92fede2832da2"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\interior-services\\StepReview.tsx": {
+    "mtime": 1779622717.4176397,
+    "ast_hash": "163578959446d16f00007c2f13db5be4",
+    "semantic_hash": "163578959446d16f00007c2f13db5be4"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\interior-services\\StepSchedule.tsx": {
+    "mtime": 1781229524.586266,
+    "ast_hash": "a2b50debdc877b18c286d826b7305e7e",
+    "semantic_hash": "a2b50debdc877b18c286d826b7305e7e"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\interior-services\\StepService.tsx": {
+    "mtime": 1779622717.4176397,
+    "ast_hash": "c38a039d6f38915c3d84458b18d38b33",
+    "semantic_hash": "c38a039d6f38915c3d84458b18d38b33"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\interior-services\\SuccessState.tsx": {
+    "mtime": 1779622717.4196513,
+    "ast_hash": "e7ba7ad1d7f8e8fe561722584cf54e0d",
+    "semantic_hash": "e7ba7ad1d7f8e8fe561722584cf54e0d"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\interior-services\\SummaryRow.tsx": {
+    "mtime": 1779622717.4196513,
+    "ast_hash": "de96a17fa39677237b55974f908f89ad",
+    "semantic_hash": "de96a17fa39677237b55974f908f89ad"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\interior-services\\animation.ts": {
+    "mtime": 1779622717.4196513,
+    "ast_hash": "34625e4e7c572e7cfcfbc2a67ab72c62",
+    "semantic_hash": "34625e4e7c572e7cfcfbc2a67ab72c62"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\interior-services\\sections\\BookingSection.tsx": {
+    "mtime": 1779622717.4216619,
+    "ast_hash": "4c3fa39bb106a321c61a234c3b5460af",
+    "semantic_hash": "4c3fa39bb106a321c61a234c3b5460af"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\interior-services\\sections\\HeroSection.tsx": {
+    "mtime": 1779622717.4216619,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\interior-services\\sections\\ServiceSection.tsx": {
+    "mtime": 1779622717.4216619,
+    "ast_hash": "5a93cf10c36da9c82bd3db7648766877",
+    "semantic_hash": "5a93cf10c36da9c82bd3db7648766877"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\interior-services\\types.ts": {
+    "mtime": 1779622717.4216619,
+    "ast_hash": "4d94de4ebb084884f6371147439711ee",
+    "semantic_hash": "4d94de4ebb084884f6371147439711ee"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\interior-services\\ui\\Primitives.tsx": {
+    "mtime": 1779622717.4251912,
+    "ast_hash": "2ae992835d19998f1611a15468b09c91",
+    "semantic_hash": "2ae992835d19998f1611a15468b09c91"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\item\\ItemCard.tsx": {
+    "mtime": 1781229524.5882647,
+    "ast_hash": "33a38fe5cb34b8a7f0bfdcd2fad74446",
+    "semantic_hash": "33a38fe5cb34b8a7f0bfdcd2fad74446"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\item\\ProductFilter.tsx": {
+    "mtime": 1779622717.4272027,
+    "ast_hash": "909b7fa3225990e5611f1defda819536",
+    "semantic_hash": "909b7fa3225990e5611f1defda819536"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\item\\TopFilter.tsx": {
+    "mtime": 1779622717.4272027,
+    "ast_hash": "332cad0d0ebbeeadaa42280d967379ad",
+    "semantic_hash": "332cad0d0ebbeeadaa42280d967379ad"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\landing-page\\AboutSection.tsx": {
+    "mtime": 1779622717.4292142,
+    "ast_hash": "f6921e6c83de6e8c7c19929ce3d60143",
+    "semantic_hash": "f6921e6c83de6e8c7c19929ce3d60143"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\landing-page\\CTASection.tsx": {
+    "mtime": 1779622717.4292142,
+    "ast_hash": "30e08816a7af85e0a63bb7ba91fb11db",
+    "semantic_hash": "30e08816a7af85e0a63bb7ba91fb11db"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\landing-page\\CategoryNav.tsx": {
+    "mtime": 1779622717.4292142,
+    "ast_hash": "9ac9c0e3aaf5cfd02bbf256795d4e1e3",
+    "semantic_hash": "9ac9c0e3aaf5cfd02bbf256795d4e1e3"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\landing-page\\CommissionSection.tsx": {
+    "mtime": 1779622717.4292142,
+    "ast_hash": "03498c3da38e376094ac732df4a14c16",
+    "semantic_hash": "03498c3da38e376094ac732df4a14c16"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\landing-page\\ExperienceSection.tsx": {
+    "mtime": 1779622717.4326015,
+    "ast_hash": "43cee24cc51644c48c43306603898d52",
+    "semantic_hash": "43cee24cc51644c48c43306603898d52"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\landing-page\\FeaturedBanner.tsx": {
+    "mtime": 1779622717.4326015,
+    "ast_hash": "ca6e129034dbf74ac0f1fb61e78a1d89",
+    "semantic_hash": "ca6e129034dbf74ac0f1fb61e78a1d89"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\landing-page\\Footer.tsx": {
+    "mtime": 1779622717.4326015,
+    "ast_hash": "304a724c2c83304ce86c21a6f90980fa",
+    "semantic_hash": "304a724c2c83304ce86c21a6f90980fa"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\landing-page\\Header.tsx": {
+    "mtime": 1781229524.589265,
+    "ast_hash": "82d123b55bf61fb39817b16e10a5637e",
+    "semantic_hash": "82d123b55bf61fb39817b16e10a5637e"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\landing-page\\HeroSection.tsx": {
+    "mtime": 1779622717.4346135,
+    "ast_hash": "bdc5d3eed30e57feceea66bb9aa3a8e0",
+    "semantic_hash": "bdc5d3eed30e57feceea66bb9aa3a8e0"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\landing-page\\HowItWorksSection.tsx": {
+    "mtime": 1779622717.4346135,
+    "ast_hash": "886330c53b5f72148459cfd86d19520f",
+    "semantic_hash": "886330c53b5f72148459cfd86d19520f"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\landing-page\\LandingPage.tsx": {
+    "mtime": 1780758989.0362263,
+    "ast_hash": "94d6c2e55aad186ae4ce0b4f757d82ac",
+    "semantic_hash": "94d6c2e55aad186ae4ce0b4f757d82ac"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\landing-page\\LifetimeBenefitsSection.tsx": {
+    "mtime": 1779622717.4376357,
+    "ast_hash": "361a1f484604613694cc00e1dcac8e66",
+    "semantic_hash": "361a1f484604613694cc00e1dcac8e66"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\landing-page\\Newsletter.tsx": {
+    "mtime": 1779622717.4387803,
+    "ast_hash": "80722bd844019067958102dfa3e6dcd7",
+    "semantic_hash": "80722bd844019067958102dfa3e6dcd7"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\landing-page\\ProductCard.tsx": {
+    "mtime": 1779622717.4397788,
+    "ast_hash": "285af05003e297d0f2b4b46e73b2901b",
+    "semantic_hash": "285af05003e297d0f2b4b46e73b2901b"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\landing-page\\ProductGrid.tsx": {
+    "mtime": 1779622717.4407835,
+    "ast_hash": "37bfcaf0c0e4a799abcb7c0c6f7da390",
+    "semantic_hash": "37bfcaf0c0e4a799abcb7c0c6f7da390"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\landing-page\\ProductsBrandsSection.tsx": {
+    "mtime": 1779622717.4407835,
+    "ast_hash": "65fe3e2b3956349ece8d63e47d0a93c8",
+    "semantic_hash": "65fe3e2b3956349ece8d63e47d0a93c8"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\landing-page\\QuickViewModal.tsx": {
+    "mtime": 1779622717.4417803,
+    "ast_hash": "1c6d516d79553a9174b7228b7ade38a0",
+    "semantic_hash": "1c6d516d79553a9174b7228b7ade38a0"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\landing-page\\ScrollToTop.tsx": {
+    "mtime": 1779622717.44278,
+    "ast_hash": "ad06d1ae8b755e7594b833cb524bb36c",
+    "semantic_hash": "ad06d1ae8b755e7594b833cb524bb36c"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\landing-page\\SkeletonLoader.tsx": {
+    "mtime": 1779622717.4437783,
+    "ast_hash": "37cc21036fd6101336ee7e36bef3f0fb",
+    "semantic_hash": "37cc21036fd6101336ee7e36bef3f0fb"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\landing-page\\TargetAudienceSection.tsx": {
+    "mtime": 1779622717.4447806,
+    "ast_hash": "afbf1244578fc73d056d06a0acde348d",
+    "semantic_hash": "afbf1244578fc73d056d06a0acde348d"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\landing-page\\TeamSection.tsx": {
+    "mtime": 1779622717.445781,
+    "ast_hash": "392ca33687c48b565b44c37cbcad5001",
+    "semantic_hash": "392ca33687c48b565b44c37cbcad5001"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\landing-page\\Testimonials.tsx": {
+    "mtime": 1779622717.445781,
+    "ast_hash": "f8609a881aee67a60f3c6a8663f54692",
+    "semantic_hash": "f8609a881aee67a60f3c6a8663f54692"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\landing-page\\TrainingSupportSection.tsx": {
+    "mtime": 1779622717.4467807,
+    "ast_hash": "e122cff1a34f658615fe5574a6b47a37",
+    "semantic_hash": "e122cff1a34f658615fe5574a6b47a37"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\landing-page\\TrustIndicators.tsx": {
+    "mtime": 1779622717.4477808,
+    "ast_hash": "4b3e055772c84bf085322e8b21353079",
+    "semantic_hash": "4b3e055772c84bf085322e8b21353079"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\landing-page\\index.ts": {
+    "mtime": 1779622717.448778,
+    "ast_hash": "4a6baf268f9cbe5d254d0182a1e74f2c",
+    "semantic_hash": "4a6baf268f9cbe5d254d0182a1e74f2c"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\layout\\AppPromoBar.tsx": {
+    "mtime": 1779622717.4497807,
+    "ast_hash": "2b809a3aab93d27c6749850f7d51a58b",
+    "semantic_hash": "2b809a3aab93d27c6749850f7d51a58b"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\layout\\Footer.tsx": {
+    "mtime": 1779622717.4497807,
+    "ast_hash": "19de0af7ecd4dc87a5e2c3f583f8e12e",
+    "semantic_hash": "19de0af7ecd4dc87a5e2c3f583f8e12e"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\layout\\Navbar.tsx": {
+    "mtime": 1780758989.0402424,
+    "ast_hash": "1e09952ec5022dc7d7bc11f8ea2e52be",
+    "semantic_hash": "1e09952ec5022dc7d7bc11f8ea2e52be"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\layout\\TopBar.tsx": {
+    "mtime": 1779622717.4527795,
+    "ast_hash": "72583697817ee3e130b8f6bbb1672ed8",
+    "semantic_hash": "72583697817ee3e130b8f6bbb1672ed8"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\layout\\TrustBar.tsx": {
+    "mtime": 1779622717.4527795,
+    "ast_hash": "b2cb0c79c6d44b649f21e4d35e0e030a",
+    "semantic_hash": "b2cb0c79c6d44b649f21e4d35e0e030a"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\legal\\LegalPageShell.tsx": {
+    "mtime": 1781229524.590265,
+    "ast_hash": "346eb56d3f14fd50fdd35bfc8f4cf87a",
+    "semantic_hash": "346eb56d3f14fd50fdd35bfc8f4cf87a"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\media\\PhotoGalleryPageClient.tsx": {
+    "mtime": 1780155770.3962638,
+    "ast_hash": "2bb260276bd3fbc2f5597f826f0df08e",
+    "semantic_hash": "2bb260276bd3fbc2f5597f826f0df08e"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\media\\VideoGalleryPageClient.tsx": {
+    "mtime": 1780155770.3962638,
+    "ast_hash": "1eb41145b7ca586ea8c974cab97cf344",
+    "semantic_hash": "1eb41145b7ca586ea8c974cab97cf344"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\orders\\GuestTrackOrderPage.tsx": {
+    "mtime": 1779622717.4577813,
+    "ast_hash": "17fa557103a4c2ec69bab2f4bf8e9632",
+    "semantic_hash": "17fa557103a4c2ec69bab2f4bf8e9632"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\orders\\Icons.tsx": {
+    "mtime": 1779977055.1942587,
+    "ast_hash": "3f8d41231c01efd05179f720ca46dc01",
+    "semantic_hash": "3f8d41231c01efd05179f720ca46dc01"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\orders\\OrderCard.tsx": {
+    "mtime": 1779622717.4587803,
+    "ast_hash": "6d418c63af8b31737dc32273e54154c8",
+    "semantic_hash": "6d418c63af8b31737dc32273e54154c8"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\orders\\OrdersPageMain.tsx": {
+    "mtime": 1779622717.459781,
+    "ast_hash": "f07325a8c0b88965aee950cebf46e082",
+    "semantic_hash": "f07325a8c0b88965aee950cebf46e082"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\partner\\DashboardLayout.tsx": {
+    "mtime": 1780758989.0432398,
+    "ast_hash": "59be42fa05c68d97836fb2d4910f54c5",
+    "semantic_hash": "59be42fa05c68d97836fb2d4910f54c5"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\partner\\Header.tsx": {
+    "mtime": 1779622717.4617803,
+    "ast_hash": "b1d7b60451a7096df3faa230fc3aabeb",
+    "semantic_hash": "b1d7b60451a7096df3faa230fc3aabeb"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\partner\\LandingPageStudio.tsx": {
+    "mtime": 1780758989.0452383,
+    "ast_hash": "6670065f7f612a46f48d258b3ebdc9c9",
+    "semantic_hash": "6670065f7f612a46f48d258b3ebdc9c9"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\partner\\PartnerMembersPage.tsx": {
+    "mtime": 1780758989.0472398,
+    "ast_hash": "dff96aeaf8a97930821c66d8bc0f313b",
+    "semantic_hash": "dff96aeaf8a97930821c66d8bc0f313b"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\partner\\PartnerOrdersPage.tsx": {
+    "mtime": 1780758989.0492406,
+    "ast_hash": "26950f62bb1a549bc17e7d547a6bdf1e",
+    "semantic_hash": "26950f62bb1a549bc17e7d547a6bdf1e"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\partner\\PartnerStorefrontPage.tsx": {
+    "mtime": 1780758989.0512404,
+    "ast_hash": "a202c7378fc462a0e2abfca11e808f4c",
+    "semantic_hash": "a202c7378fc462a0e2abfca11e808f4c"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\partner\\PartnerStorefrontRenewalPage.tsx": {
+    "mtime": 1781229524.5922654,
+    "ast_hash": "2d1dfd4582bfd35978a1d0627473a280",
+    "semantic_hash": "2d1dfd4582bfd35978a1d0627473a280"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\partner\\PartnerSubscriptionsPage.tsx": {
+    "mtime": 1781229524.593273,
+    "ast_hash": "7211940090162ab8ca3b99f883fd443e",
+    "semantic_hash": "7211940090162ab8ca3b99f883fd443e"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\partner\\Sidebar.tsx": {
+    "mtime": 1781229524.5952704,
+    "ast_hash": "49ef8b28e477c0731ea077c69617d4d3",
+    "semantic_hash": "49ef8b28e477c0731ea077c69617d4d3"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\partner\\templates\\template1.tsx": {
+    "mtime": 1780758989.0572417,
+    "ast_hash": "ea3b0b5f91ee032f68b5fa4678c3483b",
+    "semantic_hash": "ea3b0b5f91ee032f68b5fa4678c3483b"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\partner\\templates\\template2.tsx": {
+    "mtime": 1780758989.05924,
+    "ast_hash": "e42152cf00a4836674668ed73caf1085",
+    "semantic_hash": "e42152cf00a4836674668ed73caf1085"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\partner\\templates\\template3.tsx": {
+    "mtime": 1780758989.0612407,
+    "ast_hash": "16f83b72a66c016824817754fd633233",
+    "semantic_hash": "16f83b72a66c016824817754fd633233"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\partner\\templates\\template4.tsx": {
+    "mtime": 1780758989.0632396,
+    "ast_hash": "73f791514e7b147e2566dba2f8987c1f",
+    "semantic_hash": "73f791514e7b147e2566dba2f8987c1f"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\product\\BuyNowOptionsModal.tsx": {
+    "mtime": 1780155770.4122584,
+    "ast_hash": "6e30eca6062ebb4b282becee89f0a7c0",
+    "semantic_hash": "6e30eca6062ebb4b282becee89f0a7c0"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\product\\Checkout.tsx": {
+    "mtime": 1779622717.46778,
+    "ast_hash": "ffd83ebb2a83e7fd2e47c7f0cb4c0bba",
+    "semantic_hash": "ffd83ebb2a83e7fd2e47c7f0cb4c0bba"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\product\\CheckoutSuccess.tsx": {
+    "mtime": 1779622717.46778,
+    "ast_hash": "b27243b2dfa189ad08b55be7853189ab",
+    "semantic_hash": "b27243b2dfa189ad08b55be7853189ab"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\product\\CompleteTheLook.tsx": {
+    "mtime": 1780155770.4122584,
+    "ast_hash": "4a8e9d286d6bb90ad8221defea16c23e",
+    "semantic_hash": "4a8e9d286d6bb90ad8221defea16c23e"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\product\\FailedCheckouut.tsx": {
+    "mtime": 1779622717.46778,
+    "ast_hash": "5d25dd99d7fc3f2342f7afeeca0ce7aa",
+    "semantic_hash": "5d25dd99d7fc3f2342f7afeeca0ce7aa"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\product\\ProductImageGallery.tsx": {
+    "mtime": 1780316279.8569963,
+    "ast_hash": "a6d669974ee426fbf7166e7493a92d96",
+    "semantic_hash": "a6d669974ee426fbf7166e7493a92d96"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\product\\ProductInfo.tsx": {
+    "mtime": 1780758989.0652423,
+    "ast_hash": "1cc43e21774a18615f12c81d06284a46",
+    "semantic_hash": "1cc43e21774a18615f12c81d06284a46"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\product\\ProductPageClient.tsx": {
+    "mtime": 1780758989.0672412,
+    "ast_hash": "9904ded36ce670ed97d0bca72122ff2e",
+    "semantic_hash": "9904ded36ce670ed97d0bca72122ff2e"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\product\\ProductPageWrapper.tsx": {
+    "mtime": 1779622717.4737425,
+    "ast_hash": "558853fb7f71cb166072bfbabae394d7",
+    "semantic_hash": "558853fb7f71cb166072bfbabae394d7"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\product\\ProductQA.tsx": {
+    "mtime": 1779622717.4737425,
+    "ast_hash": "3bb298a55499e49a075c10e14b5e15e2",
+    "semantic_hash": "3bb298a55499e49a075c10e14b5e15e2"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\product\\ProductTabs.tsx": {
+    "mtime": 1780155770.4122584,
+    "ast_hash": "de93a47e88d972df668469c105fe58a2",
+    "semantic_hash": "de93a47e88d972df668469c105fe58a2"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\product\\RelatedProduct.tsx": {
+    "mtime": 1779622717.475754,
+    "ast_hash": "3f778a7edd128f5cc88cf9f1d6094e6e",
+    "semantic_hash": "3f778a7edd128f5cc88cf9f1d6094e6e"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\product\\StickyAddToCart.tsx": {
+    "mtime": 1779622717.475754,
+    "ast_hash": "4ddfcf435060a8737d73a6d313ade397",
+    "semantic_hash": "4ddfcf435060a8737d73a6d313ade397"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\profile\\AvatarCropModal.tsx": {
+    "mtime": 1779622717.4777658,
+    "ast_hash": "154c6934d01f1c601951fc0ca74e0485",
+    "semantic_hash": "154c6934d01f1c601951fc0ca74e0485"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\profile\\EncashmentTab.tsx": {
+    "mtime": 1779622717.4777658,
+    "ast_hash": "fb53838943b0ba93ef4c046e736dde9b",
+    "semantic_hash": "fb53838943b0ba93ef4c046e736dde9b"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\profile\\FadeUp.tsx": {
+    "mtime": 1779622717.4805706,
+    "ast_hash": "9b430db26b09801846f82ae80a4d1f0d",
+    "semantic_hash": "9b430db26b09801846f82ae80a4d1f0d"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\profile\\GetActivityIcon.tsx": {
+    "mtime": 1779622717.4805706,
+    "ast_hash": "a28ed1b08b72d14f795e115de253b6b6",
+    "semantic_hash": "a28ed1b08b72d14f795e115de253b6b6"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\profile\\GetPasswordStrength.tsx": {
+    "mtime": 1779622717.4805706,
+    "ast_hash": "f74fed489364843b42e4db8e79423735",
+    "semantic_hash": "f74fed489364843b42e4db8e79423735"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\profile\\Icons.tsx": {
+    "mtime": 1779977055.1978533,
+    "ast_hash": "d510f294d2deed6305e7b97e81b57121",
+    "semantic_hash": "d510f294d2deed6305e7b97e81b57121"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\profile\\InteriorRequestsTab.tsx": {
+    "mtime": 1779622717.4834404,
+    "ast_hash": "5bb03a2e3cb4233535f1e933ba333e49",
+    "semantic_hash": "5bb03a2e3cb4233535f1e933ba333e49"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\profile\\LevelUpPage.tsx": {
+    "mtime": 1779977075.3483303,
+    "ast_hash": "6294aefe25460982b7083462ba753604",
+    "semantic_hash": "6294aefe25460982b7083462ba753604"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\profile\\LevelsTab.tsx": {
+    "mtime": 1779622717.4854522,
+    "ast_hash": "abc3cb4820f573adce7c8fc4f5180aab",
+    "semantic_hash": "abc3cb4820f573adce7c8fc4f5180aab"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\profile\\NetworkEarningsTab.tsx": {
+    "mtime": 1779977075.3508735,
+    "ast_hash": "f2b8de62b8e751ba81b185b44fdb3b3a",
+    "semantic_hash": "f2b8de62b8e751ba81b185b44fdb3b3a"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\profile\\PasswordInput.tsx": {
+    "mtime": 1779622717.4854522,
+    "ast_hash": "aa2f62789f09f3f90792b3a4abff2f44",
+    "semantic_hash": "aa2f62789f09f3f90792b3a4abff2f44"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\profile\\PerformanceTab.tsx": {
+    "mtime": 1781229524.597265,
+    "ast_hash": "e44a1e83e546441a80e0008258c45d29",
+    "semantic_hash": "e44a1e83e546441a80e0008258c45d29"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\profile\\ProfilePage.tsx": {
+    "mtime": 1781229524.6022637,
+    "ast_hash": "02e6dd55b2ed6633524932cb0e05ea7d",
+    "semantic_hash": "02e6dd55b2ed6633524932cb0e05ea7d"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\profile\\PvStatCard.tsx": {
+    "mtime": 1779977075.364341,
+    "ast_hash": "c970f0ade97555ef9b43cfde2b9e2cfe",
+    "semantic_hash": "c970f0ade97555ef9b43cfde2b9e2cfe"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\profile\\PvWalletTab.tsx": {
+    "mtime": 1781229524.604266,
+    "ast_hash": "fb30d2433d82d296e9c71720bf4c7108",
+    "semantic_hash": "fb30d2433d82d296e9c71720bf4c7108"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\profile\\RewardsWalletTab.tsx": {
+    "mtime": 1781229524.605264,
+    "ast_hash": "2be4b8139cee712135ec5035f86e9b1a",
+    "semantic_hash": "2be4b8139cee712135ec5035f86e9b1a"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\profile\\TierMap.tsx": {
+    "mtime": 1779622717.4934933,
+    "ast_hash": "f35518dfe8aac6f347a764a2b10ac2cf",
+    "semantic_hash": "f35518dfe8aac6f347a764a2b10ac2cf"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\profile\\Toggle.tsx": {
+    "mtime": 1779622717.4934933,
+    "ast_hash": "e6719cdae01f969a3d677baf06bec6bd",
+    "semantic_hash": "e6719cdae01f969a3d677baf06bec6bd"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\profile\\WalletTab.tsx": {
+    "mtime": 1781229524.607263,
+    "ast_hash": "1fb5a4643ffd09a960fa5d7f00428c8e",
+    "semantic_hash": "1fb5a4643ffd09a960fa5d7f00428c8e"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ranking\\RankingFilters.tsx": {
+    "mtime": 1779622717.4955056,
+    "ast_hash": "587b9da0aeb8f08d21f63edd2be0fb0d",
+    "semantic_hash": "587b9da0aeb8f08d21f63edd2be0fb0d"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ranking\\RankingLeaderboard.tsx": {
+    "mtime": 1779622717.4955056,
+    "ast_hash": "a0ac52d30ecd44ac68dd38c8f3c9410c",
+    "semantic_hash": "a0ac52d30ecd44ac68dd38c8f3c9410c"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ranking\\RankingPageClient.tsx": {
+    "mtime": 1779622717.4975166,
+    "ast_hash": "15458815519a7ca082c90f412b571382",
+    "semantic_hash": "15458815519a7ca082c90f412b571382"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ranking\\RankingPodium.tsx": {
+    "mtime": 1779622717.4975166,
+    "ast_hash": "a04b81589146ff260b1a14d8d29a2760",
+    "semantic_hash": "a04b81589146ff260b1a14d8d29a2760"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\referrals\\ReferralCapture.tsx": {
+    "mtime": 1779622717.499269,
+    "ast_hash": "b970577857f611505414752cff4ea6df",
+    "semantic_hash": "b970577857f611505414752cff4ea6df"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\referrals\\ReferralLandingPage.tsx": {
+    "mtime": 1780758989.0782475,
+    "ast_hash": "8af7c99420b68a0549adb19b31062d7e",
+    "semantic_hash": "8af7c99420b68a0549adb19b31062d7e"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\sections\\DynamicWebContent.tsx": {
+    "mtime": 1779622717.501281,
+    "ast_hash": "10948fa507ec36c1af03a49c9f3ae1a3",
+    "semantic_hash": "10948fa507ec36c1af03a49c9f3ae1a3"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\sections\\FeaturedSections.tsx": {
+    "mtime": 1779622717.501281,
+    "ast_hash": "f89aaf2dee24abe8f69ff8c88c3dd12f",
+    "semantic_hash": "f89aaf2dee24abe8f69ff8c88c3dd12f"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\sections\\HeroSection.tsx": {
+    "mtime": 1779622717.501281,
+    "ast_hash": "816bc8e6766b10b0c3ce5ae169cd8fc3",
+    "semantic_hash": "816bc8e6766b10b0c3ce5ae169cd8fc3"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\sections\\NewsLetter.tsx": {
+    "mtime": 1779622717.501281,
+    "ast_hash": "ddc26378e4ee44ecdfed1760323461a2",
+    "semantic_hash": "ddc26378e4ee44ecdfed1760323461a2"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\sections\\PromoBenners.tsx": {
+    "mtime": 1779622717.5044477,
+    "ast_hash": "210a53e24033e20b79446b6c068f2445",
+    "semantic_hash": "210a53e24033e20b79446b6c068f2445"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\sections\\ShopBuilderSections.tsx": {
+    "mtime": 1780758989.0802405,
+    "ast_hash": "536d82b453560f191e3b2fbfef7aaf26",
+    "semantic_hash": "536d82b453560f191e3b2fbfef7aaf26"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\sections\\ShopCategoryCarousel.tsx": {
+    "mtime": 1779622717.5044477,
+    "ast_hash": "7579702faec1c747446be36a4e002192",
+    "semantic_hash": "7579702faec1c747446be36a4e002192"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\sections\\ShopNewsletterSignup.tsx": {
+    "mtime": 1779622717.5064597,
+    "ast_hash": "8f80ff2374198dc9a882079ee1cc0fd0",
+    "semantic_hash": "8f80ff2374198dc9a882079ee1cc0fd0"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\shop\\AdsPopup.tsx": {
+    "mtime": 1780155770.427897,
+    "ast_hash": "344b424851f9b261ed13003f61afbbbb",
+    "semantic_hash": "344b424851f9b261ed13003f61afbbbb"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\shop\\ShopPageClient.tsx": {
+    "mtime": 1779977075.380291,
+    "ast_hash": "579da24f26ded6a01b710c5fdae7c9c0",
+    "semantic_hash": "579da24f26ded6a01b710c5fdae7c9c0"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\AdminPagination.tsx": {
+    "mtime": 1779622717.5088956,
+    "ast_hash": "1f017f2d44b0665dc13c107564396f03",
+    "semantic_hash": "1f017f2d44b0665dc13c107564396f03"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\AvatarImg.tsx": {
+    "mtime": 1779622717.5088956,
+    "ast_hash": "124cd08ca3f3c1504a19325a04570db2",
+    "semantic_hash": "124cd08ca3f3c1504a19325a04570db2"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\DashboardLayout.tsx": {
+    "mtime": 1779622717.5109086,
+    "ast_hash": "1e7bb20074e61dc539f60279539c6e97",
+    "semantic_hash": "1e7bb20074e61dc539f60279539c6e97"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\DataFilterBar.tsx": {
+    "mtime": 1779622717.5109086,
+    "ast_hash": "9c9ff717e059225f87775e3b47d0292b",
+    "semantic_hash": "9c9ff717e059225f87775e3b47d0292b"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\DataTableShell.tsx": {
+    "mtime": 1780155770.427897,
+    "ast_hash": "e63f4162d82181a93f75ce15ef3e860d",
+    "semantic_hash": "e63f4162d82181a93f75ce15ef3e860d"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\Header.tsx": {
+    "mtime": 1779717163.5030665,
+    "ast_hash": "77cc42ac9093bfd90321ee1be79d086f",
+    "semantic_hash": "77cc42ac9093bfd90321ee1be79d086f"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\SearchCommandPalette.tsx": {
+    "mtime": 1779622717.5127308,
+    "ast_hash": "3d6c6100921aab4d676922c39c2f81c4",
+    "semantic_hash": "3d6c6100921aab4d676922c39c2f81c4"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\Sidebar.tsx": {
+    "mtime": 1781229524.6092684,
+    "ast_hash": "65062528281a8f7c25a21b635f7daf09",
+    "semantic_hash": "65062528281a8f7c25a21b635f7daf09"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\UnderMaintenancePage.tsx": {
+    "mtime": 1779622717.5147412,
+    "ast_hash": "102f1c6fc20c2071876900279ec1e463",
+    "semantic_hash": "102f1c6fc20c2071876900279ec1e463"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\accounting\\AccountingDashboardMain.tsx": {
+    "mtime": 1779622717.516752,
+    "ast_hash": "5530d5a4aadcda2264d8af52a223870a",
+    "semantic_hash": "5530d5a4aadcda2264d8af52a223870a"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\accounting\\AccountingSectionPlaceholder.tsx": {
+    "mtime": 1779622717.516752,
+    "ast_hash": "3f26f6732bf302b3a619f87ca34b432c",
+    "semantic_hash": "3f26f6732bf302b3a619f87ca34b432c"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\accounting\\AccountingSettingsMain.tsx": {
+    "mtime": 1779622717.5187652,
+    "ast_hash": "2a32ee20111d074859516232ac9ce061",
+    "semantic_hash": "2a32ee20111d074859516232ac9ce061"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\accounting\\AuditTrailMain.tsx": {
+    "mtime": 1779622717.5187652,
+    "ast_hash": "aabaebfc44f4518150a2f38bb3f80c25",
+    "semantic_hash": "aabaebfc44f4518150a2f38bb3f80c25"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\accounting\\DisbursementHistoryMain.tsx": {
+    "mtime": 1779622717.5187652,
+    "ast_hash": "526e22d142b58aed4b4196bdfbc0f626",
+    "semantic_hash": "526e22d142b58aed4b4196bdfbc0f626"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\accounting\\FinanceDashboardMain.tsx": {
+    "mtime": 1779622717.5205824,
+    "ast_hash": "874320ef3ce5cf012414c4a9fa64eb30",
+    "semantic_hash": "874320ef3ce5cf012414c4a9fa64eb30"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\accounting\\InvoicesPageMain.tsx": {
+    "mtime": 1779622717.5205824,
+    "ast_hash": "8f0f29c0490b91e4ab7ffaaf958c26f8",
+    "semantic_hash": "8f0f29c0490b91e4ab7ffaaf958c26f8"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\accounting\\ReconciliationMain.tsx": {
+    "mtime": 1779622717.5225935,
+    "ast_hash": "2ad54e12024f1c4fcc35315a11384a8b",
+    "semantic_hash": "2ad54e12024f1c4fcc35315a11384a8b"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\accounting\\ReportsMain.tsx": {
+    "mtime": 1779622717.5225935,
+    "ast_hash": "81f5a509804a209fc0a9325dc72a93c4",
+    "semantic_hash": "81f5a509804a209fc0a9325dc72a93c4"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\dashboard\\AdminDashboardHome.tsx": {
+    "mtime": 1779622717.5246065,
+    "ast_hash": "58aa7a30fe0f3ff4842b0d9384e3a279",
+    "semantic_hash": "58aa7a30fe0f3ff4842b0d9384e3a279"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\dashboard\\DashboardPageRouter.tsx": {
+    "mtime": 1779622717.5246065,
+    "ast_hash": "2417a55848e4a82d3d4457ca64c060a6",
+    "semantic_hash": "2417a55848e4a82d3d4457ca64c060a6"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\dashboard\\OrdersChart.tsx": {
+    "mtime": 1779622717.5246065,
+    "ast_hash": "49064f841e673ae11938a1ec0d2da11e",
+    "semantic_hash": "49064f841e673ae11938a1ec0d2da11e"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\dashboard\\RecentAdminProductActivity.tsx": {
+    "mtime": 1779622717.5246065,
+    "ast_hash": "4d7eab0c06c3a5ed03fb3435a80ab955",
+    "semantic_hash": "4d7eab0c06c3a5ed03fb3435a80ab955"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\dashboard\\RecentOrders.tsx": {
+    "mtime": 1779622717.527922,
+    "ast_hash": "7908f6a623cee1fb122639d1009826aa",
+    "semantic_hash": "7908f6a623cee1fb122639d1009826aa"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\dashboard\\SalesChart.tsx": {
+    "mtime": 1779622717.527922,
+    "ast_hash": "01c9f87112771354e494cbe0370d5f21",
+    "semantic_hash": "01c9f87112771354e494cbe0370d5f21"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\dashboard\\StatsGrid.tsx": {
+    "mtime": 1779622717.527922,
+    "ast_hash": "a33a26fd5d2f17f8032b64cc14fb7771",
+    "semantic_hash": "a33a26fd5d2f17f8032b64cc14fb7771"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\dashboard\\SupplierDashboardHome.tsx": {
+    "mtime": 1781229524.6112626,
+    "ast_hash": "092c81c8f18948372c16a26cca0f0df7",
+    "semantic_hash": "092c81c8f18948372c16a26cca0f0df7"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\dashboard\\TopProducts.tsx": {
+    "mtime": 1779622717.5299308,
+    "ast_hash": "98091b796c1bc433ef6f4de76e10a06f",
+    "semantic_hash": "98091b796c1bc433ef6f4de76e10a06f"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\dashboard\\statsGridTypes.ts": {
+    "mtime": 1779622717.5319395,
+    "ast_hash": "353f96c1f6b398c2d3b7eb7e898dcd32",
+    "semantic_hash": "353f96c1f6b398c2d3b7eb7e898dcd32"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\emailBlast\\EmailBlastForm.tsx": {
+    "mtime": 1779622717.5319395,
+    "ast_hash": "a1dd1fad64c0f04a291b33843fc1f9a7",
+    "semantic_hash": "a1dd1fad64c0f04a291b33843fc1f9a7"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\emailBlast\\EmailBlastPageMain.tsx": {
+    "mtime": 1779622717.5319395,
+    "ast_hash": "6777dd9e0d27e76a5fcd8d5fac40cd21",
+    "semantic_hash": "6777dd9e0d27e76a5fcd8d5fac40cd21"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\encashment\\EncashmentPageMain.tsx": {
+    "mtime": 1779622717.5339477,
+    "ast_hash": "98b30be803c691878f0f5369dc61fb7a",
+    "semantic_hash": "98b30be803c691878f0f5369dc61fb7a"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\expenses\\ExpenseCategoriesPageMain.tsx": {
+    "mtime": 1779622717.5359583,
+    "ast_hash": "d6ea085e18e4cf392d07f7c1951a4166",
+    "semantic_hash": "d6ea085e18e4cf392d07f7c1951a4166"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\expenses\\ExpensesPageMain.tsx": {
+    "mtime": 1779622717.5359583,
+    "ast_hash": "d0db5d1f8d0ba68ce7ef7b361f8e32d6",
+    "semantic_hash": "d0db5d1f8d0ba68ce7ef7b361f8e32d6"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\inquiry\\AdminInquiryPage.tsx": {
+    "mtime": 1781229524.6122649,
+    "ast_hash": "94fef36b3154197088673cc4bf24a479",
+    "semantic_hash": "94fef36b3154197088673cc4bf24a479"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\inquiry\\ServiceInquiriesAdminPage.tsx": {
+    "mtime": 1781229524.6142697,
+    "ast_hash": "5fe0529a81662ac310ad39778065ab4c",
+    "semantic_hash": "5fe0529a81662ac310ad39778065ab4c"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\inquiry\\UsernameChangeRequestsPage.tsx": {
+    "mtime": 1779622717.5379694,
+    "ast_hash": "ffb7928dfcf829f473949cc91a082584",
+    "semantic_hash": "ffb7928dfcf829f473949cc91a082584"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\inquiry\\WebstoreRequestsPage.tsx": {
+    "mtime": 1781229524.6162639,
+    "ast_hash": "a1f526b01bb1ee1ed7a924f710594df6",
+    "semantic_hash": "a1f526b01bb1ee1ed7a924f710594df6"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\interiorRequests\\InteriorRequestsPageMain.tsx": {
+    "mtime": 1779622717.539982,
+    "ast_hash": "4a96842b9c1f72162a19933b7786c9ad",
+    "semantic_hash": "4a96842b9c1f72162a19933b7786c9ad"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\members\\AddMemberModal.tsx": {
+    "mtime": 1779622717.5417771,
+    "ast_hash": "f35c3222d9c975d9dc45a5ca2e598215",
+    "semantic_hash": "f35c3222d9c975d9dc45a5ca2e598215"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\members\\KycVerificationPageMain.tsx": {
+    "mtime": 1779622717.5417771,
+    "ast_hash": "cc2d4f69735bf3599a405fb4459d12cd",
+    "semantic_hash": "cc2d4f69735bf3599a405fb4459d12cd"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\members\\MembersPageMain.tsx": {
+    "mtime": 1779622717.5437877,
+    "ast_hash": "988bbfcc3a4ad6f12f1c1a93add6a07b",
+    "semantic_hash": "988bbfcc3a4ad6f12f1c1a93add6a07b"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\members\\MembersStats.tsx": {
+    "mtime": 1780758989.091266,
+    "ast_hash": "9099cc2e114d7bf8b78ae4cac418c45e",
+    "semantic_hash": "9099cc2e114d7bf8b78ae4cac418c45e"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\members\\MembersStatusBadge.tsx": {
+    "mtime": 1779622717.5457985,
+    "ast_hash": "6f0d9e4932a154f5abe2c4078412834e",
+    "semantic_hash": "6f0d9e4932a154f5abe2c4078412834e"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\members\\MembersTable.tsx": {
+    "mtime": 1779622717.5457985,
+    "ast_hash": "cbcadd6095f9b68d98fb2deb7f1565a9",
+    "semantic_hash": "cbcadd6095f9b68d98fb2deb7f1565a9"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\members\\MembersToolbar.tsx": {
+    "mtime": 1779622717.5478108,
+    "ast_hash": "b51ce9e4d6937d0f49d6e7f23f25a6fc",
+    "semantic_hash": "b51ce9e4d6937d0f49d6e7f23f25a6fc"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\members\\ReferralTreePageMain.tsx": {
+    "mtime": 1780758989.0932636,
+    "ast_hash": "adf09febcf3651f33307f259aa9fc6b5",
+    "semantic_hash": "adf09febcf3651f33307f259aa9fc6b5"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\members\\activityLogs\\ActivityLogsPageMain.tsx": {
+    "mtime": 1779622717.5498226,
+    "ast_hash": "5927c432b67bcd0f1e29834df547d484",
+    "semantic_hash": "5927c432b67bcd0f1e29834df547d484"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\members\\activityLogs\\ActivityLogsStats.tsx": {
+    "mtime": 1779622717.5498226,
+    "ast_hash": "6ef180a745360b610fecf11cb1e5d4c3",
+    "semantic_hash": "6ef180a745360b610fecf11cb1e5d4c3"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\members\\activityLogs\\ActivityLogsTable.tsx": {
+    "mtime": 1779622717.5498226,
+    "ast_hash": "5e3f9b817845351efa1b16f63f129490",
+    "semantic_hash": "5e3f9b817845351efa1b16f63f129490"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\members\\activityLogs\\ActivityLogsToolbar.tsx": {
+    "mtime": 1779622717.5498226,
+    "ast_hash": "94303bd4faa415b7a75ab102da175263",
+    "semantic_hash": "94303bd4faa415b7a75ab102da175263"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\members\\activityLogs\\types.ts": {
+    "mtime": 1779622717.5529451,
+    "ast_hash": "762dd0a55b821d9476bf6132c3a6f094",
+    "semantic_hash": "762dd0a55b821d9476bf6132c3a6f094"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\members\\topEarners\\TopEarnersPageMain.tsx": {
+    "mtime": 1779622717.5529451,
+    "ast_hash": "98673ae678de85928ed331f98c707097",
+    "semantic_hash": "98673ae678de85928ed331f98c707097"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\members\\topEarners\\TopEarnersPodium.tsx": {
+    "mtime": 1780758989.0962648,
+    "ast_hash": "962c4ae00af4d7f48ffa677cea455c5f",
+    "semantic_hash": "962c4ae00af4d7f48ffa677cea455c5f"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\members\\topEarners\\TopEarnersStats.tsx": {
+    "mtime": 1779622717.5549567,
+    "ast_hash": "a7aecc5d2041059d06160bc52b74331f",
+    "semantic_hash": "a7aecc5d2041059d06160bc52b74331f"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\members\\topEarners\\TopEarnersTable.tsx": {
+    "mtime": 1780758989.0982625,
+    "ast_hash": "983d5fba1e42aa26142eab2c54a5f227",
+    "semantic_hash": "983d5fba1e42aa26142eab2c54a5f227"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\members\\topEarners\\TopEarnersToolbar.tsx": {
+    "mtime": 1779622717.557397,
+    "ast_hash": "3393607d2a7fbc72950d7147c14ea566",
+    "semantic_hash": "3393607d2a7fbc72950d7147c14ea566"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\members\\topEarners\\types.ts": {
+    "mtime": 1779622717.557397,
+    "ast_hash": "64c85b78bf06a27e913f82a9ca7f523f",
+    "semantic_hash": "64c85b78bf06a27e913f82a9ca7f523f"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\members\\walletCredits\\AdjustWalletModal.tsx": {
+    "mtime": 1779622717.559409,
+    "ast_hash": "16d41618841ddfe919a4226f2f9ac0eb",
+    "semantic_hash": "16d41618841ddfe919a4226f2f9ac0eb"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\members\\walletCredits\\WalletCreditsPageMain.tsx": {
+    "mtime": 1779622717.559409,
+    "ast_hash": "c27425d32bf00f8670466a70f7db2e6d",
+    "semantic_hash": "c27425d32bf00f8670466a70f7db2e6d"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\members\\walletCredits\\WalletCreditsStats.tsx": {
+    "mtime": 1779622717.559409,
+    "ast_hash": "753935eee2996737af0a5b0f5b6162c6",
+    "semantic_hash": "753935eee2996737af0a5b0f5b6162c6"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\members\\walletCredits\\WalletCreditsTable.tsx": {
+    "mtime": 1779622717.5618284,
+    "ast_hash": "4bdc52fc378952204371f90601433548",
+    "semantic_hash": "4bdc52fc378952204371f90601433548"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\members\\walletCredits\\WalletCreditsToolbar.tsx": {
+    "mtime": 1779622717.562969,
+    "ast_hash": "070aec0f9bcc0a092fff77f62ebc626a",
+    "semantic_hash": "070aec0f9bcc0a092fff77f62ebc626a"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\members\\walletCredits\\types.ts": {
+    "mtime": 1779622717.5639713,
+    "ast_hash": "fda0a9861a49ecd4b95afb99b900f4ef",
+    "semantic_hash": "fda0a9861a49ecd4b95afb99b900f4ef"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\orders\\AdminOrdersPageMain.tsx": {
+    "mtime": 1779717163.5087311,
+    "ast_hash": "abb03bcdd9d43bd3bb10f6824318368e",
+    "semantic_hash": "abb03bcdd9d43bd3bb10f6824318368e"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\payments\\PaymentsEwalletPageMain.tsx": {
+    "mtime": 1779622717.5669703,
+    "ast_hash": "9ba6684c4eb32c255589377c6114e7c0",
+    "semantic_hash": "9ba6684c4eb32c255589377c6114e7c0"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\payments\\PaymentsPageMain.tsx": {
+    "mtime": 1779622717.5679674,
+    "ast_hash": "2cf35a7082e3d868c8231ab040c9c545",
+    "semantic_hash": "2cf35a7082e3d868c8231ab040c9c545"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\payments\\PaymentsVouchersPageMain.tsx": {
+    "mtime": 1781229524.6182773,
+    "ast_hash": "cdb4b15722fd148297b9de7819e42af8",
+    "semantic_hash": "cdb4b15722fd148297b9de7819e42af8"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\products\\AddProductModal.tsx": {
+    "mtime": 1781229524.6212666,
+    "ast_hash": "6019d55aca7834ca20acc21333c5582f",
+    "semantic_hash": "6019d55aca7834ca20acc21333c5582f"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\products\\BulkEditProductsModal.tsx": {
+    "mtime": 1779622717.5709612,
+    "ast_hash": "e0cceb6cfa990f96c5c80a122bea4d48",
+    "semantic_hash": "e0cceb6cfa990f96c5c80a122bea4d48"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\products\\BulkProductImportPanel.tsx": {
+    "mtime": 1779622717.5733142,
+    "ast_hash": "86d5516c3e005591ed064bc488dc1a2a",
+    "semantic_hash": "86d5516c3e005591ed064bc488dc1a2a"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\products\\CsvImportTutorialMain.tsx": {
+    "mtime": 1779622717.5743244,
+    "ast_hash": "d4cc083016a0b45dce17911f79729830",
+    "semantic_hash": "d4cc083016a0b45dce17911f79729830"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\products\\EditProductModal.tsx": {
+    "mtime": 1781229524.6252685,
+    "ast_hash": "42d9692a91119c0c0c2cb822a0d6e5cc",
+    "semantic_hash": "42d9692a91119c0c0c2cb822a0d6e5cc"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\products\\EditZqPricingModal.tsx": {
+    "mtime": 1780758989.103264,
+    "ast_hash": "1adec0b7f8b4b25f4760dffc090a7c89",
+    "semantic_hash": "1adec0b7f8b4b25f4760dffc090a7c89"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\products\\ImagePositionEditorModal.tsx": {
+    "mtime": 1779622717.5763242,
+    "ast_hash": "af632dd5d0293e48b6c23ca6287761a5",
+    "semantic_hash": "af632dd5d0293e48b6c23ca6287761a5"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\products\\ImportImagePageMain.tsx": {
+    "mtime": 1780758989.1057706,
+    "ast_hash": "920febfe517907df41b8597fbe67fa26",
+    "semantic_hash": "920febfe517907df41b8597fbe67fa26"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\products\\ImportZqPricingModal.tsx": {
+    "mtime": 1779717163.5107434,
+    "ast_hash": "f6935d94abe3886dae9926b5c5ec97fb",
+    "semantic_hash": "f6935d94abe3886dae9926b5c5ec97fb"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\products\\ProductActivityLogsModal.tsx": {
+    "mtime": 1779622717.5773258,
+    "ast_hash": "b56ebf717ff78458771a524a08e36f49",
+    "semantic_hash": "b56ebf717ff78458771a524a08e36f49"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\products\\ProductDescriptionGenerator.tsx": {
+    "mtime": 1779622717.5784662,
+    "ast_hash": "8dc39cd71c8082322dd6c0a4dd251b94",
+    "semantic_hash": "8dc39cd71c8082322dd6c0a4dd251b94"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\products\\ProductsInventoryPageMain.tsx": {
+    "mtime": 1779622717.5794628,
+    "ast_hash": "478d3cca139aab88ecf47a5099fc6746",
+    "semantic_hash": "478d3cca139aab88ecf47a5099fc6746"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\products\\ProductsPageMain.tsx": {
+    "mtime": 1781229524.6272612,
+    "ast_hash": "40faed3b1d52b272882e19ad113405e3",
+    "semantic_hash": "40faed3b1d52b272882e19ad113405e3"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\products\\ProductsReviewsPageMain.tsx": {
+    "mtime": 1779717163.5159326,
+    "ast_hash": "e0063bcdbf84d8ff34cf19c5d58e1759",
+    "semantic_hash": "e0063bcdbf84d8ff34cf19c5d58e1759"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\products\\ProductsTable.tsx": {
+    "mtime": 1781229524.629266,
+    "ast_hash": "9bb97fdcf874ba601343fcd0457a39b4",
+    "semantic_hash": "9bb97fdcf874ba601343fcd0457a39b4"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\products\\ProductsToolbar.tsx": {
+    "mtime": 1781229524.6312666,
+    "ast_hash": "88ed815e303f0f71ba75cb67c6c87f9e",
+    "semantic_hash": "88ed815e303f0f71ba75cb67c6c87f9e"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\products\\ZqProductPreviewClient.tsx": {
+    "mtime": 1779622717.584467,
+    "ast_hash": "ef90e65f90ec5243eb5d889c5222cad0",
+    "semantic_hash": "ef90e65f90ec5243eb5d889c5222cad0"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\products\\ZqProductPreviewPage.tsx": {
+    "mtime": 1779622717.5854635,
+    "ast_hash": "dfcc462db3dd2da60c1878ccb41aeac7",
+    "semantic_hash": "dfcc462db3dd2da60c1878ccb41aeac7"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\products\\ZqSupplierProductsPageMain.tsx": {
+    "mtime": 1780316279.8726747,
+    "ast_hash": "265139903a5276f36c5fb2b39191bad7",
+    "semantic_hash": "265139903a5276f36c5fb2b39191bad7"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\products\\brands\\BrandsPageMain.tsx": {
+    "mtime": 1779622717.5874646,
+    "ast_hash": "a591a7701a46c72b44ba4275ba182cf1",
+    "semantic_hash": "a591a7701a46c72b44ba4275ba182cf1"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\products\\categories\\AddCategoryModal.tsx": {
+    "mtime": 1779622717.5884604,
+    "ast_hash": "7dd1021b726716772f104b26f96c64d6",
+    "semantic_hash": "7dd1021b726716772f104b26f96c64d6"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\products\\categories\\BulkEditModal.tsx": {
+    "mtime": 1779622717.5894637,
+    "ast_hash": "d8495694ecb14723e4a38ba6f903e610",
+    "semantic_hash": "d8495694ecb14723e4a38ba6f903e610"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\products\\categories\\CategoriesPageMain.tsx": {
+    "mtime": 1779622717.5904639,
+    "ast_hash": "b184a8092d7fe344760c6183c623f276",
+    "semantic_hash": "b184a8092d7fe344760c6183c623f276"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\products\\categories\\EditCategoryModal.tsx": {
+    "mtime": 1779622717.5914607,
+    "ast_hash": "d69737248078ad2b04341205ef629312",
+    "semantic_hash": "d69737248078ad2b04341205ef629312"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\profile\\AdminProfilePageMain.tsx": {
+    "mtime": 1779622717.5924618,
+    "ast_hash": "9b7e36c0e15cd0121344da74a57bc190",
+    "semantic_hash": "9b7e36c0e15cd0121344da74a57bc190"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\project\\AdminProjectPageMain.tsx": {
+    "mtime": 1779981624.3071759,
+    "ast_hash": "db0bfbc7bbf6d073b2f1e9844a88de73",
+    "semantic_hash": "db0bfbc7bbf6d073b2f1e9844a88de73"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\project\\MerchantCataloguePage.tsx": {
+    "mtime": 1781229524.6322672,
+    "ast_hash": "16a719973f0869d7e1a87c61be000eba",
+    "semantic_hash": "16a719973f0869d7e1a87c61be000eba"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\reports\\ProfitSimulationMain.tsx": {
+    "mtime": 1779622717.595756,
+    "ast_hash": "5a1206047456a9c95594a747bbcec193",
+    "semantic_hash": "5a1206047456a9c95594a747bbcec193"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\settings\\AdminGeneralSettingsPageMain.tsx": {
+    "mtime": 1779622717.5967526,
+    "ast_hash": "e19f468e663935d8a0a429c401ddcfb7",
+    "semantic_hash": "e19f468e663935d8a0a429c401ddcfb7"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\settings\\AdminNotificationsSettingsPageMain.tsx": {
+    "mtime": 1779622717.5977492,
+    "ast_hash": "5a4660222cdccf61b13ac5598d7b09f0",
+    "semantic_hash": "5a4660222cdccf61b13ac5598d7b09f0"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\settings\\AdminSecuritySettingsPageMain.tsx": {
+    "mtime": 1779980274.1131861,
+    "ast_hash": "d7afed122c9502e1bb55ec0edcecc706",
+    "semantic_hash": "d7afed122c9502e1bb55ec0edcecc706"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\settings\\AdminTermsConditionSettingsPageMain.tsx": {
+    "mtime": 1779622717.5997522,
+    "ast_hash": "101d1728cb74eac37dddf397581f866f",
+    "semantic_hash": "101d1728cb74eac37dddf397581f866f"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\settings\\AdminUsersPageMain.tsx": {
+    "mtime": 1779622717.6007566,
+    "ast_hash": "b2c89d00492cc3e849bd83bc826a8745",
+    "semantic_hash": "b2c89d00492cc3e849bd83bc826a8745"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\shipping\\AdminShippingRatesPageMain.tsx": {
+    "mtime": 1779622717.6027544,
+    "ast_hash": "afdcb410331fe7bc3e2d5446afce390b",
+    "semantic_hash": "afdcb410331fe7bc3e2d5446afce390b"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\suppliers\\SuppliersPageMain.tsx": {
+    "mtime": 1781229524.6342669,
+    "ast_hash": "f2e469d1560bd07541e2c033ac1c616b",
+    "semantic_hash": "f2e469d1560bd07541e2c033ac1c616b"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\suppliers\\SuppliersTabsWrapper.tsx": {
+    "mtime": 1780758989.1119905,
+    "ast_hash": "b24d81241d0d6bd654f0bd457582dd61",
+    "semantic_hash": "b24d81241d0d6bd654f0bd457582dd61"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\suppliers\\WarehouseTab.tsx": {
+    "mtime": 1780758989.1119905,
+    "ast_hash": "256ae98ad4a9b73e2b8e4de930501ea4",
+    "semantic_hash": "256ae98ad4a9b73e2b8e4de930501ea4"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\webpages\\AssemblyGuidesManager.tsx": {
+    "mtime": 1779622717.6057525,
+    "ast_hash": "86f049c6cd242e19f0965457c2454040",
+    "semantic_hash": "86f049c6cd242e19f0965457c2454040"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\webpages\\BlogsContentManager.tsx": {
+    "mtime": 1779622717.606751,
+    "ast_hash": "2282a7ea743803f521297b92a1f85e9a",
+    "semantic_hash": "2282a7ea743803f521297b92a1f85e9a"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\webpages\\DatabaseExportPage.tsx": {
+    "mtime": 1779622717.6077504,
+    "ast_hash": "6d08fc9145cd0e0a04ffa7ce4e967bf7",
+    "semantic_hash": "6d08fc9145cd0e0a04ffa7ce4e967bf7"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\webpages\\DreamBuildContentManager.tsx": {
+    "mtime": 1779622717.6077504,
+    "ast_hash": "e0e38f287bd24e81d627a4125d841954",
+    "semantic_hash": "e0e38f287bd24e81d627a4125d841954"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\webpages\\PartnerStorefrontStudio.tsx": {
+    "mtime": 1781229524.6372633,
+    "ast_hash": "0960caf86b656d628b0a52ac3788ad8a",
+    "semantic_hash": "0960caf86b656d628b0a52ac3788ad8a"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\webpages\\PartnerUsersPage.tsx": {
+    "mtime": 1780758989.1119905,
+    "ast_hash": "db218ae0e097420365dd95f5c7f9f7dc",
+    "semantic_hash": "db218ae0e097420365dd95f5c7f9f7dc"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\webpages\\ShopBuilderStudio.tsx": {
+    "mtime": 1779622717.6077504,
+    "ast_hash": "bd7416aeee5b02b3ef11033312c56e22",
+    "semantic_hash": "bd7416aeee5b02b3ef11033312c56e22"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\webpages\\WebContentDashboard.tsx": {
+    "mtime": 1779622717.6077504,
+    "ast_hash": "341b8f1d9ebccf6a3887370d1a9f7541",
+    "semantic_hash": "341b8f1d9ebccf6a3887370d1a9f7541"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\superAdmin\\webpages\\WebPageItemsManager.tsx": {
+    "mtime": 1779622717.6077504,
+    "ast_hash": "89133b8a350944e2e05b9d2d9cb4836f",
+    "semantic_hash": "89133b8a350944e2e05b9d2d9cb4836f"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\supplier\\SupplierCataloguePage.tsx": {
+    "mtime": 1781229524.6382644,
+    "ast_hash": "19080996636f42ea2b573b13d487fc97",
+    "semantic_hash": "19080996636f42ea2b573b13d487fc97"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\supplier\\SupplierCategoriesPage.tsx": {
+    "mtime": 1780758989.1215992,
+    "ast_hash": "fe8125c03b0cb13633e097d8db332474",
+    "semantic_hash": "fe8125c03b0cb13633e097d8db332474"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\supplier\\SupplierChatPage.tsx": {
+    "mtime": 1781229524.6412685,
+    "ast_hash": "5903d83ee3f33f8e06bde1a05e5d76f4",
+    "semantic_hash": "5903d83ee3f33f8e06bde1a05e5d76f4"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\supplier\\SupplierForgotPasswordForm.tsx": {
+    "mtime": 1779622717.6077504,
+    "ast_hash": "b88e375c82fdb2aa4256907dab75fe1a",
+    "semantic_hash": "b88e375c82fdb2aa4256907dab75fe1a"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\supplier\\SupplierInventoryPage.tsx": {
+    "mtime": 1781229524.643268,
+    "ast_hash": "4179203c82f57dc334817ec201397dcd",
+    "semantic_hash": "4179203c82f57dc334817ec201397dcd"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\supplier\\SupplierInviteSetupForm.tsx": {
+    "mtime": 1779622717.6077504,
+    "ast_hash": "43d403a7d365dd37c6e2338eaed76288",
+    "semantic_hash": "43d403a7d365dd37c6e2338eaed76288"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\supplier\\SupplierLayoutShell.tsx": {
+    "mtime": 1781229524.6452644,
+    "ast_hash": "cbab3e653d0f65e1af8eb46f2297eb23",
+    "semantic_hash": "cbab3e653d0f65e1af8eb46f2297eb23"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\supplier\\SupplierLoginForm.tsx": {
+    "mtime": 1779622717.6077504,
+    "ast_hash": "b801c70d13032f06e6682b9834205def",
+    "semantic_hash": "b801c70d13032f06e6682b9834205def"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\supplier\\SupplierOrderReportsPage.tsx": {
+    "mtime": 1780316279.8726747,
+    "ast_hash": "40171f25026942a26043012c41059363",
+    "semantic_hash": "40171f25026942a26043012c41059363"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\supplier\\SupplierOrdersPage.tsx": {
+    "mtime": 1781229524.6472635,
+    "ast_hash": "808d2e21ae74e93415e89a0eaf624ee4",
+    "semantic_hash": "808d2e21ae74e93415e89a0eaf624ee4"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\supplier\\SupplierResetPasswordForm.tsx": {
+    "mtime": 1779622717.6077504,
+    "ast_hash": "62f9bdff471281dac7031201580ec77d",
+    "semantic_hash": "62f9bdff471281dac7031201580ec77d"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\supplier\\SupplierSidebar.tsx": {
+    "mtime": 1781229524.648264,
+    "ast_hash": "7b713e99eaf1121586900fa9ccb59970",
+    "semantic_hash": "7b713e99eaf1121586900fa9ccb59970"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\supplier\\SupplierUsersPage.tsx": {
+    "mtime": 1780758989.1291707,
+    "ast_hash": "b1024261fdcd286dbaf4f7d9a16c89c1",
+    "semantic_hash": "b1024261fdcd286dbaf4f7d9a16c89c1"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\supplier\\SupplierWarehousePage.tsx": {
+    "mtime": 1780316279.88458,
+    "ast_hash": "f10f24b8d9bccfaf18e53fd2764f708a",
+    "semantic_hash": "f10f24b8d9bccfaf18e53fd2764f708a"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\supplier\\SupplierZqPricingModal.tsx": {
+    "mtime": 1781229524.6502645,
+    "ast_hash": "e292f7fba35b552cc46f10cc236d9169",
+    "semantic_hash": "e292f7fba35b552cc46f10cc236d9169"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\supplier\\zq\\ZqCustomerProductPreview.tsx": {
+    "mtime": 1779622717.6235373,
+    "ast_hash": "766e554a8531ca0348fb6f0d016b6806",
+    "semantic_hash": "766e554a8531ca0348fb6f0d016b6806"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\supplier\\zq\\zqProductAdapter.ts": {
+    "mtime": 1779622717.6235373,
+    "ast_hash": "4dc2f10e61026b2c6c2f289531b5ae5b",
+    "semantic_hash": "4dc2f10e61026b2c6c2f289531b5ae5b"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ui\\CartDrawer.tsx": {
+    "mtime": 1781229524.651266,
+    "ast_hash": "4e7f127eaadd99999b04dfd74fe4a403",
+    "semantic_hash": "4e7f127eaadd99999b04dfd74fe4a403"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ui\\DynamicNotify\\DynamicNotify.tsx": {
+    "mtime": 1780758989.1291707,
+    "ast_hash": "aeb724807ecf4ed848ba39c71eeefdf7",
+    "semantic_hash": "aeb724807ecf4ed848ba39c71eeefdf7"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ui\\DynamicNotify\\page.tsx": {
+    "mtime": 1779622717.6235373,
+    "ast_hash": "3465fcbc12117c50cbb1c3baa122ae6a",
+    "semantic_hash": "3465fcbc12117c50cbb1c3baa122ae6a"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ui\\EmojiPicker.tsx": {
+    "mtime": 1780758989.1291707,
+    "ast_hash": "57d8a7a41a1586f0747b5a0a7ffb3e05",
+    "semantic_hash": "57d8a7a41a1586f0747b5a0a7ffb3e05"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ui\\LinkPreview.tsx": {
+    "mtime": 1780758989.1363728,
+    "ast_hash": "b3b47561c526591a8d9f68c6d225a995",
+    "semantic_hash": "b3b47561c526591a8d9f68c6d225a995"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ui\\LoadingScreen.tsx": {
+    "mtime": 1779622717.6235373,
+    "ast_hash": "e58341165f26623b1bc63e6c0a9c24de",
+    "semantic_hash": "e58341165f26623b1bc63e6c0a9c24de"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ui\\LoginLoading\\LoginLoading.tsx": {
+    "mtime": 1780758989.1373858,
+    "ast_hash": "be8453c4535ab24e53acde708c376c4e",
+    "semantic_hash": "be8453c4535ab24e53acde708c376c4e"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ui\\LoginLoading\\page.tsx": {
+    "mtime": 1779622717.6235373,
+    "ast_hash": "c38d419a54eda49b615b08a655ace1b1",
+    "semantic_hash": "c38d419a54eda49b615b08a655ace1b1"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ui\\ProductCard.tsx": {
+    "mtime": 1779622717.6235373,
+    "ast_hash": "593bc3cf1225f82426645fdd082bd17a",
+    "semantic_hash": "593bc3cf1225f82426645fdd082bd17a"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ui\\RichTextEditor.tsx": {
+    "mtime": 1779622717.6235373,
+    "ast_hash": "c194c50936b16f85e8efd5ca07eb26ff",
+    "semantic_hash": "c194c50936b16f85e8efd5ca07eb26ff"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ui\\ShareModal.tsx": {
+    "mtime": 1779622717.6235373,
+    "ast_hash": "5a27c0ccdcbae0f89707a61bcdc780ca",
+    "semantic_hash": "5a27c0ccdcbae0f89707a61bcdc780ca"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ui\\StarRating.tsx": {
+    "mtime": 1779622717.6235373,
+    "ast_hash": "b6df51e2dc971ef6703bcb3f30f5fc07",
+    "semantic_hash": "b6df51e2dc971ef6703bcb3f30f5fc07"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ui\\TierBadge.tsx": {
+    "mtime": 1779622717.6235373,
+    "ast_hash": "6ed252bc91dda45dbb039562d30b135f",
+    "semantic_hash": "6ed252bc91dda45dbb039562d30b135f"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ui\\WishlistDrawer.tsx": {
+    "mtime": 1779622717.6235373,
+    "ast_hash": "30dcc44515a31f1200634d7b4d168d2a",
+    "semantic_hash": "30dcc44515a31f1200634d7b4d168d2a"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ui\\buttons\\OutlineButton.tsx": {
+    "mtime": 1779622717.6235373,
+    "ast_hash": "d80cf29c0bfe01de4d4e91efe7d4be82",
+    "semantic_hash": "d80cf29c0bfe01de4d4e91efe7d4be82"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ui\\buttons\\PrimaryButton.tsx": {
+    "mtime": 1779622717.6235373,
+    "ast_hash": "9447695092c7f951fbb45eabc9284da6",
+    "semantic_hash": "9447695092c7f951fbb45eabc9284da6"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ui\\buttons\\SecondaryButton.tsx": {
+    "mtime": 1779622717.6235373,
+    "ast_hash": "f6a3c9c45230ee1829ff46091d8d6cd3",
+    "semantic_hash": "f6a3c9c45230ee1829ff46091d8d6cd3"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ui\\buttons\\ThemeToggle.tsx": {
+    "mtime": 1779622717.639532,
+    "ast_hash": "e91629f6cf7aa37978b766057584dfac",
+    "semantic_hash": "e91629f6cf7aa37978b766057584dfac"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ui\\buttons\\TransparentButton.tsx": {
+    "mtime": 1779622717.639532,
+    "ast_hash": "622b3d9884829b4a164f49bcacca7989",
+    "semantic_hash": "622b3d9884829b4a164f49bcacca7989"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ui\\card.tsx": {
+    "mtime": 1779622717.639532,
+    "ast_hash": "0fc5ebee40699cbbcbef96fe005ef9cd",
+    "semantic_hash": "0fc5ebee40699cbbcbef96fe005ef9cd"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\ui\\carousel.tsx": {
+    "mtime": 1779622717.639532,
+    "ast_hash": "eb361b008efb4dddbbcf9c63f0faa1e2",
+    "semantic_hash": "eb361b008efb4dddbbcf9c63f0faa1e2"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\verification\\GlobalVerificationPrompt.tsx": {
+    "mtime": 1779622717.639532,
+    "ast_hash": "86b79afdc16ea4337a83acdef28bd0ff",
+    "semantic_hash": "86b79afdc16ea4337a83acdef28bd0ff"
+  },
+  "C:\\Users\\rafha\\Downloads\\Dream-Next\\apps\\apsara-home-frontend\\components\\verification\\VerificationOverviewPage.tsx": {
+    "mtime": 1779622717.639532,
+    "ast_hash": "8ace747ea84b1caeaff2e042de3dd1b7",
+    "semantic_hash": "8ace747ea84b1caeaff2e042de3dd1b7"
+  }
+}
