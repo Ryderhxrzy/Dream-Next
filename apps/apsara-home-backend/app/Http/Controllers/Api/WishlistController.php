@@ -25,7 +25,12 @@ class WishlistController extends Controller
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
 
-        $search = trim((string) ($validated['search'] ?? $validated['q'] ?? ''));
+        // Prefer `search`, but fall back to `q` when `search` is missing OR sent empty
+        // (`??` alone would let an empty `search` string shadow a valid `q`).
+        $search = trim((string) ($validated['search'] ?? ''));
+        if ($search === '') {
+            $search = trim((string) ($validated['q'] ?? ''));
+        }
         $perPage = (int) ($validated['per_page'] ?? 12);
         // Pagination is opt-in: callers that pass neither page nor per_page keep
         // receiving the full list (backward compatible with existing wishlist views).
@@ -57,11 +62,16 @@ class WishlistController extends Controller
                 $query->whereIn('pd_status', [1, 2]);
 
                 if ($search !== '') {
-                    $like = '%' . $search . '%';
+                    // Escape LIKE wildcards so %/_ in the term match literally, and use
+                    // ilike for case-insensitive matching on PostgreSQL (parity with the
+                    // main product search in ProductController::applyKeywordSearch()).
+                    $like = '%' . addcslashes($search, '\\%_') . '%';
                     $query->where(function ($inner) use ($like) {
-                        $inner->where('pd_name', 'like', $like)
-                            ->orWhere('pd_parent_sku', 'like', $like)
-                            ->orWhere('pd_description', 'like', $like);
+                        $inner->where('pd_name', 'ilike', $like)
+                            ->orWhere('pd_parent_sku', 'ilike', $like)
+                            ->orWhereHas('variants', function ($variantQuery) use ($like) {
+                                $variantQuery->where('pv_sku', 'ilike', $like);
+                            });
                     });
                 }
             })
