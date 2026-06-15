@@ -1,6 +1,6 @@
-import { motion } from "framer-motion";
-import { UserPlus, Share2, Wallet } from "lucide-react";
-import PrimaryButton from "@/components/ui/buttons/PrimaryButton";
+import { motion } from "framer-motion"
+import { UserPlus, Share2, Wallet } from "lucide-react"
+import PrimaryButton from "@/components/ui/buttons/PrimaryButton"
 
 const steps = [
   {
@@ -30,11 +30,14 @@ const steps = [
     color: "bg-green-100 text-green-600",
     border: "border-green-200",
   },
-];
+]
 
 export default function HowItWorksSection() {
   return (
-    <section id="how-it-works" className="py-24 bg-white dark:bg-gray-900 overflow-hidden">
+    <section
+      id="how-it-works"
+      className="py-24 bg-white dark:bg-gray-900 overflow-hidden"
+    >
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -97,6 +100,5 @@ export default function HowItWorksSection() {
         </motion.div>
       </div>
     </section>
-  );
+  )
 }
-

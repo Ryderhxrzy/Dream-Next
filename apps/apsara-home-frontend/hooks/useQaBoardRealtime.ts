@@ -1,9 +1,9 @@
-'use client'
+"use client"
 
-import { useCallback, useEffect, useRef, useState } from 'react'
-import Pusher, { type Channel } from 'pusher-js'
+import { useCallback, useEffect, useRef, useState } from "react"
+import Pusher, { type Channel } from "pusher-js"
 
-export type QaTestStatus = 'pending' | 'pass' | 'bug' | 'skip'
+export type QaTestStatus = "pending" | "pass" | "bug" | "skip"
 
 export interface QaStatusUpdate {
   test_id: string
@@ -38,7 +38,7 @@ interface Result {
   setEditing: (testId: string | null) => void
 }
 
-const CHANNEL = 'presence-qa-board'
+const CHANNEL = "presence-qa-board"
 
 /**
  * Wires the QA board to the shared `presence-qa-board` Pusher channel. Every
@@ -49,11 +49,17 @@ const CHANNEL = 'presence-qa-board'
  *   • qa.status.updated     → live status/note sync
  *   • qa.reset              → board cleared
  */
-export function useQaBoardRealtime({ enabled, onStatusUpdate, onReset }: Options): Result {
+export function useQaBoardRealtime({
+  enabled,
+  onStatusUpdate,
+  onReset,
+}: Options): Result {
   const [members, setMembers] = useState<QaMember[]>([])
   const [myId, setMyId] = useState<string | null>(null)
   // Keyed by the editor's presence id so members leaving cleans up correctly.
-  const [editingByMember, setEditingByMember] = useState<Record<string, { testId: string; name: string }>>({})
+  const [editingByMember, setEditingByMember] = useState<
+    Record<string, { testId: string; name: string }>
+  >({})
 
   const channelRef = useRef<Channel | null>(null)
   const meRef = useRef<{ id: string; name: string } | null>(null)
@@ -63,39 +69,51 @@ export function useQaBoardRealtime({ enabled, onStatusUpdate, onReset }: Options
   cbRef.current = { onStatusUpdate, onReset }
 
   useEffect(() => {
-    if (!enabled || typeof window === 'undefined') return
+    if (!enabled || typeof window === "undefined") return
 
     const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY
-    const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'ap3'
+    const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "ap3"
     if (!pusherKey) return
 
     const pusher = new Pusher(pusherKey, {
       cluster: pusherCluster,
       // The BFF route attaches the admin Sanctum token from the session.
       channelAuthorization: {
-        endpoint: '/api/qa/realtime-auth',
-        transport: 'ajax',
+        endpoint: "/api/qa/realtime-auth",
+        transport: "ajax",
       },
     })
 
     const channel = pusher.subscribe(CHANNEL)
     channelRef.current = channel
 
-    const toMembers = (membersObj: { each: (cb: (m: { id: string; info?: { name?: string } }) => void) => void }) => {
+    const toMembers = (membersObj: {
+      each: (cb: (m: { id: string; info?: { name?: string } }) => void) => void
+    }) => {
       const list: QaMember[] = []
-      membersObj.each((m) => list.push({ id: m.id, name: m.info?.name ?? 'Tester' }))
+      membersObj.each((m) =>
+        list.push({ id: m.id, name: m.info?.name ?? "Tester" })
+      )
       return list
     }
 
     const onSubscribed = (membersObj: any) => {
-      meRef.current = { id: membersObj.me?.id ?? null, name: membersObj.me?.info?.name ?? 'You' }
+      meRef.current = {
+        id: membersObj.me?.id ?? null,
+        name: membersObj.me?.info?.name ?? "You",
+      }
       setMyId(meRef.current.id)
       setMembers(toMembers(membersObj))
     }
 
-    const onMemberAdded = (member: { id: string; info?: { name?: string } }) => {
+    const onMemberAdded = (member: {
+      id: string
+      info?: { name?: string }
+    }) => {
       setMembers((prev) =>
-        prev.some((m) => m.id === member.id) ? prev : [...prev, { id: member.id, name: member.info?.name ?? 'Tester' }],
+        prev.some((m) => m.id === member.id)
+          ? prev
+          : [...prev, { id: member.id, name: member.info?.name ?? "Tester" }]
       )
     }
 
@@ -110,23 +128,30 @@ export function useQaBoardRealtime({ enabled, onStatusUpdate, onReset }: Options
       })
     }
 
-    const onEditing = (data: { test_id: string | null; by_id?: string; by_name?: string }) => {
+    const onEditing = (data: {
+      test_id: string | null
+      by_id?: string
+      by_name?: string
+    }) => {
       const uid = data?.by_id
       if (!uid || uid === meRef.current?.id) return
       setEditingByMember((prev) => {
         const next = { ...prev }
-        if (data.test_id) next[uid] = { testId: data.test_id, name: data.by_name ?? 'Someone' }
+        if (data.test_id)
+          next[uid] = { testId: data.test_id, name: data.by_name ?? "Someone" }
         else delete next[uid]
         return next
       })
     }
 
-    channel.bind('pusher:subscription_succeeded', onSubscribed)
-    channel.bind('pusher:member_added', onMemberAdded)
-    channel.bind('pusher:member_removed', onMemberRemoved)
-    channel.bind('qa.editing', onEditing)
-    channel.bind('qa.status.updated', (u: QaStatusUpdate) => cbRef.current.onStatusUpdate(u))
-    channel.bind('qa.reset', () => cbRef.current.onReset())
+    channel.bind("pusher:subscription_succeeded", onSubscribed)
+    channel.bind("pusher:member_added", onMemberAdded)
+    channel.bind("pusher:member_removed", onMemberRemoved)
+    channel.bind("qa.editing", onEditing)
+    channel.bind("qa.status.updated", (u: QaStatusUpdate) =>
+      cbRef.current.onStatusUpdate(u)
+    )
+    channel.bind("qa.reset", () => cbRef.current.onReset())
 
     return () => {
       channel.unbind_all()
@@ -146,12 +171,14 @@ export function useQaBoardRealtime({ enabled, onStatusUpdate, onReset }: Options
     lastSentRef.current = testId
     // Broadcast server-side via the BFF (uses the Pusher secret in backend .env).
     // keepalive lets the "stop editing" ping still send while the tab closes.
-    fetch('/api/qa/editing', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    fetch("/api/qa/editing", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ test_id: testId }),
       keepalive: true,
-    }).catch(() => { /* best-effort presence ping */ })
+    }).catch(() => {
+      /* best-effort presence ping */
+    })
   }, [])
 
   // Collapse the per-member map into test_id -> [names].

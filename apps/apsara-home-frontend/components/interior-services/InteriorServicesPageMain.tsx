@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import Image from "next/image"
 import { motion, useInView } from "framer-motion"
@@ -60,16 +60,28 @@ const InteriorServicesPageMain = () => {
               <motion.h1
                 className="font-['Cormorant_Garamond'] text-[clamp(2.8rem,6vw,5.2rem)] font-light leading-[0.98] text-slate-900"
                 initial={{ opacity: 0, y: 60 }}
-                animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 60 }}
-                transition={{ duration: 0.85, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+                animate={
+                  isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 60 }
+                }
+                transition={{
+                  duration: 0.85,
+                  delay: 0.1,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
               >
                 Dream, Build,
                 <br />
                 <motion.span
                   className="italic text-[#9c7420]"
                   initial={{ opacity: 0, x: -20 }}
-                  animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
-                  transition={{ duration: 0.85, delay: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                  animate={
+                    isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }
+                  }
+                  transition={{
+                    duration: 0.85,
+                    delay: 0.28,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
                 >
                   Refine Every Room
                 </motion.span>
@@ -84,8 +96,9 @@ const InteriorServicesPageMain = () => {
               variants={fadeUp}
               custom={0.38}
             >
-              From tailored residential styling to commercial fit-outs, we turn early ideas into refined,
-              functional spaces with a polished end-to-end design experience.
+              From tailored residential styling to commercial fit-outs, we turn
+              early ideas into refined, functional spaces with a polished
+              end-to-end design experience.
             </motion.p>
 
             {/* CTA buttons */}
@@ -129,17 +142,29 @@ const InteriorServicesPageMain = () => {
                 { value: "1:1", label: "Personal Lead" },
                 { value: "200+", label: "Projects Done" },
               ].map((item, i) => (
-                <motion.div key={item.label} className="flex items-center gap-6" variants={staggerItem}>
+                <motion.div
+                  key={item.label}
+                  className="flex items-center gap-6"
+                  variants={staggerItem}
+                >
                   <div>
                     <motion.p
                       className="font-['Cormorant_Garamond'] text-2xl font-semibold text-slate-900"
                       initial={{ opacity: 0, y: 12 }}
-                      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
-                      transition={{ duration: 0.5, delay: 0.65 + i * 0.1, ease: [0.22, 1, 0.36, 1] }}
+                      animate={
+                        isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }
+                      }
+                      transition={{
+                        duration: 0.5,
+                        delay: 0.65 + i * 0.1,
+                        ease: [0.22, 1, 0.36, 1],
+                      }}
                     >
                       {item.value}
                     </motion.p>
-                    <p className="mt-0.5 text-[10px] uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
+                    <p className="mt-0.5 text-[10px] uppercase tracking-[0.18em] text-slate-400">
+                      {item.label}
+                    </p>
                   </div>
                   {i < 2 && <div className="h-8 w-px bg-slate-200" />}
                 </motion.div>
@@ -166,13 +191,21 @@ const InteriorServicesPageMain = () => {
               className="relative overflow-hidden rounded-4xl border border-white/80 bg-white shadow-[0_30px_80px_rgba(79,70,229,0.14)]"
               initial={{ opacity: 0, x: 40 }}
               animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 40 }}
-              transition={{ duration: 1, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+              transition={{
+                duration: 1,
+                delay: 0.15,
+                ease: [0.22, 1, 0.36, 1],
+              }}
               whileHover={{ scale: 1.015, transition: { duration: 0.4 } }}
             >
               <motion.div
                 initial={{ scale: 1.08 }}
                 animate={isInView ? { scale: 1 } : { scale: 1.08 }}
-                transition={{ duration: 1.2, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+                transition={{
+                  duration: 1.2,
+                  delay: 0.15,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
               >
                 <Image
                   src="/DreambuildBanner.jpg"

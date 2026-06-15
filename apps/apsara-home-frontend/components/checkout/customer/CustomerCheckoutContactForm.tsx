@@ -1,233 +1,321 @@
-'use client';
+"use client"
 
-import { FormErrors, GuestForm } from "@/types/CustomerCheckout/types";
-import { AlertCircle, Check, Gift, WalletCards } from 'lucide-react';
+import { FormErrors, GuestForm } from "@/types/CustomerCheckout/types"
+import { AlertCircle, Check, Gift, WalletCards } from "lucide-react"
 
 interface CustomerCheckoutContactFormProps {
-    form: GuestForm;
-    errors: FormErrors;
-    setField: (key: keyof GuestForm, value: string) => void;
-    lockReferralField?: boolean;
-    referralSourceCode?: string;
-    showReferral?: boolean;
-    voucherStatus?: {
-        loading?: boolean;
-        error?: string | null;
-        appliedAmount?: number | null;
-        message?: string | null;
-    };
-    egcStatus?: {
-        available: number;
-        appliedAmount: number;
-        error?: string | null;
-        loading?: boolean;
-        disabled?: boolean;
-    };
-    cashbackStatus?: {
-        available: number;
-        appliedAmount: number;
-        error?: string | null;
-        loading?: boolean;
-        disabled?: boolean;
-    };
+  form: GuestForm
+  errors: FormErrors
+  setField: (key: keyof GuestForm, value: string) => void
+  lockReferralField?: boolean
+  referralSourceCode?: string
+  showReferral?: boolean
+  voucherStatus?: {
+    loading?: boolean
+    error?: string | null
+    appliedAmount?: number | null
+    message?: string | null
+  }
+  egcStatus?: {
+    available: number
+    appliedAmount: number
+    error?: string | null
+    loading?: boolean
+    disabled?: boolean
+  }
+  cashbackStatus?: {
+    available: number
+    appliedAmount: number
+    error?: string | null
+    loading?: boolean
+    disabled?: boolean
+  }
 }
 
-const Field = ({ label, value, onChange, placeholder, type = 'text', required = false, error, fieldKey }: {
-    label: string; value: string; onChange: (v: string) => void;
-    placeholder: string; type?: string; required?: boolean; error?: string; fieldKey?: keyof GuestForm;
+const Field = ({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+  required = false,
+  error,
+  fieldKey,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  placeholder: string
+  type?: string
+  required?: boolean
+  error?: string
+  fieldKey?: keyof GuestForm
 }) => (
-    <div data-error-field={fieldKey} className="transition-transform duration-200">
-        <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
-            {label}{required && <span className="text-red-500 ml-0.5">*</span>}
-        </label>
-        <input
-            type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-            className={`w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border rounded-xl text-sm text-slate-700 dark:text-slate-200 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 transition-all ${error ? 'border-red-300 dark:border-red-600 focus:ring-red-200 dark:focus:ring-red-900 focus:border-red-400 dark:focus:border-red-500'
-                : 'border-slate-200 dark:border-slate-700 focus:ring-sky-200 dark:focus:ring-sky-900 focus:border-sky-400 dark:focus:border-sky-500'
-                }`}
-        />
-        {error && <p className="text-red-500 dark:text-red-400 text-[11px] mt-1">{error}</p>}
-    </div>
-);
+  <div
+    data-error-field={fieldKey}
+    className="transition-transform duration-200"
+  >
+    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
+      {label}
+      {required && <span className="text-red-500 ml-0.5">*</span>}
+    </label>
+    <input
+      type={type}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className={`w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border rounded-xl text-sm text-slate-700 dark:text-slate-200 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 transition-all ${
+        error
+          ? "border-red-300 dark:border-red-600 focus:ring-red-200 dark:focus:ring-red-900 focus:border-red-400 dark:focus:border-red-500"
+          : "border-slate-200 dark:border-slate-700 focus:ring-sky-200 dark:focus:ring-sky-900 focus:border-sky-400 dark:focus:border-sky-500"
+      }`}
+    />
+    {error && (
+      <p className="text-red-500 dark:text-red-400 text-[11px] mt-1">{error}</p>
+    )}
+  </div>
+)
 
 const CustomerCheckoutContactForm = ({
-    form,
-    errors,
-    setField,
-    lockReferralField = false,
-    referralSourceCode = '',
-    showReferral = true,
-    voucherStatus,
-    egcStatus,
-    cashbackStatus,
+  form,
+  errors,
+  setField,
+  lockReferralField = false,
+  referralSourceCode = "",
+  showReferral = true,
+  voucherStatus,
+  egcStatus,
+  cashbackStatus,
 }: CustomerCheckoutContactFormProps) => {
-    return (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
-            <h2 className="text-sm font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2.5">
-                <div className="h-6 w-6 rounded-full bg-sky-500 text-white text-xs font-bold flex items-center justify-center shrink-0">1</div>
-                Contact information
-            </h2>
-            <div className="space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <Field label="Full Name" value={form.name} onChange={v => setField('name', v)} placeholder="Enter Full Name" required error={errors.name} fieldKey="name" />
-                    <Field label="Email" value={form.email} onChange={v => setField('email', v)} placeholder="Enter Email" required error={errors.email} fieldKey="email" />
-                </div>
-                <Field label="Phone Number" value={form.phone} onChange={v => setField('phone', v)} placeholder="Enter Phone Number" required error={errors.phone} fieldKey="phone" />
-
-                {/* DIVIDER */}
-                <div className="flex items-center gap-3 pt-1">
-                    <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium uppercase tracking-wider">Optional</span>
-                    <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
-                </div>
-
-                {/* REFERRAL + VOUCHER */}
-                {showReferral && (
-                    <div data-error-field="referred_by" className="transition-transform duration-200">
-                        <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Referred By <span className="text-red-500 ml-0.5">*</span></label>
-                        <div className="relative">
-                            <Gift className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
-                            <input
-                                type="text"
-                                value={form.referred_by}
-                                onChange={e => setField('referred_by', e.target.value)}
-                                placeholder="Enter name or referral ID"
-                                maxLength={60}
-                                disabled={lockReferralField}
-                                className={`w-full pl-10 pr-4 py-2.5 border rounded-xl text-sm placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 transition-all ${
-                                    lockReferralField
-                                        ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300 cursor-not-allowed focus:ring-emerald-100 dark:focus:ring-emerald-900 focus:border-emerald-300 dark:focus:border-emerald-600'
-                                        : errors.referred_by
-                                            ? 'bg-white dark:bg-slate-900 border-red-300 dark:border-red-600 text-slate-700 dark:text-slate-200 focus:ring-red-200 dark:focus:ring-red-900 focus:border-red-400 dark:focus:border-red-500'
-                                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 focus:ring-sky-200 dark:focus:ring-sky-900 focus:border-sky-400 dark:focus:border-sky-500'
-                                }`}
-                                required
-                            />
-                        </div>
-                        {errors.referred_by ? (
-                            <p className="text-red-500 dark:text-red-400 text-[11px] mt-1">{errors.referred_by}</p>
-                        ) : lockReferralField && referralSourceCode ? (
-                            <p className="text-[11px] text-emerald-700 dark:text-emerald-300 mt-1.5 flex items-center gap-1">
-                                <Check className="w-3 h-3 shrink-0" />
-                                Shared shopping link detected. This checkout is locked to
-                                <span className="font-semibold break-all"> {referralSourceCode}</span>.
-                            </p>
-                        ) : (
-                        <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5 flex items-center gap-1">
-                            <AlertCircle className="w-3 h-3 shrink-0" />
-                            Enter who referred you only if no affiliate shopping link was shared with you.
-                        </p>
-                        )}
-                    </div>
-                )}
-
-                <div>
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Voucher Coupon</label>
-                    <div className="relative">
-                        <Gift className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
-                        <input
-                            type="text"
-                            value={form.voucher_coupon}
-                            onChange={e => setField('voucher_coupon', e.target.value.toUpperCase())}
-                            placeholder="Enter voucher code"
-                            maxLength={30}
-                            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-700 dark:text-slate-200 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-200 dark:focus:ring-sky-900 focus:border-sky-400 dark:focus:border-sky-500 transition-all tracking-widest font-mono uppercase"
-                        />
-                    </div>
-                    {voucherStatus?.loading ? (
-                        <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5">Checking voucher…</p>
-                    ) : voucherStatus?.error ? (
-                        <p className="text-[11px] text-rose-500 dark:text-rose-400 mt-1.5">{voucherStatus.error}</p>
-                    ) : (voucherStatus?.appliedAmount ?? 0) > 0 ? (
-                        <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1.5">
-                            {voucherStatus?.message || `Voucher applied: -PHP ${(voucherStatus?.appliedAmount ?? 0).toLocaleString()}`}
-                        </p>
-                    ) : (
-                        <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5 flex items-center gap-1">
-                            <AlertCircle className="w-3 h-3 shrink-0" />
-                            Apply your voucher coupon code if available.
-                        </p>
-                    )}
-                </div>
-
-                {cashbackStatus && !cashbackStatus.disabled ? (
-                    <div>
-                        <div className="mb-1.5 flex items-center justify-between gap-3">
-                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">Personal Cashback Discount</label>
-                            <span className="text-[11px] font-semibold text-rose-600 dark:text-rose-400">
-                                Balance: PHP {cashbackStatus.available.toLocaleString()}
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-3 rounded-xl border border-rose-100 bg-rose-50/70 px-3.5 py-2.5 dark:border-rose-900/50 dark:bg-rose-950/20">
-                            <WalletCards className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" />
-                            <div className="min-w-0 flex-1">
-                                <p className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                                    {cashbackStatus.loading
-                                        ? 'Checking available cashback...'
-                                        : cashbackStatus.appliedAmount > 0
-                                            ? `Auto-applied: -PHP ${cashbackStatus.appliedAmount.toLocaleString()}`
-                                            : 'No cashback discount applied'}
-                                </p>
-                                <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                                    Personal cashback is auto-deducted only when this product passes supplier discount rules.
-                                </p>
-                            </div>
-                        </div>
-                        {cashbackStatus.error ? (
-                            <p className="mt-1.5 text-[11px] text-rose-500 dark:text-rose-400">{cashbackStatus.error}</p>
-                        ) : cashbackStatus.appliedAmount > 0 ? (
-                            <p className="mt-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
-                                Personal cashback will be deducted automatically after payment is confirmed.
-                            </p>
-                        ) : (
-                            <p className="mt-1.5 flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
-                                <AlertCircle className="h-3 w-3 shrink-0" />
-                                Available cashback stays unused when this order has no eligible cashback discount.
-                            </p>
-                        )}
-                    </div>
-                ) : null}
-
-                {egcStatus ? (
-                    <div>
-                        <div className="mb-1.5 flex items-center justify-between gap-3">
-                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">AF-GC Store Credit</label>
-                            <span className="text-[11px] font-semibold text-fuchsia-600 dark:text-fuchsia-400">
-                                Balance: PHP {egcStatus.available.toLocaleString()}
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-3 rounded-xl border border-fuchsia-100 bg-fuchsia-50/70 px-3.5 py-2.5 dark:border-fuchsia-900/50 dark:bg-fuchsia-950/20">
-                            <WalletCards className="h-4 w-4 shrink-0 text-fuchsia-600 dark:text-fuchsia-400" />
-                            <div className="min-w-0 flex-1">
-                                <p className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                                    {egcStatus.loading
-                                        ? 'Checking available AF-GC...'
-                                        : egcStatus.appliedAmount > 0
-                                            ? `Auto-applied: -PHP ${egcStatus.appliedAmount.toLocaleString()}`
-                                            : 'No AF-GC applied'}
-                                </p>
-                                <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                                    AF-GC is auto-deducted only when this product passes admin discount rules.
-                                </p>
-                            </div>
-                        </div>
-                        {egcStatus.error ? (
-                            <p className="mt-1.5 text-[11px] text-rose-500 dark:text-rose-400">{egcStatus.error}</p>
-                        ) : egcStatus.appliedAmount > 0 ? (
-                            <p className="mt-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
-                                AF-GC will be deducted automatically after payment is confirmed.
-                            </p>
-                        ) : (
-                            <p className="mt-1.5 flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
-                                <AlertCircle className="h-3 w-3 shrink-0" />
-                                Available balance stays unused when this order has no eligible AF-GC discount.
-                            </p>
-                        )}
-                    </div>
-                ) : null}
-            </div>
+  return (
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+      <h2 className="text-sm font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2.5">
+        <div className="h-6 w-6 rounded-full bg-sky-500 text-white text-xs font-bold flex items-center justify-center shrink-0">
+          1
         </div>
-    )
+        Contact information
+      </h2>
+      <div className="space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field
+            label="Full Name"
+            value={form.name}
+            onChange={(v) => setField("name", v)}
+            placeholder="Enter Full Name"
+            required
+            error={errors.name}
+            fieldKey="name"
+          />
+          <Field
+            label="Email"
+            value={form.email}
+            onChange={(v) => setField("email", v)}
+            placeholder="Enter Email"
+            required
+            error={errors.email}
+            fieldKey="email"
+          />
+        </div>
+        <Field
+          label="Phone Number"
+          value={form.phone}
+          onChange={(v) => setField("phone", v)}
+          placeholder="Enter Phone Number"
+          required
+          error={errors.phone}
+          fieldKey="phone"
+        />
+
+        {/* DIVIDER */}
+        <div className="flex items-center gap-3 pt-1">
+          <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium uppercase tracking-wider">
+            Optional
+          </span>
+          <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+        </div>
+
+        {/* REFERRAL + VOUCHER */}
+        {showReferral && (
+          <div
+            data-error-field="referred_by"
+            className="transition-transform duration-200"
+          >
+            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
+              Referred By <span className="text-red-500 ml-0.5">*</span>
+            </label>
+            <div className="relative">
+              <Gift className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
+              <input
+                type="text"
+                value={form.referred_by}
+                onChange={(e) => setField("referred_by", e.target.value)}
+                placeholder="Enter name or referral ID"
+                maxLength={60}
+                disabled={lockReferralField}
+                className={`w-full pl-10 pr-4 py-2.5 border rounded-xl text-sm placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 transition-all ${
+                  lockReferralField
+                    ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300 cursor-not-allowed focus:ring-emerald-100 dark:focus:ring-emerald-900 focus:border-emerald-300 dark:focus:border-emerald-600"
+                    : errors.referred_by
+                      ? "bg-white dark:bg-slate-900 border-red-300 dark:border-red-600 text-slate-700 dark:text-slate-200 focus:ring-red-200 dark:focus:ring-red-900 focus:border-red-400 dark:focus:border-red-500"
+                      : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 focus:ring-sky-200 dark:focus:ring-sky-900 focus:border-sky-400 dark:focus:border-sky-500"
+                }`}
+                required
+              />
+            </div>
+            {errors.referred_by ? (
+              <p className="text-red-500 dark:text-red-400 text-[11px] mt-1">
+                {errors.referred_by}
+              </p>
+            ) : lockReferralField && referralSourceCode ? (
+              <p className="text-[11px] text-emerald-700 dark:text-emerald-300 mt-1.5 flex items-center gap-1">
+                <Check className="w-3 h-3 shrink-0" />
+                Shared shopping link detected. This checkout is locked to
+                <span className="font-semibold break-all">
+                  {" "}
+                  {referralSourceCode}
+                </span>
+                .
+              </p>
+            ) : (
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3 shrink-0" />
+                Enter who referred you only if no affiliate shopping link was
+                shared with you.
+              </p>
+            )}
+          </div>
+        )}
+
+        <div>
+          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
+            Voucher Coupon
+          </label>
+          <div className="relative">
+            <Gift className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
+            <input
+              type="text"
+              value={form.voucher_coupon}
+              onChange={(e) =>
+                setField("voucher_coupon", e.target.value.toUpperCase())
+              }
+              placeholder="Enter voucher code"
+              maxLength={30}
+              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-700 dark:text-slate-200 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-200 dark:focus:ring-sky-900 focus:border-sky-400 dark:focus:border-sky-500 transition-all tracking-widest font-mono uppercase"
+            />
+          </div>
+          {voucherStatus?.loading ? (
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5">
+              Checking voucher…
+            </p>
+          ) : voucherStatus?.error ? (
+            <p className="text-[11px] text-rose-500 dark:text-rose-400 mt-1.5">
+              {voucherStatus.error}
+            </p>
+          ) : (voucherStatus?.appliedAmount ?? 0) > 0 ? (
+            <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1.5">
+              {voucherStatus?.message ||
+                `Voucher applied: -PHP ${(voucherStatus?.appliedAmount ?? 0).toLocaleString()}`}
+            </p>
+          ) : (
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5 flex items-center gap-1">
+              <AlertCircle className="w-3 h-3 shrink-0" />
+              Apply your voucher coupon code if available.
+            </p>
+          )}
+        </div>
+
+        {cashbackStatus && !cashbackStatus.disabled ? (
+          <div>
+            <div className="mb-1.5 flex items-center justify-between gap-3">
+              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">
+                Personal Cashback Discount
+              </label>
+              <span className="text-[11px] font-semibold text-rose-600 dark:text-rose-400">
+                Balance: PHP {cashbackStatus.available.toLocaleString()}
+              </span>
+            </div>
+            <div className="flex items-center gap-3 rounded-xl border border-rose-100 bg-rose-50/70 px-3.5 py-2.5 dark:border-rose-900/50 dark:bg-rose-950/20">
+              <WalletCards className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                  {cashbackStatus.loading
+                    ? "Checking available cashback..."
+                    : cashbackStatus.appliedAmount > 0
+                      ? `Auto-applied: -PHP ${cashbackStatus.appliedAmount.toLocaleString()}`
+                      : "No cashback discount applied"}
+                </p>
+                <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                  Personal cashback is auto-deducted only when this product
+                  passes supplier discount rules.
+                </p>
+              </div>
+            </div>
+            {cashbackStatus.error ? (
+              <p className="mt-1.5 text-[11px] text-rose-500 dark:text-rose-400">
+                {cashbackStatus.error}
+              </p>
+            ) : cashbackStatus.appliedAmount > 0 ? (
+              <p className="mt-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
+                Personal cashback will be deducted automatically after payment
+                is confirmed.
+              </p>
+            ) : (
+              <p className="mt-1.5 flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
+                <AlertCircle className="h-3 w-3 shrink-0" />
+                Available cashback stays unused when this order has no eligible
+                cashback discount.
+              </p>
+            )}
+          </div>
+        ) : null}
+
+        {egcStatus ? (
+          <div>
+            <div className="mb-1.5 flex items-center justify-between gap-3">
+              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">
+                AF-GC Store Credit
+              </label>
+              <span className="text-[11px] font-semibold text-fuchsia-600 dark:text-fuchsia-400">
+                Balance: PHP {egcStatus.available.toLocaleString()}
+              </span>
+            </div>
+            <div className="flex items-center gap-3 rounded-xl border border-fuchsia-100 bg-fuchsia-50/70 px-3.5 py-2.5 dark:border-fuchsia-900/50 dark:bg-fuchsia-950/20">
+              <WalletCards className="h-4 w-4 shrink-0 text-fuchsia-600 dark:text-fuchsia-400" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                  {egcStatus.loading
+                    ? "Checking available AF-GC..."
+                    : egcStatus.appliedAmount > 0
+                      ? `Auto-applied: -PHP ${egcStatus.appliedAmount.toLocaleString()}`
+                      : "No AF-GC applied"}
+                </p>
+                <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                  AF-GC is auto-deducted only when this product passes admin
+                  discount rules.
+                </p>
+              </div>
+            </div>
+            {egcStatus.error ? (
+              <p className="mt-1.5 text-[11px] text-rose-500 dark:text-rose-400">
+                {egcStatus.error}
+              </p>
+            ) : egcStatus.appliedAmount > 0 ? (
+              <p className="mt-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
+                AF-GC will be deducted automatically after payment is confirmed.
+              </p>
+            ) : (
+              <p className="mt-1.5 flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
+                <AlertCircle className="h-3 w-3 shrink-0" />
+                Available balance stays unused when this order has no eligible
+                AF-GC discount.
+              </p>
+            )}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  )
 }
 
 export default CustomerCheckoutContactForm

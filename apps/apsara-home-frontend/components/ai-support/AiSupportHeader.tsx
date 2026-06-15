@@ -1,8 +1,8 @@
-import { X } from 'lucide-react';
+import { X } from "lucide-react"
 
 interface Props {
-  onClose: () => void;
-  logoSrc: string;
+  onClose: () => void
+  logoSrc: string
 }
 
 export function AiSupportHeader({ onClose, logoSrc }: Props) {
@@ -15,7 +15,11 @@ export function AiSupportHeader({ onClose, logoSrc }: Props) {
       <div className="relative flex items-center gap-3 min-w-0 z-10">
         <div className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm border border-white/25 flex items-center justify-center shadow-lg flex-shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={logoSrc} alt="AF" className="w-6 h-6 object-contain rounded-md" />
+          <img
+            src={logoSrc}
+            alt="AF"
+            className="w-6 h-6 object-contain rounded-md"
+          />
         </div>
         <div className="flex flex-col gap-0.5">
           <span className="text-sm font-bold leading-tight tracking-tight text-white">
@@ -39,5 +43,5 @@ export function AiSupportHeader({ onClose, logoSrc }: Props) {
         <X size={15} strokeWidth={2.5} />
       </button>
     </div>
-  );
+  )
 }

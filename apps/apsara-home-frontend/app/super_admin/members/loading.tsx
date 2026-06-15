@@ -1,4 +1,4 @@
-import DashboardLayout from "@/components/superAdmin/DashboardLayout";
+import DashboardLayout from "@/components/superAdmin/DashboardLayout"
 
 function SkeletonTable() {
   return (
@@ -20,7 +20,7 @@ function SkeletonTable() {
         ))}
       </div>
     </div>
-  );
+  )
 }
 
 export default function LoadingMembersPage() {
@@ -37,7 +37,10 @@ export default function LoadingMembersPage() {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
           {Array.from({ length: 7 }).map((_, i) => (
-            <div key={i} className="h-24 rounded-2xl bg-white border border-slate-100 animate-pulse" />
+            <div
+              key={i}
+              className="h-24 rounded-2xl bg-white border border-slate-100 animate-pulse"
+            />
           ))}
         </div>
 
@@ -45,5 +48,5 @@ export default function LoadingMembersPage() {
         <SkeletonTable />
       </div>
     </DashboardLayout>
-  );
+  )
 }

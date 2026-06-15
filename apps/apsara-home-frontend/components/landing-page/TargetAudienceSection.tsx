@@ -1,63 +1,62 @@
-import { motion } from 'framer-motion';
-import { Check, User, Smartphone, Home, TrendingUp, Heart } from 'lucide-react';
+import { motion } from "framer-motion"
+import { Check, User, Smartphone, Home, TrendingUp, Heart } from "lucide-react"
 
 export default function TargetAudienceSection() {
   const criteria = [
     {
       icon: Home,
       text: "You want to earn without stocking products",
-      color: "text-blue-600 bg-blue-100"
+      color: "text-blue-600 bg-blue-100",
     },
     {
       icon: Smartphone,
       text: "You create content on social media",
-      color: "text-pink-600 bg-pink-100"
+      color: "text-pink-600 bg-pink-100",
     },
     {
       icon: User,
       text: "You help people find home solutions",
-      color: "text-orange-600 bg-orange-100"
+      color: "text-orange-600 bg-orange-100",
     },
     {
       icon: TrendingUp,
       text: "You want extra income or a scalable business",
-      color: "text-green-600 bg-green-100"
+      color: "text-green-600 bg-green-100",
     },
     {
       icon: Heart,
       text: "You believe homes should be better, not more expensive",
-      color: "text-red-600 bg-red-100"
-    }
-  ];
+      color: "text-red-600 bg-red-100",
+    },
+  ]
 
   const personas = [
     {
       image: "/Images/landing/content-creator.png",
       label: "Content Creator",
-      position: "h-64 sm:h-auto"
+      position: "h-64 sm:h-auto",
     },
     {
       image: "/Images/landing/young-couple.png",
       label: "Young Couple",
-      position: "h-64 sm:h-auto"
+      position: "h-64 sm:h-auto",
     },
     {
       image: "/Images/landing/sales-agent.png",
       label: "Sales Agent / Designer",
-      position: "h-64 sm:h-auto"
+      position: "h-64 sm:h-auto",
     },
     {
       image: "/Images/landing/digital-nomad.png",
       label: "OFW / Digital Nomad",
-      position: "h-64 sm:h-auto"
-    }
-  ];
+      position: "h-64 sm:h-auto",
+    },
+  ]
 
   return (
     <section className="py-24 bg-gray-50 dark:bg-gray-900 relative overflow-hidden">
       <div className="container mx-auto px-4 relative z-10">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
-
           {/* Visual Content - Persona Grid */}
           <div className="order-2 lg:order-1">
             <div className="grid grid-cols-2 gap-4 h-[600px]">
@@ -77,7 +76,9 @@ export default function TargetAudienceSection() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                   <div className="absolute bottom-4 left-4">
-                    <span className="text-white font-bold text-lg">{persona.label}</span>
+                    <span className="text-white font-bold text-lg">
+                      {persona.label}
+                    </span>
                   </div>
                 </motion.div>
               ))}
@@ -107,17 +108,18 @@ export default function TargetAudienceSection() {
             </motion.h2>
 
             <div className="space-y-6">
-
               {criteria.map((item, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, x: 20 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: 0.2 + (index * 0.1) }}
+                  transition={{ delay: 0.2 + index * 0.1 }}
                   className="flex items-center gap-4 group"
                 >
-                  <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors ${item.color} group-hover:scale-110 duration-300`}>
+                  <div
+                    className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors ${item.color} group-hover:scale-110 duration-300`}
+                  >
                     <item.icon size={20} />
                   </div>
                   <span className="text-lg text-gray-700 dark:text-gray-200 font-medium group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
@@ -134,15 +136,14 @@ export default function TargetAudienceSection() {
               className="mt-10 p-6 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-lg"
             >
               <p className="text-gray-600 dark:text-gray-300 italic">
-                &quot;Whether you&apos;re looking for a side hustle or a full-time career, AF Home gives you the platform to succeed on your own terms.&quot;
+                &quot;Whether you&apos;re looking for a side hustle or a
+                full-time career, AF Home gives you the platform to succeed on
+                your own terms.&quot;
               </p>
             </motion.div>
-
           </div>
-
         </div>
       </div>
     </section>
-  );
+  )
 }
-

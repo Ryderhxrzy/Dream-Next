@@ -1,84 +1,93 @@
-import { useEffect, useMemo, useState } from 'react';
-import type { StepImagesMessage } from '../types';
+import { useEffect, useMemo, useState } from "react"
+import type { StepImagesMessage } from "../types"
 
 export function StepImages({ message }: { message: StepImagesMessage }) {
-  const [images, setImages] = useState(message.images);
-  const isGrid = images.length > 3;
-  const [isOpen, setIsOpen] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const total = images.length;
-  const active = useMemo(() => images[activeIndex], [images, activeIndex]);
+  const [images, setImages] = useState(message.images)
+  const isGrid = images.length > 3
+  const [isOpen, setIsOpen] = useState(false)
+  const [activeIndex, setActiveIndex] = useState(0)
+  const total = images.length
+  const active = useMemo(() => images[activeIndex], [images, activeIndex])
   const openAt = (index: number) => {
-    if (total === 0) return;
-    setActiveIndex(Math.max(0, Math.min(index, total - 1)));
-    setIsOpen(true);
-  };
-  const goPrev = () => setActiveIndex((idx) => (idx - 1 + total) % total);
-  const goNext = () => setActiveIndex((idx) => (idx + 1) % total);
+    if (total === 0) return
+    setActiveIndex(Math.max(0, Math.min(index, total - 1)))
+    setIsOpen(true)
+  }
+  const goPrev = () => setActiveIndex((idx) => (idx - 1 + total) % total)
+  const goNext = () => setActiveIndex((idx) => (idx + 1) % total)
   const isSteps =
     message.images.length > 0 &&
-    message.images.every((img) => img.url.toLowerCase().includes('/images/steps/'));
+    message.images.every((img) =>
+      img.url.toLowerCase().includes("/images/steps/")
+    )
 
   useEffect(() => {
-    if (!isSteps) return;
-    const first = message.images[0]?.url ?? '';
-    const match = first.match(/(.*\/)r{1,2}\d+\.(\w+)$/i);
-    if (!match) return;
-    const base = match[1];
-    const ext = match[2];
+    if (!isSteps) return
+    const first = message.images[0]?.url ?? ""
+    const match = first.match(/(.*\/)r{1,2}\d+\.(\w+)$/i)
+    if (!match) return
+    const base = match[1]
+    const ext = match[2]
     const extCandidates = Array.from(
       new Set([
         ext.toLowerCase(),
         ext.toUpperCase(),
-        'png',
-        'PNG',
-        'jpg',
-        'JPG',
-        'jpeg',
-        'JPEG',
-        'webp',
-        'WEBP',
-      ]),
-    );
-    const maxProbe = 20;
+        "png",
+        "PNG",
+        "jpg",
+        "JPG",
+        "jpeg",
+        "JPEG",
+        "webp",
+        "WEBP",
+      ])
+    )
+    const maxProbe = 20
     const urls = Array.from({ length: maxProbe }, (_, i) => {
-      const n = i + 1;
-      const prefixes = [`r${n}`, `rr${n}`];
-      return prefixes.flatMap((prefix) => extCandidates.map((candidate) => `${base}${prefix}.${candidate}`));
-    }).flat();
+      const n = i + 1
+      const prefixes = [`r${n}`, `rr${n}`]
+      return prefixes.flatMap((prefix) =>
+        extCandidates.map((candidate) => `${base}${prefix}.${candidate}`)
+      )
+    }).flat()
 
     const loadImage = (url: string) =>
       new Promise<boolean>((resolve) => {
-        const img = new Image();
-        img.onload = () => resolve(true);
-        img.onerror = () => resolve(false);
-        img.src = url;
-      });
+        const img = new Image()
+        img.onload = () => resolve(true)
+        img.onerror = () => resolve(false)
+        img.src = url
+      })
 
     Promise.all(urls.map((u) => loadImage(u))).then((results) => {
-      const seen = new Set<string>();
+      const seen = new Set<string>()
       const next = urls
         .filter((_, i) => results[i])
         .filter((url) => {
-          if (seen.has(url)) return false;
-          seen.add(url);
-          return true;
+          if (seen.has(url)) return false
+          seen.add(url)
+          return true
         })
         .map((url, i) => ({
           url,
           caption: message.images[i]?.caption,
-        }));
+        }))
       if (next.length > 0) {
-        setImages(next);
+        setImages(next)
       }
-    });
-  }, [isSteps, message.images]);
+    })
+  }, [isSteps, message.images])
 
   return (
-    <div className={isGrid ? 'w-full' : 'w-full space-y-3'}>
+    <div className={isGrid ? "w-full" : "w-full space-y-3"}>
       {isGrid && (
         <div className="flex flex-col items-start gap-1">
-          <div className="text-[12px] text-slate-500"> <span className="text-orange-500 font-bold">A</span><span className="text-cyan-500 font-bold">F</span>Shop AI sent {images.length} photos</div>
+          <div className="text-[12px] text-slate-500">
+            {" "}
+            <span className="text-orange-500 font-bold">A</span>
+            <span className="text-cyan-500 font-bold">F</span>Shop AI sent{" "}
+            {images.length} photos
+          </div>
           <button
             type="button"
             onClick={() => openAt(0)}
@@ -92,7 +101,11 @@ export function StepImages({ message }: { message: StepImagesMessage }) {
                 src={img.url}
                 alt={img.caption ?? `Step ${i + 1}`}
                 className={`absolute w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 object-cover rounded-[20px] border border-white shadow ${
-                  i === 0 ? 'left-1 top-1 z-30' : i === 1 ? 'left-2.5 top-2.5 z-20' : 'left-4 top-4 z-10'
+                  i === 0
+                    ? "left-1 top-1 z-30"
+                    : i === 1
+                      ? "left-2.5 top-2.5 z-20"
+                      : "left-4 top-4 z-10"
                 }`}
               />
             ))}
@@ -105,24 +118,27 @@ export function StepImages({ message }: { message: StepImagesMessage }) {
       )}
       {!isGrid &&
         images.map((img, i) => (
-        <div key={i} className="bg-white border border-slate-100 rounded-xl p-2 shadow-sm">
-          <button
-            type="button"
-            onClick={() => openAt(i)}
-            className="block w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 overflow-hidden rounded-xl"
-            aria-label={`Open image ${i + 1}`}
+          <div
+            key={i}
+            className="bg-white border border-slate-100 rounded-xl p-2 shadow-sm"
           >
-            <img
-              src={img.url}
-              alt={img.caption ?? `Step ${i + 1}`}
-              className="w-full h-full object-cover"
-            />
-          </button>
-          {img.caption && (
-            <p className="mt-2 text-[12px] text-slate-600">{img.caption}</p>
-          )}
-        </div>
-      ))}
+            <button
+              type="button"
+              onClick={() => openAt(i)}
+              className="block w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 overflow-hidden rounded-xl"
+              aria-label={`Open image ${i + 1}`}
+            >
+              <img
+                src={img.url}
+                alt={img.caption ?? `Step ${i + 1}`}
+                className="w-full h-full object-cover"
+              />
+            </button>
+            {img.caption && (
+              <p className="mt-2 text-[12px] text-slate-600">{img.caption}</p>
+            )}
+          </div>
+        ))}
       {isOpen && active && (
         <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm">
           <div className="absolute inset-0" onClick={() => setIsOpen(false)} />
@@ -166,11 +182,15 @@ export function StepImages({ message }: { message: StepImagesMessage }) {
                   type="button"
                   onClick={() => setActiveIndex(i)}
                   className={`h-14 w-14 shrink-0 overflow-hidden rounded-lg border ${
-                    i === activeIndex ? 'border-white' : 'border-white/30'
+                    i === activeIndex ? "border-white" : "border-white/30"
                   }`}
                   aria-label={`View image ${i + 1}`}
                 >
-                  <img src={img.url} alt={img.caption ?? `Step ${i + 1}`} className="h-full w-full object-cover" />
+                  <img
+                    src={img.url}
+                    alt={img.caption ?? `Step ${i + 1}`}
+                    className="h-full w-full object-cover"
+                  />
                 </button>
               ))}
             </div>
@@ -178,5 +198,5 @@ export function StepImages({ message }: { message: StepImagesMessage }) {
         </div>
       )}
     </div>
-  );
+  )
 }

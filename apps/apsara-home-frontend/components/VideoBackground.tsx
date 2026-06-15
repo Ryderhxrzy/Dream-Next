@@ -1,12 +1,14 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
+import { useState } from "react"
 
 type VideoBackgroundProps = {
   videoSrc?: string
 }
 
-const VideoBackground = ({ videoSrc = '/loginpageVideo/home-login.mp4' }: VideoBackgroundProps) => {
+const VideoBackground = ({
+  videoSrc = "/loginpageVideo/home-login.mp4",
+}: VideoBackgroundProps) => {
   const [isReady, setIsReady] = useState(false)
 
   return (
@@ -23,7 +25,7 @@ const VideoBackground = ({ videoSrc = '/loginpageVideo/home-login.mp4' }: VideoB
         aria-label="Partner storefront hero video"
         onCanPlay={() => setIsReady(true)}
         className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${
-          isReady ? 'opacity-100' : 'opacity-0'
+          isReady ? "opacity-100" : "opacity-0"
         }`}
       >
         <source src={videoSrc} />

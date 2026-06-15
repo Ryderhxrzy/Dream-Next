@@ -1,7 +1,7 @@
-import type { ProductCardsMessage } from '../types';
+import type { ProductCardsMessage } from "../types"
 
 function normalizePrice(price: string) {
-  return price.replace(/(\d[\d,]*)\.00\b/g, '$1');
+  return price.replace(/(\d[\d,]*)\.00\b/g, "$1")
 }
 
 export function ProductCards({ message }: { message: ProductCardsMessage }) {
@@ -22,16 +22,22 @@ export function ProductCards({ message }: { message: ProductCardsMessage }) {
             />
           )}
           <div className="min-w-0 flex flex-col gap-0.5">
-            <span className="text-xs font-semibold text-slate-900 leading-snug">{card.name}</span>
+            <span className="text-xs font-semibold text-slate-900 leading-snug">
+              {card.name}
+            </span>
             {card.description && (
-              <span className="text-[11px] text-slate-500 leading-snug line-clamp-2">{card.description}</span>
+              <span className="text-[11px] text-slate-500 leading-snug line-clamp-2">
+                {card.description}
+              </span>
             )}
             {card.price && (
-              <span className="text-xs font-bold text-indigo-600">₱{normalizePrice(card.price)}</span>
+              <span className="text-xs font-bold text-indigo-600">
+                ₱{normalizePrice(card.price)}
+              </span>
             )}
           </div>
         </a>
       ))}
     </div>
-  );
+  )
 }

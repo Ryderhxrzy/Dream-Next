@@ -1,7 +1,7 @@
-'use client'
+"use client"
 
-import { motion } from 'framer-motion'
-import EmailBlastForm from './EmailBlastForm'
+import { motion } from "framer-motion"
+import EmailBlastForm from "./EmailBlastForm"
 
 export default function EmailBlastPageMain() {
   return (
@@ -30,9 +30,13 @@ export default function EmailBlastPageMain() {
         {/* Info Box */}
         <div className="bg-blue-50 dark:bg-blue-950 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
           <div className="space-y-2">
-            <h3 className="font-semibold text-blue-900 dark:text-blue-100">Email Blast Information</h3>
+            <h3 className="font-semibold text-blue-900 dark:text-blue-100">
+              Email Blast Information
+            </h3>
             <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1 list-disc list-inside">
-              <li>Recipients receive emails via BCC to protect email privacy</li>
+              <li>
+                Recipients receive emails via BCC to protect email privacy
+              </li>
               <li>You can send to members, suppliers, or both</li>
               <li>Emails can include subject, body text, and an image</li>
               <li>Large campaigns are sent in batches for reliability</li>

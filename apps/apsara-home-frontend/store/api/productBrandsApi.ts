@@ -1,4 +1,4 @@
-import { baseApi } from './baseApi'
+import { baseApi } from "./baseApi"
 
 export interface ProductBrand {
   id: number
@@ -20,52 +20,64 @@ interface ProductBrandPayload {
 
 export const productBrandsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getPublicProductBrands: builder.query<ProductBrandsResponse, { search?: string } | void>({
+    getPublicProductBrands: builder.query<
+      ProductBrandsResponse,
+      { search?: string } | void
+    >({
       query: (params) => ({
-        url: '/api/product-brands',
-        method: 'GET',
+        url: "/api/product-brands",
+        method: "GET",
         params: {
           q: params?.search,
         },
       }),
-      providesTags: ['Brands'],
+      providesTags: ["Brands"],
       keepUnusedDataFor: 300,
       refetchOnFocus: false,
       refetchOnReconnect: false,
       refetchOnMountOrArgChange: false,
     }),
-    getProductBrands: builder.query<ProductBrandsResponse, { search?: string } | void>({
+    getProductBrands: builder.query<
+      ProductBrandsResponse,
+      { search?: string } | void
+    >({
       query: (params) => ({
-        url: '/api/admin/product-brands',
-        method: 'GET',
+        url: "/api/admin/product-brands",
+        method: "GET",
         params: {
           q: params?.search,
         },
       }),
-      providesTags: ['Brands'],
+      providesTags: ["Brands"],
     }),
-    createProductBrand: builder.mutation<{ message: string; brand: ProductBrand }, ProductBrandPayload>({
+    createProductBrand: builder.mutation<
+      { message: string; brand: ProductBrand },
+      ProductBrandPayload
+    >({
       query: (body) => ({
-        url: '/api/admin/product-brands',
-        method: 'POST',
+        url: "/api/admin/product-brands",
+        method: "POST",
         body,
       }),
-      invalidatesTags: ['Brands'],
+      invalidatesTags: ["Brands"],
     }),
-    updateProductBrand: builder.mutation<{ message: string }, { id: number; data: ProductBrandPayload }>({
+    updateProductBrand: builder.mutation<
+      { message: string },
+      { id: number; data: ProductBrandPayload }
+    >({
       query: ({ id, data }) => ({
         url: `/api/admin/product-brands/${id}`,
-        method: 'PUT',
+        method: "PUT",
         body: data,
       }),
-      invalidatesTags: ['Brands'],
+      invalidatesTags: ["Brands"],
     }),
     deleteProductBrand: builder.mutation<{ message: string }, number>({
       query: (id) => ({
         url: `/api/admin/product-brands/${id}`,
-        method: 'DELETE',
+        method: "DELETE",
       }),
-      invalidatesTags: ['Brands'],
+      invalidatesTags: ["Brands"],
     }),
   }),
 })

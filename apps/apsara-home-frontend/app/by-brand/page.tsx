@@ -1,11 +1,15 @@
-import { Suspense } from 'react'
-import { buildPageMetadata } from '@/app/seo'
-import ByBrandPageMain from '@/components/brand/ByBrandPageMain'
-import TopBar from '@/components/layout/TopBar'
-import Navbar from '@/components/layout/Navbar'
-import { getNavbarCategories } from '@/libs/serverStorefront'
+import { Suspense } from "react"
+import { buildPageMetadata } from "@/app/seo"
+import ByBrandPageMain from "@/components/brand/ByBrandPageMain"
+import TopBar from "@/components/layout/TopBar"
+import Navbar from "@/components/layout/Navbar"
+import { getNavbarCategories } from "@/libs/serverStorefront"
 
-export const metadata = buildPageMetadata({ title: 'By Brand', description: 'Browse the By Brand page on AF Home.', path: '/by-brand' })
+export const metadata = buildPageMetadata({
+  title: "By Brand",
+  description: "Browse the By Brand page on AF Home.",
+  path: "/by-brand",
+})
 
 function ByBrandLoadingFallback() {
   return (
@@ -29,7 +33,10 @@ function ByBrandLoadingFallback() {
         {/* Brands grid skeleton */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {Array.from({ length: 12 }).map((_, i) => (
-            <div key={i} className="flex flex-col items-center rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div
+              key={i}
+              className="flex flex-col items-center rounded-lg border border-gray-200 dark:border-gray-700 p-4"
+            >
               <div className="h-20 w-20 shrink-0 rounded-lg bg-gray-200 dark:bg-gray-700 animate-pulse" />
               <div className="mt-3 h-4 w-3/4 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
             </div>

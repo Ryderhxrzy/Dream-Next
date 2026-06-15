@@ -1,43 +1,42 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { AnimatePresence } from "framer-motion";
-import Header from "@/components/landing-page/Header";
-import HeroSection from "@/components/landing-page/HeroSection";
-import ExperienceSection from "@/components/landing-page/ExperienceSection";
-import QuickViewModal from "@/components/landing-page/QuickViewModal";
-import Testimonials from "@/components/landing-page/Testimonials";
-import Newsletter from "@/components/landing-page/Newsletter";
-import Footer from "@/components/landing-page/Footer";
-import ProductsBrandsSection from "@/components/landing-page/ProductsBrandsSection";
-import CommissionSection from "@/components/landing-page/CommissionSection";
-import LifetimeBenefitsSection from "@/components/landing-page/LifetimeBenefitsSection";
-import TeamSection from "@/components/landing-page/TeamSection";
-import TrainingSupportSection from "@/components/landing-page/TrainingSupportSection";
-import TargetAudienceSection from "@/components/landing-page/TargetAudienceSection";
-import CTASection from "@/components/landing-page/CTASection";
-import HowItWorksSection from "@/components/landing-page/HowItWorksSection";
-import ScrollToTop from "@/components/landing-page/ScrollToTop";
-import type { Product } from "@/components/landing-page/ProductCard";
+import { useState } from "react"
+import { AnimatePresence } from "framer-motion"
+import Header from "@/components/landing-page/Header"
+import HeroSection from "@/components/landing-page/HeroSection"
+import ExperienceSection from "@/components/landing-page/ExperienceSection"
+import QuickViewModal from "@/components/landing-page/QuickViewModal"
+import Testimonials from "@/components/landing-page/Testimonials"
+import Newsletter from "@/components/landing-page/Newsletter"
+import Footer from "@/components/landing-page/Footer"
+import ProductsBrandsSection from "@/components/landing-page/ProductsBrandsSection"
+import CommissionSection from "@/components/landing-page/CommissionSection"
+import LifetimeBenefitsSection from "@/components/landing-page/LifetimeBenefitsSection"
+import TeamSection from "@/components/landing-page/TeamSection"
+import TrainingSupportSection from "@/components/landing-page/TrainingSupportSection"
+import TargetAudienceSection from "@/components/landing-page/TargetAudienceSection"
+import CTASection from "@/components/landing-page/CTASection"
+import HowItWorksSection from "@/components/landing-page/HowItWorksSection"
+import ScrollToTop from "@/components/landing-page/ScrollToTop"
+import type { Product } from "@/components/landing-page/ProductCard"
 
 type LandingPageProps = {
-  partnerSlug?: string;
+  partnerSlug?: string
 }
 
 export default function LandingPage({ partnerSlug }: LandingPageProps = {}) {
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
-  const [cartCount, setCartCount] = useState(0);
-
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [isQuickViewOpen, setIsQuickViewOpen] = useState(false)
+  const [cartCount, setCartCount] = useState(0)
 
   const handleCloseQuickView = () => {
-    setIsQuickViewOpen(false);
-    setTimeout(() => setSelectedProduct(null), 300);
-  };
+    setIsQuickViewOpen(false)
+    setTimeout(() => setSelectedProduct(null), 300)
+  }
 
   const handleAddToCart = (_product: Product, quantity: number) => {
-    setCartCount((prev) => prev + quantity);
-  };
+    setCartCount((prev) => prev + quantity)
+  }
 
   return (
     <div className="min-h-screen bg-af-cream dark:bg-gray-950">
@@ -82,6 +81,5 @@ export default function LandingPage({ partnerSlug }: LandingPageProps = {}) {
         />
       </AnimatePresence>
     </div>
-  );
+  )
 }
-

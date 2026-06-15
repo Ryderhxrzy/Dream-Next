@@ -1,11 +1,11 @@
-'use client';
+"use client"
 
-import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import VideoBackground from "@/components/VideoBackground";
-import { motion } from "framer-motion";
-import Header from "@/components/landing-page/Header";
-import PrimaryButton from "@/components/ui/buttons/PrimaryButton";
+import Link from "next/link"
+import { useEffect, useMemo, useState } from "react"
+import VideoBackground from "@/components/VideoBackground"
+import { motion } from "framer-motion"
+import Header from "@/components/landing-page/Header"
+import PrimaryButton from "@/components/ui/buttons/PrimaryButton"
 
 type ResetPayload = {
   email: string
@@ -28,22 +28,25 @@ function getPasswordChecks(password: string) {
 }
 
 export default function ResetPasswordForm({ token }: Props) {
-  const apiUrl = (process.env.NEXT_PUBLIC_LARAVEL_API_URL ?? '').replace(/\/+$/, '')
+  const apiUrl = (process.env.NEXT_PUBLIC_LARAVEL_API_URL ?? "").replace(
+    /\/+$/,
+    ""
+  )
   const [reset, setReset] = useState<ResetPayload | null>(null)
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const checks = useMemo(() => getPasswordChecks(password), [password])
 
   const getFirstApiError = (value: unknown): string | null => {
-    if (!value || typeof value !== 'object') return null
+    if (!value || typeof value !== "object") return null
     const errorMap = value as Record<string, unknown>
     const firstEntry = Object.values(errorMap)[0]
-    if (Array.isArray(firstEntry) && typeof firstEntry[0] === 'string') {
+    if (Array.isArray(firstEntry) && typeof firstEntry[0] === "string") {
       return firstEntry[0]
     }
     return null
@@ -55,21 +58,24 @@ export default function ResetPasswordForm({ token }: Props) {
     const loadReset = async () => {
       if (!apiUrl || !token) {
         if (isMounted) {
-          setError('Reset link is invalid.')
+          setError("Reset link is invalid.")
           setIsLoading(false)
         }
         return
       }
 
       try {
-        const res = await fetch(`${apiUrl}/api/auth/reset-password/${encodeURIComponent(token)}`, {
-          cache: 'no-store',
-          headers: { Accept: 'application/json' },
-        })
+        const res = await fetch(
+          `${apiUrl}/api/auth/reset-password/${encodeURIComponent(token)}`,
+          {
+            cache: "no-store",
+            headers: { Accept: "application/json" },
+          }
+        )
 
         const data = await res.json().catch(() => ({}))
         if (!res.ok) {
-          throw new Error(data?.message || 'Reset link is invalid or expired.')
+          throw new Error(data?.message || "Reset link is invalid or expired.")
         }
 
         if (isMounted) {
@@ -77,7 +83,9 @@ export default function ResetPasswordForm({ token }: Props) {
         }
       } catch (err) {
         if (isMounted) {
-          setError(err instanceof Error ? err.message : 'Unable to load reset link.')
+          setError(
+            err instanceof Error ? err.message : "Unable to load reset link."
+          )
         }
       } finally {
         if (isMounted) {
@@ -88,36 +96,38 @@ export default function ResetPasswordForm({ token }: Props) {
 
     loadReset()
 
-    return () => { isMounted = false }
+    return () => {
+      isMounted = false
+    }
   }, [apiUrl, token])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
-    setSuccess('')
+    setError("")
+    setSuccess("")
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match.')
+      setError("Passwords do not match.")
       return
     }
 
     if (!Object.values(checks).every(Boolean)) {
-      setError('Password does not meet the required strength.')
+      setError("Password does not meet the required strength.")
       return
     }
 
     if (!apiUrl) {
-      setError('API URL is not configured.')
+      setError("API URL is not configured.")
       return
     }
 
     setIsSubmitting(true)
     try {
       const res = await fetch(`${apiUrl}/api/auth/reset-password`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify({
           token,
@@ -128,15 +138,19 @@ export default function ResetPasswordForm({ token }: Props) {
 
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        const firstError = getFirstApiError((data as { errors?: unknown } | null)?.errors)
-        throw new Error(firstError || data?.message || 'Unable to reset password.')
+        const firstError = getFirstApiError(
+          (data as { errors?: unknown } | null)?.errors
+        )
+        throw new Error(
+          firstError || data?.message || "Unable to reset password."
+        )
       }
 
-      setSuccess(data?.message || 'Your password has been reset.')
-      setPassword('')
-      setConfirmPassword('')
+      setSuccess(data?.message || "Your password has been reset.")
+      setPassword("")
+      setConfirmPassword("")
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to reset password.')
+      setError(err instanceof Error ? err.message : "Unable to reset password.")
     } finally {
       setIsSubmitting(false)
     }
@@ -160,7 +174,9 @@ export default function ResetPasswordForm({ token }: Props) {
         >
           <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-3xl shadow-2xl p-8">
             <div className="mb-8">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Reset Password</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Reset Password
+              </h1>
               <p className="mt-2 text-sm text-gray-500 dark:text-white/70">
                 Choose a new password for your AF Home account.
               </p>
@@ -177,12 +193,24 @@ export default function ResetPasswordForm({ token }: Props) {
             ) : reset ? (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 p-4 text-sm text-gray-700 dark:text-white/80">
-                  <p><span className="font-semibold text-gray-900 dark:text-white">Name:</span> {reset.name}</p>
-                  <p className="mt-1"><span className="font-semibold text-gray-900 dark:text-white">Email:</span> {reset.email}</p>
+                  <p>
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      Name:
+                    </span>{" "}
+                    {reset.name}
+                  </p>
+                  <p className="mt-1">
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      Email:
+                    </span>{" "}
+                    {reset.email}
+                  </p>
                 </div>
 
                 <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-white/80">New Password</label>
+                  <label className="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-white/80">
+                    New Password
+                  </label>
                   <input
                     type="password"
                     value={password}
@@ -194,7 +222,9 @@ export default function ResetPasswordForm({ token }: Props) {
                 </div>
 
                 <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-white/80">Confirm Password</label>
+                  <label className="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-white/80">
+                    Confirm Password
+                  </label>
                   <input
                     type="password"
                     value={confirmPassword}
@@ -206,13 +236,55 @@ export default function ResetPasswordForm({ token }: Props) {
                 </div>
 
                 <div className="rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 p-4">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">Password requirements</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    Password requirements
+                  </p>
                   <ul className="mt-2 space-y-1 text-sm">
-                    <li className={checks.length ? 'text-emerald-600 dark:text-emerald-300' : 'text-gray-500 dark:text-white/70'}>At least 8 characters</li>
-                    <li className={checks.uppercase ? 'text-emerald-600 dark:text-emerald-300' : 'text-gray-500 dark:text-white/70'}>At least one uppercase letter</li>
-                    <li className={checks.lowercase ? 'text-emerald-600 dark:text-emerald-300' : 'text-gray-500 dark:text-white/70'}>At least one lowercase letter</li>
-                    <li className={checks.number ? 'text-emerald-600 dark:text-emerald-300' : 'text-gray-500 dark:text-white/70'}>At least one number</li>
-                    <li className={checks.special ? 'text-emerald-600 dark:text-emerald-300' : 'text-gray-500 dark:text-white/70'}>At least one special character</li>
+                    <li
+                      className={
+                        checks.length
+                          ? "text-emerald-600 dark:text-emerald-300"
+                          : "text-gray-500 dark:text-white/70"
+                      }
+                    >
+                      At least 8 characters
+                    </li>
+                    <li
+                      className={
+                        checks.uppercase
+                          ? "text-emerald-600 dark:text-emerald-300"
+                          : "text-gray-500 dark:text-white/70"
+                      }
+                    >
+                      At least one uppercase letter
+                    </li>
+                    <li
+                      className={
+                        checks.lowercase
+                          ? "text-emerald-600 dark:text-emerald-300"
+                          : "text-gray-500 dark:text-white/70"
+                      }
+                    >
+                      At least one lowercase letter
+                    </li>
+                    <li
+                      className={
+                        checks.number
+                          ? "text-emerald-600 dark:text-emerald-300"
+                          : "text-gray-500 dark:text-white/70"
+                      }
+                    >
+                      At least one number
+                    </li>
+                    <li
+                      className={
+                        checks.special
+                          ? "text-emerald-600 dark:text-emerald-300"
+                          : "text-gray-500 dark:text-white/70"
+                      }
+                    >
+                      At least one special character
+                    </li>
                   </ul>
                 </div>
 
@@ -224,8 +296,10 @@ export default function ResetPasswordForm({ token }: Props) {
 
                 {success ? (
                   <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-700 shadow-sm dark:border-emerald-400/20 dark:bg-emerald-500/20 dark:text-emerald-300">
-                    {success}{' '}
-                    <Link href="/login" className="font-semibold underline">Go to login</Link>
+                    {success}{" "}
+                    <Link href="/login" className="font-semibold underline">
+                      Go to login
+                    </Link>
                   </div>
                 ) : null}
 
@@ -234,13 +308,16 @@ export default function ResetPasswordForm({ token }: Props) {
                   disabled={isSubmitting}
                   className="w-full py-3 px-5 text-sm"
                 >
-                  {isSubmitting ? 'Resetting password...' : 'Reset Password'}
+                  {isSubmitting ? "Resetting password..." : "Reset Password"}
                 </PrimaryButton>
               </form>
             ) : null}
 
             <p className="mt-6 text-center text-sm text-gray-500 dark:text-white/70">
-              <Link href="/login" className="text-sky-500 hover:text-sky-400 font-semibold transition-colors">
+              <Link
+                href="/login"
+                className="text-sky-500 hover:text-sky-400 font-semibold transition-colors"
+              >
                 Back to login
               </Link>
             </p>

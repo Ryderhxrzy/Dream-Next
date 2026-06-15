@@ -1,112 +1,121 @@
-'use client';
+"use client"
 
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, Menu, X, User } from 'lucide-react';
-import { useSession } from 'next-auth/react';
-import { usePathname } from 'next/navigation';
-import Link from 'next/link';
-import ThemeToggle from '@/components/ui/buttons/ThemeToggle';
+import { useState, useEffect } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { ShoppingBag, Menu, X, User } from "lucide-react"
+import { useSession } from "next-auth/react"
+import { usePathname } from "next/navigation"
+import Link from "next/link"
+import ThemeToggle from "@/components/ui/buttons/ThemeToggle"
 
 interface HeaderProps {
-  cartCount: number;
-  hideNavLinks?: boolean;
-  logoUrl?: string;
-  logoAlt?: string;
-  logoHref?: string;
-  shopHref?: string;
-  partnerSlug?: string;
+  cartCount: number
+  hideNavLinks?: boolean
+  logoUrl?: string
+  logoAlt?: string
+  logoHref?: string
+  shopHref?: string
+  partnerSlug?: string
 }
 
 export default function Header({
   cartCount,
   hideNavLinks = false,
-  logoUrl = '/Images/af_home_logo.png',
-  logoAlt = 'AFhome Logo',
-  logoHref = '/',
-  shopHref = '/shop',
+  logoUrl = "/Images/af_home_logo.png",
+  logoAlt = "AFhome Logo",
+  logoHref = "/",
+  shopHref = "/shop",
   partnerSlug,
 }: HeaderProps) {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<string>('');
-  const { status } = useSession();
-  const pathname = usePathname();
-  const MotionLink = motion(Link);
-  const isHome = pathname === '/';
-  const normalizedPartnerSlug = String(partnerSlug ?? '').trim().replace(/^\/+|\/+$/g, '');
+  const [isScrolled, setIsScrolled] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [activeSection, setActiveSection] = useState<string>("")
+  const { status } = useSession()
+  const pathname = usePathname()
+  const MotionLink = motion(Link)
+  const isHome = pathname === "/"
+  const normalizedPartnerSlug = String(partnerSlug ?? "")
+    .trim()
+    .replace(/^\/+|\/+$/g, "")
   const userHref = normalizedPartnerSlug
     ? `/${normalizedPartnerSlug}/login`
-    : (status === 'authenticated' ? '/profile' : '/login');
-  const effectiveLogoHref = normalizedPartnerSlug ? `/${normalizedPartnerSlug}` : logoHref;
-  const effectiveShopHref = normalizedPartnerSlug ? `/shop/${normalizedPartnerSlug}` : shopHref;
+    : status === "authenticated"
+      ? "/profile"
+      : "/login"
+  const effectiveLogoHref = normalizedPartnerSlug
+    ? `/${normalizedPartnerSlug}`
+    : logoHref
+  const effectiveShopHref = normalizedPartnerSlug
+    ? `/shop/${normalizedPartnerSlug}`
+    : shopHref
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+      setIsScrolled(window.scrollY > 50)
+    }
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
 
   useEffect(() => {
-    if (!isHome) return;
-    const sectionIds = ['ecosystem', 'earnings', 'benefits', 'team', 'training'];
-    const observers: IntersectionObserver[] = [];
+    if (!isHome) return
+    const sectionIds = ["ecosystem", "earnings", "benefits", "team", "training"]
+    const observers: IntersectionObserver[] = []
 
     sectionIds.forEach((id) => {
-      const el = document.getElementById(id);
-      if (!el) return;
+      const el = document.getElementById(id)
+      if (!el) return
       const observer = new IntersectionObserver(
         ([entry]) => {
           if (entry.isIntersecting) {
-            setActiveSection(id);
-            history.replaceState(null, '', `#${id}`);
+            setActiveSection(id)
+            history.replaceState(null, "", `#${id}`)
           }
         },
         { threshold: 0.3 }
-      );
-      observer.observe(el);
-      observers.push(observer);
-    });
+      )
+      observer.observe(el)
+      observers.push(observer)
+    })
 
     const handleScroll = () => {
       if (window.scrollY < 100) {
-        setActiveSection('');
-        history.replaceState(null, '', '/');
+        setActiveSection("")
+        history.replaceState(null, "", "/")
       }
-    };
-    window.addEventListener('scroll', handleScroll);
+    }
+    window.addEventListener("scroll", handleScroll)
 
     return () => {
-      observers.forEach((o) => o.disconnect());
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [isHome]);
+      observers.forEach((o) => o.disconnect())
+      window.removeEventListener("scroll", handleScroll)
+    }
+  }, [isHome])
 
   const rawNavLinks = [
-    { name: 'Home', href: '/' },
-    { name: 'Ecosystem', href: '#ecosystem' },
-    { name: 'Earnings', href: '#earnings' },
-    { name: 'Benefits', href: '#benefits' },
-    { name: 'Team', href: '#team' },
-    { name: 'Training', href: '#training' },
-  ];
+    { name: "Home", href: "/" },
+    { name: "Ecosystem", href: "#ecosystem" },
+    { name: "Earnings", href: "#earnings" },
+    { name: "Benefits", href: "#benefits" },
+    { name: "Team", href: "#team" },
+    { name: "Training", href: "#training" },
+  ]
 
   const navLinks = rawNavLinks.map((link) => ({
     ...link,
-    href: !isHome && link.href.startsWith('#') ? `/${link.href}` : link.href,
-  }));
+    href: !isHome && link.href.startsWith("#") ? `/${link.href}` : link.href,
+  }))
 
   return (
     <motion.header
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] as const }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled
-        ? 'bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-soft'
-        : 'bg-transparent'
-        }`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        isScrolled
+          ? "bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-soft"
+          : "bg-transparent"
+      }`}
     >
       <div className="container mx-auto">
         <div className="flex items-center justify-between h-20 px-4">
@@ -125,23 +134,27 @@ export default function Header({
           </motion.a>
 
           {/* Desktop Navigation - Centered */}
-          <nav className={`${hideNavLinks ? 'hidden' : 'hidden lg:flex'} items-center gap-6 xl:gap-8 absolute left-1/2 -translate-x-1/2`}>
+          <nav
+            className={`${hideNavLinks ? "hidden" : "hidden lg:flex"} items-center gap-6 xl:gap-8 absolute left-1/2 -translate-x-1/2`}
+          >
             {navLinks.map((link, index) => {
-              const sectionId = link.href.replace(/^\/?#/, '');
-              const isActive = link.href === '/'
-                ? isHome && activeSection === ''
-                : isHome && activeSection === sectionId;
+              const sectionId = link.href.replace(/^\/?#/, "")
+              const isActive =
+                link.href === "/"
+                  ? isHome && activeSection === ""
+                  : isHome && activeSection === sectionId
 
               return (
                 <motion.a
                   key={link.name}
                   href={link.href}
                   className={`font-medium text-[15px] relative group transition-all duration-300
-                    ${isActive
-                      ? 'text-amber-500'
-                      : (isScrolled || !isHome)
-                        ? 'text-black dark:text-white hover:text-amber-500'
-                        : 'text-white hover:text-amber-400'
+                    ${
+                      isActive
+                        ? "text-amber-500"
+                        : isScrolled || !isHome
+                          ? "text-black dark:text-white hover:text-amber-500"
+                          : "text-white hover:text-amber-400"
                     }`}
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -149,9 +162,11 @@ export default function Header({
                   whileHover={{ y: -2 }}
                 >
                   {link.name}
-                  <span className={`absolute -bottom-1 left-0 h-0.5 bg-amber-500 transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'}`} />
+                  <span
+                    className={`absolute -bottom-1 left-0 h-0.5 bg-amber-500 transition-all duration-300 ${isActive ? "w-full" : "w-0 group-hover:w-full"}`}
+                  />
                 </motion.a>
-              );
+              )
             })}
           </nav>
 
@@ -162,14 +177,14 @@ export default function Header({
               <MotionLink
                 href={userHref}
                 aria-label="User account"
-                className={`inline-flex items-center justify-center rounded-full p-2 transition-colors ${(isScrolled || !isHome) ? 'text-black dark:text-white' : 'text-white'}`}
+                className={`inline-flex items-center justify-center rounded-full p-2 transition-colors ${isScrolled || !isHome ? "text-black dark:text-white" : "text-white"}`}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
               >
                 <User size={20} />
               </MotionLink>
               <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2 whitespace-nowrap rounded-lg bg-gray-900/90 px-2.5 py-1 text-xs font-medium text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-lg">
-                {status === 'authenticated' ? 'My Account' : 'Login'}
+                {status === "authenticated" ? "My Account" : "Login"}
               </span>
             </div>
 
@@ -178,7 +193,7 @@ export default function Header({
               <MotionLink
                 href={effectiveShopHref}
                 aria-label="Browse shop"
-                className={`relative inline-flex items-center justify-center rounded-full p-2 transition-colors ${(isScrolled || !isHome) ? 'text-black dark:text-white' : 'text-white'}`}
+                className={`relative inline-flex items-center justify-center rounded-full p-2 transition-colors ${isScrolled || !isHome ? "text-black dark:text-white" : "text-white"}`}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -202,7 +217,9 @@ export default function Header({
             </div>
 
             {/* Divider */}
-            <span className={`h-5 w-px ${(isScrolled || !isHome) ? 'bg-gray-300 dark:bg-gray-600' : 'bg-white/30'}`} />
+            <span
+              className={`h-5 w-px ${isScrolled || !isHome ? "bg-gray-300 dark:bg-gray-600" : "bg-white/30"}`}
+            />
 
             {/* Dark mode toggle */}
             <ThemeToggle isScrolled={isScrolled} isHome={isHome} />
@@ -212,7 +229,7 @@ export default function Header({
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className={`lg:hidden p-2 transition-colors ${(isScrolled || !isHome) ? 'text-black dark:text-white' : 'text-white'}`}
+              className={`lg:hidden p-2 transition-colors ${isScrolled || !isHome ? "text-black dark:text-white" : "text-white"}`}
             >
               {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </motion.button>
@@ -225,17 +242,18 @@ export default function Header({
         {isMobileMenuOpen && !hideNavLinks && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
+            animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
             className="lg:hidden bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-t border-af-cream dark:border-gray-700"
           >
             <nav className="flex flex-col p-6 gap-4">
               {navLinks.map((link, index) => {
-                const sectionId = link.href.replace(/^\/?#/, '');
-                const isActive = link.href === '/'
-                  ? isHome && activeSection === ''
-                  : isHome && activeSection === sectionId;
+                const sectionId = link.href.replace(/^\/?#/, "")
+                const isActive =
+                  link.href === "/"
+                    ? isHome && activeSection === ""
+                    : isHome && activeSection === sectionId
 
                 return (
                   <motion.a
@@ -244,18 +262,17 @@ export default function Header({
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className={`font-medium text-lg py-2 transition-colors duration-200 ${isActive ? 'text-amber-500' : 'text-af-text dark:text-gray-100 hover:text-amber-500'}`}
+                    className={`font-medium text-lg py-2 transition-colors duration-200 ${isActive ? "text-amber-500" : "text-af-text dark:text-gray-100 hover:text-amber-500"}`}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     {link.name}
                   </motion.a>
-                );
+                )
               })}
             </nav>
           </motion.div>
         )}
       </AnimatePresence>
     </motion.header>
-  );
+  )
 }
-

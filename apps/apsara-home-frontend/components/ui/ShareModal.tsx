@@ -1,10 +1,10 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import Image from 'next/image'
-import { Link2, X as XIcon } from 'lucide-react'
-import toast from 'react-hot-toast'
+import { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import Image from "next/image"
+import { Link2, X as XIcon } from "lucide-react"
+import toast from "react-hot-toast"
 
 interface Product {
   id: number
@@ -47,28 +47,44 @@ type ShareOptionWithIcon = {
 
 type ShareOption = ShareOptionWithIconSrc | ShareOptionWithIcon
 
-export default function ShareModal({ isOpen, onClose, product, brandName, shareUrl, forceRealPrice = false }: ShareModalProps) {
+export default function ShareModal({
+  isOpen,
+  onClose,
+  product,
+  brandName,
+  shareUrl,
+  forceRealPrice = false,
+}: ShareModalProps) {
   const [shareCopied, setShareCopied] = useState(false)
 
   const toSlug = (value: string) =>
     value
       .toLowerCase()
       .trim()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
 
   const slug = toSlug(product.name)
-  const href = shareUrl || `${typeof window !== 'undefined' ? window.location.origin : ''}/product/${slug}-i${product.id}`
+  const href =
+    shareUrl ||
+    `${typeof window !== "undefined" ? window.location.origin : ""}/product/${slug}-i${product.id}`
   const [imageError, setImageError] = useState(false)
 
-  const baseSrp = (product.originalPrice ? Number(product.originalPrice) : undefined) ?? (product.price ? Number(product.price) : undefined) ?? 0
-  const srpPrice = (product.priceSrp ? Number(product.priceSrp) : undefined) ?? baseSrp
-  const memberPrice = (product.priceMember ? Number(product.priceMember) : undefined) ?? (product.priceDp ? Number(product.priceDp) : undefined) ?? 0
+  const baseSrp =
+    (product.originalPrice ? Number(product.originalPrice) : undefined) ??
+    (product.price ? Number(product.price) : undefined) ??
+    0
+  const srpPrice =
+    (product.priceSrp ? Number(product.priceSrp) : undefined) ?? baseSrp
+  const memberPrice =
+    (product.priceMember ? Number(product.priceMember) : undefined) ??
+    (product.priceDp ? Number(product.priceDp) : undefined) ??
+    0
   const hasMemberPrice = memberPrice > 0 && memberPrice < srpPrice
   const showMemberPrice = hasMemberPrice && !forceRealPrice
   const displayPrice = showMemberPrice ? memberPrice : srpPrice
   const displayPv = product.prodpv ? Number(product.prodpv) : 0
-  const displaySku = product.sku || ''
+  const displaySku = product.sku || ""
 
   const handleCopyShareLink = async () => {
     if (!href) return
@@ -76,25 +92,27 @@ export default function ShareModal({ isOpen, onClose, product, brandName, shareU
       if (navigator?.clipboard?.writeText) {
         await navigator.clipboard.writeText(href)
       } else {
-        const fallback = document.createElement('textarea')
+        const fallback = document.createElement("textarea")
         fallback.value = href
-        fallback.style.position = 'fixed'
-        fallback.style.opacity = '0'
+        fallback.style.position = "fixed"
+        fallback.style.opacity = "0"
         document.body.appendChild(fallback)
         fallback.focus()
         fallback.select()
-        document.execCommand('copy')
+        document.execCommand("copy")
         document.body.removeChild(fallback)
       }
       setShareCopied(true)
-      toast.success('Link copied to clipboard')
+      toast.success("Link copied to clipboard")
       setTimeout(() => setShareCopied(false), 2000)
     } catch {
-      toast.error('Failed to copy link')
+      toast.error("Failed to copy link")
     }
   }
 
-  const handleShareExternal = (type: 'messenger' | 'whatsapp' | 'x' | 'telegram' | 'viber') => {
+  const handleShareExternal = (
+    type: "messenger" | "whatsapp" | "x" | "telegram" | "viber"
+  ) => {
     const url = href
     const title = product.name
     if (!url) return
@@ -110,16 +128,46 @@ export default function ShareModal({ isOpen, onClose, product, brandName, shareU
       viber: `viber://forward?text=${encodedText}`,
     }
     const targetUrl = shareTargets[type]
-    if (targetUrl) window.open(targetUrl, '_blank', 'noopener,noreferrer')
+    if (targetUrl) window.open(targetUrl, "_blank", "noopener,noreferrer")
   }
 
   const shareOptions: ShareOption[] = [
-    { id: 'messenger', label: 'Messenger', iconSrc: '/Images/icon_apps/messenger1.png', action: () => handleShareExternal('messenger') },
-    { id: 'whatsapp', label: 'WhatsApp', iconSrc: '/Images/icon_apps/whatsapp1.png', action: () => handleShareExternal('whatsapp') },
-    { id: 'x', label: 'X', iconSrc: '/Images/icon_apps/x1.png', action: () => handleShareExternal('x') },
-    { id: 'telegram', label: 'Telegram', iconSrc: '/Images/icon_apps/telegram1.png', action: () => handleShareExternal('telegram') },
-    { id: 'viber', label: 'Viber', iconSrc: '/Images/icon_apps/viber1.png', action: () => handleShareExternal('viber') },
-    { id: 'copy', label: shareCopied ? 'Copied' : 'Copy link', icon: Link2, action: handleCopyShareLink },
+    {
+      id: "messenger",
+      label: "Messenger",
+      iconSrc: "/Images/icon_apps/messenger1.png",
+      action: () => handleShareExternal("messenger"),
+    },
+    {
+      id: "whatsapp",
+      label: "WhatsApp",
+      iconSrc: "/Images/icon_apps/whatsapp1.png",
+      action: () => handleShareExternal("whatsapp"),
+    },
+    {
+      id: "x",
+      label: "X",
+      iconSrc: "/Images/icon_apps/x1.png",
+      action: () => handleShareExternal("x"),
+    },
+    {
+      id: "telegram",
+      label: "Telegram",
+      iconSrc: "/Images/icon_apps/telegram1.png",
+      action: () => handleShareExternal("telegram"),
+    },
+    {
+      id: "viber",
+      label: "Viber",
+      iconSrc: "/Images/icon_apps/viber1.png",
+      action: () => handleShareExternal("viber"),
+    },
+    {
+      id: "copy",
+      label: shareCopied ? "Copied" : "Copy link",
+      icon: Link2,
+      action: handleCopyShareLink,
+    },
   ]
 
   return (
@@ -144,8 +192,12 @@ export default function ShareModal({ isOpen, onClose, product, brandName, shareU
               {/* Header */}
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Share to</p>
-                  <h3 className="text-lg font-bold text-slate-800 dark:text-gray-200">Send this {displayPrice > 0 ? 'product' : 'brand'}</h3>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                    Share to
+                  </p>
+                  <h3 className="text-lg font-bold text-slate-800 dark:text-gray-200">
+                    Send this {displayPrice > 0 ? "product" : "brand"}
+                  </h3>
                 </div>
                 <button
                   onClick={onClose}
@@ -172,7 +224,16 @@ export default function ShareModal({ isOpen, onClose, product, brandName, shareU
                   </div>
                 ) : (
                   <div className="h-20 w-20 shrink-0 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-400">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="32"
+                      height="32"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      className="text-gray-400"
+                    >
                       <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                       <circle cx="8.5" cy="8.5" r="1.5" />
                       <polyline points="21 15 16 10 5 21" />
@@ -181,23 +242,31 @@ export default function ShareModal({ isOpen, onClose, product, brandName, shareU
                 )}
                 <div className="flex-1 min-w-0">
                   {brandName && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{brandName}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                      {brandName}
+                    </p>
                   )}
-                  <h4 className="font-semibold text-gray-900 dark:text-white line-clamp-2 text-sm">{product.name}</h4>
+                  <h4 className="font-semibold text-gray-900 dark:text-white line-clamp-2 text-sm">
+                    {product.name}
+                  </h4>
                   {displayPrice > 0 && (
                     <div className="mt-2 flex items-baseline gap-2 flex-wrap">
                       <span className="text-lg font-bold text-sky-500 dark:text-sky-400">
-                        {'\u20b1'}{displayPrice.toLocaleString()}
+                        {"\u20b1"}
+                        {displayPrice.toLocaleString()}
                       </span>
                       {showMemberPrice && (
                         <span className="text-sm text-gray-400 dark:text-gray-500 line-through">
-                          {'\u20b1'}{srpPrice.toLocaleString()}
+                          {"\u20b1"}
+                          {srpPrice.toLocaleString()}
                         </span>
                       )}
                     </div>
                   )}
                   {displayPrice > 0 && displaySku && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">SKU: {displaySku}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      SKU: {displaySku}
+                    </p>
                   )}
                   {displayPrice > 0 && displayPv > 0 && (
                     <span className="inline-block mt-1 rounded-full border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:text-blue-300">
@@ -217,7 +286,7 @@ export default function ShareModal({ isOpen, onClose, product, brandName, shareU
                     type="button"
                   >
                     <span className="flex h-14 w-14 items-center justify-center rounded-full border border-gray-200 dark:border-gray-600 text-slate-600 dark:text-gray-400">
-                      {'iconSrc' in item ? (
+                      {"iconSrc" in item ? (
                         <Image
                           src={item.iconSrc as string}
                           alt={item.label}
@@ -236,15 +305,19 @@ export default function ShareModal({ isOpen, onClose, product, brandName, shareU
 
               {/* Share Link */}
               <div className="mt-4 rounded-2xl border border-gray-100 dark:border-gray-700 px-4 py-3">
-                <p className="text-xs font-semibold text-slate-500 dark:text-gray-400">{displayPrice > 0 ? 'Product' : 'Brand'} share link</p>
+                <p className="text-xs font-semibold text-slate-500 dark:text-gray-400">
+                  {displayPrice > 0 ? "Product" : "Brand"} share link
+                </p>
                 <div className="mt-1 flex items-center justify-between gap-3">
-                  <span className="text-xs text-slate-600 dark:text-gray-400 truncate">{href}</span>
+                  <span className="text-xs text-slate-600 dark:text-gray-400 truncate">
+                    {href}
+                  </span>
                   <button
                     onClick={handleCopyShareLink}
                     className="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300"
                     type="button"
                   >
-                    {shareCopied ? 'Copied' : 'Copy'}
+                    {shareCopied ? "Copied" : "Copy"}
                   </button>
                 </div>
               </div>

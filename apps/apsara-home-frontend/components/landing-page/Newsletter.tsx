@@ -1,23 +1,23 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Check, Sparkles } from 'lucide-react';
-import PrimaryButton from '@/components/ui/buttons/PrimaryButton';
+import { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { Send, Check, Sparkles } from "lucide-react"
+import PrimaryButton from "@/components/ui/buttons/PrimaryButton"
 
 export default function Newsletter() {
-  const [email, setEmail] = useState('');
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
+  const [email, setEmail] = useState("")
+  const [isSubmitted, setIsSubmitted] = useState(false)
+  const [isFocused, setIsFocused] = useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     if (email) {
-      setIsSubmitted(true);
+      setIsSubmitted(true)
       setTimeout(() => {
-        setIsSubmitted(false);
-        setEmail('');
-      }, 4000);
+        setIsSubmitted(false)
+        setEmail("")
+      }, 4000)
     }
-  };
+  }
 
   return (
     <section className="py-24 md:py-32 bg-stone-50 dark:bg-gray-900 relative overflow-hidden">
@@ -27,8 +27,8 @@ export default function Newsletter() {
           className="w-full h-full"
           style={{
             backgroundImage:
-              'radial-gradient(circle at 2px 2px, #2C5F4F 1px, transparent 0)',
-            backgroundSize: '40px 40px',
+              "radial-gradient(circle at 2px 2px, #2C5F4F 1px, transparent 0)",
+            backgroundSize: "40px 40px",
           }}
         />
       </div>
@@ -83,7 +83,7 @@ export default function Newsletter() {
                 >
                   <div
                     className={`relative bg-white dark:bg-gray-800 rounded-full p-2 shadow-soft transition-all duration-500 dark:border dark:border-gray-700 ${
-                      isFocused ? 'shadow-soft-lg ring-2 ring-af-forest/20' : ''
+                      isFocused ? "shadow-soft-lg ring-2 ring-af-forest/20" : ""
                     }`}
                   >
                     <input
@@ -141,6 +141,5 @@ export default function Newsletter() {
         </div>
       </div>
     </section>
-  );
+  )
 }
-

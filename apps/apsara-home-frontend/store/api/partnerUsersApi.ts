@@ -1,4 +1,4 @@
-import { baseApi } from './baseApi'
+import { baseApi } from "./baseApi"
 
 export interface PartnerUserItem {
   id: number
@@ -51,10 +51,13 @@ export interface UpdatePartnerUserPayload {
 
 export const partnerUsersApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getPartnerUsers: builder.query<PartnerUsersResponse, PartnerUsersQuery | void>({
+    getPartnerUsers: builder.query<
+      PartnerUsersResponse,
+      PartnerUsersQuery | void
+    >({
       query: (params) => ({
-        url: '/api/admin/partner-users',
-        method: 'GET',
+        url: "/api/admin/partner-users",
+        method: "GET",
         params: {
           q: params?.search,
           storefront_id: params?.storefrontId,
@@ -62,30 +65,36 @@ export const partnerUsersApi = baseApi.injectEndpoints({
           per_page: params?.perPage ?? 20,
         },
       }),
-      providesTags: ['AdminUsers'],
+      providesTags: ["AdminUsers"],
     }),
-    createPartnerUser: builder.mutation<{ message: string; user: PartnerUserItem }, CreatePartnerUserPayload>({
+    createPartnerUser: builder.mutation<
+      { message: string; user: PartnerUserItem },
+      CreatePartnerUserPayload
+    >({
       query: (body) => ({
-        url: '/api/admin/partner-users',
-        method: 'POST',
+        url: "/api/admin/partner-users",
+        method: "POST",
         body,
       }),
-      invalidatesTags: ['AdminUsers'],
+      invalidatesTags: ["AdminUsers"],
     }),
-    updatePartnerUser: builder.mutation<{ message: string; user: PartnerUserItem }, UpdatePartnerUserPayload>({
+    updatePartnerUser: builder.mutation<
+      { message: string; user: PartnerUserItem },
+      UpdatePartnerUserPayload
+    >({
       query: ({ id, ...body }) => ({
         url: `/api/admin/partner-users/${id}`,
-        method: 'PUT',
+        method: "PUT",
         body,
       }),
-      invalidatesTags: ['AdminUsers'],
+      invalidatesTags: ["AdminUsers"],
     }),
     deletePartnerUser: builder.mutation<{ message: string }, { id: number }>({
       query: ({ id }) => ({
         url: `/api/admin/partner-users/${id}`,
-        method: 'DELETE',
+        method: "DELETE",
       }),
-      invalidatesTags: ['AdminUsers'],
+      invalidatesTags: ["AdminUsers"],
     }),
   }),
 })

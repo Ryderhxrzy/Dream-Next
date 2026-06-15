@@ -1,21 +1,21 @@
-import { motion } from 'framer-motion';
-import { Heart, Eye } from 'lucide-react';
+import { motion } from "framer-motion"
+import { Heart, Eye } from "lucide-react"
 
 export interface Product {
-  id: string;
-  name: string;
-  price: number;
-  originalPrice?: number;
-  image: string;
-  category: string;
-  badge?: string;
-  isNew?: boolean;
+  id: string
+  name: string
+  price: number
+  originalPrice?: number
+  image: string
+  category: string
+  badge?: string
+  isNew?: boolean
 }
 
 interface ProductCardProps {
-  product: Product;
-  index: number;
-  onQuickView: (product: Product) => void;
+  product: Product
+  index: number
+  onQuickView: (product: Product) => void
 }
 
 export default function ProductCard({
@@ -27,7 +27,7 @@ export default function ProductCard({
     <motion.div
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-50px' }}
+      viewport={{ once: true, margin: "-50px" }}
       transition={{
         duration: 0.6,
         delay: index * 0.1,
@@ -111,6 +111,5 @@ export default function ProductCard({
         </div>
       </motion.div>
     </motion.div>
-  );
+  )
 }
-

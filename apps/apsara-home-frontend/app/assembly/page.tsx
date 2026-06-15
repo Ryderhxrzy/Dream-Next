@@ -1,12 +1,17 @@
-import { buildPageMetadata } from '@/app/seo';
-import AssemblyGuidesPageClient from '@/components/assembly/AssemblyGuidesPageClient';
-import { readdir } from 'fs/promises';
-import path from 'path';
-import { getNavbarCategories } from '@/libs/serverStorefront';
+import { buildPageMetadata } from "@/app/seo"
+import AssemblyGuidesPageClient from "@/components/assembly/AssemblyGuidesPageClient"
+import { readdir } from "fs/promises"
+import path from "path"
+import { getNavbarCategories } from "@/libs/serverStorefront"
 
-export const metadata = buildPageMetadata({ title: 'Assembly', description: 'Browse the Assembly page on AF Home.', path: '/assembly', noIndex: true });
-export const revalidate = 600;
-export const dynamic = 'force-dynamic';
+export const metadata = buildPageMetadata({
+  title: "Assembly",
+  description: "Browse the Assembly page on AF Home.",
+  path: "/assembly",
+  noIndex: true,
+})
+export const revalidate = 600
+export const dynamic = "force-dynamic"
 
 type LocalAssemblyGuide = {
   id: string
@@ -17,9 +22,9 @@ type LocalAssemblyGuide = {
 
 function humanizeGuideName(fileName: string) {
   return fileName
-    .replace(/\.pdf$/i, '')
-    .replace(/[_-]+/g, ' ')
-    .replace(/\s+/g, ' ')
+    .replace(/\.pdf$/i, "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
     .trim()
 }
 
@@ -27,13 +32,18 @@ function isNumericOnlyTitle(value: string) {
   return /^[0-9]+$/.test(value.trim())
 }
 
-async function collectAssemblyGuidePdfs(dirPath: string, relativeDir = ''): Promise<LocalAssemblyGuide[]> {
+async function collectAssemblyGuidePdfs(
+  dirPath: string,
+  relativeDir = ""
+): Promise<LocalAssemblyGuide[]> {
   const entries = await readdir(dirPath, { withFileTypes: true })
   const guides: LocalAssemblyGuide[] = []
 
   for (const entry of entries) {
     const absolutePath = path.join(dirPath, entry.name)
-    const relativePath = relativeDir ? `${relativeDir}/${entry.name}` : entry.name
+    const relativePath = relativeDir
+      ? `${relativeDir}/${entry.name}`
+      : entry.name
 
     if (entry.isDirectory()) {
       const nested = await collectAssemblyGuidePdfs(absolutePath, relativePath)
@@ -41,13 +51,18 @@ async function collectAssemblyGuidePdfs(dirPath: string, relativeDir = ''): Prom
       continue
     }
 
-    if (!entry.isFile() || !entry.name.toLowerCase().endsWith('.pdf')) {
+    if (!entry.isFile() || !entry.name.toLowerCase().endsWith(".pdf")) {
       continue
     }
 
     const segments = relativePath.split(/[\\/]/)
-    const folder = segments.length > 1 ? segments[segments.length - 2] : 'Assembly Guide'
-    const encodedHref = '/' + ['All Assembly Guides', ...relativePath.split(/[\\/]/)].map(encodeURIComponent).join('/')
+    const folder =
+      segments.length > 1 ? segments[segments.length - 2] : "Assembly Guide"
+    const encodedHref =
+      "/" +
+      ["All Assembly Guides", ...relativePath.split(/[\\/]/)]
+        .map(encodeURIComponent)
+        .join("/")
     const humanizedFileName = humanizeGuideName(entry.name)
     const humanizedFolder = humanizeGuideName(folder)
 
@@ -65,7 +80,7 @@ async function collectAssemblyGuidePdfs(dirPath: string, relativeDir = ''): Prom
 }
 
 export default async function AssemblyGuidesPage() {
-  const baseDir = path.join(process.cwd(), 'public', 'All Assembly Guides')
+  const baseDir = path.join(process.cwd(), "public", "All Assembly Guides")
   let localGuides: LocalAssemblyGuide[] = []
 
   try {
@@ -74,7 +89,7 @@ export default async function AssemblyGuidesPage() {
     localGuides = []
   }
 
-  const initialCategories = await getNavbarCategories();
+  const initialCategories = await getNavbarCategories()
 
   return (
     <AssemblyGuidesPageClient

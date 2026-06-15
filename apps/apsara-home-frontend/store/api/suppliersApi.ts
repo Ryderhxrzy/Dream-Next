@@ -1,4 +1,4 @@
-import { baseApi } from './baseApi'
+import { baseApi } from "./baseApi"
 
 export interface SupplierItem {
   id: number
@@ -35,7 +35,7 @@ export interface InviteSupplierUserPayload {
 export interface InviteSupplierUserResponse {
   message: string
   setup_url: string
-  delivery: 'link_only' | 'email_and_link'
+  delivery: "link_only" | "email_and_link"
   invite: {
     supplier_id: number
     supplier_name: string
@@ -107,65 +107,77 @@ export const suppliersApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getSupplierMe: builder.query<SupplierMeResponse, void>({
       query: () => ({
-        url: '/api/supplier/auth/me',
-        method: 'GET',
+        url: "/api/supplier/auth/me",
+        method: "GET",
       }),
     }),
     getSuppliers: builder.query<{ suppliers: SupplierItem[] }, void>({
       query: () => ({
-        url: '/api/admin/suppliers',
-        method: 'GET',
+        url: "/api/admin/suppliers",
+        method: "GET",
       }),
-      providesTags: ['Suppliers'],
+      providesTags: ["Suppliers"],
     }),
     getSupplierStats: builder.query<SupplierStatsResponse, void>({
       query: () => ({
-        url: '/api/admin/suppliers/stats',
-        method: 'GET',
+        url: "/api/admin/suppliers/stats",
+        method: "GET",
       }),
-      providesTags: ['Suppliers', 'Orders'],
+      providesTags: ["Suppliers", "Orders"],
     }),
-    createSupplier: builder.mutation<{ message: string; supplier: SupplierItem }, CreateSupplierPayload>({
+    createSupplier: builder.mutation<
+      { message: string; supplier: SupplierItem },
+      CreateSupplierPayload
+    >({
       query: (body) => ({
-        url: '/api/admin/suppliers',
-        method: 'POST',
+        url: "/api/admin/suppliers",
+        method: "POST",
         body,
       }),
-      invalidatesTags: ['Suppliers'],
+      invalidatesTags: ["Suppliers"],
     }),
-    updateSupplier: builder.mutation<{ message: string; supplier: SupplierItem }, { id: number; data: CreateSupplierPayload }>({
+    updateSupplier: builder.mutation<
+      { message: string; supplier: SupplierItem },
+      { id: number; data: CreateSupplierPayload }
+    >({
       query: ({ id, data }) => ({
         url: `/api/admin/suppliers/${id}`,
-        method: 'PUT',
+        method: "PUT",
         body: data,
       }),
-      invalidatesTags: ['Suppliers'],
+      invalidatesTags: ["Suppliers"],
     }),
-    deleteSupplier: builder.mutation<{ message: string }, { id: number; company?: string; name?: string }>({
+    deleteSupplier: builder.mutation<
+      { message: string },
+      { id: number; company?: string; name?: string }
+    >({
       query: ({ id, company, name }) => ({
         url: `/api/admin/suppliers/${id}`,
-        method: 'DELETE',
+        method: "DELETE",
         body: {
           company,
           name,
         },
       }),
-      invalidatesTags: ['Suppliers'],
+      invalidatesTags: ["Suppliers"],
     }),
-    inviteSupplierUser: builder.mutation<InviteSupplierUserResponse, InviteSupplierUserPayload>({
+    inviteSupplierUser: builder.mutation<
+      InviteSupplierUserResponse,
+      InviteSupplierUserPayload
+    >({
       query: (body) => ({
-        url: '/api/admin/supplier-users',
-        method: 'POST',
+        url: "/api/admin/supplier-users",
+        method: "POST",
         body,
       }),
-      invalidatesTags: ['Suppliers'],
+      invalidatesTags: ["Suppliers"],
     }),
     getSupplierCategories: builder.query<SupplierCategoriesResponse, number>({
       query: (supplierId) => ({
         url: `/api/admin/suppliers/${supplierId}/categories`,
-        method: 'GET',
+        method: "GET",
       }),
-      providesTags: ['Suppliers', 'Categories'],
+      providesTags: ["Suppliers", "Categories"],
     }),
     updateSupplierCategories: builder.mutation<
       SupplierCategoriesResponse & { message: string },
@@ -173,33 +185,39 @@ export const suppliersApi = baseApi.injectEndpoints({
     >({
       query: ({ supplierId, category_ids }) => ({
         url: `/api/admin/suppliers/${supplierId}/categories`,
-        method: 'PUT',
+        method: "PUT",
         body: { category_ids },
       }),
-      invalidatesTags: ['Suppliers', 'Categories'],
+      invalidatesTags: ["Suppliers", "Categories"],
     }),
-    getSupplierUsers: builder.query<{ supplier_id: number; users: SupplierPortalUser[] }, number | void>({
+    getSupplierUsers: builder.query<
+      { supplier_id: number; users: SupplierPortalUser[] },
+      number | void
+    >({
       query: (supplierId) => ({
-        url: '/api/admin/supplier-users',
-        method: 'GET',
+        url: "/api/admin/supplier-users",
+        method: "GET",
         params: supplierId ? { supplier_id: supplierId } : undefined,
       }),
-      providesTags: ['Suppliers'],
+      providesTags: ["Suppliers"],
     }),
-    updateSupplierUser: builder.mutation<{ message: string; user: SupplierPortalUser }, UpdateSupplierUserPayload>({
+    updateSupplierUser: builder.mutation<
+      { message: string; user: SupplierPortalUser },
+      UpdateSupplierUserPayload
+    >({
       query: ({ id, ...body }) => ({
         url: `/api/admin/supplier-users/${id}`,
-        method: 'PUT',
+        method: "PUT",
         body,
       }),
-      invalidatesTags: ['Suppliers'],
+      invalidatesTags: ["Suppliers"],
     }),
     deleteSupplierUser: builder.mutation<{ message: string }, number>({
       query: (id) => ({
         url: `/api/admin/supplier-users/${id}`,
-        method: 'DELETE',
+        method: "DELETE",
       }),
-      invalidatesTags: ['Suppliers'],
+      invalidatesTags: ["Suppliers"],
     }),
   }),
 })

@@ -1,28 +1,28 @@
-import { motion } from 'framer-motion';
-import { Truck, Shield, RotateCcw, Award } from 'lucide-react';
+import { motion } from "framer-motion"
+import { Truck, Shield, RotateCcw, Award } from "lucide-react"
 
 const indicators = [
   {
     icon: Truck,
-    title: 'Free Membership Shipping',
-    description: 'On orders over 50,000',
+    title: "Free Membership Shipping",
+    description: "On orders over 50,000",
   },
   {
     icon: Shield,
-    title: '1-Year Warranty',
-    description: 'Guaranteed protection',
+    title: "1-Year Warranty",
+    description: "Guaranteed protection",
   },
   {
     icon: RotateCcw,
-    title: '30-Day Returns',
-    description: 'Hassle-free returns',
+    title: "30-Day Returns",
+    description: "Hassle-free returns",
   },
   {
     icon: Award,
-    title: 'Premium Quality',
-    description: 'Handpicked materials',
+    title: "Premium Quality",
+    description: "Handpicked materials",
   },
-];
+]
 
 export default function TrustIndicators() {
   return (
@@ -55,7 +55,7 @@ export default function TrustIndicators() {
                   duration: 3,
                   repeat: Infinity,
                   delay: index * 0.5,
-                  ease: 'easeInOut',
+                  ease: "easeInOut",
                 }}
                 className="w-16 h-16 mx-auto mb-4 bg-af-forest/10 dark:bg-orange-500/10 rounded-2xl flex items-center justify-center"
               >
@@ -72,6 +72,5 @@ export default function TrustIndicators() {
         </motion.div>
       </div>
     </section>
-  );
+  )
 }
-

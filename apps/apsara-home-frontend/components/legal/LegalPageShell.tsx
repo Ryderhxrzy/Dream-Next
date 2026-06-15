@@ -1,17 +1,21 @@
-import Link from 'next/link';
-import type { ReactNode } from 'react';
-import TopBar from '@/components/layout/TopBar';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/landing-page/Footer';
-import { getNavbarCategories } from '@/libs/serverStorefront';
+import Link from "next/link"
+import type { ReactNode } from "react"
+import TopBar from "@/components/layout/TopBar"
+import Navbar from "@/components/layout/Navbar"
+import Footer from "@/components/landing-page/Footer"
+import { getNavbarCategories } from "@/libs/serverStorefront"
 
 type LegalPageShellProps = {
-  title: string;
-  subtitle: string;
-  children: ReactNode;
-};
+  title: string
+  subtitle: string
+  children: ReactNode
+}
 
-export default async function LegalPageShell({ title, subtitle, children }: LegalPageShellProps) {
+export default async function LegalPageShell({
+  title,
+  subtitle,
+  children,
+}: LegalPageShellProps) {
   const navbarCategories = await getNavbarCategories()
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-gray-950 text-gray-900 dark:text-white">
@@ -22,7 +26,10 @@ export default async function LegalPageShell({ title, subtitle, children }: Lega
       <div className="bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 pt-8 pb-8">
         <div className="container mx-auto px-4">
           <nav className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 mb-4">
-            <Link href="/shop" className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+            <Link
+              href="/shop"
+              className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+            >
               Home
             </Link>
             <span>/</span>
@@ -48,5 +55,5 @@ export default async function LegalPageShell({ title, subtitle, children }: Lega
 
       <Footer />
     </div>
-  );
+  )
 }

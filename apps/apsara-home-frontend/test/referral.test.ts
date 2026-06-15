@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from "vitest"
 
 import {
   REFERRAL_STORAGE_KEY,
@@ -6,7 +6,7 @@ import {
   getStoredReferralCode,
   normalizeReferralCode,
   setStoredReferralCode,
-} from '../libs/referral'
+} from "../libs/referral"
 
 const createLocalStorageMock = () => {
   const store = new Map<string, string>()
@@ -36,37 +36,43 @@ beforeEach(() => {
   ;(globalThis as any).window = { localStorage }
 })
 
-describe('normalizeReferralCode', () => {
-  it('returns a trimmed plain referral code', () => {
-    expect(normalizeReferralCode('  referrer1  ')).toBe('referrer1')
+describe("normalizeReferralCode", () => {
+  it("returns a trimmed plain referral code", () => {
+    expect(normalizeReferralCode("  referrer1  ")).toBe("referrer1")
   })
 
-  it('extracts the ref query parameter from a full URL', () => {
-    expect(normalizeReferralCode('https://afhome.ph/signup?ref=referrer1')).toBe('referrer1')
+  it("extracts the ref query parameter from a full URL", () => {
+    expect(
+      normalizeReferralCode("https://afhome.ph/signup?ref=referrer1")
+    ).toBe("referrer1")
   })
 
-  it('extracts the referred_by query parameter from a full URL', () => {
-    expect(normalizeReferralCode('https://afhome.ph/signup?referred_by=referrer2')).toBe('referrer2')
+  it("extracts the referred_by query parameter from a full URL", () => {
+    expect(
+      normalizeReferralCode("https://afhome.ph/signup?referred_by=referrer2")
+    ).toBe("referrer2")
   })
 
-  it('falls back to the last path segment when there is no query parameter', () => {
-    expect(normalizeReferralCode('https://afhome.ph/referrals/referrer3')).toBe('referrer3')
+  it("falls back to the last path segment when there is no query parameter", () => {
+    expect(normalizeReferralCode("https://afhome.ph/referrals/referrer3")).toBe(
+      "referrer3"
+    )
   })
 })
 
-describe('stored referral helpers', () => {
-  it('stores the normalized referral code in localStorage', () => {
-    setStoredReferralCode('https://afhome.ph/signup?ref=storedRef')
+describe("stored referral helpers", () => {
+  it("stores the normalized referral code in localStorage", () => {
+    setStoredReferralCode("https://afhome.ph/signup?ref=storedRef")
 
-    expect(window.localStorage.getItem(REFERRAL_STORAGE_KEY)).toBe('storedRef')
-    expect(getStoredReferralCode()).toBe('storedRef')
+    expect(window.localStorage.getItem(REFERRAL_STORAGE_KEY)).toBe("storedRef")
+    expect(getStoredReferralCode()).toBe("storedRef")
   })
 
-  it('clears the stored referral code', () => {
-    setStoredReferralCode('referrer4')
+  it("clears the stored referral code", () => {
+    setStoredReferralCode("referrer4")
     clearStoredReferralCode()
 
     expect(window.localStorage.getItem(REFERRAL_STORAGE_KEY)).toBeNull()
-    expect(getStoredReferralCode()).toBe('')
+    expect(getStoredReferralCode()).toBe("")
   })
 })

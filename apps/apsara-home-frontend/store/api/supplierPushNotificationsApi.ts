@@ -1,4 +1,4 @@
-import { baseApi } from './baseApi'
+import { baseApi } from "./baseApi"
 
 export interface SupplierPushNotification {
   spn_id: number
@@ -41,7 +41,7 @@ export interface SendNotificationResponse {
   failed?: number
   total_tokens?: number
   scheduled_at?: string
-  status?: 'sent' | 'scheduled'
+  status?: "sent" | "scheduled"
 }
 
 export interface PushNotificationsHistoryResponse {
@@ -67,31 +67,40 @@ export const supplierPushNotificationsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getAvailableCustomers: builder.query<AvailableCustomersResponse, void>({
       query: () => ({
-        url: '/api/supplier/push-notifications/available-customers',
-        method: 'GET',
+        url: "/api/supplier/push-notifications/available-customers",
+        method: "GET",
       }),
       keepUnusedDataFor: 300,
     }),
-    getPushNotificationsHistory: builder.query<PushNotificationsHistoryResponse, void>({
+    getPushNotificationsHistory: builder.query<
+      PushNotificationsHistoryResponse,
+      void
+    >({
       query: () => ({
-        url: '/api/supplier/push-notifications/history',
-        method: 'GET',
+        url: "/api/supplier/push-notifications/history",
+        method: "GET",
       }),
       keepUnusedDataFor: 60,
-      providesTags: ['PushNotifications'],
+      providesTags: ["PushNotifications"],
     }),
-    sendPushNotification: builder.mutation<SendNotificationResponse, SendNotificationRequest>({
+    sendPushNotification: builder.mutation<
+      SendNotificationResponse,
+      SendNotificationRequest
+    >({
       query: (body) => ({
-        url: '/api/supplier/push-notifications/send',
-        method: 'POST',
+        url: "/api/supplier/push-notifications/send",
+        method: "POST",
         body,
       }),
-      invalidatesTags: ['PushNotifications'],
+      invalidatesTags: ["PushNotifications"],
     }),
-    getCloudinarySignature: builder.mutation<CloudinarySignResponse, CloudinarySignRequest>({
+    getCloudinarySignature: builder.mutation<
+      CloudinarySignResponse,
+      CloudinarySignRequest
+    >({
       query: (body) => ({
-        url: '/api/supplier/cloudinary-sign',
-        method: 'POST',
+        url: "/api/supplier/cloudinary-sign",
+        method: "POST",
         body,
       }),
     }),

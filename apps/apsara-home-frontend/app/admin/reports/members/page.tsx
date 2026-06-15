@@ -1,10 +1,10 @@
-import { buildPageMetadata } from '@/app/seo'
-import UnderMaintenancePage from '@/components/superAdmin/UnderMaintenancePage'
+import { buildPageMetadata } from "@/app/seo"
+import UnderMaintenancePage from "@/components/superAdmin/UnderMaintenancePage"
 
 export const metadata = buildPageMetadata({
-  title: 'Admin Member Report',
-  description: 'Browse the Admin Member Report page on AF Home.',
-  path: '/admin/reports/members',
+  title: "Admin Member Report",
+  description: "Browse the Admin Member Report page on AF Home.",
+  path: "/admin/reports/members",
   noIndex: true,
 })
 

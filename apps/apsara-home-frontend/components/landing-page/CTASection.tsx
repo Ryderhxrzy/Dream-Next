@@ -1,5 +1,5 @@
-import { motion } from 'framer-motion';
-import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { motion } from "framer-motion"
+import { ArrowRight, CheckCircle2 } from "lucide-react"
 
 export default function CTASection() {
   return (
@@ -12,7 +12,6 @@ export default function CTASection() {
 
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
-          
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -20,13 +19,15 @@ export default function CTASection() {
             className="mb-8 relative inline-block"
           >
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
-              Start Building Your<br />
+              Start Building Your
+              <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600">
                 AF Home Income Today.
               </span>
             </h2>
             <p className="text-xl text-gray-200 max-w-2xl mx-auto leading-relaxed">
-              Join thousands of affiliates turning everyday home products into long-term value and income.
+              Join thousands of affiliates turning everyday home products into
+              long-term value and income.
             </p>
           </motion.div>
 
@@ -64,6 +65,5 @@ export default function CTASection() {
         </div>
       </div>
     </section>
-  );
+  )
 }
-

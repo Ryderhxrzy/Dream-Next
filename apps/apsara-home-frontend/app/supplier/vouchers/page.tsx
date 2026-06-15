@@ -1,14 +1,14 @@
-import { buildPageMetadata } from '@/app/seo'
-import PaymentsVouchersPageMain from '@/components/superAdmin/payments/PaymentsVouchersPageMain'
+import { buildPageMetadata } from "@/app/seo"
+import PaymentsVouchersPageMain from "@/components/superAdmin/payments/PaymentsVouchersPageMain"
 
 export const metadata = buildPageMetadata({
-  title: 'Supplier Vouchers',
-  description: 'Manage supplier voucher eligibility on AF Home.',
-  path: '/supplier/vouchers',
+  title: "Supplier Vouchers",
+  description: "Manage supplier voucher eligibility on AF Home.",
+  path: "/supplier/vouchers",
   noIndex: true,
 })
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
 export default function SupplierVouchersPage() {
   return <PaymentsVouchersPageMain scope="supplier" />

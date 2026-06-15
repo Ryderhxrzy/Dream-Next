@@ -1,5 +1,5 @@
-import { motion } from "framer-motion";
-import { Armchair, Box, Home, Hammer, Star } from "lucide-react";
+import { motion } from "framer-motion"
+import { Armchair, Box, Home, Hammer, Star } from "lucide-react"
 
 const categories = [
   {
@@ -32,7 +32,7 @@ const categories = [
     description: "Exclusive Collections",
     color: "bg-yellow-100 text-yellow-600",
   },
-];
+]
 
 const brands = [
   { name: "Afforda Home", logo: "/Images/landing/affordahome.png" },
@@ -48,7 +48,7 @@ const brands = [
   { name: "Beanio", logo: "/Images/landing/beani-mnl.png" },
   { name: "Pica Pillow", logo: "/Images/landing/pica-pillow.png" },
   { name: "AirPro", logo: "/Images/landing/airpro.png" },
-];
+]
 
 export default function ProductsBrandsSection() {
   return (
@@ -152,5 +152,5 @@ export default function ProductsBrandsSection() {
         </div>
       </div>
     </section>
-  );
+  )
 }

@@ -1,32 +1,35 @@
-'use client'
+"use client"
 
-import Link from 'next/link'
-import { useState } from 'react'
+import Link from "next/link"
+import { useState } from "react"
 
 export default function SupplierForgotPasswordForm() {
-  const apiUrl = (process.env.NEXT_PUBLIC_LARAVEL_API_URL ?? '').replace(/\/+$/, '')
-  const [email, setEmail] = useState('')
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
+  const apiUrl = (process.env.NEXT_PUBLIC_LARAVEL_API_URL ?? "").replace(
+    /\/+$/,
+    ""
+  )
+  const [email, setEmail] = useState("")
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
-    setError('')
-    setSuccess('')
+    setError("")
+    setSuccess("")
 
     if (!apiUrl) {
-      setError('API URL is not configured.')
+      setError("API URL is not configured.")
       return
     }
 
     setIsSubmitting(true)
     try {
       const res = await fetch(`${apiUrl}/api/supplier/auth/forgot-password`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify({ email }),
       })
@@ -34,12 +37,16 @@ export default function SupplierForgotPasswordForm() {
       const data = await res.json().catch(() => ({}))
 
       if (!res.ok) {
-        throw new Error(data?.message || 'Unable to send reset email.')
+        throw new Error(data?.message || "Unable to send reset email.")
       }
 
-      setSuccess(data?.message || 'If that email exists, a reset link has been sent.')
+      setSuccess(
+        data?.message || "If that email exists, a reset link has been sent."
+      )
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to send reset email.')
+      setError(
+        err instanceof Error ? err.message : "Unable to send reset email."
+      )
     } finally {
       setIsSubmitting(false)
     }
@@ -53,15 +60,20 @@ export default function SupplierForgotPasswordForm() {
             <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">
               Supplier Password Reset
             </div>
-            <h1 className="mt-5 text-3xl font-bold tracking-tight text-white">Forgot your supplier password?</h1>
+            <h1 className="mt-5 text-3xl font-bold tracking-tight text-white">
+              Forgot your supplier password?
+            </h1>
             <p className="mt-3 text-sm leading-7 text-slate-400">
-              Enter the email linked to your supplier account and we will send you a reset link.
+              Enter the email linked to your supplier account and we will send
+              you a reset link.
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-200">Supplier Email</label>
+              <label className="mb-2 block text-sm font-semibold text-slate-200">
+                Supplier Email
+              </label>
               <input
                 type="email"
                 value={email}
@@ -89,12 +101,15 @@ export default function SupplierForgotPasswordForm() {
               disabled={isSubmitting}
               className="w-full rounded-2xl bg-cyan-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isSubmitting ? 'Sending reset link...' : 'Send Reset Link'}
+              {isSubmitting ? "Sending reset link..." : "Send Reset Link"}
             </button>
           </form>
 
           <p className="mt-6 text-sm text-slate-400">
-            <Link href="/supplier/login" className="font-semibold text-cyan-300 underline">
+            <Link
+              href="/supplier/login"
+              className="font-semibold text-cyan-300 underline"
+            >
               Back to supplier login
             </Link>
           </p>

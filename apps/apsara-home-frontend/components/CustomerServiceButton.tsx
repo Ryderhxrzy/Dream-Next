@@ -1,17 +1,17 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import ChatModal from './ChatModal'
-import { usePathname } from 'next/navigation'
-import { extractPartnerSlugFromPath } from '@/libs/storefrontRouting'
+import { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import ChatModal from "./ChatModal"
+import { usePathname } from "next/navigation"
+import { extractPartnerSlugFromPath } from "@/libs/storefrontRouting"
 
 export default function CustomerServiceButton() {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
   const partnerSlug = extractPartnerSlugFromPath(pathname)
 
-  if (pathname.startsWith('/ranking') || Boolean(partnerSlug)) return null
+  if (pathname.startsWith("/ranking") || Boolean(partnerSlug)) return null
 
   return (
     <>

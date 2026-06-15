@@ -1,22 +1,22 @@
-import { getServerSession } from 'next-auth';
-import { redirect } from 'next/navigation';
-import { adminAuthOptions } from '@/libs/adminAuth';
-import Testing from '@/components/Testing';
+import { getServerSession } from "next-auth"
+import { redirect } from "next/navigation"
+import { adminAuthOptions } from "@/libs/adminAuth"
+import Testing from "@/components/Testing"
 
 export const metadata = {
-  title: 'QA Testing Backlog — Apsara Home',
-};
+  title: "QA Testing Backlog — Apsara Home",
+}
 
 // Session-gated, so it must never be statically rendered.
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic"
 
 export default async function TestingPage() {
-  const session = await getServerSession(adminAuthOptions);
+  const session = await getServerSession(adminAuthOptions)
 
   // Only signed-in admins may view the QA board.
   if (!session?.user) {
-    redirect('/admin/login?callbackUrl=/testing');
+    redirect("/admin/login?callbackUrl=/testing")
   }
 
-  return <Testing />;
+  return <Testing />
 }

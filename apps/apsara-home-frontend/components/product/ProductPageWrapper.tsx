@@ -1,8 +1,8 @@
-'use client'
+"use client"
 
-import TopBar from '@/components/layout/TopBar'
-import Navbar from '@/components/layout/Navbar'
-import type { Category } from '@/store/api/categoriesApi'
+import TopBar from "@/components/layout/TopBar"
+import Navbar from "@/components/layout/Navbar"
+import type { Category } from "@/store/api/categoriesApi"
 
 interface ProductPageWrapperProps {
   children: React.ReactNode
@@ -22,9 +22,9 @@ export default function ProductPageWrapper({
   children,
   initialCategories = [],
   hideTopBar = false,
-  logoSrc = '/Images/af_home_logo.png',
-  logoAlt = 'AF Home',
-  logoHref = '/shop',
+  logoSrc = "/Images/af_home_logo.png",
+  logoAlt = "AF Home",
+  logoHref = "/shop",
   hideSignIn = false,
   hideNavLinks = false,
   categoryOnlyNav = false,

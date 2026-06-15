@@ -1,12 +1,19 @@
-'use client'
+"use client"
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState } from "react"
 import {
-  Users, BarChart2, Search, ChevronDown,
-  RotateCcw, Phone, ChevronsUpDown, ChevronLeft, ChevronRight,
-} from 'lucide-react'
-import { useGetPartnerMembersQuery } from '@/store/api/membersApi'
-import type { Member } from '@/types/members/types'
+  Users,
+  BarChart2,
+  Search,
+  ChevronDown,
+  RotateCcw,
+  Phone,
+  ChevronsUpDown,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react"
+import { useGetPartnerMembersQuery } from "@/store/api/membersApi"
+import type { Member } from "@/types/members/types"
 
 type ApiError = {
   status?: number | string
@@ -15,58 +22,72 @@ type ApiError = {
 }
 
 const extractErrorMessage = (error: unknown): string => {
-  if (!error || typeof error !== 'object') return 'Unknown error.'
+  if (!error || typeof error !== "object") return "Unknown error."
   const e = error as ApiError
   const message = e.data?.message || e.data?.error || e.error
-  if (message && String(message).trim() !== '') {
-    return e.status !== undefined ? `${e.status}: ${String(message)}` : String(message)
+  if (message && String(message).trim() !== "") {
+    return e.status !== undefined
+      ? `${e.status}: ${String(message)}`
+      : String(message)
   }
-  return e.status !== undefined ? `${e.status}: Request failed.` : 'Request failed.'
+  return e.status !== undefined
+    ? `${e.status}: Request failed.`
+    : "Request failed."
 }
 
-const normalize = (value?: string | null) => String(value ?? '').trim().toLowerCase()
+const normalize = (value?: string | null) =>
+  String(value ?? "")
+    .trim()
+    .toLowerCase()
 
 const getInitials = (name?: string | null) => {
-  const cleaned = String(name ?? '').trim()
-  if (!cleaned) return 'U'
+  const cleaned = String(name ?? "").trim()
+  if (!cleaned) return "U"
   const parts = cleaned.split(/\s+/).filter(Boolean)
-  const first = parts[0]?.[0] ?? ''
-  const last = parts.length > 1 ? parts[parts.length - 1]?.[0] ?? '' : ''
-  return (`${first}${last}`.toUpperCase()) || 'U'
+  const first = parts[0]?.[0] ?? ""
+  const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? "") : ""
+  return `${first}${last}`.toUpperCase() || "U"
 }
 
 const formatJoinedDate = (member: Member) => {
-  const raw = member.joinedAt || member.createdAt || member.created_at || ''
-  if (!raw) return 'N/A'
+  const raw = member.joinedAt || member.createdAt || member.created_at || ""
+  if (!raw) return "N/A"
   const date = new Date(raw)
-  if (Number.isNaN(date.getTime())) return 'N/A'
-  return date.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })
+  if (Number.isNaN(date.getTime())) return "N/A"
+  return date.toLocaleDateString("en-PH", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })
 }
 
 const INITIALS_COLORS = [
-  { bg: 'bg-blue-100',   text: 'text-blue-700'   },
-  { bg: 'bg-emerald-100', text: 'text-emerald-700' },
-  { bg: 'bg-amber-100',  text: 'text-amber-700'  },
-  { bg: 'bg-violet-100', text: 'text-violet-700' },
-  { bg: 'bg-pink-100',   text: 'text-pink-700'   },
-  { bg: 'bg-cyan-100',   text: 'text-cyan-700'   },
-  { bg: 'bg-orange-100', text: 'text-orange-700' },
+  { bg: "bg-blue-100", text: "text-blue-700" },
+  { bg: "bg-emerald-100", text: "text-emerald-700" },
+  { bg: "bg-amber-100", text: "text-amber-700" },
+  { bg: "bg-violet-100", text: "text-violet-700" },
+  { bg: "bg-pink-100", text: "text-pink-700" },
+  { bg: "bg-cyan-100", text: "text-cyan-700" },
+  { bg: "bg-orange-100", text: "text-orange-700" },
 ]
 
 const initialsColor = (name?: string | null) => {
   let hash = 0
-  const base = String(name ?? '').trim().toLowerCase()
-  for (let i = 0; i < base.length; i++) hash = (hash * 31 + base.charCodeAt(i)) >>> 0
+  const base = String(name ?? "")
+    .trim()
+    .toLowerCase()
+  for (let i = 0; i < base.length; i++)
+    hash = (hash * 31 + base.charCodeAt(i)) >>> 0
   return INITIALS_COLORS[hash % INITIALS_COLORS.length]
 }
 
 const sponsorLabel = (member: Member) => {
-  const username = String(member.referredByUsername ?? '').trim()
-  const name = String(member.referredByName ?? '').trim()
+  const username = String(member.referredByUsername ?? "").trim()
+  const name = String(member.referredByName ?? "").trim()
   if (username && name) return `${name} (@${username})`
   if (username) return `@${username}`
   if (name) return name
-  return 'None'
+  return "None"
 }
 
 const sponsorKey = (member: Member) => {
@@ -74,7 +95,7 @@ const sponsorKey = (member: Member) => {
   if (username) return `u:${username}`
   const name = normalize(member.referredByName)
   if (name) return `n:${name}`
-  return 'none'
+  return "none"
 }
 
 const PER_PAGE_OPTIONS = [10, 25, 50]
@@ -92,7 +113,9 @@ function SkeletonRow() {
           </div>
         </div>
       </td>
-      <td className="px-5 py-4"><div className="h-8 w-32 rounded-full bg-slate-100 dark:bg-slate-800" /></td>
+      <td className="px-5 py-4">
+        <div className="h-8 w-32 rounded-full bg-slate-100 dark:bg-slate-800" />
+      </td>
       <td className="px-5 py-4">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800" />
@@ -102,17 +125,21 @@ function SkeletonRow() {
           </div>
         </div>
       </td>
-      <td className="px-5 py-4"><div className="h-3 w-28 rounded bg-slate-100 dark:bg-slate-800" /></td>
-      <td className="px-5 py-4"><div className="h-6 w-24 rounded-full bg-slate-100 dark:bg-slate-800" /></td>
+      <td className="px-5 py-4">
+        <div className="h-3 w-28 rounded bg-slate-100 dark:bg-slate-800" />
+      </td>
+      <td className="px-5 py-4">
+        <div className="h-6 w-24 rounded-full bg-slate-100 dark:bg-slate-800" />
+      </td>
     </tr>
   )
 }
 
 export default function PartnerMembersPage() {
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
-  const [sponsorFilter, setSponsorFilter] = useState('all')
+  const [sponsorFilter, setSponsorFilter] = useState("all")
 
   const { data, isLoading, isFetching, error } = useGetPartnerMembersQuery({
     page,
@@ -132,7 +159,7 @@ export default function PartnerMembersPage() {
     const map = new Map<string, string>()
     for (const m of members) {
       const key = sponsorKey(m)
-      if (key === 'none') continue
+      if (key === "none") continue
       if (!map.has(key)) map.set(key, sponsorLabel(m))
     }
     return Array.from(map.entries())
@@ -141,25 +168,24 @@ export default function PartnerMembersPage() {
   }, [members])
 
   const filteredMembers = useMemo(() => {
-    if (sponsorFilter === 'all') return members
+    if (sponsorFilter === "all") return members
     return members.filter((m) => sponsorKey(m) === sponsorFilter)
   }, [members, sponsorFilter])
 
   const resetFilters = () => {
-    setSearch('')
-    setSponsorFilter('all')
+    setSearch("")
+    setSponsorFilter("all")
     setPage(1)
   }
 
   // range label e.g. "1–10 of 42"
   const rangeStart = totalMembers === 0 ? 0 : (page - 1) * perPage + 1
-  const rangeEnd   = Math.min(page * perPage, totalMembers)
+  const rangeEnd = Math.min(page * perPage, totalMembers)
 
-  const COL_HEADERS = ['Member', 'Contact', 'Sponsor', 'Address', 'Joined']
+  const COL_HEADERS = ["Member", "Contact", "Sponsor", "Address", "Joined"]
 
   return (
     <section className="space-y-4">
-
       {/* ── Header card ── */}
       <div className="relative overflow-hidden rounded-3xl border border-indigo-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="absolute inset-0 bg-linear-to-br from-indigo-50 via-violet-50/40 to-sky-50/60 dark:from-indigo-900/20 dark:via-violet-900/10 dark:to-sky-900/20" />
@@ -172,7 +198,9 @@ export default function PartnerMembersPage() {
                 <Users className="h-8 w-8 text-indigo-600 dark:text-indigo-400" />
               </div>
               <div>
-                <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">Members</h1>
+                <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                  Members
+                </h1>
                 <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
                   Search, filter, and review member profiles by sponsor.
                 </p>
@@ -181,7 +209,7 @@ export default function PartnerMembersPage() {
             <div className="flex items-center gap-2 self-start rounded-full border border-indigo-100 bg-white px-4 py-2 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:self-auto">
               <BarChart2 className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
               <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                {isFetching && !loading ? '…' : filteredMembers.length} shown
+                {isFetching && !loading ? "…" : filteredMembers.length} shown
               </span>
             </div>
           </div>
@@ -198,7 +226,10 @@ export default function PartnerMembersPage() {
                 <input
                   type="search"
                   value={search}
-                  onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+                  onChange={(e) => {
+                    setSearch(e.target.value)
+                    setPage(1)
+                  }}
                   placeholder="Search by name, username, or email"
                   className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm font-medium text-slate-800 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 />
@@ -219,7 +250,9 @@ export default function PartnerMembersPage() {
                 >
                   <option value="all">All sponsors</option>
                   {sponsorOptions.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
                   ))}
                 </select>
                 <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -246,7 +279,9 @@ export default function PartnerMembersPage() {
                 <RotateCcw className="h-4 w-4" />
                 Reset
               </button>
-              <p className="text-center text-[11px] text-slate-400 dark:text-slate-500">Use filters to refine results</p>
+              <p className="text-center text-[11px] text-slate-400 dark:text-slate-500">
+                Use filters to refine results
+              </p>
             </div>
           </div>
         </div>
@@ -254,7 +289,6 @@ export default function PartnerMembersPage() {
 
       {/* ── Table card ── */}
       <div className="rounded-3xl border border-slate-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-
         {/* Loading skeleton */}
         {loading && (
           <div className="overflow-x-auto">
@@ -271,7 +305,9 @@ export default function PartnerMembersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {[...Array(5)].map((_, i) => <SkeletonRow key={i} />)}
+                {[...Array(5)].map((_, i) => (
+                  <SkeletonRow key={i} />
+                ))}
               </tbody>
             </table>
           </div>
@@ -280,8 +316,12 @@ export default function PartnerMembersPage() {
         {/* Error */}
         {!loading && error && (
           <div className="space-y-1 p-8 text-sm">
-            <p className="font-bold text-rose-600 dark:text-rose-400">Failed to load members.</p>
-            <p className="text-xs text-rose-500 dark:text-rose-300">{extractErrorMessage(error)}</p>
+            <p className="font-bold text-rose-600 dark:text-rose-400">
+              Failed to load members.
+            </p>
+            <p className="text-xs text-rose-500 dark:text-rose-300">
+              {extractErrorMessage(error)}
+            </p>
           </div>
         )}
 
@@ -291,8 +331,12 @@ export default function PartnerMembersPage() {
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-900/30">
               <Users className="h-8 w-8 text-indigo-400" />
             </div>
-            <p className="mt-4 text-base font-bold text-slate-700 dark:text-slate-200">No members found.</p>
-            <p className="mt-1 text-sm text-slate-400">Try adjusting the search or sponsor filter.</p>
+            <p className="mt-4 text-base font-bold text-slate-700 dark:text-slate-200">
+              No members found.
+            </p>
+            <p className="mt-1 text-sm text-slate-400">
+              Try adjusting the search or sponsor filter.
+            </p>
           </div>
         )}
 
@@ -314,15 +358,21 @@ export default function PartnerMembersPage() {
 
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {filteredMembers.map((member) => {
-                  const fullAddress   = String(member.fullAddress ?? '').trim() || 'N/A'
-                  const memberUsername = String(member.username ?? '').trim()
-                  const sponsorName   = String(member.referredByName ?? '').trim() || 'None'
-                  const sponsorUsername = String(member.referredByUsername ?? '').trim()
-                  const sponsorAvatar = String(member.referredByAvatar ?? '').trim()
-                  const avatar        = String(member.avatar ?? '').trim()
-                  const initials      = getInitials(member.name)
-                  const color         = initialsColor(member.name)
-                  const joinedDate    = formatJoinedDate(member)
+                  const fullAddress =
+                    String(member.fullAddress ?? "").trim() || "N/A"
+                  const memberUsername = String(member.username ?? "").trim()
+                  const sponsorName =
+                    String(member.referredByName ?? "").trim() || "None"
+                  const sponsorUsername = String(
+                    member.referredByUsername ?? ""
+                  ).trim()
+                  const sponsorAvatar = String(
+                    member.referredByAvatar ?? ""
+                  ).trim()
+                  const avatar = String(member.avatar ?? "").trim()
+                  const initials = getInitials(member.name)
+                  const color = initialsColor(member.name)
+                  const joinedDate = formatJoinedDate(member)
 
                   return (
                     <tr
@@ -332,11 +382,19 @@ export default function PartnerMembersPage() {
                       {/* Member */}
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <div className={`flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full ${avatar ? '' : `${color.bg} ${color.text}`}`}>
+                          <div
+                            className={`flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full ${avatar ? "" : `${color.bg} ${color.text}`}`}
+                          >
                             {avatar ? (
-                              <img src={avatar} alt={member.name} className="h-full w-full object-cover" />
+                              <img
+                                src={avatar}
+                                alt={member.name}
+                                className="h-full w-full object-cover"
+                              />
                             ) : (
-                              <span className="text-sm font-bold">{initials}</span>
+                              <span className="text-sm font-bold">
+                                {initials}
+                              </span>
                             )}
                           </div>
                           <div className="min-w-0">
@@ -345,9 +403,13 @@ export default function PartnerMembersPage() {
                             </p>
                             <div className="mt-0.5 space-y-0.5">
                               {memberUsername && (
-                                <p className="truncate text-xs text-slate-500 dark:text-slate-400">@{memberUsername}</p>
+                                <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                                  @{memberUsername}
+                                </p>
                               )}
-                              <p className="truncate text-xs text-slate-500 dark:text-slate-400">{member.email}</p>
+                              <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                                {member.email}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -360,7 +422,7 @@ export default function PartnerMembersPage() {
                             <Phone className="h-3.5 w-3.5" />
                           </span>
                           <span className="rounded-lg bg-slate-50 px-2.5 py-1 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800/60 dark:text-slate-200 dark:ring-slate-700">
-                            {member.contactNumber || 'N/A'}
+                            {member.contactNumber || "N/A"}
                           </span>
                         </div>
                       </td>
@@ -370,7 +432,11 @@ export default function PartnerMembersPage() {
                         <div className="flex items-center gap-2.5">
                           <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                             {sponsorAvatar ? (
-                              <img src={sponsorAvatar} alt={sponsorName} className="h-full w-full object-cover" />
+                              <img
+                                src={sponsorAvatar}
+                                alt={sponsorName}
+                                className="h-full w-full object-cover"
+                              />
                             ) : (
                               <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
                                 {getInitials(sponsorName)}
@@ -378,9 +444,13 @@ export default function PartnerMembersPage() {
                             )}
                           </div>
                           <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-200">{sponsorName}</p>
+                            <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-200">
+                              {sponsorName}
+                            </p>
                             {sponsorUsername && (
-                              <p className="truncate text-xs text-slate-500 dark:text-slate-400">@{sponsorUsername}</p>
+                              <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                                @{sponsorUsername}
+                              </p>
                             )}
                           </div>
                         </div>
@@ -388,7 +458,10 @@ export default function PartnerMembersPage() {
 
                       {/* Address */}
                       <td className="px-5 py-4">
-                        <span className="max-w-xs truncate text-sm text-slate-600 dark:text-slate-400" title={fullAddress}>
+                        <span
+                          className="max-w-xs truncate text-sm text-slate-600 dark:text-slate-400"
+                          title={fullAddress}
+                        >
                           {fullAddress}
                         </span>
                       </td>
@@ -416,10 +489,17 @@ export default function PartnerMembersPage() {
               <div className="relative">
                 <select
                   value={perPage}
-                  onChange={(e) => { setPerPage(Number(e.target.value)); setPage(1) }}
+                  onChange={(e) => {
+                    setPerPage(Number(e.target.value))
+                    setPage(1)
+                  }}
                   className="appearance-none rounded-lg border border-slate-200 bg-white py-1 pl-3 pr-7 text-sm font-semibold text-slate-700 shadow-sm outline-none focus:border-indigo-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                 >
-                  {PER_PAGE_OPTIONS.map((n) => <option key={n} value={n}>{n}</option>)}
+                  {PER_PAGE_OPTIONS.map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
                 </select>
                 <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
               </div>
@@ -446,8 +526,8 @@ export default function PartnerMembersPage() {
                     onClick={() => setPage(p)}
                     className={`flex h-8 w-8 items-center justify-center rounded-lg text-sm font-semibold transition ${
                       page === p
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200 dark:shadow-indigo-900/40'
-                        : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                        ? "bg-indigo-600 text-white shadow-md shadow-indigo-200 dark:shadow-indigo-900/40"
+                        : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
                     }`}
                   >
                     {p}
@@ -467,11 +547,11 @@ export default function PartnerMembersPage() {
 
             {/* Range label */}
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              {totalMembers === 0 ? '0' : `${rangeStart}–${rangeEnd}`} of {totalMembers}
+              {totalMembers === 0 ? "0" : `${rangeStart}–${rangeEnd}`} of{" "}
+              {totalMembers}
             </p>
           </div>
         )}
-
       </div>
     </section>
   )

@@ -1,43 +1,57 @@
-import { buildPageMetadata } from '@/app/seo';
-import { headers } from 'next/headers'
-import { redirect } from 'next/navigation'
+import { buildPageMetadata } from "@/app/seo"
+import { headers } from "next/headers"
+import { redirect } from "next/navigation"
 
-export const metadata = buildPageMetadata({ title: 'Shop', description: 'Browse the Shop page on AF Home.', path: '/shop' });
+export const metadata = buildPageMetadata({
+  title: "Shop",
+  description: "Browse the Shop page on AF Home.",
+  path: "/shop",
+})
 
 import ShopPageClient from "@/components/shop/ShopPageClient"
-import ShopBuilderSections, { type ShopBuilderApiResponse } from "@/components/sections/ShopBuilderSections"
-import { getNavbarCategories } from '@/libs/serverStorefront'
-import { getPartnerStorefrontRecordByHost } from '@/libs/partnerStorefrontServer'
-import { serverFetch } from '@/libs/serverFetch'
-import type { TopBarConfig } from '@/components/layout/TopBar'
-import type { TrustBarConfig } from '@/components/layout/TrustBar'
+import ShopBuilderSections, {
+  type ShopBuilderApiResponse,
+} from "@/components/sections/ShopBuilderSections"
+import { getNavbarCategories } from "@/libs/serverStorefront"
+import { getPartnerStorefrontRecordByHost } from "@/libs/partnerStorefrontServer"
+import { serverFetch } from "@/libs/serverFetch"
+import type { TopBarConfig } from "@/components/layout/TopBar"
+import type { TrustBarConfig } from "@/components/layout/TrustBar"
 
 type ApiCategoriesResponse = {
-  categories?: ShopBuilderApiResponse['categories']
+  categories?: ShopBuilderApiResponse["categories"]
 }
 
 type ApiProductsResponse = {
-  products?: ShopBuilderApiResponse['products']
+  products?: ShopBuilderApiResponse["products"]
 }
 
 type ApiWebPagesResponse = {
-  items?: ShopBuilderApiResponse['items']
+  items?: ShopBuilderApiResponse["items"]
 }
 
-const getItemByKey = (items: ShopBuilderApiResponse['items'], key: string) =>
-  items.find((item) => String(item.key ?? '').trim() === key)
+const getItemByKey = (items: ShopBuilderApiResponse["items"], key: string) =>
+  items.find((item) => String(item.key ?? "").trim() === key)
 
-const getField = (item: ShopBuilderApiResponse['items'][number] | undefined, key: string) =>
-  (((item?.payload ?? {}) as { fields?: Record<string, string> }).fields ?? {})[key] ?? ''
+const getField = (
+  item: ShopBuilderApiResponse["items"][number] | undefined,
+  key: string
+) =>
+  (((item?.payload ?? {}) as { fields?: Record<string, string> }).fields ?? {})[
+    key
+  ] ?? ""
 
 const parseList = (value: string) =>
   value
-    .split('\n')
+    .split("\n")
     .map((item) => item.trim())
     .filter(Boolean)
 
-const parseTrustItems = (item: ShopBuilderApiResponse['items'][number] | undefined) => {
-  const fields = (((item?.payload ?? {}) as { fields?: Record<string, string> }).fields ?? {})
+const parseTrustItems = (
+  item: ShopBuilderApiResponse["items"][number] | undefined
+) => {
+  const fields =
+    ((item?.payload ?? {}) as { fields?: Record<string, string> }).fields ?? {}
   const grouped = new Map<number, { title: string; desc: string }>()
 
   Object.entries(fields).forEach(([key, value]) => {
@@ -46,10 +60,10 @@ const parseTrustItems = (item: ShopBuilderApiResponse['items'][number] | undefin
 
     const index = Number.parseInt(match[1], 10)
     const kind = match[2]
-    const current = grouped.get(index) ?? { title: '', desc: '' }
+    const current = grouped.get(index) ?? { title: "", desc: "" }
 
-    if (kind === 'title') current.title = value
-    if (kind === 'desc') current.desc = value
+    if (kind === "title") current.title = value
+    if (kind === "desc") current.desc = value
 
     grouped.set(index, current)
   })
@@ -60,19 +74,19 @@ const parseTrustItems = (item: ShopBuilderApiResponse['items'][number] | undefin
     .filter((trustItem) => trustItem.title || trustItem.desc)
 }
 
-const getShopHeaderConfig = (items: ShopBuilderApiResponse['items']) => {
-  const shopHeader = getItemByKey(items, 'shop-header')
+const getShopHeaderConfig = (items: ShopBuilderApiResponse["items"]) => {
+  const shopHeader = getItemByKey(items, "shop-header")
 
   const topBar: TopBarConfig = {
-    phone: getField(shopHeader, 'contact_phone') || '+63 912 345 6789',
-    email: getField(shopHeader, 'contact_email') || 'hello@afhome.ph',
-    messages: parseList(getField(shopHeader, 'marquee_messages')),
-    facebookLabel: getField(shopHeader, 'facebook_label') || 'FB',
-    facebookUrl: getField(shopHeader, 'facebook_url'),
-    instagramLabel: getField(shopHeader, 'instagram_label') || 'IG',
-    instagramUrl: getField(shopHeader, 'instagram_url'),
-    tiktokLabel: getField(shopHeader, 'tiktok_label') || 'TikTok',
-    tiktokUrl: getField(shopHeader, 'tiktok_url'),
+    phone: getField(shopHeader, "contact_phone") || "+63 912 345 6789",
+    email: getField(shopHeader, "contact_email") || "hello@afhome.ph",
+    messages: parseList(getField(shopHeader, "marquee_messages")),
+    facebookLabel: getField(shopHeader, "facebook_label") || "FB",
+    facebookUrl: getField(shopHeader, "facebook_url"),
+    instagramLabel: getField(shopHeader, "instagram_label") || "IG",
+    instagramUrl: getField(shopHeader, "instagram_url"),
+    tiktokLabel: getField(shopHeader, "tiktok_label") || "TikTok",
+    tiktokUrl: getField(shopHeader, "tiktok_url"),
   }
 
   const trustBar: TrustBarConfig = {
@@ -83,25 +97,26 @@ const getShopHeaderConfig = (items: ShopBuilderApiResponse['items']) => {
 }
 
 async function getShopBuilderData(): Promise<ShopBuilderApiResponse | null> {
-  const apiUrl = process.env.LARAVEL_API_URL ?? process.env.NEXT_PUBLIC_LARAVEL_API_URL
+  const apiUrl =
+    process.env.LARAVEL_API_URL ?? process.env.NEXT_PUBLIC_LARAVEL_API_URL
   if (!apiUrl) return null
 
   try {
     const [webPagesRes, categoriesRes, productsRes] = await Promise.all([
       serverFetch(`${apiUrl}/api/web-pages/shop-builder`, {
-        method: 'GET',
-        headers: { Accept: 'application/json' },
-        cache: 'no-store',
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
       }),
       serverFetch(`${apiUrl}/api/categories?page=1&per_page=100&used_only=1`, {
-        method: 'GET',
-        headers: { Accept: 'application/json' },
-        cache: 'no-store',
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
       }),
       serverFetch(`${apiUrl}/api/products?page=1&per_page=200&status=1`, {
-        method: 'GET',
-        headers: { Accept: 'application/json' },
-        cache: 'no-store',
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
       }),
     ])
 
@@ -123,8 +138,11 @@ async function getShopBuilderData(): Promise<ShopBuilderApiResponse | null> {
 
 const ShopPage = async () => {
   const requestHeaders = await headers()
-  const requestHost = requestHeaders.get('x-forwarded-host') ?? requestHeaders.get('host') ?? ''
-  const storefront = await getPartnerStorefrontRecordByHost(requestHost, { fresh: true })
+  const requestHost =
+    requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? ""
+  const storefront = await getPartnerStorefrontRecordByHost(requestHost, {
+    fresh: true,
+  })
   if (storefront) {
     redirect(`/shop/${storefront.config.slug}`)
   }

@@ -2,7 +2,7 @@
 // ui/Primitives.tsx — Reusable UI atoms
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState } from "react";
+import { useState } from "react"
 
 // ── Section eyebrow label ──────────────────────────────────────────────────
 export function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -13,7 +13,7 @@ export function SectionLabel({ children }: { children: React.ReactNode }) {
         {children}
       </span>
     </div>
-  );
+  )
 }
 
 // ── Form field wrapper ─────────────────────────────────────────────────────
@@ -22,9 +22,9 @@ export function FormField({
   required,
   children,
 }: {
-  label: string;
-  required?: boolean;
-  children: React.ReactNode;
+  label: string
+  required?: boolean
+  children: React.ReactNode
 }) {
   return (
     <div className="flex flex-col gap-2">
@@ -34,7 +34,7 @@ export function FormField({
       </label>
       {children}
     </div>
-  );
+  )
 }
 
 // ── Text input ─────────────────────────────────────────────────────────────
@@ -45,13 +45,13 @@ export function InputField({
   onChange,
   name,
 }: {
-  type?: string;
-  placeholder: string;
-  value: string;
-  onChange: (val: string) => void;
-  name?: string;
+  type?: string
+  placeholder: string
+  value: string
+  onChange: (val: string) => void
+  name?: string
 }) {
-  const [focused, setFocused] = useState(false);
+  const [focused, setFocused] = useState(false)
   return (
     <input
       type={type}
@@ -69,7 +69,7 @@ export function InputField({
         boxShadow: focused ? "0 0 0 3px rgba(212,165,20,0.12)" : "none",
       }}
     />
-  );
+  )
 }
 
 // ── Select field ───────────────────────────────────────────────────────────
@@ -79,12 +79,12 @@ export function SelectField({
   value,
   onChange,
 }: {
-  options: { value: string; label: string }[];
-  placeholder: string;
-  value: string;
-  onChange: (val: string) => void;
+  options: { value: string; label: string }[]
+  placeholder: string
+  value: string
+  onChange: (val: string) => void
 }) {
-  const [focused, setFocused] = useState(false);
+  const [focused, setFocused] = useState(false)
   return (
     <div className="relative">
       <select
@@ -95,7 +95,7 @@ export function SelectField({
         className="w-full bg-white text-sm px-4 py-3 rounded-[4px] outline-none appearance-none transition-all duration-300 cursor-pointer"
         style={{
           color: value ? "#1e293b" : "#94a3b8",
-        border: focused
+          border: focused
             ? "1px solid rgba(212,165,20,0.7)"
             : "1px solid rgba(15,23,42,0.12)",
           boxShadow: focused ? "0 0 0 3px rgba(212,165,20,0.12)" : "none",
@@ -105,7 +105,11 @@ export function SelectField({
           {placeholder}
         </option>
         {options.map((o) => (
-          <option key={o.value} value={o.value} className="bg-white text-slate-800">
+          <option
+            key={o.value}
+            value={o.value}
+            className="bg-white text-slate-800"
+          >
             {o.label}
           </option>
         ))}
@@ -114,7 +118,7 @@ export function SelectField({
         ▾
       </div>
     </div>
-  );
+  )
 }
 
 // ── Textarea field ─────────────────────────────────────────────────────────
@@ -124,12 +128,12 @@ export function TextareaField({
   onChange,
   rows = 5,
 }: {
-  placeholder: string;
-  value: string;
-  onChange: (val: string) => void;
-  rows?: number;
+  placeholder: string
+  value: string
+  onChange: (val: string) => void
+  rows?: number
 }) {
-  const [focused, setFocused] = useState(false);
+  const [focused, setFocused] = useState(false)
   return (
     <textarea
       placeholder={placeholder}
@@ -146,7 +150,7 @@ export function TextareaField({
         boxShadow: focused ? "0 0 0 3px rgba(212,165,20,0.12)" : "none",
       }}
     />
-  );
+  )
 }
 
 // ── Primary CTA button ─────────────────────────────────────────────────────
@@ -156,10 +160,10 @@ export function PrimaryButton({
   type = "button",
   disabled,
 }: {
-  children: React.ReactNode;
-  onClick?: () => void;
-  type?: "button" | "submit";
-  disabled?: boolean;
+  children: React.ReactNode
+  onClick?: () => void
+  type?: "button" | "submit"
+  disabled?: boolean
 }) {
   return (
     <button
@@ -171,7 +175,7 @@ export function PrimaryButton({
       <span className="relative z-10">{children}</span>
       <div className="absolute inset-0 bg-gradient-to-r from-[#d4a514] to-[#c9891b] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
     </button>
-  );
+  )
 }
 
 // ── Ghost button ───────────────────────────────────────────────────────────
@@ -179,8 +183,8 @@ export function GhostButton({
   children,
   onClick,
 }: {
-  children: React.ReactNode;
-  onClick?: () => void;
+  children: React.ReactNode
+  onClick?: () => void
 }) {
   return (
     <button
@@ -189,5 +193,5 @@ export function GhostButton({
     >
       {children}
     </button>
-  );
+  )
 }

@@ -1,20 +1,24 @@
-import type { Category } from '@/store/api/categoriesApi'
-import { serverFetch } from '@/libs/serverFetch'
+import type { Category } from "@/store/api/categoriesApi"
+import { serverFetch } from "@/libs/serverFetch"
 
 type ApiCategoriesResponse = {
   categories?: Category[]
 }
 
 export async function getNavbarCategories(): Promise<Category[]> {
-  const apiUrl = process.env.LARAVEL_API_URL ?? process.env.NEXT_PUBLIC_LARAVEL_API_URL
+  const apiUrl =
+    process.env.LARAVEL_API_URL ?? process.env.NEXT_PUBLIC_LARAVEL_API_URL
   if (!apiUrl) return []
 
   try {
-    const response = await serverFetch(`${apiUrl}/api/categories?page=1&per_page=100`, {
-      method: 'GET',
-      headers: { Accept: 'application/json' },
-      cache: 'no-store',
-    })
+    const response = await serverFetch(
+      `${apiUrl}/api/categories?page=1&per_page=100`,
+      {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      }
+    )
 
     if (!response.ok) return []
 
