@@ -1,6 +1,6 @@
-import { baseApi } from './baseApi'
+import { baseApi } from "./baseApi"
 
-export type ServiceInquiryStatus = 'new' | 'viewed' | 'responded' | 'closed'
+export type ServiceInquiryStatus = "new" | "viewed" | "responded" | "closed"
 
 export interface ServiceInquiryItem {
   id: number
@@ -66,52 +66,81 @@ export interface SubmitInquiryResponse {
 
 export const serviceInquiriesApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    submitServiceInquiry: builder.mutation<SubmitInquiryResponse, SubmitInquiryPayload>({
+    submitServiceInquiry: builder.mutation<
+      SubmitInquiryResponse,
+      SubmitInquiryPayload
+    >({
       query: (body) => ({
-        url: '/api/service-inquiries',
-        method: 'POST',
+        url: "/api/service-inquiries",
+        method: "POST",
         body,
       }),
-      invalidatesTags: ['ServiceInquiries'],
+      invalidatesTags: ["ServiceInquiries"],
     }),
-    getSupplierServiceInquiries: builder.query<ServiceInquiriesResponse, { status?: string; per_page?: number } | void>({
+    getSupplierServiceInquiries: builder.query<
+      ServiceInquiriesResponse,
+      { status?: string; per_page?: number } | void
+    >({
       query: (params) => ({
-        url: '/api/supplier/service-inquiries',
-        method: 'GET',
+        url: "/api/supplier/service-inquiries",
+        method: "GET",
         params: params ?? undefined,
       }),
-      providesTags: ['ServiceInquiries'],
+      providesTags: ["ServiceInquiries"],
     }),
-    updateServiceInquiryStatus: builder.mutation<{ message: string; inquiry: { id: number; status: ServiceInquiryStatus; updated_at: string } }, { id: number; status: ServiceInquiryStatus }>({
+    updateServiceInquiryStatus: builder.mutation<
+      {
+        message: string
+        inquiry: {
+          id: number
+          status: ServiceInquiryStatus
+          updated_at: string
+        }
+      },
+      { id: number; status: ServiceInquiryStatus }
+    >({
       query: ({ id, status }) => ({
         url: `/api/supplier/service-inquiries/${id}`,
-        method: 'PATCH',
+        method: "PATCH",
         body: { status },
       }),
-      invalidatesTags: ['ServiceInquiries'],
+      invalidatesTags: ["ServiceInquiries"],
     }),
-    getAdminServiceInquiries: builder.query<ServiceInquiriesResponse, { status?: string; search?: string; per_page?: number } | void>({
+    getAdminServiceInquiries: builder.query<
+      ServiceInquiriesResponse,
+      { status?: string; search?: string; per_page?: number } | void
+    >({
       query: (params) => ({
-        url: '/api/admin/service-inquiries',
-        method: 'GET',
+        url: "/api/admin/service-inquiries",
+        method: "GET",
         params: params ?? undefined,
       }),
-      providesTags: ['ServiceInquiries'],
+      providesTags: ["ServiceInquiries"],
     }),
-    updateAdminServiceInquiryStatus: builder.mutation<{ message: string; inquiry: { id: number; status: ServiceInquiryStatus; updated_at: string } }, { id: number; status: ServiceInquiryStatus }>({
+    updateAdminServiceInquiryStatus: builder.mutation<
+      {
+        message: string
+        inquiry: {
+          id: number
+          status: ServiceInquiryStatus
+          updated_at: string
+        }
+      },
+      { id: number; status: ServiceInquiryStatus }
+    >({
       query: ({ id, status }) => ({
         url: `/api/admin/service-inquiries/${id}`,
-        method: 'PATCH',
+        method: "PATCH",
         body: { status },
       }),
-      invalidatesTags: ['ServiceInquiries'],
+      invalidatesTags: ["ServiceInquiries"],
     }),
     deleteServiceInquiry: builder.mutation<{ message: string }, number>({
       query: (id) => ({
         url: `/api/supplier/service-inquiries/${id}`,
-        method: 'DELETE',
+        method: "DELETE",
       }),
-      invalidatesTags: ['ServiceInquiries'],
+      invalidatesTags: ["ServiceInquiries"],
     }),
   }),
 })

@@ -1,4 +1,4 @@
-import { baseApi } from './baseApi'
+import { baseApi } from "./baseApi"
 
 export interface ExpenseCategoryRef {
   id: number
@@ -60,8 +60,8 @@ export const expensesApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getExpenses: builder.query<ExpensesResponse, GetExpensesParams | void>({
       query: (params) => ({
-        url: '/api/admin/expenses',
-        method: 'GET',
+        url: "/api/admin/expenses",
+        method: "GET",
         params: {
           q: params?.search,
           category_id: params?.categoryId,
@@ -71,55 +71,64 @@ export const expensesApi = baseApi.injectEndpoints({
           per_page: params?.perPage,
         },
       }),
-      providesTags: ['Expenses'],
+      providesTags: ["Expenses"],
     }),
-    createExpense: builder.mutation<{ message: string; expense: Expense }, ExpensePayload | FormData>({
+    createExpense: builder.mutation<
+      { message: string; expense: Expense },
+      ExpensePayload | FormData
+    >({
       query: (body) => ({
-        url: '/api/admin/expenses',
-        method: 'POST',
+        url: "/api/admin/expenses",
+        method: "POST",
         body,
       }),
-      invalidatesTags: ['Expenses'],
+      invalidatesTags: ["Expenses"],
     }),
-    updateExpense: builder.mutation<{ message: string; expense: Expense }, { id: number; data: ExpensePayload | FormData }>({
+    updateExpense: builder.mutation<
+      { message: string; expense: Expense },
+      { id: number; data: ExpensePayload | FormData }
+    >({
       query: ({ id, data }) => {
         if (data instanceof FormData) {
           const body = data
-          if (!body.has('_method')) {
-            body.append('_method', 'PUT')
+          if (!body.has("_method")) {
+            body.append("_method", "PUT")
           }
           return {
             url: `/api/admin/expenses/${id}`,
-            method: 'POST',
+            method: "POST",
             body,
           }
         }
         return {
           url: `/api/admin/expenses/${id}`,
-          method: 'PUT',
+          method: "PUT",
           body: data,
         }
       },
-      invalidatesTags: ['Expenses'],
+      invalidatesTags: ["Expenses"],
     }),
     deleteExpense: builder.mutation<{ message: string }, number>({
       query: (id) => ({
         url: `/api/admin/expenses/${id}`,
-        method: 'DELETE',
+        method: "DELETE",
       }),
-      invalidatesTags: ['Expenses'],
+      invalidatesTags: ["Expenses"],
     }),
-    getExpensesSummary: builder.query<ExpensesSummaryResponse, { from?: string; to?: string; status?: number } | void>({
+    getExpensesSummary: builder.query<
+      ExpensesSummaryResponse,
+      { from?: string; to?: string; status?: number } | void
+    >({
       query: (params) => ({
-        url: '/api/admin/expenses/summary',
-        method: 'GET',
+        url: "/api/admin/expenses/summary",
+        method: "GET",
         params: {
           from: params?.from,
           to: params?.to,
           status: params?.status,
         },
       }),
-      providesTags: ['Expenses'],
+      providesTags: ["Expenses"],
     }),
   }),
 })

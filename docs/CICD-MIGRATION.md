@@ -12,15 +12,15 @@ git push → GitHub Actions → build all images (parallel, cached)
 
 ## Services & images
 
-| Service            | Image (`ghcr.io/dreamnext-af-home/…`) | Dockerfile                     |
-|--------------------|----------------------------------------|--------------------------------|
-| apsara-home-frontend | `afhome-frontend`                    | `docker/next.prod.Dockerfile`  |
-| dreambuild         | `afhome-dreambuild`                     | `docker/next.prod.Dockerfile`  |
-| community-frontend | `community-frontend`                    | `docker/next.prod.Dockerfile`  |
-| Laravel backend    | `afhome-backend` (web **and** worker)   | `docker/backend.prod.Dockerfile` |
-| community-backend  | `community-backend`                     | `docker/node.prod.Dockerfile`  |
-| realtime-service   | `realtime-service`                      | `docker/node.prod.Dockerfile`  |
-| redis              | official `redis:7-alpine` (no build)    | —                              |
+| Service              | Image (`ghcr.io/dreamnext-af-home/…`) | Dockerfile                       |
+| -------------------- | ------------------------------------- | -------------------------------- |
+| apsara-home-frontend | `afhome-frontend`                     | `docker/next.prod.Dockerfile`    |
+| dreambuild           | `afhome-dreambuild`                   | `docker/next.prod.Dockerfile`    |
+| community-frontend   | `community-frontend`                  | `docker/next.prod.Dockerfile`    |
+| Laravel backend      | `afhome-backend` (web **and** worker) | `docker/backend.prod.Dockerfile` |
+| community-backend    | `community-backend`                   | `docker/node.prod.Dockerfile`    |
+| realtime-service     | `realtime-service`                    | `docker/node.prod.Dockerfile`    |
+| redis                | official `redis:7-alpine` (no build)  | —                                |
 
 ## 1. GitHub setup (one-time)
 
@@ -55,7 +55,7 @@ git push → GitHub Actions → build all images (parallel, cached)
    > (NEXTAUTH_SECRET, API secret keys, DB passwords) stays a **runtime env in
    > Dokploy** and is NOT baked into images.
 
-4. *(Optional)* **Secrets** — `DOKPLOY_WEBHOOK_URL_MAIN` /
+4. _(Optional)_ **Secrets** — `DOKPLOY_WEBHOOK_URL_MAIN` /
    `DOKPLOY_WEBHOOK_URL_COMMUNITY` to auto-redeploy after a build. Leave unset to
    deploy manually (recommended while validating).
 
@@ -84,7 +84,7 @@ git push → GitHub Actions → build all images (parallel, cached)
      `build`.
    - Keep all existing **runtime env vars** (DB creds, NEXTAUTH_SECRET, PayMongo,
      couriers, etc.) — these are unchanged.
-   - *(Optional)* set `IMAGE_TAG` env (see Rollback).
+   - _(Optional)_ set `IMAGE_TAG` env (see Rollback).
 
 ## 4. Migration order (low downtime)
 

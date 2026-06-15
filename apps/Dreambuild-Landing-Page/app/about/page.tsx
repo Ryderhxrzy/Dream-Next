@@ -1,16 +1,25 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { Header } from "@/components/shared/header";
-import { Footer } from "@/components/landing/footer";
-import { FadeUp, FadeIn, SlideInLeft, SlideInRight, StaggerContainer, StaggerItem, motion } from "@/components/ui/motion";
+import Link from "next/link"
+
+import {
+  FadeIn,
+  FadeUp,
+  motion,
+  SlideInLeft,
+  SlideInRight,
+  StaggerContainer,
+  StaggerItem,
+} from "@/components/ui/motion"
+import { Footer } from "@/components/landing/footer"
+import { Header } from "@/components/shared/header"
 
 const stats = [
   { value: "150+", label: "Concepts Designed" },
   { value: "48", label: "Spaces Styled" },
   { value: "10", label: "Palette Directions" },
   { value: "5+", label: "Years of Studio Work" },
-];
+]
 
 const principles = [
   {
@@ -28,14 +37,26 @@ const principles = [
     title: "Warmth without softness",
     body: "Our interiors are livable, not precious. We balance refinement with the kind of warmth that makes a home feel used, loved, and real.",
   },
-];
+]
 
 const process = [
-  { step: "Discovery", desc: "We listen before we sketch. Understanding how you live shapes every direction we take." },
-  { step: "Direction", desc: "A single, cohesive design language — no scattered moodboards, no confusion." },
-  { step: "Refinement", desc: "Every material, finish, and proportion is reviewed until the space feels resolved." },
-  { step: "Delivery", desc: "Presentation-ready concepts that make the path forward clear and confident." },
-];
+  {
+    step: "Discovery",
+    desc: "We listen before we sketch. Understanding how you live shapes every direction we take.",
+  },
+  {
+    step: "Direction",
+    desc: "A single, cohesive design language — no scattered moodboards, no confusion.",
+  },
+  {
+    step: "Refinement",
+    desc: "Every material, finish, and proportion is reviewed until the space feels resolved.",
+  },
+  {
+    step: "Delivery",
+    desc: "Presentation-ready concepts that make the path forward clear and confident.",
+  },
+]
 
 export default function AboutPage() {
   return (
@@ -46,7 +67,7 @@ export default function AboutPage() {
       <section className="relative overflow-hidden pt-32 pb-20 lg:pt-44 lg:pb-28">
         {/* Large decorative text */}
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center select-none">
-          <span className="text-[clamp(6rem,20vw,18rem)] font-bold leading-none tracking-tighter text-[var(--border)] opacity-40">
+          <span className="text-[clamp(6rem,20vw,18rem)] leading-none font-bold tracking-tighter text-[var(--border)] opacity-40">
             STUDIO
           </span>
         </div>
@@ -60,14 +81,16 @@ export default function AboutPage() {
           </FadeUp>
 
           <FadeUp delay={0.15}>
-            <h1 className="mt-6 max-w-4xl text-5xl font-medium leading-[1.1] tracking-tight text-[var(--foreground)] sm:text-6xl lg:text-7xl">
+            <h1 className="mt-6 max-w-4xl text-5xl leading-[1.1] font-medium tracking-tight text-[var(--foreground)] sm:text-6xl lg:text-7xl">
               A studio built on the belief that great interiors feel inevitable.
             </h1>
           </FadeUp>
 
           <FadeUp delay={0.25}>
             <p className="mt-8 max-w-xl text-lg leading-relaxed text-[var(--muted)]">
-              Dreambuild is a residential interior design studio. We shape spaces that are calm, refined, and deeply livable — homes that reflect the people inside them.
+              Dreambuild is a residential interior design studio. We shape
+              spaces that are calm, refined, and deeply livable — homes that
+              reflect the people inside them.
             </p>
           </FadeUp>
         </div>
@@ -75,7 +98,10 @@ export default function AboutPage() {
 
       {/* ── Stats Strip ── */}
       <section className="border-y border-[var(--border)] bg-white">
-        <StaggerContainer className="mx-auto grid max-w-7xl grid-cols-2 divide-x divide-y divide-[var(--border)] px-6 sm:grid-cols-4 sm:divide-y-0 lg:px-8" staggerDelay={0.08}>
+        <StaggerContainer
+          className="mx-auto grid max-w-7xl grid-cols-2 divide-x divide-y divide-[var(--border)] px-6 sm:grid-cols-4 sm:divide-y-0 lg:px-8"
+          staggerDelay={0.08}
+        >
           {stats.map((s) => (
             <StaggerItem key={s.label}>
               <div className="flex flex-col gap-1 px-6 py-10 first:pl-0 last:pr-0 sm:px-8">
@@ -97,25 +123,32 @@ export default function AboutPage() {
               <p className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
                 Our Story
               </p>
-              <h2 className="mt-5 text-3xl font-medium leading-snug tracking-tight text-[var(--foreground)] sm:text-4xl">
+              <h2 className="mt-5 text-3xl leading-snug font-medium tracking-tight text-[var(--foreground)] sm:text-4xl">
                 We started because most interiors felt designed — not lived in.
               </h2>
               <div className="mt-8 space-y-5 text-base leading-relaxed text-[var(--muted)]">
                 <p>
-                  Dreambuild began with a frustration: beautiful rooms that felt like showrooms rather than homes. Too stiff, too styled, too perfect. We wanted something different — spaces that had intention without pretension.
+                  Dreambuild began with a frustration: beautiful rooms that felt
+                  like showrooms rather than homes. Too stiff, too styled, too
+                  perfect. We wanted something different — spaces that had
+                  intention without pretension.
                 </p>
                 <p>
-                  Over the years we refined a process that starts with listening, not sketching. We learn how clients move through their homes, what they value, and what exhausts them. That becomes the foundation of every design decision.
+                  Over the years we refined a process that starts with
+                  listening, not sketching. We learn how clients move through
+                  their homes, what they value, and what exhausts them. That
+                  becomes the foundation of every design decision.
                 </p>
                 <p>
-                  The result is interiors that don't announce themselves. They just feel right.
+                  The result is interiors that don't announce themselves. They
+                  just feel right.
                 </p>
               </div>
             </SlideInLeft>
 
             <SlideInRight delay={0.2} className="relative">
               {/* Placeholder — swap with real image */}
-              <div className="relative overflow-hidden rounded-3xl aspect-[4/5] bg-gradient-to-br from-[#e8e3db] via-[#d9d0c5] to-[#c9bfb2]">
+              <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-gradient-to-br from-[#e8e3db] via-[#d9d0c5] to-[#c9bfb2]">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
                 {/* Floating label */}
                 <motion.div
@@ -123,7 +156,7 @@ export default function AboutPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.6, delay: 0.5 }}
-                  className="absolute bottom-6 left-6 right-6 rounded-xl bg-white/90 backdrop-blur-sm p-5"
+                  className="absolute right-6 bottom-6 left-6 rounded-xl bg-white/90 p-5 backdrop-blur-sm"
                 >
                   <p className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
                     Studio Philosophy
@@ -139,10 +172,12 @@ export default function AboutPage() {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: 0.7 }}
-                className="absolute -right-4 top-12 rounded-2xl bg-[var(--dark)] px-6 py-5 text-white shadow-xl lg:-right-8"
+                className="absolute top-12 -right-4 rounded-2xl bg-[var(--dark)] px-6 py-5 text-white shadow-xl lg:-right-8"
               >
                 <p className="text-3xl font-medium">5+</p>
-                <p className="mt-1 text-xs text-neutral-400">Years crafting spaces</p>
+                <p className="mt-1 text-xs text-neutral-400">
+                  Years crafting spaces
+                </p>
               </motion.div>
             </SlideInRight>
           </div>
@@ -156,10 +191,13 @@ export default function AboutPage() {
             <p className="text-xs font-medium tracking-widest text-[var(--accent)] uppercase">
               What We Believe
             </p>
-            <blockquote className="mt-8 text-3xl font-medium leading-snug tracking-tight text-white sm:text-4xl lg:text-5xl">
-              "The best interior doesn't distract. It disappears — and what's left is a space that feels entirely yours."
+            <blockquote className="mt-8 text-3xl leading-snug font-medium tracking-tight text-white sm:text-4xl lg:text-5xl">
+              "The best interior doesn't distract. It disappears — and what's
+              left is a space that feels entirely yours."
             </blockquote>
-            <p className="mt-8 text-sm text-neutral-400">— Dreambuild Design Studio</p>
+            <p className="mt-8 text-sm text-neutral-400">
+              — Dreambuild Design Studio
+            </p>
           </div>
         </FadeIn>
       </section>
@@ -178,7 +216,10 @@ export default function AboutPage() {
             </FadeUp>
           </div>
 
-          <StaggerContainer className="mt-16 grid gap-px border border-[var(--border)] overflow-hidden rounded-3xl bg-[var(--border)] lg:grid-cols-3" staggerDelay={0.1}>
+          <StaggerContainer
+            className="mt-16 grid gap-px overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--border)] lg:grid-cols-3"
+            staggerDelay={0.1}
+          >
             {principles.map((p) => (
               <StaggerItem key={p.number}>
                 <motion.div
@@ -189,8 +230,12 @@ export default function AboutPage() {
                     {p.number}
                   </span>
                   <div>
-                    <h3 className="text-lg font-medium text-[var(--foreground)]">{p.title}</h3>
-                    <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">{p.body}</p>
+                    <h3 className="text-lg font-medium text-[var(--foreground)]">
+                      {p.title}
+                    </h3>
+                    <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">
+                      {p.body}
+                    </p>
                   </div>
                 </motion.div>
               </StaggerItem>
@@ -211,11 +256,16 @@ export default function AboutPage() {
                 A process built for clarity.
               </h2>
               <p className="mt-5 text-base leading-relaxed text-[var(--muted)]">
-                We run a tight, transparent process — no ambiguity, no surprises. Every stage is designed to move you forward with confidence.
+                We run a tight, transparent process — no ambiguity, no
+                surprises. Every stage is designed to move you forward with
+                confidence.
               </p>
             </FadeUp>
 
-            <StaggerContainer className="space-y-0 divide-y divide-[var(--border)]" staggerDelay={0.12}>
+            <StaggerContainer
+              className="space-y-0 divide-y divide-[var(--border)]"
+              staggerDelay={0.12}
+            >
               {process.map((item, i) => (
                 <StaggerItem key={item.step}>
                   <motion.div
@@ -227,8 +277,12 @@ export default function AboutPage() {
                       {String(i + 1).padStart(2, "0")}
                     </span>
                     <div className="flex-1">
-                      <h3 className="text-base font-medium text-[var(--foreground)]">{item.step}</h3>
-                      <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">{item.desc}</p>
+                      <h3 className="text-base font-medium text-[var(--foreground)]">
+                        {item.step}
+                      </h3>
+                      <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
+                        {item.desc}
+                      </p>
                     </div>
                     <span className="mt-0.5 text-[var(--border)] transition-colors group-hover:text-[var(--foreground)]">
                       →
@@ -256,19 +310,20 @@ export default function AboutPage() {
               <h2 className="relative mt-5 text-3xl font-medium tracking-tight text-white sm:text-4xl lg:text-5xl">
                 Let's build something you'll never want to leave.
               </h2>
-              <p className="relative mt-6 mx-auto max-w-xl text-base leading-relaxed text-neutral-400">
-                Book a consult and we'll figure out together what your space needs — no pressure, no pitch. Just a conversation.
+              <p className="relative mx-auto mt-6 max-w-xl text-base leading-relaxed text-neutral-400">
+                Book a consult and we'll figure out together what your space
+                needs — no pressure, no pitch. Just a conversation.
               </p>
               <div className="relative mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
                 <Link
                   href="/#contact"
-                  className="rounded-full bg-white px-7 py-3.5 text-sm font-medium text-[var(--dark)] transition-all hover:bg-neutral-100 hover:scale-105"
+                  className="rounded-full bg-white px-7 py-3.5 text-sm font-medium text-[var(--dark)] transition-all hover:scale-105 hover:bg-neutral-100"
                 >
                   Book a Consult
                 </Link>
                 <Link
                   href="/projects"
-                  className="rounded-full border border-white/20 px-7 py-3.5 text-sm font-medium text-white transition-all hover:border-white/50 hover:scale-105"
+                  className="rounded-full border border-white/20 px-7 py-3.5 text-sm font-medium text-white transition-all hover:scale-105 hover:border-white/50"
                 >
                   View Our Projects
                 </Link>
@@ -280,5 +335,5 @@ export default function AboutPage() {
 
       <Footer />
     </main>
-  );
+  )
 }

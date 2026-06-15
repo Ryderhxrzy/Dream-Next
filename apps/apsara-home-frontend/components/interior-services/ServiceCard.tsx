@@ -1,23 +1,29 @@
-'use client';
+"use client"
 
-import { staggerItem } from "./animation";
-import { ServiceItem } from "./types";
-import { AnimatePresence, motion } from "framer-motion";
-import Image from "next/image";
+import { AnimatePresence, motion } from "framer-motion"
+import Image from "next/image"
+
+import { staggerItem } from "./animation"
+import { ServiceItem } from "./types"
 
 interface ServiceCardProps {
-    service: ServiceItem;
-    isActive: boolean;
-    onClick: () => void;
-    index: number;
+  service: ServiceItem
+  isActive: boolean
+  onClick: () => void
+  index: number
 }
 
-const ServiceCard = ({ service, isActive, onClick, index}: ServiceCardProps) => {
+const ServiceCard = ({
+  service,
+  isActive,
+  onClick,
+  index,
+}: ServiceCardProps) => {
   return (
-        <motion.div
+    <motion.div
       variants={staggerItem}
       onClick={onClick}
-      className="group relative cursor-pointer rounded-3xl overflow-hidden"
+      className="group relative cursor-pointer overflow-hidden rounded-3xl"
       style={{
         border: isActive
           ? `1px solid ${service.accentColor}60`
@@ -29,7 +35,10 @@ const ServiceCard = ({ service, isActive, onClick, index}: ServiceCardProps) => 
           ? `0 8px 32px ${service.accentColor}18`
           : "0 2px 12px rgba(79,70,229,0.04)",
       }}
-      whileHover={{ y: -6, transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] } }}
+      whileHover={{
+        y: -6,
+        transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] },
+      }}
       animate={{
         boxShadow: isActive
           ? `0 20px 60px ${service.accentColor}18, 0 0 0 1px ${service.accentColor}30`
@@ -39,7 +48,7 @@ const ServiceCard = ({ service, isActive, onClick, index}: ServiceCardProps) => 
     >
       {/* Hover shimmer */}
       <motion.div
-        className="absolute inset-0 opacity-0 group-hover:opacity-100 pointer-events-none"
+        className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100"
         style={{
           background: `linear-gradient(135deg, ${service.accentColor}06 0%, transparent 60%)`,
         }}
@@ -61,7 +70,7 @@ const ServiceCard = ({ service, isActive, onClick, index}: ServiceCardProps) => 
         <AnimatePresence>
           {isActive && (
             <motion.div
-              className="absolute top-3 right-3 w-2 h-2 rounded-full"
+              className="absolute top-3 right-3 h-2 w-2 rounded-full"
               style={{ background: service.accentColor }}
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -90,22 +99,22 @@ const ServiceCard = ({ service, isActive, onClick, index}: ServiceCardProps) => 
       <div className="p-6">
         {/* Index number */}
         <div
-          className="font-['Cormorant_Garamond'] text-[2.4rem] font-light leading-none mb-2 select-none"
+          className="mb-2 font-['Cormorant_Garamond'] text-[2.4rem] leading-none font-light select-none"
           style={{ color: `${service.accentColor}30` }}
         >
           {String(index + 1).padStart(2, "0")}
         </div>
 
-        <h3 className="font-['Cormorant_Garamond'] text-xl font-medium text-slate-800 mb-1 tracking-wide">
+        <h3 className="mb-1 font-['Cormorant_Garamond'] text-xl font-medium tracking-wide text-slate-800">
           {service.title}
         </h3>
         <p
-          className="text-[0.7rem] tracking-[0.12em] uppercase mb-4"
+          className="mb-4 text-[0.7rem] tracking-[0.12em] uppercase"
           style={{ color: service.accentColor }}
         >
           {service.tagline}
         </p>
-        <p className="text-[0.82rem] text-slate-500 leading-relaxed mb-5">
+        <p className="mb-5 text-[0.82rem] leading-relaxed text-slate-500">
           {service.description}
         </p>
 
@@ -113,7 +122,10 @@ const ServiceCard = ({ service, isActive, onClick, index}: ServiceCardProps) => 
         <div className="flex flex-col gap-2">
           {service.features.map((feature) => (
             <div key={feature} className="flex items-center gap-2.5">
-              <div className="w-1 h-1 rounded-full shrink-0" style={{ background: service.accentColor }} />
+              <div
+                className="h-1 w-1 shrink-0 rounded-full"
+                style={{ background: service.accentColor }}
+              />
               <span className="text-[0.75rem] text-slate-500">{feature}</span>
             </div>
           ))}

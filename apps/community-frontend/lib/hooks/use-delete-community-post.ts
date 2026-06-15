@@ -1,17 +1,17 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuthStore } from "@/store/auth.store"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 
-import { api } from "@/lib/api";
-import { useAuthStore } from "@/store/auth.store";
+import { api } from "@/lib/api"
 
 export function useDeleteCommunityPost() {
-  const queryClient = useQueryClient();
-  const token = useAuthStore((state) => state.token);
+  const queryClient = useQueryClient()
+  const token = useAuthStore((state) => state.token)
 
   return useMutation({
     mutationFn: (postId: string) =>
       api(`/posts/${postId}`, { method: "DELETE", token }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["community-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["community-posts"] })
     },
-  });
+  })
 }

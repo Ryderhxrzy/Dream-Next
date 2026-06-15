@@ -1,35 +1,47 @@
 "use client"
 
 import { useState } from "react"
+import { useCommunityUiStore } from "@/store/community-ui.store"
 import { formatDistanceToNowStrict } from "date-fns"
-import { Loader2, Crown } from "lucide-react"
+import { Crown, Loader2 } from "lucide-react"
+
+import { useEventRsvps, type EventRsvp } from "@/lib/hooks/use-event-rsvps"
+import { cn } from "@/lib/utils"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { cn } from "@/lib/utils"
-import { useEventRsvps, type EventRsvp } from "@/lib/hooks/use-event-rsvps"
-import { useCommunityUiStore } from "@/store/community-ui.store"
 
 type Tab = "GOING" | "INTERESTED"
 
-function RespondentRow({ rsvp, showTime }: { rsvp: EventRsvp; showTime: boolean }) {
+function RespondentRow({
+  rsvp,
+  showTime,
+}: {
+  rsvp: EventRsvp
+  showTime: boolean
+}) {
   return (
     <div className="flex items-center gap-3 px-1 py-2">
-      <Avatar className="w-9 h-9 shrink-0">
+      <Avatar className="h-9 w-9 shrink-0">
         <AvatarImage src={rsvp.avatarUrl ?? undefined} />
         <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
           {rsvp.name.slice(0, 2).toUpperCase()}
         </AvatarFallback>
       </Avatar>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-foreground truncate">{rsvp.name}</p>
+        <p className="text-foreground truncate text-sm font-medium">
+          {rsvp.name}
+        </p>
         {showTime && (
-          <p className="text-[11px] text-muted-foreground">
-            RSVP&apos;d {formatDistanceToNowStrict(new Date(rsvp.createdAt), { addSuffix: true })}
+          <p className="text-muted-foreground text-[11px]">
+            RSVP&apos;d{" "}
+            {formatDistanceToNowStrict(new Date(rsvp.createdAt), {
+              addSuffix: true,
+            })}
           </p>
         )}
       </div>
@@ -51,37 +63,40 @@ export function RespondentsModal() {
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && closeRespondents()}>
-      <DialogContent className="sm:max-w-md p-0 overflow-hidden">
+      <DialogContent className="overflow-hidden p-0 sm:max-w-md">
         <DialogHeader className="px-5 pt-5 pb-3">
-          <DialogTitle className="text-base font-semibold text-foreground">
+          <DialogTitle className="text-foreground text-base font-semibold">
             {respondentsEvent?.title ?? "Event"} · Respondents
           </DialogTitle>
         </DialogHeader>
 
         {/* Owner banner */}
         {isOwner && (
-          <div className="mx-5 mb-3 flex items-center gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2">
-            <Crown className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+          <div className="mx-5 mb-3 flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2">
+            <Crown className="h-3.5 w-3.5 shrink-0 text-amber-600" />
             <p className="text-xs text-amber-700 dark:text-amber-500">
-              You&apos;re hosting · {going.length} going, {interested.length} interested
+              You&apos;re hosting · {going.length} going, {interested.length}{" "}
+              interested
             </p>
           </div>
         )}
 
         {/* Tabs */}
-        <div className="flex items-center gap-1 px-5 border-b border-border">
+        <div className="border-border flex items-center gap-1 border-b px-5">
           {(["GOING", "INTERESTED"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={cn(
-                "px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
+                "-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors",
                 tab === t
                   ? "border-foreground text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground border-transparent"
               )}
             >
-              {t === "GOING" ? `Going (${going.length})` : `Interested (${interested.length})`}
+              {t === "GOING"
+                ? `Going (${going.length})`
+                : `Interested (${interested.length})`}
             </button>
           ))}
         </div>
@@ -90,10 +105,10 @@ export function RespondentsModal() {
         <div className="max-h-80 overflow-y-auto px-5 py-2">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
+              <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
             </div>
           ) : list.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">
+            <p className="text-muted-foreground py-8 text-center text-sm">
               No one {tab === "GOING" ? "going" : "interested"} yet.
             </p>
           ) : (

@@ -1,7 +1,7 @@
-import StorefrontDemo from '@/components/StorefrontDemo';
+import StorefrontDemo from "@/components/StorefrontDemo"
 
-export const metadata = { title: 'Partner Storefront Demo — Apsara Home' };
+export const metadata = { title: "Partner Storefront Demo — Apsara Home" }
 
 export default function StorefrontDemoPage() {
-  return <StorefrontDemo />;
+  return <StorefrontDemo />
 }

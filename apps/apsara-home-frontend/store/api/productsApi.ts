@@ -1,4 +1,4 @@
-import { baseApi } from './baseApi'
+import { baseApi } from "./baseApi"
 
 export interface Product {
   id: number
@@ -185,7 +185,7 @@ export interface BulkImportProductsRow {
 
 export interface BulkImportProductsPayload {
   rows: BulkImportProductsRow[]
-  mode?: 'create_only' | 'create_or_update'
+  mode?: "create_only" | "create_or_update"
 }
 
 export interface BulkImportProductsResponse {
@@ -198,7 +198,7 @@ export interface BulkImportProductsResponse {
   }
   results: Array<{
     row: number
-    status: 'created' | 'updated' | 'failed'
+    status: "created" | "updated" | "failed"
     product_id?: number | null
     name?: string | null
     sku?: string | null
@@ -242,7 +242,7 @@ export interface BulkPricePreviewResponse {
   }
   results: Array<{
     row: number
-    status: 'ready' | 'failed'
+    status: "ready" | "failed"
     product_id?: number | null
     sku?: string | null
     name?: string | null
@@ -269,7 +269,7 @@ export interface BulkUpdatePreviewResponse {
   }
   results: Array<{
     row: number
-    status: 'ready' | 'failed'
+    status: "ready" | "failed"
     product_id?: number | null
     sku?: string | null
     name?: string | null
@@ -288,7 +288,7 @@ export interface BulkPriceApplyResponse {
   }
   results: Array<{
     row: number
-    status: 'updated' | 'failed'
+    status: "updated" | "failed"
     product_id?: number | null
     sku?: string | null
     name?: string | null
@@ -305,7 +305,7 @@ export interface BulkUpdateApplyResponse {
   }
   results: Array<{
     row: number
-    status: 'updated' | 'failed'
+    status: "updated" | "failed"
     product_id?: number | null
     sku?: string | null
     name?: string | null
@@ -335,7 +335,7 @@ export interface ManualCheckoutApplyResponse {
   }
   results: Array<{
     product_id: number
-    status: 'updated' | 'failed'
+    status: "updated" | "failed"
     name?: string | null
     message: string
   }>
@@ -372,7 +372,7 @@ export interface ZqImportProductsResponse {
   }
   results: Array<{
     id: string
-    status: 'created' | 'failed'
+    status: "created" | "failed"
     product_id?: number | null
     name?: string | null
     message: string
@@ -395,7 +395,7 @@ export interface ZqCachedProduct {
   categoryName?: string | null
   localCategoryId?: number | null
   localCategoryName?: string | null
-  categoryMappingStatus?: 'mapped' | 'unmapped' | 'missing'
+  categoryMappingStatus?: "mapped" | "unmapped" | "missing"
   primaryImage?: string | null
   images?: string[]
   sourceType?: string | null
@@ -482,7 +482,7 @@ export interface ZqCategoryMappingItem {
   productCount: number
   localCategoryId?: number | null
   localCategoryName?: string | null
-  status: 'mapped' | 'unmapped'
+  status: "mapped" | "unmapped"
 }
 
 export interface ZqCategoryMappingLocalCategory {
@@ -575,7 +575,7 @@ export interface BulkUpdateZqPricingRow {
 export interface BulkUpdateZqPricingResultRow {
   row: number
   externalId: string | null
-  status: 'updated' | 'skipped' | 'error'
+  status: "updated" | "skipped" | "error"
   reason: string | null
 }
 
@@ -604,7 +604,7 @@ export interface ZqInventoryResponse {
   variant_count?: number
   checked_skus?: string[]
   partial_errors?: Record<string, string>
-  source?: 'order_inventory' | 'product_detail_fallback'
+  source?: "order_inventory" | "product_detail_fallback"
   raw?: Record<string, unknown>
 }
 
@@ -690,7 +690,7 @@ interface ProductActivityLogsQueryParams {
   page?: number
   perPage?: number
   search?: string
-  scope?: 'my' | 'all'
+  scope?: "my" | "all"
 }
 
 interface ZqCachedProductsQueryParams {
@@ -702,32 +702,43 @@ interface ZqCachedProductsQueryParams {
   status?: string
   importStatus?: string
   localCategoryId?: number
-  mappingStatus?: 'mapped' | 'unmapped' | 'missing'
+  mappingStatus?: "mapped" | "unmapped" | "missing"
 }
 
 const zqProductsApiBase = () => {
-  if (typeof window !== 'undefined' && window.location.pathname.startsWith('/supplier')) {
-    return '/api/supplier/products/zq'
+  if (
+    typeof window !== "undefined" &&
+    window.location.pathname.startsWith("/supplier")
+  ) {
+    return "/api/supplier/products/zq"
   }
 
-  return '/api/admin/products/zq'
+  return "/api/admin/products/zq"
 }
 
 const cleanParams = (params: Record<string, unknown>) =>
   Object.fromEntries(
-    Object.entries(params).filter(([, value]) => value !== undefined && value !== null && value !== ''),
+    Object.entries(params).filter(
+      ([, value]) => value !== undefined && value !== null && value !== ""
+    )
   )
 
 const toStringArray = (value: unknown): string[] => {
   if (Array.isArray(value)) {
-    return value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+    return value.filter(
+      (item): item is string =>
+        typeof item === "string" && item.trim().length > 0
+    )
   }
 
-  if (typeof value === 'string' && value.trim().length > 0) {
+  if (typeof value === "string" && value.trim().length > 0) {
     try {
       const parsed = JSON.parse(value) as unknown
       if (Array.isArray(parsed)) {
-        return parsed.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+        return parsed.filter(
+          (item): item is string =>
+            typeof item === "string" && item.trim().length > 0
+        )
       }
     } catch {
       // keep fallback below
@@ -740,44 +751,54 @@ const toStringArray = (value: unknown): string[] => {
 
 const getProductVariantKey = (variant: ProductVariant) => {
   return [
-    variant.sku?.trim().toLowerCase() ?? '',
-    variant.name?.trim().toLowerCase() ?? '',
-    variant.color?.trim().toLowerCase() ?? '',
-    variant.colorHex?.trim().toLowerCase() ?? '',
-    variant.size?.trim().toLowerCase() ?? '',
-    variant.style?.trim().toLowerCase() ?? '',
-    String(variant.width ?? ''),
-    String(variant.dimension ?? ''),
-    String(variant.height ?? ''),
-    String(variant.priceSrp ?? ''),
-    String(variant.priceDp ?? ''),
-    String(variant.priceMember ?? ''),
-    String(variant.prodpv ?? ''),
-    String(variant.qty ?? ''),
-    String(variant.status ?? ''),
-    variant.images?.join('|') ?? '',
-  ].join('|')
+    variant.sku?.trim().toLowerCase() ?? "",
+    variant.name?.trim().toLowerCase() ?? "",
+    variant.color?.trim().toLowerCase() ?? "",
+    variant.colorHex?.trim().toLowerCase() ?? "",
+    variant.size?.trim().toLowerCase() ?? "",
+    variant.style?.trim().toLowerCase() ?? "",
+    String(variant.width ?? ""),
+    String(variant.dimension ?? ""),
+    String(variant.height ?? ""),
+    String(variant.priceSrp ?? ""),
+    String(variant.priceDp ?? ""),
+    String(variant.priceMember ?? ""),
+    String(variant.prodpv ?? ""),
+    String(variant.qty ?? ""),
+    String(variant.status ?? ""),
+    variant.images?.join("|") ?? "",
+  ].join("|")
 }
 
 const dedupeProductVariants = (variants: ProductVariant[]) =>
   Array.from(
-    variants.reduce((map, variant) => {
-      const key = getProductVariantKey(variant)
-      if (!map.has(key)) {
-        map.set(key, variant)
-      }
-      return map
-    }, new Map<string, ProductVariant>()).values(),
+    variants
+      .reduce((map, variant) => {
+        const key = getProductVariantKey(variant)
+        if (!map.has(key)) {
+          map.set(key, variant)
+        }
+        return map
+      }, new Map<string, ProductVariant>())
+      .values()
   )
 
-const getEffectiveProductQty = (variants: ProductVariant[], fallbackQty: number) => {
-  const activeVariants = variants.filter((variant) => Number(variant.status ?? 1) === 1)
+const getEffectiveProductQty = (
+  variants: ProductVariant[],
+  fallbackQty: number
+) => {
+  const activeVariants = variants.filter(
+    (variant) => Number(variant.status ?? 1) === 1
+  )
 
   if (activeVariants.length === 0) {
     return fallbackQty
   }
 
-  return activeVariants.reduce((total, variant) => total + Number(variant.qty ?? 0), 0)
+  return activeVariants.reduce(
+    (total, variant) => total + Number(variant.qty ?? 0),
+    0
+  )
 }
 
 const dedupeImageUrls = (urls: string[]) => {
@@ -794,15 +815,21 @@ const dedupeImageUrls = (urls: string[]) => {
     })
 }
 
-export const normalizeProduct = (input: Product & Record<string, unknown>): Product => {
-  const parsedImages = dedupeImageUrls(toStringArray(input.images ?? input.pd_images))
-  const primaryImage = typeof input.image === 'string' && input.image.trim().length > 0
-    ? input.image
-    : (typeof input.pd_image === 'string' && input.pd_image.trim().length > 0 ? input.pd_image : null)
+export const normalizeProduct = (
+  input: Product & Record<string, unknown>
+): Product => {
+  const parsedImages = dedupeImageUrls(
+    toStringArray(input.images ?? input.pd_images)
+  )
+  const primaryImage =
+    typeof input.image === "string" && input.image.trim().length > 0
+      ? input.image
+      : typeof input.pd_image === "string" && input.pd_image.trim().length > 0
+        ? input.pd_image
+        : null
 
-  const images = parsedImages.length > 0
-    ? parsedImages
-    : (primaryImage ? [primaryImage] : [])
+  const images =
+    parsedImages.length > 0 ? parsedImages : primaryImage ? [primaryImage] : []
 
   const rawVariants = Array.isArray(input.variants)
     ? input.variants
@@ -811,175 +838,388 @@ export const normalizeProduct = (input: Product & Record<string, unknown>): Prod
       : []
 
   const parsedVariants = rawVariants.map((variant) => {
-        const row = variant as ProductVariant & Record<string, unknown>
-        return {
-          id: typeof row.id === 'number' ? row.id : undefined,
-          sku: typeof row.sku === 'string' ? row.sku : (typeof row.pv_sku === 'string' ? row.pv_sku : undefined),
-          name: typeof row.name === 'string' ? row.name : (typeof row.pv_name === 'string' ? row.pv_name : undefined),
-          color: typeof row.color === 'string' ? row.color : (typeof row.pv_color === 'string' ? row.pv_color : undefined),
-          colorHex: typeof row.colorHex === 'string' ? row.colorHex : (typeof row.pv_color_hex === 'string' ? row.pv_color_hex : undefined),
-          size: typeof row.size === 'string' ? row.size : (typeof row.pv_size === 'string' ? row.pv_size : undefined),
-          style: typeof row.style === 'string' ? row.style : (typeof row.pv_style === 'string' ? row.pv_style : undefined),
-          width: typeof row.width === 'number' ? row.width : (typeof row.width === 'string' ? Number(row.width) : (typeof row.pv_width === 'number' ? row.pv_width : (typeof row.pv_width === 'string' ? Number(row.pv_width) : undefined))),
-          dimension: typeof row.dimension === 'number' ? row.dimension : (typeof row.dimension === 'string' ? Number(row.dimension) : (typeof row.pv_dimension === 'number' ? row.pv_dimension : (typeof row.pv_dimension === 'string' ? Number(row.pv_dimension) : undefined))),
-          height: typeof row.height === 'number' ? row.height : (typeof row.height === 'string' ? Number(row.height) : (typeof row.pv_height === 'number' ? row.pv_height : (typeof row.pv_height === 'string' ? Number(row.pv_height) : undefined))),
-          priceSrp: typeof row.priceSrp === 'number' ? row.priceSrp : (typeof row.priceSrp === 'string' ? Number(row.priceSrp) : (typeof row.pv_price_srp === 'number' ? row.pv_price_srp : (typeof row.pv_price_srp === 'string' ? Number(row.pv_price_srp) : undefined))),
-          priceDp: typeof row.priceDp === 'number' ? row.priceDp : (typeof row.priceDp === 'string' ? Number(row.priceDp) : (typeof row.pv_price_dp === 'number' ? row.pv_price_dp : (typeof row.pv_price_dp === 'string' ? Number(row.pv_price_dp) : undefined))),
-          priceMember: typeof row.priceMember === 'number' ? row.priceMember : (typeof row.priceMember === 'string' ? Number(row.priceMember) : (typeof row.pv_price_member === 'number' ? row.pv_price_member : (typeof row.pv_price_member === 'string' ? Number(row.pv_price_member) : undefined))),
-          prodpv: typeof row.prodpv === 'number' ? row.prodpv : (typeof row.prodpv === 'string' ? Number(row.prodpv) : (typeof row.pv_prodpv === 'number' ? row.pv_prodpv : (typeof row.pv_prodpv === 'string' ? Number(row.pv_prodpv) : undefined))),
-          qty: typeof row.qty === 'number' ? row.qty : (typeof row.qty === 'string' ? Number(row.qty) : (typeof row.pv_qty === 'number' ? row.pv_qty : (typeof row.pv_qty === 'string' ? Number(row.pv_qty) : undefined))),
-          status: typeof row.status === 'number' ? row.status : (typeof row.status === 'string' ? Number(row.status) : (typeof row.pv_status === 'number' ? row.pv_status : (typeof row.pv_status === 'string' ? Number(row.pv_status) : undefined))),
-          images: dedupeImageUrls(toStringArray(row.images ?? row.pv_images)),
-        } satisfies ProductVariant
-      })
+    const row = variant as ProductVariant & Record<string, unknown>
+    return {
+      id: typeof row.id === "number" ? row.id : undefined,
+      sku:
+        typeof row.sku === "string"
+          ? row.sku
+          : typeof row.pv_sku === "string"
+            ? row.pv_sku
+            : undefined,
+      name:
+        typeof row.name === "string"
+          ? row.name
+          : typeof row.pv_name === "string"
+            ? row.pv_name
+            : undefined,
+      color:
+        typeof row.color === "string"
+          ? row.color
+          : typeof row.pv_color === "string"
+            ? row.pv_color
+            : undefined,
+      colorHex:
+        typeof row.colorHex === "string"
+          ? row.colorHex
+          : typeof row.pv_color_hex === "string"
+            ? row.pv_color_hex
+            : undefined,
+      size:
+        typeof row.size === "string"
+          ? row.size
+          : typeof row.pv_size === "string"
+            ? row.pv_size
+            : undefined,
+      style:
+        typeof row.style === "string"
+          ? row.style
+          : typeof row.pv_style === "string"
+            ? row.pv_style
+            : undefined,
+      width:
+        typeof row.width === "number"
+          ? row.width
+          : typeof row.width === "string"
+            ? Number(row.width)
+            : typeof row.pv_width === "number"
+              ? row.pv_width
+              : typeof row.pv_width === "string"
+                ? Number(row.pv_width)
+                : undefined,
+      dimension:
+        typeof row.dimension === "number"
+          ? row.dimension
+          : typeof row.dimension === "string"
+            ? Number(row.dimension)
+            : typeof row.pv_dimension === "number"
+              ? row.pv_dimension
+              : typeof row.pv_dimension === "string"
+                ? Number(row.pv_dimension)
+                : undefined,
+      height:
+        typeof row.height === "number"
+          ? row.height
+          : typeof row.height === "string"
+            ? Number(row.height)
+            : typeof row.pv_height === "number"
+              ? row.pv_height
+              : typeof row.pv_height === "string"
+                ? Number(row.pv_height)
+                : undefined,
+      priceSrp:
+        typeof row.priceSrp === "number"
+          ? row.priceSrp
+          : typeof row.priceSrp === "string"
+            ? Number(row.priceSrp)
+            : typeof row.pv_price_srp === "number"
+              ? row.pv_price_srp
+              : typeof row.pv_price_srp === "string"
+                ? Number(row.pv_price_srp)
+                : undefined,
+      priceDp:
+        typeof row.priceDp === "number"
+          ? row.priceDp
+          : typeof row.priceDp === "string"
+            ? Number(row.priceDp)
+            : typeof row.pv_price_dp === "number"
+              ? row.pv_price_dp
+              : typeof row.pv_price_dp === "string"
+                ? Number(row.pv_price_dp)
+                : undefined,
+      priceMember:
+        typeof row.priceMember === "number"
+          ? row.priceMember
+          : typeof row.priceMember === "string"
+            ? Number(row.priceMember)
+            : typeof row.pv_price_member === "number"
+              ? row.pv_price_member
+              : typeof row.pv_price_member === "string"
+                ? Number(row.pv_price_member)
+                : undefined,
+      prodpv:
+        typeof row.prodpv === "number"
+          ? row.prodpv
+          : typeof row.prodpv === "string"
+            ? Number(row.prodpv)
+            : typeof row.pv_prodpv === "number"
+              ? row.pv_prodpv
+              : typeof row.pv_prodpv === "string"
+                ? Number(row.pv_prodpv)
+                : undefined,
+      qty:
+        typeof row.qty === "number"
+          ? row.qty
+          : typeof row.qty === "string"
+            ? Number(row.qty)
+            : typeof row.pv_qty === "number"
+              ? row.pv_qty
+              : typeof row.pv_qty === "string"
+                ? Number(row.pv_qty)
+                : undefined,
+      status:
+        typeof row.status === "number"
+          ? row.status
+          : typeof row.status === "string"
+            ? Number(row.status)
+            : typeof row.pv_status === "number"
+              ? row.pv_status
+              : typeof row.pv_status === "string"
+                ? Number(row.pv_status)
+                : undefined,
+      images: dedupeImageUrls(toStringArray(row.images ?? row.pv_images)),
+    } satisfies ProductVariant
+  })
   const uniqueVariants = dedupeProductVariants(parsedVariants)
   const fallbackQty =
-    typeof input.qty === 'number'
+    typeof input.qty === "number"
       ? input.qty
-      : (typeof input.pd_qty === 'number' ? input.pd_qty : (typeof input.pd_qty === 'string' ? Number(input.pd_qty) : 0))
+      : typeof input.pd_qty === "number"
+        ? input.pd_qty
+        : typeof input.pd_qty === "string"
+          ? Number(input.pd_qty)
+          : 0
   const effectiveQty = getEffectiveProductQty(uniqueVariants, fallbackQty)
 
   return {
     ...input,
-    id: typeof input.id === 'number' ? input.id : Number(input.id ?? 0),
+    id: typeof input.id === "number" ? input.id : Number(input.id ?? 0),
     supplierId:
-      typeof input.supplierId === 'number'
+      typeof input.supplierId === "number"
         ? input.supplierId
-        : (typeof input.pd_supplier === 'number' ? input.pd_supplier : (typeof input.pd_supplier === 'string' ? Number(input.pd_supplier) : 0)),
-    supplierName: typeof input.supplierName === 'string' ? input.supplierName : null,
-    name: typeof input.name === 'string' ? input.name : (typeof input.pd_name === 'string' ? input.pd_name : ''),
-    specifications: typeof input.specifications === 'string' ? input.specifications : null,
+        : typeof input.pd_supplier === "number"
+          ? input.pd_supplier
+          : typeof input.pd_supplier === "string"
+            ? Number(input.pd_supplier)
+            : 0,
+    supplierName:
+      typeof input.supplierName === "string" ? input.supplierName : null,
+    name:
+      typeof input.name === "string"
+        ? input.name
+        : typeof input.pd_name === "string"
+          ? input.pd_name
+          : "",
+    specifications:
+      typeof input.specifications === "string" ? input.specifications : null,
     catid:
-      typeof input.catid === 'number'
+      typeof input.catid === "number"
         ? input.catid
-        : (typeof input.pd_catid === 'number' ? input.pd_catid : (typeof input.pd_catid === 'string' ? Number(input.pd_catid) : 0)),
+        : typeof input.pd_catid === "number"
+          ? input.pd_catid
+          : typeof input.pd_catid === "string"
+            ? Number(input.pd_catid)
+            : 0,
     catsubid:
-      typeof input.catsubid === 'number'
+      typeof input.catsubid === "number"
         ? input.catsubid
-        : (typeof input.pd_catsubid === 'number' ? input.pd_catsubid : (typeof input.pd_catsubid === 'string' ? Number(input.pd_catsubid) : 0)),
+        : typeof input.pd_catsubid === "number"
+          ? input.pd_catsubid
+          : typeof input.pd_catsubid === "string"
+            ? Number(input.pd_catsubid)
+            : 0,
     priceSrp:
-      typeof input.priceSrp === 'number'
+      typeof input.priceSrp === "number"
         ? input.priceSrp
-        : (typeof input.pd_price_srp === 'number' ? input.pd_price_srp : (typeof input.pd_price_srp === 'string' ? Number(input.pd_price_srp) : 0)),
+        : typeof input.pd_price_srp === "number"
+          ? input.pd_price_srp
+          : typeof input.pd_price_srp === "string"
+            ? Number(input.pd_price_srp)
+            : 0,
     priceDp:
-      typeof input.priceDp === 'number'
+      typeof input.priceDp === "number"
         ? input.priceDp
-        : (typeof input.pd_price_dp === 'number' ? input.pd_price_dp : (typeof input.pd_price_dp === 'string' ? Number(input.pd_price_dp) : 0)),
+        : typeof input.pd_price_dp === "number"
+          ? input.pd_price_dp
+          : typeof input.pd_price_dp === "string"
+            ? Number(input.pd_price_dp)
+            : 0,
     priceMember:
-      typeof input.priceMember === 'number'
+      typeof input.priceMember === "number"
         ? input.priceMember
-        : (typeof input.pd_price_member === 'number' ? input.pd_price_member : (typeof input.pd_price_member === 'string' ? Number(input.pd_price_member) : undefined)),
+        : typeof input.pd_price_member === "number"
+          ? input.pd_price_member
+          : typeof input.pd_price_member === "string"
+            ? Number(input.pd_price_member)
+            : undefined,
     prodpv:
-      typeof input.prodpv === 'number'
+      typeof input.prodpv === "number"
         ? input.prodpv
-        : (typeof input.pd_prodpv === 'number' ? input.pd_prodpv : (typeof input.pd_prodpv === 'string' ? Number(input.pd_prodpv) : 0)),
+        : typeof input.pd_prodpv === "number"
+          ? input.pd_prodpv
+          : typeof input.pd_prodpv === "string"
+            ? Number(input.pd_prodpv)
+            : 0,
     psweight:
-      typeof input.psweight === 'number'
+      typeof input.psweight === "number"
         ? input.psweight
-        : (typeof input.pd_psweight === 'number' ? input.pd_psweight : (typeof input.pd_psweight === 'string' ? Number(input.pd_psweight) : undefined)),
+        : typeof input.pd_psweight === "number"
+          ? input.pd_psweight
+          : typeof input.pd_psweight === "string"
+            ? Number(input.pd_psweight)
+            : undefined,
     pslenght:
-      typeof input.pslenght === 'number'
+      typeof input.pslenght === "number"
         ? input.pslenght
-        : (typeof input.pd_pslenght === 'number' ? input.pd_pslenght : (typeof input.pd_pslenght === 'string' ? Number(input.pd_pslenght) : undefined)),
+        : typeof input.pd_pslenght === "number"
+          ? input.pd_pslenght
+          : typeof input.pd_pslenght === "string"
+            ? Number(input.pd_pslenght)
+            : undefined,
     psheight:
-      typeof input.psheight === 'number'
+      typeof input.psheight === "number"
         ? input.psheight
-        : (typeof input.pd_psheight === 'number' ? input.pd_psheight : (typeof input.pd_psheight === 'string' ? Number(input.pd_psheight) : undefined)),
+        : typeof input.pd_psheight === "number"
+          ? input.pd_psheight
+          : typeof input.pd_psheight === "string"
+            ? Number(input.pd_psheight)
+            : undefined,
     roomType:
-      typeof input.roomType === 'number'
+      typeof input.roomType === "number"
         ? input.roomType
-        : (typeof input.pd_room_type === 'number' ? input.pd_room_type : (typeof input.pd_room_type === 'string' ? Number(input.pd_room_type) : undefined)),
+        : typeof input.pd_room_type === "number"
+          ? input.pd_room_type
+          : typeof input.pd_room_type === "string"
+            ? Number(input.pd_room_type)
+            : undefined,
     brandType:
-      typeof input.brandType === 'number'
+      typeof input.brandType === "number"
         ? input.brandType
-        : (typeof input.pd_brand_type === 'number' ? input.pd_brand_type : (typeof input.pd_brand_type === 'string' ? Number(input.pd_brand_type) : undefined)),
+        : typeof input.pd_brand_type === "number"
+          ? input.pd_brand_type
+          : typeof input.pd_brand_type === "string"
+            ? Number(input.pd_brand_type)
+            : undefined,
     brand:
-      typeof input.brand === 'string'
+      typeof input.brand === "string"
         ? input.brand
-        : (typeof input.brand_name === 'string'
+        : typeof input.brand_name === "string"
           ? input.brand_name
-          : (typeof (input as { brand?: { pb_name?: string; name?: string } }).brand === 'object'
-            ? ((input as { brand?: { pb_name?: string; name?: string } }).brand?.pb_name
-              ?? (input as { brand?: { pb_name?: string; name?: string } }).brand?.name
-              ?? null)
-            : null)),
-    qty:
-      effectiveQty,
+          : typeof (input as { brand?: { pb_name?: string; name?: string } })
+                .brand === "object"
+            ? ((input as { brand?: { pb_name?: string; name?: string } }).brand
+                ?.pb_name ??
+              (input as { brand?: { pb_name?: string; name?: string } }).brand
+                ?.name ??
+              null)
+            : null,
+    qty: effectiveQty,
     weight:
-      typeof input.weight === 'number'
+      typeof input.weight === "number"
         ? input.weight
-        : (typeof input.pd_weight === 'number' ? input.pd_weight : (typeof input.pd_weight === 'string' ? Number(input.pd_weight) : 0)),
+        : typeof input.pd_weight === "number"
+          ? input.pd_weight
+          : typeof input.pd_weight === "string"
+            ? Number(input.pd_weight)
+            : 0,
     type:
-      typeof input.type === 'number'
+      typeof input.type === "number"
         ? input.type
-        : (typeof input.pd_type === 'number' ? input.pd_type : (typeof input.pd_type === 'string' ? Number(input.pd_type) : 0)),
+        : typeof input.pd_type === "number"
+          ? input.pd_type
+          : typeof input.pd_type === "string"
+            ? Number(input.pd_type)
+            : 0,
     musthave:
-      typeof input.musthave === 'boolean'
+      typeof input.musthave === "boolean"
         ? input.musthave
         : Boolean(input.pd_musthave),
     bestseller:
-      typeof input.bestseller === 'boolean'
+      typeof input.bestseller === "boolean"
         ? input.bestseller
         : Boolean(input.pd_bestseller),
     salespromo:
-      typeof input.salespromo === 'boolean'
+      typeof input.salespromo === "boolean"
         ? input.salespromo
         : Boolean(input.pd_salespromo),
     manualCheckoutEnabled:
-      typeof input.manualCheckoutEnabled === 'boolean'
+      typeof input.manualCheckoutEnabled === "boolean"
         ? input.manualCheckoutEnabled
         : Boolean(input.pd_manual_checkout_enabled),
     status:
-      typeof input.status === 'number'
+      typeof input.status === "number"
         ? input.status
-        : (typeof input.pd_status === 'number' ? input.pd_status : (typeof input.pd_status === 'string' ? Number(input.pd_status) : 0)),
+        : typeof input.pd_status === "number"
+          ? input.pd_status
+          : typeof input.pd_status === "string"
+            ? Number(input.pd_status)
+            : 0,
     sku:
-      typeof input.sku === 'string'
+      typeof input.sku === "string"
         ? input.sku
-        : (typeof input.pd_parent_sku === 'string' ? input.pd_parent_sku : ''),
-    uploaderName: typeof input.uploaderName === 'string' ? input.uploaderName : null,
-    uploaderEmail: typeof input.uploaderEmail === 'string' ? input.uploaderEmail : null,
-    uploaderRole: typeof input.uploaderRole === 'string' ? input.uploaderRole : null,
+        : typeof input.pd_parent_sku === "string"
+          ? input.pd_parent_sku
+          : "",
+    uploaderName:
+      typeof input.uploaderName === "string" ? input.uploaderName : null,
+    uploaderEmail:
+      typeof input.uploaderEmail === "string" ? input.uploaderEmail : null,
+    uploaderRole:
+      typeof input.uploaderRole === "string" ? input.uploaderRole : null,
     image: images[0] ?? primaryImage ?? null,
     images,
     variants: uniqueVariants,
     avgRating:
-      typeof input.avgRating === 'number'
+      typeof input.avgRating === "number"
         ? input.avgRating
-        : (typeof input.avg_rating === 'number'
+        : typeof input.avg_rating === "number"
           ? input.avg_rating
-          : (typeof input.avg_rating === 'string'
+          : typeof input.avg_rating === "string"
             ? Number(input.avg_rating)
-            : (typeof input.rating === 'number'
+            : typeof input.rating === "number"
               ? input.rating
-              : (typeof input.rating === 'string' ? Number(input.rating) : undefined)))),
+              : typeof input.rating === "string"
+                ? Number(input.rating)
+                : undefined,
     material:
-      typeof input.material === 'string'
+      typeof input.material === "string"
         ? input.material
-        : (typeof (input as Record<string, unknown>).pd_material === 'string' ? (input as Record<string, unknown>).pd_material as string : null),
+        : typeof (input as Record<string, unknown>).pd_material === "string"
+          ? ((input as Record<string, unknown>).pd_material as string)
+          : null,
     warranty:
-      typeof input.warranty === 'string'
+      typeof input.warranty === "string"
         ? input.warranty
-        : (typeof (input as Record<string, unknown>).pd_warranty === 'string' ? (input as Record<string, unknown>).pd_warranty as string : null),
+        : typeof (input as Record<string, unknown>).pd_warranty === "string"
+          ? ((input as Record<string, unknown>).pd_warranty as string)
+          : null,
     description:
-      typeof input.description === 'string'
+      typeof input.description === "string"
         ? input.description
-        : (typeof (input as Record<string, unknown>).pd_description === 'string' ? (input as Record<string, unknown>).pd_description as string : null),
-    createdAt: typeof input.createdAt === 'string' ? input.createdAt : (typeof (input as Record<string, unknown>).created_at === 'string' ? (input as Record<string, unknown>).created_at as string : null),
-    updatedAt: typeof input.updatedAt === 'string' ? input.updatedAt : (typeof (input as Record<string, unknown>).updated_at === 'string' ? (input as Record<string, unknown>).updated_at as string : null),
+        : typeof (input as Record<string, unknown>).pd_description === "string"
+          ? ((input as Record<string, unknown>).pd_description as string)
+          : null,
+    createdAt:
+      typeof input.createdAt === "string"
+        ? input.createdAt
+        : typeof (input as Record<string, unknown>).created_at === "string"
+          ? ((input as Record<string, unknown>).created_at as string)
+          : null,
+    updatedAt:
+      typeof input.updatedAt === "string"
+        ? input.updatedAt
+        : typeof (input as Record<string, unknown>).updated_at === "string"
+          ? ((input as Record<string, unknown>).updated_at as string)
+          : null,
   }
 }
 
-export const normalizeProductsResponse = (response: ProductsResponse | Record<string, unknown>): ProductsResponse => {
+export const normalizeProductsResponse = (
+  response: ProductsResponse | Record<string, unknown>
+): ProductsResponse => {
   const rawProducts = Array.isArray((response as ProductsResponse).products)
     ? (response as ProductsResponse).products
     : []
-  const normalizedProducts = rawProducts.map((product) => normalizeProduct(product as Product & Record<string, unknown>))
+  const normalizedProducts = rawProducts.map((product) =>
+    normalizeProduct(product as Product & Record<string, unknown>)
+  )
   const uniqueProducts = Array.from(
-    normalizedProducts.reduce((map, product) => {
-      map.set(product.id, product)
-      return map
-    }, new Map<number, Product>()).values(),
+    normalizedProducts
+      .reduce((map, product) => {
+        map.set(product.id, product)
+        return map
+      }, new Map<number, Product>())
+      .values()
   )
 
   return {
@@ -991,44 +1231,54 @@ export const normalizeProductsResponse = (response: ProductsResponse | Record<st
 export const productsApi = baseApi.injectEndpoints({
   overrideExisting: true,
   endpoints: (builder) => ({
-    getPublicProducts: builder.query<ProductsResponse, ProductsQueryParams | void>({
+    getPublicProducts: builder.query<
+      ProductsResponse,
+      ProductsQueryParams | void
+    >({
       query: (params) => ({
-        url: '/api/products',
-        method: 'GET',
-        cache: 'no-store',
-          params: cleanParams({
-            page: params?.page ?? 1,
-            per_page: params?.perPage ?? 25,
-            q: params?.search,
-            search: params?.search,
-            status: params?.status,
-            cat_id: params?.catId,
-            room_type: params?.roomType,
-            brand_type: params?.brandType,
-            supplier_id: params?.supplierId,
-            include_all: params?.includeAll ? 1 : undefined,
-          }),
+        url: "/api/products",
+        method: "GET",
+        cache: "no-store",
+        params: cleanParams({
+          page: params?.page ?? 1,
+          per_page: params?.perPage ?? 25,
+          q: params?.search,
+          search: params?.search,
+          status: params?.status,
+          cat_id: params?.catId,
+          room_type: params?.roomType,
+          brand_type: params?.brandType,
+          supplier_id: params?.supplierId,
+          include_all: params?.includeAll ? 1 : undefined,
         }),
-      transformResponse: (response: ProductsResponse) => normalizeProductsResponse(response),
-      providesTags: ['Products'],
+      }),
+      transformResponse: (response: ProductsResponse) =>
+        normalizeProductsResponse(response),
+      providesTags: ["Products"],
     }),
     getPublicProduct: builder.query<Product, number>({
       query: (id) => ({
         url: `/api/products/${id}`,
-        method: 'GET',
-        cache: 'no-store',
+        method: "GET",
+        cache: "no-store",
       }),
       transformResponse: (response: PublicProductResponse | Product) => {
-        const rawProduct = 'product' in response ? response.product : response
+        const rawProduct = "product" in response ? response.product : response
         return normalizeProduct(rawProduct as Product & Record<string, unknown>)
       },
-      providesTags: ['Products'],
+      providesTags: ["Products"],
     }),
-    getPublicZqProducts: builder.query<ZqCachedProductsResponse, Pick<ZqCachedProductsQueryParams, 'page' | 'perPage' | 'search' | 'brandType' | 'localCategoryId'> | void>({
+    getPublicZqProducts: builder.query<
+      ZqCachedProductsResponse,
+      Pick<
+        ZqCachedProductsQueryParams,
+        "page" | "perPage" | "search" | "brandType" | "localCategoryId"
+      > | void
+    >({
       query: (params) => ({
-        url: '/api/products/zq/cached',
-        method: 'GET',
-        cache: 'no-store',
+        url: "/api/products/zq/cached",
+        method: "GET",
+        cache: "no-store",
         params: cleanParams({
           page: params?.page ?? 1,
           per_page: params?.perPage ?? 20,
@@ -1037,35 +1287,42 @@ export const productsApi = baseApi.injectEndpoints({
           local_category_id: params?.localCategoryId,
         }),
       }),
-      providesTags: ['Products'],
+      providesTags: ["Products"],
     }),
-    getPublicZqProduct: builder.query<ZqPublicProductResponse['product'], number>({
+    getPublicZqProduct: builder.query<
+      ZqPublicProductResponse["product"],
+      number
+    >({
       query: (id) => ({
         url: `/api/products/zq/cached/${id}`,
-        method: 'GET',
-        cache: 'no-store',
+        method: "GET",
+        cache: "no-store",
       }),
-      transformResponse: (response: ZqPublicProductResponse) => response.product,
-      providesTags: ['Products'],
+      transformResponse: (response: ZqPublicProductResponse) =>
+        response.product,
+      providesTags: ["Products"],
     }),
     getProductReviews: builder.query<ProductReviewsResponse, number>({
       query: (id) => ({
         url: `/api/products/${id}/reviews`,
-        method: 'GET',
+        method: "GET",
       }),
-      providesTags: ['Products'],
+      providesTags: ["Products"],
     }),
-    deleteProductReview: builder.mutation<{ message: string; deleted_id: number; product_id: number }, number>({
+    deleteProductReview: builder.mutation<
+      { message: string; deleted_id: number; product_id: number },
+      number
+    >({
       query: (id) => ({
         url: `/api/admin/products/reviews/${id}`,
-        method: 'DELETE',
+        method: "DELETE",
       }),
-      invalidatesTags: ['Products'],
+      invalidatesTags: ["Products"],
     }),
     getProductBrand: builder.query<ProductBrandInfo, number>({
       query: (id) => ({
         url: `/api/products/${id}/brand`,
-        method: 'GET',
+        method: "GET",
       }),
       transformResponse: (response: {
         brand?: Record<string, unknown>
@@ -1074,22 +1331,28 @@ export const productsApi = baseApi.injectEndpoints({
         total_reviews?: number
         total_products?: number
       }) => {
-        const brand = response.brand || {};
-        const supplierUser = response.supplier_user || {};
+        const brand = response.brand || {}
+        const supplierUser = response.supplier_user || {}
         return {
           ...brand,
-          joinedDate: typeof supplierUser.joined_date === 'string' ? supplierUser.joined_date : undefined,
+          joinedDate:
+            typeof supplierUser.joined_date === "string"
+              ? supplierUser.joined_date
+              : undefined,
           overallRating: response.overall_rating,
           totalReviews: response.total_reviews,
           totalProducts: response.total_products,
-        } as ProductBrandInfo;
+        } as ProductBrandInfo
       },
-      providesTags: ['Products'],
+      providesTags: ["Products"],
     }),
-    heartbeatProductViewer: builder.mutation<ProductViewerHeartbeatResponse, { productId: number; viewerId?: string }>({
+    heartbeatProductViewer: builder.mutation<
+      ProductViewerHeartbeatResponse,
+      { productId: number; viewerId?: string }
+    >({
       query: ({ productId, viewerId }) => ({
         url: `/api/products/${productId}/viewers/heartbeat`,
-        method: 'POST',
+        method: "POST",
         body: cleanParams({
           viewer_id: viewerId,
         }),
@@ -1097,9 +1360,9 @@ export const productsApi = baseApi.injectEndpoints({
     }),
     getProducts: builder.query<ProductsResponse, ProductsQueryParams | void>({
       query: (params) => ({
-        url: '/api/admin/products',
-        method: 'GET',
-        cache: 'no-store',
+        url: "/api/admin/products",
+        method: "GET",
+        cache: "no-store",
         params: cleanParams({
           page: params?.page ?? 1,
           per_page: params?.perPage ?? 25,
@@ -1113,89 +1376,120 @@ export const productsApi = baseApi.injectEndpoints({
           sort: params?.sort,
         }),
       }),
-      transformResponse: (response: ProductsResponse) => normalizeProductsResponse(response),
-      providesTags: ['Products'],
+      transformResponse: (response: ProductsResponse) =>
+        normalizeProductsResponse(response),
+      providesTags: ["Products"],
     }),
-    getProductActivityLogs: builder.query<ProductActivityLogsResponse, ProductActivityLogsQueryParams | void>({
+    getProductActivityLogs: builder.query<
+      ProductActivityLogsResponse,
+      ProductActivityLogsQueryParams | void
+    >({
       query: (params) => ({
-        url: '/api/admin/products/activity-logs',
-        method: 'GET',
-        cache: 'no-store',
+        url: "/api/admin/products/activity-logs",
+        method: "GET",
+        cache: "no-store",
         params: {
           page: params?.page ?? 1,
           per_page: params?.perPage ?? 20,
           search: params?.search,
-          scope: params?.scope ?? 'my',
+          scope: params?.scope ?? "my",
         },
       }),
-      providesTags: ['Products'],
+      providesTags: ["Products"],
     }),
-    createProduct: builder.mutation<{ message: string; product: Partial<Product> }, CreateProductPayload>({
+    createProduct: builder.mutation<
+      { message: string; product: Partial<Product> },
+      CreateProductPayload
+    >({
       query: (body) => ({
-        url: '/api/admin/products',
-        method: 'POST',
+        url: "/api/admin/products",
+        method: "POST",
         body,
       }),
-      invalidatesTags: ['Products'],
+      invalidatesTags: ["Products"],
     }),
-    bulkImportProducts: builder.mutation<BulkImportProductsResponse, BulkImportProductsPayload>({
+    bulkImportProducts: builder.mutation<
+      BulkImportProductsResponse,
+      BulkImportProductsPayload
+    >({
       query: (body) => ({
-        url: '/api/admin/products/import',
-        method: 'POST',
+        url: "/api/admin/products/import",
+        method: "POST",
         body,
       }),
-      invalidatesTags: ['Products'],
+      invalidatesTags: ["Products"],
     }),
-    bulkImportProductsWithVariants: builder.mutation<BulkImportProductsResponse, BulkImportProductsPayload>({
+    bulkImportProductsWithVariants: builder.mutation<
+      BulkImportProductsResponse,
+      BulkImportProductsPayload
+    >({
       query: (body) => ({
-        url: '/api/admin/products/import-with-variants',
-        method: 'POST',
+        url: "/api/admin/products/import-with-variants",
+        method: "POST",
         body,
       }),
-      invalidatesTags: ['Products'],
+      invalidatesTags: ["Products"],
     }),
-    bulkPricePreview: builder.mutation<BulkPricePreviewResponse, { rows: BulkPriceRow[] }>({
+    bulkPricePreview: builder.mutation<
+      BulkPricePreviewResponse,
+      { rows: BulkPriceRow[] }
+    >({
       query: (body) => ({
-        url: '/api/admin/products/bulk-price/preview',
-        method: 'POST',
-        body,
-      }),
-    }),
-    bulkPriceApply: builder.mutation<BulkPriceApplyResponse, { rows: BulkPriceRow[] }>({
-      query: (body) => ({
-        url: '/api/admin/products/bulk-price/apply',
-        method: 'POST',
-        body,
-      }),
-      invalidatesTags: ['Products'],
-    }),
-    bulkUpdatePreview: builder.mutation<BulkUpdatePreviewResponse, { rows: BulkUpdateRow[] }>({
-      query: (body) => ({
-        url: '/api/admin/products/bulk-update/preview',
-        method: 'POST',
+        url: "/api/admin/products/bulk-price/preview",
+        method: "POST",
         body,
       }),
     }),
-    bulkUpdateApply: builder.mutation<BulkUpdateApplyResponse, { rows: BulkUpdateRow[] }>({
+    bulkPriceApply: builder.mutation<
+      BulkPriceApplyResponse,
+      { rows: BulkPriceRow[] }
+    >({
       query: (body) => ({
-        url: '/api/admin/products/bulk-update/apply',
-        method: 'POST',
+        url: "/api/admin/products/bulk-price/apply",
+        method: "POST",
         body,
       }),
-      invalidatesTags: ['Products'],
+      invalidatesTags: ["Products"],
     }),
-    manualCheckoutApply: builder.mutation<ManualCheckoutApplyResponse, { product_ids: number[]; enabled?: boolean }>({
+    bulkUpdatePreview: builder.mutation<
+      BulkUpdatePreviewResponse,
+      { rows: BulkUpdateRow[] }
+    >({
       query: (body) => ({
-        url: '/api/admin/products/manual-checkout/apply',
-        method: 'POST',
+        url: "/api/admin/products/bulk-update/preview",
+        method: "POST",
         body,
       }),
-      invalidatesTags: ['Products'],
     }),
-    fetchZqImportPreview: builder.mutation<ZqImportPreviewResponse, ZqImportPreviewPayload | void>({
+    bulkUpdateApply: builder.mutation<
+      BulkUpdateApplyResponse,
+      { rows: BulkUpdateRow[] }
+    >({
+      query: (body) => ({
+        url: "/api/admin/products/bulk-update/apply",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Products"],
+    }),
+    manualCheckoutApply: builder.mutation<
+      ManualCheckoutApplyResponse,
+      { product_ids: number[]; enabled?: boolean }
+    >({
+      query: (body) => ({
+        url: "/api/admin/products/manual-checkout/apply",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Products"],
+    }),
+    fetchZqImportPreview: builder.mutation<
+      ZqImportPreviewResponse,
+      ZqImportPreviewPayload | void
+    >({
       query: (body) => ({
         url: `${zqProductsApiBase()}/fetch-preview`,
-        method: 'POST',
+        method: "POST",
         body: body
           ? (() => {
               const { resumeFromSaved, resetCursor, ...rest } = body
@@ -1208,25 +1502,34 @@ export const productsApi = baseApi.injectEndpoints({
           : {},
       }),
     }),
-    importZqProducts: builder.mutation<ZqImportProductsResponse, { ids: string[] }>({
+    importZqProducts: builder.mutation<
+      ZqImportProductsResponse,
+      { ids: string[] }
+    >({
       query: (body) => ({
-        url: '/api/admin/products/zq/import',
-        method: 'POST',
+        url: "/api/admin/products/zq/import",
+        method: "POST",
         body,
       }),
-      invalidatesTags: ['Products'],
+      invalidatesTags: ["Products"],
     }),
-    fetchZqImportDetail: builder.mutation<ZqImportDetailResponse, string | number>({
+    fetchZqImportDetail: builder.mutation<
+      ZqImportDetailResponse,
+      string | number
+    >({
       query: (id) => ({
         url: `${zqProductsApiBase()}/detail/${id}`,
-        method: 'GET',
+        method: "GET",
       }),
     }),
-    getZqCachedProducts: builder.query<ZqCachedProductsResponse, ZqCachedProductsQueryParams | void>({
+    getZqCachedProducts: builder.query<
+      ZqCachedProductsResponse,
+      ZqCachedProductsQueryParams | void
+    >({
       query: (params) => ({
         url: `${zqProductsApiBase()}/cached`,
-        method: 'GET',
-        cache: 'no-store',
+        method: "GET",
+        cache: "no-store",
         params: cleanParams({
           page: params?.page ?? 1,
           per_page: params?.perPage ?? 20,
@@ -1239,20 +1542,23 @@ export const productsApi = baseApi.injectEndpoints({
           mapping_status: params?.mappingStatus,
         }),
       }),
-      providesTags: ['Products'],
+      providesTags: ["Products"],
     }),
     getZqProductsSummary: builder.query<ZqProductsSummaryResponse, void>({
       query: () => ({
         url: `${zqProductsApiBase()}/summary`,
-        method: 'GET',
-        cache: 'no-store',
+        method: "GET",
+        cache: "no-store",
       }),
-      providesTags: ['Products'],
+      providesTags: ["Products"],
     }),
-    syncZqProducts: builder.mutation<ZqSyncProductsResponse, ZqSyncProductsPayload | void>({
+    syncZqProducts: builder.mutation<
+      ZqSyncProductsResponse,
+      ZqSyncProductsPayload | void
+    >({
       query: (body) => ({
         url: `${zqProductsApiBase()}/sync`,
-        method: 'POST',
+        method: "POST",
         body: body
           ? (() => {
               const { resumeFromSaved, resetCursor, ...rest } = body
@@ -1264,92 +1570,116 @@ export const productsApi = baseApi.injectEndpoints({
             })()
           : {},
       }),
-      invalidatesTags: ['Products'],
+      invalidatesTags: ["Products"],
     }),
     importZqToLocal: builder.mutation<ImportZqToLocalResponse, string>({
       query: (externalId) => ({
         url: `${zqProductsApiBase()}/import-to-local/${externalId}`,
-        method: 'POST',
+        method: "POST",
       }),
-      invalidatesTags: ['Products'],
+      invalidatesTags: ["Products"],
     }),
     getZqCategoryMappings: builder.query<ZqCategoryMappingsResponse, void>({
       query: () => ({
         url: `${zqProductsApiBase()}/category-mappings`,
-        method: 'GET',
-        cache: 'no-store',
+        method: "GET",
+        cache: "no-store",
       }),
-      providesTags: ['Products'],
+      providesTags: ["Products"],
     }),
     getZqInventory: builder.query<ZqInventoryResponse, string>({
       query: (sku) => ({
         url: `${zqProductsApiBase()}/inventory/${encodeURIComponent(sku)}`,
-        method: 'GET',
+        method: "GET",
       }),
     }),
-    upsertZqCategoryMapping: builder.mutation<UpsertZqCategoryMappingResponse, UpsertZqCategoryMappingPayload>({
+    upsertZqCategoryMapping: builder.mutation<
+      UpsertZqCategoryMappingResponse,
+      UpsertZqCategoryMappingPayload
+    >({
       query: (body) => ({
         url: `${zqProductsApiBase()}/category-mappings`,
-        method: 'POST',
+        method: "POST",
         body: {
           zq_category_id: body.zqCategoryId,
           zq_category_name: body.zqCategoryName,
           local_category_id: body.localCategoryId,
         },
       }),
-      invalidatesTags: ['Products'],
+      invalidatesTags: ["Products"],
     }),
-    updateProduct: builder.mutation<{ message: string; product?: Product }, { id: number; data: Partial<CreateProductPayload> }>({
+    updateProduct: builder.mutation<
+      { message: string; product?: Product },
+      { id: number; data: Partial<CreateProductPayload> }
+    >({
       query: ({ id, data }) => ({
         url: `/api/admin/products/${id}`,
-        method: 'PUT',
+        method: "PUT",
         body: data,
       }),
-      transformResponse: (response: { message: string; product?: Product | Record<string, unknown> }) => ({
+      transformResponse: (response: {
+        message: string
+        product?: Product | Record<string, unknown>
+      }) => ({
         ...response,
-        product: response.product ? normalizeProduct(response.product as Product & Record<string, unknown>) : undefined,
+        product: response.product
+          ? normalizeProduct(
+              response.product as Product & Record<string, unknown>
+            )
+          : undefined,
       }),
-      invalidatesTags: ['Products'],
+      invalidatesTags: ["Products"],
     }),
     deleteProduct: builder.mutation<{ message: string }, number>({
       query: (id) => ({
         url: `/api/admin/products/${id}`,
-        method: 'DELETE',
+        method: "DELETE",
       }),
-      invalidatesTags: ['Products'],
+      invalidatesTags: ["Products"],
     }),
-    updateZqProductPricing: builder.mutation<UpdateZqProductPricingResponse, UpdateZqProductPricingPayload>({
+    updateZqProductPricing: builder.mutation<
+      UpdateZqProductPricingResponse,
+      UpdateZqProductPricingPayload
+    >({
       query: ({ externalId, ...body }) => ({
         url: `/api/supplier/products/zq/pricing/${externalId}`,
-        method: 'PATCH',
+        method: "PATCH",
         body,
       }),
-      invalidatesTags: ['Products'],
+      invalidatesTags: ["Products"],
     }),
-    bulkUpdateZqPricing: builder.mutation<BulkUpdateZqPricingResponse, { rows: BulkUpdateZqPricingRow[] }>({
+    bulkUpdateZqPricing: builder.mutation<
+      BulkUpdateZqPricingResponse,
+      { rows: BulkUpdateZqPricingRow[] }
+    >({
       query: (body) => ({
-        url: '/api/supplier/products/zq/pricing/bulk-update',
-        method: 'POST',
+        url: "/api/supplier/products/zq/pricing/bulk-update",
+        method: "POST",
         body,
       }),
-      invalidatesTags: ['Products'],
+      invalidatesTags: ["Products"],
     }),
     getZqVariantPricing: builder.query<GetZqVariantPricingResponse, string>({
       query: (externalId) => ({
         url: `/api/supplier/products/zq/pricing/${externalId}/variants`,
-        method: 'GET',
+        method: "GET",
       }),
-      providesTags: (_r, _e, externalId) => [{ type: 'Products' as const, id: `zqvp-${externalId}` }],
+      providesTags: (_r, _e, externalId) => [
+        { type: "Products" as const, id: `zqvp-${externalId}` },
+      ],
     }),
-    updateZqVariantPricing: builder.mutation<UpdateZqVariantPricingResponse, UpdateZqVariantPricingPayload>({
+    updateZqVariantPricing: builder.mutation<
+      UpdateZqVariantPricingResponse,
+      UpdateZqVariantPricingPayload
+    >({
       query: ({ externalId, ...body }) => ({
         url: `/api/supplier/products/zq/pricing/${externalId}/variants`,
-        method: 'POST',
+        method: "POST",
         body,
       }),
       invalidatesTags: (_r, _e, { externalId }) => [
-        'Products',
-        { type: 'Products' as const, id: `zqvp-${externalId}` },
+        "Products",
+        { type: "Products" as const, id: `zqvp-${externalId}` },
       ],
     }),
   }),

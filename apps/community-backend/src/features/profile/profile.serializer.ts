@@ -1,4 +1,4 @@
-import type { CommunityProfile } from "../../generated/prisma/client.js";
+import type { CommunityProfile } from "../../generated/prisma/client.js"
 
 export function serializeProfile(profile: CommunityProfile | null) {
   return {
@@ -8,5 +8,5 @@ export function serializeProfile(profile: CommunityProfile | null) {
     occupation: profile?.occupation ?? null,
     role: profile?.role ?? null,
     interests: profile?.interests ?? [],
-  };
+  }
 }

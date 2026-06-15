@@ -1,33 +1,33 @@
-"use client";
+"use client"
 
-import { motion, type Variants } from "framer-motion";
-import type { ReactNode } from "react";
+import type { ReactNode } from "react"
+import { motion, type Variants } from "framer-motion"
 
 // Animation variants
 export const fadeUp: Variants = {
   hidden: { opacity: 0, y: 40 },
   visible: { opacity: 1, y: 0 },
-};
+}
 
 export const fadeIn: Variants = {
   hidden: { opacity: 0 },
   visible: { opacity: 1 },
-};
+}
 
 export const scaleUp: Variants = {
   hidden: { opacity: 0, scale: 0.95 },
   visible: { opacity: 1, scale: 1 },
-};
+}
 
 export const slideInLeft: Variants = {
   hidden: { opacity: 0, x: -40 },
   visible: { opacity: 1, x: 0 },
-};
+}
 
 export const slideInRight: Variants = {
   hidden: { opacity: 0, x: 40 },
   visible: { opacity: 1, x: 0 },
-};
+}
 
 export const staggerContainer: Variants = {
   hidden: { opacity: 0 },
@@ -38,20 +38,20 @@ export const staggerContainer: Variants = {
       delayChildren: 0.1,
     },
   },
-};
+}
 
 export const staggerItem: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0 },
-};
+}
 
 // Reusable components
 interface MotionDivProps {
-  children: ReactNode;
-  className?: string;
-  variants?: Variants;
-  delay?: number;
-  duration?: number;
+  children: ReactNode
+  className?: string
+  variants?: Variants
+  delay?: number
+  duration?: number
 }
 
 export function FadeUp({
@@ -71,7 +71,7 @@ export function FadeUp({
     >
       {children}
     </motion.div>
-  );
+  )
 }
 
 export function FadeIn({
@@ -91,7 +91,7 @@ export function FadeIn({
     >
       {children}
     </motion.div>
-  );
+  )
 }
 
 export function ScaleUp({
@@ -111,7 +111,7 @@ export function ScaleUp({
     >
       {children}
     </motion.div>
-  );
+  )
 }
 
 export function SlideInLeft({
@@ -131,7 +131,7 @@ export function SlideInLeft({
     >
       {children}
     </motion.div>
-  );
+  )
 }
 
 export function SlideInRight({
@@ -151,13 +151,13 @@ export function SlideInRight({
     >
       {children}
     </motion.div>
-  );
+  )
 }
 
 interface StaggerContainerProps {
-  children: ReactNode;
-  className?: string;
-  staggerDelay?: number;
+  children: ReactNode
+  className?: string
+  staggerDelay?: number
 }
 
 export function StaggerContainer({
@@ -184,15 +184,15 @@ export function StaggerContainer({
     >
       {children}
     </motion.div>
-  );
+  )
 }
 
 export function StaggerItem({
   children,
   className,
 }: {
-  children: ReactNode;
-  className?: string;
+  children: ReactNode
+  className?: string
 }) {
   return (
     <motion.div
@@ -202,8 +202,8 @@ export function StaggerItem({
     >
       {children}
     </motion.div>
-  );
+  )
 }
 
 // Export motion for direct use
-export { motion };
+export { motion }

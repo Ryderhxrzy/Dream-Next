@@ -1,10 +1,11 @@
-import LandingPage from '@/components/landing-page/LandingPage'
-import Template1Component from '@/components/partner/templates/template1'
-import Template2Component from '@/components/partner/templates/template2'
-import Template3Component from '@/components/partner/templates/template3'
-import Template4Component from '@/components/partner/templates/template4'
-import { getPartnerStorefrontConfig } from '@/libs/partnerStorefront'
-import type { WebPageItem } from '@/store/api/webPagesApi'
+import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
+import type { WebPageItem } from "@/store/api/webPagesApi"
+
+import LandingPage from "@/components/landing-page/LandingPage"
+import Template1Component from "@/components/partner/templates/template1"
+import Template2Component from "@/components/partner/templates/template2"
+import Template3Component from "@/components/partner/templates/template3"
+import Template4Component from "@/components/partner/templates/template4"
 
 type PartnerLandingPageViewProps = {
   partnerSlug: string
@@ -17,7 +18,7 @@ type BlockBase = {
 }
 
 type NavBlock = BlockBase & {
-  type: 'nav'
+  type: "nav"
   storeName?: string
   logo?: string
   primaryColor?: string
@@ -25,11 +26,11 @@ type NavBlock = BlockBase & {
 }
 
 type HeroBlock = BlockBase & {
-  type: 'hero'
+  type: "hero"
   tagline?: string
   description?: string
   bgImage?: string
-  align?: 'left' | 'center' | 'right'
+  align?: "left" | "center" | "right"
   btnPrimary?: string
   btnSecondary?: string
   badge1?: string
@@ -38,12 +39,12 @@ type HeroBlock = BlockBase & {
 }
 
 type StatsBlock = BlockBase & {
-  type: 'stats'
+  type: "stats"
   items?: Array<{ value: string; label: string }>
 }
 
 type AboutBlock = BlockBase & {
-  type: 'about'
+  type: "about"
   heading?: string
   story?: string
   image?: string
@@ -51,25 +52,25 @@ type AboutBlock = BlockBase & {
 }
 
 type TestimonialBlock = BlockBase & {
-  type: 'testimonial'
+  type: "testimonial"
   text?: string
 }
 
 type FeaturesBlock = BlockBase & {
-  type: 'features'
+  type: "features"
   title?: string
   subtitle?: string
 }
 
 type CtaBlock = BlockBase & {
-  type: 'cta'
+  type: "cta"
   title?: string
   subtitle?: string
   btnText?: string
 }
 
 type FooterBlock = BlockBase & {
-  type: 'footer'
+  type: "footer"
   email?: string
   phone?: string
   address?: string
@@ -78,31 +79,58 @@ type FooterBlock = BlockBase & {
   socialX?: string
 }
 
-type LandingBlock = NavBlock | HeroBlock | StatsBlock | AboutBlock | TestimonialBlock | FeaturesBlock | CtaBlock | FooterBlock
+type LandingBlock =
+  | NavBlock
+  | HeroBlock
+  | StatsBlock
+  | AboutBlock
+  | TestimonialBlock
+  | FeaturesBlock
+  | CtaBlock
+  | FooterBlock
 
 const parseBlocks = (value: unknown): LandingBlock[] => {
-  if (typeof value !== 'string' || value.trim().length === 0) return []
+  if (typeof value !== "string" || value.trim().length === 0) return []
 
   try {
     const parsed = JSON.parse(value) as unknown
     if (!Array.isArray(parsed)) return []
-    return parsed.filter((item): item is LandingBlock => Boolean(item) && typeof item === 'object')
+    return parsed.filter(
+      (item): item is LandingBlock => Boolean(item) && typeof item === "object"
+    )
   } catch {
     return []
   }
 }
 
-const getFieldValue = (fields: Record<string, unknown>, key: string) => String(fields[key] ?? '').trim()
+const getFieldValue = (fields: Record<string, unknown>, key: string) =>
+  String(fields[key] ?? "").trim()
 
 function mapCommonContent(blocks: LandingBlock[]) {
-  const nav = blocks.find((block) => block.type === 'nav') as NavBlock | undefined
-  const hero = blocks.find((block) => block.type === 'hero') as HeroBlock | undefined
-  const about = blocks.find((block) => block.type === 'about') as AboutBlock | undefined
-  const testimonial = blocks.find((block) => block.type === 'testimonial') as TestimonialBlock | undefined
-  const stats = blocks.find((block) => block.type === 'stats') as StatsBlock | undefined
-  const features = blocks.find((block) => block.type === 'features') as FeaturesBlock | undefined
-  const cta = blocks.find((block) => block.type === 'cta') as CtaBlock | undefined
-  const footer = blocks.find((block) => block.type === 'footer') as FooterBlock | undefined
+  const nav = blocks.find((block) => block.type === "nav") as
+    | NavBlock
+    | undefined
+  const hero = blocks.find((block) => block.type === "hero") as
+    | HeroBlock
+    | undefined
+  const about = blocks.find((block) => block.type === "about") as
+    | AboutBlock
+    | undefined
+  const testimonial = blocks.find((block) => block.type === "testimonial") as
+    | TestimonialBlock
+    | undefined
+  const stats = blocks.find((block) => block.type === "stats") as
+    | StatsBlock
+    | undefined
+  const features = blocks.find((block) => block.type === "features") as
+    | FeaturesBlock
+    | undefined
+  const cta = blocks.find((block) => block.type === "cta") as
+    | CtaBlock
+    | undefined
+  const footer = blocks.find((block) => block.type === "footer") as
+    | FooterBlock
+    | undefined
   const items = stats?.items ?? []
 
   return {
@@ -148,10 +176,15 @@ function mapCommonContent(blocks: LandingBlock[]) {
   }
 }
 
-export default function PartnerLandingPageView({ partnerSlug, storefrontItem }: PartnerLandingPageViewProps) {
+export default function PartnerLandingPageView({
+  partnerSlug,
+  storefrontItem,
+}: PartnerLandingPageViewProps) {
   const config = getPartnerStorefrontConfig(storefrontItem ?? undefined)
-  const fields = ((storefrontItem?.payload ?? {}) as { fields?: Record<string, unknown> }).fields ?? {}
-  const templateId = getFieldValue(fields, 'landing_template_id') || 'template4'
+  const fields =
+    ((storefrontItem?.payload ?? {}) as { fields?: Record<string, unknown> })
+      .fields ?? {}
+  const templateId = getFieldValue(fields, "landing_template_id") || "template4"
   const blocks = parseBlocks(fields.page_blocks)
   const content = mapCommonContent(blocks)
 
@@ -159,7 +192,7 @@ export default function PartnerLandingPageView({ partnerSlug, storefrontItem }: 
     return <LandingPage partnerSlug={partnerSlug} />
   }
 
-  if (templateId === 'template1') {
+  if (templateId === "template1") {
     return (
       <div className="min-h-screen bg-white">
         <Template1Component
@@ -189,7 +222,7 @@ export default function PartnerLandingPageView({ partnerSlug, storefrontItem }: 
     )
   }
 
-  if (templateId === 'template2') {
+  if (templateId === "template2") {
     return (
       <div className="min-h-screen bg-white">
         <Template2Component
@@ -220,7 +253,7 @@ export default function PartnerLandingPageView({ partnerSlug, storefrontItem }: 
     )
   }
 
-  if (templateId === 'template3') {
+  if (templateId === "template3") {
     return (
       <div className="min-h-screen bg-white">
         <Template3Component

@@ -1,6 +1,6 @@
-import InteriorServicesPageMain from "@/components/interior-services/InteriorServicesPageMain";
-import Link from 'next/link'
+import Link from "next/link"
 
+import InteriorServicesPageMain from "@/components/interior-services/InteriorServicesPageMain"
 
 const InteriorservicesPage = () => {
   return (
@@ -18,4 +18,4 @@ const InteriorservicesPage = () => {
   )
 }
 
-export default InteriorservicesPage;
+export default InteriorservicesPage

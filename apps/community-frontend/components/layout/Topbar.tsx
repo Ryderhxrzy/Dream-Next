@@ -1,6 +1,6 @@
 "use client"
 
-import { useRouter } from "next/navigation"
+import { useAuthStore } from "@/store/auth.store"
 import {
   Bookmark,
   ChevronDown,
@@ -12,9 +12,15 @@ import {
   Settings,
   User,
 } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
+
+import {
+  getFullName,
+  getInitials,
+  useCurrentUser,
+} from "@/lib/hooks/use-current-user"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,10 +29,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Input } from "@/components/ui/input"
 import { NotificationsDropdown } from "@/components/layout/NotificationsDropdown"
 import { ThemeToggle } from "@/components/layout/ThemeToggle"
-import { useAuthStore } from "@/store/auth.store"
-import { useCurrentUser, getFullName, getInitials } from "@/lib/hooks/use-current-user"
 
 export function Topbar() {
   const router = useRouter()
@@ -40,42 +45,51 @@ export function Topbar() {
   }
 
   return (
-    <header className="h-14 border-b border-border bg-card flex items-center px-4 gap-3 sticky top-0 z-50">
-
+    <header className="border-border bg-card sticky top-0 z-50 flex h-14 items-center gap-3 border-b px-4">
       {/* Logo */}
-      <div className="flex items-center gap-2 w-auto lg:w-52 shrink-0">
-        <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-          <svg className="w-3.5 h-3.5 text-primary-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
-              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+      <div className="flex w-auto shrink-0 items-center gap-2 lg:w-52">
+        <div className="bg-primary flex h-7 w-7 items-center justify-center rounded-lg">
+          <svg
+            className="text-primary-foreground h-3.5 w-3.5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2.5}
+              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+            />
           </svg>
         </div>
-        <span className="font-semibold text-foreground text-sm tracking-tight">AF Nexus</span>
+        <span className="text-foreground text-sm font-semibold tracking-tight">
+          AF Nexus
+        </span>
       </div>
 
       {/* Location Dropdown — hidden on mobile */}
       <Button
         variant="ghost"
-        className="hidden sm:flex items-center gap-1.5 rounded-md px-2.5 h-8 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent shrink-0"
+        className="text-foreground/80 hover:text-foreground hover:bg-accent hidden h-8 shrink-0 items-center gap-1.5 rounded-md px-2.5 text-sm font-medium sm:flex"
       >
-        <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
+        <MapPin className="text-muted-foreground h-3.5 w-3.5" />
         <span className="hidden md:inline">Quezon City, Philippines</span>
         <span className="md:hidden">Quezon City</span>
-        <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+        <ChevronDown className="text-muted-foreground h-3.5 w-3.5" />
       </Button>
 
       {/* Search */}
-      <div className="flex-1 relative max-w-sm min-w-0">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+      <div className="relative max-w-sm min-w-0 flex-1">
+        <Search className="text-muted-foreground absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2" />
         <Input
           placeholder="Search..."
-          className="pl-8 h-8 bg-muted border-border text-sm rounded-md focus-visible:ring-1 focus-visible:ring-ring placeholder:text-muted-foreground"
+          className="bg-muted border-border focus-visible:ring-ring placeholder:text-muted-foreground h-8 rounded-md pl-8 text-sm focus-visible:ring-1"
         />
       </div>
 
       {/* Right Actions */}
-      <div className="flex items-center gap-0.5 ml-auto">
-
+      <div className="ml-auto flex items-center gap-0.5">
         {/* Theme Toggle */}
         <ThemeToggle />
 
@@ -83,53 +97,57 @@ export function Topbar() {
         <NotificationsDropdown />
 
         {/* Grid */}
-        <Button variant="ghost" size="icon" className="rounded-md w-8 h-8 text-muted-foreground hover:text-foreground hover:bg-accent">
-          <Grid3x3 className="w-4 h-4" />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-muted-foreground hover:text-foreground hover:bg-accent h-8 w-8 rounded-md"
+        >
+          <Grid3x3 className="h-4 w-4" />
         </Button>
 
         {/* Divider */}
-        <div className="w-px h-5 bg-muted mx-1.5" />
+        <div className="bg-muted mx-1.5 h-5 w-px" />
 
         {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex h-8 items-center gap-1 rounded-md px-1 outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring">
-              <Avatar className="w-7 h-7">
+            <button className="hover:bg-accent focus-visible:ring-ring flex h-8 items-center gap-1 rounded-md px-1 transition-colors outline-none focus-visible:ring-2">
+              <Avatar className="h-7 w-7">
                 <AvatarImage src={currentUser?.avatarUrl ?? ""} />
                 <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
                   {getInitials(currentUser)}
                 </AvatarFallback>
               </Avatar>
-              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+              <ChevronDown className="text-muted-foreground h-3.5 w-3.5" />
               <span className="sr-only">Open user menu</span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>
               <div className="flex flex-col">
-                <span className="text-sm font-semibold text-foreground">
+                <span className="text-foreground text-sm font-semibold">
                   {getFullName(currentUser)}
                 </span>
-                <span className="text-xs font-normal text-muted-foreground">
+                <span className="text-muted-foreground text-xs font-normal">
                   {currentUser?.email ?? "Community member"}
                 </span>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => router.push("/profile")}>
-              <User className="h-4 w-4 text-muted-foreground" />
+              <User className="text-muted-foreground h-4 w-4" />
               Profile
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => router.push("/saved")}>
-              <Bookmark className="h-4 w-4 text-muted-foreground" />
+              <Bookmark className="text-muted-foreground h-4 w-4" />
               Saved posts
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <Settings className="h-4 w-4 text-muted-foreground" />
+              <Settings className="text-muted-foreground h-4 w-4" />
               Account settings
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <CircleHelp className="h-4 w-4 text-muted-foreground" />
+              <CircleHelp className="text-muted-foreground h-4 w-4" />
               Help & support
             </DropdownMenuItem>
             <DropdownMenuSeparator />
@@ -139,7 +157,6 @@ export function Topbar() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-
       </div>
     </header>
   )

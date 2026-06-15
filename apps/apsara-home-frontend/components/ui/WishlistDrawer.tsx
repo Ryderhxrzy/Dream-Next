@@ -1,16 +1,17 @@
-'use client'
+"use client"
 
-import { motion, AnimatePresence } from 'framer-motion'
-import { usePathname, useRouter } from 'next/navigation'
-import { useGetWishlistQuery } from '@/store/api/wishlistApi'
-import { useSession } from 'next-auth/react'
-import { useEffect, useMemo, useState } from 'react'
-import PrimaryButton from '@/components/ui/buttons/PrimaryButton'
-import { useWishlist } from '@/context/WishlistContext'
-import ItemCard from '@/components/item/ItemCard'
-import { extractPartnerSlugFromPath } from '@/libs/storefrontRouting'
+import { useEffect, useMemo, useState } from "react"
+import { useWishlist } from "@/context/WishlistContext"
+import { extractPartnerSlugFromPath } from "@/libs/storefrontRouting"
+import { useGetWishlistQuery } from "@/store/api/wishlistApi"
+import { AnimatePresence, motion } from "framer-motion"
+import { useSession } from "next-auth/react"
+import { usePathname, useRouter } from "next/navigation"
 
-const GUEST_WISHLIST_ITEMS_STORAGE_KEY = 'partner_guest_wishlist_items'
+import PrimaryButton from "@/components/ui/buttons/PrimaryButton"
+import ItemCard from "@/components/item/ItemCard"
+
+const GUEST_WISHLIST_ITEMS_STORAGE_KEY = "partner_guest_wishlist_items"
 
 type GuestWishlistItem = {
   productId: number
@@ -28,34 +29,39 @@ type GuestWishlistItem = {
 }
 
 const readGuestWishlistItems = (): GuestWishlistItem[] => {
-  if (typeof window === 'undefined') return []
+  if (typeof window === "undefined") return []
 
   try {
     const raw =
-      window.localStorage.getItem(GUEST_WISHLIST_ITEMS_STORAGE_KEY)
-      ?? window.localStorage.getItem('synergy_guest_wishlist_items')
+      window.localStorage.getItem(GUEST_WISHLIST_ITEMS_STORAGE_KEY) ??
+      window.localStorage.getItem("synergy_guest_wishlist_items")
     const parsed = raw ? JSON.parse(raw) : []
     if (!Array.isArray(parsed)) return []
 
     return parsed
       .map((entry): GuestWishlistItem | null => {
-        if (!entry || typeof entry !== 'object') return null
+        if (!entry || typeof entry !== "object") return null
         const row = entry as Record<string, unknown>
         const productId = Number(row.productId ?? 0)
         if (!Number.isInteger(productId) || productId <= 0) return null
         return {
           productId,
-          name: typeof row.name === 'string' ? row.name : `Product ${productId}`,
+          name:
+            typeof row.name === "string" ? row.name : `Product ${productId}`,
           price: Number(row.price ?? 0),
           priceMember: Number(row.priceMember ?? 0) || undefined,
           priceDp: Number(row.priceDp ?? 0) || undefined,
           priceSrp: Number(row.priceSrp ?? 0) || undefined,
           originalPrice: Number(row.originalPrice ?? 0) || undefined,
-          sku: typeof row.sku === 'string' ? row.sku : undefined,
+          sku: typeof row.sku === "string" ? row.sku : undefined,
           prodpv: Number(row.prodpv ?? 0) || undefined,
-          image: typeof row.image === 'string' && row.image.trim().length > 0 ? row.image : '/Images/af_home_logo.png',
-          slug: typeof row.slug === 'string' ? row.slug : `product-${productId}`,
-          brand: typeof row.brand === 'string' ? row.brand : null,
+          image:
+            typeof row.image === "string" && row.image.trim().length > 0
+              ? row.image
+              : "/Images/af_home_logo.png",
+          slug:
+            typeof row.slug === "string" ? row.slug : `product-${productId}`,
+          brand: typeof row.brand === "string" ? row.brand : null,
         } satisfies GuestWishlistItem
       })
       .filter((item): item is GuestWishlistItem => Boolean(item))
@@ -69,16 +75,21 @@ export default function WishlistDrawer() {
   const pathname = usePathname()
   const { isOpen, setIsOpen } = useWishlist()
   const { data: session, status } = useSession()
-  const role = String(session?.user?.role ?? '').toLowerCase()
-  const isLoggedIn = status === 'authenticated' && (role === 'customer' || role === '')
-  const loginHref = `/login?callback=${encodeURIComponent(pathname || '/wishlist')}`
+  const role = String(session?.user?.role ?? "").toLowerCase()
+  const isLoggedIn =
+    status === "authenticated" && (role === "customer" || role === "")
+  const loginHref = `/login?callback=${encodeURIComponent(pathname || "/wishlist")}`
   const partnerSlug = extractPartnerSlugFromPath(pathname)
   const isPartnerStorefrontRoute = Boolean(partnerSlug)
   const useGuestWishlistMode = isPartnerStorefrontRoute
   const useApiWishlistMode = isLoggedIn && !useGuestWishlistMode
   const [guestWishlist, setGuestWishlist] = useState<GuestWishlistItem[]>([])
-  
-  const { data: wishlist = [], isLoading, error } = useGetWishlistQuery(undefined, {
+
+  const {
+    data: wishlist = [],
+    isLoading,
+    error,
+  } = useGetWishlistQuery(undefined, {
     skip: !useApiWishlistMode,
   })
 
@@ -90,17 +101,24 @@ export default function WishlistDrawer() {
     }
 
     syncGuestWishlist()
-    window.addEventListener('partner:guest-wishlist-updated', syncGuestWishlist)
-    window.addEventListener('synergy:guest-wishlist-updated', syncGuestWishlist)
+    window.addEventListener("partner:guest-wishlist-updated", syncGuestWishlist)
+    window.addEventListener("synergy:guest-wishlist-updated", syncGuestWishlist)
     return () => {
-      window.removeEventListener('partner:guest-wishlist-updated', syncGuestWishlist)
-      window.removeEventListener('synergy:guest-wishlist-updated', syncGuestWishlist)
+      window.removeEventListener(
+        "partner:guest-wishlist-updated",
+        syncGuestWishlist
+      )
+      window.removeEventListener(
+        "synergy:guest-wishlist-updated",
+        syncGuestWishlist
+      )
     }
   }, [isOpen, useGuestWishlistMode])
 
   const visibleWishlist = useMemo(
-    () => (useGuestWishlistMode ? guestWishlist : (useApiWishlistMode ? wishlist : [])),
-    [guestWishlist, useApiWishlistMode, useGuestWishlistMode, wishlist],
+    () =>
+      useGuestWishlistMode ? guestWishlist : useApiWishlistMode ? wishlist : [],
+    [guestWishlist, useApiWishlistMode, useGuestWishlistMode, wishlist]
   )
 
   return (
@@ -116,15 +134,17 @@ export default function WishlistDrawer() {
           />
 
           <motion.div
-            initial={{ x: '100%' }}
+            initial={{ x: "100%" }}
             animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-            className="fixed right-0 top-0 bottom-0 z-[60] flex w-full max-w-md flex-col bg-white dark:bg-gray-800 shadow-2xl"
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 28, stiffness: 300 }}
+            className="fixed top-0 right-0 bottom-0 z-[60] flex w-full max-w-md flex-col bg-white shadow-2xl dark:bg-gray-800"
           >
-            <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 p-5">
+            <div className="flex items-center justify-between border-b border-gray-100 p-5 dark:border-gray-700">
               <div className="flex items-center gap-3">
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">My Wishlist</h2>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                  My Wishlist
+                </h2>
                 {visibleWishlist.length > 0 && (
                   <span className="rounded-full bg-sky-500 px-2 py-0.5 text-xs font-bold text-white">
                     {visibleWishlist.length}
@@ -133,9 +153,17 @@ export default function WishlistDrawer() {
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="rounded-xl p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 cursor-pointer text-slate-600 dark:text-gray-300"
+                className="cursor-pointer rounded-xl p-2 text-slate-600 transition-colors hover:bg-gray-100 active:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700 dark:active:bg-gray-600"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
@@ -146,15 +174,31 @@ export default function WishlistDrawer() {
               {!useApiWishlistMode && !useGuestWishlistMode ? (
                 <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
                   <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-400 dark:text-gray-500">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="32"
+                      height="32"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      className="text-gray-400 dark:text-gray-500"
+                    >
                       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                     </svg>
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-800 dark:text-gray-200">Sign in to view wishlist</p>
-                    <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">Please sign in to see your saved items</p>
+                    <p className="font-semibold text-gray-800 dark:text-gray-200">
+                      Sign in to view wishlist
+                    </p>
+                    <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+                      Please sign in to see your saved items
+                    </p>
                   </div>
-                  <PrimaryButton onClick={() => router.push(loginHref)} className="!px-6 !py-2.5 !text-sm">
+                  <PrimaryButton
+                    onClick={() => router.push(loginHref)}
+                    className="!px-6 !py-2.5 !text-sm"
+                  >
                     Sign In
                   </PrimaryButton>
                 </div>
@@ -165,27 +209,52 @@ export default function WishlistDrawer() {
               ) : useApiWishlistMode && error ? (
                 <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
                   <div className="flex h-20 w-20 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="1.5">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="32"
+                      height="32"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#ef4444"
+                      strokeWidth="1.5"
+                    >
                       <circle cx="12" cy="12" r="10" />
                       <line x1="12" y1="8" x2="12" y2="12" />
                       <line x1="12" y1="16" x2="12.01" y2="16" />
                     </svg>
                   </div>
                   <div>
-                    <p className="font-semibold text-red-600 dark:text-red-400">Failed to load wishlist</p>
-                    <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">Please try again later</p>
+                    <p className="font-semibold text-red-600 dark:text-red-400">
+                      Failed to load wishlist
+                    </p>
+                    <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+                      Please try again later
+                    </p>
                   </div>
                 </div>
               ) : visibleWishlist.length === 0 ? (
                 <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
                   <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gray-100">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-400">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="32"
+                      height="32"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      className="text-gray-400"
+                    >
                       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                     </svg>
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-800 dark:text-gray-200">Your wishlist is empty</p>
-                    <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">Start adding items you love</p>
+                    <p className="font-semibold text-gray-800 dark:text-gray-200">
+                      Your wishlist is empty
+                    </p>
+                    <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+                      Start adding items you love
+                    </p>
                   </div>
                 </div>
               ) : (
@@ -213,7 +282,7 @@ export default function WishlistDrawer() {
                             prodpv: item.prodpv,
                             image: item.image,
                           }}
-                          brandName={item.brand ?? ''}
+                          brandName={item.brand ?? ""}
                           hideDiscountBadge={isPartnerStorefrontRoute}
                           forceRealPrice={isPartnerStorefrontRoute}
                           allowGuestAddToCart={isPartnerStorefrontRoute}

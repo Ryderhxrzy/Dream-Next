@@ -1,7 +1,8 @@
-'use client'
+"use client"
 
-import { FormEvent, useMemo, useState } from 'react'
-import { showErrorToast, showSuccessToast } from '@/libs/toast'
+import { FormEvent, useMemo, useState } from "react"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
+import { useGetExpenseCategoriesQuery } from "@/store/api/expenseCategoriesApi"
 import {
   Expense,
   useCreateExpenseMutation,
@@ -9,18 +10,17 @@ import {
   useGetExpensesQuery,
   useLazyGetExpensesQuery,
   useUpdateExpenseMutation,
-} from '@/store/api/expensesApi'
-import { useGetExpenseCategoriesQuery } from '@/store/api/expenseCategoriesApi'
+} from "@/store/api/expensesApi"
 
 const formatMoney = (value: number) =>
-  new Intl.NumberFormat('en-PH', {
-    style: 'currency',
-    currency: 'PHP',
+  new Intl.NumberFormat("en-PH", {
+    style: "currency",
+    currency: "PHP",
     maximumFractionDigits: 2,
   }).format(value || 0)
 
 const formatDateShort = (value?: string | null) => {
-  if (!value) return ''
+  if (!value) return ""
 
   const raw = String(value).trim()
   // Prefer the date part to avoid timezone shifts (e.g. ISO strings).
@@ -29,22 +29,34 @@ const formatDateShort = (value?: string | null) => {
     const year = Number(match[1])
     const month = Number(match[2])
     const day = Number(match[3])
-    if (Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day)) {
+    if (
+      Number.isFinite(year) &&
+      Number.isFinite(month) &&
+      Number.isFinite(day)
+    ) {
       const d = new Date(year, month - 1, day)
-      return new Intl.DateTimeFormat('en-PH', { year: 'numeric', month: 'short', day: 'numeric' }).format(d)
+      return new Intl.DateTimeFormat("en-PH", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      }).format(d)
     }
   }
 
   const fallback = new Date(raw)
   if (Number.isNaN(fallback.getTime())) return raw
-  return new Intl.DateTimeFormat('en-PH', { year: 'numeric', month: 'short', day: 'numeric' }).format(fallback)
+  return new Intl.DateTimeFormat("en-PH", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  }).format(fallback)
 }
 
 const todayKey = () => {
   const d = new Date()
   const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
+  const m = String(d.getMonth() + 1).padStart(2, "0")
+  const day = String(d.getDate()).padStart(2, "0")
   return `${y}-${m}-${day}`
 }
 
@@ -56,12 +68,14 @@ const getApiMessage = (error: unknown, fallback: string) => {
     }
   }
 
-  const firstValidation = apiError?.data?.errors ? Object.values(apiError.data.errors).flat()[0] : undefined
+  const firstValidation = apiError?.data?.errors
+    ? Object.values(apiError.data.errors).flat()[0]
+    : undefined
   return firstValidation || apiError?.data?.message || fallback
 }
 
 const csvEscape = (value: unknown) => {
-  const str = value == null ? '' : String(value)
+  const str = value == null ? "" : String(value)
   return `"${str.replace(/"/g, '""')}"`
 }
 
@@ -79,25 +93,27 @@ type FormState = {
 
 const emptyForm = (): FormState => ({
   category_id: 0,
-  sub_category_name: '',
-  invoice_url: '',
+  sub_category_name: "",
+  invoice_url: "",
   invoice_file: null,
   remove_invoice: false,
-  amount: '',
+  amount: "",
   transaction_date: todayKey(),
-  intent: '',
+  intent: "",
   status: 1,
 })
 
 export default function ExpensesPageMain() {
   const [selectedCategoryId, setSelectedCategoryId] = useState(0)
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
+  const [dateFrom, setDateFrom] = useState("")
+  const [dateTo, setDateTo] = useState("")
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
   const [isExporting, setIsExporting] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
-  const [invoicePreviewUrl, setInvoicePreviewUrl] = useState<string | null>(null)
+  const [invoicePreviewUrl, setInvoicePreviewUrl] = useState<string | null>(
+    null
+  )
   const [forceIframePreview, setForceIframePreview] = useState(false)
   const [editing, setEditing] = useState<Expense | null>(null)
   const [invoiceFileInputKey, setInvoiceFileInputKey] = useState(0)
@@ -105,11 +121,20 @@ export default function ExpensesPageMain() {
 
   const { data: categoriesData } = useGetExpenseCategoriesQuery()
   const categories = useMemo(
-    () => (categoriesData?.categories ?? []).filter((category) => (category.status ?? 1) === 1),
-    [categoriesData],
+    () =>
+      (categoriesData?.categories ?? []).filter(
+        (category) => (category.status ?? 1) === 1
+      ),
+    [categoriesData]
   )
 
-  const { data, isLoading, isFetching, isError, error: loadError } = useGetExpensesQuery({
+  const {
+    data,
+    isLoading,
+    isFetching,
+    isError,
+    error: loadError,
+  } = useGetExpensesQuery({
     categoryId: selectedCategoryId > 0 ? selectedCategoryId : undefined,
     dateFrom: dateFrom || undefined,
     dateTo: dateTo || undefined,
@@ -122,22 +147,28 @@ export default function ExpensesPageMain() {
   const currentPage = data?.current_page ?? page
   const lastPage = Math.max(1, data?.last_page ?? 1)
   const totalAmount = useMemo(() => {
-    if (typeof data?.filtered_total_amount === 'number') return data.filtered_total_amount
+    if (typeof data?.filtered_total_amount === "number")
+      return data.filtered_total_amount
     return expenses.reduce((sum, row) => sum + Number(row.amount ?? 0), 0)
   }, [data?.filtered_total_amount, expenses])
 
   const loadErrorMessage = useMemo(() => {
     if (!loadError) return null
-    const err = loadError as { status?: number; data?: { message?: string } | string }
-    const status = typeof err.status === 'number' ? err.status : undefined
+    const err = loadError as {
+      status?: number
+      data?: { message?: string } | string
+    }
+    const status = typeof err.status === "number" ? err.status : undefined
     const message =
-      typeof err.data === 'string'
+      typeof err.data === "string"
         ? err.data
         : (err.data as { message?: string } | undefined)?.message
 
-    if (status === 401) return 'Your session expired. Please refresh the page or sign in again.'
-    if (status === 403) return message || 'You do not have access to view expenses.'
-    return message || 'Failed to load expenses.'
+    if (status === 401)
+      return "Your session expired. Please refresh the page or sign in again."
+    if (status === 403)
+      return message || "You do not have access to view expenses."
+    return message || "Failed to load expenses."
   }, [loadError])
 
   const [createExpense, { isLoading: isCreating }] = useCreateExpenseMutation()
@@ -151,7 +182,10 @@ export default function ExpensesPageMain() {
       const next = emptyForm()
       const firstCategory = categories[0]
       if (firstCategory) next.category_id = firstCategory.id
-      return { ...next, transaction_date: prev.transaction_date || next.transaction_date }
+      return {
+        ...next,
+        transaction_date: prev.transaction_date || next.transaction_date,
+      }
     })
     setModalOpen(true)
   }
@@ -160,13 +194,13 @@ export default function ExpensesPageMain() {
     setEditing(row)
     setForm({
       category_id: row.category_id,
-      sub_category_name: row.sub_category_name || '',
-      invoice_url: row.invoice_url || '',
+      sub_category_name: row.sub_category_name || "",
+      invoice_url: row.invoice_url || "",
       invoice_file: null,
       remove_invoice: false,
-      amount: String(row.amount ?? ''),
+      amount: String(row.amount ?? ""),
       transaction_date: row.transaction_date || todayKey(),
-      intent: row.intent || '',
+      intent: row.intent || "",
       status: row.status ?? 1,
     })
     setModalOpen(true)
@@ -183,33 +217,36 @@ export default function ExpensesPageMain() {
   const toPayload = (): FormData | null => {
     const amount = Number(form.amount)
     if (!Number.isFinite(amount) || amount < 0) {
-      showErrorToast('Amount must be a valid number.')
+      showErrorToast("Amount must be a valid number.")
       return null
     }
     if (!form.category_id || form.category_id <= 0) {
-      showErrorToast('Please select a category.')
+      showErrorToast("Please select a category.")
       return null
     }
     if (!form.transaction_date) {
-      showErrorToast('Transaction date is required.')
+      showErrorToast("Transaction date is required.")
       return null
     }
     if (!form.intent.trim()) {
-      showErrorToast('Intent is required.')
+      showErrorToast("Intent is required.")
       return null
     }
 
     const payload = new FormData()
-    payload.append('category_id', String(form.category_id))
-    payload.append('sub_category_name', form.sub_category_name.trim())
-    payload.append('amount', String(amount))
-    payload.append('transaction_date', form.transaction_date)
-    payload.append('intent', form.intent.trim())
-    payload.append('status', String(form.status))
-    payload.append('remove_invoice', form.remove_invoice ? '1' : '0')
-    payload.append('invoice_url', form.remove_invoice ? '' : form.invoice_url.trim())
+    payload.append("category_id", String(form.category_id))
+    payload.append("sub_category_name", form.sub_category_name.trim())
+    payload.append("amount", String(amount))
+    payload.append("transaction_date", form.transaction_date)
+    payload.append("intent", form.intent.trim())
+    payload.append("status", String(form.status))
+    payload.append("remove_invoice", form.remove_invoice ? "1" : "0")
+    payload.append(
+      "invoice_url",
+      form.remove_invoice ? "" : form.invoice_url.trim()
+    )
     if (!form.remove_invoice && form.invoice_file) {
-      payload.append('invoice_file', form.invoice_file)
+      payload.append("invoice_file", form.invoice_file)
     }
 
     return payload
@@ -222,29 +259,32 @@ export default function ExpensesPageMain() {
 
     try {
       if (editing) {
-        const response = await updateExpense({ id: editing.id, data: payload }).unwrap()
-        showSuccessToast(response.message || 'Expense updated.')
+        const response = await updateExpense({
+          id: editing.id,
+          data: payload,
+        }).unwrap()
+        showSuccessToast(response.message || "Expense updated.")
       } else {
         const response = await createExpense(payload).unwrap()
-        showSuccessToast(response.message || 'Expense created.')
+        showSuccessToast(response.message || "Expense created.")
       }
       closeModal()
     } catch (error) {
-      showErrorToast(getApiMessage(error, 'Failed to save expense.'))
+      showErrorToast(getApiMessage(error, "Failed to save expense."))
     }
   }
 
   const handleDelete = async (row: Expense) => {
     const ok = window.confirm(
-      `Delete this expense?\n\n${row.category?.name || 'Category'} • ${formatMoney(row.amount)} • ${formatDateShort(row.transaction_date)}`,
+      `Delete this expense?\n\n${row.category?.name || "Category"} • ${formatMoney(row.amount)} • ${formatDateShort(row.transaction_date)}`
     )
     if (!ok) return
 
     try {
       const response = await deleteExpense(row.id).unwrap()
-      showSuccessToast(response.message || 'Expense deleted.')
+      showSuccessToast(response.message || "Expense deleted.")
     } catch (error) {
-      showErrorToast(getApiMessage(error, 'Failed to delete expense.'))
+      showErrorToast(getApiMessage(error, "Failed to delete expense."))
     }
   }
 
@@ -263,7 +303,7 @@ export default function ExpensesPageMain() {
           page: 1,
           perPage: exportPerPage,
         },
-        true,
+        true
       ).unwrap()
 
       allRows.push(...(firstPage.expenses ?? []))
@@ -278,41 +318,50 @@ export default function ExpensesPageMain() {
             page: p,
             perPage: exportPerPage,
           },
-          true,
+          true
         ).unwrap()
         allRows.push(...(next.expenses ?? []))
       }
 
       if (allRows.length === 0) {
-        showErrorToast('No expenses to export for current filters.')
+        showErrorToast("No expenses to export for current filters.")
         return
       }
 
-      const header = ['ID', 'Category', 'Sub-category', 'Intent', 'Amount', 'Transaction Date', 'Invoice URL', 'Status']
+      const header = [
+        "ID",
+        "Category",
+        "Sub-category",
+        "Intent",
+        "Amount",
+        "Transaction Date",
+        "Invoice URL",
+        "Status",
+      ]
       const lines = [
-        header.map(csvEscape).join(','),
+        header.map(csvEscape).join(","),
         ...allRows.map((row) =>
           [
             row.id,
-            row.category?.name ?? '',
-            row.sub_category_name ?? '',
-            row.intent ?? '',
+            row.category?.name ?? "",
+            row.sub_category_name ?? "",
+            row.intent ?? "",
             Number(row.amount ?? 0).toFixed(2),
-            row.transaction_date ?? '',
-            row.invoice_url ?? '',
-            row.status === 1 ? 'Active' : 'Inactive',
+            row.transaction_date ?? "",
+            row.invoice_url ?? "",
+            row.status === 1 ? "Active" : "Inactive",
           ]
             .map(csvEscape)
-            .join(','),
+            .join(",")
         ),
       ]
 
-      const csv = '\uFEFF' + lines.join('\n')
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+      const csv = "\uFEFF" + lines.join("\n")
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
       const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
+      const a = document.createElement("a")
       const now = new Date()
-      const pad = (n: number) => String(n).padStart(2, '0')
+      const pad = (n: number) => String(n).padStart(2, "0")
       const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
       a.href = url
       a.download = `expenses-export-${stamp}.csv`
@@ -322,7 +371,7 @@ export default function ExpensesPageMain() {
       URL.revokeObjectURL(url)
       showSuccessToast(`Exported ${allRows.length} expense record(s).`)
     } catch (error) {
-      showErrorToast(getApiMessage(error, 'Failed to export expenses.'))
+      showErrorToast(getApiMessage(error, "Failed to export expenses."))
     } finally {
       setIsExporting(false)
     }
@@ -334,37 +383,43 @@ export default function ExpensesPageMain() {
   }
 
   const resolveInvoiceUrl = (rawUrl: string): string => {
-    const value = String(rawUrl || '').trim()
-    if (!value) return ''
+    const value = String(rawUrl || "").trim()
+    if (!value) return ""
     if (/^https?:\/\//i.test(value)) return value
 
-    const apiBase = String(process.env.NEXT_PUBLIC_LARAVEL_API_URL || '').trim().replace(/\/+$/, '')
+    const apiBase = String(process.env.NEXT_PUBLIC_LARAVEL_API_URL || "")
+      .trim()
+      .replace(/\/+$/, "")
     if (!apiBase) return value
 
-    if (value.startsWith('/')) {
+    if (value.startsWith("/")) {
       return `${apiBase}${value}`
     }
 
-    return `${apiBase}/${value.replace(/^\/+/, '')}`
+    return `${apiBase}/${value.replace(/^\/+/, "")}`
   }
 
-  const getInvoicePreviewType = (url: string): 'image' | 'pdf' | 'other' => {
-    const clean = url.split('?')[0].toLowerCase()
-    if (/\.(png|jpe?g|gif|webp|bmp|svg)$/.test(clean)) return 'image'
-    if (clean.endsWith('.pdf')) return 'pdf'
-    return 'other'
+  const getInvoicePreviewType = (url: string): "image" | "pdf" | "other" => {
+    const clean = url.split("?")[0].toLowerCase()
+    if (/\.(png|jpe?g|gif|webp|bmp|svg)$/.test(clean)) return "image"
+    if (clean.endsWith(".pdf")) return "pdf"
+    return "other"
   }
 
   return (
     <div className="space-y-6">
       <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-emerald-50 p-6 shadow-sm">
-        <div className="pointer-events-none absolute -right-24 -top-20 h-52 w-52 rounded-full bg-emerald-200/40 blur-3xl" />
+        <div className="pointer-events-none absolute -top-20 -right-24 h-52 w-52 rounded-full bg-emerald-200/40 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-amber-200/35 blur-3xl" />
         <div className="relative flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.28em] text-emerald-700">Accounting</p>
+            <p className="text-xs font-bold tracking-[0.28em] text-emerald-700 uppercase">
+              Accounting
+            </p>
             <h1 className="mt-2 text-3xl font-bold text-slate-900">Expenses</h1>
-            <p className="mt-2 text-sm text-slate-600">Add and manage expense entries by category and transaction date.</p>
+            <p className="mt-2 text-sm text-slate-600">
+              Add and manage expense entries by category and transaction date.
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -373,7 +428,7 @@ export default function ExpensesPageMain() {
               disabled={isExporting}
               className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
             >
-              {isExporting ? 'Exporting...' : 'Export CSV'}
+              {isExporting ? "Exporting..." : "Export CSV"}
             </button>
             <button
               type="button"
@@ -387,16 +442,28 @@ export default function ExpensesPageMain() {
 
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
           <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
-            <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Records</p>
-            <p className="mt-1 text-2xl font-bold text-slate-900">{totalRecords}</p>
+            <p className="text-xs tracking-[0.16em] text-slate-500 uppercase">
+              Records
+            </p>
+            <p className="mt-1 text-2xl font-bold text-slate-900">
+              {totalRecords}
+            </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
-            <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Total (Filtered)</p>
-            <p className="mt-1 text-2xl font-bold text-emerald-700">{formatMoney(totalAmount)}</p>
+            <p className="text-xs tracking-[0.16em] text-slate-500 uppercase">
+              Total (Filtered)
+            </p>
+            <p className="mt-1 text-2xl font-bold text-emerald-700">
+              {formatMoney(totalAmount)}
+            </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
-            <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Categories</p>
-            <p className="mt-1 text-2xl font-bold text-slate-900">{categories.length}</p>
+            <p className="text-xs tracking-[0.16em] text-slate-500 uppercase">
+              Categories
+            </p>
+            <p className="mt-1 text-2xl font-bold text-slate-900">
+              {categories.length}
+            </p>
           </div>
         </div>
       </section>
@@ -453,8 +520,8 @@ export default function ExpensesPageMain() {
               type="button"
               onClick={() => {
                 setSelectedCategoryId(0)
-                setDateFrom('')
-                setDateTo('')
+                setDateFrom("")
+                setDateTo("")
                 setPage(1)
               }}
               className="h-[42px] rounded-xl border border-slate-200 px-4 text-xs font-semibold text-slate-600 hover:bg-slate-50"
@@ -466,7 +533,7 @@ export default function ExpensesPageMain() {
           <div className="flex items-center justify-between gap-3 lg:justify-end">
             <p className="text-xs text-slate-500">
               {isFetching
-                ? 'Refreshing...'
+                ? "Refreshing..."
                 : `${expenses.length} on this page | ${totalRecords} total result(s)`}
             </p>
           </div>
@@ -474,13 +541,13 @@ export default function ExpensesPageMain() {
 
         {isError ? (
           <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-            {loadErrorMessage || 'Failed to load expenses.'}
+            {loadErrorMessage || "Failed to load expenses."}
           </div>
         ) : null}
 
         <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200">
           <table className="w-full min-w-[900px]">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="border-b border-slate-200 bg-slate-50">
               <tr className="text-left text-xs font-semibold text-slate-500">
                 <th className="px-4 py-3">Category</th>
                 <th className="px-4 py-3">Sub-category</th>
@@ -494,43 +561,64 @@ export default function ExpensesPageMain() {
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-500">
+                  <td
+                    colSpan={7}
+                    className="px-4 py-10 text-center text-sm text-slate-500"
+                  >
                     Loading expenses...
                   </td>
                 </tr>
               ) : expenses.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-500">
+                  <td
+                    colSpan={7}
+                    className="px-4 py-10 text-center text-sm text-slate-500"
+                  >
                     No expenses found.
                   </td>
                 </tr>
               ) : (
                 expenses.map((row) => (
-                  <tr key={row.id} className="border-b border-slate-100 last:border-b-0 text-sm">
+                  <tr
+                    key={row.id}
+                    className="border-b border-slate-100 text-sm last:border-b-0"
+                  >
                     <td className="px-4 py-3">
-                      <p className="font-semibold text-slate-800">{row.category?.name || 'Category'}</p>
+                      <p className="font-semibold text-slate-800">
+                        {row.category?.name || "Category"}
+                      </p>
                       <p className="text-xs text-slate-400">#{row.id}</p>
                     </td>
-                    <td className="px-4 py-3 text-slate-700">{row.sub_category_name?.trim() || '-'}</td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {row.sub_category_name?.trim() || "-"}
+                    </td>
                     <td className="px-4 py-3 text-slate-700">
                       <p className="line-clamp-2">{row.intent}</p>
                     </td>
-                    <td className="px-4 py-3 font-semibold text-slate-800">{formatMoney(Number(row.amount ?? 0))}</td>
-                    <td className="px-4 py-3 text-slate-600">{formatDateShort(row.transaction_date)}</td>
+                    <td className="px-4 py-3 font-semibold text-slate-800">
+                      {formatMoney(Number(row.amount ?? 0))}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">
+                      {formatDateShort(row.transaction_date)}
+                    </td>
                     <td className="px-4 py-3">
                       {row.invoice_url ? (
                         <button
                           type="button"
                           onClick={() => {
                             setForceIframePreview(false)
-                            setInvoicePreviewUrl(resolveInvoiceUrl(row.invoice_url ?? ''))
+                            setInvoicePreviewUrl(
+                              resolveInvoiceUrl(row.invoice_url ?? "")
+                            )
                           }}
                           className="text-xs font-semibold text-emerald-700 hover:underline"
                         >
                           View Invoice
                         </button>
                       ) : (
-                        <span className="text-xs text-slate-400">No invoice</span>
+                        <span className="text-xs text-slate-400">
+                          No invoice
+                        </span>
                       )}
                     </td>
                     <td className="px-4 py-3">
@@ -538,8 +626,16 @@ export default function ExpensesPageMain() {
                         <button
                           type="button"
                           onClick={() => openEdit(row)}
-                          title={row.invoice_url ? 'Edit expense invoice' : 'Upload invoice'}
-                          aria-label={row.invoice_url ? 'Edit expense invoice' : 'Upload invoice'}
+                          title={
+                            row.invoice_url
+                              ? "Edit expense invoice"
+                              : "Upload invoice"
+                          }
+                          aria-label={
+                            row.invoice_url
+                              ? "Edit expense invoice"
+                              : "Upload invoice"
+                          }
                           className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-60"
                         >
                           <svg
@@ -638,8 +734,12 @@ export default function ExpensesPageMain() {
           <div className="w-full max-w-xl rounded-2xl border border-slate-200 bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
               <div>
-                <h2 className="text-lg font-bold text-slate-900">{editing ? 'Edit Expense' : 'Add Expense'}</h2>
-                <p className="mt-0.5 text-xs text-slate-500">Category, sub-category, amount, date, intent, and invoice.</p>
+                <h2 className="text-lg font-bold text-slate-900">
+                  {editing ? "Edit Expense" : "Add Expense"}
+                </h2>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  Category, sub-category, amount, date, intent, and invoice.
+                </p>
               </div>
               <button
                 type="button"
@@ -655,7 +755,12 @@ export default function ExpensesPageMain() {
                 Expense Category
                 <select
                   value={form.category_id}
-                  onChange={(event) => setForm((prev) => ({ ...prev, category_id: Number(event.target.value) }))}
+                  onChange={(event) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      category_id: Number(event.target.value),
+                    }))
+                  }
                   className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800"
                   required
                 >
@@ -675,7 +780,12 @@ export default function ExpensesPageMain() {
                 <input
                   type="text"
                   value={form.sub_category_name}
-                  onChange={(event) => setForm((prev) => ({ ...prev, sub_category_name: event.target.value }))}
+                  onChange={(event) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      sub_category_name: event.target.value,
+                    }))
+                  }
                   className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800"
                   placeholder="Enter sub-category name"
                   maxLength={180}
@@ -690,7 +800,12 @@ export default function ExpensesPageMain() {
                     step="0.01"
                     min="0"
                     value={form.amount}
-                    onChange={(event) => setForm((prev) => ({ ...prev, amount: event.target.value }))}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        amount: event.target.value,
+                      }))
+                    }
                     className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800"
                     placeholder="0.00"
                     required
@@ -702,7 +817,12 @@ export default function ExpensesPageMain() {
                   <input
                     type="date"
                     value={form.transaction_date}
-                    onChange={(event) => setForm((prev) => ({ ...prev, transaction_date: event.target.value }))}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        transaction_date: event.target.value,
+                      }))
+                    }
                     className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800"
                     required
                   />
@@ -732,7 +852,7 @@ export default function ExpensesPageMain() {
                       onClick={() =>
                         setForm((prev) => ({
                           ...prev,
-                          invoice_url: '',
+                          invoice_url: "",
                         }))
                       }
                       className="mt-1 text-xs font-semibold text-slate-500 hover:text-slate-700"
@@ -750,13 +870,19 @@ export default function ExpensesPageMain() {
                     accept="image/*"
                     onChange={(event) => {
                       const file = event.target.files?.[0] ?? null
-                      setForm((prev) => ({ ...prev, invoice_file: file, remove_invoice: false }))
+                      setForm((prev) => ({
+                        ...prev,
+                        invoice_file: file,
+                        remove_invoice: false,
+                      }))
                     }}
                     className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-2.5 file:py-1.5 file:text-xs file:font-semibold file:text-emerald-700"
                     disabled={form.remove_invoice}
                   />
                   <p className="mt-1 text-xs text-slate-400">
-                    {form.invoice_file ? `Selected: ${form.invoice_file.name}` : 'Optional. Upload photo/screenshot of receipt.'}
+                    {form.invoice_file
+                      ? `Selected: ${form.invoice_file.name}`
+                      : "Optional. Upload photo/screenshot of receipt."}
                   </p>
                   {form.invoice_file ? (
                     <button
@@ -782,7 +908,9 @@ export default function ExpensesPageMain() {
                       setForm((prev) => ({
                         ...prev,
                         remove_invoice: event.target.checked,
-                        ...(event.target.checked ? { invoice_url: '', invoice_file: null } : {}),
+                        ...(event.target.checked
+                          ? { invoice_url: "", invoice_file: null }
+                          : {}),
                       }))
                     }
                   />
@@ -794,7 +922,9 @@ export default function ExpensesPageMain() {
                 Intent
                 <textarea
                   value={form.intent}
-                  onChange={(event) => setForm((prev) => ({ ...prev, intent: event.target.value }))}
+                  onChange={(event) =>
+                    setForm((prev) => ({ ...prev, intent: event.target.value }))
+                  }
                   className="mt-1 h-24 w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800"
                   placeholder="Describe the purpose of this expense..."
                   maxLength={500}
@@ -806,7 +936,12 @@ export default function ExpensesPageMain() {
                 <input
                   type="checkbox"
                   checked={form.status === 1}
-                  onChange={(event) => setForm((prev) => ({ ...prev, status: event.target.checked ? 1 : 0 }))}
+                  onChange={(event) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      status: event.target.checked ? 1 : 0,
+                    }))
+                  }
                 />
                 Active expense
               </label>
@@ -824,7 +959,11 @@ export default function ExpensesPageMain() {
                   disabled={isCreating || isUpdating}
                   className="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
                 >
-                  {isCreating || isUpdating ? 'Saving...' : editing ? 'Save Changes' : 'Create Expense'}
+                  {isCreating || isUpdating
+                    ? "Saving..."
+                    : editing
+                      ? "Save Changes"
+                      : "Create Expense"}
                 </button>
               </div>
             </form>
@@ -837,8 +976,12 @@ export default function ExpensesPageMain() {
           <div className="w-full max-w-5xl rounded-2xl border border-slate-200 bg-white shadow-xl">
             <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
               <div>
-                <h2 className="text-lg font-bold text-slate-900">Invoice Preview</h2>
-                <p className="mt-0.5 text-xs text-slate-500">Preview the uploaded invoice without leaving this page.</p>
+                <h2 className="text-lg font-bold text-slate-900">
+                  Invoice Preview
+                </h2>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  Preview the uploaded invoice without leaving this page.
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 <a
@@ -860,14 +1003,15 @@ export default function ExpensesPageMain() {
             </div>
 
             <div className="max-h-[75vh] overflow-auto bg-slate-50 p-4">
-              {getInvoicePreviewType(invoicePreviewUrl) === 'image' && !forceIframePreview ? (
+              {getInvoicePreviewType(invoicePreviewUrl) === "image" &&
+              !forceIframePreview ? (
                 <img
                   src={invoicePreviewUrl}
                   alt="Invoice"
                   onError={() => setForceIframePreview(true)}
                   className="mx-auto max-h-[70vh] w-auto max-w-full rounded-lg border border-slate-200 bg-white"
                 />
-              ) : getInvoicePreviewType(invoicePreviewUrl) === 'pdf' ? (
+              ) : getInvoicePreviewType(invoicePreviewUrl) === "pdf" ? (
                 <iframe
                   src={invoicePreviewUrl}
                   title="Invoice PDF Preview"

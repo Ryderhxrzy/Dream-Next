@@ -1,10 +1,10 @@
-import { buildPageMetadata } from '@/app/seo'
-import PartnerUsersPage from '@/components/superAdmin/webpages/PartnerUsersPage'
+import PartnerUsersPage from "@/components/superAdmin/webpages/PartnerUsersPage"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
-  title: 'Partner Users',
-  description: 'Manage users for your partner storefront.',
-  path: '/partner/webpages/partner-users',
+  title: "Partner Users",
+  description: "Manage users for your partner storefront.",
+  path: "/partner/webpages/partner-users",
   noIndex: true,
 })
 

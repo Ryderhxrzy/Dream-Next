@@ -1,21 +1,22 @@
-'use client';
+"use client"
 
-import { staggerContainer, staggerItem } from "./animation";
-import { BookingFormData, TIME_SLOTS } from "./types";
-import { motion } from "framer-motion";
-import { FormField, SelectField } from "./ui/Primitives";
-import { useState } from "react";
+import { useState } from "react"
+import { motion } from "framer-motion"
+
+import { staggerContainer, staggerItem } from "./animation"
+import { BookingFormData, TIME_SLOTS } from "./types"
+import { FormField, SelectField } from "./ui/Primitives"
 
 interface StepScheduleProps {
-  form: BookingFormData;
-  onChange: (field: keyof BookingFormData, value: string | string[]) => void;
+  form: BookingFormData
+  onChange: (field: keyof BookingFormData, value: string | string[]) => void
 }
 
 const FLEXIBILITY_OPTIONS = [
   { value: "exact", label: "This exact date only" },
   { value: "week", label: "Within the same week" },
   { value: "flexible", label: "Flexible (any time)" },
-];
+]
 
 const TIMELINE_OPTIONS = [
   { value: "asap", label: "As soon as possible" },
@@ -23,19 +24,18 @@ const TIMELINE_OPTIONS = [
   { value: "three-months", label: "Within 3 months" },
   { value: "six-months", label: "Within 6 months" },
   { value: "planning", label: "Still planning / exploring" },
-];
+]
 
 const today = (() => {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-})();
-
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, "0")
+  const day = String(d.getDate()).padStart(2, "0")
+  return `${y}-${m}-${day}`
+})()
 
 const StepSchedule = ({ form, onChange }: StepScheduleProps) => {
-  const [dateFocused, setDateFocused] = useState(false);
+  const [dateFocused, setDateFocused] = useState(false)
   return (
     <motion.div
       variants={staggerContainer}
@@ -55,12 +55,14 @@ const StepSchedule = ({ form, onChange }: StepScheduleProps) => {
               onChange={(e) => onChange("preferredDate", e.target.value)}
               onFocus={() => setDateFocused(true)}
               onBlur={() => setDateFocused(false)}
-              className="w-full bg-white text-slate-800 text-sm px-4 py-3 rounded-[4px] outline-none transition-all duration-300"
+              className="w-full rounded-[4px] bg-white px-4 py-3 text-sm text-slate-800 transition-all duration-300 outline-none"
               style={{
                 border: dateFocused
                   ? "1px solid rgba(99,102,241,0.7)"
                   : "1px solid rgba(99,102,241,0.15)",
-                boxShadow: dateFocused ? "0 0 0 3px rgba(99,102,241,0.08)" : "none",
+                boxShadow: dateFocused
+                  ? "0 0 0 3px rgba(99,102,241,0.08)"
+                  : "none",
                 colorScheme: "light",
               }}
             />
@@ -103,23 +105,25 @@ const StepSchedule = ({ form, onChange }: StepScheduleProps) => {
 
       {/* Time slot visual picker */}
       <motion.div variants={staggerItem}>
-        <label className="text-[0.68rem] tracking-[0.14em] uppercase text-slate-500 font-medium block mb-3">
+        <label className="mb-3 block text-[0.68rem] font-medium tracking-[0.14em] text-slate-500 uppercase">
           Quick Time Select
         </label>
         <div className="flex flex-wrap gap-2">
           {TIME_SLOTS.map((slot) => {
-            const isSelected = form.preferredTime === slot;
+            const isSelected = form.preferredTime === slot
             return (
               <motion.button
                 key={slot}
                 type="button"
                 onClick={() => onChange("preferredTime", slot)}
-                className="text-[0.7rem] tracking-wide px-3.5 py-2 rounded-[3px] transition-all duration-250"
+                className="rounded-[3px] px-3.5 py-2 text-[0.7rem] tracking-wide transition-all duration-250"
                 style={{
                   border: isSelected
                     ? "1px solid rgba(99,102,241,0.6)"
                     : "1px solid rgba(99,102,241,0.12)",
-                  background: isSelected ? "rgba(99,102,241,0.1)" : "rgba(255,255,255,0.8)",
+                  background: isSelected
+                    ? "rgba(99,102,241,0.1)"
+                    : "rgba(255,255,255,0.8)",
                   color: isSelected ? "#4338ca" : "#94a3b8",
                 }}
                 whileHover={{ scale: 1.04 }}
@@ -128,7 +132,7 @@ const StepSchedule = ({ form, onChange }: StepScheduleProps) => {
               >
                 {slot}
               </motion.button>
-            );
+            )
           })}
         </div>
       </motion.div>
@@ -136,15 +140,16 @@ const StepSchedule = ({ form, onChange }: StepScheduleProps) => {
       {/* Info note */}
       <motion.div
         variants={staggerItem}
-        className="flex items-start gap-3 p-4 rounded-[4px] border"
+        className="flex items-start gap-3 rounded-[4px] border p-4"
         style={{
           background: "rgba(99,102,241,0.04)",
           borderColor: "rgba(99,102,241,0.15)",
         }}
       >
-        <span className="text-indigo-500 text-sm mt-0.5 flex-shrink-0">ℹ</span>
-        <p className="text-[0.75rem] text-slate-500 leading-relaxed">
-          Our team will confirm your appointment within 24 hours and may suggest an alternative slot if your preferred time is unavailable.
+        <span className="mt-0.5 flex-shrink-0 text-sm text-indigo-500">ℹ</span>
+        <p className="text-[0.75rem] leading-relaxed text-slate-500">
+          Our team will confirm your appointment within 24 hours and may suggest
+          an alternative slot if your preferred time is unavailable.
         </p>
       </motion.div>
     </motion.div>

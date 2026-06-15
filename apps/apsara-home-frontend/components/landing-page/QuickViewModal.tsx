@@ -1,13 +1,22 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronLeft, ChevronRight, Minus, Plus, Check, ShoppingBag } from 'lucide-react';
-import { Product } from './ProductCard';
+import { useState } from "react"
+import { AnimatePresence, motion } from "framer-motion"
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Minus,
+  Plus,
+  ShoppingBag,
+  X,
+} from "lucide-react"
+
+import { Product } from "./ProductCard"
 
 interface QuickViewModalProps {
-  product: Product | null;
-  isOpen: boolean;
-  onClose: () => void;
-  onAddToCart: (product: Product, quantity: number) => void;
+  product: Product | null
+  isOpen: boolean
+  onClose: () => void
+  onAddToCart: (product: Product, quantity: number) => void
 }
 
 export default function QuickViewModal({
@@ -16,35 +25,35 @@ export default function QuickViewModal({
   onClose,
   onAddToCart,
 }: QuickViewModalProps) {
-  const [currentImage, setCurrentImage] = useState(0);
-  const [quantity, setQuantity] = useState(1);
-  const [isAdded, setIsAdded] = useState(false);
+  const [currentImage, setCurrentImage] = useState(0)
+  const [quantity, setQuantity] = useState(1)
+  const [isAdded, setIsAdded] = useState(false)
 
   // Mock multiple images
   const images = product
     ? [
         product.image,
-        product.image.replace('w=600', 'w=601'),
-        product.image.replace('w=600', 'w=602'),
+        product.image.replace("w=600", "w=601"),
+        product.image.replace("w=600", "w=602"),
       ]
-    : [];
+    : []
 
   const handleAddToCart = () => {
-    if (!product) return;
-    setIsAdded(true);
-    onAddToCart(product, quantity);
+    if (!product) return
+    setIsAdded(true)
+    onAddToCart(product, quantity)
     setTimeout(() => {
-      setIsAdded(false);
-    }, 2000);
-  };
+      setIsAdded(false)
+    }, 2000)
+  }
 
   const nextImage = () => {
-    setCurrentImage((prev) => (prev + 1) % images.length);
-  };
+    setCurrentImage((prev) => (prev + 1) % images.length)
+  }
 
   const prevImage = () => {
-    setCurrentImage((prev) => (prev - 1 + images.length) % images.length);
-  };
+    setCurrentImage((prev) => (prev - 1 + images.length) % images.length)
+  }
 
   return (
     <AnimatePresence>
@@ -57,7 +66,7 @@ export default function QuickViewModal({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/40 backdrop-blur-md z-50"
+            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md"
           />
 
           {/* Modal */}
@@ -66,12 +75,12 @@ export default function QuickViewModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] as const }}
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[95%] max-w-4xl max-h-[90vh] z-50 overflow-hidden"
+            className="fixed top-1/2 left-1/2 z-50 max-h-[90vh] w-[95%] max-w-4xl -translate-x-1/2 -translate-y-1/2 overflow-hidden"
           >
             <div
-              className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-3xl shadow-soft-lg overflow-hidden"
+              className="shadow-soft-lg overflow-hidden rounded-3xl bg-white/95 backdrop-blur-xl dark:bg-gray-900/95"
               style={{
-                border: '1px solid rgba(255, 255, 255, 0.3)',
+                border: "1px solid rgba(255, 255, 255, 0.3)",
               }}
             >
               {/* Close Button */}
@@ -79,14 +88,14 @@ export default function QuickViewModal({
                 whileHover={{ scale: 1.1, rotate: 90 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={onClose}
-                className="absolute top-4 right-4 z-10 w-10 h-10 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-soft dark:shadow-none text-af-text dark:text-gray-100 hover:text-af-forest dark:hover:text-orange-400 transition-colors"
+                className="shadow-soft text-af-text hover:text-af-forest absolute top-4 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white transition-colors dark:bg-gray-800 dark:text-gray-100 dark:shadow-none dark:hover:text-orange-400"
               >
                 <X size={20} />
               </motion.button>
 
-              <div className="grid md:grid-cols-2 gap-0">
+              <div className="grid gap-0 md:grid-cols-2">
                 {/* Image Gallery */}
-                <div className="relative bg-[#f5f5f3] dark:bg-gray-950 aspect-square md:aspect-auto">
+                <div className="relative aspect-square bg-[#f5f5f3] md:aspect-auto dark:bg-gray-950">
                   <motion.img
                     key={currentImage}
                     initial={{ opacity: 0 }}
@@ -94,7 +103,7 @@ export default function QuickViewModal({
                     transition={{ duration: 0.3 }}
                     src={images[currentImage]}
                     alt={product.name}
-                    className="w-full h-full object-cover"
+                    className="h-full w-full object-cover"
                   />
 
                   {/* Navigation Arrows */}
@@ -102,7 +111,7 @@ export default function QuickViewModal({
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={prevImage}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-soft dark:shadow-none text-af-text dark:text-gray-100 hover:bg-white dark:hover:bg-gray-700 transition-all"
+                    className="shadow-soft text-af-text absolute top-1/2 left-4 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 backdrop-blur-sm transition-all hover:bg-white dark:bg-gray-800/80 dark:text-gray-100 dark:shadow-none dark:hover:bg-gray-700"
                   >
                     <ChevronLeft size={20} />
                   </motion.button>
@@ -110,21 +119,21 @@ export default function QuickViewModal({
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={nextImage}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-soft dark:shadow-none text-af-text dark:text-gray-100 hover:bg-white dark:hover:bg-gray-700 transition-all"
+                    className="shadow-soft text-af-text absolute top-1/2 right-4 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 backdrop-blur-sm transition-all hover:bg-white dark:bg-gray-800/80 dark:text-gray-100 dark:shadow-none dark:hover:bg-gray-700"
                   >
                     <ChevronRight size={20} />
                   </motion.button>
 
                   {/* Image Indicators */}
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                  <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
                     {images.map((_, index) => (
                       <button
                         key={index}
                         onClick={() => setCurrentImage(index)}
-                        className={`w-2.5 h-2.5 rounded-full transition-all ${
+                        className={`h-2.5 w-2.5 rounded-full transition-all ${
                           currentImage === index
-                            ? 'bg-af-forest w-6'
-                            : 'bg-white/60 dark:bg-gray-500/70'
+                            ? "bg-af-forest w-6"
+                            : "bg-white/60 dark:bg-gray-500/70"
                         }`}
                       />
                     ))}
@@ -134,12 +143,12 @@ export default function QuickViewModal({
                   {(product.badge || product.isNew) && (
                     <div className="absolute top-4 left-4 flex flex-col gap-2">
                       {product.isNew && (
-                        <span className="bg-af-forest text-white text-xs font-bold px-3 py-1 rounded-full">
+                        <span className="bg-af-forest rounded-full px-3 py-1 text-xs font-bold text-white">
                           NEW
                         </span>
                       )}
                       {product.badge && (
-                        <span className="bg-af-brass text-white text-xs font-bold px-3 py-1 rounded-full">
+                        <span className="bg-af-brass rounded-full px-3 py-1 text-xs font-bold text-white">
                           {product.badge}
                         </span>
                       )}
@@ -148,26 +157,26 @@ export default function QuickViewModal({
                 </div>
 
                 {/* Product Details */}
-                <div className="p-8 md:p-10 flex flex-col justify-center">
-                  <span className="font-mono text-xs text-af-text-secondary dark:text-gray-400 uppercase tracking-wider">
+                <div className="flex flex-col justify-center p-8 md:p-10">
+                  <span className="text-af-text-secondary font-mono text-xs tracking-wider uppercase dark:text-gray-400">
                     {product.category}
                   </span>
-                  <h2 className="font-display text-2xl md:text-3xl font-semibold text-af-text dark:text-white mt-2 mb-4">
+                  <h2 className="font-display text-af-text mt-2 mb-4 text-2xl font-semibold md:text-3xl dark:text-white">
                     {product.name}
                   </h2>
 
-                  <div className="flex items-center gap-3 mb-6">
-                    <span className="font-mono text-2xl font-bold text-af-forest">
+                  <div className="mb-6 flex items-center gap-3">
+                    <span className="text-af-forest font-mono text-2xl font-bold">
                       ${product.price.toLocaleString()}
                     </span>
                     {product.originalPrice && (
-                      <span className="font-mono text-lg text-af-text-secondary dark:text-gray-400 line-through">
+                      <span className="text-af-text-secondary font-mono text-lg line-through dark:text-gray-400">
                         ${product.originalPrice.toLocaleString()}
                       </span>
                     )}
                   </div>
 
-                  <p className="text-af-text-secondary dark:text-gray-400 leading-relaxed mb-8">
+                  <p className="text-af-text-secondary mb-8 leading-relaxed dark:text-gray-400">
                     Crafted with premium materials and meticulous attention to
                     detail, this piece brings both comfort and sophistication to
                     your space. Designed to complement any modern interior while
@@ -175,25 +184,27 @@ export default function QuickViewModal({
                   </p>
 
                   {/* Quantity Selector */}
-                  <div className="flex items-center gap-4 mb-6">
-                    <span className="text-af-text dark:text-white font-medium">Quantity:</span>
-                    <div className="flex items-center gap-3 bg-[#f5f5f3] dark:bg-gray-800 rounded-full px-2 py-1">
+                  <div className="mb-6 flex items-center gap-4">
+                    <span className="text-af-text font-medium dark:text-white">
+                      Quantity:
+                    </span>
+                    <div className="flex items-center gap-3 rounded-full bg-[#f5f5f3] px-2 py-1 dark:bg-gray-800">
                       <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                        className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white dark:hover:bg-gray-700 transition-colors"
+                        className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-white dark:hover:bg-gray-700"
                       >
                         <Minus size={16} />
                       </motion.button>
-                      <span className="font-mono text-lg w-8 text-center dark:text-white">
+                      <span className="w-8 text-center font-mono text-lg dark:text-white">
                         {quantity}
                       </span>
                       <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setQuantity(quantity + 1)}
-                        className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white dark:hover:bg-gray-700 transition-colors"
+                        className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-white dark:hover:bg-gray-700"
                       >
                         <Plus size={16} />
                       </motion.button>
@@ -206,13 +217,13 @@ export default function QuickViewModal({
                     whileTap={{ scale: 0.98 }}
                     onClick={handleAddToCart}
                     disabled={isAdded}
-                    className={`relative w-full py-4 rounded-full font-semibold text-base flex items-center justify-center gap-2 transition-all duration-500 overflow-hidden ${
+                    className={`relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-full py-4 text-base font-semibold transition-all duration-500 ${
                       isAdded
-                        ? 'bg-green-500 text-white'
-                        : 'bg-af-brass text-white hover:bg-[#c4955f]'
+                        ? "bg-green-500 text-white"
+                        : "bg-af-brass text-white hover:bg-[#c4955f]"
                     }`}
                     style={{
-                      boxShadow: '0px 4px 16px rgba(212, 165, 116, 0.4)',
+                      boxShadow: "0px 4px 16px rgba(212, 165, 116, 0.4)",
                     }}
                   >
                     <AnimatePresence mode="wait">
@@ -242,22 +253,26 @@ export default function QuickViewModal({
                           className="flex items-center gap-2"
                         >
                           <ShoppingBag size={20} />
-                          Add to Cart — ${(product.price * quantity).toLocaleString()}
+                          Add to Cart — $
+                          {(product.price * quantity).toLocaleString()}
                         </motion.span>
                       )}
                     </AnimatePresence>
                   </motion.button>
 
                   {/* Trust Indicators */}
-                  <div className="flex flex-wrap gap-4 mt-6 text-sm text-af-text-secondary dark:text-gray-400">
+                  <div className="text-af-text-secondary mt-6 flex flex-wrap gap-4 text-sm dark:text-gray-400">
                     <span className="flex items-center gap-1">
-                      <Check size={14} className="text-af-forest" /> Free Shipping
+                      <Check size={14} className="text-af-forest" /> Free
+                      Shipping
                     </span>
                     <span className="flex items-center gap-1">
-                      <Check size={14} className="text-af-forest" /> 30-Day Returns
+                      <Check size={14} className="text-af-forest" /> 30-Day
+                      Returns
                     </span>
                     <span className="flex items-center gap-1">
-                      <Check size={14} className="text-af-forest" /> 2-Year Warranty
+                      <Check size={14} className="text-af-forest" /> 2-Year
+                      Warranty
                     </span>
                   </div>
                 </div>
@@ -267,6 +282,5 @@ export default function QuickViewModal({
         </>
       )}
     </AnimatePresence>
-  );
+  )
 }
-

@@ -1,10 +1,10 @@
-import { buildPageMetadata } from '@/app/seo'
-import WebPageItemsManager from '@/components/superAdmin/webpages/WebPageItemsManager'
+import WebPageItemsManager from "@/components/superAdmin/webpages/WebPageItemsManager"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
-  title: 'Admin Web Pages Banners',
-  description: 'Manage website banners.',
-  path: '/admin/webpages/banners',
+  title: "Admin Web Pages Banners",
+  description: "Manage website banners.",
+  path: "/admin/webpages/banners",
   noIndex: true,
 })
 
@@ -17,4 +17,3 @@ export default function AdminWebPagesBannersPage() {
     />
   )
 }
-

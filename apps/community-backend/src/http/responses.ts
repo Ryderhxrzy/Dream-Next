@@ -1,3 +1,3 @@
 export function errorResponse(message: string) {
-  return { message };
+  return { message }
 }

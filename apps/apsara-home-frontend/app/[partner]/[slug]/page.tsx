@@ -1,6 +1,6 @@
 import PartnerCategoryPage, {
   generateMetadata as generatePartnerCategoryMetadata,
-} from '@/app/shop/[partner]/category/[slug]/page'
+} from "@/app/shop/[partner]/category/[slug]/page"
 
 type PageProps = {
   params: Promise<{
@@ -13,6 +13,8 @@ export async function generateMetadata({ params }: PageProps) {
   return generatePartnerCategoryMetadata({ params })
 }
 
-export default async function PartnerLegacyCategoryEntryPage({ params }: PageProps) {
+export default async function PartnerLegacyCategoryEntryPage({
+  params,
+}: PageProps) {
   return PartnerCategoryPage({ params })
 }

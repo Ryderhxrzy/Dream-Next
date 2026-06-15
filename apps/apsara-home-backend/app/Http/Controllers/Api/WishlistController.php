@@ -25,7 +25,12 @@ class WishlistController extends Controller
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
 
-        $search = trim((string) ($validated['search'] ?? $validated['q'] ?? ''));
+        // Prefer `search`, but fall back to `q` when `search` is missing OR sent empty
+        // (`??` alone would let an empty `search` string shadow a valid `q`).
+        $search = trim((string) ($validated['search'] ?? ''));
+        if ($search === '') {
+            $search = trim((string) ($validated['q'] ?? ''));
+        }
         $perPage = (int) ($validated['per_page'] ?? 12);
         // Pagination is opt-in: callers that pass neither page nor per_page keep
         // receiving the full list (backward compatible with existing wishlist views).
@@ -57,11 +62,16 @@ class WishlistController extends Controller
                 $query->whereIn('pd_status', [1, 2]);
 
                 if ($search !== '') {
-                    $like = '%' . $search . '%';
+                    // Escape LIKE wildcards so %/_ in the term match literally, and use
+                    // ilike for case-insensitive matching on PostgreSQL (parity with the
+                    // main product search in ProductController::applyKeywordSearch()).
+                    $like = '%' . addcslashes($search, '\\%_') . '%';
                     $query->where(function ($inner) use ($like) {
-                        $inner->where('pd_name', 'like', $like)
-                            ->orWhere('pd_parent_sku', 'like', $like)
-                            ->orWhere('pd_description', 'like', $like);
+                        $inner->where('pd_name', 'ilike', $like)
+                            ->orWhere('pd_parent_sku', 'ilike', $like)
+                            ->orWhereHas('variants', function ($variantQuery) use ($like) {
+                                $variantQuery->where('pv_sku', 'ilike', $like);
+                            });
                     });
                 }
             })
@@ -143,6 +153,166 @@ class WishlistController extends Controller
                 'search' => $search !== '' ? $search : null,
             ]),
         ]);
+    }
+
+    /**
+     * Product recommendations seeded from the authenticated customer's wishlist.
+     *
+     * Strategy (Phase 1 - category affinity):
+     *   1. Collect the categories of the customer's currently wishlisted (visible) products.
+     *   2. Return active products from those same categories, excluding items already
+     *      wishlisted, ranked by bestseller / must-have / recency.
+     *   3. Cold-start / padding: top up remaining slots with popular products so the
+     *      feed is always full (works for users with an empty wishlist too).
+     *
+     * Returns the same product DTO as the wishlist list endpoint so the client can
+     * reuse its existing product-card rendering.
+     */
+    public function recommendations(Request $request)
+    {
+        $validated = $request->validate([
+            'limit' => ['nullable', 'integer', 'min:1', 'max:50'],
+        ]);
+
+        $limit = (int) ($validated['limit'] ?? 12);
+        $userId = Auth::id();
+
+        // 1. Pull the customer's wishlist rows with just the product id + category.
+        $wishlistRows = Wishlist::query()
+            ->where('cw_customer_id', $userId)
+            ->whereHas('product', function ($query) {
+                $query->whereIn('pd_status', [1, 2]); // public visibility
+            })
+            ->with(['product' => function ($query) {
+                $query->select('pd_id', 'pd_catid');
+            }])
+            ->get();
+
+        $wishlistedProductIds = $wishlistRows
+            ->pluck('cw_product_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $categoryIds = $wishlistRows
+            ->pluck('product.pd_catid')
+            ->filter(fn ($id) => (int) $id > 0)
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        // 2. Wishlist-seeded picks: products from the same categories, never re-suggesting
+        //    something already on the wishlist.
+        $products = collect();
+        if (!empty($categoryIds)) {
+            $products = $this->baseRecommendationQuery()
+                ->whereIn('pd_catid', $categoryIds)
+                ->when(!empty($wishlistedProductIds), fn ($q) => $q->whereNotIn('pd_id', $wishlistedProductIds))
+                ->orderByDesc('pd_bestseller')
+                ->orderByDesc('pd_musthave')
+                ->orderByDesc('pd_date')
+                ->limit($limit)
+                ->get();
+        }
+
+        $source = $products->isNotEmpty() ? 'wishlist' : 'popular';
+
+        // 3. Cold-start / padding with popular products when the wishlist is empty or thin.
+        if ($products->count() < $limit) {
+            $needed = $limit - $products->count();
+            $alreadyPicked = $products->pluck('pd_id')->map(fn ($id) => (int) $id)->all();
+            $excludeIds = array_values(array_unique(array_merge($wishlistedProductIds, $alreadyPicked)));
+
+            $popular = $this->baseRecommendationQuery()
+                ->when(!empty($excludeIds), fn ($q) => $q->whereNotIn('pd_id', $excludeIds))
+                ->orderByDesc('pd_bestseller')
+                ->orderByDesc('pd_musthave')
+                ->orderByDesc('pd_date')
+                ->limit($needed)
+                ->get();
+
+            $products = $products->concat($popular);
+        }
+
+        // 4. Attach sold counts + ratings (single query each) and map to the product DTO.
+        [$soldCounts, $avgRatings] = $this->loadSoldCountsAndRatings(
+            $products->pluck('pd_id')->filter()->unique()
+        );
+
+        $data = $products->values()->map(function ($product) use ($soldCounts, $avgRatings) {
+            return $this->mapProduct(
+                $product,
+                (int) ($soldCounts[$product->pd_id] ?? 0),
+                (float) ($avgRatings[$product->pd_id] ?? 0.0)
+            );
+        });
+
+        return response()->json([
+            'data' => $data,
+            'meta' => [
+                'source' => $source,                 // 'wishlist' = personalized, 'popular' = cold-start fallback
+                'based_on_wishlist' => !empty($categoryIds),
+                'seed_category_ids' => $categoryIds,
+                'limit' => $limit,
+                'count' => $data->count(),
+            ],
+        ]);
+    }
+
+    /**
+     * Shared Product query (columns + relations) used by recommendations, matching the
+     * shape mapProduct() expects. Only public-visible products.
+     */
+    private function baseRecommendationQuery()
+    {
+        return Product::query()
+            ->select([
+                'pd_id', 'pd_name', 'pd_description', 'pd_specifications', 'pd_material', 'pd_warranty',
+                'pd_catid', 'pd_catsubid', 'pd_room_type', 'pd_brand_type', 'pd_supplier',
+                'pd_price_srp', 'pd_price_dp', 'pd_price_member', 'pd_qty',
+                'pd_prodpv',
+                'pd_weight', 'pd_psweight', 'pd_pswidth', 'pd_pslenght', 'pd_psheight',
+                'pd_assembly_required', 'pd_type', 'pd_musthave',
+                'pd_bestseller', 'pd_salespromo', 'pd_status', 'pd_date',
+                'pd_last_update', 'pd_parent_sku', 'pd_image',
+            ])
+            ->with([
+                'photos:pp_id,pp_pdid,pp_filename,pp_varone,pp_date',
+                'brand:pb_id,pb_name,pb_status',
+                'variants:pv_id,pv_pdid,pv_sku,pv_name,pv_color,pv_color_hex,pv_size,pv_style,pv_width,pv_dimension,pv_height,pv_price_srp,pv_price_dp,pv_price_member,pv_prodpv,pv_qty,pv_status,pv_date',
+                'variants.photos:pvp_id,pvp_pvid,pvp_filename,pvp_sort,pvp_date',
+            ])
+            ->whereIn('pd_status', [1, 2]);
+    }
+
+    /**
+     * Pre-load sold counts and average ratings for a set of product ids in one query each
+     * (avoids N+1). Returns [soldCounts, avgRatings] keyed by product id.
+     */
+    private function loadSoldCountsAndRatings($productIds): array
+    {
+        $soldCounts = [];
+        $avgRatings = [];
+
+        if ($productIds->isNotEmpty()) {
+            $soldCounts = DB::table('tbl_checkout_history')
+                ->whereIn('ch_product_id', $productIds)
+                ->whereIn('ch_status', ['paid', 'completed', 'shipped'])
+                ->selectRaw('ch_product_id, SUM(ch_quantity) as total_sold')
+                ->groupBy('ch_product_id')
+                ->pluck('total_sold', 'ch_product_id')
+                ->toArray();
+
+            $avgRatings = DB::table('tbl_product_reviews')
+                ->whereIn('pr_product_id', $productIds)
+                ->selectRaw('pr_product_id, AVG(pr_rating) as avg_rating')
+                ->groupBy('pr_product_id')
+                ->pluck('avg_rating', 'pr_product_id')
+                ->map(fn ($rating) => (float) $rating)
+                ->toArray();
+        }
+
+        return [$soldCounts, $avgRatings];
     }
 
     private function mapProduct($p, int $soldCount = 0, float $avgRating = 0.0): array

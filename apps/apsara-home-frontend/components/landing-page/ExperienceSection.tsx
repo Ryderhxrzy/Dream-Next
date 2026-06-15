@@ -1,42 +1,46 @@
-'use client';
+"use client"
 
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion"
 
 const experiences = [
   {
-    title: 'Comfort',
-    image: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&q=80',
-    description: 'Living room setup',
+    title: "Comfort",
+    image:
+      "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&q=80",
+    description: "Living room setup",
   },
   {
-    title: 'Function',
-    image: 'https://images.unsplash.com/photo-1595428774223-ef52624120d2?w=800&q=80',
-    description: 'Small condo space',
+    title: "Function",
+    image:
+      "https://images.unsplash.com/photo-1595428774223-ef52624120d2?w=800&q=80",
+    description: "Small condo space",
   },
   {
-    title: 'Everyday Living',
-    image: 'https://images.unsplash.com/photo-1540518614846-7eded433c457?w=800&q=80',
-    description: 'Bedroom setup',
+    title: "Everyday Living",
+    image:
+      "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=800&q=80",
+    description: "Bedroom setup",
   },
   {
-    title: 'Gathering',
-    image: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?w=800&q=80',
-    description: 'Dining room setup',
+    title: "Gathering",
+    image:
+      "https://images.unsplash.com/photo-1617806118233-18e1de247200?w=800&q=80",
+    description: "Dining room setup",
   },
-];
+]
 
 const highlights = [
-  'Products designed for real Filipino homes',
-  'Styles for condos, houses, offices, and families',
-  'Quality materials at factory-direct prices',
-  'Solutions people actually use every day',
-];
+  "Products designed for real Filipino homes",
+  "Styles for condos, houses, offices, and families",
+  "Quality materials at factory-direct prices",
+  "Solutions people actually use every day",
+]
 
 export default function ExperienceSection() {
   return (
-    <section className="relative overflow-hidden py-20 bg-gradient-to-b from-[#fbf7f2] via-white to-[#f7f2eb] dark:from-gray-950 dark:via-gray-950 dark:to-gray-900">
+    <section className="relative overflow-hidden bg-gradient-to-b from-[#fbf7f2] via-white to-[#f7f2eb] py-20 dark:from-gray-950 dark:via-gray-950 dark:to-gray-900">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-24 top-8 h-72 w-72 rounded-full bg-orange-200/35 blur-3xl dark:bg-orange-500/10" />
+        <div className="absolute top-8 -left-24 h-72 w-72 rounded-full bg-orange-200/35 blur-3xl dark:bg-orange-500/10" />
         <div className="absolute right-0 bottom-0 h-80 w-80 rounded-full bg-blue-200/30 blur-3xl dark:bg-blue-500/10" />
       </div>
 
@@ -47,14 +51,14 @@ export default function ExperienceSection() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="flex-1 rounded-[32px] border border-orange-100/80 bg-white/80 p-8 shadow-[0_20px_70px_rgba(15,23,42,0.06)] backdrop-blur-sm dark:border-white/10 dark:bg-white/5 dark:shadow-none sm:p-10 lg:max-w-xl"
+            className="flex-1 rounded-[32px] border border-orange-100/80 bg-white/80 p-8 shadow-[0_20px_70px_rgba(15,23,42,0.06)] backdrop-blur-sm sm:p-10 lg:max-w-xl dark:border-white/10 dark:bg-white/5 dark:shadow-none"
           >
-            <span className="mb-4 block font-mono text-sm uppercase tracking-[0.28em] text-orange-500 dark:text-orange-400">
+            <span className="mb-4 block font-mono text-sm tracking-[0.28em] text-orange-500 uppercase dark:text-orange-400">
               Experience
             </span>
-            <h2 className="mb-6 font-display text-3xl font-medium leading-tight text-gray-900 dark:text-white md:text-5xl">
-              More Than Products.{' '}
-              <span className="italic text-blue-600 dark:text-blue-400">
+            <h2 className="font-display mb-6 text-3xl leading-tight font-medium text-gray-900 md:text-5xl dark:text-white">
+              More Than Products.{" "}
+              <span className="text-blue-600 italic dark:text-blue-400">
                 A Better Home Experience.
               </span>
             </h2>
@@ -99,7 +103,7 @@ export default function ExperienceSection() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/10 to-transparent transition-colors group-hover:from-black/45 group-hover:via-black/20" />
                   <div className="absolute bottom-6 left-6">
-                    <span className="rounded-full border border-white/20 bg-white/15 px-4 py-2 font-display text-lg tracking-wide text-white backdrop-blur-md">
+                    <span className="font-display rounded-full border border-white/20 bg-white/15 px-4 py-2 text-lg tracking-wide text-white backdrop-blur-md">
                       {exp.title}
                     </span>
                   </div>
@@ -110,5 +114,5 @@ export default function ExperienceSection() {
         </div>
       </div>
     </section>
-  );
+  )
 }

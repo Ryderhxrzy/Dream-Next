@@ -1,13 +1,13 @@
-import type { Metadata } from 'next'
-import Link from 'next/link'
+import type { Metadata } from "next"
+import Link from "next/link"
 
 export const metadata: Metadata = {
-  title: 'Admin — Desktop Only',
+  title: "Admin — Desktop Only",
 }
 
 export default function AdminMobileBlockedPage() {
   return (
-    <div className="min-h-[100dvh] w-full flex flex-col items-center justify-center bg-gray-950 px-6 text-center">
+    <div className="flex min-h-[100dvh] w-full flex-col items-center justify-center bg-gray-950 px-6 text-center">
       {/* Icon */}
       <div className="mb-8 flex h-24 w-24 items-center justify-center rounded-3xl bg-gray-800 shadow-xl">
         <svg
@@ -32,17 +32,17 @@ export default function AdminMobileBlockedPage() {
       </h1>
 
       {/* Message */}
-      <p className="mb-2 max-w-xs text-base text-gray-400 leading-relaxed">
+      <p className="mb-2 max-w-xs text-base leading-relaxed text-gray-400">
         The Admin Panel is not accessible on mobile devices.
       </p>
-      <p className="mb-10 max-w-xs text-sm text-gray-500 leading-relaxed">
+      <p className="mb-10 max-w-xs text-sm leading-relaxed text-gray-500">
         Please open this page on a desktop or laptop computer to continue.
       </p>
 
       {/* Divider hint */}
       <div className="mb-6 flex items-center gap-3 text-gray-600">
         <span className="h-px w-16 bg-gray-700" />
-        <span className="text-xs uppercase tracking-widest">or</span>
+        <span className="text-xs tracking-widest uppercase">or</span>
         <span className="h-px w-16 bg-gray-700" />
       </div>
 

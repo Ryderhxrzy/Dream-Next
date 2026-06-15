@@ -1,25 +1,33 @@
-import Link from "next/link";
-import Image from "next/image";
-import { Header } from "@/components/shared/header";
-import { getDreamBuildContent } from "@/lib/dreambuild-cms";
-import { FadeUp, FadeIn, SlideInLeft, SlideInRight, StaggerContainer, StaggerItem } from "@/components/ui/motion";
+import Image from "next/image"
+import Link from "next/link"
 
-export const dynamic = "force-dynamic";
+import { getDreamBuildContent } from "@/lib/dreambuild-cms"
+import {
+  FadeIn,
+  FadeUp,
+  SlideInLeft,
+  SlideInRight,
+  StaggerContainer,
+  StaggerItem,
+} from "@/components/ui/motion"
+import { Header } from "@/components/shared/header"
+
+export const dynamic = "force-dynamic"
 
 export default async function BlogsPage() {
-  const { blogPosts } = await getDreamBuildContent();
-  const featuredPost = blogPosts[0];
-  const otherPosts = blogPosts.slice(1);
+  const { blogPosts } = await getDreamBuildContent()
+  const featuredPost = blogPosts[0]
+  const otherPosts = blogPosts.slice(1)
   const fallbackImages = [
     "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=900&q=80",
     "https://images.unsplash.com/photo-1631679706909-1844bbd07221?w=600&q=80",
     "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&q=80",
-  ];
+  ]
 
   return (
     <main className="min-h-screen bg-[var(--background)]">
       <Header />
-      
+
       {/* Hero Section */}
       <section className="pt-32 pb-16 lg:pt-40 lg:pb-24">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -30,14 +38,15 @@ export default async function BlogsPage() {
               </p>
             </FadeUp>
             <FadeUp delay={0.1}>
-              <h1 className="mt-4 text-4xl font-medium tracking-tight text-[var(--foreground)] sm:text-5xl lg:text-6xl text-balance">
+              <h1 className="mt-4 text-4xl font-medium tracking-tight text-balance text-[var(--foreground)] sm:text-5xl lg:text-6xl">
                 Helpful reads for planning and styling your space
               </h1>
             </FadeUp>
             <FadeUp delay={0.2}>
               <p className="mt-6 text-lg leading-relaxed text-[var(--muted)]">
-                Explore our collection of design insights, styling guides, and practical 
-                tips to help you create spaces that feel both beautiful and livable.
+                Explore our collection of design insights, styling guides, and
+                practical tips to help you create spaces that feel both
+                beautiful and livable.
               </p>
             </FadeUp>
           </div>
@@ -66,7 +75,9 @@ export default async function BlogsPage() {
                       {featuredPost.category}
                     </span>
                     <span className="h-1 w-1 rounded-full bg-[var(--border)]" />
-                    <span className="text-xs text-[var(--muted)]">{featuredPost.date}</span>
+                    <span className="text-xs text-[var(--muted)]">
+                      {featuredPost.date}
+                    </span>
                   </div>
                   <h2 className="mt-4 text-2xl font-medium tracking-tight text-[var(--foreground)] transition-colors group-hover:text-[var(--accent)] sm:text-3xl lg:text-4xl">
                     {featuredPost.title}
@@ -91,7 +102,9 @@ export default async function BlogsPage() {
                         />
                       </svg>
                     </span>
-                    <span className="text-sm text-[var(--muted)]">{featuredPost.readTime}</span>
+                    <span className="text-sm text-[var(--muted)]">
+                      {featuredPost.readTime}
+                    </span>
                   </div>
                 </SlideInRight>
               </div>
@@ -115,7 +128,10 @@ export default async function BlogsPage() {
                   <Link href={`/blogs/${post.id}`} className="block">
                     <div className="relative aspect-[16/10] overflow-hidden rounded-2xl">
                       <Image
-                        src={post.image || fallbackImages[(index + 1) % fallbackImages.length]}
+                        src={
+                          post.image ||
+                          fallbackImages[(index + 1) % fallbackImages.length]
+                        }
                         alt={post.title}
                         fill
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -127,7 +143,9 @@ export default async function BlogsPage() {
                           {post.category}
                         </span>
                         <span className="h-1 w-1 rounded-full bg-[var(--border)]" />
-                        <span className="text-xs text-[var(--muted)]">{post.date}</span>
+                        <span className="text-xs text-[var(--muted)]">
+                          {post.date}
+                        </span>
                       </div>
                       <h3 className="mt-3 text-xl font-medium tracking-tight text-[var(--foreground)] transition-colors group-hover:text-[var(--accent)]">
                         {post.title}
@@ -152,7 +170,9 @@ export default async function BlogsPage() {
                             />
                           </svg>
                         </span>
-                        <span className="text-xs text-[var(--muted)]">{post.readTime}</span>
+                        <span className="text-xs text-[var(--muted)]">
+                          {post.readTime}
+                        </span>
                       </div>
                     </div>
                   </Link>
@@ -173,8 +193,8 @@ export default async function BlogsPage() {
           </FadeUp>
           <FadeUp delay={0.1}>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-[var(--muted)]">
-              Subscribe to our newsletter for the latest design insights, project reveals, 
-              and styling tips delivered to your inbox.
+              Subscribe to our newsletter for the latest design insights,
+              project reveals, and styling tips delivered to your inbox.
             </p>
           </FadeUp>
           <FadeUp delay={0.2}>
@@ -201,11 +221,12 @@ export default async function BlogsPage() {
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
               <p className="text-sm text-[var(--muted)]">
-                &copy; {new Date().getFullYear()} Dreambuild Design Studio. All rights reserved.
+                &copy; {new Date().getFullYear()} Dreambuild Design Studio. All
+                rights reserved.
               </p>
               <Link
                 href="/"
-                className="text-sm text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
+                className="text-sm text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
               >
                 Back to Home
               </Link>
@@ -214,5 +235,5 @@ export default async function BlogsPage() {
         </footer>
       </FadeIn>
     </main>
-  );
+  )
 }

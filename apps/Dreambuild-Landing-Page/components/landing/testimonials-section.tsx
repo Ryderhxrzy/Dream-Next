@@ -1,24 +1,29 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { testimonials as defaultTestimonials } from "@/lib/landing-data";
-import { motion, AnimatePresence } from "framer-motion";
-import { FadeUp } from "@/components/ui/motion";
+import { useState } from "react"
+import { AnimatePresence, motion } from "framer-motion"
 
-export function TestimonialsSection({ testimonials = defaultTestimonials }: { testimonials?: typeof defaultTestimonials }) {
-  const [current, setCurrent] = useState(0);
+import { testimonials as defaultTestimonials } from "@/lib/landing-data"
+import { FadeUp } from "@/components/ui/motion"
 
-  if (testimonials.length === 0) return null;
+export function TestimonialsSection({
+  testimonials = defaultTestimonials,
+}: {
+  testimonials?: typeof defaultTestimonials
+}) {
+  const [current, setCurrent] = useState(0)
 
-  const prev = () => setCurrent((i) => (i - 1 + testimonials.length) % testimonials.length);
-  const next = () => setCurrent((i) => (i + 1) % testimonials.length);
+  if (testimonials.length === 0) return null
 
-  const active = testimonials[current];
+  const prev = () =>
+    setCurrent((i) => (i - 1 + testimonials.length) % testimonials.length)
+  const next = () => setCurrent((i) => (i + 1) % testimonials.length)
+
+  const active = testimonials[current]
 
   return (
-    <section className="bg-white py-24 lg:py-36 overflow-hidden">
+    <section className="overflow-hidden bg-white py-24 lg:py-36">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-
         {/* Header */}
         <FadeUp className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -37,7 +42,6 @@ export function TestimonialsSection({ testimonials = defaultTestimonials }: { te
 
         {/* Main testimonial block */}
         <div className="mt-16 grid gap-12 lg:mt-20 lg:grid-cols-[1fr_1.8fr] lg:gap-20">
-
           {/* Left — Author + Nav */}
           <div className="flex flex-col justify-between gap-10">
             <AnimatePresence mode="wait">
@@ -57,7 +61,9 @@ export function TestimonialsSection({ testimonials = defaultTestimonials }: { te
                     </span>
                   </div>
                   <div>
-                    <p className="font-medium text-[var(--foreground)]">{active.name}</p>
+                    <p className="font-medium text-[var(--foreground)]">
+                      {active.name}
+                    </p>
                     <p className="text-sm text-[var(--muted)]">{active.role}</p>
                   </div>
                 </div>
@@ -67,7 +73,12 @@ export function TestimonialsSection({ testimonials = defaultTestimonials }: { te
                   <div className="h-px flex-1 bg-[var(--border)]" />
                   <div className="flex gap-0.5">
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <svg key={i} className="h-4 w-4 text-[var(--accent)]" fill="currentColor" viewBox="0 0 20 20">
+                      <svg
+                        key={i}
+                        className="h-4 w-4 text-[var(--accent)]"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                       </svg>
                     ))}
@@ -76,7 +87,8 @@ export function TestimonialsSection({ testimonials = defaultTestimonials }: { te
 
                 {/* Counter */}
                 <p className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
-                  {String(current + 1).padStart(2, "0")} / {String(testimonials.length).padStart(2, "0")}
+                  {String(current + 1).padStart(2, "0")} /{" "}
+                  {String(testimonials.length).padStart(2, "0")}
                 </p>
               </motion.div>
             </AnimatePresence>
@@ -85,14 +97,14 @@ export function TestimonialsSection({ testimonials = defaultTestimonials }: { te
             <div className="flex items-center gap-3">
               <button
                 onClick={prev}
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border)] bg-white text-[var(--foreground)] transition-all hover:bg-[var(--dark)] hover:text-white hover:border-[var(--dark)]"
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border)] bg-white text-[var(--foreground)] transition-all hover:border-[var(--dark)] hover:bg-[var(--dark)] hover:text-white"
                 aria-label="Previous testimonial"
               >
                 ←
               </button>
               <button
                 onClick={next}
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border)] bg-white text-[var(--foreground)] transition-all hover:bg-[var(--dark)] hover:text-white hover:border-[var(--dark)]"
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border)] bg-white text-[var(--foreground)] transition-all hover:border-[var(--dark)] hover:bg-[var(--dark)] hover:text-white"
                 aria-label="Next testimonial"
               >
                 →
@@ -108,7 +120,8 @@ export function TestimonialsSection({ testimonials = defaultTestimonials }: { te
                     <motion.span
                       animate={{
                         width: i === current ? 20 : 6,
-                        backgroundColor: i === current ? "var(--foreground)" : "var(--border)",
+                        backgroundColor:
+                          i === current ? "var(--foreground)" : "var(--border)",
                       }}
                       transition={{ duration: 0.3 }}
                       className="block h-1.5 rounded-full"
@@ -122,7 +135,7 @@ export function TestimonialsSection({ testimonials = defaultTestimonials }: { te
           {/* Right — Quote */}
           <div className="relative flex flex-col justify-center">
             {/* Large decorative quote mark */}
-            <div className="pointer-events-none absolute -top-8 -left-4 select-none text-[10rem] font-bold leading-none text-[var(--border)] opacity-50 lg:-left-8">
+            <div className="pointer-events-none absolute -top-8 -left-4 text-[10rem] leading-none font-bold text-[var(--border)] opacity-50 select-none lg:-left-8">
               &quot;
             </div>
 
@@ -134,7 +147,7 @@ export function TestimonialsSection({ testimonials = defaultTestimonials }: { te
                 exit={{ opacity: 0, x: -30 }}
                 transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
               >
-                <blockquote className="relative text-2xl font-medium leading-relaxed tracking-tight text-[var(--foreground)] sm:text-3xl lg:text-4xl">
+                <blockquote className="relative text-2xl leading-relaxed font-medium tracking-tight text-[var(--foreground)] sm:text-3xl lg:text-4xl">
                   {active.quote}
                 </blockquote>
 
@@ -147,9 +160,8 @@ export function TestimonialsSection({ testimonials = defaultTestimonials }: { te
               </motion.div>
             </AnimatePresence>
           </div>
-
         </div>
       </div>
     </section>
-  );
+  )
 }

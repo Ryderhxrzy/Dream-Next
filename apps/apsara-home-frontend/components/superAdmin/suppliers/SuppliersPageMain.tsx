@@ -1,25 +1,38 @@
-'use client'
+"use client"
 
-import { Fragment, useMemo, useState } from 'react'
-import { useSession } from 'next-auth/react'
-import {
-  Store, User, Building2, Mail, Phone, MapPin, CheckCircle2,
-  FolderOpen, UserPlus, AtSign, Send, Lock, ShieldCheck, Copy, Tag,
-} from 'lucide-react'
-import { useGetCategoriesQuery } from '@/store/api/categoriesApi'
+import { Fragment, useMemo, useState } from "react"
+import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
 import {
   InviteSupplierUserResponse,
   SupplierItem,
   useCreateSupplierMutation,
-  useDeleteSupplierUserMutation,
   useDeleteSupplierMutation,
-  useGetSupplierUsersQuery,
+  useDeleteSupplierUserMutation,
   useGetSuppliersQuery,
+  useGetSupplierUsersQuery,
   useInviteSupplierUserMutation,
-  useUpdateSupplierUserMutation,
   useUpdateSupplierCategoriesMutation,
   useUpdateSupplierMutation,
-} from '@/store/api/suppliersApi'
+  useUpdateSupplierUserMutation,
+} from "@/store/api/suppliersApi"
+import {
+  AtSign,
+  Building2,
+  CheckCircle2,
+  Copy,
+  FolderOpen,
+  Lock,
+  Mail,
+  MapPin,
+  Phone,
+  Send,
+  ShieldCheck,
+  Store,
+  Tag,
+  User,
+  UserPlus,
+} from "lucide-react"
+import { useSession } from "next-auth/react"
 
 type SupplierCompanyForm = {
   name: string
@@ -27,7 +40,7 @@ type SupplierCompanyForm = {
   email: string
   contact: string
   address: string
-  status: '1' | '0'
+  status: "1" | "0"
 }
 
 type SupplierInviteForm = {
@@ -38,32 +51,37 @@ type SupplierInviteForm = {
 }
 
 const defaultSupplierCompanyForm: SupplierCompanyForm = {
-  name: '',
-  company: '',
-  email: '',
-  contact: '',
-  address: '',
-  status: '1',
+  name: "",
+  company: "",
+  email: "",
+  contact: "",
+  address: "",
+  status: "1",
 }
 
 const defaultSupplierInviteForm: SupplierInviteForm = {
-  supplier_id: '',
-  fullname: '',
-  username: '',
-  email: '',
+  supplier_id: "",
+  fullname: "",
+  username: "",
+  email: "",
 }
 
 export default function SuppliersPageMain() {
   const { data: session } = useSession()
-  const role = String(session?.user?.role ?? '').toLowerCase()
-  const isSupplierPortal = role === 'supplier'
+  const role = String(session?.user?.role ?? "").toLowerCase()
+  const isSupplierPortal = role === "supplier"
   const isMainSupplier = Boolean(session?.user?.isMainSupplier)
   const isSupplierAdmin =
-    role === 'supplier_admin' || isSupplierPortal || (session?.user?.userLevelId ?? 0) === 8
+    role === "supplier_admin" ||
+    isSupplierPortal ||
+    (session?.user?.userLevelId ?? 0) === 8
   const { data, isLoading, isError } = useGetSuppliersQuery()
-  const [createSupplier, { isLoading: isCreatingSupplier }] = useCreateSupplierMutation()
-  const [updateSupplier, { isLoading: isUpdatingSupplier }] = useUpdateSupplierMutation()
-  const [deleteSupplier, { isLoading: isDeletingSupplier }] = useDeleteSupplierMutation()
+  const [createSupplier, { isLoading: isCreatingSupplier }] =
+    useCreateSupplierMutation()
+  const [updateSupplier, { isLoading: isUpdatingSupplier }] =
+    useUpdateSupplierMutation()
+  const [deleteSupplier, { isLoading: isDeletingSupplier }] =
+    useDeleteSupplierMutation()
   const [inviteSupplierUser, { isLoading: isInvitingSupplierUser }] =
     useInviteSupplierUserMutation()
   const [updateSupplierCategories, { isLoading: isSavingSupplierCategories }] =
@@ -75,24 +93,33 @@ export default function SuppliersPageMain() {
     defaultSupplierInviteForm
   )
   const [companyFeedback, setCompanyFeedback] = useState<{
-    type: 'success' | 'error'
+    type: "success" | "error"
     message: string
   } | null>(null)
-  const [supplierOverrides, setSupplierOverrides] = useState<Record<number, SupplierItem>>({})
+  const [supplierOverrides, setSupplierOverrides] = useState<
+    Record<number, SupplierItem>
+  >({})
   const [inviteFeedback, setInviteFeedback] = useState<{
-    type: 'success' | 'error'
+    type: "success" | "error"
     message: string
   } | null>(null)
-  const [supplierSearch, setSupplierSearch] = useState('')
+  const [supplierSearch, setSupplierSearch] = useState("")
   const [supplierPage, setSupplierPage] = useState(1)
-  const [latestInvite, setLatestInvite] = useState<InviteSupplierUserResponse | null>(null)
-  const [editingSupplierId, setEditingSupplierId] = useState<number | null>(null)
+  const [latestInvite, setLatestInvite] =
+    useState<InviteSupplierUserResponse | null>(null)
+  const [editingSupplierId, setEditingSupplierId] = useState<number | null>(
+    null
+  )
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [expandedSupplierTreeId, setExpandedSupplierTreeId] = useState<number | null>(null)
-  const [categoryTarget, setCategoryTarget] = useState<SupplierItem | null>(null)
+  const [expandedSupplierTreeId, setExpandedSupplierTreeId] = useState<
+    number | null
+  >(null)
+  const [categoryTarget, setCategoryTarget] = useState<SupplierItem | null>(
+    null
+  )
   const [categorySelection, setCategorySelection] = useState<number[]>([])
   const [categoryFeedback, setCategoryFeedback] = useState<{
-    type: 'success' | 'error'
+    type: "success" | "error"
     message: string
   } | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -104,20 +131,23 @@ export default function SuppliersPageMain() {
   const sortedSuppliers = useMemo(
     () =>
       Object.values(
-        [...(data?.suppliers ?? []), ...Object.values(supplierOverrides)].reduce<Record<number, SupplierItem>>(
-          (acc, supplier) => {
-            acc[supplier.id] = supplier
-            return acc
-          },
-          {}
-        )
+        [
+          ...(data?.suppliers ?? []),
+          ...Object.values(supplierOverrides),
+        ].reduce<Record<number, SupplierItem>>((acc, supplier) => {
+          acc[supplier.id] = supplier
+          return acc
+        }, {})
       ).sort((a, b) =>
         (a.company || a.name).localeCompare(b.company || b.name)
       ),
     [data?.suppliers, supplierOverrides]
   )
   const linkedSupplierId = Number(session?.user?.supplierId ?? 0)
-  const { data: allCategoriesData } = useGetCategoriesQuery({ page: 1, per_page: 500 })
+  const { data: allCategoriesData } = useGetCategoriesQuery({
+    page: 1,
+    per_page: 500,
+  })
   const allCategories = useMemo(
     () => allCategoriesData?.categories ?? [],
     [allCategoriesData?.categories]
@@ -132,22 +162,26 @@ export default function SuppliersPageMain() {
   const selectedInviteSupplier = useMemo(
     () =>
       sortedSuppliers.find(
-        (supplier) => String(supplier.id) === String(supplierInviteForm.supplier_id)
+        (supplier) =>
+          String(supplier.id) === String(supplierInviteForm.supplier_id)
       ) ?? null,
     [sortedSuppliers, supplierInviteForm.supplier_id]
   )
   const filteredSuppliers = useMemo(() => {
     const keyword = supplierSearch.trim().toLowerCase()
-    if (keyword === '') return sortedSuppliers
+    if (keyword === "") return sortedSuppliers
 
     return sortedSuppliers.filter((supplier) =>
       [supplier.company, supplier.name, supplier.email, supplier.contact]
-        .map((value) => String(value ?? '').toLowerCase())
+        .map((value) => String(value ?? "").toLowerCase())
         .some((value) => value.includes(keyword))
     )
   }, [sortedSuppliers, supplierSearch])
   const supplierPageSize = 8
-  const supplierTotalPages = Math.max(1, Math.ceil(filteredSuppliers.length / supplierPageSize))
+  const supplierTotalPages = Math.max(
+    1,
+    Math.ceil(filteredSuppliers.length / supplierPageSize)
+  )
   const normalizedSupplierPage = Math.min(supplierPage, supplierTotalPages)
   const paginatedSuppliers = useMemo(() => {
     const start = (normalizedSupplierPage - 1) * supplierPageSize
@@ -155,13 +189,18 @@ export default function SuppliersPageMain() {
   }, [filteredSuppliers, normalizedSupplierPage])
 
   const getErrorMessage = (error: unknown, fallback: string) => {
-    if (error && typeof error === 'object') {
-      const dataValue = (error as {
-        data?: { message?: string; errors?: Record<string, string[]> }
-      }).data
-      const firstEntry = dataValue?.errors ? Object.values(dataValue.errors)[0] : null
-      if (Array.isArray(firstEntry) && typeof firstEntry[0] === 'string') return firstEntry[0]
-      if (typeof dataValue?.message === 'string') return dataValue.message
+    if (error && typeof error === "object") {
+      const dataValue = (
+        error as {
+          data?: { message?: string; errors?: Record<string, string[]> }
+        }
+      ).data
+      const firstEntry = dataValue?.errors
+        ? Object.values(dataValue.errors)[0]
+        : null
+      if (Array.isArray(firstEntry) && typeof firstEntry[0] === "string")
+        return firstEntry[0]
+      if (typeof dataValue?.message === "string") return dataValue.message
     }
 
     return fallback
@@ -170,7 +209,9 @@ export default function SuppliersPageMain() {
   const handleCompanyInput =
     (field: keyof SupplierCompanyForm) =>
     (
-      event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+      event: React.ChangeEvent<
+        HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+      >
     ) => {
       setCompanyForm((prev) => ({ ...prev, [field]: event.target.value }))
     }
@@ -195,11 +236,14 @@ export default function SuppliersPageMain() {
         status: Number(companyForm.status),
       }).unwrap()
 
-      setCompanyFeedback({ type: 'success', message: created.message })
-      setSupplierOverrides((prev) => ({ ...prev, [created.supplier.id]: created.supplier }))
+      setCompanyFeedback({ type: "success", message: created.message })
+      setSupplierOverrides((prev) => ({
+        ...prev,
+        [created.supplier.id]: created.supplier,
+      }))
       setCompanyForm(defaultSupplierCompanyForm)
       setLatestInvite(null)
-      setSupplierSearch('')
+      setSupplierSearch("")
       setSupplierPage(1)
       setInviteForm((prev) => ({
         ...prev,
@@ -207,8 +251,8 @@ export default function SuppliersPageMain() {
       }))
     } catch (error) {
       setCompanyFeedback({
-        type: 'error',
-        message: getErrorMessage(error, 'Unable to create supplier company.'),
+        type: "error",
+        message: getErrorMessage(error, "Unable to create supplier company."),
       })
     }
   }
@@ -232,15 +276,18 @@ export default function SuppliersPageMain() {
         },
       }).unwrap()
 
-      setCompanyFeedback({ type: 'success', message: updated.message })
-      setSupplierOverrides((prev) => ({ ...prev, [updated.supplier.id]: updated.supplier }))
+      setCompanyFeedback({ type: "success", message: updated.message })
+      setSupplierOverrides((prev) => ({
+        ...prev,
+        [updated.supplier.id]: updated.supplier,
+      }))
       setEditingSupplierId(null)
       setIsEditModalOpen(false)
       setCompanyForm(defaultSupplierCompanyForm)
     } catch (error) {
       setCompanyFeedback({
-        type: 'error',
-        message: getErrorMessage(error, 'Unable to update supplier company.'),
+        type: "error",
+        message: getErrorMessage(error, "Unable to update supplier company."),
       })
     }
   }
@@ -252,8 +299,8 @@ export default function SuppliersPageMain() {
 
     if (!selectedInviteSupplier) {
       setInviteFeedback({
-        type: 'error',
-        message: 'Please select a valid supplier company first.',
+        type: "error",
+        message: "Please select a valid supplier company first.",
       })
       return
     }
@@ -266,17 +313,19 @@ export default function SuppliersPageMain() {
         email: supplierInviteForm.email.trim() || undefined,
       }).unwrap()
 
-      setInviteFeedback({ type: 'success', message: result.message })
+      setInviteFeedback({ type: "success", message: result.message })
       setLatestInvite(result)
       setInviteForm((prev) => ({
         ...defaultSupplierInviteForm,
         supplier_id:
-          isSupplierAdmin && linkedSupplierId > 0 ? String(linkedSupplierId) : prev.supplier_id,
+          isSupplierAdmin && linkedSupplierId > 0
+            ? String(linkedSupplierId)
+            : prev.supplier_id,
       }))
     } catch (error) {
       setInviteFeedback({
-        type: 'error',
-        message: getErrorMessage(error, 'Unable to create supplier invite.'),
+        type: "error",
+        message: getErrorMessage(error, "Unable to create supplier invite."),
       })
     }
   }
@@ -284,12 +333,16 @@ export default function SuppliersPageMain() {
   const openCategoryManager = (supplier: SupplierItem) => {
     setCategoryTarget(supplier)
     setCategoryFeedback(null)
-    setCategorySelection((supplier.assigned_categories ?? []).map((category) => category.id))
+    setCategorySelection(
+      (supplier.assigned_categories ?? []).map((category) => category.id)
+    )
   }
 
   const toggleCategorySelection = (categoryId: number) => {
     setCategorySelection((prev) =>
-      prev.includes(categoryId) ? prev.filter((id) => id !== categoryId) : [...prev, categoryId]
+      prev.includes(categoryId)
+        ? prev.filter((id) => id !== categoryId)
+        : [...prev, categoryId]
     )
   }
 
@@ -304,11 +357,14 @@ export default function SuppliersPageMain() {
         category_ids: categorySelection,
       }).unwrap()
 
-      setCategoryFeedback({ type: 'success', message: result.message })
+      setCategoryFeedback({ type: "success", message: result.message })
     } catch (error) {
       setCategoryFeedback({
-        type: 'error',
-        message: getErrorMessage(error, 'Unable to update supplier category access.'),
+        type: "error",
+        message: getErrorMessage(
+          error,
+          "Unable to update supplier category access."
+        ),
       })
     }
   }
@@ -325,12 +381,12 @@ export default function SuppliersPageMain() {
     setEditingSupplierId(supplier.id)
     setCompanyFeedback(null)
     setCompanyForm({
-      name: supplier.name || '',
-      company: supplier.company || '',
-      email: supplier.email || '',
-      contact: supplier.contact || '',
-      address: supplier.address || '',
-      status: supplier.status === 1 ? '1' : '0',
+      name: supplier.name || "",
+      company: supplier.company || "",
+      email: supplier.email || "",
+      contact: supplier.contact || "",
+      address: supplier.address || "",
+      status: supplier.status === 1 ? "1" : "0",
     })
     setIsEditModalOpen(true)
   }
@@ -351,7 +407,7 @@ export default function SuppliersPageMain() {
         company: deleteTarget.company,
         name: deleteTarget.name,
       }).unwrap()
-      setCompanyFeedback({ type: 'success', message: result.message })
+      setCompanyFeedback({ type: "success", message: result.message })
       setSupplierOverrides((prev) => {
         const next = { ...prev }
         delete next[deleteTarget.id]
@@ -363,8 +419,8 @@ export default function SuppliersPageMain() {
       setDeleteTarget(null)
     } catch (error) {
       setCompanyFeedback({
-        type: 'error',
-        message: getErrorMessage(error, 'Unable to delete supplier company.'),
+        type: "error",
+        message: getErrorMessage(error, "Unable to delete supplier company."),
       })
     }
   }
@@ -388,7 +444,9 @@ export default function SuppliersPageMain() {
   if (sortedSuppliers.length === 0 && isSupplierAdmin) {
     return (
       <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 dark:border-amber-500/20 dark:bg-amber-500/10">
-        <h1 className="text-lg font-bold text-amber-900 dark:text-amber-100">No Supplier Linked</h1>
+        <h1 className="text-lg font-bold text-amber-900 dark:text-amber-100">
+          No Supplier Linked
+        </h1>
         <p className="mt-2 text-sm text-amber-700 dark:text-amber-200">
           This supplier account is not yet linked to a supplier company.
         </p>
@@ -401,17 +459,43 @@ export default function SuppliersPageMain() {
     const isActive = supplier.status === 1
 
     const INFO_ITEMS = [
-      { icon: <User className="h-4 w-4 text-sky-600 dark:text-sky-400" />, label: 'Display Name', value: supplier.name || '-' },
-      { icon: <Building2 className="h-4 w-4 text-sky-600 dark:text-sky-400" />, label: 'Company', value: supplier.company || '-' },
-      { icon: <Mail className="h-4 w-4 text-sky-600 dark:text-sky-400" />, label: 'Email', value: supplier.email || '-' },
-      { icon: <Phone className="h-4 w-4 text-sky-600 dark:text-sky-400" />, label: 'Contact', value: supplier.contact || '-' },
-      { icon: <MapPin className="h-4 w-4 text-sky-600 dark:text-sky-400" />, label: 'Address', value: supplier.address || '-' },
-      { icon: <CheckCircle2 className="h-4 w-4 text-sky-600 dark:text-sky-400" />, label: 'Status', value: null, isStatus: true },
+      {
+        icon: <User className="h-4 w-4 text-sky-600 dark:text-sky-400" />,
+        label: "Display Name",
+        value: supplier.name || "-",
+      },
+      {
+        icon: <Building2 className="h-4 w-4 text-sky-600 dark:text-sky-400" />,
+        label: "Company",
+        value: supplier.company || "-",
+      },
+      {
+        icon: <Mail className="h-4 w-4 text-sky-600 dark:text-sky-400" />,
+        label: "Email",
+        value: supplier.email || "-",
+      },
+      {
+        icon: <Phone className="h-4 w-4 text-sky-600 dark:text-sky-400" />,
+        label: "Contact",
+        value: supplier.contact || "-",
+      },
+      {
+        icon: <MapPin className="h-4 w-4 text-sky-600 dark:text-sky-400" />,
+        label: "Address",
+        value: supplier.address || "-",
+      },
+      {
+        icon: (
+          <CheckCircle2 className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+        ),
+        label: "Status",
+        value: null,
+        isStatus: true,
+      },
     ]
 
     return (
       <div className="space-y-5">
-
         {/* ── Hero header ── */}
         <div className="relative overflow-hidden rounded-3xl border border-sky-100 bg-linear-to-br from-sky-50 via-cyan-50/40 to-indigo-50/60 p-6 shadow-sm sm:p-8 dark:border-sky-900/30 dark:from-sky-900/20 dark:via-cyan-900/10 dark:to-indigo-900/20">
           <div className="flex items-center justify-between gap-6">
@@ -420,25 +504,41 @@ export default function SuppliersPageMain() {
                 <Store className="h-7 w-7 text-sky-600 dark:text-sky-400" />
               </div>
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-sky-700 dark:text-sky-400">Supplier Company</p>
+                <p className="text-[11px] font-bold tracking-[0.22em] text-sky-700 uppercase dark:text-sky-400">
+                  Supplier Company
+                </p>
                 <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
                   {supplier.company || supplier.name}
                 </h1>
                 <p className="mt-1 max-w-xl text-sm text-slate-500 dark:text-slate-400">
-                  Your supplier account is scoped to this company only. Products and dashboard data stay limited to this profile.
+                  Your supplier account is scoped to this company only. Products
+                  and dashboard data stay limited to this profile.
                 </p>
               </div>
             </div>
             {/* Decorative illustration */}
             <div className="hidden shrink-0 sm:block">
-              <div className="relative w-40 h-28">
-                <svg className="absolute top-0 right-0 opacity-25" width="56" height="44" viewBox="0 0 56 44">
-                  {[0,1,2,3].map(r => [0,1,2,3,4].map(c => (
-                    <circle key={`${r}${c}`} cx={c*13+4} cy={r*11+4} r="1.8" fill="#64748b"/>
-                  )))}
+              <div className="relative h-28 w-40">
+                <svg
+                  className="absolute top-0 right-0 opacity-25"
+                  width="56"
+                  height="44"
+                  viewBox="0 0 56 44"
+                >
+                  {[0, 1, 2, 3].map((r) =>
+                    [0, 1, 2, 3, 4].map((c) => (
+                      <circle
+                        key={`${r}${c}`}
+                        cx={c * 13 + 4}
+                        cy={r * 11 + 4}
+                        r="1.8"
+                        fill="#64748b"
+                      />
+                    ))
+                  )}
                 </svg>
-                <div className="absolute bottom-0 right-4 w-32 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-md dark:border-slate-700 dark:bg-slate-800">
-                  <div className="flex items-center gap-2 mb-2.5">
+                <div className="absolute right-4 bottom-0 w-32 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-md dark:border-slate-700 dark:bg-slate-800">
+                  <div className="mb-2.5 flex items-center gap-2">
                     <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-sky-100">
                       <ShieldCheck className="h-3.5 w-3.5 text-sky-600" />
                     </div>
@@ -453,8 +553,18 @@ export default function SuppliersPageMain() {
                   </div>
                   <div className="mt-2.5 flex justify-end">
                     <div className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-100">
-                      <svg className="h-2.5 w-2.5 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+                      <svg
+                        className="h-2.5 w-2.5 text-emerald-600"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M5 13l4 4L19 7"
+                        />
                       </svg>
                     </div>
                   </div>
@@ -468,22 +578,35 @@ export default function SuppliersPageMain() {
         <div className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="grid grid-cols-1 divide-y divide-slate-100 sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-3 lg:divide-x dark:divide-slate-800">
             {INFO_ITEMS.map((item, i) => (
-              <div key={i} className={`flex items-start gap-3 p-5 ${i >= 3 ? 'sm:border-t sm:border-slate-100 dark:sm:border-slate-800' : ''} ${i >= 2 && i < 4 ? 'lg:border-t-0' : ''}`}>
+              <div
+                key={i}
+                className={`flex items-start gap-3 p-5 ${i >= 3 ? "sm:border-t sm:border-slate-100 dark:sm:border-slate-800" : ""} ${i >= 2 && i < 4 ? "lg:border-t-0" : ""}`}
+              >
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-50 dark:bg-sky-900/30">
                   {item.icon}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">{item.label}</p>
+                  <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
+                    {item.label}
+                  </p>
                   {item.isStatus ? (
                     <div className="mt-1 flex items-center gap-2">
-                      <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{isActive ? 'Active' : 'Inactive'}</p>
-                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${isActive ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-slate-400'}`} />
-                        {isActive ? 'Active' : 'Inactive'}
+                      <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                        {isActive ? "Active" : "Inactive"}
+                      </p>
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${isActive ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300" : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"}`}
+                      >
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-emerald-500" : "bg-slate-400"}`}
+                        />
+                        {isActive ? "Active" : "Inactive"}
                       </span>
                     </div>
                   ) : (
-                    <p className="mt-1 truncate text-sm font-bold text-slate-900 dark:text-slate-100">{item.value}</p>
+                    <p className="mt-1 truncate text-sm font-bold text-slate-900 dark:text-slate-100">
+                      {item.value}
+                    </p>
                   )}
                 </div>
               </div>
@@ -499,18 +622,25 @@ export default function SuppliersPageMain() {
                 <FolderOpen className="h-5 w-5 text-violet-600 dark:text-violet-400" />
               </div>
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-violet-600 dark:text-violet-400">Allowed Categories</p>
-                <h2 className="mt-0.5 text-lg font-bold text-slate-900 dark:text-slate-100">Assigned Product Categories</h2>
+                <p className="text-[11px] font-bold tracking-[0.2em] text-violet-600 uppercase dark:text-violet-400">
+                  Allowed Categories
+                </p>
+                <h2 className="mt-0.5 text-lg font-bold text-slate-900 dark:text-slate-100">
+                  Assigned Product Categories
+                </h2>
                 <p className="mt-1 max-w-xs text-sm text-slate-500 dark:text-slate-400">
-                  These are the only categories this supplier portal can use when creating or editing products.
+                  These are the only categories this supplier portal can use
+                  when creating or editing products.
                 </p>
               </div>
             </div>
             <div className="flex flex-wrap gap-2 sm:justify-end">
               {(supplier.assigned_categories ?? []).length > 0 ? (
                 supplier.assigned_categories?.map((category) => (
-                  <span key={category.id}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 dark:border-sky-800 dark:bg-sky-900/20 dark:text-sky-300">
+                  <span
+                    key={category.id}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 dark:border-sky-800 dark:bg-sky-900/20 dark:text-sky-300"
+                  >
                     <Tag className="h-3 w-3" />
                     {category.name}
                   </span>
@@ -533,61 +663,95 @@ export default function SuppliersPageMain() {
                 <UserPlus className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
               </div>
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-600 dark:text-cyan-400">Supplier Access</p>
+                <p className="text-[11px] font-bold tracking-[0.2em] text-cyan-600 uppercase dark:text-cyan-400">
+                  Supplier Access
+                </p>
                 <h2 className="mt-0.5 text-lg font-bold text-slate-900 dark:text-slate-100">
-                  {isMainSupplier ? 'Invite Sub-Supplier User' : 'Supplier Access'}
+                  {isMainSupplier
+                    ? "Invite Sub-Supplier User"
+                    : "Supplier Access"}
                 </h2>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                   {isMainSupplier
-                    ? 'Give your staff their own supplier portal login. Email is optional, and you can copy the setup link manually after creating the invite.'
-                    : 'This account is a sub-supplier account. Only the main supplier owner can invite additional supplier users.'}
+                    ? "Give your staff their own supplier portal login. Email is optional, and you can copy the setup link manually after creating the invite."
+                    : "This account is a sub-supplier account. Only the main supplier owner can invite additional supplier users."}
                 </p>
               </div>
             </div>
 
             {/* Form */}
             {isMainSupplier ? (
-              <form onSubmit={handleInviteSupplier} className="flex-1 space-y-4">
+              <form
+                onSubmit={handleInviteSupplier}
+                className="flex-1 space-y-4"
+              >
                 <div className="grid gap-4 sm:grid-cols-2">
                   <FormField label="Full Name">
                     <div className="relative">
-                      <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                      <input value={supplierInviteForm.fullname} onChange={handleInviteInput('fullname')} required
+                      <User className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <input
+                        value={supplierInviteForm.fullname}
+                        onChange={handleInviteInput("fullname")}
+                        required
                         placeholder="Enter full name"
-                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-800 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100" />
+                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pr-4 pl-10 text-sm text-slate-800 transition outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                      />
                     </div>
                   </FormField>
                   <FormField label="Username">
                     <div className="relative">
-                      <AtSign className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                      <input value={supplierInviteForm.username} onChange={handleInviteInput('username')} required
+                      <AtSign className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <input
+                        value={supplierInviteForm.username}
+                        onChange={handleInviteInput("username")}
+                        required
                         placeholder="Enter username"
-                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-800 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100" />
+                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pr-4 pl-10 text-sm text-slate-800 transition outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                      />
                     </div>
                   </FormField>
                 </div>
 
                 <FormField label="Email (Optional)">
                   <div className="relative">
-                    <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input type="email" value={supplierInviteForm.email} onChange={handleInviteInput('email')}
+                    <Mail className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="email"
+                      value={supplierInviteForm.email}
+                      onChange={handleInviteInput("email")}
                       placeholder="Leave blank if you will send the setup link manually"
-                      className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-800 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100" />
+                      className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pr-4 pl-10 text-sm text-slate-800 transition outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                    />
                   </div>
                 </FormField>
 
-                {inviteFeedback && <FeedbackBanner type={inviteFeedback.type} message={inviteFeedback.message} />}
-                {latestInvite && <SetupLinkCard setupUrl={latestInvite.setup_url} delivery={latestInvite.delivery} />}
+                {inviteFeedback && (
+                  <FeedbackBanner
+                    type={inviteFeedback.type}
+                    message={inviteFeedback.message}
+                  />
+                )}
+                {latestInvite && (
+                  <SetupLinkCard
+                    setupUrl={latestInvite.setup_url}
+                    delivery={latestInvite.delivery}
+                  />
+                )}
 
-                <button type="submit" disabled={isInvitingSupplierUser}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-linear-to-r from-cyan-500 to-teal-500 py-3 text-sm font-bold text-white shadow-md shadow-cyan-200/60 transition hover:from-cyan-600 hover:to-teal-600 disabled:opacity-60 dark:shadow-cyan-900/30">
+                <button
+                  type="submit"
+                  disabled={isInvitingSupplierUser}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-linear-to-r from-cyan-500 to-teal-500 py-3 text-sm font-bold text-white shadow-md shadow-cyan-200/60 transition hover:from-cyan-600 hover:to-teal-600 disabled:opacity-60 dark:shadow-cyan-900/30"
+                >
                   <Send className="h-4 w-4" />
-                  {isInvitingSupplierUser ? 'Creating invite…' : 'Create Supplier Invite Link'}
+                  {isInvitingSupplierUser
+                    ? "Creating invite…"
+                    : "Create Supplier Invite Link"}
                 </button>
 
                 <p className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400 dark:text-slate-500">
-                  <Lock className="h-3 w-3" />
-                  A secure invite link will be generated for this user.
+                  <Lock className="h-3 w-3" />A secure invite link will be
+                  generated for this user.
                 </p>
               </form>
             ) : (
@@ -597,7 +761,6 @@ export default function SuppliersPageMain() {
             )}
           </div>
         </div>
-
       </div>
     )
   }
@@ -605,22 +768,27 @@ export default function SuppliersPageMain() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Suppliers</h1>
+        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+          Suppliers
+        </h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Create supplier companies here, then invite each company&apos;s login so they can use
-          the separate supplier portal.
+          Create supplier companies here, then invite each company&apos;s login
+          so they can use the separate supplier portal.
         </p>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
           <div className="mb-5">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400 dark:text-slate-500">
+            <p className="text-xs font-bold tracking-[0.24em] text-slate-400 uppercase dark:text-slate-500">
               Step 1
             </p>
-            <h2 className="mt-2 text-lg font-bold text-slate-900 dark:text-slate-100">Add Supplier Company</h2>
+            <h2 className="mt-2 text-lg font-bold text-slate-900 dark:text-slate-100">
+              Add Supplier Company
+            </h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Create the supplier company profile first before you invite its users.
+              Create the supplier company profile first before you invite its
+              users.
             </p>
           </div>
 
@@ -629,7 +797,7 @@ export default function SuppliersPageMain() {
               <FormField label="Display Name">
                 <input
                   value={companyForm.name}
-                  onChange={handleCompanyInput('name')}
+                  onChange={handleCompanyInput("name")}
                   required
                   className={inputClassName}
                 />
@@ -637,7 +805,7 @@ export default function SuppliersPageMain() {
               <FormField label="Company Name">
                 <input
                   value={companyForm.company}
-                  onChange={handleCompanyInput('company')}
+                  onChange={handleCompanyInput("company")}
                   required
                   className={inputClassName}
                 />
@@ -646,14 +814,14 @@ export default function SuppliersPageMain() {
                 <input
                   type="email"
                   value={companyForm.email}
-                  onChange={handleCompanyInput('email')}
+                  onChange={handleCompanyInput("email")}
                   className={inputClassName}
                 />
               </FormField>
               <FormField label="Contact">
                 <input
                   value={companyForm.contact}
-                  onChange={handleCompanyInput('contact')}
+                  onChange={handleCompanyInput("contact")}
                   className={inputClassName}
                 />
               </FormField>
@@ -662,7 +830,7 @@ export default function SuppliersPageMain() {
             <FormField label="Address">
               <textarea
                 value={companyForm.address}
-                onChange={handleCompanyInput('address')}
+                onChange={handleCompanyInput("address")}
                 rows={3}
                 className={textareaClassName}
               />
@@ -671,7 +839,7 @@ export default function SuppliersPageMain() {
             <FormField label="Status">
               <select
                 value={companyForm.status}
-                onChange={handleCompanyInput('status')}
+                onChange={handleCompanyInput("status")}
                 className={inputClassName}
               >
                 <option value="1">Active</option>
@@ -689,24 +857,26 @@ export default function SuppliersPageMain() {
             <button
               type="submit"
               disabled={isCreatingSupplier}
-              className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 dark:bg-cyan-600 dark:hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-600 dark:hover:bg-cyan-500"
             >
-              {isCreatingSupplier ? 'Creating supplier...' : 'Create Supplier Company'}
+              {isCreatingSupplier
+                ? "Creating supplier..."
+                : "Create Supplier Company"}
             </button>
           </form>
         </section>
 
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
           <div className="mb-5">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400 dark:text-slate-500">
+            <p className="text-xs font-bold tracking-[0.24em] text-slate-400 uppercase dark:text-slate-500">
               Step 2
             </p>
             <h2 className="mt-2 text-lg font-bold text-slate-900 dark:text-slate-100">
               Invite Supplier Login
             </h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Create the main supplier owner account here. That owner can later invite their own
-              sub-supplier users from the supplier portal.
+              Create the main supplier owner account here. That owner can later
+              invite their own sub-supplier users from the supplier portal.
             </p>
           </div>
 
@@ -714,7 +884,7 @@ export default function SuppliersPageMain() {
             <FormField label="Supplier Company">
               <select
                 value={supplierInviteForm.supplier_id}
-                onChange={handleInviteInput('supplier_id')}
+                onChange={handleInviteInput("supplier_id")}
                 required
                 className={inputClassName}
               >
@@ -731,7 +901,7 @@ export default function SuppliersPageMain() {
               <FormField label="Full Name">
                 <input
                   value={inviteForm.fullname}
-                  onChange={handleInviteInput('fullname')}
+                  onChange={handleInviteInput("fullname")}
                   required
                   className={inputClassName}
                 />
@@ -739,7 +909,7 @@ export default function SuppliersPageMain() {
               <FormField label="Username">
                 <input
                   value={inviteForm.username}
-                  onChange={handleInviteInput('username')}
+                  onChange={handleInviteInput("username")}
                   required
                   className={inputClassName}
                 />
@@ -750,7 +920,7 @@ export default function SuppliersPageMain() {
               <input
                 type="email"
                 value={inviteForm.email}
-                onChange={handleInviteInput('email')}
+                onChange={handleInviteInput("email")}
                 className={inputClassName}
                 placeholder="Optional"
               />
@@ -764,7 +934,10 @@ export default function SuppliersPageMain() {
             ) : null}
 
             {latestInvite ? (
-              <SetupLinkCard setupUrl={latestInvite.setup_url} delivery={latestInvite.delivery} />
+              <SetupLinkCard
+                setupUrl={latestInvite.setup_url}
+                delivery={latestInvite.delivery}
+              />
             ) : null}
 
             <button
@@ -772,7 +945,9 @@ export default function SuppliersPageMain() {
               disabled={isInvitingSupplierUser}
               className="rounded-2xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isInvitingSupplierUser ? 'Creating invite...' : 'Create Main Supplier Invite Link'}
+              {isInvitingSupplierUser
+                ? "Creating invite..."
+                : "Create Main Supplier Invite Link"}
             </button>
           </form>
         </section>
@@ -782,7 +957,7 @@ export default function SuppliersPageMain() {
         <div className="border-b border-slate-200/80 bg-[linear-gradient(135deg,rgba(240,249,255,0.9),rgba(255,255,255,0.96)_42%,rgba(236,254,255,0.88))] px-5 py-5 dark:border-white/8 dark:bg-[linear-gradient(135deg,rgba(8,47,73,0.28),rgba(15,23,42,0.96)_42%,rgba(8,145,178,0.12))]">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div className="min-w-0">
-              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200/80 bg-white/80 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.22em] text-cyan-700 shadow-sm dark:border-cyan-500/20 dark:bg-cyan-500/10 dark:text-cyan-200">
+              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200/80 bg-white/80 px-3 py-1 text-[11px] font-bold tracking-[0.22em] text-cyan-700 uppercase shadow-sm dark:border-cyan-500/20 dark:bg-cyan-500/10 dark:text-cyan-200">
                 <span className="h-2 w-2 rounded-full bg-cyan-500 shadow-[0_0_14px_rgba(6,182,212,0.8)]" />
                 Supplier Directory
               </div>
@@ -792,7 +967,8 @@ export default function SuppliersPageMain() {
                     Manage supplier companies in one workspace
                   </h3>
                   <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
-                    Search faster, inspect account status instantly, and jump straight into users, categories, or edits.
+                    Search faster, inspect account status instantly, and jump
+                    straight into users, categories, or edits.
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -807,8 +983,18 @@ export default function SuppliersPageMain() {
             </div>
 
             <div className="relative w-full xl:max-w-md">
-              <svg className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors duration-200 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <svg
+                className="pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors duration-200 dark:text-slate-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
               </svg>
               <input
                 type="text"
@@ -818,7 +1004,7 @@ export default function SuppliersPageMain() {
                   setSupplierPage(1)
                 }}
                 placeholder="Search supplier, email, or contact..."
-                className="w-full rounded-[20px] border border-white/70 bg-white/80 py-3.5 pl-11 pr-4 text-sm text-slate-800 shadow-sm outline-none transition-all duration-300 placeholder:text-slate-400 focus:-translate-y-0.5 focus:border-cyan-300 focus:shadow-[0_14px_35px_rgba(6,182,212,0.12)] focus:ring-4 focus:ring-cyan-100 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-cyan-400/40 dark:focus:shadow-[0_14px_35px_rgba(8,145,178,0.2)] dark:focus:ring-cyan-500/10"
+                className="w-full rounded-[20px] border border-white/70 bg-white/80 py-3.5 pr-4 pl-11 text-sm text-slate-800 shadow-sm transition-all duration-300 outline-none placeholder:text-slate-400 focus:-translate-y-0.5 focus:border-cyan-300 focus:shadow-[0_14px_35px_rgba(6,182,212,0.12)] focus:ring-4 focus:ring-cyan-100 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-cyan-400/40 dark:focus:shadow-[0_14px_35px_rgba(8,145,178,0.2)] dark:focus:ring-cyan-500/10"
               />
             </div>
           </div>
@@ -828,20 +1014,20 @@ export default function SuppliersPageMain() {
           <table className="w-full min-w-[980px] text-sm">
             <thead className="bg-slate-50/90 dark:bg-slate-900/70">
               <tr className="border-b border-slate-200/80 dark:border-white/8">
-                <th className="px-5 py-4 text-left text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
-                Company
+                <th className="px-5 py-4 text-left text-[11px] font-bold tracking-[0.2em] text-slate-400 uppercase dark:text-slate-500">
+                  Company
                 </th>
-                <th className="px-5 py-4 text-left text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
-                Contact
+                <th className="px-5 py-4 text-left text-[11px] font-bold tracking-[0.2em] text-slate-400 uppercase dark:text-slate-500">
+                  Contact
                 </th>
-                <th className="px-5 py-4 text-left text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
-                Email
+                <th className="px-5 py-4 text-left text-[11px] font-bold tracking-[0.2em] text-slate-400 uppercase dark:text-slate-500">
+                  Email
                 </th>
-                <th className="px-5 py-4 text-left text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
-                Status
+                <th className="px-5 py-4 text-left text-[11px] font-bold tracking-[0.2em] text-slate-400 uppercase dark:text-slate-500">
+                  Status
                 </th>
-                <th className="px-5 py-4 text-left text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
-                Actions
+                <th className="px-5 py-4 text-left text-[11px] font-bold tracking-[0.2em] text-slate-400 uppercase dark:text-slate-500">
+                  Actions
                 </th>
               </tr>
             </thead>
@@ -851,14 +1037,24 @@ export default function SuppliersPageMain() {
                   <td colSpan={5} className="px-5 py-14">
                     <div className="mx-auto max-w-md rounded-[24px] border border-dashed border-slate-200 bg-slate-50/70 px-6 py-10 text-center dark:border-slate-700 dark:bg-slate-900/60">
                       <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm dark:bg-slate-800">
-                        <svg className="h-6 w-6 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        <svg
+                          className="h-6 w-6 text-slate-400 dark:text-slate-500"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                          />
                         </svg>
                       </div>
                       <p className="mt-4 text-sm font-semibold text-slate-700 dark:text-slate-200">
                         {supplierSearch.trim()
                           ? `No suppliers found for "${supplierSearch.trim()}".`
-                          : 'No suppliers found.'}
+                          : "No suppliers found."}
                       </p>
                       <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                         Try a different keyword or clear the current search.
@@ -878,25 +1074,33 @@ export default function SuppliersPageMain() {
                         <p className="truncate text-[15px] font-bold text-slate-900 transition-colors duration-300 group-hover:text-cyan-700 dark:text-slate-100 dark:group-hover:text-cyan-200">
                           {supplier.company || supplier.name}
                         </p>
-                        <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">{supplier.name}</p>
+                        <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">
+                          {supplier.name}
+                        </p>
                       </div>
                     </td>
                     <td className="px-5 py-4">
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{supplier.contact || '-'}</span>
+                      <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                        {supplier.contact || "-"}
+                      </span>
                     </td>
                     <td className="px-5 py-4">
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{supplier.email || '-'}</span>
+                      <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                        {supplier.email || "-"}
+                      </span>
                     </td>
                     <td className="px-5 py-4">
                       <span
-                        className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide transition-transform duration-300 group-hover:scale-[1.03] ${
+                        className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-bold tracking-wide uppercase transition-transform duration-300 group-hover:scale-[1.03] ${
                           supplier.status === 1
-                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700 shadow-sm dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200'
-                            : 'border-slate-200 bg-slate-100 text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-700 shadow-sm dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200"
+                            : "border-slate-200 bg-slate-100 text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
                         }`}
                       >
-                        <span className={`h-1.5 w-1.5 rounded-full ${supplier.status === 1 ? 'bg-emerald-500' : 'bg-slate-400 dark:bg-slate-500'}`} />
-                        {supplier.status === 1 ? 'Active' : 'Inactive'}
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full ${supplier.status === 1 ? "bg-emerald-500" : "bg-slate-400 dark:bg-slate-500"}`}
+                        />
+                        {supplier.status === 1 ? "Active" : "Inactive"}
                       </span>
                     </td>
                     <td className="px-5 py-4">
@@ -904,11 +1108,15 @@ export default function SuppliersPageMain() {
                         <button
                           type="button"
                           onClick={() =>
-                            setExpandedSupplierTreeId((prev) => (prev === supplier.id ? null : supplier.id))
+                            setExpandedSupplierTreeId((prev) =>
+                              prev === supplier.id ? null : supplier.id
+                            )
                           }
                           className="rounded-full border border-emerald-200/90 bg-emerald-50/80 px-3.5 py-2 text-xs font-semibold text-emerald-700 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-100 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200 dark:hover:bg-emerald-500/15"
                         >
-                          {expandedSupplierTreeId === supplier.id ? 'Hide Users' : 'Users'}
+                          {expandedSupplierTreeId === supplier.id
+                            ? "Hide Users"
+                            : "Users"}
                         </button>
                         <button
                           type="button"
@@ -928,7 +1136,7 @@ export default function SuppliersPageMain() {
                           type="button"
                           onClick={() => setDeleteTarget(supplier)}
                           disabled={isDeletingSupplier}
-                          className="rounded-full border border-red-200/90 bg-red-50/75 px-3.5 py-2 text-xs font-semibold text-red-600 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-red-100 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="rounded-full border border-red-200/90 bg-red-50/75 px-3.5 py-2 text-xs font-semibold text-red-600 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/15"
                         >
                           Delete
                         </button>
@@ -950,14 +1158,20 @@ export default function SuppliersPageMain() {
           </table>
         </div>
 
-        <div className="flex flex-col gap-4 border-t border-slate-200/80 bg-slate-50/85 px-5 py-4 dark:border-white/8 dark:bg-slate-900/70 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-4 border-t border-slate-200/80 bg-slate-50/85 px-5 py-4 md:flex-row md:items-center md:justify-between dark:border-white/8 dark:bg-slate-900/70">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+            <p className="text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase dark:text-slate-500">
               Pagination
             </p>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-              Page <span className="font-bold text-slate-900 dark:text-white">{normalizedSupplierPage}</span> of{' '}
-              <span className="font-bold text-slate-900 dark:text-white">{supplierTotalPages}</span>
+              Page{" "}
+              <span className="font-bold text-slate-900 dark:text-white">
+                {normalizedSupplierPage}
+              </span>{" "}
+              of{" "}
+              <span className="font-bold text-slate-900 dark:text-white">
+                {supplierTotalPages}
+              </span>
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -965,15 +1179,19 @@ export default function SuppliersPageMain() {
               type="button"
               onClick={() => setSupplierPage((prev) => Math.max(1, prev - 1))}
               disabled={normalizedSupplierPage <= 1}
-              className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
             >
               Previous
             </button>
             <button
               type="button"
-              onClick={() => setSupplierPage((prev) => Math.min(supplierTotalPages, prev + 1))}
+              onClick={() =>
+                setSupplierPage((prev) =>
+                  Math.min(supplierTotalPages, prev + 1)
+                )
+              }
               disabled={normalizedSupplierPage >= supplierTotalPages}
-              className="rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2.5 text-xs font-semibold text-cyan-700 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-cyan-100 dark:border-cyan-500/20 dark:bg-cyan-500/10 dark:text-cyan-200 dark:hover:bg-cyan-500/15 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2.5 text-xs font-semibold text-cyan-700 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-cyan-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-cyan-500/20 dark:bg-cyan-500/10 dark:text-cyan-200 dark:hover:bg-cyan-500/15"
             >
               Next
             </button>
@@ -985,15 +1203,15 @@ export default function SuppliersPageMain() {
         <ModalShell onClose={() => setCategoryTarget(null)}>
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-700 dark:text-cyan-300">
+              <p className="text-xs font-bold tracking-[0.22em] text-cyan-700 uppercase dark:text-cyan-300">
                 Supplier Categories
               </p>
               <h3 className="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100">
                 Assign Allowed Categories
               </h3>
               <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                {categoryTarget.company || categoryTarget.name} will only be able to use the
-                categories you enable here.
+                {categoryTarget.company || categoryTarget.name} will only be
+                able to use the categories you enable here.
               </p>
             </div>
             <button
@@ -1007,7 +1225,10 @@ export default function SuppliersPageMain() {
 
           <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/70">
             {allCategories.length === 0 ? (
-              <p className="text-sm text-amber-700 dark:text-amber-200">Create master categories first before assigning them to suppliers.</p>
+              <p className="text-sm text-amber-700 dark:text-amber-200">
+                Create master categories first before assigning them to
+                suppliers.
+              </p>
             ) : (
               <div className="grid gap-3 sm:grid-cols-2">
                 {allCategories.map((category) => {
@@ -1018,8 +1239,8 @@ export default function SuppliersPageMain() {
                       key={category.id}
                       className={`flex cursor-pointer items-start gap-3 rounded-2xl border px-4 py-3 transition ${
                         checked
-                          ? 'border-cyan-300 bg-cyan-50 dark:border-cyan-500/30 dark:bg-cyan-500/10'
-                          : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-950 dark:hover:border-slate-600'
+                          ? "border-cyan-300 bg-cyan-50 dark:border-cyan-500/30 dark:bg-cyan-500/10"
+                          : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-950 dark:hover:border-slate-600"
                       }`}
                     >
                       <input
@@ -1029,8 +1250,12 @@ export default function SuppliersPageMain() {
                         className="mt-1 h-4 w-4 accent-cyan-600"
                       />
                       <div>
-                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{category.name}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">/{category.url || 'no-slug'}</p>
+                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                          {category.name}
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          /{category.url || "no-slug"}
+                        </p>
                       </div>
                     </label>
                   )
@@ -1041,7 +1266,10 @@ export default function SuppliersPageMain() {
 
           {categoryFeedback ? (
             <div className="mt-4">
-              <FeedbackBanner type={categoryFeedback.type} message={categoryFeedback.message} />
+              <FeedbackBanner
+                type={categoryFeedback.type}
+                message={categoryFeedback.message}
+              />
             </div>
           ) : null}
 
@@ -1056,10 +1284,14 @@ export default function SuppliersPageMain() {
             <button
               type="button"
               onClick={() => void handleSaveSupplierCategories()}
-              disabled={isSavingSupplierCategories || allCategories.length === 0}
+              disabled={
+                isSavingSupplierCategories || allCategories.length === 0
+              }
               className="rounded-2xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isSavingSupplierCategories ? 'Saving access...' : 'Save Category Access'}
+              {isSavingSupplierCategories
+                ? "Saving access..."
+                : "Save Category Access"}
             </button>
           </div>
         </ModalShell>
@@ -1069,10 +1301,12 @@ export default function SuppliersPageMain() {
         <ModalShell onClose={cancelEditSupplier}>
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-700 dark:text-cyan-300">
+              <p className="text-xs font-bold tracking-[0.22em] text-cyan-700 uppercase dark:text-cyan-300">
                 Edit Supplier
               </p>
-              <h3 className="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100">Update Supplier Company</h3>
+              <h3 className="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100">
+                Update Supplier Company
+              </h3>
             </div>
             <button
               type="button"
@@ -1088,7 +1322,7 @@ export default function SuppliersPageMain() {
               <FormField label="Display Name">
                 <input
                   value={companyForm.name}
-                  onChange={handleCompanyInput('name')}
+                  onChange={handleCompanyInput("name")}
                   required
                   className={inputClassName}
                 />
@@ -1096,7 +1330,7 @@ export default function SuppliersPageMain() {
               <FormField label="Company Name">
                 <input
                   value={companyForm.company}
-                  onChange={handleCompanyInput('company')}
+                  onChange={handleCompanyInput("company")}
                   required
                   className={inputClassName}
                 />
@@ -1105,14 +1339,14 @@ export default function SuppliersPageMain() {
                 <input
                   type="email"
                   value={companyForm.email}
-                  onChange={handleCompanyInput('email')}
+                  onChange={handleCompanyInput("email")}
                   className={inputClassName}
                 />
               </FormField>
               <FormField label="Contact">
                 <input
                   value={companyForm.contact}
-                  onChange={handleCompanyInput('contact')}
+                  onChange={handleCompanyInput("contact")}
                   className={inputClassName}
                 />
               </FormField>
@@ -1121,7 +1355,7 @@ export default function SuppliersPageMain() {
             <FormField label="Address">
               <textarea
                 value={companyForm.address}
-                onChange={handleCompanyInput('address')}
+                onChange={handleCompanyInput("address")}
                 rows={3}
                 className={textareaClassName}
               />
@@ -1130,7 +1364,7 @@ export default function SuppliersPageMain() {
             <FormField label="Status">
               <select
                 value={companyForm.status}
-                onChange={handleCompanyInput('status')}
+                onChange={handleCompanyInput("status")}
                 className={inputClassName}
               >
                 <option value="1">Active</option>
@@ -1151,7 +1385,7 @@ export default function SuppliersPageMain() {
                 disabled={isUpdatingSupplier}
                 className="rounded-2xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isUpdatingSupplier ? 'Saving changes...' : 'Save Changes'}
+                {isUpdatingSupplier ? "Saving changes..." : "Save Changes"}
               </button>
             </div>
           </form>
@@ -1162,10 +1396,12 @@ export default function SuppliersPageMain() {
         <ModalShell onClose={() => setDeleteTarget(null)}>
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-red-500">
+              <p className="text-xs font-bold tracking-[0.22em] text-red-500 uppercase">
                 Delete Supplier
               </p>
-              <h3 className="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100">Confirm Delete</h3>
+              <h3 className="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100">
+                Confirm Delete
+              </h3>
             </div>
             <button
               type="button"
@@ -1177,8 +1413,12 @@ export default function SuppliersPageMain() {
           </div>
 
           <div className="mt-5 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm leading-6 text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-200">
-            Delete <span className="font-semibold">{deleteTarget.company || deleteTarget.name}</span>?
-            This will remove linked supplier accounts and unassign products from this company.
+            Delete{" "}
+            <span className="font-semibold">
+              {deleteTarget.company || deleteTarget.name}
+            </span>
+            ? This will remove linked supplier accounts and unassign products
+            from this company.
           </div>
 
           <div className="mt-6 flex justify-end gap-3">
@@ -1195,7 +1435,7 @@ export default function SuppliersPageMain() {
               disabled={isDeletingSupplier}
               className="rounded-2xl bg-red-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isDeletingSupplier ? 'Deleting...' : 'Delete Supplier'}
+              {isDeletingSupplier ? "Deleting..." : "Delete Supplier"}
             </button>
           </div>
         </ModalShell>
@@ -1206,12 +1446,15 @@ export default function SuppliersPageMain() {
 
 function SupplierUsersTree({ supplierId }: { supplierId: number }) {
   const { data: session } = useSession()
-  const role = String(session?.user?.role ?? '').toLowerCase()
-  const canManageAccounts = role !== 'supplier'
+  const role = String(session?.user?.role ?? "").toLowerCase()
+  const canManageAccounts = role !== "supplier"
 
-  const { data, isLoading, isError, error, refetch } = useGetSupplierUsersQuery(supplierId)
-  const [updateSupplierUser, { isLoading: isUpdating }] = useUpdateSupplierUserMutation()
-  const [deleteSupplierUser, { isLoading: isDeleting }] = useDeleteSupplierUserMutation()
+  const { data, isLoading, isError, error, refetch } =
+    useGetSupplierUsersQuery(supplierId)
+  const [updateSupplierUser, { isLoading: isUpdating }] =
+    useUpdateSupplierUserMutation()
+  const [deleteSupplierUser, { isLoading: isDeleting }] =
+    useDeleteSupplierUserMutation()
   const users = data?.users ?? []
   const [editing, setEditing] = useState<{
     id: number
@@ -1221,30 +1464,48 @@ function SupplierUsersTree({ supplierId }: { supplierId: number }) {
     password: string
     is_main_supplier?: boolean
   } | null>(null)
-  const [confirmDelete, setConfirmDelete] = useState<{ id: number; label: string; isMain?: boolean } | null>(null)
-  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<{
+    id: number
+    label: string
+    isMain?: boolean
+  } | null>(null)
+  const [feedback, setFeedback] = useState<{
+    type: "success" | "error"
+    message: string
+  } | null>(null)
 
   const getErrorMessage = (errorValue: unknown, fallback: string) => {
-    if (errorValue && typeof errorValue === 'object') {
-      const dataValue = (errorValue as {
-        data?: { message?: string; errors?: Record<string, string[]> }
-      }).data
-      const firstEntry = dataValue?.errors ? Object.values(dataValue.errors)[0] : null
-      if (Array.isArray(firstEntry) && typeof firstEntry[0] === 'string') return firstEntry[0]
-      if (typeof dataValue?.message === 'string') return dataValue.message
+    if (errorValue && typeof errorValue === "object") {
+      const dataValue = (
+        errorValue as {
+          data?: { message?: string; errors?: Record<string, string[]> }
+        }
+      ).data
+      const firstEntry = dataValue?.errors
+        ? Object.values(dataValue.errors)[0]
+        : null
+      if (Array.isArray(firstEntry) && typeof firstEntry[0] === "string")
+        return firstEntry[0]
+      if (typeof dataValue?.message === "string") return dataValue.message
     }
 
     return fallback
   }
 
-  const openEdit = (user: { id: number; fullname: string; username: string; email: string; is_main_supplier?: boolean }) => {
+  const openEdit = (user: {
+    id: number
+    fullname: string
+    username: string
+    email: string
+    is_main_supplier?: boolean
+  }) => {
     setFeedback(null)
     setEditing({
       id: user.id,
-      fullname: user.fullname || '',
-      username: user.username || '',
-      email: user.email || '',
-      password: '',
+      fullname: user.fullname || "",
+      username: user.username || "",
+      email: user.email || "",
+      password: "",
       is_main_supplier: user.is_main_supplier,
     })
   }
@@ -1262,14 +1523,22 @@ function SupplierUsersTree({ supplierId }: { supplierId: number }) {
         email: editing.email.trim() || undefined,
         password: editing.password.trim() || undefined,
       }).unwrap()
-      setFeedback({ type: 'success', message: result.message })
+      setFeedback({ type: "success", message: result.message })
       setEditing(null)
     } catch (err) {
-      setFeedback({ type: 'error', message: getErrorMessage(err, 'Unable to update supplier user.') })
+      setFeedback({
+        type: "error",
+        message: getErrorMessage(err, "Unable to update supplier user."),
+      })
     }
   }
 
-  const requestDelete = (user: { id: number; fullname: string; username: string; is_main_supplier?: boolean }) => {
+  const requestDelete = (user: {
+    id: number
+    fullname: string
+    username: string
+    is_main_supplier?: boolean
+  }) => {
     setFeedback(null)
     setConfirmDelete({
       id: user.id,
@@ -1283,21 +1552,28 @@ function SupplierUsersTree({ supplierId }: { supplierId: number }) {
     setFeedback(null)
     try {
       const result = await deleteSupplierUser(confirmDelete.id).unwrap()
-      setFeedback({ type: 'success', message: result.message })
+      setFeedback({ type: "success", message: result.message })
       setConfirmDelete(null)
     } catch (err) {
-      setFeedback({ type: 'error', message: getErrorMessage(err, 'Unable to remove supplier user.') })
+      setFeedback({
+        type: "error",
+        message: getErrorMessage(err, "Unable to remove supplier user."),
+      })
     }
   }
 
   if (isLoading) {
-    return <p className="text-sm text-slate-500 dark:text-slate-400">Loading supplier users...</p>
+    return (
+      <p className="text-sm text-slate-500 dark:text-slate-400">
+        Loading supplier users...
+      </p>
+    )
   }
 
   if (isError) {
     return (
       <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-200">
-        <p>{getErrorMessage(error, 'Failed to load supplier users.')}</p>
+        <p>{getErrorMessage(error, "Failed to load supplier users.")}</p>
         <button
           type="button"
           onClick={() => refetch()}
@@ -1320,34 +1596,45 @@ function SupplierUsersTree({ supplierId }: { supplierId: number }) {
   return (
     <div className="space-y-3">
       <div>
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">Supplier User Tree</p>
-        <h4 className="mt-2 text-sm font-bold text-slate-900 dark:text-slate-100">Main Supplier and Sub-Suppliers</h4>
+        <p className="text-xs font-bold tracking-[0.18em] text-slate-400 uppercase dark:text-slate-500">
+          Supplier User Tree
+        </p>
+        <h4 className="mt-2 text-sm font-bold text-slate-900 dark:text-slate-100">
+          Main Supplier and Sub-Suppliers
+        </h4>
       </div>
       {users.map((user) => (
         <div
           key={user.id}
           className={`rounded-2xl border px-4 py-3 ${
             user.is_main_supplier
-              ? 'border-cyan-200 bg-cyan-50 dark:border-cyan-500/20 dark:bg-cyan-500/10'
-              : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950'
+              ? "border-cyan-200 bg-cyan-50 dark:border-cyan-500/20 dark:bg-cyan-500/10"
+              : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950"
           }`}
         >
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{user.fullname || user.username}</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  {user.fullname || user.username}
+                </p>
                 <span
                   className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold ${
                     user.is_main_supplier
-                      ? 'border-cyan-200 bg-white text-cyan-700 dark:border-cyan-500/20 dark:bg-slate-950 dark:text-cyan-200'
-                      : 'border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                      ? "border-cyan-200 bg-white text-cyan-700 dark:border-cyan-500/20 dark:bg-slate-950 dark:text-cyan-200"
+                      : "border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
                   }`}
                 >
-                  {user.role_label || (user.is_main_supplier ? 'Main Supplier' : 'Sub Supplier')}
+                  {user.role_label ||
+                    (user.is_main_supplier ? "Main Supplier" : "Sub Supplier")}
                 </span>
               </div>
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">@{user.username}</p>
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{user.email || 'No email provided'}</p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                @{user.username}
+              </p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                {user.email || "No email provided"}
+              </p>
             </div>
 
             {canManageAccounts ? (
@@ -1363,7 +1650,7 @@ function SupplierUsersTree({ supplierId }: { supplierId: number }) {
                   type="button"
                   onClick={() => requestDelete(user)}
                   disabled={isDeleting || Boolean(user.is_main_supplier)}
-                  className="rounded-xl border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 dark:border-red-500/20 dark:text-red-300 dark:hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-xl border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-500/20 dark:text-red-300 dark:hover:bg-red-500/10"
                 >
                   Delete
                 </button>
@@ -1377,9 +1664,15 @@ function SupplierUsersTree({ supplierId }: { supplierId: number }) {
         <ModalShell onClose={() => setEditing(null)}>
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">Manage Account</p>
-              <h3 className="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100">Update supplier portal user</h3>
-              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Keep the password blank if you don’t want to change it.</p>
+              <p className="text-xs font-bold tracking-[0.22em] text-slate-400 uppercase dark:text-slate-500">
+                Manage Account
+              </p>
+              <h3 className="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100">
+                Update supplier portal user
+              </h3>
+              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                Keep the password blank if you don’t want to change it.
+              </p>
             </div>
             <button
               type="button"
@@ -1394,16 +1687,24 @@ function SupplierUsersTree({ supplierId }: { supplierId: number }) {
             <FormField label="Full Name">
               <input
                 value={editing.fullname}
-                onChange={(e) => setEditing((prev) => (prev ? { ...prev, fullname: e.target.value } : prev))}
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-cyan-500/20"
+                onChange={(e) =>
+                  setEditing((prev) =>
+                    prev ? { ...prev, fullname: e.target.value } : prev
+                  )
+                }
+                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 transition outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-cyan-500/20"
                 required
               />
             </FormField>
             <FormField label="Username">
               <input
                 value={editing.username}
-                onChange={(e) => setEditing((prev) => (prev ? { ...prev, username: e.target.value } : prev))}
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-cyan-500/20"
+                onChange={(e) =>
+                  setEditing((prev) =>
+                    prev ? { ...prev, username: e.target.value } : prev
+                  )
+                }
+                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 transition outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-cyan-500/20"
                 required
               />
             </FormField>
@@ -1411,8 +1712,12 @@ function SupplierUsersTree({ supplierId }: { supplierId: number }) {
               <input
                 type="email"
                 value={editing.email}
-                onChange={(e) => setEditing((prev) => (prev ? { ...prev, email: e.target.value } : prev))}
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-cyan-500/20"
+                onChange={(e) =>
+                  setEditing((prev) =>
+                    prev ? { ...prev, email: e.target.value } : prev
+                  )
+                }
+                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 transition outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-cyan-500/20"
                 placeholder="Optional"
               />
             </FormField>
@@ -1420,13 +1725,19 @@ function SupplierUsersTree({ supplierId }: { supplierId: number }) {
               <input
                 type="password"
                 value={editing.password}
-                onChange={(e) => setEditing((prev) => (prev ? { ...prev, password: e.target.value } : prev))}
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-cyan-500/20"
+                onChange={(e) =>
+                  setEditing((prev) =>
+                    prev ? { ...prev, password: e.target.value } : prev
+                  )
+                }
+                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 transition outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-cyan-500/20"
                 placeholder="Leave blank if you don't want to change it"
               />
             </FormField>
 
-            {feedback ? <FeedbackBanner type={feedback.type} message={feedback.message} /> : null}
+            {feedback ? (
+              <FeedbackBanner type={feedback.type} message={feedback.message} />
+            ) : null}
 
             <div className="flex justify-end gap-3 pt-2">
               <button
@@ -1441,7 +1752,7 @@ function SupplierUsersTree({ supplierId }: { supplierId: number }) {
                 disabled={isUpdating}
                 className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isUpdating ? 'Saving...' : 'Save Changes'}
+                {isUpdating ? "Saving..." : "Save Changes"}
               </button>
             </div>
           </form>
@@ -1452,10 +1763,18 @@ function SupplierUsersTree({ supplierId }: { supplierId: number }) {
         <ModalShell onClose={() => setConfirmDelete(null)}>
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-red-600">Confirm Delete</p>
-              <h3 className="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100">Remove supplier user?</h3>
+              <p className="text-xs font-bold tracking-[0.22em] text-red-600 uppercase">
+                Confirm Delete
+              </p>
+              <h3 className="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100">
+                Remove supplier user?
+              </h3>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                This will remove access for <span className="font-semibold text-slate-900 dark:text-slate-100">{confirmDelete.label}</span>.
+                This will remove access for{" "}
+                <span className="font-semibold text-slate-900 dark:text-slate-100">
+                  {confirmDelete.label}
+                </span>
+                .
               </p>
               {confirmDelete.isMain ? (
                 <p className="mt-2 text-sm text-amber-700 dark:text-amber-200">
@@ -1472,7 +1791,11 @@ function SupplierUsersTree({ supplierId }: { supplierId: number }) {
             </button>
           </div>
 
-          {feedback ? <div className="mt-4"><FeedbackBanner type={feedback.type} message={feedback.message} /></div> : null}
+          {feedback ? (
+            <div className="mt-4">
+              <FeedbackBanner type={feedback.type} message={feedback.message} />
+            </div>
+          ) : null}
 
           <div className="mt-6 flex justify-end gap-3">
             <button
@@ -1488,7 +1811,7 @@ function SupplierUsersTree({ supplierId }: { supplierId: number }) {
               disabled={isDeleting || Boolean(confirmDelete.isMain)}
               className="rounded-2xl bg-red-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isDeleting ? 'Deleting...' : 'Delete User'}
+              {isDeleting ? "Deleting..." : "Delete User"}
             </button>
           </div>
         </ModalShell>
@@ -1497,22 +1820,36 @@ function SupplierUsersTree({ supplierId }: { supplierId: number }) {
   )
 }
 
-function FormField({ label, children }: { label: string; children: React.ReactNode }) {
+function FormField({
+  label,
+  children,
+}: {
+  label: string
+  children: React.ReactNode
+}) {
   return (
     <label className="block">
-      <span className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">{label}</span>
+      <span className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">
+        {label}
+      </span>
       {children}
     </label>
   )
 }
 
-function FeedbackBanner({ type, message }: { type: 'success' | 'error'; message: string }) {
+function FeedbackBanner({
+  type,
+  message,
+}: {
+  type: "success" | "error"
+  message: string
+}) {
   return (
     <div
       className={`rounded-2xl border px-4 py-3 text-sm ${
-        type === 'success'
-          ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200'
-          : 'border-red-200 bg-red-50 text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-200'
+        type === "success"
+          ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200"
+          : "border-red-200 bg-red-50 text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-200"
       }`}
     >
       {message}
@@ -1521,8 +1858,8 @@ function FeedbackBanner({ type, message }: { type: 'success' | 'error'; message:
 }
 
 function localizeSetupUrl(url: string): string {
-  if (typeof window === 'undefined') return url
-  if (window.location.hostname !== 'localhost') return url
+  if (typeof window === "undefined") return url
+  if (window.location.hostname !== "localhost") return url
   try {
     const parsed = new URL(url)
     parsed.protocol = window.location.protocol
@@ -1539,7 +1876,7 @@ function SetupLinkCard({
   delivery,
 }: {
   setupUrl: string
-  delivery: 'link_only' | 'email_and_link'
+  delivery: "link_only" | "email_and_link"
 }) {
   const [copied, setCopied] = useState(false)
   const displayUrl = localizeSetupUrl(setupUrl)
@@ -1556,15 +1893,15 @@ function SetupLinkCard({
 
   return (
     <div className="rounded-2xl border border-cyan-200 bg-cyan-50 p-4 dark:border-cyan-500/20 dark:bg-cyan-500/10">
-      <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-700">
+      <p className="text-xs font-bold tracking-[0.18em] text-cyan-700 uppercase">
         Setup Link Ready
       </p>
       <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-        {delivery === 'email_and_link'
-          ? 'An email was sent, and you can also copy the setup link below.'
-          : 'No email was sent. Copy this setup link and send it manually to your supplier user.'}
+        {delivery === "email_and_link"
+          ? "An email was sent, and you can also copy the setup link below."
+          : "No email was sent. Copy this setup link and send it manually to your supplier user."}
       </p>
-      <div className="mt-3 break-all rounded-2xl border border-cyan-100 bg-white px-4 py-3 text-sm text-slate-700 dark:border-cyan-500/20 dark:bg-slate-950 dark:text-slate-200">
+      <div className="mt-3 rounded-2xl border border-cyan-100 bg-white px-4 py-3 text-sm break-all text-slate-700 dark:border-cyan-500/20 dark:bg-slate-950 dark:text-slate-200">
         {displayUrl}
       </div>
       <button
@@ -1572,7 +1909,7 @@ function SetupLinkCard({
         onClick={() => void handleCopy()}
         className="mt-3 rounded-xl border border-cyan-200 bg-white px-3 py-2 text-xs font-semibold text-cyan-700 transition hover:bg-cyan-100 dark:border-cyan-500/20 dark:bg-slate-950 dark:text-cyan-200 dark:hover:bg-cyan-500/10"
       >
-        {copied ? 'Copied' : 'Copy Link'}
+        {copied ? "Copied" : "Copy Link"}
       </button>
     </div>
   )
@@ -1581,8 +1918,12 @@ function SetupLinkCard({
 function InfoCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">{label}</p>
-      <p className="mt-2 text-sm font-bold text-slate-800 dark:text-slate-100">{value}</p>
+      <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
+        {label}
+      </p>
+      <p className="mt-2 text-sm font-bold text-slate-800 dark:text-slate-100">
+        {value}
+      </p>
     </div>
   )
 }
@@ -1610,7 +1951,7 @@ function ModalShell({
 }
 
 const inputClassName =
-  'w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-cyan-500/20'
+  "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-cyan-500/20"
 
 const textareaClassName =
-  'w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-cyan-500/20'
+  "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-cyan-500/20"

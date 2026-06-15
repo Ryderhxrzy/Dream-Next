@@ -1,15 +1,21 @@
-import { prisma } from "../../lib/prisma.js";
-import type { UpdateProfileInput } from "./profile.validator.js";
+import { prisma } from "../../lib/prisma.js"
+import type { UpdateProfileInput } from "./profile.validator.js"
 
 export function getProfile(customerId: bigint) {
-  return prisma.communityProfile.findUnique({ where: { customerId } });
+  return prisma.communityProfile.findUnique({ where: { customerId } })
 }
 
 export function getCustomerWithProfile(userId: bigint) {
   return prisma.customer.findUnique({
     where: { id: userId },
-    select: { id: true, firstName: true, lastName: true, avatarUrl: true, profile: true },
-  });
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      avatarUrl: true,
+      profile: true,
+    },
+  })
 }
 
 export function upsertProfile(customerId: bigint, data: UpdateProfileInput) {
@@ -17,5 +23,5 @@ export function upsertProfile(customerId: bigint, data: UpdateProfileInput) {
     where: { customerId },
     create: { customerId, ...data },
     update: data,
-  });
+  })
 }

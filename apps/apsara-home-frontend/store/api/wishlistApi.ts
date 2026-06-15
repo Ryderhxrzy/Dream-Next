@@ -1,5 +1,6 @@
-import { baseApi } from './baseApi'
-import type { FetchBaseQueryError } from '@reduxjs/toolkit/query'
+import type { FetchBaseQueryError } from "@reduxjs/toolkit/query"
+
+import { baseApi } from "./baseApi"
 
 export interface WishlistItem {
   wishlistId?: number
@@ -20,13 +21,13 @@ export interface WishlistItem {
 type UnknownRow = Record<string, unknown>
 
 const asObject = (value: unknown): UnknownRow => {
-  if (value && typeof value === 'object') return value as UnknownRow
+  if (value && typeof value === "object") return value as UnknownRow
   return {}
 }
 
 const asNumber = (value: unknown): number | null => {
-  if (typeof value === 'number' && Number.isFinite(value)) return value
-  if (typeof value === 'string' && value.trim().length > 0) {
+  if (typeof value === "number" && Number.isFinite(value)) return value
+  if (typeof value === "string" && value.trim().length > 0) {
     const parsed = Number(value)
     if (Number.isFinite(parsed)) return parsed
   }
@@ -34,15 +35,15 @@ const asNumber = (value: unknown): number | null => {
 }
 
 const asString = (value: unknown): string => {
-  return typeof value === 'string' ? value : ''
+  return typeof value === "string" ? value : ""
 }
 
 const slugify = (value: string): string =>
   value
     .toLowerCase()
     .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-")
 
 const normalizeWishlistRow = (rowInput: unknown): WishlistItem | null => {
   const row = asObject(rowInput)
@@ -57,9 +58,7 @@ const normalizeWishlistRow = (rowInput: unknown): WishlistItem | null => {
     null
 
   const name =
-    asString(product.name) ||
-    asString(product.pd_name) ||
-    asString(row.name)
+    asString(product.name) || asString(product.pd_name) || asString(row.name)
 
   const brand = asString(product.brand) || null
 
@@ -73,18 +72,26 @@ const normalizeWishlistRow = (rowInput: unknown): WishlistItem | null => {
     asNumber(product.pd_price_srp) ??
     0
 
-  const priceMember = asNumber(product.priceMember) ?? asNumber(product.pd_price_dp) ?? undefined
-  const priceDp = asNumber(product.priceDp) ?? asNumber(product.pd_price_dp) ?? undefined
-  const priceSrp = asNumber(product.priceSrp) ?? asNumber(product.pd_price_srp) ?? undefined
-  const originalPrice = asNumber(product.originalPrice) ?? asNumber(product.pd_price_srp) ?? asNumber(product.priceSrp) ?? undefined
+  const priceMember =
+    asNumber(product.priceMember) ?? asNumber(product.pd_price_dp) ?? undefined
+  const priceDp =
+    asNumber(product.priceDp) ?? asNumber(product.pd_price_dp) ?? undefined
+  const priceSrp =
+    asNumber(product.priceSrp) ?? asNumber(product.pd_price_srp) ?? undefined
+  const originalPrice =
+    asNumber(product.originalPrice) ??
+    asNumber(product.pd_price_srp) ??
+    asNumber(product.priceSrp) ??
+    undefined
   const sku = asString(product.sku) ?? asString(product.pd_sku) ?? undefined
-  const prodpv = asNumber(product.prodpv) ?? asNumber(product.pd_pv) ?? undefined
+  const prodpv =
+    asNumber(product.prodpv) ?? asNumber(product.pd_pv) ?? undefined
 
   const image =
     asString(product.image) ||
     asString(product.pd_image) ||
     asString(row.image) ||
-    '/Images/af_home_logo.png'
+    "/Images/af_home_logo.png"
 
   const slug = asString(product.slug) || slugify(name)
   const wishlistId = asNumber(row.id) ?? undefined
@@ -124,10 +131,10 @@ export const wishlistApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getWishlist: builder.query<WishlistItem[], void>({
       async queryFn(_arg, _api, _extra, fetchWithBQ) {
-        const candidates = ['/api/wishlist', '/api/customer/wishlist']
+        const candidates = ["/api/wishlist", "/api/customer/wishlist"]
 
         for (const url of candidates) {
-          const response = await fetchWithBQ({ url, method: 'GET' })
+          const response = await fetchWithBQ({ url, method: "GET" })
           if (!response.error) {
             return { data: normalizeWishlistResponse(response.data) }
           }
@@ -141,26 +148,35 @@ export const wishlistApi = baseApi.injectEndpoints({
         return {
           error: {
             status: 404,
-            data: { message: 'Wishlist endpoint not found. Configure backend route first.' },
+            data: {
+              message:
+                "Wishlist endpoint not found. Configure backend route first.",
+            },
           } as FetchBaseQueryError,
         }
       },
       providesTags: (result) =>
         result
           ? [
-              ...result.map((item) => ({ type: 'Wishlist' as const, id: item.productId })),
-              { type: 'Wishlist' as const, id: 'LIST' },
+              ...result.map((item) => ({
+                type: "Wishlist" as const,
+                id: item.productId,
+              })),
+              { type: "Wishlist" as const, id: "LIST" },
             ]
-          : [{ type: 'Wishlist' as const, id: 'LIST' }],
+          : [{ type: "Wishlist" as const, id: "LIST" }],
     }),
-    addWishlist: builder.mutation<unknown, { product_id?: number; product_name?: string }>({
+    addWishlist: builder.mutation<
+      unknown,
+      { product_id?: number; product_name?: string }
+    >({
       async queryFn(body, _api, _extra, fetchWithBQ) {
-        const candidates = ['/api/wishlist', '/api/customer/wishlist']
+        const candidates = ["/api/wishlist", "/api/customer/wishlist"]
 
         for (const url of candidates) {
           const response = await fetchWithBQ({
             url,
-            method: 'POST',
+            method: "POST",
             body,
           })
           if (!response.error) return { data: response.data }
@@ -172,11 +188,11 @@ export const wishlistApi = baseApi.injectEndpoints({
         return {
           error: {
             status: 404,
-            data: { message: 'Wishlist create endpoint not found.' },
+            data: { message: "Wishlist create endpoint not found." },
           } as FetchBaseQueryError,
         }
       },
-      invalidatesTags: [{ type: 'Wishlist', id: 'LIST' }],
+      invalidatesTags: [{ type: "Wishlist", id: "LIST" }],
     }),
     removeWishlist: builder.mutation<unknown, number>({
       async queryFn(productId, _api, _extra, fetchWithBQ) {
@@ -188,7 +204,7 @@ export const wishlistApi = baseApi.injectEndpoints({
         for (const url of candidates) {
           const response = await fetchWithBQ({
             url,
-            method: 'DELETE',
+            method: "DELETE",
           })
           if (!response.error) return { data: response.data }
 
@@ -199,13 +215,13 @@ export const wishlistApi = baseApi.injectEndpoints({
         return {
           error: {
             status: 404,
-            data: { message: 'Wishlist delete endpoint not found.' },
+            data: { message: "Wishlist delete endpoint not found." },
           } as FetchBaseQueryError,
         }
       },
       invalidatesTags: (_result, _error, productId) => [
-        { type: 'Wishlist', id: productId },
-        { type: 'Wishlist', id: 'LIST' },
+        { type: "Wishlist", id: productId },
+        { type: "Wishlist", id: "LIST" },
       ],
     }),
   }),

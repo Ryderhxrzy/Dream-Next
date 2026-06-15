@@ -1,10 +1,11 @@
-import { buildPageMetadata } from '@/app/seo'
-import AdminTermsConditionSettingsPageMain from '@/components/superAdmin/settings/AdminTermsConditionSettingsPageMain'
+import AdminTermsConditionSettingsPageMain from "@/components/superAdmin/settings/AdminTermsConditionSettingsPageMain"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
-  title: 'Admin Settings Terms and Condition',
-  description: 'Manage Terms and Condition settings in the AF Home admin panel.',
-  path: '/admin/settings/terms-condition',
+  title: "Admin Settings Terms and Condition",
+  description:
+    "Manage Terms and Condition settings in the AF Home admin panel.",
+  path: "/admin/settings/terms-condition",
   noIndex: true,
 })
 

@@ -1,23 +1,33 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { notFound, useParams } from "next/navigation";
-import { Header } from "@/components/shared/header";
-import { allProjects } from "@/lib/landing-data";
-import { FadeUp, FadeIn, ScaleUp, SlideInLeft, SlideInRight, StaggerContainer, StaggerItem } from "@/components/ui/motion";
+import Link from "next/link"
+import { notFound, useParams } from "next/navigation"
+
+import { allProjects } from "@/lib/landing-data"
+import {
+  FadeIn,
+  FadeUp,
+  ScaleUp,
+  SlideInLeft,
+  SlideInRight,
+  StaggerContainer,
+  StaggerItem,
+} from "@/components/ui/motion"
+import { Header } from "@/components/shared/header"
 
 export default function ProjectPage() {
-  const params = useParams();
-  const id = params.id as string;
-  const project = allProjects.find((p) => p.id === id);
+  const params = useParams()
+  const id = params.id as string
+  const project = allProjects.find((p) => p.id === id)
 
   if (!project) {
-    notFound();
+    notFound()
   }
 
-  const projectIndex = allProjects.findIndex((p) => p.id === id);
-  const nextProject = allProjects[(projectIndex + 1) % allProjects.length];
-  const prevProject = allProjects[(projectIndex - 1 + allProjects.length) % allProjects.length];
+  const projectIndex = allProjects.findIndex((p) => p.id === id)
+  const nextProject = allProjects[(projectIndex + 1) % allProjects.length]
+  const prevProject =
+    allProjects[(projectIndex - 1 + allProjects.length) % allProjects.length]
 
   return (
     <main className="min-h-screen bg-[var(--background)]">
@@ -31,8 +41,18 @@ export default function ProjectPage() {
               href="/projects"
               className="inline-flex items-center gap-2 text-sm text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16l-4-4m0 0l4-4m-4 4h18" />
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 16l-4-4m0 0l4-4m-4 4h18"
+                />
               </svg>
               Back to Projects
             </Link>
@@ -44,14 +64,18 @@ export default function ProjectPage() {
                 {project.tag}
               </span>
               <span className="h-1 w-1 rounded-full bg-[var(--border)]" />
-              <span className="text-xs text-[var(--muted)]">{project.location}</span>
+              <span className="text-xs text-[var(--muted)]">
+                {project.location}
+              </span>
               <span className="h-1 w-1 rounded-full bg-[var(--border)]" />
-              <span className="text-xs text-[var(--muted)]">{project.year}</span>
+              <span className="text-xs text-[var(--muted)]">
+                {project.year}
+              </span>
             </div>
           </FadeUp>
 
           <FadeUp delay={0.2}>
-            <h1 className="mt-4 text-4xl font-medium tracking-tight text-[var(--foreground)] sm:text-5xl lg:text-6xl text-balance">
+            <h1 className="mt-4 text-4xl font-medium tracking-tight text-balance text-[var(--foreground)] sm:text-5xl lg:text-6xl">
               {project.title}
             </h1>
           </FadeUp>
@@ -87,7 +111,10 @@ export default function ProjectPage() {
                 </h3>
                 <ul className="mt-4 space-y-2">
                   {project.scope.map((item) => (
-                    <li key={item} className="text-base text-[var(--foreground)]">
+                    <li
+                      key={item}
+                      className="text-base text-[var(--foreground)]"
+                    >
                       {item}
                     </li>
                   ))}
@@ -101,7 +128,9 @@ export default function ProjectPage() {
                 <h3 className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
                   Location
                 </h3>
-                <p className="mt-4 text-base text-[var(--foreground)]">{project.location}</p>
+                <p className="mt-4 text-base text-[var(--foreground)]">
+                  {project.location}
+                </p>
               </div>
             </StaggerItem>
 
@@ -111,7 +140,9 @@ export default function ProjectPage() {
                 <h3 className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
                   Year Completed
                 </h3>
-                <p className="mt-4 text-base text-[var(--foreground)]">{project.year}</p>
+                <p className="mt-4 text-base text-[var(--foreground)]">
+                  {project.year}
+                </p>
               </div>
             </StaggerItem>
           </StaggerContainer>
@@ -166,7 +197,9 @@ export default function ProjectPage() {
                 <h3 className="mt-3 text-xl font-medium text-[var(--foreground)] transition-colors group-hover:text-[var(--accent)] lg:text-2xl">
                   {prevProject.title}
                 </h3>
-                <p className="mt-2 text-sm text-[var(--muted)]">{prevProject.tag}</p>
+                <p className="mt-2 text-sm text-[var(--muted)]">
+                  {prevProject.tag}
+                </p>
               </Link>
             </SlideInLeft>
 
@@ -181,7 +214,9 @@ export default function ProjectPage() {
                 <h3 className="mt-3 text-xl font-medium text-[var(--foreground)] transition-colors group-hover:text-[var(--accent)] lg:text-2xl">
                   {nextProject.title}
                 </h3>
-                <p className="mt-2 text-sm text-[var(--muted)]">{nextProject.tag}</p>
+                <p className="mt-2 text-sm text-[var(--muted)]">
+                  {nextProject.tag}
+                </p>
               </Link>
             </SlideInRight>
           </div>
@@ -194,11 +229,12 @@ export default function ProjectPage() {
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
               <p className="text-sm text-[var(--muted)]">
-                &copy; {new Date().getFullYear()} Dreambuild Design Studio. All rights reserved.
+                &copy; {new Date().getFullYear()} Dreambuild Design Studio. All
+                rights reserved.
               </p>
               <Link
                 href="/"
-                className="text-sm text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
+                className="text-sm text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
               >
                 Back to Home
               </Link>
@@ -207,5 +243,5 @@ export default function ProjectPage() {
         </footer>
       </FadeIn>
     </main>
-  );
+  )
 }

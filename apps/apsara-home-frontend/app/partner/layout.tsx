@@ -1,10 +1,10 @@
-'use client'
+"use client"
 
-import { useEffect } from 'react'
-import { usePathname } from 'next/navigation'
-import { SessionProvider, useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import PartnerDashboardLayout from '@/components/partner/DashboardLayout'
+import { useEffect } from "react"
+import { SessionProvider, useSession } from "next-auth/react"
+import { usePathname, useRouter } from "next/navigation"
+
+import PartnerDashboardLayout from "@/components/partner/DashboardLayout"
 
 function PartnerRouteGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -12,29 +12,31 @@ function PartnerRouteGuard({ children }: { children: React.ReactNode }) {
   const { status } = useSession()
 
   useEffect(() => {
-    if (status === 'loading') return
-    if (pathname === '/partner/login') return
+    if (status === "loading") return
+    if (pathname === "/partner/login") return
 
-    if (status !== 'authenticated') {
-      router.replace('/partner/login')
+    if (status !== "authenticated") {
+      router.replace("/partner/login")
     }
   }, [pathname, router, status])
 
-  if (pathname !== '/partner/login' && status !== 'authenticated') {
+  if (pathname !== "/partner/login" && status !== "authenticated") {
     return null
   }
 
   return <PartnerDashboardLayout>{children}</PartnerDashboardLayout>
 }
 
-export default function PartnerLayout({ children }: { children: React.ReactNode }) {
+export default function PartnerLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   const pathname = usePathname()
 
-  if (pathname === '/partner/login') {
+  if (pathname === "/partner/login") {
     return (
-      <SessionProvider basePath="/api/partner/auth">
-        {children}
-      </SessionProvider>
+      <SessionProvider basePath="/api/partner/auth">{children}</SessionProvider>
     )
   }
 

@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import { MapPin, Loader2, X } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { Loader2, MapPin, X } from "lucide-react"
+
 import { cn } from "@/lib/utils"
 
 interface Suggestion {
@@ -24,12 +25,12 @@ export function LocationSearch({
   placeholder = "Search location...",
   required,
 }: LocationSearchProps) {
-  const [query, setQuery]             = useState(value)
+  const [query, setQuery] = useState(value)
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
-  const [loading, setLoading]         = useState(false)
-  const [open, setOpen]               = useState(false)
-  const debounceRef                   = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const containerRef                  = useRef<HTMLDivElement>(null)
+  const [loading, setLoading] = useState(false)
+  const [open, setOpen] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -40,7 +41,11 @@ export function LocationSearch({
   }, [])
 
   async function fetchSuggestions(q: string) {
-    if (q.length < 3) { setSuggestions([]); setOpen(false); return }
+    if (q.length < 3) {
+      setSuggestions([])
+      setOpen(false)
+      return
+    }
     setLoading(true)
     try {
       const res = await fetch(`/api/location?q=${encodeURIComponent(q)}`)
@@ -83,7 +88,7 @@ export function LocationSearch({
     <div ref={containerRef} className="relative">
       {/* Input */}
       <div className="relative flex items-center">
-        <MapPin className="absolute left-3 w-3.5 h-3.5 text-muted-foreground pointer-events-none shrink-0" />
+        <MapPin className="text-muted-foreground pointer-events-none absolute left-3 h-3.5 w-3.5 shrink-0" />
         <input
           type="text"
           value={query}
@@ -91,14 +96,14 @@ export function LocationSearch({
           onFocus={() => suggestions.length > 0 && setOpen(true)}
           placeholder={placeholder}
           required={required}
-          className="w-full h-9 pl-8 pr-8 text-sm bg-muted border border-border rounded-md outline-none ring-offset-0 focus:border-ring focus:ring-1 focus:ring-ring text-foreground placeholder:text-muted-foreground transition-colors"
+          className="bg-muted border-border focus:border-ring focus:ring-ring text-foreground placeholder:text-muted-foreground h-9 w-full rounded-md border pr-8 pl-8 text-sm ring-offset-0 transition-colors outline-none focus:ring-1"
         />
         <div className="absolute right-3">
           {loading ? (
-            <Loader2 className="w-3.5 h-3.5 text-muted-foreground animate-spin" />
+            <Loader2 className="text-muted-foreground h-3.5 w-3.5 animate-spin" />
           ) : query ? (
             <button type="button" onClick={handleClear} tabIndex={-1}>
-              <X className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground transition-colors" />
+              <X className="text-muted-foreground hover:text-foreground h-3.5 w-3.5 transition-colors" />
             </button>
           ) : null}
         </div>
@@ -106,11 +111,11 @@ export function LocationSearch({
 
       {/* Dropdown */}
       {open && suggestions.length > 0 && (
-        <div className="absolute z-[9999] w-full mt-1 bg-popover border border-border rounded-lg shadow-lg overflow-hidden">
+        <div className="bg-popover border-border absolute z-[9999] mt-1 w-full overflow-hidden rounded-lg border shadow-lg">
           {suggestions.map((s, i) => {
             const parts = s.display_name.split(", ")
-            const main  = parts[0]
-            const sub   = parts.slice(1, 4).join(", ")
+            const main = parts[0]
+            const sub = parts.slice(1, 4).join(", ")
             return (
               <button
                 key={s.place_id}
@@ -118,14 +123,20 @@ export function LocationSearch({
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => handleSelect(s)}
                 className={cn(
-                  "w-full flex items-start gap-2.5 px-3 py-2.5 text-left hover:bg-accent transition-colors",
-                  i !== 0 && "border-t border-border"
+                  "hover:bg-accent flex w-full items-start gap-2.5 px-3 py-2.5 text-left transition-colors",
+                  i !== 0 && "border-border border-t"
                 )}
               >
-                <MapPin className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                <MapPin className="text-muted-foreground mt-0.5 h-3.5 w-3.5 shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{main}</p>
-                  {sub && <p className="text-xs text-muted-foreground truncate mt-0.5">{sub}</p>}
+                  <p className="text-foreground truncate text-sm font-medium">
+                    {main}
+                  </p>
+                  {sub && (
+                    <p className="text-muted-foreground mt-0.5 truncate text-xs">
+                      {sub}
+                    </p>
+                  )}
                 </div>
               </button>
             )
@@ -135,8 +146,8 @@ export function LocationSearch({
 
       {/* No results */}
       {open && !loading && query.length >= 3 && suggestions.length === 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-lg shadow-lg px-3 py-3 text-center">
-          <p className="text-sm text-muted-foreground">No locations found</p>
+        <div className="bg-popover border-border absolute z-50 mt-1 w-full rounded-lg border px-3 py-3 text-center shadow-lg">
+          <p className="text-muted-foreground text-sm">No locations found</p>
         </div>
       )}
     </div>

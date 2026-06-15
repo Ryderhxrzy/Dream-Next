@@ -1,73 +1,75 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { SlideInLeft, SlideInRight } from "@/components/ui/motion";
-import { motion } from "framer-motion";
+import { useState } from "react"
+import { motion } from "framer-motion"
+
+import { SlideInLeft, SlideInRight } from "@/components/ui/motion"
 
 const projectTypes = [
   "Full Interior Design",
   "Renovation Design",
   "Styling and Finishing",
   "Not sure yet",
-];
+]
 
 type ContactContent = {
-  title: string;
-  body: string;
-  email: string;
-  phone?: string;
-  address: string;
-};
+  title: string
+  body: string
+  email: string
+  phone?: string
+  address: string
+}
 
 const defaultContact: ContactContent = {
   title: "Ready to build something remarkable?",
-  body:
-    "Tell us about your space and what you're looking for. We'll get back to you within 24 hours to set up a free consultation.",
+  body: "Tell us about your space and what you're looking for. We'll get back to you within 24 hours to set up a free consultation.",
   email: "hello@dreambuild.studio",
   address: "Metro Manila, Philippines",
-};
+}
 
-export function ContactSection({ contact = defaultContact }: { contact?: ContactContent }) {
+export function ContactSection({
+  contact = defaultContact,
+}: {
+  contact?: ContactContent
+}) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     projectType: "",
     message: "",
-  });
-  const [submitted, setSubmitted] = useState(false);
+  })
+  const [submitted, setSubmitted] = useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     // Wire up to your backend here
-    setSubmitted(true);
-  };
+    setSubmitted(true)
+  }
   const contactDetails = [
     { label: "Email", value: contact.email },
     ...(contact.phone ? [{ label: "Phone", value: contact.phone }] : []),
     { label: "Location", value: contact.address },
     { label: "Response Time", value: "Within 24 hours" },
-  ];
+  ]
 
   return (
     <section id="contact" className="relative overflow-hidden py-24 lg:py-36">
-
       {/* Decorative background text */}
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-center select-none overflow-hidden">
-        <span className="text-[clamp(5rem,18vw,14rem)] font-bold leading-none tracking-tighter text-[var(--border)] opacity-30 whitespace-nowrap">
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden select-none">
+        <span className="text-[clamp(5rem,18vw,14rem)] leading-none font-bold tracking-tighter whitespace-nowrap text-[var(--border)] opacity-30">
           LET&apos;S TALK
         </span>
       </div>
 
       <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
         <div className="grid gap-16 lg:grid-cols-2 lg:gap-20">
-
           {/* Left — Info */}
           <SlideInLeft className="flex flex-col justify-center">
             <p className="inline-flex items-center gap-2 text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
               <span className="h-px w-8 bg-[var(--muted)]" />
               Start Your Project
             </p>
-            <h2 className="mt-5 text-4xl font-medium leading-tight tracking-tight text-[var(--foreground)] sm:text-5xl lg:text-6xl">
+            <h2 className="mt-5 text-4xl leading-tight font-medium tracking-tight text-[var(--foreground)] sm:text-5xl lg:text-6xl">
               {contact.title}
             </h2>
             <p className="mt-6 text-base leading-relaxed text-[var(--muted)]">
@@ -120,7 +122,8 @@ export function ContactSection({ contact = defaultContact }: { contact?: Contact
                   Message sent!
                 </h3>
                 <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">
-                  Thanks for reaching out. We&apos;ll be in touch within 24 hours.
+                  Thanks for reaching out. We&apos;ll be in touch within 24
+                  hours.
                 </p>
               </motion.div>
             ) : (
@@ -139,8 +142,10 @@ export function ContactSection({ contact = defaultContact }: { contact?: Contact
                       required
                       placeholder="Your name"
                       value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] outline-none transition-all focus:border-[var(--foreground)] focus:ring-2 focus:ring-[var(--foreground)]/10"
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                      className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-[var(--foreground)] transition-all outline-none placeholder:text-[var(--muted)] focus:border-[var(--foreground)] focus:ring-2 focus:ring-[var(--foreground)]/10"
                     />
                   </div>
 
@@ -154,8 +159,10 @@ export function ContactSection({ contact = defaultContact }: { contact?: Contact
                       required
                       placeholder="you@email.com"
                       value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] outline-none transition-all focus:border-[var(--foreground)] focus:ring-2 focus:ring-[var(--foreground)]/10"
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
+                      className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-[var(--foreground)] transition-all outline-none placeholder:text-[var(--muted)] focus:border-[var(--foreground)] focus:ring-2 focus:ring-[var(--foreground)]/10"
                     />
                   </div>
 
@@ -169,7 +176,9 @@ export function ContactSection({ contact = defaultContact }: { contact?: Contact
                         <button
                           key={type}
                           type="button"
-                          onClick={() => setFormData({ ...formData, projectType: type })}
+                          onClick={() =>
+                            setFormData({ ...formData, projectType: type })
+                          }
                           className={`rounded-xl border px-4 py-2.5 text-left text-xs font-medium transition-all ${
                             formData.projectType === type
                               ? "border-[var(--foreground)] bg-[var(--foreground)] text-white"
@@ -191,8 +200,10 @@ export function ContactSection({ contact = defaultContact }: { contact?: Contact
                       rows={4}
                       placeholder="Describe your space, budget range, timeline, or anything else..."
                       value={formData.message}
-                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                      className="w-full resize-none rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] outline-none transition-all focus:border-[var(--foreground)] focus:ring-2 focus:ring-[var(--foreground)]/10"
+                      onChange={(e) =>
+                        setFormData({ ...formData, message: e.target.value })
+                      }
+                      className="w-full resize-none rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-[var(--foreground)] transition-all outline-none placeholder:text-[var(--muted)] focus:border-[var(--foreground)] focus:ring-2 focus:ring-[var(--foreground)]/10"
                     />
                   </div>
 
@@ -207,15 +218,15 @@ export function ContactSection({ contact = defaultContact }: { contact?: Contact
                   </motion.button>
 
                   <p className="text-center text-xs text-[var(--muted)]">
-                    No commitment. We&apos;ll reach out to learn more before anything begins.
+                    No commitment. We&apos;ll reach out to learn more before
+                    anything begins.
                   </p>
                 </div>
               </form>
             )}
           </SlideInRight>
-
         </div>
       </div>
     </section>
-  );
+  )
 }

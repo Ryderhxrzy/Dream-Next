@@ -1,7 +1,7 @@
-import WalletCreditsPageMain from '@/components/superAdmin/members/walletCredits/WalletCreditsPageMain'
+import WalletCreditsPageMain from "@/components/superAdmin/members/walletCredits/WalletCreditsPageMain"
 
 export const metadata = {
-  title: 'Wallet & Credits | AF Home Admin',
+  title: "Wallet & Credits | AF Home Admin",
 }
 
 export default function WalletCreditsPage() {

@@ -1,13 +1,14 @@
-'use client'
+"use client"
 
-import { useMemo, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
-import { Skeleton } from '@heroui/react/skeleton'
-import TopBar from '@/components/layout/TopBar'
-import Navbar from '@/components/layout/Navbar'
-import Footer from '@/components/landing-page/Footer'
-import { useGetPublicWebPageItemsQuery } from '@/store/api/webPagesApi'
-import type { Category } from '@/store/api/categoriesApi'
+import { useMemo, useState } from "react"
+import type { Category } from "@/store/api/categoriesApi"
+import { useGetPublicWebPageItemsQuery } from "@/store/api/webPagesApi"
+import { Skeleton } from "@heroui/react/skeleton"
+import { AnimatePresence, motion } from "framer-motion"
+
+import Footer from "@/components/landing-page/Footer"
+import Navbar from "@/components/layout/Navbar"
+import TopBar from "@/components/layout/TopBar"
 
 type VideoGalleryPageClientProps = {
   initialCategories?: Category[]
@@ -22,17 +23,16 @@ type VideoGalleryItem = {
   payload?: unknown
 }
 
-
-
-
 function getVideoId(url: string): string | null {
   if (!url) return null
-  const youtubeMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&/?\s]+)/)
+  const youtubeMatch = url.match(
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&/?\s]+)/
+  )
   return youtubeMatch ? youtubeMatch[1] : null
 }
 
 function isYoutubeUrl(url: string) {
-  return /(?:youtube\.com\/watch\?v=|youtu\.be\/)/.test(url || '')
+  return /(?:youtube\.com\/watch\?v=|youtu\.be\/)/.test(url || "")
 }
 
 function VideoIcon({ className }: { className?: string }) {
@@ -103,15 +103,20 @@ function PlayIcon({ className }: { className?: string }) {
   )
 }
 
-export default function VideoGalleryPageClient({ initialCategories }: VideoGalleryPageClientProps) {
+export default function VideoGalleryPageClient({
+  initialCategories,
+}: VideoGalleryPageClientProps) {
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null)
-  const { data, isLoading } = useGetPublicWebPageItemsQuery('video-gallery')
+  const { data, isLoading } = useGetPublicWebPageItemsQuery("video-gallery")
 
-  const effectiveGalleryItems: VideoGalleryItem[] = data?.items?.filter((item: VideoGalleryItem) => item.is_active) ?? []
+  const effectiveGalleryItems: VideoGalleryItem[] =
+    data?.items?.filter((item: VideoGalleryItem) => item.is_active) ?? []
 
   const selectedItem = useMemo(() => {
     if (!selectedVideo) return null
-    return effectiveGalleryItems.find((it) => it.link_url === selectedVideo) ?? null
+    return (
+      effectiveGalleryItems.find((it) => it.link_url === selectedVideo) ?? null
+    )
   }, [effectiveGalleryItems, selectedVideo])
 
   return (
@@ -135,21 +140,28 @@ export default function VideoGalleryPageClient({ initialCategories }: VideoGalle
               aria-hidden
               className="absolute -inset-3 -z-10 rounded-3xl bg-[radial-gradient(ellipse_at_top_left,rgba(59,130,246,0.22),transparent_55%)]"
             />
-            <div aria-hidden className="absolute -left-24 top-6 h-24 w-24 -z-10 rounded-full bg-blue-200/25 blur-3xl" />
-            <div aria-hidden className="absolute -right-24 bottom-6 h-24 w-24 -z-10 rounded-full bg-amber-200/25 blur-3xl" />
+            <div
+              aria-hidden
+              className="absolute top-6 -left-24 -z-10 h-24 w-24 rounded-full bg-blue-200/25 blur-3xl"
+            />
+            <div
+              aria-hidden
+              className="absolute -right-24 bottom-6 -z-10 h-24 w-24 rounded-full bg-amber-200/25 blur-3xl"
+            />
 
             <div className="rounded-3xl border border-blue-200/70 bg-white/80 p-6 shadow-[0_0_0_1px_rgba(59,130,246,0.06)] backdrop-blur md:p-8 dark:border-white/10 dark:bg-gray-900/60">
-              <div className="flex items-start justify-between gap-6 flex-wrap">
+              <div className="flex flex-wrap items-start justify-between gap-6">
                 <div className="flex items-start gap-4">
                   <div className="mt-1 flex h-12 w-12 items-center justify-center rounded-2xl border border-orange-200 bg-orange-50 text-orange-700">
                     <VideoIcon className="h-6 w-6" />
                   </div>
                   <div>
-                    <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-gray-900 dark:text-white">
+                    <h1 className="text-4xl font-bold tracking-tight text-gray-900 md:text-5xl dark:text-white">
                       Video Gallery
                     </h1>
                     <p className="mt-3 text-lg text-gray-600 dark:text-gray-400">
-                      Premium design walkthroughs—tips, inspiration, and assembly guides in one place.
+                      Premium design walkthroughs—tips, inspiration, and
+                      assembly guides in one place.
                     </p>
 
                     <div className="mt-4 flex flex-wrap gap-2">
@@ -195,14 +207,14 @@ export default function VideoGalleryPageClient({ initialCategories }: VideoGalle
 
           {/* Loading */}
           {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
                 <div
                   key={i}
-            className="rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50/60 to-white p-2 overflow-hidden dark:border-orange-900/40 dark:from-orange-900/20 dark:to-gray-900 dark:text-white"
+                  className="overflow-hidden rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50/60 to-white p-2 dark:border-orange-900/40 dark:from-orange-900/20 dark:to-gray-900 dark:text-white"
                 >
                   <Skeleton className="aspect-video rounded-xl" />
-                  <div className="px-3 py-3 space-y-2">
+                  <div className="space-y-2 px-3 py-3">
                     <Skeleton className="h-4 w-4/5 rounded-lg" />
                     <Skeleton className="h-3 w-2/3 rounded-lg" />
                   </div>
@@ -216,22 +228,33 @@ export default function VideoGalleryPageClient({ initialCategories }: VideoGalle
               animate={{ opacity: 1, scale: 1 }}
               className="rounded-2xl border border-orange-200/70 bg-white/70 px-8 py-16 text-center shadow-sm dark:border-orange-900/40 dark:bg-gray-900/60"
             >
-              <div className="flex justify-center mb-4">
+              <div className="mb-4 flex justify-center">
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-orange-200 bg-orange-50 text-orange-700">
                   <VideoIcon className="h-7 w-7" />
                 </div>
               </div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">No Videos Available</h2>
-              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Check back soon for our latest collection!</p>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                No Videos Available
+              </h2>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                Check back soon for our latest collection!
+              </p>
             </motion.div>
           ) : (
             /* Grid */
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+            >
               {effectiveGalleryItems.map((item, index) => {
-                const linkUrl = item.link_url || ''
+                const linkUrl = item.link_url || ""
                 const videoId = linkUrl ? getVideoId(linkUrl) : null
                 const isYoutube = linkUrl ? isYoutubeUrl(linkUrl) : false
-                const videoThumbnail = videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : null
+                const videoThumbnail = videoId
+                  ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
+                  : null
 
                 return (
                   <motion.div
@@ -239,24 +262,24 @@ export default function VideoGalleryPageClient({ initialCategories }: VideoGalle
                     initial={{ opacity: 0, y: 14 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.04 }}
-                    className="group relative cursor-pointer overflow-hidden rounded-2xl border border-orange-100 bg-white dark:bg-gray-800 transition-all"
+                    className="group relative cursor-pointer overflow-hidden rounded-2xl border border-orange-100 bg-white transition-all dark:bg-gray-800"
                     onClick={() => linkUrl && setSelectedVideo(linkUrl)}
                     role="button"
                     tabIndex={0}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
+                      if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault()
                         linkUrl && setSelectedVideo(linkUrl)
                       }
                     }}
                   >
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(249,115,22,0.18),transparent_45%)] opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(249,115,22,0.18),transparent_45%)] opacity-0 transition-opacity group-hover:opacity-100" />
 
-                    <div className="relative aspect-video bg-gradient-to-br from-orange-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 overflow-hidden">
+                    <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-orange-50 to-gray-100 dark:from-gray-700 dark:to-gray-800">
                       {videoThumbnail ? (
                         <img
                           src={videoThumbnail}
-                          alt={item.title || 'Video thumbnail'}
+                          alt={item.title || "Video thumbnail"}
                           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                           loading="lazy"
                         />
@@ -275,15 +298,15 @@ export default function VideoGalleryPageClient({ initialCategories }: VideoGalle
                       )}
 
                       {/* overlay */}
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/35 transition-colors duration-300" />
+                      <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/35" />
                       <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/90 shadow-lg shadow-orange-200/40 transform transition-transform duration-300 group-hover:scale-110 dark:bg-white/10 dark:shadow-none">
+                        <div className="flex h-14 w-14 transform items-center justify-center rounded-full bg-white/90 shadow-lg shadow-orange-200/40 transition-transform duration-300 group-hover:scale-110 dark:bg-white/10 dark:shadow-none">
                           <PlayIcon className="h-7 w-7 text-orange-600" />
                         </div>
                       </div>
 
-                      <div className="absolute left-3 top-3">
-                        <span className="inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 text-[11px] font-semibold text-orange-700 border border-orange-200 dark:bg-white/10 dark:text-orange-200 dark:border-orange-900/40">
+                      <div className="absolute top-3 left-3">
+                        <span className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white/90 px-3 py-1 text-[11px] font-semibold text-orange-700 dark:border-orange-900/40 dark:bg-white/10 dark:text-orange-200">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="14"
@@ -303,8 +326,8 @@ export default function VideoGalleryPageClient({ initialCategories }: VideoGalle
                       </div>
 
                       {linkUrl && isYoutube ? (
-                        <div className="absolute right-3 top-3">
-                          <span className="inline-flex items-center justify-center rounded-full bg-black/40 text-white/90 border border-white/20 h-9 w-9">
+                        <div className="absolute top-3 right-3">
+                          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/40 text-white/90">
                             <ExternalIcon className="h-4 w-4" />
                           </span>
                         </div>
@@ -313,11 +336,13 @@ export default function VideoGalleryPageClient({ initialCategories }: VideoGalle
 
                     {item.title ? (
                       <div className="p-4">
-                        <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-1 group-hover:text-orange-700 dark:group-hover:text-orange-400 transition-colors">
+                        <h3 className="line-clamp-1 font-semibold text-gray-900 transition-colors group-hover:text-orange-700 dark:text-white dark:group-hover:text-orange-400">
                           {item.title}
                         </h3>
                         {item.subtitle ? (
-                          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{item.subtitle}</p>
+                          <p className="mt-1 line-clamp-2 text-sm text-gray-600 dark:text-gray-400">
+                            {item.subtitle}
+                          </p>
                         ) : null}
                       </div>
                     ) : null}
@@ -348,30 +373,35 @@ export default function VideoGalleryPageClient({ initialCategories }: VideoGalle
                   initial={{ scale: 0.97, y: 10, opacity: 0 }}
                   animate={{ scale: 1, y: 0, opacity: 1 }}
                   exit={{ scale: 0.98, y: 10, opacity: 0 }}
-                  transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 28 }}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <button
                     onClick={() => setSelectedVideo(null)}
-                    className="absolute -right-3 -top-3 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+                    className="absolute -top-3 -right-3 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
                     aria-label="Close video"
                   >
                     <CloseIcon className="h-5 w-5" />
                   </button>
 
-                  <div className="rounded-2xl overflow-hidden border border-white/10 bg-white dark:bg-gray-900/90 dark:border-white/10">
+                  <div className="overflow-hidden rounded-2xl border border-white/10 bg-white dark:border-white/10 dark:bg-gray-900/90">
                     {isYoutubeUrl(selectedVideo) ? (
                       <iframe
                         width="100%"
                         height="520"
-                        src={`https://www.youtube.com/embed/${getVideoId(selectedVideo) || ''}`}
+                        src={`https://www.youtube.com/embed/${getVideoId(selectedVideo) || ""}`}
                         title="Video player"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen
-                        className="w-full aspect-video"
+                        className="aspect-video w-full"
                       />
                     ) : (
-                      <video src={selectedVideo} controls autoPlay className="w-full max-h-[75vh]" />
+                      <video
+                        src={selectedVideo}
+                        controls
+                        autoPlay
+                        className="max-h-[75vh] w-full"
+                      />
                     )}
                   </div>
 
@@ -379,12 +409,16 @@ export default function VideoGalleryPageClient({ initialCategories }: VideoGalle
                     <div className="mt-4 px-2">
                       <div className="flex items-start justify-between gap-4">
                         <div>
-<h2 className="text-xl font-bold text-gray-900 dark:text-white">{selectedItem.title}</h2>
+                          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                            {selectedItem.title}
+                          </h2>
                           {selectedItem.subtitle ? (
-                            <p className="mt-1 text-sm text-white/70">{selectedItem.subtitle}</p>
+                            <p className="mt-1 text-sm text-white/70">
+                              {selectedItem.subtitle}
+                            </p>
                           ) : null}
                         </div>
-                        <div className="hidden sm:flex items-center gap-2 text-white/60 text-xs font-semibold border border-white/15 rounded-full px-3 py-1">
+                        <div className="hidden items-center gap-2 rounded-full border border-white/15 px-3 py-1 text-xs font-semibold text-white/60 sm:flex">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="14"
@@ -415,4 +449,3 @@ export default function VideoGalleryPageClient({ initialCategories }: VideoGalle
     </>
   )
 }
-

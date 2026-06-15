@@ -1,15 +1,19 @@
 "use client"
 
 import { format } from "date-fns"
-import { Clock, MapPin, Bookmark } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { cn } from "@/lib/utils"
-import { useSetRsvp } from "@/lib/hooks/use-set-rsvp"
-import { useToggleSave } from "@/lib/hooks/use-saved-posts"
-import { useEventRsvps } from "@/lib/hooks/use-event-rsvps"
+import { Bookmark, Clock, MapPin } from "lucide-react"
+
 import type { CommunityPost } from "@/lib/hooks/use-community-posts"
-import { formatEventTimeRange, initials } from "@/components/community/events/event-utils"
+import { useEventRsvps } from "@/lib/hooks/use-event-rsvps"
+import { useToggleSave } from "@/lib/hooks/use-saved-posts"
+import { useSetRsvp } from "@/lib/hooks/use-set-rsvp"
+import { cn } from "@/lib/utils"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import {
+  formatEventTimeRange,
+  initials,
+} from "@/components/community/events/event-utils"
 
 // Gradient header palette (cycled by id for variety)
 const HEADER_GRADIENTS = [
@@ -42,7 +46,7 @@ function GoingAvatars({ eventId }: { eventId: string }) {
   return (
     <div className="flex -space-x-2">
       {going.map((r) => (
-        <Avatar key={r.userId} className="w-6 h-6 ring-2 ring-card">
+        <Avatar key={r.userId} className="ring-card h-6 w-6 ring-2">
           <AvatarImage src={r.avatarUrl ?? undefined} />
           <AvatarFallback className="bg-primary text-primary-foreground text-[9px] font-semibold">
             {initials(r.name)}
@@ -57,23 +61,25 @@ export function EventCard({ event }: { event: CommunityPost }) {
   const setRsvp = useSetRsvp()
   const toggleSave = useToggleSave()
 
-  const date = event.eventDate ? new Date(event.eventDate) : new Date(event.createdAt)
+  const date = event.eventDate
+    ? new Date(event.eventDate)
+    : new Date(event.createdAt)
   const going = event.counts.going
   const isGoing = event.viewerRsvp === "GOING"
   const idx = indexForId(event.id)
   const timeRange = formatEventTimeRange(event.eventTime, event.eventEndTime)
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-md">
+    <div className="border-border bg-card flex flex-col overflow-hidden rounded-2xl border transition-shadow hover:shadow-md">
       {/* Gradient header */}
       <div className={cn("relative h-28 p-3", HEADER_GRADIENTS[idx])}>
         <div className="flex items-start justify-between">
           {/* Date badge */}
           <div className="w-12 overflow-hidden rounded-lg bg-white text-center shadow-sm">
-            <div className="bg-red-500 py-0.5 text-[9px] font-bold uppercase text-white">
+            <div className="bg-red-500 py-0.5 text-[9px] font-bold text-white uppercase">
               {format(date, "MMM")}
             </div>
-            <div className="py-0.5 text-lg font-bold leading-tight text-zinc-900">
+            <div className="py-0.5 text-lg leading-tight font-bold text-zinc-900">
               {format(date, "d")}
             </div>
           </div>
@@ -83,7 +89,12 @@ export function EventCard({ event }: { event: CommunityPost }) {
             onClick={() => toggleSave.mutate(event.id)}
             className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 transition-colors hover:bg-white"
           >
-            <Bookmark className={cn("h-4 w-4 text-zinc-700", event.viewerHasSaved && "fill-zinc-700")} />
+            <Bookmark
+              className={cn(
+                "h-4 w-4 text-zinc-700",
+                event.viewerHasSaved && "fill-zinc-700"
+              )}
+            />
           </button>
         </div>
 
@@ -96,31 +107,35 @@ export function EventCard({ event }: { event: CommunityPost }) {
 
       {/* Body */}
       <div className="flex flex-1 flex-col p-4">
-        <h3 className="text-base font-semibold leading-snug text-foreground line-clamp-1">
+        <h3 className="text-foreground line-clamp-1 text-base leading-snug font-semibold">
           {event.title}
         </h3>
 
         <div className="mt-2 space-y-1.5">
-          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
             <Clock className="h-3.5 w-3.5 shrink-0" />
             {format(date, "EEE, MMM d")}
             {timeRange ? ` · ${timeRange}` : ""}
           </p>
           {event.location && (
-            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
               <MapPin className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">{event.location}</span>
             </p>
           )}
         </div>
 
-        <div className="mt-4 flex items-center justify-between gap-2 border-t border-border pt-3">
+        <div className="border-border mt-4 flex items-center justify-between gap-2 border-t pt-3">
           <div className="flex min-w-0 items-center gap-2">
             <GoingAvatars eventId={event.id} />
-            <span className="whitespace-nowrap text-xs text-muted-foreground">{going} going</span>
+            <span className="text-muted-foreground text-xs whitespace-nowrap">
+              {going} going
+            </span>
           </div>
           <Button
-            onClick={() => setRsvp.mutate({ postId: event.id, status: "GOING" })}
+            onClick={() =>
+              setRsvp.mutate({ postId: event.id, status: "GOING" })
+            }
             size="sm"
             className={cn(
               "h-8 rounded-full px-4 text-xs font-semibold shadow-none transition-colors",

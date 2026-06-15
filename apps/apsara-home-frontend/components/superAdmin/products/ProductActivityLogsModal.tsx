@@ -1,9 +1,12 @@
-'use client'
+"use client"
 
-import { useEffect, useMemo, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import Image from 'next/image'
-import { ProductActivityLog, useGetProductActivityLogsQuery } from '@/store/api/productsApi'
+import { useEffect, useMemo, useState } from "react"
+import {
+  ProductActivityLog,
+  useGetProductActivityLogsQuery,
+} from "@/store/api/productsApi"
+import { AnimatePresence, motion } from "framer-motion"
+import Image from "next/image"
 
 interface ProductActivityLogsModalProps {
   isOpen: boolean
@@ -11,54 +14,54 @@ interface ProductActivityLogsModalProps {
 }
 
 const formatActivityDate = (value?: string | null) => {
-  if (!value) return 'Unknown time'
+  if (!value) return "Unknown time"
 
   const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) return 'Unknown time'
+  if (Number.isNaN(parsed.getTime())) return "Unknown time"
 
-  return new Intl.DateTimeFormat('en-PH', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
+  return new Intl.DateTimeFormat("en-PH", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
   }).format(parsed)
 }
 
 const actionLabel = (action?: string | null) => {
-  switch ((action ?? '').toLowerCase()) {
-    case 'created':
-      return 'Added'
-    case 'updated':
-      return 'Updated'
-    case 'deleted':
-      return 'Deleted'
+  switch ((action ?? "").toLowerCase()) {
+    case "created":
+      return "Added"
+    case "updated":
+      return "Updated"
+    case "deleted":
+      return "Deleted"
     default:
-      return action?.trim() ? action : 'Activity'
+      return action?.trim() ? action : "Activity"
   }
 }
 
 const actionBadgeClass = (action?: string | null) => {
-  switch ((action ?? '').toLowerCase()) {
-    case 'created':
-      return 'bg-emerald-50 text-emerald-700 border-emerald-200'
-    case 'updated':
-      return 'bg-amber-50 text-amber-700 border-amber-200'
-    case 'deleted':
-      return 'bg-red-50 text-red-700 border-red-200'
+  switch ((action ?? "").toLowerCase()) {
+    case "created":
+      return "bg-emerald-50 text-emerald-700 border-emerald-200"
+    case "updated":
+      return "bg-amber-50 text-amber-700 border-amber-200"
+    case "deleted":
+      return "bg-red-50 text-red-700 border-red-200"
     default:
-      return 'bg-slate-50 text-slate-700 border-slate-200'
+      return "bg-slate-50 text-slate-700 border-slate-200"
   }
 }
 
 const statusBadgeClass = (status?: string | null) => {
-  switch ((status ?? '').toLowerCase()) {
-    case 'failed':
-      return 'bg-red-50 text-red-600 border-red-200'
-    case 'success':
-      return 'bg-emerald-50 text-emerald-600 border-emerald-200'
+  switch ((status ?? "").toLowerCase()) {
+    case "failed":
+      return "bg-red-50 text-red-600 border-red-200"
+    case "success":
+      return "bg-emerald-50 text-emerald-600 border-emerald-200"
     default:
-      return 'bg-slate-50 text-slate-500 border-slate-200'
+      return "bg-slate-50 text-slate-500 border-slate-200"
   }
 }
 
@@ -78,97 +81,160 @@ const splitImageValues = (value?: string | string[] | null) => {
 }
 
 const isImageField = (field?: string | null) => {
-  const normalized = (field ?? '').trim().toLowerCase()
-  return normalized === 'primary image' || normalized === 'image gallery'
+  const normalized = (field ?? "").trim().toLowerCase()
+  return normalized === "primary image" || normalized === "image gallery"
 }
 
 function ActivityRow({ log }: { log: ProductActivityLog }) {
   const safeChanges = Array.isArray(log.changes)
-    ? log.changes.filter((change): change is NonNullable<ProductActivityLog['changes']>[number] =>
-      Boolean(change) && typeof change === 'object')
+    ? log.changes.filter(
+        (
+          change
+        ): change is NonNullable<ProductActivityLog["changes"]>[number] =>
+          Boolean(change) && typeof change === "object"
+      )
     : []
 
-  const safeStatus = log.status?.trim() ? log.status : 'unknown'
-  const safeProductName = log.productName?.trim() ? log.productName : 'Unknown product'
-  const safeAction = log.action?.trim() ? log.action : 'activity'
+  const safeStatus = log.status?.trim() ? log.status : "unknown"
+  const safeProductName = log.productName?.trim()
+    ? log.productName
+    : "Unknown product"
+  const safeAction = log.action?.trim() ? log.action : "activity"
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold ${actionBadgeClass(safeAction)}`}>
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold ${actionBadgeClass(safeAction)}`}
+            >
               {actionLabel(safeAction)}
             </span>
-            <p className="text-sm font-semibold text-slate-800 truncate">{safeProductName}</p>
+            <p className="truncate text-sm font-semibold text-slate-800">
+              {safeProductName}
+            </p>
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
-            <span>SKU: {log.productSku?.trim() ? log.productSku : 'N/A'}</span>
-            <span>By: {log.actorName?.trim() ? log.actorName : 'Unknown user'}</span>
+            <span>SKU: {log.productSku?.trim() ? log.productSku : "N/A"}</span>
+            <span>
+              By: {log.actorName?.trim() ? log.actorName : "Unknown user"}
+            </span>
             <span>{formatActivityDate(log.createdAt)}</span>
           </div>
           {(log.actorEmail || log.actorRole) && (
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
               {log.actorEmail ? <span>{log.actorEmail}</span> : null}
-              {log.actorRole ? <span className="uppercase tracking-[0.12em]">{log.actorRole.replace(/_/g, ' ')}</span> : null}
+              {log.actorRole ? (
+                <span className="tracking-[0.12em] uppercase">
+                  {log.actorRole.replace(/_/g, " ")}
+                </span>
+              ) : null}
             </div>
           )}
         </div>
-        <div className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${statusBadgeClass(safeStatus)}`}>
+        <div
+          className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-[0.16em] uppercase ${statusBadgeClass(safeStatus)}`}
+        >
           {safeStatus}
         </div>
       </div>
       {safeChanges.length > 0 ? (
         <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">Field Changes</p>
+          <p className="text-[11px] font-semibold tracking-[0.14em] text-slate-400 uppercase">
+            Field Changes
+          </p>
           <div className="mt-2 space-y-2">
             {safeChanges.map((change, index) => {
-              const fieldLabel = typeof change.field === 'string' && change.field.trim() ? change.field : 'Unknown field'
+              const fieldLabel =
+                typeof change.field === "string" && change.field.trim()
+                  ? change.field
+                  : "Unknown field"
 
               return (
-              <div key={`${fieldLabel}-${index}`} className="rounded-lg bg-white px-3 py-2 text-xs text-slate-600 border border-slate-100">
-                <span className="font-semibold text-slate-700">{fieldLabel}</span>
-                <span className="mx-2 text-slate-300">:</span>
-                {isImageField(fieldLabel) ? (
-                  <div className="mt-2 grid gap-3 sm:grid-cols-2">
-                    <div>
-                      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">Before</p>
-                      {splitImageValues(change.before).length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
-                          {splitImageValues(change.before).map((url, imageIndex) => (
-                            <div key={`before-${imageIndex}-${url}`} className="relative h-14 w-14 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-                              <Image src={url} alt={`${change.field} before ${imageIndex + 1}`} fill className="object-cover" unoptimized />
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-slate-500">{change.before ?? 'empty'}</span>
-                      )}
+                <div
+                  key={`${fieldLabel}-${index}`}
+                  className="rounded-lg border border-slate-100 bg-white px-3 py-2 text-xs text-slate-600"
+                >
+                  <span className="font-semibold text-slate-700">
+                    {fieldLabel}
+                  </span>
+                  <span className="mx-2 text-slate-300">:</span>
+                  {isImageField(fieldLabel) ? (
+                    <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <p className="mb-2 text-[11px] font-semibold tracking-[0.12em] text-slate-400 uppercase">
+                          Before
+                        </p>
+                        {splitImageValues(change.before).length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {splitImageValues(change.before).map(
+                              (url, imageIndex) => (
+                                <div
+                                  key={`before-${imageIndex}-${url}`}
+                                  className="relative h-14 w-14 overflow-hidden rounded-lg border border-slate-200 bg-slate-50"
+                                >
+                                  <Image
+                                    src={url}
+                                    alt={`${change.field} before ${imageIndex + 1}`}
+                                    fill
+                                    className="object-cover"
+                                    unoptimized
+                                  />
+                                </div>
+                              )
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-slate-500">
+                            {change.before ?? "empty"}
+                          </span>
+                        )}
+                      </div>
+                      <div>
+                        <p className="mb-2 text-[11px] font-semibold tracking-[0.12em] text-slate-400 uppercase">
+                          After
+                        </p>
+                        {splitImageValues(change.after).length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {splitImageValues(change.after).map(
+                              (url, imageIndex) => (
+                                <div
+                                  key={`after-${imageIndex}-${url}`}
+                                  className="relative h-14 w-14 overflow-hidden rounded-lg border border-slate-200 bg-slate-50"
+                                >
+                                  <Image
+                                    src={url}
+                                    alt={`${change.field} after ${imageIndex + 1}`}
+                                    fill
+                                    className="object-cover"
+                                    unoptimized
+                                  />
+                                </div>
+                              )
+                            )}
+                          </div>
+                        ) : (
+                          <span className="font-semibold text-slate-800">
+                            {change.after ?? "empty"}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">After</p>
-                      {splitImageValues(change.after).length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
-                          {splitImageValues(change.after).map((url, imageIndex) => (
-                            <div key={`after-${imageIndex}-${url}`} className="relative h-14 w-14 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-                              <Image src={url} alt={`${change.field} after ${imageIndex + 1}`} fill className="object-cover" unoptimized />
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="font-semibold text-slate-800">{change.after ?? 'empty'}</span>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <span className="text-slate-500">{change.before ?? 'empty'}</span>
-                    <span className="mx-2 text-slate-300">-&gt;</span>
-                    <span className="font-semibold text-slate-800">{change.after ?? 'empty'}</span>
-                  </>
-                )}
-              </div>
-            )})}
+                  ) : (
+                    <>
+                      <span className="text-slate-500">
+                        {change.before ?? "empty"}
+                      </span>
+                      <span className="mx-2 text-slate-300">-&gt;</span>
+                      <span className="font-semibold text-slate-800">
+                        {change.after ?? "empty"}
+                      </span>
+                    </>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
       ) : null}
@@ -176,9 +242,12 @@ function ActivityRow({ log }: { log: ProductActivityLog }) {
   )
 }
 
-export default function ProductActivityLogsModal({ isOpen, onClose }: ProductActivityLogsModalProps) {
-  const [search, setSearch] = useState('')
-  const [debouncedSearch, setDebouncedSearch] = useState('')
+export default function ProductActivityLogsModal({
+  isOpen,
+  onClose,
+}: ProductActivityLogsModalProps) {
+  const [search, setSearch] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search.trim()), 250)
@@ -190,9 +259,9 @@ export default function ProductActivityLogsModal({ isOpen, onClose }: ProductAct
       page: 1,
       perPage: 20,
       search: debouncedSearch || undefined,
-      scope: 'my',
+      scope: "my",
     },
-    { skip: !isOpen },
+    { skip: !isOpen }
   )
 
   const logs = useMemo(() => data?.logs ?? [], [data?.logs])
@@ -219,16 +288,31 @@ export default function ProductActivityLogsModal({ isOpen, onClose }: ProductAct
             <div className="border-b border-slate-200 bg-white px-6 py-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-800">Recent Product Activity</h2>
-                  <p className="mt-1 text-sm text-slate-500">Check if a product was really added, updated, deleted, or failed and who did it.</p>
+                  <h2 className="text-xl font-bold text-slate-800">
+                    Recent Product Activity
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Check if a product was really added, updated, deleted, or
+                    failed and who did it.
+                  </p>
                 </div>
                 <button
                   onClick={onClose}
                   className="rounded-full border border-slate-200 p-2 text-slate-400 transition hover:border-slate-300 hover:text-slate-600"
                   aria-label="Close activity history"
                 >
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               </div>
@@ -238,14 +322,24 @@ export default function ProductActivityLogsModal({ isOpen, onClose }: ProductAct
                   This account&apos;s activity only
                 </div>
                 <div className="relative w-full sm:max-w-sm">
-                  <svg className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m21 21-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" />
+                  <svg
+                    className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="m21 21-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
+                    />
                   </svg>
                   <input
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
                     placeholder="Search product name or SKU..."
-                    className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                    className="h-11 w-full rounded-xl border border-slate-200 bg-white pr-4 pl-10 text-sm text-slate-700 transition outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                   />
                 </div>
               </div>
@@ -255,24 +349,44 @@ export default function ProductActivityLogsModal({ isOpen, onClose }: ProductAct
               {isLoading || isFetching ? (
                 <div className="space-y-3">
                   {Array.from({ length: 4 }).map((_, index) => (
-                    <div key={index} className="h-20 animate-pulse rounded-2xl border border-slate-200 bg-white" />
+                    <div
+                      key={index}
+                      className="h-20 animate-pulse rounded-2xl border border-slate-200 bg-white"
+                    />
                   ))}
                 </div>
               ) : logs.length === 0 ? (
                 <div className="flex min-h-[260px] items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white px-6 text-center">
                   <div>
                     <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-                      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-6m3 6V7m3 10v-4M7 4h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" />
+                      <svg
+                        className="h-6 w-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 17v-6m3 6V7m3 10v-4M7 4h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"
+                        />
                       </svg>
                     </div>
-                    <p className="text-sm font-semibold text-slate-700">No product activity found</p>
-                    <p className="mt-1 text-sm text-slate-500">Successful and failed product actions for this account will appear here.</p>
+                    <p className="text-sm font-semibold text-slate-700">
+                      No product activity found
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Successful and failed product actions for this account
+                      will appear here.
+                    </p>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {logs.map((log) => <ActivityRow key={log.id} log={log} />)}
+                  {logs.map((log) => (
+                    <ActivityRow key={log.id} log={log} />
+                  ))}
                 </div>
               )}
             </div>

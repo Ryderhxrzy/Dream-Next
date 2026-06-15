@@ -1,17 +1,20 @@
-'use client'
+"use client"
 
-import { usePathname } from 'next/navigation'
-import DashboardLayout from '@/components/superAdmin/DashboardLayout'
-import { SessionProvider } from 'next-auth/react'
+import { SessionProvider } from "next-auth/react"
+import { usePathname } from "next/navigation"
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+import DashboardLayout from "@/components/superAdmin/DashboardLayout"
+
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   const pathname = usePathname()
 
-  if (pathname === '/admin/login') {
+  if (pathname === "/admin/login") {
     return (
-      <SessionProvider basePath="/api/admin/auth">
-        {children}
-      </SessionProvider>
+      <SessionProvider basePath="/api/admin/auth">{children}</SessionProvider>
     )
   }
 

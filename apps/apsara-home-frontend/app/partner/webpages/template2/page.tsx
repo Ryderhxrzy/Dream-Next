@@ -1,10 +1,10 @@
-import { buildPageMetadata } from '@/app/seo'
-import Template2 from '@/components/partner/templates/template2'
+import Template2 from "@/components/partner/templates/template2"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
-  title: 'Template 2 — Light & Clean',
-  description: 'Landing page template 2 preview.',
-  path: '/partner/webpages/template2',
+  title: "Template 2 — Light & Clean",
+  description: "Landing page template 2 preview.",
+  path: "/partner/webpages/template2",
   noIndex: true,
 })
 
