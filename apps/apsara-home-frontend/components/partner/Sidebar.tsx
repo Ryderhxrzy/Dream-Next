@@ -4,7 +4,6 @@ import Link from 'next/link'
 
 import { usePathname } from 'next/navigation'
 import { useGetAdminWebPageItemsQuery, type WebPageItem } from '@/store/api/webPagesApi'
-import { useGetAdminMeQuery } from '@/store/api/authApi'
 import { getPartnerStorefrontConfig } from '@/libs/partnerStorefront'
 
 interface PartnerSidebarProps {
@@ -125,9 +124,7 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
   const { data } = useGetAdminWebPageItemsQuery({ type: 'partner_storefront' } as never)
   const items = (data as { items?: WebPageItem[] } | undefined)?.items ?? []
   const slug = getPartnerStorefrontConfig(items[0])?.slug ?? ''
-  const { data: me } = useGetAdminMeQuery()
-  const canAccessLandingPage = slug === 'jujutsu-kaisen' || me?.username === 'try'
-  const visibleLinks = links.filter((link) => !link.restricted || canAccessLandingPage)
+  const visibleLinks = links.filter((link) => !link.restricted || Boolean(slug))
 
   return (
     <>

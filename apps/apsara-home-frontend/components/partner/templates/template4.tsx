@@ -39,6 +39,9 @@ export interface Template4Props {
   stat5Value?: string; stat5Label?: string
   selectedSection?: string | null
   onSectionClick?: (section: string) => void
+  /** Set to true by the studio when in mobile preview mode so the nav shows the hamburger
+   *  instead of relying on viewport breakpoints (which don't match the preview box width). */
+  previewMobile?: boolean
 }
 
 function S({
@@ -114,6 +117,7 @@ export default function Template4({
   stat5Value = '24/7',    stat5Label = 'Customer Support',
   selectedSection,
   onSectionClick,
+  previewMobile = false,
 }: Template4Props) {
   const [mobileOpen, setMobileOpen] = useState(false)
 
@@ -197,97 +201,124 @@ export default function Template4({
       icon: <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="#ea580c" strokeWidth={1.8}><circle cx="12" cy="12" r="10" /><path strokeLinecap="round" d="M12 6v6l4 2" /></svg> },
   ]
 
+  // Outer div gives the sticky nav a containing block spanning the full page height.
+  // Without it, the S wrapper (same height as the nav) ends the sticky constraint immediately.
   return (
-    <>
-      {/* ── Nav (outside @container so sticky is not trapped by layout containment) ── */}
-      <S id="nav" label="Nav" selected={sel('nav')} onClick={onSectionClick}>
-        <nav className="sticky top-0 z-50 border-b border-slate-100 bg-white px-5 py-4 md:px-16" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-          <div className="flex items-center justify-between gap-3">
-            {/* Logo */}
-            <div className="flex min-w-0 items-center gap-2">
-              {navLogo
-                ? <img src={navLogo} alt={storeName} className="h-10 w-auto shrink-0 rounded-xl object-contain" />
-                : <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white text-xs font-black" style={{ backgroundColor: primaryColor }}>
-                    {storeName.charAt(0)}
-                  </div>
-              }
-              <span className="truncate text-base font-black tracking-tight text-slate-900">{storeName}</span>
-            </div>
+    <div style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+      {/*
+        Nav is NOT wrapped in <S> — <S> renders a block-level <div> that becomes the
+        sticky element's containing block. When that div's height equals the nav's
+        height, the sticky constraint is violated on the first scroll pixel and the
+        nav scrolls away. Studio click-to-edit is inlined directly on <nav> so the
+        outer wrapper div (full page height) is the containing block → sticky works.
+      */}
+      <nav
+        id="nav"
+        className={`sticky top-0 z-50 border-b border-slate-100 bg-white outline-none transition-all
+          ${onSectionClick ? 'group cursor-pointer' : ''}
+          ${sel('nav') ? 'ring-2 ring-inset ring-indigo-500' : onSectionClick ? 'hover:ring-1 hover:ring-inset hover:ring-indigo-300' : ''}`}
+        onClick={onSectionClick ? () => onSectionClick('nav') : undefined}
+        role={onSectionClick ? 'button' : undefined}
+        tabIndex={onSectionClick ? 0 : undefined}
+        onKeyDown={onSectionClick ? (e) => e.key === 'Enter' && onSectionClick('nav') : undefined}
+      >
+        {onSectionClick && (
+          <div className={`pointer-events-none absolute left-2 top-2 z-50 rounded-lg px-2 py-1 text-[10px] font-semibold text-white shadow transition-opacity
+            ${sel('nav') ? 'bg-indigo-600 opacity-100' : 'bg-black/50 opacity-0 backdrop-blur-sm group-hover:opacity-100'}`}>
+            Nav
+          </div>
+        )}
+        <div className={`flex items-center justify-between gap-3 px-4 py-3 ${previewMobile ? '' : 'md:px-10 md:py-4'}`}>
+          {/* Logo */}
+          <div className="flex min-w-0 items-center gap-2">
+            {navLogo
+              ? <img src={navLogo} alt={storeName} className={`w-auto shrink-0 rounded-xl object-contain ${previewMobile ? 'h-8' : 'h-8 md:h-10'}`} />
+              : <div className={`flex shrink-0 items-center justify-center rounded-full text-white text-xs font-black ${previewMobile ? 'h-7 w-7' : 'h-7 w-7 md:h-8 md:w-8'}`} style={{ backgroundColor: primaryColor }}>
+                  {storeName.charAt(0)}
+                </div>
+            }
+            <span className={`truncate font-black tracking-tight text-slate-900 ${previewMobile ? 'text-sm' : 'text-sm md:text-base'}`}>{storeName}</span>
+          </div>
 
-            {/* Desktop nav links */}
-            <div className="hidden items-center gap-8 text-sm text-slate-600 md:flex">
+          {/* Desktop nav links — hidden on mobile */}
+          {!previewMobile && (
+            <div className="hidden md:flex items-center gap-6 text-sm text-slate-600">
               {navLinks.map((l, i) => (
                 <a key={l.label} href={l.href}
-                  onClick={(e) => scrollTo(e, l.href)}
+                  onClick={(e) => { e.stopPropagation(); scrollTo(e, l.href) }}
                   className={`cursor-pointer whitespace-nowrap transition hover:text-slate-900 ${i === 0 ? 'border-b-2 font-semibold text-slate-900' : ''}`}
                   style={i === 0 ? { borderColor: primaryColor } : {}}>
                   {l.label}
                 </a>
               ))}
             </div>
-
-            {/* Right: Shop Now + hamburger */}
-            <div className="flex shrink-0 items-center gap-2">
-              <a href={shopSlug ? `/shop/${shopSlug}` : '#'} className="rounded-lg bg-[#111827] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1f2937]">
-                Shop Now
-              </a>
-              <button
-                type="button"
-                className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-50 md:hidden"
-                onClick={() => setMobileOpen((o) => !o)}
-                aria-label="Toggle menu"
-              >
-                {mobileOpen
-                  ? <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                  : <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
-                }
-              </button>
-            </div>
-          </div>
-
-          {/* Mobile dropdown */}
-          {mobileOpen && (
-            <div className="mt-4 flex flex-col gap-1 border-t border-slate-100 pt-4 md:hidden">
-              {navLinks.map((l) => (
-                <a key={l.label} href={l.href}
-                  onClick={(e) => scrollTo(e, l.href)}
-                  className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900">
-                  {l.label}
-                </a>
-              ))}
-            </div>
           )}
-        </nav>
-      </S>
+
+          {/* Right: Shop Now + hamburger */}
+          <div className="flex shrink-0 items-center gap-2">
+            <a href={shopSlug ? `/shop/${shopSlug}` : '#'}
+              onClick={(e) => e.stopPropagation()}
+              className={`rounded-lg bg-[#111827] font-semibold text-white transition hover:bg-[#1f2937] ${previewMobile ? 'px-3 py-1.5 text-xs' : 'px-3 py-1.5 text-xs md:px-4 md:py-2 md:text-sm'}`}>
+              Shop Now
+            </a>
+            {/* Hamburger — always visible in mobile preview, viewport-gated on live page */}
+            <button
+              type="button"
+              className={`flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-all hover:bg-slate-50 active:scale-90 ${previewMobile ? '' : 'md:hidden'}`}
+              onClick={(e) => { e.stopPropagation(); setMobileOpen((o) => !o) }}
+              aria-label="Toggle menu"
+            >
+              <div className="flex w-4.5 flex-col gap-1.25">
+                <span className={`block h-0.5 w-full rounded-full bg-current transition-all duration-300 ease-in-out ${mobileOpen ? 'translate-y-1.75 rotate-45' : ''}`} />
+                <span className={`block h-0.5 w-full rounded-full bg-current transition-all duration-300 ease-in-out ${mobileOpen ? 'opacity-0 scale-x-0' : ''}`} />
+                <span className={`block h-0.5 w-full rounded-full bg-current transition-all duration-300 ease-in-out ${mobileOpen ? '-translate-y-1.75 -rotate-45' : ''}`} />
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile dropdown — slide-down animation via max-h transition */}
+        <div className={`overflow-hidden transition-all duration-300 ease-in-out ${previewMobile ? '' : 'md:hidden'} ${mobileOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
+          <div className="flex flex-col gap-1 border-t border-slate-100 px-4 pb-4 pt-3">
+            {navLinks.map((l) => (
+              <a key={l.label} href={l.href}
+                onClick={(e) => { e.stopPropagation(); scrollTo(e, l.href) }}
+                className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900">
+                {l.label}
+              </a>
+            ))}
+          </div>
+        </div>
+      </nav>
 
       {/* @container so all breakpoints respond to THIS element's width, not the viewport */}
-      <div className="@container bg-white font-sans text-[#1e293b] overflow-x-clip" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+      <div className="@container bg-white font-sans text-[#1e293b] overflow-x-clip">
 
       {/* ── Hero ─────────────────────────────────────────────── */}
       <S id="hero" label="Hero" selected={sel('hero')} onClick={onSectionClick}>
-        <section className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-8 px-5 py-12 @md:grid-cols-2 @md:px-16 @md:py-20">
+        <section className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-8 px-4 py-10 @md:grid-cols-2 @md:px-16 @md:py-20">
           <div className={heroTextAlign}>
-            <h1 className="text-3xl font-black leading-tight text-slate-900 @sm:text-4xl @lg:text-5xl">{tagline}</h1>
-            <p className="mt-4 text-sm leading-relaxed text-slate-500">{description}</p>
-            <div className={`mt-6 flex flex-wrap gap-3 ${heroBtnAlign}`}>
+            <h1 className="text-2xl font-black leading-tight text-slate-900 @xs:text-3xl @sm:text-4xl @lg:text-5xl">{tagline}</h1>
+            <p className="mt-3 text-sm leading-relaxed text-slate-500">{description}</p>
+            <div className={`mt-5 flex flex-wrap gap-2 @sm:gap-3 ${heroBtnAlign}`}>
               <a href={shopSlug ? `/shop/${shopSlug}` : '#'}
-                className="inline-block rounded-lg bg-[#111827] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#1f2937]">
+                className="inline-block rounded-lg bg-[#111827] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#1f2937] @sm:px-6 @sm:py-3">
                 Shop Now
               </a>
-              <button type="button" className="flex items-center gap-2 rounded-lg border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+              <button type="button" className="flex items-center gap-2 rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 @sm:px-6 @sm:py-3">
                 {heroBtnSecondary}
                 <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
               </button>
             </div>
-            <div className={`mt-6 flex flex-wrap items-center gap-4 ${heroBtnAlign}`}>
+            <div className={`mt-5 flex flex-wrap items-center gap-3 ${heroBtnAlign}`}>
               {[
-                { label: trustBadge1, icon: <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg> },
-                { label: trustBadge2, icon: <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg> },
-                { label: trustBadge3, icon: <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8}><circle cx="12" cy="12" r="10" /><path strokeLinecap="round" d="M12 6v6l4 2" /></svg> },
+                { label: trustBadge1, icon: <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg> },
+                { label: trustBadge2, icon: <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg> },
+                { label: trustBadge3, icon: <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.8}><circle cx="12" cy="12" r="10" /><path strokeLinecap="round" d="M12 6v6l4 2" /></svg> },
               ].map((b) => (
-                <div key={b.label} className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
+                <div key={b.label} className="flex items-center gap-1 text-[11px] font-medium text-slate-500 @sm:gap-1.5 @sm:text-xs">
                   <span className="text-slate-400">{b.icon}</span>
                   {b.label}
                 </div>
@@ -367,18 +398,18 @@ export default function Template4({
 
       {/* ── Stats ─────────────────────────────────────────────── */}
       <S id="stats" label="Stats" selected={sel('stats')} onClick={onSectionClick}>
-        <section className="bg-slate-50 px-5 py-10 @md:px-16 @md:py-12">
-          <p className="mb-8 text-center text-xs font-semibold uppercase tracking-widest text-slate-400">
+        <section className="bg-slate-50 px-4 py-10 @md:px-16 @md:py-12">
+          <p className="mb-6 text-center text-[11px] font-semibold uppercase tracking-widest text-slate-400 @sm:mb-8 @sm:text-xs">
             Trusted by Businesses Worldwide
           </p>
-          <div className="mx-auto grid max-w-5xl grid-cols-2 gap-6 @sm:grid-cols-3 @lg:grid-cols-5">
+          <div className="mx-auto flex max-w-5xl flex-wrap justify-center gap-6 @lg:flex-nowrap @lg:gap-8">
             {statsData.map((s) => (
-              <div key={s.label} className="flex flex-col items-center gap-2 text-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: s.bg }}>
+              <div key={s.label} className="flex w-[calc(50%-12px)] flex-col items-center gap-2 text-center @sm:w-[calc(33.333%-16px)] @lg:w-auto @lg:flex-1">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full @sm:h-12 @sm:w-12" style={{ backgroundColor: s.bg }}>
                   {s.icon}
                 </div>
-                <p className="text-xl font-black text-slate-900">{s.value}</p>
-                <p className="text-[11px] text-slate-400">{s.label}</p>
+                <p className="text-lg font-black text-slate-900 @sm:text-xl">{s.value}</p>
+                <p className="text-[10px] text-slate-400 @sm:text-[11px]">{s.label}</p>
               </div>
             ))}
           </div>
@@ -387,22 +418,22 @@ export default function Template4({
 
       {/* ── About ─────────────────────────────────────────────── */}
       <S id="about" label="About" selected={sel('about')} onClick={onSectionClick}>
-        <section className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-5 py-12 @md:grid-cols-2 @md:px-16 @md:py-24">
-          <div className="relative overflow-hidden rounded-3xl shadow-lg">
+        <section className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-8 px-4 py-10 @md:grid-cols-2 @md:px-16 @md:py-24">
+          <div className="relative overflow-hidden rounded-2xl shadow-lg @sm:rounded-3xl">
             {aboutPhoto
-              ? <img src={aboutPhoto} alt="About" className="h-64 w-full object-cover @sm:h-80 @md:h-96" />
-              : <div className="flex h-64 items-center justify-center bg-slate-100 @sm:h-80"><span className="text-6xl">🏢</span></div>
+              ? <img src={aboutPhoto} alt="About" className="h-48 w-full object-cover @xs:h-56 @sm:h-80 @md:h-96" />
+              : <div className="flex h-48 items-center justify-center bg-slate-100 @xs:h-56 @sm:h-80"><span className="text-5xl @sm:text-6xl">🏢</span></div>
             }
-            <div className="absolute bottom-4 left-4 right-4 rounded-xl bg-white/90 px-4 py-3 backdrop-blur-sm shadow">
+            <div className="absolute bottom-3 left-3 right-3 rounded-xl bg-white/90 px-3 py-2 shadow backdrop-blur-sm @sm:bottom-4 @sm:left-4 @sm:right-4 @sm:px-4 @sm:py-3">
               <p className="text-xs font-bold text-slate-800">Better Solutions</p>
-              <p className="text-xs text-slate-500">Better Future</p>
+              <p className="text-[11px] text-slate-500">Better Future</p>
             </div>
           </div>
           <div>
-            <p className="mb-3 text-xs font-bold uppercase tracking-widest" style={{ color: primaryColor }}>About Us</p>
-            <h2 className="text-2xl font-black leading-tight text-slate-900 @sm:text-3xl @lg:text-4xl">{aboutTitle}</h2>
-            <p className="mt-4 text-sm leading-relaxed text-slate-500">{aboutBody}</p>
-            <ul className="mt-6 space-y-3">
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-widest @sm:mb-3 @sm:text-xs" style={{ color: primaryColor }}>About Us</p>
+            <h2 className="text-xl font-black leading-tight text-slate-900 @xs:text-2xl @sm:text-3xl @lg:text-4xl">{aboutTitle}</h2>
+            <p className="mt-3 text-sm leading-relaxed text-slate-500">{aboutBody}</p>
+            <ul className="mt-5 space-y-2.5 @sm:space-y-3">
               {highlights.map((h) => (
                 <li key={h.text} className="flex items-center gap-3 text-sm text-slate-600">
                   <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke={primaryColor} strokeWidth={2.5}>
@@ -413,7 +444,7 @@ export default function Template4({
                 </li>
               ))}
             </ul>
-            <button type="button" className="mt-8 rounded-lg bg-[#111827] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#1f2937]">
+            <button type="button" className="mt-6 rounded-lg bg-[#111827] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#1f2937] @sm:mt-8 @sm:px-6 @sm:py-3">
               Learn More About Us
             </button>
           </div>
@@ -422,17 +453,17 @@ export default function Template4({
 
       {/* ── Features ─────────────────────────────────────────── */}
       <S id="features" label="Features" selected={sel('features')} onClick={onSectionClick}>
-        <section className="px-5 py-12 @md:px-16 @md:py-20">
+        <section className="px-4 py-10 @md:px-16 @md:py-20">
           <div className="mx-auto max-w-6xl">
-            <div className="mb-10 text-center">
-              <p className="mb-2 text-xs font-bold uppercase tracking-widest" style={{ color: primaryColor }}>Products</p>
-              <h2 className="text-2xl font-black text-slate-900 @sm:text-3xl">{featuresTitle}</h2>
+            <div className="mb-8 text-center @sm:mb-10">
+              <p className="mb-2 text-[11px] font-bold uppercase tracking-widest @sm:text-xs" style={{ color: primaryColor }}>Products</p>
+              <h2 className="text-xl font-black text-slate-900 @xs:text-2xl @sm:text-3xl">{featuresTitle}</h2>
               <p className="mt-2 text-sm text-slate-500">{featuresSubtitle}</p>
             </div>
-            <div className="grid grid-cols-1 gap-5 @sm:grid-cols-2 @lg:grid-cols-3 @xl:grid-cols-5">
+            <div className="grid grid-cols-1 gap-3 @xs:grid-cols-2 @lg:grid-cols-3 @xl:grid-cols-5">
               {features.map((f) => (
-                <div key={f.title} className="flex flex-row items-start gap-4 rounded-xl border border-slate-100 p-4 @sm:flex-col @sm:gap-3 @sm:p-0 @sm:border-none">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: f.bg }}>
+                <div key={f.title} className="flex flex-row items-start gap-3 rounded-xl border border-slate-100 p-3 @lg:flex-col @lg:border-none @lg:p-0">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl @sm:h-10 @sm:w-10" style={{ backgroundColor: f.bg }}>
                     {f.icon}
                   </div>
                   <div>
@@ -448,20 +479,20 @@ export default function Template4({
 
       {/* ── CTA ──────────────────────────────────────────────── */}
       <S id="cta" label="CTA" selected={sel('cta')} onClick={onSectionClick}>
-        <section className="bg-slate-50 px-5 py-12 @md:px-16 @md:py-20">
-          <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 @md:grid-cols-2">
+        <section className="bg-slate-50 px-4 py-10 @md:px-16 @md:py-20">
+          <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-8 @md:grid-cols-2">
             <div>
-              <p className="mb-3 text-xs font-bold uppercase tracking-widest" style={{ color: primaryColor }}>Contact Us</p>
-              <h2 className="text-2xl font-black leading-tight text-slate-900 @sm:text-3xl">{ctaTitle}</h2>
-              <p className="mt-4 text-sm leading-relaxed text-slate-500">{ctaSubtitle}</p>
-              <button type="button" className="mt-7 flex items-center gap-2 rounded-lg bg-[#111827] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#1f2937]">
+              <p className="mb-2 text-[11px] font-bold uppercase tracking-widest @sm:mb-3 @sm:text-xs" style={{ color: primaryColor }}>Contact Us</p>
+              <h2 className="text-xl font-black leading-tight text-slate-900 @xs:text-2xl @sm:text-3xl">{ctaTitle}</h2>
+              <p className="mt-3 text-sm leading-relaxed text-slate-500">{ctaSubtitle}</p>
+              <button type="button" className="mt-5 flex items-center gap-2 rounded-lg bg-[#111827] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#1f2937] @sm:mt-7 @sm:px-6 @sm:py-3">
                 {ctaBtnText}
                 <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
               </button>
             </div>
-            <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm @sm:p-8">
+            <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm @sm:p-8">
               <div className="pointer-events-none absolute inset-0 opacity-5">
                 <svg viewBox="0 0 400 240" className="h-full w-full" preserveAspectRatio="xMidYMid slice">
                   {Array.from({ length: 12 }).map((_, i) => <line key={`v${i}`} x1={i * 36} y1="0" x2={i * 36} y2="240" stroke="#64748b" strokeWidth="0.5" />)}
@@ -489,8 +520,8 @@ export default function Template4({
 
       {/* ── Footer ───────────────────────────────────────────── */}
       <S id="footer" label="Footer" selected={sel('footer')} onClick={onSectionClick}>
-        <footer className="border-t border-slate-100 bg-white px-5 py-8 @md:px-16">
-          <div className="mx-auto flex max-w-7xl flex-col items-center gap-6 @md:flex-row @md:justify-between">
+        <footer className="border-t border-slate-100 bg-white px-4 py-6 @md:px-16 @md:py-8">
+          <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 @md:flex-row @md:justify-between @md:gap-6">
             <div className="flex min-w-0 items-center gap-2">
               {navLogo
                 ? <img src={navLogo} alt={storeName} className="h-6 w-auto shrink-0 object-contain" />
@@ -529,6 +560,6 @@ export default function Template4({
       </S>
 
       </div>
-    </>
+    </div>
   )
 }

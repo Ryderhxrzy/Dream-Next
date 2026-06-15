@@ -19,10 +19,12 @@ export default function CartDrawer() {
     items,
     selectedIds,
     selectedItems,
+    focusedId,
     selectedCount,
     selectedTotal,
     toggleItemSelected,
     setSelection,
+    clearFocus,
     selectAll,
     clearSelection,
     isOpen,
@@ -168,6 +170,19 @@ export default function CartDrawer() {
     router.push(targetPath)
   }
 
+  useEffect(() => {
+    if (!isOpen || !focusedId) return
+
+    const escapeSelectorValue = (value: string) => value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+    const frame = window.requestAnimationFrame(() => {
+      const target = document.querySelector<HTMLElement>(`[data-cart-item-id="${escapeSelectorValue(focusedId)}"]`)
+      target?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      clearFocus()
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [clearFocus, focusedId, isOpen])
+
   const isAtMaxStock = (item: CartItem) =>
     typeof item.availableStock === 'number' &&
     item.availableStock > 0 &&
@@ -269,7 +284,7 @@ export default function CartDrawer() {
     animate={{ opacity: 1, y: 0 }}
     exit={{ opacity: 0, x: 60 }}
     transition={{ duration: 0.2 }}
-    className="flex gap-3 rounded-2xl bg-gray-50 dark:bg-gray-700/50 p-3 cursor-pointer"
+    className={`flex gap-3 rounded-2xl bg-gray-50 dark:bg-gray-700/50 p-3 cursor-pointer transition ring-0 ${focusedId === item.id ? 'ring-2 ring-sky-400/70' : ''}`}
     onClick={() => handleOpenCartItem(item)}
     onKeyDown={(event) => {
       if (event.key === 'Enter' || event.key === ' ') {
@@ -280,6 +295,7 @@ export default function CartDrawer() {
     tabIndex={0}
     role="button"
     aria-label={`Open ${item.name}`}
+    data-cart-item-id={item.id}
   >
                             <label className="mt-1 flex items-start cursor-pointer" onClick={(event) => event.stopPropagation()}>
                               <input
@@ -353,6 +369,16 @@ export default function CartDrawer() {
           +
         </button>
       </div>
+      {typeof item.availableStock === 'number' && item.availableStock > 0 && (() => {
+        const remaining = item.availableStock - item.quantity
+        if (remaining <= 0) {
+          return <p className="mt-1 text-[10px] font-semibold text-rose-500 dark:text-rose-400">0 left in stock</p>
+        }
+        if (remaining <= 5) {
+          return <p className="mt-1 text-[10px] font-semibold text-rose-500 dark:text-rose-400">Only {remaining} left!</p>
+        }
+        return <p className="mt-1 text-[10px] font-semibold text-gray-400 dark:text-gray-500">{remaining} left in stock</p>
+      })()}
     </div>
 
     <div className="flex flex-col items-end justify-between">

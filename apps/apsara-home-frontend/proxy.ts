@@ -194,7 +194,14 @@ const getRequiredWebContentPermission = (pathname: string): string | null => {
 const canAccessWebContentPath = (permissions: string[], pathname: string): boolean => {
   const sectionPermissions = permissions.filter((permission) => permission.startsWith("wc:"));
   if (sectionPermissions.length === 0) return true;
-  if (pathname === "/admin" || pathname === "/admin/webpages" || pathname === "/partner") return true;
+  if (
+    pathname === "/admin" ||
+    pathname === "/admin/webpages" ||
+    pathname === "/partner" ||
+    pathname.startsWith("/partner/webpages")
+  ) {
+    return true;
+  }
 
   const requiredPermission = getRequiredWebContentPermission(pathname);
   return requiredPermission !== null && sectionPermissions.includes(requiredPermission);

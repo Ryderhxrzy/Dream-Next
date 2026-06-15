@@ -160,7 +160,7 @@ const TEMPLATE_DEFAULTS: Record<string, () => Block[]> = {
 ───────────────────────────────────────────────────────────── */
 function RenderNav({ b, compact, shopSlug }: { b: NavBlock; compact?: boolean; shopSlug?: string }) {
   return (
-    <nav className={`sticky top-0 z-50 flex items-center justify-between py-4 ${compact ? 'px-4' : 'px-4 md:px-10'}`} style={{ backgroundColor: b.bg, borderBottom: `1px solid ${b.textColor}20` }}>
+    <nav className={`flex items-center justify-between py-4 ${compact ? 'px-4' : 'px-4 md:px-10'}`} style={{ backgroundColor: b.bg, borderBottom: `1px solid ${b.textColor}20` }}>
       <div className="flex items-center gap-2.5">
         {b.logo && (
           <img src={b.logo} alt="logo" className="h-12 w-12 rounded-2xl object-cover"
@@ -991,7 +991,8 @@ export default function LandingPageStudio() {
 
   useEffect(() => {
     if (!isLoading && !canAccess) {
-      router.replace('/partner')
+      const isAdminRoute = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')
+      router.replace(isAdminRoute ? '/admin/webpages/partner-landing-page' : '/partner/webpages/partner-landing-page')
     }
   }, [isLoading, canAccess, router])
 
@@ -1351,10 +1352,11 @@ export default function LandingPageStudio() {
           <div className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto p-4">
             {templateId === 'template4' ? (
               /* Template4 renders its own complete design with per-section click-to-edit */
-              <div className="w-full rounded-xl bg-white shadow-2xl overflow-hidden" style={{ maxWidth: mobile ? 390 : '100%' }}>
+              <div className="w-full rounded-xl bg-white shadow-2xl" style={{ maxWidth: mobile ? 390 : '100%' }}>
                 <Template4Component
                   {...mapBlocksToT4Props(blocks)}
                   shopSlug={slug}
+                  previewMobile={mobile}
                   selectedSection={blocks.find((b) => b.id === selectedId)?.type ?? null}
                   onSectionClick={(section) => {
                     const block = blocks.find((b) => b.type === section)
@@ -1375,7 +1377,7 @@ export default function LandingPageStudio() {
                   const isSelected = block.id === selectedId
                   return (
                     <div key={block.id}
-                      className={`group relative cursor-pointer outline-none transition-all ${isSelected ? 'ring-2 ring-inset ring-indigo-500' : 'hover:ring-1 hover:ring-inset hover:ring-indigo-300'}`}
+                      className={`group relative cursor-pointer outline-none transition-all ${block.type === 'nav' ? 'sticky top-0 z-50' : ''} ${isSelected ? 'ring-2 ring-inset ring-indigo-500' : 'hover:ring-1 hover:ring-inset hover:ring-indigo-300'}`}
                       onClick={(e) => { e.stopPropagation(); setSelectedId(block.id); setRightTab('props') }}
                       draggable
                       onDragStart={() => { dragRef.from = i }}

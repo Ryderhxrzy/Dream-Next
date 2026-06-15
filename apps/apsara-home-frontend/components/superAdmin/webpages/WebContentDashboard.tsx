@@ -43,6 +43,13 @@ const builderCards: ContentCard[] = [
     badge: 'B2B',
     wcKey: 'wc:partner-storefronts',
   },
+  {
+    title: 'Partner Landing Page',
+    description: 'Design the hero, sections, and content of your storefront\'s public landing page.',
+    href: '/admin/webpages/partner-landing-page',
+    badge: 'Landing Page',
+    wcKey: 'wc:partner-storefronts',
+  },
 
   {
     title: 'Adds Content',

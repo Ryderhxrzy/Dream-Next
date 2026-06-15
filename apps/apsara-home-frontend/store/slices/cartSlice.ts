@@ -24,12 +24,14 @@ interface CartState {
   items: CartItem[];
   isOpen: boolean;
   selectedIds: string[];
+  focusedId: string | null;
 }
 
 const initialState: CartState = {
   items: [],
   isOpen: false,
   selectedIds: [],
+  focusedId: null,
 };
 
 const cartSlice = createSlice({
@@ -80,6 +82,9 @@ const cartSlice = createSlice({
     setCartSelection: (state, action: PayloadAction<{ ids: string[] }>) => {
       state.selectedIds = action.payload.ids;
     },
+    setCartFocusedId: (state, action: PayloadAction<string | null>) => {
+      state.focusedId = action.payload;
+    },
     setCartItems: (state, action: PayloadAction<CartItem[]>) => {
       state.items = action.payload;
     },
@@ -93,6 +98,7 @@ export const {
   setCartOpen,
   toggleCartItemSelected,
   setCartSelection,
+  setCartFocusedId,
   setCartItems,
 } = cartSlice.actions;
 export default cartSlice.reducer;

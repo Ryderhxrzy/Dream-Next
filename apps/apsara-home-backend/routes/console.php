@@ -710,6 +710,14 @@ Artisan::command('psgc:import-addresses {--truncate : Truncate address tables be
     return self::SUCCESS;
 })->purpose('Import PSGC regions, provinces, cities, and barangays into backend address tables');
 
+Schedule::command('webstore:send-expiry-reminders')
+    ->dailyAt('09:00')
+    ->timezone('Asia/Manila')
+    ->withoutOverlapping()
+    ->onFailure(function () {
+        Log::error('Webstore subscription expiry reminder job failed.');
+    });
+
 Schedule::command('sanctum:prune-expired --hours=0')
     ->daily()
     ->withoutOverlapping();

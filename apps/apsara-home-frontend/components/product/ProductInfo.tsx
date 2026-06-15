@@ -243,7 +243,7 @@ const ProductInfo = ({
     forceRealPrice = false,
     allowGuestWishlist = false,
 }: ProductInfoProps) => {
-    const { addToCart } = useCart();
+    const { addToCart, items, focusItem } = useCart();
     const router = useRouter();
     const pathname = usePathname();
     const partnerSlug = extractPartnerSlugFromPath(pathname);
@@ -698,6 +698,14 @@ const ProductInfo = ({
     const displayStock = typeof selectedVariant?.qty === 'number'
         ? selectedVariant.qty
         : (typeof totalVariantStock === 'number' ? totalVariantStock : product.stock);
+    const maxQuantity = typeof displayStock === 'number' && displayStock > 0 ? displayStock : undefined;
+
+    useEffect(() => {
+        if (typeof maxQuantity === 'number') {
+            setQuantity((current) => Math.min(current, maxQuantity));
+        }
+    }, [maxQuantity]);
+
     const productType = Number(product.type ?? 0);
     const hasRealVariants = variantOptions.length > 0;
     const variantPv = hasRealVariants
@@ -719,6 +727,10 @@ const ProductInfo = ({
     const displayTitle = selectedVariantTitleParts.length > 0
         ? `${product.name} - ${selectedVariantTitleParts.join(' - ')}`
         : product.name;
+    const cartItemIdBase = product.id ? String(product.id) : product.name.toLocaleLowerCase().replace(/\s+/g, '-');
+    const cartItemId = selectedVariant?.sku ? `${cartItemIdBase}::${selectedVariant.sku}` : cartItemIdBase;
+    const cartItem = items.find((item) => item.productId === product.id) ?? items.find((item) => item.id === cartItemId);
+    const isAlreadyInCart = items.some((item) => item.productId === product.id) || Boolean(cartItem);
     const isInStock = typeof displayStock !== 'number' || displayStock > 0;
     const isManualCheckoutOnly = Boolean(publicSettingsData?.settings?.enable_manual_checkout_mode) && !Boolean(product.manualCheckoutEnabled);
     const isCheckoutAvailable = !isManualCheckoutOnly;
@@ -746,9 +758,6 @@ const ProductInfo = ({
             selectedVariant?.size?.trim(),
             selectedVariant?.color ? displayColorName(selectedVariant.color) : '',
         ].filter(Boolean).join(' ? ');
-        const cartItemIdBase = product.id ? String(product.id) : product.name.toLocaleLowerCase().replace(/\s+/g, '-');
-        const cartItemId = selectedVariant?.sku ? `${cartItemIdBase}::${selectedVariant.sku}` : cartItemIdBase;
-
         for (let i = 0; i < quantity; i++) {
             addToCart({
                 id: cartItemId,
@@ -770,7 +779,6 @@ const ProductInfo = ({
         }
         setAdded(true);
         setTimeout(() => setAdded(false), 2000);
-
     };
 
     const handleDirectBuyNow = () => {
@@ -805,6 +813,11 @@ const ProductInfo = ({
         }));
 
         router.push(checkoutTarget);
+    };
+
+    const handleViewProduct = () => {
+        if (!cartItem) return;
+        focusItem(cartItem.id);
     };
 
     const referralCode = (me?.username ?? '').trim();
@@ -1155,7 +1168,9 @@ const ProductInfo = ({
             {/* Quantity & Actions */}
             <div className="space-y-4">
                 <div className="flex items-center justify-between gap-4">
-                    <span className="text-sm font-semibold text-slate-700 dark:text-gray-300">Quantity:</span>
+                    <span className="text-sm font-semibold text-slate-700 dark:text-gray-300">
+                        Quantity{typeof maxQuantity === 'number' ? ` (max ${maxQuantity})` : ''}:
+                    </span>
                     <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
                         <button
                             onClick={() => setQuantity(qty => Math.max(1, qty - 1))}
@@ -1167,21 +1182,27 @@ const ProductInfo = ({
                             {quantity}
                         </span>
                         <button
-                            onClick={() => setQuantity(qty => qty + 1)}
+                            onClick={() => setQuantity((qty) => (typeof maxQuantity === 'number' ? Math.min(qty + 1, maxQuantity) : qty + 1))}
+                            disabled={typeof maxQuantity === 'number' && quantity >= maxQuantity}
                             className="px-4 py-2.5 text-gray-500 dark:text-gray-400 hover:text-sky-500 dark:hover:text-sky-400 transition-colors text-lg font-medium"
                         >
                             +
                         </button>
                     </div>
                 </div>
+                {typeof maxQuantity === 'number' ? (
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                        Only {maxQuantity.toLocaleString()} available in stock.
+                    </p>
+                ) : null}
 
                 <div className="flex flex-col sm:flex-row gap-3">
                     <OutlineButton
-                        onClick={handleAddToCart}
-                        disabled={!isInStock || !isCheckoutAvailable}
+                        onClick={isAlreadyInCart ? handleViewProduct : handleAddToCart}
+                        disabled={!isCheckoutAvailable || (!isInStock && !isAlreadyInCart)}
                         className="flex-1"
                     >
-                        {added ? 'Added!' : <><CartIcon /> Add to Cart</>}
+                        {isAlreadyInCart ? 'View Product' : added ? 'Added!' : <><CartIcon /> Add to Cart</>}
                     </OutlineButton>
                     <PrimaryButton
                         onClick={() => {

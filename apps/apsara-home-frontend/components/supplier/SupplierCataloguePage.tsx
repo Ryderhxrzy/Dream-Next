@@ -19,12 +19,14 @@ import {
   Grid2x2,
   ImageIcon,
   Loader2,
+  Package,
   Play,
   Save,
   Upload,
   Video,
   X,
 } from 'lucide-react'
+import { useGetProductsQuery, type Product } from '@/store/api/productsApi'
 import { showErrorToast, showSuccessToast } from '@/libs/toast'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -32,10 +34,25 @@ import { showErrorToast, showSuccessToast } from '@/libs/toast'
 interface CataloguePage {
   url: string
   type: 'image' | 'video'
+  name?: string
+  description?: string
 }
 
 function brandItemKey(brandId: number) {
   return `brand-${brandId}`
+}
+
+function stripHtml(html: string): string {
+  return html
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 // ─── Upload helpers ───────────────────────────────────────────────────────────
@@ -60,8 +77,8 @@ async function uploadCataloguePage(file: File): Promise<CataloguePage> {
 
 // ─── PageMedia ────────────────────────────────────────────────────────────────
 
-function PageMedia({ page, className }: { page: CataloguePage | null; className?: string }) {
-  const cls = className ?? 'h-full w-full object-cover'
+function PageMedia({ page, className, contain }: { page: CataloguePage | null; className?: string; contain?: boolean }) {
+  const cls = className ?? (contain ? 'h-full w-full object-contain' : 'h-full w-full object-cover')
   if (!page) return null
   if (page.type === 'video') {
     return <video src={page.url} className={cls} autoPlay loop muted playsInline preload="metadata" />
@@ -134,7 +151,7 @@ const backfaceHidden: React.CSSProperties = {
   WebkitBackfaceVisibility: 'hidden' as React.CSSProperties['WebkitBackfaceVisibility'],
 }
 
-function PageSlot({ pages, spreadIdx, side, brand }: { pages: CataloguePage[]; spreadIdx: number; side: 'left' | 'right'; brand: ProductBrand }) {
+function PageSlot({ pages, spreadIdx, side, brand, containImages }: { pages: CataloguePage[]; spreadIdx: number; side: 'left' | 'right'; brand: ProductBrand; containImages?: boolean }) {
   if (spreadIdx === 0) {
     return side === 'right' ? <CoverPage brand={brand} /> : <EndpaperPage />
   }
@@ -144,6 +161,21 @@ function PageSlot({ pages, spreadIdx, side, brand }: { pages: CataloguePage[]; s
     return side === 'left'
       ? <div className="h-full w-full bg-slate-800 flex items-center justify-center"><BookOpen className="h-10 w-10 text-slate-600" /></div>
       : <div className="h-full w-full bg-slate-900" />
+  }
+  if (containImages) {
+    return (
+      <div className="h-full w-full bg-white flex flex-col">
+        <div className="flex-1 min-h-0 flex items-center justify-center bg-slate-50 p-4">
+          <PageMedia page={page} className="max-h-full max-w-full object-contain" />
+        </div>
+        {(page.name || page.description) && (
+          <div className="shrink-0 border-t border-slate-100 px-5 py-4">
+            {page.name && <p className="text-sm font-semibold leading-snug text-slate-800">{page.name}</p>}
+            {page.description && <p className="mt-1.5 line-clamp-4 text-[11px] leading-relaxed text-slate-500">{page.description}</p>}
+          </div>
+        )}
+      </div>
+    )
   }
   return <PageMedia page={page} />
 }
@@ -159,7 +191,7 @@ function PageLabel({ pages, spreadIdx, side }: { pages: CataloguePage[]; spreadI
   )
 }
 
-function FlipbookViewer({ pages, brand, onClose }: { pages: CataloguePage[]; brand: ProductBrand; onClose: () => void }) {
+function FlipbookViewer({ pages, brand, onClose, containImages }: { pages: CataloguePage[]; brand: ProductBrand; onClose: () => void; containImages?: boolean }) {
   const [spread, setSpread] = useState(0)
   const [flipState, setFlipState] = useState<FlipState | null>(null)
   const totalSpreads = 1 + Math.ceil(pages.length / 2)
@@ -198,7 +230,7 @@ function FlipbookViewer({ pages, brand, onClose }: { pages: CataloguePage[]; bra
     setFlipState({ dir: targetSpread > spread ? 'next' : 'prev', from: spread, to: targetSpread })
   }, [isAnimating, spread])
 
-  const slotProps = { pages, brand }
+  const slotProps = { pages, brand, containImages }
   const isCoverStatic = spread === 0 && !flipState
   const isCoverFlipping = !!flipState && flipState.dir === 'next' && flipState.from === 0
   const isCoverBackFlipping = !!flipState && flipState.dir === 'prev' && flipState.to === 0
@@ -358,6 +390,126 @@ function FlipbookViewer({ pages, brand, onClose }: { pages: CataloguePage[]; bra
   )
 }
 
+// ─── Brand Products panel ─────────────────────────────────────────────────────
+
+interface ProductsPanelProps {
+  brand: ProductBrand
+  productSearch: string
+  setProductSearch: (v: string) => void
+  productsLoading: boolean
+  brandProducts: Product[]
+  productsTotal: number
+}
+
+function ProductsPanel({ brand, productSearch, setProductSearch, productsLoading, brandProducts, productsTotal }: ProductsPanelProps) {
+  const [viewerOpen, setViewerOpen] = useState(false)
+
+  const productPages: CataloguePage[] = brandProducts
+    .filter(p => !!p.image)
+    .map(p => ({
+      url: p.image!,
+      type: 'image' as const,
+      name: p.name,
+      description: p.description ? stripHtml(p.description) : undefined,
+    }))
+
+  return (
+    <>
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="font-bold text-slate-900">Brand Products</h3>
+            <p className="mt-0.5 text-xs text-slate-400">
+              All products catalogued under{' '}
+              <span className="font-semibold text-slate-600">{brand.name}</span>
+              {productsTotal > 0 && (
+                <span className="ml-1.5 inline-flex items-center rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-600">
+                  {productsTotal}
+                </span>
+              )}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {productPages.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setViewerOpen(true)}
+                className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700"
+              >
+                <BookOpen className="h-4 w-4" /> View Flipbook
+              </button>
+            )}
+            <div className="relative">
+              <svg className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+              </svg>
+              <input
+                type="text"
+                value={productSearch}
+                onChange={e => setProductSearch(e.target.value)}
+                placeholder="Search products…"
+                className="h-10 w-52 rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-400"
+              />
+            </div>
+          </div>
+        </div>
+
+        {productsLoading ? (
+          <div className="flex items-center justify-center gap-2 py-20 text-slate-400">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span className="text-sm">Loading products…</span>
+          </div>
+        ) : brandProducts.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-200 py-20">
+            <Package className="h-10 w-10 text-slate-300" />
+            <p className="text-sm text-slate-400">{productSearch ? 'No products match your search' : 'No products found for this brand'}</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+            {brandProducts.map(product => (
+              <div key={product.id} className="group overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 transition hover:shadow-md">
+                <div className="relative aspect-square overflow-hidden bg-white">
+                  {product.image ? (
+                    <img src={product.image} alt={product.name} className="h-full w-full object-contain p-2 transition group-hover:scale-105" draggable={false} />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center">
+                      <Package className="h-10 w-10 text-slate-300" />
+                    </div>
+                  )}
+                  {product.status === 0 && (
+                    <span className="absolute left-2 top-2 rounded-full bg-slate-800/70 px-2 py-0.5 text-[9px] font-bold text-white">Inactive</span>
+                  )}
+                  {product.bestseller && (
+                    <span className="absolute right-2 top-2 rounded-full bg-amber-400 px-2 py-0.5 text-[9px] font-bold text-white">Bestseller</span>
+                  )}
+                </div>
+                <div className="p-3">
+                  <p className="line-clamp-2 text-xs font-semibold text-slate-800">{product.name}</p>
+                  <p className="mt-0.5 text-[10px] text-slate-400">SKU: {product.sku || '—'}</p>
+                  <div className="mt-2 flex items-center justify-between">
+                    <span className="text-xs font-bold text-violet-600">₱{product.priceSrp?.toLocaleString('en-PH') ?? '—'}</span>
+                    <span className={`text-[10px] font-medium ${product.qty > 0 ? 'text-emerald-600' : 'text-rose-400'}`}>
+                      {product.qty > 0 ? `${product.qty} in stock` : 'Out of stock'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <AnimatePresence>
+        {viewerOpen && productPages.length > 0 && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+            <FlipbookViewer pages={productPages} brand={brand} onClose={() => setViewerOpen(false)} containImages />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  )
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function SupplierCataloguePage() {
@@ -415,6 +567,19 @@ export default function SupplierCataloguePage() {
   const [saving, setSaving] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const [activeTab, setActiveTab] = useState<'pages' | 'products'>('pages')
+  const [productSearch, setProductSearch] = useState('')
+  const [debouncedProductSearch, setDebouncedProductSearch] = useState('')
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedProductSearch(productSearch.trim()), 350)
+    return () => clearTimeout(t)
+  }, [productSearch])
+  const { data: productsData, isLoading: productsLoading } = useGetProductsQuery(
+    brand ? { brandType: brand.id, perPage: 200, search: debouncedProductSearch || undefined } : undefined,
+    { skip: !brand || activeTab !== 'products' },
+  )
+  const brandProducts = productsData?.products ?? []
 
   const catalogueItem = brand
     ? (catalogueData?.items ?? []).find(item => item.key === brandItemKey(brand.id))
@@ -587,7 +752,46 @@ export default function SupplierCataloguePage() {
         </div>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[1fr_280px]">
+      {/* Tab bar */}
+      <div className="flex gap-1 rounded-2xl border border-slate-200 bg-slate-50 p-1 shadow-sm">
+        {([
+          { key: 'pages', label: 'Catalogue Pages', icon: <BookOpen className="h-4 w-4" /> },
+          { key: 'products', label: 'Brand Products', icon: <Package className="h-4 w-4" /> },
+        ] as const).map(tab => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setActiveTab(tab.key)}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-all ${
+              activeTab === tab.key
+                ? 'bg-white text-violet-700 shadow-sm ring-1 ring-slate-200'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            {tab.icon}{tab.label}
+            {tab.key === 'products' && productsData && (
+              <span className="ml-1 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-600">
+                {productsData.meta?.total ?? brandProducts.length}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Products tab */}
+      {activeTab === 'products' && (
+        <ProductsPanel
+          brand={brand}
+          productSearch={productSearch}
+          setProductSearch={setProductSearch}
+          productsLoading={productsLoading}
+          brandProducts={brandProducts}
+          productsTotal={productsData?.meta?.total ?? brandProducts.length}
+        />
+      )}
+
+      {/* Catalogue pages tab */}
+      {activeTab === 'pages' && <div className="grid gap-5 lg:grid-cols-[1fr_280px]">
 
         {/* ── Left: pages manager ── */}
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -763,7 +967,7 @@ export default function SupplierCataloguePage() {
             </ul>
           </div>
         </div>
-      </div>
+      </div>}
 
       <AnimatePresence>
         {viewerOpen && localPages.length > 0 && (

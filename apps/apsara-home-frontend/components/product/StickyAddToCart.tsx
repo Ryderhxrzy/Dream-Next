@@ -35,7 +35,7 @@ const getEffectiveVariantStock = (variants?: CategoryProduct['variants']) => {
 
 const StickyAddToCart = ({ product, selectedVariant, forceRealPrice = false }: StickyAddToCartProps) => {
   const [visible, setVisible] = useState(false);
-  const { addToCart } = useCart();
+  const { addToCart, items, focusItem } = useCart();
   const { data: session } = useSession();
   const pathname = usePathname();
   const router = useRouter();
@@ -74,6 +74,10 @@ const StickyAddToCart = ({ product, selectedVariant, forceRealPrice = false }: S
     : (typeof totalVariantStock === 'number' ? totalVariantStock : Number(product.stock ?? 0));
   const isInStock = stock > 0;
   const isCheckoutAvailable = !(Boolean(publicSettingsData?.settings?.enable_manual_checkout_mode) && !Boolean(product.manualCheckoutEnabled));
+  const cartItemIdBase = product.id ? String(product.id) : product.name.toLowerCase().replace(/\s+/g, '-');
+  const cartItemId = selectedVariant?.sku ? `${cartItemIdBase}::${selectedVariant.sku}` : cartItemIdBase;
+  const cartItem = items.find((item) => item.productId === product.id) ?? items.find((item) => item.id === cartItemId);
+  const isAlreadyInCart = items.some((item) => item.productId === product.id) || Boolean(cartItem);
 
   useEffect(() => {
     let lastScrollY = window.scrollY;
@@ -136,6 +140,11 @@ const StickyAddToCart = ({ product, selectedVariant, forceRealPrice = false }: S
     });
   };
 
+  const handleViewProduct = () => {
+    if (!cartItem) return;
+    focusItem(cartItem.id);
+  };
+
   return (
     <AnimatePresence>
       {visible && (
@@ -163,12 +172,12 @@ const StickyAddToCart = ({ product, selectedVariant, forceRealPrice = false }: S
             </div>
             <div className="flex shrink-0 gap-2">
               <OutlineButton
-                onClick={handleAddToCart}
-                disabled={!isInStock || !isCheckoutAvailable}
+                onClick={isAlreadyInCart ? handleViewProduct : handleAddToCart}
+                disabled={!isCheckoutAvailable || (!isInStock && !isAlreadyInCart)}
                 className="!px-4 !py-2 !text-sm !rounded-lg"
               >
-                <span className="hidden sm:inline">Add to Cart</span>
-                <span className="sm:hidden">Cart</span>
+                <span className="hidden sm:inline">{isAlreadyInCart ? 'View Product' : 'Add to Cart'}</span>
+                <span className="sm:hidden">{isAlreadyInCart ? 'View' : 'Cart'}</span>
               </OutlineButton>
               <PrimaryButton
                 disabled={!isInStock || !isCheckoutAvailable}

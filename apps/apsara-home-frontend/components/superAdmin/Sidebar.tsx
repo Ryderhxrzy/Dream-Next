@@ -453,7 +453,11 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
           if (child.path === '/admin/webpages/dreambuild') {
             return canAccessWebContentSection(webContentPermissions, 'wc:dreambuild')
           }
-          if (child.path === '/admin/webpages/partner-storefronts' || child.path === '/admin/webpages/partner-users') {
+          if (
+            child.path === '/admin/webpages/partner-storefronts' ||
+            child.path === '/admin/webpages/partner-landing-page' ||
+            child.path === '/admin/webpages/partner-users'
+          ) {
             return canAccessWebContentSection(webContentPermissions, 'wc:partner-storefronts')
           }
           return webContentPermissions.length === 0
