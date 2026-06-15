@@ -1,10 +1,10 @@
 interface Props {
-  items: string[];
-  onSelect: (item: string) => void;
+  items: string[]
+  onSelect: (item: string) => void
 }
 
 export function AiSupportQuickReplies({ items, onSelect }: Props) {
-  if (!items.length) return null;
+  if (!items.length) return null
   return (
     <div className="flex-shrink-0 border-t border-slate-100 bg-white px-3 py-2 flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
       {items.map((item, i) => (
@@ -18,5 +18,5 @@ export function AiSupportQuickReplies({ items, onSelect }: Props) {
         </button>
       ))}
     </div>
-  );
+  )
 }

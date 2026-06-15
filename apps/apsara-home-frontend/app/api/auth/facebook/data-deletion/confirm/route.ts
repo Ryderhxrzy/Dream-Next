@@ -1,14 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server"
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const code = searchParams.get('code');
+  const { searchParams } = new URL(request.url)
+  const code = searchParams.get("code")
 
   if (!code) {
     return NextResponse.json(
-      { error: 'Missing confirmation code' },
+      { error: "Missing confirmation code" },
       { status: 400 }
-    );
+    )
   }
 
   // Simple confirmation page response
@@ -32,9 +32,9 @@ export async function GET(request: NextRequest) {
       <p><a href="/">Return to AF Home</a></p>
     </body>
     </html>
-  `;
+  `
 
   return new NextResponse(html, {
-    headers: { 'Content-Type': 'text/html' }
-  });
+    headers: { "Content-Type": "text/html" },
+  })
 }

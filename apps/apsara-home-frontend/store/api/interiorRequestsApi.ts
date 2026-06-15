@@ -1,15 +1,19 @@
-import { baseApi } from './baseApi'
+import { baseApi } from "./baseApi"
 
 export type InteriorRequestStatus =
-  | 'pending'
-  | 'reviewing'
-  | 'estimate_ready'
-  | 'scheduled'
-  | 'completed'
-  | 'cancelled'
+  | "pending"
+  | "reviewing"
+  | "estimate_ready"
+  | "scheduled"
+  | "completed"
+  | "cancelled"
 
-export type InteriorRequestPriority = 'normal' | 'priority'
-export type InteriorRequestUpdateType = 'message' | 'estimate' | 'design' | 'schedule'
+export type InteriorRequestPriority = "normal" | "priority"
+export type InteriorRequestUpdateType =
+  | "message"
+  | "estimate"
+  | "design"
+  | "schedule"
 
 export interface InteriorRequestActor {
   id: number
@@ -120,44 +124,60 @@ export interface AdminInteriorReplyPayload {
 
 export const interiorRequestsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    createInteriorRequest: builder.mutation<InteriorRequestResponse, CreateInteriorRequestPayload>({
+    createInteriorRequest: builder.mutation<
+      InteriorRequestResponse,
+      CreateInteriorRequestPayload
+    >({
       query: (body) => ({
-        url: '/api/interior-requests',
-        method: 'POST',
+        url: "/api/interior-requests",
+        method: "POST",
         body,
       }),
-      invalidatesTags: ['InteriorRequests', 'CustomerNotifications', 'AdminNotifications'],
+      invalidatesTags: [
+        "InteriorRequests",
+        "CustomerNotifications",
+        "AdminNotifications",
+      ],
     }),
     getMyInteriorRequests: builder.query<InteriorRequestsResponse, void>({
       query: () => ({
-        url: '/api/interior-requests',
-        method: 'GET',
+        url: "/api/interior-requests",
+        method: "GET",
       }),
-      providesTags: ['InteriorRequests'],
+      providesTags: ["InteriorRequests"],
     }),
-    getAdminInteriorRequests: builder.query<InteriorRequestsResponse, { status?: string; q?: string } | void>({
+    getAdminInteriorRequests: builder.query<
+      InteriorRequestsResponse,
+      { status?: string; q?: string } | void
+    >({
       query: (params) => ({
-        url: '/api/admin/interior-requests',
-        method: 'GET',
+        url: "/api/admin/interior-requests",
+        method: "GET",
         params: params ?? undefined,
       }),
-      providesTags: ['InteriorRequests', 'AdminNotifications'],
+      providesTags: ["InteriorRequests", "AdminNotifications"],
     }),
-    updateAdminInteriorRequest: builder.mutation<InteriorRequestResponse, { id: number; body: AdminInteriorRequestUpdatePayload }>({
+    updateAdminInteriorRequest: builder.mutation<
+      InteriorRequestResponse,
+      { id: number; body: AdminInteriorRequestUpdatePayload }
+    >({
       query: ({ id, body }) => ({
         url: `/api/admin/interior-requests/${id}`,
-        method: 'PATCH',
+        method: "PATCH",
         body,
       }),
-      invalidatesTags: ['InteriorRequests', 'CustomerNotifications'],
+      invalidatesTags: ["InteriorRequests", "CustomerNotifications"],
     }),
-    replyAdminInteriorRequest: builder.mutation<InteriorRequestResponse, { id: number; body: AdminInteriorReplyPayload }>({
+    replyAdminInteriorRequest: builder.mutation<
+      InteriorRequestResponse,
+      { id: number; body: AdminInteriorReplyPayload }
+    >({
       query: ({ id, body }) => ({
         url: `/api/admin/interior-requests/${id}/updates`,
-        method: 'POST',
+        method: "POST",
         body,
       }),
-      invalidatesTags: ['InteriorRequests', 'CustomerNotifications'],
+      invalidatesTags: ["InteriorRequests", "CustomerNotifications"],
     }),
   }),
 })

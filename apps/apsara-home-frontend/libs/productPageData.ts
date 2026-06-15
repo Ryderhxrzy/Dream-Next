@@ -1,6 +1,6 @@
-import { categoryMeta, type CategoryProduct } from '@/libs/CategoryData'
-import type { Category } from '@/store/api/categoriesApi'
-import type { Product } from '@/store/api/productsApi'
+import { categoryMeta, type CategoryProduct } from "@/libs/CategoryData"
+import type { Category } from "@/store/api/categoriesApi"
+import type { Product } from "@/store/api/productsApi"
 
 type LooseRecord = Record<string, unknown>
 const toLooseRecord = (value: unknown): LooseRecord => value as LooseRecord
@@ -42,42 +42,55 @@ const slugify = (value: string) =>
   value
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
 
 const parseSlugAndId = (raw: string) => {
   const match = raw.match(/^(.*)-i(\d+)$/i)
   if (!match) return { slugOnly: raw, id: null as number | null }
   const id = Number(match[2])
   return {
-    slugOnly: (match[1] || '').trim(),
+    slugOnly: (match[1] || "").trim(),
     id: Number.isFinite(id) ? id : null,
   }
 }
 
 export const buildCanonicalProductSlug = (name: string, id?: number) => {
   const base = slugify(name)
-  if (typeof id === 'number' && id > 0) return `${base}-i${id}`
+  if (typeof id === "number" && id > 0) return `${base}-i${id}`
   return base
 }
 
-const normalizeCategorySlug = (rawUrl: string | null | undefined, fallbackName: string) => {
-  const source = (rawUrl ?? '').trim()
-  if (!source || source === '0') return slugify(fallbackName)
-  const withoutDomain = source.replace(/^https?:\/\/[^/]+/i, '')
-  const cleaned = withoutDomain.replace(/^\/+/, '').replace(/^category\//i, '').replace(/\/+$/, '')
+const normalizeCategorySlug = (
+  rawUrl: string | null | undefined,
+  fallbackName: string
+) => {
+  const source = (rawUrl ?? "").trim()
+  if (!source || source === "0") return slugify(fallbackName)
+  const withoutDomain = source.replace(/^https?:\/\/[^/]+/i, "")
+  const cleaned = withoutDomain
+    .replace(/^\/+/, "")
+    .replace(/^category\//i, "")
+    .replace(/\/+$/, "")
   return cleaned || slugify(fallbackName)
 }
 
-const resolveImageUrl = (rawImage: string | null | undefined, apiUrl?: string) => {
-  if (!rawImage) return '/Images/HeroSection/chairs_stools.jpg'
-  if (rawImage.startsWith('http://') || rawImage.startsWith('https://')) return rawImage
-  if (rawImage.startsWith('/')) return rawImage
+const resolveImageUrl = (
+  rawImage: string | null | undefined,
+  apiUrl?: string
+) => {
+  if (!rawImage) return "/Images/HeroSection/chairs_stools.jpg"
+  if (rawImage.startsWith("http://") || rawImage.startsWith("https://"))
+    return rawImage
+  if (rawImage.startsWith("/")) return rawImage
   if (!apiUrl) return `/${rawImage}`
-  return `${apiUrl.replace(/\/$/, '')}/${rawImage.replace(/^\/+/, '')}`
+  return `${apiUrl.replace(/\/$/, "")}/${rawImage.replace(/^\/+/, "")}`
 }
 
-const fetchWithRetry = async (input: string, init?: RequestInit): Promise<Response> => {
+const fetchWithRetry = async (
+  input: string,
+  init?: RequestInit
+): Promise<Response> => {
   let lastResponse: Response | null = null
   let lastError: unknown = null
 
@@ -89,13 +102,19 @@ const fetchWithRetry = async (input: string, init?: RequestInit): Promise<Respon
       }
 
       // Do not hammer the API on client errors; return immediately.
-      if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+      if (
+        response.status >= 400 &&
+        response.status < 500 &&
+        response.status !== 429
+      ) {
         return response
       }
 
       if (response.status === 429) {
-        const retryAfterRaw = response.headers.get('retry-after')
-        const retryAfterSeconds = retryAfterRaw ? Number.parseInt(retryAfterRaw, 10) : NaN
+        const retryAfterRaw = response.headers.get("retry-after")
+        const retryAfterSeconds = retryAfterRaw
+          ? Number.parseInt(retryAfterRaw, 10)
+          : NaN
         const delayMs = Number.isFinite(retryAfterSeconds)
           ? Math.max(250, Math.min(2000, retryAfterSeconds * 1000))
           : 700 * (attempt + 1)
@@ -115,15 +134,16 @@ const fetchWithRetry = async (input: string, init?: RequestInit): Promise<Respon
   }
 
   if (lastResponse) return lastResponse
-  throw (lastError instanceof Error ? lastError : new Error('Failed to fetch'))
+  throw lastError instanceof Error ? lastError : new Error("Failed to fetch")
 }
 
-const asArray = <T,>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : [])
+const asArray = <T>(value: unknown): T[] =>
+  Array.isArray(value) ? (value as T[]) : []
 
 const toNumber = (value: unknown): number => {
-  if (typeof value === 'number') return Number.isFinite(value) ? value : 0
-  if (typeof value === 'string') {
-    const normalized = value.replace(/[^0-9.-]/g, '')
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0
+  if (typeof value === "string") {
+    const normalized = value.replace(/[^0-9.-]/g, "")
     const parsed = Number(normalized)
     return Number.isFinite(parsed) ? parsed : 0
   }
@@ -133,13 +153,13 @@ const toNumber = (value: unknown): number => {
 
 const toOptionalNumber = (value: unknown): number | undefined => {
   if (value == null) return undefined
-  if (typeof value === 'string' && value.trim() === '') return undefined
+  if (typeof value === "string" && value.trim() === "") return undefined
 
-  if (typeof value === 'number') {
+  if (typeof value === "number") {
     return Number.isFinite(value) ? value : undefined
   }
-  if (typeof value === 'string') {
-    const normalized = value.replace(/[^0-9.-]/g, '')
+  if (typeof value === "string") {
+    const normalized = value.replace(/[^0-9.-]/g, "")
     const parsed = Number(normalized)
     return Number.isFinite(parsed) ? parsed : undefined
   }
@@ -149,14 +169,20 @@ const toOptionalNumber = (value: unknown): number | undefined => {
 
 const toStringArray = (value: unknown): string[] => {
   if (Array.isArray(value)) {
-    return value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+    return value.filter(
+      (item): item is string =>
+        typeof item === "string" && item.trim().length > 0
+    )
   }
 
-  if (typeof value === 'string' && value.trim().length > 0) {
+  if (typeof value === "string" && value.trim().length > 0) {
     try {
       const parsed = JSON.parse(value) as unknown
       if (Array.isArray(parsed)) {
-        return parsed.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+        return parsed.filter(
+          (item): item is string =>
+            typeof item === "string" && item.trim().length > 0
+        )
       }
     } catch {
       // fallback below
@@ -167,7 +193,10 @@ const toStringArray = (value: unknown): string[] => {
   return []
 }
 
-const resolveDisplayStock = (baseStock: number, variants?: Array<{ qty?: number; status?: number }>): number => {
+const resolveDisplayStock = (
+  baseStock: number,
+  variants?: Array<{ qty?: number; status?: number }>
+): number => {
   if (!variants || variants.length === 0) return baseStock
 
   const activeVariants = variants.filter((variant) => {
@@ -177,10 +206,15 @@ const resolveDisplayStock = (baseStock: number, variants?: Array<{ qty?: number;
 
   if (activeVariants.length === 0) return 0
 
-  const hasVariantQty = activeVariants.some((variant) => typeof variant.qty === 'number')
+  const hasVariantQty = activeVariants.some(
+    (variant) => typeof variant.qty === "number"
+  )
   if (!hasVariantQty) return baseStock
 
-  return activeVariants.reduce((sum, variant) => sum + Math.max(0, Number(variant.qty ?? 0)), 0)
+  return activeVariants.reduce(
+    (sum, variant) => sum + Math.max(0, Number(variant.qty ?? 0)),
+    0
+  )
 }
 
 const extractCategories = (json: unknown): Category[] => {
@@ -193,28 +227,37 @@ const extractProducts = (json: unknown): Product[] => {
   return asArray<Product>(source.products ?? source.data)
 }
 
-const toCategoryProduct = (row: LooseRecord, apiUrl?: string): CategoryProduct => {
+const toCategoryProduct = (
+  row: LooseRecord,
+  apiUrl?: string
+): CategoryProduct => {
   const id = toNumber(row.id ?? row.pd_id ?? 0)
-  const name = String(row.name ?? row.pd_name ?? 'Untitled Product')
+  const name = String(row.name ?? row.pd_name ?? "Untitled Product")
   const srp = toNumber(row.priceSrp ?? row.pd_price_srp ?? 0)
   const member = toNumber(row.priceMember ?? row.pd_price_member ?? 0)
   const prodpv = toNumber(row.prodpv ?? row.pd_prodpv ?? 0)
-  const soldCount = toOptionalNumber(row.soldCount ?? row.sold_count ?? row.pd_sold_count)
-  const rating = toOptionalNumber(row.avgRating ?? row.avg_rating ?? row.rating ?? row.pd_avg_rating)
+  const soldCount = toOptionalNumber(
+    row.soldCount ?? row.sold_count ?? row.pd_sold_count
+  )
+  const rating = toOptionalNumber(
+    row.avgRating ?? row.avg_rating ?? row.rating ?? row.pd_avg_rating
+  )
   const price = srp
   const rawImage = (row.image ?? row.pd_image) as string | null | undefined
-  const images = toStringArray(row.images ?? row.pd_images).map((item) => resolveImageUrl(item, apiUrl))
+  const images = toStringArray(row.images ?? row.pd_images).map((item) =>
+    resolveImageUrl(item, apiUrl)
+  )
 
   let badge: string | undefined
-  if (Boolean(row.salespromo ?? row.pd_salespromo)) badge = 'SALE'
-  else if (Boolean(row.bestseller ?? row.pd_bestseller)) badge = 'BEST SELLER'
-  else if (Boolean(row.musthave ?? row.pd_musthave)) badge = 'MUST HAVE'
+  if (Boolean(row.salespromo ?? row.pd_salespromo)) badge = "SALE"
+  else if (Boolean(row.bestseller ?? row.pd_bestseller)) badge = "BEST SELLER"
+  else if (Boolean(row.musthave ?? row.pd_musthave)) badge = "MUST HAVE"
 
   const rawVariants = Array.isArray(row.variants)
     ? row.variants
     : Array.isArray(row.pd_variants)
       ? row.pd_variants
-      : row.variants && typeof row.variants === 'object'
+      : row.variants && typeof row.variants === "object"
         ? Object.values(row.variants as Record<string, unknown>)
         : []
 
@@ -224,34 +267,50 @@ const toCategoryProduct = (row: LooseRecord, apiUrl?: string): CategoryProduct =
           const variant = toLooseRecord(item)
           const statusRaw = variant.status ?? variant.pv_status
           return {
-            id: typeof variant.id === 'number' ? variant.id : undefined,
-            sku: typeof (variant.sku ?? variant.pv_sku) === 'string' ? String(variant.sku ?? variant.pv_sku) : undefined,
+            id: typeof variant.id === "number" ? variant.id : undefined,
+            sku:
+              typeof (variant.sku ?? variant.pv_sku) === "string"
+                ? String(variant.sku ?? variant.pv_sku)
+                : undefined,
             name:
-              typeof (variant.name ?? variant.pv_name) === 'string' ? String(variant.name ?? variant.pv_name) : undefined,
+              typeof (variant.name ?? variant.pv_name) === "string"
+                ? String(variant.name ?? variant.pv_name)
+                : undefined,
             color:
-              typeof (variant.color ?? variant.pv_color) === 'string'
+              typeof (variant.color ?? variant.pv_color) === "string"
                 ? String(variant.color ?? variant.pv_color)
                 : undefined,
             colorHex:
-              typeof (variant.colorHex ?? variant.pv_color_hex) === 'string'
+              typeof (variant.colorHex ?? variant.pv_color_hex) === "string"
                 ? String(variant.colorHex ?? variant.pv_color_hex)
                 : undefined,
             size:
-              typeof (variant.size ?? variant.pv_size) === 'string' ? String(variant.size ?? variant.pv_size) : undefined,
+              typeof (variant.size ?? variant.pv_size) === "string"
+                ? String(variant.size ?? variant.pv_size)
+                : undefined,
             style:
-              typeof (variant.style ?? variant.pv_style) === 'string'
+              typeof (variant.style ?? variant.pv_style) === "string"
                 ? String(variant.style ?? variant.pv_style)
                 : undefined,
             width: toOptionalNumber(variant.width ?? variant.pv_width),
-            dimension: toOptionalNumber(variant.dimension ?? variant.pv_dimension),
+            dimension: toOptionalNumber(
+              variant.dimension ?? variant.pv_dimension
+            ),
             height: toOptionalNumber(variant.height ?? variant.pv_height),
-            priceSrp: toOptionalNumber(variant.priceSrp ?? variant.pv_price_srp),
+            priceSrp: toOptionalNumber(
+              variant.priceSrp ?? variant.pv_price_srp
+            ),
             priceDp: toOptionalNumber(variant.priceDp ?? variant.pv_price_dp),
-            priceMember: toOptionalNumber(variant.priceMember ?? variant.pv_price_member),
+            priceMember: toOptionalNumber(
+              variant.priceMember ?? variant.pv_price_member
+            ),
             prodpv: toOptionalNumber(variant.prodpv ?? variant.pv_prodpv),
             qty: toOptionalNumber(variant.qty ?? variant.pv_qty),
-            status: typeof statusRaw === 'number' ? statusRaw : Number(statusRaw),
-            images: toStringArray(variant.images ?? variant.pv_images).map((img) => resolveImageUrl(img, apiUrl)),
+            status:
+              typeof statusRaw === "number" ? statusRaw : Number(statusRaw),
+            images: toStringArray(variant.images ?? variant.pv_images).map(
+              (img) => resolveImageUrl(img, apiUrl)
+            ),
           }
         })
       : undefined
@@ -260,12 +319,12 @@ const toCategoryProduct = (row: LooseRecord, apiUrl?: string): CategoryProduct =
   const stock = resolveDisplayStock(baseStock, variants)
 
   const resolveBrand = () => {
-    if (typeof row.brand === 'string') return row.brand
-    if (typeof row.brand_name === 'string') return row.brand_name
-    if (row.brand && typeof row.brand === 'object') {
+    if (typeof row.brand === "string") return row.brand
+    if (typeof row.brand_name === "string") return row.brand_name
+    if (row.brand && typeof row.brand === "object") {
       const brandObj = row.brand as LooseRecord
-      if (typeof brandObj.name === 'string') return brandObj.name
-      if (typeof brandObj.brand_name === 'string') return brandObj.brand_name
+      if (typeof brandObj.name === "string") return brandObj.name
+      if (typeof brandObj.brand_name === "string") return brandObj.brand_name
     }
     return undefined
   }
@@ -274,7 +333,9 @@ const toCategoryProduct = (row: LooseRecord, apiUrl?: string): CategoryProduct =
     id,
     name,
     type: toNumber(row.type ?? row.pd_type),
-    createdAt: (row.createdAt ?? row.pd_created_at ?? row.created_at) as string | undefined,
+    createdAt: (row.createdAt ?? row.pd_created_at ?? row.created_at) as
+      | string
+      | undefined,
     price,
     priceSrp: srp || undefined,
     priceDp: toOptionalNumber(row.priceDp ?? row.pd_price_dp),
@@ -286,14 +347,18 @@ const toCategoryProduct = (row: LooseRecord, apiUrl?: string): CategoryProduct =
     image: resolveImageUrl(rawImage, apiUrl),
     images,
     description: (row.description ?? row.pd_description) as string | undefined,
-    specifications: (row.specifications ?? row.pd_specifications) as string | undefined,
+    specifications: (row.specifications ?? row.pd_specifications) as
+      | string
+      | undefined,
     badge,
     verified: Boolean(row.verified ?? row.pd_verified),
     stock,
-    sku: String(row.sku ?? row.pd_parent_sku ?? '').trim() || undefined,
+    sku: String(row.sku ?? row.pd_parent_sku ?? "").trim() || undefined,
     variants,
     brand: resolveBrand(),
-    manualCheckoutEnabled: Boolean(row.manualCheckoutEnabled ?? row.pd_manual_checkout_enabled),
+    manualCheckoutEnabled: Boolean(
+      row.manualCheckoutEnabled ?? row.pd_manual_checkout_enabled
+    ),
     weight: toOptionalNumber(row.weight ?? row.pd_weight),
     psweight: toOptionalNumber(row.psweight ?? row.pd_psweight),
     pswidth: toOptionalNumber(row.pswidth ?? row.pd_pswidth),
@@ -305,17 +370,21 @@ const toCategoryProduct = (row: LooseRecord, apiUrl?: string): CategoryProduct =
   }
 }
 
-const getCategorySlugFromProduct = (row: LooseRecord, categories: Category[]) => {
+const getCategorySlugFromProduct = (
+  row: LooseRecord,
+  categories: Category[]
+) => {
   const catId = Number(
     row.catid ??
       row.pd_catid ??
       row.cat_id ??
       row.category_id ??
-      ((row.category as LooseRecord | undefined)?.id) ??
-      -1,
+      (row.category as LooseRecord | undefined)?.id ??
+      -1
   )
   const matchedById = categories.find((c) => Number(c.id) === catId)
-  if (matchedById) return normalizeCategorySlug(matchedById.url, matchedById.name)
+  if (matchedById)
+    return normalizeCategorySlug(matchedById.url, matchedById.name)
 
   const categoryName =
     (row.categoryName as string | undefined) ??
@@ -324,57 +393,89 @@ const getCategorySlugFromProduct = (row: LooseRecord, categories: Category[]) =>
     ((row.category as LooseRecord | undefined)?.name as string | undefined)
 
   if (categoryName) return slugify(categoryName)
-  return ''
+  return ""
 }
 
-export async function getProductPageData(slug: string): Promise<ProductPageData | null> {
-  const apiUrl = process.env.LARAVEL_API_URL ?? process.env.NEXT_PUBLIC_LARAVEL_API_URL
+export async function getProductPageData(
+  slug: string
+): Promise<ProductPageData | null> {
+  const apiUrl =
+    process.env.LARAVEL_API_URL ?? process.env.NEXT_PUBLIC_LARAVEL_API_URL
   if (!apiUrl) return null
   const { slugOnly, id } = parseSlugAndId(slug)
 
   try {
     const [categoriesRes, productRes, productsRes] = await Promise.allSettled([
       fetchWithRetry(`${apiUrl}/api/categories?page=1&per_page=100`, {
-        method: 'GET',
-        headers: { Accept: 'application/json' },
-        next: { revalidate: PRODUCT_PAGE_REVALIDATE_SECONDS, tags: ['storefront:categories'] },
+        method: "GET",
+        headers: { Accept: "application/json" },
+        next: {
+          revalidate: PRODUCT_PAGE_REVALIDATE_SECONDS,
+          tags: ["storefront:categories"],
+        },
       }),
-      fetchWithRetry(id ? `${apiUrl}/api/products/${id}` : `${apiUrl}/api/products/slug/${encodeURIComponent(slugOnly)}`, {
-        method: 'GET',
-        headers: { Accept: 'application/json' },
-        next: { revalidate: PRODUCT_PAGE_REVALIDATE_SECONDS, tags: ['storefront:products'] },
-      }),
+      fetchWithRetry(
+        id
+          ? `${apiUrl}/api/products/${id}`
+          : `${apiUrl}/api/products/slug/${encodeURIComponent(slugOnly)}`,
+        {
+          method: "GET",
+          headers: { Accept: "application/json" },
+          next: {
+            revalidate: PRODUCT_PAGE_REVALIDATE_SECONDS,
+            tags: ["storefront:products"],
+          },
+        }
+      ),
       fetchWithRetry(`${apiUrl}/api/products?page=1&per_page=300&status=1`, {
-        method: 'GET',
-        headers: { Accept: 'application/json' },
-        next: { revalidate: PRODUCT_PAGE_REVALIDATE_SECONDS, tags: ['storefront:products'] },
+        method: "GET",
+        headers: { Accept: "application/json" },
+        next: {
+          revalidate: PRODUCT_PAGE_REVALIDATE_SECONDS,
+          tags: ["storefront:products"],
+        },
       }),
     ])
 
-    const categoriesResponse = categoriesRes.status === 'fulfilled' ? categoriesRes.value : null
-    const productResponse = productRes.status === 'fulfilled' ? productRes.value : null
-    const productsResponse = productsRes.status === 'fulfilled' ? productsRes.value : null
+    const categoriesResponse =
+      categoriesRes.status === "fulfilled" ? categoriesRes.value : null
+    const productResponse =
+      productRes.status === "fulfilled" ? productRes.value : null
+    const productsResponse =
+      productsRes.status === "fulfilled" ? productsRes.value : null
 
     const categories =
-      categoriesResponse && categoriesResponse.ok ? extractCategories(await categoriesResponse.json()) : []
+      categoriesResponse && categoriesResponse.ok
+        ? extractCategories(await categoriesResponse.json())
+        : []
     const products =
       productsResponse && productsResponse.ok
-        ? extractProducts(await productsResponse.json()).map((p) => toLooseRecord(p))
+        ? extractProducts(await productsResponse.json()).map((p) =>
+            toLooseRecord(p)
+          )
         : []
 
     let target: LooseRecord | null = null
     if (productResponse && productResponse.ok) {
-      const productJson = (await productResponse.json()) as { product?: Product }
+      const productJson = (await productResponse.json()) as {
+        product?: Product
+      }
       target = productJson.product ? toLooseRecord(productJson.product) : null
     }
 
     if (!target && id) {
       try {
-        const slugResponse = await fetchWithRetry(`${apiUrl}/api/products/slug/${encodeURIComponent(slugOnly)}`, {
-          method: 'GET',
-          headers: { Accept: 'application/json' },
-          next: { revalidate: PRODUCT_PAGE_REVALIDATE_SECONDS, tags: ['storefront:products'] },
-        })
+        const slugResponse = await fetchWithRetry(
+          `${apiUrl}/api/products/slug/${encodeURIComponent(slugOnly)}`,
+          {
+            method: "GET",
+            headers: { Accept: "application/json" },
+            next: {
+              revalidate: PRODUCT_PAGE_REVALIDATE_SECONDS,
+              tags: ["storefront:products"],
+            },
+          }
+        )
         if (slugResponse.ok) {
           const slugJson = (await slugResponse.json()) as { product?: Product }
           target = slugJson.product ? toLooseRecord(slugJson.product) : null
@@ -392,22 +493,26 @@ export async function getProductPageData(slug: string): Promise<ProductPageData 
 
     if (!target && products.length > 0) {
       target =
-        products.find((row) => slugify(String(row.name ?? row.pd_name ?? '')) === slugOnly) ??
-        null
+        products.find(
+          (row) => slugify(String(row.name ?? row.pd_name ?? "")) === slugOnly
+        ) ?? null
     }
 
     if (!target) return null
 
     const categorySlug = getCategorySlugFromProduct(target, categories)
-    const matchedCategory = categories.find((c) => normalizeCategorySlug(c.url, c.name) === categorySlug)
+    const matchedCategory = categories.find(
+      (c) => normalizeCategorySlug(c.url, c.name) === categorySlug
+    )
     const categoryId = matchedCategory?.id ?? 0
-    const categoryLabel = matchedCategory?.name ?? categoryMeta[categorySlug]?.label ?? 'Category'
+    const categoryLabel =
+      matchedCategory?.name ?? categoryMeta[categorySlug]?.label ?? "Category"
 
     const relatedProducts = products
       .filter((row) => {
         const rowId = toNumber(row.id ?? row.pd_id ?? 0)
         if (id && rowId === id) return false
-        const rowSlug = slugify(String(row.name ?? row.pd_name ?? ''))
+        const rowSlug = slugify(String(row.name ?? row.pd_name ?? ""))
         if (rowSlug === slugOnly) return false
         const rowCategorySlug = getCategorySlugFromProduct(row, categories)
         return rowCategorySlug === categorySlug
@@ -417,19 +522,25 @@ export async function getProductPageData(slug: string): Promise<ProductPageData 
 
     const resolvedProduct = toCategoryProduct(target, apiUrl)
     const reviewId = resolvedProduct.id ?? id ?? 0
-    let reviewSummary: ProductPageData['reviewSummary']
-    let reviews: ProductPageData['reviews']
+    let reviewSummary: ProductPageData["reviewSummary"]
+    let reviews: ProductPageData["reviews"]
     if (reviewId > 0) {
       try {
-        const reviewsRes = await fetch(`${apiUrl}/api/products/${reviewId}/reviews`, {
-          method: 'GET',
-          headers: { Accept: 'application/json' },
-          next: { revalidate: PRODUCT_PAGE_REVALIDATE_SECONDS, tags: ['storefront:products'] },
-        })
+        const reviewsRes = await fetch(
+          `${apiUrl}/api/products/${reviewId}/reviews`,
+          {
+            method: "GET",
+            headers: { Accept: "application/json" },
+            next: {
+              revalidate: PRODUCT_PAGE_REVALIDATE_SECONDS,
+              tags: ["storefront:products"],
+            },
+          }
+        )
         if (reviewsRes.ok) {
           const reviewsJson = (await reviewsRes.json()) as {
-            summary?: ProductPageData['reviewSummary']
-            reviews?: ProductPageData['reviews']
+            summary?: ProductPageData["reviewSummary"]
+            reviews?: ProductPageData["reviews"]
           }
           reviewSummary = reviewsJson.summary
           reviews = reviewsJson.reviews

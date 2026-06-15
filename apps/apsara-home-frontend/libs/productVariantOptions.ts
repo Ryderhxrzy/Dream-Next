@@ -4,16 +4,18 @@ export type VariantOptionLabels = {
   pricingTier?: string
 }
 
-const META_PREFIX = '<!--AFHOME_VARIANT_OPTIONS:'
-const META_SUFFIX = '-->'
+const META_PREFIX = "<!--AFHOME_VARIANT_OPTIONS:"
+const META_SUFFIX = "-->"
 
 const normalizeLabel = (value?: string | null) => {
-  const trimmed = (value ?? '').trim()
+  const trimmed = (value ?? "").trim()
   return trimmed.length > 0 ? trimmed : undefined
 }
 
-export const extractVariantOptionLabels = (specifications?: string | null): VariantOptionLabels => {
-  const source = specifications ?? ''
+export const extractVariantOptionLabels = (
+  specifications?: string | null
+): VariantOptionLabels => {
+  const source = specifications ?? ""
   const start = source.indexOf(META_PREFIX)
   if (start === -1) return {}
 
@@ -24,7 +26,11 @@ export const extractVariantOptionLabels = (specifications?: string | null): Vari
   if (!payload) return {}
 
   try {
-    const parsed = JSON.parse(payload) as { primaryLabel?: string; secondaryLabel?: string; pricingTier?: string }
+    const parsed = JSON.parse(payload) as {
+      primaryLabel?: string
+      secondaryLabel?: string
+      pricingTier?: string
+    }
     return {
       primaryLabel: normalizeLabel(parsed.primaryLabel),
       secondaryLabel: normalizeLabel(parsed.secondaryLabel),
@@ -35,8 +41,10 @@ export const extractVariantOptionLabels = (specifications?: string | null): Vari
   }
 }
 
-export const stripVariantOptionLabelsMeta = (specifications?: string | null) => {
-  const source = specifications ?? ''
+export const stripVariantOptionLabelsMeta = (
+  specifications?: string | null
+) => {
+  const source = specifications ?? ""
   const start = source.indexOf(META_PREFIX)
   if (start === -1) return source
 
@@ -45,12 +53,12 @@ export const stripVariantOptionLabelsMeta = (specifications?: string | null) => 
 
   const before = source.slice(0, start).trim()
   const after = source.slice(end + META_SUFFIX.length).trim()
-  return [before, after].filter(Boolean).join('\n\n').trim()
+  return [before, after].filter(Boolean).join("\n\n").trim()
 }
 
 export const mergeVariantOptionLabelsMeta = (
   specifications: string | null | undefined,
-  labels: VariantOptionLabels,
+  labels: VariantOptionLabels
 ) => {
   const cleaned = stripVariantOptionLabelsMeta(specifications)
   const primaryLabel = normalizeLabel(labels.primaryLabel)
@@ -67,5 +75,8 @@ export const mergeVariantOptionLabelsMeta = (
     ...(pricingTier ? { pricingTier } : {}),
   })
 
-  return [cleaned, `${META_PREFIX}${payload}${META_SUFFIX}`].filter(Boolean).join('\n\n').trim()
+  return [cleaned, `${META_PREFIX}${payload}${META_SUFFIX}`]
+    .filter(Boolean)
+    .join("\n\n")
+    .trim()
 }

@@ -1,6 +1,6 @@
-import { Member } from '@/types/members/types'
-import { MemberStatus, MemberTier } from '@/types/members/types'
-import { baseApi } from './baseApi'
+import { Member } from "@/types/members/types"
+import { MemberStatus, MemberTier } from "@/types/members/types"
+import { baseApi } from "./baseApi"
 
 export interface MembersMeta {
   current_page: number
@@ -29,40 +29,46 @@ export interface MembersStatsResponse {
   totalReferrals: number
 }
 
-export type MembersStatsPeriod = '7d' | '30d' | 'last_month' | '3m'
+export type MembersStatsPeriod = "7d" | "30d" | "last_month" | "3m"
 
 export type MemberStatKey =
-  | 'total_members'
-  | 'active'
-  | 'pending'
-  | 'blocked'
-  | 'new_members'
-  | 'total_spent'
-  | 'total_earnings'
-  | 'total_referrals'
+  | "total_members"
+  | "active"
+  | "pending"
+  | "blocked"
+  | "new_members"
+  | "total_spent"
+  | "total_earnings"
+  | "total_referrals"
 
 export interface MemberStatDetailsResponse {
   stat: MemberStatKey
   title: string
   metricLabel: string
   search?: string
-  members: Array<Member & {
-    metricValue: string
-    referralChildren?: Array<{
-      id: number
-      name: string
-      username: string
-      email: string
-      contactNumber: string
-      status: MemberStatus
-      tier: MemberTier
-      joinedAt: string
-    }>
-  }>
+  members: Array<
+    Member & {
+      metricValue: string
+      referralChildren?: Array<{
+        id: number
+        name: string
+        username: string
+        email: string
+        contactNumber: string
+        status: MemberStatus
+        tier: MemberTier
+        joinedAt: string
+      }>
+    }
+  >
   meta: MembersMeta
 }
 
-export type ReferralAdminStatus = 'active' | 'pending' | 'blocked' | 'kyc_review'
+export type ReferralAdminStatus =
+  | "active"
+  | "pending"
+  | "blocked"
+  | "kyc_review"
 
 export interface AdminReferralNode {
   id: number
@@ -123,9 +129,15 @@ interface MembersQueryParams {
   search?: string
   status?: MemberStatus
   tier?: MemberTier
-  registration?: 'new' | 'referred' | 'direct'
-  profilePhoto?: 'with_photo' | 'no_photo'
-  sort?: 'default' | 'newest_registered' | 'oldest_registered' | 'earnings_low_high' | 'earnings_high_low' | 'referrals_high_low'
+  registration?: "new" | "referred" | "direct"
+  profilePhoto?: "with_photo" | "no_photo"
+  sort?:
+    | "default"
+    | "newest_registered"
+    | "oldest_registered"
+    | "earnings_low_high"
+    | "earnings_high_low"
+    | "referrals_high_low"
 }
 
 interface PartnerMembersQueryParams {
@@ -137,8 +149,8 @@ interface PartnerMembersQueryParams {
 
 interface TopEarnersQueryParams {
   search?: string
-  tier?: MemberTier | 'All Tiers'
-  sort?: 'earnings' | 'orders' | 'referrals' | 'total_spent'
+  tier?: MemberTier | "All Tiers"
+  sort?: "earnings" | "orders" | "referrals" | "total_spent"
 }
 
 export interface UpdateMemberPayload {
@@ -162,7 +174,11 @@ export interface AssignSponsorPayload {
   sponsorUsername: string
 }
 
-export type MemberKycStatus = 'pending_review' | 'on_hold' | 'approved' | 'rejected'
+export type MemberKycStatus =
+  | "pending_review"
+  | "on_hold"
+  | "approved"
+  | "rejected"
 
 export interface MemberKycItem {
   id: number
@@ -221,15 +237,15 @@ interface MemberKycQueryParams {
   page?: number
   perPage?: number
   search?: string
-  filter?: 'all' | 'pending_review' | 'approved' | 'rejected' | 'on_hold'
+  filter?: "all" | "pending_review" | "approved" | "rejected" | "on_hold"
 }
 
 export const membersApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getMembers: builder.query<MembersResponse, MembersQueryParams | void>({
       query: (params) => ({
-        url: '/api/admin/members',
-        method: 'GET',
+        url: "/api/admin/members",
+        method: "GET",
         params: {
           page: params?.page ?? 1,
           per_page: params?.perPage ?? 25,
@@ -242,12 +258,15 @@ export const membersApi = baseApi.injectEndpoints({
         },
       }),
       keepUnusedDataFor: 300,
-      providesTags: ['Members'],
+      providesTags: ["Members"],
     }),
-    getPartnerMembers: builder.query<MembersResponse, PartnerMembersQueryParams | void>({
+    getPartnerMembers: builder.query<
+      MembersResponse,
+      PartnerMembersQueryParams | void
+    >({
       query: (params) => ({
-        url: '/api/admin/partner-members',
-        method: 'GET',
+        url: "/api/admin/partner-members",
+        method: "GET",
         params: {
           page: params?.page ?? 1,
           per_page: params?.perPage ?? 50,
@@ -256,23 +275,35 @@ export const membersApi = baseApi.injectEndpoints({
         },
       }),
       keepUnusedDataFor: 120,
-      providesTags: ['Members'],
+      providesTags: ["Members"],
     }),
-    getMembersStats: builder.query<MembersStatsResponse, { period?: MembersStatsPeriod } | void>({
+    getMembersStats: builder.query<
+      MembersStatsResponse,
+      { period?: MembersStatsPeriod } | void
+    >({
       query: (params) => ({
-        url: '/api/admin/members/stats',
-        method: 'GET',
+        url: "/api/admin/members/stats",
+        method: "GET",
         params: {
-          period: params?.period ?? '7d',
+          period: params?.period ?? "7d",
         },
       }),
       keepUnusedDataFor: 300,
-      providesTags: ['Members'],
+      providesTags: ["Members"],
     }),
-    getMemberStatDetails: builder.query<MemberStatDetailsResponse, { stat: MemberStatKey; page?: number; perPage?: number; search?: string; period?: MembersStatsPeriod }>({
-      query: ({ stat, page = 1, perPage = 25, search, period = '7d' }) => ({
+    getMemberStatDetails: builder.query<
+      MemberStatDetailsResponse,
+      {
+        stat: MemberStatKey
+        page?: number
+        perPage?: number
+        search?: string
+        period?: MembersStatsPeriod
+      }
+    >({
+      query: ({ stat, page = 1, perPage = 25, search, period = "7d" }) => ({
         url: `/api/admin/members/stats/${stat}`,
-        method: 'GET',
+        method: "GET",
         params: {
           page,
           per_page: perPage,
@@ -281,85 +312,103 @@ export const membersApi = baseApi.injectEndpoints({
         },
       }),
       keepUnusedDataFor: 120,
-      providesTags: ['Members'],
+      providesTags: ["Members"],
     }),
     getMembersReferralTree: builder.query<AdminReferralTreeResponse, void>({
-      query: () => '/api/admin/members/referrals',
+      query: () => "/api/admin/members/referrals",
       keepUnusedDataFor: 120,
-      providesTags: ['Members'],
+      providesTags: ["Members"],
     }),
-    getTopEarners: builder.query<TopEarnersResponse, TopEarnersQueryParams | void>({
+    getTopEarners: builder.query<
+      TopEarnersResponse,
+      TopEarnersQueryParams | void
+    >({
       query: (params) => ({
-        url: '/api/admin/members/top-earners',
-        method: 'GET',
+        url: "/api/admin/members/top-earners",
+        method: "GET",
         params: {
           q: params?.search?.trim() ? params.search.trim() : undefined,
-          tier: params?.tier && params.tier !== 'All Tiers' ? params.tier : undefined,
-          sort: params?.sort ?? 'earnings',
+          tier:
+            params?.tier && params.tier !== "All Tiers"
+              ? params.tier
+              : undefined,
+          sort: params?.sort ?? "earnings",
         },
       }),
       keepUnusedDataFor: 120,
-      providesTags: ['Members'],
+      providesTags: ["Members"],
     }),
-    getMembersKyc: builder.query<MemberKycResponse, MemberKycQueryParams | void>({
+    getMembersKyc: builder.query<
+      MemberKycResponse,
+      MemberKycQueryParams | void
+    >({
       query: (params) => ({
-        url: '/api/admin/members/kyc',
-        method: 'GET',
+        url: "/api/admin/members/kyc",
+        method: "GET",
         params: {
           page: params?.page ?? 1,
           per_page: params?.perPage ?? 20,
           q: params?.search,
-          filter: params?.filter ?? 'pending_review',
+          filter: params?.filter ?? "pending_review",
         },
       }),
       keepUnusedDataFor: 120,
-      providesTags: ['Members'],
+      providesTags: ["Members"],
     }),
     updateMember: builder.mutation<{ message: string }, UpdateMemberPayload>({
       query: ({ id, ...body }) => ({
         url: `/api/admin/members/${id}`,
-        method: 'PATCH',
+        method: "PATCH",
         body,
       }),
-      invalidatesTags: ['Members'],
+      invalidatesTags: ["Members"],
     }),
     assignSponsor: builder.mutation<{ message: string }, AssignSponsorPayload>({
       query: ({ id, sponsorUsername }) => ({
         url: `/api/admin/members/${id}/assign-sponsor`,
-        method: 'PATCH',
+        method: "PATCH",
         body: { sponsor_username: sponsorUsername.trim() },
       }),
-      invalidatesTags: ['Members'],
+      invalidatesTags: ["Members"],
     }),
     deleteMember: builder.mutation<{ message: string }, number>({
       query: (id) => ({
         url: `/api/admin/members/${id}`,
-        method: 'DELETE',
+        method: "DELETE",
       }),
-      invalidatesTags: ['Members'],
+      invalidatesTags: ["Members"],
     }),
-    generateMemberTemporaryPassword: builder.mutation<GenerateTemporaryPasswordResponse, number>({
+    generateMemberTemporaryPassword: builder.mutation<
+      GenerateTemporaryPasswordResponse,
+      number
+    >({
       query: (id) => ({
         url: `/api/admin/members/${id}/temporary-password`,
-        method: 'POST',
+        method: "POST",
       }),
-      invalidatesTags: ['Members'],
+      invalidatesTags: ["Members"],
     }),
-    approveMemberKyc: builder.mutation<{ message: string }, { id: number; notes?: string }>({
+    approveMemberKyc: builder.mutation<
+      { message: string },
+      { id: number; notes?: string }
+    >({
       query: ({ id, notes }) => ({
         url: `/api/admin/members/kyc/${id}/approve`,
-        method: 'PATCH',
+        method: "PATCH",
         body: { notes },
       }),
-      invalidatesTags: ['Members'],
+      invalidatesTags: ["Members"],
     }),
-    rejectMemberKyc: builder.mutation<{ message: string }, { id: number; notes: string }>({
+    rejectMemberKyc: builder.mutation<
+      { message: string },
+      { id: number; notes: string }
+    >({
       query: ({ id, notes }) => ({
         url: `/api/admin/members/kyc/${id}/reject`,
-        method: 'PATCH',
+        method: "PATCH",
         body: { notes },
       }),
-      invalidatesTags: ['Members'],
+      invalidatesTags: ["Members"],
     }),
   }),
 })

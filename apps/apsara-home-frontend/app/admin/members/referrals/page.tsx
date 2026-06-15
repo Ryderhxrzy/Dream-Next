@@ -1,7 +1,7 @@
-import ReferralTreePageMain from '@/components/superAdmin/members/ReferralTreePageMain'
+import ReferralTreePageMain from "@/components/superAdmin/members/ReferralTreePageMain"
 
 export const metadata = {
-  title: 'Commission / Referral Tree | AF Home Admin',
+  title: "Commission / Referral Tree | AF Home Admin",
 }
 
 export default function ReferralTreePage() {

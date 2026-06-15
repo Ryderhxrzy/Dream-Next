@@ -1,27 +1,27 @@
-import { baseApi } from './baseApi'
+import { baseApi } from "./baseApi"
 
-export type AdminApprovalStatus = 'pending_approval' | 'approved' | 'rejected'
+export type AdminApprovalStatus = "pending_approval" | "approved" | "rejected"
 export type AdminFulfillmentStatus =
-  | 'pending'
-  | 'processing'
-  | 'packed'
-  | 'shipped'
-  | 'out_for_delivery'
-  | 'delivered'
-  | 'cancelled'
-  | 'refunded'
+  | "pending"
+  | "processing"
+  | "packed"
+  | "shipped"
+  | "out_for_delivery"
+  | "delivered"
+  | "cancelled"
+  | "refunded"
 
 export type AdminShipmentStatus =
-  | 'for_pickup'
-  | 'picked_up'
-  | 'in_transit'
-  | 'out_for_delivery'
-  | 'delivered'
-  | 'failed_delivery'
-  | 'cancelled'
-  | 'returned_to_sender'
+  | "for_pickup"
+  | "picked_up"
+  | "in_transit"
+  | "out_for_delivery"
+  | "delivered"
+  | "failed_delivery"
+  | "cancelled"
+  | "returned_to_sender"
 
-export type AdminCourier = 'jnt' | 'xde'
+export type AdminCourier = "jnt" | "xde"
 
 export interface AdminOrder {
   id: number
@@ -33,7 +33,7 @@ export interface AdminOrder {
   approved_by?: number | null
   approved_at?: string | null
   fulfillment_status: AdminFulfillmentStatus
-  fulfillment_mode?: 'manual' | 'local_courier' | 'zq' | null
+  fulfillment_mode?: "manual" | "local_courier" | "zq" | null
   courier?: string | null
   tracking_no?: string | null
   shipment_status?: string | null
@@ -77,7 +77,7 @@ export interface AdminOrder {
   updated_at?: string | null
   sla?: {
     key: string
-    state: 'on_track' | 'due_soon' | 'overdue' | 'no_sla'
+    state: "on_track" | "due_soon" | "overdue" | "no_sla"
     target_minutes: number | null
     elapsed_minutes: number | null
     remaining_minutes: number | null
@@ -113,98 +113,126 @@ interface AdminOrdersQuery {
 
 export const adminOrdersApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getAdminOrders: builder.query<AdminOrdersResponse, AdminOrdersQuery | void>({
+    getAdminOrders: builder.query<AdminOrdersResponse, AdminOrdersQuery | void>(
+      {
+        query: (params) => ({
+          url: "/api/admin/orders",
+          method: "GET",
+          params: {
+            filter: params?.filter ?? "all",
+            q: params?.search,
+            page: params?.page ?? 1,
+            per_page: params?.perPage ?? 20,
+          },
+        }),
+        providesTags: ["Orders"],
+      }
+    ),
+    getPartnerStorefrontOrders: builder.query<
+      AdminOrdersResponse,
+      AdminOrdersQuery | void
+    >({
       query: (params) => ({
-        url: '/api/admin/orders',
-        method: 'GET',
+        url: "/api/admin/storefront-orders",
+        method: "GET",
         params: {
-          filter: params?.filter ?? 'all',
+          filter: params?.filter ?? "all",
           q: params?.search,
           page: params?.page ?? 1,
           per_page: params?.perPage ?? 20,
         },
       }),
-      providesTags: ['Orders'],
+      providesTags: ["Orders"],
     }),
-    getPartnerStorefrontOrders: builder.query<AdminOrdersResponse, AdminOrdersQuery | void>({
-      query: (params) => ({
-        url: '/api/admin/storefront-orders',
-        method: 'GET',
-        params: {
-          filter: params?.filter ?? 'all',
-          q: params?.search,
-          page: params?.page ?? 1,
-          per_page: params?.perPage ?? 20,
-        },
-      }),
-      providesTags: ['Orders'],
-    }),
-    approveAdminOrder: builder.mutation<{ message: string }, { id: number; notes?: string }>({
+    approveAdminOrder: builder.mutation<
+      { message: string },
+      { id: number; notes?: string }
+    >({
       query: ({ id, notes }) => ({
         url: `/api/admin/orders/${id}/approve`,
-        method: 'PATCH',
+        method: "PATCH",
         body: { notes },
       }),
-      invalidatesTags: ['Orders', 'AdminNotifications'],
+      invalidatesTags: ["Orders", "AdminNotifications"],
     }),
-    rejectAdminOrder: builder.mutation<{ message: string }, { id: number; notes?: string }>({
+    rejectAdminOrder: builder.mutation<
+      { message: string },
+      { id: number; notes?: string }
+    >({
       query: ({ id, notes }) => ({
         url: `/api/admin/orders/${id}/reject`,
-        method: 'PATCH',
+        method: "PATCH",
         body: { notes },
       }),
-      invalidatesTags: ['Orders', 'AdminNotifications'],
+      invalidatesTags: ["Orders", "AdminNotifications"],
     }),
-    updateAdminOrderStatus: builder.mutation<{ message: string }, { id: number; status: AdminFulfillmentStatus }>({
+    updateAdminOrderStatus: builder.mutation<
+      { message: string },
+      { id: number; status: AdminFulfillmentStatus }
+    >({
       query: ({ id, status }) => ({
         url: `/api/admin/orders/${id}/status`,
-        method: 'PATCH',
+        method: "PATCH",
         body: { status },
       }),
-      invalidatesTags: ['Orders', 'AdminNotifications'],
+      invalidatesTags: ["Orders", "AdminNotifications"],
     }),
     updateAdminOrderFulfillmentMode: builder.mutation<
-      { message: string; fulfillment_mode: 'manual' | 'local_courier' | 'zq' },
-      { id: number; mode: 'manual' | 'local_courier' | 'zq' }
+      { message: string; fulfillment_mode: "manual" | "local_courier" | "zq" },
+      { id: number; mode: "manual" | "local_courier" | "zq" }
     >({
       query: ({ id, mode }) => ({
         url: `/api/admin/orders/${id}/fulfillment-mode`,
-        method: 'PATCH',
+        method: "PATCH",
         body: { mode },
       }),
-      invalidatesTags: ['Orders', 'AdminNotifications'],
+      invalidatesTags: ["Orders", "AdminNotifications"],
     }),
     updateAdminOrderShipmentStatus: builder.mutation<
       { message: string },
-      { id: number; shipment_status: AdminShipmentStatus; courier?: AdminCourier; clear_courier?: boolean }
+      {
+        id: number
+        shipment_status: AdminShipmentStatus
+        courier?: AdminCourier
+        clear_courier?: boolean
+      }
     >({
       query: ({ id, shipment_status, courier, clear_courier }) => ({
         url: `/api/admin/orders/${id}/shipment-status`,
-        method: 'PATCH',
+        method: "PATCH",
         body: { shipment_status, courier, clear_courier },
       }),
-      invalidatesTags: ['Orders', 'AdminNotifications'],
+      invalidatesTags: ["Orders", "AdminNotifications"],
     }),
     bookAdminOrderCourier: builder.mutation<
-      { message: string; tracking_no?: string | null; shipment_status?: string | null; payload?: Record<string, unknown> | null },
+      {
+        message: string
+        tracking_no?: string | null
+        shipment_status?: string | null
+        payload?: Record<string, unknown> | null
+      },
       { id: number; courier: AdminCourier; payload?: Record<string, unknown> }
     >({
       query: ({ id, courier, payload }) => ({
         url: `/api/admin/orders/${id}/shipping/${courier}/book`,
-        method: 'POST',
+        method: "POST",
         body: payload ? { payload } : {},
       }),
-      invalidatesTags: ['Orders', 'AdminNotifications'],
+      invalidatesTags: ["Orders", "AdminNotifications"],
     }),
     trackAdminOrderCourier: builder.mutation<
-      { tracking_no: string; shipment_status?: string | null; payload?: Record<string, unknown> | Array<unknown> | null },
+      {
+        tracking_no: string
+        shipment_status?: string | null
+        payload?: Record<string, unknown> | Array<unknown> | null
+      },
       { id: number; courier: AdminCourier }
     >({
       query: ({ id, courier }) => ({
         url: `/api/admin/orders/${id}/shipping/${courier}/track`,
-        method: 'GET',
+        method: "GET",
       }),
-      invalidatesTags: ['Orders', 'AdminNotifications'],
+      invalidatesTags: ["Orders", "AdminNotifications"],
     }),
     getAdminOrderCourierWaybill: builder.mutation<
       Blob,
@@ -212,27 +240,31 @@ export const adminOrdersApi = baseApi.injectEndpoints({
     >({
       query: ({ id, courier }) => ({
         url: `/api/admin/orders/${id}/shipping/${courier}/waybill`,
-        method: 'GET',
+        method: "GET",
         responseHandler: async (response) => response.blob(),
       }),
     }),
     cancelAdminOrderCourier: builder.mutation<
-      { message: string; tracking_no?: string | null; payload?: Record<string, unknown> | null },
+      {
+        message: string
+        tracking_no?: string | null
+        payload?: Record<string, unknown> | null
+      },
       { id: number; courier: AdminCourier }
     >({
       query: ({ id, courier }) => ({
         url: `/api/admin/orders/${id}/shipping/${courier}/cancel`,
-        method: 'POST',
+        method: "POST",
       }),
-      invalidatesTags: ['Orders', 'AdminNotifications'],
+      invalidatesTags: ["Orders", "AdminNotifications"],
     }),
     getAdminOrderCourierEpod: builder.mutation<
       Blob,
-      { id: number; courier: AdminCourier; type?: 'document' | 'signature' }
+      { id: number; courier: AdminCourier; type?: "document" | "signature" }
     >({
       query: ({ id, courier, type }) => ({
         url: `/api/admin/orders/${id}/shipping/${courier}/epod`,
-        method: 'GET',
+        method: "GET",
         params: type ? { type } : undefined,
         responseHandler: async (response) => response.blob(),
       }),
@@ -243,9 +275,9 @@ export const adminOrdersApi = baseApi.injectEndpoints({
     >({
       query: ({ id }) => ({
         url: `/api/admin/orders/${id}/zq/push`,
-        method: 'POST',
+        method: "POST",
       }),
-      invalidatesTags: ['Orders', 'AdminNotifications'],
+      invalidatesTags: ["Orders", "AdminNotifications"],
     }),
     fetchAdminOrderZqDetail: builder.mutation<
       { message: string; zq?: Record<string, unknown> | null },
@@ -253,9 +285,9 @@ export const adminOrdersApi = baseApi.injectEndpoints({
     >({
       query: ({ id }) => ({
         url: `/api/admin/orders/${id}/zq/detail`,
-        method: 'GET',
+        method: "GET",
       }),
-      invalidatesTags: ['Orders', 'AdminNotifications'],
+      invalidatesTags: ["Orders", "AdminNotifications"],
     }),
     syncAdminOrderZqTracking: builder.mutation<
       { message: string; zq?: Record<string, unknown> | null },
@@ -263,19 +295,16 @@ export const adminOrdersApi = baseApi.injectEndpoints({
     >({
       query: ({ id }) => ({
         url: `/api/admin/orders/${id}/zq/tracking`,
-        method: 'GET',
+        method: "GET",
       }),
-      invalidatesTags: ['Orders', 'AdminNotifications'],
+      invalidatesTags: ["Orders", "AdminNotifications"],
     }),
-    deleteAdminOrder: builder.mutation<
-      { message: string },
-      { id: number }
-    >({
+    deleteAdminOrder: builder.mutation<{ message: string }, { id: number }>({
       query: ({ id }) => ({
         url: `/api/admin/orders/${id}`,
-        method: 'DELETE',
+        method: "DELETE",
       }),
-      invalidatesTags: ['Orders', 'AdminNotifications'],
+      invalidatesTags: ["Orders", "AdminNotifications"],
     }),
   }),
 })

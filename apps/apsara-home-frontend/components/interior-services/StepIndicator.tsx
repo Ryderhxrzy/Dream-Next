@@ -1,21 +1,24 @@
-'use client';
+"use client"
 
-import { FORM_STEPS, FormStep } from "./types";
-import { motion } from "framer-motion";
+import { FORM_STEPS, FormStep } from "./types"
+import { motion } from "framer-motion"
 
 interface StepIndicatorProps {
-    currentStep: FormStep;
-    onStepClick: (step: FormStep) => void;
+  currentStep: FormStep
+  onStepClick: (step: FormStep) => void
 }
 
 const StepIndicator = ({ currentStep, onStepClick }: StepIndicatorProps) => {
   return (
-     <div className="flex items-center gap-0 mb-10">
+    <div className="flex items-center gap-0 mb-10">
       {FORM_STEPS.map((item, i) => {
-        const isCompleted = currentStep > item.step;
-        const isActive = currentStep === item.step;
+        const isCompleted = currentStep > item.step
+        const isActive = currentStep === item.step
         return (
-          <div key={item.step} className="flex items-center flex-1 last:flex-none">
+          <div
+            key={item.step}
+            className="flex items-center flex-1 last:flex-none"
+          >
             <button
               type="button"
               onClick={() => isCompleted && onStepClick(item.step)}
@@ -28,18 +31,18 @@ const StepIndicator = ({ currentStep, onStepClick }: StepIndicatorProps) => {
                   background: isActive
                     ? "#111111"
                     : isCompleted
-                    ? "rgba(212,165,20,0.18)"
-                    : "rgba(15,23,42,0.05)",
+                      ? "rgba(212,165,20,0.18)"
+                      : "rgba(15,23,42,0.05)",
                   border: isActive
                     ? "1px solid #111111"
                     : isCompleted
-                    ? "1px solid rgba(212,165,20,0.45)"
-                    : "1px solid rgba(15,23,42,0.12)",
+                      ? "1px solid rgba(212,165,20,0.45)"
+                      : "1px solid rgba(15,23,42,0.12)",
                   color: isActive
                     ? "#ffffff"
                     : isCompleted
-                    ? "#9c7420"
-                    : "#94a3b8",
+                      ? "#9c7420"
+                      : "#94a3b8",
                 }}
                 transition={{ duration: 0.35 }}
               >
@@ -48,7 +51,11 @@ const StepIndicator = ({ currentStep, onStepClick }: StepIndicatorProps) => {
               <span
                 className="text-[0.6rem] tracking-[0.1em] uppercase transition-colors duration-300"
                 style={{
-                  color: isActive ? "#111111" : isCompleted ? "#9c7420" : "#cbd5e1",
+                  color: isActive
+                    ? "#111111"
+                    : isCompleted
+                      ? "#9c7420"
+                      : "#cbd5e1",
                 }}
               >
                 {item.label}
@@ -67,7 +74,7 @@ const StepIndicator = ({ currentStep, onStepClick }: StepIndicatorProps) => {
               </div>
             )}
           </div>
-        );
+        )
       })}
     </div>
   )

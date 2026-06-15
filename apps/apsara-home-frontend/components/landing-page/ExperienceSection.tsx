@@ -1,36 +1,40 @@
-'use client';
+"use client"
 
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion"
 
 const experiences = [
   {
-    title: 'Comfort',
-    image: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&q=80',
-    description: 'Living room setup',
+    title: "Comfort",
+    image:
+      "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&q=80",
+    description: "Living room setup",
   },
   {
-    title: 'Function',
-    image: 'https://images.unsplash.com/photo-1595428774223-ef52624120d2?w=800&q=80',
-    description: 'Small condo space',
+    title: "Function",
+    image:
+      "https://images.unsplash.com/photo-1595428774223-ef52624120d2?w=800&q=80",
+    description: "Small condo space",
   },
   {
-    title: 'Everyday Living',
-    image: 'https://images.unsplash.com/photo-1540518614846-7eded433c457?w=800&q=80',
-    description: 'Bedroom setup',
+    title: "Everyday Living",
+    image:
+      "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=800&q=80",
+    description: "Bedroom setup",
   },
   {
-    title: 'Gathering',
-    image: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?w=800&q=80',
-    description: 'Dining room setup',
+    title: "Gathering",
+    image:
+      "https://images.unsplash.com/photo-1617806118233-18e1de247200?w=800&q=80",
+    description: "Dining room setup",
   },
-];
+]
 
 const highlights = [
-  'Products designed for real Filipino homes',
-  'Styles for condos, houses, offices, and families',
-  'Quality materials at factory-direct prices',
-  'Solutions people actually use every day',
-];
+  "Products designed for real Filipino homes",
+  "Styles for condos, houses, offices, and families",
+  "Quality materials at factory-direct prices",
+  "Solutions people actually use every day",
+]
 
 export default function ExperienceSection() {
   return (
@@ -53,7 +57,7 @@ export default function ExperienceSection() {
               Experience
             </span>
             <h2 className="mb-6 font-display text-3xl font-medium leading-tight text-gray-900 dark:text-white md:text-5xl">
-              More Than Products.{' '}
+              More Than Products.{" "}
               <span className="italic text-blue-600 dark:text-blue-400">
                 A Better Home Experience.
               </span>
@@ -110,5 +114,5 @@ export default function ExperienceSection() {
         </div>
       </div>
     </section>
-  );
+  )
 }

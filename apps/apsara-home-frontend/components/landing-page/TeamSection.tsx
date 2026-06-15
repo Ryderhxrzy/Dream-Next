@@ -1,35 +1,67 @@
-import { motion } from 'framer-motion';
-import { Users, UserPlus, Share2, TrendingUp, User, Video, Briefcase, ShoppingBag } from 'lucide-react';
+import { motion } from "framer-motion"
+import {
+  Users,
+  UserPlus,
+  Share2,
+  TrendingUp,
+  User,
+  Video,
+  Briefcase,
+  ShoppingBag,
+} from "lucide-react"
 
 export default function TeamSection() {
   const keyPoints = [
     {
       icon: UserPlus,
       text: "Refer friends & professionals",
-      desc: "Invite creators, sellers, and experts"
+      desc: "Invite creators, sellers, and experts",
     },
     {
       icon: Users,
       text: "Grow together",
-      desc: "Support your team and unlock opportunities"
+      desc: "Support your team and unlock opportunities",
     },
     {
       icon: TrendingUp,
       text: "Scalable income",
-      desc: "Ideal for OFWs, freelancers & entrepreneurs"
-    }
-  ];
+      desc: "Ideal for OFWs, freelancers & entrepreneurs",
+    },
+  ]
 
   // Network nodes data
   const networkNodes = [
-    { icon: Video, label: "Creators", color: "bg-pink-100 text-pink-600", position: "top-0 left-1/2 -translate-x-1/2 -translate-y-1/2" },
-    { icon: Briefcase, label: "Pros", color: "bg-blue-100 text-blue-600", position: "bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2" },
-    { icon: ShoppingBag, label: "Sellers", color: "bg-purple-100 text-purple-600", position: "top-1/2 right-0 translate-x-1/2 -translate-y-1/2" },
-    { icon: User, label: "Friends", color: "bg-orange-100 text-orange-600", position: "top-1/2 left-0 -translate-x-1/2 -translate-y-1/2" },
-  ];
+    {
+      icon: Video,
+      label: "Creators",
+      color: "bg-pink-100 text-pink-600",
+      position: "top-0 left-1/2 -translate-x-1/2 -translate-y-1/2",
+    },
+    {
+      icon: Briefcase,
+      label: "Pros",
+      color: "bg-blue-100 text-blue-600",
+      position: "bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2",
+    },
+    {
+      icon: ShoppingBag,
+      label: "Sellers",
+      color: "bg-purple-100 text-purple-600",
+      position: "top-1/2 right-0 translate-x-1/2 -translate-y-1/2",
+    },
+    {
+      icon: User,
+      label: "Friends",
+      color: "bg-orange-100 text-orange-600",
+      position: "top-1/2 left-0 -translate-x-1/2 -translate-y-1/2",
+    },
+  ]
 
   return (
-    <section id="team" className="py-24 bg-gray-50 dark:bg-gray-900 overflow-hidden relative">
+    <section
+      id="team"
+      className="py-24 bg-gray-50 dark:bg-gray-900 overflow-hidden relative"
+    >
       {/* Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/2 right-0 w-96 h-96 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob" />
@@ -38,11 +70,9 @@ export default function TeamSection() {
 
       <div className="container mx-auto px-4 relative z-10">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
-          
           {/* Visual Content - Network Diagram */}
           <div className="order-2 lg:order-1 flex justify-center">
             <div className="relative w-[300px] h-[300px] md:w-[400px] md:h-[400px]">
-              
               {/* Connecting Lines (SVG) */}
               <svg className="absolute inset-0 w-full h-full z-0 pointer-events-none">
                 <motion.g
@@ -51,13 +81,52 @@ export default function TeamSection() {
                   transition={{ duration: 1, delay: 0.5 }}
                 >
                   {/* Lines radiating from center */}
-                  <line x1="50%" y1="50%" x2="50%" y2="10%" stroke="#CBD5E1" strokeWidth="2" strokeDasharray="6 6" />
-                  <line x1="50%" y1="50%" x2="50%" y2="90%" stroke="#CBD5E1" strokeWidth="2" strokeDasharray="6 6" />
-                  <line x1="50%" y1="50%" x2="90%" y2="50%" stroke="#CBD5E1" strokeWidth="2" strokeDasharray="6 6" />
-                  <line x1="50%" y1="50%" x2="10%" y2="50%" stroke="#CBD5E1" strokeWidth="2" strokeDasharray="6 6" />
-                  
+                  <line
+                    x1="50%"
+                    y1="50%"
+                    x2="50%"
+                    y2="10%"
+                    stroke="#CBD5E1"
+                    strokeWidth="2"
+                    strokeDasharray="6 6"
+                  />
+                  <line
+                    x1="50%"
+                    y1="50%"
+                    x2="50%"
+                    y2="90%"
+                    stroke="#CBD5E1"
+                    strokeWidth="2"
+                    strokeDasharray="6 6"
+                  />
+                  <line
+                    x1="50%"
+                    y1="50%"
+                    x2="90%"
+                    y2="50%"
+                    stroke="#CBD5E1"
+                    strokeWidth="2"
+                    strokeDasharray="6 6"
+                  />
+                  <line
+                    x1="50%"
+                    y1="50%"
+                    x2="10%"
+                    y2="50%"
+                    stroke="#CBD5E1"
+                    strokeWidth="2"
+                    strokeDasharray="6 6"
+                  />
+
                   {/* Outer Circle Ring */}
-                  <circle cx="50%" cy="50%" r="40%" fill="none" stroke="#E2E8F0" strokeWidth="1" />
+                  <circle
+                    cx="50%"
+                    cy="50%"
+                    r="40%"
+                    fill="none"
+                    stroke="#E2E8F0"
+                    strokeWidth="1"
+                  />
                 </motion.g>
               </svg>
 
@@ -70,15 +139,15 @@ export default function TeamSection() {
                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center"
               >
                 <div className="w-24 h-24 bg-white dark:bg-gray-800 rounded-full shadow-xl flex items-center justify-center border-4 border-green-100 dark:border-green-900 relative">
-                   <div className="absolute inset-0 rounded-full bg-green-50 animate-ping opacity-20" />
-                   <img 
-                     src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100" 
-                     alt="You" 
-                     className="w-full h-full rounded-full object-cover p-1"
-                   />
-                   <div className="absolute -bottom-2 bg-green-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                     YOU
-                   </div>
+                  <div className="absolute inset-0 rounded-full bg-green-50 animate-ping opacity-20" />
+                  <img
+                    src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100"
+                    alt="You"
+                    className="w-full h-full rounded-full object-cover p-1"
+                  />
+                  <div className="absolute -bottom-2 bg-green-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                    YOU
+                  </div>
                 </div>
               </motion.div>
 
@@ -89,10 +158,12 @@ export default function TeamSection() {
                   initial={{ scale: 0, opacity: 0 }}
                   whileInView={{ scale: 1, opacity: 1 }}
                   viewport={{ once: true }}
-                  transition={{ delay: 0.3 + (index * 0.1), type: "spring" }}
+                  transition={{ delay: 0.3 + index * 0.1, type: "spring" }}
                   className={`absolute ${node.position} z-10 flex flex-col items-center`}
                 >
-                  <div className={`w-16 h-16 rounded-full shadow-lg flex items-center justify-center ${node.color} bg-white mb-2`}>
+                  <div
+                    className={`w-16 h-16 rounded-full shadow-lg flex items-center justify-center ${node.color} bg-white mb-2`}
+                  >
                     <node.icon size={24} />
                   </div>
                   <span className="text-sm font-semibold text-gray-600 dark:text-gray-300 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm px-2 py-0.5 rounded-md shadow-sm">
@@ -104,22 +175,30 @@ export default function TeamSection() {
               {/* Floating "Invite Share Grow" badges */}
               <motion.div
                 animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
                 className="absolute top-1/4 right-1/4 bg-white dark:bg-gray-800 p-2 rounded-lg shadow-md flex items-center gap-2 z-0 opacity-80"
               >
                 <Share2 size={14} className="text-blue-500" />
                 <span className="text-xs font-bold text-gray-500">Share</span>
               </motion.div>
-              
+
               <motion.div
                 animate={{ y: [0, 10, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                transition={{
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: 1,
+                }}
                 className="absolute bottom-1/4 left-1/4 bg-white dark:bg-gray-800 p-2 rounded-lg shadow-md flex items-center gap-2 z-0 opacity-80"
               >
                 <TrendingUp size={14} className="text-green-500" />
                 <span className="text-xs font-bold text-gray-500">Grow</span>
               </motion.div>
-
             </div>
           </div>
 
@@ -134,7 +213,7 @@ export default function TeamSection() {
               <Users size={14} />
               BUILD A TEAM & REFERRAL SYSTEM
             </motion.div>
-            
+
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -145,7 +224,7 @@ export default function TeamSection() {
               Build a Team. <br />
               <span className="text-blue-600">Grow Together.</span>
             </motion.h2>
-            
+
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -153,10 +232,10 @@ export default function TeamSection() {
               transition={{ delay: 0.2 }}
               className="text-xl text-gray-600 dark:text-gray-400 mb-8 leading-relaxed"
             >
-              Invite others to become affiliates and build your own network. 
-              The more your community grows, the more opportunities you unlock.
+              Invite others to become affiliates and build your own network. The
+              more your community grows, the more opportunities you unlock.
             </motion.p>
-            
+
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -165,23 +244,27 @@ export default function TeamSection() {
               className="space-y-4"
             >
               {keyPoints.map((point, index) => (
-                <div key={index} className="flex items-start gap-4 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow">
+                <div
+                  key={index}
+                  className="flex items-start gap-4 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow"
+                >
                   <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
                     <point.icon size={20} />
                   </div>
                   <div className="text-left">
-                    <h4 className="font-bold text-gray-900 dark:text-white">{point.text}</h4>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{point.desc}</p>
+                    <h4 className="font-bold text-gray-900 dark:text-white">
+                      {point.text}
+                    </h4>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {point.desc}
+                    </p>
                   </div>
                 </div>
               ))}
             </motion.div>
-
           </div>
-
         </div>
       </div>
     </section>
-  );
+  )
 }
-

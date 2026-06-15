@@ -1,20 +1,22 @@
-'use client'
+"use client"
 
-async function getPortalCsrfToken(portal: 'admin' | 'partner' | 'supplier'): Promise<string | null> {
+async function getPortalCsrfToken(
+  portal: "admin" | "partner" | "supplier"
+): Promise<string | null> {
   try {
     const response = await fetch(`/api/${portal}/auth/csrf`, {
-      method: 'GET',
-      credentials: 'same-origin',
-      cache: 'no-store',
+      method: "GET",
+      credentials: "same-origin",
+      cache: "no-store",
       headers: {
-        Accept: 'application/json',
+        Accept: "application/json",
       },
     })
 
     if (!response.ok) return null
 
     const data = (await response.json()) as { csrfToken?: string }
-    return typeof data.csrfToken === 'string' && data.csrfToken.trim() !== ''
+    return typeof data.csrfToken === "string" && data.csrfToken.trim() !== ""
       ? data.csrfToken
       : null
   } catch {
@@ -22,23 +24,26 @@ async function getPortalCsrfToken(portal: 'admin' | 'partner' | 'supplier'): Pro
   }
 }
 
-async function clearPortalSession(portal: 'admin' | 'partner' | 'supplier', callbackUrl: string): Promise<void> {
+async function clearPortalSession(
+  portal: "admin" | "partner" | "supplier",
+  callbackUrl: string
+): Promise<void> {
   const csrfToken = await getPortalCsrfToken(portal)
   if (!csrfToken) return
 
   const body = new URLSearchParams({
     csrfToken,
-    json: 'true',
+    json: "true",
     callbackUrl,
   })
 
   try {
     await fetch(`/api/${portal}/auth/signout`, {
-      method: 'POST',
-      credentials: 'same-origin',
-      cache: 'no-store',
+      method: "POST",
+      credentials: "same-origin",
+      cache: "no-store",
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        "Content-Type": "application/x-www-form-urlencoded",
       },
       body: body.toString(),
     })
@@ -47,14 +52,20 @@ async function clearPortalSession(portal: 'admin' | 'partner' | 'supplier', call
   }
 }
 
-export async function clearAdminSession(callbackUrl: string = '/admin/login'): Promise<void> {
-  await clearPortalSession('admin', callbackUrl)
+export async function clearAdminSession(
+  callbackUrl: string = "/admin/login"
+): Promise<void> {
+  await clearPortalSession("admin", callbackUrl)
 }
 
-export async function clearPartnerSession(callbackUrl: string = '/partner/login'): Promise<void> {
-  await clearPortalSession('partner', callbackUrl)
+export async function clearPartnerSession(
+  callbackUrl: string = "/partner/login"
+): Promise<void> {
+  await clearPortalSession("partner", callbackUrl)
 }
 
-export async function clearSupplierSession(callbackUrl: string = '/supplier/login'): Promise<void> {
-  await clearPortalSession('supplier', callbackUrl)
+export async function clearSupplierSession(
+  callbackUrl: string = "/supplier/login"
+): Promise<void> {
+  await clearPortalSession("supplier", callbackUrl)
 }

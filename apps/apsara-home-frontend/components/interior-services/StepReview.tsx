@@ -1,122 +1,122 @@
-'use client';
+"use client"
 
-import { ChangeEvent, DragEvent, useRef, useState } from "react";
-import { staggerContainer, staggerItem } from "./animation";
-import { BookingFormData, SERVICES } from "./types";
-import { motion } from "framer-motion";
-import { FormField, InputField, TextareaField } from "./ui/Primitives";
-import SummaryRow from "./SummaryRow";
+import { ChangeEvent, DragEvent, useRef, useState } from "react"
+import { staggerContainer, staggerItem } from "./animation"
+import { BookingFormData, SERVICES } from "./types"
+import { motion } from "framer-motion"
+import { FormField, InputField, TextareaField } from "./ui/Primitives"
+import SummaryRow from "./SummaryRow"
 
 interface StepReviewProps {
-    form: BookingFormData;
-    onChange: (field: keyof BookingFormData, value: string | string[]) => void;
+  form: BookingFormData
+  onChange: (field: keyof BookingFormData, value: string | string[]) => void
 }
 
 const isValidUrl = (value: string) => {
   try {
-    const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:";
+    const url = new URL(value)
+    return url.protocol === "http:" || url.protocol === "https:"
   } catch {
-    return false;
+    return false
   }
-};
+}
 
 const isImageReference = (value: string) =>
   /^https?:\/\/.+\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(value) ||
-  value.includes("res.cloudinary.com");
+  value.includes("res.cloudinary.com")
 
 const StepReview = ({ form, onChange }: StepReviewProps) => {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [referenceLink, setReferenceLink] = useState("");
-  const [isDragging, setIsDragging] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadError, setUploadError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const [referenceLink, setReferenceLink] = useState("")
+  const [isDragging, setIsDragging] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadError, setUploadError] = useState("")
 
-  const selectedService = SERVICES.find((s) => s.id === form.serviceType);
+  const selectedService = SERVICES.find((s) => s.id === form.serviceType)
 
   const uploadedFiles = Array.isArray(form.inspirationFiles)
     ? form.inspirationFiles
-    : [];
+    : []
 
   const updateReferences = (nextItems: string[]) => {
-    onChange("inspirationFiles", Array.from(new Set(nextItems.filter(Boolean))));
-  };
+    onChange("inspirationFiles", Array.from(new Set(nextItems.filter(Boolean))))
+  }
 
   const uploadFiles = async (files: File[]) => {
-    if (!files.length) return;
+    if (!files.length) return
 
-    setIsUploading(true);
-    setUploadError("");
+    setIsUploading(true)
+    setUploadError("")
 
     try {
-      const uploadedUrls: string[] = [];
+      const uploadedUrls: string[] = []
 
       for (const file of files) {
-        const payload = new FormData();
-        const isPdf = file.type === "application/pdf";
+        const payload = new FormData()
+        const isPdf = file.type === "application/pdf"
 
-        payload.append("file", file);
-        payload.append("folder", "web-content");
-        payload.append("asset_type", isPdf ? "pdf" : "image");
+        payload.append("file", file)
+        payload.append("folder", "web-content")
+        payload.append("asset_type", isPdf ? "pdf" : "image")
 
         const response = await fetch("/api/admin/upload", {
           method: "POST",
           body: payload,
-        });
+        })
 
-        const result = await response.json();
+        const result = await response.json()
 
         if (!response.ok || !result?.url) {
-          throw new Error(result?.error || "Upload failed. Please try again.");
+          throw new Error(result?.error || "Upload failed. Please try again.")
         }
 
-        uploadedUrls.push(result.url);
+        uploadedUrls.push(result.url)
       }
 
-      updateReferences([...uploadedFiles, ...uploadedUrls]);
+      updateReferences([...uploadedFiles, ...uploadedUrls])
     } catch (error) {
       setUploadError(
         error instanceof Error
           ? error.message
           : "Upload failed. Please try again."
-      );
+      )
     } finally {
-      setIsUploading(false);
+      setIsUploading(false)
     }
-  };
+  }
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files ? Array.from(event.target.files) : [];
-    await uploadFiles(files);
-    event.target.value = "";
-  };
+    const files = event.target.files ? Array.from(event.target.files) : []
+    await uploadFiles(files)
+    event.target.value = ""
+  }
 
   const handleAddLink = () => {
-    const trimmedLink = referenceLink.trim();
+    const trimmedLink = referenceLink.trim()
 
-    if (!trimmedLink) return;
+    if (!trimmedLink) return
 
     if (!isValidUrl(trimmedLink)) {
-      setUploadError("Please enter a valid image or inspiration link.");
-      return;
+      setUploadError("Please enter a valid image or inspiration link.")
+      return
     }
 
-    updateReferences([...uploadedFiles, trimmedLink]);
-    setReferenceLink("");
-    setUploadError("");
-  };
+    updateReferences([...uploadedFiles, trimmedLink])
+    setReferenceLink("")
+    setUploadError("")
+  }
 
   const handleRemoveReference = (target: string) => {
-    updateReferences(uploadedFiles.filter((item) => item !== target));
-  };
+    updateReferences(uploadedFiles.filter((item) => item !== target))
+  }
 
   const handleDrop = async (event: DragEvent<HTMLLabelElement>) => {
-    event.preventDefault();
-    setIsDragging(false);
+    event.preventDefault()
+    setIsDragging(false)
 
-    const files = Array.from(event.dataTransfer.files ?? []);
-    await uploadFiles(files);
-  };
+    const files = Array.from(event.dataTransfer.files ?? [])
+    await uploadFiles(files)
+  }
 
   return (
     <motion.div
@@ -136,7 +136,8 @@ const StepReview = ({ form, onChange }: StepReviewProps) => {
           />
         </FormField>
         <p className="text-[0.68rem] text-slate-400 mt-2">
-          The more detail you share, the better we can prepare for your consultation.
+          The more detail you share, the better we can prepare for your
+          consultation.
         </p>
       </motion.div>
 
@@ -154,7 +155,9 @@ const StepReview = ({ form, onChange }: StepReviewProps) => {
               type="button"
               onClick={handleAddLink}
               className="rounded-[4px] px-4 py-3 text-[0.78rem] font-medium text-white transition"
-              style={{ background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)" }}
+              style={{
+                background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
+              }}
             >
               Add Link
             </button>
@@ -171,8 +174,8 @@ const StepReview = ({ form, onChange }: StepReviewProps) => {
                 : "rgba(99,102,241,0.02)",
             }}
             onDragOver={(event) => {
-              event.preventDefault();
-              setIsDragging(true);
+              event.preventDefault()
+              setIsDragging(true)
             }}
             onDragLeave={() => setIsDragging(false)}
             onDrop={handleDrop}
@@ -198,7 +201,9 @@ const StepReview = ({ form, onChange }: StepReviewProps) => {
               Add either a link, an uploaded image, or both.
             </p>
             {isUploading && (
-              <span className="text-[0.68rem] text-indigo-500">Uploading...</span>
+              <span className="text-[0.68rem] text-indigo-500">
+                Uploading...
+              </span>
             )}
           </div>
           {uploadError && (
@@ -244,7 +249,8 @@ const StepReview = ({ form, onChange }: StepReviewProps) => {
         className="rounded-[6px] overflow-hidden"
         style={{
           border: "1px solid rgba(99,102,241,0.15)",
-          background: "linear-gradient(135deg, rgba(99,102,241,0.04) 0%, rgba(255,255,255,0.9) 100%)",
+          background:
+            "linear-gradient(135deg, rgba(99,102,241,0.04) 0%, rgba(255,255,255,0.9) 100%)",
         }}
       >
         <div
@@ -256,7 +262,9 @@ const StepReview = ({ form, onChange }: StepReviewProps) => {
           </span>
           <div className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-            <span className="text-[0.6rem] text-indigo-400">Ready to submit</span>
+            <span className="text-[0.6rem] text-indigo-400">
+              Ready to submit
+            </span>
           </div>
         </div>
 
@@ -274,12 +282,15 @@ const StepReview = ({ form, onChange }: StepReviewProps) => {
             label="Date"
             value={
               form.preferredDate
-                ? new Date(form.preferredDate + "T00:00:00").toLocaleDateString("en-US", {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })
+                ? new Date(form.preferredDate + "T00:00:00").toLocaleDateString(
+                    "en-US",
+                    {
+                      weekday: "long",
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    }
+                  )
                 : ""
             }
           />
@@ -295,7 +306,11 @@ const StepReview = ({ form, onChange }: StepReviewProps) => {
           <SummaryRow label="Email" value={form.email} />
           <SummaryRow
             label="References"
-            value={uploadedFiles.length ? `${uploadedFiles.length} item(s) attached` : "No references attached"}
+            value={
+              uploadedFiles.length
+                ? `${uploadedFiles.length} item(s) attached`
+                : "No references attached"
+            }
           />
         </div>
       </motion.div>
@@ -311,8 +326,10 @@ const StepReview = ({ form, onChange }: StepReviewProps) => {
       >
         <span className="text-indigo-500 text-sm mt-0.5">✦</span>
         <p className="text-[0.75rem] text-slate-500 leading-relaxed">
-          By submitting this form you're not committing to any contract. This is simply a consultation request — our team will reach out within{" "}
-          <span className="text-slate-700">24 hours</span> to discuss your project.
+          By submitting this form you're not committing to any contract. This is
+          simply a consultation request — our team will reach out within{" "}
+          <span className="text-slate-700">24 hours</span> to discuss your
+          project.
         </p>
       </motion.div>
     </motion.div>

@@ -1,7 +1,7 @@
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion"
 
 interface SkeletonLoaderProps {
-  count?: number;
+  count?: number
 }
 
 export default function SkeletonLoader({ count = 8 }: SkeletonLoaderProps) {
@@ -17,21 +17,20 @@ export default function SkeletonLoader({ count = 8 }: SkeletonLoaderProps) {
         >
           {/* Image Skeleton */}
           <div className="aspect-[4/5] bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 animate-shimmer bg-[length:200%_100%]" />
-          
+
           {/* Content Skeleton */}
           <div className="p-5 space-y-3">
             {/* Category */}
             <div className="h-3 w-20 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 rounded animate-shimmer bg-[length:200%_100%]" />
-            
+
             {/* Title */}
             <div className="h-5 w-3/4 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 rounded animate-shimmer bg-[length:200%_100%]" />
-            
+
             {/* Price */}
             <div className="h-5 w-24 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 rounded animate-shimmer bg-[length:200%_100%]" />
           </div>
         </motion.div>
       ))}
     </div>
-  );
+  )
 }
-

@@ -1,7 +1,7 @@
-import SupplierDemo from '@/components/SupplierDemo';
+import SupplierDemo from "@/components/SupplierDemo"
 
-export const metadata = { title: 'Supplier Dashboard Demo — AF Home' };
+export const metadata = { title: "Supplier Dashboard Demo — AF Home" }
 
 export default function SupplierDemoPage() {
-  return <SupplierDemo />;
+  return <SupplierDemo />
 }

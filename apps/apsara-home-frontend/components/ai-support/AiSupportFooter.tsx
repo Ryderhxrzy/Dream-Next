@@ -1,15 +1,15 @@
-import { SendHorizonal, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { SendHorizonal, X } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
 
 interface Props {
-  value: string;
-  onChange: (v: string) => void;
-  onSend: () => void;
-  images: string[];
-  onImageChange: (dataUrls: string[]) => void;
-  hasImage: boolean;
-  maxImages?: number;
-  disabled?: boolean;
+  value: string
+  onChange: (v: string) => void
+  onSend: () => void
+  images: string[]
+  onImageChange: (dataUrls: string[]) => void
+  hasImage: boolean
+  maxImages?: number
+  disabled?: boolean
 }
 
 export function AiSupportFooter({
@@ -22,58 +22,60 @@ export function AiSupportFooter({
   maxImages = 4,
   disabled,
 }: Props) {
-  const [previews, setPreviews] = useState<Array<{ url: string; name: string; dataUrl: string }>>([]);
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const [previews, setPreviews] = useState<
+    Array<{ url: string; name: string; dataUrl: string }>
+  >([])
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
   useEffect(() => {
-    if (!textareaRef.current) return;
-    textareaRef.current.style.height = 'auto';
-    textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 140)}px`;
-  }, [value]);
+    if (!textareaRef.current) return
+    textareaRef.current.style.height = "auto"
+    textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 140)}px`
+  }, [value])
 
   useEffect(() => {
     return () => {
       previews.forEach((preview) => {
-        URL.revokeObjectURL(preview.url);
-      });
-    };
-  }, [previews]);
+        URL.revokeObjectURL(preview.url)
+      })
+    }
+  }, [previews])
 
   const clearPreview = (index?: number) => {
-    if (typeof index === 'number') {
+    if (typeof index === "number") {
       setPreviews((prev) => {
-        const target = prev[index];
+        const target = prev[index]
         if (target?.url) {
-          URL.revokeObjectURL(target.url);
+          URL.revokeObjectURL(target.url)
         }
-        const next = prev.filter((_, i) => i !== index);
-        onImageChange(next.map((item) => item.dataUrl));
-        return next;
-      });
-      return;
+        const next = prev.filter((_, i) => i !== index)
+        onImageChange(next.map((item) => item.dataUrl))
+        return next
+      })
+      return
     }
-    previews.forEach((preview) => URL.revokeObjectURL(preview.url));
-    setPreviews([]);
-    onImageChange([]);
-  };
+    previews.forEach((preview) => URL.revokeObjectURL(preview.url))
+    setPreviews([])
+    onImageChange([])
+  }
 
   const handleSend = () => {
-    onSend();
+    onSend()
     if (hasImage) {
-      clearPreview();
+      clearPreview()
     }
-  };
+  }
 
   return (
     <div className="relative flex-shrink-0 border-t border-slate-100 bg-white px-3 py-2.5 flex items-end gap-2">
       <textarea
         ref={textareaRef}
         value={value}
-        onChange={e => onChange(e.target.value)}
-        onKeyDown={e => {
-          if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            handleSend();
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault()
+            handleSend()
           }
         }}
         placeholder="Type your question..."
@@ -97,7 +99,7 @@ export function AiSupportFooter({
               <div key={`${preview.url}-${idx}`} className="relative">
                 <img
                   src={preview.url}
-                  alt={preview.name || 'Selected upload'}
+                  alt={preview.name || "Selected upload"}
                   className="h-10 w-10 rounded-lg object-cover"
                 />
                 <button
@@ -112,10 +114,10 @@ export function AiSupportFooter({
             ))}
           </div>
           <div className="mt-2 text-[11px] text-slate-500">
-            {previews.length} image{previews.length > 1 ? 's' : ''} attached
+            {previews.length} image{previews.length > 1 ? "s" : ""} attached
           </div>
         </div>
       )}
     </div>
-  );
+  )
 }

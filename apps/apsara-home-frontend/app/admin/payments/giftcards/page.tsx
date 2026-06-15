@@ -1,10 +1,10 @@
-import { buildPageMetadata } from '@/app/seo'
-import PaymentsVouchersPageMain from '@/components/superAdmin/payments/PaymentsVouchersPageMain'
+import { buildPageMetadata } from "@/app/seo"
+import PaymentsVouchersPageMain from "@/components/superAdmin/payments/PaymentsVouchersPageMain"
 
 export const metadata = buildPageMetadata({
-  title: 'Admin Vouchers',
-  description: 'Browse the Admin Vouchers page on AF Home.',
-  path: '/admin/payments/giftcards',
+  title: "Admin Vouchers",
+  description: "Browse the Admin Vouchers page on AF Home.",
+  path: "/admin/payments/giftcards",
   noIndex: true,
 })
 

@@ -1,10 +1,10 @@
-import { buildPageMetadata } from '@/app/seo'
-import SupplierChatPageClient from '@/components/supplier/SupplierChatPage'
+import { buildPageMetadata } from "@/app/seo"
+import SupplierChatPageClient from "@/components/supplier/SupplierChatPage"
 
 export const metadata = buildPageMetadata({
-  title: 'Chats',
-  description: 'Manage customer conversations and inquiries.',
-  path: '/supplier/chat',
+  title: "Chats",
+  description: "Manage customer conversations and inquiries.",
+  path: "/supplier/chat",
   noIndex: true,
 })
 

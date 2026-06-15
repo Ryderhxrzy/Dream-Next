@@ -1,4 +1,4 @@
-import { baseApi } from './baseApi'
+import { baseApi } from "./baseApi"
 
 export interface SupplierWarehouseProfile {
   id: number
@@ -24,40 +24,49 @@ export const supplierWarehouseApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getSupplierWarehouses: builder.query<SupplierWarehousesResponse, void>({
       query: () => ({
-        url: '/api/supplier/warehouse',
-        method: 'GET',
+        url: "/api/supplier/warehouse",
+        method: "GET",
       }),
-      providesTags: ['Suppliers'],
+      providesTags: ["Suppliers"],
     }),
-    getAdminSupplierWarehouses: builder.query<SupplierWarehousesResponse, number>({
+    getAdminSupplierWarehouses: builder.query<
+      SupplierWarehousesResponse,
+      number
+    >({
       query: (supplierId) => ({
         url: `/api/admin/suppliers/${supplierId}/warehouses`,
-        method: 'GET',
+        method: "GET",
       }),
-      providesTags: ['Suppliers'],
+      providesTags: ["Suppliers"],
     }),
-    createSupplierWarehouse: builder.mutation<SupplierWarehouseResponse, FormData>({
+    createSupplierWarehouse: builder.mutation<
+      SupplierWarehouseResponse,
+      FormData
+    >({
       query: (body) => ({
-        url: '/api/supplier/warehouse',
-        method: 'POST',
+        url: "/api/supplier/warehouse",
+        method: "POST",
         body,
       }),
-      invalidatesTags: ['Suppliers'],
+      invalidatesTags: ["Suppliers"],
     }),
-    updateSupplierWarehouse: builder.mutation<SupplierWarehouseResponse, { id: number; body: FormData }>({
+    updateSupplierWarehouse: builder.mutation<
+      SupplierWarehouseResponse,
+      { id: number; body: FormData }
+    >({
       query: ({ id, body }) => ({
         url: `/api/supplier/warehouse/${id}`,
-        method: 'PUT',
+        method: "PUT",
         body,
       }),
-      invalidatesTags: ['Suppliers'],
+      invalidatesTags: ["Suppliers"],
     }),
     deleteSupplierWarehouse: builder.mutation<{ message: string }, number>({
       query: (id) => ({
         url: `/api/supplier/warehouse/${id}`,
-        method: 'DELETE',
+        method: "DELETE",
       }),
-      invalidatesTags: ['Suppliers'],
+      invalidatesTags: ["Suppliers"],
     }),
   }),
 })

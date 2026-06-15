@@ -1,35 +1,38 @@
-import { motion } from 'framer-motion';
-import { Star, Quote } from 'lucide-react';
+import { motion } from "framer-motion"
+import { Star, Quote } from "lucide-react"
 
 const testimonials = [
   {
     id: 1,
-    name: 'James Dela Cruz',
-    role: 'Interior Designer',
-    image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKrrwhQ_77kdU7Nn1--i-7HkgF3t1hmGQyDA&s',
+    name: "James Dela Cruz",
+    role: "Interior Designer",
+    image:
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKrrwhQ_77kdU7Nn1--i-7HkgF3t1hmGQyDA&s",
     content:
-      'The quality of AFhome furniture is exceptional. Every piece I\'ve purchased has exceeded my expectations. Their attention to detail is remarkable.',
+      "The quality of AFhome furniture is exceptional. Every piece I've purchased has exceeded my expectations. Their attention to detail is remarkable.",
     rating: 5,
   },
   {
     id: 2,
-    name: 'Kurt Rodriguez',
-    role: 'Architect',
-    image: 'https://t3.ftcdn.net/jpg/06/69/31/58/360_F_669315870_bzhKwzvSERkba6LsjmNh5FhXDtLtM1TS.jpg',
+    name: "Kurt Rodriguez",
+    role: "Architect",
+    image:
+      "https://t3.ftcdn.net/jpg/06/69/31/58/360_F_669315870_bzhKwzvSERkba6LsjmNh5FhXDtLtM1TS.jpg",
     content:
       "I've furnished multiple client projects with AFhome pieces. The blend of modern design and craftsmanship is unmatched in this price range.",
     rating: 5,
   },
   {
     id: 3,
-    name: 'Emily Chua',
-    role: 'Homeowner',
-    image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS12Z07ElLrs733vYazzm77ZSTb6qMAG1euQg&s',
+    name: "Emily Chua",
+    role: "Homeowner",
+    image:
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS12Z07ElLrs733vYazzm77ZSTb6qMAG1euQg&s",
     content:
       "Our living room was transformed completely. The velvet sofa became the centerpiece of our home. Delivery and setup were seamless.",
     rating: 5,
   },
-];
+]
 
 export default function Testimonials() {
   return (
@@ -115,10 +118,10 @@ export default function Testimonials() {
           className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 text-center"
         >
           {[
-            { value: '10K+', label: 'Happy Customers' },
-            { value: '98%', label: 'Satisfaction Rate' },
-            { value: '500+', label: 'Products' },
-            { value: '15+', label: 'Years Experience' },
+            { value: "10K+", label: "Happy Customers" },
+            { value: "98%", label: "Satisfaction Rate" },
+            { value: "500+", label: "Products" },
+            { value: "15+", label: "Years Experience" },
           ].map((stat, index) => (
             <motion.div
               key={stat.label}
@@ -130,12 +133,13 @@ export default function Testimonials() {
               <span className="font-display text-4xl md:text-5xl font-bold text-orange-500">
                 {stat.value}
               </span>
-              <p className="text-gray-600 dark:text-gray-400 mt-2">{stat.label}</p>
+              <p className="text-gray-600 dark:text-gray-400 mt-2">
+                {stat.label}
+              </p>
             </motion.div>
           ))}
         </motion.div>
       </div>
     </section>
-  );
+  )
 }
-

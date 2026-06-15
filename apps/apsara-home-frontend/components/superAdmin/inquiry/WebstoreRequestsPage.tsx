@@ -1,7 +1,7 @@
-﻿'use client'
+﻿"use client"
 
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { useEffect, useMemo, useRef, useState } from "react"
+import { AnimatePresence, motion } from "framer-motion"
 import {
   useApproveWebstoreRequestMutation,
   useApproveWebstoreReceiptMutation,
@@ -9,72 +9,96 @@ import {
   useGetWebstoreRequestsQuery,
   useRejectWebstoreReceiptMutation,
   useRejectWebstoreRequestMutation,
-} from '@/store/api/adminInquiriesApi'
-import { useDeleteAdminWebPageItemMutation, useGetAdminWebPageItemsQuery } from '@/store/api/webPagesApi'
-import { getPartnerStorefrontConfig } from '@/libs/partnerStorefront'
-import { showErrorToast } from '@/libs/toast'
-import { computeEndDateRaw, isWebstoreRequestExpired } from '@/libs/webstoreExpiry'
+} from "@/store/api/adminInquiriesApi"
+import {
+  useDeleteAdminWebPageItemMutation,
+  useGetAdminWebPageItemsQuery,
+} from "@/store/api/webPagesApi"
+import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
+import { showErrorToast } from "@/libs/toast"
+import {
+  computeEndDateRaw,
+  isWebstoreRequestExpired,
+} from "@/libs/webstoreExpiry"
 
-type RequestStatus = 'all' | 'pending_review' | 'approved' | 'rejected' | 'deleted' | 'expired'
-type StatusKey = Exclude<RequestStatus, 'all'>
+type RequestStatus =
+  | "all"
+  | "pending_review"
+  | "approved"
+  | "rejected"
+  | "deleted"
+  | "expired"
+type StatusKey = Exclude<RequestStatus, "all">
 
 type StatusStyleMap = Record<StatusKey, string>
 
 const statusStyles: StatusStyleMap = {
   pending_review:
-    'border border-amber-200/80 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200',
+    "border border-amber-200/80 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200",
   approved:
-    'border border-emerald-200/80 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200',
+    "border border-emerald-200/80 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200",
   rejected:
-    'border border-rose-200/80 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200',
+    "border border-rose-200/80 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200",
   deleted:
-    'border border-slate-300/80 bg-slate-100 text-slate-700 dark:border-slate-600/60 dark:bg-slate-700/30 dark:text-slate-200',
+    "border border-slate-300/80 bg-slate-100 text-slate-700 dark:border-slate-600/60 dark:bg-slate-700/30 dark:text-slate-200",
   expired:
-    'border border-orange-200/80 bg-orange-50 text-orange-700 dark:border-orange-500/30 dark:bg-orange-500/10 dark:text-orange-200',
+    "border border-orange-200/80 bg-orange-50 text-orange-700 dark:border-orange-500/30 dark:bg-orange-500/10 dark:text-orange-200",
 }
 
 const prettyStatus = (status: StatusKey) => {
-  if (status === 'pending_review') return 'Pending'
-  if (status === 'approved') return 'Approved'
-  if (status === 'deleted') return 'Deleted'
-  if (status === 'expired') return 'Expired'
-  return 'Rejected'
+  if (status === "pending_review") return "Pending"
+  if (status === "approved") return "Approved"
+  if (status === "deleted") return "Deleted"
+  if (status === "expired") return "Expired"
+  return "Rejected"
 }
 
 const isExpiredItem = isWebstoreRequestExpired
 
 export default function WebstoreRequestsPage() {
   const { data, isLoading, isError } = useGetWebstoreRequestsQuery()
-  const [approveRequest, { isLoading: isApproving }] = useApproveWebstoreRequestMutation()
-  const [rejectRequest, { isLoading: isRejecting }] = useRejectWebstoreRequestMutation()
-  const [deleteRequest, { isLoading: isDeleting }] = useDeleteWebstoreRequestMutation()
-  const [deleteStorefront, { isLoading: isDeletingStorefront }] = useDeleteAdminWebPageItemMutation()
+  const [approveRequest, { isLoading: isApproving }] =
+    useApproveWebstoreRequestMutation()
+  const [rejectRequest, { isLoading: isRejecting }] =
+    useRejectWebstoreRequestMutation()
+  const [deleteRequest, { isLoading: isDeleting }] =
+    useDeleteWebstoreRequestMutation()
+  const [deleteStorefront, { isLoading: isDeletingStorefront }] =
+    useDeleteAdminWebPageItemMutation()
   const { data: storefrontsData } = useGetAdminWebPageItemsQuery({
-    type: 'partner-storefront',
+    type: "partner-storefront",
     page: 1,
     perPage: 500,
-    status: 'all',
+    status: "all",
   })
 
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<RequestStatus>('all')
+  const [search, setSearch] = useState("")
+  const [statusFilter, setStatusFilter] = useState<RequestStatus>("all")
 
   const [confirm, setConfirm] = useState<{
     open: boolean
-    action: 'approve' | 'reject' | 'delete'
+    action: "approve" | "reject" | "delete"
     id: number | null
     displayName?: string | null
     slugName?: string | null
-  }>({ open: false, action: 'approve', id: null, displayName: null, slugName: null })
+  }>({
+    open: false,
+    action: "approve",
+    id: null,
+    displayName: null,
+    slugName: null,
+  })
   const [deleteAcknowledge, setDeleteAcknowledge] = useState(false)
   const [receiptConfirm, setReceiptConfirm] = useState<{
     open: boolean
     receiptId: number | null
-    action: 'approve' | 'reject'
+    action: "approve" | "reject"
     label?: string | null
-  }>({ open: false, receiptId: null, action: 'approve', label: null })
-  const [approveReceipt, { isLoading: isApprovingReceipt }] = useApproveWebstoreReceiptMutation()
-  const [rejectReceipt, { isLoading: isRejectingReceipt }] = useRejectWebstoreReceiptMutation()
+  }>({ open: false, receiptId: null, action: "approve", label: null })
+  const [approveReceipt, { isLoading: isApprovingReceipt }] =
+    useApproveWebstoreReceiptMutation()
+  const [rejectReceipt, { isLoading: isRejectingReceipt }] =
+    useRejectWebstoreReceiptMutation()
   const autoProcessedReceiptIds = useRef<Set<number>>(new Set())
   const [details, setDetails] = useState<{
     open: boolean
@@ -116,7 +140,17 @@ export default function WebstoreRequestsPage() {
       approvedAt?: string | null
       type?: string | null
     }> | null
-  }>({ open: false, id: null, displayName: null, slugName: null, customerName: null, email: null, username: null, status: null, submittedAt: null })
+  }>({
+    open: false,
+    id: null,
+    displayName: null,
+    slugName: null,
+    customerName: null,
+    email: null,
+    username: null,
+    status: null,
+    submittedAt: null,
+  })
   const [receiptPreview, setReceiptPreview] = useState<{
     open: boolean
     label?: string | null
@@ -125,12 +159,19 @@ export default function WebstoreRequestsPage() {
   }>({ open: false, label: null, urls: [], activeIndex: 0 })
   const receiptSlideDir = useRef<1 | -1>(1)
 
-  const openReceiptPreview = (urls: string[], label?: string | null, activeIndex?: number) => {
-    const normalizedUrls = urls.map((url) => String(url ?? '').trim()).filter(Boolean)
+  const openReceiptPreview = (
+    urls: string[],
+    label?: string | null,
+    activeIndex?: number
+  ) => {
+    const normalizedUrls = urls
+      .map((url) => String(url ?? "").trim())
+      .filter(Boolean)
     if (normalizedUrls.length === 0) return
-    const nextIndex = typeof activeIndex === 'number'
-      ? Math.max(0, Math.min(activeIndex, normalizedUrls.length - 1))
-      : normalizedUrls.length - 1
+    const nextIndex =
+      typeof activeIndex === "number"
+        ? Math.max(0, Math.min(activeIndex, normalizedUrls.length - 1))
+        : normalizedUrls.length - 1
     receiptSlideDir.current = 1
     setReceiptPreview({
       open: true,
@@ -158,11 +199,24 @@ export default function WebstoreRequestsPage() {
     const q = search.trim().toLowerCase()
 
     return source.filter((item) => {
-      if (statusFilter !== 'all') {
+      if (statusFilter !== "all") {
         const expired = isExpiredItem(item)
-        if (statusFilter === 'expired' && !(item.status === 'approved' && expired)) return false
-        if (statusFilter === 'approved' && !(item.status === 'approved' && !expired)) return false
-        if (statusFilter !== 'expired' && statusFilter !== 'approved' && item.status !== statusFilter) return false
+        if (
+          statusFilter === "expired" &&
+          !(item.status === "approved" && expired)
+        )
+          return false
+        if (
+          statusFilter === "approved" &&
+          !(item.status === "approved" && !expired)
+        )
+          return false
+        if (
+          statusFilter !== "expired" &&
+          statusFilter !== "approved" &&
+          item.status !== statusFilter
+        )
+          return false
       }
       if (!q) return true
 
@@ -176,7 +230,7 @@ export default function WebstoreRequestsPage() {
         String(item.ticket_id),
       ]
         .filter(Boolean)
-        .join(' ')
+        .join(" ")
         .toLowerCase()
 
       return haystack.includes(q)
@@ -185,35 +239,58 @@ export default function WebstoreRequestsPage() {
 
   const counts = useMemo(() => {
     const all = data?.requests ?? []
-    const pending = all.filter((r) => r.status === 'pending_review').length
+    const pending = all.filter((r) => r.status === "pending_review").length
     const expired = all.filter((r) => isExpiredItem(r)).length
-    const approved = all.filter((r) => r.status === 'approved' && !isExpiredItem(r)).length
-    const rejected = all.filter((r) => r.status === 'rejected').length
-    const deleted = all.filter((r) => r.status === 'deleted').length
+    const approved = all.filter(
+      (r) => r.status === "approved" && !isExpiredItem(r)
+    ).length
+    const rejected = all.filter((r) => r.status === "rejected").length
+    const deleted = all.filter((r) => r.status === "deleted").length
     return { all: all.length, pending, approved, rejected, deleted, expired }
   }, [data?.requests])
 
   const openConfirm = (
-    action: 'approve' | 'reject' | 'delete',
+    action: "approve" | "reject" | "delete",
     id: number,
     displayName?: string | null,
-    slugName?: string | null,
+    slugName?: string | null
   ) => {
     setDeleteAcknowledge(false)
-    setConfirm({ open: true, action, id, displayName: displayName ?? null, slugName: slugName ?? null })
+    setConfirm({
+      open: true,
+      action,
+      id,
+      displayName: displayName ?? null,
+      slugName: slugName ?? null,
+    })
   }
 
   const closeConfirm = () => {
     setDeleteAcknowledge(false)
-    setConfirm({ open: false, action: 'approve', id: null, displayName: null, slugName: null })
+    setConfirm({
+      open: false,
+      action: "approve",
+      id: null,
+      displayName: null,
+      slugName: null,
+    })
   }
 
-  const openReceiptConfirm = (action: 'approve' | 'reject', receiptId: number, label?: string | null) => {
+  const openReceiptConfirm = (
+    action: "approve" | "reject",
+    receiptId: number,
+    label?: string | null
+  ) => {
     setReceiptConfirm({ open: true, action, receiptId, label: label ?? null })
   }
 
   const closeReceiptConfirm = () => {
-    setReceiptConfirm({ open: false, receiptId: null, action: 'approve', label: null })
+    setReceiptConfirm({
+      open: false,
+      receiptId: null,
+      action: "approve",
+      label: null,
+    })
   }
 
   const openDetails = (item: {
@@ -256,25 +333,31 @@ export default function WebstoreRequestsPage() {
       type?: string | null
     }> | null
   }) => {
-    const mappedReceiptItems = (item.receipt_items ?? []).map((receipt, index) => ({
-      id: receipt.id ?? null,
-      label: receipt.label ?? `Receipt ${index + 1}`,
-      submittedAt: receipt.submitted_at ?? null,
-      receiptUrls: receipt.receipt_urls ?? [],
-      checkoutId: receipt.checkout_id ?? null,
-      paymentReference: receipt.payment_reference ?? null,
-      paymentIntentId: receipt.payment_intent_id ?? null,
-      baseCheckoutId: receipt.base_checkout_id ?? null,
-      basePaymentReference: receipt.base_payment_reference ?? null,
-      basePaymentIntentId: receipt.base_payment_intent_id ?? null,
-      approvalStatus: receipt.approval_status ?? null,
-      approvedAt: receipt.approved_at ?? null,
-      type: receipt.type ?? null,
-    }))
-    const approvedReceipt = [...mappedReceiptItems].reverse().find((receipt) => {
-      const status = String(receipt.approvalStatus ?? '').toLowerCase()
-      return status === 'approved' || (!status && receipt.type !== 'webstore_payment_continuation')
-    }) ?? null
+    const mappedReceiptItems = (item.receipt_items ?? []).map(
+      (receipt, index) => ({
+        id: receipt.id ?? null,
+        label: receipt.label ?? `Receipt ${index + 1}`,
+        submittedAt: receipt.submitted_at ?? null,
+        receiptUrls: receipt.receipt_urls ?? [],
+        checkoutId: receipt.checkout_id ?? null,
+        paymentReference: receipt.payment_reference ?? null,
+        paymentIntentId: receipt.payment_intent_id ?? null,
+        baseCheckoutId: receipt.base_checkout_id ?? null,
+        basePaymentReference: receipt.base_payment_reference ?? null,
+        basePaymentIntentId: receipt.base_payment_intent_id ?? null,
+        approvalStatus: receipt.approval_status ?? null,
+        approvedAt: receipt.approved_at ?? null,
+        type: receipt.type ?? null,
+      })
+    )
+    const approvedReceipt =
+      [...mappedReceiptItems].reverse().find((receipt) => {
+        const status = String(receipt.approvalStatus ?? "").toLowerCase()
+        return (
+          status === "approved" ||
+          (!status && receipt.type !== "webstore_payment_continuation")
+        )
+      }) ?? null
 
     setDetails({
       open: true,
@@ -293,9 +376,21 @@ export default function WebstoreRequestsPage() {
       effectiveMonthly: item.effective_monthly ?? null,
       billingOption: item.billing_option ?? null,
       paymentMethod: item.payment_method ?? null,
-      checkoutId: approvedReceipt?.baseCheckoutId || item.base_checkout_id || item.checkout_id || null,
-      paymentReference: approvedReceipt?.basePaymentReference || item.base_payment_reference || item.payment_reference || null,
-      paymentIntentId: approvedReceipt?.basePaymentIntentId || item.base_payment_intent_id || item.payment_intent_id || null,
+      checkoutId:
+        approvedReceipt?.baseCheckoutId ||
+        item.base_checkout_id ||
+        item.checkout_id ||
+        null,
+      paymentReference:
+        approvedReceipt?.basePaymentReference ||
+        item.base_payment_reference ||
+        item.payment_reference ||
+        null,
+      paymentIntentId:
+        approvedReceipt?.basePaymentIntentId ||
+        item.base_payment_intent_id ||
+        item.payment_intent_id ||
+        null,
       remainingBalance: item.remaining_balance ?? null,
       receiptUrls: item.receipt_urls ?? [],
       receiptItems: mappedReceiptItems,
@@ -342,23 +437,28 @@ export default function WebstoreRequestsPage() {
           receipt.id === receiptId
             ? {
                 ...receipt,
-                approvalStatus: 'approved',
+                approvalStatus: "approved",
                 approvedAt: new Date().toISOString(),
               }
-            : receipt,
+            : receipt
         )
-        const latestReceipt = updatedReceiptItems[updatedReceiptItems.length - 1] ?? null
+        const latestReceipt =
+          updatedReceiptItems[updatedReceiptItems.length - 1] ?? null
         return {
           ...prev,
           receiptItems: updatedReceiptItems,
           checkoutId: latestReceipt?.checkoutId ?? prev.checkoutId,
-          paymentReference: latestReceipt?.paymentReference ?? prev.paymentReference,
-          paymentIntentId: latestReceipt?.paymentIntentId ?? prev.paymentIntentId,
+          paymentReference:
+            latestReceipt?.paymentReference ?? prev.paymentReference,
+          paymentIntentId:
+            latestReceipt?.paymentIntentId ?? prev.paymentIntentId,
         }
       })
     } catch (error) {
       const apiErr = error as { data?: { message?: string }; message?: string }
-      showErrorToast(apiErr?.data?.message || apiErr?.message || 'Failed to approve receipt.')
+      showErrorToast(
+        apiErr?.data?.message || apiErr?.message || "Failed to approve receipt."
+      )
     }
   }
 
@@ -373,23 +473,28 @@ export default function WebstoreRequestsPage() {
           receipt.id === receiptId
             ? {
                 ...receipt,
-                approvalStatus: 'rejected',
+                approvalStatus: "rejected",
                 approvedAt: null,
               }
-            : receipt,
+            : receipt
         )
-        const latestReceipt = updatedReceiptItems[updatedReceiptItems.length - 1] ?? null
+        const latestReceipt =
+          updatedReceiptItems[updatedReceiptItems.length - 1] ?? null
         return {
           ...prev,
           receiptItems: updatedReceiptItems,
           checkoutId: latestReceipt?.checkoutId ?? prev.checkoutId,
-          paymentReference: latestReceipt?.paymentReference ?? prev.paymentReference,
-          paymentIntentId: latestReceipt?.paymentIntentId ?? prev.paymentIntentId,
+          paymentReference:
+            latestReceipt?.paymentReference ?? prev.paymentReference,
+          paymentIntentId:
+            latestReceipt?.paymentIntentId ?? prev.paymentIntentId,
         }
       })
     } catch (error) {
       const apiErr = error as { data?: { message?: string }; message?: string }
-      showErrorToast(apiErr?.data?.message || apiErr?.message || 'Failed to reject receipt.')
+      showErrorToast(
+        apiErr?.data?.message || apiErr?.message || "Failed to reject receipt."
+      )
     }
   }
 
@@ -398,7 +503,7 @@ export default function WebstoreRequestsPage() {
     const receiptId = receiptConfirm.receiptId
     const action = receiptConfirm.action
     closeReceiptConfirm()
-    if (action === 'approve') {
+    if (action === "approve") {
       await handleApproveReceipt(receiptId)
     } else {
       await handleRejectReceipt(receiptId)
@@ -409,19 +514,24 @@ export default function WebstoreRequestsPage() {
     if (!confirm.id) return
 
     try {
-      if (confirm.action === 'approve') {
+      if (confirm.action === "approve") {
         await approveRequest({ id: confirm.id }).unwrap()
-      } else if (confirm.action === 'reject') {
+      } else if (confirm.action === "reject") {
         await rejectRequest({ id: confirm.id }).unwrap()
-      } else if (confirm.action === 'delete') {
-        const rowSlug = String(confirm.slugName ?? '').trim().toLowerCase()
+      } else if (confirm.action === "delete") {
+        const rowSlug = String(confirm.slugName ?? "")
+          .trim()
+          .toLowerCase()
         if (rowSlug) {
           const storefront = (storefrontsData?.items ?? []).find((entry) => {
             const config = getPartnerStorefrontConfig(entry)
             return config?.slug === rowSlug
           })
           if (storefront) {
-            await deleteStorefront({ type: 'partner-storefront', id: storefront.id }).unwrap()
+            await deleteStorefront({
+              type: "partner-storefront",
+              id: storefront.id,
+            }).unwrap()
           }
         }
         await deleteRequest({ id: confirm.id }).unwrap()
@@ -429,7 +539,9 @@ export default function WebstoreRequestsPage() {
       closeConfirm()
     } catch (error) {
       const apiErr = error as { data?: { message?: string }; message?: string }
-      showErrorToast(apiErr?.data?.message || apiErr?.message || 'Failed to process request.')
+      showErrorToast(
+        apiErr?.data?.message || apiErr?.message || "Failed to process request."
+      )
       closeConfirm()
     }
   }
@@ -438,46 +550,73 @@ export default function WebstoreRequestsPage() {
   // Prefer real PayMongo references (pay_/pi_/cs_) over WEB- fallbacks.
   // Track its original index so only that specific card shows "Matches ref".
   const receiptItems = details.receiptItems ?? []
-  const isPayMongoRef = (v?: string | null) => Boolean(v && /^(pay_|pi_|cs_)/.test(String(v).trim()))
+  const isPayMongoRef = (v?: string | null) =>
+    Boolean(v && /^(pay_|pi_|cs_)/.test(String(v).trim()))
   const reversed = [...receiptItems].reverse()
   const latestReceiptItem =
-    reversed.find((r) => isPayMongoRef(r.paymentReference))
-    ?? reversed.find((r) => isPayMongoRef(r.paymentIntentId))
-    ?? reversed.find((r) => String(r.paymentReference ?? '').trim())
-    ?? reversed.find((r) => String(r.paymentIntentId ?? '').trim())
-    ?? null
+    reversed.find((r) => isPayMongoRef(r.paymentReference)) ??
+    reversed.find((r) => isPayMongoRef(r.paymentIntentId)) ??
+    reversed.find((r) => String(r.paymentReference ?? "").trim()) ??
+    reversed.find((r) => String(r.paymentIntentId ?? "").trim()) ??
+    null
   const latestReceiptReferenceId = String(
-    latestReceiptItem?.paymentReference
-    || latestReceiptItem?.paymentIntentId
-    || (isPayMongoRef(details.paymentReference) ? details.paymentReference : null)
-    || (isPayMongoRef(details.paymentIntentId) ? details.paymentIntentId : null)
-    || details.paymentReference
-    || details.paymentIntentId
-    || '',
+    latestReceiptItem?.paymentReference ||
+      latestReceiptItem?.paymentIntentId ||
+      (isPayMongoRef(details.paymentReference)
+        ? details.paymentReference
+        : null) ||
+      (isPayMongoRef(details.paymentIntentId)
+        ? details.paymentIntentId
+        : null) ||
+      details.paymentReference ||
+      details.paymentIntentId ||
+      ""
   ).trim()
-  const confirmedCheckoutId = String(details.checkoutId ?? '').trim()
-  const confirmedPaymentRef = String(details.paymentReference ?? details.paymentIntentId ?? '').trim()
+  const confirmedCheckoutId = String(details.checkoutId ?? "").trim()
+  const confirmedPaymentRef = String(
+    details.paymentReference ?? details.paymentIntentId ?? ""
+  ).trim()
 
   // Auto-approve or auto-reject pending continuation receipts based on filename match.
   // This handles receipts submitted before backend auto-processing was deployed.
   useEffect(() => {
-    if (!details.open || !details.id || !Array.isArray(details.receiptItems) || !latestReceiptReferenceId) return
+    if (
+      !details.open ||
+      !details.id ||
+      !Array.isArray(details.receiptItems) ||
+      !latestReceiptReferenceId
+    )
+      return
 
     const getFilename = (url: string) => {
-      try { return decodeURIComponent(new URL(url).pathname.split('/').pop() ?? '').toLowerCase() }
-      catch { return decodeURIComponent(url.split('/').pop()?.split('?')[0] ?? '').toLowerCase() }
+      try {
+        return decodeURIComponent(
+          new URL(url).pathname.split("/").pop() ?? ""
+        ).toLowerCase()
+      } catch {
+        return decodeURIComponent(
+          url.split("/").pop()?.split("?")[0] ?? ""
+        ).toLowerCase()
+      }
     }
 
     for (const receipt of details.receiptItems) {
       if (!receipt.id) continue
-      if (receipt.type !== 'webstore_payment_continuation') continue
-      const status = String(receipt.approvalStatus ?? '').trim().toLowerCase()
-      if (status === 'approved' || status === 'rejected') continue
+      if (receipt.type !== "webstore_payment_continuation") continue
+      const status = String(receipt.approvalStatus ?? "")
+        .trim()
+        .toLowerCase()
+      if (status === "approved" || status === "rejected") continue
       if (autoProcessedReceiptIds.current.has(receipt.id)) continue
 
-      const cardUrls = Array.isArray(receipt.receiptUrls) ? receipt.receiptUrls : []
-      const matches = latestReceiptReferenceId.length > 0 &&
-        cardUrls.some(url => getFilename(url).includes(latestReceiptReferenceId.toLowerCase()))
+      const cardUrls = Array.isArray(receipt.receiptUrls)
+        ? receipt.receiptUrls
+        : []
+      const matches =
+        latestReceiptReferenceId.length > 0 &&
+        cardUrls.some((url) =>
+          getFilename(url).includes(latestReceiptReferenceId.toLowerCase())
+        )
 
       const receiptId = receipt.id
       const ticketId = details.id
@@ -486,26 +625,42 @@ export default function WebstoreRequestsPage() {
       if (matches) {
         approveReceipt({ id: ticketId, detailId: receiptId })
           .unwrap()
-          .then(() => setDetails(prev => ({
-            ...prev,
-            receiptItems: (prev.receiptItems ?? []).map(r =>
-              r.id === receiptId ? { ...r, approvalStatus: 'approved', approvedAt: new Date().toISOString() } : r
-            ),
-          })))
-          .catch(() => { autoProcessedReceiptIds.current.delete(receiptId) })
+          .then(() =>
+            setDetails((prev) => ({
+              ...prev,
+              receiptItems: (prev.receiptItems ?? []).map((r) =>
+                r.id === receiptId
+                  ? {
+                      ...r,
+                      approvalStatus: "approved",
+                      approvedAt: new Date().toISOString(),
+                    }
+                  : r
+              ),
+            }))
+          )
+          .catch(() => {
+            autoProcessedReceiptIds.current.delete(receiptId)
+          })
       } else {
         rejectReceipt({ id: ticketId, detailId: receiptId })
           .unwrap()
-          .then(() => setDetails(prev => ({
-            ...prev,
-            receiptItems: (prev.receiptItems ?? []).map(r =>
-              r.id === receiptId ? { ...r, approvalStatus: 'rejected', approvedAt: null } : r
-            ),
-          })))
-          .catch(() => { autoProcessedReceiptIds.current.delete(receiptId) })
+          .then(() =>
+            setDetails((prev) => ({
+              ...prev,
+              receiptItems: (prev.receiptItems ?? []).map((r) =>
+                r.id === receiptId
+                  ? { ...r, approvalStatus: "rejected", approvedAt: null }
+                  : r
+              ),
+            }))
+          )
+          .catch(() => {
+            autoProcessedReceiptIds.current.delete(receiptId)
+          })
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [details.open, details.id, details.receiptItems, latestReceiptReferenceId])
 
   const parseDateSafe = (value?: string | null): Date | null => {
@@ -516,24 +671,31 @@ export default function WebstoreRequestsPage() {
 
   const formatDate = (value?: string | null): string => {
     const date = parseDateSafe(value)
-    if (!date) return '-'
-    return date.toLocaleDateString(undefined, { month: 'long', day: '2-digit', year: 'numeric' })
+    if (!date) return "-"
+    return date.toLocaleDateString(undefined, {
+      month: "long",
+      day: "2-digit",
+      year: "numeric",
+    })
   }
 
   const formatDateTime = (value?: string | null): string => {
     const date = parseDateSafe(value)
-    if (!date) return '-'
+    if (!date) return "-"
     return date.toLocaleString(undefined, {
-      month: 'long',
-      day: '2-digit',
-      year: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
+      month: "long",
+      day: "2-digit",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
     })
   }
 
-  const planTermDuration = (plan?: string | null, term?: string | null): { months: number; days: number } => {
-    const raw = String(term ?? '').toLowerCase()
+  const planTermDuration = (
+    plan?: string | null,
+    term?: string | null
+  ): { months: number; days: number } => {
+    const raw = String(term ?? "").toLowerCase()
     const dayMatch = raw.match(/(\d+)\s*day/)
     if (dayMatch) {
       return { months: 0, days: Number(dayMatch[1]) }
@@ -544,54 +706,60 @@ export default function WebstoreRequestsPage() {
       return { months: Number(monthMatch[1]), days: 0 }
     }
 
-    const normalizedPlan = String(plan ?? '').toLowerCase()
-    if (normalizedPlan === 'quarterly') return { months: 3, days: 0 }
-    if (normalizedPlan === 'semi_annual' || normalizedPlan === 'semi-annual') return { months: 6, days: 0 }
-    if (normalizedPlan === 'annual') return { months: 12, days: 0 }
-    if (normalizedPlan === 'test') return { months: 0, days: 2 }
+    const normalizedPlan = String(plan ?? "").toLowerCase()
+    if (normalizedPlan === "quarterly") return { months: 3, days: 0 }
+    if (normalizedPlan === "semi_annual" || normalizedPlan === "semi-annual")
+      return { months: 6, days: 0 }
+    if (normalizedPlan === "annual") return { months: 12, days: 0 }
+    if (normalizedPlan === "test") return { months: 0, days: 2 }
 
     return { months: 0, days: 0 }
   }
 
   const formatPlanLabel = (value?: string | null): string => {
-    const v = String(value ?? '').trim()
-    if (!v) return '-'
+    const v = String(value ?? "").trim()
+    if (!v) return "-"
     const normalized = v.toLowerCase()
-    if (normalized === 'semi_annual' || normalized === 'semi-annual') return 'Semi-annual'
+    if (normalized === "semi_annual" || normalized === "semi-annual")
+      return "Semi-annual"
     return v
   }
 
-  const formatPlanTermLabel = (plan?: string | null, term?: string | null): string => {
-    const raw = String(term ?? '').trim()
-    const normalizedPlan = String(plan ?? '').toLowerCase()
-    if (normalizedPlan === 'test') return '2 days'
-    if (!raw) return '-'
+  const formatPlanTermLabel = (
+    plan?: string | null,
+    term?: string | null
+  ): string => {
+    const raw = String(term ?? "").trim()
+    const normalizedPlan = String(plan ?? "").toLowerCase()
+    if (normalizedPlan === "test") return "2 days"
+    if (!raw) return "-"
     const normalized = raw.toLowerCase()
-    if (normalized === 'unlimited' && normalizedPlan === 'test') return '2 days'
-    if (normalized === 'semi_annual' || normalized === 'semi-annual') return '6 months'
+    if (normalized === "unlimited" && normalizedPlan === "test") return "2 days"
+    if (normalized === "semi_annual" || normalized === "semi-annual")
+      return "6 months"
     return raw
   }
 
   const formatSingleCapitalized = (value?: string | null): string => {
-    const v = String(value ?? '').trim()
-    if (!v) return '-'
+    const v = String(value ?? "").trim()
+    if (!v) return "-"
     return v.charAt(0).toUpperCase() + v.slice(1)
   }
 
   const formatBillingLabel = (value?: string | null): string => {
-    const v = String(value ?? '').trim()
-    if (!v) return '-'
+    const v = String(value ?? "").trim()
+    if (!v) return "-"
     const normalized = v.toLowerCase()
-    if (normalized === 'monthly') return 'Monthly Installment'
-    if (normalized === 'full') return 'Full Payment'
+    if (normalized === "monthly") return "Monthly Installment"
+    if (normalized === "full") return "Full Payment"
     return v.charAt(0).toUpperCase() + v.slice(1)
   }
 
   const formatPaymentMethodLabel = (value?: string | null): string => {
-    const v = String(value ?? '').trim()
-    if (!v) return '-'
+    const v = String(value ?? "").trim()
+    if (!v) return "-"
     const normalized = v.toLowerCase()
-    if (normalized === 'gcash') return 'Gcash'
+    if (normalized === "gcash") return "Gcash"
     return v.charAt(0).toUpperCase() + v.slice(1)
   }
 
@@ -605,21 +773,29 @@ export default function WebstoreRequestsPage() {
       type?: string | null
       approvalStatus?: string | null
       approvedAt?: string | null
-    }> | null,
+    }> | null
   ): string => {
     const startDate = parseDateSafe(startRaw)
-    if (!startDate) return '-'
+    if (!startDate) return "-"
 
     const endDate = new Date(startDate)
-    const normalizedBilling = String(billing ?? '').toLowerCase()
-    const format = (d: Date) => d.toLocaleDateString(undefined, { month: 'long', day: '2-digit', year: 'numeric' })
+    const normalizedBilling = String(billing ?? "").toLowerCase()
+    const format = (d: Date) =>
+      d.toLocaleDateString(undefined, {
+        month: "long",
+        day: "2-digit",
+        year: "numeric",
+      })
 
-    if (normalizedBilling === 'monthly') {
-      const requestApproved = String(overallStatus ?? '').toLowerCase() === 'approved'
+    if (normalizedBilling === "monthly") {
+      const requestApproved =
+        String(overallStatus ?? "").toLowerCase() === "approved"
       const continuationMonths = Array.isArray(receiptItems)
-        ? receiptItems.filter((receipt) =>
-            receipt?.type === 'webstore_payment_continuation'
-            && (receipt?.approvalStatus === 'approved' || Boolean(receipt?.approvedAt)),
+        ? receiptItems.filter(
+            (receipt) =>
+              receipt?.type === "webstore_payment_continuation" &&
+              (receipt?.approvalStatus === "approved" ||
+                Boolean(receipt?.approvedAt))
           ).length
         : 0
       const monthsPaid = (requestApproved ? 1 : 0) + continuationMonths
@@ -632,7 +808,11 @@ export default function WebstoreRequestsPage() {
     // renewals properly push the end date forward by a full period.
     const approvedContinuations = Array.isArray(receiptItems)
       ? receiptItems
-          .filter((r) => r?.type === 'webstore_payment_continuation' && (r?.approvalStatus === 'approved' || Boolean(r?.approvedAt)))
+          .filter(
+            (r) =>
+              r?.type === "webstore_payment_continuation" &&
+              (r?.approvalStatus === "approved" || Boolean(r?.approvedAt))
+          )
           .map((r) => parseDateSafe(r?.approvedAt))
           .filter((d): d is Date => d !== null)
           .sort((a, b) => a.getTime() - b.getTime())
@@ -650,7 +830,7 @@ export default function WebstoreRequestsPage() {
       }
       return format(currentEnd)
     }
-    if (duration.months <= 0) return '-'
+    if (duration.months <= 0) return "-"
     let currentEnd = new Date(startDate)
     currentEnd.setMonth(currentEnd.getMonth() + duration.months)
     for (const contDate of approvedContinuations) {
@@ -662,38 +842,46 @@ export default function WebstoreRequestsPage() {
     return format(currentEnd)
   }
 
-  const getReceiptStatus = (receipt?: {
-    approvalStatus?: string | null
-    approvedAt?: string | null
-  } | null) => {
-    const status = String(receipt?.approvalStatus ?? '').toLowerCase()
-    if (status === 'rejected') return 'rejected'
-    if (status === 'approved' || Boolean(receipt?.approvedAt)) return 'approved'
-    return 'pending'
+  const getReceiptStatus = (
+    receipt?: {
+      approvalStatus?: string | null
+      approvedAt?: string | null
+    } | null
+  ) => {
+    const status = String(receipt?.approvalStatus ?? "").toLowerCase()
+    if (status === "rejected") return "rejected"
+    if (status === "approved" || Boolean(receipt?.approvedAt)) return "approved"
+    return "pending"
   }
 
-  const getLatestPendingReceipt = <T extends {
-    id?: number | null
-    label?: string | null
-    type?: string | null
-    approvalStatus?: string | null
-    approvedAt?: string | null
-  }>(receipts?: T[] | null): T | null => {
+  const getLatestPendingReceipt = <
+    T extends {
+      id?: number | null
+      label?: string | null
+      type?: string | null
+      approvalStatus?: string | null
+      approvedAt?: string | null
+    },
+  >(
+    receipts?: T[] | null
+  ): T | null => {
     if (!Array.isArray(receipts) || receipts.length === 0) return null
-    return [...receipts].reverse().find((receipt) => {
-      if (receipt?.type !== 'webstore_payment_continuation') return false
-      const status = getReceiptStatus(receipt)
-      return status === 'pending'
-    }) ?? null
+    return (
+      [...receipts].reverse().find((receipt) => {
+        if (receipt?.type !== "webstore_payment_continuation") return false
+        const status = getReceiptStatus(receipt)
+        return status === "pending"
+      }) ?? null
+    )
   }
 
-  const fallbackReceiptStatus = String(details.status ?? '').toLowerCase()
+  const fallbackReceiptStatus = String(details.status ?? "").toLowerCase()
   const fallbackReceiptBadgeText =
-    fallbackReceiptStatus === 'approved'
-      ? 'Approved'
-      : fallbackReceiptStatus === 'rejected'
-        ? 'Rejected'
-        : 'Pending'
+    fallbackReceiptStatus === "approved"
+      ? "Approved"
+      : fallbackReceiptStatus === "rejected"
+        ? "Rejected"
+        : "Pending"
 
   return (
     <div className="space-y-5">
@@ -708,14 +896,22 @@ export default function WebstoreRequestsPage() {
               Webstore Requests
             </h1>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-              Review partner webstore submissions and approve to auto-create storefronts.
+              Review partner webstore submissions and approve to auto-create
+              storefronts.
             </p>
           </div>
 
           <div className="flex flex-col items-end gap-3 sm:flex-row sm:items-center">
             <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <label className="sr-only" htmlFor="webstore-search">Search</label>
-              <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <label className="sr-only" htmlFor="webstore-search">
+                Search
+              </label>
+              <svg
+                className="h-4 w-4 text-slate-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -750,12 +946,32 @@ export default function WebstoreRequestsPage() {
         <div className="mt-4 flex flex-wrap items-center gap-2">
           {(
             [
-              { key: 'all' as const, label: 'All', count: counts.all },
-              { key: 'pending_review' as const, label: 'Pending', count: counts.pending },
-              { key: 'approved' as const, label: 'Approved', count: counts.approved },
-              { key: 'expired' as const, label: 'Expired', count: counts.expired },
-              { key: 'rejected' as const, label: 'Rejected', count: counts.rejected },
-              { key: 'deleted' as const, label: 'Deleted', count: counts.deleted },
+              { key: "all" as const, label: "All", count: counts.all },
+              {
+                key: "pending_review" as const,
+                label: "Pending",
+                count: counts.pending,
+              },
+              {
+                key: "approved" as const,
+                label: "Approved",
+                count: counts.approved,
+              },
+              {
+                key: "expired" as const,
+                label: "Expired",
+                count: counts.expired,
+              },
+              {
+                key: "rejected" as const,
+                label: "Rejected",
+                count: counts.rejected,
+              },
+              {
+                key: "deleted" as const,
+                label: "Deleted",
+                count: counts.deleted,
+              },
             ] as const
           ).map((chip) => {
             const active = statusFilter === chip.key
@@ -766,11 +982,14 @@ export default function WebstoreRequestsPage() {
                 onClick={() => setStatusFilter(chip.key)}
                 className={
                   active
-                    ? 'rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-bold text-cyan-800 shadow-sm dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-200'
-                    : 'rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/60'
+                    ? "rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-bold text-cyan-800 shadow-sm dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-200"
+                    : "rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/60"
                 }
               >
-                {chip.label} <span className="ml-1 text-[11px] opacity-70">{chip.count}</span>
+                {chip.label}{" "}
+                <span className="ml-1 text-[11px] opacity-70">
+                  {chip.count}
+                </span>
               </button>
             )
           })}
@@ -780,12 +999,14 @@ export default function WebstoreRequestsPage() {
       <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Showing</span>
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+              Showing
+            </span>
             <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
               {rows.length}
             </span>
             <span className="text-xs text-slate-500 dark:text-slate-400">
-              {rows.length === 1 ? 'request' : 'requests'}
+              {rows.length === 1 ? "request" : "requests"}
             </span>
           </div>
 
@@ -797,11 +1018,15 @@ export default function WebstoreRequestsPage() {
         </div>
 
         {isError ? (
-          <div className="p-5 text-sm text-rose-600 dark:text-rose-300">Failed to load webstore requests.</div>
+          <div className="p-5 text-sm text-rose-600 dark:text-rose-300">
+            Failed to load webstore requests.
+          </div>
         ) : null}
 
         {!isLoading && !rows.length && !isError ? (
-          <div className="p-10 text-center text-sm text-slate-500 dark:text-slate-400">No webstore requests yet.</div>
+          <div className="p-10 text-center text-sm text-slate-500 dark:text-slate-400">
+            No webstore requests yet.
+          </div>
         ) : null}
 
         {rows.length > 0 ? (
@@ -810,21 +1035,33 @@ export default function WebstoreRequestsPage() {
               <thead className="bg-slate-50 text-xs uppercase text-slate-500 dark:bg-slate-950/40 dark:text-slate-400">
                 <tr>
                   <th className="px-5 py-3 text-left font-semibold">Ticket</th>
-                  <th className="px-5 py-3 text-left font-semibold">Customer</th>
-                  <th className="px-5 py-3 text-left font-semibold">Username</th>
+                  <th className="px-5 py-3 text-left font-semibold">
+                    Customer
+                  </th>
+                  <th className="px-5 py-3 text-left font-semibold">
+                    Username
+                  </th>
                   <th className="px-5 py-3 text-left font-semibold">Slug</th>
                   <th className="px-5 py-3 text-left font-semibold">Display</th>
                   <th className="px-5 py-3 text-left font-semibold">Status</th>
-                  <th className="px-5 py-3 text-left font-semibold">Submitted</th>
+                  <th className="px-5 py-3 text-left font-semibold">
+                    Submitted
+                  </th>
                   <th className="px-5 py-3 text-left font-semibold">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {rows.map((item) => {
-                  const submitted = item.submitted_at ? new Date(item.submitted_at).toLocaleString() : '-'
+                  const submitted = item.submitted_at
+                    ? new Date(item.submitted_at).toLocaleString()
+                    : "-"
                   const rawStatus = item.status as StatusKey
-                  const status: StatusKey = rawStatus === 'approved' && isExpiredItem(item) ? 'expired' : rawStatus
-                  const statusClass = statusStyles[status] ?? statusStyles.pending_review
+                  const status: StatusKey =
+                    rawStatus === "approved" && isExpiredItem(item)
+                      ? "expired"
+                      : rawStatus
+                  const statusClass =
+                    statusStyles[status] ?? statusStyles.pending_review
 
                   return (
                     <tr
@@ -839,51 +1076,86 @@ export default function WebstoreRequestsPage() {
                       <td className="px-5 py-4">
                         <div className="min-w-[180px]">
                           <p className="font-semibold text-slate-900 dark:text-slate-100">
-                            {item.customer_name || item.full_name || 'Unknown'}
+                            {item.customer_name || item.full_name || "Unknown"}
                           </p>
                           <p className="text-xs text-slate-500 dark:text-slate-400">
-                            {item.customer_email || item.email || 'No email'}
+                            {item.customer_email || item.email || "No email"}
                           </p>
                         </div>
                       </td>
-                      <td className="px-5 py-4 text-slate-600 dark:text-slate-300">{item.username ? `@${item.username}` : '-'}</td>
-                      <td className="px-5 py-4 font-semibold text-slate-900 dark:text-slate-100">{item.slug_name || '-'}</td>
-                      <td className="px-5 py-4 text-slate-700 dark:text-slate-200">{item.display_name || '-'}</td>
+                      <td className="px-5 py-4 text-slate-600 dark:text-slate-300">
+                        {item.username ? `@${item.username}` : "-"}
+                      </td>
+                      <td className="px-5 py-4 font-semibold text-slate-900 dark:text-slate-100">
+                        {item.slug_name || "-"}
+                      </td>
+                      <td className="px-5 py-4 text-slate-700 dark:text-slate-200">
+                        {item.display_name || "-"}
+                      </td>
                       <td className="px-5 py-4">
-                        <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-bold ${statusClass}`}>
+                        <span
+                          className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-bold ${statusClass}`}
+                        >
                           <span className="h-1.5 w-1.5 rounded-full bg-current opacity-80" />
                           {prettyStatus(status)}
                         </span>
                       </td>
-                      <td className="px-5 py-4 text-xs text-slate-500 dark:text-slate-400">{submitted}</td>
+                      <td className="px-5 py-4 text-xs text-slate-500 dark:text-slate-400">
+                        {submitted}
+                      </td>
                       <td className="px-5 py-4">
                         {(() => {
-                          const rowSlug = String(item.slug_name ?? '').trim().toLowerCase()
-                          const latestPendingReceipt = getLatestPendingReceipt(item.receipt_items)
+                          const rowSlug = String(item.slug_name ?? "")
+                            .trim()
+                            .toLowerCase()
+                          const latestPendingReceipt = getLatestPendingReceipt(
+                            item.receipt_items
+                          )
                           const storefront = rowSlug
                             ? (storefrontsData?.items ?? []).find((entry) => {
                                 const config = getPartnerStorefrontConfig(entry)
                                 return config?.slug === rowSlug
                               })
                             : undefined
-                          const busy = isApproving || isRejecting || isDeleting || isDeletingStorefront
+                          const busy =
+                            isApproving ||
+                            isRejecting ||
+                            isDeleting ||
+                            isDeletingStorefront
 
                           const RequestDeleteIcon = (
                             <button
                               type="button"
                               disabled={busy}
-                              onClick={() => openConfirm('delete', item.id, item.display_name, item.slug_name)}
+                              onClick={() =>
+                                openConfirm(
+                                  "delete",
+                                  item.id,
+                                  item.display_name,
+                                  item.slug_name
+                                )
+                              }
                               className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-slate-100 text-slate-700 transition hover:bg-slate-200 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
                               title="Delete request"
                               aria-label="Delete request"
                             >
-                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3M4 7h16" />
+                              <svg
+                                className="h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3M4 7h16"
+                                />
                               </svg>
-                              </button>
+                            </button>
                           )
 
-                          if (item.status === 'pending_review') {
+                          if (item.status === "pending_review") {
                             return (
                               <div className="flex flex-wrap items-center gap-2">
                                 <button
@@ -896,7 +1168,14 @@ export default function WebstoreRequestsPage() {
                                 <button
                                   type="button"
                                   disabled={busy}
-                                  onClick={() => openConfirm('approve', item.id, item.display_name, item.slug_name)}
+                                  onClick={() =>
+                                    openConfirm(
+                                      "approve",
+                                      item.id,
+                                      item.display_name,
+                                      item.slug_name
+                                    )
+                                  }
                                   className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-60 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200 dark:hover:bg-emerald-500/15"
                                 >
                                   Approve
@@ -907,17 +1186,25 @@ export default function WebstoreRequestsPage() {
                                   onClick={() => {
                                     if (latestPendingReceipt?.id != null) {
                                       openReceiptConfirm(
-                                        'reject',
+                                        "reject",
                                         latestPendingReceipt.id,
-                                        latestPendingReceipt.label ?? 'Latest receipt',
+                                        latestPendingReceipt.label ??
+                                          "Latest receipt"
                                       )
                                       return
                                     }
-                                    openConfirm('reject', item.id, item.display_name, item.slug_name)
+                                    openConfirm(
+                                      "reject",
+                                      item.id,
+                                      item.display_name,
+                                      item.slug_name
+                                    )
                                   }}
                                   className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-200 dark:hover:bg-rose-500/15"
                                 >
-                                  {latestPendingReceipt?.id != null ? 'Reject Receipt' : 'Reject'}
+                                  {latestPendingReceipt?.id != null
+                                    ? "Reject Receipt"
+                                    : "Reject"}
                                 </button>
                                 {RequestDeleteIcon}
                               </div>
@@ -953,49 +1240,62 @@ export default function WebstoreRequestsPage() {
             <div className="relative border-b border-slate-100 px-5 py-4 dark:border-slate-800">
               <div
                 className={
-                  confirm.action === 'approve'
-                    ? 'absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 via-emerald-400 to-emerald-500'
-                    : confirm.action === 'reject' || confirm.action === 'delete'
-                      ? 'absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-rose-500 via-rose-400 to-rose-500'
-                      : 'absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-slate-500 via-slate-400 to-slate-500'
+                  confirm.action === "approve"
+                    ? "absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 via-emerald-400 to-emerald-500"
+                    : confirm.action === "reject" || confirm.action === "delete"
+                      ? "absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-rose-500 via-rose-400 to-rose-500"
+                      : "absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-slate-500 via-slate-400 to-slate-500"
                 }
               />
               <div className="pt-2">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                  {confirm.action === 'approve'
-                    ? 'Confirm Approval'
-                    : confirm.action === 'reject'
-                      ? 'Confirm Rejection'
-                      : 'Confirm Delete'}
+                  {confirm.action === "approve"
+                    ? "Confirm Approval"
+                    : confirm.action === "reject"
+                      ? "Confirm Rejection"
+                      : "Confirm Delete"}
                 </h3>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  {confirm.action === 'approve'
-                    ? 'Approving will also auto-create or update partner storefront using slug and display name.'
-                    : confirm.action === 'reject'
-                      ? 'This will mark the request as rejected.'
-                      : 'This will permanently remove the request and linked partner storefront (if it exists).'}
+                  {confirm.action === "approve"
+                    ? "Approving will also auto-create or update partner storefront using slug and display name."
+                    : confirm.action === "reject"
+                      ? "This will mark the request as rejected."
+                      : "This will permanently remove the request and linked partner storefront (if it exists)."}
                 </p>
               </div>
             </div>
 
             <div className="p-5 space-y-3">
               <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-800/50">
-                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Display name</p>
-                <p className="mt-1 text-sm font-bold text-slate-900 dark:text-slate-100">{confirm.displayName || '-'}</p>
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  Display name
+                </p>
+                <p className="mt-1 text-sm font-bold text-slate-900 dark:text-slate-100">
+                  {confirm.displayName || "-"}
+                </p>
               </div>
               <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-800/50">
-                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Slug</p>
-                <p className="mt-1 text-sm font-bold text-slate-900 dark:text-slate-100">{confirm.slugName || '-'}</p>
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  Slug
+                </p>
+                <p className="mt-1 text-sm font-bold text-slate-900 dark:text-slate-100">
+                  {confirm.slugName || "-"}
+                </p>
               </div>
-              {confirm.action === 'delete' ? (
+              {confirm.action === "delete" ? (
                 <label className="flex items-start gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
                   <input
                     type="checkbox"
                     checked={deleteAcknowledge}
-                    onChange={(event) => setDeleteAcknowledge(event.target.checked)}
+                    onChange={(event) =>
+                      setDeleteAcknowledge(event.target.checked)
+                    }
                     className="mt-0.5 h-4 w-4 rounded border-rose-300 text-rose-600 focus:ring-rose-500/40 dark:border-rose-500/40"
                   />
-                  <span>I understand this delete action is permanent and cannot be undone.</span>
+                  <span>
+                    I understand this delete action is permanent and cannot be
+                    undone.
+                  </span>
                 </label>
               ) : null}
             </div>
@@ -1015,29 +1315,29 @@ export default function WebstoreRequestsPage() {
                   isRejecting ||
                   isDeleting ||
                   isDeletingStorefront ||
-                  (confirm.action === 'delete' && !deleteAcknowledge)
+                  (confirm.action === "delete" && !deleteAcknowledge)
                 }
                 onClick={handleConfirm}
                 className={
-                  'rounded-2xl px-4 py-2 text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60 ' +
-                  (confirm.action === 'approve'
-                    ? 'bg-emerald-600 hover:bg-emerald-700'
-                    : confirm.action === 'reject'
-                      ? 'bg-rose-600 hover:bg-rose-700'
-                      : 'bg-slate-700 hover:bg-slate-800')
+                  "rounded-2xl px-4 py-2 text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60 " +
+                  (confirm.action === "approve"
+                    ? "bg-emerald-600 hover:bg-emerald-700"
+                    : confirm.action === "reject"
+                      ? "bg-rose-600 hover:bg-rose-700"
+                      : "bg-slate-700 hover:bg-slate-800")
                 }
               >
-                {confirm.action === 'approve'
+                {confirm.action === "approve"
                   ? isApproving
-                    ? 'Approving...'
-                    : 'Confirm Approval'
-                  : confirm.action === 'reject'
+                    ? "Approving..."
+                    : "Confirm Approval"
+                  : confirm.action === "reject"
                     ? isRejecting
-                      ? 'Rejecting...'
-                      : 'Confirm Rejection'
+                      ? "Rejecting..."
+                      : "Confirm Rejection"
                     : isDeleting || isDeletingStorefront
-                      ? 'Deleting...'
-                      : 'Confirm Delete'}
+                      ? "Deleting..."
+                      : "Confirm Delete"}
               </button>
             </div>
           </div>
@@ -1071,7 +1371,9 @@ export default function WebstoreRequestsPage() {
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/60 px-5 py-4 dark:border-slate-800">
                   <div className="flex items-center gap-2">
                     <span className="inline-flex h-2.5 w-2.5 rounded-full bg-cyan-500 shadow-[0_0_0_4px_rgba(6,182,212,0.14)]" />
-                    <p className="text-sm font-bold text-slate-800 dark:text-slate-100">Subscription Summary</p>
+                    <p className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                      Subscription Summary
+                    </p>
                   </div>
                   <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200 dark:bg-slate-950/40 dark:text-slate-200 dark:ring-slate-800">
                     Webstore Receipt
@@ -1080,305 +1382,589 @@ export default function WebstoreRequestsPage() {
 
                 <div className="p-4 sm:p-5">
                   <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
-                      <div className="grid gap-px sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
-                        {/* Customer */}
-                        <div className="flex min-h-[112px] min-w-0 flex-col items-center justify-start border-r border-slate-200 px-3 py-3 text-center dark:border-slate-800">
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-blue-500 ring-1 ring-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:ring-blue-500/20">
-                              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A9 9 0 1118.9 6.02 9 9 0 015.12 17.804z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                              </svg>
-                            </span>
-                            <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">Customer</p>
-                          </div>
-                          <p className="mt-1 max-w-full break-words text-sm font-semibold leading-tight text-[#163060]">
-                            {details.customerName || '-'}
+                    <div className="grid gap-px sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+                      {/* Customer */}
+                      <div className="flex min-h-[112px] min-w-0 flex-col items-center justify-start border-r border-slate-200 px-3 py-3 text-center dark:border-slate-800">
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-blue-500 ring-1 ring-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:ring-blue-500/20">
+                            <svg
+                              className="h-3.5 w-3.5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M5.121 17.804A9 9 0 1118.9 6.02 9 9 0 015.12 17.804z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                              />
+                            </svg>
+                          </span>
+                          <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">
+                            Customer
                           </p>
                         </div>
-
-                        {/* Plan & Terms */}
-                        <div className="flex min-h-[112px] min-w-0 flex-col items-center justify-start border-r border-slate-200 px-3 py-3 text-center dark:border-slate-800">
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-50 text-emerald-500 ring-1 ring-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20">
-                              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5h6M9 9h6M9 13h6M7 3h10a2 2 0 012 2v14l-4-2-4 2-4-2-4 2V5a2 2 0 012-2z" />
-                              </svg>
-                            </span>
-                            <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">Plan &amp; Terms</p>
-                          </div>
-                          <div className="mt-1 inline-flex flex-col items-center">
-                            <span className="max-w-full break-words text-center text-sm font-semibold leading-tight text-[#163060]">
-                              {formatPlanLabel(details.plan)}
-                            </span>
-                            <span className="mt-1 inline-flex w-fit whitespace-nowrap rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-200 dark:ring-emerald-500/30">
-                              {formatPlanTermLabel(details.plan, details.planTerm)}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Subscription fee */}
-                        <div className="flex min-h-[112px] min-w-0 flex-col items-center justify-start border-r border-slate-200 px-3 py-3 text-center dark:border-slate-800">
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-orange-50 text-orange-500 ring-1 ring-orange-100 dark:bg-orange-500/10 dark:text-orange-300 dark:ring-orange-500/20">
-                              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-2.21 0-4 .9-4 2s1.79 2 4 2 4 .9 4 2-1.79 2-4 2m0-8c1.11 0 2.09.28 2.75.72M12 8V6m0 12v-2" />
-                              </svg>
-                            </span>
-                            <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">Sub fee &amp; Monthly cost</p>
-                          </div>
-                          <div className="mt-1 inline-flex flex-col items-center">
-                            <span className="max-w-full break-words text-center text-sm font-semibold leading-tight text-[#163060]">
-                              {details.subscriptionFee != null ? `₱${Number(details.subscriptionFee).toLocaleString()}` : '-'}
-                            </span>
-                            <span className="mt-1 inline-flex w-fit whitespace-nowrap rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-200 dark:ring-amber-500/30">
-                              {details.effectiveMonthly != null ? `₱${Number(details.effectiveMonthly).toLocaleString()}` : '-'}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Billing & Payment */}
-                        <div className="flex min-h-[112px] min-w-0 flex-col items-center justify-start border-r border-slate-200 px-3 py-3 text-center dark:border-slate-800">
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-blue-500 ring-1 ring-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:ring-blue-500/20">
-                              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h18M5 7v10a2 2 0 002 2h12a2 2 0 002-2V7M5 11h14" />
-                              </svg>
-                            </span>
-                            <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">Billing &amp; Payment Method</p>
-                          </div>
-                          <div className="mt-1 inline-flex flex-col items-center">
-                            <span className="max-w-full break-words text-center text-sm font-semibold leading-tight text-[#163060]">
-                              {formatBillingLabel(details.billingOption)}
-                            </span>
-                            <span className="mt-1 inline-flex w-fit whitespace-nowrap rounded-full bg-sky-50 px-3 py-1 text-xs font-bold text-sky-700 ring-1 ring-sky-200 dark:bg-sky-500/10 dark:text-sky-200 dark:ring-sky-500/30">
-                              {formatPaymentMethodLabel(details.paymentMethod)}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Start Date */}
-                        <div className="flex min-h-[112px] min-w-0 flex-col items-center justify-start border-r border-slate-200 px-3 py-3 text-center dark:border-slate-800">
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-violet-50 text-violet-500 ring-1 ring-violet-100 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20">
-                              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 2v4M16 2v4M3 10h18M5 6h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
-                              </svg>
-                            </span>
-                            <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">Start Date</p>
-                          </div>
-                          <p className="mt-1 max-w-full break-words text-center text-sm font-semibold leading-tight text-[#163060]">
-                            {formatDate(
-                              String(details.billingOption ?? '').toLowerCase() !== 'monthly'
-                                ? (details.receiptItems ?? []).reduce<string | null | undefined>((latest, r) => {
-                                    if (r?.type !== 'webstore_payment_continuation') return latest
-                                    if (r?.approvalStatus !== 'approved' && !r?.approvedAt) return latest
-                                    const t = parseDateSafe(r?.approvedAt)
-                                    const l = parseDateSafe(latest)
-                                    return t && (!l || t > l) ? r.approvedAt : latest
-                                  }, null) || details.approvedAt
-                                : details.approvedAt
-                            )}
-                          </p>
-                        </div>
-
-                        {/* End Date */}
-                        <div className="flex min-h-[112px] min-w-0 flex-col items-center justify-start border-r border-slate-200 px-3 py-3 text-center dark:border-slate-800">
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-rose-50 text-rose-500 ring-1 ring-rose-100 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-500/20">
-                              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 2v4M16 2v4M3 10h18M5 6h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
-                              </svg>
-                            </span>
-                            <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">End Date</p>
-                          </div>
-                          <p className="mt-1 max-w-full break-words text-center text-sm font-semibold leading-tight text-[#163060]">
-                            {computeEndDate(
-                              details.approvedAt,
-                              details.billingOption,
-                              details.plan,
-                              details.planTerm,
-                              details.status,
-                              details.receiptItems,
-                            )}
-                          </p>
-                        </div>
-
+                        <p className="mt-1 max-w-full break-words text-sm font-semibold leading-tight text-[#163060]">
+                          {details.customerName || "-"}
+                        </p>
                       </div>
 
-                      {/* Receipt */}
-                      <div className="border-t border-slate-200 px-2 py-3 text-left dark:border-slate-800">
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-blue-500 ring-1 ring-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:ring-blue-500/20">
-                              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 4h14a1 1 0 011 1v14l-3-2-3 2-3-2-3 2-3-2-3 2V5a1 1 0 011-1z" />
-                              </svg>
-                            </span>
-                            <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">Receipt</p>
-                          </div>
-                          <div className="mt-0.5 grid max-h-[360px] grid-cols-1 gap-3 overflow-y-auto pr-1 sm:grid-cols-2 xl:grid-cols-3">
-                            {Array.isArray(details.receiptItems) && details.receiptItems.length > 0 ? (
-                              [...details.receiptItems].reverse().map((receipt, index) => {
-                                const urls = Array.isArray(receipt.receiptUrls) ? receipt.receiptUrls : []
-                                const primaryUrl = urls.find(u => /\.(png|jpg|jpeg|webp|gif)(\?.*)?$/i.test(u) || u.includes('res.cloudinary.com')) ?? null
-                                const receiptId = receipt.id ?? null
-                                const requestStatus = String(details.status ?? '').toLowerCase()
-                                const receiptStatus =
-                                  receipt.type !== 'webstore_payment_continuation'
-                                    ? (requestStatus === 'approved'
-                                        ? 'approved'
-                                        : requestStatus === 'rejected'
-                                          ? 'rejected'
-                                          : getReceiptStatus(receipt))
-                                    : getReceiptStatus(receipt)
-                                const isApproved = receiptStatus === 'approved'
-                                const isRejected = receiptStatus === 'rejected'
-                                const canReview = receipt.type === 'webstore_payment_continuation' && !isApproved && !isRejected && receiptId != null
-                                return (
-                                  <div key={`${receipt.label ?? 'receipt'}-${index}`} className="w-full overflow-hidden rounded-2xl border border-sky-100 bg-sky-50/60 shadow-sm dark:border-sky-500/20 dark:bg-sky-500/10">
-                                    <button
-                                      type="button"
-                                      disabled={!primaryUrl}
-                                      onClick={() => openReceiptPreview(urls, receipt.label ?? `Receipt ${index + 1}`)}
-                                      className="block w-full text-left transition hover:bg-white/50 disabled:cursor-not-allowed disabled:opacity-60 dark:hover:bg-slate-950/20"
-                                      aria-label={primaryUrl ? `Preview ${receipt.label ?? `Receipt ${index + 1}`}` : `${receipt.label ?? `Receipt ${index + 1}`} has no image`}
-                                    >
-                                      <div className="relative aspect-[4/3] overflow-hidden bg-slate-100 dark:bg-slate-950/40">
-                                        {primaryUrl ? (
-                                          <img
-                                            src={primaryUrl}
-                                            alt={receipt.label ?? `Receipt ${index + 1}`}
-                                            className="h-full w-full object-cover"
-                                          />
-                                        ) : (
-                                          <div className="flex h-full w-full items-center justify-center">
-                                            <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white text-sky-500 ring-1 ring-sky-200 dark:bg-slate-900 dark:ring-sky-500/30">
-                                              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 4h14a1 1 0 011 1v14l-3-2-3 2-3-2-3 2-3-2-3 2V5a1 1 0 011-1z" />
-                                              </svg>
-                                            </span>
-                                          </div>
-                                        )}
-                                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/70 to-transparent px-3 py-2 text-white">
-                                          <div className="flex items-end justify-between gap-2">
-                                            <p className="truncate text-xs font-bold">{receipt.label ?? `Receipt ${index + 1}`}</p>
-                                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${isApproved ? 'bg-emerald-500/20 text-emerald-100' : isRejected ? 'bg-rose-500/20 text-rose-100' : 'bg-amber-500/20 text-amber-100'}`}>
-                                              {isApproved ? 'Approved' : isRejected ? 'Rejected' : 'Pending'}
-                                            </span>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </button>
-                                    <div className="px-3 py-2 space-y-1.5">
-                                      <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
-                                        {formatDateTime(receipt.submittedAt)}
-                                      </p>
-                                      {(() => {
-                                        // Prefer the checkout/session ID because that is what PayMongo
-                                        // prints on the receipt image — it is unique per payment attempt.
-                                        // paymentReference can be shared across continuation payments,
-                                        // which would cause false "Matches" badges.
-                                        const getCardFilename = (url: string) => {
-                                          try { return decodeURIComponent(new URL(url).pathname.split('/').pop() ?? '').toLowerCase() }
-                                          catch { return decodeURIComponent(url.split('/').pop()?.split('?')[0] ?? '').toLowerCase() }
-                                        }
-                                        const cardUrls = Array.isArray(receipt.receiptUrls) ? receipt.receiptUrls : []
-                                        const refMatch = latestReceiptReferenceId.length > 0 && cardUrls.some(url => getCardFilename(url).includes(latestReceiptReferenceId.toLowerCase()))
-                                        if (isApproved) {
-                                          return (
-                                            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[9px] font-bold text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
-                                              <svg className="h-2.5 w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/></svg>
-                                              Approved
-                                            </span>
-                                          )
-                                        }
-                                        if (isRejected) {
-                                          return (
-                                            <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[9px] font-bold text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
-                                              <svg className="h-2.5 w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
-                                              Rejected
-                                            </span>
-                                          )
-                                        }
-                                        return (
-                                          <div className="space-y-0.5">
-                                            {refMatch ? (
-                                              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[9px] font-bold text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
-                                                <svg className="h-2.5 w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/></svg>
-                                                Matches ref
-                                              </span>
-                                            ) : (
-                                              <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[9px] font-bold text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
-                                                <svg className="h-2.5 w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
-                                                No match
-                                              </span>
-                                            )}
-                                          </div>
-                                        )
-                                      })()}
-                                    </div>
-                                    <div className="mt-1.5 flex flex-col gap-1">
-                                      {canReview ? (
-                                        <>
-                                          <button
-                                            type="button"
-                                            onClick={() => receiptId != null && openReceiptConfirm('approve', receiptId, receipt.label ?? `Receipt ${index + 1}`)}
-                                            disabled={isApprovingReceipt || isRejectingReceipt}
-                                            className="w-full rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200 dark:hover:bg-emerald-500/15"
-                                          >
-                                            Approve
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={() => receiptId != null && openReceiptConfirm('reject', receiptId, receipt.label ?? `Receipt ${index + 1}`)}
-                                            disabled={isApprovingReceipt || isRejectingReceipt}
-                                            className="w-full rounded-full border border-rose-200 bg-rose-50 px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-200 dark:hover:bg-rose-500/15"
-                                          >
-                                            Reject
-                                          </button>
-                                        </>
-                                      ) : null}
-                                    </div>
-                                  </div>
-                                )
-                              })
-                            ) : Array.isArray(details.receiptUrls) && details.receiptUrls.length > 0 ? (
-                              details.receiptUrls.map((url, index) => (
-                                  <div key={`${url}-${index}`} className="w-full overflow-hidden rounded-2xl border border-sky-100 bg-sky-50/60 shadow-sm dark:border-sky-500/20 dark:bg-sky-500/10">
-                                    <button
-                                      type="button"
-                                      onClick={() => openReceiptPreview([url], `Receipt ${index + 1}`, 0)}
-                                    className="block w-full text-left transition hover:bg-white/50 dark:hover:bg-slate-950/20"
-                                    aria-label={`Preview Receipt ${index + 1}`}
+                      {/* Plan & Terms */}
+                      <div className="flex min-h-[112px] min-w-0 flex-col items-center justify-start border-r border-slate-200 px-3 py-3 text-center dark:border-slate-800">
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-50 text-emerald-500 ring-1 ring-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20">
+                            <svg
+                              className="h-3.5 w-3.5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 5h6M9 9h6M9 13h6M7 3h10a2 2 0 012 2v14l-4-2-4 2-4-2-4 2V5a2 2 0 012-2z"
+                              />
+                            </svg>
+                          </span>
+                          <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">
+                            Plan &amp; Terms
+                          </p>
+                        </div>
+                        <div className="mt-1 inline-flex flex-col items-center">
+                          <span className="max-w-full break-words text-center text-sm font-semibold leading-tight text-[#163060]">
+                            {formatPlanLabel(details.plan)}
+                          </span>
+                          <span className="mt-1 inline-flex w-fit whitespace-nowrap rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-200 dark:ring-emerald-500/30">
+                            {formatPlanTermLabel(
+                              details.plan,
+                              details.planTerm
+                            )}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Subscription fee */}
+                      <div className="flex min-h-[112px] min-w-0 flex-col items-center justify-start border-r border-slate-200 px-3 py-3 text-center dark:border-slate-800">
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-orange-50 text-orange-500 ring-1 ring-orange-100 dark:bg-orange-500/10 dark:text-orange-300 dark:ring-orange-500/20">
+                            <svg
+                              className="h-3.5 w-3.5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 8c-2.21 0-4 .9-4 2s1.79 2 4 2 4 .9 4 2-1.79 2-4 2m0-8c1.11 0 2.09.28 2.75.72M12 8V6m0 12v-2"
+                              />
+                            </svg>
+                          </span>
+                          <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">
+                            Sub fee &amp; Monthly cost
+                          </p>
+                        </div>
+                        <div className="mt-1 inline-flex flex-col items-center">
+                          <span className="max-w-full break-words text-center text-sm font-semibold leading-tight text-[#163060]">
+                            {details.subscriptionFee != null
+                              ? `₱${Number(details.subscriptionFee).toLocaleString()}`
+                              : "-"}
+                          </span>
+                          <span className="mt-1 inline-flex w-fit whitespace-nowrap rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-200 dark:ring-amber-500/30">
+                            {details.effectiveMonthly != null
+                              ? `₱${Number(details.effectiveMonthly).toLocaleString()}`
+                              : "-"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Billing & Payment */}
+                      <div className="flex min-h-[112px] min-w-0 flex-col items-center justify-start border-r border-slate-200 px-3 py-3 text-center dark:border-slate-800">
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-blue-500 ring-1 ring-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:ring-blue-500/20">
+                            <svg
+                              className="h-3.5 w-3.5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M3 7h18M5 7v10a2 2 0 002 2h12a2 2 0 002-2V7M5 11h14"
+                              />
+                            </svg>
+                          </span>
+                          <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">
+                            Billing &amp; Payment Method
+                          </p>
+                        </div>
+                        <div className="mt-1 inline-flex flex-col items-center">
+                          <span className="max-w-full break-words text-center text-sm font-semibold leading-tight text-[#163060]">
+                            {formatBillingLabel(details.billingOption)}
+                          </span>
+                          <span className="mt-1 inline-flex w-fit whitespace-nowrap rounded-full bg-sky-50 px-3 py-1 text-xs font-bold text-sky-700 ring-1 ring-sky-200 dark:bg-sky-500/10 dark:text-sky-200 dark:ring-sky-500/30">
+                            {formatPaymentMethodLabel(details.paymentMethod)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Start Date */}
+                      <div className="flex min-h-[112px] min-w-0 flex-col items-center justify-start border-r border-slate-200 px-3 py-3 text-center dark:border-slate-800">
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-violet-50 text-violet-500 ring-1 ring-violet-100 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20">
+                            <svg
+                              className="h-3.5 w-3.5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M8 2v4M16 2v4M3 10h18M5 6h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z"
+                              />
+                            </svg>
+                          </span>
+                          <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">
+                            Start Date
+                          </p>
+                        </div>
+                        <p className="mt-1 max-w-full break-words text-center text-sm font-semibold leading-tight text-[#163060]">
+                          {formatDate(
+                            String(
+                              details.billingOption ?? ""
+                            ).toLowerCase() !== "monthly"
+                              ? (details.receiptItems ?? []).reduce<
+                                  string | null | undefined
+                                >((latest, r) => {
+                                  if (
+                                    r?.type !== "webstore_payment_continuation"
+                                  )
+                                    return latest
+                                  if (
+                                    r?.approvalStatus !== "approved" &&
+                                    !r?.approvedAt
+                                  )
+                                    return latest
+                                  const t = parseDateSafe(r?.approvedAt)
+                                  const l = parseDateSafe(latest)
+                                  return t && (!l || t > l)
+                                    ? r.approvedAt
+                                    : latest
+                                }, null) || details.approvedAt
+                              : details.approvedAt
+                          )}
+                        </p>
+                      </div>
+
+                      {/* End Date */}
+                      <div className="flex min-h-[112px] min-w-0 flex-col items-center justify-start border-r border-slate-200 px-3 py-3 text-center dark:border-slate-800">
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-rose-50 text-rose-500 ring-1 ring-rose-100 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-500/20">
+                            <svg
+                              className="h-3.5 w-3.5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M8 2v4M16 2v4M3 10h18M5 6h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z"
+                              />
+                            </svg>
+                          </span>
+                          <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">
+                            End Date
+                          </p>
+                        </div>
+                        <p className="mt-1 max-w-full break-words text-center text-sm font-semibold leading-tight text-[#163060]">
+                          {computeEndDate(
+                            details.approvedAt,
+                            details.billingOption,
+                            details.plan,
+                            details.planTerm,
+                            details.status,
+                            details.receiptItems
+                          )}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Receipt */}
+                    <div className="border-t border-slate-200 px-2 py-3 text-left dark:border-slate-800">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-blue-500 ring-1 ring-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:ring-blue-500/20">
+                          <svg
+                            className="h-3.5 w-3.5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M5 4h14a1 1 0 011 1v14l-3-2-3 2-3-2-3 2-3-2-3 2V5a1 1 0 011-1z"
+                            />
+                          </svg>
+                        </span>
+                        <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">
+                          Receipt
+                        </p>
+                      </div>
+                      <div className="mt-0.5 grid max-h-[360px] grid-cols-1 gap-3 overflow-y-auto pr-1 sm:grid-cols-2 xl:grid-cols-3">
+                        {Array.isArray(details.receiptItems) &&
+                        details.receiptItems.length > 0 ? (
+                          [...details.receiptItems]
+                            .reverse()
+                            .map((receipt, index) => {
+                              const urls = Array.isArray(receipt.receiptUrls)
+                                ? receipt.receiptUrls
+                                : []
+                              const primaryUrl =
+                                urls.find(
+                                  (u) =>
+                                    /\.(png|jpg|jpeg|webp|gif)(\?.*)?$/i.test(
+                                      u
+                                    ) || u.includes("res.cloudinary.com")
+                                ) ?? null
+                              const receiptId = receipt.id ?? null
+                              const requestStatus = String(
+                                details.status ?? ""
+                              ).toLowerCase()
+                              const receiptStatus =
+                                receipt.type !== "webstore_payment_continuation"
+                                  ? requestStatus === "approved"
+                                    ? "approved"
+                                    : requestStatus === "rejected"
+                                      ? "rejected"
+                                      : getReceiptStatus(receipt)
+                                  : getReceiptStatus(receipt)
+                              const isApproved = receiptStatus === "approved"
+                              const isRejected = receiptStatus === "rejected"
+                              const canReview =
+                                receipt.type ===
+                                  "webstore_payment_continuation" &&
+                                !isApproved &&
+                                !isRejected &&
+                                receiptId != null
+                              return (
+                                <div
+                                  key={`${receipt.label ?? "receipt"}-${index}`}
+                                  className="w-full overflow-hidden rounded-2xl border border-sky-100 bg-sky-50/60 shadow-sm dark:border-sky-500/20 dark:bg-sky-500/10"
+                                >
+                                  <button
+                                    type="button"
+                                    disabled={!primaryUrl}
+                                    onClick={() =>
+                                      openReceiptPreview(
+                                        urls,
+                                        receipt.label ?? `Receipt ${index + 1}`
+                                      )
+                                    }
+                                    className="block w-full text-left transition hover:bg-white/50 disabled:cursor-not-allowed disabled:opacity-60 dark:hover:bg-slate-950/20"
+                                    aria-label={
+                                      primaryUrl
+                                        ? `Preview ${receipt.label ?? `Receipt ${index + 1}`}`
+                                        : `${receipt.label ?? `Receipt ${index + 1}`} has no image`
+                                    }
                                   >
                                     <div className="relative aspect-[4/3] overflow-hidden bg-slate-100 dark:bg-slate-950/40">
-                                      <img src={url} alt={`Receipt ${index + 1}`} className="h-full w-full object-cover" />
+                                      {primaryUrl ? (
+                                        <img
+                                          src={primaryUrl}
+                                          alt={
+                                            receipt.label ??
+                                            `Receipt ${index + 1}`
+                                          }
+                                          className="h-full w-full object-cover"
+                                        />
+                                      ) : (
+                                        <div className="flex h-full w-full items-center justify-center">
+                                          <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white text-sky-500 ring-1 ring-sky-200 dark:bg-slate-900 dark:ring-sky-500/30">
+                                            <svg
+                                              className="h-6 w-6"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M5 4h14a1 1 0 011 1v14l-3-2-3 2-3-2-3 2-3-2-3 2V5a1 1 0 011-1z"
+                                              />
+                                            </svg>
+                                          </span>
+                                        </div>
+                                      )}
                                       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/70 to-transparent px-3 py-2 text-white">
                                         <div className="flex items-end justify-between gap-2">
-                                          <p className="truncate text-xs font-bold">Receipt {index + 1}</p>
-                                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${fallbackReceiptBadgeText === 'Approved' ? 'bg-emerald-500/20 text-emerald-100' : fallbackReceiptBadgeText === 'Rejected' ? 'bg-rose-500/20 text-rose-100' : 'bg-amber-500/20 text-amber-100'}`}>
-                                            {fallbackReceiptBadgeText}
+                                          <p className="truncate text-xs font-bold">
+                                            {receipt.label ??
+                                              `Receipt ${index + 1}`}
+                                          </p>
+                                          <span
+                                            className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${isApproved ? "bg-emerald-500/20 text-emerald-100" : isRejected ? "bg-rose-500/20 text-rose-100" : "bg-amber-500/20 text-amber-100"}`}
+                                          >
+                                            {isApproved
+                                              ? "Approved"
+                                              : isRejected
+                                                ? "Rejected"
+                                                : "Pending"}
                                           </span>
                                         </div>
                                       </div>
                                     </div>
                                   </button>
+                                  <div className="px-3 py-2 space-y-1.5">
+                                    <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                                      {formatDateTime(receipt.submittedAt)}
+                                    </p>
+                                    {(() => {
+                                      // Prefer the checkout/session ID because that is what PayMongo
+                                      // prints on the receipt image — it is unique per payment attempt.
+                                      // paymentReference can be shared across continuation payments,
+                                      // which would cause false "Matches" badges.
+                                      const getCardFilename = (url: string) => {
+                                        try {
+                                          return decodeURIComponent(
+                                            new URL(url).pathname
+                                              .split("/")
+                                              .pop() ?? ""
+                                          ).toLowerCase()
+                                        } catch {
+                                          return decodeURIComponent(
+                                            url
+                                              .split("/")
+                                              .pop()
+                                              ?.split("?")[0] ?? ""
+                                          ).toLowerCase()
+                                        }
+                                      }
+                                      const cardUrls = Array.isArray(
+                                        receipt.receiptUrls
+                                      )
+                                        ? receipt.receiptUrls
+                                        : []
+                                      const refMatch =
+                                        latestReceiptReferenceId.length > 0 &&
+                                        cardUrls.some((url) =>
+                                          getCardFilename(url).includes(
+                                            latestReceiptReferenceId.toLowerCase()
+                                          )
+                                        )
+                                      if (isApproved) {
+                                        return (
+                                          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[9px] font-bold text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
+                                            <svg
+                                              className="h-2.5 w-2.5"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2.5}
+                                                d="M5 13l4 4L19 7"
+                                              />
+                                            </svg>
+                                            Approved
+                                          </span>
+                                        )
+                                      }
+                                      if (isRejected) {
+                                        return (
+                                          <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[9px] font-bold text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
+                                            <svg
+                                              className="h-2.5 w-2.5"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M6 18L18 6M6 6l12 12"
+                                              />
+                                            </svg>
+                                            Rejected
+                                          </span>
+                                        )
+                                      }
+                                      return (
+                                        <div className="space-y-0.5">
+                                          {refMatch ? (
+                                            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[9px] font-bold text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
+                                              <svg
+                                                className="h-2.5 w-2.5"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2.5}
+                                                  d="M5 13l4 4L19 7"
+                                                />
+                                              </svg>
+                                              Matches ref
+                                            </span>
+                                          ) : (
+                                            <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[9px] font-bold text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
+                                              <svg
+                                                className="h-2.5 w-2.5"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M6 18L18 6M6 6l12 12"
+                                                />
+                                              </svg>
+                                              No match
+                                            </span>
+                                          )}
+                                        </div>
+                                      )
+                                    })()}
+                                  </div>
+                                  <div className="mt-1.5 flex flex-col gap-1">
+                                    {canReview ? (
+                                      <>
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            receiptId != null &&
+                                            openReceiptConfirm(
+                                              "approve",
+                                              receiptId,
+                                              receipt.label ??
+                                                `Receipt ${index + 1}`
+                                            )
+                                          }
+                                          disabled={
+                                            isApprovingReceipt ||
+                                            isRejectingReceipt
+                                          }
+                                          className="w-full rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200 dark:hover:bg-emerald-500/15"
+                                        >
+                                          Approve
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            receiptId != null &&
+                                            openReceiptConfirm(
+                                              "reject",
+                                              receiptId,
+                                              receipt.label ??
+                                                `Receipt ${index + 1}`
+                                            )
+                                          }
+                                          disabled={
+                                            isApprovingReceipt ||
+                                            isRejectingReceipt
+                                          }
+                                          className="w-full rounded-full border border-rose-200 bg-rose-50 px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-200 dark:hover:bg-rose-500/15"
+                                        >
+                                          Reject
+                                        </button>
+                                      </>
+                                    ) : null}
+                                  </div>
                                 </div>
-                              ))
-                            ) : (
-                              <span className="text-sm font-semibold text-slate-400">-</span>
-                            )}
-                          </div>
+                              )
+                            })
+                        ) : Array.isArray(details.receiptUrls) &&
+                          details.receiptUrls.length > 0 ? (
+                          details.receiptUrls.map((url, index) => (
+                            <div
+                              key={`${url}-${index}`}
+                              className="w-full overflow-hidden rounded-2xl border border-sky-100 bg-sky-50/60 shadow-sm dark:border-sky-500/20 dark:bg-sky-500/10"
+                            >
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openReceiptPreview(
+                                    [url],
+                                    `Receipt ${index + 1}`,
+                                    0
+                                  )
+                                }
+                                className="block w-full text-left transition hover:bg-white/50 dark:hover:bg-slate-950/20"
+                                aria-label={`Preview Receipt ${index + 1}`}
+                              >
+                                <div className="relative aspect-[4/3] overflow-hidden bg-slate-100 dark:bg-slate-950/40">
+                                  <img
+                                    src={url}
+                                    alt={`Receipt ${index + 1}`}
+                                    className="h-full w-full object-cover"
+                                  />
+                                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/70 to-transparent px-3 py-2 text-white">
+                                    <div className="flex items-end justify-between gap-2">
+                                      <p className="truncate text-xs font-bold">
+                                        Receipt {index + 1}
+                                      </p>
+                                      <span
+                                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${fallbackReceiptBadgeText === "Approved" ? "bg-emerald-500/20 text-emerald-100" : fallbackReceiptBadgeText === "Rejected" ? "bg-rose-500/20 text-rose-100" : "bg-amber-500/20 text-amber-100"}`}
+                                      >
+                                        {fallbackReceiptBadgeText}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </button>
+                            </div>
+                          ))
+                        ) : (
+                          <span className="text-sm font-semibold text-slate-400">
+                            -
+                          </span>
+                        )}
                       </div>
+                    </div>
                     <div className="grid grid-cols-1 border-t border-slate-200/70 md:grid-cols-3">
                       <div className="border-b border-slate-200 p-4 md:border-b-0 md:border-r dark:border-slate-800">
                         <div className="flex items-center gap-2">
                           <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-50 text-emerald-500 ring-1 ring-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20">
-                            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h10M7 11h10M7 15h6M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
+                            <svg
+                              className="h-3.5 w-3.5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M7 7h10M7 11h10M7 15h6M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z"
+                              />
                             </svg>
                           </span>
-                          <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">Payment Reference No.</p>
+                          <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">
+                            Payment Reference No.
+                          </p>
                         </div>
                         {latestReceiptReferenceId ? (
                           <>
@@ -1389,24 +1975,59 @@ export default function WebstoreRequestsPage() {
                               // Check if the reference appears in the filename of ANY receipt image.
                               const getFilename = (url: string) => {
                                 try {
-                                  return decodeURIComponent(new URL(url).pathname.split('/').pop() ?? '')
+                                  return decodeURIComponent(
+                                    new URL(url).pathname.split("/").pop() ?? ""
+                                  )
                                 } catch {
-                                  return decodeURIComponent(url.split('/').pop()?.split('?')[0] ?? '')
+                                  return decodeURIComponent(
+                                    url.split("/").pop()?.split("?")[0] ?? ""
+                                  )
                                 }
                               }
-                              const allUrls = receiptItems[receiptItems.length - 1]?.receiptUrls ?? []
-                              const filenameMatch = latestReceiptReferenceId.length > 0 && allUrls.some(url => {
-                                const filename = getFilename(url).toLowerCase()
-                                return filename.includes(latestReceiptReferenceId.toLowerCase())
-                              })
+                              const allUrls =
+                                receiptItems[receiptItems.length - 1]
+                                  ?.receiptUrls ?? []
+                              const filenameMatch =
+                                latestReceiptReferenceId.length > 0 &&
+                                allUrls.some((url) => {
+                                  const filename =
+                                    getFilename(url).toLowerCase()
+                                  return filename.includes(
+                                    latestReceiptReferenceId.toLowerCase()
+                                  )
+                                })
                               return filenameMatch ? (
                                 <span className="mt-1.5 inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
-                                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/></svg>
+                                  <svg
+                                    className="h-3 w-3"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2.5}
+                                      d="M5 13l4 4L19 7"
+                                    />
+                                  </svg>
                                   Verified
                                 </span>
                               ) : (
                                 <span className="mt-1.5 inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
-                                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+                                  <svg
+                                    className="h-3 w-3"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M6 18L18 6M6 6l12 12"
+                                    />
+                                  </svg>
                                   No receipt match
                                 </span>
                               )
@@ -1421,24 +2042,50 @@ export default function WebstoreRequestsPage() {
                       <div className="border-b border-slate-200 p-4 md:border-b-0 md:border-r dark:border-slate-800">
                         <div className="flex items-center gap-2">
                           <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-sky-50 text-sky-500 ring-1 ring-sky-100 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/20">
-                            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-2.21 0-4 .9-4 2s1.79 2 4 2 4 .9 4 2-1.79 2-4 2m0-8c1.11 0 2.09.28 2.75.72M12 8V6m0 12v-2" />
+                            <svg
+                              className="h-3.5 w-3.5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 8c-2.21 0-4 .9-4 2s1.79 2 4 2 4 .9 4 2-1.79 2-4 2m0-8c1.11 0 2.09.28 2.75.72M12 8V6m0 12v-2"
+                              />
                             </svg>
                           </span>
-                          <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">Remaining Balance</p>
+                          <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">
+                            Remaining Balance
+                          </p>
                         </div>
                         <p className="mt-1 break-words text-sm font-semibold leading-tight text-[#163060]">
-                          {details.remainingBalance != null ? `₱${Number(details.remainingBalance).toLocaleString()}` : '-'}
+                          {details.remainingBalance != null
+                            ? `₱${Number(details.remainingBalance).toLocaleString()}`
+                            : "-"}
                         </p>
                       </div>
                       <div className="border-slate-200 p-4 dark:border-slate-800">
                         <div className="flex items-center gap-2">
                           <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-orange-50 text-orange-500 ring-1 ring-orange-100 dark:bg-orange-500/10 dark:text-orange-300 dark:ring-orange-500/20">
-                            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-2.21 0-4 .9-4 2s1.79 2 4 2 4 .9 4 2-1.79 2-4 2m0-8c1.11 0 2.09.28 2.75.72M12 8V6m0 12v-2" />
+                            <svg
+                              className="h-3.5 w-3.5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 8c-2.21 0-4 .9-4 2s1.79 2 4 2 4 .9 4 2-1.79 2-4 2m0-8c1.11 0 2.09.28 2.75.72M12 8V6m0 12v-2"
+                              />
                             </svg>
                           </span>
-                          <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">Overall Payment Status</p>
+                          <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">
+                            Overall Payment Status
+                          </p>
                         </div>
                         <div className="mt-2 inline-flex">
                           {details.remainingBalance == null ? (
@@ -1480,18 +2127,24 @@ export default function WebstoreRequestsPage() {
           <div className="w-full max-w-md overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
             <div className="border-b border-slate-100 px-5 py-4 dark:border-slate-800">
               <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                {receiptConfirm.action === 'approve' ? 'Confirm Receipt Approval' : 'Confirm Receipt Rejection'}
+                {receiptConfirm.action === "approve"
+                  ? "Confirm Receipt Approval"
+                  : "Confirm Receipt Rejection"}
               </h3>
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                {receiptConfirm.action === 'approve'
-                  ? `Approving ${receiptConfirm.label || 'this receipt'} will deduct its amount from the customer remaining balance.`
-                  : `Rejecting ${receiptConfirm.label || 'this receipt'} will keep it out of the active subscription balance.`}
+                {receiptConfirm.action === "approve"
+                  ? `Approving ${receiptConfirm.label || "this receipt"} will deduct its amount from the customer remaining balance.`
+                  : `Rejecting ${receiptConfirm.label || "this receipt"} will keep it out of the active subscription balance.`}
               </p>
             </div>
             <div className="p-5">
               <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-800/50">
-                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Receipt</p>
-                <p className="mt-1 text-sm font-bold text-slate-900 dark:text-slate-100">{receiptConfirm.label || '-'}</p>
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  Receipt
+                </p>
+                <p className="mt-1 text-sm font-bold text-slate-900 dark:text-slate-100">
+                  {receiptConfirm.label || "-"}
+                </p>
               </div>
             </div>
             <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-5 py-4 dark:border-slate-800">
@@ -1507,14 +2160,18 @@ export default function WebstoreRequestsPage() {
                 onClick={() => void confirmReceiptAction()}
                 disabled={isApprovingReceipt || isRejectingReceipt}
                 className={`rounded-2xl px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                  receiptConfirm.action === 'approve'
-                    ? 'border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200 dark:hover:bg-emerald-500/15'
-                    : 'border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-200 dark:hover:bg-rose-500/15'
+                  receiptConfirm.action === "approve"
+                    ? "border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200 dark:hover:bg-emerald-500/15"
+                    : "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-200 dark:hover:bg-rose-500/15"
                 }`}
               >
-                {receiptConfirm.action === 'approve'
-                  ? (isApprovingReceipt ? 'Approving...' : 'Approve')
-                  : (isRejectingReceipt ? 'Rejecting...' : 'Reject')}
+                {receiptConfirm.action === "approve"
+                  ? isApprovingReceipt
+                    ? "Approving..."
+                    : "Approve"
+                  : isRejectingReceipt
+                    ? "Rejecting..."
+                    : "Reject"}
               </button>
             </div>
           </div>
@@ -1537,20 +2194,25 @@ export default function WebstoreRequestsPage() {
               initial={{ opacity: 0, scale: 0.95, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 16 }}
-              transition={{ duration: 0.22, ease: 'easeOut' }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
               className="relative w-full max-w-4xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900"
               onClick={(event) => event.stopPropagation()}
             >
               {/* Header */}
               <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">Receipt Preview</p>
+                  <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+                    Receipt Preview
+                  </p>
                   {receiptPreview.urls.length > 1 ? (
                     <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                      {receiptPreview.activeIndex + 1} / {receiptPreview.urls.length}
+                      {receiptPreview.activeIndex + 1} /{" "}
+                      {receiptPreview.urls.length}
                     </p>
                   ) : receiptPreview.label ? (
-                    <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">{receiptPreview.label}</p>
+                    <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
+                      {receiptPreview.label}
+                    </p>
                   ) : null}
                 </div>
                 <button
@@ -1567,7 +2229,10 @@ export default function WebstoreRequestsPage() {
               <div className="relative bg-slate-50 dark:bg-slate-950/40">
                 {/* Sliding image */}
                 <div className="flex max-h-[72vh] items-center justify-center overflow-hidden p-4">
-                  <AnimatePresence mode="popLayout" custom={receiptSlideDir.current}>
+                  <AnimatePresence
+                    mode="popLayout"
+                    custom={receiptSlideDir.current}
+                  >
                     <motion.img
                       key={receiptPreview.activeIndex}
                       custom={receiptSlideDir.current}
@@ -1579,8 +2244,11 @@ export default function WebstoreRequestsPage() {
                       initial="enter"
                       animate="center"
                       exit="exit"
-                      transition={{ duration: 0.28, ease: 'easeInOut' }}
-                      src={receiptPreview.urls[receiptPreview.activeIndex] ?? receiptPreview.urls[0]}
+                      transition={{ duration: 0.28, ease: "easeInOut" }}
+                      src={
+                        receiptPreview.urls[receiptPreview.activeIndex] ??
+                        receiptPreview.urls[0]
+                      }
                       alt={`Receipt ${receiptPreview.activeIndex + 1}`}
                       className="mx-auto max-h-[68vh] w-auto max-w-full rounded-xl border border-slate-200 bg-white object-contain shadow-sm dark:border-slate-700"
                     />
@@ -1592,7 +2260,11 @@ export default function WebstoreRequestsPage() {
                   <>
                     <button
                       type="button"
-                      onClick={() => setActiveReceiptPreviewIndex(receiptPreview.activeIndex - 1)}
+                      onClick={() =>
+                        setActiveReceiptPreviewIndex(
+                          receiptPreview.activeIndex - 1
+                        )
+                      }
                       disabled={receiptPreview.activeIndex === 0}
                       className="absolute left-3 top-1/2 -translate-y-1/2 inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-xl text-slate-700 shadow-md backdrop-blur-sm transition hover:scale-110 hover:bg-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 dark:border-slate-700 dark:bg-slate-800/90 dark:text-slate-200 dark:hover:bg-slate-800"
                       aria-label="Previous receipt"
@@ -1601,8 +2273,15 @@ export default function WebstoreRequestsPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setActiveReceiptPreviewIndex(receiptPreview.activeIndex + 1)}
-                      disabled={receiptPreview.activeIndex === receiptPreview.urls.length - 1}
+                      onClick={() =>
+                        setActiveReceiptPreviewIndex(
+                          receiptPreview.activeIndex + 1
+                        )
+                      }
+                      disabled={
+                        receiptPreview.activeIndex ===
+                        receiptPreview.urls.length - 1
+                      }
                       className="absolute right-3 top-1/2 -translate-y-1/2 inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-xl text-slate-700 shadow-md backdrop-blur-sm transition hover:scale-110 hover:bg-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 dark:border-slate-700 dark:bg-slate-800/90 dark:text-slate-200 dark:hover:bg-slate-800"
                       aria-label="Next receipt"
                     >
@@ -1623,7 +2302,10 @@ export default function WebstoreRequestsPage() {
                       aria-label={`Go to receipt ${index + 1}`}
                       animate={{
                         width: index === receiptPreview.activeIndex ? 24 : 8,
-                        backgroundColor: index === receiptPreview.activeIndex ? '#0ea5e9' : '#cbd5e1',
+                        backgroundColor:
+                          index === receiptPreview.activeIndex
+                            ? "#0ea5e9"
+                            : "#cbd5e1",
                       }}
                       transition={{ duration: 0.2 }}
                       className="h-2 rounded-full"

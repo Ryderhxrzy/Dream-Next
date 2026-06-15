@@ -1,6 +1,10 @@
-import { buildPageMetadata } from '@/app/seo';
+import { buildPageMetadata } from "@/app/seo"
 
-export const metadata = buildPageMetadata({ title: 'Media Details', description: 'Browse the Media Details page on AF Home.', path: '/media/[slug]' });
+export const metadata = buildPageMetadata({
+  title: "Media Details",
+  description: "Browse the Media Details page on AF Home.",
+  path: "/media/[slug]",
+})
 
 type MediaSectionPageProps = {
   params: Promise<{ slug: string }>
@@ -8,11 +12,13 @@ type MediaSectionPageProps = {
 
 const getTitle = (slug: string) =>
   slug
-    .split('-')
+    .split("-")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ')
+    .join(" ")
 
-export default async function MediaSectionPage({ params }: MediaSectionPageProps) {
+export default async function MediaSectionPage({
+  params,
+}: MediaSectionPageProps) {
   const { slug } = await params
   const title = getTitle(slug)
 

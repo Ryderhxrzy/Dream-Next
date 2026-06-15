@@ -1,11 +1,13 @@
-'use client'
+"use client"
 
-import Link from 'next/link'
-import { useEffect } from 'react'
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import ShopBuilderSections, { type ShopBuilderApiResponse } from '@/components/sections/ShopBuilderSections'
-import type { PartnerStorefrontConfig } from '@/libs/partnerStorefront'
+import Link from "next/link"
+import { useEffect } from "react"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
+import ShopBuilderSections, {
+  type ShopBuilderApiResponse,
+} from "@/components/sections/ShopBuilderSections"
+import type { PartnerStorefrontConfig } from "@/libs/partnerStorefront"
 
 type Props = {
   partner: PartnerStorefrontConfig
@@ -13,47 +15,65 @@ type Props = {
   publicShopUrl?: string
 }
 
-export default function PartnerStorefrontPage({ partner, data, publicShopUrl }: Props) {
+export default function PartnerStorefrontPage({
+  partner,
+  data,
+  publicShopUrl,
+}: Props) {
   const { status, data: session } = useSession()
   const router = useRouter()
   const titleColor = partner.themeColor
   const displayName = partner.displayName.trim()
-  const pageTitle = displayName.toLowerCase().endsWith('shop') ? displayName : `${displayName} Shop`
+  const pageTitle = displayName.toLowerCase().endsWith("shop")
+    ? displayName
+    : `${displayName} Shop`
   const allowedSet = new Set(partner.allowedCategoryIds ?? [])
-  const sanitizedItems = partner.allowedCategoryIds.length === 0
-    ? (data?.items ?? []).filter((item) => String(item.key ?? '').trim() !== 'category-grid')
-    : (data?.items ?? [])
-  const sanitizedCategories = partner.allowedCategoryIds.length === 0
-    ? []
-    : (data?.categories ?? []).filter((category) => allowedSet.has(category.id))
-  const sanitizedProducts = partner.allowedCategoryIds.length === 0
-    ? []
-    : (data?.products ?? []).filter((product) => allowedSet.has(product.catid))
+  const sanitizedItems =
+    partner.allowedCategoryIds.length === 0
+      ? (data?.items ?? []).filter(
+          (item) => String(item.key ?? "").trim() !== "category-grid"
+        )
+      : (data?.items ?? [])
+  const sanitizedCategories =
+    partner.allowedCategoryIds.length === 0
+      ? []
+      : (data?.categories ?? []).filter((category) =>
+          allowedSet.has(category.id)
+        )
+  const sanitizedProducts =
+    partner.allowedCategoryIds.length === 0
+      ? []
+      : (data?.products ?? []).filter((product) =>
+          allowedSet.has(product.catid)
+        )
   const sanitizedData = data
     ? {
-      items: sanitizedItems,
-      categories: sanitizedCategories,
-      products: sanitizedProducts,
-    }
+        items: sanitizedItems,
+        categories: sanitizedCategories,
+        products: sanitizedProducts,
+      }
     : data
 
   const logoUrlWithVersion = partner.logoUrl
-    ? `${partner.logoUrl}${partner.logoUrl.includes('?') ? '&' : '?'}v=${partner.logoVersion || '1'}`
-    : ''
+    ? `${partner.logoUrl}${partner.logoUrl.includes("?") ? "&" : "?"}v=${partner.logoVersion || "1"}`
+    : ""
   const tabLogoUrlWithVersion = partner.tabLogoUrl
-    ? `${partner.tabLogoUrl}${partner.tabLogoUrl.includes('?') ? '&' : '?'}v=${partner.logoVersion || '1'}`
+    ? `${partner.tabLogoUrl}${partner.tabLogoUrl.includes("?") ? "&" : "?"}v=${partner.logoVersion || "1"}`
     : logoUrlWithVersion
   const partnerShopPath = publicShopUrl || `/shop/${partner.slug}`
-  const partnerProductPath = `${partnerShopPath.replace(/\/$/, '')}/product`
+  const partnerProductPath = `${partnerShopPath.replace(/\/$/, "")}/product`
   const loginHref = `/${partner.slug}/login?switch=1&callback=${encodeURIComponent(partnerProductPath)}`
-  const role = String(session?.user?.role ?? '').toLowerCase()
-  const isCustomerSession = status === 'authenticated' && (role === 'customer' || role === '')
+  const role = String(session?.user?.role ?? "").toLowerCase()
+  const isCustomerSession =
+    status === "authenticated" && (role === "customer" || role === "")
 
   useEffect(() => {
     const setIcon = (rel: string, href: string) => {
-      let link = document.querySelector(`link[rel="${rel}"]`) as HTMLLinkElement | null
+      let link = document.querySelector(
+        `link[rel="${rel}"]`
+      ) as HTMLLinkElement | null
       if (!link) {
-        link = document.createElement('link')
+        link = document.createElement("link")
         link.rel = rel
         document.head.appendChild(link)
       }
@@ -61,8 +81,8 @@ export default function PartnerStorefrontPage({ partner, data, publicShopUrl }: 
     }
 
     if (tabLogoUrlWithVersion) {
-      setIcon('icon', tabLogoUrlWithVersion)
-      setIcon('apple-touch-icon', tabLogoUrlWithVersion)
+      setIcon("icon", tabLogoUrlWithVersion)
+      setIcon("apple-touch-icon", tabLogoUrlWithVersion)
     }
 
     if (displayName) {
@@ -71,13 +91,17 @@ export default function PartnerStorefrontPage({ partner, data, publicShopUrl }: 
   }, [displayName, pageTitle, tabLogoUrlWithVersion])
 
   useEffect(() => {
-    const key = 'afhome:partner-storefront-updated'
-    const channelName = 'afhome:partner-storefront'
+    const key = "afhome:partner-storefront-updated"
+    const channelName = "afhome:partner-storefront"
 
     const handlePayload = (payload: unknown) => {
-      if (!payload || typeof payload !== 'object') return
+      if (!payload || typeof payload !== "object") return
       const data = payload as { slug?: string }
-      if (String(data.slug ?? '').trim().toLowerCase() === partner.slug.toLowerCase()) {
+      if (
+        String(data.slug ?? "")
+          .trim()
+          .toLowerCase() === partner.slug.toLowerCase()
+      ) {
         router.refresh()
       }
     }
@@ -94,16 +118,16 @@ export default function PartnerStorefrontPage({ partner, data, publicShopUrl }: 
     let channel: BroadcastChannel | null = null
     const onChannelMessage = (event: MessageEvent) => handlePayload(event.data)
 
-    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+    if (typeof window !== "undefined" && "BroadcastChannel" in window) {
       channel = new BroadcastChannel(channelName)
-      channel.addEventListener('message', onChannelMessage)
+      channel.addEventListener("message", onChannelMessage)
     }
 
-    window.addEventListener('storage', onStorage)
+    window.addEventListener("storage", onStorage)
     return () => {
-      window.removeEventListener('storage', onStorage)
+      window.removeEventListener("storage", onStorage)
       if (channel) {
-        channel.removeEventListener('message', onChannelMessage)
+        channel.removeEventListener("message", onChannelMessage)
         channel.close()
       }
     }
@@ -128,7 +152,9 @@ export default function PartnerStorefrontPage({ partner, data, publicShopUrl }: 
                     className="h-full w-full object-contain p-2.5 sm:p-3"
                   />
                 ) : (
-                  <span className="text-xl font-bold text-slate-700">{partner.displayName.slice(0, 2).toUpperCase()}</span>
+                  <span className="text-xl font-bold text-slate-700">
+                    {partner.displayName.slice(0, 2).toUpperCase()}
+                  </span>
                 )}
               </div>
               <div>
@@ -138,7 +164,9 @@ export default function PartnerStorefrontPage({ partner, data, publicShopUrl }: 
                 >
                   {partner.heroTitle}
                 </h1>
-                <p className="mt-1 max-w-2xl text-sm text-slate-600">{partner.heroSubtitle}</p>
+                <p className="mt-1 max-w-2xl text-sm text-slate-600">
+                  {partner.heroSubtitle}
+                </p>
               </div>
             </div>
 
@@ -176,9 +204,15 @@ export default function PartnerStorefrontPage({ partner, data, publicShopUrl }: 
       <footer className="border-t border-slate-200 bg-white">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-6 text-sm text-slate-500 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
           <p>
-            Orders from <span className="font-semibold text-slate-800">{partner.displayName}</span> are still processed through AF Home.
+            Orders from{" "}
+            <span className="font-semibold text-slate-800">
+              {partner.displayName}
+            </span>{" "}
+            are still processed through AF Home.
           </p>
-          {partner.notificationEmail ? <p>Partner notifications: {partner.notificationEmail}</p> : null}
+          {partner.notificationEmail ? (
+            <p>Partner notifications: {partner.notificationEmail}</p>
+          ) : null}
         </div>
       </footer>
     </div>

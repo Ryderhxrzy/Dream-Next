@@ -1,15 +1,25 @@
-﻿'use client'
+﻿"use client"
 
-import type { ReactNode } from 'react'
-import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
-import Link from 'next/link'
-import { useSession } from 'next-auth/react'
-import { showErrorToast, showSuccessToast } from '@/libs/toast'
-import { buildPartnerStorefrontPublicUrl, getPartnerStorefrontConfig } from '@/libs/partnerStorefront'
-import { Loader2, Trash2 } from 'lucide-react'
-import { useGetCategoriesQuery } from '@/store/api/categoriesApi'
-import { type Product, useLazyGetProductsQuery, useLazyGetPublicProductQuery } from '@/store/api/productsApi'
-import { useDeletePartnerUserMutation, useGetPartnerUsersQuery } from '@/store/api/partnerUsersApi'
+import type { ReactNode } from "react"
+import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react"
+import Link from "next/link"
+import { useSession } from "next-auth/react"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
+import {
+  buildPartnerStorefrontPublicUrl,
+  getPartnerStorefrontConfig,
+} from "@/libs/partnerStorefront"
+import { Loader2, Trash2 } from "lucide-react"
+import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
+import {
+  type Product,
+  useLazyGetProductsQuery,
+  useLazyGetPublicProductQuery,
+} from "@/store/api/productsApi"
+import {
+  useDeletePartnerUserMutation,
+  useGetPartnerUsersQuery,
+} from "@/store/api/partnerUsersApi"
 
 import {
   useCreateAdminWebPageItemMutation,
@@ -17,7 +27,7 @@ import {
   useGetAdminWebPageItemsQuery,
   useUpdateAdminWebPageItemMutation,
   type WebPageItem,
-} from '@/store/api/webPagesApi'
+} from "@/store/api/webPagesApi"
 
 type DraftState = {
   id?: number
@@ -41,35 +51,33 @@ type DraftState = {
   enableActivateDiscount: boolean
 }
 
-
 const emptyDraft: DraftState = {
-  slug: '',
-  displayName: '',
-  heroTitle: '',
-  heroSubtitle: '',
-  logoUrl: '',
-  tabLogoUrl: '',
-  heroVideoUrl: '',
-  logoVersion: '',
-  referralLink: '',
-  shopUrl: '',
-  domainLink: '',
-  themeColor: '#0f766e',
-  accentColor: '#f97316',
-  notificationEmail: '',
+  slug: "",
+  displayName: "",
+  heroTitle: "",
+  heroSubtitle: "",
+  logoUrl: "",
+  tabLogoUrl: "",
+  heroVideoUrl: "",
+  logoVersion: "",
+  referralLink: "",
+  shopUrl: "",
+  domainLink: "",
+  themeColor: "#0f766e",
+  accentColor: "#f97316",
+  notificationEmail: "",
   allowedCategoryIds: [],
   featuredProductIds: [],
   enableAiSupport: false,
   enableActivateDiscount: false,
 }
 
-
 const toSlug = (value: string) =>
   value
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
 
 const toDraft = (item?: WebPageItem): DraftState => {
   const config = getPartnerStorefrontConfig(item)
@@ -80,13 +88,13 @@ const toDraft = (item?: WebPageItem): DraftState => {
     displayName: config.displayName,
     heroTitle: config.heroTitle,
     heroSubtitle: config.heroSubtitle,
-    logoUrl: config.logoUrl ?? '',
-    tabLogoUrl: config.tabLogoUrl ?? '',
-    heroVideoUrl: config.heroVideoUrl ?? '',
-    logoVersion: config.logoVersion ?? '',
-    referralLink: config.referralLink ?? '',
-    shopUrl: config.shopUrl ?? '',
-    domainLink: config.domainLink ?? '',
+    logoUrl: config.logoUrl ?? "",
+    tabLogoUrl: config.tabLogoUrl ?? "",
+    heroVideoUrl: config.heroVideoUrl ?? "",
+    logoVersion: config.logoVersion ?? "",
+    referralLink: config.referralLink ?? "",
+    shopUrl: config.shopUrl ?? "",
+    domainLink: config.domainLink ?? "",
     themeColor: config.themeColor,
     accentColor: config.accentColor,
     notificationEmail: config.notificationEmail,
@@ -97,37 +105,50 @@ const toDraft = (item?: WebPageItem): DraftState => {
   }
 }
 
-
 const panelClass =
-  'rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-sm shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-black/20'
+  "rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-sm shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-black/20"
 
 const inputClass =
-  'w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100/70 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-emerald-500 dark:focus:ring-emerald-900/30'
+  "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100/70 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-emerald-500 dark:focus:ring-emerald-900/30"
 
 const selectClass =
-  'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium leading-6 text-slate-700 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100/70 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-100 dark:focus:border-emerald-500 dark:focus:ring-emerald-900/30'
+  "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium leading-6 text-slate-700 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100/70 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-100 dark:focus:border-emerald-500 dark:focus:ring-emerald-900/30"
 
 const softCardClass =
-  'rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3.5 dark:border-slate-700 dark:bg-slate-800/70'
+  "rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3.5 dark:border-slate-700 dark:bg-slate-800/70"
 
 const broadcastStorefrontUpdate = (slug: string) => {
-  if (typeof window === 'undefined') return
-  const normalizedSlug = String(slug ?? '').trim().toLowerCase()
+  if (typeof window === "undefined") return
+  const normalizedSlug = String(slug ?? "")
+    .trim()
+    .toLowerCase()
   if (!normalizedSlug) return
   const payload = { slug: normalizedSlug, ts: Date.now() }
-  window.localStorage.setItem('afhome:partner-storefront-updated', JSON.stringify(payload))
-  if ('BroadcastChannel' in window) {
-    const channel = new BroadcastChannel('afhome:partner-storefront')
+  window.localStorage.setItem(
+    "afhome:partner-storefront-updated",
+    JSON.stringify(payload)
+  )
+  if ("BroadcastChannel" in window) {
+    const channel = new BroadcastChannel("afhome:partner-storefront")
     channel.postMessage(payload)
     channel.close()
   }
 }
 
-function OpenPreviewButton({ slug, displayName }: { slug: string; displayName: string }) {
+function OpenPreviewButton({
+  slug,
+  displayName,
+}: {
+  slug: string
+  displayName: string
+}) {
   const previewSlug = toSlug(slug || displayName)
-  const previewPath = previewSlug === 'jujutsu-kaisen' ? `/${previewSlug}` : `/shop/${previewSlug}`
+  const previewPath =
+    previewSlug === "jujutsu-kaisen"
+      ? `/${previewSlug}`
+      : `/shop/${previewSlug}`
   const previewHref =
-    typeof window !== 'undefined'
+    typeof window !== "undefined"
       ? `${window.location.origin}${previewPath}`
       : `http://localhost:3000${previewPath}`
   return (
@@ -143,16 +164,22 @@ function OpenPreviewButton({ slug, displayName }: { slug: string; displayName: s
 }
 
 export default function PartnerStorefrontStudio() {
-  const [selectedId, setSelectedId] = useState<number | 'new'>('new')
+  const [selectedId, setSelectedId] = useState<number | "new">("new")
   const [draft, setDraft] = useState<DraftState>(emptyDraft)
-  const [discountToggleByStorefrontId, setDiscountToggleByStorefrontId] = useState<Record<number, boolean>>({})
-  const [helperCategoryId, setHelperCategoryId] = useState<number | ''>('')
-  const [selectedProductsCategoryFilter, setSelectedProductsCategoryFilter] = useState<number | 'all'>('all')
+  const [discountToggleByStorefrontId, setDiscountToggleByStorefrontId] =
+    useState<Record<number, boolean>>({})
+  const [helperCategoryId, setHelperCategoryId] = useState<number | "">("")
+  const [selectedProductsCategoryFilter, setSelectedProductsCategoryFilter] =
+    useState<number | "all">("all")
   const [helperProducts, setHelperProducts] = useState<Product[]>([])
-  const [helperProductById, setHelperProductById] = useState<Record<number, Product>>({})
+  const [helperProductById, setHelperProductById] = useState<
+    Record<number, Product>
+  >({})
   const [isLoadingHelperProducts, setIsLoadingHelperProducts] = useState(false)
   const [logoVersion, setLogoVersion] = useState(0)
-  const [activeTab, setActiveTab] = useState<'identity' | 'categories' | 'products'>('identity')
+  const [activeTab, setActiveTab] = useState<
+    "identity" | "categories" | "products"
+  >("identity")
   const missingSelectedProductRequestIdsRef = useRef<Set<number>>(new Set())
   const { data: session } = useSession()
 
@@ -162,30 +189,42 @@ export default function PartnerStorefrontStudio() {
     displayName?: string
   }>({ open: false })
 
-  const sessionRole = String(session?.user?.role ?? '').toLowerCase()
-  const sessionUserLevelId = Number((session?.user as { userLevelId?: number } | undefined)?.userLevelId ?? 0)
-  const storefrontIds = (session?.user as { storefrontIds?: number[] } | undefined)?.storefrontIds ?? []
-  const isPartnerScoped = sessionUserLevelId === 4 || sessionRole === 'web_content'
-  const canManageAiSupport = sessionUserLevelId === 1 || sessionUserLevelId === 2 || sessionRole === 'super_admin' || sessionRole === 'admin'
+  const sessionRole = String(session?.user?.role ?? "").toLowerCase()
+  const sessionUserLevelId = Number(
+    (session?.user as { userLevelId?: number } | undefined)?.userLevelId ?? 0
+  )
+  const storefrontIds =
+    (session?.user as { storefrontIds?: number[] } | undefined)
+      ?.storefrontIds ?? []
+  const isPartnerScoped =
+    sessionUserLevelId === 4 || sessionRole === "web_content"
+  const canManageAiSupport =
+    sessionUserLevelId === 1 ||
+    sessionUserLevelId === 2 ||
+    sessionRole === "super_admin" ||
+    sessionRole === "admin"
   // Only restrict to specific IDs when some are explicitly assigned; empty = full access (same pattern as wc: permissions)
-  const validStorefrontIds = storefrontIds.filter((id) => Number.isInteger(id) && id > 0)
-  const hasSpecificStorefrontIds = isPartnerScoped && validStorefrontIds.length > 0
+  const validStorefrontIds = storefrontIds.filter(
+    (id) => Number.isInteger(id) && id > 0
+  )
+  const hasSpecificStorefrontIds =
+    isPartnerScoped && validStorefrontIds.length > 0
   const allowedStorefrontIds = useMemo(
     () => (hasSpecificStorefrontIds ? validStorefrontIds : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [hasSpecificStorefrontIds, storefrontIds],
+    [hasSpecificStorefrontIds, storefrontIds]
   )
   const { data, isLoading, isError, refetch } = useGetAdminWebPageItemsQuery(
     {
-      type: 'partner-storefront',
+      type: "partner-storefront",
       page: 1,
       perPage: 100,
-      status: 'all',
+      status: "all",
     },
     {
       refetchOnMountOrArgChange: true,
       refetchOnFocus: true,
-    },
+    }
   )
   const [isUploadingLogo, setIsUploadingLogo] = useState(false)
   const logoInputRef = useRef<HTMLInputElement | null>(null)
@@ -199,11 +238,17 @@ export default function PartnerStorefrontStudio() {
   const { data: categoriesData } = useGetCategoriesQuery({ per_page: 200 })
   const [fetchProducts] = useLazyGetProductsQuery()
   const [fetchPublicProduct] = useLazyGetPublicProductQuery()
-  const [createItem, { isLoading: isCreating }] = useCreateAdminWebPageItemMutation()
-  const [updateItem, { isLoading: isUpdating }] = useUpdateAdminWebPageItemMutation()
-  const [deleteItem, { isLoading: isDeleting }] = useDeleteAdminWebPageItemMutation()
-  const [deletePartnerUser, { isLoading: isDeletingPartnerUser }] = useDeletePartnerUserMutation()
-  const storefrontDeleteTargetId = deleteModal.open ? Number(deleteModal.item?.id ?? 0) : 0
+  const [createItem, { isLoading: isCreating }] =
+    useCreateAdminWebPageItemMutation()
+  const [updateItem, { isLoading: isUpdating }] =
+    useUpdateAdminWebPageItemMutation()
+  const [deleteItem, { isLoading: isDeleting }] =
+    useDeleteAdminWebPageItemMutation()
+  const [deletePartnerUser, { isLoading: isDeletingPartnerUser }] =
+    useDeletePartnerUserMutation()
+  const storefrontDeleteTargetId = deleteModal.open
+    ? Number(deleteModal.item?.id ?? 0)
+    : 0
   const { data: relatedPartnerUsersData } = useGetPartnerUsersQuery(
     storefrontDeleteTargetId > 0
       ? { storefrontId: storefrontDeleteTargetId, page: 1, perPage: 200 }
@@ -211,7 +256,7 @@ export default function PartnerStorefrontStudio() {
     {
       skip: storefrontDeleteTargetId <= 0,
       refetchOnMountOrArgChange: true,
-    },
+    }
   )
 
   const storefronts = useMemo(() => {
@@ -220,92 +265,119 @@ export default function PartnerStorefrontStudio() {
         item,
         config: getPartnerStorefrontConfig(item),
       }))
-      .filter((entry): entry is { item: WebPageItem; config: NonNullable<ReturnType<typeof getPartnerStorefrontConfig>> } => Boolean(entry.config))
+      .filter(
+        (
+          entry
+        ): entry is {
+          item: WebPageItem
+          config: NonNullable<ReturnType<typeof getPartnerStorefrontConfig>>
+        } => Boolean(entry.config)
+      )
 
     const scoped = hasSpecificStorefrontIds
       ? items.filter((entry) => allowedStorefrontIds.includes(entry.item.id))
       : items
 
-    return scoped.sort((a, b) => a.config.displayName.localeCompare(b.config.displayName))
+    return scoped.sort((a, b) =>
+      a.config.displayName.localeCompare(b.config.displayName)
+    )
   }, [data?.items, allowedStorefrontIds, hasSpecificStorefrontIds])
   const selectedStorefrontItem = useMemo(
-    () => (typeof selectedId === 'number' ? storefronts.find((entry) => entry.item.id === selectedId)?.item ?? null : null),
-    [selectedId, storefronts],
+    () =>
+      typeof selectedId === "number"
+        ? (storefronts.find((entry) => entry.item.id === selectedId)?.item ??
+          null)
+        : null,
+    [selectedId, storefronts]
   )
   const renewalHref = useMemo(() => {
     const storefrontKey = selectedStorefrontItem
-      ? getPartnerStorefrontConfig(selectedStorefrontItem)?.slug || String(selectedStorefrontItem.id)
-      : ''
-    if (!storefrontKey) return '/partner/webpages/renewal'
+      ? getPartnerStorefrontConfig(selectedStorefrontItem)?.slug ||
+        String(selectedStorefrontItem.id)
+      : ""
+    if (!storefrontKey) return "/partner/webpages/renewal"
     return `/partner/webpages/renewal?storefront=${encodeURIComponent(storefrontKey)}`
   }, [selectedStorefrontItem])
 
   const categories = categoriesData?.categories ?? []
   const allowedCategoryOptions = useMemo(
-    () => categories.filter((category) => draft.allowedCategoryIds.includes(category.id)),
-    [categories, draft.allowedCategoryIds],
+    () =>
+      categories.filter((category) =>
+        draft.allowedCategoryIds.includes(category.id)
+      ),
+    [categories, draft.allowedCategoryIds]
   )
   const publicShopUrl = useMemo(
     () => buildPartnerStorefrontPublicUrl(draft.shopUrl, draft.domainLink),
-    [draft.domainLink, draft.shopUrl],
+    [draft.domainLink, draft.shopUrl]
   )
   const selectedProducts = useMemo(
-    () => draft.featuredProductIds.map((id) => helperProductById[id]).filter((product): product is Product => Boolean(product)),
-    [draft.featuredProductIds, helperProductById],
+    () =>
+      draft.featuredProductIds
+        .map((id) => helperProductById[id])
+        .filter((product): product is Product => Boolean(product)),
+    [draft.featuredProductIds, helperProductById]
   )
   const missingSelectedProductIds = useMemo(
     () => draft.featuredProductIds.filter((id) => !helperProductById[id]),
-    [draft.featuredProductIds, helperProductById],
+    [draft.featuredProductIds, helperProductById]
   )
   const selectedProductCategoryOptions = useMemo(
     () =>
-      Array.from(new Set(selectedProducts.map((product) => product.catid))).map((categoryId) => ({
-        id: categoryId,
-        label: categories.find((category) => category.id === categoryId)?.name ?? `Category ${categoryId}`,
-      })),
-    [selectedProducts, categories],
+      Array.from(new Set(selectedProducts.map((product) => product.catid))).map(
+        (categoryId) => ({
+          id: categoryId,
+          label:
+            categories.find((category) => category.id === categoryId)?.name ??
+            `Category ${categoryId}`,
+        })
+      ),
+    [selectedProducts, categories]
   )
   const filteredSelectedProducts = useMemo(
     () =>
-      selectedProductsCategoryFilter === 'all'
+      selectedProductsCategoryFilter === "all"
         ? selectedProducts
-        : selectedProducts.filter((product) => product.catid === selectedProductsCategoryFilter),
-    [selectedProducts, selectedProductsCategoryFilter],
+        : selectedProducts.filter(
+            (product) => product.catid === selectedProductsCategoryFilter
+          ),
+    [selectedProducts, selectedProductsCategoryFilter]
   )
   const filteredMissingSelectedProductIds = useMemo(
-    () => (selectedProductsCategoryFilter === 'all' ? missingSelectedProductIds : []),
-    [missingSelectedProductIds, selectedProductsCategoryFilter],
+    () =>
+      selectedProductsCategoryFilter === "all" ? missingSelectedProductIds : [],
+    [missingSelectedProductIds, selectedProductsCategoryFilter]
   )
 
   const selectStorefront = (item?: WebPageItem) => {
     if (!item) {
-      setSelectedId('new')
+      setSelectedId("new")
       setDraft(emptyDraft)
       setLogoVersion(Date.now())
       if (logoInputRef.current) {
-        logoInputRef.current.value = ''
+        logoInputRef.current.value = ""
       }
       if (tabLogoInputRef.current) {
-        tabLogoInputRef.current.value = ''
+        tabLogoInputRef.current.value = ""
       }
       if (heroVideoInputRef.current) {
-        heroVideoInputRef.current.value = ''
+        heroVideoInputRef.current.value = ""
       }
       return
     }
 
     setSelectedId(item.id)
     setDraft(toDraft(item))
-    const storedVersion = Number.parseInt(toDraft(item).logoVersion || '', 10)
+    const storedVersion = Number.parseInt(toDraft(item).logoVersion || "", 10)
     setLogoVersion(Number.isFinite(storedVersion) ? storedVersion : Date.now())
     if (logoInputRef.current) {
-      logoInputRef.current.value = ''
+      logoInputRef.current.value = ""
     }
     if (tabLogoInputRef.current) {
-      tabLogoInputRef.current.value = ''
+      tabLogoInputRef.current.value = ""
     }
     if (heroVideoInputRef.current) {
-      heroVideoInputRef.current.value = ''
+      heroVideoInputRef.current.value = ""
     }
   }
 
@@ -343,9 +415,11 @@ export default function PartnerStorefrontStudio() {
     if (isCurrentlySelected && draft.featuredProductIds.length > 0) {
       try {
         const categoryProductIdSet = await getProductIdsByCategory(categoryId)
-        nextFeaturedProductIds = draft.featuredProductIds.filter((id) => !categoryProductIdSet.has(id))
+        nextFeaturedProductIds = draft.featuredProductIds.filter(
+          (id) => !categoryProductIdSet.has(id)
+        )
       } catch {
-        showErrorToast('Failed to filter selected products for this category.')
+        showErrorToast("Failed to filter selected products for this category.")
       }
     }
 
@@ -357,16 +431,16 @@ export default function PartnerStorefrontStudio() {
 
     setDraft(nextDraft)
 
-    if (typeof selectedId === 'number') {
+    if (typeof selectedId === "number") {
       const payload = buildStorefrontPayload(nextDraft)
-      updateItem({ type: 'partner-storefront', id: selectedId, data: payload })
+      updateItem({ type: "partner-storefront", id: selectedId, data: payload })
         .unwrap()
         .then(() => {
           broadcastStorefrontUpdate(nextDraft.slug)
           refetch()
         })
         .catch(() => {
-          showErrorToast('Failed to update categories.')
+          showErrorToast("Failed to update categories.")
         })
     }
   }
@@ -376,12 +450,14 @@ export default function PartnerStorefrontStudio() {
     return {
       key: slug,
       title: nextDraft.displayName.trim() || slug,
-      subtitle: nextDraft.heroTitle.trim() || `${nextDraft.displayName.trim() || slug} Shop`,
+      subtitle:
+        nextDraft.heroTitle.trim() ||
+        `${nextDraft.displayName.trim() || slug} Shop`,
       body: nextDraft.heroSubtitle.trim(),
       image_url: nextDraft.logoUrl.trim() || undefined,
       is_active: true,
       payload: {
-          fields: {
+        fields: {
           slug,
           display_name: nextDraft.displayName.trim(),
 
@@ -397,11 +473,16 @@ export default function PartnerStorefrontStudio() {
           theme_color: nextDraft.themeColor.trim(),
           accent_color: nextDraft.accentColor.trim(),
           notification_email: nextDraft.notificationEmail.trim(),
-          allowed_category_ids: nextDraft.allowedCategoryIds.length > 0 ? nextDraft.allowedCategoryIds.join(',') : '0',
-          featured_product_ids: nextDraft.featuredProductIds.length > 0 ? nextDraft.featuredProductIds.join(',') : '0',
-          enable_ai_support: nextDraft.enableAiSupport ? '1' : '0',
-          activate_discount: nextDraft.enableActivateDiscount ? '1' : '0',
-
+          allowed_category_ids:
+            nextDraft.allowedCategoryIds.length > 0
+              ? nextDraft.allowedCategoryIds.join(",")
+              : "0",
+          featured_product_ids:
+            nextDraft.featuredProductIds.length > 0
+              ? nextDraft.featuredProductIds.join(",")
+              : "0",
+          enable_ai_support: nextDraft.enableAiSupport ? "1" : "0",
+          activate_discount: nextDraft.enableActivateDiscount ? "1" : "0",
         },
       },
     }
@@ -409,26 +490,38 @@ export default function PartnerStorefrontStudio() {
 
   const toggleFeaturedProduct = (productId: number) => {
     setDraft((current) => {
-      const nextFeaturedProductIds = current.featuredProductIds.includes(productId)
+      const nextFeaturedProductIds = current.featuredProductIds.includes(
+        productId
+      )
         ? current.featuredProductIds.filter((id) => id !== productId)
         : [...current.featuredProductIds, productId]
-      const nextDraft = { ...current, featuredProductIds: nextFeaturedProductIds }
+      const nextDraft = {
+        ...current,
+        featuredProductIds: nextFeaturedProductIds,
+      }
 
-      if (typeof selectedId === 'number') {
-        if (hasSpecificStorefrontIds && !allowedStorefrontIds.includes(selectedId)) {
-          showErrorToast('You do not have access to edit this storefront.')
+      if (typeof selectedId === "number") {
+        if (
+          hasSpecificStorefrontIds &&
+          !allowedStorefrontIds.includes(selectedId)
+        ) {
+          showErrorToast("You do not have access to edit this storefront.")
           return current
         }
 
         const payload = buildStorefrontPayload(nextDraft)
-        updateItem({ type: 'partner-storefront', id: selectedId, data: payload })
+        updateItem({
+          type: "partner-storefront",
+          id: selectedId,
+          data: payload,
+        })
           .unwrap()
           .then(() => {
             broadcastStorefrontUpdate(nextDraft.slug)
             refetch()
           })
           .catch(() => {
-            showErrorToast('Failed to update selected products.')
+            showErrorToast("Failed to update selected products.")
           })
       }
 
@@ -436,9 +529,12 @@ export default function PartnerStorefrontStudio() {
     })
   }
 
-  const handleDeleteStorefront = async (item: WebPageItem, displayName: string) => {
+  const handleDeleteStorefront = async (
+    item: WebPageItem,
+    displayName: string
+  ) => {
     if (isPartnerScoped) {
-      showErrorToast('Only admin users can delete partner storefronts.')
+      showErrorToast("Only admin users can delete partner storefronts.")
       return
     }
 
@@ -449,27 +545,29 @@ export default function PartnerStorefrontStudio() {
     if (!deleteModal.item) return
 
     const item = deleteModal.item
-    const displayName = deleteModal.displayName ?? ''
+    const displayName = deleteModal.displayName ?? ""
 
     try {
-      const relatedUsers = (relatedPartnerUsersData?.users ?? []).filter((user) =>
-        (user.storefront_ids ?? []).includes(item.id),
+      const relatedUsers = (relatedPartnerUsersData?.users ?? []).filter(
+        (user) => (user.storefront_ids ?? []).includes(item.id)
       )
       for (const user of relatedUsers) {
         await deletePartnerUser({ id: user.id }).unwrap()
       }
 
-      await deleteItem({ type: 'partner-storefront', id: item.id }).unwrap()
+      await deleteItem({ type: "partner-storefront", id: item.id }).unwrap()
       showSuccessToast(
         relatedUsers.length > 0
-          ? (displayName
-              ? `Partner storefront "${displayName}" deleted with ${relatedUsers.length} related partner user account(s).`
-              : `Partner storefront deleted with ${relatedUsers.length} related partner user account(s).`)
-          : (displayName ? `Partner storefront "${displayName}" deleted.` : 'Partner storefront deleted.'),
+          ? displayName
+            ? `Partner storefront "${displayName}" deleted with ${relatedUsers.length} related partner user account(s).`
+            : `Partner storefront deleted with ${relatedUsers.length} related partner user account(s).`
+          : displayName
+            ? `Partner storefront "${displayName}" deleted.`
+            : "Partner storefront deleted."
       )
 
       if (selectedId === item.id) {
-        setSelectedId('new')
+        setSelectedId("new")
         setDraft(emptyDraft)
       }
 
@@ -477,39 +575,45 @@ export default function PartnerStorefrontStudio() {
       await refetch()
     } catch (error) {
       const apiErr = error as { data?: { message?: string } }
-      showErrorToast(apiErr?.data?.message || 'Failed to delete storefront and related partner users.')
+      showErrorToast(
+        apiErr?.data?.message ||
+          "Failed to delete storefront and related partner users."
+      )
       setDeleteModal({ open: false })
     }
   }
-
-
 
   const handleLogoUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
 
     const payload = new FormData()
-    payload.append('file', file)
-    payload.append('folder', 'partner-storefronts')
+    payload.append("file", file)
+    payload.append("folder", "partner-storefronts")
 
     setIsUploadingLogo(true)
 
     try {
-      const response = await fetch('/api/admin/upload', {
-        method: 'POST',
+      const response = await fetch("/api/admin/upload", {
+        method: "POST",
         body: payload,
       })
 
       const result = (await response.json()) as { url?: string; error?: string }
 
       if (!response.ok || !result.url) {
-        throw new Error(result.error || 'Failed to upload logo.')
+        throw new Error(result.error || "Failed to upload logo.")
       }
 
-      const nextLogoUrl = result.url ?? ''
+      const nextLogoUrl = result.url ?? ""
       const nextVersion = Date.now()
-      const nextDraft = { ...draft, logoUrl: nextLogoUrl, logoVersion: String(nextVersion) }
-      const targetId = typeof selectedId === 'number' ? selectedId : nextDraft.id
+      const nextDraft = {
+        ...draft,
+        logoUrl: nextLogoUrl,
+        logoVersion: String(nextVersion),
+      }
+      const targetId =
+        typeof selectedId === "number" ? selectedId : nextDraft.id
 
       setDraft((current) => ({
         ...current,
@@ -519,75 +623,94 @@ export default function PartnerStorefrontStudio() {
       setLogoVersion(nextVersion)
 
       if (targetId) {
-        if (hasSpecificStorefrontIds && !allowedStorefrontIds.includes(targetId)) {
-          showErrorToast('You do not have access to edit this storefront.')
+        if (
+          hasSpecificStorefrontIds &&
+          !allowedStorefrontIds.includes(targetId)
+        ) {
+          showErrorToast("You do not have access to edit this storefront.")
           return
         }
 
         const slug = toSlug(nextDraft.slug || nextDraft.displayName)
         if (!slug) {
-          showErrorToast('Add a slug or display name first.')
+          showErrorToast("Add a slug or display name first.")
           return
         }
 
         const payload = buildStorefrontPayload(nextDraft)
 
         try {
-          await updateItem({ type: 'partner-storefront', id: targetId, data: payload }).unwrap()
-          showSuccessToast('Logo saved to storefront.')
+          await updateItem({
+            type: "partner-storefront",
+            id: targetId,
+            data: payload,
+          }).unwrap()
+          showSuccessToast("Logo saved to storefront.")
           refetch()
         } catch (error) {
           const apiErr = error as { data?: { message?: string } }
-          showErrorToast(apiErr?.data?.message || 'Failed to save logo.')
+          showErrorToast(apiErr?.data?.message || "Failed to save logo.")
         }
       } else {
-        showSuccessToast('Logo uploaded successfully.')
+        showSuccessToast("Logo uploaded successfully.")
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to upload logo.'
+      const message =
+        err instanceof Error ? err.message : "Failed to upload logo."
       showErrorToast(message)
     } finally {
       setIsUploadingLogo(false)
       if (logoInputRef.current) {
-        logoInputRef.current.value = ''
+        logoInputRef.current.value = ""
       }
     }
   }
 
   const handleRemoveLogo = async () => {
-    if (typeof selectedId !== 'number') {
-      setDraft((current) => ({ ...current, logoUrl: '', logoVersion: '' }))
+    if (typeof selectedId !== "number") {
+      setDraft((current) => ({ ...current, logoUrl: "", logoVersion: "" }))
       showSuccessToast('Logo cleared. Click "Save Storefront" to apply it.')
       return
     }
 
-    if (hasSpecificStorefrontIds && !allowedStorefrontIds.includes(selectedId)) {
-      showErrorToast('You do not have access to edit this storefront.')
+    if (
+      hasSpecificStorefrontIds &&
+      !allowedStorefrontIds.includes(selectedId)
+    ) {
+      showErrorToast("You do not have access to edit this storefront.")
       return
     }
 
     const nextVersion = Date.now()
     const slug = toSlug(draft.slug || draft.displayName)
     if (!slug) {
-      showErrorToast('Add a slug or display name first.')
+      showErrorToast("Add a slug or display name first.")
       return
     }
 
     const payload = buildStorefrontPayload({
       ...draft,
-      logoUrl: '',
+      logoUrl: "",
       logoVersion: String(nextVersion),
     })
 
     try {
-      await updateItem({ type: 'partner-storefront', id: selectedId, data: payload }).unwrap()
-      setDraft((current) => ({ ...current, logoUrl: '', logoVersion: String(nextVersion) }))
+      await updateItem({
+        type: "partner-storefront",
+        id: selectedId,
+        data: payload,
+      }).unwrap()
+      setDraft((current) => ({
+        ...current,
+        logoUrl: "",
+        logoVersion: String(nextVersion),
+      }))
       setLogoVersion(nextVersion)
-      showSuccessToast('Logo removed.')
+      showSuccessToast("Logo removed.")
       refetch()
     } catch (error) {
       const apiErr = error as { data?: { message?: string } }
-      showErrorToast(apiErr?.data?.message || 'Failed to remove logo.')
+      showErrorToast(apiErr?.data?.message || "Failed to remove logo.")
     }
   }
 
@@ -596,27 +719,32 @@ export default function PartnerStorefrontStudio() {
     if (!file) return
 
     const payload = new FormData()
-    payload.append('file', file)
-    payload.append('folder', 'partner-storefronts')
+    payload.append("file", file)
+    payload.append("folder", "partner-storefronts")
 
     setIsUploadingTabLogo(true)
 
     try {
-      const response = await fetch('/api/admin/upload', {
-        method: 'POST',
+      const response = await fetch("/api/admin/upload", {
+        method: "POST",
         body: payload,
       })
 
       const result = (await response.json()) as { url?: string; error?: string }
 
       if (!response.ok || !result.url) {
-        throw new Error(result.error || 'Failed to upload tab logo.')
+        throw new Error(result.error || "Failed to upload tab logo.")
       }
 
-      const nextTabLogoUrl = result.url ?? ''
+      const nextTabLogoUrl = result.url ?? ""
       const nextVersion = Date.now()
-      const nextDraft = { ...draft, tabLogoUrl: nextTabLogoUrl, logoVersion: String(nextVersion) }
-      const targetId = typeof selectedId === 'number' ? selectedId : nextDraft.id
+      const nextDraft = {
+        ...draft,
+        tabLogoUrl: nextTabLogoUrl,
+        logoVersion: String(nextVersion),
+      }
+      const targetId =
+        typeof selectedId === "number" ? selectedId : nextDraft.id
 
       setDraft((current) => ({
         ...current,
@@ -627,102 +755,118 @@ export default function PartnerStorefrontStudio() {
 
       if (targetId) {
         if (isPartnerScoped && !allowedStorefrontIds.includes(targetId)) {
-          showErrorToast('You do not have access to edit this storefront.')
+          showErrorToast("You do not have access to edit this storefront.")
           return
         }
 
         const slug = toSlug(nextDraft.slug || nextDraft.displayName)
         if (!slug) {
-          showErrorToast('Add a slug or display name first.')
+          showErrorToast("Add a slug or display name first.")
           return
         }
 
         const data = buildStorefrontPayload(nextDraft)
 
         try {
-          await updateItem({ type: 'partner-storefront', id: targetId, data }).unwrap()
-          showSuccessToast('Tab logo saved to storefront.')
+          await updateItem({
+            type: "partner-storefront",
+            id: targetId,
+            data,
+          }).unwrap()
+          showSuccessToast("Tab logo saved to storefront.")
           refetch()
         } catch (error) {
           const apiErr = error as { data?: { message?: string } }
-          showErrorToast(apiErr?.data?.message || 'Failed to save tab logo.')
+          showErrorToast(apiErr?.data?.message || "Failed to save tab logo.")
         }
       } else {
-        showSuccessToast('Tab logo uploaded successfully.')
+        showSuccessToast("Tab logo uploaded successfully.")
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to upload tab logo.'
+      const message =
+        err instanceof Error ? err.message : "Failed to upload tab logo."
       showErrorToast(message)
     } finally {
       setIsUploadingTabLogo(false)
       if (tabLogoInputRef.current) {
-        tabLogoInputRef.current.value = ''
+        tabLogoInputRef.current.value = ""
       }
     }
   }
 
   const handleRemoveTabLogo = async () => {
-    if (typeof selectedId !== 'number') {
-      setDraft((current) => ({ ...current, tabLogoUrl: '', logoVersion: '' }))
+    if (typeof selectedId !== "number") {
+      setDraft((current) => ({ ...current, tabLogoUrl: "", logoVersion: "" }))
       showSuccessToast('Tab logo cleared. Click "Save Storefront" to apply it.')
       return
     }
 
     if (isPartnerScoped && !allowedStorefrontIds.includes(selectedId)) {
-      showErrorToast('You do not have access to edit this storefront.')
+      showErrorToast("You do not have access to edit this storefront.")
       return
     }
 
     const nextVersion = Date.now()
     const slug = toSlug(draft.slug || draft.displayName)
     if (!slug) {
-      showErrorToast('Add a slug or display name first.')
+      showErrorToast("Add a slug or display name first.")
       return
     }
 
     const data = buildStorefrontPayload({
       ...draft,
-      tabLogoUrl: '',
+      tabLogoUrl: "",
       logoVersion: String(nextVersion),
     })
 
     try {
-      await updateItem({ type: 'partner-storefront', id: selectedId, data }).unwrap()
-      setDraft((current) => ({ ...current, tabLogoUrl: '', logoVersion: String(nextVersion) }))
+      await updateItem({
+        type: "partner-storefront",
+        id: selectedId,
+        data,
+      }).unwrap()
+      setDraft((current) => ({
+        ...current,
+        tabLogoUrl: "",
+        logoVersion: String(nextVersion),
+      }))
       setLogoVersion(nextVersion)
-      showSuccessToast('Tab logo removed.')
+      showSuccessToast("Tab logo removed.")
       refetch()
     } catch (error) {
       const apiErr = error as { data?: { message?: string } }
-      showErrorToast(apiErr?.data?.message || 'Failed to remove tab logo.')
+      showErrorToast(apiErr?.data?.message || "Failed to remove tab logo.")
     }
   }
 
-  const handleHeroVideoUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+  const handleHeroVideoUpload = async (
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0]
     if (!file) return
 
     const payload = new FormData()
-    payload.append('file', file)
-    payload.append('folder', 'partner-storefronts')
-    payload.append('asset_type', 'video')
+    payload.append("file", file)
+    payload.append("folder", "partner-storefronts")
+    payload.append("asset_type", "video")
 
     setIsUploadingHeroVideo(true)
 
     try {
-      const response = await fetch('/api/admin/upload', {
-        method: 'POST',
+      const response = await fetch("/api/admin/upload", {
+        method: "POST",
         body: payload,
       })
 
       const result = (await response.json()) as { url?: string; error?: string }
       if (!response.ok || !result.url) {
-        throw new Error(result.error || 'Failed to upload video.')
+        throw new Error(result.error || "Failed to upload video.")
       }
 
-      const nextVideoUrl = result.url ?? ''
+      const nextVideoUrl = result.url ?? ""
       const nextDraft = { ...draft, heroVideoUrl: nextVideoUrl }
-      const targetId = typeof selectedId === 'number' ? selectedId : nextDraft.id
+      const targetId =
+        typeof selectedId === "number" ? selectedId : nextDraft.id
 
       setDraft((current) => ({
         ...current,
@@ -730,88 +874,109 @@ export default function PartnerStorefrontStudio() {
       }))
 
       if (targetId) {
-        if (hasSpecificStorefrontIds && !allowedStorefrontIds.includes(targetId)) {
-          showErrorToast('You do not have access to edit this storefront.')
+        if (
+          hasSpecificStorefrontIds &&
+          !allowedStorefrontIds.includes(targetId)
+        ) {
+          showErrorToast("You do not have access to edit this storefront.")
           return
         }
 
         const slug = toSlug(nextDraft.slug || nextDraft.displayName)
         if (!slug) {
-          showErrorToast('Add a slug or display name first.')
+          showErrorToast("Add a slug or display name first.")
           return
         }
 
         const data = buildStorefrontPayload(nextDraft)
         try {
-          await updateItem({ type: 'partner-storefront', id: targetId, data }).unwrap()
-          showSuccessToast('Hero video saved to storefront.')
+          await updateItem({
+            type: "partner-storefront",
+            id: targetId,
+            data,
+          }).unwrap()
+          showSuccessToast("Hero video saved to storefront.")
           refetch()
         } catch (error) {
           const apiErr = error as { data?: { message?: string } }
-          showErrorToast(apiErr?.data?.message || 'Failed to save hero video.')
+          showErrorToast(apiErr?.data?.message || "Failed to save hero video.")
         }
       } else {
-        showSuccessToast('Hero video uploaded successfully.')
+        showSuccessToast("Hero video uploaded successfully.")
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to upload hero video.'
+      const message =
+        err instanceof Error ? err.message : "Failed to upload hero video."
       showErrorToast(message)
     } finally {
       setIsUploadingHeroVideo(false)
       if (heroVideoInputRef.current) {
-        heroVideoInputRef.current.value = ''
+        heroVideoInputRef.current.value = ""
       }
     }
   }
 
   const handleRemoveHeroVideo = async () => {
-    if (typeof selectedId !== 'number') {
-      setDraft((current) => ({ ...current, heroVideoUrl: '' }))
-      showSuccessToast('Hero video cleared. Click "Save Storefront" to apply it.')
+    if (typeof selectedId !== "number") {
+      setDraft((current) => ({ ...current, heroVideoUrl: "" }))
+      showSuccessToast(
+        'Hero video cleared. Click "Save Storefront" to apply it.'
+      )
       return
     }
 
-    if (hasSpecificStorefrontIds && !allowedStorefrontIds.includes(selectedId)) {
-      showErrorToast('You do not have access to edit this storefront.')
+    if (
+      hasSpecificStorefrontIds &&
+      !allowedStorefrontIds.includes(selectedId)
+    ) {
+      showErrorToast("You do not have access to edit this storefront.")
       return
     }
 
     const slug = toSlug(draft.slug || draft.displayName)
     if (!slug) {
-      showErrorToast('Add a slug or display name first.')
+      showErrorToast("Add a slug or display name first.")
       return
     }
 
     const data = buildStorefrontPayload({
       ...draft,
-      heroVideoUrl: '',
+      heroVideoUrl: "",
     })
 
     try {
-      await updateItem({ type: 'partner-storefront', id: selectedId, data }).unwrap()
-      setDraft((current) => ({ ...current, heroVideoUrl: '' }))
-      showSuccessToast('Hero video removed.')
+      await updateItem({
+        type: "partner-storefront",
+        id: selectedId,
+        data,
+      }).unwrap()
+      setDraft((current) => ({ ...current, heroVideoUrl: "" }))
+      showSuccessToast("Hero video removed.")
       refetch()
     } catch (error) {
       const apiErr = error as { data?: { message?: string } }
-      showErrorToast(apiErr?.data?.message || 'Failed to remove hero video.')
+      showErrorToast(apiErr?.data?.message || "Failed to remove hero video.")
     }
   }
 
   const saveStorefront = async () => {
     if (isPartnerScoped && !draft.id) {
-      showErrorToast('You can only edit your assigned storefront.')
+      showErrorToast("You can only edit your assigned storefront.")
       return
     }
 
-    if (hasSpecificStorefrontIds && draft.id && !allowedStorefrontIds.includes(draft.id)) {
-      showErrorToast('You do not have access to edit this storefront.')
+    if (
+      hasSpecificStorefrontIds &&
+      draft.id &&
+      !allowedStorefrontIds.includes(draft.id)
+    ) {
+      showErrorToast("You do not have access to edit this storefront.")
       return
     }
 
     const slug = toSlug(draft.slug || draft.displayName)
     if (!slug) {
-      showErrorToast('Add a slug or display name first.')
+      showErrorToast("Add a slug or display name first.")
       return
     }
 
@@ -821,57 +986,72 @@ export default function PartnerStorefrontStudio() {
       let savedItem: WebPageItem
 
       if (draft.id) {
-        const result = await updateItem({ type: 'partner-storefront', id: draft.id, data: payload }).unwrap()
+        const result = await updateItem({
+          type: "partner-storefront",
+          id: draft.id,
+          data: payload,
+        }).unwrap()
         savedItem = result.item
       } else {
-        const result = await createItem({ type: 'partner-storefront', data: payload }).unwrap()
+        const result = await createItem({
+          type: "partner-storefront",
+          data: payload,
+        }).unwrap()
         savedItem = result.item
       }
 
       setDraft(toDraft(savedItem))
       setSelectedId(savedItem.id)
-      showSuccessToast('Partner storefront saved.')
+      showSuccessToast("Partner storefront saved.")
       broadcastStorefrontUpdate(slug)
       refetch()
     } catch (error) {
       const apiErr = error as { data?: { message?: string } }
-      showErrorToast(apiErr?.data?.message || 'Failed to save partner storefront.')
+      showErrorToast(
+        apiErr?.data?.message || "Failed to save partner storefront."
+      )
     }
   }
 
   const handleApplyReferralLink = async () => {
     const referral = draft.referralLink.trim()
     if (!referral) {
-      showErrorToast('Enter a referral link before uploading.')
+      showErrorToast("Enter a referral link before uploading.")
       return
     }
 
     if (!draft.id) {
-      showSuccessToast('Referral link set. Click "Save Storefront" to apply it.')
+      showSuccessToast(
+        'Referral link set. Click "Save Storefront" to apply it.'
+      )
       return
     }
 
     if (hasSpecificStorefrontIds && !allowedStorefrontIds.includes(draft.id)) {
-      showErrorToast('You do not have access to edit this storefront.')
+      showErrorToast("You do not have access to edit this storefront.")
       return
     }
 
     const slug = toSlug(draft.slug || draft.displayName)
     if (!slug) {
-      showErrorToast('Add a slug or display name first.')
+      showErrorToast("Add a slug or display name first.")
       return
     }
 
     setIsUploadingReferralLink(true)
 
     try {
-      await updateItem({ type: 'partner-storefront', id: draft.id, data: buildStorefrontPayload(draft) }).unwrap()
-      showSuccessToast('Referral link saved successfully.')
+      await updateItem({
+        type: "partner-storefront",
+        id: draft.id,
+        data: buildStorefrontPayload(draft),
+      }).unwrap()
+      showSuccessToast("Referral link saved successfully.")
       broadcastStorefrontUpdate(draft.slug || draft.displayName)
       refetch()
     } catch (error) {
       const apiErr = error as { data?: { message?: string } }
-      showErrorToast(apiErr?.data?.message || 'Failed to save referral link.')
+      showErrorToast(apiErr?.data?.message || "Failed to save referral link.")
     } finally {
       setIsUploadingReferralLink(false)
     }
@@ -881,43 +1061,52 @@ export default function PartnerStorefrontStudio() {
     const previousReferral = draft.referralLink
     if (!previousReferral.trim()) return
 
-    const nextDraft = { ...draft, referralLink: '' }
+    const nextDraft = { ...draft, referralLink: "" }
     setDraft(nextDraft)
 
     if (!nextDraft.id) {
-      showSuccessToast('Referral link removed. Click "Save Storefront" to apply it.')
+      showSuccessToast(
+        'Referral link removed. Click "Save Storefront" to apply it.'
+      )
       return
     }
 
-    if (hasSpecificStorefrontIds && !allowedStorefrontIds.includes(nextDraft.id)) {
+    if (
+      hasSpecificStorefrontIds &&
+      !allowedStorefrontIds.includes(nextDraft.id)
+    ) {
       setDraft((current) => ({ ...current, referralLink: previousReferral }))
-      showErrorToast('You do not have access to edit this storefront.')
+      showErrorToast("You do not have access to edit this storefront.")
       return
     }
 
     const slug = toSlug(nextDraft.slug || nextDraft.displayName)
     if (!slug) {
       setDraft((current) => ({ ...current, referralLink: previousReferral }))
-      showErrorToast('Add a slug or display name first.')
+      showErrorToast("Add a slug or display name first.")
       return
     }
 
     try {
-      await updateItem({ type: 'partner-storefront', id: nextDraft.id, data: buildStorefrontPayload(nextDraft) }).unwrap()
-      showSuccessToast('Referral link removed.')
+      await updateItem({
+        type: "partner-storefront",
+        id: nextDraft.id,
+        data: buildStorefrontPayload(nextDraft),
+      }).unwrap()
+      showSuccessToast("Referral link removed.")
       broadcastStorefrontUpdate(nextDraft.slug || nextDraft.displayName)
       refetch()
     } catch (error) {
       setDraft((current) => ({ ...current, referralLink: previousReferral }))
       const apiErr = error as { data?: { message?: string } }
-      showErrorToast(apiErr?.data?.message || 'Failed to remove referral link.')
+      showErrorToast(apiErr?.data?.message || "Failed to remove referral link.")
     }
   }
 
   const handleApplyShopUrl = async () => {
     const shopUrl = draft.shopUrl.trim()
     if (!shopUrl) {
-      showErrorToast('Enter a shop URL before saving.')
+      showErrorToast("Enter a shop URL before saving.")
       return
     }
 
@@ -927,26 +1116,30 @@ export default function PartnerStorefrontStudio() {
     }
 
     if (hasSpecificStorefrontIds && !allowedStorefrontIds.includes(draft.id)) {
-      showErrorToast('You do not have access to edit this storefront.')
+      showErrorToast("You do not have access to edit this storefront.")
       return
     }
 
     const slug = toSlug(draft.slug || draft.displayName)
     if (!slug) {
-      showErrorToast('Add a slug or display name first.')
+      showErrorToast("Add a slug or display name first.")
       return
     }
 
     setIsUploadingShopUrl(true)
 
     try {
-      await updateItem({ type: 'partner-storefront', id: draft.id, data: buildStorefrontPayload(draft) }).unwrap()
-      showSuccessToast('Shop URL saved successfully.')
+      await updateItem({
+        type: "partner-storefront",
+        id: draft.id,
+        data: buildStorefrontPayload(draft),
+      }).unwrap()
+      showSuccessToast("Shop URL saved successfully.")
       broadcastStorefrontUpdate(draft.slug || draft.displayName)
       refetch()
     } catch (error) {
       const apiErr = error as { data?: { message?: string } }
-      showErrorToast(apiErr?.data?.message || 'Failed to save shop URL.')
+      showErrorToast(apiErr?.data?.message || "Failed to save shop URL.")
     } finally {
       setIsUploadingShopUrl(false)
     }
@@ -956,7 +1149,7 @@ export default function PartnerStorefrontStudio() {
     const previousShopUrl = draft.shopUrl
     if (!previousShopUrl.trim()) return
 
-    const nextDraft = { ...draft, shopUrl: '' }
+    const nextDraft = { ...draft, shopUrl: "" }
     setDraft(nextDraft)
 
     if (!nextDraft.id) {
@@ -964,35 +1157,42 @@ export default function PartnerStorefrontStudio() {
       return
     }
 
-    if (hasSpecificStorefrontIds && !allowedStorefrontIds.includes(nextDraft.id)) {
+    if (
+      hasSpecificStorefrontIds &&
+      !allowedStorefrontIds.includes(nextDraft.id)
+    ) {
       setDraft((current) => ({ ...current, shopUrl: previousShopUrl }))
-      showErrorToast('You do not have access to edit this storefront.')
+      showErrorToast("You do not have access to edit this storefront.")
       return
     }
 
     const slug = toSlug(nextDraft.slug || nextDraft.displayName)
     if (!slug) {
       setDraft((current) => ({ ...current, shopUrl: previousShopUrl }))
-      showErrorToast('Add a slug or display name first.')
+      showErrorToast("Add a slug or display name first.")
       return
     }
 
     try {
-      await updateItem({ type: 'partner-storefront', id: nextDraft.id, data: buildStorefrontPayload(nextDraft) }).unwrap()
-      showSuccessToast('Shop URL removed.')
+      await updateItem({
+        type: "partner-storefront",
+        id: nextDraft.id,
+        data: buildStorefrontPayload(nextDraft),
+      }).unwrap()
+      showSuccessToast("Shop URL removed.")
       broadcastStorefrontUpdate(nextDraft.slug || nextDraft.displayName)
       refetch()
     } catch (error) {
       setDraft((current) => ({ ...current, shopUrl: previousShopUrl }))
       const apiErr = error as { data?: { message?: string } }
-      showErrorToast(apiErr?.data?.message || 'Failed to remove shop URL.')
+      showErrorToast(apiErr?.data?.message || "Failed to remove shop URL.")
     }
   }
 
   const handleApplyDomainLink = async () => {
     const domain = draft.domainLink.trim()
     if (!domain) {
-      showErrorToast('Enter a domain link before saving.')
+      showErrorToast("Enter a domain link before saving.")
       return
     }
 
@@ -1002,26 +1202,30 @@ export default function PartnerStorefrontStudio() {
     }
 
     if (hasSpecificStorefrontIds && !allowedStorefrontIds.includes(draft.id)) {
-      showErrorToast('You do not have access to edit this storefront.')
+      showErrorToast("You do not have access to edit this storefront.")
       return
     }
 
     const slug = toSlug(draft.slug || draft.displayName)
     if (!slug) {
-      showErrorToast('Add a slug or display name first.')
+      showErrorToast("Add a slug or display name first.")
       return
     }
 
     setIsUploadingDomainLink(true)
 
     try {
-      await updateItem({ type: 'partner-storefront', id: draft.id, data: buildStorefrontPayload(draft) }).unwrap()
-      showSuccessToast('Domain link saved successfully.')
+      await updateItem({
+        type: "partner-storefront",
+        id: draft.id,
+        data: buildStorefrontPayload(draft),
+      }).unwrap()
+      showSuccessToast("Domain link saved successfully.")
       broadcastStorefrontUpdate(draft.slug || draft.displayName)
       refetch()
     } catch (error) {
       const apiErr = error as { data?: { message?: string } }
-      showErrorToast(apiErr?.data?.message || 'Failed to save domain link.')
+      showErrorToast(apiErr?.data?.message || "Failed to save domain link.")
     } finally {
       setIsUploadingDomainLink(false)
     }
@@ -1031,36 +1235,45 @@ export default function PartnerStorefrontStudio() {
     const previousDomain = draft.domainLink
     if (!previousDomain.trim()) return
 
-    const nextDraft = { ...draft, domainLink: '' }
+    const nextDraft = { ...draft, domainLink: "" }
     setDraft(nextDraft)
 
     if (!nextDraft.id) {
-      showSuccessToast('Domain link removed. Click "Save Storefront" to apply it.')
+      showSuccessToast(
+        'Domain link removed. Click "Save Storefront" to apply it.'
+      )
       return
     }
 
-    if (hasSpecificStorefrontIds && !allowedStorefrontIds.includes(nextDraft.id)) {
+    if (
+      hasSpecificStorefrontIds &&
+      !allowedStorefrontIds.includes(nextDraft.id)
+    ) {
       setDraft((current) => ({ ...current, domainLink: previousDomain }))
-      showErrorToast('You do not have access to edit this storefront.')
+      showErrorToast("You do not have access to edit this storefront.")
       return
     }
 
     const slug = toSlug(nextDraft.slug || nextDraft.displayName)
     if (!slug) {
       setDraft((current) => ({ ...current, domainLink: previousDomain }))
-      showErrorToast('Add a slug or display name first.')
+      showErrorToast("Add a slug or display name first.")
       return
     }
 
     try {
-      await updateItem({ type: 'partner-storefront', id: nextDraft.id, data: buildStorefrontPayload(nextDraft) }).unwrap()
-      showSuccessToast('Domain link removed.')
+      await updateItem({
+        type: "partner-storefront",
+        id: nextDraft.id,
+        data: buildStorefrontPayload(nextDraft),
+      }).unwrap()
+      showSuccessToast("Domain link removed.")
       broadcastStorefrontUpdate(nextDraft.slug || nextDraft.displayName)
       refetch()
     } catch (error) {
       setDraft((current) => ({ ...current, domainLink: previousDomain }))
       const apiErr = error as { data?: { message?: string } }
-      showErrorToast(apiErr?.data?.message || 'Failed to remove domain link.')
+      showErrorToast(apiErr?.data?.message || "Failed to remove domain link.")
     }
   }
 
@@ -1068,12 +1281,14 @@ export default function PartnerStorefrontStudio() {
     if (!isPartnerScoped) return
 
     if (storefronts.length === 0) {
-      setSelectedId('new')
+      setSelectedId("new")
       setDraft(emptyDraft)
       return
     }
 
-    const currentAllowed = selectedId !== 'new' && storefronts.some((entry) => entry.item.id === selectedId)
+    const currentAllowed =
+      selectedId !== "new" &&
+      storefronts.some((entry) => entry.item.id === selectedId)
     if (!currentAllowed) {
       const first = storefronts[0].item
       setSelectedId(first.id)
@@ -1083,12 +1298,15 @@ export default function PartnerStorefrontStudio() {
 
   useEffect(() => {
     if (allowedCategoryOptions.length === 0) {
-      setHelperCategoryId('')
+      setHelperCategoryId("")
       return
     }
 
     setHelperCategoryId((current) => {
-      if (current && allowedCategoryOptions.some((category) => category.id === current)) {
+      if (
+        current &&
+        allowedCategoryOptions.some((category) => category.id === current)
+      ) {
         return current
       }
       return allowedCategoryOptions[0].id
@@ -1096,10 +1314,12 @@ export default function PartnerStorefrontStudio() {
   }, [allowedCategoryOptions])
 
   useEffect(() => {
-    if (selectedProductsCategoryFilter === 'all') return
-    const stillValid = selectedProductCategoryOptions.some((category) => category.id === selectedProductsCategoryFilter)
+    if (selectedProductsCategoryFilter === "all") return
+    const stillValid = selectedProductCategoryOptions.some(
+      (category) => category.id === selectedProductsCategoryFilter
+    )
     if (!stillValid) {
-      setSelectedProductsCategoryFilter('all')
+      setSelectedProductsCategoryFilter("all")
     }
   }, [selectedProductsCategoryFilter, selectedProductCategoryOptions])
 
@@ -1107,13 +1327,17 @@ export default function PartnerStorefrontStudio() {
     let isCancelled = false
 
     const missingIds = draft.featuredProductIds.filter(
-      (id) => !helperProductById[id] && !missingSelectedProductRequestIdsRef.current.has(id),
+      (id) =>
+        !helperProductById[id] &&
+        !missingSelectedProductRequestIdsRef.current.has(id)
     )
     if (missingIds.length === 0) {
       return
     }
 
-    missingIds.forEach((id) => missingSelectedProductRequestIdsRef.current.add(id))
+    missingIds.forEach((id) =>
+      missingSelectedProductRequestIdsRef.current.add(id)
+    )
 
     const loadMissingSelectedProducts = async () => {
       try {
@@ -1121,15 +1345,25 @@ export default function PartnerStorefrontStudio() {
           missingIds.map(async (id) => {
             const product = await fetchPublicProduct(id).unwrap()
             return { id, product }
-          }),
+          })
         )
 
         if (isCancelled) return
 
         const resolvedProducts = results
-          .filter((result): result is PromiseFulfilledResult<{ id: number; product: Product }> => result.status === 'fulfilled')
+          .filter(
+            (
+              result
+            ): result is PromiseFulfilledResult<{
+              id: number
+              product: Product
+            }> => result.status === "fulfilled"
+          )
           .map((result) => result.value.product)
-          .filter((product): product is Product => Boolean(product) && typeof product.id === 'number')
+          .filter(
+            (product): product is Product =>
+              Boolean(product) && typeof product.id === "number"
+          )
 
         if (resolvedProducts.length > 0) {
           setHelperProductById((current) => {
@@ -1141,7 +1375,9 @@ export default function PartnerStorefrontStudio() {
           })
         }
       } finally {
-        missingIds.forEach((id) => missingSelectedProductRequestIdsRef.current.delete(id))
+        missingIds.forEach((id) =>
+          missingSelectedProductRequestIdsRef.current.delete(id)
+        )
       }
     }
 
@@ -1168,7 +1404,7 @@ export default function PartnerStorefrontStudio() {
         const firstPage = await fetchProducts({
           page: 1,
           perPage,
-          status: '1',
+          status: "1",
           catId: helperCategoryId,
         }).unwrap()
 
@@ -1179,17 +1415,19 @@ export default function PartnerStorefrontStudio() {
           const nextPage = await fetchProducts({
             page,
             perPage,
-            status: '1',
+            status: "1",
             catId: helperCategoryId,
           }).unwrap()
           allProducts = [...allProducts, ...(nextPage.products ?? [])]
         }
 
         const uniqueProducts = Array.from(
-          allProducts.reduce((map, product) => {
-            map.set(product.id, product)
-            return map
-          }, new Map<number, Product>()).values(),
+          allProducts
+            .reduce((map, product) => {
+              map.set(product.id, product)
+              return map
+            }, new Map<number, Product>())
+            .values()
         )
 
         if (!isCancelled) {
@@ -1205,7 +1443,7 @@ export default function PartnerStorefrontStudio() {
       } catch {
         if (!isCancelled) {
           setHelperProducts([])
-          showErrorToast('Failed to load products for the selected category.')
+          showErrorToast("Failed to load products for the selected category.")
         }
       } finally {
         if (!isCancelled) {
@@ -1222,11 +1460,19 @@ export default function PartnerStorefrontStudio() {
   }, [helperCategoryId, fetchProducts])
 
   if (isLoading) {
-    return <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center text-sm text-slate-500 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">Loading partner storefronts...</div>
+    return (
+      <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center text-sm text-slate-500 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+        Loading partner storefronts...
+      </div>
+    )
   }
 
   if (isError) {
-    return <div className="rounded-3xl border border-red-200 bg-red-50 p-12 text-center text-sm font-semibold text-red-600 shadow-sm dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">Failed to load partner storefronts.</div>
+    return (
+      <div className="rounded-3xl border border-red-200 bg-red-50 p-12 text-center text-sm font-semibold text-red-600 shadow-sm dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
+        Failed to load partner storefronts.
+      </div>
+    )
   }
 
   const saving = isCreating || isUpdating || isDeleting || isDeletingPartnerUser
@@ -1235,22 +1481,48 @@ export default function PartnerStorefrontStudio() {
     <div className="flex flex-col gap-5 lg:flex-row lg:items-start text-slate-900 dark:text-slate-100">
       {/* Delete modal */}
       {deleteModal.open ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-label="Delete storefront confirmation">
-          <button type="button" className="absolute inset-0" aria-label="Close" onClick={() => setDeleteModal({ open: false })} />
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Delete storefront confirmation"
+        >
+          <button
+            type="button"
+            className="absolute inset-0"
+            aria-label="Close"
+            onClick={() => setDeleteModal({ open: false })}
+          />
           <div className="relative z-[51] w-full max-w-md rounded-3xl border border-slate-200 bg-white p-7 shadow-2xl dark:border-slate-700 dark:bg-slate-950">
             <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-100 text-rose-600 dark:bg-rose-950/50 dark:text-rose-300">
               <Trash2 className="h-5 w-5" />
             </div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Delete storefront?</h3>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+              Delete storefront?
+            </h3>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              This will permanently delete <span className="font-semibold text-slate-900 dark:text-slate-100">{deleteModal.displayName ?? 'this storefront'}</span> and all related partner user accounts. This cannot be undone.
+              This will permanently delete{" "}
+              <span className="font-semibold text-slate-900 dark:text-slate-100">
+                {deleteModal.displayName ?? "this storefront"}
+              </span>{" "}
+              and all related partner user accounts. This cannot be undone.
             </p>
             <div className="mt-6 flex items-center justify-end gap-3">
-              <button type="button" onClick={() => setDeleteModal({ open: false })} disabled={isDeleting || isDeletingPartnerUser} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+              <button
+                type="button"
+                onClick={() => setDeleteModal({ open: false })}
+                disabled={isDeleting || isDeletingPartnerUser}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+              >
                 Cancel
               </button>
-              <button type="button" onClick={() => void confirmDeleteStorefrontNow()} disabled={isDeleting || isDeletingPartnerUser} className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-rose-400">
-                {isDeleting || isDeletingPartnerUser ? 'Deleting…' : 'Delete'}
+              <button
+                type="button"
+                onClick={() => void confirmDeleteStorefrontNow()}
+                disabled={isDeleting || isDeletingPartnerUser}
+                className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-rose-400"
+              >
+                {isDeleting || isDeletingPartnerUser ? "Deleting…" : "Delete"}
               </button>
             </div>
           </div>
@@ -1262,61 +1534,95 @@ export default function PartnerStorefrontStudio() {
         <div className="rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-500 p-5 text-white shadow-lg shadow-emerald-900/20">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Partner</p>
-              <h1 className="mt-0.5 text-2xl font-bold tracking-tight">Storefront Studio</h1>
+              <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">
+                Partner
+              </p>
+              <h1 className="mt-0.5 text-2xl font-bold tracking-tight">
+                Storefront Studio
+              </h1>
             </div>
             {!isPartnerScoped ? (
-              <button type="button" onClick={() => selectStorefront()} className="rounded-xl bg-white/20 px-3 py-2 text-xs font-bold text-white transition hover:bg-white/30">
+              <button
+                type="button"
+                onClick={() => selectStorefront()}
+                className="rounded-xl bg-white/20 px-3 py-2 text-xs font-bold text-white transition hover:bg-white/30"
+              >
                 + New
               </button>
             ) : null}
           </div>
-          <p className="mt-3 text-xs opacity-70">{storefronts.length} storefront{storefronts.length !== 1 ? 's' : ''} · Live editor</p>
+          <p className="mt-3 text-xs opacity-70">
+            {storefronts.length} storefront{storefronts.length !== 1 ? "s" : ""}{" "}
+            · Live editor
+          </p>
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Your Storefronts</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              Your Storefronts
+            </p>
           </div>
           <div className="max-h-[560px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {storefronts.length === 0 ? (
               <p className="p-5 text-sm text-slate-400 dark:text-slate-500">
-                {hasSpecificStorefrontIds ? 'No storefront assigned to your account yet.' : 'No partner storefronts yet.'}
+                {hasSpecificStorefrontIds
+                  ? "No storefront assigned to your account yet."
+                  : "No partner storefronts yet."}
               </p>
             ) : null}
             {storefronts.map(({ item, config }) => {
               const active = selectedId === item.id
-              const isDiscountEnabled = discountToggleByStorefrontId[item.id] ?? config.enableActivateDiscount
+              const isDiscountEnabled =
+                discountToggleByStorefrontId[item.id] ??
+                config.enableActivateDiscount
               return (
                 <div
                   key={item.id}
                   onClick={() => selectStorefront(item)}
-                  className={`cursor-pointer p-4 transition ${active ? 'bg-emerald-50 dark:bg-emerald-950/30' : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'}`}
+                  className={`cursor-pointer p-4 transition ${active ? "bg-emerald-50 dark:bg-emerald-950/30" : "hover:bg-slate-50 dark:hover:bg-slate-800/40"}`}
                 >
                   <div className="flex items-start gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800">
                       {config.logoUrl ? (
-                        <img src={config.logoUrl} alt="" className="h-full w-full object-contain" />
+                        <img
+                          src={config.logoUrl}
+                          alt=""
+                          className="h-full w-full object-contain"
+                        />
                       ) : (
-                        <span className={`text-sm font-bold ${active ? 'text-emerald-600 dark:text-emerald-300' : 'text-slate-400'}`}>
-                          {(config.displayName[0] ?? '?').toUpperCase()}
+                        <span
+                          className={`text-sm font-bold ${active ? "text-emerald-600 dark:text-emerald-300" : "text-slate-400"}`}
+                        >
+                          {(config.displayName[0] ?? "?").toUpperCase()}
                         </span>
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{config.displayName}</p>
+                        <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                          {config.displayName}
+                        </p>
                         {active ? (
                           <span className="shrink-0 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
                             Selected
                           </span>
                         ) : null}
                       </div>
-                      <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">/{config.slug}</p>
+                      <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
+                        /{config.slug}
+                      </p>
                       <div className="mt-2 flex items-center justify-between">
-                        <span className="text-xs text-slate-400 dark:text-slate-500">{config.allowedCategoryIds.length} categories</span>
-                        <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                          <span className="text-[10px] text-slate-400">Discount</span>
+                        <span className="text-xs text-slate-400 dark:text-slate-500">
+                          {config.allowedCategoryIds.length} categories
+                        </span>
+                        <div
+                          className="flex items-center gap-1.5"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <span className="text-[10px] text-slate-400">
+                            Discount
+                          </span>
                           <label className="relative inline-flex cursor-pointer items-center">
                             <input
                               type="checkbox"
@@ -1324,36 +1630,74 @@ export default function PartnerStorefrontStudio() {
                               checked={isDiscountEnabled}
                               onChange={() => {
                                 const next = !isDiscountEnabled
-                                setDiscountToggleByStorefrontId((current) => ({ ...current, [item.id]: next }))
+                                setDiscountToggleByStorefrontId((current) => ({
+                                  ...current,
+                                  [item.id]: next,
+                                }))
                                 if (selectedId === item.id) {
-                                  setDraft((current) => ({ ...current, enableActivateDiscount: next }))
+                                  setDraft((current) => ({
+                                    ...current,
+                                    enableActivateDiscount: next,
+                                  }))
                                 }
-                                if (hasSpecificStorefrontIds && !allowedStorefrontIds.includes(item.id)) {
-                                  showErrorToast('You do not have access to edit this storefront.')
-                                  setDiscountToggleByStorefrontId((current) => ({ ...current, [item.id]: isDiscountEnabled }))
+                                if (
+                                  hasSpecificStorefrontIds &&
+                                  !allowedStorefrontIds.includes(item.id)
+                                ) {
+                                  showErrorToast(
+                                    "You do not have access to edit this storefront."
+                                  )
+                                  setDiscountToggleByStorefrontId(
+                                    (current) => ({
+                                      ...current,
+                                      [item.id]: isDiscountEnabled,
+                                    })
+                                  )
                                   return
                                 }
                                 const baseDraft = toDraft(item)
-                                const payload = buildStorefrontPayload({ ...baseDraft, enableActivateDiscount: next })
-                                updateItem({ type: 'partner-storefront', id: item.id, data: payload })
+                                const payload = buildStorefrontPayload({
+                                  ...baseDraft,
+                                  enableActivateDiscount: next,
+                                })
+                                updateItem({
+                                  type: "partner-storefront",
+                                  id: item.id,
+                                  data: payload,
+                                })
                                   .unwrap()
                                   .then(() => {
-                                    setDiscountToggleByStorefrontId((current) => {
-                                      const nextState = { ...current }
-                                      delete nextState[item.id]
-                                      return nextState
-                                    })
-                                    broadcastStorefrontUpdate(baseDraft.slug || baseDraft.displayName)
+                                    setDiscountToggleByStorefrontId(
+                                      (current) => {
+                                        const nextState = { ...current }
+                                        delete nextState[item.id]
+                                        return nextState
+                                      }
+                                    )
+                                    broadcastStorefrontUpdate(
+                                      baseDraft.slug || baseDraft.displayName
+                                    )
                                     refetch()
                                   })
                                   .catch(() => {
-                                    setDiscountToggleByStorefrontId((current) => ({ ...current, [item.id]: isDiscountEnabled }))
-                                    showErrorToast('Failed to update activate discount.')
+                                    setDiscountToggleByStorefrontId(
+                                      (current) => ({
+                                        ...current,
+                                        [item.id]: isDiscountEnabled,
+                                      })
+                                    )
+                                    showErrorToast(
+                                      "Failed to update activate discount."
+                                    )
                                   })
                               }}
                             />
-                            <div className={`peer h-5 w-9 rounded-full border transition ${isDiscountEnabled ? '!border-emerald-500 !bg-emerald-500' : 'border-slate-200 bg-slate-300 dark:border-slate-600 dark:bg-slate-700'}`} />
-                            <div className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${isDiscountEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
+                            <div
+                              className={`peer h-5 w-9 rounded-full border transition ${isDiscountEnabled ? "!border-emerald-500 !bg-emerald-500" : "border-slate-200 bg-slate-300 dark:border-slate-600 dark:bg-slate-700"}`}
+                            />
+                            <div
+                              className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${isDiscountEnabled ? "translate-x-4" : "translate-x-0"}`}
+                            />
                           </label>
                         </div>
                       </div>
@@ -1361,7 +1705,10 @@ export default function PartnerStorefrontStudio() {
                     {!isPartnerScoped ? (
                       <button
                         type="button"
-                        onClick={(e) => { e.stopPropagation(); void handleDeleteStorefront(item, config.displayName) }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          void handleDeleteStorefront(item, config.displayName)
+                        }}
                         className="shrink-0 rounded-lg p-1.5 text-slate-300 transition hover:bg-rose-50 hover:text-rose-500 dark:text-slate-600 dark:hover:bg-rose-950/30 dark:hover:text-rose-400"
                         aria-label={`Delete ${config.displayName}`}
                       >
@@ -1382,20 +1729,27 @@ export default function PartnerStorefrontStudio() {
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div>
             <p className="text-xs text-slate-400 dark:text-slate-500">
-              {selectedId === 'new' ? 'Creating new storefront' : `Storefront ID ${selectedId}`}
+              {selectedId === "new"
+                ? "Creating new storefront"
+                : `Storefront ID ${selectedId}`}
             </p>
             <h2 className="mt-0.5 text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-              {draft.displayName || <span className="text-slate-400">Untitled Storefront</span>}
+              {draft.displayName || (
+                <span className="text-slate-400">Untitled Storefront</span>
+              )}
             </h2>
           </div>
           <div className="flex items-center gap-2">
-            <OpenPreviewButton slug={draft.slug} displayName={draft.displayName} />
+            <OpenPreviewButton
+              slug={draft.slug}
+              displayName={draft.displayName}
+            />
             <Link
               href={renewalHref}
               className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold shadow-sm transition ${
                 selectedStorefrontItem
-                  ? 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:border-indigo-700/60 dark:bg-indigo-900/30 dark:text-indigo-200 dark:hover:bg-indigo-900/50'
-                  : 'pointer-events-none cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500'
+                  ? "border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:border-indigo-700/60 dark:bg-indigo-900/30 dark:text-indigo-200 dark:hover:bg-indigo-900/50"
+                  : "pointer-events-none cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500"
               }`}
               aria-disabled={!selectedStorefrontItem}
               tabIndex={selectedStorefrontItem ? 0 : -1}
@@ -1408,7 +1762,9 @@ export default function PartnerStorefrontStudio() {
               disabled={saving}
               className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-emerald-900/20 transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
+              {saving ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              ) : null}
               Save Storefront
             </button>
           </div>
@@ -1416,97 +1772,203 @@ export default function PartnerStorefrontStudio() {
 
         {/* Tab navigation */}
         <div className="flex rounded-2xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-900/60">
-          {(['identity', 'categories', 'products'] as const).map((tab) => (
+          {(["identity", "categories", "products"] as const).map((tab) => (
             <button
               key={tab}
               type="button"
               onClick={() => setActiveTab(tab)}
               className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
                 activeTab === tab
-                  ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-slate-100'
-                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                  ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-slate-100"
+                  : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
               }`}
             >
-              {tab === 'identity'
-                ? 'Identity'
-                : tab === 'categories'
-                  ? `Categories${draft.allowedCategoryIds.length > 0 ? ` (${draft.allowedCategoryIds.length})` : ''}`
-                  : `Products${draft.featuredProductIds.length > 0 ? ` (${draft.featuredProductIds.length})` : ''}`}
+              {tab === "identity"
+                ? "Identity"
+                : tab === "categories"
+                  ? `Categories${draft.allowedCategoryIds.length > 0 ? ` (${draft.allowedCategoryIds.length})` : ""}`
+                  : `Products${draft.featuredProductIds.length > 0 ? ` (${draft.featuredProductIds.length})` : ""}`}
             </button>
           ))}
         </div>
 
         {/* Identity Tab */}
-        {activeTab === 'identity' ? (
+        {activeTab === "identity" ? (
           <div className={panelClass}>
             <div className="mb-5">
-              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Basic Info</h2>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Configure storefront identity, hero messaging and partner settings.</p>
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                Basic Info
+              </h2>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                Configure storefront identity, hero messaging and partner
+                settings.
+              </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <Field label="Slug">
-                <input value={draft.slug} onChange={(e) => setDraft((c) => ({ ...c, slug: e.target.value }))} onBlur={(e) => setDraft((c) => ({ ...c, slug: toSlug(e.target.value) }))} placeholder="your-shop-name" className={inputClass} />
+                <input
+                  value={draft.slug}
+                  onChange={(e) =>
+                    setDraft((c) => ({ ...c, slug: e.target.value }))
+                  }
+                  onBlur={(e) =>
+                    setDraft((c) => ({ ...c, slug: toSlug(e.target.value) }))
+                  }
+                  placeholder="your-shop-name"
+                  className={inputClass}
+                />
               </Field>
               <Field label="Display Name">
-                <input value={draft.displayName} onChange={(e) => setDraft((c) => ({ ...c, displayName: e.target.value }))} placeholder="Your Shop Name" className={inputClass} />
+                <input
+                  value={draft.displayName}
+                  onChange={(e) =>
+                    setDraft((c) => ({ ...c, displayName: e.target.value }))
+                  }
+                  placeholder="Your Shop Name"
+                  className={inputClass}
+                />
               </Field>
               <Field label="Hero Title">
-                <input value={draft.heroTitle} onChange={(e) => setDraft((c) => ({ ...c, heroTitle: e.target.value }))} placeholder="Shop Name Furniture Store" className={inputClass} />
+                <input
+                  value={draft.heroTitle}
+                  onChange={(e) =>
+                    setDraft((c) => ({ ...c, heroTitle: e.target.value }))
+                  }
+                  placeholder="Shop Name Furniture Store"
+                  className={inputClass}
+                />
               </Field>
               <Field label="Partner Notification Email">
-                <input value={draft.notificationEmail} onChange={(e) => setDraft((c) => ({ ...c, notificationEmail: e.target.value }))} placeholder="partner@example.com" className={inputClass} />
+                <input
+                  value={draft.notificationEmail}
+                  onChange={(e) =>
+                    setDraft((c) => ({
+                      ...c,
+                      notificationEmail: e.target.value,
+                    }))
+                  }
+                  placeholder="partner@example.com"
+                  className={inputClass}
+                />
               </Field>
-              <Field label="Hero Subtitle" className="sm:col-span-2 xl:col-span-4">
-                <textarea value={draft.heroSubtitle} onChange={(e) => setDraft((c) => ({ ...c, heroSubtitle: e.target.value }))} placeholder="Curated home furniture for condo buyers." rows={3} className={inputClass} />
+              <Field
+                label="Hero Subtitle"
+                className="sm:col-span-2 xl:col-span-4"
+              >
+                <textarea
+                  value={draft.heroSubtitle}
+                  onChange={(e) =>
+                    setDraft((c) => ({ ...c, heroSubtitle: e.target.value }))
+                  }
+                  placeholder="Curated home furniture for condo buyers."
+                  rows={3}
+                  className={inputClass}
+                />
               </Field>
             </div>
 
             <div className="mt-6 border-t border-slate-100 pt-6 dark:border-slate-800">
-              <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-300">Brand Colors</h3>
+              <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-300">
+                Brand Colors
+              </h3>
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <Field label="Theme Color" className="xl:col-span-2">
                   <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800/80">
-                    <input type="color" value={draft.themeColor} onChange={(e) => setDraft((c) => ({ ...c, themeColor: e.target.value }))} className="h-9 w-9 cursor-pointer rounded-lg border border-slate-200 dark:border-slate-600" />
-                    <span className="font-mono text-sm text-slate-600 dark:text-slate-300">{draft.themeColor}</span>
+                    <input
+                      type="color"
+                      value={draft.themeColor}
+                      onChange={(e) =>
+                        setDraft((c) => ({ ...c, themeColor: e.target.value }))
+                      }
+                      className="h-9 w-9 cursor-pointer rounded-lg border border-slate-200 dark:border-slate-600"
+                    />
+                    <span className="font-mono text-sm text-slate-600 dark:text-slate-300">
+                      {draft.themeColor}
+                    </span>
                   </div>
                 </Field>
                 <Field label="Accent Color" className="xl:col-span-2">
                   <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800/80">
-                    <input type="color" value={draft.accentColor} onChange={(e) => setDraft((c) => ({ ...c, accentColor: e.target.value }))} className="h-9 w-9 cursor-pointer rounded-lg border border-slate-200 dark:border-slate-600" />
-                    <span className="font-mono text-sm text-slate-600 dark:text-slate-300">{draft.accentColor}</span>
+                    <input
+                      type="color"
+                      value={draft.accentColor}
+                      onChange={(e) =>
+                        setDraft((c) => ({ ...c, accentColor: e.target.value }))
+                      }
+                      className="h-9 w-9 cursor-pointer rounded-lg border border-slate-200 dark:border-slate-600"
+                    />
+                    <span className="font-mono text-sm text-slate-600 dark:text-slate-300">
+                      {draft.accentColor}
+                    </span>
                   </div>
                 </Field>
               </div>
             </div>
 
             <div className="mt-6 border-t border-slate-100 pt-6 dark:border-slate-800">
-              <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-300">Brand Assets</h3>
+              <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-300">
+                Brand Assets
+              </h3>
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 {/* Logo */}
                 <div className="space-y-2 xl:col-span-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Logo</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                    Logo
+                  </p>
                   <div className={softCardClass}>
                     <div className="flex items-center gap-3">
                       <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
                         {draft.logoUrl ? (
-                          <img src={`${draft.logoUrl}${draft.logoUrl.includes('?') ? '&' : '?'}v=${logoVersion || draft.logoVersion || '1'}`} alt="Logo" className="h-full w-full object-contain p-1" />
+                          <img
+                            src={`${draft.logoUrl}${draft.logoUrl.includes("?") ? "&" : "?"}v=${logoVersion || draft.logoVersion || "1"}`}
+                            alt="Logo"
+                            className="h-full w-full object-contain p-1"
+                          />
                         ) : (
-                          <span className="text-xs text-slate-300 dark:text-slate-600">No logo</span>
+                          <span className="text-xs text-slate-300 dark:text-slate-600">
+                            No logo
+                          </span>
                         )}
                       </div>
                       <div>
-                        <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">Storefront logo</p>
-                        <p className="mt-0.5 text-xs text-slate-400">PNG, JPG, or WebP</p>
+                        <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                          Storefront logo
+                        </p>
+                        <p className="mt-0.5 text-xs text-slate-400">
+                          PNG, JPG, or WebP
+                        </p>
                       </div>
                     </div>
                     <div className="mt-3 flex items-center gap-2">
-                      <input ref={logoInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleLogoUpload} className="hidden" />
-                      <button type="button" onClick={() => logoInputRef.current?.click()} disabled={isUploadingLogo} className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-white px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300">
-                        {isUploadingLogo ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : null}
+                      <input
+                        ref={logoInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        onChange={handleLogoUpload}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => logoInputRef.current?.click()}
+                        disabled={isUploadingLogo}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-white px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300"
+                      >
+                        {isUploadingLogo ? (
+                          <Loader2
+                            className="h-3.5 w-3.5 animate-spin"
+                            aria-hidden="true"
+                          />
+                        ) : null}
                         Upload
                       </button>
                       {draft.logoUrl ? (
-                        <button type="button" onClick={() => void handleRemoveLogo()} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">Remove</button>
+                        <button
+                          type="button"
+                          onClick={() => void handleRemoveLogo()}
+                          className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                        >
+                          Remove
+                        </button>
                       ) : null}
                     </div>
                   </div>
@@ -1514,29 +1976,63 @@ export default function PartnerStorefrontStudio() {
 
                 {/* Tab Logo */}
                 <div className="space-y-2 xl:col-span-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Browser Tab Logo</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                    Browser Tab Logo
+                  </p>
                   <div className={softCardClass}>
                     <div className="flex items-center gap-3">
                       <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
                         {draft.tabLogoUrl ? (
-                          <img src={`${draft.tabLogoUrl}${draft.tabLogoUrl.includes('?') ? '&' : '?'}v=${logoVersion || draft.logoVersion || '1'}`} alt="Tab logo" className="h-full w-full object-contain p-1" />
+                          <img
+                            src={`${draft.tabLogoUrl}${draft.tabLogoUrl.includes("?") ? "&" : "?"}v=${logoVersion || draft.logoVersion || "1"}`}
+                            alt="Tab logo"
+                            className="h-full w-full object-contain p-1"
+                          />
                         ) : (
-                          <span className="text-xs text-slate-300 dark:text-slate-600">No icon</span>
+                          <span className="text-xs text-slate-300 dark:text-slate-600">
+                            No icon
+                          </span>
                         )}
                       </div>
                       <div>
-                        <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">Favicon / tab icon</p>
-                        <p className="mt-0.5 text-xs text-slate-400">PNG, ICO, or WebP</p>
+                        <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                          Favicon / tab icon
+                        </p>
+                        <p className="mt-0.5 text-xs text-slate-400">
+                          PNG, ICO, or WebP
+                        </p>
                       </div>
                     </div>
                     <div className="mt-3 flex items-center gap-2">
-                      <input ref={tabLogoInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/x-icon,image/vnd.microsoft.icon" onChange={handleTabLogoUpload} className="hidden" />
-                      <button type="button" onClick={() => tabLogoInputRef.current?.click()} disabled={isUploadingTabLogo} className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-white px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300">
-                        {isUploadingTabLogo ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : null}
+                      <input
+                        ref={tabLogoInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif,image/x-icon,image/vnd.microsoft.icon"
+                        onChange={handleTabLogoUpload}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => tabLogoInputRef.current?.click()}
+                        disabled={isUploadingTabLogo}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-white px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300"
+                      >
+                        {isUploadingTabLogo ? (
+                          <Loader2
+                            className="h-3.5 w-3.5 animate-spin"
+                            aria-hidden="true"
+                          />
+                        ) : null}
                         Upload
                       </button>
                       {draft.tabLogoUrl ? (
-                        <button type="button" onClick={() => void handleRemoveTabLogo()} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">Remove</button>
+                        <button
+                          type="button"
+                          onClick={() => void handleRemoveTabLogo()}
+                          className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                        >
+                          Remove
+                        </button>
                       ) : null}
                     </div>
                   </div>
@@ -1544,26 +2040,60 @@ export default function PartnerStorefrontStudio() {
 
                 {/* Hero Video */}
                 <div className="space-y-2 sm:col-span-2 xl:col-span-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Hero Video</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                    Hero Video
+                  </p>
                   <div className={softCardClass}>
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">Storefront hero video</p>
-                        <p className="mt-0.5 text-xs text-slate-400">MP4, MOV, WEBM · Min 5MB</p>
+                        <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                          Storefront hero video
+                        </p>
+                        <p className="mt-0.5 text-xs text-slate-400">
+                          MP4, MOV, WEBM · Min 5MB
+                        </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <input ref={heroVideoInputRef} type="file" accept="video/mp4,video/quicktime,video/webm,video/x-msvideo,video/x-ms-wmv" onChange={handleHeroVideoUpload} className="hidden" />
-                        <button type="button" onClick={() => heroVideoInputRef.current?.click()} disabled={isUploadingHeroVideo} className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-white px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300">
-                          {isUploadingHeroVideo ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : null}
+                        <input
+                          ref={heroVideoInputRef}
+                          type="file"
+                          accept="video/mp4,video/quicktime,video/webm,video/x-msvideo,video/x-ms-wmv"
+                          onChange={handleHeroVideoUpload}
+                          className="hidden"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => heroVideoInputRef.current?.click()}
+                          disabled={isUploadingHeroVideo}
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-white px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300"
+                        >
+                          {isUploadingHeroVideo ? (
+                            <Loader2
+                              className="h-3.5 w-3.5 animate-spin"
+                              aria-hidden="true"
+                            />
+                          ) : null}
                           Upload Video
                         </button>
                         {draft.heroVideoUrl ? (
-                          <button type="button" onClick={() => void handleRemoveHeroVideo()} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">Remove</button>
+                          <button
+                            type="button"
+                            onClick={() => void handleRemoveHeroVideo()}
+                            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                          >
+                            Remove
+                          </button>
                         ) : null}
                       </div>
                     </div>
                     {draft.heroVideoUrl ? (
-                      <video key={draft.heroVideoUrl} src={draft.heroVideoUrl} controls preload="metadata" className="mt-3 w-full max-h-56 rounded-xl border border-slate-200 bg-slate-900 dark:border-slate-700" />
+                      <video
+                        key={draft.heroVideoUrl}
+                        src={draft.heroVideoUrl}
+                        controls
+                        preload="metadata"
+                        className="mt-3 w-full max-h-56 rounded-xl border border-slate-200 bg-slate-900 dark:border-slate-700"
+                      />
                     ) : null}
                   </div>
                 </div>
@@ -1571,17 +2101,43 @@ export default function PartnerStorefrontStudio() {
             </div>
 
             <div className="mt-6 border-t border-slate-100 pt-6 dark:border-slate-800">
-              <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-300">Referral Link</h3>
+              <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-300">
+                Referral Link
+              </h3>
               <div className="space-y-2">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Referral Link</p>
-                <input value={draft.referralLink} onChange={(e) => setDraft((c) => ({ ...c, referralLink: e.target.value }))} placeholder="https://www.afhome.ph/ref/username" className={inputClass} />
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                  Referral Link
+                </p>
+                <input
+                  value={draft.referralLink}
+                  onChange={(e) =>
+                    setDraft((c) => ({ ...c, referralLink: e.target.value }))
+                  }
+                  placeholder="https://www.afhome.ph/ref/username"
+                  className={inputClass}
+                />
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <button type="button" onClick={() => void handleApplyReferralLink()} disabled={isUploadingReferralLink || saving} className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300">
-                    {isUploadingReferralLink ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
+                  <button
+                    type="button"
+                    onClick={() => void handleApplyReferralLink()}
+                    disabled={isUploadingReferralLink || saving}
+                    className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300"
+                  >
+                    {isUploadingReferralLink ? (
+                      <Loader2
+                        className="h-4 w-4 animate-spin"
+                        aria-hidden="true"
+                      />
+                    ) : null}
                     Save Link
                   </button>
                   {draft.referralLink.trim() ? (
-                    <button type="button" onClick={() => void handleRemoveReferralLink()} disabled={saving} className="rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-60 dark:border-red-900/60 dark:bg-slate-800 dark:text-red-300">
+                    <button
+                      type="button"
+                      onClick={() => void handleRemoveReferralLink()}
+                      disabled={saving}
+                      className="rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-60 dark:border-red-900/60 dark:bg-slate-800 dark:text-red-300"
+                    >
                       Remove Link
                     </button>
                   ) : null}
@@ -1590,40 +2146,95 @@ export default function PartnerStorefrontStudio() {
             </div>
 
             <div className="mt-6 border-t border-slate-100 pt-6 dark:border-slate-800">
-              <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-300">Shop URL</h3>
+              <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-300">
+                Shop URL
+              </h3>
               <div className="space-y-2">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Shop URL</p>
-                <input value={draft.shopUrl} onChange={(e) => setDraft((c) => ({ ...c, shopUrl: e.target.value }))} placeholder="https://www.afhome.ph/shop?ref=username" className={inputClass} />
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                  Shop URL
+                </p>
+                <input
+                  value={draft.shopUrl}
+                  onChange={(e) =>
+                    setDraft((c) => ({ ...c, shopUrl: e.target.value }))
+                  }
+                  placeholder="https://www.afhome.ph/shop?ref=username"
+                  className={inputClass}
+                />
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <button type="button" onClick={() => void handleApplyShopUrl()} disabled={isUploadingShopUrl || saving} className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300">
-                    {isUploadingShopUrl ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
+                  <button
+                    type="button"
+                    onClick={() => void handleApplyShopUrl()}
+                    disabled={isUploadingShopUrl || saving}
+                    className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300"
+                  >
+                    {isUploadingShopUrl ? (
+                      <Loader2
+                        className="h-4 w-4 animate-spin"
+                        aria-hidden="true"
+                      />
+                    ) : null}
                     Save Shop URL
                   </button>
                   {draft.shopUrl.trim() ? (
-                    <button type="button" onClick={() => void handleRemoveShopUrl()} disabled={saving} className="rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-60 dark:border-red-900/60 dark:bg-slate-800 dark:text-red-300">
+                    <button
+                      type="button"
+                      onClick={() => void handleRemoveShopUrl()}
+                      disabled={saving}
+                      className="rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-60 dark:border-red-900/60 dark:bg-slate-800 dark:text-red-300"
+                    >
                       Remove Shop URL
                     </button>
                   ) : null}
                 </div>
                 <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
-                  <span className="font-semibold text-slate-700 dark:text-slate-100">Public storefront URL:</span>{' '}
-                  {publicShopUrl || 'Will appear here after you enter a Shop URL or Domain Link.'}
+                  <span className="font-semibold text-slate-700 dark:text-slate-100">
+                    Public storefront URL:
+                  </span>{" "}
+                  {publicShopUrl ||
+                    "Will appear here after you enter a Shop URL or Domain Link."}
                 </div>
               </div>
             </div>
 
             <div className="mt-6 border-t border-slate-100 pt-6 dark:border-slate-800">
-              <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-300">Domain Link(optional)</h3>
+              <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-300">
+                Domain Link(optional)
+              </h3>
               <div className="space-y-2">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Domain Link</p>
-                <input value={draft.domainLink} onChange={(e) => setDraft((c) => ({ ...c, domainLink: e.target.value }))} placeholder="https://myshop.com" className={inputClass} />
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                  Domain Link
+                </p>
+                <input
+                  value={draft.domainLink}
+                  onChange={(e) =>
+                    setDraft((c) => ({ ...c, domainLink: e.target.value }))
+                  }
+                  placeholder="https://myshop.com"
+                  className={inputClass}
+                />
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <button type="button" onClick={() => void handleApplyDomainLink()} disabled={isUploadingDomainLink || saving} className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300">
-                    {isUploadingDomainLink ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
+                  <button
+                    type="button"
+                    onClick={() => void handleApplyDomainLink()}
+                    disabled={isUploadingDomainLink || saving}
+                    className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300"
+                  >
+                    {isUploadingDomainLink ? (
+                      <Loader2
+                        className="h-4 w-4 animate-spin"
+                        aria-hidden="true"
+                      />
+                    ) : null}
                     Save Domain Link
                   </button>
                   {draft.domainLink.trim() ? (
-                    <button type="button" onClick={() => void handleRemoveDomainLink()} disabled={saving} className="rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-60 dark:border-red-900/60 dark:bg-slate-800 dark:text-red-300">
+                    <button
+                      type="button"
+                      onClick={() => void handleRemoveDomainLink()}
+                      disabled={saving}
+                      className="rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-60 dark:border-red-900/60 dark:bg-slate-800 dark:text-red-300"
+                    >
                       Remove Domain Link
                     </button>
                   ) : null}
@@ -1634,10 +2245,25 @@ export default function PartnerStorefrontStudio() {
             {canManageAiSupport ? (
               <div className="mt-6 border-t border-slate-100 pt-6 dark:border-slate-800">
                 <label className="flex cursor-pointer items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800/50 dark:hover:bg-slate-800">
-                  <input type="checkbox" checked={draft.enableAiSupport} onChange={(e) => setDraft((c) => ({ ...c, enableAiSupport: e.target.checked }))} className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-900" />
+                  <input
+                    type="checkbox"
+                    checked={draft.enableAiSupport}
+                    onChange={(e) =>
+                      setDraft((c) => ({
+                        ...c,
+                        enableAiSupport: e.target.checked,
+                      }))
+                    }
+                    className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-900"
+                  />
                   <div>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Enable AI Support</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Show the floating AI chat widget on this partner storefront.</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      Enable AI Support
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Show the floating AI chat widget on this partner
+                      storefront.
+                    </p>
                   </div>
                 </label>
               </div>
@@ -1646,12 +2272,16 @@ export default function PartnerStorefrontStudio() {
         ) : null}
 
         {/* Categories Tab */}
-        {activeTab === 'categories' ? (
+        {activeTab === "categories" ? (
           <div className={panelClass}>
             <div className="mb-5 flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Allowed Categories</h2>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Only selected categories appear on this storefront.</p>
+                <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                  Allowed Categories
+                </h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  Only selected categories appear on this storefront.
+                </p>
               </div>
               <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
                 {draft.allowedCategoryIds.length} selected
@@ -1660,60 +2290,187 @@ export default function PartnerStorefrontStudio() {
             <div className="grid gap-3 sm:grid-cols-2">
               {categories.map((category) => {
                 const active = draft.allowedCategoryIds.includes(category.id)
-                const categoryName = (category.name ?? '').toLowerCase()
-                const iconTone = categoryName.includes('mobile') || categoryName.includes('accessories')
-                  ? 'border-violet-100 bg-violet-50 text-violet-500'
-                  : categoryName.includes('decor')
-                    ? 'border-emerald-100 bg-emerald-50 text-emerald-500'
-                    : categoryName.includes('essential') || categoryName.includes('home ')
-                      ? 'border-amber-100 bg-amber-50 text-amber-500'
-                      : categoryName.includes('appliance')
-                        ? 'border-sky-100 bg-sky-50 text-sky-500'
-                        : categoryName.includes('auto') || categoryName.includes('care')
-                          ? 'border-rose-100 bg-rose-50 text-rose-500'
-                          : categoryName.includes('living')
-                            ? 'border-purple-100 bg-purple-50 text-purple-500'
-                            : categoryName.includes('service')
-                              ? 'border-cyan-100 bg-cyan-50 text-cyan-500'
-                              : categoryName.includes('propert')
-                                ? 'border-orange-100 bg-orange-50 text-orange-500'
-                                : 'border-slate-200 bg-slate-50 text-slate-500'
-                const countTone = categoryName.includes('mobile') || categoryName.includes('accessories')
-                  ? 'text-violet-500'
-                  : categoryName.includes('decor')
-                    ? 'text-emerald-500'
-                    : categoryName.includes('essential') || categoryName.includes('home ')
-                      ? 'text-amber-500'
-                      : categoryName.includes('appliance')
-                        ? 'text-sky-500'
-                        : categoryName.includes('auto') || categoryName.includes('care')
-                          ? 'text-rose-500'
-                          : categoryName.includes('living')
-                            ? 'text-purple-500'
-                            : categoryName.includes('service')
-                              ? 'text-cyan-500'
-                              : categoryName.includes('propert')
-                                ? 'text-orange-500'
-                                : 'text-slate-500'
+                const categoryName = (category.name ?? "").toLowerCase()
+                const iconTone =
+                  categoryName.includes("mobile") ||
+                  categoryName.includes("accessories")
+                    ? "border-violet-100 bg-violet-50 text-violet-500"
+                    : categoryName.includes("decor")
+                      ? "border-emerald-100 bg-emerald-50 text-emerald-500"
+                      : categoryName.includes("essential") ||
+                          categoryName.includes("home ")
+                        ? "border-amber-100 bg-amber-50 text-amber-500"
+                        : categoryName.includes("appliance")
+                          ? "border-sky-100 bg-sky-50 text-sky-500"
+                          : categoryName.includes("auto") ||
+                              categoryName.includes("care")
+                            ? "border-rose-100 bg-rose-50 text-rose-500"
+                            : categoryName.includes("living")
+                              ? "border-purple-100 bg-purple-50 text-purple-500"
+                              : categoryName.includes("service")
+                                ? "border-cyan-100 bg-cyan-50 text-cyan-500"
+                                : categoryName.includes("propert")
+                                  ? "border-orange-100 bg-orange-50 text-orange-500"
+                                  : "border-slate-200 bg-slate-50 text-slate-500"
+                const countTone =
+                  categoryName.includes("mobile") ||
+                  categoryName.includes("accessories")
+                    ? "text-violet-500"
+                    : categoryName.includes("decor")
+                      ? "text-emerald-500"
+                      : categoryName.includes("essential") ||
+                          categoryName.includes("home ")
+                        ? "text-amber-500"
+                        : categoryName.includes("appliance")
+                          ? "text-sky-500"
+                          : categoryName.includes("auto") ||
+                              categoryName.includes("care")
+                            ? "text-rose-500"
+                            : categoryName.includes("living")
+                              ? "text-purple-500"
+                              : categoryName.includes("service")
+                                ? "text-cyan-500"
+                                : categoryName.includes("propert")
+                                  ? "text-orange-500"
+                                  : "text-slate-500"
                 const modernIcon =
-                  categoryName.includes('mobile') || categoryName.includes('accessories') ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><rect x="7" y="2.5" width="10" height="19" rx="2.5" /><path d="M11 18h2" /></svg>
-                  ) : categoryName.includes('decor') ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M4 12h16" /><path d="M6.5 12V9a3.5 3.5 0 0 1 7 0v3" /><path d="M10.5 12V9a3.5 3.5 0 0 1 7 0v3" /><path d="M5 12v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" /></svg>
-                  ) : categoryName.includes('essential') || categoryName.includes('home ') ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M3 10.5L12 3l9 7.5" /><path d="M5 9.5V21h14V9.5" /><path d="M10 21v-6h4v6" /></svg>
-                  ) : categoryName.includes('appliance') ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><rect x="5" y="2.5" width="14" height="19" rx="2.5" /><circle cx="12" cy="13" r="4" /><path d="M8 6.5h8" /></svg>
-                  ) : categoryName.includes('auto') || categoryName.includes('care') ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M6 16h12l-1.5-5a2 2 0 0 0-1.9-1.4H9.4A2 2 0 0 0 7.5 11z" /><path d="M4 16h16v2a2 2 0 0 1-2 2h-1v-2H7v2H6a2 2 0 0 1-2-2z" /><circle cx="8" cy="16.5" r="0.8" /><circle cx="16" cy="16.5" r="0.8" /></svg>
-                  ) : categoryName.includes('living') ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M12 2l5 9h-10z" /><path d="M12 11v9" /><path d="M8 20h8" /></svg>
-                  ) : categoryName.includes('service') ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M21 7.5a3 3 0 0 1-3 3h-1l-4.7 4.7a2 2 0 0 1-2.8 0L8 13.7a2 2 0 0 1 0-2.8L12.7 6H14a3 3 0 1 1 0 6h-1.2" /><path d="M4 20l4-4" /></svg>
-                  ) : categoryName.includes('propert') ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M8 7h2M14 7h2M8 11h2M14 11h2M8 15h2M14 15h2" /></svg>
+                  categoryName.includes("mobile") ||
+                  categoryName.includes("accessories") ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-5 w-5"
+                    >
+                      <rect x="7" y="2.5" width="10" height="19" rx="2.5" />
+                      <path d="M11 18h2" />
+                    </svg>
+                  ) : categoryName.includes("decor") ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-5 w-5"
+                    >
+                      <path d="M4 12h16" />
+                      <path d="M6.5 12V9a3.5 3.5 0 0 1 7 0v3" />
+                      <path d="M10.5 12V9a3.5 3.5 0 0 1 7 0v3" />
+                      <path d="M5 12v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" />
+                    </svg>
+                  ) : categoryName.includes("essential") ||
+                    categoryName.includes("home ") ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-5 w-5"
+                    >
+                      <path d="M3 10.5L12 3l9 7.5" />
+                      <path d="M5 9.5V21h14V9.5" />
+                      <path d="M10 21v-6h4v6" />
+                    </svg>
+                  ) : categoryName.includes("appliance") ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-5 w-5"
+                    >
+                      <rect x="5" y="2.5" width="14" height="19" rx="2.5" />
+                      <circle cx="12" cy="13" r="4" />
+                      <path d="M8 6.5h8" />
+                    </svg>
+                  ) : categoryName.includes("auto") ||
+                    categoryName.includes("care") ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-5 w-5"
+                    >
+                      <path d="M6 16h12l-1.5-5a2 2 0 0 0-1.9-1.4H9.4A2 2 0 0 0 7.5 11z" />
+                      <path d="M4 16h16v2a2 2 0 0 1-2 2h-1v-2H7v2H6a2 2 0 0 1-2-2z" />
+                      <circle cx="8" cy="16.5" r="0.8" />
+                      <circle cx="16" cy="16.5" r="0.8" />
+                    </svg>
+                  ) : categoryName.includes("living") ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-5 w-5"
+                    >
+                      <path d="M12 2l5 9h-10z" />
+                      <path d="M12 11v9" />
+                      <path d="M8 20h8" />
+                    </svg>
+                  ) : categoryName.includes("service") ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-5 w-5"
+                    >
+                      <path d="M21 7.5a3 3 0 0 1-3 3h-1l-4.7 4.7a2 2 0 0 1-2.8 0L8 13.7a2 2 0 0 1 0-2.8L12.7 6H14a3 3 0 1 1 0 6h-1.2" />
+                      <path d="M4 20l4-4" />
+                    </svg>
+                  ) : categoryName.includes("propert") ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-5 w-5"
+                    >
+                      <rect x="4" y="3" width="16" height="18" rx="2" />
+                      <path d="M8 7h2M14 7h2M8 11h2M14 11h2M8 15h2M14 15h2" />
+                    </svg>
                   ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h16" /></svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-5 w-5"
+                    >
+                      <path d="M4 7h16" />
+                      <path d="M4 12h16" />
+                      <path d="M4 17h16" />
+                    </svg>
                   )
                 return (
                   <button
@@ -1721,29 +2478,53 @@ export default function PartnerStorefrontStudio() {
                     type="button"
                     onClick={() => toggleCategory(category.id)}
                     className={[
-                      'group relative flex items-center justify-between gap-3 rounded-2xl border px-4 py-4 text-left transition',
-                      'focus:outline-none focus:ring-4 focus:ring-slate-200/70 dark:focus:ring-slate-700/40',
+                      "group relative flex items-center justify-between gap-3 rounded-2xl border px-4 py-4 text-left transition",
+                      "focus:outline-none focus:ring-4 focus:ring-slate-200/70 dark:focus:ring-slate-700/40",
                       active
-                        ? 'border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-900/40'
-                        : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900/20 dark:hover:border-slate-600',
-                    ].join(' ')}
+                        ? "border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-900/40"
+                        : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900/20 dark:hover:border-slate-600",
+                    ].join(" ")}
                     aria-pressed={active}
                   >
                     <div className="min-w-0">
                       <div className="flex items-center gap-3">
-                        <div className={['flex h-12 w-12 items-center justify-center rounded-xl border', 'dark:border-slate-700/60 dark:bg-slate-800/70', iconTone].join(' ')} aria-hidden="true">
+                        <div
+                          className={[
+                            "flex h-12 w-12 items-center justify-center rounded-xl border",
+                            "dark:border-slate-700/60 dark:bg-slate-800/70",
+                            iconTone,
+                          ].join(" ")}
+                          aria-hidden="true"
+                        >
                           {modernIcon}
                         </div>
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{category.name}</p>
+                          <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            {category.name}
+                          </p>
                           <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-300">
-                            ID {category.id} · <span className={countTone}>{category.product_count ?? 0} items</span>
+                            ID {category.id} ·{" "}
+                            <span className={countTone}>
+                              {category.product_count ?? 0} items
+                            </span>
                           </p>
                         </div>
                       </div>
                     </div>
-                    <span className={['flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition', active ? 'border-slate-400 bg-slate-100 dark:border-slate-500 dark:bg-slate-700/60' : 'border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-900/40'].join(' ')} aria-label={active ? 'Selected' : 'Not selected'}>
-                      {active ? <span className="h-2.5 w-2.5 rounded-full bg-slate-500 dark:bg-slate-200" /> : <span className="h-2.5 w-2.5 rounded-full bg-transparent" />}
+                    <span
+                      className={[
+                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition",
+                        active
+                          ? "border-slate-400 bg-slate-100 dark:border-slate-500 dark:bg-slate-700/60"
+                          : "border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-900/40",
+                      ].join(" ")}
+                      aria-label={active ? "Selected" : "Not selected"}
+                    >
+                      {active ? (
+                        <span className="h-2.5 w-2.5 rounded-full bg-slate-500 dark:bg-slate-200" />
+                      ) : (
+                        <span className="h-2.5 w-2.5 rounded-full bg-transparent" />
+                      )}
                     </span>
                   </button>
                 )
@@ -1753,62 +2534,115 @@ export default function PartnerStorefrontStudio() {
         ) : null}
 
         {/* Products Tab */}
-        {activeTab === 'products' ? (
+        {activeTab === "products" ? (
           <div className="grid gap-5 lg:grid-cols-2">
             {/* Product Helper */}
             <div className={`flex h-150 flex-col ${panelClass}`}>
               <div>
-                <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Product Helper</h2>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Select products from an allowed category to feature.</p>
+                <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                  Product Helper
+                </h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  Select products from an allowed category to feature.
+                </p>
               </div>
               <label className="mt-3 block">
-                <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Category</span>
+                <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                  Category
+                </span>
                 <select
                   value={helperCategoryId}
                   onChange={(event) => {
                     const nextId = Number.parseInt(event.target.value, 10)
-                    setHelperCategoryId(Number.isFinite(nextId) ? nextId : '')
+                    setHelperCategoryId(Number.isFinite(nextId) ? nextId : "")
                   }}
                   disabled={allowedCategoryOptions.length === 0}
                   className={`${selectClass} disabled:cursor-not-allowed disabled:opacity-60`}
                 >
-                  {allowedCategoryOptions.length === 0 ? <option value="">Select allowed categories first</option> : null}
+                  {allowedCategoryOptions.length === 0 ? (
+                    <option value="">Select allowed categories first</option>
+                  ) : null}
                   {allowedCategoryOptions.map((category) => (
-                    <option key={category.id} value={category.id}>{category.name} (ID {category.id})</option>
+                    <option key={category.id} value={category.id}>
+                      {category.name} (ID {category.id})
+                    </option>
                   ))}
                 </select>
               </label>
               <div className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
                 {isLoadingHelperProducts ? (
-                  <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-400">Loading products...</p>
+                  <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-400">
+                    Loading products...
+                  </p>
                 ) : null}
                 {helperProducts.map((product) => {
                   const imageUrl =
-                    (typeof product.image === 'string' && product.image.trim().length > 0 ? product.image : undefined) ??
-                    (Array.isArray(product.images) && typeof product.images[0] === 'string' ? product.images[0] : undefined)
-                  const isFeatured = draft.featuredProductIds.includes(product.id)
+                    (typeof product.image === "string" &&
+                    product.image.trim().length > 0
+                      ? product.image
+                      : undefined) ??
+                    (Array.isArray(product.images) &&
+                    typeof product.images[0] === "string"
+                      ? product.images[0]
+                      : undefined)
+                  const isFeatured = draft.featuredProductIds.includes(
+                    product.id
+                  )
                   return (
-                    <button key={product.id} type="button" onClick={() => toggleFeaturedProduct(product.id)} className={`relative w-full rounded-2xl border px-4 py-3 text-left transition ${isFeatured ? 'border-emerald-300 bg-emerald-50/60 dark:border-emerald-700/70 dark:bg-emerald-900/20' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-slate-600 dark:hover:bg-slate-800/60'}`}>
+                    <button
+                      key={product.id}
+                      type="button"
+                      onClick={() => toggleFeaturedProduct(product.id)}
+                      className={`relative w-full rounded-2xl border px-4 py-3 text-left transition ${isFeatured ? "border-emerald-300 bg-emerald-50/60 dark:border-emerald-700/70 dark:bg-emerald-900/20" : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-slate-600 dark:hover:bg-slate-800/60"}`}
+                    >
                       <span className="absolute right-3 top-3.5">
-                        <input type="checkbox" checked={isFeatured} onChange={() => toggleFeaturedProduct(product.id)} onClick={(e) => e.stopPropagation()} className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-900" />
+                        <input
+                          type="checkbox"
+                          checked={isFeatured}
+                          onChange={() => toggleFeaturedProduct(product.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-900"
+                        />
                       </span>
                       <div className="flex items-center gap-3 pr-6">
                         <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-                          {imageUrl ? <img src={imageUrl} alt={product.name} className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center text-xs font-semibold uppercase text-slate-400 dark:text-slate-500">No Image</div>}
+                          {imageUrl ? (
+                            <img
+                              src={imageUrl}
+                              alt={product.name}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-xs font-semibold uppercase text-slate-400 dark:text-slate-500">
+                              No Image
+                            </div>
+                          )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="line-clamp-2 text-sm font-semibold leading-snug text-slate-900 dark:text-slate-100">{product.name}</p>
-                          <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">ID {product.id} · Cat {product.catid}</p>
+                          <p className="line-clamp-2 text-sm font-semibold leading-snug text-slate-900 dark:text-slate-100">
+                            {product.name}
+                          </p>
+                          <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                            ID {product.id} · Cat {product.catid}
+                          </p>
                           <p className="mt-1.5 text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                            ₱{Number(product.priceSrp).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            ₱
+                            {Number(product.priceSrp).toLocaleString("en-PH", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
                           </p>
                         </div>
                       </div>
                     </button>
                   )
                 })}
-                {!isLoadingHelperProducts && allowedCategoryOptions.length > 0 && helperProducts.length === 0 ? (
-                  <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-400">No active products found for this category.</p>
+                {!isLoadingHelperProducts &&
+                allowedCategoryOptions.length > 0 &&
+                helperProducts.length === 0 ? (
+                  <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-400">
+                    No active products found for this category.
+                  </p>
                 ) : null}
               </div>
             </div>
@@ -1817,64 +2651,121 @@ export default function PartnerStorefrontStudio() {
             <div className={`flex h-150 flex-col ${panelClass}`}>
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Selected Products</h2>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Featured products on this storefront.</p>
+                  <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                    Selected Products
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    Featured products on this storefront.
+                  </p>
                 </div>
-                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">{draft.featuredProductIds.length} selected</span>
+                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                  {draft.featuredProductIds.length} selected
+                </span>
               </div>
               <label className="mt-3 block">
-                <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Filter Category</span>
+                <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                  Filter Category
+                </span>
                 <select
                   value={selectedProductsCategoryFilter}
                   onChange={(event) => {
                     const next = event.target.value
-                    if (next === 'all') {
-                      setSelectedProductsCategoryFilter('all')
+                    if (next === "all") {
+                      setSelectedProductsCategoryFilter("all")
                       return
                     }
                     const nextId = Number.parseInt(next, 10)
-                    setSelectedProductsCategoryFilter(Number.isFinite(nextId) ? nextId : 'all')
+                    setSelectedProductsCategoryFilter(
+                      Number.isFinite(nextId) ? nextId : "all"
+                    )
                   }}
                   className={selectClass}
                 >
                   <option value="all">All Categories</option>
                   {selectedProductCategoryOptions.map((category) => (
-                    <option key={category.id} value={category.id}>{category.label} (ID {category.id})</option>
+                    <option key={category.id} value={category.id}>
+                      {category.label} (ID {category.id})
+                    </option>
                   ))}
                 </select>
               </label>
               <div className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
                 {filteredSelectedProducts.map((product) => {
                   const imageUrl =
-                    (typeof product.image === 'string' && product.image.trim().length > 0 ? product.image : undefined) ??
-                    (Array.isArray(product.images) && typeof product.images[0] === 'string' ? product.images[0] : undefined)
+                    (typeof product.image === "string" &&
+                    product.image.trim().length > 0
+                      ? product.image
+                      : undefined) ??
+                    (Array.isArray(product.images) &&
+                    typeof product.images[0] === "string"
+                      ? product.images[0]
+                      : undefined)
                   return (
-                    <div key={product.id} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900/40">
+                    <div
+                      key={product.id}
+                      className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900/40"
+                    >
                       <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900">
-                        {imageUrl ? <img src={imageUrl} alt={product.name} className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center text-[9px] font-semibold uppercase text-slate-400 dark:text-slate-500">No Image</div>}
+                        {imageUrl ? (
+                          <img
+                            src={imageUrl}
+                            alt={product.name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-[9px] font-semibold uppercase text-slate-400 dark:text-slate-500">
+                            No Image
+                          </div>
+                        )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{product.name}</p>
-                        <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">ID {product.id} · Cat {product.catid}</p>
+                        <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                          {product.name}
+                        </p>
+                        <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
+                          ID {product.id} · Cat {product.catid}
+                        </p>
                         <p className="mt-1.5 text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                          ₱{Number(product.priceSrp).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          ₱
+                          {Number(product.priceSrp).toLocaleString("en-PH", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
                         </p>
                       </div>
-                      <button type="button" onClick={() => toggleFeaturedProduct(product.id)} className="shrink-0 rounded-xl border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 dark:border-rose-900/60 dark:bg-slate-900 dark:text-rose-300 dark:hover:bg-rose-950/30">
+                      <button
+                        type="button"
+                        onClick={() => toggleFeaturedProduct(product.id)}
+                        className="shrink-0 rounded-xl border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 dark:border-rose-900/60 dark:bg-slate-900 dark:text-rose-300 dark:hover:bg-rose-950/30"
+                      >
                         Remove
                       </button>
                     </div>
                   )
                 })}
                 {filteredMissingSelectedProductIds.map((id) => (
-                  <div key={id} className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/70">
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Product ID {id}</p>
-                    <button type="button" onClick={() => toggleFeaturedProduct(id)} className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800">Remove</button>
+                  <div
+                    key={id}
+                    className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/70"
+                  >
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Product ID {id}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => toggleFeaturedProduct(id)}
+                      className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                    >
+                      Remove
+                    </button>
                   </div>
                 ))}
-                {filteredSelectedProducts.length === 0 && filteredMissingSelectedProductIds.length === 0 ? (
+                {filteredSelectedProducts.length === 0 &&
+                filteredMissingSelectedProductIds.length === 0 ? (
                   <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-400">
-                    {draft.featuredProductIds.length === 0 ? 'No selected products yet.' : 'No selected products in this category.'}
+                    {draft.featuredProductIds.length === 0
+                      ? "No selected products yet."
+                      : "No selected products in this category."}
                   </p>
                 ) : null}
               </div>
@@ -1889,7 +2780,7 @@ export default function PartnerStorefrontStudio() {
 function Field({
   label,
   children,
-  className = '',
+  className = "",
 }: {
   label: string
   children: ReactNode
@@ -1897,16 +2788,10 @@ function Field({
 }) {
   return (
     <label className={`block ${className}`}>
-      <span className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{label}</span>
+      <span className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+        {label}
+      </span>
       {children}
     </label>
   )
 }
-
-
-
-
-
-
-
-

@@ -1,13 +1,13 @@
-'use client'
+"use client"
 
-import { Button } from '@heroui/react/button'
-import { Card } from '@heroui/react/card'
-import { Label } from '@heroui/react/label'
-import { ListBox } from '@heroui/react/list-box'
-import { ListBoxItem } from '@heroui/react/list-box-item'
-import { SearchField } from '@heroui/react/search-field'
-import { Select } from '@heroui/react/select'
-import { ReactNode } from 'react'
+import { Button } from "@heroui/react/button"
+import { Card } from "@heroui/react/card"
+import { Label } from "@heroui/react/label"
+import { ListBox } from "@heroui/react/list-box"
+import { ListBoxItem } from "@heroui/react/list-box-item"
+import { SearchField } from "@heroui/react/search-field"
+import { Select } from "@heroui/react/select"
+import { ReactNode } from "react"
 
 export type DataFilterOption<T extends string = string> = {
   value: T
@@ -46,7 +46,10 @@ function FilterSelect({
   options: DataFilterOption[]
   onChange: (value: string) => void
 }) {
-  const selectedLabel = options.find((option) => option.value === value)?.label ?? options[0]?.label ?? 'Select'
+  const selectedLabel =
+    options.find((option) => option.value === value)?.label ??
+    options[0]?.label ??
+    "Select"
 
   return (
     <Select
@@ -106,7 +109,9 @@ export default function DataFilterBar({
                   className="flex-1 border-none bg-transparent p-0 text-sm text-gray-900 dark:text-white outline-none placeholder:text-gray-400 dark:placeholder:text-white/55"
                   placeholder="Search..."
                 />
-                {searchValue ? <SearchField.ClearButton className="text-gray-400 transition hover:text-gray-600 dark:text-white/60 dark:hover:text-white" /> : null}
+                {searchValue ? (
+                  <SearchField.ClearButton className="text-gray-400 transition hover:text-gray-600 dark:text-white/60 dark:hover:text-white" />
+                ) : null}
               </SearchField.Group>
             </SearchField>
           </div>
@@ -126,7 +131,9 @@ export default function DataFilterBar({
                 isDisabled={primaryActionDisabled}
                 className="rounded-xl bg-teal-600 text-white transition hover:bg-teal-700 disabled:bg-teal-300"
               >
-                {primaryActionLoading ? 'Loading...' : (primaryActionLabel ?? 'Apply')}
+                {primaryActionLoading
+                  ? "Loading..."
+                  : (primaryActionLabel ?? "Apply")}
               </Button>
             ) : null}
           </div>

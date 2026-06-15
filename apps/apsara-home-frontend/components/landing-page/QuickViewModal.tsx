@@ -1,13 +1,21 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronLeft, ChevronRight, Minus, Plus, Check, ShoppingBag } from 'lucide-react';
-import { Product } from './ProductCard';
+import { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import {
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Minus,
+  Plus,
+  Check,
+  ShoppingBag,
+} from "lucide-react"
+import { Product } from "./ProductCard"
 
 interface QuickViewModalProps {
-  product: Product | null;
-  isOpen: boolean;
-  onClose: () => void;
-  onAddToCart: (product: Product, quantity: number) => void;
+  product: Product | null
+  isOpen: boolean
+  onClose: () => void
+  onAddToCart: (product: Product, quantity: number) => void
 }
 
 export default function QuickViewModal({
@@ -16,35 +24,35 @@ export default function QuickViewModal({
   onClose,
   onAddToCart,
 }: QuickViewModalProps) {
-  const [currentImage, setCurrentImage] = useState(0);
-  const [quantity, setQuantity] = useState(1);
-  const [isAdded, setIsAdded] = useState(false);
+  const [currentImage, setCurrentImage] = useState(0)
+  const [quantity, setQuantity] = useState(1)
+  const [isAdded, setIsAdded] = useState(false)
 
   // Mock multiple images
   const images = product
     ? [
         product.image,
-        product.image.replace('w=600', 'w=601'),
-        product.image.replace('w=600', 'w=602'),
+        product.image.replace("w=600", "w=601"),
+        product.image.replace("w=600", "w=602"),
       ]
-    : [];
+    : []
 
   const handleAddToCart = () => {
-    if (!product) return;
-    setIsAdded(true);
-    onAddToCart(product, quantity);
+    if (!product) return
+    setIsAdded(true)
+    onAddToCart(product, quantity)
     setTimeout(() => {
-      setIsAdded(false);
-    }, 2000);
-  };
+      setIsAdded(false)
+    }, 2000)
+  }
 
   const nextImage = () => {
-    setCurrentImage((prev) => (prev + 1) % images.length);
-  };
+    setCurrentImage((prev) => (prev + 1) % images.length)
+  }
 
   const prevImage = () => {
-    setCurrentImage((prev) => (prev - 1 + images.length) % images.length);
-  };
+    setCurrentImage((prev) => (prev - 1 + images.length) % images.length)
+  }
 
   return (
     <AnimatePresence>
@@ -71,7 +79,7 @@ export default function QuickViewModal({
             <div
               className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-3xl shadow-soft-lg overflow-hidden"
               style={{
-                border: '1px solid rgba(255, 255, 255, 0.3)',
+                border: "1px solid rgba(255, 255, 255, 0.3)",
               }}
             >
               {/* Close Button */}
@@ -123,8 +131,8 @@ export default function QuickViewModal({
                         onClick={() => setCurrentImage(index)}
                         className={`w-2.5 h-2.5 rounded-full transition-all ${
                           currentImage === index
-                            ? 'bg-af-forest w-6'
-                            : 'bg-white/60 dark:bg-gray-500/70'
+                            ? "bg-af-forest w-6"
+                            : "bg-white/60 dark:bg-gray-500/70"
                         }`}
                       />
                     ))}
@@ -176,7 +184,9 @@ export default function QuickViewModal({
 
                   {/* Quantity Selector */}
                   <div className="flex items-center gap-4 mb-6">
-                    <span className="text-af-text dark:text-white font-medium">Quantity:</span>
+                    <span className="text-af-text dark:text-white font-medium">
+                      Quantity:
+                    </span>
                     <div className="flex items-center gap-3 bg-[#f5f5f3] dark:bg-gray-800 rounded-full px-2 py-1">
                       <motion.button
                         whileHover={{ scale: 1.1 }}
@@ -208,11 +218,11 @@ export default function QuickViewModal({
                     disabled={isAdded}
                     className={`relative w-full py-4 rounded-full font-semibold text-base flex items-center justify-center gap-2 transition-all duration-500 overflow-hidden ${
                       isAdded
-                        ? 'bg-green-500 text-white'
-                        : 'bg-af-brass text-white hover:bg-[#c4955f]'
+                        ? "bg-green-500 text-white"
+                        : "bg-af-brass text-white hover:bg-[#c4955f]"
                     }`}
                     style={{
-                      boxShadow: '0px 4px 16px rgba(212, 165, 116, 0.4)',
+                      boxShadow: "0px 4px 16px rgba(212, 165, 116, 0.4)",
                     }}
                   >
                     <AnimatePresence mode="wait">
@@ -242,7 +252,8 @@ export default function QuickViewModal({
                           className="flex items-center gap-2"
                         >
                           <ShoppingBag size={20} />
-                          Add to Cart — ${(product.price * quantity).toLocaleString()}
+                          Add to Cart — $
+                          {(product.price * quantity).toLocaleString()}
                         </motion.span>
                       )}
                     </AnimatePresence>
@@ -251,13 +262,16 @@ export default function QuickViewModal({
                   {/* Trust Indicators */}
                   <div className="flex flex-wrap gap-4 mt-6 text-sm text-af-text-secondary dark:text-gray-400">
                     <span className="flex items-center gap-1">
-                      <Check size={14} className="text-af-forest" /> Free Shipping
+                      <Check size={14} className="text-af-forest" /> Free
+                      Shipping
                     </span>
                     <span className="flex items-center gap-1">
-                      <Check size={14} className="text-af-forest" /> 30-Day Returns
+                      <Check size={14} className="text-af-forest" /> 30-Day
+                      Returns
                     </span>
                     <span className="flex items-center gap-1">
-                      <Check size={14} className="text-af-forest" /> 2-Year Warranty
+                      <Check size={14} className="text-af-forest" /> 2-Year
+                      Warranty
                     </span>
                   </div>
                 </div>
@@ -267,6 +281,5 @@ export default function QuickViewModal({
         </>
       )}
     </AnimatePresence>
-  );
+  )
 }
-

@@ -1,6 +1,6 @@
-import { buildPageMetadata } from '@/app/seo'
-import { getBlogsContent } from '@/lib/blogs-cms'
-import { notFound } from 'next/navigation'
+import { buildPageMetadata } from "@/app/seo"
+import { getBlogsContent } from "@/lib/blogs-cms"
+import { notFound } from "next/navigation"
 
 type BlogPageProps = {
   params: Promise<{ slug: string }>
@@ -9,17 +9,17 @@ type BlogPageProps = {
 export async function generateMetadata({ params }: BlogPageProps) {
   const { slug } = await params
   const blogs = await getBlogsContent()
-  const blog = blogs.find(b => b.slug === slug)
+  const blog = blogs.find((b) => b.slug === slug)
 
   if (!blog) {
     return {
-      title: 'Blog Post Not Found',
+      title: "Blog Post Not Found",
     }
   }
 
   return buildPageMetadata({
     title: blog.title,
-    description: blog.subtitle || blog.body || '',
+    description: blog.subtitle || blog.body || "",
     path: `/blog/${slug}`,
   })
 }
@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: BlogPageProps) {
 export default async function BlogPage({ params }: BlogPageProps) {
   const { slug } = await params
   const blogs = await getBlogsContent()
-  const blog = blogs.find(b => b.slug === slug)
+  const blog = blogs.find((b) => b.slug === slug)
 
   if (!blog) {
     notFound()
@@ -39,7 +39,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
       <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-cyan-900 px-4 py-16 text-white sm:px-6 sm:py-20 lg:px-8">
         <div className="absolute -right-8 -top-10 h-36 w-36 rounded-full bg-cyan-300/30 blur-2xl" />
         <div className="absolute -left-10 -bottom-12 h-48 w-48 rounded-full bg-orange-300/20 blur-3xl" />
-        
+
         <div className="relative mx-auto max-w-4xl">
           {blog.category && (
             <span className="inline-flex rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-medium tracking-wide text-cyan-100">
@@ -60,7 +60,11 @@ export default async function BlogPage({ params }: BlogPageProps) {
       {blog.image_url && (
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <div className="-mt-8 overflow-hidden rounded-3xl shadow-2xl">
-            <img src={blog.image_url} alt={blog.title} className="h-auto w-full object-cover" />
+            <img
+              src={blog.image_url}
+              alt={blog.title}
+              className="h-auto w-full object-cover"
+            />
           </div>
         </div>
       )}
@@ -72,11 +76,14 @@ export default async function BlogPage({ params }: BlogPageProps) {
             {blog.subtitle}
           </p>
         )}
-        
+
         {blog.body && (
           <div className="prose prose-lg mt-8 prose-slate dark:prose-invert max-w-none">
-            {blog.body.split('\n\n').map((paragraph, index) => (
-              <p key={index} className="mb-4 leading-relaxed text-slate-600 dark:text-slate-400">
+            {blog.body.split("\n\n").map((paragraph, index) => (
+              <p
+                key={index}
+                className="mb-4 leading-relaxed text-slate-600 dark:text-slate-400"
+              >
                 {paragraph}
               </p>
             ))}

@@ -1,16 +1,16 @@
-'use client'
+"use client"
 
-import { useMemo } from 'react'
-import { Button } from '@heroui/react/button'
-import { Card } from '@heroui/react/card'
-import { Chip } from '@heroui/react/chip'
-import { Label } from '@heroui/react/label'
-import { ListBox } from '@heroui/react/list-box'
-import { ListBoxItem } from '@heroui/react/list-box-item'
-import { SearchField } from '@heroui/react/search-field'
-import { Select } from '@heroui/react/select'
-import { useGetCategoriesQuery } from '@/store/api/categoriesApi'
-import { useGetProductBrandsQuery } from '@/store/api/productBrandsApi'
+import { useMemo } from "react"
+import { Button } from "@heroui/react/button"
+import { Card } from "@heroui/react/card"
+import { Chip } from "@heroui/react/chip"
+import { Label } from "@heroui/react/label"
+import { ListBox } from "@heroui/react/list-box"
+import { ListBoxItem } from "@heroui/react/list-box-item"
+import { SearchField } from "@heroui/react/search-field"
+import { Select } from "@heroui/react/select"
+import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
+import { useGetProductBrandsQuery } from "@/store/api/productBrandsApi"
 
 interface ProductsToolbarProps {
   search: string
@@ -38,18 +38,18 @@ interface ProductsToolbarProps {
 }
 
 const STATUS_TABS = [
-  { value: '', label: 'All' },
-  { value: '1', label: 'Active' },
-  { value: '0', label: 'Inactive' },
-  { value: '3', label: 'Pending' },
-  { value: 'new', label: 'New' },
+  { value: "", label: "All" },
+  { value: "1", label: "Active" },
+  { value: "0", label: "Inactive" },
+  { value: "3", label: "Pending" },
+  { value: "new", label: "New" },
 ]
 
 const SERVICES_STATUS_TABS = [
-  { value: '', label: 'All' },
-  { value: '1', label: 'Complete' },
-  { value: '0', label: 'In Progress' },
-  { value: 'new', label: 'New' },
+  { value: "", label: "All" },
+  { value: "1", label: "Complete" },
+  { value: "0", label: "In Progress" },
+  { value: "new", label: "New" },
 ]
 
 function ToolbarSelect({
@@ -65,13 +65,16 @@ function ToolbarSelect({
   isDisabled?: boolean
   onChange: (value: string) => void
 }) {
-  const selectedLabel = options.find((option) => option.value === value)?.label ?? options[0]?.label ?? 'Select'
+  const selectedLabel =
+    options.find((option) => option.value === value)?.label ??
+    options[0]?.label ??
+    "Select"
 
   return (
     <Select
       aria-label={ariaLabel}
       selectedKey={value}
-      onSelectionChange={(key) => onChange(key == null ? '' : String(key))}
+      onSelectionChange={(key) => onChange(key == null ? "" : String(key))}
       isDisabled={isDisabled}
       className="w-full"
     >
@@ -122,11 +125,11 @@ export default function ProductsToolbar({
 }: ProductsToolbarProps) {
   const activeTabs = isServicesView ? SERVICES_STATUS_TABS : STATUS_TABS
   const { data: categoriesData } = useGetCategoriesQuery(
-    supplierId && supplierId > 0
-      ? { supplier_id: supplierId }
-      : undefined,
+    supplierId && supplierId > 0 ? { supplier_id: supplierId } : undefined
   )
-  const { data: brandsData } = useGetProductBrandsQuery(undefined, { skip: !showBrandFilter })
+  const { data: brandsData } = useGetProductBrandsQuery(undefined, {
+    skip: !showBrandFilter,
+  })
 
   const categories = useMemo(() => {
     const seen = new Set<number>()
@@ -155,50 +158,65 @@ export default function ProductsToolbar({
     })
   }, [supplierOptions])
 
-  const hasSupplierScopedCategories = !supplierId || supplierId <= 0 || categories.length > 0
-  const hasFilter = search !== '' || status !== '' || catId !== undefined || brandType !== undefined || supplierFilterId !== undefined
-  const showSupplierFilter = typeof onSupplierFilterId === 'function' && uniqueSupplierOptions.length > 0
+  const hasSupplierScopedCategories =
+    !supplierId || supplierId <= 0 || categories.length > 0
+  const hasFilter =
+    search !== "" ||
+    status !== "" ||
+    catId !== undefined ||
+    brandType !== undefined ||
+    supplierFilterId !== undefined
+  const showSupplierFilter =
+    typeof onSupplierFilterId === "function" && uniqueSupplierOptions.length > 0
 
   return (
     <Card className="border border-slate-200 bg-white shadow-none dark:border-slate-800 dark:bg-slate-900">
       <Card.Content className="space-y-4 p-4 sm:p-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-          {!isServicesView && <div className="flex flex-wrap items-center gap-2">
-            {activeTabs.map((tab) => (
-              <Button
-                key={tab.value}
-                size="sm"
-                variant={status === tab.value ? 'primary' : 'tertiary'}
-                onPress={() => onStatus(tab.value)}
-                className={status === tab.value
-                  ? 'rounded-xl bg-sky-600 px-4 text-xs font-semibold text-white hover:bg-sky-700'
-                  : 'rounded-xl border border-transparent bg-slate-100 px-4 text-xs font-semibold text-slate-600 hover:bg-slate-200 hover:text-slate-800 dark:bg-white/12 dark:text-slate-200 dark:hover:bg-white/18 dark:hover:text-white'}
-              >
-                {tab.label}
-              </Button>
-            ))}
+          {!isServicesView && (
+            <div className="flex flex-wrap items-center gap-2">
+              {activeTabs.map((tab) => (
+                <Button
+                  key={tab.value}
+                  size="sm"
+                  variant={status === tab.value ? "primary" : "tertiary"}
+                  onPress={() => onStatus(tab.value)}
+                  className={
+                    status === tab.value
+                      ? "rounded-xl bg-sky-600 px-4 text-xs font-semibold text-white hover:bg-sky-700"
+                      : "rounded-xl border border-transparent bg-slate-100 px-4 text-xs font-semibold text-slate-600 hover:bg-slate-200 hover:text-slate-800 dark:bg-white/12 dark:text-slate-200 dark:hover:bg-white/18 dark:hover:text-white"
+                  }
+                >
+                  {tab.label}
+                </Button>
+              ))}
 
-            {onToggleDuplicateFilter ? (
-              <Button
-                size="sm"
-                variant={isDuplicateFilterActive ? 'primary' : 'tertiary'}
-                onPress={onToggleDuplicateFilter}
-                className={isDuplicateFilterActive
-                  ? 'rounded-xl bg-sky-600 px-4 text-xs font-semibold text-white hover:bg-sky-700'
-                  : 'rounded-xl border border-transparent bg-slate-100 px-4 text-xs font-semibold text-slate-600 hover:bg-slate-200 hover:text-slate-800 dark:bg-white/12 dark:text-slate-200 dark:hover:bg-white/18 dark:hover:text-white'}
-              >
-                <span>Duplicate item</span>
-                {duplicateCount > 0 ? (
-                  <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-bold leading-none text-current">
-                    {duplicateCount}
-                  </span>
-                ) : null}
-              </Button>
-            ) : null}
-          </div>}
+              {onToggleDuplicateFilter ? (
+                <Button
+                  size="sm"
+                  variant={isDuplicateFilterActive ? "primary" : "tertiary"}
+                  onPress={onToggleDuplicateFilter}
+                  className={
+                    isDuplicateFilterActive
+                      ? "rounded-xl bg-sky-600 px-4 text-xs font-semibold text-white hover:bg-sky-700"
+                      : "rounded-xl border border-transparent bg-slate-100 px-4 text-xs font-semibold text-slate-600 hover:bg-slate-200 hover:text-slate-800 dark:bg-white/12 dark:text-slate-200 dark:hover:bg-white/18 dark:hover:text-white"
+                  }
+                >
+                  <span>Duplicate item</span>
+                  {duplicateCount > 0 ? (
+                    <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-bold leading-none text-current">
+                      {duplicateCount}
+                    </span>
+                  ) : null}
+                </Button>
+              ) : null}
+            </div>
+          )}
 
-          <div className={`flex flex-col gap-3 lg:flex-row lg:items-center ${isServicesView ? 'w-full' : 'w-full max-w-4xl lg:justify-end'}`}>
-            <div className={isServicesView ? 'w-full' : 'w-full lg:max-w-xl'}>
+          <div
+            className={`flex flex-col gap-3 lg:flex-row lg:items-center ${isServicesView ? "w-full" : "w-full max-w-4xl lg:justify-end"}`}
+          >
+            <div className={isServicesView ? "w-full" : "w-full lg:max-w-xl"}>
               <SearchField
                 aria-label="Search products"
                 value={search}
@@ -212,7 +230,9 @@ export default function ProductsToolbar({
                     placeholder="Search by name or SKU..."
                     className="flex-1 border-none bg-transparent p-0 text-sm text-slate-700 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-400"
                   />
-                  {search ? <SearchField.ClearButton className="text-slate-400 transition hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200" /> : null}
+                  {search ? (
+                    <SearchField.ClearButton className="text-slate-400 transition hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200" />
+                  ) : null}
                 </SearchField.Group>
               </SearchField>
             </div>
@@ -227,7 +247,11 @@ export default function ProductsToolbar({
                 >
                   View Manual Checkout
                 </Button>
-                <Chip size="sm" variant="soft" className="h-11 border border-emerald-200 bg-emerald-50 px-3 text-sm font-medium text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-900/20 dark:text-emerald-300">
+                <Chip
+                  size="sm"
+                  variant="soft"
+                  className="h-11 border border-emerald-200 bg-emerald-50 px-3 text-sm font-medium text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-900/20 dark:text-emerald-300"
+                >
                   {manualCheckoutCount} added
                 </Chip>
               </div>
@@ -235,7 +259,11 @@ export default function ProductsToolbar({
 
             {selectedCount > 0 && onViewSelected ? (
               <div className="flex items-center gap-2 self-start lg:self-auto">
-                <Chip size="sm" variant="soft" className="h-11 border border-sky-200 bg-sky-50 px-3 text-sm font-medium text-sky-700 dark:border-sky-900/40 dark:bg-sky-900/20 dark:text-sky-300">
+                <Chip
+                  size="sm"
+                  variant="soft"
+                  className="h-11 border border-sky-200 bg-sky-50 px-3 text-sm font-medium text-sky-700 dark:border-sky-900/40 dark:bg-sky-900/20 dark:text-sky-300"
+                >
                   {selectedCount} selected
                 </Chip>
                 <Button
@@ -248,30 +276,46 @@ export default function ProductsToolbar({
                 </Button>
               </div>
             ) : null}
-
           </div>
         </div>
 
-        <div className={`grid gap-3 ${showSupplierFilter ? 'xl:grid-cols-[1.1fr_1fr_1.4fr_auto]' : showBrandFilter ? 'lg:grid-cols-[1.1fr_1fr_auto]' : 'md:grid-cols-[1.1fr_auto]'}`}>
+        <div
+          className={`grid gap-3 ${showSupplierFilter ? "xl:grid-cols-[1.1fr_1fr_1.4fr_auto]" : showBrandFilter ? "lg:grid-cols-[1.1fr_1fr_auto]" : "md:grid-cols-[1.1fr_auto]"}`}
+        >
           <ToolbarSelect
             ariaLabel="Filter products by category"
-            value={catId === undefined ? '' : String(catId)}
+            value={catId === undefined ? "" : String(catId)}
             isDisabled={!hasSupplierScopedCategories}
-            onChange={(value) => onCatId(value === '' ? undefined : Number(value))}
+            onChange={(value) =>
+              onCatId(value === "" ? undefined : Number(value))
+            }
             options={[
-              { value: '', label: hasSupplierScopedCategories ? 'All Categories' : 'No categories assigned' },
-              ...categories.map((category) => ({ value: String(category.id), label: category.name })),
+              {
+                value: "",
+                label: hasSupplierScopedCategories
+                  ? "All Categories"
+                  : "No categories assigned",
+              },
+              ...categories.map((category) => ({
+                value: String(category.id),
+                label: category.name,
+              })),
             ]}
           />
 
           {showBrandFilter ? (
             <ToolbarSelect
               ariaLabel="Filter products by brand"
-              value={brandType === undefined ? '' : String(brandType)}
-              onChange={(value) => onBrandType(value === '' ? undefined : Number(value))}
+              value={brandType === undefined ? "" : String(brandType)}
+              onChange={(value) =>
+                onBrandType(value === "" ? undefined : Number(value))
+              }
               options={[
-                { value: '', label: 'All Brands' },
-                ...brands.map((brand) => ({ value: String(brand.id), label: brand.name })),
+                { value: "", label: "All Brands" },
+                ...brands.map((brand) => ({
+                  value: String(brand.id),
+                  label: brand.name,
+                })),
               ]}
             />
           ) : null}
@@ -279,28 +323,52 @@ export default function ProductsToolbar({
           {showSupplierFilter ? (
             <ToolbarSelect
               ariaLabel="Filter products by supplier"
-              value={supplierFilterId === undefined ? '' : String(supplierFilterId)}
-              onChange={(value) => onSupplierFilterId(value === '' ? undefined : Number(value))}
+              value={
+                supplierFilterId === undefined ? "" : String(supplierFilterId)
+              }
+              onChange={(value) =>
+                onSupplierFilterId(value === "" ? undefined : Number(value))
+              }
               options={[
-                { value: '', label: 'All Suppliers' },
-                ...uniqueSupplierOptions.map((supplier) => ({ value: String(supplier.id), label: supplier.label })),
+                { value: "", label: "All Suppliers" },
+                ...uniqueSupplierOptions.map((supplier) => ({
+                  value: String(supplier.id),
+                  label: supplier.label,
+                })),
               ]}
             />
           ) : null}
 
           <div className="flex items-center justify-start xl:justify-end">
-            <Chip size="sm" variant="soft" className="h-11 border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-              <span className="font-semibold text-slate-800 dark:text-slate-100">{resultCount.toLocaleString()}</span>&nbsp;results
+            <Chip
+              size="sm"
+              variant="soft"
+              className="h-11 border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+            >
+              <span className="font-semibold text-slate-800 dark:text-slate-100">
+                {resultCount.toLocaleString()}
+              </span>
+              &nbsp;results
             </Chip>
           </div>
         </div>
 
         <div className="flex flex-col gap-2 border-t border-slate-100 pt-3 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400 sm:flex-row sm:items-center sm:justify-between">
           <p>
-            <span className="font-semibold text-slate-700 dark:text-slate-200">{resultCount.toLocaleString()}</span> product{resultCount !== 1 ? 's' : ''}
-            {hasFilter ? <span className="ml-1 text-teal-600 dark:text-teal-300">filtered</span> : null}
+            <span className="font-semibold text-slate-700 dark:text-slate-200">
+              {resultCount.toLocaleString()}
+            </span>{" "}
+            product{resultCount !== 1 ? "s" : ""}
+            {hasFilter ? (
+              <span className="ml-1 text-teal-600 dark:text-teal-300">
+                filtered
+              </span>
+            ) : null}
           </p>
-          <p className="text-slate-400 dark:text-slate-500">Products filters now use the same HeroUI search and select pattern as the newer admin sections.</p>
+          <p className="text-slate-400 dark:text-slate-500">
+            Products filters now use the same HeroUI search and select pattern
+            as the newer admin sections.
+          </p>
         </div>
       </Card.Content>
     </Card>

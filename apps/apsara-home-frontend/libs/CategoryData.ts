@@ -1,1 +1,1 @@
-export * from '@/features/category/data/CategoryData';
+export * from "@/features/category/data/CategoryData"

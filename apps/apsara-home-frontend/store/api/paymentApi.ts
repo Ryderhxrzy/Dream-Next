@@ -1,8 +1,8 @@
-import { baseApi } from './baseApi'
+import { baseApi } from "./baseApi"
 
-export type CheckoutPaymentMethod = 'online_banking' | 'card' | 'gcash' | 'maya'
-export type CheckoutPaymentMode = 'test' | 'live'
-export type CheckoutOnlineBankingProvider = 'dob'
+export type CheckoutPaymentMethod = "online_banking" | "card" | "gcash" | "maya"
+export type CheckoutPaymentMode = "test" | "live"
+export type CheckoutOnlineBankingProvider = "dob"
 
 export interface CheckoutCustomerPayload {
   name?: string
@@ -41,7 +41,7 @@ export interface CreateCheckoutSessionPayload {
     selected_type?: string | null
     subtotal?: number
     handling_fee?: number
-    source_type?: 'local' | 'zq'
+    source_type?: "local" | "zq"
     zq_product_id?: number | null
     zq_external_id?: string | null
     zq_offer_id?: string | null
@@ -84,7 +84,7 @@ export interface ValidateVoucherResponse {
     id: number
     code: string
     amount: number
-    source_type?: 'personal_cashback' | string | null
+    source_type?: "personal_cashback" | string | null
     max_uses?: number | null
     used_count?: number | null
     expires_at?: string | null
@@ -114,14 +114,14 @@ export interface ValidateEgcResponse {
 export type ValidateCashbackResponse = ValidateEgcResponse
 
 export type CustomerOrderStatus =
-  | 'pending'
-  | 'processing'
-  | 'packed'
-  | 'shipped'
-  | 'out_for_delivery'
-  | 'delivered'
-  | 'cancelled'
-  | 'refunded'
+  | "pending"
+  | "processing"
+  | "packed"
+  | "shipped"
+  | "out_for_delivery"
+  | "delivered"
+  | "cancelled"
+  | "refunded"
 
 export interface CustomerOrderItem {
   id: number
@@ -175,64 +175,92 @@ export interface GuestTrackOrderResponse {
 
 export const paymentApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    createCheckoutSession: builder.mutation<CreateCheckoutSessionResponse, CreateCheckoutSessionPayload>({
+    createCheckoutSession: builder.mutation<
+      CreateCheckoutSessionResponse,
+      CreateCheckoutSessionPayload
+    >({
       query: (body) => ({
-        url: '/api/payments/checkout-session',
-        method: 'POST',
+        url: "/api/payments/checkout-session",
+        method: "POST",
         body,
       }),
     }),
-    verifyCheckoutSession: builder.query<VerifyCheckoutSessionResponse, string | { checkoutId: string; paymentMode?: CheckoutPaymentMode }>({
+    verifyCheckoutSession: builder.query<
+      VerifyCheckoutSessionResponse,
+      string | { checkoutId: string; paymentMode?: CheckoutPaymentMode }
+    >({
       query: (arg) => {
-        const checkoutId = typeof arg === 'string' ? arg : arg.checkoutId
-        const paymentMode = typeof arg === 'string' ? undefined : arg.paymentMode
+        const checkoutId = typeof arg === "string" ? arg : arg.checkoutId
+        const paymentMode =
+          typeof arg === "string" ? undefined : arg.paymentMode
 
         return {
           url: `/api/payments/checkout-session/${checkoutId}`,
-          method: 'GET',
+          method: "GET",
           params: paymentMode ? { payment_mode: paymentMode } : undefined,
         }
       },
     }),
-    validateVoucher: builder.mutation<ValidateVoucherResponse, { code: string; subtotal?: number; product_id?: number | null }>({
+    validateVoucher: builder.mutation<
+      ValidateVoucherResponse,
+      { code: string; subtotal?: number; product_id?: number | null }
+    >({
       query: (body) => ({
-        url: '/api/payments/validate-voucher',
-        method: 'POST',
+        url: "/api/payments/validate-voucher",
+        method: "POST",
         body,
       }),
     }),
-    validateEgc: builder.mutation<ValidateEgcResponse, { subtotal?: number; product_id?: number | null; voucher_discount?: number }>({
+    validateEgc: builder.mutation<
+      ValidateEgcResponse,
+      {
+        subtotal?: number
+        product_id?: number | null
+        voucher_discount?: number
+      }
+    >({
       query: (body) => ({
-        url: '/api/payments/validate-egc',
-        method: 'POST',
+        url: "/api/payments/validate-egc",
+        method: "POST",
         body,
       }),
     }),
-    validateCashback: builder.mutation<ValidateCashbackResponse, { subtotal?: number; product_id?: number | null; voucher_discount?: number }>({
+    validateCashback: builder.mutation<
+      ValidateCashbackResponse,
+      {
+        subtotal?: number
+        product_id?: number | null
+        voucher_discount?: number
+      }
+    >({
       query: (body) => ({
-        url: '/api/payments/validate-cashback',
-        method: 'POST',
+        url: "/api/payments/validate-cashback",
+        method: "POST",
         body,
       }),
     }),
     getCheckoutHistory: builder.query<CheckoutHistoryResponse, void>({
       query: () => ({
-        url: '/api/orders/history',
-        method: 'GET',
+        url: "/api/orders/history",
+        method: "GET",
       }),
-      transformResponse: (response: CheckoutHistoryResponse | { orders?: Array<Partial<CustomerOrder>> }) => ({
+      transformResponse: (
+        response:
+          | CheckoutHistoryResponse
+          | { orders?: Array<Partial<CustomerOrder>> }
+      ) => ({
         orders: (response.orders ?? []).map((order) => ({
           ...order,
           id: Number(order.id ?? 0),
-          order_number: String(order.order_number ?? ''),
-          status: (order.status ?? 'pending') as CustomerOrderStatus,
+          order_number: String(order.order_number ?? ""),
+          status: (order.status ?? "pending") as CustomerOrderStatus,
           items: Array.isArray(order.items)
             ? order.items.map((item) => ({
                 ...item,
                 id: Number(item.id ?? 0),
                 product_id: item.product_id ?? null,
-                name: String(item.name ?? 'Order Item'),
-                image: String(item.image ?? '/Images/HeroSection/sofas.jpg'),
+                name: String(item.name ?? "Order Item"),
+                image: String(item.image ?? "/Images/HeroSection/sofas.jpg"),
                 quantity: Number(item.quantity ?? 1) || 1,
                 price: Number(item.price ?? 0) || 0,
               }))
@@ -240,75 +268,101 @@ export const paymentApi = baseApi.injectEndpoints({
           total: Number(order.total ?? order.total_amount ?? 0) || 0,
           total_amount: Number(order.total_amount ?? order.total ?? 0) || 0,
           shipping_fee: Number(order.shipping_fee ?? 0) || 0,
-          payment_method: String(order.payment_method ?? 'Payment'),
-          shipping_address: String(order.shipping_address ?? 'Shipping address not available'),
+          payment_method: String(order.payment_method ?? "Payment"),
+          shipping_address: String(
+            order.shipping_address ?? "Shipping address not available"
+          ),
           tracking_no: order.tracking_no ?? order.tracking_number ?? null,
           tracking_number: order.tracking_number ?? order.tracking_no ?? null,
           refund_reason: order.refund_reason ?? null,
-          refund_image_urls: Array.isArray(order.refund_image_urls) ? order.refund_image_urls : [],
-          refund_video_urls: Array.isArray(order.refund_video_urls) ? order.refund_video_urls : [],
+          refund_image_urls: Array.isArray(order.refund_image_urls)
+            ? order.refund_image_urls
+            : [],
+          refund_video_urls: Array.isArray(order.refund_video_urls)
+            ? order.refund_video_urls
+            : [],
           refund_requested_at: order.refund_requested_at ?? null,
-          created_at: String(order.created_at ?? ''),
+          created_at: String(order.created_at ?? ""),
         })) as CustomerOrder[],
       }),
-      providesTags: ['Orders'],
+      providesTags: ["Orders"],
     }),
-    trackGuestOrder: builder.query<GuestTrackOrderResponse, { orderNumber: string; contact: string }>({
+    trackGuestOrder: builder.query<
+      GuestTrackOrderResponse,
+      { orderNumber: string; contact: string }
+    >({
       query: ({ orderNumber, contact }) => ({
-        url: '/api/orders/track',
-        method: 'GET',
+        url: "/api/orders/track",
+        method: "GET",
         params: {
           order_number: orderNumber,
           contact,
         },
       }),
     }),
-    confirmOrder: builder.mutation<{ message: string }, { id: number; rating: number; review: string; reviewImages?: File[]; reviewVideos?: File[] }>({
+    confirmOrder: builder.mutation<
+      { message: string },
+      {
+        id: number
+        rating: number
+        review: string
+        reviewImages?: File[]
+        reviewVideos?: File[]
+      }
+    >({
       query: ({ id, rating, review, reviewImages, reviewVideos }) => {
         const formData = new FormData()
-        formData.append('rating', String(rating))
-        formData.append('review', review)
+        formData.append("rating", String(rating))
+        formData.append("review", review)
         if (Array.isArray(reviewImages)) {
           for (const file of reviewImages) {
-            formData.append('review_images[]', file)
+            formData.append("review_images[]", file)
           }
         }
         if (Array.isArray(reviewVideos)) {
           for (const file of reviewVideos) {
-            formData.append('review_videos[]', file)
+            formData.append("review_videos[]", file)
           }
         }
 
-        return ({
-        url: `/api/orders/${id}/confirm`,
-        method: 'POST',
-        body: formData,
-      })
+        return {
+          url: `/api/orders/${id}/confirm`,
+          method: "POST",
+          body: formData,
+        }
       },
-      invalidatesTags: ['Orders'],
+      invalidatesTags: ["Orders"],
     }),
-    refundOrder: builder.mutation<{ message: string }, { id: number; reason: string; refundImages?: File[]; refundVideos?: File[] }>({
+    refundOrder: builder.mutation<
+      { message: string },
+      {
+        id: number
+        reason: string
+        refundImages?: File[]
+        refundVideos?: File[]
+      }
+    >({
       query: ({ id, reason, refundImages, refundVideos }) => {
         const formData = new FormData()
-        formData.append('reason', reason)
+        formData.append("reason", reason)
         if (Array.isArray(refundImages)) {
           for (const file of refundImages) {
-            formData.append('refund_images[]', file)
+            formData.append("refund_images[]", file)
           }
         }
         if (Array.isArray(refundVideos)) {
           for (const file of refundVideos) {
-            formData.append('refund_videos[]', file)
+            formData.append("refund_videos[]", file)
           }
         }
 
         return {
           url: `/api/orders/${id}/refund`,
-          method: 'POST',
+          method: "POST",
           body: formData,
         }
       },
-      invalidatesTags: ['Orders'],
+      invalidatesTags: ["Orders"],
     }),
   }),
 })

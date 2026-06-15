@@ -1,6 +1,10 @@
-import { baseApi } from './baseApi'
+import { baseApi } from "./baseApi"
 
-export type CustomerNotificationSeverity = 'info' | 'warning' | 'critical' | 'success'
+export type CustomerNotificationSeverity =
+  | "info"
+  | "warning"
+  | "critical"
+  | "success"
 
 export interface CustomerNotificationItem {
   id: string
@@ -20,12 +24,15 @@ export interface CustomerNotificationsResponse {
 
 export const customerNotificationsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getCustomerNotifications: builder.query<CustomerNotificationsResponse, string | number | void>({
+    getCustomerNotifications: builder.query<
+      CustomerNotificationsResponse,
+      string | number | void
+    >({
       query: () => ({
-        url: '/api/notifications/customer',
-        method: 'GET',
+        url: "/api/notifications/customer",
+        method: "GET",
       }),
-      providesTags: ['CustomerNotifications'],
+      providesTags: ["CustomerNotifications"],
     }),
   }),
 })

@@ -19,19 +19,19 @@ live na store gaya ng `https://www.afhome.ph/livingco`. Kunan mo nang malinis
 (full window, walang ibang tab/clutter). Pangalanan gaya ng nakalista para
 madaling i-order sa NotebookLM.
 
-| # | Filename | Ano kukunan | Mula sa |
-|---|----------|-------------|---------|
-| 01 | `00-intro.png` | (Optional) title/landing ng Storefront Studio | Admin sidebar header |
-| 02 | `01-identity.png` | Slug, Display Name, Hero Title, Notification Email na napunan | Admin → Identity tab |
-| 03 | `02-logo-referral.png` | Logo uploaded + Referral link + Shop URL | Admin → Logo/Referral |
-| 04 | `03-colors.png` | Theme color, Accent color, Hero Subtitle + live preview bar | Admin → Colors |
-| 05 | `04-categories.png` | Categories grid (may naka-enable) + product checkboxes | Admin → Categories |
-| 06 | `05-save.png` | Summary cards + "Save Storefront" button (Saved! state) | Admin → Save |
-| 07 | `06-live-store.png` | Live storefront hero (logo, title, subtitle) + featured products | `/livingco` |
-| 08 | `07-product-list.png` | All Products page (filters sidebar + grid) | `/livingco` products |
-| 09 | `08-cart.png` | Cart drawer / "Proceed to Checkout" | Live store cart |
-| 10 | `09-checkout.png` | Checkout page (contact, address, payment) | Checkout |
-| 11 | `10-success.png` | "Payment Successful!" page | Checkout success |
+| #   | Filename               | Ano kukunan                                                      | Mula sa               |
+| --- | ---------------------- | ---------------------------------------------------------------- | --------------------- |
+| 01  | `00-intro.png`         | (Optional) title/landing ng Storefront Studio                    | Admin sidebar header  |
+| 02  | `01-identity.png`      | Slug, Display Name, Hero Title, Notification Email na napunan    | Admin → Identity tab  |
+| 03  | `02-logo-referral.png` | Logo uploaded + Referral link + Shop URL                         | Admin → Logo/Referral |
+| 04  | `03-colors.png`        | Theme color, Accent color, Hero Subtitle + live preview bar      | Admin → Colors        |
+| 05  | `04-categories.png`    | Categories grid (may naka-enable) + product checkboxes           | Admin → Categories    |
+| 06  | `05-save.png`          | Summary cards + "Save Storefront" button (Saved! state)          | Admin → Save          |
+| 07  | `06-live-store.png`    | Live storefront hero (logo, title, subtitle) + featured products | `/livingco`           |
+| 08  | `07-product-list.png`  | All Products page (filters sidebar + grid)                       | `/livingco` products  |
+| 09  | `08-cart.png`          | Cart drawer / "Proceed to Checkout"                              | Live store cart       |
+| 10  | `09-checkout.png`      | Checkout page (contact, address, payment)                        | Checkout              |
+| 11  | `10-success.png`       | "Payment Successful!" page                                       | Checkout success      |
 
 Tip: 1280×720 o mas mataas, PNG. Iwasan ang personal/totoong data — gamitin
 ang demo gaya ng "LivingCo Philippines".
@@ -71,7 +71,7 @@ storefront link to share with customers while AF Home handles the backend.
 #### Why join — the benefits
 
 - **Your own branded store.** Custom store URL (slug), display name, logo,
-  hero title, brand colors, and hero subtitle — it looks like *your* brand.
+  hero title, brand colors, and hero subtitle — it looks like _your_ brand.
 - **Launch instantly.** Click Save and your storefront goes live immediately.
   No setup, no deployment, no technical work.
 - **Earn from every order.** Your referral link tracks every purchase that
@@ -227,4 +227,3 @@ PACING: short, concrete narration per step — tell the viewer exactly what to d
 Add a one-line on-screen caption per scene. Keep the whole video under ~4 minutes.
 LANGUAGE: English. (If asked, an alternate Taglish narration is also fine.)
 ```
-

@@ -1,10 +1,10 @@
-import { buildPageMetadata } from '@/app/seo'
-import WebPageItemsManager from '@/components/superAdmin/webpages/WebPageItemsManager'
+import { buildPageMetadata } from "@/app/seo"
+import WebPageItemsManager from "@/components/superAdmin/webpages/WebPageItemsManager"
 
 export const metadata = buildPageMetadata({
-  title: 'Admin Web Pages Home',
-  description: 'Manage dynamic home page sections.',
-  path: '/admin/webpages/home',
+  title: "Admin Web Pages Home",
+  description: "Manage dynamic home page sections.",
+  path: "/admin/webpages/home",
   noIndex: true,
 })
 
@@ -17,4 +17,3 @@ export default function AdminWebPagesHomePage() {
     />
   )
 }
-

@@ -6,8 +6,12 @@ export default function AdminPartnerStorefrontsLoading() {
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-emerald-100 bg-emerald-50 text-emerald-600 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300">
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
         </div>
-        <p className="mt-4 text-sm font-semibold text-slate-800 dark:text-slate-100">Loading partner storefronts...</p>
-        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Preparing the storefront workspace and syncing your data.</p>
+        <p className="mt-4 text-sm font-semibold text-slate-800 dark:text-slate-100">
+          Loading partner storefronts...
+        </p>
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          Preparing the storefront workspace and syncing your data.
+        </p>
       </div>
     </div>
   )

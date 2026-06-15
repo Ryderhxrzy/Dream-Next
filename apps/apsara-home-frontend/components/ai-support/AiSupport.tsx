@@ -1,54 +1,61 @@
-'use client';
+"use client"
 
-import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { useAiSupport } from './hooks/useAiSupport';
-import { AiSupportPanel } from './AiSupportPanel';
-import { AiSupportToggle } from './AiSupportToggle';
+import { usePathname } from "next/navigation"
+import { useEffect, useState } from "react"
+import { useAiSupport } from "./hooks/useAiSupport"
+import { AiSupportPanel } from "./AiSupportPanel"
+import { AiSupportToggle } from "./AiSupportToggle"
 
-const API_BASE = (process.env.NEXT_PUBLIC_LARAVEL_API_URL ?? '').replace(/\/+$/, '');
-const LOGO_SRC = `${API_BASE}/Image/af.png`;
-const ROBOT_SRC = `${API_BASE}/Image/sir.png`;
+const API_BASE = (process.env.NEXT_PUBLIC_LARAVEL_API_URL ?? "").replace(
+  /\/+$/,
+  ""
+)
+const LOGO_SRC = `${API_BASE}/Image/af.png`
+const ROBOT_SRC = `${API_BASE}/Image/sir.png`
 
 const DISABLED_PREFIXES = [
-  '/admin',
-  '/supplier',
-  '/loading',
-  '/interior-services',
-  '/login',
-  '/checkout',
-  '/orders',
-  '/track-order',
-  '/verification',
-];
+  "/admin",
+  "/supplier",
+  "/loading",
+  "/interior-services",
+  "/login",
+  "/checkout",
+  "/orders",
+  "/track-order",
+  "/verification",
+]
 
 function useIsAllowed() {
-  const pathname = usePathname();
-  if (pathname === '/') return false;
-  return !DISABLED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix + '/'));
+  const pathname = usePathname()
+  if (pathname === "/") return false
+  return !DISABLED_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(prefix + "/")
+  )
 }
 
 function useIsLoadingScreenVisible() {
-  const [isLoadingScreenVisible, setIsLoadingScreenVisible] = useState(false);
+  const [isLoadingScreenVisible, setIsLoadingScreenVisible] = useState(false)
 
   useEffect(() => {
     const check = () => {
-      setIsLoadingScreenVisible(Boolean(document.getElementById('af-loading-screen')));
-    };
+      setIsLoadingScreenVisible(
+        Boolean(document.getElementById("af-loading-screen"))
+      )
+    }
 
-    check();
-    const observer = new MutationObserver(check);
-    observer.observe(document.body, { childList: true, subtree: true });
+    check()
+    const observer = new MutationObserver(check)
+    observer.observe(document.body, { childList: true, subtree: true })
 
-    return () => observer.disconnect();
-  }, []);
+    return () => observer.disconnect()
+  }, [])
 
-  return isLoadingScreenVisible;
+  return isLoadingScreenVisible
 }
 
 export function AiSupport() {
-  const allowed = useIsAllowed();
-  const isLoadingScreenVisible = useIsLoadingScreenVisible();
+  const allowed = useIsAllowed()
+  const isLoadingScreenVisible = useIsLoadingScreenVisible()
   const {
     isOpen,
     close,
@@ -61,14 +68,18 @@ export function AiSupport() {
     setImageDataUrls,
     send,
     isLoading,
-  } =
-    useAiSupport();
+  } = useAiSupport()
 
-  if (!allowed || isLoadingScreenVisible) return null;
+  if (!allowed || isLoadingScreenVisible) return null
 
   return (
     <>
-      <AiSupportToggle onClick={toggle} isOpen={isOpen} robotSrc={ROBOT_SRC} logoSrc={LOGO_SRC} />
+      <AiSupportToggle
+        onClick={toggle}
+        isOpen={isOpen}
+        robotSrc={ROBOT_SRC}
+        logoSrc={LOGO_SRC}
+      />
       <AiSupportPanel
         isOpen={isOpen}
         messages={messages}
@@ -84,5 +95,5 @@ export function AiSupport() {
         hasImage={imageDataUrls.length > 0}
       />
     </>
-  );
+  )
 }

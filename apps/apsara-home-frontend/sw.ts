@@ -1,14 +1,14 @@
-import { defaultCache } from "@serwist/next/worker";
-import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { NetworkFirst, NetworkOnly, Serwist } from "serwist";
+import { defaultCache } from "@serwist/next/worker"
+import type { PrecacheEntry, SerwistGlobalConfig } from "serwist"
+import { NetworkFirst, NetworkOnly, Serwist } from "serwist"
 
 declare global {
   interface ServiceWorkerGlobalScope extends SerwistGlobalConfig {
-    __SW_MANIFEST: (PrecacheEntry | string)[] | undefined;
+    __SW_MANIFEST: (PrecacheEntry | string)[] | undefined
   }
 }
 
-declare const self: ServiceWorkerGlobalScope;
+declare const self: ServiceWorkerGlobalScope
 
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
@@ -20,7 +20,10 @@ const serwist = new Serwist({
   runtimeCaching: [
     // Never cache API calls to avoid stale/rate-limited partner storefront payloads.
     {
-      matcher: ({ url, request }) => request.method === "GET" && url.origin === self.location.origin && url.pathname.startsWith("/api/"),
+      matcher: ({ url, request }) =>
+        request.method === "GET" &&
+        url.origin === self.location.origin &&
+        url.pathname.startsWith("/api/"),
       handler: new NetworkOnly(),
     },
     // Keep partner storefront navigations network-first so route HTML and JS stay in sync.
@@ -36,6 +39,6 @@ const serwist = new Serwist({
     },
     ...defaultCache,
   ],
-});
+})
 
-serwist.addEventListeners();
+serwist.addEventListeners()

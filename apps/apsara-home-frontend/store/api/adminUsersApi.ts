@@ -1,4 +1,4 @@
-import { baseApi } from './baseApi'
+import { baseApi } from "./baseApi"
 
 export interface AdminUserItem {
   id: number
@@ -33,7 +33,7 @@ export interface AdminUsersResponse {
 interface AdminUsersQuery {
   search?: string
   role?: string
-  activityStatus?: 'active' | 'inactive'
+  activityStatus?: "active" | "inactive"
   page?: number
   perPage?: number
 }
@@ -73,7 +73,7 @@ export interface CreateAdminUserPayload {
 export interface CreateAdminUserResponse {
   message: string
   setup_url: string
-  delivery: 'link_only' | 'email_and_link'
+  delivery: "link_only" | "email_and_link"
   invite: {
     name: string
     username: string
@@ -101,8 +101,8 @@ export const adminUsersApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getAdminUsers: builder.query<AdminUsersResponse, AdminUsersQuery | void>({
       query: (params) => ({
-        url: '/api/admin/users',
-        method: 'GET',
+        url: "/api/admin/users",
+        method: "GET",
         params: {
           q: params?.search,
           role: params?.role,
@@ -111,64 +111,86 @@ export const adminUsersApi = baseApi.injectEndpoints({
           per_page: params?.perPage ?? 20,
         },
       }),
-      providesTags: ['AdminUsers'],
+      providesTags: ["AdminUsers"],
     }),
-    getAdminUserActivity: builder.query<AdminUserActivityResponse, { id: number; page?: number; perPage?: number }>({
+    getAdminUserActivity: builder.query<
+      AdminUserActivityResponse,
+      { id: number; page?: number; perPage?: number }
+    >({
       query: ({ id, page = 1, perPage = 12 }) => ({
         url: `/api/admin/users/${id}/activity`,
-        method: 'GET',
+        method: "GET",
         params: {
           page,
           per_page: perPage,
         },
       }),
-      providesTags: ['AdminUsers'],
+      providesTags: ["AdminUsers"],
     }),
-    heartbeatAdminPresence: builder.mutation<{ message: string; last_seen_at?: string; last_active_path?: string | null }, { path?: string | null } | void>({
+    heartbeatAdminPresence: builder.mutation<
+      {
+        message: string
+        last_seen_at?: string
+        last_active_path?: string | null
+      },
+      { path?: string | null } | void
+    >({
       query: (body) => ({
-        url: '/api/admin/users/presence/heartbeat',
-        method: 'POST',
+        url: "/api/admin/users/presence/heartbeat",
+        method: "POST",
         body: {
           path: body?.path ?? null,
         },
       }),
     }),
-    createAdminUser: builder.mutation<CreateAdminUserResponse, CreateAdminUserPayload>({
+    createAdminUser: builder.mutation<
+      CreateAdminUserResponse,
+      CreateAdminUserPayload
+    >({
       query: (body) => ({
-        url: '/api/admin/users',
-        method: 'POST',
+        url: "/api/admin/users",
+        method: "POST",
         body,
       }),
-      invalidatesTags: ['AdminUsers'],
+      invalidatesTags: ["AdminUsers"],
     }),
-    updateAdminUser: builder.mutation<{ message: string; user: AdminUserItem }, UpdateAdminUserPayload>({
+    updateAdminUser: builder.mutation<
+      { message: string; user: AdminUserItem },
+      UpdateAdminUserPayload
+    >({
       query: ({ id, ...body }) => ({
         url: `/api/admin/users/${id}`,
-        method: 'PUT',
+        method: "PUT",
         body,
       }),
-      invalidatesTags: ['AdminUsers'],
+      invalidatesTags: ["AdminUsers"],
     }),
     deleteAdminUser: builder.mutation<{ message: string }, { id: number }>({
       query: ({ id }) => ({
         url: `/api/admin/users/${id}`,
-        method: 'DELETE',
+        method: "DELETE",
       }),
-      invalidatesTags: ['AdminUsers'],
+      invalidatesTags: ["AdminUsers"],
     }),
-    banAdminUser: builder.mutation<{ message: string; user: AdminUserItem }, { id: number }>({
+    banAdminUser: builder.mutation<
+      { message: string; user: AdminUserItem },
+      { id: number }
+    >({
       query: ({ id }) => ({
         url: `/api/admin/users/${id}/ban`,
-        method: 'PUT',
+        method: "PUT",
       }),
-      invalidatesTags: ['AdminUsers'],
+      invalidatesTags: ["AdminUsers"],
     }),
-    unbanAdminUser: builder.mutation<{ message: string; user: AdminUserItem }, { id: number }>({
+    unbanAdminUser: builder.mutation<
+      { message: string; user: AdminUserItem },
+      { id: number }
+    >({
       query: ({ id }) => ({
         url: `/api/admin/users/${id}/unban`,
-        method: 'PUT',
+        method: "PUT",
       }),
-      invalidatesTags: ['AdminUsers'],
+      invalidatesTags: ["AdminUsers"],
     }),
   }),
 })
