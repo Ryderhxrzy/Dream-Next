@@ -1691,6 +1691,137 @@ class ProductController extends Controller
         ]);
     }
 
+    /**
+     * Related ("you may also like") products for a given product.
+     *
+     * Relevance model (tiered, most-specific first): same sub-category -> same
+     * category -> same brand -> same room type. Within each tier the strongest
+     * products surface first (bestseller / must-have / sales-promo / newest). Every
+     * tier is an indexed filter with an index-friendly sort, so we never pay for a
+     * full-table computed sort.
+     *
+     * Cached for 24h per (product, limit): related sets only change as the catalog
+     * changes, and products are added daily, so a daily refresh keeps results fresh
+     * while keeping this high-traffic product-page call cheap under load. The TTL is
+     * staggered per product (not a fixed wall-clock time) to avoid a cache stampede.
+     */
+    public function related(int $id, Request $request): JsonResponse
+    {
+        $limit = max(1, min((int) $request->query('limit', 8), 20));
+
+        // Cheap PK lookup (uncached) so we return a correct 404 and never cache a miss.
+        $seed = Product::query()
+            ->select(['pd_id', 'pd_catid', 'pd_catsubid', 'pd_room_type', 'pd_brand_type'])
+            ->tap(fn ($q) => $this->applyPublicVisibility($q))
+            ->where('pd_id', $id)
+            ->first();
+
+        if (! $seed) {
+            return response()->json(['message' => 'Product not found.'], 404);
+        }
+
+        // Bump the v1 segment to invalidate every cached related set if the algorithm changes.
+        $cacheKey = "product:related:v1:{$id}:{$limit}";
+
+        $payload = Cache::remember($cacheKey, now()->addDay(), function () use ($seed, $id, $limit) {
+            $relatedIds = $this->collectRelatedProductIds($seed, $limit);
+
+            if (empty($relatedIds)) {
+                return ['products' => [], 'meta' => ['product_id' => $id, 'count' => 0, 'limit' => $limit]];
+            }
+
+            // Hydrate light card data for just the related ids.
+            $products = Product::query()
+                ->select([
+                    'pd_id', 'pd_name', 'pd_image',
+                    'pd_price_srp', 'pd_price_member',
+                    'pd_prodpv', 'pd_brand_type',
+                    'pd_musthave', 'pd_bestseller', 'pd_salespromo',
+                ])
+                ->with([
+                    'photos:pp_id,pp_pdid,pp_filename',
+                    'brand:pb_id,pb_name',
+                ])
+                ->withCount('variants')
+                ->whereIn('pd_id', $relatedIds)
+                ->get()
+                ->keyBy('pd_id');
+
+            // Single query for sold counts (avoid N+1).
+            $soldCounts = DB::table('tbl_checkout_history')
+                ->whereIn('ch_product_id', $relatedIds)
+                ->whereIn('ch_status', ['paid', 'completed', 'shipped'])
+                ->groupBy('ch_product_id')
+                ->selectRaw('ch_product_id as product_id, SUM(ch_quantity) as sold_count')
+                ->pluck('sold_count', 'product_id');
+
+            // Preserve the relevance order produced by collectRelatedProductIds().
+            $cards = collect($relatedIds)
+                ->map(function ($pid) use ($products, $soldCounts) {
+                    $product = $products->get($pid);
+                    if (! $product) {
+                        return null;
+                    }
+                    return $this->mapProductSummary($product, (int) ($soldCounts->get($pid, 0)));
+                })
+                ->filter()
+                ->values()
+                ->all();
+
+            return [
+                'products' => $cards,
+                'meta' => [
+                    'product_id' => $id,
+                    'count' => count($cards),
+                    'limit' => $limit,
+                ],
+            ];
+        });
+
+        return response()->json($payload);
+    }
+
+    /**
+     * Collect related product ids in relevance order using tiered, index-friendly
+     * queries. De-duplicates across tiers and stops once `limit` is reached.
+     */
+    private function collectRelatedProductIds(Product $seed, int $limit): array
+    {
+        // Tiers from most to least specific; only include attributes the seed actually has.
+        $tiers = array_values(array_filter([
+            (int) $seed->pd_catsubid > 0   ? ['pd_catsubid', (int) $seed->pd_catsubid] : null,
+            (int) $seed->pd_catid > 0      ? ['pd_catid', (int) $seed->pd_catid] : null,
+            (int) $seed->pd_brand_type > 0 ? ['pd_brand_type', (int) $seed->pd_brand_type] : null,
+            (int) $seed->pd_room_type > 0  ? ['pd_room_type', (int) $seed->pd_room_type] : null,
+        ]));
+
+        $collected = [];
+
+        foreach ($tiers as [$column, $value]) {
+            if (count($collected) >= $limit) {
+                break;
+            }
+
+            $exclude = array_merge([(int) $seed->pd_id], $collected);
+
+            $ids = Product::query()
+                ->where($column, $value)
+                ->whereNotIn('pd_id', $exclude)
+                ->tap(fn ($q) => $this->applyPublicVisibility($q))
+                ->orderByDesc('pd_bestseller')
+                ->orderByDesc('pd_musthave')
+                ->orderByDesc('pd_salespromo')
+                ->orderByDesc('pd_id')
+                ->limit($limit - count($collected))
+                ->pluck('pd_id')
+                ->all();
+
+            $collected = array_merge($collected, array_map('intval', $ids));
+        }
+
+        return array_slice($collected, 0, $limit);
+    }
+
     public function showSummary(int $id): JsonResponse
     {
         $product = Product::query()
