@@ -57,7 +57,7 @@ export default function Template1({
   return (
     <div className="bg-[#0a0a0f] font-sans text-white">
       {/* Nav */}
-      <nav className="sticky top-0 z-50 flex items-center justify-between border-b border-white/10 px-10 py-5">
+      <nav className="sticky top-0 z-50 flex items-center justify-between border-b border-white/10 bg-[#0a0a0f] px-10 py-5">
         <span className="text-xl font-black tracking-tight">{storeName}</span>
         <div className="hidden items-center gap-8 text-sm text-white/50 md:flex">
           <span className="cursor-pointer transition hover:text-white">
