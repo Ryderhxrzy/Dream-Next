@@ -1,6 +1,6 @@
 'use client'
 
-import type { FormEvent, ReactNode } from 'react'
+import type { FormEvent, KeyboardEvent, ReactNode } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   useCreateAdminWebPageItemMutation,
@@ -73,8 +73,12 @@ const sections: DreamBuildSection[] = [
     label: 'Services',
     dot: 'bg-cyan-400',
     itemLabel: 'Service',
-    helper: 'Service cards: Full Interior Design, Renovation, Styling.',
+    helper: 'Service cards: Interior Design, Sourcing & Supply, Installation & Finishing.',
     fields: [
+      { key: 'section_eyebrow', label: 'Section eyebrow' },
+      { key: 'section_title', label: 'Section title' },
+      { key: 'section_description', label: 'Section description', kind: 'textarea' },
+      { key: 'service_label', label: 'Service label' },
       { key: 'service_number', label: 'Service number (01, 02…)' },
       { key: 'bullets', label: 'Bullet points (one per line)', kind: 'textarea' },
     ],
@@ -127,8 +131,12 @@ const sections: DreamBuildSection[] = [
     label: 'Gallery',
     dot: 'bg-orange-400',
     itemLabel: 'Gallery item',
-    helper: 'Gallery tiles with images and tone.',
+    helper: 'Parallax gallery images and header copy.',
     fields: [
+      { key: 'section_eyebrow', label: 'Section eyebrow' },
+      { key: 'section_title', label: 'Section title' },
+      { key: 'cta_text', label: 'Header button text' },
+      { key: 'cta_url', label: 'Header button link' },
       { key: 'tone', label: 'Tone', kind: 'select', options: ['light', 'dark', 'gold', 'soft'] },
       { key: 'alt', label: 'Image alt text' },
     ],
@@ -187,22 +195,22 @@ const STATIC_DEFAULTS: Record<string, WebPageItem[]> = {
   ],
   'dreambuild-services': [
     {
-      id: -1, type: 'dreambuild-services', key: 'full-interior-design', sort_order: 0, is_active: true,
-      title: 'Full Interior Design', subtitle: null, body: 'A complete design service covering planning, mood direction, furniture curation, detailing, and the final visual language of the home.',
+      id: -1, type: 'dreambuild-services', key: 'interior-design', sort_order: 0, is_active: true,
+      title: 'Interior Design', subtitle: null, body: 'Space planning, material direction, and a complete visual language - designed around how you actually live, and engineered to be sourced and installed without compromise.',
       image_url: null, link_url: null, button_text: null,
-      payload: { service_number: '01', bullets: 'Space planning with lifestyle-based zoning\nMaterial, color, and finish coordination\nFurniture, lighting, and styling direction' },
+      payload: { section_eyebrow: 'Interior Services', section_title: 'What we do best.', section_description: 'Three focused service areas, each designed to move your space forward.', service_label: 'Solution', service_number: '01', bullets: 'Space planning with lifestyle-based zoning\nMaterial, color, and finish coordination\nFurniture, lighting, and styling direction' },
     },
     {
-      id: -2, type: 'dreambuild-services', key: 'renovation-design', sort_order: 1, is_active: true,
-      title: 'Renovation Design', subtitle: null, body: 'For homes that need better flow, more refined finishes, and a stronger point of view before construction and procurement begin.',
+      id: -2, type: 'dreambuild-services', key: 'sourcing-supply', sort_order: 1, is_active: true,
+      title: 'Sourcing & Supply', subtitle: null, body: 'Two decades of direct factory relationships through our proprietary international supply chain mean designer-grade furniture, lighting, and finishing materials at prices showrooms can\'t touch.',
       image_url: null, link_url: null, button_text: null,
-      payload: { service_number: '02', bullets: 'Kitchen, bath, and common area upgrades\nBuilt-in, joinery, and ceiling direction\nLighting plans and visual consistency checks' },
+      payload: { service_label: 'Solution', service_number: '02', bullets: 'Direct-from-factory furniture, lighting, and fixtures\nFinishing materials, hardware, and soft furnishings\nConsolidated shipping, QC inspection, and delivery' },
     },
     {
-      id: -3, type: 'dreambuild-services', key: 'styling-finishing', sort_order: 2, is_active: true,
-      title: 'Styling and Finishing', subtitle: null, body: 'The final layer that makes a home feel complete through accessories, texture balance, lighting ambiance, and soft luxury detailing.',
+      id: -3, type: 'dreambuild-services', key: 'installation-finishing', sort_order: 2, is_active: true,
+      title: 'Installation & Finishing', subtitle: null, body: 'Our crews install, assemble, and style everything we design and supply, then hand you a home that\'s photo-ready on day one.',
       image_url: null, link_url: null, button_text: null,
-      payload: { service_number: '03', bullets: 'Decor styling and shelf composition\nCurtain, textile, and soft-finish selection\nFinal-home shoot readiness and presentation polish' },
+      payload: { service_label: 'Solution', service_number: '03', bullets: 'Furniture, fixture, and built-in installation\nCurtains, lighting, and accessory fit-out\nFinal styling, QC walkthrough, and turnover' },
     },
   ],
   'dreambuild-projects': [
@@ -224,7 +232,7 @@ const STATIC_DEFAULTS: Record<string, WebPageItem[]> = {
     { id: -2, type: 'dreambuild-testimonials', key: 'daniel-r', sort_order: 1, is_active: true, title: 'Daniel R.', subtitle: null, body: 'They translated our vague ideas into something polished and cohesive. The material palette alone changed the whole mood.', image_url: null, link_url: null, button_text: null, payload: { client_name: 'Daniel R.', client_role: 'Condo Client' } },
   ],
   'dreambuild-gallery': [
-    { id: -1, type: 'dreambuild-gallery', key: 'living-room-styling', sort_order: 0, is_active: true, title: 'Living Room Styling', subtitle: null, body: null, image_url: null, link_url: null, button_text: null, payload: { tone: 'dark', alt: 'Living room with dark tones' } },
+    { id: -1, type: 'dreambuild-gallery', key: 'living-room-styling', sort_order: 0, is_active: true, title: 'Living Room Styling', subtitle: null, body: null, image_url: null, link_url: null, button_text: null, payload: { section_eyebrow: 'Interior Gallery', section_title: 'A curated look at our aesthetic.', cta_text: 'See All Projects', cta_url: '/projects', tone: 'dark', alt: 'Living room with dark tones' } },
     { id: -2, type: 'dreambuild-gallery', key: 'dining-space-layers', sort_order: 1, is_active: true, title: 'Dining Space Layers', subtitle: null, body: null, image_url: null, link_url: null, button_text: null, payload: { tone: 'light', alt: 'Dining area with light finish' } },
     { id: -3, type: 'dreambuild-gallery', key: 'bedroom-material-story', sort_order: 2, is_active: true, title: 'Bedroom Material Story', subtitle: null, body: null, image_url: null, link_url: null, button_text: null, payload: { tone: 'gold', alt: 'Bedroom with warm gold tones' } },
     { id: -4, type: 'dreambuild-gallery', key: 'modern-kitchen-detail', sort_order: 3, is_active: true, title: 'Modern Kitchen Detail', subtitle: null, body: null, image_url: null, link_url: null, button_text: null, payload: { tone: 'soft', alt: 'Kitchen with soft finish' } },
@@ -260,6 +268,16 @@ const slugify = (v: string) =>
 
 const toForm = (item: WebPageItem, section: DreamBuildSection): FormState => {
   const p = (item.payload ?? {}) as Record<string, unknown>
+  const payloadFallback = (key: string) => {
+    if (section.id !== 'dreambuild-services') return ''
+    if (key === 'section_eyebrow') return SERVICES_HEADER_DEFAULTS.eyebrow
+    if (key === 'section_title') return SERVICES_HEADER_DEFAULTS.title
+    if (key === 'section_description') return SERVICES_HEADER_DEFAULTS.description
+    if (key === 'service_label') return 'Solution'
+    if (key === 'service_number') return String((item.sort_order ?? 0) + 1).padStart(2, '0')
+    return ''
+  }
+
   return {
     key: item.key ?? '',
     title: item.title ?? '',
@@ -272,7 +290,11 @@ const toForm = (item: WebPageItem, section: DreamBuildSection): FormState => {
     is_active: item.is_active,
     payload: section.fields.reduce<Record<string, string>>((acc, f) => {
       const v = p[f.key]
-      acc[f.key] = typeof v === 'string' ? v : Array.isArray(v) ? (v as string[]).join('\n') : ''
+      if (section.id === 'dreambuild-services' && f.key === 'service_number') {
+        acc[f.key] = payloadFallback(f.key)
+        return acc
+      }
+      acc[f.key] = typeof v === 'string' ? v : Array.isArray(v) ? (v as string[]).join('\n') : payloadFallback(f.key)
       return acc
     }, {}),
   }
@@ -287,18 +309,41 @@ const toPayload = (form: FormState, section: DreamBuildSection) => {
     payload.slug = slugify(form.title)
   }
 
+  const subtitle = section.id === 'dreambuild-services'
+    ? null
+    : form.subtitle.trim().slice(0, SUBTITLE_LIMIT) || undefined
+  const linkUrl = section.id === 'dreambuild-services'
+    ? null
+    : form.link_url.trim() || undefined
+  const buttonText = section.id === 'dreambuild-services'
+    ? null
+    : form.button_text.trim() || undefined
+  const serviceNumberOrder = section.id === 'dreambuild-services'
+    ? Number.parseInt(form.payload.service_number || '', 10) - 1
+    : Number.NaN
+  const sortOrder = Number.isFinite(serviceNumberOrder) && serviceNumberOrder >= 0
+    ? serviceNumberOrder
+    : Number.parseInt(form.sort_order, 10) || 0
+
   return {
     key: form.key.trim() || slugify(form.title) || section.id,
     title: form.title.trim() || undefined,
-    subtitle: form.subtitle.trim().slice(0, SUBTITLE_LIMIT) || undefined,
+    subtitle,
     body: form.body.trim() || undefined,
     image_url: form.image_url.trim() || undefined,
-    link_url: form.link_url.trim() || undefined,
-    button_text: form.button_text.trim() || undefined,
-    sort_order: Number.parseInt(form.sort_order, 10) || 0,
+    link_url: linkUrl,
+    button_text: buttonText,
+    sort_order: sortOrder,
     is_active: form.is_active,
     payload,
   }
+}
+
+const sortOrderFromForm = (form: FormState) => {
+  const serviceNumberOrder = Number.parseInt(form.payload.service_number || '', 10) - 1
+  return Number.isFinite(serviceNumberOrder) && serviceNumberOrder >= 0
+    ? serviceNumberOrder
+    : Number.parseInt(form.sort_order, 10) || 0
 }
 
 const mergeItem = (item: WebPageItem, form: FormState): WebPageItem => ({
@@ -309,10 +354,12 @@ const mergeItem = (item: WebPageItem, form: FormState): WebPageItem => ({
   image_url: form.image_url || null,
   link_url: form.link_url || null,
   button_text: form.button_text || null,
-  sort_order: Number(form.sort_order) || 0,
+  sort_order: sortOrderFromForm(form),
   is_active: form.is_active,
   payload: { ...((item.payload as Record<string, string>) ?? {}), ...form.payload },
 })
+
+const draftKeyFor = (type: WebPageType, id: number) => `${type}:${id}`
 
 // Static fallback images for services (matches landing page serviceImages)
 const SERVICE_IMAGES = [
@@ -320,6 +367,25 @@ const SERVICE_IMAGES = [
   'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=900&q=80',
   'https://images.unsplash.com/photo-1631679706909-1844bbd07221?w=900&q=80',
 ]
+
+const SERVICES_CTA_DEFAULTS = {
+  text: 'Not sure which service fits your project?',
+  buttonText: 'Book a Free Consult',
+  buttonUrl: '#contact',
+}
+
+const SERVICES_HEADER_DEFAULTS = {
+  eyebrow: 'Interior Services',
+  title: 'What we do best.',
+  description: 'Three focused service areas, each designed to move your space forward.',
+}
+
+const GALLERY_HEADER_DEFAULTS = {
+  eyebrow: 'Interior Gallery',
+  title: 'A curated look at our aesthetic.',
+  ctaText: 'See All Projects',
+  ctaUrl: '/projects',
+}
 
 // ─── FieldZone — clickable sub-element within a canvas card ────────────────────
 
@@ -530,7 +596,36 @@ function HeroCanvas({ items, selected, onSelect, onAddNew, isLoading, onFieldFoc
 
 function ServicesCanvas({ items, selected, onSelect, onAddNew, isLoading, onFieldFocus, focusedField }: CanvasProps) {
   const isStatic = items.length === 0
-  const displayItems = isStatic ? (STATIC_DEFAULTS['dreambuild-services'] ?? []) : items
+  const displayItems = [...(isStatic ? (STATIC_DEFAULTS['dreambuild-services'] ?? []) : items)]
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.id - b.id)
+  const ctaText = SERVICES_CTA_DEFAULTS.text
+  const ctaButtonText = SERVICES_CTA_DEFAULTS.buttonText
+  const headerItem = displayItems[0]
+  const headerPayload = (headerItem?.payload ?? {}) as Record<string, string>
+  const sectionEyebrow = headerPayload.section_eyebrow || SERVICES_HEADER_DEFAULTS.eyebrow
+  const sectionTitle = headerPayload.section_title || SERVICES_HEADER_DEFAULTS.title
+  const sectionDescription = headerPayload.section_description || SERVICES_HEADER_DEFAULTS.description
+  const sharedServiceLabel =
+    displayItems
+      .map(item => ((item.payload ?? {}) as Record<string, string>).service_label)
+      .find(Boolean) || 'Solution'
+  const headerItemWithDefaults: WebPageItem | null = headerItem
+    ? {
+      ...headerItem,
+      payload: {
+        ...headerPayload,
+        section_eyebrow: sectionEyebrow,
+        section_title: sectionTitle,
+        section_description: sectionDescription,
+      },
+    }
+    : null
+  const headerField = (fieldKey: string, label: string) => ({
+    fieldKey,
+    label,
+    onFocus: (key: string) => headerItemWithDefaults && onFieldFocus?.(headerItemWithDefaults, key),
+    isActive: !isStatic && selected?.id === headerItem?.id && focusedField === fieldKey,
+  })
 
   return (
     <div className="mx-auto max-w-4xl p-8">
@@ -540,17 +635,23 @@ function ServicesCanvas({ items, selected, onSelect, onAddNew, isLoading, onFiel
       {/* Section header — mirrors landing page */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-stone-400">
-            <span className="h-px w-8 bg-stone-300" />
-            Interior Services
-          </p>
-          <h2 className="mt-4 text-3xl font-medium tracking-tight text-stone-900">
-            What we do best.
-          </h2>
+          <FieldZone {...headerField('section_eyebrow', 'Section eyebrow')}>
+            <p className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-stone-400">
+              <span className="h-px w-8 bg-stone-300" />
+              {sectionEyebrow}
+            </p>
+          </FieldZone>
+          <FieldZone {...headerField('section_title', 'Section title')}>
+            <h2 className="mt-4 text-3xl font-medium tracking-tight text-stone-900">
+              {sectionTitle}
+            </h2>
+          </FieldZone>
         </div>
-        <p className="max-w-xs text-sm leading-relaxed text-stone-500 lg:text-right">
-          Three focused service areas, each designed to move your space forward.
-        </p>
+        <FieldZone {...headerField('section_description', 'Section description')}>
+          <p className="max-w-xs text-sm leading-relaxed text-stone-500 lg:text-right">
+            {sectionDescription}
+          </p>
+        </FieldZone>
       </div>
 
       {/* Service items */}
@@ -559,18 +660,28 @@ function ServicesCanvas({ items, selected, onSelect, onAddNew, isLoading, onFiel
           const p = (item.payload ?? {}) as Record<string, string>
           const bullets = (p.bullets ?? '').split('\n').filter(Boolean)
           const isEven = idx % 2 === 1
-          const serviceNum = p.service_number || String(idx + 1).padStart(2, '0')
+          const serviceLabel = p.service_label || sharedServiceLabel
+          const serviceNum = String(idx + 1).padStart(2, '0')
+          const itemForEditing: WebPageItem = {
+            ...item,
+            sort_order: idx,
+            payload: {
+              ...p,
+              service_label: serviceLabel,
+              service_number: serviceNum,
+            },
+          }
           const imgSrc = item.image_url || SERVICE_IMAGES[idx % SERVICE_IMAGES.length]
           const isThisSelected = !isStatic && selected?.id === item.id
           const fz = (fieldKey: string, label: string) => ({
             fieldKey,
             label,
-            onFocus: (key: string) => onFieldFocus?.(item, key),
+            onFocus: (key: string) => onFieldFocus?.(itemForEditing, key),
             isActive: isThisSelected && focusedField === fieldKey,
           })
 
           return (
-            <CanvasItem key={item.id} item={item} selected={selected} onSelect={onSelect} isStatic={isStatic}>
+            <CanvasItem key={item.id} item={itemForEditing} selected={selected} onSelect={onSelect} isStatic={isStatic}>
               <div className="relative">
                 {/* Oversized background number */}
                 <div className={`pointer-events-none absolute -top-8 select-none text-[7rem] font-bold leading-none tracking-tighter text-stone-200 ${isEven ? 'right-0' : 'left-0'}`}>
@@ -581,19 +692,22 @@ function ServicesCanvas({ items, selected, onSelect, onAddNew, isLoading, onFiel
                   {isEven ? (
                     <>
                       <div className="flex flex-col justify-center">
-                        <FieldZone {...fz('service_number', 'Service #')}>
-                          <p className="text-xs font-medium uppercase tracking-widest text-stone-400">
-                            Service {serviceNum}
-                          </p>
-                        </FieldZone>
+                        <p className="flex w-fit items-center gap-1 text-xs font-medium uppercase tracking-widest text-stone-400">
+                          <FieldZone {...fz('service_label', 'Service label')}>
+                            <span>{serviceLabel}</span>
+                          </FieldZone>
+                          <FieldZone {...fz('service_number', 'Service #')}>
+                            <span>{serviceNum}</span>
+                          </FieldZone>
+                        </p>
                         <FieldZone {...fz('title', 'Title')}>
                           <h3 className="mt-4 text-2xl font-medium tracking-tight text-stone-900 lg:text-3xl">
                             {item.title || <em className="font-normal text-stone-300">Service title…</em>}
                           </h3>
                         </FieldZone>
                         <FieldZone {...fz('body', 'Body')}>
-                          {(item.subtitle ?? item.body) ? (
-                            <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-stone-500">{item.subtitle ?? item.body}</p>
+                          {(item.body ?? item.subtitle) ? (
+                            <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-stone-500">{item.body ?? item.subtitle}</p>
                           ) : null}
                         </FieldZone>
                         <div className="my-6 h-px w-10 bg-stone-200" />
@@ -636,19 +750,22 @@ function ServicesCanvas({ items, selected, onSelect, onAddNew, isLoading, onFiel
                         </div>
                       </FieldZone>
                       <div className="flex flex-col justify-center">
-                        <FieldZone {...fz('service_number', 'Service #')}>
-                          <p className="text-xs font-medium uppercase tracking-widest text-stone-400">
-                            Service {serviceNum}
-                          </p>
-                        </FieldZone>
+                        <p className="flex w-fit items-center gap-1 text-xs font-medium uppercase tracking-widest text-stone-400">
+                          <FieldZone {...fz('service_label', 'Service label')}>
+                            <span>{serviceLabel}</span>
+                          </FieldZone>
+                          <FieldZone {...fz('service_number', 'Service #')}>
+                            <span>{serviceNum}</span>
+                          </FieldZone>
+                        </p>
                         <FieldZone {...fz('title', 'Title')}>
                           <h3 className="mt-4 text-2xl font-medium tracking-tight text-stone-900 lg:text-3xl">
                             {item.title || <em className="font-normal text-stone-300">Service title…</em>}
                           </h3>
                         </FieldZone>
                         <FieldZone {...fz('body', 'Body')}>
-                          {(item.subtitle ?? item.body) ? (
-                            <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-stone-500">{item.subtitle ?? item.body}</p>
+                          {(item.body ?? item.subtitle) ? (
+                            <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-stone-500">{item.body ?? item.subtitle}</p>
                           ) : null}
                         </FieldZone>
                         <div className="my-6 h-px w-10 bg-stone-200" />
@@ -679,10 +796,10 @@ function ServicesCanvas({ items, selected, onSelect, onAddNew, isLoading, onFiel
       {/* Bottom CTA — mirrors landing page */}
       <div className="mt-16 flex flex-col items-center gap-4 border-t border-stone-200 pt-12 text-center">
         <p className="text-base font-medium text-stone-900">
-          Not sure which service fits your project?
+          {ctaText}
         </p>
         <span className="inline-flex items-center gap-2 rounded-full bg-stone-900 px-8 py-3.5 text-sm font-medium text-white">
-          Book a Free Consult →
+          {ctaButtonText} -&gt;
         </span>
       </div>
 
@@ -1156,6 +1273,30 @@ function BlogsCanvas({ items, selected, onSelect, onRequestDelete, onAddNew, isL
 
 function GalleryCanvas({ items, selected, onSelect, onAddNew, isLoading, onFieldFocus, focusedField }: CanvasProps) {
   const displayItems = items
+  const headerItem = displayItems[0]
+  const headerPayload = (headerItem?.payload ?? {}) as Record<string, string>
+  const sectionEyebrow = headerPayload.section_eyebrow || GALLERY_HEADER_DEFAULTS.eyebrow
+  const sectionTitle = headerPayload.section_title || GALLERY_HEADER_DEFAULTS.title
+  const ctaText = headerPayload.cta_text || GALLERY_HEADER_DEFAULTS.ctaText
+  const ctaUrl = headerPayload.cta_url || GALLERY_HEADER_DEFAULTS.ctaUrl
+  const headerItemWithDefaults: WebPageItem | null = headerItem
+    ? {
+      ...headerItem,
+      payload: {
+        ...headerPayload,
+        section_eyebrow: sectionEyebrow,
+        section_title: sectionTitle,
+        cta_text: ctaText,
+        cta_url: ctaUrl,
+      },
+    }
+    : null
+  const headerField = (fieldKey: string, label: string) => ({
+    fieldKey,
+    label,
+    onFocus: (key: string) => headerItemWithDefaults && onFieldFocus?.(headerItemWithDefaults, key),
+    isActive: selected?.id === headerItem?.id && focusedField === fieldKey,
+  })
   const toneGrad: Record<string, string> = {
     dark: 'from-stone-600 to-stone-900',
     light: 'from-stone-100 to-stone-200',
@@ -1166,22 +1307,41 @@ function GalleryCanvas({ items, selected, onSelect, onAddNew, isLoading, onField
   return (
     <div className="mx-auto max-w-5xl p-8">
       {isLoading && <ProgressBar />}
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-4 border-b border-stone-300/60 pb-5">
+      <div className="mb-8 flex flex-col gap-6 border-b border-stone-300/60 pb-8 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-stone-500">Visual Archive</p>
-          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-stone-950">Gallery</h2>
-          <p className="mt-1 max-w-xl text-sm leading-relaxed text-stone-500">
-            Add CMS gallery entries with tone and alt text. The landing page keeps its static gallery until items are added here.
-          </p>
+          <FieldZone {...headerField('section_eyebrow', 'Section eyebrow')}>
+            <p className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-stone-500">
+              <span className="h-px w-8 bg-stone-400" />
+              {sectionEyebrow}
+            </p>
+          </FieldZone>
+          <FieldZone {...headerField('section_title', 'Section title')}>
+            <h2 className="mt-4 text-3xl font-medium tracking-tight text-stone-950">
+              {sectionTitle}
+            </h2>
+          </FieldZone>
         </div>
-        <button
-          type="button"
-          onClick={onAddNew}
-          className="inline-flex items-center gap-2 rounded-full bg-stone-950 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-stone-800"
-        >
-          <span className="text-base leading-none">+</span>
-          Add Gallery Item
-        </button>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <FieldZone {...headerField('cta_text', 'Header button text')}>
+            <span className="inline-flex items-center gap-2 rounded-full border border-stone-200 px-5 py-2.5 text-sm font-medium text-stone-900">
+              {ctaText}
+              <span>-&gt;</span>
+            </span>
+          </FieldZone>
+          <FieldZone {...headerField('cta_url', 'Header button link')}>
+            <span className="rounded-full bg-stone-100 px-3 py-2 text-[10px] font-semibold text-stone-500">
+              {ctaUrl}
+            </span>
+          </FieldZone>
+          <button
+            type="button"
+            onClick={onAddNew}
+            className="inline-flex items-center gap-2 rounded-full bg-stone-950 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-stone-800"
+          >
+            <span className="text-base leading-none">+</span>
+            Add Image
+          </button>
+        </div>
       </div>
 
       {displayItems.length === 0 ? (
@@ -1433,7 +1593,7 @@ function CarouselImagesField({
 
 function EditPanel({
   section, form, setForm, editTarget, isBusy, onSubmit, onDelete, onCancel,
-  focusedField, onUploadImage, isUploadingImage,
+  focusedField, onUploadImage, isUploadingImage, serviceItems, onServiceTabSelect,
 }: {
   section: DreamBuildSection
   form: FormState
@@ -1446,8 +1606,12 @@ function EditPanel({
   focusedField?: string | null
   onUploadImage?: (file: File) => Promise<void>
   isUploadingImage?: boolean
+  serviceItems?: WebPageItem[]
+  onServiceTabSelect?: (item: WebPageItem) => void
 }) {
   const isCreatingFromStatic = !editTarget
+  const isServices = section.id === 'dreambuild-services'
+  const isGallery = section.id === 'dreambuild-gallery'
   const scrollAreaRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -1492,6 +1656,222 @@ function EditPanel({
     )
   }
 
+  const updatePayloadField = (key: string, value: string) => {
+    setForm(p => ({ ...p, payload: { ...p.payload, [key]: value } }))
+  }
+
+  const renderImageField = (label = 'Image') => (
+    <Field label={label} fieldKey="image_url" focusedField={focusedField}>
+      <input
+        data-field="image_url"
+        value={form.image_url}
+        onChange={e => setForm(p => ({ ...p, image_url: e.target.value }))}
+        placeholder="Paste URL or upload below"
+        className={inputClass}
+      />
+      <label className={`mt-1.5 inline-flex cursor-pointer items-center gap-2 rounded-2xl border px-3.5 py-2 text-xs font-semibold transition ${
+        isUploadingImage
+          ? 'cursor-wait border-cyan-200 bg-cyan-50 text-cyan-500'
+          : 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-white'
+      }`}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="16 16 12 12 8 16" />
+          <line x1="12" y1="12" x2="12" y2="21" />
+          <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
+        </svg>
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          className="hidden"
+          disabled={isUploadingImage}
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            if (file) void onUploadImage?.(file)
+            e.currentTarget.value = ''
+          }}
+        />
+        {isUploadingImage ? 'Uploading...' : 'Upload Image'}
+      </label>
+      {form.image_url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={form.image_url} alt="" className="mt-2 h-24 w-full rounded-xl object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+      )}
+    </Field>
+  )
+
+  const renderServicesFields = () => (
+    <>
+      {serviceItems && serviceItems.length > 0 && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+          <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+            Solutions
+          </p>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {[...serviceItems]
+              .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.id - b.id)
+              .map((item, index) => {
+                const payload = (item.payload ?? {}) as Record<string, string>
+                const number = payload.service_number || String(index + 1).padStart(2, '0')
+                const selected = editTarget?.id === item.id
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => onServiceTabSelect?.(item)}
+                    className={`min-w-[8rem] rounded-xl border px-3 py-2 text-left transition ${
+                      selected
+                        ? 'border-cyan-300 bg-cyan-50 shadow-sm ring-2 ring-cyan-100 dark:bg-slate-900'
+                        : 'border-slate-200 bg-slate-50 hover:border-cyan-200 hover:bg-white dark:border-slate-800 dark:bg-slate-900'
+                    }`}
+                  >
+                    <span className="block text-[10px] font-bold uppercase tracking-widest text-cyan-600">
+                      Solution {number}
+                    </span>
+                    <span className="mt-0.5 block truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+                      {item.title || `Service ${number}`}
+                    </span>
+                  </button>
+                )
+              })}
+          </div>
+        </div>
+      )}
+
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950">
+        <div className="relative h-32 bg-slate-100 dark:bg-slate-900">
+          {form.image_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={form.image_url} alt="" className="h-full w-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+          ) : (
+            <div className="flex h-full items-center justify-center text-xs font-semibold text-slate-400">
+              Service image
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
+          <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-white/75">
+                {form.payload.service_label || 'Solution'} {form.payload.service_number || '01'}
+              </p>
+              <p className="truncate text-sm font-bold text-white">
+                {form.title || 'Untitled service'}
+              </p>
+            </div>
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-xs font-bold text-slate-900 shadow">
+              {form.payload.service_number || '01'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+            {form.payload.service_label || 'Solution'} {form.payload.service_number || '01'} content
+          </p>
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">
+            Parent
+          </span>
+        </div>
+        <div className="space-y-3">
+          <Field label="Service title" fieldKey="title" focusedField={focusedField}>
+            <input data-field="title" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="Interior Design" className={inputClass} />
+          </Field>
+          <Field label="Service description" fieldKey="body" focusedField={focusedField}>
+            <textarea data-field="body" value={form.body} onChange={e => setForm(p => ({ ...p, body: e.target.value }))} rows={5} placeholder="Short paragraph shown under the service title" className={inputClass} />
+          </Field>
+          {renderImageField('Service image')}
+        </div>
+      </div>
+
+      {(form.payload.service_number || '01') === '01' && (
+        <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4 dark:border-cyan-900/30">
+          <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-cyan-700 dark:text-cyan-400">
+            Services section header
+          </p>
+          <div className="space-y-3">
+            <Field label="Eyebrow text" fieldKey="section_eyebrow" focusedField={focusedField}>
+              <input data-field="section_eyebrow" value={form.payload.section_eyebrow ?? ''} onChange={e => updatePayloadField('section_eyebrow', e.target.value)} placeholder="Interior Services" className={inputClass} />
+            </Field>
+            <Field label="Heading" fieldKey="section_title" focusedField={focusedField}>
+              <input data-field="section_title" value={form.payload.section_title ?? ''} onChange={e => updatePayloadField('section_title', e.target.value)} placeholder="What we do best." className={inputClass} />
+            </Field>
+            <Field label="Intro text" fieldKey="section_description" focusedField={focusedField}>
+              <textarea data-field="section_description" value={form.payload.section_description ?? ''} onChange={e => updatePayloadField('section_description', e.target.value)} rows={3} placeholder="Short copy shown beside the heading" className={inputClass} />
+            </Field>
+          </div>
+        </div>
+      )}
+
+      <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4 dark:border-cyan-900/30">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-cyan-700 dark:text-cyan-400">
+            {form.payload.service_label || 'Solution'} {form.payload.service_number || '01'} details
+          </p>
+          <span className="rounded-full bg-cyan-100 px-2 py-0.5 text-[10px] font-bold text-cyan-700">
+            Fields
+          </span>
+        </div>
+        <div className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Label" fieldKey="service_label" focusedField={focusedField}>
+              <input data-field="service_label" value={form.payload.service_label ?? ''} onChange={e => updatePayloadField('service_label', e.target.value)} placeholder="Solution" className={inputClass} />
+            </Field>
+            <Field label="Number" fieldKey="service_number" focusedField={focusedField}>
+              <input data-field="service_number" value={form.payload.service_number ?? ''} onChange={e => updatePayloadField('service_number', e.target.value)} placeholder="01" className={inputClass} />
+            </Field>
+          </div>
+          <Field label="Bullet points" fieldKey="bullets" focusedField={focusedField}>
+            <NumberedLinesField
+              dataField="bullets"
+              value={form.payload.bullets ?? ''}
+              onChange={val => updatePayloadField('bullets', val)}
+            />
+          </Field>
+        </div>
+      </div>
+    </>
+  )
+
+  const renderSectionFields = () => (
+    section.fields.length > 0 && (
+      <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4 dark:border-cyan-900/30">
+        <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-cyan-700 dark:text-cyan-400">
+          {section.label} fields
+        </p>
+        <div className="space-y-3">
+          {section.fields.map(field => (
+            <Field key={field.key} label={field.label} fieldKey={field.key} focusedField={focusedField}>
+              {field.kind === 'image-list' ? (
+                <div data-field={field.key}>
+                  <CarouselImagesField
+                    value={form.payload[field.key] ?? ''}
+                    onChange={val => setForm(p => ({ ...p, payload: { ...p.payload, [field.key]: val } }))}
+                  />
+                </div>
+              ) : field.kind === 'select' ? (
+                <select data-field={field.key} value={form.payload[field.key] ?? ''} onChange={e => setForm(p => ({ ...p, payload: { ...p.payload, [field.key]: e.target.value } }))} className={inputClass}>
+                  <option value="">Select...</option>
+                  {(field.options ?? []).map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                </select>
+              ) : field.key === 'bullets' ? (
+                <NumberedLinesField
+                  dataField={field.key}
+                  value={form.payload[field.key] ?? ''}
+                  onChange={val => setForm(p => ({ ...p, payload: { ...p.payload, [field.key]: val } }))}
+                />
+              ) : field.kind === 'textarea' ? (
+                <textarea data-field={field.key} value={form.payload[field.key] ?? ''} onChange={e => setForm(p => ({ ...p, payload: { ...p.payload, [field.key]: e.target.value } }))} rows={3} className={inputClass} />
+              ) : (
+                <input data-field={field.key} value={form.payload[field.key] ?? ''} onChange={e => setForm(p => ({ ...p, payload: { ...p.payload, [field.key]: e.target.value } }))} className={inputClass} />
+              )}
+            </Field>
+          ))}
+        </div>
+      </div>
+    )
+  )
+
   return (
     <form onSubmit={onSubmit} className="flex h-full flex-col overflow-hidden">
       <div className="shrink-0 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
@@ -1522,17 +1902,27 @@ function EditPanel({
       </div>
 
       <div ref={scrollAreaRef} className="flex-1 space-y-3 overflow-y-auto p-5">
-        <Field label="Title" fieldKey="title" focusedField={focusedField}>
-          <input data-field="title" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="Main title" className={inputClass} />
-        </Field>
-        <Field label="Subtitle" fieldKey="subtitle" focusedField={focusedField}>
-          <input data-field="subtitle" value={form.subtitle} onChange={e => setForm(p => ({ ...p, subtitle: e.target.value }))} placeholder="Short support text" className={inputClass} />
-        </Field>
-        <Field label="Body / description" fieldKey="body" focusedField={focusedField}>
-          <textarea data-field="body" value={form.body} onChange={e => setForm(p => ({ ...p, body: e.target.value }))} rows={3} placeholder="Longer copy, quote, or description" className={inputClass} />
-        </Field>
+        {isGallery && renderSectionFields()}
+        {isServices && renderServicesFields()}
+
+        {!isServices && (
+          <Field label="Title" fieldKey="title" focusedField={focusedField}>
+            <input data-field="title" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="Main title" className={inputClass} />
+          </Field>
+        )}
+        {section.id !== 'dreambuild-services' && !isGallery && (
+          <Field label="Subtitle" fieldKey="subtitle" focusedField={focusedField}>
+            <input data-field="subtitle" value={form.subtitle} onChange={e => setForm(p => ({ ...p, subtitle: e.target.value }))} placeholder="Short support text" className={inputClass} />
+          </Field>
+        )}
+        {!isGallery && !isServices && (
+          <Field label="Body / description" fieldKey="body" focusedField={focusedField}>
+            <textarea data-field="body" value={form.body} onChange={e => setForm(p => ({ ...p, body: e.target.value }))} rows={3} placeholder="Longer copy, quote, or description" className={inputClass} />
+          </Field>
+        )}
 
         {/* Image field with upload */}
+        {!isServices && (
         <Field label="Image" fieldKey="image_url" focusedField={focusedField}>
           <input
             data-field="image_url"
@@ -1569,15 +1959,20 @@ function EditPanel({
             <img src={form.image_url} alt="" className="mt-2 h-24 w-full rounded-xl object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
           )}
         </Field>
+        )}
 
-        <Field label="Link URL" fieldKey="link_url" focusedField={focusedField}>
-          <input data-field="link_url" value={form.link_url} onChange={e => setForm(p => ({ ...p, link_url: e.target.value }))} placeholder="/projects or https://..." className={inputClass} />
-        </Field>
-        <Field label="Button text" fieldKey="button_text" focusedField={focusedField}>
-          <input data-field="button_text" value={form.button_text} onChange={e => setForm(p => ({ ...p, button_text: e.target.value }))} placeholder="e.g. View Project" className={inputClass} />
-        </Field>
+        {section.id !== 'dreambuild-services' && !isGallery && (
+          <>
+            <Field label="Link URL" fieldKey="link_url" focusedField={focusedField}>
+              <input data-field="link_url" value={form.link_url} onChange={e => setForm(p => ({ ...p, link_url: e.target.value }))} placeholder="/projects or https://..." className={inputClass} />
+            </Field>
+            <Field label="Button text" fieldKey="button_text" focusedField={focusedField}>
+              <input data-field="button_text" value={form.button_text} onChange={e => setForm(p => ({ ...p, button_text: e.target.value }))} placeholder="e.g. View Project" className={inputClass} />
+            </Field>
+          </>
+        )}
 
-        {section.fields.length > 0 && (
+        {!isServices && !isGallery && section.fields.length > 0 && (
           <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4 dark:border-cyan-900/30">
             <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-cyan-700 dark:text-cyan-400">
               {section.label} fields
@@ -1597,6 +1992,12 @@ function EditPanel({
                       <option value="">Select…</option>
                       {(field.options ?? []).map(opt => <option key={opt} value={opt}>{opt}</option>)}
                     </select>
+                  ) : field.key === 'bullets' ? (
+                    <NumberedLinesField
+                      dataField={field.key}
+                      value={form.payload[field.key] ?? ''}
+                      onChange={val => setForm(p => ({ ...p, payload: { ...p.payload, [field.key]: val } }))}
+                    />
                   ) : field.kind === 'textarea' ? (
                     <textarea data-field={field.key} value={form.payload[field.key] ?? ''} onChange={e => setForm(p => ({ ...p, payload: { ...p.payload, [field.key]: e.target.value } }))} rows={3} className={inputClass} />
                   ) : (
@@ -1608,14 +2009,16 @@ function EditPanel({
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Sort order" fieldKey="sort_order" focusedField={focusedField}>
-            <input data-field="sort_order" type="number" min={0} value={form.sort_order} onChange={e => setForm(p => ({ ...p, sort_order: e.target.value }))} className={inputClass} />
-          </Field>
-          <Field label="Key (auto)" fieldKey="key" focusedField={focusedField}>
-            <input data-field="key" value={form.key} onChange={e => setForm(p => ({ ...p, key: e.target.value }))} placeholder="Auto from title" className={inputClass} />
-          </Field>
-        </div>
+        {section.id !== 'dreambuild-services' && !isGallery && (
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Sort order" fieldKey="sort_order" focusedField={focusedField}>
+              <input data-field="sort_order" type="number" min={0} value={form.sort_order} onChange={e => setForm(p => ({ ...p, sort_order: e.target.value }))} className={inputClass} />
+            </Field>
+            <Field label="Key (auto)" fieldKey="key" focusedField={focusedField}>
+              <input data-field="key" value={form.key} onChange={e => setForm(p => ({ ...p, key: e.target.value }))} placeholder="Auto from title" className={inputClass} />
+            </Field>
+          </div>
+        )}
       </div>
 
       <div className="shrink-0 space-y-2 border-t border-slate-100 p-4 dark:border-slate-800">
@@ -1985,6 +2388,7 @@ export default function DreamBuildContentManager() {
   const [focusedField, setFocusedField] = useState<string | null>(null)
   const [isUploadingImage, setIsUploadingImage] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<WebPageItem | null>(null)
+  const [draftForms, setDraftForms] = useState<Record<string, FormState>>({})
   const editorShellRef = useRef<HTMLDivElement | null>(null)
 
   const selectedSection = useMemo(
@@ -2033,12 +2437,42 @@ export default function DreamBuildContentManager() {
     }
   }, [isResizingPanel])
 
-  // Real-time canvas: merge form state into the editing item for live preview
+  // Real-time canvas: merge draft state into items for live preview
   const displayItems = useMemo(() => {
     const saved = data?.items ?? []
-    if (!editTarget || editTarget.id < 0) return saved
-    return saved.map(item => item.id === editTarget.id ? mergeItem(item, form) : item)
-  }, [data?.items, editTarget, form])
+    const merged = saved.map(item => {
+      const draft = draftForms[draftKeyFor(selectedSection.id, item.id)]
+      return draft ? mergeItem(item, draft) : item
+    })
+
+    if (!editTarget || editTarget.id < 0 || saved.some(item => item.id === editTarget.id)) return merged
+
+    const draft = draftForms[draftKeyFor(selectedSection.id, editTarget.id)] ?? form
+    return [...merged, mergeItem(editTarget, draft)]
+  }, [data?.items, draftForms, editTarget, form, selectedSection.id])
+
+  const keepSavedItemOpen = (item: WebPageItem) => {
+    setDraftForms(prev => {
+      const next = { ...prev }
+      delete next[draftKeyFor(selectedSection.id, item.id)]
+      return next
+    })
+    setEditTarget(item)
+    setForm(toForm(item, selectedSection))
+    setPanelOpen(true)
+    setDeleteTarget(null)
+  }
+
+  const setDraftingForm: React.Dispatch<React.SetStateAction<FormState>> = (value) => {
+    const next = typeof value === 'function'
+      ? (value as (previous: FormState) => FormState)(form)
+      : value
+
+    setForm(next)
+
+    if (!editTarget || editTarget.id < 0) return
+    setDraftForms(prev => ({ ...prev, [draftKeyFor(selectedSection.id, editTarget.id)]: next }))
+  }
 
   const resetForm = () => {
     setForm(emptyForm)
@@ -2046,6 +2480,7 @@ export default function DreamBuildContentManager() {
     setPanelOpen(false)
     setFocusedField(null)
     setDeleteTarget(null)
+    setDraftForms({})
   }
 
   const handleSectionChange = (type: WebPageType) => {
@@ -2058,12 +2493,13 @@ export default function DreamBuildContentManager() {
   const openPanel = (item: WebPageItem, focusField?: string | null) => {
     const isSameItem = editTarget !== null && editTarget.id === item.id
     if (!isSameItem) {
+      const draft = item.id > 0 ? draftForms[draftKeyFor(selectedSection.id, item.id)] : undefined
       if (item.id < 0) {
         setEditTarget(null)
-        setForm(toForm(item, selectedSection))
+        setForm(draft ?? toForm(item, selectedSection))
       } else {
         setEditTarget(item)
-        setForm(toForm(item, selectedSection))
+        setForm(draft ?? toForm(item, selectedSection))
       }
     }
     setPanelOpen(true)
@@ -2094,6 +2530,16 @@ export default function DreamBuildContentManager() {
             step_number: nextStepNumber,
           },
         }
+      : selectedSection.id === 'dreambuild-services'
+        ? {
+          ...emptyForm,
+          sort_order: String(displayItems.length),
+        }
+      : selectedSection.id === 'dreambuild-gallery'
+        ? {
+          ...emptyForm,
+          sort_order: String(displayItems.length),
+        }
       : emptyForm)
     setPanelOpen(true)
     setFocusedField(null)
@@ -2109,7 +2555,7 @@ export default function DreamBuildContentManager() {
       const response = await fetch('/api/admin/upload', { method: 'POST', body: payload })
       const result = (await response.json()) as { url?: string; error?: string }
       if (!response.ok || !result.url) throw new Error(result.error ?? 'Upload failed')
-      setForm(p => ({ ...p, image_url: result.url! }))
+      setDraftingForm(p => ({ ...p, image_url: result.url! }))
       showSuccessToast('Image uploaded.')
     } catch (error) {
       showErrorToast(error instanceof Error ? error.message : 'Failed to upload image.')
@@ -2122,13 +2568,14 @@ export default function DreamBuildContentManager() {
     e.preventDefault()
     try {
       if (editTarget && editTarget.id > 0) {
-        await updateItem({ type: selectedSection.id, id: editTarget.id, data: toPayload(form, selectedSection) }).unwrap()
+        const response = await updateItem({ type: selectedSection.id, id: editTarget.id, data: toPayload(form, selectedSection) }).unwrap()
+        keepSavedItemOpen(response.item)
         showSuccessToast(`${selectedSection.itemLabel} updated.`)
       } else {
-        await createItem({ type: selectedSection.id, data: toPayload(form, selectedSection) }).unwrap()
+        const response = await createItem({ type: selectedSection.id, data: toPayload(form, selectedSection) }).unwrap()
+        keepSavedItemOpen(response.item)
         showSuccessToast(`${selectedSection.itemLabel} created.`)
       }
-      resetForm()
     } catch (err: unknown) {
       const apiErr = err as { data?: { message?: string; errors?: Record<string, string[]> } }
       const first = apiErr?.data?.errors ? Object.values(apiErr.data.errors)[0]?.[0] : undefined
@@ -2265,7 +2712,7 @@ export default function DreamBuildContentManager() {
             <EditPanel
               section={selectedSection}
               form={form}
-              setForm={setForm}
+              setForm={setDraftingForm}
               editTarget={editTarget}
               isBusy={isBusy}
               onSubmit={handleSubmit}
@@ -2274,6 +2721,8 @@ export default function DreamBuildContentManager() {
               focusedField={focusedField}
               onUploadImage={handleUploadImage}
               isUploadingImage={isUploadingImage}
+              serviceItems={selectedSection.id === 'dreambuild-services' ? displayItems : undefined}
+              onServiceTabSelect={handleSelect}
             />
           </>
         )}
@@ -2359,6 +2808,74 @@ function DeleteConfirmModal({
           </button>
         </div>
       </div>
+    </div>
+  )
+}
+
+function NumberedLinesField({
+  value,
+  onChange,
+  dataField,
+}: {
+  value: string
+  onChange: (value: string) => void
+  dataField: string
+}) {
+  const lines = value === '' ? [''] : value.split('\n')
+
+  const focusLine = (container: HTMLElement | null, index: number) => {
+    window.setTimeout(() => {
+      container
+        ?.querySelector<HTMLInputElement>(`input[data-line-index="${index}"]`)
+        ?.focus()
+    }, 0)
+  }
+
+  const updateLines = (next: string[]) => onChange(next.join('\n'))
+
+  const updateLine = (index: number, nextValue: string) => {
+    const next = [...lines]
+    next[index] = nextValue.replace(/\r?\n/g, ' ')
+    updateLines(next)
+  }
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>, index: number) => {
+    const container = event.currentTarget.closest<HTMLElement>(`[data-field="${dataField}"]`)
+
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      const next = [...lines]
+      next.splice(index + 1, 0, '')
+      updateLines(next)
+      focusLine(container, index + 1)
+      return
+    }
+
+    if (event.key === 'Backspace' && lines[index] === '' && lines.length > 1) {
+      event.preventDefault()
+      const next = lines.filter((_, lineIndex) => lineIndex !== index)
+      updateLines(next)
+      focusLine(container, Math.max(index - 1, 0))
+    }
+  }
+
+  return (
+    <div data-field={dataField} className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50 p-2 transition focus-within:border-cyan-300 focus-within:bg-white focus-within:ring-2 focus-within:ring-cyan-100 dark:border-slate-700 dark:bg-slate-800">
+      {lines.map((line, index) => (
+        <div key={index} className="grid grid-cols-[2rem_1fr] items-center gap-2">
+          <span className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-[10px] font-bold text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+            {String(index + 1).padStart(2, '0')}
+          </span>
+          <input
+            data-line-index={index}
+            value={line}
+            onChange={event => updateLine(index, event.target.value)}
+            onKeyDown={event => handleKeyDown(event, index)}
+            placeholder="Bullet text"
+            className="min-w-0 rounded-xl border border-transparent bg-transparent px-2 py-1.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-cyan-200 focus:bg-white dark:text-slate-100 dark:focus:bg-slate-900"
+          />
+        </div>
+      ))}
     </div>
   )
 }

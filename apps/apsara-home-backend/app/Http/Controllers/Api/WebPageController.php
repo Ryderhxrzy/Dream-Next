@@ -99,7 +99,7 @@ class WebPageController extends Controller
             $query->whereIn('wpc_id', $allowedStorefrontIds);
         }
 
-        if ($resolvedType === 'shop-builder') {
+        if (in_array($resolvedType, ['shop-builder', 'dreambuild-services'], true)) {
             $items = $this->dedupeItemsByKey(
                 $query->get()->map(fn (WebPageContent $item) => $this->transform($item)),
                 $resolvedType,
@@ -757,6 +757,41 @@ class WebPageController extends Controller
 
     private function dedupeItemsByKey($items, string $type)
     {
+        if ($type === 'dreambuild-services') {
+            $canonicalSlots = [
+                'interior-design' => '01',
+                'sourcing-supply' => '02',
+                'installation-finishing' => '03',
+            ];
+
+            return $items
+                ->groupBy(function (array $item) use ($canonicalSlots) {
+                    $key = trim((string) ($item['key'] ?? ''));
+                    $payload = is_array($item['payload'] ?? null) ? $item['payload'] : [];
+                    $number = trim((string) ($payload['service_number'] ?? ''));
+
+                    if (isset($canonicalSlots[$key])) {
+                        return $canonicalSlots[$key];
+                    }
+
+                    if ($number !== '') {
+                        return str_pad($number, 2, '0', STR_PAD_LEFT);
+                    }
+
+                    return 'id:' . (string) ($item['id'] ?? '');
+                })
+                ->map(function ($group) use ($canonicalSlots) {
+                    return $group
+                        ->sortByDesc(function (array $item) use ($canonicalSlots) {
+                            $key = trim((string) ($item['key'] ?? ''));
+                            return sprintf('%d-%010d', isset($canonicalSlots[$key]) ? 1 : 0, (int) ($item['id'] ?? 0));
+                        })
+                        ->first();
+                })
+                ->sortBy('sort_order')
+                ->values();
+        }
+
         if ($type !== 'shop-builder') {
             return $items;
         }

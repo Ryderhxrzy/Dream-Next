@@ -31,6 +31,9 @@ test-results/
 apps/test-results/
 storage/logs/
 
+# Graphify generated knowledge graph
+graphify-out/
+
 # Laravel/runtime generated files
 bootstrap/cache/*.php
 storage/framework/cache/

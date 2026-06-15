@@ -1,16 +1,16 @@
-# Graph Report - Dream-Next  (2026-06-14)
+# Graph Report - Dream-Next  (2026-06-15)
 
 ## Corpus Check
-- 1338 files · ~3,063,682 words
+- 1339 files · ~3,064,273 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 10275 nodes · 17710 edges · 699 communities (585 shown, 114 thin omitted)
+- 10302 nodes · 17755 edges · 696 communities (576 shown, 120 thin omitted)
 - Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 368 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `5e9a1908`
+- Built from commit: `0c13bf3c`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -93,7 +93,6 @@
 - [[_COMMUNITY_Products Group 75|Products Group 75]]
 - [[_COMMUNITY_Ai Group 76|Ai Group 76]]
 - [[_COMMUNITY_Auth Group 77|Auth Group 77]]
-- [[_COMMUNITY_Buttons Group 78|Buttons Group 78]]
 - [[_COMMUNITY_Components Group 79|Components Group 79]]
 - [[_COMMUNITY_Supplier Group 80|Supplier Group 80]]
 - [[_COMMUNITY_Supplier Group 81|Supplier Group 81]]
@@ -248,6 +247,7 @@
 - [[_COMMUNITY_Community 236|Community 236]]
 - [[_COMMUNITY_Community 237|Community 237]]
 - [[_COMMUNITY_Community 238|Community 238]]
+- [[_COMMUNITY_Community 239|Community 239]]
 - [[_COMMUNITY_Community 240|Community 240]]
 - [[_COMMUNITY_Community 241|Community 241]]
 - [[_COMMUNITY_Community 242|Community 242]]
@@ -307,6 +307,7 @@
 - [[_COMMUNITY_Community 297|Community 297]]
 - [[_COMMUNITY_Community 298|Community 298]]
 - [[_COMMUNITY_Community 299|Community 299]]
+- [[_COMMUNITY_Community 300|Community 300]]
 - [[_COMMUNITY_Community 301|Community 301]]
 - [[_COMMUNITY_Community 302|Community 302]]
 - [[_COMMUNITY_Community 303|Community 303]]
@@ -327,7 +328,6 @@
 - [[_COMMUNITY_Community 318|Community 318]]
 - [[_COMMUNITY_Community 319|Community 319]]
 - [[_COMMUNITY_Community 320|Community 320]]
-- [[_COMMUNITY_Community 321|Community 321]]
 - [[_COMMUNITY_Community 322|Community 322]]
 - [[_COMMUNITY_Community 323|Community 323]]
 - [[_COMMUNITY_Community 324|Community 324]]
@@ -363,12 +363,9 @@
 - [[_COMMUNITY_Community 354|Community 354]]
 - [[_COMMUNITY_Community 355|Community 355]]
 - [[_COMMUNITY_Community 356|Community 356]]
-- [[_COMMUNITY_Community 357|Community 357]]
-- [[_COMMUNITY_Community 358|Community 358]]
 - [[_COMMUNITY_Community 359|Community 359]]
 - [[_COMMUNITY_Community 360|Community 360]]
 - [[_COMMUNITY_Community 361|Community 361]]
-- [[_COMMUNITY_Community 362|Community 362]]
 - [[_COMMUNITY_Community 363|Community 363]]
 - [[_COMMUNITY_Community 364|Community 364]]
 - [[_COMMUNITY_Community 365|Community 365]]
@@ -386,18 +383,14 @@
 - [[_COMMUNITY_Community 377|Community 377]]
 - [[_COMMUNITY_Community 378|Community 378]]
 - [[_COMMUNITY_Community 379|Community 379]]
-- [[_COMMUNITY_Community 380|Community 380]]
 - [[_COMMUNITY_Community 381|Community 381]]
 - [[_COMMUNITY_Community 382|Community 382]]
 - [[_COMMUNITY_Community 383|Community 383]]
 - [[_COMMUNITY_Community 384|Community 384]]
 - [[_COMMUNITY_Community 385|Community 385]]
 - [[_COMMUNITY_Community 386|Community 386]]
-- [[_COMMUNITY_Community 387|Community 387]]
 - [[_COMMUNITY_Community 388|Community 388]]
-- [[_COMMUNITY_Community 389|Community 389]]
 - [[_COMMUNITY_Community 390|Community 390]]
-- [[_COMMUNITY_Community 391|Community 391]]
 - [[_COMMUNITY_Community 392|Community 392]]
 - [[_COMMUNITY_Community 393|Community 393]]
 - [[_COMMUNITY_Community 394|Community 394]]
@@ -423,9 +416,7 @@
 - [[_COMMUNITY_Community 572|Community 572]]
 - [[_COMMUNITY_Community 573|Community 573]]
 - [[_COMMUNITY_Community 574|Community 574]]
-- [[_COMMUNITY_Community 575|Community 575]]
 - [[_COMMUNITY_Community 576|Community 576]]
-- [[_COMMUNITY_Community 577|Community 577]]
 - [[_COMMUNITY_Community 578|Community 578]]
 - [[_COMMUNITY_Community 587|Community 587]]
 - [[_COMMUNITY_Community 588|Community 588]]
@@ -440,6 +431,7 @@
 - [[_COMMUNITY_Community 598|Community 598]]
 - [[_COMMUNITY_Community 599|Community 599]]
 - [[_COMMUNITY_Community 600|Community 600]]
+- [[_COMMUNITY_Community 609|Community 609]]
 - [[_COMMUNITY_Community 611|Community 611]]
 - [[_COMMUNITY_Community 612|Community 612]]
 - [[_COMMUNITY_Community 613|Community 613]]
@@ -471,6 +463,11 @@
 - [[_COMMUNITY_Community 639|Community 639]]
 - [[_COMMUNITY_Community 640|Community 640]]
 - [[_COMMUNITY_Community 641|Community 641]]
+- [[_COMMUNITY_Community 645|Community 645]]
+- [[_COMMUNITY_Community 720|Community 720]]
+- [[_COMMUNITY_Community 734|Community 734]]
+- [[_COMMUNITY_Community 739|Community 739]]
+- [[_COMMUNITY_Community 741|Community 741]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `AuthController` - 164 edges
@@ -485,8 +482,8 @@
 10. `getNavbarCategories()` - 58 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `Home()` --calls--> `getDreamBuildContent()`  [INFERRED]
-  apps/Dreambuild-Landing-Page/app/page.tsx → apps/Dreambuild-Landing-Page/lib/dreambuild-cms.ts
+- `BlogPostPage()` --calls--> `getDreamBuildContent()`  [INFERRED]
+  apps/Dreambuild-Landing-Page/app/blogs/[id]/page.tsx → apps/Dreambuild-Landing-Page/lib/dreambuild-cms.ts
 - `generateMetadata()` --calls--> `buildPageMetadata()`  [INFERRED]
   apps/apsara-home-frontend/app/[partner]/track-order/page.tsx → apps/apsara-home-frontend/app/seo.ts
 - `CategoryPage()` --calls--> `getNavbarCategories()`  [INFERRED]
@@ -501,34 +498,38 @@
 - 1-file cycle: `apps/apsara-home-frontend/app/[partner]/checkout/failed/page.tsx -> apps/apsara-home-frontend/app/[partner]/checkout/failed/page.tsx`
 - 1-file cycle: `apps/apsara-home-frontend/app/[partner]/checkout/success/page.tsx -> apps/apsara-home-frontend/app/[partner]/checkout/success/page.tsx`
 - 1-file cycle: `apps/apsara-home-frontend/app/shop/[partner]/product/[slug]/page.tsx -> apps/apsara-home-frontend/app/shop/[partner]/product/[slug]/page.tsx`
-- 3-file cycle: `apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts -> apps/community-backend/src/generated/prisma/models.ts -> apps/community-backend/src/generated/prisma/models/CommunityPost.ts -> apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts`
+- 3-file cycle: `apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts -> apps/community-backend/src/generated/prisma/models.ts -> apps/community-backend/src/generated/prisma/models/Message.ts -> apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts`
 - 3-file cycle: `apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts -> apps/community-backend/src/generated/prisma/models.ts -> apps/community-backend/src/generated/prisma/models/PersonalAccessToken.ts -> apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts`
-- 3-file cycle: `apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts -> apps/community-backend/src/generated/prisma/models.ts -> apps/community-backend/src/generated/prisma/models/CommunityNotification.ts -> apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts`
-- 3-file cycle: `apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts -> apps/community-backend/src/generated/prisma/models.ts -> apps/community-backend/src/generated/prisma/models/CommunityEventRsvp.ts -> apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts`
-- 3-file cycle: `apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts -> apps/community-backend/src/generated/prisma/models.ts -> apps/community-backend/src/generated/prisma/models/CommunityComment.ts -> apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts`
+- 3-file cycle: `apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts -> apps/community-backend/src/generated/prisma/models.ts -> apps/community-backend/src/generated/prisma/models/CommunityPost.ts -> apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts`
 - 3-file cycle: `apps/community-backend/src/generated/prisma/commonInputTypes.ts -> apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts -> apps/community-backend/src/generated/prisma/models.ts -> apps/community-backend/src/generated/prisma/commonInputTypes.ts`
+- 3-file cycle: `apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts -> apps/community-backend/src/generated/prisma/models.ts -> apps/community-backend/src/generated/prisma/models/CommunityComment.ts -> apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts`
 - 3-file cycle: `apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts -> apps/community-backend/src/generated/prisma/models.ts -> apps/community-backend/src/generated/prisma/models/CommunityConnection.ts -> apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts`
+- 3-file cycle: `apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts -> apps/community-backend/src/generated/prisma/models.ts -> apps/community-backend/src/generated/prisma/models/CommunityEventRsvp.ts -> apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts`
+- 3-file cycle: `apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts -> apps/community-backend/src/generated/prisma/models.ts -> apps/community-backend/src/generated/prisma/models/CommunityNotification.ts -> apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts`
 - 3-file cycle: `apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts -> apps/community-backend/src/generated/prisma/models.ts -> apps/community-backend/src/generated/prisma/models/CommunityProfile.ts -> apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts`
 - 3-file cycle: `apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts -> apps/community-backend/src/generated/prisma/models.ts -> apps/community-backend/src/generated/prisma/models/CommunityReaction.ts -> apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts`
 - 3-file cycle: `apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts -> apps/community-backend/src/generated/prisma/models.ts -> apps/community-backend/src/generated/prisma/models/CommunitySavedPost.ts -> apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts`
+- 3-file cycle: `apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts -> apps/community-backend/src/generated/prisma/models.ts -> apps/community-backend/src/generated/prisma/models/Conversation.ts -> apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts`
+- 3-file cycle: `apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts -> apps/community-backend/src/generated/prisma/models.ts -> apps/community-backend/src/generated/prisma/models/ConversationParticipant.ts -> apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts`
+- 3-file cycle: `apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts -> apps/community-backend/src/generated/prisma/models.ts -> apps/community-backend/src/generated/prisma/models/Customer.ts -> apps/community-backend/src/generated/prisma/internal/prismaNamespace.ts`
 
-## Communities (699 total, 114 thin omitted)
+## Communities (696 total, 120 thin omitted)
 
 ### Community 0 - "Interior Services Animations"
 Cohesion: 0.13
 Nodes (16): REFERRAL_OPTIONS, StepContact(), StepContactProps, StepReviewProps, FLEXIBILITY_OPTIONS, StepScheduleProps, TIMELINE_OPTIONS, today (+8 more)
 
 ### Community 1 - "Ranking & Leaderboard"
-Cohesion: 0.06
-Nodes (39): AVATAR_COLORS, RankingLeaderboardProps, PodiumCard(), PodiumCardProps, RANK_STYLES, RIBBON_MEDAL_SVG(), metadata, STRIPE (+31 more)
+Cohesion: 0.05
+Nodes (46): metadata, PERIOD_COLORS, PERIODS, RankingFilters(), RankingFiltersProps, AVATAR_COLORS, RankingLeaderboardProps, PREVIOUS_RANKS (+38 more)
 
 ### Community 2 - "Partner Storefront & Sections"
-Cohesion: 0.08
-Nodes (24): buildPartnerShopLink(), PartnerStorefrontConfig, Props, AnnouncementsSection(), buildProductLink(), CampaignBannersSection(), CategoryGridSection(), fadeUp (+16 more)
+Cohesion: 0.11
+Nodes (20): buildPartnerShopLink(), AnnouncementsSection(), buildProductLink(), CampaignBannersSection(), CategoryGridSection(), fadeUp, FeaturedCollectionSection(), getFeaturedProducts() (+12 more)
 
 ### Community 3 - "Partner Landing Studio"
 Cohesion: 0.04
-Nodes (34): AboutBlock, AboutHighlight, Block, BLOCK_LABEL, BLOCK_META, COLOR_THEMES, CtaBlock, DEFAULT_NAV_LINKS (+26 more)
+Nodes (21): AboutBlock, AboutHighlight, Block, BLOCK_LABEL, BLOCK_META, COLOR_THEMES, CtaBlock, DEFAULT_NAV_LINKS (+13 more)
 
 ### Community 4 - "Storefront Tutorial Flow"
 Cohesion: 0.05
@@ -547,24 +548,24 @@ Cohesion: 0.10
 Nodes (18): ZqCachedProduct, Props, buildPricingSummary(), centsToPhp(), formatDate(), inputCls(), parseDetail(), PricingForm (+10 more)
 
 ### Community 8 - "Wallet & Credits"
-Cohesion: 0.09
-Nodes (30): metadata, AdjustWalletModalProps, AdjustType, getInitials(), MemberWallet, MOCK_WALLETS, php(), pv() (+22 more)
+Cohesion: 0.08
+Nodes (32): DataFilterBarProps, DataFilterOption, metadata, AdjustWalletModalProps, AdjustType, getInitials(), MemberWallet, MOCK_WALLETS (+24 more)
 
 ### Community 9 - "Login & Auth"
-Cohesion: 0.06
-Nodes (15): clearAccessTokenCache(), LoginForm(), LoadingProps, BLOCKED_KEYWORDS, FloatingInputProps, GoogleAuthResult, LoginFormProps, PasskeyAllowCredential (+7 more)
+Cohesion: 0.07
+Nodes (13): LoginForm(), BLOCKED_KEYWORDS, FloatingInputProps, GoogleAuthResult, LoginFormProps, PasskeyAllowCredential, resolveCallbackPath(), Window (+5 more)
 
 ### Community 10 - "Superadmin Dashboard"
-Cohesion: 0.12
-Nodes (17): AdminNotificationItem, adminNotificationsApi, AdminNotificationSeverity, AdminNotificationsResponse, DATE_RANGE_OPTIONS, DateRangePreset, formatExactNotificationTime(), formatRelativeTime() (+9 more)
+Cohesion: 0.10
+Nodes (18): AdminNotificationItem, adminNotificationsApi, AdminNotificationSeverity, AdminNotificationsResponse, ThemeToggleProps, DATE_RANGE_OPTIONS, DateRangePreset, formatExactNotificationTime() (+10 more)
 
 ### Community 11 - "Admin Orders"
-Cohesion: 0.06
-Nodes (17): AdminOrderItem, APPROVAL_CONFIG, COURIER_OPTIONS, FILTER_LABELS, formatDateOnly(), formatTimeOnly(), FULFILLMENT_MODE_OPTIONS, FulfillmentMode (+9 more)
+Cohesion: 0.05
+Nodes (26): AdminApprovalStatus, AdminCourier, AdminFulfillmentStatus, adminOrdersApi, AdminOrdersQuery, AdminShipmentStatus, metadata, COLORS (+18 more)
 
 ### Community 12 - "Content Manager"
-Cohesion: 0.06
-Nodes (11): BlogEditPanel(), CanvasProps, DreamBuildSection, emptyForm, FormState, SectionField, sections, SERVICE_IMAGES (+3 more)
+Cohesion: 0.05
+Nodes (16): BlogEditPanel(), CanvasProps, DreamBuildSection, emptyForm, FormState, GALLERY_HEADER_DEFAULTS, mergeItem(), SectionField (+8 more)
 
 ### Community 13 - "KYC Verification"
 Cohesion: 0.13
@@ -580,51 +581,47 @@ Nodes (33): AddProductDraft, AddProductModal(), buildPricingSummary(), buildVari
 
 ### Community 16 - "Edit Product Modal"
 Cohesion: 0.05
-Nodes (32): buildVariantColorSku(), collapseGeneratedGlobalVariants(), collectVariantColors(), collectVariantNames(), collectVariantSizes(), dedupeVariantColors(), dedupeVariantValues(), EditProductDraft (+24 more)
+Nodes (37): buildVariantColorSku(), collapseGeneratedGlobalVariants(), collectVariantColors(), collectVariantNames(), collectVariantSizes(), dedupeVariantColors(), dedupeVariantValues(), EditProductDraft (+29 more)
 
 ### Community 17 - "Admin User Settings"
-Cohesion: 0.05
-Nodes (34): metadata, ADMIN_PERMISSION_OPTIONS, AdminPermissionId, canAccessWebContentSection(), DEFAULT_ADMIN_PERMISSIONS, normalizeAdminPermissions(), VALID_PERMISSION_SET, WEB_CONTENT_SECTION_OPTIONS (+26 more)
+Cohesion: 0.04
+Nodes (43): AdminUserActivityLog, AdminUserActivityResponse, AdminUserItem, adminUsersApi, AdminUsersQuery, AdminUsersResponse, CreateAdminUserPayload, CreateAdminUserResponse (+35 more)
 
 ### Community 18 - "Supplier & Guest Orders"
-Cohesion: 0.07
-Nodes (18): CreateSupplierPayload, InviteSupplierUserPayload, InviteSupplierUserResponse, SupplierCategoriesResponse, SupplierItem, SupplierMeResponse, SupplierPortalUser, suppliersApi (+10 more)
+Cohesion: 0.05
+Nodes (22): CreateSupplierPayload, InviteSupplierUserPayload, InviteSupplierUserResponse, SupplierCategoriesResponse, SupplierItem, SupplierMeResponse, SupplierPortalUser, suppliersApi (+14 more)
 
 ### Community 19 - "Shop Builder Studio"
 Cohesion: 0.09
 Nodes (20): BuilderField, BuilderSection, BuilderSectionId, BuilderSectionStatus, defaultSections, getFieldValue(), parseIdList(), parseTrustItemsFromFields() (+12 more)
-
-### Community 20 - "Admin Inquiry & Service"
-Cohesion: 0.15
-Nodes (6): InquiryTab, TABS, RequestStatus, StatusKey, StatusStyleMap, statusStyles
 
 ### Community 21 - "Supplier Orders Page"
 Cohesion: 0.08
 Nodes (22): AVATAR_GRADIENTS, fmtDate(), fmtTime(), formatInquiryDate(), FULFILLMENT_OPTIONS, getInquiryStatusLabel(), getInquiryStatusStyle(), INQUIRY_FILTER_OPTIONS (+14 more)
 
 ### Community 22 - "Category Add Modal"
-Cohesion: 0.03
-Nodes (51): categoriesApi, CategoriesResponse, Category, CreateCategoryPayload, GetCategoriesParams, CustomerNotificationItem, customerNotificationsApi, CustomerNotificationSeverity (+43 more)
+Cohesion: 0.04
+Nodes (38): categoriesApi, CategoriesResponse, Category, CreateCategoryPayload, GetCategoriesParams, metadata, ApiCategoriesResponse, defaultForm (+30 more)
 
 ### Community 23 - "Products Table"
-Cohesion: 0.06
-Nodes (24): CreateProductPayload, Product, ApiProductsResponse, ApiProductsResponse, AddProductModalProps, Props, ToggleMode, EditProductModalProps (+16 more)
+Cohesion: 0.09
+Nodes (16): ActionButton(), getEffectiveStockQty(), getSortableValue(), getVariantCoreGroupKey(), isActiveStatus(), normalizeSkuSegment(), normalizeVariantLabel(), ProductsTable() (+8 more)
 
 ### Community 24 - "Activity Logs"
 Cohesion: 0.08
-Nodes (27): metadata, ActivityLogsStats(), ActivityLogsStatsProps, ACTIVITY_TYPES, ActivityLogsTable(), ActivityLogsTableProps, ActivityLogsToolbar(), ActivityLogsToolbarProps (+19 more)
+Nodes (28): metadata, ActivityLogsStats(), ActivityLogsStatsProps, ACTIVITY_TYPES, ActivityLogsTable(), ActivityLogsTableProps, ActivityLogsToolbar(), ActivityLogsToolbarProps (+20 more)
 
 ### Community 25 - "AI Support Chat"
-Cohesion: 0.06
-Nodes (36): AiSupportBody(), API_BASE, Props, AiSupportFooter(), Props, AiSupportHeader(), Props, AiSupportPanel() (+28 more)
+Cohesion: 0.14
+Nodes (16): API_BASE, BrandCardData, BrandCardsMessage, CategoryCardData, CategoryCardsMessage, ImageMessage, ProductCardData, ProductCardsMessage (+8 more)
 
 ### Community 26 - "Product Info & Variants"
-Cohesion: 0.08
-Nodes (29): asNumber(), asObject(), asString(), normalizeWishlistResponse(), normalizeWishlistRow(), slugify(), UnknownRow, wishlistApi (+21 more)
+Cohesion: 0.06
+Nodes (34): SecondaryButtonProps, CheckoutSourceMeta, DEFAULT_HOSTS, normalizeHost(), normalizePath(), resolveCheckoutSource(), toDisplayLabel(), extractVariantOptionLabels() (+26 more)
 
 ### Community 27 - "Supplier Chat"
 Cohesion: 0.07
-Nodes (25): ApiEnvelope, AttachmentPayload, createSupplierChatConversation(), fetchSupplierChatConversation(), fetchSupplierChatConversations(), getApiBaseUrl(), getSupplierAccessToken(), sendSupplierChatMessage() (+17 more)
+Nodes (27): ApiEnvelope, AttachmentPayload, createSupplierChatConversation(), fetchSupplierChatConversation(), fetchSupplierChatConversations(), getApiBaseUrl(), getSupplierAccessToken(), sendSupplierChatMessage() (+19 more)
 
 ### Community 28 - "Brand By-Brand Page"
 Cohesion: 0.09
@@ -635,12 +632,12 @@ Cohesion: 0.12
 Nodes (18): MembersStatusBadge(), statusMap, ApiErrorShape, avatarColors, formatMemberRegisteredDate(), formatMemberRegisteredTime(), formatPhp(), getAvatarColor() (+10 more)
 
 ### Community 30 - "Order Cards & Icons"
-Cohesion: 0.08
-Nodes (28): formatDate(), formatPrice(), formatCourierLabel(), getStatusConfig(), GuestTrackOrderPage(), GuestTrackOrderPageProps, PartnerShellConfig, STATUS_CONFIG (+20 more)
+Cohesion: 0.05
+Nodes (35): formatDate(), formatPrice(), formatCourierLabel(), getErrorMessage(), getStatusConfig(), GuestTrackOrderPage(), GuestTrackOrderPageProps, PartnerShellConfig (+27 more)
 
 ### Community 31 - "Products Page Main"
-Cohesion: 0.06
-Nodes (26): normalizeProductsResponse(), ProductsResponse, ZqCategoryMappingItem, ZqSyncProductsPayload, ZqSyncProductsResponse, getInitialProducts(), metadata, getInitialProducts() (+18 more)
+Cohesion: 0.07
+Nodes (17): CreateProductPayload, Product, ZqCategoryMappingItem, ZqSyncProductsPayload, ZqSyncProductsResponse, ApiProductsResponse, ApiProductsResponse, revalidateStorefront() (+9 more)
 
 ### Community 32 - "Supplier Demo"
 Cohesion: 0.08
@@ -652,7 +649,7 @@ Nodes (17): AdminEncashmentStatus, ACTION_META, ActionType, CHANNEL_PILL, cleanM
 
 ### Community 34 - "Layout Navbar & Promo"
 Cohesion: 0.01
-Nodes (68): metadata, buildPageMetadata(), metadata, PageProps, metadata, metadata, metadata, PageProps (+60 more)
+Nodes (82): metadata, buildPageMetadata(), metadata, PageProps, metadata, metadata, metadata, PageProps (+74 more)
 
 ### Community 35 - "Partner Subscriptions"
 Cohesion: 0.14
@@ -663,16 +660,16 @@ Cohesion: 0.12
 Nodes (12): BalanceCardProps, EgcWalletPanel(), LEDGER_SOURCE_LABELS, numberFmt(), orderedWalletOptions, peso(), walletMeta, walletOptionOrder (+4 more)
 
 ### Community 37 - "Auth Forgot Password"
-Cohesion: 0.13
-Nodes (5): Props, Window, ThemeToggleProps, Header(), HeaderProps
+Cohesion: 0.18
+Nodes (5): SupplierOrderController, CheckoutHistory, JsonResponse, Request, SupplierUser
 
 ### Community 38 - "ZQ Product Preview"
 Cohesion: 0.18
 Nodes (12): centsToDisplay(), extractZqImportDetail(), stripHtml(), ZqImportDetailData, ZqImportDetailSpec, ZqProductPreviewPage(), ZqCustomerProductPreview(), adaptZqDetailToDisplayProduct() (+4 more)
 
 ### Community 39 - "Category List Products"
-Cohesion: 0.08
-Nodes (16): buildVisiblePages(), CategoryListProductMain(), CategoryListProductMainProps, containerVariants, itemVariants, ListViewProduct(), ListViewProductProps, normalizeCategorySlug() (+8 more)
+Cohesion: 0.06
+Nodes (16): ProductBrand, ProductBrandPayload, productBrandsApi, ProductBrandsResponse, BrandModalProps, DeleteModalProps, SortOption, StatusFilter (+8 more)
 
 ### Community 40 - "Components Group 40"
 Cohesion: 0.12
@@ -687,28 +684,24 @@ Cohesion: 0.10
 Nodes (10): AF_PRODUCTS, BENEFITS, DURATIONS, EARNINGS_FEED, HIGHLIGHT_CARDS, Scene, SCENES, STEPS (+2 more)
 
 ### Community 43 - "Dynamicnotify Group 43"
-Cohesion: 0.11
-Nodes (13): viewport, metadata, CONFIG, DEFAULT_DURATION, Dispatch, DynamicNotifyToaster(), nextId(), notify (+5 more)
-
-### Community 44 - "Webpages Group 44"
-Cohesion: 0.12
-Nodes (9): WebPageItem, blogFields, BLOGS_TYPE, CanvasProps, emptyForm, FormState, SectionField, slugify() (+1 more)
+Cohesion: 0.08
+Nodes (18): viewport, metadata, CONFIG, DEFAULT_DURATION, Dispatch, DynamicNotifyToaster(), nextId(), notify (+10 more)
 
 ### Community 45 - "Components Group 45"
 Cohesion: 0.09
 Nodes (17): ALL_TESTS, AVATAR_COLORS, COLUMNS, FilterCategory, GROUP_ORDER, SECTIONS, StatusMeta, TestCase (+9 more)
 
 ### Community 46 - "Customer Group 46"
-Cohesion: 0.14
-Nodes (12): ProductVariant, defaultForm, DraftCheckoutItem, FIELD_LABELS, LOCAL_PAYMENT_MODE_HOSTS, readCheckoutDraft(), REQUIRED_FIELD_ORDER, toPositiveDraftNumber() (+4 more)
+Cohesion: 0.09
+Nodes (23): ShippingRate, ShippingRatePayload, shippingRatesApi, ShippingRatesResponse, CustomerAddress, CITY_ALIASES, CustomerCheckoutAddressForm(), CustomerCheckoutAddressFormProps (+15 more)
 
 ### Community 47 - "Products Group 47"
-Cohesion: 0.09
-Nodes (26): COLOR_PALETTE, colorNameToHex(), displayColorName(), getAllColors(), hexToColorName(), hexToRgb(), isHexColor(), normalizeColorName() (+18 more)
+Cohesion: 0.17
+Nodes (14): COLOR_PALETTE, colorNameToHex(), displayColorName(), getAllColors(), hexToColorName(), hexToRgb(), isHexColor(), normalizeColorName() (+6 more)
 
 ### Community 48 - "Project Group 48"
-Cohesion: 0.07
-Nodes (15): ProductBrand, ProductBrandPayload, productBrandsApi, ProductBrandsResponse, BrandModalProps, DeleteModalProps, SortOption, StatusFilter (+7 more)
+Cohesion: 0.13
+Nodes (9): AccountDeletedListener(), EchoInitializer(), CartProvider(), WishlistContext, WishlistContextType, WishlistProvider(), TokenUser, useAccountDeletedListener() (+1 more)
 
 ### Community 49 - "Shipping Group 49"
 Cohesion: 0.14
@@ -719,8 +712,8 @@ Cohesion: 0.13
 Nodes (3): fmtDate(), ProductRow(), ttStyle
 
 ### Community 51 - "Profile Group 51"
-Cohesion: 0.12
-Nodes (19): EncashmentChannel, EncashmentRequestItem, PayoutMethodType, CustomerCheckoutAddressForm(), usePhAddress(), EncashmentTab(), formatCooldownRemaining(), formatPhilippineDateTime() (+11 more)
+Cohesion: 0.13
+Nodes (17): EncashmentChannel, EncashmentRequestItem, PayoutMethodType, EncashmentTab(), formatCooldownRemaining(), formatPhilippineDateTime(), FormState, initialForm (+9 more)
 
 ### Community 52 - "Products Group 52"
 Cohesion: 0.14
@@ -730,29 +723,25 @@ Nodes (9): metadata, formatNumber(), getProductThumbnail(), normalizeImageUrl(),
 Cohesion: 0.22
 Nodes (9): AiSupport(), API_BASE, DISABLED_PREFIXES, useIsAllowed(), useIsLoadingScreenVisible(), AiSupportToggle(), Props, PublicWebPageItemsResponse (+1 more)
 
-### Community 54 - "Assembly Group 54"
-Cohesion: 0.20
-Nodes (12): generateMetadata(), blogCategories, Blogs(), BlogsProps, BlogPost, defaultBlogPosts, fetchBlogItems(), getApiBase() (+4 more)
-
 ### Community 55 - "Components Group 55"
-Cohesion: 0.05
-Nodes (45): PrimaryButtonProps, ChatModal(), Conversation, CSR_NAMES, Message, CustomerServiceButton(), AccountDeletedListener(), EchoInitializer() (+37 more)
+Cohesion: 0.04
+Nodes (52): addsContentApi, AddsContentItem, adminDatabaseApi, DatabaseExportItem, DeleteDatabaseExportPayload, DeleteDatabaseExportResponse, DownloadDatabaseExportPayload, ExportDatabaseResponse (+44 more)
 
 ### Community 56 - "Globalproduct Group 56"
-Cohesion: 0.11
-Nodes (14): ZqPublicProductResponse, decodeHtmlEntities(), DescAttribute, extractCleanText(), extractDescriptionImages(), GlobalProductDetail(), parseDescriptionAttributes(), Product (+6 more)
+Cohesion: 0.10
+Nodes (15): ZqPublicProductResponse, OutlineButtonProps, decodeHtmlEntities(), DescAttribute, extractCleanText(), extractDescriptionImages(), GlobalProductDetail(), parseDescriptionAttributes() (+7 more)
 
 ### Community 57 - "Landing Group 57"
-Cohesion: 0.07
-Nodes (32): links, defaultMessages, TopBarConfig, icons, TrustBar(), TrustBarConfig, TrustBarItem, getPartnerStorefrontRecordByHost() (+24 more)
+Cohesion: 0.09
+Nodes (21): defaultMessages, TopBarConfig, icons, TrustBar(), TrustBarConfig, TrustBarItem, PartnerStorefrontConfig, Props (+13 more)
 
 ### Community 58 - "Partner Group 58"
 Cohesion: 0.16
 Nodes (9): ApiError, extractErrorMessage(), formatJoinedDate(), INITIALS_COLORS, normalize(), PartnerMembersPage(), PER_PAGE_OPTIONS, sponsorKey() (+1 more)
 
 ### Community 59 - "Partner Group 59"
-Cohesion: 0.09
-Nodes (22): SubmitWebstoreRequestPayload, RequestStatus, StatusKey, StatusStyleMap, statusStyles, computeEndDateRaw(), isWebstoreRequestExpired(), BillingOption (+14 more)
+Cohesion: 0.10
+Nodes (20): SubmitWebstoreRequestPayload, RequestStatus, StatusKey, StatusStyleMap, statusStyles, computeEndDateRaw(), isWebstoreRequestExpired(), BillingOption (+12 more)
 
 ### Community 60 - "Product Group 60"
 Cohesion: 0.01
@@ -763,8 +752,8 @@ Cohesion: 0.19
 Nodes (11): compactFormatter, DEFAULT_RATES, money(), numberFormatter, percent(), ProfitSimulationMain(), pv(), RateConfig (+3 more)
 
 ### Community 62 - "Supplier Group 62"
-Cohesion: 0.14
-Nodes (5): backfaceHidden, CataloguePage, FlipState, preserve3d, uploadCataloguePage()
+Cohesion: 0.07
+Nodes (17): stats, values, SECTIONS, SECTIONS, LegalPageShell(), LegalPageShellProps, sections, metadata (+9 more)
 
 ### Community 63 - "Supplier Group 63"
 Cohesion: 0.16
@@ -779,12 +768,12 @@ Cohesion: 0.12
 Nodes (9): ADVANTAGES, BENEFITS, LightboxImage, Phase, PHASES, Scene, SCENES, Step (+1 more)
 
 ### Community 66 - "Customer Group 66"
-Cohesion: 0.13
-Nodes (15): CustomerAddress, CITY_ALIASES, CustomerCheckoutAddressFormProps, emptyAddressDraft, normalizeCityKey(), normalizeLocationKey(), normalizeProvinceKey(), PROVINCE_ALIASES (+7 more)
+Cohesion: 0.10
+Nodes (21): CheckoutOnlineBankingProvider, ProductVariant, defaultForm, DraftCheckoutItem, FIELD_LABELS, LOCAL_PAYMENT_MODE_HOSTS, readCheckoutDraft(), REQUIRED_FIELD_ORDER (+13 more)
 
 ### Community 67 - "Dashboard Group 67"
-Cohesion: 0.19
-Nodes (9): dateKey(), formatCount(), monthRange(), pluralize(), ResolvedStatCard, StatCard, statHrefMap, stats (+1 more)
+Cohesion: 0.06
+Nodes (28): CustomerNotificationItem, customerNotificationsApi, CustomerNotificationSeverity, CustomerNotificationsResponse, { useGetCustomerNotificationsQuery }, searchApi, SearchHistoryItem, SearchHistoryResponse (+20 more)
 
 ### Community 68 - "Item Group 68"
 Cohesion: 0.01
@@ -796,27 +785,27 @@ Nodes (127): AggregateCommunityComment, CommunityComment$parentArgs, CommunityCo
 
 ### Community 70 - "Landing Group 70"
 Cohesion: 0.08
-Nodes (9): CTASection(), experiences, ExperienceSection(), highlights, steps, LandingPageProps, brands, categories (+1 more)
+Nodes (11): metadata, CTASection(), experiences, ExperienceSection(), highlights, steps, LandingPage(), LandingPageProps (+3 more)
 
 ### Community 71 - "Landing Group 71"
-Cohesion: 0.33
-Nodes (5): Footer(), footerLinks, getSettingValue(), paymentLogos, socialLinks
+Cohesion: 0.25
+Nodes (9): AssemblyGuidesPageClient(), LocalAssemblyGuide, Props, AssemblyGuidesPage(), collectAssemblyGuidePdfs(), humanizeGuideName(), isNumericOnlyTitle(), LocalAssemblyGuide (+1 more)
 
 ### Community 72 - "Members Group 72"
-Cohesion: 0.07
-Nodes (35): AdminReferralTreeResponse, AssignSponsorPayload, GenerateTemporaryPasswordResponse, MemberKycQueryParams, MemberKycResponse, MembersMeta, MembersQueryParams, MembersResponse (+27 more)
+Cohesion: 0.06
+Nodes (42): AdminReferralTreeResponse, AssignSponsorPayload, GenerateTemporaryPasswordResponse, MemberKycQueryParams, MemberKycResponse, membersApi, MembersMeta, MembersQueryParams (+34 more)
 
 ### Community 73 - "Members Group 73"
-Cohesion: 0.17
-Nodes (8): MembersToolbarProps, profilePhotoOptions, registrationOptions, sortOptions, statusOptions, tierOptions, DataFilterBarProps, DataFilterOption
+Cohesion: 0.05
+Nodes (60): Head(), HeadProps, metadata, PageProps, generateMetadata(), PageProps, buildProfileCallback(), getInitialProfile() (+52 more)
 
 ### Community 74 - "Products Group 74"
-Cohesion: 0.03
-Nodes (41): BelongsTo, BelongsTo, HasMany, BelongsTo, Model, AdminNotification, Category, CheckoutHistory (+33 more)
+Cohesion: 0.04
+Nodes (31): Model, AdminNotification, Category, CheckoutHistory, CustomerAddress, CustomerNotification, CustomerVerificationRequest, DailyCheckin (+23 more)
 
 ### Community 75 - "Products Group 75"
-Cohesion: 0.20
-Nodes (7): ProductReview, clampRating(), formatRating(), ProductReviewCard(), ProductsReviewsPageMain(), ProductsReviewsPageMainProps, Stars()
+Cohesion: 0.26
+Nodes (6): SupplierChatController, JsonResponse, Request, Collection, SupplierChatConversation, SupplierChatMessage
 
 ### Community 76 - "Ai Group 76"
 Cohesion: 0.02
@@ -826,29 +815,25 @@ Nodes (98): AggregateCommunityConnection, CommunityConnectionAggregateArgs, Comm
 Cohesion: 0.02
 Nodes (98): AggregateCommunityEventRsvp, CommunityEventRsvpAggregateArgs, CommunityEventRsvpAvgAggregateInputType, CommunityEventRsvpAvgAggregateOutputType, CommunityEventRsvpAvgOrderByAggregateInput, CommunityEventRsvpCountAggregateInputType, CommunityEventRsvpCountAggregateOutputType, CommunityEventRsvpCountArgs (+90 more)
 
-### Community 78 - "Buttons Group 78"
-Cohesion: 0.06
-Nodes (35): AdminGeneralSettings, AdminNotificationSettings, AdminSecuritySettings, adminSettingsApi, PublicSecuritySettings, ProductReviewSummary, OutlineButtonProps, SecondaryButtonProps (+27 more)
-
 ### Community 79 - "Components Group 79"
 Cohesion: 0.11
 Nodes (15): FieldAvailability, FloatingInputProps, passwordChecks(), SignUpForm(), SignUpFormProps, termsSections, readStoredReferral(), AppPromoBar() (+7 more)
 
 ### Community 80 - "Supplier Group 80"
-Cohesion: 0.28
-Nodes (8): formatRole(), getInitials(), mainItems, mobileAdsItems, reportItems, servicesMainItems, settingsItems, SupplierSidebar()
+Cohesion: 0.14
+Nodes (24): createComment(), createReply(), getPostAuthorId(), serializeAuthor(), createRepost(), setRsvp(), toggleReaction(), connectionRoutes (+16 more)
 
 ### Community 81 - "Supplier Group 81"
-Cohesion: 0.12
-Nodes (9): metadata, metadata, AVATAR_COLORS, fmtMoney(), ReportRow, STATUS_OPTIONS, STATUS_STYLES, StatusStyle (+1 more)
+Cohesion: 0.18
+Nodes (7): AVATAR_COLORS, fmtMoney(), ReportRow, STATUS_OPTIONS, STATUS_STYLES, StatusStyle, SupplierOrderReportsPage()
 
 ### Community 82 - "Accounting Group 82"
 Cohesion: 0.27
 Nodes (8): formatDate(), formatMoney(), InvoicesPageMain(), openBulkPrintView(), openPrintView(), sanitize(), STRIPE, AdminEncashmentItem
 
 ### Community 83 - "Landing Group 83"
-Cohesion: 0.13
-Nodes (7): Product, ProductCard(), ProductCardProps, ProductGridProps, products, QuickViewModalProps, indicators
+Cohesion: 0.09
+Nodes (9): Product, ProductCard(), ProductCardProps, ProductGridProps, products, QuickViewModalProps, SkeletonLoaderProps, testimonials (+1 more)
 
 ### Community 84 - "Orders Group 84"
 Cohesion: 0.02
@@ -863,32 +848,32 @@ Cohesion: 0.21
 Nodes (8): UnilevelAwardItem, colorOf(), LEVEL_COLORS, MonthlyActivation, NetworkEarningsTab(), num(), peso(), Props
 
 ### Community 87 - "Accounting Group 87"
-Cohesion: 0.07
-Nodes (16): FilterStatus, STATUS_CONFIG, STRIPE, TIER_BADGE, CHANNEL_STYLE, DisbursementHistoryMain(), formatMoney(), STRIPE (+8 more)
+Cohesion: 0.18
+Nodes (8): CHANNEL_STYLE, DisbursementHistoryMain(), formatMoney(), STRIPE, TIER_BADGE, AdminPagination(), AdminPaginationProps, getPaginationPages()
 
 ### Community 88 - "Auth Group 88"
-Cohesion: 0.13
-Nodes (8): LoginPageClient(), LoginPageClientProps, Mode, resolveCallbackPath(), Props, ResetPayload, VideoBackground(), VideoBackgroundProps
+Cohesion: 0.11
+Nodes (8): Props, Window, Props, ResetPayload, VideoBackground(), VideoBackgroundProps, Header(), HeaderProps
 
 ### Community 89 - "Brands Group 89"
 Cohesion: 0.02
 Nodes (97): AggregateCommunitySavedPost, CommunitySavedPostAggregateArgs, CommunitySavedPostAvgAggregateInputType, CommunitySavedPostAvgAggregateOutputType, CommunitySavedPostAvgOrderByAggregateInput, CommunitySavedPostCountAggregateInputType, CommunitySavedPostCountAggregateOutputType, CommunitySavedPostCountArgs (+89 more)
 
 ### Community 90 - "Dashboard Group 90"
-Cohesion: 0.18
-Nodes (18): AdminOrdersResponse, AdminPaymentsOverviewResponse, Expense, ExpenseCategoryRef, ExpensePayload, expensesApi, ExpensesResponse, ExpensesSummaryResponse (+10 more)
+Cohesion: 0.09
+Nodes (29): AdminOrdersResponse, AdminPaymentsOverviewResponse, Expense, ExpenseCategoryRef, ExpensePayload, expensesApi, ExpensesResponse, ExpensesSummaryResponse (+21 more)
 
 ### Community 91 - "Media Group 91"
 Cohesion: 0.02
 Nodes (96): AggregateMessage, GetMessageAggregateType, GetMessageGroupByPayload, MessageAggregateArgs, MessageAvgAggregateInputType, MessageAvgAggregateOutputType, MessageAvgOrderByAggregateInput, MessageCountAggregateInputType (+88 more)
 
 ### Community 92 - "Partner Group 92"
-Cohesion: 0.08
-Nodes (17): AdminLoginPayload, AdminLoginResponse, AdminMeResponse, authApi, EmailAvailabilityResponse, LogoutResponse, ReferralAvailabilityResponse, RegisterPayload (+9 more)
+Cohesion: 0.06
+Nodes (18): AdminLoginPayload, AdminLoginResponse, AdminMeResponse, authApi, EmailAvailabilityResponse, LogoutResponse, ReferralAvailabilityResponse, RegisterPayload (+10 more)
 
 ### Community 93 - "Products Group 93"
 Cohesion: 0.04
-Nodes (58): BulkPriceApplyResponse, BulkPricePreviewResponse, BulkPriceRow, BulkUpdateApplyResponse, BulkUpdatePreviewResponse, BulkUpdateRow, BulkUpdateZqPricingResponse, BulkUpdateZqPricingResultRow (+50 more)
+Nodes (51): BulkPriceApplyResponse, BulkPricePreviewResponse, BulkPriceRow, BulkUpdateApplyResponse, BulkUpdatePreviewResponse, BulkUpdateRow, BulkUpdateZqPricingResponse, BulkUpdateZqPricingResultRow (+43 more)
 
 ### Community 94 - "Products Group 94"
 Cohesion: 0.06
@@ -899,8 +884,8 @@ Cohesion: 0.08
 Nodes (23): AdminInteriorReplyPayload, AdminInteriorRequestUpdatePayload, CreateInteriorRequestPayload, InteriorRequestActor, InteriorRequestCounts, InteriorRequestItem, InteriorRequestPriority, InteriorRequestResponse (+15 more)
 
 ### Community 96 - "Profile Group 96"
-Cohesion: 0.11
-Nodes (12): PublicHomeContentResponse, PublicWebPageItemsResponse, UpsertWebPageItemPayload, WebPageItemsResponse, webPagesApi, LevelUpPageProps, MemberTier, TIER_BADGE_IMAGE (+4 more)
+Cohesion: 0.25
+Nodes (12): CloudinaryUploadResult, createCloudinarySignature(), isRecord(), readCloudinaryConfig(), uploadImageToCloudinary(), getOrCreateConversation(), isParticipant(), listConversations() (+4 more)
 
 ### Community 97 - "Profile Group 97"
 Cohesion: 0.20
@@ -923,8 +908,8 @@ Cohesion: 0.02
 Nodes (89): AggregateConversation, Conversation$messagesArgs, Conversation$participantsArgs, ConversationAggregateArgs, ConversationAvgAggregateInputType, ConversationAvgAggregateOutputType, ConversationAvgOrderByAggregateInput, ConversationCountAggregateInputType (+81 more)
 
 ### Community 102 - "Dashboard Group 102"
-Cohesion: 0.09
-Nodes (13): AdminApprovalStatus, AdminCourier, AdminFulfillmentStatus, AdminOrder, adminOrdersApi, AdminOrdersQuery, AdminShipmentStatus, metadata (+5 more)
+Cohesion: 0.19
+Nodes (12): resolveAccessToken(), forceDownload(), GET(), GET(), POST(), forceDownload(), AdminSessionUser, authHeaders() (+4 more)
 
 ### Community 103 - "Expenses Group 103"
 Cohesion: 0.13
@@ -935,52 +920,52 @@ Cohesion: 0.02
 Nodes (83): AggregateCommunityNotification, BoolFieldUpdateOperationsInput, CommunityNotificationAggregateArgs, CommunityNotificationAvgAggregateInputType, CommunityNotificationAvgAggregateOutputType, CommunityNotificationAvgOrderByAggregateInput, CommunityNotificationCountAggregateInputType, CommunityNotificationCountAggregateOutputType (+75 more)
 
 ### Community 105 - "Payments Group 105"
-Cohesion: 0.25
-Nodes (5): colorGradients, formatMoney(), PaymentsVouchersPageMain(), VoucherAdminView, VoucherStatusFilter
+Cohesion: 0.07
+Nodes (19): buildVisiblePages(), CategoryListProductMain(), CategoryListProductMainProps, containerVariants, itemVariants, ListViewProduct(), ListViewProductProps, normalizeCategorySlug() (+11 more)
 
 ### Community 106 - "Products Group 106"
 Cohesion: 0.05
-Nodes (65): LoginForm(), Card(), CardContent(), categories, conditions, CreatePostModal(), CreatePostModalProps, createPostSchema (+57 more)
+Nodes (66): LoginForm(), Card(), CardContent(), categories, conditions, CreatePostModal(), CreatePostModalProps, createPostSchema (+58 more)
 
 ### Community 107 - "Products Group 107"
-Cohesion: 0.31
-Nodes (9): buildPricingSummary(), deriveComputedPv(), deriveMultiplierFromPv(), formatDecimalInput(), getComputedPvDisplay(), mapVariantToForm(), roundTo(), toOptionalPositiveNumber() (+1 more)
+Cohesion: 0.25
+Nodes (7): ProductActivityLog, actionBadgeClass(), actionLabel(), ActivityRow(), formatActivityDate(), ProductActivityLogsModalProps, statusBadgeClass()
 
 ### Community 108 - "Products Group 108"
 Cohesion: 0.28
 Nodes (7): buildProductDescription(), LengthOption, normalize(), ProductDescriptionGeneratorInput, ProductDescriptionGeneratorProps, sentenceCase(), ToneOption
 
 ### Community 109 - "Profile Group 109"
-Cohesion: 0.06
-Nodes (37): AccountSnapshot, ChangePasswordPayload, CreateCustomerAddressPayload, CreateWebstorePaymentSessionPayload, CreateWebstorePaymentSessionResponse, CustomerAddressesResponse, DisableTotpPayload, EnableTotpPayload (+29 more)
+Cohesion: 0.11
+Nodes (22): ProductReview, ProductReviewSummary, CategoryProduct, CloudinaryImageOptions, getEnhancedCloudinaryImageUrl(), isCloudinaryUrl(), ProductPageData, ProductImageGalleryProps (+14 more)
 
 ### Community 110 - "Ui Group 110"
 Cohesion: 0.22
 Nodes (3): CarouselContentProps, CarouselItemProps, CarouselProps
 
 ### Community 111 - "Webpages Group 111"
-Cohesion: 0.08
-Nodes (28): buildPartnerCategoryLink(), buildPartnerStorefrontPublicUrl(), getPartnerStorefrontConfig(), getPayloadFields(), getUrlHost(), normalizeBaseUrl(), normalizeCategorySlug(), normalizeStorefrontHost() (+20 more)
+Cohesion: 0.05
+Nodes (23): AboutBlock, BlockBase, CtaBlock, FeaturesBlock, FooterBlock, getFieldValue(), HeroBlock, LandingBlock (+15 more)
 
 ### Community 112 - "Webpages Group 112"
 Cohesion: 0.06
 Nodes (17): metadata, WebPageType, metadata, metadata, metadata, metadata, metadata, metadata (+9 more)
 
 ### Community 113 - "Auth Group 113"
-Cohesion: 0.09
-Nodes (27): baseQueryWithBanCheck(), membersApi, AdminLoginForm(), BAN_KEYWORDS, NavbarInner(), clearAdminSession(), clearPartnerSession(), clearPortalSession() (+19 more)
+Cohesion: 0.20
+Nodes (13): links, ApiCategoriesResponse, ApiProductsResponse, ApiWebPagesResponse, formatMoney(), getProductImage(), getProductPrice(), getShopPreviewData() (+5 more)
 
 ### Community 114 - "Branches Group 114"
 Cohesion: 0.06
-Nodes (43): generateMetadata(), PageProps, ApiCategoriesResponse, asArray(), extractCategories(), extractProducts(), generateMetadata(), LooseRecord (+35 more)
+Nodes (42): generateMetadata(), PageProps, ApiCategoriesResponse, asArray(), extractCategories(), extractProducts(), generateMetadata(), LooseRecord (+34 more)
 
 ### Community 115 - "Buttons Group 115"
 Cohesion: 0.04
-Nodes (47): stats, values, metadata, metadata, metadata, metadata, metadata, BlogPage() (+39 more)
+Nodes (59): normalizeBase(), parsePayload(), POST(), MeResponse, handler, metadata, metadata, metadata (+51 more)
 
 ### Community 116 - "Buttons Group 116"
-Cohesion: 0.08
-Nodes (12): AdminOrderController, Admin, AdminNotification, CheckoutHistory, Request, CheckoutHistory, CheckoutHistory, Customer (+4 more)
+Cohesion: 0.11
+Nodes (6): AdminOrderController, Admin, AdminNotification, CheckoutHistory, Request, AdminNotificationRead
 
 ### Community 117 - "Profile Group 117"
 Cohesion: 0.03
@@ -991,59 +976,63 @@ Cohesion: 0.24
 Nodes (5): AccountingDashboardMain(), formatMoney(), STATUS_META, STRIPE, metadata
 
 ### Community 120 - "Apps Group 120"
-Cohesion: 0.33
-Nodes (4): CategoryCard(), CategoryCardProps, toSlug(), categories
+Cohesion: 0.20
+Nodes (6): quickActions, getRoomOptionById(), inferRoomTypeFromCategory(), KEYWORD_RULES, ROOM_OPTIONS, RoomOption
 
 ### Community 121 - "Components Group 121"
-Cohesion: 0.07
-Nodes (49): Topbar(), Post, PostCard(), PostCardProps, PostType, typeBadge, PostFeedSkeleton(), getInitials() (+41 more)
+Cohesion: 0.09
+Nodes (42): DOT_COLORS, EventCard(), GoingAvatars(), HEADER_GRADIENTS, indexForId(), Post, PostCard(), PostCardProps (+34 more)
 
 ### Community 122 - "Partner Group 122"
-Cohesion: 0.06
-Nodes (28): AdminInviteMail, AdminKycSubmittedAlertMail, AdminPasswordResetMail, EmailBlastMail, self, self, self, self (+20 more)
+Cohesion: 0.07
+Nodes (25): AdminInviteMail, AdminKycSubmittedAlertMail, AdminPasswordResetMail, EmailBlastMail, self, self, self, self (+17 more)
+
+### Community 123 - "Payments Group 123"
+Cohesion: 0.18
+Nodes (12): products, formatMoney(), getEffectiveStock(), getVariantChoiceKey(), isNewProduct(), normalizeSkuSegment(), normalizeVariantLabel(), ProductCard() (+4 more)
 
 ### Community 124 - "Product Group 124"
-Cohesion: 0.08
-Nodes (13): MemberController, MemberTierController, QaTestStatusController, Customer, JsonResponse, Request, JsonResponse, Request (+5 more)
+Cohesion: 0.10
+Nodes (10): MemberController, MemberTierController, Customer, JsonResponse, Request, JsonResponse, Request, Customer (+2 more)
 
 ### Community 125 - "Product Group 125"
-Cohesion: 0.08
-Nodes (5): PaymentController, CheckoutHistory, Customer, JsonResponse, Request
+Cohesion: 0.07
+Nodes (6): PaymentController, CheckoutHistory, Customer, JsonResponse, Request, WebPageContent
 
 ### Community 126 - "Supplier Group 126"
-Cohesion: 0.18
-Nodes (4): supplierWarehouseApi, SupplierWarehouseProfile, SupplierWarehouseResponse, SupplierWarehousesResponse
+Cohesion: 0.12
+Nodes (7): backfaceHidden, BrandSelectorProps, CataloguePage, FlipbookViewerProps, FlipState, preserve3d, uploadCataloguePage()
 
 ### Community 127 - "Verification Group 127"
 Cohesion: 0.03
 Nodes (67): BigIntFilter, BigIntNullableFilter, BigIntNullableWithAggregatesFilter, BigIntWithAggregatesFilter, BoolFilter, BoolWithAggregatesFilter, DateTimeFilter, DateTimeNullableFilter (+59 more)
 
 ### Community 128 - "Webpages Group 128"
-Cohesion: 0.07
-Nodes (21): OtpInputProps, OtpVerification(), OtpVerificationProps, QrModal(), QrModalProps, resolveCallbackPath(), baseStyle, defaultOptions (+13 more)
+Cohesion: 0.05
+Nodes (31): AdminGeneralSettings, AdminNotificationSettings, AdminSecuritySettings, adminSettingsApi, PublicSecuritySettings, OtpInputProps, OtpVerification(), OtpVerificationProps (+23 more)
 
 ### Community 129 - "Auth Group 129"
-Cohesion: 0.08
-Nodes (5): ProductController, JsonResponse, SearchHistory, ZqCategoryMapping, ZqProduct
+Cohesion: 0.15
+Nodes (5): JsonResponse, Request, SearchHistory, ZqCategoryMapping, ZqProduct
 
 ### Community 131 - "Components Group 131"
-Cohesion: 0.06
-Nodes (34): normalizeBase(), parsePayload(), POST(), MeResponse, handler, metadata, getInitialProfile(), metadata (+26 more)
+Cohesion: 0.07
+Nodes (33): PrimaryButtonProps, ChatModal(), Conversation, CSR_NAMES, Message, CustomerServiceButton(), CartContextType, CartItem (+25 more)
 
 ### Community 132 - "Customer Group 132"
-Cohesion: 0.09
-Nodes (22): CheckoutCustomerPayload, CheckoutHistoryResponse, CheckoutOnlineBankingProvider, CheckoutPaymentMethod, CheckoutPaymentMode, CreateCheckoutSessionPayload, CreateCheckoutSessionResponse, CustomerOrder (+14 more)
+Cohesion: 0.12
+Nodes (15): CheckoutCustomerPayload, CheckoutHistoryResponse, CheckoutPaymentMethod, CheckoutPaymentMode, CreateCheckoutSessionPayload, CreateCheckoutSessionResponse, CustomerOrder, CustomerOrderItem (+7 more)
 
 ### Community 133 - "Dashboard Group 133"
-Cohesion: 0.15
-Nodes (5): AdminDashboardHome(), AdminDashboardHomeProps, formatMoney(), SalesChart(), tabs
+Cohesion: 0.18
+Nodes (9): Props, Props, ApiResponse, ChatMessage, normalizeQuery(), NXT_ONLY_KEYWORDS, shouldRestrictToNxt(), STARTER_QUESTIONS (+1 more)
 
 ### Community 134 - "Emailblast Group 134"
 Cohesion: 0.25
 Nodes (4): metadata, FormData, Member, EmailBlastPageMain()
 
 ### Community 135 - "Interiorrequests Group 135"
-Cohesion: 0.07
+Cohesion: 0.08
 Nodes (7): MobilePaymentController, CheckoutHistory, Request, self, CheckoutHistory, OrderNotification, PaymongoPaymentSyncService
 
 ### Community 136 - "Item Group 136"
@@ -1055,28 +1044,32 @@ Cohesion: 0.06
 Nodes (14): CustomerNotificationController, SupplierPushNotificationController, Customer, Request, Request, SupplierUser, BelongsTo, BelongsTo (+6 more)
 
 ### Community 139 - "Products Group 139"
-Cohesion: 0.06
-Nodes (45): Head(), HeadProps, metadata, PageProps, generateMetadata(), PageProps, Head(), HeadProps (+37 more)
+Cohesion: 0.03
+Nodes (67): PublicHomeContentResponse, PublicWebPageItemsResponse, UpsertWebPageItemPayload, WebPageItem, WebPageItemsResponse, webPagesApi, metadata, metadata (+59 more)
+
+### Community 140 - "Products Group 140"
+Cohesion: 0.10
+Nodes (20): normalizeProductsResponse(), ProductsResponse, getInitialProducts(), metadata, getInitialProducts(), metadata, AdminProductsPage(), pickBestBrandId() (+12 more)
 
 ### Community 142 - "Profile Group 142"
-Cohesion: 0.16
-Nodes (8): Admin, Product, Request, SupplierUser, DateTimeInterface, ProductPhoto, ProductActivityLog, StreamedResponse
+Cohesion: 0.26
+Nodes (5): Admin, Product, SupplierUser, DateTimeInterface, ProductPhoto
 
 ### Community 144 - "Accounting Group 144"
-Cohesion: 0.07
-Nodes (27): formatMoney(), Period, ReconciliationMain(), STRIPE, AdminEncashmentQuery, AdminEncashmentResponse, AdminVoucherItem, AdminVouchersQuery (+19 more)
+Cohesion: 0.09
+Nodes (23): AdminEncashmentQuery, AdminEncashmentResponse, AdminVoucherItem, AdminVouchersQuery, AdminVouchersResponse, CreateAffiliateVoucherPayload, CreateAffiliateVoucherResponse, CreateEncashmentPayload (+15 more)
 
 ### Community 145 - "Ai Group 145"
-Cohesion: 0.12
-Nodes (27): CommentsModal(), ReplyInput(), CommunityModals(), DeletePostModal(), RepostModal(), RespondentsModal(), Tab, useDeleteCommunityPost() (+19 more)
+Cohesion: 0.09
+Nodes (30): CommentsModal(), ReplyInput(), CommunityModals(), DeletePostModal(), RepostModal(), RespondentsModal(), Tab, useDeleteCommunityPost() (+22 more)
 
 ### Community 146 - "Auth Group 146"
 Cohesion: 0.25
 Nodes (3): metadata, InvitePayload, Props
 
 ### Community 147 - "Expenses Group 147"
-Cohesion: 0.12
-Nodes (3): Customer, Request, CustomerLoginSession
+Cohesion: 0.21
+Nodes (8): AiSupportBody(), AiSupportFooter(), Props, AiSupportHeader(), Props, AiSupportPanel(), AiSupportQuickReplies(), Props
 
 ### Community 148 - "Item Group 148"
 Cohesion: 0.05
@@ -1087,20 +1080,20 @@ Cohesion: 0.40
 Nodes (3): categories, Category, CategoryNavProps
 
 ### Community 150 - "Payments Group 150"
-Cohesion: 0.11
-Nodes (16): AdminEncashmentSnapshot, AdminPaymentMethodBreakdownItem, adminPaymentsApi, AdminPaymentSummary, AdminRecentTransactionItem, AdminRecentVoucherItem, AdminSalesTrendPoint, AdminSalesTrends (+8 more)
+Cohesion: 0.08
+Nodes (19): AdminEncashmentSnapshot, AdminPaymentMethodBreakdownItem, adminPaymentsApi, AdminPaymentSummary, AdminRecentTransactionItem, AdminRecentVoucherItem, AdminSalesTrendPoint, AdminSalesTrends (+11 more)
 
 ### Community 151 - "Products Group 151"
-Cohesion: 0.40
-Nodes (5): hasEditDraftContent(), normalizeFormForComparison(), normalizeNumberField(), normalizeTextField(), normalizeVariantsForComparison()
+Cohesion: 0.31
+Nodes (4): ProductBrandController, JsonResponse, Request, ProductBrand
 
 ### Community 152 - "Profile Group 152"
-Cohesion: 0.50
-Nodes (3): AvatarCropModalProps, createImage(), getCroppedBlob()
+Cohesion: 0.07
+Nodes (28): ChangePasswordPayload, CreateCustomerAddressPayload, CreateWebstorePaymentSessionPayload, CreateWebstorePaymentSessionResponse, CustomerAddressesResponse, DisableTotpPayload, EnableTotpPayload, LinkedAccount (+20 more)
 
 ### Community 153 - "Settings Group 153"
-Cohesion: 0.08
-Nodes (18): BelongsTo, BelongsTo, HasMany, BelongsTo, BelongsTo, BelongsTo, Authenticatable, HasApiTokens (+10 more)
+Cohesion: 0.10
+Nodes (16): BelongsTo, HasMany, BelongsTo, BelongsTo, BelongsTo, Authenticatable, HasApiTokens, HasFactory (+8 more)
 
 ### Community 154 - "Supplier Group 154"
 Cohesion: 0.25
@@ -1111,40 +1104,40 @@ Cohesion: 0.25
 Nodes (3): metadata, Props, ResetPayload
 
 ### Community 156 - "Webpages Group 156"
-Cohesion: 0.36
-Nodes (5): metadata, ApiErrorLike, DatabaseExportPage(), formatBytes(), formatDate()
+Cohesion: 0.20
+Nodes (9): blogCategories, Blogs(), BlogsProps, Footer(), footerLinks, getSettingValue(), paymentLogos, socialLinks (+1 more)
 
 ### Community 157 - "Webpages Group 157"
-Cohesion: 0.29
-Nodes (3): metadata, metadata, PartnerUsersPage()
+Cohesion: 0.24
+Nodes (6): useUnreadMessageCount(), CommunityAuthGuard(), MainContent(), MobileBottomNav(), tabs, PageTransition()
 
 ### Community 158 - "Webpages Group 158"
-Cohesion: 0.06
-Nodes (30): addsContentApi, AddsContentItem, adminDatabaseApi, DatabaseExportItem, DeleteDatabaseExportPayload, DeleteDatabaseExportResponse, DownloadDatabaseExportPayload, ExportDatabaseResponse (+22 more)
+Cohesion: 0.20
+Nodes (9): AvailableCustomersResponse, CloudinarySignRequest, CloudinarySignResponse, Device, PushNotificationsHistoryResponse, SendNotificationRequest, SendNotificationResponse, SupplierPushNotification (+1 more)
 
 ### Community 159 - "Accounting Group 159"
 Cohesion: 0.29
 Nodes (3): REPORTS, STRIPE, metadata
 
 ### Community 160 - "Chat Group 160"
-Cohesion: 0.15
-Nodes (11): BaseModel, ChatProps, Message, Conversation, ConversationListProps, Image, embed_image(), EmbedRequest (+3 more)
+Cohesion: 0.10
+Nodes (12): BaseModel, ChatProps, Message, Conversation, ConversationListProps, Image, embed_image(), EmbedRequest (+4 more)
 
 ### Community 161 - "Chat Group 161"
 Cohesion: 0.14
 Nodes (8): WebPageController, JsonResponse, Request, WebPageContent, DatabaseExportService, CloudinaryUploadService, Throwable, UploadedFile
 
 ### Community 162 - "Customer Group 162"
-Cohesion: 0.11
-Nodes (28): DOT_COLORS, EventCard(), GoingAvatars(), HEADER_GRADIENTS, indexForId(), eventDateOf(), formatEventTimeRange(), to12h() (+20 more)
+Cohesion: 0.18
+Nodes (9): categories, EventsRightPanel(), EventsView(), useEvents(), activeMembers, events, quickActions, RightPanel() (+1 more)
 
 ### Community 163 - "Dashboard Group 163"
 Cohesion: 0.07
-Nodes (25): AdminChatPage(), AVATAR_COLORS, ChatRenderItem, ConversationTab, FileBadge, FileKind, formatLastActive(), formatSupplierId() (+17 more)
+Nodes (26): AdminChatPage(), AVATAR_COLORS, ChatRenderItem, ConversationTab, FileBadge, FileKind, formatLastActive(), formatSupplierId() (+18 more)
 
 ### Community 164 - "Dashboard Group 164"
-Cohesion: 0.22
-Nodes (5): quickActions, getRoomOptionById(), inferRoomTypeFromCategory(), KEYWORD_RULES, RoomOption
+Cohesion: 0.11
+Nodes (8): FilterStatus, STATUS_CONFIG, STRIPE, TIER_BADGE, FinanceDashboardMain(), formatMoney(), STRIPE, AvatarImgProps
 
 ### Community 165 - "Faq Group 165"
 Cohesion: 0.07
@@ -1155,8 +1148,8 @@ Cohesion: 0.06
 Nodes (36): dependencies, cloudinary, @emnapi/core, @emnapi/runtime, @floating-ui/dom, framer-motion, googleapis, @heroui/react (+28 more)
 
 ### Community 167 - "Product Group 167"
-Cohesion: 0.10
-Nodes (12): $(), b(), deleteCacheAndMetadata(), F, G, get(), h(), j() (+4 more)
+Cohesion: 0.09
+Nodes (14): $(), a, b(), deleteCacheAndMetadata(), et, F, G, get() (+6 more)
 
 ### Community 168 - "Superadmin Group 168"
 Cohesion: 0.07
@@ -1166,29 +1159,29 @@ Nodes (4): Customer, Product, CacheService, QueryOptimizerService
 Cohesion: 0.06
 Nodes (31): author, dependencies, cors, dotenv, hono, @hono/node-server, ioredis, pg (+23 more)
 
-### Community 170 - "Templates Group 170"
-Cohesion: 0.08
-Nodes (19): AboutBlock, BlockBase, CtaBlock, FeaturesBlock, FooterBlock, getFieldValue(), HeroBlock, LandingBlock (+11 more)
+### Community 172 - "Landing Group 172"
+Cohesion: 0.45
+Nodes (3): QaTestStatusController, JsonResponse, Request
 
 ### Community 173 - "Landing Group 173"
-Cohesion: 0.13
-Nodes (22): ChatMessage, ChatUser, MessagesData, UploadResponse, useConversations(), useMarkConversationRead(), useMessages(), useSendMessage() (+14 more)
+Cohesion: 0.08
+Nodes (38): Topbar(), PostFeedSkeleton(), CurrentUser, getFullName(), getInitials(), useCurrentUser(), ChatMessage, ChatUser (+30 more)
 
 ### Community 174 - "Layout Group 174"
 Cohesion: 0.21
 Nodes (6): EncashmentController, Customer, CustomerVerificationRequest, EncashmentRequest, Request, EncashmentPayoutMethod
 
 ### Community 175 - "Members Group 175"
-Cohesion: 0.18
-Nodes (5): SupplierOrderController, CheckoutHistory, JsonResponse, Request, SupplierUser
+Cohesion: 0.15
+Nodes (6): InquiryTab, TABS, RequestStatus, StatusKey, StatusStyleMap, statusStyles
 
 ### Community 176 - "Product Group 176"
 Cohesion: 0.40
 Nodes (3): metadata, Checkout(), methodMap
 
 ### Community 177 - "Products Group 177"
-Cohesion: 0.09
-Nodes (12): CheckoutHistory, Customer, CheckoutHistory, Customer, Customer, Customer, CustomerWalletLedger, DirectAffiliatePerformanceBonus (+4 more)
+Cohesion: 0.07
+Nodes (14): CheckoutHistory, Customer, CheckoutHistory, Customer, Customer, Customer, Customer, CustomerWalletLedger (+6 more)
 
 ### Community 178 - "Products Group 178"
 Cohesion: 0.21
@@ -1199,32 +1192,32 @@ Cohesion: 0.18
 Nodes (4): SupplierAuthController, Request, SupplierUser, SystemSetting
 
 ### Community 180 - "Superadmin Group 180"
-Cohesion: 0.10
-Nodes (10): metadata, metadata, metadata, metadata, metadata, metadata, Props, UnderMaintenancePage() (+2 more)
+Cohesion: 0.18
+Nodes (11): handler, GET(), getClientIp(), isRateLimited(), rateLimitStore, partnerAuthOptions, TokenUser, getClientIp() (+3 more)
 
 ### Community 181 - "Templates Group 181"
-Cohesion: 0.15
-Nodes (24): createComment(), createReply(), getPostAuthorId(), serializeAuthor(), CommunityPostListItem, serializeCommunityPost(), serializeCommunityPostImageUpload(), serializeCommunityPostListItem() (+16 more)
+Cohesion: 0.12
+Nodes (24): CommunityPostListItem, serializeCommunityPost(), serializeCommunityPostImageUpload(), serializeCommunityPostListItem(), createCommunityPost(), deleteCommunityPost(), listCommunityPosts(), listEvents() (+16 more)
 
 ### Community 182 - "Templates Group 182"
 Cohesion: 0.07
 Nodes (28): dependencies, framer-motion, next, next-pwa, pusher-js, react, react-dom, devDependencies (+20 more)
 
 ### Community 183 - "Templates Group 183"
-Cohesion: 0.18
-Nodes (16): principles, process, stats, Footer(), allProjects, Header(), navigation, FadeIn (+8 more)
+Cohesion: 0.14
+Nodes (21): principles, process, stats, BlogPostPage(), BlogPostPageProps, defaultSections, fallbackImages, blogImages (+13 more)
 
 ### Community 184 - "Ui Group 184"
-Cohesion: 0.11
-Nodes (5): PartnerStorefrontApiResponse, PartnerStorefrontApiResponse, ShopLoading(), titleCase(), LoadingScreenProps
+Cohesion: 0.22
+Nodes (4): AdminOrder, formatDateOnly(), parseOrderDate(), statusConfig
 
 ### Community 185 - "Verification Group 185"
 Cohesion: 0.18
 Nodes (6): Admin, Conversation, Customer, Message, Paginator, ConversationService
 
 ### Community 187 - "Partner Group 187"
-Cohesion: 0.19
-Nodes (5): AdminEncashmentController, Admin, EncashmentRequest, Request, YearlyGlobalPurchaseBonus
+Cohesion: 0.14
+Nodes (7): AdminEncashmentController, Admin, EncashmentRequest, Request, Customer, CustomerCashWallet, YearlyGlobalPurchaseBonus
 
 ### Community 190 - "Products Group 190"
 Cohesion: 0.10
@@ -1235,20 +1228,12 @@ Cohesion: 0.25
 Nodes (4): XdeShippingController, Admin, CheckoutHistory, Request
 
 ### Community 193 - "Profile Group 193"
-Cohesion: 0.11
-Nodes (15): useConnectionActions(), ConnectRequestActions(), NotifAuthor, ThemeToggle(), DropdownMenu(), DropdownMenuCheckboxItem(), DropdownMenuContent(), DropdownMenuItem() (+7 more)
-
-### Community 195 - "Profile Group 195"
-Cohesion: 0.26
-Nodes (6): SupplierChatController, JsonResponse, Request, Collection, SupplierChatConversation, SupplierChatMessage
+Cohesion: 0.10
+Nodes (17): useNotifications(), NotifAuthor, NotificationsDropdown(), ThemeToggle(), Notification, NotificationsState, DropdownMenu(), DropdownMenuCheckboxItem() (+9 more)
 
 ### Community 196 - "Referrals Group 196"
-Cohesion: 0.11
-Nodes (22): BlogsPage(), BlogPostPage(), BlogPostPageProps, defaultSections, fallbackImages, ProcessSection(), byIndex(), CmsItem (+14 more)
-
-### Community 197 - "Sections Group 197"
-Cohesion: 0.12
-Nodes (3): a, q(), r
+Cohesion: 0.08
+Nodes (30): defaultGalleryImages, defaultHeader, GalleryImage, GallerySection(), ProcessSection(), TestimonialsSection(), CmsItem, contentTypes (+22 more)
 
 ### Community 198 - "Settings Group 198"
 Cohesion: 0.13
@@ -1257,6 +1242,10 @@ Nodes (10): GeminiController, LeadController, ProductViewerController, Storefron
 ### Community 199 - "Settings Group 199"
 Cohesion: 0.24
 Nodes (5): SupplierUserController, Admin, Request, Supplier, SupplierUser
+
+### Community 200 - "Supplier Group 200"
+Cohesion: 0.22
+Nodes (6): defaultCta, defaultHeader, serviceImages, ServicesSection(), ServicesCtaContent, ServicesHeaderContent
 
 ### Community 203 - "Community 203"
 Cohesion: 0.08
@@ -1279,8 +1268,8 @@ Cohesion: 0.15
 Nodes (14): clipReveal, fadeIn, fadeUp, floatY, lineGrow, scaleIn, slideLeft, slideRight (+6 more)
 
 ### Community 208 - "Community 208"
-Cohesion: 0.14
-Nodes (16): startServer(), authRoutes, communityCommentRoutes, listPostComments(), communityPostRoutes, connectionRoutes, AuthVariables, requireAuth (+8 more)
+Cohesion: 0.12
+Nodes (17): authRoutes, serializeAuthCustomer(), AuthCustomer, communityCommentRoutes, listPostComments(), communityPostRoutes, messageRoutes, AuthVariables (+9 more)
 
 ### Community 209 - "Community 209"
 Cohesion: 0.12
@@ -1299,8 +1288,8 @@ Cohesion: 0.22
 Nodes (3): SearchController, JsonResponse, Request
 
 ### Community 213 - "Community 213"
-Cohesion: 0.21
-Nodes (8): ShippingRateController, JsonResponse, Request, Seeder, DatabaseSeeder, ManualCheckoutShippingRateSeeder, ShippingRate, WithoutModelEvents
+Cohesion: 0.13
+Nodes (11): ShippingRateController, JsonResponse, Request, Customer, Seeder, AutomationCheckoutAccountSeeder, DatabaseSeeder, DreamBuildContentDeckV2Seeder (+3 more)
 
 ### Community 214 - "Community 214"
 Cohesion: 0.16
@@ -1311,8 +1300,8 @@ Cohesion: 0.09
 Nodes (21): dependencies, googleapis, devDependencies, axios, concurrently, laravel-vite-plugin, tailwindcss, @tailwindcss/vite (+13 more)
 
 ### Community 216 - "Community 216"
-Cohesion: 0.17
-Nodes (8): Command, SendScheduledPushNotifications, Dispatchable, InteractsWithQueue, SendEmailBlastJob, SendScheduledPushNotificationJob, SendSmsBlastJob, ShouldQueue
+Cohesion: 0.22
+Nodes (6): Dispatchable, InteractsWithQueue, SendEmailBlastJob, SendScheduledPushNotificationJob, SendSmsBlastJob, ShouldQueue
 
 ### Community 217 - "Community 217"
 Cohesion: 0.09
@@ -1323,8 +1312,8 @@ Cohesion: 0.09
 Nodes (21): devDependencies, @types/node, name, packageManager, private, scripts, build, dev:backend (+13 more)
 
 ### Community 219 - "Community 219"
-Cohesion: 0.19
-Nodes (8): et, i, m(), s, st(), T(), U(), v
+Cohesion: 0.27
+Nodes (6): m(), s, st(), T(), U(), v
 
 ### Community 220 - "Community 220"
 Cohesion: 0.29
@@ -1339,8 +1328,8 @@ Cohesion: 0.13
 Nodes (4): Admin, BelongsTo, HasMany, Conversation
 
 ### Community 223 - "Community 223"
-Cohesion: 0.11
-Nodes (16): Home(), ContactContent, ContactSection(), defaultContact, projectTypes, defaultCarouselSlides, HeroSection(), aspectConfig (+8 more)
+Cohesion: 0.42
+Nodes (3): CheckoutHistory, ReferralEarning, DirectReferralCommission
 
 ### Community 224 - "Community 224"
 Cohesion: 0.30
@@ -1359,8 +1348,8 @@ Cohesion: 0.24
 Nodes (3): Admin, Carbon, PartnerStorefrontAccess
 
 ### Community 229 - "Community 229"
-Cohesion: 0.18
-Nodes (12): getAuthCustomer(), hashSanctumToken(), readToken(), config, databaseUrl, adapter, adapter, prismaAuth (+4 more)
+Cohesion: 0.15
+Nodes (15): startServer(), getAuthCustomer(), hashSanctumToken(), readToken(), config, databaseUrl, adapter, adapter (+7 more)
 
 ### Community 230 - "Community 230"
 Cohesion: 0.10
@@ -1371,8 +1360,8 @@ Cohesion: 0.10
 Nodes (19): compilerOptions, allowJs, esModuleInterop, incremental, isolatedModules, jsx, lib, module (+11 more)
 
 ### Community 232 - "Community 232"
-Cohesion: 0.17
-Nodes (17): CommunityPostImageUpload, CreateCommunityPostInput, ALLOWED_POST_IMAGE_TYPES, isRecord(), isUploadedFile(), parseCommunityPostImageUpload(), parseCreateCommunityPostInput(), parseEnumValue() (+9 more)
+Cohesion: 0.14
+Nodes (13): CommunityComment, CommunityConnection, CommunityEventRsvp, CommunityNotification, CommunityPost, CommunityProfile, CommunityReaction, CommunitySavedPost (+5 more)
 
 ### Community 233 - "Community 233"
 Cohesion: 0.10
@@ -1387,44 +1376,52 @@ Cohesion: 0.31
 Nodes (4): AdminSettingsController, JsonResponse, Request, SystemSetting
 
 ### Community 236 - "Community 236"
-Cohesion: 0.16
-Nodes (16): PageProps, ApiCategoriesResponse, ApiProductsResponse, DisplayProduct, generateMetadata(), mapProductToDisplay(), PageProps, resolveImageUrl() (+8 more)
+Cohesion: 0.12
+Nodes (8): blogFields, BLOGS_TYPE, CanvasProps, emptyForm, FormState, SectionField, slugify(), toPayload()
 
 ### Community 237 - "Community 237"
-Cohesion: 0.12
-Nodes (15): serializeAuthCustomer(), AuthCustomer, CommunityComment, CommunityConnection, CommunityEventRsvp, CommunityNotification, CommunityProfile, CommunityReaction (+7 more)
+Cohesion: 0.15
+Nodes (12): CommunityComment, CommunityConnection, CommunityEventRsvp, CommunityNotification, CommunityProfile, CommunityReaction, CommunitySavedPost, Conversation (+4 more)
 
 ### Community 238 - "Community 238"
-Cohesion: 0.11
-Nodes (10): AdminUserActivityLog, AdminUserActivityResponse, AdminUserItem, adminUsersApi, AdminUsersQuery, AdminUsersResponse, CreateAdminUserPayload, CreateAdminUserResponse (+2 more)
+Cohesion: 0.25
+Nodes (4): formatDate(), ProductRow(), ZqLiveProduct, ZqPageData
+
+### Community 239 - "Community 239"
+Cohesion: 0.31
+Nodes (9): buildPricingSummary(), deriveComputedPv(), deriveMultiplierFromPv(), formatDecimalInput(), getComputedPvDisplay(), mapVariantToForm(), roundTo(), toOptionalPositiveNumber() (+1 more)
 
 ### Community 240 - "Community 240"
 Cohesion: 0.14
 Nodes (11): MemberKycItem, MemberKycStatus, ActionType, DetailModal(), FILTER_TABS, FilterKey, formatDate(), getInitials() (+3 more)
 
 ### Community 241 - "Community 241"
-Cohesion: 0.31
-Nodes (4): ProductBrandController, JsonResponse, Request, ProductBrand
+Cohesion: 0.25
+Nodes (6): BUDGET_OPTIONS, PROJECT_SCOPE_OPTIONS, PROJECT_TYPE_OPTIONS, PROPERTY_TYPE_OPTIONS, StepServiceProps, STYLE_OPTIONS
 
 ### Community 242 - "Community 242"
-Cohesion: 0.13
-Nodes (13): serviceInquiriesApi, ServiceInquiriesResponse, ServiceInquiryCounts, ServiceInquiryItem, ServiceInquiryStatus, SubmitInquiryPayload, SubmitInquiryResponse, AVATAR_COLORS (+5 more)
+Cohesion: 0.29
+Nodes (5): ContactForm(), FormState, branches, metadata, quickStats
 
 ### Community 243 - "Community 243"
-Cohesion: 0.16
-Nodes (13): SupplierFulfillmentStatus, SupplierNotificationItem, SupplierNotificationsResponse, SupplierOrder, supplierOrdersApi, SupplierOrdersQuery, SupplierShipmentStatus, Options (+5 more)
+Cohesion: 0.11
+Nodes (20): SupplierFulfillmentStatus, SupplierNotificationItem, SupplierNotificationsResponse, SupplierOrder, supplierOrdersApi, SupplierOrdersQuery, SupplierShipmentStatus, Options (+12 more)
 
 ### Community 246 - "Community 246"
 Cohesion: 0.17
 Nodes (14): DisplayProduct, LooseRecord, mapProductToDisplay(), metadata, resolveDisplayStock(), resolveImageUrl(), titleFromSlug(), toBoolean() (+6 more)
 
 ### Community 247 - "Community 247"
-Cohesion: 0.19
-Nodes (15): uploadCommunityPostImage(), CloudinaryUploadResult, createCloudinarySignature(), isRecord(), readCloudinaryConfig(), uploadImageToCloudinary(), CHANNELS, messageRoutes (+7 more)
+Cohesion: 0.57
+Nodes (3): TotpController, JsonResponse, Request
+
+### Community 248 - "Community 248"
+Cohesion: 0.48
+Nodes (3): CheckoutHistory, Customer, OrderPvPosting
 
 ### Community 249 - "Community 249"
-Cohesion: 0.21
-Nodes (13): ConnectionUser, serializeConnectionUser(), acceptRequest(), buildAuthor(), connectedIds(), ConnectionStatus, getConnectionStatus(), listConnections() (+5 more)
+Cohesion: 0.15
+Nodes (6): LoginPageClient(), LoginPageClientProps, Mode, resolveCallbackPath(), AuthTabsProps, Mode
 
 ### Community 250 - "Community 250"
 Cohesion: 0.12
@@ -1439,27 +1436,27 @@ Cohesion: 0.36
 Nodes (6): SupplierWarehouseController, CloudinaryUploadService, JsonResponse, Request, Supplier, SupplierWarehouse
 
 ### Community 253 - "Community 253"
-Cohesion: 0.18
-Nodes (11): handler, GET(), getClientIp(), isRateLimited(), rateLimitStore, partnerAuthOptions, TokenUser, getClientIp() (+3 more)
+Cohesion: 0.33
+Nodes (6): featureItems, getStatusInfo(), requirementItems, STEPS, VerificationOverviewPage(), VerificationStatus
 
 ### Community 254 - "Community 254"
-Cohesion: 0.19
-Nodes (12): forceDownload(), uploadAdminChatAttachment(), uploadSupplierChatAttachment(), GET(), POST(), forceDownload(), AdminSessionUser, authHeaders() (+4 more)
+Cohesion: 0.38
+Nodes (5): Icon, normalizeIncomingContent(), normalizeListHtml(), RichTextEditor(), RichTextEditorProps
 
 ### Community 255 - "Community 255"
-Cohesion: 0.19
-Nodes (9): getInitials(), useUnreadMessageCount(), CommunityAuthGuard(), MainContent(), MobileBottomNav(), tabs, PageTransition(), navItems (+1 more)
+Cohesion: 0.33
+Nodes (4): CategoryCard(), CategoryCardProps, toSlug(), categories
 
 ### Community 256 - "Community 256"
-Cohesion: 0.15
-Nodes (11): blogImages, BlogsSection(), defaultGalleryImages, GalleryImage, GallerySection(), DreamBuildBlogPost, blogPosts, galleryItems (+3 more)
+Cohesion: 0.61
+Nodes (3): JntWebhookController, JsonResponse, Request
 
 ### Community 258 - "Community 258"
 Cohesion: 0.26
 Nodes (4): AdminSmsBlastController, Admin, Request, SemaphoreService
 
 ### Community 259 - "Community 259"
-Cohesion: 0.30
+Cohesion: 0.21
 Nodes (4): CategoryController, JsonResponse, Request, Category
 
 ### Community 260 - "Community 260"
@@ -1482,10 +1479,6 @@ Nodes (4): PartnerUserController, Admin, Request, PartnerStorefrontAccess
 Cohesion: 0.36
 Nodes (4): RewardCheckinController, Carbon, Request, DailyCheckin
 
-### Community 265 - "Community 265"
-Cohesion: 0.20
-Nodes (14): PageProps, ApiCategoriesResponse, ApiProductResponse, ApiProductsResponse, ApiWebPagesResponse, fetchWithRetry(), fetchWithTimeout(), generateMetadata() (+6 more)
-
 ### Community 266 - "Community 266"
 Cohesion: 0.20
 Nodes (8): stepFade, StepIndicatorProps, FORM_STEPS, FormStep, INITIAL_FORM_DATA, SERVICES, TIME_SLOTS, PrimaryButton()
@@ -1507,12 +1500,8 @@ Cohesion: 0.14
 Nodes (13): compilerOptions, esModuleInterop, forceConsistentCasingInFileNames, module, moduleResolution, outDir, rootDir, skipLibCheck (+5 more)
 
 ### Community 271 - "Community 271"
-Cohesion: 0.14
-Nodes (7): getErrorMessage(), AVATAR_COLORS, defaultInviteForm, EditForm, InviteForm, SupplierUsersPage(), SupplierUsersTree()
-
-### Community 272 - "Community 272"
-Cohesion: 0.14
-Nodes (13): CommunityComment, CommunityConnection, CommunityEventRsvp, CommunityNotification, CommunityPost, CommunityProfile, CommunityReaction, CommunitySavedPost (+5 more)
+Cohesion: 0.47
+Nodes (3): UserFactory, Factory, static
 
 ### Community 273 - "Community 273"
 Cohesion: 0.41
@@ -1527,12 +1516,12 @@ Cohesion: 0.15
 Nodes (13): require, bacon/bacon-qr-code, google/auth, kreait/firebase-php, laravel/framework, laravel/sanctum, laravel/tinker, meilisearch/meilisearch-php (+5 more)
 
 ### Community 277 - "Community 277"
-Cohesion: 0.26
-Nodes (9): countConnections(), profileRoutes, getCustomerWithProfile(), getProfile(), upsertProfile(), isRecord(), parseOptionalString(), parseUpdateProfileInput() (+1 more)
+Cohesion: 0.29
+Nodes (8): countConnections(), getCustomerWithProfile(), getProfile(), upsertProfile(), isRecord(), parseOptionalString(), parseUpdateProfileInput(), UpdateProfileInput
 
 ### Community 278 - "Community 278"
-Cohesion: 0.27
-Nodes (11): initials(), ConnectionStatus, ConnectionUser, useConnectionRequests(), useMutualConnections(), useMyConnections(), UserProfileBundle, PersonRow() (+3 more)
+Cohesion: 0.12
+Nodes (18): ConnectionStatus, ConnectionUser, useConnectionActions(), useConnectionRequests(), useMutualConnections(), useMyConnections(), UserProfileBundle, useUserProfile() (+10 more)
 
 ### Community 279 - "Community 279"
 Cohesion: 0.24
@@ -1558,6 +1547,10 @@ Nodes (12): devDependencies, cross-env, eslint, eslint-config-next, tailwindcss,
 Cohesion: 0.17
 Nodes (11): Advantages of availing a webstore, AF Home — Partner Storefront Studio: Complete Tutorial, Closing, PART A — Screenshots na kukunin mo (8–11 images), PART B — Source document (i-paste/upload ito sa NotebookLM), PART C — Video Overview customization prompt, PART D — Motion-graphics prompt (PDF reference + sequential images), Partner Storefront Tutorial → NotebookLM Video Overview (+3 more)
 
+### Community 287 - "Community 287"
+Cohesion: 0.40
+Nodes (9): ALLOWED_POST_IMAGE_TYPES, isRecord(), isUploadedFile(), parseCommunityPostImageUpload(), parseCreateCommunityPostInput(), parseEnumValue(), parseOptionalDate(), parseOptionalString() (+1 more)
+
 ### Community 290 - "Community 290"
 Cohesion: 0.35
 Nodes (4): Closure, Request, Response, RequestAbuseGuard
@@ -1575,16 +1568,16 @@ Cohesion: 0.35
 Nodes (6): startServer(), registerChatNamespace(), registerNotifyNamespace(), config, CHANNELS, subscriber
 
 ### Community 294 - "Community 294"
-Cohesion: 0.25
-Nodes (9): AssemblyGuidesPageClient(), LocalAssemblyGuide, Props, AssemblyGuidesPage(), collectAssemblyGuidePdfs(), humanizeGuideName(), isNumericOnlyTitle(), LocalAssemblyGuide (+1 more)
+Cohesion: 0.47
+Nodes (4): fetchReferrerProfile(), generateMetadata(), normalizeAvatarUrl(), ReferralPageProps
 
 ### Community 295 - "Community 295"
 Cohesion: 0.18
 Nodes (10): Checklists, Example: Rename `validateUser` to `authenticateUser`, Extract Module, Refactoring with GitNexus, Rename Symbol, Risk Rules, Split Function/Service, Tools (+2 more)
 
 ### Community 296 - "Community 296"
-Cohesion: 0.20
-Nodes (7): metadata, PERIOD_COLORS, PERIODS, RankingFilters(), RankingFiltersProps, PREVIOUS_RANKS, RankingPageClient()
+Cohesion: 0.33
+Nodes (4): BelongsTo, HasMany, HasOne, SupplierChatConversation
 
 ### Community 297 - "Community 297"
 Cohesion: 0.18
@@ -1595,16 +1588,16 @@ Cohesion: 0.22
 Nodes (7): AnnouncementsClient(), RecipientMode, RecipientOption, SendTimingMode, VARIABLE_TOKENS, VariableToken, metadata
 
 ### Community 299 - "Community 299"
-Cohesion: 0.20
-Nodes (9): adminInquiriesApi, AdminUsernameChangeRequest, AdminUsernameChangeRequestsResponse, AdminWebstoreReceiptItem, AdminWebstoreRequest, AdminWebstoreRequestsResponse, PartnerWebstoreRequestsResponse, UsernameChangeRequestStatus (+1 more)
+Cohesion: 0.33
+Nodes (3): Phase, PHASES, Step
 
 ### Community 301 - "Community 301"
 Cohesion: 0.53
 Nodes (4): ExpenseCategoryController, ExpenseCategory, JsonResponse, Request
 
-### Community 303 - "Community 303"
-Cohesion: 0.24
-Nodes (8): ShippingRate, ShippingRatePayload, shippingRatesApi, ShippingRatesResponse, CITY_ALIASES, normalizeKey(), PROVINCE_ALIASES, resolveShippingFee()
+### Community 302 - "Community 302"
+Cohesion: 0.09
+Nodes (22): Home(), BlogsPage(), BlogsSection(), ContactContent, ContactSection(), defaultContact, projectTypes, defaultCarouselSlides (+14 more)
 
 ### Community 306 - "Community 306"
 Cohesion: 0.20
@@ -1631,16 +1624,12 @@ Cohesion: 0.42
 Nodes (3): FollowerController, Request, Follower
 
 ### Community 313 - "Community 313"
-Cohesion: 0.61
-Nodes (3): JntWebhookController, JsonResponse, Request
+Cohesion: 0.31
+Nodes (8): generateMetadata(), BlogPost, defaultBlogPosts, fetchBlogItems(), getApiBase(), getBlogsContent(), BlogPage(), BlogPageProps
 
 ### Community 314 - "Community 314"
 Cohesion: 0.31
 Nodes (3): Request, MeilisearchController, MeilisearchService
-
-### Community 315 - "Community 315"
-Cohesion: 0.33
-Nodes (4): BelongsTo, HasMany, HasOne, SupplierChatConversation
 
 ### Community 316 - "Community 316"
 Cohesion: 0.22
@@ -1662,25 +1651,21 @@ Nodes (8): graphify reference: extra exports and benchmark, Step 6b - Wiki (only
 Cohesion: 0.22
 Nodes (8): Checklist, Example: "What breaks if I change validateUser?", Impact Analysis with GitNexus, Risk Assessment, Tools, Understanding Output, When to Use, Workflow
 
-### Community 321 - "Community 321"
-Cohesion: 0.25
-Nodes (4): formatDate(), ProductRow(), ZqLiveProduct, ZqPageData
-
 ### Community 323 - "Community 323"
-Cohesion: 0.50
-Nodes (3): SupplierUploadController, Request, SupplierUser
+Cohesion: 0.70
+Nodes (3): getProfileCompletion(), inferWorkLocation(), isFilled()
 
 ### Community 324 - "Community 324"
 Cohesion: 0.36
 Nodes (4): inter, metadata, createQueryClient(), AppProviders()
 
+### Community 326 - "Community 326"
+Cohesion: 0.50
+Nodes (3): AvatarCropModalProps, createImage(), getCroppedBlob()
+
 ### Community 327 - "Community 327"
 Cohesion: 0.25
 Nodes (8): require-dev, fakerphp/faker, laravel/pail, laravel/pint, laravel/sail, mockery/mockery, nunomaduro/collision, phpunit/phpunit
-
-### Community 328 - "Community 328"
-Cohesion: 0.29
-Nodes (5): ContactForm(), FormState, branches, metadata, quickStats
 
 ### Community 329 - "Community 329"
 Cohesion: 0.25
@@ -1690,17 +1675,13 @@ Nodes (7): Checklist, Debugging Patterns, Debugging with GitNexus, Example: "Pay
 Cohesion: 0.25
 Nodes (7): Checklist, Example: "How does payment processing work?", Exploring Codebases with GitNexus, Resources, Tools, When to Use, Workflow
 
-### Community 331 - "Community 331"
-Cohesion: 0.25
-Nodes (6): BUDGET_OPTIONS, PROJECT_SCOPE_OPTIONS, PROJECT_TYPE_OPTIONS, PROPERTY_TYPE_OPTIONS, StepServiceProps, STYLE_OPTIONS
-
 ### Community 332 - "Community 332"
-Cohesion: 0.57
-Nodes (3): TotpController, JsonResponse, Request
+Cohesion: 0.40
+Nodes (3): TextMessage, API_BASE, TextMessage()
 
 ### Community 333 - "Community 333"
-Cohesion: 0.29
-Nodes (3): metadata, LandingPage(), metadata
+Cohesion: 0.24
+Nodes (9): AccountSnapshot, ALL_TIERS, LevelsTab(), NEXT_TIER_REQUIREMENTS, Props, rankToTier(), TIER_BADGE_IMAGE, TIER_COVER (+1 more)
 
 ### Community 334 - "Community 334"
 Cohesion: 0.52
@@ -1733,10 +1714,6 @@ Nodes (3): FieldDefinition, PRODUCT_CSV_FIELDS, SAMPLE_PRODUCTS
 ### Community 341 - "Community 341"
 Cohesion: 0.29
 Nodes (6): destDir, files, fs, path, projectRoot, srcDir
-
-### Community 344 - "Community 344"
-Cohesion: 0.38
-Nodes (5): Icon, normalizeIncomingContent(), normalizeListHtml(), RichTextEditor(), RichTextEditorProps
 
 ### Community 345 - "Community 345"
 Cohesion: 0.53
@@ -1782,25 +1759,9 @@ Nodes (4): AuthLayout(), getCommunityStats(), CountUp(), CountUpProps
 Cohesion: 0.33
 Nodes (5): For /graphify explain, For /graphify path, graphify reference: query, path, explain, Step 0 — Constrained query expansion (REQUIRED before traversal), Step 1 — Traversal
 
-### Community 357 - "Community 357"
-Cohesion: 0.33
-Nodes (3): Phase, PHASES, Step
-
-### Community 358 - "Community 358"
-Cohesion: 0.47
-Nodes (3): UserFactory, Factory, static
-
-### Community 359 - "Community 359"
-Cohesion: 0.33
-Nodes (3): serviceImages, ServicesSection(), services
-
-### Community 360 - "Community 360"
-Cohesion: 0.53
-Nodes (5): extractVariantOptionLabels(), mergeVariantOptionLabelsMeta(), normalizeLabel(), stripVariantOptionLabelsMeta(), VariantOptionLabels
-
-### Community 362 - "Community 362"
-Cohesion: 0.50
-Nodes (4): metadata, getTitle(), MediaSectionPage(), MediaSectionPageProps
+### Community 361 - "Community 361"
+Cohesion: 0.18
+Nodes (11): mkAbout(), mkCta(), mkFeatures(), mkFooter(), mkHero(), mkId(), mkImage(), mkNav() (+3 more)
 
 ### Community 363 - "Community 363"
 Cohesion: 0.40
@@ -1809,14 +1770,6 @@ Nodes (5): autoload, psr-4, App\\, Database\\Factories\\, Database\\Seeders\\
 ### Community 364 - "Community 364"
 Cohesion: 0.40
 Nodes (4): buildCpusRaw, csp, nextConfig, securityHeaders
-
-### Community 365 - "Community 365"
-Cohesion: 0.70
-Nodes (3): getProfileCompletion(), inferWorkLocation(), isFilled()
-
-### Community 366 - "Community 366"
-Cohesion: 0.40
-Nodes (4): CartItem, cartSlice, CartState, initialState
 
 ### Community 367 - "Community 367"
 Cohesion: 0.40
@@ -1874,6 +1827,10 @@ Nodes (3): LOCAL_HOSTS, normalizeRequestHost(), shouldUseTurnstile()
 Cohesion: 0.67
 Nodes (3): columnToLetter(), POST(), SCOPES
 
+### Community 388 - "Community 388"
+Cohesion: 0.13
+Nodes (13): serviceInquiriesApi, ServiceInquiriesResponse, ServiceInquiryCounts, ServiceInquiryItem, ServiceInquiryStatus, SubmitInquiryPayload, SubmitInquiryResponse, AVATAR_COLORS (+5 more)
+
 ### Community 392 - "Community 392"
 Cohesion: 0.67
 Nodes (3): autoload-dev, psr-4, Tests\\
@@ -1882,25 +1839,33 @@ Nodes (3): autoload-dev, psr-4, Tests\\
 Cohesion: 0.67
 Nodes (3): extra, laravel, dont-discover
 
+### Community 564 - "Community 564"
+Cohesion: 0.50
+Nodes (4): formatMoney(), Period, ReconciliationMain(), STRIPE
+
+### Community 568 - "Community 568"
+Cohesion: 0.50
+Nodes (3): SupplierUploadController, Request, SupplierUser
+
 ## Knowledge Gaps
-- **3685 isolated node(s):** `stats`, `principles`, `process`, `BlogPostPageProps`, `fallbackImages` (+3680 more)
+- **3694 isolated node(s):** `stats`, `principles`, `process`, `BlogPostPageProps`, `fallbackImages` (+3689 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **114 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **120 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `uploadImageToCloudinary()` connect `Community 247` to `Templates Group 181`, `Community 254`?**
+- **Why does `uploadImageToCloudinary()` connect `Profile Group 96` to `Templates Group 181`, `Dashboard Group 102`?**
   _High betweenness centrality (0.149) - this node is a cross-community bridge._
-- **Why does `Controller` connect `Settings Group 198` to `Auth Group 129`, `Community 258`, `Community 259`, `Community 261`, `Community 262`, `Interiorrequests Group 135`, `Community 263`, `Community 264`, `Members Group 138`, `Community 267`, `Community 268`, `Products Group 141`, `Profile Group 142`, `Community 273`, `Community 280`, `Community 286`, `Community 287`, `Community 289`, `Chat Group 161`, `Community 301`, `Layout Group 174`, `Community 302`, `Members Group 175`, `Community 304`, `Products Group 178`, `Products Group 179`, `Community 312`, `Community 313`, `Community 314`, `Partner Group 187`, `Products Group 191`, `Profile Group 195`, `Community 323`, `Settings Group 199`, `Community 332`, `Community 212`, `Community 213`, `Community 214`, `Community 220`, `Community 221`, `Products Group 94`, `Community 224`, `Community 225`, `Accounting Group 100`, `Community 234`, `Community 235`, `Community 241`, `Buttons Group 116`, `Community 252`, `Profile Group 118`, `Community 251`, `Product Group 124`, `Product Group 125`?**
-  _High betweenness centrality (0.042) - this node is a cross-community bridge._
-- **Why does `Image` connect `Chat Group 160` to `Community 256`, `Ranking & Leaderboard`, `Partner Storefront & Sections`, `Components Group 131`, `Storefront Tutorial Flow`, `Customer Group 132`, `Login & Auth`, `Superadmin Dashboard`, `Products Group 140`, `Add Product Modal`, `Edit Product Modal`, `Admin User Settings`, `Shop Builder Studio`, `Category Add Modal`, `Products Table`, `Product Info & Variants`, `Community 282`, `Brand By-Brand Page`, `Order Cards & Icons`, `Products Page Main`, `ZQ Product Preview`, `Customer Group 46`, `Products Group 47`, `Project Group 48`, `Dashboard Group 50`, `Components Group 55`, `Templates Group 183`, `Globalproduct Group 56`, `Landing Group 57`, `Supplier Group 63`, `Community 321`, `Referrals Group 196`, `Products Group 75`, `Buttons Group 78`, `Community 207`, `Supplier Group 80`, `Products Group 93`, `Community 223`, `Profile Group 96`, `Community 359`, `Webpages Group 111`, `Auth Group 113`, `Buttons Group 115`, `Community 243`, `Apps Group 120`?**
+- **Why does `Controller` connect `Settings Group 198` to `Community 256`, `Auth Group 129`, `Community 258`, `Community 259`, `Community 261`, `Community 262`, `Interiorrequests Group 135`, `Community 263`, `Community 264`, `Members Group 138`, `Community 267`, `Community 268`, `Products Group 141`, `Community 273`, `Admin Inquiry & Service`, `Products Group 151`, `Community 280`, `Community 286`, `Community 289`, `Chat Group 161`, `Auth Forgot Password`, `Landing Group 172`, `Community 301`, `Layout Group 174`, `Community 304`, `Products Group 178`, `Products Group 179`, `Community 312`, `Community 568`, `Community 314`, `Partner Group 187`, `Products Group 191`, `Profile Group 195`, `Settings Group 199`, `Products Group 75`, `Community 212`, `Community 213`, `Community 214`, `Community 220`, `Community 221`, `Products Group 94`, `Community 224`, `Community 225`, `Accounting Group 100`, `Community 234`, `Community 235`, `Buttons Group 116`, `Community 252`, `Profile Group 118`, `Community 247`, `Community 251`, `Product Group 124`, `Product Group 125`?**
   _High betweenness centrality (0.039) - this node is a cross-community bridge._
+- **Why does `buildPageMetadata()` connect `Layout Navbar & Promo` to `Webpages Group 128`, `Emailblast Group 134`, `Admin Orders`, `Products Group 140`, `Products Group 139`, `Accounting Group 143`, `Admin User Settings`, `Auth Group 146`, `Category Add Modal`, `Supplier Group 154`, `Supplier Group 155`, `Accounting Group 159`, `Community 294`, `Community 298`, `Product Group 176`, `Products Group 52`, `Community 313`, `Landing Group 57`, `Products Group 190`, `Supplier Group 62`, `Landing Group 70`, `Landing Group 71`, `Members Group 72`, `Members Group 73`, `Community 206`, `Community 344`, `Dashboard Group 90`, `Profile Group 95`, `Community 226`, `Webpages Group 111`, `Webpages Group 112`, `Community 369`, `Branches Group 114`, `Buttons Group 115`, `Community 242`, `Auth Group 113`, `Community 246`, `Accounting Group 119`?**
+  _High betweenness centrality (0.038) - this node is a cross-community bridge._
 - **Are the 9 inferred relationships involving `buildPageMetadata()` (e.g. with `generateMetadata()` and `generateMetadata()`) actually correct?**
   _`buildPageMetadata()` has 9 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `stats`, `principles`, `process` to the rest of the system?**
-  _3685 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _3694 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Interior Services Animations` be split into smaller, more focused modules?**
   _Cohesion score 0.12666666666666668 - nodes in this community are weakly interconnected._
 - **Should `Ranking & Leaderboard` be split into smaller, more focused modules?**
-  _Cohesion score 0.055191256830601096 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.045774647887323945 - nodes in this community are weakly interconnected._

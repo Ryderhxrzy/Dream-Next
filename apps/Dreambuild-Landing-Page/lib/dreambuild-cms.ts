@@ -50,11 +50,38 @@ export type DreamBuildBlogPost = (typeof blogPosts)[number] & {
   faq?: Array<{ question: string; answer: string }>;
 };
 
+export type ServicesCtaContent = {
+  text: string;
+  buttonText: string;
+  buttonUrl: string;
+};
+
+export type ServicesHeaderContent = {
+  eyebrow: string;
+  title: string;
+  description: string;
+};
+
+export type GalleryContent = (typeof galleryItems)[number] & {
+  image?: string;
+  alt?: string;
+};
+
+export type GalleryHeaderContent = {
+  eyebrow: string;
+  title: string;
+  ctaText: string;
+  ctaUrl: string;
+};
+
 export type DreamBuildContent = {
   hero: HeroContent;
   services: typeof services;
+  servicesHeader: ServicesHeaderContent;
+  servicesCta: ServicesCtaContent;
   projects: typeof projects;
-  galleryItems: typeof galleryItems;
+  galleryItems: GalleryContent[];
+  galleryHeader: GalleryHeaderContent;
   processSteps: ProcessStepContent[];
   testimonials: typeof testimonials;
   blogPosts: DreamBuildBlogPost[];
@@ -110,6 +137,25 @@ const defaultContact = {
     "Tell us about your space and what you're looking for. We'll get back to you within 24 hours to set up a free consultation.",
   email: "hello@dreambuild.studio",
   address: "Metro Manila, Philippines",
+};
+
+const defaultServicesCta: ServicesCtaContent = {
+  text: "Not sure which service fits your project?",
+  buttonText: "Book a Free Consult",
+  buttonUrl: "#contact",
+};
+
+const defaultServicesHeader: ServicesHeaderContent = {
+  eyebrow: "Interior Services",
+  title: "What we do best.",
+  description: "Three focused service areas, each designed to move your space forward.",
+};
+
+const defaultGalleryHeader: GalleryHeaderContent = {
+  eyebrow: "Interior Gallery",
+  title: "A curated look at our aesthetic.",
+  ctaText: "See All Projects",
+  ctaUrl: "/projects",
 };
 
 const contentTypes = [
@@ -186,6 +232,39 @@ const byIndex = <T>(items: CmsItem[], defaults: readonly T[], mapper: (item: Cms
   });
 };
 
+const mapServices = (items: CmsItem[]): typeof services => {
+  const seen = new Set<string>();
+  const activeItems = items
+    .filter((item) => item.is_active)
+    .sort((a, b) => a.sort_order - b.sort_order || a.id - b.id)
+    .filter((item, index) => {
+      const key = text(item.payload?.service_number, "") || item.key || `index:${index}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+  if (!activeItems.length) return [...services];
+
+  const sharedServiceLabel =
+    activeItems
+      .map((item) => text(item.payload?.service_label, ""))
+      .find(Boolean) || services[0].serviceLabel;
+
+  return activeItems.map((item, index) => {
+    const fallback = services[index] ?? services[services.length - 1];
+    const payload = item.payload ?? {};
+    return {
+      ...fallback,
+      id: String(index + 1).padStart(2, "0"),
+      serviceLabel: text(payload.service_label, sharedServiceLabel),
+      title: text(item.title, fallback.title),
+      description: text(item.body, fallback.description),
+      bullets: textList(payload.bullets, fallback.bullets),
+    };
+  }) as typeof services;
+};
+
 const mapProcessSteps = (items: CmsItem[]): ProcessStepContent[] => {
   if (!items.length) return [...processSteps];
 
@@ -219,6 +298,14 @@ export async function getDreamBuildContent(): Promise<DreamBuildContent> {
 
   const heroItem = heroItems[0];
   const heroPayload = heroItem?.payload ?? {};
+  const servicesHeaderItem =
+    serviceItems.find((item) => item.payload?.section_eyebrow || item.payload?.section_title || item.payload?.section_description) ??
+    serviceItems[0];
+  const servicesHeaderPayload = servicesHeaderItem?.payload ?? {};
+  const galleryHeaderItem =
+    galleryCmsItems.find((item) => item.payload?.section_eyebrow || item.payload?.section_title || item.payload?.cta_text || item.payload?.cta_url) ??
+    galleryCmsItems[0];
+  const galleryHeaderPayload = galleryHeaderItem?.payload ?? {};
   const carouselUrls = textList(heroPayload.carousel_images, []).filter(Boolean);
   const hero: HeroContent = heroItem
     ? {
@@ -245,16 +332,13 @@ export async function getDreamBuildContent(): Promise<DreamBuildContent> {
 
   return {
     hero,
-    services: byIndex(serviceItems, services, (item, fallback) => {
-      const payload = item.payload ?? {};
-      return {
-        ...fallback,
-        id: text(payload.service_number, fallback.id),
-        title: text(item.title, fallback.title),
-        description: text(item.body, fallback.description),
-        bullets: textList(payload.bullets, fallback.bullets),
-      };
-    }),
+    services: mapServices(serviceItems),
+    servicesHeader: {
+      eyebrow: text(servicesHeaderPayload.section_eyebrow, defaultServicesHeader.eyebrow),
+      title: text(servicesHeaderPayload.section_title, defaultServicesHeader.title),
+      description: text(servicesHeaderPayload.section_description, defaultServicesHeader.description),
+    },
+    servicesCta: defaultServicesCta,
     projects: byIndex(projectItems, projects, (item, fallback) => {
       const payload = item.payload ?? {};
       return {
@@ -303,9 +387,17 @@ export async function getDreamBuildContent(): Promise<DreamBuildContent> {
       return {
         ...fallback,
         title: text(item.title, fallback.title),
+        image: text(item.image_url, ""),
+        alt: text(payload.alt, item.title || fallback.title),
         tone: text(payload.tone, fallback.tone) as typeof fallback.tone,
       };
     }),
+    galleryHeader: {
+      eyebrow: text(galleryHeaderPayload.section_eyebrow, defaultGalleryHeader.eyebrow),
+      title: text(galleryHeaderPayload.section_title, defaultGalleryHeader.title),
+      ctaText: text(galleryHeaderPayload.cta_text, defaultGalleryHeader.ctaText),
+      ctaUrl: text(galleryHeaderPayload.cta_url, defaultGalleryHeader.ctaUrl),
+    },
     processSteps: mapProcessSteps(processItems),
     contact: contactItems[0]
       ? {

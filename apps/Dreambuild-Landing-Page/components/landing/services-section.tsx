@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { services as defaultServices } from "@/lib/landing-data";
+import type { ServicesCtaContent, ServicesHeaderContent } from "@/lib/dreambuild-cms";
 import { FadeUp, SlideInLeft, SlideInRight, StaggerContainer, StaggerItem } from "@/components/ui/motion";
 import { motion } from "framer-motion";
 
@@ -12,7 +13,27 @@ const serviceImages = [
   "https://images.unsplash.com/photo-1631679706909-1844bbd07221?w=900&q=80",
 ];
 
-export function ServicesSection({ services = defaultServices }: { services?: typeof defaultServices }) {
+const defaultCta: ServicesCtaContent = {
+  text: "Not sure which service fits your project?",
+  buttonText: "Book a Free Consult",
+  buttonUrl: "#contact",
+};
+
+const defaultHeader: ServicesHeaderContent = {
+  eyebrow: "Interior Services",
+  title: "What we do best.",
+  description: "Three focused service areas, each designed to move your space forward with clarity and intention.",
+};
+
+export function ServicesSection({
+  services = defaultServices,
+  header = defaultHeader,
+  cta = defaultCta,
+}: {
+  services?: typeof defaultServices;
+  header?: ServicesHeaderContent;
+  cta?: ServicesCtaContent;
+}) {
   return (
     <section id="services" className="overflow-hidden py-24 lg:py-36">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -22,14 +43,14 @@ export function ServicesSection({ services = defaultServices }: { services?: typ
           <div>
             <p className="inline-flex items-center gap-2 text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
               <span className="h-px w-8 bg-[var(--muted)]" />
-              Interior Services
+              {header.eyebrow}
             </p>
             <h2 className="mt-4 text-3xl font-medium tracking-tight text-[var(--foreground)] sm:text-4xl lg:text-5xl">
-              What we do best.
+              {header.title}
             </h2>
           </div>
           <p className="max-w-sm text-sm leading-relaxed text-[var(--muted)] lg:text-right">
-            Three focused service areas, each designed to move your space forward with clarity and intention.
+            {header.description}
           </p>
         </FadeUp>
 
@@ -81,13 +102,13 @@ export function ServicesSection({ services = defaultServices }: { services?: typ
         {/* Bottom CTA */}
         <FadeUp delay={0.1} className="mt-24 flex flex-col items-center gap-5 border-t border-[var(--border)] pt-16 text-center lg:mt-32">
           <p className="text-lg font-medium text-[var(--foreground)]">
-            Not sure which service fits your project?
+            {cta.text}
           </p>
           <Link
-            href="#contact"
+            href={cta.buttonUrl}
             className="inline-flex items-center gap-2 rounded-full bg-[var(--dark)] px-8 py-3.5 text-sm font-medium text-white transition-all hover:bg-[var(--dark-muted)] hover:scale-105"
           >
-            Book a Free Consult
+            {cta.buttonText}
             <span>→</span>
           </Link>
         </FadeUp>
@@ -125,7 +146,7 @@ function ServiceContent({ service }: { service: typeof defaultServices[number] }
   return (
     <div>
       <p className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
-        Service {service.id}
+        {service.serviceLabel} {service.id}
       </p>
       <h3 className="mt-4 text-2xl font-medium tracking-tight text-[var(--foreground)] sm:text-3xl lg:text-4xl">
         {service.title}

@@ -5,9 +5,9 @@ import { SlideInLeft, SlideInRight } from "@/components/ui/motion";
 import { motion } from "framer-motion";
 
 const projectTypes = [
-  "Full Interior Design",
-  "Renovation Design",
-  "Styling and Finishing",
+  "Interior Design",
+  "Sourcing & Supply",
+  "Installation & Finishing",
   "Not sure yet",
 ];
 

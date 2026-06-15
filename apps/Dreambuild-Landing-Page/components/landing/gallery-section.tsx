@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import { motion, useMotionValue, useAnimationFrame } from "framer-motion";
 import { FadeUp } from "@/components/ui/motion";
 import { galleryItems as defaultGalleryItems } from "@/lib/landing-data";
+import type { GalleryContent, GalleryHeaderContent } from "@/lib/dreambuild-cms";
 
 const defaultGalleryImages = [
   { src: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600&q=80", title: "Living Room Styling", aspect: "aspect-[4/3]" as const },
@@ -17,6 +18,13 @@ const defaultGalleryImages = [
 ];
 
 type GalleryImage = typeof defaultGalleryImages[number];
+
+const defaultHeader: GalleryHeaderContent = {
+  eyebrow: "Interior Gallery",
+  title: "A curated look at our aesthetic.",
+  ctaText: "See All Projects",
+  ctaUrl: "/projects",
+};
 
 function MarqueeRow({
   items,
@@ -97,10 +105,17 @@ function MarqueeRow({
   );
 }
 
-export function GallerySection({ galleryItems = defaultGalleryItems }: { galleryItems?: typeof defaultGalleryItems }) {
+export function GallerySection({
+  galleryItems = defaultGalleryItems,
+  header = defaultHeader,
+}: {
+  galleryItems?: GalleryContent[];
+  header?: GalleryHeaderContent;
+}) {
   const galleryImages = defaultGalleryImages.map((fallback, index) => ({
     ...fallback,
     title: galleryItems[index]?.title ?? fallback.title,
+    src: galleryItems[index]?.image || fallback.src,
   }));
   const row1 = [...galleryImages, ...galleryImages];
   const row2 = [...galleryImages.slice().reverse(), ...galleryImages.slice().reverse()];
@@ -112,17 +127,17 @@ export function GallerySection({ galleryItems = defaultGalleryItems }: { gallery
           <div>
             <p className="inline-flex items-center gap-2 text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
               <span className="h-px w-8 bg-[var(--muted)]" />
-              Interior Gallery
+              {header.eyebrow}
             </p>
             <h2 className="mt-4 text-3xl font-medium tracking-tight text-[var(--foreground)] sm:text-4xl lg:text-5xl">
-              A curated look at our aesthetic.
+              {header.title}
             </h2>
           </div>
           <Link
-            href="/projects"
+            href={header.ctaUrl}
             className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[var(--border)] px-6 py-3 text-sm font-medium text-[var(--foreground)] transition-all hover:bg-[var(--dark)] hover:text-white hover:border-[var(--dark)]"
           >
-            See All Projects
+            {header.ctaText}
             <span>→</span>
           </Link>
         </FadeUp>

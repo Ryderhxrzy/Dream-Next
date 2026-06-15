@@ -67,11 +67,11 @@ export interface PublicWebPageItemsResponse {
 export interface UpsertWebPageItemPayload {
   key?: string
   title?: string
-  subtitle?: string
+  subtitle?: string | null
   body?: string
   image_url?: string
-  link_url?: string
-  button_text?: string
+  link_url?: string | null
+  button_text?: string | null
   payload?: Record<string, unknown> | null
   sort_order?: number
   is_active?: boolean
@@ -114,6 +114,8 @@ export const webPagesApi = baseApi.injectEndpoints({
         },
       }),
       providesTags: ['WebPages'],
+      refetchOnMountOrArgChange: true,
+      refetchOnFocus: true,
     }),
     createAdminWebPageItem: builder.mutation<{ message: string; item: WebPageItem }, { type: WebPageType; data: UpsertWebPageItemPayload }>({
       query: ({ type, data }) => ({
