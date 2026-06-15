@@ -1,11 +1,11 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
 import {
-  useCreateCategoryMutation,
   CreateCategoryPayload,
+  useCreateCategoryMutation,
 } from "@/store/api/categoriesApi"
+import { AnimatePresence, motion } from "framer-motion"
 
 interface Props {
   isOpen: boolean
@@ -116,7 +116,7 @@ export default function AddCategoryModal({ isOpen, onClose }: Props) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={handleClose}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
           />
           <div className="fixed inset-0 z-50 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-4">
@@ -126,14 +126,14 @@ export default function AddCategoryModal({ isOpen, onClose }: Props) {
                 exit={{ opacity: 0, scale: 0.95, y: 12 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
                 onClick={(e) => e.stopPropagation()}
-                className="bg-white rounded-2xl shadow-2xl w-full max-w-lg my-4"
+                className="my-4 w-full max-w-lg rounded-2xl bg-white shadow-2xl"
               >
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5 dark:border-slate-800">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-violet-500 flex items-center justify-center shadow-md shadow-violet-500/30">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500 shadow-md shadow-violet-500/30">
                       <svg
-                        className="w-5 h-5 text-white"
+                        className="h-5 w-5 text-white"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -147,10 +147,10 @@ export default function AddCategoryModal({ isOpen, onClose }: Props) {
                       </svg>
                     </div>
                     <div>
-                      <h2 className="text-slate-800 font-bold text-base leading-none">
+                      <h2 className="text-base leading-none font-bold text-slate-800">
                         Add Category
                       </h2>
-                      <p className="text-slate-400 text-xs mt-1">
+                      <p className="mt-1 text-xs text-slate-400">
                         Create a new product category
                       </p>
                     </div>
@@ -158,10 +158,10 @@ export default function AddCategoryModal({ isOpen, onClose }: Props) {
                   <button
                     onClick={handleClose}
                     disabled={isLoading}
-                    className="h-8 w-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors flex items-center justify-center disabled:opacity-40"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:opacity-40"
                   >
                     <svg
-                      className="w-4 h-4"
+                      className="h-4 w-4"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -177,11 +177,11 @@ export default function AddCategoryModal({ isOpen, onClose }: Props) {
                 </div>
 
                 {/* Form */}
-                <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4 px-6 py-5">
                   {serverError && (
-                    <div className="flex items-start gap-2.5 p-3 bg-red-50 rounded-xl border border-red-100">
+                    <div className="flex items-start gap-2.5 rounded-xl border border-red-100 bg-red-50 p-3">
                       <svg
-                        className="w-4 h-4 text-red-500 shrink-0 mt-0.5"
+                        className="mt-0.5 h-4 w-4 shrink-0 text-red-500"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -199,7 +199,7 @@ export default function AddCategoryModal({ isOpen, onClose }: Props) {
 
                   {/* Category Name */}
                   <div>
-                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">
                       Category Name <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -208,18 +208,17 @@ export default function AddCategoryModal({ isOpen, onClose }: Props) {
                       onChange={(e) => set("cat_name", e.target.value)}
                       placeholder="e.g. Home Furniture"
                       maxLength={50}
-                      className={`w-full px-3 py-2.5 bg-slate-50 border rounded-xl text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 transition-all
-                        ${errors.cat_name ? "border-red-300 focus:ring-red-300/30 focus:border-red-400" : "border-slate-200 focus:ring-violet-500/30 focus:border-violet-400"}`}
+                      className={`w-full rounded-xl border bg-slate-50 px-3 py-2.5 text-sm text-slate-700 placeholder-slate-400 transition-all focus:ring-2 focus:outline-none dark:bg-slate-800 dark:text-slate-100 ${errors.cat_name ? "border-red-300 focus:border-red-400 focus:ring-red-300/30" : "border-slate-200 focus:border-violet-400 focus:ring-violet-500/30"}`}
                     />
-                    <div className="flex justify-between mt-1">
+                    <div className="mt-1 flex justify-between">
                       {errors.cat_name ? (
-                        <p className="text-red-500 text-xs">
+                        <p className="text-xs text-red-500">
                           {errors.cat_name}
                         </p>
                       ) : (
                         <span />
                       )}
-                      <p className="text-slate-400 text-xs">
+                      <p className="text-xs text-slate-400">
                         {form.cat_name.length}/50
                       </p>
                     </div>
@@ -227,11 +226,11 @@ export default function AddCategoryModal({ isOpen, onClose }: Props) {
 
                   {/* URL Slug */}
                   <div>
-                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">
                       URL Slug
                     </label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-mono">
+                      <span className="absolute top-1/2 left-3 -translate-y-1/2 font-mono text-sm text-slate-400">
                         /
                       </span>
                       <input
@@ -240,15 +239,14 @@ export default function AddCategoryModal({ isOpen, onClose }: Props) {
                         onChange={(e) => handleSlugChange(e.target.value)}
                         placeholder="home-furniture"
                         maxLength={40}
-                        className={`w-full pl-6 pr-3 py-2.5 bg-slate-50 border rounded-xl text-sm font-mono text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 transition-all
-                          ${errors.cat_url ? "border-red-300 focus:ring-red-300/30 focus:border-red-400" : "border-slate-200 focus:ring-violet-500/30 focus:border-violet-400"}`}
+                        className={`w-full rounded-xl border bg-slate-50 py-2.5 pr-3 pl-6 font-mono text-sm text-slate-700 placeholder-slate-400 transition-all focus:ring-2 focus:outline-none ${errors.cat_url ? "border-red-300 focus:border-red-400 focus:ring-red-300/30" : "border-slate-200 focus:border-violet-400 focus:ring-violet-500/30"}`}
                       />
                     </div>
-                    <p className="text-slate-400 text-xs mt-1">
+                    <p className="mt-1 text-xs text-slate-400">
                       Auto-generated from name · editable
                     </p>
                     {errors.cat_url && (
-                      <p className="text-red-500 text-xs mt-0.5">
+                      <p className="mt-0.5 text-xs text-red-500">
                         {errors.cat_url}
                       </p>
                     )}
@@ -256,7 +254,7 @@ export default function AddCategoryModal({ isOpen, onClose }: Props) {
 
                   {/* Description */}
                   <div>
-                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">
                       Description
                     </label>
                     <textarea
@@ -265,17 +263,17 @@ export default function AddCategoryModal({ isOpen, onClose }: Props) {
                       placeholder="Short description of this category..."
                       rows={3}
                       maxLength={200}
-                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition-all resize-none"
+                      className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 placeholder-slate-400 transition-all focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                     />
-                    <div className="flex justify-between mt-1">
+                    <div className="mt-1 flex justify-between">
                       {errors.cat_description ? (
-                        <p className="text-red-500 text-xs">
+                        <p className="text-xs text-red-500">
                           {errors.cat_description}
                         </p>
                       ) : (
                         <span />
                       )}
-                      <p className="text-slate-400 text-xs">
+                      <p className="text-xs text-slate-400">
                         {form.cat_description.length}/200
                       </p>
                     </div>
@@ -283,7 +281,7 @@ export default function AddCategoryModal({ isOpen, onClose }: Props) {
 
                   {/* Sort Order */}
                   <div>
-                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">
                       Sort Order
                     </label>
                     <input
@@ -292,13 +290,13 @@ export default function AddCategoryModal({ isOpen, onClose }: Props) {
                       onChange={(e) => set("cat_order", e.target.value)}
                       placeholder="0"
                       min="0"
-                      className="w-32 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition-all"
+                      className="w-32 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 placeholder-slate-400 transition-all focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                     />
-                    <p className="text-slate-400 text-xs mt-1">
+                    <p className="mt-1 text-xs text-slate-400">
                       Lower number = appears first
                     </p>
                     {errors.cat_order && (
-                      <p className="text-red-500 text-xs mt-0.5">
+                      <p className="mt-0.5 text-xs text-red-500">
                         {errors.cat_order}
                       </p>
                     )}
@@ -310,19 +308,19 @@ export default function AddCategoryModal({ isOpen, onClose }: Props) {
                       type="button"
                       onClick={handleClose}
                       disabled={isLoading}
-                      className="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-semibold transition-colors disabled:opacity-60"
+                      className="flex-1 rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-200 disabled:opacity-60"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="flex-1 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-violet-500/30 flex items-center justify-center gap-2 disabled:opacity-60"
+                      className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-violet-500/30 transition-colors hover:bg-violet-700 disabled:opacity-60"
                     >
                       {isLoading ? (
                         <>
                           <svg
-                            className="w-4 h-4 animate-spin"
+                            className="h-4 w-4 animate-spin"
                             fill="none"
                             viewBox="0 0 24 24"
                           >
@@ -345,7 +343,7 @@ export default function AddCategoryModal({ isOpen, onClose }: Props) {
                       ) : (
                         <>
                           <svg
-                            className="w-4 h-4"
+                            className="h-4 w-4"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"

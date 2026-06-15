@@ -1,6 +1,7 @@
-import { buildPageMetadata } from "@/app/seo"
-import FaqPageClient from "@/components/faq/FaqPageClient"
 import { getNavbarCategories } from "@/libs/serverStorefront"
+
+import FaqPageClient from "@/components/faq/FaqPageClient"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "FAQ",

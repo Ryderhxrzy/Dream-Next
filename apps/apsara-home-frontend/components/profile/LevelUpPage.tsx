@@ -1,17 +1,18 @@
 "use client"
 
-import Footer from "@/components/landing-page/Footer"
-import Navbar from "@/components/layout/Navbar"
-import TopBar from "@/components/layout/TopBar"
+import { useMemo } from "react"
+import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
+import { extractPartnerSlugFromPath } from "@/libs/storefrontRouting"
 import type { Category } from "@/store/api/categoriesApi"
 import type { MeResponse } from "@/store/api/userApi"
 import { useGetPublicWebPageItemsQuery } from "@/store/api/webPagesApi"
 import Image from "next/image"
 import Link from "next/link"
-import { useMemo } from "react"
 import { usePathname } from "next/navigation"
-import { extractPartnerSlugFromPath } from "@/libs/storefrontRouting"
-import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
+
+import Footer from "@/components/landing-page/Footer"
+import Navbar from "@/components/layout/Navbar"
+import TopBar from "@/components/layout/TopBar"
 
 type MemberTier =
   | "Home Starter"
@@ -176,9 +177,9 @@ export default function LevelUpPage({
       />
 
       <section className="relative px-4 py-8 md:px-6 md:py-12">
-        <div className="absolute left-1/2 top-20 h-72 w-72 -translate-x-1/2 rounded-full bg-amber-300/20 blur-3xl dark:bg-sky-500/10" />
-        <div className="absolute -right-24 top-40 h-80 w-80 rounded-full bg-emerald-300/20 blur-3xl dark:bg-emerald-500/10" />
-        <div className="absolute -left-24 bottom-28 h-80 w-80 rounded-full bg-rose-300/20 blur-3xl dark:bg-rose-500/10" />
+        <div className="absolute top-20 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-amber-300/20 blur-3xl dark:bg-sky-500/10" />
+        <div className="absolute top-40 -right-24 h-80 w-80 rounded-full bg-emerald-300/20 blur-3xl dark:bg-emerald-500/10" />
+        <div className="absolute bottom-28 -left-24 h-80 w-80 rounded-full bg-rose-300/20 blur-3xl dark:bg-rose-500/10" />
 
         <div className="relative mx-auto max-w-7xl">
           <div
@@ -191,7 +192,7 @@ export default function LevelUpPage({
             <div className="relative grid gap-10 px-5 py-8 sm:px-8 md:grid-cols-[1.05fr_0.95fr] md:px-12 md:py-14 lg:px-16">
               <div className="flex flex-col justify-between gap-10">
                 <div>
-                  <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-white/85 backdrop-blur-md">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-black tracking-[0.22em] text-white/85 uppercase backdrop-blur-md">
                     <span
                       className={`h-2 w-2 rounded-full ${TIER_COVER[tier].glow}`}
                     />
@@ -199,11 +200,11 @@ export default function LevelUpPage({
                   </div>
 
                   <p
-                    className={`mt-8 text-xs font-black uppercase tracking-[0.28em] ${TIER_COVER[tier].accent}`}
+                    className={`mt-8 text-xs font-black tracking-[0.28em] uppercase ${TIER_COVER[tier].accent}`}
                   >
                     Congratulations
                   </p>
-                  <h1 className="mt-3 max-w-3xl text-4xl font-black leading-[0.95] tracking-[-0.06em] text-white sm:text-6xl lg:text-7xl">
+                  <h1 className="mt-3 max-w-3xl text-4xl leading-[0.95] font-black tracking-[-0.06em] text-white sm:text-6xl lg:text-7xl">
                     You just reached {tier}.
                   </h1>
                   <p className="mt-6 max-w-2xl text-base leading-8 text-white/78 md:text-lg">
@@ -217,10 +218,10 @@ export default function LevelUpPage({
                       key={reward}
                       className="rounded-3xl border border-white/15 bg-white/10 p-4 backdrop-blur-md"
                     >
-                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/45">
+                      <p className="text-xs font-bold tracking-[0.18em] text-white/45 uppercase">
                         Unlocked
                       </p>
-                      <p className="mt-2 text-sm font-semibold leading-6 text-white">
+                      <p className="mt-2 text-sm leading-6 font-semibold text-white">
                         {reward}
                       </p>
                     </div>
@@ -248,7 +249,7 @@ export default function LevelUpPage({
                   </div>
 
                   <div className="mt-5 rounded-[26px] bg-white px-5 py-4 text-slate-950 shadow-xl dark:bg-slate-950 dark:text-white">
-                    <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-400">
+                    <p className="text-xs font-black tracking-[0.22em] text-slate-400 uppercase">
                       Badge Active
                     </p>
                     <p className="mt-2 text-2xl font-black tracking-[-0.04em]">
@@ -267,7 +268,7 @@ export default function LevelUpPage({
             <div className="rounded-[32px] border border-slate-200/80 bg-white/85 p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06]">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-400">
+                  <p className="text-xs font-black tracking-[0.22em] text-slate-400 uppercase">
                     Level Progress
                   </p>
                   <h2 className="mt-2 text-2xl font-black tracking-[-0.04em] text-slate-950 dark:text-white">
@@ -275,7 +276,7 @@ export default function LevelUpPage({
                   </h2>
                 </div>
                 <div className="rounded-2xl bg-slate-950 px-4 py-3 text-center text-white dark:bg-white dark:text-slate-950">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] opacity-60">
+                  <p className="text-[10px] font-bold tracking-[0.18em] uppercase opacity-60">
                     Rank
                   </p>
                   <p className="text-2xl font-black">
@@ -301,7 +302,7 @@ export default function LevelUpPage({
                         className={`mx-auto h-3 w-3 rounded-full ${isActive ? "bg-slate-950 dark:bg-white" : "bg-slate-300 dark:bg-white/20"}`}
                       />
                       <p
-                        className={`mt-2 hidden text-[10px] font-bold uppercase tracking-[0.12em] sm:block ${isActive ? "text-slate-800 dark:text-white" : "text-slate-400"}`}
+                        className={`mt-2 hidden text-[10px] font-bold tracking-[0.12em] uppercase sm:block ${isActive ? "text-slate-800 dark:text-white" : "text-slate-400"}`}
                       >
                         {index + 1}
                       </p>
@@ -313,7 +314,7 @@ export default function LevelUpPage({
 
             <div className="grid gap-5 sm:grid-cols-2">
               <div className="rounded-[32px] border border-slate-200/80 bg-white/85 p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06]">
-                <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-400">
+                <p className="text-xs font-black tracking-[0.22em] text-slate-400 uppercase">
                   What Changed
                 </p>
                 <h3 className="mt-3 text-xl font-black tracking-[-0.04em]">
@@ -326,7 +327,7 @@ export default function LevelUpPage({
               </div>
 
               <div className="rounded-[32px] border border-slate-200/80 bg-white/85 p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06]">
-                <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-400">
+                <p className="text-xs font-black tracking-[0.22em] text-slate-400 uppercase">
                   Keep Moving
                 </p>
                 <h3 className="mt-3 text-xl font-black tracking-[-0.04em]">
@@ -340,7 +341,7 @@ export default function LevelUpPage({
             </div>
           </div>
 
-          <div className="mt-7 flex flex-col gap-3 rounded-[30px] border border-slate-200/80 bg-white/75 p-4 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06] sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-7 flex flex-col gap-3 rounded-[30px] border border-slate-200/80 bg-white/75 p-4 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between dark:border-white/10 dark:bg-white/[0.06]">
             <div className="px-2">
               <p className="text-sm font-bold text-slate-800 dark:text-white">
                 Ready to continue?

@@ -1,20 +1,21 @@
 "use client"
 
 import { useMemo } from "react"
-import Navbar from "@/components/layout/Navbar"
-import TopBar from "@/components/layout/TopBar"
-import Footer from "@/components/landing-page/Footer"
-import ScrollToTop from "@/components/landing-page/ScrollToTop"
 import { useGetPublicGeneralSettingsQuery } from "@/store/api/adminSettingsApi"
 import type { Category } from "@/store/api/categoriesApi"
 import {
   Building2,
   Factory,
-  MapPin,
-  Store,
-  Navigation,
   Map as MapIcon,
+  MapPin,
+  Navigation,
+  Store,
 } from "lucide-react"
+
+import Footer from "@/components/landing-page/Footer"
+import ScrollToTop from "@/components/landing-page/ScrollToTop"
+import Navbar from "@/components/layout/Navbar"
+import TopBar from "@/components/layout/TopBar"
 
 type Branch = {
   name: string
@@ -124,7 +125,7 @@ export default function CompanyBranchesPageMain({
                   <MapPin className="h-7 w-7" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-widest opacity-70">
+                  <p className="text-xs font-bold tracking-widest uppercase opacity-70">
                     AF Home · Locations
                   </p>
                   <h1 className="mt-1 text-3xl font-bold tracking-tight md:text-4xl">
@@ -209,7 +210,7 @@ export default function CompanyBranchesPageMain({
                     <div className="p-5">
                       <div className="flex items-center justify-between gap-3">
                         <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ring-1 ${badge}`}
+                          className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase ring-1 ${badge}`}
                         >
                           {tag}
                         </span>

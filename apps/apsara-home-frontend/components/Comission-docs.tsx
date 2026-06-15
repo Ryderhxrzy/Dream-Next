@@ -1,21 +1,21 @@
 "use client"
 
-import { useState, useEffect, useRef, useId, useCallback, useMemo } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
+import { AnimatePresence, motion } from "framer-motion"
 import {
-  TrendingUp,
-  Users,
   Award,
-  Zap,
-  Gift,
-  Star,
   BarChart3,
   BookOpen,
-  Download,
-  Search,
   ChevronDown,
-  X,
+  Download,
+  Gift,
   Menu,
+  Search,
+  Star,
+  TrendingUp,
+  Users,
+  X,
+  Zap,
 } from "lucide-react"
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -324,27 +324,27 @@ function DiagramLightbox({
 
   return (
     <div className="commission-docs-lightbox fixed inset-0 z-[100] flex flex-col bg-black/95">
-      <div className="flex items-center justify-between px-5 py-3 bg-[#1a1205] border-b border-[#3d2e0a] shrink-0">
+      <div className="flex shrink-0 items-center justify-between border-b border-[#3d2e0a] bg-[#1a1205] px-5 py-3">
         <div className="flex items-center gap-3">
-          <span className="text-xs text-[#a07830] font-mono">
+          <span className="font-mono text-xs text-[#a07830]">
             {Math.round(scale * 100)}% · scroll to zoom · drag to pan
           </span>
           <div className="flex items-center gap-1">
             <button
               onClick={() => zoomAt(0.83)}
-              className="px-2 py-1 rounded text-xs text-[#a07830] hover:text-white hover:bg-[#2a1f05] transition-colors font-mono"
+              className="rounded px-2 py-1 font-mono text-xs text-[#a07830] transition-colors hover:bg-[#2a1f05] hover:text-white"
             >
               +
             </button>
             <button
               onClick={() => zoomAt(1.2)}
-              className="px-2 py-1 rounded text-xs text-[#a07830] hover:text-white hover:bg-[#2a1f05] transition-colors font-mono"
+              className="rounded px-2 py-1 font-mono text-xs text-[#a07830] transition-colors hover:bg-[#2a1f05] hover:text-white"
             >
               −
             </button>
             <button
               onClick={reset}
-              className="px-2 py-1 rounded text-xs text-[#a07830] hover:text-white hover:bg-[#2a1f05] transition-colors"
+              className="rounded px-2 py-1 text-xs text-[#a07830] transition-colors hover:bg-[#2a1f05] hover:text-white"
             >
               Reset
             </button>
@@ -352,7 +352,7 @@ function DiagramLightbox({
         </div>
         <button
           onClick={onClose}
-          className="flex items-center gap-1.5 text-xs text-[#a07830] hover:text-white transition-colors px-2 py-1 rounded hover:bg-[#2a1f05]"
+          className="flex items-center gap-1.5 rounded px-2 py-1 text-xs text-[#a07830] transition-colors hover:bg-[#2a1f05] hover:text-white"
         >
           <X size={14} />
           Close
@@ -360,7 +360,7 @@ function DiagramLightbox({
       </div>
       <div
         ref={containerRef}
-        className="flex-1 min-h-0 overflow-hidden select-none bg-[#0d0a04]"
+        className="min-h-0 flex-1 overflow-hidden bg-[#0d0a04] select-none"
         style={{ cursor: isDragging ? "grabbing" : "grab" }}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
@@ -374,7 +374,7 @@ function DiagramLightbox({
         onDoubleClick={reset}
         dangerouslySetInnerHTML={{ __html: displaySvg }}
       />
-      <div className="px-5 py-2 bg-[#1a1205] border-t border-[#3d2e0a] text-center text-[11px] text-[#a07830] shrink-0">
+      <div className="shrink-0 border-t border-[#3d2e0a] bg-[#1a1205] px-5 py-2 text-center text-[11px] text-[#a07830]">
         Double-click to reset · Pinch to zoom on mobile · Press Esc to close
       </div>
     </div>
@@ -435,21 +435,21 @@ function MermaidDiagram({ code }: { code: string }) {
         <DiagramLightbox svg={svg} onClose={() => setOpen(false)} />
       )}
       <div
-        className="my-6 rounded-xl overflow-hidden border border-[#3d2e0a] bg-[#0d0a04] group cursor-zoom-in"
+        className="group my-6 cursor-zoom-in overflow-hidden rounded-xl border border-[#3d2e0a] bg-[#0d0a04]"
         onClick={() => !loading && svg && setOpen(true)}
         title="Click to expand"
       >
-        <div className="commission-docs-diagram-toolbar flex items-center justify-between px-4 py-2 border-b border-[#3d2e0a] bg-[#1a1205]">
+        <div className="commission-docs-diagram-toolbar flex items-center justify-between border-b border-[#3d2e0a] bg-[#1a1205] px-4 py-2">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#f85149]/80" />
-            <span className="w-2.5 h-2.5 rounded-full bg-[#3fb950]/80" />
-            <span className="w-2.5 h-2.5 rounded-full bg-[#d29922]/80" />
-            <span className="ml-2 text-[11px] text-[#a07830] font-mono tracking-wide">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#f85149]/80" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#3fb950]/80" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#d29922]/80" />
+            <span className="ml-2 font-mono text-[11px] tracking-wide text-[#a07830]">
               diagram
             </span>
           </div>
           {!loading && svg && (
-            <span className="text-[10px] text-[#a07830] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+            <span className="flex items-center gap-1 text-[10px] text-[#a07830] opacity-0 transition-opacity group-hover:opacity-100">
               <svg
                 width="11"
                 height="11"
@@ -465,13 +465,13 @@ function MermaidDiagram({ code }: { code: string }) {
           )}
         </div>
         {loading ? (
-          <div className="flex items-center justify-center py-16 gap-2 text-[#a07830] text-sm">
-            <div className="w-4 h-4 border-2 border-[#3d2e0a] border-t-[#b8952a] rounded-full animate-spin" />
+          <div className="flex items-center justify-center gap-2 py-16 text-sm text-[#a07830]">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#3d2e0a] border-t-[#b8952a]" />
             Rendering diagram…
           </div>
         ) : (
           <div
-            className="p-5 overflow-hidden [&_svg]:max-w-full [&_svg]:h-auto pointer-events-none"
+            className="pointer-events-none overflow-hidden p-5 [&_svg]:h-auto [&_svg]:max-w-full"
             dangerouslySetInnerHTML={{ __html: svg }}
           />
         )}
@@ -497,7 +497,7 @@ function Badge({
   }
   return (
     <span
-      className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full ${map[color]}`}
+      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${map[color]}`}
     >
       {label}
     </span>
@@ -519,9 +519,9 @@ function Note({
   const icon = { info: "💡", warning: "⚠️", tip: "✅" }
   return (
     <div
-      className={`flex gap-3 border-l-[3px] ${map[type]} rounded-r-lg px-4 py-3 mb-5 text-sm`}
+      className={`flex gap-3 border-l-[3px] ${map[type]} mb-5 rounded-r-lg px-4 py-3 text-sm`}
     >
-      <span className="shrink-0 mt-0.5">{icon[type]}</span>
+      <span className="mt-0.5 shrink-0">{icon[type]}</span>
       <div>{children}</div>
     </div>
   )
@@ -535,14 +535,14 @@ function InfoTable({
   rows: (string | React.ReactNode)[][]
 }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-amber-200 mb-6 text-sm">
+    <div className="mb-6 overflow-x-auto rounded-xl border border-amber-200 text-sm">
       <table className="w-full">
         <thead>
           <tr className="bg-[#b8952a]">
             {headers.map((h, i) => (
               <th
                 key={i}
-                className="px-4 py-3 text-left text-white font-semibold text-xs uppercase tracking-wider"
+                className="px-4 py-3 text-left text-xs font-semibold tracking-wider text-white uppercase"
               >
                 {h}
               </th>
@@ -575,7 +575,7 @@ function SectionHeading({
   return (
     <h2
       id={id}
-      className="text-2xl font-bold text-gray-900 mt-2 mb-3 scroll-mt-24"
+      className="mt-2 mb-3 scroll-mt-24 text-2xl font-bold text-gray-900"
     >
       {children}
     </h2>
@@ -592,16 +592,16 @@ function SubHeading({
   return (
     <h3
       id={id}
-      className="flex items-center gap-2 text-lg font-semibold text-gray-800 mt-10 mb-3 scroll-mt-24"
+      className="mt-10 mb-3 flex scroll-mt-24 items-center gap-2 text-lg font-semibold text-gray-800"
     >
-      <span className="block w-1 h-5 rounded-full bg-[#b8952a] shrink-0" />
+      <span className="block h-5 w-1 shrink-0 rounded-full bg-[#b8952a]" />
       {children}
     </h3>
   )
 }
 
 function Divider() {
-  return <hr className="border-amber-100 my-10" />
+  return <hr className="my-10 border-amber-100" />
 }
 
 function SectionTag({
@@ -612,7 +612,7 @@ function SectionTag({
   children: React.ReactNode
 }) {
   return (
-    <div className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full mb-3 text-amber-800 bg-amber-100">
+    <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">
       {icon}
       {children}
     </div>
@@ -621,7 +621,7 @@ function SectionTag({
 
 function FormulaBlock({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 mb-5 font-mono text-sm text-amber-900 whitespace-pre leading-relaxed print:whitespace-pre-wrap">
+    <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 font-mono text-sm leading-relaxed whitespace-pre text-amber-900 print:whitespace-pre-wrap">
       {children}
     </div>
   )
@@ -681,26 +681,26 @@ export default function CommissionDocs() {
     : NAV
 
   const SidebarContent = (
-    <nav className="h-full flex flex-col bg-white border-r border-amber-100">
-      <div className="px-5 py-5 border-b border-amber-100">
+    <nav className="flex h-full flex-col border-r border-amber-100 bg-white">
+      <div className="border-b border-amber-100 px-5 py-5">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-[#b8952a] flex items-center justify-center shrink-0">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#b8952a]">
             <TrendingUp size={14} className="text-white" />
           </div>
           <div>
-            <div className="text-sm font-bold text-gray-900 leading-tight">
+            <div className="text-sm leading-tight font-bold text-gray-900">
               AF Home
             </div>
-            <div className="text-[10px] text-amber-600 uppercase tracking-widest">
+            <div className="text-[10px] tracking-widest text-amber-600 uppercase">
               Commission System
             </div>
           </div>
         </div>
       </div>
 
-      <div className="px-3 py-3 border-b border-amber-100">
-        <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-          <Search size={13} className="text-amber-400 shrink-0" />
+      <div className="border-b border-amber-100 px-3 py-3">
+        <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+          <Search size={13} className="shrink-0 text-amber-400" />
           <input
             type="text"
             placeholder="Search…"
@@ -716,7 +716,7 @@ export default function CommissionDocs() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto py-3 px-2">
+      <div className="flex-1 overflow-y-auto px-2 py-3">
         {filteredNav.map((item) => {
           const Icon = item.icon
           const isOpen = !!openSections[item.id]
@@ -730,19 +730,19 @@ export default function CommissionDocs() {
                   scrollTo(item.id)
                   setActiveSection(item.id)
                 }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all ${isActive ? "bg-amber-50 text-amber-800 font-semibold" : "text-gray-600 hover:bg-amber-50/60 hover:text-gray-900"}`}
+                className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-all ${isActive ? "bg-amber-50 font-semibold text-amber-800" : "text-gray-600 hover:bg-amber-50/60 hover:text-gray-900"}`}
               >
                 <Icon size={15} className="shrink-0" />
                 <span className="flex-1 text-left">{item.label}</span>
                 {hasSubs && (
                   <ChevronDown
                     size={13}
-                    className={`transition-transform text-amber-400 ${isOpen ? "rotate-180" : ""}`}
+                    className={`text-amber-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
                   />
                 )}
               </button>
               {hasSubs && isOpen && (
-                <div className="ml-7 mt-0.5 space-y-0.5">
+                <div className="mt-0.5 ml-7 space-y-0.5">
                   {item.sub!.map((sub) => (
                     <button
                       key={sub.id}
@@ -750,7 +750,7 @@ export default function CommissionDocs() {
                         scrollTo(sub.id)
                         setActiveSection(item.id)
                       }}
-                      className={`w-full text-left px-3 py-1.5 rounded-md text-xs transition-all ${activeId === sub.id ? "text-amber-800 font-semibold bg-amber-50" : "text-gray-500 hover:text-gray-800 hover:bg-amber-50/60"}`}
+                      className={`w-full rounded-md px-3 py-1.5 text-left text-xs transition-all ${activeId === sub.id ? "bg-amber-50 font-semibold text-amber-800" : "text-gray-500 hover:bg-amber-50/60 hover:text-gray-800"}`}
                     >
                       {sub.label}
                     </button>
@@ -762,10 +762,10 @@ export default function CommissionDocs() {
         })}
       </div>
 
-      <div className="px-4 py-3 border-t border-amber-100">
+      <div className="border-t border-amber-100 px-4 py-3">
         <button
           onClick={() => window.print()}
-          className="w-full flex items-center justify-center gap-2 text-xs text-gray-500 hover:text-gray-800 py-2 rounded-lg hover:bg-amber-50 transition-colors"
+          className="flex w-full items-center justify-center gap-2 rounded-lg py-2 text-xs text-gray-500 transition-colors hover:bg-amber-50 hover:text-gray-800"
         >
           <Download size={13} />
           Export as PDF
@@ -775,7 +775,7 @@ export default function CommissionDocs() {
   )
 
   return (
-    <div className="commission-docs-root flex h-screen bg-white overflow-hidden">
+    <div className="commission-docs-root flex h-screen overflow-hidden bg-white">
       <style jsx global>{`
         @media print {
           @page {
@@ -868,7 +868,7 @@ export default function CommissionDocs() {
           }
         }
       `}</style>
-      <div className="commission-docs-sidebar hidden lg:block w-64 shrink-0 h-full">
+      <div className="commission-docs-sidebar hidden h-full w-64 shrink-0 lg:block">
         {SidebarContent}
       </div>
 
@@ -887,7 +887,7 @@ export default function CommissionDocs() {
               animate={{ x: 0 }}
               exit={{ x: -280 }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="commission-docs-lightbox fixed left-0 top-0 bottom-0 z-50 w-72 lg:hidden"
+              className="commission-docs-lightbox fixed top-0 bottom-0 left-0 z-50 w-72 lg:hidden"
             >
               {SidebarContent}
             </motion.div>
@@ -895,8 +895,8 @@ export default function CommissionDocs() {
         )}
       </AnimatePresence>
 
-      <div className="commission-docs-scroll flex-1 h-full overflow-y-auto">
-        <div className="commission-docs-mobile-header lg:hidden sticky top-0 z-30 bg-white border-b border-amber-100 px-4 py-3 flex items-center gap-3">
+      <div className="commission-docs-scroll h-full flex-1 overflow-y-auto">
+        <div className="commission-docs-mobile-header sticky top-0 z-30 flex items-center gap-3 border-b border-amber-100 bg-white px-4 py-3 lg:hidden">
           <button
             onClick={() => setMobileOpen(true)}
             className="text-amber-600"
@@ -909,21 +909,21 @@ export default function CommissionDocs() {
         </div>
 
         {/* Hero Banner */}
-        <div className="commission-docs-hero bg-gradient-to-br from-[#b8952a] via-[#9a7a22] to-[#7a6018] text-white px-6 py-10">
-          <div className="max-w-3xl mx-auto">
-            <div className="flex items-center gap-2 text-amber-200 text-xs font-semibold uppercase tracking-widest mb-3">
+        <div className="commission-docs-hero bg-gradient-to-br from-[#b8952a] via-[#9a7a22] to-[#7a6018] px-6 py-10 text-white">
+          <div className="mx-auto max-w-3xl">
+            <div className="mb-3 flex items-center gap-2 text-xs font-semibold tracking-widest text-amber-200 uppercase">
               <TrendingUp size={13} />
               Apsara Home — Business Rules
             </div>
-            <h1 className="text-3xl font-bold mb-2">
+            <h1 className="mb-2 text-3xl font-bold">
               Commission & Bonus System
             </h1>
-            <p className="text-amber-100 text-[15px] leading-relaxed max-w-xl">
+            <p className="max-w-xl text-[15px] leading-relaxed text-amber-100">
               Complete guide to how earnings work — from Performance Value (PV)
               to all bonus types. For business stakeholders, administrators, and
               team members.
             </p>
-            <div className="flex flex-wrap gap-2 mt-5">
+            <div className="mt-5 flex flex-wrap gap-2">
               {[
                 "PV-based",
                 "Network Earning",
@@ -933,7 +933,7 @@ export default function CommissionDocs() {
               ].map((tag) => (
                 <span
                   key={tag}
-                  className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-white/15 text-amber-100"
+                  className="rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-medium text-amber-100"
                 >
                   {tag}
                 </span>
@@ -942,14 +942,14 @@ export default function CommissionDocs() {
           </div>
         </div>
 
-        <div className="commission-docs-content max-w-3xl mx-auto px-6 py-10 pb-24 space-y-0">
+        <div className="commission-docs-content mx-auto max-w-3xl space-y-0 px-6 py-10 pb-24">
           {/* ── PV ───────────────────────────────────────────── */}
           <section id="pv" data-section>
             <SectionTag icon={<TrendingUp size={11} />}>
               Performance Value
             </SectionTag>
             <SectionHeading>Performance Value (PV)</SectionHeading>
-            <p className="text-gray-600 text-[15px] leading-relaxed mb-5">
+            <p className="mb-5 text-[15px] leading-relaxed text-gray-600">
               <strong>Performance Value (PV)</strong> is the core unit used to
               measure a member&apos;s purchasing activity. Each product carries
               a set PV value. PV is only credited{" "}
@@ -983,7 +983,7 @@ export default function CommissionDocs() {
 
           <section id="pv-distribution" data-section className="pt-2">
             <SubHeading id="pv-distribution">How PV Is Distributed</SubHeading>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="mb-4 text-sm text-gray-600">
               Every time a member earns PV, that PV is automatically split
               across different bonus pools. The full 100% is always accounted
               for.
@@ -1040,7 +1040,7 @@ export default function CommissionDocs() {
           <section id="activation" data-section>
             <SectionTag icon={<Zap size={11} />}>Monthly Activation</SectionTag>
             <SectionHeading>Monthly Activation</SectionHeading>
-            <p className="text-gray-600 text-[15px] leading-relaxed mb-5">
+            <p className="mb-5 text-[15px] leading-relaxed text-gray-600">
               Activation is a monthly status that determines whether a member
               can <strong>receive</strong> unilevel and affiliate performance
               bonuses from their network. It does <strong>not</strong> affect a
@@ -1122,7 +1122,7 @@ export default function CommissionDocs() {
           <section id="ranks" data-section>
             <SectionTag icon={<Award size={11} />}>Member Ranks</SectionTag>
             <SectionHeading>Member Rank / Tier System</SectionHeading>
-            <p className="text-gray-600 text-[15px] leading-relaxed mb-5">
+            <p className="mb-5 text-[15px] leading-relaxed text-gray-600">
               Members progress through 5 tiers based on performance. Rank
               reflects network leadership — it does <strong>not</strong>{" "}
               restrict unilevel access.{" "}
@@ -1215,7 +1215,7 @@ export default function CommissionDocs() {
 
           <section id="ranks-unilevel" data-section className="pt-2">
             <SubHeading id="ranks-unilevel">Rank & Unilevel</SubHeading>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="mb-4 text-sm text-gray-600">
               Rank reflects network leadership and tier progression — it does{" "}
               <strong>not</strong> restrict unilevel access. As long as a member
               is <strong>monthly-active</strong> and has at least one direct
@@ -1234,7 +1234,7 @@ export default function CommissionDocs() {
           <section id="referral" data-section>
             <SectionTag icon={<Users size={11} />}>Direct Referral</SectionTag>
             <SectionHeading>Direct Referral Commission</SectionHeading>
-            <p className="text-gray-600 text-[15px] leading-relaxed mb-5">
+            <p className="mb-5 text-[15px] leading-relaxed text-gray-600">
               When a <strong>new member makes their first SRP purchase</strong>{" "}
               through a member&apos;s referral link, that member earns a{" "}
               <strong>Direct Referral Commission</strong> — on the first
@@ -1244,7 +1244,7 @@ export default function CommissionDocs() {
 
           <section id="referral-how" data-section className="pt-2">
             <SubHeading id="referral-how">How It Works</SubHeading>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="mb-4 text-sm text-gray-600">
               The commission is computed from the product&apos;s
               commission-eligible amount and split equally between cash and
               e-GC. Both portions are held pending on payment and released once
@@ -1307,7 +1307,7 @@ Order Delivered → Both portions released (Available)`}</FormulaBlock>
               Group Purchase Bonus
             </SectionTag>
             <SectionHeading>Unilevel — Group Purchase Bonus</SectionHeading>
-            <p className="text-gray-600 text-[15px] leading-relaxed mb-5">
+            <p className="mb-5 text-[15px] leading-relaxed text-gray-600">
               The <strong>Group Purchase Bonus</strong> is the main network
               earning. Every time any member in a person&apos;s network receives
               a delivered order, that purchase generates a bonus that flows{" "}
@@ -1331,7 +1331,7 @@ Order Delivered → Both portions released (Available)`}</FormulaBlock>
               sponsor&apos;s sponsor, and so on up the chain. The deeper you are
               above a buyer, the higher your level number.
             </Note>
-            <p className="text-sm text-gray-600 mb-3 font-medium mt-4">
+            <p className="mt-4 mb-3 text-sm font-medium text-gray-600">
               Example — Buyer&apos;s order worth 1,000 PV (levels counted from
               buyer upward):
             </p>
@@ -1364,7 +1364,7 @@ Order Delivered → Both portions released (Available)`}</FormulaBlock>
             <SubHeading id="unilevel-compression">
               Compression — Skipping Inactive Uplines
             </SubHeading>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="mb-4 text-sm text-gray-600">
               If an upline is <strong>inactive</strong> for that month, they are
               skipped and the next <strong>active</strong> upline takes their
               position. The total of 10 paid positions is maintained.
@@ -1384,7 +1384,7 @@ Order Delivered → Both portions released (Available)`}</FormulaBlock>
               Affiliate Performance
             </SectionTag>
             <SectionHeading>Direct Affiliate Performance Bonus</SectionHeading>
-            <p className="text-gray-600 text-[15px] leading-relaxed mb-5">
+            <p className="mb-5 text-[15px] leading-relaxed text-gray-600">
               A <strong>milestone-based bonus</strong> rewarding sponsors when
               the combined PV of their directly referred members reaches certain
               thresholds. The sponsor must be <strong>active</strong> in the
@@ -1443,7 +1443,7 @@ Resets to 0 every 1st of the month — earnable again each month.`}</FormulaBloc
           <section id="cashback" data-section>
             <SectionTag icon={<Gift size={11} />}>Personal Cashback</SectionTag>
             <SectionHeading>Personal Purchase Cashback Discount</SectionHeading>
-            <p className="text-gray-600 text-[15px] leading-relaxed mb-5">
+            <p className="mb-5 text-[15px] leading-relaxed text-gray-600">
               Every member receives <strong>4% cashback</strong> from their own
               delivered purchase PV. It is stored as a separate{" "}
               <strong>Personal Cashback Balance</strong>, not as E-GC cash, and
@@ -1503,7 +1503,7 @@ Resets to 0 every 1st of the month — earnable again each month.`}</FormulaBloc
               Yearly Global Bonus
             </SectionTag>
             <SectionHeading>Yearly Global Purchase Bonus</SectionHeading>
-            <p className="text-gray-600 text-[15px] leading-relaxed mb-5">
+            <p className="mb-5 text-[15px] leading-relaxed text-gray-600">
               At the end of each year, the{" "}
               <strong>Top 10 highest PV earners</strong> in the entire network
               receive a special year-end bonus based on 1% of their total yearly
@@ -1637,7 +1637,7 @@ Resets to 0 every 1st of the month — earnable again each month.`}</FormulaBloc
               Flow Diagrams
             </SectionTag>
             <SectionHeading>Flow Diagrams</SectionHeading>
-            <p className="text-gray-600 text-[15px] leading-relaxed mb-6">
+            <p className="mb-6 text-[15px] leading-relaxed text-gray-600">
               Visual reference for the three core flows. Click any diagram to
               open the full-screen viewer with zoom and pan.
             </p>
@@ -1647,7 +1647,7 @@ Resets to 0 every 1st of the month — earnable again each month.`}</FormulaBloc
             <SubHeading id="diagram-order">
               Order → Bonus Distribution
             </SubHeading>
-            <p className="text-sm text-gray-600 mb-1">
+            <p className="mb-1 text-sm text-gray-600">
               How a single delivered order triggers PV credit and distributes
               bonuses across all pools.
             </p>
@@ -1658,7 +1658,7 @@ Resets to 0 every 1st of the month — earnable again each month.`}</FormulaBloc
             <SubHeading id="diagram-activation">
               Monthly Activation Flow
             </SubHeading>
-            <p className="text-sm text-gray-600 mb-1">
+            <p className="mb-1 text-sm text-gray-600">
               How the system determines whether a member is active or inactive
               each month and what changes as a result.
             </p>
@@ -1667,7 +1667,7 @@ Resets to 0 every 1st of the month — earnable again each month.`}</FormulaBloc
 
           <section id="diagram-rank" data-section className="pt-2">
             <SubHeading id="diagram-rank">Rank Determination</SubHeading>
-            <p className="text-sm text-gray-600 mb-1">
+            <p className="mb-1 text-sm text-gray-600">
               How the system evaluates all rank criteria simultaneously to
               assign or maintain a member&apos;s tier.
             </p>

@@ -1,25 +1,25 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { useSession } from "next-auth/react"
-import { RefreshCw } from "lucide-react"
 import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import {
-  type SupplierFulfillmentStatus,
-  type SupplierOrdersResponse,
+  useDeleteServiceInquiryMutation,
+  useGetSupplierServiceInquiriesQuery,
+  useUpdateServiceInquiryStatusMutation,
+  type ServiceInquiryItem,
+  type ServiceInquiryStatus,
+} from "@/store/api/serviceInquiriesApi"
+import {
   useApproveSupplierOrderMutation,
   useGetSupplierOrdersQuery,
   usePushSupplierOrderToZqMutation,
   useUpdateSupplierOrderFulfillmentMutation,
+  type SupplierFulfillmentStatus,
+  type SupplierOrdersResponse,
 } from "@/store/api/supplierOrdersApi"
-import {
-  type ServiceInquiryItem,
-  type ServiceInquiryStatus,
-  useGetSupplierServiceInquiriesQuery,
-  useUpdateServiceInquiryStatusMutation,
-  useDeleteServiceInquiryMutation,
-} from "@/store/api/serviceInquiriesApi"
 import { useGetSupplierCategoriesQuery } from "@/store/api/suppliersApi"
+import { RefreshCw } from "lucide-react"
+import { useSession } from "next-auth/react"
 
 /* ─── Sparkline paths (decorative, 7-point normalised to 60×28 viewBox) ─── */
 const SPARKLINES: Record<string, string> = {
@@ -1010,7 +1010,7 @@ export default function SupplierOrdersPage({
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative">
                 <svg
-                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                  className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -1024,7 +1024,7 @@ export default function SupplierOrdersPage({
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search inquiries..."
-                  className="h-10 w-56 rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 transition-all focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  className="h-10 w-56 rounded-xl border border-slate-200 bg-slate-50 pr-3 pl-9 text-sm text-slate-800 transition-all outline-none placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 />
               </div>
               <select
@@ -1115,7 +1115,7 @@ export default function SupplierOrdersPage({
                     ].map((col) => (
                       <th
                         key={col}
-                        className="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400"
+                        className="px-6 py-3 text-left text-[11px] font-semibold tracking-wider text-slate-400 uppercase"
                       >
                         {col}
                       </th>
@@ -1345,7 +1345,7 @@ export default function SupplierOrdersPage({
                     </svg>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-500">
+                    <p className="text-[10px] font-bold tracking-widest text-indigo-500 uppercase">
                       Service Inquiry
                     </p>
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white">
@@ -1393,7 +1393,7 @@ export default function SupplierOrdersPage({
                     </svg>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                    <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                       Service
                     </p>
                     <p className="mt-0.5 text-sm font-semibold text-slate-800 dark:text-slate-100">
@@ -1418,7 +1418,7 @@ export default function SupplierOrdersPage({
                     </svg>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                    <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                       Status
                     </p>
                     <span
@@ -1715,7 +1715,7 @@ export default function SupplierOrdersPage({
                 onClick={() => setFilter(stat.filterVal)}
                 className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white p-5 text-left shadow-sm ring-1 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
                   active
-                    ? "ring-2 ring-indigo-400 shadow-md -translate-y-0.5"
+                    ? "-translate-y-0.5 shadow-md ring-2 ring-indigo-400"
                     : "ring-slate-100 hover:ring-slate-200"
                 }`}
               >
@@ -1761,7 +1761,7 @@ export default function SupplierOrdersPage({
                   onClick={() => setFilter(stat.filterVal)}
                   className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white p-5 text-left shadow-sm ring-1 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
                     active
-                      ? "ring-2 ring-indigo-400 shadow-md -translate-y-0.5"
+                      ? "-translate-y-0.5 shadow-md ring-2 ring-indigo-400"
                       : "ring-slate-100 hover:ring-slate-200"
                   }`}
                 >
@@ -1806,7 +1806,7 @@ export default function SupplierOrdersPage({
                   onClick={() => setFilter(stat.filterVal)}
                   className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white p-5 text-left shadow-sm ring-1 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
                     active
-                      ? "ring-2 ring-indigo-400 shadow-md -translate-y-0.5"
+                      ? "-translate-y-0.5 shadow-md ring-2 ring-indigo-400"
                       : "ring-slate-100 hover:ring-slate-200"
                   }`}
                 >
@@ -1851,7 +1851,7 @@ export default function SupplierOrdersPage({
               {isServicesView ? "Inquiry Management" : "Order Fulfillment"}
             </h2>
             {isServicesView ? (
-              <div className="flex items-center gap-2 mt-0.5">
+              <div className="mt-0.5 flex items-center gap-2">
                 <svg
                   className="h-3.5 w-3.5 shrink-0 text-indigo-400"
                   fill="none"
@@ -1889,7 +1889,7 @@ export default function SupplierOrdersPage({
             {/* Search */}
             <div className="relative">
               <svg
-                className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth={2}
@@ -1908,7 +1908,7 @@ export default function SupplierOrdersPage({
                 placeholder={
                   isServicesView ? "Search inquiries…" : "Search orders..."
                 }
-                className="h-10 w-48 rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 transition-all focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+                className="h-10 w-48 rounded-xl border border-slate-200 bg-slate-50 pr-3 pl-9 text-sm text-slate-800 transition-all outline-none placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100"
               />
             </div>
 
@@ -1948,7 +1948,7 @@ export default function SupplierOrdersPage({
                 </svg>
               </button>
               {filterOpen && (
-                <div className="absolute right-0 top-12 z-20 min-w-40 overflow-hidden rounded-xl border border-slate-100 bg-white py-1 shadow-lg">
+                <div className="absolute top-12 right-0 z-20 min-w-40 overflow-hidden rounded-xl border border-slate-100 bg-white py-1 shadow-lg">
                   {activeFilterOptions.map((opt) => (
                     <button
                       key={opt.value}
@@ -2054,7 +2054,7 @@ export default function SupplierOrdersPage({
                   ).map((col) => (
                     <th
                       key={col}
-                      className="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400"
+                      className="px-6 py-3 text-left text-[11px] font-semibold tracking-wider text-slate-400 uppercase"
                     >
                       {col}
                     </th>
@@ -2108,7 +2108,7 @@ export default function SupplierOrdersPage({
                               )}
                               {newOrder && (
                                 <div className="absolute inset-0 flex items-start justify-start">
-                                  <span className="rounded-br-lg rounded-tl-xl bg-indigo-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">
+                                  <span className="rounded-tl-xl rounded-br-lg bg-indigo-500 px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-white uppercase">
                                     NEW
                                   </span>
                                 </div>
@@ -2157,7 +2157,7 @@ export default function SupplierOrdersPage({
                               />
                             </svg>
                             <div>
-                              <p className="whitespace-nowrap text-[12px] font-medium text-slate-700">
+                              <p className="text-[12px] font-medium whitespace-nowrap text-slate-700">
                                 {fmtDate(order.created_at)}
                               </p>
                               <p className="text-[11px] text-slate-400">
@@ -2304,7 +2304,7 @@ export default function SupplierOrdersPage({
                             <div className="grid gap-6 sm:grid-cols-3">
                               {/* Inquiry / Order details */}
                               <div>
-                                <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                                <p className="mb-3 text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                                   {isServicesView
                                     ? "Inquiry Details"
                                     : "Order Details"}
@@ -2338,7 +2338,7 @@ export default function SupplierOrdersPage({
                                       <dt className="text-[11px] text-slate-400">
                                         {label}
                                       </dt>
-                                      <dd className="text-[11px] font-semibold text-slate-700 text-right">
+                                      <dd className="text-right text-[11px] font-semibold text-slate-700">
                                         {value}
                                       </dd>
                                     </div>
@@ -2348,7 +2348,7 @@ export default function SupplierOrdersPage({
 
                               {/* Client / Customer info */}
                               <div>
-                                <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                                <p className="mb-3 text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                                   {isServicesView ? "Client" : "Customer"}
                                 </p>
                                 <div className="flex items-center gap-2.5">
@@ -2380,7 +2380,7 @@ export default function SupplierOrdersPage({
 
                               {/* Status Update / Fulfillment */}
                               <div>
-                                <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                                <p className="mb-3 text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                                   {isServicesView
                                     ? "Status Update"
                                     : "Fulfillment"}
@@ -2401,7 +2401,7 @@ export default function SupplierOrdersPage({
                                               .value as SupplierFulfillmentStatus,
                                           }))
                                         }
-                                        className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-3 pr-8 text-sm font-medium text-slate-700 outline-none transition-all focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 disabled:opacity-60"
+                                        className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pr-8 pl-3 text-sm font-medium text-slate-700 transition-all outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 disabled:opacity-60"
                                       >
                                         {activeFulfillOptions.map((o) => (
                                           <option key={o.value} value={o.value}>
@@ -2410,7 +2410,7 @@ export default function SupplierOrdersPage({
                                         ))}
                                       </select>
                                       <svg
-                                        className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                                        className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-slate-400"
                                         fill="none"
                                         stroke="currentColor"
                                         strokeWidth={2}
@@ -2436,14 +2436,14 @@ export default function SupplierOrdersPage({
                                     </button>
                                     {!isServicesView && order.tracking_no && (
                                       <div className="rounded-xl bg-white p-3 ring-1 ring-slate-200">
-                                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                                        <p className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">
                                           Tracking
                                         </p>
                                         <p className="mt-1 font-mono text-[12px] font-semibold text-slate-800">
                                           {order.tracking_no}
                                         </p>
                                         {order.courier && (
-                                          <p className="text-[11px] capitalize text-slate-400">
+                                          <p className="text-[11px] text-slate-400 capitalize">
                                             {order.courier}
                                           </p>
                                         )}

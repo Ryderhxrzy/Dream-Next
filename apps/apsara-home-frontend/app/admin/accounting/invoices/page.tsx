@@ -1,3 +1,4 @@
+import InvoicesPageMain from "@/components/superAdmin/accounting/InvoicesPageMain"
 import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
@@ -6,8 +7,6 @@ export const metadata = buildPageMetadata({
   path: "/admin/accounting/invoices",
   noIndex: true,
 })
-
-import InvoicesPageMain from "@/components/superAdmin/accounting/InvoicesPageMain"
 
 export default function AccountingInvoicesPage() {
   return <InvoicesPageMain />

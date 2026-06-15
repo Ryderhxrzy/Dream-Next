@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
+import { useCallback, useEffect, useState } from "react"
+import { AnimatePresence, motion } from "framer-motion"
 import Cropper from "react-easy-crop"
 import type { Area, Point } from "react-easy-crop"
-import { AnimatePresence, motion } from "framer-motion"
 
 /* --- Canvas helper: crop image to blob --- */
 function createImage(url: string): Promise<HTMLImageElement> {
@@ -127,7 +127,7 @@ export default function AvatarCropModal({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+        className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
         onClick={onCancel}
       >
         <motion.div
@@ -135,11 +135,11 @@ export default function AvatarCropModal({
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.9, opacity: 0, y: 16 }}
           transition={{ type: "spring", stiffness: 300, damping: 26 }}
-          className="w-fit max-w-[92vw] overflow-hidden rounded-3xl bg-white dark:bg-gray-900 shadow-2xl"
+          className="w-fit max-w-[92vw] overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-gray-900"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-5 py-4">
+          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
             <div>
               <p className="text-sm font-bold text-slate-900 dark:text-white">
                 Crop Photo
@@ -151,7 +151,7 @@ export default function AvatarCropModal({
             <button
               type="button"
               onClick={onCancel}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-gray-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 dark:bg-slate-800 dark:text-gray-400 dark:hover:bg-slate-700"
               aria-label="Cancel"
             >
               <svg
@@ -201,7 +201,7 @@ export default function AvatarCropModal({
               <button
                 type="button"
                 onClick={() => setZoom((z) => Math.max(1, z - 0.2))}
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-base font-bold leading-none"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-base leading-none font-bold text-slate-500 transition-colors hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700"
                 aria-label="Zoom out"
               >
                 −
@@ -213,13 +213,13 @@ export default function AvatarCropModal({
                 step={0.05}
                 value={zoom}
                 onChange={(e) => setZoom(Number(e.target.value))}
-                className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-slate-200 dark:bg-slate-700 accent-sky-500"
+                className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-sky-500 dark:bg-slate-700"
                 aria-label="Zoom"
               />
               <button
                 type="button"
                 onClick={() => setZoom((z) => Math.min(4, z + 0.2))}
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-base font-bold leading-none"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-base leading-none font-bold text-slate-500 transition-colors hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700"
                 aria-label="Zoom in"
               >
                 +
@@ -235,7 +235,7 @@ export default function AvatarCropModal({
             <button
               type="button"
               onClick={onCancel}
-              className="flex-1 rounded-2xl border border-slate-200 dark:border-slate-700 py-2.5 text-sm font-semibold text-slate-700 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+              className="flex-1 rounded-2xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-gray-300 dark:hover:bg-slate-800"
             >
               Cancel
             </button>
@@ -243,7 +243,7 @@ export default function AvatarCropModal({
               type="button"
               onClick={handleConfirm}
               disabled={isProcessing}
-              className="flex-1 rounded-2xl bg-sky-500 hover:bg-sky-600 disabled:bg-sky-300 py-2.5 text-sm font-semibold text-white transition-colors"
+              className="flex-1 rounded-2xl bg-sky-500 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-sky-600 disabled:bg-sky-300"
             >
               {isProcessing ? "Processing…" : "Apply Crop"}
             </button>

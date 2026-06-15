@@ -73,17 +73,17 @@ export default function ConversationList({
   if (!isOpen) return null
 
   return (
-    <div className="absolute top-full right-0 mt-2 z-50">
+    <div className="absolute top-full right-0 z-50 mt-2">
       <div className="relative">
         {/* Arrow pointing to icon */}
-        <div className="absolute -top-2 right-3 w-4 h-4 bg-orange-500 transform rotate-45" />
-        <div className="flex h-[500px] w-[380px] flex-col rounded-lg bg-white shadow-2xl border border-gray-200">
+        <div className="absolute -top-2 right-3 h-4 w-4 rotate-45 transform bg-orange-500" />
+        <div className="flex h-[500px] w-[380px] flex-col rounded-lg border border-gray-200 bg-white shadow-2xl">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-gray-200 bg-orange-500 px-4 py-3">
             <h3 className="text-base font-bold text-white">Messages</h3>
             <button
               onClick={onClose}
-              className="flex h-7 w-7 items-center justify-center rounded-full text-white transition hover:bg-orange-600 cursor-pointer"
+              className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-white transition hover:bg-orange-600"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -107,7 +107,7 @@ export default function ConversationList({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search messages..."
-              className="w-full rounded-full border border-gray-300 px-4 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+              className="w-full rounded-full border border-gray-300 px-4 py-2 text-sm focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 focus:outline-none"
             />
           </div>
 
@@ -115,7 +115,7 @@ export default function ConversationList({
           <div className="flex-1 overflow-y-auto">
             {filteredConversations.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 text-center">
-                <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="24"
@@ -128,7 +128,7 @@ export default function ConversationList({
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                   </svg>
                 </div>
-                <p className="text-sm font-medium text-gray-500 mt-3">
+                <p className="mt-3 text-sm font-medium text-gray-500">
                   No messages found
                 </p>
               </div>
@@ -138,7 +138,7 @@ export default function ConversationList({
                   <button
                     key={conv.id}
                     onClick={() => onSelectConversation(conv)}
-                    className="flex items-center gap-3 w-full p-3 hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="flex w-full cursor-pointer items-center gap-3 p-3 transition-colors hover:bg-gray-50"
                   >
                     <div className="relative">
                       {conv.avatar ? (
@@ -157,24 +157,24 @@ export default function ConversationList({
                         </div>
                       )}
                       {conv.online && (
-                        <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-white" />
+                        <div className="absolute right-0 bottom-0 h-3 w-3 rounded-full border-2 border-white bg-green-500" />
                       )}
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-semibold text-gray-900 truncate">
+                        <h4 className="truncate text-sm font-semibold text-gray-900">
                           {conv.name}
                         </h4>
-                        <span className="text-xs text-gray-400 shrink-0">
+                        <span className="shrink-0 text-xs text-gray-400">
                           {conv.lastMessageTime}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between mt-1">
-                        <p className="text-sm text-gray-500 truncate">
+                      <div className="mt-1 flex items-center justify-between">
+                        <p className="truncate text-sm text-gray-500">
                           {conv.lastMessage}
                         </p>
                         {conv.unreadCount > 0 && (
-                          <span className="shrink-0 bg-orange-500 text-white text-xs rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center leading-none">
+                          <span className="flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-orange-500 px-1 text-xs leading-none text-white">
                             {conv.unreadCount}
                           </span>
                         )}

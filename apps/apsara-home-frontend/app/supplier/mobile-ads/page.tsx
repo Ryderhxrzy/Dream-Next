@@ -1,16 +1,16 @@
 "use client"
 
 import { useState } from "react"
+import { AnimatePresence, motion } from "framer-motion"
 import {
-  Plus,
-  GripVertical,
-  Trash2,
   Edit2,
+  GripVertical,
   Image as ImageIcon,
   LayoutGrid,
+  Plus,
+  Trash2,
   Type,
 } from "lucide-react"
-import { AnimatePresence, motion } from "framer-motion"
 
 interface Section {
   id: string
@@ -149,7 +149,7 @@ export default function MobileManagementHomePage() {
                             : "border-slate-200/80 bg-white/50 hover:border-cyan-200 dark:border-white/10 dark:bg-white/[0.03] dark:hover:border-cyan-400/30"
                         } cursor-grab active:cursor-grabbing`}
                       >
-                        <GripVertical className="h-5 w-5 text-slate-400 transition opacity-0 group-hover:opacity-100" />
+                        <GripVertical className="h-5 w-5 text-slate-400 opacity-0 transition group-hover:opacity-100" />
 
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 dark:border-white/10 dark:bg-white/[0.05]">
                           <Icon className="h-5 w-5 text-slate-600 dark:text-slate-300" />
@@ -256,7 +256,7 @@ export default function MobileManagementHomePage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-slate-900"
+              className="fixed top-1/2 left-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-slate-900"
             >
               <h3 className="mb-4 text-xl font-bold text-slate-900 dark:text-white">
                 Add New Section

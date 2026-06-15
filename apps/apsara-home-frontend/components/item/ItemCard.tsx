@@ -1,24 +1,25 @@
 "use client"
 
-import Link from "next/link"
-import Image from "next/image"
 import { useEffect, useMemo, useState } from "react"
-import { useSession } from "next-auth/react"
-import { usePathname, useRouter } from "next/navigation"
-import { motion, AnimatePresence } from "framer-motion"
+import { useCart } from "@/context/CartContext"
+import { buildStorefrontProductPath } from "@/libs/storefrontRouting"
 import { useAddToCartMutation, useGetCartQuery } from "@/store/api/cartApi"
+import { useLazyGetPublicProductQuery } from "@/store/api/productsApi"
+import { useSubmitServiceInquiryMutation } from "@/store/api/serviceInquiriesApi"
+import { useMeQuery } from "@/store/api/userApi"
 import {
-  useGetWishlistQuery,
   useAddWishlistMutation,
+  useGetWishlistQuery,
   useRemoveWishlistMutation,
 } from "@/store/api/wishlistApi"
-import { useLazyGetPublicProductQuery } from "@/store/api/productsApi"
-import { useMeQuery } from "@/store/api/userApi"
-import { useSubmitServiceInquiryMutation } from "@/store/api/serviceInquiriesApi"
-import { useCart } from "@/context/CartContext"
+import { AnimatePresence, motion } from "framer-motion"
+import { useSession } from "next-auth/react"
+import Image from "next/image"
+import Link from "next/link"
+import { usePathname, useRouter } from "next/navigation"
 import toast from "react-hot-toast"
+
 import ShareModal from "@/components/ui/ShareModal"
-import { buildStorefrontProductPath } from "@/libs/storefrontRouting"
 
 const toSlug = (value: string) =>
   value
@@ -582,22 +583,22 @@ export default function ItemCard({
       <Link
         href={isServicesCategory ? "#" : href}
         onClick={isServicesCategory ? (e) => e.preventDefault() : undefined}
-        className={`flex flex-col group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden transition-colors ${isServicesCategory ? "cursor-default" : "hover:border-sky-500 dark:hover:border-sky-400 cursor-pointer"}`}
+        className={`group flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white transition-colors dark:border-gray-700 dark:bg-gray-800 ${isServicesCategory ? "cursor-default" : "cursor-pointer hover:border-sky-500 dark:hover:border-sky-400"}`}
       >
         {/* Product Image */}
-        <div className="relative aspect-square w-full bg-gray-100 dark:bg-gray-700 overflow-hidden border-b border-gray-200 dark:border-gray-700">
+        <div className="relative aspect-square w-full overflow-hidden border-b border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-700">
           {/* Action Icons */}
-          <div className="absolute top-2 right-2 flex flex-col gap-2 z-10">
+          <div className="absolute top-2 right-2 z-10 flex flex-col gap-2">
             {!isServicesCategory && (
               <div className="relative">
                 <button
                   onClick={handleWishlist}
                   disabled={isAddingToWishlist || isRemovingFromWishlist}
-                  className={`p-2 rounded-full backdrop-blur-md border shadow-lg transition-all duration-200 cursor-pointer hover:cursor-hand ${
+                  className={`hover:cursor-hand cursor-pointer rounded-full border p-2 shadow-lg backdrop-blur-md transition-all duration-200 ${
                     isInWishlist
-                      ? "bg-sky-500 border-sky-500 hover:bg-sky-600 hover:border-sky-600"
-                      : "bg-white/90 dark:bg-gray-800/90 border-gray-200 dark:border-gray-600 hover:bg-sky-500 hover:border-sky-500 dark:hover:bg-sky-500 dark:hover:border-sky-500"
-                  } ${isAddingToWishlist || isRemovingFromWishlist ? "opacity-50 cursor-not-allowed" : ""}`}
+                      ? "border-sky-500 bg-sky-500 hover:border-sky-600 hover:bg-sky-600"
+                      : "border-gray-200 bg-white/90 hover:border-sky-500 hover:bg-sky-500 dark:border-gray-600 dark:bg-gray-800/90 dark:hover:border-sky-500 dark:hover:bg-sky-500"
+                  } ${isAddingToWishlist || isRemovingFromWishlist ? "cursor-not-allowed opacity-50" : ""}`}
                   title={
                     isInWishlist ? "Remove from Wishlist" : "Add to Wishlist"
                   }
@@ -624,7 +625,7 @@ export default function ItemCard({
                       fill={isInWishlist ? "white" : "none"}
                       stroke={isInWishlist ? "white" : "currentColor"}
                       strokeWidth="2"
-                      className={`transition-colors ${isInWishlist ? "text-white" : "text-gray-700 dark:text-gray-300 hover:text-white"}`}
+                      className={`transition-colors ${isInWishlist ? "text-white" : "text-gray-700 hover:text-white dark:text-gray-300"}`}
                     >
                       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                     </svg>
@@ -635,7 +636,7 @@ export default function ItemCard({
             {!isServicesCategory && (
               <button
                 onClick={handleShare}
-                className="p-2 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200 dark:border-gray-600 shadow-lg hover:bg-sky-500 hover:border-sky-500 dark:hover:bg-sky-500 dark:hover:border-sky-500 transition-all duration-200 cursor-pointer hover:cursor-hand"
+                className="hover:cursor-hand cursor-pointer rounded-full border border-gray-200 bg-white/90 p-2 shadow-lg backdrop-blur-md transition-all duration-200 hover:border-sky-500 hover:bg-sky-500 dark:border-gray-600 dark:bg-gray-800/90 dark:hover:border-sky-500 dark:hover:bg-sky-500"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -645,7 +646,7 @@ export default function ItemCard({
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
-                  className="text-gray-700 dark:text-gray-300 hover:text-white transition-colors"
+                  className="text-gray-700 transition-colors hover:text-white dark:text-gray-300"
                 >
                   <circle cx="18" cy="5" r="3" />
                   <circle cx="6" cy="12" r="3" />
@@ -686,13 +687,13 @@ export default function ItemCard({
           {/* Badges */}
           <div className="absolute top-0 left-0 flex flex-col">
             {hasMemberPrice && !hideDiscountBadge && isLoggedIn && (
-              <div className="bg-sky-500 text-white text-xs font-bold px-2 py-1">
+              <div className="bg-sky-500 px-2 py-1 text-xs font-bold text-white">
                 Enjoy {Math.round(((srpPrice - memberPrice) / srpPrice) * 100)}%
                 off
               </div>
             )}
             {product.bestseller && (
-              <div className="bg-purple-500 text-white text-xs font-bold px-2 py-1">
+              <div className="bg-purple-500 px-2 py-1 text-xs font-bold text-white">
                 Bestseller
               </div>
             )}
@@ -706,7 +707,7 @@ export default function ItemCard({
                 e.stopPropagation()
                 setServiceModalOpen(true)
               }}
-              className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-sky-500 text-white shadow-lg transition-all duration-300 hover:bg-sky-600 sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2 sm:text-sm sm:font-semibold sm:opacity-0 sm:translate-y-2 sm:group-hover:opacity-100 sm:group-hover:translate-y-0 cursor-pointer"
+              className="absolute right-3 bottom-3 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-sky-500 text-white shadow-lg transition-all duration-300 hover:bg-sky-600 sm:h-auto sm:w-auto sm:translate-y-2 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm sm:font-semibold sm:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -730,7 +731,7 @@ export default function ItemCard({
             <button
               onClick={handleAddToCart}
               disabled={isAddingToCart || isFetchingProductDetails}
-              className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-sky-500 text-white shadow-lg transition-all duration-300 hover:bg-sky-600 sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2 sm:text-sm sm:font-semibold sm:opacity-0 sm:translate-y-2 sm:group-hover:opacity-100 sm:group-hover:translate-y-0 cursor-pointer hover:cursor-hand disabled:opacity-50 disabled:cursor-not-allowed"
+              className="hover:cursor-hand absolute right-3 bottom-3 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-sky-500 text-white shadow-lg transition-all duration-300 hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-50 sm:h-auto sm:w-auto sm:translate-y-2 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm sm:font-semibold sm:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100"
               title="Add to Cart"
               aria-label="Add to Cart"
             >
@@ -776,17 +777,17 @@ export default function ItemCard({
 
         {/* Product Info */}
         {isServicesCategory ? (
-          <div className="flex flex-col gap-2 px-2.5 sm:px-3 py-2.5 sm:py-3">
+          <div className="flex flex-col gap-2 px-2.5 py-2.5 sm:px-3 sm:py-3">
             <div>
-              <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-sky-500">
+              <p className="text-[9px] font-bold tracking-widest text-sky-500 uppercase sm:text-[10px]">
                 Company
               </p>
-              <h3 className="line-clamp-1 text-xs sm:text-sm font-semibold text-gray-800 dark:text-gray-200 leading-snug">
+              <h3 className="line-clamp-1 text-xs leading-snug font-semibold text-gray-800 sm:text-sm dark:text-gray-200">
                 {product.name}
               </h3>
             </div>
             <div>
-              <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1">
+              <p className="mb-1 text-[9px] font-bold tracking-widest text-gray-400 uppercase sm:text-[10px] dark:text-gray-500">
                 Services
               </p>
               {serviceTypes.length > 0 ? (
@@ -794,7 +795,7 @@ export default function ItemCard({
                   {serviceTypes.map((type) => (
                     <span
                       key={type}
-                      className="rounded-full border border-sky-100 bg-sky-50 px-2 py-0.5 text-[9px] sm:text-[10px] font-medium text-sky-600 dark:bg-sky-900/20 dark:border-sky-800 dark:text-sky-300"
+                      className="rounded-full border border-sky-100 bg-sky-50 px-2 py-0.5 text-[9px] font-medium text-sky-600 sm:text-[10px] dark:border-sky-800 dark:bg-sky-900/20 dark:text-sky-300"
                     >
                       {type}
                     </span>
@@ -808,31 +809,31 @@ export default function ItemCard({
             </div>
           </div>
         ) : (
-          <div className="mt-1 flex flex-col gap-1 px-2.5 sm:px-3 py-2.5 sm:py-3">
+          <div className="mt-1 flex flex-col gap-1 px-2.5 py-2.5 sm:px-3 sm:py-3">
             {brandName && (
-              <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">
+              <p className="text-[10px] font-medium tracking-wide text-gray-500 uppercase sm:text-xs dark:text-gray-400">
                 {brandName}
               </p>
             )}
-            <h3 className="line-clamp-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200 leading-snug min-h-[2.5rem]">
+            <h3 className="line-clamp-2 min-h-[2.5rem] text-xs leading-snug text-gray-800 sm:text-sm dark:text-gray-200">
               {product.name}
             </h3>
 
-            <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1 sm:gap-2">
-              <div className="flex items-baseline gap-1.5 sm:gap-2 flex-wrap">
-                <span className="text-sm sm:text-base font-bold text-sky-500 dark:text-sky-400">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
+              <div className="flex flex-wrap items-baseline gap-1.5 sm:gap-2">
+                <span className="text-sm font-bold text-sky-500 sm:text-base dark:text-sky-400">
                   {"₱"}
                   {displayPrice.toLocaleString()}
                 </span>
                 {strikePrice > displayPrice && (
-                  <span className="text-xs sm:text-sm text-gray-400 dark:text-gray-500 line-through">
+                  <span className="text-xs text-gray-400 line-through sm:text-sm dark:text-gray-500">
                     {"₱"}
                     {strikePrice.toLocaleString()}
                   </span>
                 )}
               </div>
               {isLoggedIn && displayPv > 0 && (
-                <span className="rounded-full border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/30 px-1 sm:px-2 py-0.5 text-[8px] sm:text-[11px] font-semibold text-blue-700 dark:text-blue-300 shrink-0 whitespace-nowrap w-fit">
+                <span className="w-fit shrink-0 rounded-full border border-blue-200 bg-blue-50 px-1 py-0.5 text-[8px] font-semibold whitespace-nowrap text-blue-700 sm:px-2 sm:text-[11px] dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
                   PV {displayPv.toLocaleString()}
                 </span>
               )}
@@ -852,7 +853,7 @@ export default function ItemCard({
                       hasRating && star <= filledStars ? "#38bdf8" : "#d1d5db"
                     }
                     strokeWidth="2"
-                    className="sm:w-[10px] sm:h-[10px]"
+                    className="sm:h-[10px] sm:w-[10px]"
                   >
                     <path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
                   </svg>
@@ -917,7 +918,7 @@ export default function ItemCard({
                     </svg>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                    <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase dark:text-gray-500">
                       Service Details
                     </p>
                     <h3 className="line-clamp-1 text-base font-bold text-gray-900 dark:text-white">
@@ -950,7 +951,7 @@ export default function ItemCard({
               <div className="max-h-[75vh] overflow-y-auto">
                 {/* Hero banner */}
                 <div className="relative mx-4 mb-1 overflow-hidden rounded-2xl bg-gradient-to-br from-sky-50 to-blue-100 p-5 dark:from-sky-900/30 dark:to-blue-900/20">
-                  <span className="absolute right-4 top-3 text-lg text-sky-300 dark:text-sky-500">
+                  <span className="absolute top-3 right-4 text-lg text-sky-300 dark:text-sky-500">
                     ✦
                   </span>
                   <div className="flex items-center gap-4">
@@ -958,7 +959,7 @@ export default function ItemCard({
                       <p className="text-sm font-semibold text-sky-500 dark:text-sky-400">
                         Hello there! 👋
                       </p>
-                      <p className="mt-1 text-base font-bold leading-snug text-gray-900 dark:text-white">
+                      <p className="mt-1 text-base leading-snug font-bold text-gray-900 dark:text-white">
                         Professional service you can count on.
                       </p>
                       <p className="mt-1.5 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
@@ -1000,7 +1001,7 @@ export default function ItemCard({
                       </svg>
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                      <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase dark:text-gray-500">
                         Company
                       </p>
                       <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
@@ -1012,7 +1013,7 @@ export default function ItemCard({
                   {/* Services Offered */}
                   {serviceTypes.length > 0 && (
                     <div className="border-b border-gray-100 py-4 dark:border-gray-800">
-                      <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                      <p className="mb-3 text-[10px] font-bold tracking-widest text-gray-400 uppercase dark:text-gray-500">
                         Services Offered
                       </p>
                       <div className="flex flex-wrap gap-2">
@@ -1079,7 +1080,7 @@ export default function ItemCard({
                         </svg>
                       </div>
                       <div>
-                        <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                        <p className="mb-1 text-[10px] font-bold tracking-widest text-gray-400 uppercase dark:text-gray-500">
                           About
                         </p>
                         <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
@@ -1275,7 +1276,7 @@ export default function ItemCard({
                     </svg>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-sky-500">
+                    <p className="text-[10px] font-bold tracking-widest text-sky-500 uppercase">
                       Inquiry
                     </p>
                     <h3 className="text-base font-bold text-gray-900 dark:text-white">
@@ -1381,7 +1382,7 @@ export default function ItemCard({
                             }))
                           }
                           placeholder="Enter your full name"
-                          className="w-full rounded-xl border border-gray-200 py-2.5 pl-9 pr-4 text-sm text-gray-800 outline-none placeholder:text-gray-300 transition-all focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-600 dark:focus:border-sky-500"
+                          className="w-full rounded-xl border border-gray-200 py-2.5 pr-4 pl-9 text-sm text-gray-800 transition-all outline-none placeholder:text-gray-300 focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-600 dark:focus:border-sky-500"
                         />
                       </div>
                     </div>
@@ -1417,7 +1418,7 @@ export default function ItemCard({
                             }))
                           }
                           placeholder="Enter your email"
-                          className="w-full rounded-xl border border-gray-200 py-2.5 pl-9 pr-4 text-sm text-gray-800 outline-none placeholder:text-gray-300 transition-all focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-600 dark:focus:border-sky-500"
+                          className="w-full rounded-xl border border-gray-200 py-2.5 pr-4 pl-9 text-sm text-gray-800 transition-all outline-none placeholder:text-gray-300 focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-600 dark:focus:border-sky-500"
                         />
                       </div>
                     </div>
@@ -1452,7 +1453,7 @@ export default function ItemCard({
                             }))
                           }
                           placeholder="Enter your contact number"
-                          className="w-full rounded-xl border border-gray-200 py-2.5 pl-9 pr-4 text-sm text-gray-800 outline-none placeholder:text-gray-300 transition-all focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-600 dark:focus:border-sky-500"
+                          className="w-full rounded-xl border border-gray-200 py-2.5 pr-4 pl-9 text-sm text-gray-800 transition-all outline-none placeholder:text-gray-300 focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-600 dark:focus:border-sky-500"
                         />
                       </div>
                     </div>
@@ -1463,7 +1464,7 @@ export default function ItemCard({
                         Address <span className="text-rose-500">*</span>
                       </label>
                       <div className="relative">
-                        <span className="pointer-events-none absolute left-3 top-3">
+                        <span className="pointer-events-none absolute top-3 left-3">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="15"
@@ -1488,7 +1489,7 @@ export default function ItemCard({
                           }
                           placeholder="Enter your address"
                           rows={3}
-                          className="w-full resize-none rounded-xl border border-gray-200 py-2.5 pl-9 pr-4 text-sm text-gray-800 outline-none placeholder:text-gray-300 transition-all focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-600 dark:focus:border-sky-500"
+                          className="w-full resize-none rounded-xl border border-gray-200 py-2.5 pr-4 pl-9 text-sm text-gray-800 transition-all outline-none placeholder:text-gray-300 focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-600 dark:focus:border-sky-500"
                         />
                       </div>
                     </div>
@@ -1500,7 +1501,7 @@ export default function ItemCard({
                         <span className="text-rose-500">*</span>
                       </label>
                       <div className="relative">
-                        <span className="pointer-events-none absolute left-3 top-3">
+                        <span className="pointer-events-none absolute top-3 left-3">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="15"
@@ -1524,7 +1525,7 @@ export default function ItemCard({
                           }
                           placeholder="Describe what you need or your purpose for this inquiry..."
                           rows={3}
-                          className="w-full resize-none rounded-xl border border-gray-200 py-2.5 pl-9 pr-4 text-sm text-gray-800 outline-none placeholder:text-gray-300 transition-all focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-600 dark:focus:border-sky-500"
+                          className="w-full resize-none rounded-xl border border-gray-200 py-2.5 pr-4 pl-9 text-sm text-gray-800 transition-all outline-none placeholder:text-gray-300 focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-600 dark:focus:border-sky-500"
                         />
                       </div>
                     </div>
@@ -1644,7 +1645,7 @@ export default function ItemCard({
             >
               <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-sky-500">
+                  <p className="text-xs font-bold tracking-widest text-sky-500 uppercase">
                     Select Variant
                   </p>
                   <h3 className="line-clamp-1 text-base font-bold text-gray-900 dark:text-white">

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation"
+
 import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({

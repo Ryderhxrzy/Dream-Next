@@ -1,4 +1,4 @@
-import type { AuthCustomer } from "./auth.types.js";
+import type { AuthCustomer } from "./auth.types.js"
 
 export function serializeAuthCustomer(customer: AuthCustomer) {
   return {
@@ -7,5 +7,5 @@ export function serializeAuthCustomer(customer: AuthCustomer) {
     lastName: customer.lastName,
     email: customer.email,
     avatarUrl: customer.avatarUrl,
-  };
+  }
 }

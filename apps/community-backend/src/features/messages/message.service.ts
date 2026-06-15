@@ -1,22 +1,27 @@
-import { prisma } from "../../lib/prisma.js";
-import { publish, CHANNELS } from "../../lib/redis.js";
+import { prisma } from "../../lib/prisma.js"
+import { CHANNELS, publish } from "../../lib/redis.js"
 
 function serializeUser(user: {
-  id: bigint;
-  firstName: string | null;
-  lastName: string | null;
-  avatarUrl: string | null;
+  id: bigint
+  firstName: string | null
+  lastName: string | null
+  avatarUrl: string | null
 }) {
   return {
     id: user.id.toString(),
-    name: [user.firstName, user.lastName].filter(Boolean).join(" ") || "Community Member",
+    name:
+      [user.firstName, user.lastName].filter(Boolean).join(" ") ||
+      "Community Member",
     avatarUrl: user.avatarUrl,
-  };
+  }
 }
 
 // Find an existing 1:1 conversation between two users, or create one.
-export async function getOrCreateConversation(userId: bigint, otherUserId: bigint) {
-  if (userId === otherUserId) return { data: null, error: "self" as const };
+export async function getOrCreateConversation(
+  userId: bigint,
+  otherUserId: bigint
+) {
+  if (userId === otherUserId) return { data: null, error: "self" as const }
 
   // Find a conversation where BOTH are participants
   const existing = await prisma.conversation.findFirst({
@@ -27,9 +32,9 @@ export async function getOrCreateConversation(userId: bigint, otherUserId: bigin
       ],
     },
     select: { id: true },
-  });
+  })
 
-  if (existing) return { data: existing.id, error: null };
+  if (existing) return { data: existing.id, error: null }
 
   const created = await prisma.conversation.create({
     data: {
@@ -38,9 +43,9 @@ export async function getOrCreateConversation(userId: bigint, otherUserId: bigin
       },
     },
     select: { id: true },
-  });
+  })
 
-  return { data: created.id, error: null };
+  return { data: created.id, error: null }
 }
 
 // List the current user's conversations with last message + other participant.
@@ -52,13 +57,13 @@ export async function listConversations(userId: bigint) {
       messages: { orderBy: { createdAt: "desc" }, take: 1 },
     },
     orderBy: { updatedAt: "desc" },
-  });
+  })
 
   return Promise.all(
     conversations.map(async (conv) => {
-      const me = conv.participants.find((p) => p.userId === userId);
-      const other = conv.participants.find((p) => p.userId !== userId);
-      const lastMessage = conv.messages[0] ?? null;
+      const me = conv.participants.find((p) => p.userId === userId)
+      const other = conv.participants.find((p) => p.userId !== userId)
+      const lastMessage = conv.messages[0] ?? null
 
       const unreadCount = await prisma.message.count({
         where: {
@@ -66,7 +71,7 @@ export async function listConversations(userId: bigint) {
           senderId: { not: userId },
           ...(me?.lastReadAt ? { createdAt: { gt: me.lastReadAt } } : {}),
         },
-      });
+      })
 
       return {
         id: conv.id.toString(),
@@ -80,21 +85,21 @@ export async function listConversations(userId: bigint) {
           : null,
         unreadCount,
         updatedAt: conv.updatedAt,
-      };
-    }),
-  );
+      }
+    })
+  )
 }
 
 async function isParticipant(conversationId: bigint, userId: bigint) {
   const p = await prisma.conversationParticipant.findUnique({
     where: { conversationId_userId: { conversationId, userId } },
-  });
-  return !!p;
+  })
+  return !!p
 }
 
 export async function listMessages(conversationId: bigint, userId: bigint) {
   if (!(await isParticipant(conversationId, userId))) {
-    return { data: null, error: "forbidden" as const };
+    return { data: null, error: "forbidden" as const }
   }
 
   const [messages, otherParticipant] = await Promise.all([
@@ -108,7 +113,7 @@ export async function listMessages(conversationId: bigint, userId: bigint) {
       where: { conversationId, userId: { not: userId } },
       select: { lastReadAt: true },
     }),
-  ]);
+  ])
 
   return {
     data: {
@@ -123,17 +128,17 @@ export async function listMessages(conversationId: bigint, userId: bigint) {
       otherReadAt: otherParticipant?.lastReadAt ?? null,
     },
     error: null,
-  };
+  }
 }
 
 export async function sendMessage(
   conversationId: bigint,
   senderId: bigint,
   content: string,
-  imageUrl?: string | null,
+  imageUrl?: string | null
 ) {
   if (!(await isParticipant(conversationId, senderId))) {
-    return { data: null, error: "forbidden" as const };
+    return { data: null, error: "forbidden" as const }
   }
 
   const [message] = await Promise.all([
@@ -145,13 +150,13 @@ export async function sendMessage(
       where: { id: conversationId },
       data: { updatedAt: new Date() },
     }),
-  ]);
+  ])
 
   // Recipient(s) — everyone in the conversation except sender
   const participants = await prisma.conversationParticipant.findMany({
     where: { conversationId, userId: { not: senderId } },
     select: { userId: true },
-  });
+  })
 
   const payload = {
     conversationId: conversationId.toString(),
@@ -164,26 +169,29 @@ export async function sendMessage(
       createdAt: message.createdAt,
     },
     recipientIds: participants.map((p) => p.userId.toString()),
-  };
+  }
 
-  await publish(CHANNELS.NEW_MESSAGE, payload);
+  await publish(CHANNELS.NEW_MESSAGE, payload)
 
-  return { data: payload.message, error: null };
+  return { data: payload.message, error: null }
 }
 
-export async function markConversationRead(conversationId: bigint, userId: bigint) {
-  const readAt = new Date();
+export async function markConversationRead(
+  conversationId: bigint,
+  userId: bigint
+) {
+  const readAt = new Date()
   await prisma.conversationParticipant.updateMany({
     where: { conversationId, userId },
     data: { lastReadAt: readAt },
-  });
+  })
 
   // Notify the OTHER participant(s) so their "Sent" updates to "Seen" live
   await publish(CHANNELS.MESSAGE_READ, {
     conversationId: conversationId.toString(),
     readerId: userId.toString(),
     readAt,
-  });
+  })
 
-  return { error: null };
+  return { error: null }
 }

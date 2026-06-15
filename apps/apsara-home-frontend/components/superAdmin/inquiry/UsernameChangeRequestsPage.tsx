@@ -152,7 +152,7 @@ export default function UsernameChangeRequestsPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as RequestStatus)}
-              className="rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-700 shadow-sm focus:border-cyan-300 focus:outline-none focus:ring-4 focus:ring-cyan-100/60 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/20"
+              className="rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-700 shadow-sm focus:border-cyan-300 focus:ring-4 focus:ring-cyan-100/60 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/20"
             >
               <option value="all">All Status ({counts.all})</option>
               <option value="pending_review">Pending ({counts.pending})</option>
@@ -243,7 +243,7 @@ export default function UsernameChangeRequestsPage() {
         {rows.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-xs uppercase text-slate-500 dark:bg-slate-950/40 dark:text-slate-400">
+              <thead className="bg-slate-50 text-xs text-slate-500 uppercase dark:bg-slate-950/40 dark:text-slate-400">
                 <tr>
                   <th className="px-5 py-3 text-left font-semibold">Ticket</th>
                   <th className="px-5 py-3 text-left font-semibold">

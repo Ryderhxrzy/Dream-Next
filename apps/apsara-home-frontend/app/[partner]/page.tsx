@@ -1,9 +1,10 @@
-import LandingPageView from "@/components/partner/PartnerLandingPageView"
-import type { Metadata } from "next"
 import {
   getPartnerStorefrontBySlug,
   getPartnerStorefrontItemBySlug,
 } from "@/libs/partnerStorefrontServer"
+import type { Metadata } from "next"
+
+import LandingPageView from "@/components/partner/PartnerLandingPageView"
 
 type PageProps = {
   params: Promise<{ partner: string }>

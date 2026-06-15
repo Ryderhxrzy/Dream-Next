@@ -1,5 +1,5 @@
-import { buildPageMetadata } from "@/app/seo"
 import DreamBuildContentManager from "@/components/superAdmin/webpages/DreamBuildContentManager"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Admin DreamBuild Content",

@@ -50,7 +50,7 @@ const SuccessState = ({ firstName }: { firstName: string }) => {
         <p className="max-w-sm text-[0.87rem] leading-relaxed text-slate-500">
           Thank you{firstName ? `, ${firstName}` : ""}. Your consultation
           request has been prepared and our design team will be in touch within{" "}
-          <span className="text-slate-800 font-medium">24 hours</span> using the
+          <span className="font-medium text-slate-800">24 hours</span> using the
           details you provided.
         </p>
       </motion.div>
@@ -68,7 +68,7 @@ const SuccessState = ({ firstName }: { firstName: string }) => {
         ].map((item) => (
           <div key={item.label} className="flex flex-col items-center gap-2">
             <span className="text-sm text-indigo-500">{item.icon}</span>
-            <span className="text-[0.68rem] uppercase tracking-[0.1em] text-slate-400">
+            <span className="text-[0.68rem] tracking-[0.1em] text-slate-400 uppercase">
               {item.label}
             </span>
           </div>

@@ -1,7 +1,8 @@
-import { redirect } from "next/navigation"
-import { getServerSession } from "next-auth"
-import { buildPageMetadata } from "@/app/seo"
 import { partnerAuthOptions } from "@/libs/partnerAuth"
+import { getServerSession } from "next-auth"
+import { redirect } from "next/navigation"
+
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Partner Portal",

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import { useGetAdminPaymentsOverviewQuery } from "@/store/api/adminPaymentsApi"
 import {
   Area,
   AreaChart,
@@ -11,7 +12,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
-import { useGetAdminPaymentsOverviewQuery } from "@/store/api/adminPaymentsApi"
 
 const tabs = ["Today's", "Monthly", "Yearly"]
 
@@ -73,7 +73,7 @@ const SalesChart = () => {
               : `Real payment totals from the database - ${formatMoney(totalAmount)}`}
           </p>
         </div>
-        <div className="flex self-start rounded-xl bg-gray-100 p-1 dark:bg-gray-800/80 sm:self-auto">
+        <div className="flex self-start rounded-xl bg-gray-100 p-1 sm:self-auto dark:bg-gray-800/80">
           {tabs.map((tab, index) => (
             <button
               key={tab}

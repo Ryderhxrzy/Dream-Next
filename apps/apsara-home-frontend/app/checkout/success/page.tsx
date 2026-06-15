@@ -1,5 +1,5 @@
-import { buildPageMetadata } from "@/app/seo"
 import CheckoutSuccessPage from "@/components/product/CheckoutSuccess"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Checkout Success",

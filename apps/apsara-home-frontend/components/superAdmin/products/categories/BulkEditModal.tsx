@@ -1,8 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
 import { Category, useUpdateCategoryMutation } from "@/store/api/categoriesApi"
+import { AnimatePresence, motion } from "framer-motion"
 
 interface Props {
   categories: Category[]
@@ -146,7 +146,7 @@ export default function BulkEditModal({ categories, onClose }: Props) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={handleClose}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
           />
           <div className="fixed inset-0 z-50 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-4">
@@ -156,14 +156,14 @@ export default function BulkEditModal({ categories, onClose }: Props) {
                 exit={{ opacity: 0, scale: 0.95, y: 12 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
                 onClick={(e) => e.stopPropagation()}
-                className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl my-4"
+                className="my-4 w-full max-w-3xl rounded-2xl bg-white shadow-2xl"
               >
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5 dark:border-slate-800">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-teal-500 flex items-center justify-center shadow-md shadow-teal-500/30 shrink-0">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-500 shadow-md shadow-teal-500/30">
                       <svg
-                        className="w-5 h-5 text-white"
+                        className="h-5 w-5 text-white"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -177,17 +177,17 @@ export default function BulkEditModal({ categories, onClose }: Props) {
                       </svg>
                     </div>
                     <div>
-                      <h2 className="text-slate-800 font-bold text-base leading-none">
+                      <h2 className="text-base leading-none font-bold text-slate-800">
                         Bulk Edit
                       </h2>
-                      <p className="text-slate-400 text-xs mt-1">
+                      <p className="mt-1 text-xs text-slate-400">
                         Editing{" "}
                         <span className="font-semibold text-slate-600">
                           {categories.length}
                         </span>{" "}
                         categories
                         {changedRows.length > 0 && (
-                          <span className="ml-1.5 text-teal-600 font-semibold">
+                          <span className="ml-1.5 font-semibold text-teal-600">
                             · {changedRows.length} changed
                           </span>
                         )}
@@ -197,10 +197,10 @@ export default function BulkEditModal({ categories, onClose }: Props) {
                   <button
                     onClick={handleClose}
                     disabled={isSavingAll}
-                    className="h-8 w-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors flex items-center justify-center disabled:opacity-40"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:opacity-40"
                   >
                     <svg
-                      className="w-4 h-4"
+                      className="h-4 w-4"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -222,10 +222,10 @@ export default function BulkEditModal({ categories, onClose }: Props) {
                       initial={{ opacity: 0, y: -4 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}
-                      className="mx-6 mt-4 flex items-start gap-2.5 p-3 bg-red-50 rounded-xl border border-red-100"
+                      className="mx-6 mt-4 flex items-start gap-2.5 rounded-xl border border-red-100 bg-red-50 p-3"
                     >
                       <svg
-                        className="w-4 h-4 text-red-500 shrink-0 mt-0.5"
+                        className="mt-0.5 h-4 w-4 shrink-0 text-red-500"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -244,25 +244,25 @@ export default function BulkEditModal({ categories, onClose }: Props) {
 
                 {/* Column headers */}
                 <div className="px-6 pt-4">
-                  <div className="grid grid-cols-[32px_1fr_1fr_72px_1fr] gap-2 pb-1.5 border-b border-slate-100 dark:border-slate-800">
+                  <div className="grid grid-cols-[32px_1fr_1fr_72px_1fr] gap-2 border-b border-slate-100 pb-1.5 dark:border-slate-800">
                     <div />
-                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">
+                    <p className="text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
                       Name
                     </p>
-                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">
+                    <p className="text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
                       URL Slug
                     </p>
-                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide text-center">
+                    <p className="text-center text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
                       Order
                     </p>
-                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">
+                    <p className="text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
                       Description
                     </p>
                   </div>
                 </div>
 
                 {/* Rows */}
-                <div className="px-6 py-3 space-y-2 max-h-[50vh] overflow-y-auto">
+                <div className="max-h-[50vh] space-y-2 overflow-y-auto px-6 py-3">
                   {rows.map((row, idx) => {
                     const status = statuses[row.id] ?? "idle"
                     const color = CARD_COLORS[idx % CARD_COLORS.length]
@@ -278,18 +278,13 @@ export default function BulkEditModal({ categories, onClose }: Props) {
                     return (
                       <div
                         key={row.id}
-                        className={`grid grid-cols-[32px_1fr_1fr_72px_1fr] gap-2 items-center py-2 px-2 rounded-xl transition-colors
-                          ${status === "saved" ? "bg-teal-50/70" : ""}
-                          ${status === "error" ? "bg-red-50/70" : ""}
-                          ${status === "saving" ? "bg-slate-50/70" : ""}
-                          ${changed && status === "idle" ? "bg-amber-50/60" : ""}
-                        `}
+                        className={`grid grid-cols-[32px_1fr_1fr_72px_1fr] items-center gap-2 rounded-xl px-2 py-2 transition-colors ${status === "saved" ? "bg-teal-50/70" : ""} ${status === "error" ? "bg-red-50/70" : ""} ${status === "saving" ? "bg-slate-50/70" : ""} ${changed && status === "idle" ? "bg-amber-50/60" : ""} `}
                       >
                         {/* Color initial icon */}
                         <div
-                          className={`h-7 w-7 rounded-lg ${color} flex items-center justify-center shrink-0`}
+                          className={`h-7 w-7 rounded-lg ${color} flex shrink-0 items-center justify-center`}
                         >
-                          <span className="text-white text-xs font-bold uppercase">
+                          <span className="text-xs font-bold text-white uppercase">
                             {row.cat_name.charAt(0) || "?"}
                           </span>
                         </div>
@@ -304,12 +299,12 @@ export default function BulkEditModal({ categories, onClose }: Props) {
                           maxLength={50}
                           disabled={status === "saving"}
                           placeholder="Category name"
-                          className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 transition-all disabled:opacity-60 w-full"
+                          className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-700 placeholder-slate-400 transition-all focus:border-teal-400 focus:ring-2 focus:ring-teal-500/30 focus:outline-none disabled:opacity-60"
                         />
 
                         {/* URL Slug */}
                         <div className="relative">
-                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-mono">
+                          <span className="absolute top-1/2 left-2 -translate-y-1/2 font-mono text-xs text-slate-400">
                             /
                           </span>
                           <input
@@ -321,7 +316,7 @@ export default function BulkEditModal({ categories, onClose }: Props) {
                             maxLength={40}
                             disabled={status === "saving"}
                             placeholder="url-slug"
-                            className="pl-4 pr-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 transition-all disabled:opacity-60 w-full"
+                            className="w-full rounded-lg border border-slate-200 bg-white py-1.5 pr-2 pl-4 font-mono text-xs text-slate-700 placeholder-slate-400 transition-all focus:border-teal-400 focus:ring-2 focus:ring-teal-500/30 focus:outline-none disabled:opacity-60"
                           />
                         </div>
 
@@ -334,7 +329,7 @@ export default function BulkEditModal({ categories, onClose }: Props) {
                           }
                           min="0"
                           disabled={status === "saving"}
-                          className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 text-center focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 transition-all disabled:opacity-60 w-full"
+                          className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-center text-xs text-slate-700 transition-all focus:border-teal-400 focus:ring-2 focus:ring-teal-500/30 focus:outline-none disabled:opacity-60"
                         />
 
                         {/* Description */}
@@ -352,13 +347,13 @@ export default function BulkEditModal({ categories, onClose }: Props) {
                             maxLength={200}
                             disabled={status === "saving"}
                             placeholder="Description..."
-                            className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 transition-all disabled:opacity-60 w-full"
+                            className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-700 placeholder-slate-400 transition-all focus:border-teal-400 focus:ring-2 focus:ring-teal-500/30 focus:outline-none disabled:opacity-60"
                           />
                           {/* Row status indicator */}
-                          <div className="shrink-0 w-5">
+                          <div className="w-5 shrink-0">
                             {status === "saving" && (
                               <svg
-                                className="w-4 h-4 text-slate-400 animate-spin"
+                                className="h-4 w-4 animate-spin text-slate-400"
                                 fill="none"
                                 viewBox="0 0 24 24"
                               >
@@ -379,7 +374,7 @@ export default function BulkEditModal({ categories, onClose }: Props) {
                             )}
                             {status === "saved" && (
                               <svg
-                                className="w-4 h-4 text-teal-500"
+                                className="h-4 w-4 text-teal-500"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -394,7 +389,7 @@ export default function BulkEditModal({ categories, onClose }: Props) {
                             )}
                             {status === "error" && (
                               <svg
-                                className="w-4 h-4 text-red-500"
+                                className="h-4 w-4 text-red-500"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -415,12 +410,12 @@ export default function BulkEditModal({ categories, onClose }: Props) {
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between gap-3">
+                <div className="flex items-center justify-between gap-3 border-t border-slate-100 px-6 py-4">
                   <p className="text-xs text-slate-400">
                     {changedRows.length === 0 ? (
                       "No changes yet — edit any field above"
                     ) : (
-                      <span className="text-amber-600 font-semibold">
+                      <span className="font-semibold text-amber-600">
                         {changedRows.length} unsaved change
                         {changedRows.length !== 1 ? "s" : ""}
                       </span>
@@ -431,19 +426,19 @@ export default function BulkEditModal({ categories, onClose }: Props) {
                       type="button"
                       onClick={handleClose}
                       disabled={isSavingAll}
-                      className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-semibold transition-colors disabled:opacity-60"
+                      className="rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-200 disabled:opacity-60"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleSaveAll}
                       disabled={isSavingAll || changedRows.length === 0}
-                      className="flex items-center gap-2 px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-teal-500/30 disabled:opacity-60"
+                      className="flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-teal-500/30 transition-colors hover:bg-teal-700 disabled:opacity-60"
                     >
                       {isSavingAll ? (
                         <>
                           <svg
-                            className="w-4 h-4 animate-spin"
+                            className="h-4 w-4 animate-spin"
                             fill="none"
                             viewBox="0 0 24 24"
                           >
@@ -466,7 +461,7 @@ export default function BulkEditModal({ categories, onClose }: Props) {
                       ) : (
                         <>
                           <svg
-                            className="w-4 h-4"
+                            className="h-4 w-4"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"

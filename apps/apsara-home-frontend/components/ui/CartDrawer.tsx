@@ -1,17 +1,18 @@
 "use client"
 
-import { motion, AnimatePresence } from "framer-motion"
-import Image from "next/image"
-import { useCart, type CartItem } from "@/context/CartContext"
-import { usePathname, useRouter } from "next/navigation"
-import type { CustomerCheckoutLineItem } from "@/types/CustomerCheckout/types"
 import { useEffect, useMemo } from "react"
-import PrimaryButton from "@/components/ui/buttons/PrimaryButton"
+import { useCart, type CartItem } from "@/context/CartContext"
 import { resolveCheckoutSource } from "@/libs/checkoutSource"
 import {
   buildStorefrontProductPath,
   extractPartnerSlugFromPath,
 } from "@/libs/storefrontRouting"
+import { AnimatePresence, motion } from "framer-motion"
+import Image from "next/image"
+import { usePathname, useRouter } from "next/navigation"
+
+import type { CustomerCheckoutLineItem } from "@/types/CustomerCheckout/types"
+import PrimaryButton from "@/components/ui/buttons/PrimaryButton"
 
 export default function CartDrawer() {
   const router = useRouter()
@@ -255,9 +256,9 @@ export default function CartDrawer() {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className="fixed right-0 top-0 bottom-0 z-[60] flex w-full max-w-md flex-col bg-white dark:bg-gray-800 shadow-2xl"
+            className="fixed top-0 right-0 bottom-0 z-[60] flex w-full max-w-md flex-col bg-white shadow-2xl dark:bg-gray-800"
           >
-            <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 p-5">
+            <div className="flex items-center justify-between border-b border-gray-100 p-5 dark:border-gray-700">
               <div className="flex items-center gap-3">
                 <h2 className="text-lg font-bold text-slate-900 dark:text-white">
                   Your Cart
@@ -270,7 +271,7 @@ export default function CartDrawer() {
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="rounded-xl p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 cursor-pointer text-slate-600 dark:text-gray-300"
+                className="cursor-pointer rounded-xl p-2 text-slate-600 transition-colors hover:bg-gray-100 active:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700 dark:active:bg-gray-600"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -327,8 +328,8 @@ export default function CartDrawer() {
                     {Array.from(groupedItems.entries()).map(
                       ([brandName, brandItems]) => (
                         <div key={brandName} className="space-y-3">
-                          <div className="flex items-center justify-between rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700/50 px-3 py-2">
-                            <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300 cursor-pointer">
+                          <div className="flex items-center justify-between rounded-2xl border border-gray-200 bg-white px-3 py-2 dark:border-gray-700 dark:bg-gray-700/50">
+                            <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
                               <input
                                 type="checkbox"
                                 checked={brandItems.every((item) =>
@@ -352,10 +353,10 @@ export default function CartDrawer() {
                                     )
                                   }
                                 }}
-                                className="h-4 w-4 rounded border-gray-300 text-sky-500 focus:ring-sky-200 cursor-pointer"
+                                className="h-4 w-4 cursor-pointer rounded border-gray-300 text-sky-500 focus:ring-sky-200"
                                 style={{ cursor: "pointer" }}
                               />
-                              <span className="flex items-center gap-1.5 font-bold uppercase tracking-[0.2em] text-slate-700 dark:text-gray-300">
+                              <span className="flex items-center gap-1.5 font-bold tracking-[0.2em] text-slate-700 uppercase dark:text-gray-300">
                                 {brandName}
                               </span>
                             </label>
@@ -372,7 +373,7 @@ export default function CartDrawer() {
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, x: 60 }}
                               transition={{ duration: 0.2 }}
-                              className="flex gap-3 rounded-2xl bg-gray-50 dark:bg-gray-700/50 p-3 cursor-pointer"
+                              className="flex cursor-pointer gap-3 rounded-2xl bg-gray-50 p-3 dark:bg-gray-700/50"
                               onClick={() => handleOpenCartItem(item)}
                               onKeyDown={(event) => {
                                 if (
@@ -388,7 +389,7 @@ export default function CartDrawer() {
                               aria-label={`Open ${item.name}`}
                             >
                               <label
-                                className="mt-1 flex items-start cursor-pointer"
+                                className="mt-1 flex cursor-pointer items-start"
                                 onClick={(event) => event.stopPropagation()}
                               >
                                 <input
@@ -396,7 +397,7 @@ export default function CartDrawer() {
                                   checked={selectedIds.includes(item.id)}
                                   onChange={() => toggleItemSelected(item.id)}
                                   onClick={(event) => event.stopPropagation()}
-                                  className="h-4 w-4 rounded border-gray-300 text-sky-500 focus:ring-sky-200 cursor-pointer"
+                                  className="h-4 w-4 cursor-pointer rounded border-gray-300 text-sky-500 focus:ring-sky-200"
                                   style={{ cursor: "pointer" }}
                                 />
                               </label>
@@ -409,7 +410,7 @@ export default function CartDrawer() {
                                     className="object-cover"
                                   />
                                 ) : (
-                                  <div className="h-full w-full flex items-center justify-center">
+                                  <div className="flex h-full w-full items-center justify-center">
                                     <svg
                                       xmlns="http://www.w3.org/2000/svg"
                                       width="24"
@@ -439,27 +440,27 @@ export default function CartDrawer() {
                                 item.selectedSku ? (
                                   <div className="mt-1 flex flex-wrap gap-1">
                                     {item.selectedColor ? (
-                                      <span className="rounded-full bg-slate-100 dark:bg-gray-600 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:text-gray-300">
+                                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-gray-600 dark:text-gray-300">
                                         {item.selectedColor}
                                       </span>
                                     ) : null}
                                     {item.selectedStyle ? (
-                                      <span className="rounded-full bg-slate-100 dark:bg-gray-600 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:text-gray-300">
+                                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-gray-600 dark:text-gray-300">
                                         {item.selectedStyle}
                                       </span>
                                     ) : null}
                                     {item.selectedSize ? (
-                                      <span className="rounded-full bg-slate-100 dark:bg-gray-600 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:text-gray-300">
+                                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-gray-600 dark:text-gray-300">
                                         {item.selectedSize}
                                       </span>
                                     ) : null}
                                     {item.selectedType ? (
-                                      <span className="rounded-full bg-slate-100 dark:bg-gray-600 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:text-gray-300">
+                                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-gray-600 dark:text-gray-300">
                                         {item.selectedType}
                                       </span>
                                     ) : null}
                                     {item.selectedSku ? (
-                                      <span className="rounded-full bg-slate-100 dark:bg-gray-600 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:text-gray-300">
+                                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-gray-600 dark:text-gray-300">
                                         {item.selectedSku}
                                       </span>
                                     ) : null}
@@ -472,14 +473,14 @@ export default function CartDrawer() {
                                   </p>
                                   {typeof item.originalPrice === "number" &&
                                     item.originalPrice > item.price && (
-                                      <p className="text-xs font-semibold text-slate-400 dark:text-gray-500 line-through">
+                                      <p className="text-xs font-semibold text-slate-400 line-through dark:text-gray-500">
                                         {"\u20b1"}
                                         {item.originalPrice.toLocaleString()}
                                       </p>
                                     )}
                                   {typeof item.prodpv === "number" &&
                                     item.prodpv > 0 && (
-                                      <span className="rounded-full border border-blue-200 dark:border-blue-900/30 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:text-blue-400">
+                                      <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:border-blue-900/30 dark:bg-blue-900/20 dark:text-blue-400">
                                         PV {item.prodpv.toLocaleString()}
                                       </span>
                                     )}
@@ -490,7 +491,7 @@ export default function CartDrawer() {
                                       event.stopPropagation()
                                       updateQuantity(item.id, item.quantity - 1)
                                     }}
-                                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-lg font-bold leading-none transition-colors hover:border-sky-400 hover:text-sky-500 dark:hover:border-sky-500 dark:hover:text-sky-400 text-slate-700 dark:text-gray-300"
+                                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 bg-white text-lg leading-none font-bold text-slate-700 transition-colors hover:border-sky-400 hover:text-sky-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:border-sky-500 dark:hover:text-sky-400"
                                   >
                                     -
                                   </button>
@@ -503,7 +504,7 @@ export default function CartDrawer() {
                                       updateQuantity(item.id, item.quantity + 1)
                                     }}
                                     disabled={isAtMaxStock(item)}
-                                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-lg font-bold leading-none transition-colors hover:border-sky-400 hover:text-sky-500 dark:hover:border-sky-500 dark:hover:text-sky-400 text-slate-700 dark:text-gray-300 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:text-slate-700 dark:disabled:hover:border-gray-600 dark:disabled:hover:text-gray-300"
+                                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 bg-white text-lg leading-none font-bold text-slate-700 transition-colors hover:border-sky-400 hover:text-sky-500 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:text-slate-700 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:border-sky-500 dark:hover:text-sky-400 dark:disabled:hover:border-gray-600 dark:disabled:hover:text-gray-300"
                                   >
                                     +
                                   </button>
@@ -516,7 +517,7 @@ export default function CartDrawer() {
                                     event.stopPropagation()
                                     removeFromCart(item.id)
                                   }}
-                                  className="rounded-lg p-1.5 text-gray-400 dark:text-gray-500 transition-colors hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-500 dark:hover:text-red-400 cursor-pointer"
+                                  className="cursor-pointer rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:text-gray-500 dark:hover:bg-red-900/30 dark:hover:text-red-400"
                                 >
                                   <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -552,7 +553,7 @@ export default function CartDrawer() {
             </div>
 
             {items.length > 0 && (
-              <div className="space-y-3 border-t border-gray-100 dark:border-gray-700 p-5">
+              <div className="space-y-3 border-t border-gray-100 p-5 dark:border-gray-700">
                 {selectedIds.length > 0 && (
                   <button
                     type="button"

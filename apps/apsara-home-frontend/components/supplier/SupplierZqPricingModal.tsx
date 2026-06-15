@@ -1,15 +1,15 @@
 "use client"
 
 import { Fragment, useCallback, useEffect, useRef, useState } from "react"
-import { AnimatePresence, motion } from "framer-motion"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import {
-  type ZqCachedProduct,
-  useUpdateZqProductPricingMutation,
   useFetchZqImportDetailMutation,
   useLazyGetZqVariantPricingQuery,
+  useUpdateZqProductPricingMutation,
   useUpdateZqVariantPricingMutation,
+  type ZqCachedProduct,
 } from "@/store/api/productsApi"
-import { showErrorToast, showSuccessToast } from "@/libs/toast"
+import { AnimatePresence, motion } from "framer-motion"
 
 /* ─── constants ──────────────────────────────────────────────────────── */
 
@@ -535,7 +535,7 @@ export default function SupplierZqPricingModal({
               className="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-[32px] border border-white/70 bg-white shadow-[0_32px_100px_-36px_rgba(15,23,42,0.55)] dark:border-slate-800 dark:bg-slate-950"
             >
               {/* ── Header ── */}
-              <div className="shrink-0 border-b border-slate-200/80 bg-gradient-to-r from-sky-50 via-white to-cyan-50 px-4 py-4 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-sky-950/30 sm:px-6 sm:py-5">
+              <div className="shrink-0 border-b border-slate-200/80 bg-gradient-to-r from-sky-50 via-white to-cyan-50 px-4 py-4 sm:px-6 sm:py-5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-sky-950/30">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-cyan-500 shadow-lg shadow-sky-500/30">
@@ -554,10 +554,10 @@ export default function SupplierZqPricingModal({
                       </svg>
                     </div>
                     <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-600 dark:text-sky-300">
+                      <p className="text-[11px] font-semibold tracking-[0.2em] text-sky-600 uppercase dark:text-sky-300">
                         Global Supplier Workspace
                       </p>
-                      <h2 className="mt-1 text-lg font-bold leading-none text-slate-900 dark:text-slate-100">
+                      <h2 className="mt-1 text-lg leading-none font-bold text-slate-900 dark:text-slate-100">
                         Edit Product Pricing
                       </h2>
                       <div className="mt-1 flex max-w-xl flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
@@ -634,7 +634,7 @@ export default function SupplierZqPricingModal({
                                 </div>
                               )}
                             </div>
-                            <div className="flex flex-wrap gap-2 content-start">
+                            <div className="flex flex-wrap content-start gap-2">
                               {displayImages.map((img, idx) => (
                                 <button
                                   key={idx}
@@ -653,7 +653,7 @@ export default function SupplierZqPricingModal({
                                     className="h-full w-full object-cover"
                                   />
                                   {img.isMain && (
-                                    <span className="absolute bottom-0 left-0 right-0 bg-sky-500/80 py-0.5 text-center text-[9px] font-bold uppercase text-white">
+                                    <span className="absolute right-0 bottom-0 left-0 bg-sky-500/80 py-0.5 text-center text-[9px] font-bold text-white uppercase">
                                       Main
                                     </span>
                                   )}
@@ -950,42 +950,42 @@ export default function SupplierZqPricingModal({
                                       className="w-9 px-2 py-3"
                                       aria-label="Expand"
                                     />
-                                    <th className="px-3 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                                    <th className="px-3 py-3 text-left text-[11px] font-bold tracking-wider text-slate-600 uppercase">
                                       Image
                                     </th>
-                                    <th className="px-3 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                                    <th className="px-3 py-3 text-left text-[11px] font-bold tracking-wider text-slate-600 uppercase">
                                       Spec
                                     </th>
-                                    <th className="px-3 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                                    <th className="px-3 py-3 text-left text-[11px] font-bold tracking-wider text-slate-600 uppercase">
                                       SKU ID
                                     </th>
-                                    <th className="whitespace-nowrap px-3 py-3 text-right text-[11px] font-bold uppercase tracking-wider text-slate-600 leading-tight">
+                                    <th className="px-3 py-3 text-right text-[11px] leading-tight font-bold tracking-wider whitespace-nowrap text-slate-600 uppercase">
                                       <span className="block text-[10px] font-semibold tracking-normal text-slate-500">
                                         AF Home Global
                                       </span>
                                       Cost
                                     </th>
-                                    <th className="whitespace-nowrap px-3 py-3 text-right text-[11px] font-bold uppercase tracking-wider text-slate-600 leading-tight">
+                                    <th className="px-3 py-3 text-right text-[11px] leading-tight font-bold tracking-wider whitespace-nowrap text-slate-600 uppercase">
                                       <span className="block text-[10px] font-semibold tracking-normal text-slate-500">
                                         AF Home Global
                                       </span>
                                       Price
                                     </th>
-                                    <th className="px-3 py-3 text-right text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                                    <th className="px-3 py-3 text-right text-[11px] font-bold tracking-wider text-slate-600 uppercase">
                                       Stock
                                     </th>
-                                    <th className="border-l border-emerald-200 bg-emerald-50 px-3 py-3 text-center text-[11px] font-bold uppercase tracking-wider text-emerald-700">
+                                    <th className="border-l border-emerald-200 bg-emerald-50 px-3 py-3 text-center text-[11px] font-bold tracking-wider text-emerald-700 uppercase">
                                       Member ₱
                                     </th>
-                                    <th className="bg-emerald-50 px-3 py-3 text-center text-[11px] font-bold uppercase tracking-wider text-emerald-700">
+                                    <th className="bg-emerald-50 px-3 py-3 text-center text-[11px] font-bold tracking-wider text-emerald-700 uppercase">
                                       Dealer ₱
                                     </th>
                                     {showVariantReversedMultiplier && (
-                                      <th className="bg-emerald-50 px-3 py-3 text-center text-[11px] font-bold uppercase tracking-wider text-emerald-700">
+                                      <th className="bg-emerald-50 px-3 py-3 text-center text-[11px] font-bold tracking-wider text-emerald-700 uppercase">
                                         Multiplier
                                       </th>
                                     )}
-                                    <th className="border-l border-teal-200 bg-teal-50 px-3 py-3 text-center text-[11px] font-bold uppercase tracking-wider text-teal-700">
+                                    <th className="border-l border-teal-200 bg-teal-50 px-3 py-3 text-center text-[11px] font-bold tracking-wider text-teal-700 uppercase">
                                       Auto PV
                                     </th>
                                   </tr>
@@ -1102,24 +1102,24 @@ export default function SupplierZqPricingModal({
                                             )}
                                           </td>
                                           <td className="px-3 py-3 align-top">
-                                            <span className="block w-[200px] break-words text-[13px] font-medium leading-snug text-slate-700">
+                                            <span className="block w-[200px] text-[13px] leading-snug font-medium break-words text-slate-700">
                                               {spec.spec || "—"}
                                             </span>
                                           </td>
-                                          <td className="px-3 py-3 font-mono text-[12px] text-slate-600 whitespace-nowrap">
+                                          <td className="px-3 py-3 font-mono text-[12px] whitespace-nowrap text-slate-600">
                                             {spec.skuId || "—"}
                                           </td>
-                                          <td className="px-3 py-3 text-right tabular-nums text-slate-600 whitespace-nowrap">
+                                          <td className="px-3 py-3 text-right whitespace-nowrap text-slate-600 tabular-nums">
                                             {formatCents(spec.cost)}
                                           </td>
-                                          <td className="px-3 py-3 text-right font-semibold tabular-nums text-slate-800 whitespace-nowrap">
+                                          <td className="px-3 py-3 text-right font-semibold whitespace-nowrap text-slate-800 tabular-nums">
                                             {formatCents(spec.salesPrice)}
                                           </td>
-                                          <td className="px-3 py-3 text-right tabular-nums text-slate-600">
+                                          <td className="px-3 py-3 text-right text-slate-600 tabular-nums">
                                             {spec.amountOnSale ?? "—"}
                                           </td>
                                           {/* editable pricing */}
-                                          <td className="border-l border-emerald-100 bg-emerald-50/30 px-2 py-2.5 min-w-[96px]">
+                                          <td className="min-w-[96px] border-l border-emerald-100 bg-emerald-50/30 px-2 py-2.5">
                                             <input
                                               type="number"
                                               min="0"
@@ -1136,7 +1136,7 @@ export default function SupplierZqPricingModal({
                                               className={variantInputCls()}
                                             />
                                           </td>
-                                          <td className="bg-emerald-50/30 px-2 py-2.5 min-w-[96px]">
+                                          <td className="min-w-[96px] bg-emerald-50/30 px-2 py-2.5">
                                             <input
                                               type="number"
                                               min="0"
@@ -1154,7 +1154,7 @@ export default function SupplierZqPricingModal({
                                             />
                                           </td>
                                           {showVariantReversedMultiplier && (
-                                            <td className="bg-emerald-50/30 px-2 py-2.5 min-w-[96px]">
+                                            <td className="min-w-[96px] bg-emerald-50/30 px-2 py-2.5">
                                               <input
                                                 type="number"
                                                 min="0"
@@ -1179,15 +1179,15 @@ export default function SupplierZqPricingModal({
                                               />
                                             </td>
                                           )}
-                                          <td className="border-l border-teal-100 bg-teal-50/30 px-3 py-3 text-center min-w-[110px]">
+                                          <td className="min-w-[110px] border-l border-teal-100 bg-teal-50/30 px-3 py-3 text-center">
                                             <div className="inline-flex min-w-[88px] flex-col items-center rounded-lg border border-teal-200 bg-white px-3.5 py-1.5 shadow-sm">
-                                              <span className="whitespace-nowrap text-base font-bold tabular-nums leading-none text-teal-700">
+                                              <span className="text-base leading-none font-bold whitespace-nowrap text-teal-700 tabular-nums">
                                                 {effectiveMultiplier > 0
                                                   ? autoPv.toFixed(2)
                                                   : "—"}
                                               </span>
                                               {effectiveMultiplier > 0 && (
-                                                <span className="mt-0.5 text-[10px] font-semibold tabular-nums text-teal-500">
+                                                <span className="mt-0.5 text-[10px] font-semibold text-teal-500 tabular-nums">
                                                   ×
                                                   {effectiveMultiplier.toFixed(
                                                     2
@@ -1203,7 +1203,7 @@ export default function SupplierZqPricingModal({
                                               colSpan={variantColSpan}
                                               className="px-3 py-4 sm:px-4"
                                             >
-                                              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                                              <p className="mb-2 text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
                                                 PV breakdown —{" "}
                                                 <span className="text-slate-700">
                                                   {spec.spec || spec.skuId}
@@ -1245,7 +1245,7 @@ export default function SupplierZqPricingModal({
                 </div>
 
                 {/* ── Footer ── */}
-                <div className="shrink-0 flex items-center justify-end border-t border-slate-200/80 bg-slate-50/60 px-4 py-4 dark:border-slate-800 dark:bg-slate-900/50 sm:px-6">
+                <div className="flex shrink-0 items-center justify-end border-t border-slate-200/80 bg-slate-50/60 px-4 py-4 sm:px-6 dark:border-slate-800 dark:bg-slate-900/50">
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
@@ -1319,7 +1319,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2.5 pt-2">
       <div className="h-4 w-0.5 shrink-0 rounded-full bg-sky-400" />
-      <span className="whitespace-nowrap text-[11px] font-bold uppercase tracking-[0.2em] text-slate-700">
+      <span className="text-[11px] font-bold tracking-[0.2em] whitespace-nowrap text-slate-700 uppercase">
         {children}
       </span>
       <div className="h-px flex-1 bg-gradient-to-r from-slate-200 via-slate-100 to-transparent" />
@@ -1340,7 +1340,7 @@ function Field({
 }) {
   return (
     <div className={`space-y-2 ${span ?? ""}`}>
-      <label className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-600 dark:text-slate-300">
+      <label className="block text-[11px] font-semibold tracking-[0.18em] text-slate-600 uppercase dark:text-slate-300">
         {label}
         {required && <span className="ml-0.5 text-red-400">*</span>}
       </label>
@@ -1373,10 +1373,10 @@ function CalcRow({
           ? "text-rose-500"
           : "text-slate-800"
   return (
-    <div className="flex items-center justify-between px-3 py-2.5 gap-2">
+    <div className="flex items-center justify-between gap-2 px-3 py-2.5">
       <div className="min-w-0">
         <p className="text-[11px] font-semibold text-slate-500">{label}</p>
-        <div className="flex items-center gap-1 mt-0.5 font-mono text-[11px] text-slate-500 flex-wrap">
+        <div className="mt-0.5 flex flex-wrap items-center gap-1 font-mono text-[11px] text-slate-500">
           <span>{a}</span>
           <span className="text-slate-400">{op}</span>
           <span>{b}</span>
@@ -1459,11 +1459,11 @@ function PricingSummaryPanel({
     unit === "currency" ? `₱ ${fmt(v)}` : `${fmt(v)} pts`
 
   return (
-    <div className="rounded-2xl border border-blue-100 overflow-hidden shadow-sm">
-      <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-500">
+    <div className="overflow-hidden rounded-2xl border border-blue-100 shadow-sm">
+      <div className="flex items-center justify-between bg-gradient-to-r from-blue-600 to-blue-500 px-4 py-3">
         <div className="flex items-center gap-2">
           <svg
-            className="w-3.5 h-3.5 text-white/80 shrink-0"
+            className="h-3.5 w-3.5 shrink-0 text-white/80"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -1475,61 +1475,61 @@ function PricingSummaryPanel({
               d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"
             />
           </svg>
-          <span className="text-xs font-bold uppercase tracking-widest text-white">
+          <span className="text-xs font-bold tracking-widest text-white uppercase">
             PV Summary
           </span>
           <span className="text-xs text-blue-200">
             — live computation ({scopeLabel})
           </span>
         </div>
-        <div className="text-right shrink-0">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-200">
+        <div className="shrink-0 text-right">
+          <p className="text-[11px] font-semibold tracking-wide text-blue-200 uppercase">
             Member Price
           </p>
-          <p className="text-base font-bold text-white leading-none mt-0.5">
+          <p className="mt-0.5 text-base leading-none font-bold text-white">
             {summary.effectiveMemberPrice > 0 ? (
               `₱ ${mp}`
             ) : (
-              <span className="text-blue-300 text-xs italic">—</span>
+              <span className="text-xs text-blue-300 italic">—</span>
             )}
           </p>
         </div>
       </div>
 
-      <div className="bg-gradient-to-br from-slate-50 to-blue-50/60 divide-y divide-slate-100">
+      <div className="divide-y divide-slate-100 bg-gradient-to-br from-slate-50 to-blue-50/60">
         <div className="px-4 py-3">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-2">
+          <p className="mb-2 text-[11px] font-bold tracking-widest text-slate-500 uppercase">
             PV Computation
           </p>
-          <div className="rounded-xl bg-white border border-teal-100 px-3 py-3">
+          <div className="rounded-xl border border-teal-100 bg-white px-3 py-3">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
+                <p className="mb-1 text-xs font-semibold tracking-wide text-slate-500 uppercase">
                   Transfer Price × Reversed PV Multiplier = PV Product
                 </p>
-                <div className="flex items-center gap-2 font-mono text-base flex-wrap">
+                <div className="flex flex-wrap items-center gap-2 font-mono text-base">
                   <span className="font-semibold text-slate-700">
                     {transfer}
                   </span>
-                  <span className="text-slate-300 text-lg">×</span>
+                  <span className="text-lg text-slate-300">×</span>
                   <span className="font-semibold text-slate-700">{mult}</span>
-                  <span className="text-slate-300 text-lg">=</span>
-                  <span className="font-bold text-teal-600 text-lg">
+                  <span className="text-lg text-slate-300">=</span>
+                  <span className="text-lg font-bold text-teal-600">
                     {fmtPv(summary.formulaPv)} PV
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 mt-2">
+                <p className="mt-2 text-xs text-slate-500">
                   Encoded PV used in summary:{" "}
                   <span className="font-semibold text-slate-700">
                     {pvStr} PV
                   </span>
                 </p>
               </div>
-              <div className="shrink-0 text-right bg-teal-50 rounded-lg px-3 py-2 border border-teal-100">
-                <p className="text-[11px] font-semibold text-teal-500 uppercase tracking-wide">
+              <div className="shrink-0 rounded-lg border border-teal-100 bg-teal-50 px-3 py-2 text-right">
+                <p className="text-[11px] font-semibold tracking-wide text-teal-500 uppercase">
                   Auto PV
                 </p>
-                <p className="text-2xl font-bold text-teal-700 leading-none mt-0.5">
+                <p className="mt-0.5 text-2xl leading-none font-bold text-teal-700">
                   {pvStr}
                 </p>
                 <p className="text-[11px] text-teal-400">PV units</p>
@@ -1539,10 +1539,10 @@ function PricingSummaryPanel({
         </div>
 
         <div className="px-4 py-3">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-2">
+          <p className="mb-2 text-[11px] font-bold tracking-widest text-slate-500 uppercase">
             Price Breakdown
           </p>
-          <div className="rounded-xl bg-white border border-slate-100 overflow-hidden divide-y divide-slate-100">
+          <div className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-100 bg-white">
             <CalcRow
               label="VAT (12% of Member Price)"
               a={`₱${mp}`}
@@ -1554,44 +1554,44 @@ function PricingSummaryPanel({
         </div>
 
         <div className="px-4 py-3">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-[11px] font-bold tracking-widest text-slate-500 uppercase">
               PV Allocation Preview
             </p>
             <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[11px] font-bold text-white">
               100% of PV
             </span>
           </div>
-          <div className="rounded-xl bg-white border border-slate-100 overflow-hidden divide-y divide-slate-100">
+          <div className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-100 bg-white">
             {allocationRows.map(({ label, rate, value, unit, note }) => (
               <div
                 key={label}
-                className="flex items-center justify-between px-3 py-2 gap-2"
+                className="flex items-center justify-between gap-2 px-3 py-2"
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
                     <span className="shrink-0 rounded-full bg-blue-50 px-1.5 py-0.5 text-[11px] font-bold text-blue-500">
                       {rate}
                     </span>
-                    <span className="text-sm font-semibold text-slate-600 truncate">
+                    <span className="truncate text-sm font-semibold text-slate-600">
                       {label}
                     </span>
                   </div>
-                  <p className="font-mono text-xs text-slate-500 mt-0.5">
+                  <p className="mt-0.5 font-mono text-xs text-slate-500">
                     {pvStr} PV <span className="text-slate-400">×</span> {rate}{" "}
                     <span className="text-slate-400">=</span>{" "}
                     <span className="font-semibold text-slate-700">
                       {fmtAlloc(value, unit)}
                     </span>
                   </p>
-                  <p className="text-[11px] text-slate-500 mt-1">{note}</p>
+                  <p className="mt-1 text-[11px] text-slate-500">{note}</p>
                 </div>
                 <span className="shrink-0 text-base font-bold text-slate-800 tabular-nums">
                   {fmtAlloc(value, unit)}
                 </span>
               </div>
             ))}
-            <div className="flex items-center justify-between px-3 py-2.5 bg-blue-600">
+            <div className="flex items-center justify-between bg-blue-600 px-3 py-2.5">
               <div className="flex items-center gap-2">
                 <span className="shrink-0 rounded-full bg-white/20 px-1.5 py-0.5 text-[11px] font-bold text-white">
                   100%
@@ -1613,7 +1613,7 @@ function PricingSummaryPanel({
         </div>
 
         <div className="px-4 py-3">
-          <p className="text-xs text-blue-700 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
+          <p className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-700">
             {pricingTierLabel} pricing shown for costing reference only. Actual
             bonus payout depends on qualification rules.
           </p>

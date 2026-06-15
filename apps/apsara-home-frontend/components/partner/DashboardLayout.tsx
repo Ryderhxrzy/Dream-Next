@@ -1,12 +1,13 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { usePathname, useRouter } from "next/navigation"
-import { useSession } from "next-auth/react"
-import { useGetAdminMeQuery } from "@/store/api/authApi"
 import { useHeartbeatAdminPresenceMutation } from "@/store/api/adminUsersApi"
-import Sidebar from "./Sidebar"
+import { useGetAdminMeQuery } from "@/store/api/authApi"
+import { useSession } from "next-auth/react"
+import { usePathname, useRouter } from "next/navigation"
+
 import Header from "./Header"
+import Sidebar from "./Sidebar"
 
 interface PartnerDashboardLayoutProps {
   children: React.ReactNode
@@ -92,7 +93,7 @@ const PartnerDashboardLayout = ({ children }: PartnerDashboardLayoutProps) => {
         isCollapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Header onMenuClick={() => setSidebarOpen(true)} />
         <main className="flex-1 overflow-y-auto bg-slate-100 p-4 lg:p-6 dark:bg-slate-950">
           {children}

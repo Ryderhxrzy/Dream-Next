@@ -1,3 +1,4 @@
+import ReconciliationMain from "@/components/superAdmin/accounting/ReconciliationMain"
 import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
@@ -6,8 +7,6 @@ export const metadata = buildPageMetadata({
   path: "/admin/accounting/reconciliation",
   noIndex: true,
 })
-
-import ReconciliationMain from "@/components/superAdmin/accounting/ReconciliationMain"
 
 export default function AccountingReconciliationPage() {
   return <ReconciliationMain />

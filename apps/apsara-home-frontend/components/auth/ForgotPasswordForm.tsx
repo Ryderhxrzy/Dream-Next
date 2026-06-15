@@ -1,13 +1,14 @@
 "use client"
 
+import { useEffect, useMemo, useRef, useState } from "react"
+import { useGetPublicSecuritySettingsQuery } from "@/store/api/adminSettingsApi"
+import { AnimatePresence, motion } from "framer-motion"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useEffect, useMemo, useRef, useState } from "react"
-import VideoBackground from "@/components/VideoBackground"
-import { AnimatePresence, motion } from "framer-motion"
-import Header from "@/components/landing-page/Header"
+
 import PrimaryButton from "@/components/ui/buttons/PrimaryButton"
-import { useGetPublicSecuritySettingsQuery } from "@/store/api/adminSettingsApi"
+import Header from "@/components/landing-page/Header"
+import VideoBackground from "@/components/VideoBackground"
 
 declare global {
   interface Window {
@@ -160,9 +161,9 @@ function OtpInput({
           aria-invalid={hasError ? true : undefined}
           onChange={(e) => handleChange(i, e.target.value)}
           onKeyDown={(e) => handleKeyDown(i, e)}
-          className={`h-14 w-12 sm:w-14 rounded-2xl border text-center text-xl font-semibold text-gray-900 dark:text-white outline-none transition-all duration-200 disabled:opacity-60 ${
+          className={`h-14 w-12 rounded-2xl border text-center text-xl font-semibold text-gray-900 transition-all duration-200 outline-none disabled:opacity-60 sm:w-14 dark:text-white ${
             hasError
-              ? "border-rose-400 ring-2 ring-rose-100 bg-white dark:border-rose-400/70 dark:ring-rose-400/15 dark:bg-white/12"
+              ? "border-rose-400 bg-white ring-2 ring-rose-100 dark:border-rose-400/70 dark:bg-white/12 dark:ring-rose-400/15"
               : "border-gray-300 bg-white focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-white/18 dark:bg-white/12 dark:focus:border-sky-400/60 dark:focus:ring-sky-400/15"
           }`}
         />
@@ -459,22 +460,22 @@ export default function ForgotPasswordForm({ turnstileSiteKey = "" }: Props) {
   }
 
   return (
-    <div className="relative min-h-screen w-full overflow-x-hidden overflow-y-auto flex flex-col">
+    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden overflow-y-auto">
       <VideoBackground />
-      <div className="absolute inset-0 bg-black/25 dark:bg-black/55 backdrop-blur-[2px]" />
+      <div className="absolute inset-0 bg-black/25 backdrop-blur-[2px] dark:bg-black/55" />
 
       <div className="relative z-20">
         <Header cartCount={0} />
       </div>
 
-      <div className="relative z-10 flex justify-center w-full px-4 flex-1 items-center py-10">
+      <div className="relative z-10 flex w-full flex-1 items-center justify-center px-4 py-10">
         <motion.div
           initial={{ opacity: 0, y: 32, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
           className="w-full max-w-md transition-all duration-300"
         >
-          <div className="overflow-hidden bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-3xl shadow-2xl p-8">
+          <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white p-8 shadow-2xl dark:border-white/10 dark:bg-slate-800">
             <div className="mb-8">
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Forgot Password
@@ -524,10 +525,10 @@ export default function ForgotPasswordForm({ turnstileSiteKey = "" }: Props) {
                         }}
                         required
                         aria-invalid={identifierError ? true : undefined}
-                        className={`h-11 w-full rounded-[18px] border bg-white dark:bg-white/12 px-4 text-sm text-gray-900 dark:text-white outline-none transition-all duration-200 ${
+                        className={`h-11 w-full rounded-[18px] border bg-white px-4 text-sm text-gray-900 transition-all duration-200 outline-none dark:bg-white/12 dark:text-white ${
                           identifierError
-                            ? "border-rose-400 ring-2 ring-rose-100 dark:border-rose-400/70 dark:ring-rose-400/15 focus:border-rose-400"
-                            : "border-gray-300 dark:border-white/18 focus:border-sky-400 dark:focus:border-sky-400/60 focus:bg-white dark:focus:bg-white/18"
+                            ? "border-rose-400 ring-2 ring-rose-100 focus:border-rose-400 dark:border-rose-400/70 dark:ring-rose-400/15"
+                            : "border-gray-300 focus:border-sky-400 focus:bg-white dark:border-white/18 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
                         }`}
                       />
                       {identifierError && (
@@ -560,7 +561,7 @@ export default function ForgotPasswordForm({ turnstileSiteKey = "" }: Props) {
                       disabled={
                         isSubmitting || (!!turnstileSiteKey && !turnstileToken)
                       }
-                      className="w-full py-3 px-5 text-sm"
+                      className="w-full px-5 py-3 text-sm"
                     >
                       {isSubmitting ? (
                         <>
@@ -583,7 +584,7 @@ export default function ForgotPasswordForm({ turnstileSiteKey = "" }: Props) {
                 >
                   <div className="space-y-5">
                     {maskedPhone && (
-                      <div className="rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 p-4 text-sm text-gray-700 dark:text-white/80">
+                      <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700 dark:border-white/10 dark:bg-white/5 dark:text-white/80">
                         OTP sent to{" "}
                         <span className="font-semibold text-gray-900 dark:text-white">
                           {maskedPhone}
@@ -665,7 +666,7 @@ export default function ForgotPasswordForm({ turnstileSiteKey = "" }: Props) {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        className="h-11 w-full rounded-[18px] border border-gray-300 dark:border-white/18 bg-white dark:bg-white/12 px-4 text-sm text-gray-900 dark:text-white outline-none transition-all duration-200 focus:border-sky-400 dark:focus:border-sky-400/60 focus:bg-white dark:focus:bg-white/18"
+                        className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 transition-all duration-200 outline-none focus:border-sky-400 focus:bg-white dark:border-white/18 dark:bg-white/12 dark:text-white dark:focus:border-sky-400/60 dark:focus:bg-white/18"
                       />
                     </div>
 
@@ -678,11 +679,11 @@ export default function ForgotPasswordForm({ turnstileSiteKey = "" }: Props) {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         required
-                        className="h-11 w-full rounded-[18px] border border-gray-300 dark:border-white/18 bg-white dark:bg-white/12 px-4 text-sm text-gray-900 dark:text-white outline-none transition-all duration-200 focus:border-sky-400 dark:focus:border-sky-400/60 focus:bg-white dark:focus:bg-white/18"
+                        className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 transition-all duration-200 outline-none focus:border-sky-400 focus:bg-white dark:border-white/18 dark:bg-white/12 dark:text-white dark:focus:border-sky-400/60 dark:focus:bg-white/18"
                       />
                     </div>
 
-                    <div className="rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 p-4">
+                    <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-white/10 dark:bg-white/5">
                       <p className="text-sm font-semibold text-gray-900 dark:text-white">
                         Password requirements
                       </p>
@@ -719,7 +720,7 @@ export default function ForgotPasswordForm({ turnstileSiteKey = "" }: Props) {
                     <PrimaryButton
                       type="submit"
                       disabled={isResetting || !!success}
-                      className="w-full py-3 px-5 text-sm"
+                      className="w-full px-5 py-3 text-sm"
                     >
                       {isResetting ? (
                         <>
@@ -738,7 +739,7 @@ export default function ForgotPasswordForm({ turnstileSiteKey = "" }: Props) {
             <p className="mt-6 text-center text-sm text-gray-500 dark:text-white/70">
               <Link
                 href="/login"
-                className="text-sky-500 hover:text-sky-400 font-semibold transition-colors"
+                className="font-semibold text-sky-500 transition-colors hover:text-sky-400"
               >
                 Back to login
               </Link>

@@ -1,5 +1,5 @@
-import { buildPageMetadata } from "@/app/seo"
 import AdminSecuritySettingsPageMain from "@/components/superAdmin/settings/AdminSecuritySettingsPageMain"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Admin Settings Security",

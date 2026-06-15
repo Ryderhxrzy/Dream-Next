@@ -1,12 +1,14 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { motion } from "framer-motion"
-import RankingPodium from "./RankingPodium"
-import RankingLeaderboard from "./RankingLeaderboard"
-import RankingFilters from "./RankingFilters"
-import { php } from "@/components/superAdmin/members/topEarners/types"
 import { useGetTopEarnersQuery } from "@/store/api/membersApi"
+import { motion } from "framer-motion"
+
+import { php } from "@/components/superAdmin/members/topEarners/types"
+
+import RankingFilters from "./RankingFilters"
+import RankingLeaderboard from "./RankingLeaderboard"
+import RankingPodium from "./RankingPodium"
 
 const PREVIOUS_RANKS: Record<number, number> = {
   1: 2,
@@ -112,7 +114,7 @@ export default function RankingPageClient() {
         <motion.div
           animate={{ y: [0, -14, 0], rotate: [0, 8, 0] }}
           transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
-          className="absolute -left-16 -top-16 h-64 w-64 rounded-full border-4 border-[#8B5CF6]"
+          className="absolute -top-16 -left-16 h-64 w-64 rounded-full border-4 border-[#8B5CF6]"
           style={{ backgroundColor: "#8B5CF620" }}
         />
         {/* Top-right yellow blob */}
@@ -124,7 +126,7 @@ export default function RankingPageClient() {
             ease: "easeInOut",
             delay: 1,
           }}
-          className="absolute -right-20 -top-10 h-56 w-56 rounded-full"
+          className="absolute -top-10 -right-20 h-56 w-56 rounded-full"
           style={{ backgroundColor: "#FBBF2430", border: "4px solid #FBBF24" }}
         />
         {/* Bottom-left pink triangle */}
@@ -147,14 +149,14 @@ export default function RankingPageClient() {
             ease: "easeInOut",
             delay: 0.5,
           }}
-          className="absolute right-10 top-1/3 h-20 w-20 rounded-full"
+          className="absolute top-1/3 right-10 h-20 w-20 rounded-full"
           style={{ backgroundColor: "#34D39940", border: "3px solid #34D399" }}
         />
         {/* Small violet square */}
         <motion.div
           animate={{ rotate: [0, 45, 0] }}
           transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
-          className="absolute bottom-40 right-24 h-10 w-10 rounded-md"
+          className="absolute right-24 bottom-40 h-10 w-10 rounded-md"
           style={{ backgroundColor: "#8B5CF650", border: "2px solid #8B5CF6" }}
         />
         {/* Pink dot cluster */}
@@ -196,7 +198,7 @@ export default function RankingPageClient() {
         >
           <div>
             <p
-              className="mb-1 text-xs font-bold uppercase tracking-[0.3em]"
+              className="mb-1 text-xs font-bold tracking-[0.3em] uppercase"
               style={{
                 color: "#8B5CF6",
                 fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
@@ -235,7 +237,7 @@ export default function RankingPageClient() {
           <motion.div
             animate={{ scale: [1, 1.05, 1] }}
             transition={{ repeat: Infinity, duration: 2 }}
-            className="flex items-center gap-2 rounded-full border-2 px-4 py-2 text-xs font-bold uppercase tracking-widest"
+            className="flex items-center gap-2 rounded-full border-2 px-4 py-2 text-xs font-bold tracking-widest uppercase"
             style={{
               borderColor: "#1E293B",
               backgroundColor: "#34D399",
@@ -279,7 +281,7 @@ export default function RankingPageClient() {
               </svg>
             </div>
             <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
+              <p className="text-[10px] font-bold tracking-[0.18em] text-slate-400 uppercase">
                 Total Earnings
               </p>
               <motion.p
@@ -321,7 +323,7 @@ export default function RankingPageClient() {
               </svg>
             </div>
             <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
+              <p className="text-[10px] font-bold tracking-[0.18em] text-slate-400 uppercase">
                 Total Referrals
               </p>
               <motion.p
@@ -363,7 +365,7 @@ export default function RankingPageClient() {
               </svg>
             </div>
             <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
+              <p className="text-[10px] font-bold tracking-[0.18em] text-slate-400 uppercase">
                 Members
               </p>
               <p
@@ -402,7 +404,7 @@ export default function RankingPageClient() {
               </svg>
             </div>
             <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
+              <p className="text-[10px] font-bold tracking-[0.18em] text-slate-400 uppercase">
                 Top Earner
               </p>
               <p

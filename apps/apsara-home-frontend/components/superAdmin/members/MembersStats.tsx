@@ -1,10 +1,10 @@
 "use client"
 
-import { Card } from "@heroui/react/card"
 import {
   MembersStatsPeriod,
   MembersStatsResponse,
 } from "@/store/api/membersApi"
+import { Card } from "@heroui/react/card"
 import { motion } from "framer-motion"
 
 interface MembersStatsProps {
@@ -60,7 +60,7 @@ export default function MembersStats({
       sub: "Click to view members",
       icon: (
         <svg
-          className="w-5 h-5"
+          className="h-5 w-5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -85,7 +85,7 @@ export default function MembersStats({
       sub: "Click to view active members",
       icon: (
         <svg
-          className="w-5 h-5"
+          className="h-5 w-5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -110,7 +110,7 @@ export default function MembersStats({
       sub: "Click to trace pending members",
       icon: (
         <svg
-          className="w-5 h-5"
+          className="h-5 w-5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -135,7 +135,7 @@ export default function MembersStats({
       sub: "Click to trace blocked members",
       icon: (
         <svg
-          className="w-5 h-5"
+          className="h-5 w-5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -160,7 +160,7 @@ export default function MembersStats({
       sub: "Click to trace new registrations",
       icon: (
         <svg
-          className="w-5 h-5"
+          className="h-5 w-5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -185,7 +185,7 @@ export default function MembersStats({
       sub: "Click to view spenders",
       icon: (
         <svg
-          className="w-5 h-5"
+          className="h-5 w-5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -210,7 +210,7 @@ export default function MembersStats({
       sub: "Click to trace earners",
       icon: (
         <svg
-          className="w-5 h-5"
+          className="h-5 w-5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -235,7 +235,7 @@ export default function MembersStats({
       sub: "Click to trace referrers",
       icon: (
         <svg
-          className="w-5 h-5"
+          className="h-5 w-5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -282,16 +282,16 @@ export default function MembersStats({
               >
                 {card.icon}
               </div>
-              <p className="truncate text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-300">
+              <p className="truncate text-[10px] font-semibold tracking-wider text-slate-400 uppercase dark:text-slate-300">
                 {card.label}
               </p>
               <p
-                className={`mt-1 whitespace-nowrap text-lg font-extrabold tracking-tight tabular-nums sm:text-xl ${card.val}`}
+                className={`mt-1 text-lg font-extrabold tracking-tight whitespace-nowrap tabular-nums sm:text-xl ${card.val}`}
               >
                 {card.value}
               </p>
               {card.sub ? (
-                <p className="mt-auto pt-2 line-clamp-1 text-[11px] text-slate-400 dark:text-slate-300">
+                <p className="mt-auto line-clamp-1 pt-2 text-[11px] text-slate-400 dark:text-slate-300">
                   {card.sub}
                 </p>
               ) : null}

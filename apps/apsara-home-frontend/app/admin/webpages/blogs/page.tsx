@@ -1,5 +1,5 @@
-import { buildPageMetadata } from "@/app/seo"
 import BlogsContentManager from "@/components/superAdmin/webpages/BlogsContentManager"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Admin Blogs Content",

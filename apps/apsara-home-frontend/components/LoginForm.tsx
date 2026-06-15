@@ -1,17 +1,17 @@
 "use client"
 
-import Link from "next/link"
 import { useCallback, useEffect, useRef, useState } from "react"
-import { motion } from "framer-motion"
-import { useRouter } from "next/navigation"
-import { useSearchParams } from "next/navigation"
-import { getSession, signIn, signOut, useSession } from "next-auth/react"
-import Loading from "@/components/Loading"
-import {
-  DynamicIslandToast,
-  dynamicIsland,
-} from "@/components/ui/LoginLoading/LoginLoading"
 import { clearAccessTokenCache } from "@/store/api/baseApi"
+import { motion } from "framer-motion"
+import { getSession, signIn, signOut, useSession } from "next-auth/react"
+import Link from "next/link"
+import { useRouter, useSearchParams } from "next/navigation"
+
+import {
+  dynamicIsland,
+  DynamicIslandToast,
+} from "@/components/ui/LoginLoading/LoginLoading"
+import Loading from "@/components/Loading"
 import QrModal from "@/components/QrModal"
 
 declare global {
@@ -341,7 +341,7 @@ function FloatingInput({
     <div className="w-full">
       <label
         htmlFor={id}
-        className="block text-xs font-semibold text-gray-600 dark:text-white/80 mb-1.5"
+        className="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-white/80"
       >
         {label}
       </label>
@@ -355,14 +355,14 @@ function FloatingInput({
           autoComplete={autoComplete}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? `${id}-error` : undefined}
-          className={`h-11 w-full rounded-[18px] border bg-white dark:bg-white/12 px-4 text-sm text-gray-900 dark:text-white outline-none transition-all duration-200 focus:bg-white dark:focus:bg-white/18 ${
+          className={`h-11 w-full rounded-[18px] border bg-white px-4 text-sm text-gray-900 transition-all duration-200 outline-none focus:bg-white dark:bg-white/12 dark:text-white dark:focus:bg-white/18 ${
             error
               ? "border-red-400 focus:border-red-500 dark:border-red-400/70 dark:focus:border-red-300"
-              : "border-gray-300 dark:border-white/18 focus:border-sky-400 dark:focus:border-sky-400/60"
+              : "border-gray-300 focus:border-sky-400 dark:border-white/18 dark:focus:border-sky-400/60"
           }`}
         />
         {endContent ? (
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/60">
+          <div className="absolute top-1/2 right-4 -translate-y-1/2 text-gray-400 dark:text-white/60">
             {endContent}
           </div>
         ) : null}
@@ -1022,10 +1022,10 @@ const LoginForm = ({
       transition={{ duration: 0.25 }}
     >
       <DynamicIslandToast />
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+      <h2 className="mb-1 text-2xl font-bold text-gray-900 dark:text-white">
         Welcome back!
       </h2>
-      <p className="text-gray-500 dark:text-white/70 text-sm mb-7">
+      <p className="mb-7 text-sm text-gray-500 dark:text-white/70">
         Sign in to your {accountLabel} account
       </p>
 
@@ -1067,7 +1067,7 @@ const LoginForm = ({
                   <button
                     type="button"
                     onClick={() => setShowPass((p) => !p)}
-                    className="text-gray-400 dark:text-white/60 hover:text-gray-700 dark:hover:text-white/80 transition-colors"
+                    className="text-gray-400 transition-colors hover:text-gray-700 dark:text-white/60 dark:hover:text-white/80"
                   >
                     <EyeIcon open={showPass} />
                   </button>
@@ -1082,7 +1082,7 @@ const LoginForm = ({
 
         {showTotpField && (
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between mb-1">
+            <div className="mb-1 flex items-center justify-between">
               <label
                 htmlFor="login-totp"
                 className="block text-xs font-semibold text-gray-600 dark:text-white/80"
@@ -1096,7 +1096,7 @@ const LoginForm = ({
                   setTotpLoginCode("")
                   resetTurnstile()
                 }}
-                className="text-[11px] font-medium text-gray-400 dark:text-white/50 hover:text-sky-500 dark:hover:text-sky-400 transition-colors"
+                className="text-[11px] font-medium text-gray-400 transition-colors hover:text-sky-500 dark:text-white/50 dark:hover:text-sky-400"
               >
                 ← Back to sign in
               </button>
@@ -1113,7 +1113,7 @@ const LoginForm = ({
               maxLength={6}
               autoComplete="one-time-code"
               autoFocus
-              className="h-11 w-full rounded-[18px] border border-gray-300 dark:border-white/18 bg-white dark:bg-white/12 px-4 text-sm text-gray-900 dark:text-white outline-none transition-all duration-200 focus:border-sky-400 dark:focus:border-sky-400/60 focus:bg-white dark:focus:bg-white/18 font-mono tracking-widest text-center"
+              className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-center font-mono text-sm tracking-widest text-gray-900 transition-all duration-200 outline-none focus:border-sky-400 focus:bg-white dark:border-white/18 dark:bg-white/12 dark:text-white dark:focus:border-sky-400/60 dark:focus:bg-white/18"
             />
             <p className="text-[11px] text-gray-400 dark:text-white/55">
               Enter the 6-digit code from your authenticator app.
@@ -1165,7 +1165,7 @@ const LoginForm = ({
                     setIsLoading(false)
                   }
                 }}
-                className="text-xs font-semibold text-orange-500 hover:text-orange-400 transition-colors"
+                className="text-xs font-semibold text-orange-500 transition-colors hover:text-orange-400"
               >
                 Resend Email
               </button>
@@ -1175,7 +1175,7 @@ const LoginForm = ({
                   setMfaChallengeToken("")
                   setError("")
                 }}
-                className="text-xs font-semibold text-slate-500 hover:text-slate-700 dark:text-white/70 dark:hover:text-white transition-colors"
+                className="text-xs font-semibold text-slate-500 transition-colors hover:text-slate-700 dark:text-white/70 dark:hover:text-white"
               >
                 Start Over
               </button>
@@ -1185,7 +1185,7 @@ const LoginForm = ({
 
         {!showTotpField && (
           <div className="flex items-center justify-between text-xs">
-            <label className="flex items-center gap-2 text-gray-500 dark:text-white/70 cursor-pointer">
+            <label className="flex cursor-pointer items-center gap-2 text-gray-500 dark:text-white/70">
               <input
                 type="checkbox"
                 checked={form.rememberMe}
@@ -1198,7 +1198,7 @@ const LoginForm = ({
             </label>
             <Link
               href="/forgot-password"
-              className="text-sky-500 hover:text-sky-400 font-semibold transition-colors"
+              className="font-semibold text-sky-500 transition-colors hover:text-sky-400"
             >
               Forgot Password
             </Link>
@@ -1223,7 +1223,7 @@ const LoginForm = ({
               !turnstileToken &&
               !mfaChallengeToken)
           }
-          className="w-full h-11 flex items-center justify-center gap-3 rounded-[14px] bg-sky-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-sky-600 disabled:opacity-60 disabled:cursor-not-allowed"
+          className="flex h-11 w-full items-center justify-center gap-3 rounded-[14px] bg-sky-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <span>
             {lockoutSeconds > 0
@@ -1242,7 +1242,7 @@ const LoginForm = ({
             <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-4 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400">
+            <span className="bg-white px-4 text-gray-500 dark:bg-gray-900 dark:text-gray-400">
               Or continue with
             </span>
           </div>
@@ -1267,11 +1267,11 @@ const LoginForm = ({
               handleGoogleSignIn()
             }}
             disabled={isLoading || isPasskeyLoading || isGoogleLoading}
-            className="flex-1 flex flex-row items-center justify-center gap-2 py-3 rounded-[14px] border border-slate-200 bg-white transition-colors hover:bg-slate-50 disabled:opacity-60 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+            className="flex flex-1 flex-row items-center justify-center gap-2 rounded-[14px] border border-slate-200 bg-white py-3 transition-colors hover:bg-slate-50 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
           >
             {isGoogleLoading ? (
               <svg
-                className="animate-spin h-5 w-5 text-slate-400"
+                className="h-5 w-5 animate-spin text-slate-400"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -1338,7 +1338,7 @@ const LoginForm = ({
             type="button"
             onClick={() => setIsQrModalOpen(true)}
             disabled={isLoading || isPasskeyLoading || isGoogleLoading}
-            className="flex-1 flex flex-row items-center justify-center gap-2 py-3 rounded-[14px] border border-slate-200 bg-white transition-colors hover:bg-slate-50 disabled:opacity-60 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+            className="flex flex-1 flex-row items-center justify-center gap-2 rounded-[14px] border border-slate-200 bg-white py-3 transition-colors hover:bg-slate-50 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
           >
             <svg
               className="h-5 w-5 text-slate-600 dark:text-gray-300"
@@ -1387,11 +1387,11 @@ const LoginForm = ({
                 isGoogleLoading ||
                 lockoutSeconds > 0
               }
-              className="flex-1 flex flex-row items-center justify-center gap-2 py-3 rounded-[14px] border border-slate-200 bg-white transition-colors hover:bg-slate-50 disabled:opacity-60 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+              className="flex flex-1 flex-row items-center justify-center gap-2 rounded-[14px] border border-slate-200 bg-white py-3 transition-colors hover:bg-slate-50 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
             >
               {isPasskeyLoading ? (
                 <svg
-                  className="animate-spin h-5 w-5 text-slate-400"
+                  className="h-5 w-5 animate-spin text-slate-400"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
@@ -1432,7 +1432,7 @@ const LoginForm = ({
           )}
         </div>
         {isMounted && !passkeySupported && (
-          <p className="text-[11px] text-center text-slate-500 dark:text-gray-400">
+          <p className="text-center text-[11px] text-slate-500 dark:text-gray-400">
             Passkeys are not supported in this browser.
           </p>
         )}

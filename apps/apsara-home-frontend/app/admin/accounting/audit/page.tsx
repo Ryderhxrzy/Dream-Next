@@ -1,3 +1,4 @@
+import AuditTrailMain from "@/components/superAdmin/accounting/AuditTrailMain"
 import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
@@ -6,8 +7,6 @@ export const metadata = buildPageMetadata({
   path: "/admin/accounting/audit",
   noIndex: true,
 })
-
-import AuditTrailMain from "@/components/superAdmin/accounting/AuditTrailMain"
 
 export default function AccountingAuditTrailPage() {
   return <AuditTrailMain />

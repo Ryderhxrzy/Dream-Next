@@ -1,20 +1,20 @@
 "use client"
 
-import { AnimatePresence, motion } from "framer-motion"
-import Image from "next/image"
-import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
-import { useSession } from "next-auth/react"
 import { useCart } from "@/context/CartContext"
 import type { CategoryProduct } from "@/libs/CategoryData"
 import { displayColorName } from "@/libs/colorUtils"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import { useLazyGetPublicProductQuery } from "@/store/api/productsApi"
 import {
   useAddWishlistMutation,
   useGetWishlistQuery,
   useRemoveWishlistMutation,
 } from "@/store/api/wishlistApi"
-import { showErrorToast, showSuccessToast } from "@/libs/toast"
+import { AnimatePresence, motion } from "framer-motion"
+import { useSession } from "next-auth/react"
+import Image from "next/image"
+import Link from "next/link"
 
 interface ProductCardProps {
   id?: number
@@ -412,7 +412,7 @@ export default function ProductCard({
                 onError={() => setImageSrc(FALLBACK_IMAGE)}
               />
 
-              <div className="absolute left-3 top-3 z-10 flex flex-wrap gap-2">
+              <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-2">
                 {showNewBadge ? (
                   <span className="rounded-full bg-emerald-500 px-2 py-1 text-[10px] font-bold tracking-wide text-white">
                     NEW
@@ -497,7 +497,7 @@ export default function ProductCard({
                   type="button"
                   onClick={handleWishlist}
                   disabled={isWishlistPending}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-slate-600 dark:text-gray-300 shadow-sm transition hover:border-sky-200 dark:hover:border-sky-800 hover:bg-sky-50 dark:hover:bg-sky-900/30 disabled:opacity-60"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-sky-200 hover:bg-sky-50 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-sky-800 dark:hover:bg-sky-900/30"
                   aria-label={
                     isWishlisted ? "Remove from wishlist" : "Add to wishlist"
                   }
@@ -522,7 +522,7 @@ export default function ProductCard({
                   className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition ${
                     isInStock
                       ? "bg-sky-500 text-white shadow-sm hover:bg-sky-600"
-                      : "cursor-not-allowed bg-slate-200 dark:bg-gray-700 text-slate-500 dark:text-gray-400"
+                      : "cursor-not-allowed bg-slate-200 text-slate-500 dark:bg-gray-700 dark:text-gray-400"
                   } ${isFetchingProductDetails ? "opacity-80" : ""}`}
                 >
                   <svg
@@ -570,7 +570,7 @@ export default function ProductCard({
                 onError={() => setImageSrc(FALLBACK_IMAGE)}
               />
 
-              <div className="absolute left-3 top-3 z-10 flex flex-wrap gap-2">
+              <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-2">
                 {showNewBadge ? (
                   <span className="rounded-full bg-emerald-500 px-2 py-1 text-[10px] font-bold tracking-wide text-white">
                     NEW
@@ -589,7 +589,7 @@ export default function ProductCard({
                 type="button"
                 onClick={handleWishlist}
                 disabled={isWishlistPending}
-                className="absolute right-3 top-3 rounded-full bg-white/90 dark:bg-gray-800/90 p-2 shadow-md backdrop-blur-sm transition-all duration-300 hover:bg-sky-50 dark:hover:bg-sky-900/30 group-hover:translate-x-0 group-hover:opacity-100 disabled:opacity-60 opacity-0 translate-x-2"
+                className="absolute top-3 right-3 translate-x-2 rounded-full bg-white/90 p-2 opacity-0 shadow-md backdrop-blur-sm transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100 hover:bg-sky-50 disabled:opacity-60 dark:bg-gray-800/90 dark:hover:bg-sky-900/30"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -604,7 +604,7 @@ export default function ProductCard({
                 </svg>
               </button>
 
-              <div className="absolute bottom-0 left-0 right-0 translate-y-full p-3 transition-transform duration-300 ease-out group-hover:translate-y-0">
+              <div className="absolute right-0 bottom-0 left-0 translate-y-full p-3 transition-transform duration-300 ease-out group-hover:translate-y-0">
                 <button
                   type="button"
                   onClick={handleAddToCart}
@@ -612,7 +612,7 @@ export default function ProductCard({
                   className={`flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-all duration-200 ${
                     isInStock
                       ? "bg-sky-500 text-white shadow-lg hover:bg-sky-600 active:scale-95"
-                      : "cursor-not-allowed bg-slate-200 dark:bg-gray-700 text-slate-500 dark:text-gray-400"
+                      : "cursor-not-allowed bg-slate-200 text-slate-500 dark:bg-gray-700 dark:text-gray-400"
                   }`}
                 >
                   <svg
@@ -719,7 +719,7 @@ export default function ProductCard({
                 <div className="border-b border-slate-100 px-5 py-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-sky-500">
+                      <p className="text-[10px] font-bold tracking-widest text-sky-500 uppercase">
                         Select Variant
                       </p>
                       <h3 className="mt-1 text-lg font-bold text-slate-900">

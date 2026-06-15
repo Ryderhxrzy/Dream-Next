@@ -1,8 +1,9 @@
-import { getServerSession } from "next-auth"
 import { supplierAuthOptions } from "@/libs/supplierAuth"
-import { buildPageMetadata } from "@/app/seo"
-import SupplierOrdersPage from "@/components/supplier/SupplierOrdersPage"
 import type { SupplierOrdersResponse } from "@/store/api/supplierOrdersApi"
+import { getServerSession } from "next-auth"
+
+import SupplierOrdersPage from "@/components/supplier/SupplierOrdersPage"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Supplier Orders",

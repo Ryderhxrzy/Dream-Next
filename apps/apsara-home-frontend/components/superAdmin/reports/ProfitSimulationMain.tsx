@@ -341,14 +341,14 @@ export default function ProfitSimulationMain() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 px-4 py-6 text-slate-900 dark:bg-slate-950 dark:text-white sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-100 px-4 py-6 text-slate-900 sm:px-6 lg:px-8 dark:bg-slate-950 dark:text-white">
       <div className="mx-auto max-w-7xl space-y-6">
         <section className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-950 text-white shadow-xl dark:border-slate-800">
           <div className="relative p-6 sm:p-8">
             <div className="absolute inset-0 opacity-30 [background:radial-gradient(circle_at_top_left,#0ea5e9,transparent_32%),radial-gradient(circle_at_bottom_right,#10b981,transparent_28%)]" />
             <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.35em] text-cyan-300">
+                <p className="text-xs font-black tracking-[0.35em] text-cyan-300 uppercase">
                   Finance Reports
                 </p>
                 <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
@@ -399,7 +399,7 @@ export default function ProfitSimulationMain() {
         <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
           <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="mb-5">
-              <p className="text-xs font-black uppercase tracking-[0.28em] text-slate-400">
+              <p className="text-xs font-black tracking-[0.28em] text-slate-400 uppercase">
                 Inputs
               </p>
               <h2 className="mt-2 text-xl font-black">Simulation Setup</h2>
@@ -412,7 +412,7 @@ export default function ProfitSimulationMain() {
             <div className="space-y-4">
               <div className="block">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <span className="text-xs font-bold tracking-wider text-slate-500 uppercase">
                     Search Product
                   </span>
                   <button
@@ -429,7 +429,7 @@ export default function ProfitSimulationMain() {
                     handleProductSearchChange(event.target.value)
                   }
                   placeholder="Search product name or SKU..."
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-cyan-400 dark:border-slate-700 dark:bg-slate-950"
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm transition outline-none focus:border-cyan-400 dark:border-slate-700 dark:bg-slate-950"
                 />
                 {hasProductSearch && (
                   <div className="mt-2 max-h-80 overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-700">
@@ -503,7 +503,7 @@ export default function ProfitSimulationMain() {
 
               <label className="block">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <span className="text-xs font-bold tracking-wider text-slate-500 uppercase">
                     Product Name
                   </span>
                   <span
@@ -532,7 +532,7 @@ export default function ProfitSimulationMain() {
                   ["Shipping Cost / Subsidy", shippingCost, setShippingCost],
                 ].map(([label, value, setter]) => (
                   <label key={label as string} className="block">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    <span className="text-xs font-bold tracking-wider text-slate-500 uppercase">
                       {label as string}
                     </span>
                     <input
@@ -543,7 +543,7 @@ export default function ProfitSimulationMain() {
                       onChange={(event) =>
                         (setter as (next: string) => void)(event.target.value)
                       }
-                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-cyan-400 dark:border-slate-700 dark:bg-slate-950"
+                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm transition outline-none focus:border-cyan-400 dark:border-slate-700 dark:bg-slate-950"
                     />
                   </label>
                 ))}
@@ -581,7 +581,7 @@ export default function ProfitSimulationMain() {
                       : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
                   }`}
                 >
-                  <p className="text-xs font-black uppercase tracking-widest text-slate-400">
+                  <p className="text-xs font-black tracking-widest text-slate-400 uppercase">
                     {label}
                   </p>
                   <p className="mt-3 text-2xl font-black tabular-nums">
@@ -597,7 +597,7 @@ export default function ProfitSimulationMain() {
             <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.28em] text-slate-400">
+                  <p className="text-xs font-black tracking-[0.28em] text-slate-400 uppercase">
                     Result
                   </p>
                   <h2 className="mt-2 text-xl font-black">Business Decision</h2>
@@ -611,7 +611,7 @@ export default function ProfitSimulationMain() {
 
               <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-950">
-                  <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                  <p className="text-xs font-bold tracking-widest text-slate-400 uppercase">
                     Target Margin
                   </p>
                   <p
@@ -625,7 +625,7 @@ export default function ProfitSimulationMain() {
                   </p>
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-950">
-                  <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                  <p className="text-xs font-bold tracking-widest text-slate-400 uppercase">
                     Min Price for Target
                   </p>
                   <p className="mt-2 text-xl font-black">
@@ -636,7 +636,7 @@ export default function ProfitSimulationMain() {
                   </p>
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-950">
-                  <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                  <p className="text-xs font-bold tracking-widest text-slate-400 uppercase">
                     Break-even Cost / Unit
                   </p>
                   <p className="mt-2 text-xl font-black">
@@ -644,7 +644,7 @@ export default function ProfitSimulationMain() {
                   </p>
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-950">
-                  <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                  <p className="text-xs font-bold tracking-widest text-slate-400 uppercase">
                     Cash Allocation vs Sales
                   </p>
                   <p className="mt-2 text-xl font-black">
@@ -654,7 +654,7 @@ export default function ProfitSimulationMain() {
               </div>
 
               <div className="mt-3 rounded-2xl bg-slate-50 p-4 dark:bg-slate-950">
-                <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                <p className="text-xs font-bold tracking-widest text-slate-400 uppercase">
                   Rate Check
                 </p>
                 <p
@@ -700,7 +700,7 @@ export default function ProfitSimulationMain() {
         <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.28em] text-slate-400">
+              <p className="text-xs font-black tracking-[0.28em] text-slate-400 uppercase">
                 PV Allocation
               </p>
               <h2 className="mt-2 text-xl font-black">Breakdown Output</h2>
@@ -753,7 +753,7 @@ export default function ProfitSimulationMain() {
           <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.28em] text-slate-400">
+                <p className="text-xs font-black tracking-[0.28em] text-slate-400 uppercase">
                   Unilevel
                 </p>
                 <h2 className="mt-2 text-xl font-black">Level 1 to 10 Share</h2>
@@ -766,7 +766,7 @@ export default function ProfitSimulationMain() {
 
             <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
               <table className="w-full text-left text-sm">
-                <thead className="bg-slate-50 text-xs uppercase tracking-widest text-slate-400 dark:bg-slate-950">
+                <thead className="bg-slate-50 text-xs tracking-widest text-slate-400 uppercase dark:bg-slate-950">
                   <tr>
                     <th className="px-4 py-3">Level</th>
                     <th className="px-4 py-3">Rate</th>
@@ -790,7 +790,7 @@ export default function ProfitSimulationMain() {
 
           <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.28em] text-slate-400">
+              <p className="text-xs font-black tracking-[0.28em] text-slate-400 uppercase">
                 Projection
               </p>
               <h2 className="mt-2 text-xl font-black">
@@ -825,7 +825,7 @@ export default function ProfitSimulationMain() {
 
         <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="mb-5">
-            <p className="text-xs font-black uppercase tracking-[0.28em] text-slate-400">
+            <p className="text-xs font-black tracking-[0.28em] text-slate-400 uppercase">
               Rates
             </p>
             <h2 className="mt-2 text-xl font-black">Formula Controls</h2>
@@ -837,7 +837,7 @@ export default function ProfitSimulationMain() {
 
           <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
             <label className="block">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              <span className="text-xs font-bold tracking-wider text-slate-500 uppercase">
                 Target Margin %
               </span>
               <input
@@ -849,7 +849,7 @@ export default function ProfitSimulationMain() {
                 onChange={(event) =>
                   handleTargetMarginChange(event.target.value)
                 }
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-cyan-400 dark:border-slate-700 dark:bg-slate-950"
+                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm transition outline-none focus:border-cyan-400 dark:border-slate-700 dark:bg-slate-950"
               />
             </label>
             {[
@@ -860,7 +860,7 @@ export default function ProfitSimulationMain() {
               ["Product Points %", "productPoints"],
             ].map(([label, key]) => (
               <label key={key} className="block">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                <span className="text-xs font-bold tracking-wider text-slate-500 uppercase">
                   {label}
                 </span>
                 <input
@@ -874,7 +874,7 @@ export default function ProfitSimulationMain() {
                       event.target.value
                     )
                   }
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-cyan-400 dark:border-slate-700 dark:bg-slate-950"
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm transition outline-none focus:border-cyan-400 dark:border-slate-700 dark:bg-slate-950"
                 />
               </label>
             ))}

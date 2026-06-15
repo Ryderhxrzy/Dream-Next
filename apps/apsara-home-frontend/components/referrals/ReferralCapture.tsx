@@ -1,9 +1,9 @@
 "use client"
 
 import { useEffect } from "react"
-import { usePathname, useSearchParams } from "next/navigation"
-import { useSession } from "next-auth/react"
 import { setStoredReferralCode } from "@/libs/referral"
+import { useSession } from "next-auth/react"
+import { usePathname, useSearchParams } from "next/navigation"
 
 const ReferralCapture = () => {
   const pathname = usePathname()

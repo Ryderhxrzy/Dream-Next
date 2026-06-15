@@ -1,8 +1,22 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { useSession } from "next-auth/react"
+import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
+import {
+  computeEndDateRaw,
+  isWebstoreRequestExpired,
+} from "@/libs/webstoreExpiry"
+import {
+  useCreatePartnerWebstorePaymentSessionMutation,
+  useGetPartnerWebstoreRequestsQuery,
+  useLazyVerifyPartnerWebstorePaymentSessionQuery,
+  useSubmitPartnerWebstoreRequestMutation,
+  useUploadPartnerWebstoreReceiptMutation,
+} from "@/store/api/adminInquiriesApi"
+import { useGetAdminMeQuery } from "@/store/api/authApi"
+import { type SubmitWebstoreRequestPayload } from "@/store/api/userApi"
+import { useGetAdminWebPageItemsQuery } from "@/store/api/webPagesApi"
 import {
   AlertTriangle,
   Calendar,
@@ -20,22 +34,8 @@ import {
   Users,
   X,
 } from "lucide-react"
-import { useGetAdminMeQuery } from "@/store/api/authApi"
-import { useGetAdminWebPageItemsQuery } from "@/store/api/webPagesApi"
-import {
-  useGetPartnerWebstoreRequestsQuery,
-  useCreatePartnerWebstorePaymentSessionMutation,
-  useLazyVerifyPartnerWebstorePaymentSessionQuery,
-  useSubmitPartnerWebstoreRequestMutation,
-  useUploadPartnerWebstoreReceiptMutation,
-} from "@/store/api/adminInquiriesApi"
-import { type SubmitWebstoreRequestPayload } from "@/store/api/userApi"
-import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
-import {
-  computeEndDateRaw,
-  isWebstoreRequestExpired,
-} from "@/libs/webstoreExpiry"
-import { showErrorToast, showSuccessToast } from "@/libs/toast"
+import { useSession } from "next-auth/react"
+import { useRouter, useSearchParams } from "next/navigation"
 
 type PlanKey = "test" | "quarterly" | "semiAnnual" | "annual"
 type BillingOption = "full" | "monthly"
@@ -993,11 +993,11 @@ export default function PartnerStorefrontRenewalPage() {
     <div className="space-y-5">
       {/* Hero Header */}
       <div className="relative overflow-hidden rounded-3xl border border-slate-100 bg-linear-to-br from-white via-blue-50/50 to-violet-100/70 px-8 py-7 shadow-sm dark:border-slate-800 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/40">
-        <div className="pointer-events-none absolute right-0 top-0 h-full w-2/5">
-          <div className="absolute right-16 top-3 h-14 w-14 rounded-full bg-violet-300/50 blur-sm dark:bg-violet-500/20" />
-          <div className="absolute right-6 top-10 h-20 w-20 rounded-full bg-blue-300/40 blur-sm dark:bg-blue-500/15" />
-          <div className="absolute bottom-3 right-24 h-8 w-8 rounded-full bg-indigo-400/40 dark:bg-indigo-500/20" />
-          <div className="absolute right-10 top-6 flex h-20 w-20 items-center justify-center rounded-2xl border border-white/60 bg-white/50 shadow-lg backdrop-blur-sm dark:border-slate-700/40 dark:bg-slate-900/50">
+        <div className="pointer-events-none absolute top-0 right-0 h-full w-2/5">
+          <div className="absolute top-3 right-16 h-14 w-14 rounded-full bg-violet-300/50 blur-sm dark:bg-violet-500/20" />
+          <div className="absolute top-10 right-6 h-20 w-20 rounded-full bg-blue-300/40 blur-sm dark:bg-blue-500/15" />
+          <div className="absolute right-24 bottom-3 h-8 w-8 rounded-full bg-indigo-400/40 dark:bg-indigo-500/20" />
+          <div className="absolute top-6 right-10 flex h-20 w-20 items-center justify-center rounded-2xl border border-white/60 bg-white/50 shadow-lg backdrop-blur-sm dark:border-slate-700/40 dark:bg-slate-900/50">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-indigo-500 to-violet-600 shadow-md">
               <Store className="h-6 w-6 text-white" />
             </div>
@@ -1028,7 +1028,7 @@ export default function PartnerStorefrontRenewalPage() {
                   <Store className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                  <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                     Storefront
                   </p>
                   <h2 className="text-xl font-bold text-slate-900 dark:text-white">
@@ -1055,7 +1055,7 @@ export default function PartnerStorefrontRenewalPage() {
                   <Clock3 className="h-4 w-4 text-slate-500 dark:text-slate-400" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  <p className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
                     Current plan
                   </p>
                   <p className="mt-0.5 truncate text-sm font-bold text-slate-900 dark:text-slate-100">
@@ -1072,7 +1072,7 @@ export default function PartnerStorefrontRenewalPage() {
                   <Calendar className="h-4 w-4 text-slate-500 dark:text-slate-400" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  <p className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
                     Expires
                   </p>
                   <p className="mt-0.5 truncate text-sm font-bold text-slate-900 dark:text-slate-100">
@@ -1085,7 +1085,7 @@ export default function PartnerStorefrontRenewalPage() {
                   <Users className="h-4 w-4 text-slate-500 dark:text-slate-400" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  <p className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
                     Payments
                   </p>
                   <p className="mt-0.5 text-sm font-bold text-slate-900 dark:text-slate-100">
@@ -1114,7 +1114,7 @@ export default function PartnerStorefrontRenewalPage() {
           {isLatestReceiptRejected ? (
             <div className="flex gap-3 rounded-3xl border border-rose-200 bg-linear-to-r from-rose-50 to-pink-50 p-5 shadow-sm dark:border-rose-500/30 dark:from-rose-500/10 dark:to-pink-500/10">
               <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-rose-500" />
-              <div className="flex flex-1 min-w-0 items-start justify-between gap-3">
+              <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-bold text-rose-900 dark:text-rose-100">
                     Payment receipt rejected
@@ -1123,7 +1123,7 @@ export default function PartnerStorefrontRenewalPage() {
                     Your latest submitted receipt was rejected. Please upload a
                     new receipt.
                     {latestReceiptItem?.submitted_at ? (
-                      <span className="block mt-0.5 text-xs text-rose-600/70 dark:text-rose-300/70">
+                      <span className="mt-0.5 block text-xs text-rose-600/70 dark:text-rose-300/70">
                         Submitted:{" "}
                         {new Date(
                           latestReceiptItem.submitted_at
@@ -1135,7 +1135,7 @@ export default function PartnerStorefrontRenewalPage() {
                 <button
                   type="button"
                   onClick={() => void openReuploadModalWithPrefill()}
-                  className="shrink-0 inline-flex items-center gap-1.5 rounded-xl border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/20"
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/20"
                 >
                   <Upload className="h-3.5 w-3.5" />
                   Re-upload Receipt
@@ -1161,7 +1161,7 @@ export default function PartnerStorefrontRenewalPage() {
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
               <div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-blue-600 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-400">
+                <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[10px] font-bold tracking-widest text-blue-600 uppercase dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-400">
                   <Calendar className="h-3.5 w-3.5" />
                   Renewal plan
                 </div>
@@ -1211,7 +1211,7 @@ export default function PartnerStorefrontRenewalPage() {
                       </div>
                       <div>
                         <p
-                          className={`text-sm font-bold leading-tight ${active ? style.priceText : "text-slate-900 dark:text-slate-100"}`}
+                          className={`text-sm leading-tight font-bold ${active ? style.priceText : "text-slate-900 dark:text-slate-100"}`}
                         >
                           {plan.title}
                         </p>
@@ -1261,7 +1261,7 @@ export default function PartnerStorefrontRenewalPage() {
                 <Store className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                   Selected storefront
                 </p>
                 <p className="truncate font-bold text-slate-900 dark:text-white">
@@ -1304,7 +1304,7 @@ export default function PartnerStorefrontRenewalPage() {
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                   Payment
                 </p>
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">
@@ -1323,7 +1323,7 @@ export default function PartnerStorefrontRenewalPage() {
 
             <div className="mt-4 grid grid-cols-2 items-end gap-3">
               <div className="space-y-1.5">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                   Billing option
                 </p>
                 <div className="flex gap-1.5">
@@ -1341,7 +1341,7 @@ export default function PartnerStorefrontRenewalPage() {
               </div>
 
               <div className="space-y-1.5">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                   Payment method
                 </p>
                 <div className="relative">
@@ -1352,7 +1352,7 @@ export default function PartnerStorefrontRenewalPage() {
                         event.target.value as PaymentMethod
                       )
                     }
-                    className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-3 pr-8 text-xs font-semibold text-slate-800 outline-none transition focus:border-blue-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                    className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pr-8 pl-3 text-xs font-semibold text-slate-800 transition outline-none focus:border-blue-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   >
                     {paymentMethods.map((method) => (
                       <option key={method.value} value={method.value}>
@@ -1360,7 +1360,7 @@ export default function PartnerStorefrontRenewalPage() {
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                  <ChevronDown className="pointer-events-none absolute top-1/2 right-2.5 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
                 </div>
               </div>
             </div>
@@ -1455,11 +1455,11 @@ export default function PartnerStorefrontRenewalPage() {
             </div>
 
             {/* Body */}
-            <div className="px-6 py-5 space-y-2.5">
+            <div className="space-y-2.5 px-6 py-5">
               {/* Row 1: Checkout ID + Status */}
               <div className="grid grid-cols-2 gap-2.5">
                 <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/50">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                  <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                     Checkout ID
                   </p>
                   <p className="mt-0.5 truncate text-xs font-bold text-slate-800 dark:text-slate-100">
@@ -1467,7 +1467,7 @@ export default function PartnerStorefrontRenewalPage() {
                   </p>
                 </div>
                 <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/50">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                  <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                     Status
                   </p>
                   <span className="mt-1 inline-block rounded-full bg-emerald-100 px-3 py-0.5 text-xs font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">
@@ -1478,7 +1478,7 @@ export default function PartnerStorefrontRenewalPage() {
               {/* Row 2: Payment Reference + Payment Intent */}
               <div className="grid grid-cols-2 gap-2.5">
                 <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/50">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                  <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                     Payment Reference
                   </p>
                   <p className="mt-0.5 truncate text-xs font-bold text-slate-800 dark:text-slate-100">
@@ -1486,7 +1486,7 @@ export default function PartnerStorefrontRenewalPage() {
                   </p>
                 </div>
                 <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/50">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                  <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                     Payment Intent
                   </p>
                   <p className="mt-0.5 truncate text-xs font-bold text-slate-800 dark:text-slate-100">
@@ -1497,7 +1497,7 @@ export default function PartnerStorefrontRenewalPage() {
               {/* Row 3: Customer + Email */}
               <div className="grid grid-cols-2 gap-2.5">
                 <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/50">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                  <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                     Customer
                   </p>
                   <p className="mt-0.5 truncate text-xs font-bold text-slate-800 dark:text-slate-100">
@@ -1505,7 +1505,7 @@ export default function PartnerStorefrontRenewalPage() {
                   </p>
                 </div>
                 <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/50">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                  <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                     Email
                   </p>
                   <p className="mt-0.5 truncate text-xs font-bold text-slate-800 dark:text-slate-100">
@@ -1516,7 +1516,7 @@ export default function PartnerStorefrontRenewalPage() {
               {/* Row 4: Method + Plan + Billing + Amount */}
               <div className="grid grid-cols-4 gap-2.5">
                 <div className="rounded-2xl border border-slate-100 bg-slate-50 px-3 py-3 dark:border-slate-700 dark:bg-slate-800/50">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                  <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                     Method
                   </p>
                   <p className="mt-0.5 text-xs font-bold text-slate-800 dark:text-slate-100">
@@ -1530,7 +1530,7 @@ export default function PartnerStorefrontRenewalPage() {
                   </p>
                 </div>
                 <div className="rounded-2xl border border-slate-100 bg-slate-50 px-3 py-3 dark:border-slate-700 dark:bg-slate-800/50">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                  <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                     Plan
                   </p>
                   <p className="mt-0.5 text-xs font-bold text-slate-800 dark:text-slate-100">
@@ -1539,7 +1539,7 @@ export default function PartnerStorefrontRenewalPage() {
                   </p>
                 </div>
                 <div className="rounded-2xl border border-slate-100 bg-slate-50 px-3 py-3 dark:border-slate-700 dark:bg-slate-800/50">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                  <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                     Billing
                   </p>
                   <p className="mt-0.5 text-xs font-bold text-slate-800 dark:text-slate-100">
@@ -1549,7 +1549,7 @@ export default function PartnerStorefrontRenewalPage() {
                   </p>
                 </div>
                 <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-3 py-3 dark:border-emerald-500/30 dark:bg-emerald-500/10">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+                  <p className="text-[10px] font-bold tracking-widest text-emerald-600 uppercase dark:text-emerald-400">
                     Amount
                   </p>
                   <p className="mt-0.5 text-xs font-bold text-emerald-700 dark:text-emerald-300">
@@ -1629,7 +1629,7 @@ export default function PartnerStorefrontRenewalPage() {
               onClick={() => {
                 void closeReuploadModal()
               }}
-              className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white transition hover:bg-white/35 disabled:cursor-not-allowed disabled:opacity-50"
+              className="absolute top-4 right-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white transition hover:bg-white/35 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <X className="h-4 w-4" />
             </button>
@@ -1647,7 +1647,7 @@ export default function PartnerStorefrontRenewalPage() {
             </div>
 
             {/* Body */}
-            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
+            <div className="flex-1 space-y-4 overflow-y-auto px-6 py-6">
               <input
                 ref={reuploadInputRef}
                 type="file"
@@ -1718,7 +1718,7 @@ export default function PartnerStorefrontRenewalPage() {
                           <img
                             src={f.preview}
                             alt={f.name}
-                            className={`h-24 w-24 rounded-xl object-cover block ${f.isRejected ? "" : "border border-slate-200 dark:border-slate-600"}`}
+                            className={`block h-24 w-24 rounded-xl object-cover ${f.isRejected ? "" : "border border-slate-200 dark:border-slate-600"}`}
                           />
                           <button
                             type="button"
@@ -1730,7 +1730,7 @@ export default function PartnerStorefrontRenewalPage() {
                                 return prev.filter((_, i) => i !== idx)
                               })
                             }
-                            className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-white shadow"
+                            className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-white shadow"
                           >
                             <X className="h-3 w-3" />
                           </button>

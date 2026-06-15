@@ -1,15 +1,16 @@
 "use client"
 
-import Link from "next/link"
-import Image from "next/image"
-import { useState, useRef } from "react"
-import { motion } from "framer-motion"
-import GlobalProductInfo from "./GlobalProductInfo"
-import GlobalProductImageGallery from "./GlobalProductImageGallery"
+import { useRef, useState } from "react"
 import type {
-  ZqPublicProductResponse,
   ZqCachedProduct,
+  ZqPublicProductResponse,
 } from "@/store/api/productsApi"
+import { motion } from "framer-motion"
+import Image from "next/image"
+import Link from "next/link"
+
+import GlobalProductImageGallery from "./GlobalProductImageGallery"
+import GlobalProductInfo from "./GlobalProductInfo"
 
 type Product = ZqPublicProductResponse["product"]
 type Spec = NonNullable<Product["specs"]>[number]
@@ -114,10 +115,10 @@ const parseDescriptionAttributes = (
 
 function GlobalBrandCard({ totalStock }: { totalStock: number }) {
   return (
-    <div className="relative z-20 rounded-lg bg-white dark:bg-gray-800 p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+    <div className="relative z-20 rounded-lg border border-gray-200 bg-white p-4 sm:p-6 dark:border-gray-700 dark:bg-gray-800">
       <div className="flex items-start gap-4 sm:items-center sm:gap-6">
         {/* Logo */}
-        <div className="relative flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 sm:h-32 sm:w-32">
+        <div className="relative flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-white sm:h-32 sm:w-32 dark:border-gray-600 dark:bg-gray-700">
           <Image
             src="/Images/af_home_logo.png"
             alt="AF Home Global Brand"
@@ -130,10 +131,10 @@ function GlobalBrandCard({ totalStock }: { totalStock: number }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <h2 className="text-xl font-bold leading-tight text-gray-900 dark:text-white sm:text-2xl">
+              <h2 className="text-xl leading-tight font-bold text-gray-900 sm:text-2xl dark:text-white">
                 AF Home Global Brand
               </h2>
-              <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2.5 py-1 text-xs font-semibold">
+              <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400">
                 <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
                 Online
               </span>
@@ -211,10 +212,10 @@ function GlobalBrandCard({ totalStock }: { totalStock: number }) {
       </div>
 
       {/* View Brand button */}
-      <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+      <div className="mt-4 border-t border-gray-100 pt-4 dark:border-gray-700">
         <Link
           href="/by-brand?brand=af-home-global-brand"
-          className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold border border-sky-400 dark:border-sky-500 bg-transparent hover:bg-sky-50 dark:hover:bg-sky-900 text-sky-500 dark:text-sky-400 rounded-lg transition-colors"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-sky-400 bg-transparent px-4 py-2.5 text-sm font-semibold text-sky-500 transition-colors hover:bg-sky-50 dark:border-sky-500 dark:text-sky-400 dark:hover:bg-sky-900"
         >
           View Brand
           <svg
@@ -260,9 +261,9 @@ function ZqRelatedCard({
     >
       <Link
         href={`/global-product/${product.id}`}
-        className="group flex flex-col bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden hover:border-sky-400 dark:hover:border-sky-500 hover:shadow-md transition-all duration-200"
+        className="group flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition-all duration-200 hover:border-sky-400 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-sky-500"
       >
-        <div className="relative aspect-square bg-white dark:bg-gray-700 overflow-hidden">
+        <div className="relative aspect-square overflow-hidden bg-white dark:bg-gray-700">
           <div className="absolute top-2 left-2 z-10 rounded-sm bg-sky-500 px-2 py-0.5 text-[10px] font-bold text-white">
             Register to get 6% discount
           </div>
@@ -274,11 +275,11 @@ function ZqRelatedCard({
             unoptimized
           />
         </div>
-        <div className="flex flex-1 flex-col p-3 border-t border-gray-100 dark:border-gray-700">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-1">
+        <div className="flex flex-1 flex-col border-t border-gray-100 p-3 dark:border-gray-700">
+          <p className="mb-1 text-[10px] font-semibold tracking-wide text-gray-400 uppercase">
             AF HOME GLOBAL BRAND
           </p>
-          <h3 className="text-sm font-semibold text-slate-800 dark:text-gray-100 line-clamp-2 leading-snug flex-1">
+          <h3 className="line-clamp-2 flex-1 text-sm leading-snug font-semibold text-slate-800 dark:text-gray-100">
             {product.subject}
           </h3>
           <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
@@ -354,14 +355,14 @@ export default function GlobalProductDetail({
   ].filter(Boolean) as { label: string; value: string }[]
 
   return (
-    <div className="bg-white dark:bg-gray-900 text-slate-900 dark:text-white min-h-screen">
+    <div className="min-h-screen bg-white text-slate-900 dark:bg-gray-900 dark:text-white">
       {/* Breadcrumb — matches regular product page */}
-      <div className="bg-gray-50 dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
+      <div className="border-b border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-900">
         <div className="container mx-auto px-4 py-3">
           <nav className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
             <Link
               href="/"
-              className="hover:text-sky-500 dark:hover:text-sky-400 transition-colors font-medium"
+              className="font-medium transition-colors hover:text-sky-500 dark:hover:text-sky-400"
             >
               Home
             </Link>
@@ -392,7 +393,7 @@ export default function GlobalProductDetail({
                 </svg>
               </>
             )}
-            <span className="text-slate-600 dark:text-gray-300 font-semibold truncate max-w-48">
+            <span className="max-w-48 truncate font-semibold text-slate-600 dark:text-gray-300">
               {product.subject}
             </span>
           </nav>
@@ -401,7 +402,7 @@ export default function GlobalProductDetail({
 
       {/* Main grid — matches regular product page exactly */}
       <div className="container mx-auto px-4 py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start pb-20">
+        <div className="grid grid-cols-1 items-start gap-12 pb-20 lg:grid-cols-2">
           {/* LEFT: Gallery + Brand Card */}
           <div className="space-y-4">
             <div className="relative">
@@ -429,11 +430,11 @@ export default function GlobalProductDetail({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="border-t border-gray-200 dark:border-gray-700 pt-10 mt-0 space-y-4"
+          className="mt-0 space-y-4 border-t border-gray-200 pt-10 dark:border-gray-700"
         >
           {/* Description */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
+          <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+            <h3 className="mb-4 text-lg font-bold text-slate-900 dark:text-white">
               Description
             </h3>
 
@@ -445,16 +446,16 @@ export default function GlobalProductDetail({
 
             {/* Attribute grid (parsed from ZQ description table) */}
             {descriptionAttributes.length > 0 && (
-              <div className="grid gap-2 sm:grid-cols-2 mb-6">
+              <div className="mb-6 grid gap-2 sm:grid-cols-2">
                 {descriptionAttributes.map((attr, i) => (
                   <div
                     key={`${attr.label}-${i}`}
-                    className="flex items-start gap-3 rounded-xl bg-gray-50 dark:bg-gray-700/40 border border-gray-100 dark:border-gray-700 px-3.5 py-2.5"
+                    className="flex items-start gap-3 rounded-xl border border-gray-100 bg-gray-50 px-3.5 py-2.5 dark:border-gray-700 dark:bg-gray-700/40"
                   >
-                    <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide w-28 shrink-0 pt-0.5">
+                    <span className="w-28 shrink-0 pt-0.5 text-xs font-semibold tracking-wide text-gray-400 uppercase dark:text-gray-500">
                       {attr.label}
                     </span>
-                    <span className="text-sm font-medium text-slate-700 dark:text-gray-200 leading-snug">
+                    <span className="text-sm leading-snug font-medium text-slate-700 dark:text-gray-200">
                       {attr.value}
                     </span>
                   </div>
@@ -464,7 +465,7 @@ export default function GlobalProductDetail({
 
             {/* Free-form text content (fallback when no attribute grid) */}
             {description && (
-              <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
+              <div className="mb-6 space-y-2 text-sm leading-relaxed text-gray-600 dark:text-gray-300">
                 {description.split(/\n{2,}/).map((para, i) => {
                   const trimmed = para.trim()
                   if (!trimmed) return null
@@ -481,10 +482,10 @@ export default function GlobalProductDetail({
             {descriptionImages.length > 0 && (
               <>
                 {(description || descriptionAttributes.length > 0) && (
-                  <div className="border-t border-gray-100 dark:border-gray-700 mb-4" />
+                  <div className="mb-4 border-t border-gray-100 dark:border-gray-700" />
                 )}
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-xs font-semibold tracking-wide text-gray-400 uppercase dark:text-gray-500">
                     Product Photos
                     <span className="ml-1.5 text-gray-300 dark:text-gray-600">
                       ({descriptionImages.length})
@@ -493,7 +494,7 @@ export default function GlobalProductDetail({
                   <button
                     type="button"
                     onClick={() => setGalleryOpen(true)}
-                    className="text-xs font-semibold text-sky-500 hover:text-sky-600 transition-colors flex items-center gap-1"
+                    className="flex items-center gap-1 text-xs font-semibold text-sky-500 transition-colors hover:text-sky-600"
                   >
                     View all
                     <svg
@@ -513,7 +514,7 @@ export default function GlobalProductDetail({
                 <div className="group/carousel relative">
                   <div
                     ref={carouselRef}
-                    className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1"
+                    className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1"
                     style={{ scrollbarWidth: "none" }}
                   >
                     {descriptionImages.map((src, i) => (
@@ -521,14 +522,14 @@ export default function GlobalProductDetail({
                         key={i}
                         type="button"
                         onClick={() => setLightboxSrc(src)}
-                        className="snap-start shrink-0 w-44 sm:w-52 overflow-hidden rounded-xl border border-gray-100 dark:border-gray-700 hover:border-sky-400 dark:hover:border-sky-500 transition-all duration-200 group cursor-zoom-in bg-white dark:bg-gray-700"
+                        className="group w-44 shrink-0 cursor-zoom-in snap-start overflow-hidden rounded-xl border border-gray-100 bg-white transition-all duration-200 hover:border-sky-400 sm:w-52 dark:border-gray-700 dark:bg-gray-700 dark:hover:border-sky-500"
                       >
                         <div className="relative aspect-square">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={src}
                             alt={`Product detail ${i + 1}`}
-                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                             loading="lazy"
                           />
                         </div>
@@ -542,7 +543,7 @@ export default function GlobalProductDetail({
                       <button
                         type="button"
                         onClick={() => scrollCarousel("left")}
-                        className="hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 z-10 h-9 w-9 items-center justify-center rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-gray-200 dark:border-slate-700 shadow-md text-slate-600 dark:text-slate-300 opacity-0 group-hover/carousel:opacity-100 hover:text-sky-500 transition-all"
+                        className="absolute top-1/2 left-2 z-10 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/90 text-slate-600 opacity-0 shadow-md backdrop-blur-sm transition-all group-hover/carousel:opacity-100 hover:text-sky-500 sm:flex dark:border-slate-700 dark:bg-slate-900/90 dark:text-slate-300"
                         aria-label="Scroll left"
                       >
                         <svg
@@ -560,7 +561,7 @@ export default function GlobalProductDetail({
                       <button
                         type="button"
                         onClick={() => scrollCarousel("right")}
-                        className="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 z-10 h-9 w-9 items-center justify-center rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-gray-200 dark:border-slate-700 shadow-md text-slate-600 dark:text-slate-300 opacity-0 group-hover/carousel:opacity-100 hover:text-sky-500 transition-all"
+                        className="absolute top-1/2 right-2 z-10 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/90 text-slate-600 opacity-0 shadow-md backdrop-blur-sm transition-all group-hover/carousel:opacity-100 hover:text-sky-500 sm:flex dark:border-slate-700 dark:bg-slate-900/90 dark:text-slate-300"
                         aria-label="Scroll right"
                       >
                         <svg
@@ -584,9 +585,9 @@ export default function GlobalProductDetail({
 
           {/* Pinterest-style "View all" gallery modal */}
           {galleryOpen && (
-            <div className="fixed inset-0 z-[150] bg-white dark:bg-gray-900 flex flex-col">
+            <div className="fixed inset-0 z-[150] flex flex-col bg-white dark:bg-gray-900">
               {/* Header */}
-              <div className="shrink-0 flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
+              <div className="flex shrink-0 items-center justify-between border-b border-gray-100 bg-white/95 px-4 py-4 backdrop-blur-sm sm:px-6 dark:border-gray-800 dark:bg-gray-900/95">
                 <div>
                   <h3 className="text-base font-bold text-slate-900 dark:text-white">
                     Product Photos
@@ -598,7 +599,7 @@ export default function GlobalProductDetail({
                 <button
                   type="button"
                   onClick={() => setGalleryOpen(false)}
-                  className="flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  className="flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -617,20 +618,20 @@ export default function GlobalProductDetail({
               </div>
 
               {/* Pinterest masonry */}
-              <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6">
-                <div className="columns-2 sm:columns-3 lg:columns-4 gap-3 [&>*]:mb-3">
+              <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
+                <div className="columns-2 gap-3 sm:columns-3 lg:columns-4 [&>*]:mb-3">
                   {descriptionImages.map((src, i) => (
                     <button
                       key={i}
                       type="button"
                       onClick={() => setLightboxSrc(src)}
-                      className="break-inside-avoid block w-full overflow-hidden rounded-xl border border-gray-100 dark:border-gray-700 hover:border-sky-400 dark:hover:border-sky-500 hover:shadow-lg transition-all duration-200 group cursor-zoom-in"
+                      className="group block w-full cursor-zoom-in break-inside-avoid overflow-hidden rounded-xl border border-gray-100 transition-all duration-200 hover:border-sky-400 hover:shadow-lg dark:border-gray-700 dark:hover:border-sky-500"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={src}
                         alt={`Product detail ${i + 1}`}
-                        className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                        className="h-auto w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                         loading="lazy"
                       />
                     </button>
@@ -643,12 +644,12 @@ export default function GlobalProductDetail({
           {/* Lightbox */}
           {lightboxSrc && (
             <div
-              className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-4"
+              className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 p-4"
               onClick={() => setLightboxSrc(null)}
             >
               <button
                 onClick={() => setLightboxSrc(null)}
-                className="absolute top-4 right-4 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                className="absolute top-4 right-4 rounded-full bg-white/10 p-2 text-white/70 transition-colors hover:bg-white/20 hover:text-white"
                 aria-label="Close"
               >
                 <svg
@@ -668,27 +669,27 @@ export default function GlobalProductDetail({
               <img
                 src={lightboxSrc}
                 alt="Product detail"
-                className="max-h-[90vh] max-w-full w-auto rounded-xl shadow-2xl"
+                className="max-h-[90vh] w-auto max-w-full rounded-xl shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
               />
             </div>
           )}
 
           {/* Specifications */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3">
+          <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+            <h3 className="mb-3 text-lg font-bold text-slate-900 dark:text-white">
               Specifications
             </h3>
             <div className="space-y-2">
               {specs.map((spec) => (
                 <div
                   key={spec.label}
-                  className="flex items-center justify-between px-4 py-2 text-sm border-b border-gray-100 dark:border-gray-700 last:border-b-0 bg-gray-50 dark:bg-gray-700/50 rounded"
+                  className="flex items-center justify-between rounded border-b border-gray-100 bg-gray-50 px-4 py-2 text-sm last:border-b-0 dark:border-gray-700 dark:bg-gray-700/50"
                 >
-                  <span className="font-semibold text-slate-700 dark:text-gray-200 w-36 shrink-0">
+                  <span className="w-36 shrink-0 font-semibold text-slate-700 dark:text-gray-200">
                     {spec.label}
                   </span>
-                  <span className="text-gray-500 dark:text-gray-300 text-right">
+                  <span className="text-right text-gray-500 dark:text-gray-300">
                     {spec.value}
                   </span>
                 </div>
@@ -697,16 +698,16 @@ export default function GlobalProductDetail({
           </div>
 
           {/* Reviews */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3">
+          <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+            <h3 className="mb-3 text-lg font-bold text-slate-900 dark:text-white">
               Reviews (0)
             </h3>
-            <div className="flex items-center gap-4 bg-sky-50 dark:bg-sky-900/20 rounded-xl p-4 mb-3">
-              <div className="text-center shrink-0">
+            <div className="mb-3 flex items-center gap-4 rounded-xl bg-sky-50 p-4 dark:bg-sky-900/20">
+              <div className="shrink-0 text-center">
                 <div className="text-3xl font-bold text-sky-500 dark:text-sky-400">
                   0.0
                 </div>
-                <div className="flex gap-0.5 justify-center mt-1">
+                <div className="mt-1 flex justify-center gap-0.5">
                   {[1, 2, 3, 4, 5].map((s) => (
                     <svg
                       key={s}
@@ -721,7 +722,7 @@ export default function GlobalProductDetail({
                     </svg>
                   ))}
                 </div>
-                <div className="text-xs text-gray-400 mt-1">0 reviews</div>
+                <div className="mt-1 text-xs text-gray-400">0 reviews</div>
               </div>
               <div className="flex-1 space-y-1">
                 {[5, 4, 3, 2, 1].map((star) => (
@@ -739,17 +740,17 @@ export default function GlobalProductDetail({
                     >
                       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                     </svg>
-                    <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
-                      <div className="bg-sky-400 h-full rounded-full w-0" />
+                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                      <div className="h-full w-0 rounded-full bg-sky-400" />
                     </div>
-                    <span className="w-4 text-gray-400 dark:text-gray-500 text-right">
+                    <span className="w-4 text-right text-gray-400 dark:text-gray-500">
                       0
                     </span>
                   </div>
                 ))}
               </div>
             </div>
-            <div className="border border-dashed border-gray-200 dark:border-gray-700 rounded-xl p-4 text-center text-sm text-gray-400 dark:text-gray-500">
+            <div className="rounded-xl border border-dashed border-gray-200 p-4 text-center text-sm text-gray-400 dark:border-gray-700 dark:text-gray-500">
               No reviews yet. Be the first to share your experience.
             </div>
           </div>
@@ -761,15 +762,15 @@ export default function GlobalProductDetail({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.4 }}
-            className="border-t border-gray-200 dark:border-gray-700 pt-10 mt-10"
+            className="mt-10 border-t border-gray-200 pt-10 dark:border-gray-700"
           >
-            <div className="flex items-center justify-between mb-6">
+            <div className="mb-6 flex items-center justify-between">
               <h2 className="text-xl font-bold text-slate-900 dark:text-gray-100">
                 You Might Also Like
               </h2>
               <Link
                 href="/by-brand?brand=af-home-global-brand"
-                className="text-sm text-sky-500 dark:text-sky-400 hover:text-sky-600 font-semibold transition-colors flex items-center gap-1"
+                className="flex items-center gap-1 text-sm font-semibold text-sky-500 transition-colors hover:text-sky-600 dark:text-sky-400"
               >
                 View all
                 <svg
@@ -785,7 +786,7 @@ export default function GlobalProductDetail({
                 </svg>
               </Link>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
               {relatedProducts.map((related, index) => (
                 <ZqRelatedCard
                   key={related.id}

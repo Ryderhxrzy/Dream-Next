@@ -6,8 +6,8 @@ import {
   useCreateAddsContentMutation,
   useDeleteAddsContentMutation,
   useGetAddsContentQuery,
-  useUpdateAddsContentStatusMutation,
   useUpdateAddsContentMutation,
+  useUpdateAddsContentStatusMutation,
 } from "@/store/api/addsContentApi"
 
 const getApiErrorMessage = (error: any, fallback: string) => {
@@ -142,7 +142,7 @@ export default function AddsContentClient() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-700 dark:text-cyan-400">
+        <p className="text-xs font-bold tracking-[0.22em] text-cyan-700 uppercase dark:text-cyan-400">
           Web Content
         </p>
         <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100">
@@ -155,12 +155,12 @@ export default function AddsContentClient() {
       </div>
 
       <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="pointer-events-none absolute -right-20 -top-20 h-44 w-44 rounded-full bg-orange-100/70 blur-3xl animate-pulse" />
-        <div className="pointer-events-none absolute -bottom-24 -left-24 h-56 w-56 rounded-full bg-amber-100/70 blur-3xl animate-pulse" />
+        <div className="pointer-events-none absolute -top-20 -right-20 h-44 w-44 animate-pulse rounded-full bg-orange-100/70 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -left-24 h-56 w-56 animate-pulse rounded-full bg-amber-100/70 blur-3xl" />
 
         <div className="relative flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-amber-600 dark:text-amber-400">
+            <p className="text-xs font-bold tracking-[0.22em] text-amber-600 uppercase dark:text-amber-400">
               Campaign Builder
             </p>
             <h2 className="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100">
@@ -203,7 +203,7 @@ export default function AddsContentClient() {
               </svg>
             </span>
             Add Content
-            <span className="inline-flex h-2 w-2 rounded-full bg-white/90 animate-ping" />
+            <span className="inline-flex h-2 w-2 animate-ping rounded-full bg-white/90" />
           </button>
 
           <button
@@ -221,7 +221,7 @@ export default function AddsContentClient() {
           <div className="relative z-[61] w-full max-w-2xl rounded-3xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.22em] text-amber-600 dark:text-amber-400">
+                <p className="text-xs font-bold tracking-[0.22em] text-amber-600 uppercase dark:text-amber-400">
                   New Campaign
                 </p>
                 <h3 className="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100">
@@ -244,7 +244,7 @@ export default function AddsContentClient() {
 
             <div className="mt-6 grid gap-5 sm:grid-cols-2">
               <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                <p className="text-xs font-semibold tracking-[0.18em] text-slate-500 uppercase">
                   Image
                 </p>
                 <div className="mt-3 flex items-center justify-between gap-3">
@@ -281,7 +281,7 @@ export default function AddsContentClient() {
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                <p className="text-xs font-semibold tracking-[0.18em] text-slate-500 uppercase">
                   Video
                 </p>
                 <div className="mt-3 flex items-center justify-between gap-3">
@@ -381,7 +381,7 @@ export default function AddsContentClient() {
                 </p>
 
                 {isDateOpen && (
-                  <div className="absolute z-[70] bottom-full mb-2 w-[320px] max-h-[320px] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-3 shadow-xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <div className="absolute bottom-full z-[70] mb-2 max-h-[320px] w-[320px] [scrollbar-width:none] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-3 shadow-xl [&::-webkit-scrollbar]:hidden">
                     <div className="flex items-center justify-between px-1">
                       <button
                         type="button"
@@ -419,7 +419,7 @@ export default function AddsContentClient() {
                       </button>
                     </div>
 
-                    <div className="mt-3 grid grid-cols-7 text-center text-[11px] font-semibold uppercase text-slate-400">
+                    <div className="mt-3 grid grid-cols-7 text-center text-[11px] font-semibold text-slate-400 uppercase">
                       {weekdayLabels.map((label) => (
                         <span key={label}>{label}</span>
                       ))}
@@ -497,7 +497,7 @@ export default function AddsContentClient() {
                 )}
               </div>
 
-              <label className="space-y-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 sm:col-span-2">
+              <label className="space-y-2 text-xs font-semibold tracking-[0.18em] text-slate-500 uppercase sm:col-span-2">
                 Show On Page
                 <select
                   value={pageTarget}
@@ -512,7 +512,7 @@ export default function AddsContentClient() {
                   <option value="brand">Brand</option>
                   <option value="all">All Pages</option>
                 </select>
-                <span className="block text-[11px] font-medium normal-case text-slate-500">
+                <span className="block text-[11px] font-medium text-slate-500 normal-case">
                   Choose where this ad will appear. Select “All Pages” for
                   global popups.
                 </span>
@@ -580,7 +580,7 @@ export default function AddsContentClient() {
           <div className="relative z-[71] w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-xl">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
+                <p className="text-xs font-bold tracking-[0.22em] text-amber-600 uppercase">
                   Confirm Action
                 </p>
                 <h3 className="mt-2 text-lg font-bold text-slate-900">
@@ -639,7 +639,7 @@ export default function AddsContentClient() {
           <div className="relative z-[71] w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-xl">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.22em] text-rose-600">
+                <p className="text-xs font-bold tracking-[0.22em] text-rose-600 uppercase">
                   Delete Content
                 </p>
                 <h3 className="mt-2 text-lg font-bold text-slate-900">
@@ -696,7 +696,7 @@ export default function AddsContentClient() {
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+            <p className="text-xs font-bold tracking-[0.2em] text-slate-500 uppercase dark:text-slate-400">
               Library
             </p>
             <h3 className="mt-2 text-lg font-bold text-slate-900 dark:text-slate-100">
@@ -726,13 +726,13 @@ export default function AddsContentClient() {
               return (
                 <div
                   key={item.id}
-                  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm relative"
+                  className="relative rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
                 >
                   <div className="flex items-center justify-between text-xs text-slate-500">
                     <span>#{item.id}</span>
                     <span>{formatCardDate(item.date_created)}</span>
                   </div>
-                  <span className="mt-2 inline-flex w-fit rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase text-slate-600">
+                  <span className="mt-2 inline-flex w-fit rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold text-slate-600 uppercase">
                     {item.page ? item.page : "shop"}
                   </span>
                   <div className="mt-5 space-y-3">
@@ -742,10 +742,10 @@ export default function AddsContentClient() {
                         alt="Uploaded"
                         className="h-40 w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
                       />
-                      <span className="absolute left-3 top-3 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-semibold text-emerald-700 shadow-sm">
+                      <span className="absolute top-3 left-3 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-semibold text-emerald-700 shadow-sm">
                         {statusLabel === "Active" ? "Active" : "Draft"}
                       </span>
-                      <div className="absolute right-3 top-3 flex flex-col gap-2">
+                      <div className="absolute top-3 right-3 flex flex-col gap-2">
                         <button
                           type="button"
                           onClick={() => {
@@ -775,10 +775,10 @@ export default function AddsContentClient() {
                         controls
                         className="h-32 w-full rounded-xl border border-slate-100 bg-black"
                       />
-                      <span className="absolute left-3 top-3 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-semibold text-emerald-700 shadow-sm">
+                      <span className="absolute top-3 left-3 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-semibold text-emerald-700 shadow-sm">
                         {statusLabel === "Active" ? "Active" : "Draft"}
                       </span>
-                      <div className="absolute right-3 top-3 flex flex-col gap-2">
+                      <div className="absolute top-3 right-3 flex flex-col gap-2">
                         <button
                           type="button"
                           onClick={() => {
@@ -845,25 +845,25 @@ export default function AddsContentClient() {
               return (
                 <div
                   key={`${item.id}-image`}
-                  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm relative"
+                  className="relative rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
                 >
                   <div className="flex items-center justify-between text-xs text-slate-500">
                     <span>#{item.id}</span>
                     <span>{formatCardDate(item.date_created)}</span>
                   </div>
-                  <span className="mt-2 inline-flex w-fit rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase text-slate-600">
+                  <span className="mt-2 inline-flex w-fit rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold text-slate-600 uppercase">
                     {item.page ? item.page : "shop"}
                   </span>
-                  <div className="mt-5 group relative overflow-hidden rounded-xl border border-slate-100 bg-slate-50">
+                  <div className="group relative mt-5 overflow-hidden rounded-xl border border-slate-100 bg-slate-50">
                     <img
                       src={item.image_url ?? ""}
                       alt="Uploaded"
                       className="h-48 w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
                     />
-                    <span className="absolute left-3 top-3 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-semibold text-emerald-700 shadow-sm">
+                    <span className="absolute top-3 left-3 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-semibold text-emerald-700 shadow-sm">
                       {statusLabel === "Active" ? "Active" : "Draft"}
                     </span>
-                    <div className="absolute right-3 top-3 flex flex-col gap-2">
+                    <div className="absolute top-3 right-3 flex flex-col gap-2">
                       <button
                         type="button"
                         onClick={() => {
@@ -929,25 +929,25 @@ export default function AddsContentClient() {
               return (
                 <div
                   key={`${item.id}-video`}
-                  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm relative"
+                  className="relative rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
                 >
                   <div className="flex items-center justify-between text-xs text-slate-500">
                     <span>#{item.id}</span>
                     <span>{formatCardDate(item.date_created)}</span>
                   </div>
-                  <span className="mt-2 inline-flex w-fit rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase text-slate-600">
+                  <span className="mt-2 inline-flex w-fit rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold text-slate-600 uppercase">
                     {item.page ? item.page : "shop"}
                   </span>
-                  <div className="mt-5 group relative">
+                  <div className="group relative mt-5">
                     <video
                       src={item.video_url ?? ""}
                       controls
                       className="h-40 w-full rounded-xl border border-slate-100 bg-black"
                     />
-                    <span className="absolute left-3 top-3 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-semibold text-emerald-700 shadow-sm">
+                    <span className="absolute top-3 left-3 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-semibold text-emerald-700 shadow-sm">
                       {statusLabel === "Active" ? "Active" : "Draft"}
                     </span>
-                    <div className="absolute right-3 top-3 flex flex-col gap-2">
+                    <div className="absolute top-3 right-3 flex flex-col gap-2">
                       <button
                         type="button"
                         onClick={() => {

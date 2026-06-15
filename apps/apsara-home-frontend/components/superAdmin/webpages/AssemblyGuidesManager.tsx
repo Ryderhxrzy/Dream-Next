@@ -1,6 +1,7 @@
 "use client"
 
 import { ChangeEvent, FormEvent, useMemo, useRef, useState } from "react"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import {
   useCreateAdminWebPageItemMutation,
   useDeleteAdminWebPageItemMutation,
@@ -8,7 +9,6 @@ import {
   useUpdateAdminWebPageItemMutation,
   WebPageItem,
 } from "@/store/api/webPagesApi"
-import { showErrorToast, showSuccessToast } from "@/libs/toast"
 
 type FormState = {
   title: string
@@ -231,7 +231,7 @@ export default function AssemblyGuidesManager() {
       <section className="overflow-hidden rounded-[2rem] border border-cyan-100 bg-[linear-gradient(135deg,_#f0fdfa,_#ffffff_58%,_#ecfeff)] shadow-[0_24px_70px_rgba(15,118,110,0.08)] dark:border-cyan-900/30 dark:bg-[linear-gradient(135deg,_rgba(8,51,68,0.35),_rgba(15,23,42,0.96)_58%,_rgba(8,47,73,0.42))]">
         <div className="grid gap-6 px-6 py-7 lg:grid-cols-[1.3fr_0.7fr] lg:px-8">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.28em] text-cyan-700 dark:text-cyan-400">
+            <p className="text-xs font-bold tracking-[0.28em] text-cyan-700 uppercase dark:text-cyan-400">
               PDF Workspace
             </p>
             <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100">
@@ -265,7 +265,7 @@ export default function AssemblyGuidesManager() {
         >
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-700 dark:text-cyan-400">
+              <p className="text-xs font-bold tracking-[0.22em] text-cyan-700 uppercase dark:text-cyan-400">
                 {editTarget ? "Edit Mode" : "Create"}
               </p>
               <h2 className="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100">
@@ -299,7 +299,7 @@ export default function AssemblyGuidesManager() {
             <Field label="PDF URL">
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  <p className="text-xs font-semibold tracking-[0.18em] text-slate-500 uppercase">
                     {useManualPdfLink ? "Google Drive Link" : "Upload PDF"}
                   </p>
                   <button
@@ -473,7 +473,7 @@ export default function AssemblyGuidesManager() {
           <div className="mt-2 rounded-[1.5rem] border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-800/60">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                <p className="text-xs font-bold tracking-[0.2em] text-slate-500 uppercase dark:text-slate-400">
                   Recently Added
                 </p>
                 <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -511,7 +511,7 @@ export default function AssemblyGuidesManager() {
                       </div>
 
                       <div className="p-4">
-                        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-orange-500">
+                        <p className="text-[11px] font-bold tracking-[0.2em] text-orange-500 uppercase">
                           Assembly Guide
                         </p>
                         <p className="mt-2 text-sm font-semibold text-slate-900">

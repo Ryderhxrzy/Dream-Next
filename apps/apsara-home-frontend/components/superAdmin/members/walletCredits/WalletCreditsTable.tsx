@@ -1,17 +1,19 @@
 "use client"
 
 import { motion } from "framer-motion"
+
+import AvatarImg from "@/components/superAdmin/AvatarImg"
 import DataTableShell from "@/components/superAdmin/DataTableShell"
+
 import {
+  getInitials,
   MemberWallet,
-  TIER_COLORS,
-  STATUS_CONFIG,
   php,
   pv,
-  getInitials,
+  STATUS_CONFIG,
+  TIER_COLORS,
   timeAgo,
 } from "./types"
-import AvatarImg from "@/components/superAdmin/AvatarImg"
 
 interface WalletCreditsTableProps {
   wallets: MemberWallet[]
@@ -34,7 +36,7 @@ function WalletRow({
   const status = STATUS_CONFIG[wallet.status]
 
   return (
-    <tr className="hover:bg-slate-50/70 transition-colors">
+    <tr className="transition-colors hover:bg-slate-50/70">
       {/* Member */}
       <td className="px-4 py-3.5">
         <div className="flex items-center gap-3">
@@ -57,7 +59,7 @@ function WalletRow({
       {/* Tier */}
       <td className="px-4 py-3.5">
         <span
-          className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border ${tier}`}
+          className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold ${tier}`}
         >
           {wallet.tier}
         </span>
@@ -68,7 +70,7 @@ function WalletRow({
         <p className="text-sm font-bold text-emerald-700">
           {php(wallet.cashBalance)}
         </p>
-        <p className="text-[10px] text-slate-400 mt-0.5">
+        <p className="mt-0.5 text-[10px] text-slate-400">
           <span className="text-teal-600">+{php(wallet.cashCredits)}</span>
           {" / "}
           <span className="text-rose-500">-{php(wallet.cashDebits)}</span>
@@ -99,7 +101,7 @@ function WalletRow({
       {/* Status */}
       <td className="px-4 py-3.5">
         <div className="flex items-center gap-1.5">
-          <span className={`h-2 w-2 rounded-full shrink-0 ${status.dot}`} />
+          <span className={`h-2 w-2 shrink-0 rounded-full ${status.dot}`} />
           <span className={`text-xs font-medium ${status.text}`}>
             {status.label}
           </span>
@@ -107,7 +109,7 @@ function WalletRow({
       </td>
 
       {/* Last transaction */}
-      <td className="px-4 py-3.5 text-xs text-slate-400 whitespace-nowrap">
+      <td className="px-4 py-3.5 text-xs whitespace-nowrap text-slate-400">
         {timeAgo(wallet.lastTransaction)}
       </td>
 
@@ -122,10 +124,10 @@ function WalletRow({
           </button>
           <button
             onClick={onAdjust}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100 transition-all"
+            className="flex items-center gap-1.5 rounded-lg border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-700 transition-all hover:bg-teal-100"
           >
             <svg
-              className="w-3.5 h-3.5"
+              className="h-3.5 w-3.5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -190,31 +192,31 @@ export default function WalletCreditsTable({
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/40">
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide text-slate-400 uppercase">
                   Member
                 </th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide text-slate-400 uppercase">
                   Tier
                 </th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide text-slate-400 uppercase">
                   Cash Balance
                 </th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide text-slate-400 uppercase">
                   PV Balance
                 </th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide text-slate-400 uppercase">
                   Locked
                 </th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide text-slate-400 uppercase">
                   Available
                 </th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide text-slate-400 uppercase">
                   Status
                 </th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide text-slate-400 uppercase">
                   Last Txn
                 </th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <th className="px-4 py-3 text-xs font-semibold tracking-wide text-slate-400 uppercase">
                   Action
                 </th>
               </tr>
@@ -225,7 +227,7 @@ export default function WalletCreditsTable({
                   <td colSpan={9} className="px-5 py-14 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <svg
-                        className="w-8 h-8 text-slate-300"
+                        className="h-8 w-8 text-slate-300"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"

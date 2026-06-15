@@ -1,22 +1,22 @@
-import { buildPageMetadata } from "@/app/seo"
+import { getPartnerStorefrontRecordByHost } from "@/libs/partnerStorefrontServer"
+import { serverFetch } from "@/libs/serverFetch"
+import { getNavbarCategories } from "@/libs/serverStorefront"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
+
+import type { TopBarConfig } from "@/components/layout/TopBar"
+import type { TrustBarConfig } from "@/components/layout/TrustBar"
+import ShopBuilderSections, {
+  type ShopBuilderApiResponse,
+} from "@/components/sections/ShopBuilderSections"
+import ShopPageClient from "@/components/shop/ShopPageClient"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Shop",
   description: "Browse the Shop page on AF Home.",
   path: "/shop",
 })
-
-import ShopPageClient from "@/components/shop/ShopPageClient"
-import ShopBuilderSections, {
-  type ShopBuilderApiResponse,
-} from "@/components/sections/ShopBuilderSections"
-import { getNavbarCategories } from "@/libs/serverStorefront"
-import { getPartnerStorefrontRecordByHost } from "@/libs/partnerStorefrontServer"
-import { serverFetch } from "@/libs/serverFetch"
-import type { TopBarConfig } from "@/components/layout/TopBar"
-import type { TrustBarConfig } from "@/components/layout/TrustBar"
 
 type ApiCategoriesResponse = {
   categories?: ShopBuilderApiResponse["categories"]

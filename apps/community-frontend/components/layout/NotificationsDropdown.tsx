@@ -1,26 +1,33 @@
 "use client"
 
 import { useState } from "react"
+import { useAuthStore } from "@/store/auth.store"
 import { formatDistanceToNowStrict } from "date-fns"
 import { Bell, Check } from "lucide-react"
+
 import { useConnectionActions } from "@/lib/hooks/use-connections"
+import { markAllReadRemote } from "@/lib/hooks/use-notification-sync"
+import {
+  useNotifications,
+  type Notification,
+} from "@/lib/hooks/use-notifications"
+import { cn } from "@/lib/utils"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
-import { useAuthStore } from "@/store/auth.store"
-import { useNotifications, type Notification } from "@/lib/hooks/use-notifications"
-import { markAllReadRemote } from "@/lib/hooks/use-notification-sync"
 
 type NotifAuthor = { name?: string; avatarUrl?: string | null }
 
 function getAuthor(payload: Record<string, unknown>): NotifAuthor {
   const author = payload.author as NotifAuthor | undefined
-  return { name: author?.name ?? "Someone", avatarUrl: author?.avatarUrl ?? null }
+  return {
+    name: author?.name ?? "Someone",
+    avatarUrl: author?.avatarUrl ?? null,
+  }
 }
 
 function getInitials(name: string) {
@@ -33,7 +40,8 @@ function getInitials(name: string) {
 }
 
 function getActionLabel(n: Notification): string {
-  if (n.type === "new_post") return `posted: ${String(n.payload.title ?? "a new post")}`
+  if (n.type === "new_post")
+    return `posted: ${String(n.payload.title ?? "a new post")}`
   if (n.type === "new_comment") return "commented on your post"
   if (n.type === "new_reply") return "replied to your comment"
   if (n.type === "new_reaction") return "liked your post"
@@ -50,7 +58,7 @@ function ConnectRequestActions({ userId }: { userId: string }) {
 
   if (done) {
     return (
-      <p className="mt-1.5 text-xs font-medium text-muted-foreground">
+      <p className="text-muted-foreground mt-1.5 text-xs font-medium">
         {done === "accepted" ? "✓ Connected" : "Declined"}
       </p>
     )
@@ -63,7 +71,9 @@ function ConnectRequestActions({ userId }: { userId: string }) {
         size="sm"
         className="h-7 px-3 text-xs"
         disabled={busy}
-        onClick={() => accept.mutate(undefined, { onSuccess: () => setDone("accepted") })}
+        onClick={() =>
+          accept.mutate(undefined, { onSuccess: () => setDone("accepted") })
+        }
       >
         Accept
       </Button>
@@ -72,7 +82,9 @@ function ConnectRequestActions({ userId }: { userId: string }) {
         variant="outline"
         className="h-7 px-3 text-xs"
         disabled={busy}
-        onClick={() => remove.mutate(undefined, { onSuccess: () => setDone("declined") })}
+        onClick={() =>
+          remove.mutate(undefined, { onSuccess: () => setDone("declined") })
+        }
       >
         Decline
       </Button>
@@ -95,27 +107,27 @@ export function NotificationsDropdown() {
         <Button
           variant="ghost"
           size="icon"
-          className="relative rounded-md w-8 h-8 text-muted-foreground hover:text-foreground hover:bg-accent"
+          className="text-muted-foreground hover:text-foreground hover:bg-accent relative h-8 w-8 rounded-md"
         >
-          <Bell className="w-4 h-4" />
+          <Bell className="h-4 w-4" />
           {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 min-w-3.5 h-3.5 bg-red-500 rounded-full flex items-center justify-center text-[9px] font-bold text-white px-0.5 ring-2 ring-card">
+            <span className="ring-card absolute top-1 right-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-500 px-0.5 text-[9px] font-bold text-white ring-2">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-80 p-0 overflow-hidden">
+      <DropdownMenuContent align="end" className="w-80 overflow-hidden p-0">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-          <p className="text-sm font-semibold text-foreground">Notifications</p>
+        <div className="border-border flex items-center justify-between border-b px-4 py-3">
+          <p className="text-foreground text-sm font-semibold">Notifications</p>
           {notifications.length > 0 && (
             <button
               onClick={handleMarkAllRead}
-              className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+              className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-[11px] font-medium transition-colors"
             >
-              <Check className="w-3 h-3" />
+              <Check className="h-3 w-3" />
               Mark all read
             </button>
           )}
@@ -124,12 +136,14 @@ export function NotificationsDropdown() {
         {/* List */}
         <div className="max-h-96 overflow-y-auto">
           {notifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
-              <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center mb-2">
-                <Bell className="w-4 h-4 text-muted-foreground" />
+            <div className="flex flex-col items-center justify-center px-4 py-10 text-center">
+              <div className="bg-accent mb-2 flex h-10 w-10 items-center justify-center rounded-full">
+                <Bell className="text-muted-foreground h-4 w-4" />
               </div>
-              <p className="text-sm font-medium text-foreground">No notifications yet</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-foreground text-sm font-medium">
+                No notifications yet
+              </p>
+              <p className="text-muted-foreground mt-0.5 text-xs">
                 We&apos;ll let you know when something happens.
               </p>
             </div>
@@ -141,12 +155,14 @@ export function NotificationsDropdown() {
                 <div
                   key={n.id}
                   className={cn(
-                    "w-full flex items-start gap-3 px-4 py-3 text-left transition-colors border-b border-border last:border-0",
-                    n.read ? "hover:bg-accent" : "bg-blue-500/10 hover:bg-blue-500/15"
+                    "border-border flex w-full items-start gap-3 border-b px-4 py-3 text-left transition-colors last:border-0",
+                    n.read
+                      ? "hover:bg-accent"
+                      : "bg-blue-500/10 hover:bg-blue-500/15"
                   )}
                 >
                   {/* Author avatar */}
-                  <Avatar className="w-9 h-9 shrink-0">
+                  <Avatar className="h-9 w-9 shrink-0">
                     <AvatarImage src={author.avatarUrl ?? undefined} />
                     <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
                       {getInitials(author.name ?? "S")}
@@ -155,26 +171,39 @@ export function NotificationsDropdown() {
 
                   {/* Text */}
                   <div className="min-w-0 flex-1">
-                    <p className={cn("text-sm leading-snug", n.read ? "text-foreground/80" : "text-foreground")}>
+                    <p
+                      className={cn(
+                        "text-sm leading-snug",
+                        n.read ? "text-foreground/80" : "text-foreground"
+                      )}
+                    >
                       <span className="font-semibold">{author.name}</span>{" "}
-                      <span className={n.read ? "" : "font-medium"}>{getActionLabel(n)}</span>
+                      <span className={n.read ? "" : "font-medium"}>
+                        {getActionLabel(n)}
+                      </span>
                     </p>
                     {content && (
-                      <p className="text-xs text-muted-foreground truncate mt-0.5">{content}</p>
+                      <p className="text-muted-foreground mt-0.5 truncate text-xs">
+                        {content}
+                      </p>
                     )}
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
-                      {formatDistanceToNowStrict(new Date(n.createdAt), { addSuffix: true })}
+                    <p className="text-muted-foreground mt-0.5 text-[11px]">
+                      {formatDistanceToNowStrict(new Date(n.createdAt), {
+                        addSuffix: true,
+                      })}
                     </p>
 
                     {/* Connection request actions */}
                     {n.type === "connect_request" && (
-                      <ConnectRequestActions userId={String(n.payload.userId ?? "")} />
+                      <ConnectRequestActions
+                        userId={String(n.payload.userId ?? "")}
+                      />
                     )}
                   </div>
 
                   {/* Unread dot */}
                   {!n.read && (
-                    <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0 mt-1.5" />
+                    <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-blue-500" />
                   )}
                 </div>
               )
@@ -184,8 +213,8 @@ export function NotificationsDropdown() {
 
         {/* Footer */}
         {notifications.length > 0 && (
-          <div className="border-t border-border p-2">
-            <button className="w-full text-center text-xs font-medium text-muted-foreground hover:text-foreground py-1.5 rounded-md hover:bg-accent transition-colors">
+          <div className="border-border border-t p-2">
+            <button className="text-muted-foreground hover:text-foreground hover:bg-accent w-full rounded-md py-1.5 text-center text-xs font-medium transition-colors">
               View all notifications
             </button>
           </div>

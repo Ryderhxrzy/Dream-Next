@@ -1,27 +1,27 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { useSession } from "next-auth/react"
-import {
-  User,
-  AtSign,
-  Mail,
-  Lock,
-  Send,
-  Copy,
-  Pencil,
-  Trash2,
-  Users,
-  ShieldCheck,
-  AlertTriangle,
-  X,
-} from "lucide-react"
 import {
   useDeleteSupplierUserMutation,
   useGetSupplierUsersQuery,
   useInviteSupplierUserMutation,
   useUpdateSupplierUserMutation,
 } from "@/store/api/suppliersApi"
+import {
+  AlertTriangle,
+  AtSign,
+  Copy,
+  Lock,
+  Mail,
+  Pencil,
+  Send,
+  ShieldCheck,
+  Trash2,
+  User,
+  Users,
+  X,
+} from "lucide-react"
+import { useSession } from "next-auth/react"
 
 type InviteForm = { fullname: string; username: string; email: string }
 const defaultInviteForm: InviteForm = { fullname: "", username: "", email: "" }
@@ -80,12 +80,12 @@ function IconInput({
 }: React.InputHTMLAttributes<HTMLInputElement> & { icon: React.ReactNode }) {
   return (
     <div className="relative">
-      <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+      <span className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400">
         {icon}
       </span>
       <input
         {...props}
-        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-800 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-cyan-500/20"
+        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pr-4 pl-10 text-sm text-slate-800 transition outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-cyan-500/20"
       />
     </div>
   )
@@ -114,8 +114,8 @@ function Feedback({
 /* ── Decorative hero illustration ────────────────────────────────────────── */
 function HeroIllustration() {
   return (
-    <div className="hidden sm:flex shrink-0 items-center justify-center">
-      <div className="relative w-44 h-32">
+    <div className="hidden shrink-0 items-center justify-center sm:flex">
+      <div className="relative h-32 w-44">
         {/* Dot grid */}
         <svg
           className="absolute top-0 right-0 opacity-30"
@@ -136,8 +136,8 @@ function HeroIllustration() {
           )}
         </svg>
         {/* Card */}
-        <div className="absolute bottom-0 right-6 w-36 rounded-2xl border border-slate-200 bg-white p-4 shadow-md dark:border-slate-700 dark:bg-slate-800">
-          <div className="flex items-center gap-2.5 mb-3">
+        <div className="absolute right-6 bottom-0 w-36 rounded-2xl border border-slate-200 bg-white p-4 shadow-md dark:border-slate-700 dark:bg-slate-800">
+          <div className="mb-3 flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-cyan-100">
               <ShieldCheck className="h-4 w-4 text-cyan-600" />
             </div>
@@ -380,7 +380,7 @@ export default function SupplierUsersPage() {
               <Users className="h-7 w-7 text-cyan-600 dark:text-cyan-400" />
             </div>
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-cyan-700 dark:text-cyan-400">
+              <p className="text-[11px] font-bold tracking-[0.22em] text-cyan-700 uppercase dark:text-cyan-400">
                 Supplier Users
               </p>
               <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
@@ -400,7 +400,7 @@ export default function SupplierUsersPage() {
       <div className="grid gap-5 xl:grid-cols-[1fr_1.1fr]">
         {/* ── Invite card ── */}
         <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
-          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-cyan-600 dark:text-cyan-400">
+          <p className="text-[10px] font-bold tracking-[0.22em] text-cyan-600 uppercase dark:text-cyan-400">
             Invite
           </p>
           <h2 className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100">
@@ -449,10 +449,10 @@ export default function SupplierUsersPage() {
 
               {setupUrl && (
                 <div className="rounded-2xl border border-cyan-200 bg-cyan-50 p-4 dark:border-cyan-500/20 dark:bg-cyan-500/10">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-700 dark:text-cyan-300">
+                  <p className="text-[10px] font-bold tracking-[0.18em] text-cyan-700 uppercase dark:text-cyan-300">
                     Setup Link
                   </p>
-                  <p className="mt-2 break-all text-sm text-slate-700 dark:text-slate-200">
+                  <p className="mt-2 text-sm break-all text-slate-700 dark:text-slate-200">
                     {setupUrl}
                   </p>
                   <button
@@ -490,7 +490,7 @@ export default function SupplierUsersPage() {
         <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-cyan-600 dark:text-cyan-400">
+              <p className="text-[10px] font-bold tracking-[0.22em] text-cyan-600 uppercase dark:text-cyan-400">
                 Current Team
               </p>
               <h2 className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100">
@@ -535,7 +535,7 @@ export default function SupplierUsersPage() {
                       key={user.id}
                       className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
                     >
-                      <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex min-w-0 items-center gap-3">
                         {/* Avatar */}
                         <div
                           className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold ${color.bg} ${color.text}`}
@@ -611,7 +611,7 @@ export default function SupplierUsersPage() {
           <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-950">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-cyan-600">
+                <p className="text-[10px] font-bold tracking-[0.22em] text-cyan-600 uppercase">
                   Edit User
                 </p>
                 <h3 className="mt-1 text-lg font-bold text-slate-900 dark:text-slate-100">

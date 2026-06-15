@@ -167,7 +167,7 @@ export default function ZqProductPreviewPage({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-600">
+          <p className="text-xs font-semibold tracking-[0.2em] text-sky-600 uppercase">
             {scopeLabel}
           </p>
           <h1 className="mt-1 text-2xl font-bold text-slate-900">
@@ -224,7 +224,7 @@ export default function ZqProductPreviewPage({
           </div>
 
           <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-            <div className="bg-sky-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white">
+            <div className="bg-sky-600 px-4 py-2 text-xs font-semibold tracking-wide text-white uppercase">
               Storefront-style Preview
             </div>
             <div className="space-y-4 p-4">
@@ -244,10 +244,10 @@ export default function ZqProductPreviewPage({
                 )}
               </div>
               <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <p className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
                   {detail.sourceType ?? "AF HOME GLOBAL SUPPLIER"}
                 </p>
-                <h2 className="line-clamp-3 text-xl font-bold leading-snug text-slate-900">
+                <h2 className="line-clamp-3 text-xl leading-snug font-bold text-slate-900">
                   {detail.subject || "Untitled product"}
                 </h2>
                 <div className="flex flex-wrap items-end gap-2">
@@ -303,7 +303,7 @@ export default function ZqProductPreviewPage({
                 </span>
               ) : null}
             </div>
-            <h3 className="text-3xl font-bold leading-tight text-slate-900">
+            <h3 className="text-3xl leading-tight font-bold text-slate-900">
               {detail.subject || "Untitled product"}
             </h3>
             {detail.subjectCn ? (
@@ -311,7 +311,7 @@ export default function ZqProductPreviewPage({
             ) : null}
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <p className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
                   Category
                 </p>
                 <p className="mt-1 text-sm font-semibold text-slate-700">
@@ -319,7 +319,7 @@ export default function ZqProductPreviewPage({
                 </p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <p className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
                   Currency
                 </p>
                 <p className="mt-1 text-sm font-semibold text-slate-700">
@@ -327,7 +327,7 @@ export default function ZqProductPreviewPage({
                 </p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <p className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
                   Shipping To
                 </p>
                 <p className="mt-1 text-sm font-semibold text-slate-700">
@@ -335,7 +335,7 @@ export default function ZqProductPreviewPage({
                 </p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <p className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
                   Updated
                 </p>
                 <p className="mt-1 text-sm font-semibold text-slate-700">
@@ -389,22 +389,22 @@ export default function ZqProductPreviewPage({
               <table className="min-w-full text-sm">
                 <thead className="bg-slate-50">
                   <tr className="border-b border-slate-200">
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase">
                       Spec
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase">
                       SKU
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase">
                       Cost
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase">
                       Sale Price
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase">
                       Stock
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase">
                       Weight
                     </th>
                   </tr>

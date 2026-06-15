@@ -1,13 +1,13 @@
 "use client"
 
-import { useRef, useState, useCallback } from "react"
-import { AnimatePresence, motion } from "framer-motion"
+import { useCallback, useRef, useState } from "react"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import {
   useBulkUpdateZqPricingMutation,
-  type BulkUpdateZqPricingRow,
   type BulkUpdateZqPricingResultRow,
+  type BulkUpdateZqPricingRow,
 } from "@/store/api/productsApi"
-import { showErrorToast, showSuccessToast } from "@/libs/toast"
+import { AnimatePresence, motion } from "framer-motion"
 
 /* ─── types ─────────────────────────────────────────────────────────── */
 
@@ -291,7 +291,7 @@ export default function ImportZqPricingModal({
               className="flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-[32px] border border-white/70 bg-white shadow-[0_32px_100px_-36px_rgba(15,23,42,0.55)] dark:border-slate-800 dark:bg-slate-950"
             >
               {/* ── Header ── */}
-              <div className="shrink-0 border-b border-slate-200/80 bg-gradient-to-r from-sky-50 via-white to-cyan-50 px-4 py-4 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-sky-950/30 sm:px-6 sm:py-5">
+              <div className="shrink-0 border-b border-slate-200/80 bg-gradient-to-r from-sky-50 via-white to-cyan-50 px-4 py-4 sm:px-6 sm:py-5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-sky-950/30">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-cyan-500 shadow-lg shadow-sky-500/30">
@@ -310,10 +310,10 @@ export default function ImportZqPricingModal({
                       </svg>
                     </div>
                     <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-600 dark:text-sky-300">
+                      <p className="text-[11px] font-semibold tracking-[0.2em] text-sky-600 uppercase dark:text-sky-300">
                         Global Supplier Workspace
                       </p>
-                      <h2 className="mt-1 text-lg font-bold leading-none text-slate-900 dark:text-slate-100">
+                      <h2 className="mt-1 text-lg leading-none font-bold text-slate-900 dark:text-slate-100">
                         Import ZQ Pricing CSV
                       </h2>
                       <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -436,7 +436,7 @@ export default function ImportZqPricingModal({
                     )}
 
                     <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/50">
-                      <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
+                      <p className="mb-2 text-[11px] font-bold tracking-[0.18em] text-slate-400 uppercase">
                         Expected columns
                       </p>
                       <div className="flex flex-wrap gap-1.5">
@@ -496,7 +496,7 @@ export default function ImportZqPricingModal({
                               ].map((h) => (
                                 <th
                                   key={h}
-                                  className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500"
+                                  className="px-3 py-2.5 text-left text-[11px] font-semibold tracking-wide text-slate-500 uppercase"
                                 >
                                   {h}
                                 </th>
@@ -542,7 +542,7 @@ export default function ImportZqPricingModal({
 
                     {invalidRows.length > 0 && (
                       <div className="mt-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3">
-                        <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-red-600">
+                        <p className="mb-2 text-[11px] font-bold tracking-wide text-red-600 uppercase">
                           Invalid Rows (will be skipped)
                         </p>
                         <ul className="space-y-1">
@@ -583,7 +583,7 @@ export default function ImportZqPricingModal({
 
                     {nonUpdatedResults.length > 0 ? (
                       <div className="overflow-hidden rounded-2xl border border-slate-200">
-                        <p className="border-b border-slate-100 bg-slate-50 px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                        <p className="border-b border-slate-100 bg-slate-50 px-4 py-2.5 text-[11px] font-bold tracking-wide text-slate-500 uppercase">
                           Skipped / Error rows
                         </p>
                         <div className="overflow-x-auto">
@@ -610,10 +610,10 @@ export default function ImportZqPricingModal({
                                   <td className="px-3 py-2.5">
                                     <span
                                       className={[
-                                        "rounded-full px-2 py-0.5 text-[11px] font-semibold border",
+                                        "rounded-full border px-2 py-0.5 text-[11px] font-semibold",
                                         r.status === "skipped"
-                                          ? "bg-amber-50 text-amber-700 border-amber-200"
-                                          : "bg-red-50 text-red-700 border-red-200",
+                                          ? "border-amber-200 bg-amber-50 text-amber-700"
+                                          : "border-red-200 bg-red-50 text-red-700",
                                       ].join(" ")}
                                     >
                                       {r.status}
@@ -655,7 +655,7 @@ export default function ImportZqPricingModal({
               </div>
 
               {/* ── Footer ── */}
-              <div className="shrink-0 flex items-center justify-between border-t border-slate-200/80 bg-slate-50/60 px-4 py-4 dark:border-slate-800 dark:bg-slate-900/50 sm:px-6">
+              <div className="flex shrink-0 items-center justify-between border-t border-slate-200/80 bg-slate-50/60 px-4 py-4 sm:px-6 dark:border-slate-800 dark:bg-slate-900/50">
                 <div>
                   {stage === "preview" && (
                     <button

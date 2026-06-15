@@ -1,18 +1,19 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import Image from "next/image"
-import Link from "next/link"
-import { motion } from "framer-motion"
 import { useCart } from "@/context/CartContext"
-import { useGetPublicProductsQuery } from "@/store/api/productsApi"
-import { usePathname } from "next/navigation"
-import PrimaryButton from "@/components/ui/buttons/PrimaryButton"
 import {
   buildStorefrontProductPath,
   extractPartnerSlugFromPath,
 } from "@/libs/storefrontRouting"
+import { useGetPublicProductsQuery } from "@/store/api/productsApi"
+import { motion } from "framer-motion"
 import { useSession } from "next-auth/react"
+import Image from "next/image"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+
+import PrimaryButton from "@/components/ui/buttons/PrimaryButton"
 
 interface CompleteTheLookProps {
   currentCategory: string
@@ -248,12 +249,12 @@ const CompleteTheLook = ({
       transition={{ duration: 0.5, delay: 0.2 }}
       className="mt-12 sm:mt-16"
     >
-      <div className="flex items-center justify-between gap-3 mb-6">
+      <div className="mb-6 flex items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-gray-100">
             {title}
           </h2>
-          <p className="text-sm text-gray-400 dark:text-gray-500 mt-0.5">
+          <p className="mt-0.5 text-sm text-gray-400 dark:text-gray-500">
             {subtitle}
           </p>
         </div>
@@ -269,7 +270,7 @@ const CompleteTheLook = ({
         ) : null}
       </div>
 
-      <div className="border border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden">
+      <div className="overflow-hidden rounded-2xl border border-gray-100 dark:border-gray-700">
         <div className="divide-y divide-gray-100 dark:divide-gray-700">
           {bundleItems.map((item, index) => {
             const isSelected = selectedSet.has(item.id)
@@ -290,10 +291,10 @@ const CompleteTheLook = ({
                 <button
                   type="button"
                   onClick={() => toggleItem(item.id)}
-                  className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${
+                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-all ${
                     isSelected
-                      ? "bg-sky-500 border-sky-500"
-                      : "border-gray-300 dark:border-gray-600 hover:border-sky-300 dark:hover:border-sky-400"
+                      ? "border-sky-500 bg-sky-500"
+                      : "border-gray-300 hover:border-sky-300 dark:border-gray-600 dark:hover:border-sky-400"
                   }`}
                 >
                   {isSelected ? (
@@ -313,7 +314,7 @@ const CompleteTheLook = ({
 
                 <Link
                   href={productPath}
-                  className="relative w-16 h-16 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700 shrink-0"
+                  className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-700"
                 >
                   <Image
                     src={item.image}
@@ -324,30 +325,30 @@ const CompleteTheLook = ({
                   />
                 </Link>
 
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-sky-500 dark:text-sky-400 font-semibold uppercase tracking-wide mb-0.5">
+                <div className="min-w-0 flex-1">
+                  <p className="mb-0.5 text-xs font-semibold tracking-wide text-sky-500 uppercase dark:text-sky-400">
                     {currentCategoryLabel || "Recommended"}
                   </p>
                   <Link
                     href={productPath}
-                    className="text-sm font-semibold text-slate-800 dark:text-gray-200 hover:text-sky-500 dark:hover:text-sky-400 transition-colors line-clamp-1"
+                    className="line-clamp-1 text-sm font-semibold text-slate-800 transition-colors hover:text-sky-500 dark:text-gray-200 dark:hover:text-sky-400"
                   >
                     {item.name}
                   </Link>
                   {item.brand ? (
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                    <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
                       {item.brand}
                     </p>
                   ) : null}
                 </div>
 
-                <div className="text-right shrink-0">
+                <div className="shrink-0 text-right">
                   <p className="text-sm font-bold text-slate-800 dark:text-gray-200">
                     {formatMoney(item.price)}
                   </p>
                   {typeof item.originalPrice === "number" &&
                   item.originalPrice > item.price ? (
-                    <p className="text-xs text-gray-400 dark:text-gray-500 line-through">
+                    <p className="text-xs text-gray-400 line-through dark:text-gray-500">
                       {formatMoney(item.originalPrice)}
                     </p>
                   ) : null}
@@ -357,7 +358,7 @@ const CompleteTheLook = ({
           })}
         </div>
 
-        <div className="bg-gray-50 dark:bg-gray-800 px-4 py-4 flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex flex-wrap items-center justify-between gap-4 bg-gray-50 px-4 py-4 dark:bg-gray-800">
           <div>
             <p className="text-xs text-gray-400 dark:text-gray-500">
               {selectedSet.size} item{selectedSet.size !== 1 ? "s" : ""}{" "}
@@ -373,7 +374,7 @@ const CompleteTheLook = ({
           <PrimaryButton
             onClick={handleAddAll}
             disabled={selectedSet.size === 0}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm"
+            className="flex items-center gap-2 rounded-xl px-6 py-2.5 text-sm"
           >
             {/*
               Explicit JSX children for PrimaryButton typing.

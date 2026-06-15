@@ -11,20 +11,20 @@ export const metadata = buildPageMetadata({
 export default function CsvImportTutorialPage() {
   return (
     <div className="min-h-screen bg-slate-50 p-6">
-      <div className="max-w-6xl mx-auto">
+      <div className="mx-auto max-w-6xl">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-slate-800">
             CSV Import Tutorial
           </h1>
-          <p className="text-slate-500 mt-1">
+          <p className="mt-1 text-slate-500">
             Learn how to import products using CSV files and add images via CSV
             links or file uploads.
           </p>
         </div>
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
           <iframe
             src="/Images/tutorials/How to import product.pdf"
-            className="w-full h-[calc(100vh-200px)]"
+            className="h-[calc(100vh-200px)] w-full"
             title="CSV Import Tutorial PDF"
           />
         </div>

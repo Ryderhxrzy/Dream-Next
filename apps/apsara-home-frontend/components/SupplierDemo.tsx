@@ -1,30 +1,30 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { AnimatePresence, motion } from "framer-motion"
 import {
+  AlertCircle,
+  ArrowRight,
+  BarChart3,
+  Bell,
+  Box,
+  Building2,
+  CheckCircle2,
+  ChevronRight,
+  ClipboardList,
+  Clock,
+  Layers,
+  LayoutDashboard,
+  Megaphone,
   Package,
   ShoppingCart,
-  BarChart3,
-  TrendingUp,
-  Bell,
-  CheckCircle2,
-  ArrowRight,
   Sparkles,
-  Layers,
-  Users,
-  ChevronRight,
-  Box,
-  Truck,
-  Tag,
-  ClipboardList,
-  Megaphone,
-  Building2,
-  LayoutDashboard,
-  Upload,
   Star,
-  AlertCircle,
-  Clock,
+  Tag,
+  TrendingUp,
+  Truck,
+  Upload,
+  Users,
 } from "lucide-react"
 
 /* ─── Data ──────────────────────────────────────────────────── */
@@ -206,13 +206,13 @@ const HIGHLIGHT_CARDS = [
     y: -90,
     delay: 0.3,
     content: (
-      <div className="bg-[#0d1117] border border-white/10 rounded-2xl p-4 w-48 shadow-2xl">
-        <p className="text-white/40 text-[10px] uppercase tracking-widest mb-2">
+      <div className="w-48 rounded-2xl border border-white/10 bg-[#0d1117] p-4 shadow-2xl">
+        <p className="mb-2 text-[10px] tracking-widest text-white/40 uppercase">
           New Order
         </p>
-        <p className="text-white font-bold text-sm">L-Shape Sofa Set</p>
-        <p className="text-sky-400 font-black text-xl mt-1">₱18,500</p>
-        <p className="text-white/25 text-[10px] mt-1">AF Home · Just now</p>
+        <p className="text-sm font-bold text-white">L-Shape Sofa Set</p>
+        <p className="mt-1 text-xl font-black text-sky-400">₱18,500</p>
+        <p className="mt-1 text-[10px] text-white/25">AF Home · Just now</p>
       </div>
     ),
   },
@@ -222,14 +222,14 @@ const HIGHLIGHT_CARDS = [
     y: -95,
     delay: 0.5,
     content: (
-      <div className="bg-[#0d1117] border border-white/10 rounded-2xl p-4 w-44 shadow-2xl">
-        <p className="text-white/40 text-[10px] uppercase tracking-widest mb-2">
+      <div className="w-44 rounded-2xl border border-white/10 bg-[#0d1117] p-4 shadow-2xl">
+        <p className="mb-2 text-[10px] tracking-widest text-white/40 uppercase">
           This Month
         </p>
-        <p className="text-sky-400 font-black text-2xl">₱2.4M</p>
-        <p className="text-white/25 text-[10px] mt-1">Total revenue</p>
-        <div className="mt-2 h-1 bg-white/5 rounded-full overflow-hidden">
-          <div className="h-full w-4/5 bg-sky-400 rounded-full" />
+        <p className="text-2xl font-black text-sky-400">₱2.4M</p>
+        <p className="mt-1 text-[10px] text-white/25">Total revenue</p>
+        <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/5">
+          <div className="h-full w-4/5 rounded-full bg-sky-400" />
         </div>
       </div>
     ),
@@ -240,24 +240,24 @@ const HIGHLIGHT_CARDS = [
     y: 105,
     delay: 0.7,
     content: (
-      <div className="bg-[#0d1117] border border-white/10 rounded-2xl p-4 w-44 shadow-2xl">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-7 h-7 rounded-lg bg-sky-500 flex items-center justify-center">
+      <div className="w-44 rounded-2xl border border-white/10 bg-[#0d1117] p-4 shadow-2xl">
+        <div className="mb-3 flex items-center gap-2">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-500">
             <Package size={13} className="text-white" />
           </div>
           <div>
-            <p className="text-white text-xs font-semibold">Catalog</p>
-            <p className="text-white/30 text-[9px]">1,248 products</p>
+            <p className="text-xs font-semibold text-white">Catalog</p>
+            <p className="text-[9px] text-white/30">1,248 products</p>
           </div>
         </div>
         <div className="space-y-1.5">
           {["Furniture", "Appliances", "Decor"].map((c) => (
             <div
               key={c}
-              className="flex items-center gap-2 bg-white/5 rounded-lg px-2 py-1"
+              className="flex items-center gap-2 rounded-lg bg-white/5 px-2 py-1"
             >
-              <div className="w-1.5 h-1.5 rounded-full bg-sky-400" />
-              <span className="text-white/50 text-[10px]">{c}</span>
+              <div className="h-1.5 w-1.5 rounded-full bg-sky-400" />
+              <span className="text-[10px] text-white/50">{c}</span>
             </div>
           ))}
         </div>
@@ -270,21 +270,21 @@ const HIGHLIGHT_CARDS = [
     y: 95,
     delay: 0.9,
     content: (
-      <div className="bg-[#0d1117] border border-white/10 rounded-2xl p-4 w-44 shadow-2xl">
-        <p className="text-white/40 text-[10px] uppercase tracking-widest mb-2">
+      <div className="w-44 rounded-2xl border border-white/10 bg-[#0d1117] p-4 shadow-2xl">
+        <p className="mb-2 text-[10px] tracking-widest text-white/40 uppercase">
           Orders Today
         </p>
         <div className="space-y-2">
           {["Processing", "Shipped", "Delivered"].map((s, i) => (
             <div key={s} className="flex items-center justify-between">
-              <span className="text-white/50 text-[10px]">{s}</span>
-              <span className="text-white font-bold text-xs">
+              <span className="text-[10px] text-white/50">{s}</span>
+              <span className="text-xs font-bold text-white">
                 {[8, 14, 21][i]}
               </span>
             </div>
           ))}
         </div>
-        <p className="text-white/25 text-[10px] mt-2">43 total orders</p>
+        <p className="mt-2 text-[10px] text-white/25">43 total orders</p>
       </div>
     ),
   },
@@ -324,7 +324,7 @@ function Orbs({ color }: { color: string }) {
       <motion.div
         animate={{ x: [0, 50, 0], y: [0, -40, 0] }}
         transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute -top-40 -left-40 w-[700px] h-[700px] rounded-full blur-[140px] opacity-20"
+        className="absolute -top-40 -left-40 h-[700px] w-[700px] rounded-full opacity-20 blur-[140px]"
         style={{ backgroundColor: color }}
       />
       <motion.div
@@ -335,7 +335,7 @@ function Orbs({ color }: { color: string }) {
           ease: "easeInOut",
           delay: 2,
         }}
-        className="absolute -bottom-40 -right-40 w-[600px] h-[600px] rounded-full blur-[140px] opacity-15"
+        className="absolute -right-40 -bottom-40 h-[600px] w-[600px] rounded-full opacity-15 blur-[140px]"
         style={{ backgroundColor: color }}
       />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,#030609_100%)]" />
@@ -346,12 +346,12 @@ function Orbs({ color }: { color: string }) {
 /* ─── Scene Nav ─────────────────────────────────────────────── */
 function SceneNav({ scene, goTo }: { scene: Scene; goTo: (s: Scene) => void }) {
   return (
-    <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-white/5 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
+    <div className="fixed top-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 backdrop-blur-md">
       {SCENES.map((s) => (
         <button
           key={s}
           onClick={() => goTo(s)}
-          className={`rounded-full transition-all duration-300 ${scene === s ? "w-5 h-2 bg-sky-400" : "w-2 h-2 bg-white/20 hover:bg-white/50"}`}
+          className={`rounded-full transition-all duration-300 ${scene === s ? "h-2 w-5 bg-sky-400" : "h-2 w-2 bg-white/20 hover:bg-white/50"}`}
         />
       ))}
     </div>
@@ -366,7 +366,7 @@ function HighlightScene() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ duration: 0.7 }}
-      className="relative flex items-center justify-center w-full max-w-4xl min-h-[500px]"
+      className="relative flex min-h-[500px] w-full max-w-4xl items-center justify-center"
     >
       {HIGHLIGHT_CARDS.map((card, i) => (
         <motion.div
@@ -404,7 +404,7 @@ function HighlightScene() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="text-sky-400 text-xs font-semibold tracking-[0.2em] uppercase mb-5"
+          className="mb-5 text-xs font-semibold tracking-[0.2em] text-sky-400 uppercase"
         >
           Supplier Dashboard
         </motion.p>
@@ -417,7 +417,7 @@ function HighlightScene() {
               duration: 0.7,
               ease: [0.25, 0.46, 0.45, 0.94],
             }}
-            className="text-6xl font-black leading-none bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent"
+            className="bg-gradient-to-b from-white to-white/60 bg-clip-text text-6xl leading-none font-black text-transparent"
           >
             One dashboard.
           </motion.h1>
@@ -431,12 +431,12 @@ function HighlightScene() {
               duration: 0.7,
               ease: [0.25, 0.46, 0.45, 0.94],
             }}
-            className="text-6xl font-black leading-none bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent"
+            className="bg-gradient-to-b from-white to-white/60 bg-clip-text text-6xl leading-none font-black text-transparent"
           >
             Everything visible.
           </motion.h1>
         </div>
-        <div className="overflow-hidden mt-1">
+        <div className="mt-1 overflow-hidden">
           <motion.h1
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -445,7 +445,7 @@ function HighlightScene() {
               duration: 0.7,
               ease: [0.25, 0.46, 0.45, 0.94],
             }}
-            className="text-6xl font-black leading-none text-sky-400"
+            className="text-6xl leading-none font-black text-sky-400"
           >
             Always in control.
           </motion.h1>
@@ -454,7 +454,7 @@ function HighlightScene() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.2 }}
-          className="text-white/30 text-base mt-5 max-w-xs mx-auto leading-relaxed"
+          className="mx-auto mt-5 max-w-xs text-base leading-relaxed text-white/30"
         >
           Manage products, orders, and revenue from a single powerful supplier
           hub.
@@ -519,14 +519,14 @@ function DashboardScene() {
       transition={{ duration: 0.6 }}
       className="w-full max-w-4xl"
     >
-      <div className="text-center mb-10">
-        <p className="text-sky-400 text-xs font-semibold tracking-widest uppercase mb-3">
+      <div className="mb-10 text-center">
+        <p className="mb-3 text-xs font-semibold tracking-widest text-sky-400 uppercase">
           Dashboard Overview
         </p>
-        <h2 className="text-5xl font-black bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">
+        <h2 className="bg-gradient-to-b from-white to-white/60 bg-clip-text text-5xl font-black text-transparent">
           Your Business at a Glance
         </h2>
-        <p className="text-white/35 text-sm mt-3">
+        <p className="mt-3 text-sm text-white/35">
           Real-time metrics across your entire supplier operation — all in one
           place.
         </p>
@@ -537,45 +537,45 @@ function DashboardScene() {
         initial={{ opacity: 0, scale: 0.97 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.3, duration: 0.5 }}
-        className="rounded-2xl border border-white/10 overflow-hidden shadow-[0_32px_80px_rgba(0,0,0,0.6)]"
+        className="overflow-hidden rounded-2xl border border-white/10 shadow-[0_32px_80px_rgba(0,0,0,0.6)]"
         style={{ background: "rgba(13,17,23,0.9)" }}
       >
         {/* Chrome bar */}
         <div
-          className="flex items-center gap-3 px-4 py-3 border-b border-white/5"
+          className="flex items-center gap-3 border-b border-white/5 px-4 py-3"
           style={{ background: "rgba(255,255,255,0.02)" }}
         >
           <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-red-500/70" />
-            <div className="w-3 h-3 rounded-full bg-yellow-400/70" />
-            <div className="w-3 h-3 rounded-full bg-green-500/70" />
+            <div className="h-3 w-3 rounded-full bg-red-500/70" />
+            <div className="h-3 w-3 rounded-full bg-yellow-400/70" />
+            <div className="h-3 w-3 rounded-full bg-green-500/70" />
           </div>
-          <div className="flex-1 bg-white/5 rounded-md px-3 py-1.5 text-xs text-white/25 font-mono flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-sky-400/60" />
+          <div className="flex flex-1 items-center gap-2 rounded-md bg-white/5 px-3 py-1.5 font-mono text-xs text-white/25">
+            <div className="h-2 w-2 rounded-full bg-sky-400/60" />
             afhome.ph/supplier/dashboard
           </div>
-          <div className="flex items-center gap-1.5 bg-sky-400/10 border border-sky-400/20 rounded-lg px-2.5 py-1">
+          <div className="flex items-center gap-1.5 rounded-lg border border-sky-400/20 bg-sky-400/10 px-2.5 py-1">
             <Bell size={10} className="text-sky-400" />
-            <span className="text-[10px] text-sky-400 font-semibold">
+            <span className="text-[10px] font-semibold text-sky-400">
               3 alerts
             </span>
           </div>
         </div>
 
         {/* Stats grid */}
-        <div className="p-5 grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-3 p-5">
           {stats.map((s, i) => (
             <motion.div
               key={s.label}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 + i * 0.1, duration: 0.4 }}
-              className="rounded-xl p-4 border border-white/5"
+              className="rounded-xl border border-white/5 p-4"
               style={{ backgroundColor: s.bg }}
             >
-              <div className="flex items-center justify-between mb-3">
+              <div className="mb-3 flex items-center justify-between">
                 <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg"
                   style={{ backgroundColor: `${s.color}20` }}
                 >
                   <s.icon size={15} style={{ color: s.color }} />
@@ -600,13 +600,13 @@ function DashboardScene() {
                 </motion.div>
               </div>
               <p className="text-2xl font-black text-white">{s.value}</p>
-              <p className="text-white/35 text-[10px] mt-1">{s.label}</p>
+              <p className="mt-1 text-[10px] text-white/35">{s.label}</p>
             </motion.div>
           ))}
         </div>
 
         {/* Notification bar */}
-        <div className="px-5 pb-4 flex gap-2">
+        <div className="flex gap-2 px-5 pb-4">
           {[
             {
               text: "5 orders awaiting fulfillment",
@@ -624,7 +624,7 @@ function DashboardScene() {
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 1.2, duration: 0.4 }}
-              className="flex items-center gap-2 rounded-xl px-3 py-2 flex-1 border"
+              className="flex flex-1 items-center gap-2 rounded-xl border px-3 py-2"
               style={{
                 backgroundColor: `${n.color}08`,
                 borderColor: `${n.color}25`,
@@ -669,14 +669,14 @@ function ProductsScene() {
       transition={{ duration: 0.6 }}
       className="w-full max-w-4xl"
     >
-      <div className="text-center mb-10">
-        <p className="text-sky-400 text-xs font-semibold tracking-widest uppercase mb-3">
+      <div className="mb-10 text-center">
+        <p className="mb-3 text-xs font-semibold tracking-widest text-sky-400 uppercase">
           Product Management
         </p>
-        <h2 className="text-5xl font-black bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">
+        <h2 className="bg-gradient-to-b from-white to-white/60 bg-clip-text text-5xl font-black text-transparent">
           Your Full Catalog
         </h2>
-        <p className="text-white/35 text-sm mt-3">
+        <p className="mt-3 text-sm text-white/35">
           Add, update, and track every product in your inventory — with
           real-time stock visibility.
         </p>
@@ -686,25 +686,25 @@ function ProductsScene() {
         initial={{ opacity: 0, scale: 0.97 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.3 }}
-        className="rounded-2xl border border-white/10 overflow-hidden"
+        className="overflow-hidden rounded-2xl border border-white/10"
         style={{ background: "rgba(13,17,23,0.9)" }}
       >
         {/* Table header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
+        <div className="flex items-center justify-between border-b border-white/5 px-5 py-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-sky-400/10 border border-sky-400/20 flex items-center justify-center">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-sky-400/20 bg-sky-400/10">
               <Package size={15} className="text-sky-400" />
             </div>
             <div>
-              <p className="text-white font-semibold text-sm">Products</p>
-              <p className="text-white/30 text-[10px]">1,248 total items</p>
+              <p className="text-sm font-semibold text-white">Products</p>
+              <p className="text-[10px] text-white/30">1,248 total items</p>
             </div>
           </div>
           <div className="flex gap-2">
-            <div className="bg-white/5 rounded-lg px-3 py-1.5 text-[10px] text-white/30 flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 rounded-lg bg-white/5 px-3 py-1.5 text-[10px] text-white/30">
               <Upload size={10} /> Import CSV
             </div>
-            <div className="bg-sky-400/10 border border-sky-400/20 rounded-lg px-3 py-1.5 text-[10px] text-sky-400 font-semibold flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 rounded-lg border border-sky-400/20 bg-sky-400/10 px-3 py-1.5 text-[10px] font-semibold text-sky-400">
               + Add Product
             </div>
           </div>
@@ -712,7 +712,7 @@ function ProductsScene() {
 
         {/* Column headers */}
         <div
-          className="grid px-5 py-2 text-[9px] font-bold uppercase tracking-[0.16em] text-white/25 border-b border-white/5"
+          className="grid border-b border-white/5 px-5 py-2 text-[9px] font-bold tracking-[0.16em] text-white/25 uppercase"
           style={{ gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 0.8fr" }}
         >
           <span>Product</span>
@@ -736,16 +736,16 @@ function ProductsScene() {
                   activeRow === i ? "rgba(56,189,248,0.06)" : "transparent",
               }}
               transition={{ delay: 0.4 + i * 0.08, duration: 0.35 }}
-              className="grid items-center px-5 py-3 cursor-pointer"
+              className="grid cursor-pointer items-center px-5 py-3"
               style={{ gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 0.8fr" }}
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/5 flex items-center justify-center">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/5 bg-white/5">
                   <Box size={13} className="text-white/30" />
                 </div>
-                <span className="text-white text-xs font-medium">{p.name}</span>
+                <span className="text-xs font-medium text-white">{p.name}</span>
               </div>
-              <span className="text-white/30 text-[11px] font-mono">
+              <span className="font-mono text-[11px] text-white/30">
                 {p.sku}
               </span>
               <span
@@ -753,10 +753,10 @@ function ProductsScene() {
               >
                 {p.stock === 0 ? "—" : p.stock}
               </span>
-              <span className="text-white/70 text-xs">{p.price}</span>
-              <span className="text-white/40 text-[11px]">{p.cat}</span>
+              <span className="text-xs text-white/70">{p.price}</span>
+              <span className="text-[11px] text-white/40">{p.cat}</span>
               <span
-                className="text-[10px] font-semibold px-2 py-0.5 rounded-full w-fit"
+                className="w-fit rounded-full px-2 py-0.5 text-[10px] font-semibold"
                 style={{
                   color: statusColors[p.status],
                   backgroundColor: `${statusColors[p.status]}15`,
@@ -782,35 +782,35 @@ function OrdersScene() {
       transition={{ duration: 0.6 }}
       className="w-full max-w-4xl"
     >
-      <div className="text-center mb-10">
-        <p className="text-sky-400 text-xs font-semibold tracking-widest uppercase mb-3">
+      <div className="mb-10 text-center">
+        <p className="mb-3 text-xs font-semibold tracking-widest text-sky-400 uppercase">
           Order Management
         </p>
-        <h2 className="text-5xl font-black bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">
+        <h2 className="bg-gradient-to-b from-white to-white/60 bg-clip-text text-5xl font-black text-transparent">
           Every Order, Every Status
         </h2>
-        <p className="text-white/35 text-sm mt-3">
+        <p className="mt-3 text-sm text-white/35">
           Track from placement to delivery — in real time.
         </p>
       </div>
 
-      <div className="flex gap-5 items-start">
+      <div className="flex items-start gap-5">
         {/* Order list */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
-          className="flex-1 rounded-2xl border border-white/10 overflow-hidden"
+          className="flex-1 overflow-hidden rounded-2xl border border-white/10"
           style={{ background: "rgba(13,17,23,0.9)" }}
         >
-          <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
+          <div className="flex items-center justify-between border-b border-white/5 px-5 py-4">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-sky-400/10 border border-sky-400/20 flex items-center justify-center">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-sky-400/20 bg-sky-400/10">
                 <ClipboardList size={15} className="text-sky-400" />
               </div>
-              <p className="text-white font-semibold text-sm">Recent Orders</p>
+              <p className="text-sm font-semibold text-white">Recent Orders</p>
             </div>
-            <span className="text-[10px] text-white/30 bg-white/5 px-2.5 py-1 rounded-full">
+            <span className="rounded-full bg-white/5 px-2.5 py-1 text-[10px] text-white/30">
               34 pending
             </span>
           </div>
@@ -824,23 +824,23 @@ function OrdersScene() {
                 className="flex items-center gap-4 px-5 py-3"
               >
                 <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
                   style={{ backgroundColor: `${o.color}15` }}
                 >
                   <ShoppingCart size={13} style={{ color: o.color }} />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white text-xs font-medium truncate">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-medium text-white">
                     {o.product}
                   </p>
-                  <p className="text-white/30 text-[10px]">
+                  <p className="text-[10px] text-white/30">
                     {o.id} · Qty {o.qty}
                   </p>
                 </div>
-                <div className="text-right shrink-0">
-                  <p className="text-white text-xs font-bold">{o.amount}</p>
+                <div className="shrink-0 text-right">
+                  <p className="text-xs font-bold text-white">{o.amount}</p>
                   <span
-                    className="text-[9px] font-semibold px-2 py-0.5 rounded-full"
+                    className="rounded-full px-2 py-0.5 text-[9px] font-semibold"
                     style={{ color: o.color, backgroundColor: `${o.color}15` }}
                   >
                     {o.status}
@@ -856,9 +856,9 @@ function OrdersScene() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.5 }}
-          className="min-w-[175px] flex flex-col gap-3"
+          className="flex min-w-[175px] flex-col gap-3"
         >
-          <p className="text-white/25 text-[10px] uppercase tracking-widest font-medium">
+          <p className="text-[10px] font-medium tracking-widest text-white/25 uppercase">
             Order Breakdown
           </p>
           {[
@@ -871,16 +871,16 @@ function OrdersScene() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 + i * 0.12 }}
-              className="rounded-xl p-4 border border-white/5"
+              className="rounded-xl border border-white/5 p-4"
               style={{ backgroundColor: `${s.color}08` }}
             >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-white text-xs font-semibold">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-xs font-semibold text-white">
                   {s.label}
                 </span>
-                <span className="text-white font-black text-lg">{s.count}</span>
+                <span className="text-lg font-black text-white">{s.count}</span>
               </div>
-              <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+              <div className="h-1.5 overflow-hidden rounded-full bg-white/5">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${s.pct}%` }}
@@ -900,11 +900,11 @@ function OrdersScene() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.2 }}
-            className="rounded-xl p-4 border border-sky-400/20 bg-sky-400/5"
+            className="rounded-xl border border-sky-400/20 bg-sky-400/5 p-4"
           >
-            <p className="text-white/40 text-[10px] mb-1">Fulfillment Rate</p>
-            <p className="text-sky-400 font-black text-2xl">97.4%</p>
-            <p className="text-white/25 text-[10px] mt-0.5">Last 30 days</p>
+            <p className="mb-1 text-[10px] text-white/40">Fulfillment Rate</p>
+            <p className="text-2xl font-black text-sky-400">97.4%</p>
+            <p className="mt-0.5 text-[10px] text-white/25">Last 30 days</p>
           </motion.div>
         </motion.div>
       </div>
@@ -924,20 +924,20 @@ function AnalyticsScene() {
       transition={{ duration: 0.6 }}
       className="w-full max-w-4xl"
     >
-      <div className="text-center mb-10">
-        <p className="text-sky-400 text-xs font-semibold tracking-widest uppercase mb-3">
+      <div className="mb-10 text-center">
+        <p className="mb-3 text-xs font-semibold tracking-widest text-sky-400 uppercase">
           Analytics & Reports
         </p>
-        <h2 className="text-5xl font-black bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">
+        <h2 className="bg-gradient-to-b from-white to-white/60 bg-clip-text text-5xl font-black text-transparent">
           Data-Driven Selling
         </h2>
-        <p className="text-white/35 text-sm mt-3">
+        <p className="mt-3 text-sm text-white/35">
           Track revenue trends, top products, and delivery performance — all in
           one view.
         </p>
       </div>
 
-      <div className="flex gap-5 items-start">
+      <div className="flex items-start gap-5">
         {/* Revenue chart */}
         <motion.div
           initial={{ opacity: 0, scale: 0.97 }}
@@ -946,25 +946,25 @@ function AnalyticsScene() {
           className="flex-1 rounded-2xl border border-white/10 p-5"
           style={{ background: "rgba(13,17,23,0.9)" }}
         >
-          <div className="flex items-center justify-between mb-6">
+          <div className="mb-6 flex items-center justify-between">
             <div>
-              <p className="text-white font-semibold text-sm">
+              <p className="text-sm font-semibold text-white">
                 Monthly Revenue
               </p>
-              <p className="text-white/30 text-[10px] mt-0.5">
+              <p className="mt-0.5 text-[10px] text-white/30">
                 Jan – Dec 2024 · in thousands ₱
               </p>
             </div>
-            <div className="bg-sky-400/10 border border-sky-400/20 rounded-lg px-3 py-1 text-[10px] text-sky-400 font-semibold">
+            <div className="rounded-lg border border-sky-400/20 bg-sky-400/10 px-3 py-1 text-[10px] font-semibold text-sky-400">
               ₱2.4M total
             </div>
           </div>
 
-          <div className="flex items-end gap-1.5 h-36">
+          <div className="flex h-36 items-end gap-1.5">
             {MONTHLY_REVENUE.map((r, i) => (
               <div
                 key={r.month}
-                className="flex-1 flex flex-col items-center gap-1"
+                className="flex flex-1 flex-col items-center gap-1"
               >
                 <motion.div
                   initial={{ height: 0, opacity: 0 }}
@@ -982,7 +982,7 @@ function AnalyticsScene() {
                         : "rgba(56,189,248,0.25)",
                   }}
                 />
-                <span className="text-white/20 text-[8px]">{r.month}</span>
+                <span className="text-[8px] text-white/20">{r.month}</span>
               </div>
             ))}
           </div>
@@ -993,9 +993,9 @@ function AnalyticsScene() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.5 }}
-          className="min-w-[185px] flex flex-col gap-3"
+          className="flex min-w-[185px] flex-col gap-3"
         >
-          <p className="text-white/25 text-[10px] uppercase tracking-widest font-medium">
+          <p className="text-[10px] font-medium tracking-widest text-white/25 uppercase">
             Top Performers
           </p>
           {[
@@ -1008,17 +1008,17 @@ function AnalyticsScene() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 + i * 0.12 }}
-              className="rounded-xl p-3 border border-white/5 bg-white/[0.03]"
+              className="rounded-xl border border-white/5 bg-white/[0.03] p-3"
             >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-white text-[11px] font-medium">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-[11px] font-medium text-white">
                   {p.name}
                 </span>
-                <span className="text-sky-400 text-[11px] font-bold">
+                <span className="text-[11px] font-bold text-sky-400">
                   {p.revenue}
                 </span>
               </div>
-              <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+              <div className="h-1 overflow-hidden rounded-full bg-white/5">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${p.bar}%` }}
@@ -1037,7 +1037,7 @@ function AnalyticsScene() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.2 }}
-            className="grid grid-cols-2 gap-2 mt-1"
+            className="mt-1 grid grid-cols-2 gap-2"
           >
             {[
               { label: "Avg. Order", value: "₱7,680" },
@@ -1045,10 +1045,10 @@ function AnalyticsScene() {
             ].map((s) => (
               <div
                 key={s.label}
-                className="rounded-xl p-3 border border-white/5 bg-white/[0.03]"
+                className="rounded-xl border border-white/5 bg-white/[0.03] p-3"
               >
-                <p className="text-white/30 text-[9px] mb-1">{s.label}</p>
-                <p className="text-white font-bold text-sm">{s.value}</p>
+                <p className="mb-1 text-[9px] text-white/30">{s.label}</p>
+                <p className="text-sm font-bold text-white">{s.value}</p>
               </div>
             ))}
           </motion.div>
@@ -1068,14 +1068,14 @@ function FeaturesScene() {
       transition={{ duration: 0.6 }}
       className="w-full max-w-3xl"
     >
-      <div className="text-center mb-12">
-        <p className="text-sky-400 text-xs font-semibold tracking-widest uppercase mb-3">
+      <div className="mb-12 text-center">
+        <p className="mb-3 text-xs font-semibold tracking-widest text-sky-400 uppercase">
           Platform Features
         </p>
-        <h2 className="text-5xl font-black bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">
+        <h2 className="bg-gradient-to-b from-white to-white/60 bg-clip-text text-5xl font-black text-transparent">
           Built for Suppliers
         </h2>
-        <p className="text-white/30 text-sm mt-3">
+        <p className="mt-3 text-sm text-white/30">
           Everything you need to run your business through AF Home.
         </p>
       </div>
@@ -1086,20 +1086,20 @@ function FeaturesScene() {
             initial={{ opacity: 0, y: 24, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ delay: i * 0.1, duration: 0.5 }}
-            className="group relative bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] hover:border-sky-400/20 rounded-2xl p-5 transition-all duration-300"
+            className="group relative rounded-2xl border border-white/[0.06] bg-white/[0.03] p-5 transition-all duration-300 hover:border-sky-400/20 hover:bg-white/[0.06]"
           >
             <div
-              className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute inset-0 rounded-2xl opacity-0 transition-opacity group-hover:opacity-100"
               style={{
                 background:
                   "radial-gradient(ellipse at top left,rgba(56,189,248,0.06) 0%,transparent 60%)",
               }}
             />
-            <div className="w-10 h-10 rounded-xl bg-sky-400/10 border border-sky-400/20 flex items-center justify-center mb-4">
+            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-sky-400/20 bg-sky-400/10">
               <f.icon size={18} className="text-sky-400" />
             </div>
-            <p className="font-semibold text-sm text-white mb-1">{f.label}</p>
-            <p className="text-white/35 text-xs leading-relaxed">{f.desc}</p>
+            <p className="mb-1 text-sm font-semibold text-white">{f.label}</p>
+            <p className="text-xs leading-relaxed text-white/35">{f.desc}</p>
           </motion.div>
         ))}
       </div>
@@ -1117,16 +1117,16 @@ function HowItWorksScene() {
       transition={{ duration: 0.6 }}
       className="w-full max-w-2xl"
     >
-      <div className="text-center mb-12">
-        <p className="text-sky-400 text-xs font-semibold tracking-widest uppercase mb-3">
+      <div className="mb-12 text-center">
+        <p className="mb-3 text-xs font-semibold tracking-widest text-sky-400 uppercase">
           Supplier Onboarding
         </p>
-        <h2 className="text-5xl font-black bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">
+        <h2 className="bg-gradient-to-b from-white to-white/60 bg-clip-text text-5xl font-black text-transparent">
           Getting Started
         </h2>
       </div>
       <div className="relative">
-        <div className="absolute left-[23px] top-6 bottom-6 w-px bg-gradient-to-b from-sky-400/50 via-sky-400/20 to-transparent" />
+        <div className="absolute top-6 bottom-6 left-[23px] w-px bg-gradient-to-b from-sky-400/50 via-sky-400/20 to-transparent" />
         <div className="flex flex-col gap-4">
           {HOW_IT_WORKS.map((s, i) => (
             <motion.div
@@ -1134,26 +1134,26 @@ function HowItWorksScene() {
               initial={{ opacity: 0, x: -24 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.18, duration: 0.5 }}
-              className="flex gap-5 items-start"
+              className="flex items-start gap-5"
             >
               <div
-                className="w-12 h-12 rounded-2xl flex items-center justify-center text-xs font-black text-white shrink-0 z-10 shadow-[0_0_20px_rgba(56,189,248,0.25)]"
+                className="z-10 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-xs font-black text-white shadow-[0_0_20px_rgba(56,189,248,0.25)]"
                 style={{
                   background: "linear-gradient(135deg,#38bdf8,#0ea5e9)",
                 }}
               >
                 {s.n}
               </div>
-              <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl px-5 py-4 flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <p className="font-semibold text-sm text-white">{s.label}</p>
+              <div className="flex-1 rounded-2xl border border-white/[0.06] bg-white/[0.03] px-5 py-4">
+                <div className="mb-1 flex items-center gap-2">
+                  <p className="text-sm font-semibold text-white">{s.label}</p>
                   {i < HOW_IT_WORKS.length - 1 ? (
                     <ChevronRight size={12} className="text-white/20" />
                   ) : (
                     <CheckCircle2 size={12} className="text-sky-400" />
                   )}
                 </div>
-                <p className="text-white/35 text-xs leading-relaxed">
+                <p className="text-xs leading-relaxed text-white/35">
                   {s.desc}
                 </p>
               </div>
@@ -1201,7 +1201,7 @@ export default function SupplierDemo() {
   }, [scene, playing, sceneIdx])
 
   return (
-    <div className="relative min-h-screen bg-[#030609] text-white overflow-hidden">
+    <div className="relative min-h-screen overflow-hidden bg-[#030609] text-white">
       <Orbs color="#0ea5e955" />
 
       {/* Subtle grid */}
@@ -1220,14 +1220,14 @@ export default function SupplierDemo() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="fixed top-6 right-6 z-50 text-[11px] text-white/40 bg-white/5 backdrop-blur px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-1.5"
+          className="fixed top-6 right-6 z-50 flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] text-white/40 backdrop-blur"
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
+          <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
           Paused — press Space
         </motion.div>
       )}
 
-      <div className="relative z-10 min-h-screen flex items-center justify-center px-6 py-24">
+      <div className="relative z-10 flex min-h-screen items-center justify-center px-6 py-24">
         <AnimatePresence mode="wait">
           {/* Intro */}
           {scene === "intro" && (
@@ -1237,13 +1237,13 @@ export default function SupplierDemo() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, scale: 0.96 }}
               transition={{ duration: 0.7 }}
-              className="text-center max-w-2xl"
+              className="max-w-2xl text-center"
             >
               <motion.div
                 initial={{ scale: 0, rotate: -10 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                className="w-20 h-20 mx-auto mb-8 rounded-3xl bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center shadow-[0_0_60px_rgba(56,189,248,0.35)]"
+                className="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-sky-400 to-blue-600 shadow-[0_0_60px_rgba(56,189,248,0.35)]"
               >
                 <LayoutDashboard size={38} className="text-white" />
               </motion.div>
@@ -1251,7 +1251,7 @@ export default function SupplierDemo() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
-                className="text-xs font-semibold tracking-[0.2em] uppercase text-sky-400/80"
+                className="text-xs font-semibold tracking-[0.2em] text-sky-400/80 uppercase"
               >
                 AF Home
               </motion.p>
@@ -1259,7 +1259,7 @@ export default function SupplierDemo() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
-                className="text-6xl font-black mt-3 mb-4 bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent leading-tight"
+                className="mt-3 mb-4 bg-gradient-to-b from-white to-white/60 bg-clip-text text-6xl leading-tight font-black text-transparent"
               >
                 Supplier Dashboard
               </motion.h1>
@@ -1267,7 +1267,7 @@ export default function SupplierDemo() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.8 }}
-                className="text-white/40 text-xl"
+                className="text-xl text-white/40"
               >
                 Manage. Sell. Grow. Powered by AF Home.
               </motion.p>
@@ -1288,13 +1288,13 @@ export default function SupplierDemo() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.7 }}
-              className="text-center max-w-3xl"
+              className="max-w-3xl text-center"
             >
               <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2 }}
-                className="text-sky-400 text-sm font-semibold tracking-widest uppercase mb-6"
+                className="mb-6 text-sm font-semibold tracking-widest text-sky-400 uppercase"
               >
                 The Problem
               </motion.p>
@@ -1302,7 +1302,7 @@ export default function SupplierDemo() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="text-5xl font-black leading-tight mb-6 bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent"
+                className="mb-6 bg-gradient-to-b from-white to-white/60 bg-clip-text text-5xl leading-tight font-black text-transparent"
               >
                 Managing a product
                 <br />
@@ -1312,7 +1312,7 @@ export default function SupplierDemo() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.7 }}
-                className="text-white/40 text-lg mb-8"
+                className="mb-8 text-lg text-white/40"
               >
                 Scattered spreadsheets, missed orders, no visibility on
                 inventory.
@@ -1323,7 +1323,7 @@ export default function SupplierDemo() {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 1 }}
-                className="inline-flex items-center gap-2 bg-sky-400/10 border border-sky-400/20 rounded-full px-5 py-2.5 text-sky-300 text-sm font-medium"
+                className="inline-flex items-center gap-2 rounded-full border border-sky-400/20 bg-sky-400/10 px-5 py-2.5 text-sm font-medium text-sky-300"
               >
                 <Sparkles size={14} /> AF Home Supplier Dashboard solves this
               </motion.div>
@@ -1359,13 +1359,13 @@ export default function SupplierDemo() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.8 }}
-              className="text-center max-w-2xl"
+              className="max-w-2xl text-center"
             >
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: "spring", stiffness: 180, damping: 14 }}
-                className="w-24 h-24 mx-auto mb-8 rounded-3xl bg-gradient-to-br from-sky-400/20 to-blue-600/10 border border-sky-400/20 flex items-center justify-center shadow-[0_0_80px_rgba(56,189,248,0.2)]"
+                className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-3xl border border-sky-400/20 bg-gradient-to-br from-sky-400/20 to-blue-600/10 shadow-[0_0_80px_rgba(56,189,248,0.2)]"
               >
                 <Building2 size={40} className="text-sky-400" />
               </motion.div>
@@ -1373,7 +1373,7 @@ export default function SupplierDemo() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="text-6xl font-black bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent mb-4 leading-tight"
+                className="mb-4 bg-gradient-to-b from-white to-white/60 bg-clip-text text-6xl leading-tight font-black text-transparent"
               >
                 Start Selling
                 <br />
@@ -1383,7 +1383,7 @@ export default function SupplierDemo() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="text-white/40 text-lg mb-10"
+                className="mb-10 text-lg text-white/40"
               >
                 Join hundreds of suppliers already managing their business
                 through the AF Home platform.
@@ -1392,18 +1392,18 @@ export default function SupplierDemo() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.7 }}
-                className="flex items-center justify-center gap-4 flex-wrap"
+                className="flex flex-wrap items-center justify-center gap-4"
               >
-                <button className="group px-8 py-4 bg-gradient-to-r from-sky-400 to-blue-500 hover:from-sky-300 hover:to-blue-400 text-white font-bold rounded-2xl flex items-center gap-2 transition-all shadow-[0_0_40px_rgba(56,189,248,0.3)] hover:shadow-[0_0_60px_rgba(56,189,248,0.5)]">
+                <button className="group flex items-center gap-2 rounded-2xl bg-gradient-to-r from-sky-400 to-blue-500 px-8 py-4 font-bold text-white shadow-[0_0_40px_rgba(56,189,248,0.3)] transition-all hover:from-sky-300 hover:to-blue-400 hover:shadow-[0_0_60px_rgba(56,189,248,0.5)]">
                   Register as Supplier{" "}
                   <ArrowRight
                     size={16}
-                    className="group-hover:translate-x-1 transition-transform"
+                    className="transition-transform group-hover:translate-x-1"
                   />
                 </button>
                 <button
                   onClick={() => goTo("intro")}
-                  className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white font-semibold rounded-2xl transition-all"
+                  className="rounded-2xl border border-white/10 bg-white/5 px-8 py-4 font-semibold text-white transition-all hover:border-white/20 hover:bg-white/10"
                 >
                   Watch Again
                 </button>
@@ -1412,7 +1412,7 @@ export default function SupplierDemo() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1.1 }}
-                className="mt-10 flex items-center justify-center gap-6 text-white/25 text-xs"
+                className="mt-10 flex items-center justify-center gap-6 text-xs text-white/25"
               >
                 <span className="flex items-center gap-1.5">
                   <CheckCircle2 size={12} className="text-sky-400/60" /> Full
@@ -1433,7 +1433,7 @@ export default function SupplierDemo() {
       </div>
 
       {/* Progress bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50">
+      <div className="fixed right-0 bottom-0 left-0 z-50">
         <div className="h-px bg-white/5">
           <motion.div
             key={scene}
@@ -1443,8 +1443,8 @@ export default function SupplierDemo() {
             transition={{ duration: DURATIONS[scene] / 1000, ease: "linear" }}
           />
         </div>
-        <div className="pb-3 pt-2 flex justify-center">
-          <span className="text-white/15 text-[10px] tracking-[0.2em] uppercase">
+        <div className="flex justify-center pt-2 pb-3">
+          <span className="text-[10px] tracking-[0.2em] text-white/15 uppercase">
             {scene === "intro" && "Introduction"}
             {scene === "challenge" && "The Problem"}
             {scene === "highlight" && "One Dashboard. Everything."}

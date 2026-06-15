@@ -1,12 +1,12 @@
 "use client"
 
-import { useInView } from "framer-motion"
 import { useRef, useState } from "react"
-import { SectionLabel } from "../ui/Primitives"
+import { motion, useInView } from "framer-motion"
+
 import { fadeUp, slideLeft, staggerContainer, staggerItem } from "../animation"
-import { motion } from "framer-motion"
-import { SERVICES } from "../types"
 import ServiceCard from "../ServiceCard"
+import { SERVICES } from "../types"
+import { SectionLabel } from "../ui/Primitives"
 
 const PROCESS_STEPS = [
   {
@@ -40,7 +40,7 @@ const ServiceSection = ({ id }: { id?: string }) => {
     <section
       id={id}
       ref={ref}
-      className="relative py-32 overflow-hidden"
+      className="relative overflow-hidden py-32"
       style={{
         background:
           "linear-gradient(180deg, #fffdf4 0%, #fff8de 52%, #fffdf7 100%)",
@@ -55,9 +55,9 @@ const ServiceSection = ({ id }: { id?: string }) => {
         }}
       />
 
-      <div className="relative z-10 px-8 max-w-[1180px] mx-auto">
+      <div className="relative z-10 mx-auto max-w-[1180px] px-8">
         {/* Header */}
-        <div className="flex items-end justify-between mb-16">
+        <div className="mb-16 flex items-end justify-between">
           <motion.div
             initial="hidden"
             animate={isInView ? "visible" : "hidden"}
@@ -65,14 +65,14 @@ const ServiceSection = ({ id }: { id?: string }) => {
             custom={0}
           >
             <SectionLabel>Our Services</SectionLabel>
-            <h2 className="font-['Cormorant_Garamond'] text-[clamp(2.4rem,4.5vw,4rem)] font-light text-slate-900 leading-[1.08]">
+            <h2 className="font-['Cormorant_Garamond'] text-[clamp(2.4rem,4.5vw,4rem)] leading-[1.08] font-light text-slate-900">
               Crafted for Every
               <br />
               <em style={{ fontStyle: "italic" }}>Space & Vision</em>
             </h2>
           </motion.div>
           <motion.p
-            className="max-w-[280px] text-[0.82rem] text-slate-500 leading-relaxed hidden lg:block"
+            className="hidden max-w-[280px] text-[0.82rem] leading-relaxed text-slate-500 lg:block"
             initial="hidden"
             animate={isInView ? "visible" : "hidden"}
             variants={fadeUp}
@@ -85,7 +85,7 @@ const ServiceSection = ({ id }: { id?: string }) => {
 
         {/* Service cards grid */}
         <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-24"
+          className="mb-24 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
           variants={staggerContainer}
           initial="hidden"
           animate={isInView ? "visible" : "hidden"}
@@ -110,11 +110,11 @@ const ServiceSection = ({ id }: { id?: string }) => {
         >
           <div className="border-t border-slate-200 pt-16">
             <SectionLabel>How We Work</SectionLabel>
-            <h2 className="font-['Cormorant_Garamond'] text-3xl font-light text-slate-900 mb-12">
+            <h2 className="mb-12 font-['Cormorant_Garamond'] text-3xl font-light text-slate-900">
               The Design Process
             </h2>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-0">
+            <div className="grid grid-cols-2 gap-0 lg:grid-cols-4">
               {PROCESS_STEPS.map((step, i) => (
                 <motion.div
                   key={step.num}
@@ -127,7 +127,7 @@ const ServiceSection = ({ id }: { id?: string }) => {
                   {/* Connector line */}
                   {i < 3 && (
                     <motion.div
-                      className="absolute top-5 right-0 h-px hidden lg:block"
+                      className="absolute top-5 right-0 hidden h-px lg:block"
                       style={{
                         left: "calc(3rem + 8px)",
                         background:
@@ -143,13 +143,13 @@ const ServiceSection = ({ id }: { id?: string }) => {
                     />
                   )}
 
-                  <div className="font-['Cormorant_Garamond'] text-[2.5rem] font-light text-indigo-600/20 leading-none mb-3 select-none">
+                  <div className="mb-3 font-['Cormorant_Garamond'] text-[2.5rem] leading-none font-light text-indigo-600/20 select-none">
                     {step.num}
                   </div>
-                  <div className="font-['Cormorant_Garamond'] text-lg text-slate-800 mb-2">
+                  <div className="mb-2 font-['Cormorant_Garamond'] text-lg text-slate-800">
                     {step.title}
                   </div>
-                  <p className="text-[0.78rem] text-slate-500 leading-relaxed">
+                  <p className="text-[0.78rem] leading-relaxed text-slate-500">
                     {step.desc}
                   </p>
                 </motion.div>

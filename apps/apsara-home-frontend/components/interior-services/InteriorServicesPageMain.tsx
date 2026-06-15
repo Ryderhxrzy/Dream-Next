@@ -1,19 +1,20 @@
 "use client"
 
-import Image from "next/image"
-import { motion, useInView } from "framer-motion"
 import { useRef } from "react"
+import { motion, useInView } from "framer-motion"
+import Image from "next/image"
+
+import {
+  fadeIn,
+  fadeUp,
+  floatY,
+  scaleIn,
+  slideRight,
+  staggerItem,
+  staggerSlow,
+} from "./animation"
 import BookingSection from "./sections/BookingSection"
 import ServiceSection from "./sections/ServiceSection"
-import {
-  fadeUp,
-  fadeIn,
-  slideRight,
-  scaleIn,
-  staggerSlow,
-  staggerItem,
-  floatY,
-} from "./animation"
 
 const InteriorServicesPageMain = () => {
   const heroRef = useRef<HTMLDivElement>(null)
@@ -46,7 +47,7 @@ const InteriorServicesPageMain = () => {
           <div className="max-w-xl">
             {/* Label */}
             <motion.p
-              className="mb-4 text-[11px] font-bold uppercase tracking-[0.24em] text-[#9c7420]"
+              className="mb-4 text-[11px] font-bold tracking-[0.24em] text-[#9c7420] uppercase"
               initial="hidden"
               animate={isInView ? "visible" : "hidden"}
               variants={fadeUp}
@@ -58,7 +59,7 @@ const InteriorServicesPageMain = () => {
             {/* Heading */}
             <div className="overflow-hidden">
               <motion.h1
-                className="font-['Cormorant_Garamond'] text-[clamp(2.8rem,6vw,5.2rem)] font-light leading-[0.98] text-slate-900"
+                className="font-['Cormorant_Garamond'] text-[clamp(2.8rem,6vw,5.2rem)] leading-[0.98] font-light text-slate-900"
                 initial={{ opacity: 0, y: 60 }}
                 animate={
                   isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 60 }
@@ -72,7 +73,7 @@ const InteriorServicesPageMain = () => {
                 Dream, Build,
                 <br />
                 <motion.span
-                  className="italic text-[#9c7420]"
+                  className="text-[#9c7420] italic"
                   initial={{ opacity: 0, x: -20 }}
                   animate={
                     isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }
@@ -162,7 +163,7 @@ const InteriorServicesPageMain = () => {
                     >
                       {item.value}
                     </motion.p>
-                    <p className="mt-0.5 text-[10px] uppercase tracking-[0.18em] text-slate-400">
+                    <p className="mt-0.5 text-[10px] tracking-[0.18em] text-slate-400 uppercase">
                       {item.label}
                     </p>
                   </div>

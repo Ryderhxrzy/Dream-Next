@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useMemo, useRef, useCallback } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+
 import {
   useQaBoardRealtime,
   type QaStatusUpdate,
@@ -2178,12 +2179,12 @@ function StatusDropdown({
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium border transition-all ${col.bg} ${col.color} ${col.border}`}
+        className={`flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-medium transition-all ${col.bg} ${col.color} ${col.border}`}
       >
-        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${col.dot}`} />
+        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${col.dot}`} />
         {col.label}
         <svg
-          className={`w-3 h-3 transition-transform ${open ? "rotate-180" : ""}`}
+          className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -2197,7 +2198,7 @@ function StatusDropdown({
         </svg>
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden w-32">
+        <div className="absolute top-full right-0 z-50 mt-1 w-32 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900">
           {COLUMNS.map((c) => (
             <button
               key={c.id}
@@ -2205,13 +2206,13 @@ function StatusDropdown({
                 onChange(c.id)
                 setOpen(false)
               }}
-              className={`w-full flex items-center gap-2 px-3 py-2 text-[12px] font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${c.id === status ? "bg-gray-50 dark:bg-gray-800" : ""}`}
+              className={`flex w-full items-center gap-2 px-3 py-2 text-[12px] font-medium transition-colors hover:bg-gray-50 dark:hover:bg-gray-800 ${c.id === status ? "bg-gray-50 dark:bg-gray-800" : ""}`}
             >
-              <span className={`w-2 h-2 rounded-full ${c.dot}`} />
+              <span className={`h-2 w-2 rounded-full ${c.dot}`} />
               <span className={c.color}>{c.label}</span>
               {c.id === status && (
                 <svg
-                  className="w-3 h-3 ml-auto text-gray-400"
+                  className="ml-auto h-3 w-3 text-gray-400"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -2261,7 +2262,7 @@ function NoteEditor({
     return (
       <button
         onClick={() => setOpen(true)}
-        className="mt-2 text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+        className="mt-2 text-[10px] text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-300"
       >
         + Add comment
       </button>
@@ -2270,9 +2271,9 @@ function NoteEditor({
 
   return (
     <div className="mt-2.5">
-      <div className="flex items-center gap-1 mb-1">
+      <div className="mb-1 flex items-center gap-1">
         <span
-          className={`text-[9px] font-semibold uppercase tracking-wider ${isBug ? "text-red-500 dark:text-red-400" : "text-gray-400"}`}
+          className={`text-[9px] font-semibold tracking-wider uppercase ${isBug ? "text-red-500 dark:text-red-400" : "text-gray-400"}`}
         >
           {isBug ? "🐞 Bug notes" : "💬 Comment"}
         </span>
@@ -2288,17 +2289,17 @@ function NoteEditor({
             ? "What is the bug? How to reproduce? (steps, expected vs actual)…"
             : "Add a comment…"
         }
-        className={`w-full text-[11px] leading-relaxed px-2.5 py-2 rounded-lg border resize-y focus:outline-none focus:ring-2 transition-colors ${
+        className={`w-full resize-y rounded-lg border px-2.5 py-2 text-[11px] leading-relaxed transition-colors focus:ring-2 focus:outline-none ${
           isBug
-            ? "border-red-200 dark:border-red-800/60 bg-red-50/60 dark:bg-red-900/10 focus:ring-red-300 dark:focus:ring-red-700 placeholder-red-300 dark:placeholder-red-700/70"
-            : "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 focus:ring-gray-300 dark:focus:ring-gray-600 placeholder-gray-400"
+            ? "border-red-200 bg-red-50/60 placeholder-red-300 focus:ring-red-300 dark:border-red-800/60 dark:bg-red-900/10 dark:placeholder-red-700/70 dark:focus:ring-red-700"
+            : "border-gray-200 bg-gray-50 placeholder-gray-400 focus:ring-gray-300 dark:border-gray-700 dark:bg-gray-800/50 dark:focus:ring-gray-600"
         }`}
       />
       {dirty && (
-        <div className="flex items-center gap-2 mt-1.5">
+        <div className="mt-1.5 flex items-center gap-2">
           <button
             onClick={() => onSave(draft.trim())}
-            className="text-[10px] font-semibold px-2.5 py-1 rounded-md bg-gray-900 text-white dark:bg-white dark:text-gray-900 hover:opacity-90 transition-opacity"
+            className="rounded-md bg-gray-900 px-2.5 py-1 text-[10px] font-semibold text-white transition-opacity hover:opacity-90 dark:bg-white dark:text-gray-900"
           >
             Save note
           </button>
@@ -2337,27 +2338,27 @@ function TestCard({
   const beingEdited = (editors?.length ?? 0) > 0
   return (
     <div
-      className={`bg-white dark:bg-gray-900 border rounded-xl p-3.5 shadow-sm hover:shadow-md transition-shadow ${
+      className={`rounded-xl border bg-white p-3.5 shadow-sm transition-shadow hover:shadow-md dark:bg-gray-900 ${
         beingEdited
-          ? "border-sky-300 dark:border-sky-700 ring-2 ring-sky-200 dark:ring-sky-900/50"
+          ? "border-sky-300 ring-2 ring-sky-200 dark:border-sky-700 dark:ring-sky-900/50"
           : isBug
             ? "border-red-200 dark:border-red-900/50"
             : "border-gray-200 dark:border-gray-800"
       }`}
     >
       {beingEdited && (
-        <div className="flex items-center gap-1.5 mb-2 text-[10px] font-semibold text-sky-600 dark:text-sky-400">
+        <div className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold text-sky-600 dark:text-sky-400">
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-sky-500" />
           </span>
           <span className="truncate">
             {editors!.join(", ")} {editors!.length > 1 ? "are" : "is"} editing…
           </span>
         </div>
       )}
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <span className="text-[10px] font-mono text-gray-400 dark:text-gray-600 shrink-0 mt-0.5">
+      <div className="mb-2 flex items-start justify-between gap-2">
+        <span className="mt-0.5 shrink-0 font-mono text-[10px] text-gray-400 dark:text-gray-600">
           {test.id}
         </span>
         <StatusDropdown
@@ -2366,15 +2367,15 @@ function TestCard({
           onEditing={onEditing}
         />
       </div>
-      <p className="text-sm font-medium leading-snug text-gray-800 dark:text-gray-200 mb-2">
+      <p className="mb-2 text-sm leading-snug font-medium text-gray-800 dark:text-gray-200">
         {test.title}
       </p>
-      <p className="text-[11px] text-gray-400 dark:text-gray-600 leading-relaxed line-clamp-2">
+      <p className="line-clamp-2 text-[11px] leading-relaxed text-gray-400 dark:text-gray-600">
         ✓ {test.expected}
       </p>
       <div className="mt-2.5 flex items-center gap-1.5">
         <span
-          className={`text-[9px] font-semibold uppercase tracking-widest px-1.5 py-0.5 rounded ${
+          className={`rounded px-1.5 py-0.5 text-[9px] font-semibold tracking-widest uppercase ${
             test.category === "frontend"
               ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
               : "bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400"
@@ -2382,11 +2383,11 @@ function TestCard({
         >
           {test.category === "frontend" ? "UI" : "API"}
         </span>
-        <span className="text-[10px] text-gray-400 dark:text-gray-600 truncate">
+        <span className="truncate text-[10px] text-gray-400 dark:text-gray-600">
           {test.sectionTitle}
         </span>
         {meta?.updated_by && (
-          <span className="ml-auto text-[9px] text-gray-300 dark:text-gray-700 truncate shrink-0">
+          <span className="ml-auto shrink-0 truncate text-[9px] text-gray-300 dark:text-gray-700">
             · {meta.updated_by}
           </span>
         )}
@@ -2440,19 +2441,19 @@ function PresenceBar({
         {shown.map((m, i) => (
           <span
             key={m.id}
-            className={`inline-flex items-center justify-center h-7 w-7 rounded-full text-[10px] font-bold text-white ring-2 ring-white dark:ring-gray-900 ${AVATAR_COLORS[i % AVATAR_COLORS.length]} ${m.id === myId ? "ring-emerald-400 dark:ring-emerald-500" : ""}`}
+            className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold text-white ring-2 ring-white dark:ring-gray-900 ${AVATAR_COLORS[i % AVATAR_COLORS.length]} ${m.id === myId ? "ring-emerald-400 dark:ring-emerald-500" : ""}`}
             title={m.name + (m.id === myId ? " (you)" : "")}
           >
             {initials(m.name)}
           </span>
         ))}
         {extra > 0 && (
-          <span className="inline-flex items-center justify-center h-7 w-7 rounded-full text-[10px] font-bold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 ring-2 ring-white dark:ring-gray-900">
+          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gray-200 text-[10px] font-bold text-gray-600 ring-2 ring-white dark:bg-gray-700 dark:text-gray-300 dark:ring-gray-900">
             +{extra}
           </span>
         )}
       </div>
-      <span className="text-[11px] text-gray-400 hidden sm:inline">
+      <span className="hidden text-[11px] text-gray-400 sm:inline">
         {members.length} online
       </span>
     </div>
@@ -2726,16 +2727,16 @@ export default function Testing() {
       : 0
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+    <div className="min-h-screen bg-[#f5f5f7] text-gray-900 dark:bg-gray-950 dark:text-gray-100">
       {/* ── Header ── */}
-      <div className="sticky top-0 z-20 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
-        <div className="max-w-[1400px] mx-auto px-6 py-4 space-y-3">
+      <div className="sticky top-0 z-20 border-b border-gray-200 bg-white/90 backdrop-blur-md dark:border-gray-800 dark:bg-gray-900/90">
+        <div className="mx-auto max-w-[1400px] space-y-3 px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-xl font-bold tracking-tight">
                 QA Testing Board
               </h1>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="mt-0.5 text-xs text-gray-400">
                 Apsara Home · {totalCount} test cases
                 {saving && (
                   <span className="ml-2 text-emerald-500">· Saving…</span>
@@ -2746,7 +2747,7 @@ export default function Testing() {
               <PresenceBar members={members} myId={myId} />
               <button
                 onClick={resetAll}
-                className="text-xs text-gray-400 hover:text-red-500 transition-colors px-3 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                className="rounded-lg px-3 py-1.5 text-xs text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
               >
                 Reset all
               </button>
@@ -2754,13 +2755,13 @@ export default function Testing() {
           </div>
 
           {error && (
-            <div className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
+            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
               {error}
             </div>
           )}
 
           {/* Stats chips */}
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex flex-wrap gap-2">
             {[
               {
                 label: "Total",
@@ -2790,18 +2791,18 @@ export default function Testing() {
             ].map((s) => (
               <span
                 key={s.label}
-                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${s.cls}`}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${s.cls}`}
               >
                 {s.value} {s.label}
               </span>
             ))}
-            <span className="ml-auto text-xs text-gray-400 self-center">
+            <span className="ml-auto self-center text-xs text-gray-400">
               {progressPct}% done
             </span>
           </div>
 
           {/* Progress bar */}
-          <div className="h-1.5 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
+          <div className="h-1.5 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
             <div
               className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all duration-500"
               style={{ width: `${progressPct}%` }}
@@ -2809,8 +2810,8 @@ export default function Testing() {
           </div>
 
           {/* Category toggle + search */}
-          <div className="flex gap-2 flex-wrap items-center">
-            <div className="flex rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 text-xs font-medium">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex overflow-hidden rounded-lg border border-gray-200 text-xs font-medium dark:border-gray-700">
               {(["all", "frontend", "backend"] as FilterCategory[]).map((f) => (
                 <button
                   key={f}
@@ -2837,18 +2838,18 @@ export default function Testing() {
               placeholder="Search test cases..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="flex-1 min-w-[180px] text-xs px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+              className="min-w-[180px] flex-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs placeholder-gray-400 focus:ring-2 focus:ring-gray-300 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:focus:ring-gray-600"
             />
           </div>
 
           {/* Group chips — the dividing categories */}
-          <div className="flex gap-1.5 flex-wrap">
+          <div className="flex flex-wrap gap-1.5">
             <button
               onClick={() => setGroupFilter("all")}
-              className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${
+              className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${
                 groupFilter === "all"
-                  ? "bg-gray-900 text-white border-gray-900 dark:bg-white dark:text-gray-900 dark:border-white"
-                  : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50 dark:bg-gray-900 dark:text-gray-400 dark:border-gray-700"
+                  ? "border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-gray-900"
+                  : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400"
               }`}
             >
               All categories
@@ -2857,10 +2858,10 @@ export default function Testing() {
               <button
                 key={g}
                 onClick={() => setGroupFilter(g)}
-                className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${
+                className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${
                   groupFilter === g
-                    ? "bg-gray-900 text-white border-gray-900 dark:bg-white dark:text-gray-900 dark:border-white"
-                    : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50 dark:bg-gray-900 dark:text-gray-400 dark:border-gray-700"
+                    ? "border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-gray-900"
+                    : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400"
                 }`}
               >
                 {g}
@@ -2871,15 +2872,15 @@ export default function Testing() {
       </div>
 
       {/* ── Board: grouped by category, each with a header divider ── */}
-      <div className="max-w-[1400px] mx-auto px-6 py-6 space-y-8">
+      <div className="mx-auto max-w-[1400px] space-y-8 px-6 py-6">
         {loading && (
-          <div className="text-center py-20 text-gray-400 text-sm">
+          <div className="py-20 text-center text-sm text-gray-400">
             Loading QA records…
           </div>
         )}
 
         {!loading && visibleGroups.length === 0 && (
-          <div className="text-center py-20 text-gray-400 text-sm">
+          <div className="py-20 text-center text-sm text-gray-400">
             No test cases match the current filter.
           </div>
         )}
@@ -2901,9 +2902,9 @@ export default function Testing() {
             return (
               <section key={group}>
                 {/* Group header divider */}
-                <div className="flex items-center gap-3 mb-4">
+                <div className="mb-4 flex items-center gap-3">
                   <span
-                    className={`w-1.5 h-6 rounded-full ${isBackend ? "bg-violet-500" : "bg-blue-500"}`}
+                    className={`h-6 w-1.5 rounded-full ${isBackend ? "bg-violet-500" : "bg-blue-500"}`}
                   />
                   <h2 className="text-base font-bold tracking-tight">
                     {group}
@@ -2911,28 +2912,28 @@ export default function Testing() {
                   <span className="text-[11px] font-semibold text-gray-400">
                     {groupTests.length} cases
                   </span>
-                  <div className="flex items-center gap-1.5 ml-1">
+                  <div className="ml-1 flex items-center gap-1.5">
                     {gPass > 0 && (
-                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+                      <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
                         {gPass} pass
                       </span>
                     )}
                     {gBug > 0 && (
-                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400">
+                      <span className="rounded-full bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-600 dark:bg-red-900/30 dark:text-red-400">
                         {gBug} bug
                       </span>
                     )}
                     {gPending > 0 && (
-                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                      <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-500 dark:bg-gray-800 dark:text-gray-400">
                         {gPending} pending
                       </span>
                     )}
                   </div>
-                  <div className="flex-1 h-px bg-gray-200 dark:bg-gray-800 ml-2" />
+                  <div className="ml-2 h-px flex-1 bg-gray-200 dark:bg-gray-800" />
                 </div>
 
                 {/* Kanban for this group */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 items-start">
+                <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 xl:grid-cols-4">
                   {COLUMNS.map((col) => {
                     const colTests = groupTests.filter(
                       (t) => getStatus(t.id) === col.id
@@ -2940,11 +2941,11 @@ export default function Testing() {
                     return (
                       <div key={col.id} className="flex flex-col gap-3">
                         <div
-                          className={`flex items-center justify-between px-4 py-2.5 rounded-xl border ${col.bg} ${col.border}`}
+                          className={`flex items-center justify-between rounded-xl border px-4 py-2.5 ${col.bg} ${col.border}`}
                         >
                           <div className="flex items-center gap-2">
                             <span
-                              className={`w-2.5 h-2.5 rounded-full ${col.dot}`}
+                              className={`h-2.5 w-2.5 rounded-full ${col.dot}`}
                             />
                             <span
                               className={`text-sm font-semibold ${col.color}`}
@@ -2953,14 +2954,14 @@ export default function Testing() {
                             </span>
                           </div>
                           <span
-                            className={`text-xs font-bold px-2 py-0.5 rounded-full ${col.bg} ${col.color} border ${col.border}`}
+                            className={`rounded-full px-2 py-0.5 text-xs font-bold ${col.bg} ${col.color} border ${col.border}`}
                           >
                             {colTests.length}
                           </span>
                         </div>
                         <div className="flex flex-col gap-2">
                           {colTests.length === 0 && (
-                            <div className="text-center py-8 text-gray-300 dark:text-gray-700 text-xs border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-xl">
+                            <div className="rounded-xl border-2 border-dashed border-gray-200 py-8 text-center text-xs text-gray-300 dark:border-gray-800 dark:text-gray-700">
                               No items
                             </div>
                           )}

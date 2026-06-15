@@ -1,8 +1,8 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { createPortal } from "react-dom"
 import { AnimatePresence, motion } from "framer-motion"
+import { createPortal } from "react-dom"
 
 interface Page {
   title: string
@@ -168,12 +168,12 @@ export default function SearchCommandPalette() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: -14 }}
             transition={{ duration: 0.15 }}
-            className="fixed left-1/2 top-1/2 z-[9999] w-[min(92vw,40rem)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
+            className="fixed top-1/2 left-1/2 z-[9999] w-[min(92vw,40rem)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
           >
             <div className="border-b border-gray-100 px-4 py-4 dark:border-gray-700">
               <div className="relative">
                 <svg
-                  className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500"
+                  className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -215,7 +215,7 @@ export default function SearchCommandPalette() {
                     }
                   }}
                   placeholder="Search pages, members, products..."
-                  className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-10 pr-4 text-sm text-gray-700 transition-all placeholder:text-gray-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40 dark:border-gray-700 dark:bg-gray-800/80 dark:text-gray-100 dark:placeholder:text-gray-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/40"
+                  className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pr-4 pl-10 text-sm text-gray-700 transition-all placeholder:text-gray-400 focus:border-sky-400 focus:ring-2 focus:ring-sky-500/40 focus:outline-none dark:border-gray-700 dark:bg-gray-800/80 dark:text-gray-100 dark:placeholder:text-gray-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/40"
                 />
               </div>
               <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
@@ -296,7 +296,7 @@ export default function SearchCommandPalette() {
 
   return (
     <>
-      <div className="flex-1 max-w-md mx-auto">
+      <div className="mx-auto max-w-md flex-1">
         <button
           type="button"
           onClick={() => setIsOpen(true)}

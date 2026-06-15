@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
 import { authOptions } from "@/libs/auth"
+import { getServerSession } from "next-auth"
+import { NextResponse } from "next/server"
 
 const normalizeBase = (value?: string | null) =>
   String(value ?? "").replace(/\/+$/, "")

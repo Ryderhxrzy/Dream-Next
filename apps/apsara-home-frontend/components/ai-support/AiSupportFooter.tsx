@@ -1,5 +1,5 @@
-import { SendHorizonal, X } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
+import { SendHorizonal, X } from "lucide-react"
 
 interface Props {
   value: string
@@ -67,7 +67,7 @@ export function AiSupportFooter({
   }
 
   return (
-    <div className="relative flex-shrink-0 border-t border-slate-100 bg-white px-3 py-2.5 flex items-end gap-2">
+    <div className="relative flex flex-shrink-0 items-end gap-2 border-t border-slate-100 bg-white px-3 py-2.5">
       <textarea
         ref={textareaRef}
         value={value}
@@ -81,14 +81,14 @@ export function AiSupportFooter({
         placeholder="Type your question..."
         autoComplete="off"
         rows={1}
-        className="flex-1 resize-none overflow-y-auto max-h-[140px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-slate-50 border border-slate-200 focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100 rounded-xl px-3.5 py-2.5 text-[13.5px] text-slate-800 placeholder:text-slate-400 outline-none transition-all duration-150"
+        className="max-h-[140px] flex-1 resize-none [scrollbar-width:none] overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-[13.5px] text-slate-800 transition-all duration-150 outline-none placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100 [&::-webkit-scrollbar]:hidden"
       />
       <button
         type="button"
         onClick={handleSend}
         disabled={disabled || (!value.trim() && !hasImage)}
         aria-label="Send message"
-        className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-200 hover:scale-105 hover:shadow-lg hover:shadow-indigo-300 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all duration-150 cursor-pointer"
+        className="flex h-10 w-10 flex-shrink-0 cursor-pointer items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-200 transition-all duration-150 hover:scale-105 hover:shadow-lg hover:shadow-indigo-300 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
       >
         <SendHorizonal size={16} strokeWidth={2.2} />
       </button>

@@ -85,21 +85,21 @@ export default function ReconciliationMain() {
   return (
     <div className="space-y-5">
       {/* ── Hero ── */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-700 via-purple-800 to-indigo-900 dark:from-violet-900 dark:via-slate-900 dark:to-black shadow-xl">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-700 via-purple-800 to-indigo-900 shadow-xl dark:from-violet-900 dark:via-slate-900 dark:to-black">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(255,255,255,0.06),transparent_55%)]" />
         <div className="absolute inset-0 opacity-[0.04]" style={STRIPE} />
         <div className="relative px-6 py-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <div className="flex flex-wrap items-center gap-2 mb-2">
-                <span className="rounded-md bg-white/10 border border-white/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-violet-200">
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                <span className="rounded-md border border-white/20 bg-white/10 px-2.5 py-1 text-[10px] font-bold tracking-widest text-violet-200 uppercase">
                   Accounting
                 </span>
-                <span className="rounded-full bg-violet-400/15 border border-violet-400/30 px-2.5 py-1 text-[10px] font-semibold text-violet-300">
+                <span className="rounded-full border border-violet-400/30 bg-violet-400/15 px-2.5 py-1 text-[10px] font-semibold text-violet-300">
                   Month-end Reconciliation
                 </span>
               </div>
-              <h1 className="text-2xl font-black text-white tracking-tight">
+              <h1 className="text-2xl font-black tracking-tight text-white">
                 Reconciliation
               </h1>
               <p className="mt-0.5 text-sm text-violet-300/80">
@@ -107,10 +107,10 @@ export default function ReconciliationMain() {
               </p>
             </div>
             <div className="sm:text-right">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-violet-400/60 mb-1">
+              <p className="mb-1 text-[10px] font-bold tracking-widest text-violet-400/60 uppercase">
                 Released (Period)
               </p>
-              <p className="text-3xl font-black text-white tracking-tight">
+              <p className="text-3xl font-black tracking-tight text-white">
                 {formatMoney(stats.total)}
               </p>
               <p className="mt-0.5 text-xs text-violet-400/50">
@@ -130,7 +130,7 @@ export default function ReconciliationMain() {
             className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
               period === key
                 ? "bg-violet-600 text-white shadow-md shadow-violet-500/25"
-                : "border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
             }`}
           >
             {label}
@@ -139,9 +139,9 @@ export default function ReconciliationMain() {
       </div>
 
       {isError ? (
-        <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 dark:border-red-500/30 dark:bg-red-500/10 px-4 py-3">
+        <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 dark:border-red-500/30 dark:bg-red-500/10">
           <svg
-            className="shrink-0 h-5 w-5 text-red-500"
+            className="h-5 w-5 shrink-0 text-red-500"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -158,14 +158,14 @@ export default function ReconciliationMain() {
           </p>
         </div>
       ) : isLoading ? (
-        <div className="space-y-4 animate-pulse">
+        <div className="animate-pulse space-y-4">
           <div className="h-36 rounded-2xl bg-slate-100 dark:bg-slate-800" />
           <div className="h-56 rounded-2xl bg-slate-100 dark:bg-slate-800" />
         </div>
       ) : (
         <>
           {/* ── Channel Reconciliation Cards ── */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {(
               [
                 {
@@ -206,9 +206,9 @@ export default function ReconciliationMain() {
                   style={STRIPE}
                 />
                 <div className="relative">
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="mb-3 flex items-center justify-between">
                     <p
-                      className={`text-[10px] font-bold uppercase tracking-widest ${muted}`}
+                      className={`text-[10px] font-bold tracking-widest uppercase ${muted}`}
                     >
                       {label}
                     </p>
@@ -219,7 +219,7 @@ export default function ReconciliationMain() {
                   <p className="text-3xl font-black text-white tabular-nums">
                     {formatMoney(amount)}
                   </p>
-                  <div className="mt-3 pt-3 border-t border-white/20 flex items-center justify-between">
+                  <div className="mt-3 flex items-center justify-between border-t border-white/20 pt-3">
                     <span className={`text-xs ${muted}`}>Share of total</span>
                     <span className="text-sm font-black text-white">
                       {stats.total > 0
@@ -234,8 +234,8 @@ export default function ReconciliationMain() {
           </div>
 
           {/* ── Reconciliation Summary Table ── */}
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700/60 dark:bg-slate-900 shadow-sm">
-            <div className="flex items-center gap-2.5 border-b border-slate-100 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/50 px-4 py-3">
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-900">
+            <div className="flex items-center gap-2.5 border-b border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-700/60 dark:bg-slate-800/50">
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-500/15">
                 <svg
                   className="h-4 w-4 text-violet-600 dark:text-violet-400"
@@ -251,24 +251,24 @@ export default function ReconciliationMain() {
                   />
                 </svg>
               </span>
-              <h2 className="text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+              <h2 className="text-xs font-bold tracking-wide text-slate-600 uppercase dark:text-slate-300">
                 Balance Reconciliation
               </h2>
             </div>
             <div className="overflow-auto">
               <table className="w-full min-w-[480px]">
                 <thead>
-                  <tr className="border-b border-slate-100 dark:border-slate-700/60 text-left">
-                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                  <tr className="border-b border-slate-100 text-left dark:border-slate-700/60">
+                    <th className="px-4 py-3 text-[11px] font-bold tracking-wide text-slate-400 uppercase dark:text-slate-500">
                       Category
                     </th>
-                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 text-right">
+                    <th className="px-4 py-3 text-right text-[11px] font-bold tracking-wide text-slate-400 uppercase dark:text-slate-500">
                       Count
                     </th>
-                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 text-right">
+                    <th className="px-4 py-3 text-right text-[11px] font-bold tracking-wide text-slate-400 uppercase dark:text-slate-500">
                       Amount
                     </th>
-                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 text-right">
+                    <th className="px-4 py-3 text-right text-[11px] font-bold tracking-wide text-slate-400 uppercase dark:text-slate-500">
                       % of Total
                     </th>
                   </tr>
@@ -316,12 +316,12 @@ export default function ReconciliationMain() {
                   ].map(({ label, count, amt, cls, dot }) => (
                     <tr
                       key={label}
-                      className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
+                      className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40"
                     >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
                           <span
-                            className={`h-2 w-2 rounded-full shrink-0 ${dot}`}
+                            className={`h-2 w-2 shrink-0 rounded-full ${dot}`}
                           />
                           <span className={`text-sm font-medium ${cls}`}>
                             {label}
@@ -338,7 +338,7 @@ export default function ReconciliationMain() {
                       >
                         {formatMoney(amt)}
                       </td>
-                      <td className="px-4 py-3 text-right text-sm text-slate-500 dark:text-slate-400 tabular-nums">
+                      <td className="px-4 py-3 text-right text-sm text-slate-500 tabular-nums dark:text-slate-400">
                         {stats.grandTotal > 0
                           ? Math.round((amt / stats.grandTotal) * 100)
                           : 0}

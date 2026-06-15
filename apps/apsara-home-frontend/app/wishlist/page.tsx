@@ -1,8 +1,10 @@
-import { buildPageMetadata } from "@/app/seo"
 import { authOptions } from "@/libs/auth"
 import { getNavbarCategories } from "@/libs/serverStorefront"
 import { getServerSession } from "next-auth"
 import { redirect } from "next/navigation"
+
+import Wishlist from "@/components/Wishlist"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Wishlist",
@@ -11,8 +13,6 @@ export const metadata = buildPageMetadata({
   noIndex: true,
 })
 export const dynamic = "force-dynamic"
-
-import Wishlist from "@/components/Wishlist"
 
 async function Page() {
   const session = await getServerSession(authOptions)

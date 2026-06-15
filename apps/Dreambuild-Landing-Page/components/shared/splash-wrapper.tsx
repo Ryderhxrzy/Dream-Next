@@ -1,22 +1,23 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { SplashScreen } from "./splash-screen";
+import { useEffect, useState } from "react"
+import { AnimatePresence, motion } from "framer-motion"
+
+import { SplashScreen } from "./splash-screen"
 
 export function SplashWrapper() {
-  const [show, setShow] = useState(false);
+  const [show, setShow] = useState(false)
 
   useEffect(() => {
-    const seen = sessionStorage.getItem("dreambuild_splash_seen");
+    const seen = sessionStorage.getItem("dreambuild_splash_seen")
     if (!seen) {
-      setShow(true);
-      sessionStorage.setItem("dreambuild_splash_seen", "1");
+      setShow(true)
+      sessionStorage.setItem("dreambuild_splash_seen", "1")
       // Hide after animation completes (~5.6s) + fade out duration (0.7s)
-      const timer = setTimeout(() => setShow(false), 5600);
-      return () => clearTimeout(timer);
+      const timer = setTimeout(() => setShow(false), 5600)
+      return () => clearTimeout(timer)
     }
-  }, []);
+  }, [])
 
   return (
     <AnimatePresence>
@@ -31,5 +32,5 @@ export function SplashWrapper() {
         </motion.div>
       )}
     </AnimatePresence>
-  );
+  )
 }

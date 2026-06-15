@@ -1,3 +1,4 @@
+import CategoriesPageMain from "@/components/superAdmin/products/categories/CategoriesPageMain"
 import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
@@ -6,8 +7,6 @@ export const metadata = buildPageMetadata({
   path: "/admin/products/categories",
   noIndex: true,
 })
-
-import CategoriesPageMain from "@/components/superAdmin/products/categories/CategoriesPageMain"
 
 export default function AdminCategoriesPage() {
   return <CategoriesPageMain />

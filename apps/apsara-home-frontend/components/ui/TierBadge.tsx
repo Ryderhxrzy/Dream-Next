@@ -1,4 +1,5 @@
 import Image from "next/image"
+
 import { MemberTier } from "@/types/members/types"
 
 type TierBadgeProps = {
@@ -52,7 +53,7 @@ export default function TierBadge({
         title={String(tier || "Unknown tier")}
       >
         <span
-          className={`inline-flex ${sizeClassName} shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-[10px] font-bold uppercase text-slate-500`}
+          className={`inline-flex ${sizeClassName} shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-[10px] font-bold text-slate-500 uppercase`}
         >
           N/A
         </span>

@@ -93,7 +93,7 @@ export default function Template2({
       <section className="mx-auto grid max-w-7xl items-center gap-12 px-10 py-20 md:grid-cols-2">
         <div>
           <span
-            className="mb-4 inline-block rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider"
+            className="mb-4 inline-block rounded-full px-3 py-1 text-xs font-semibold tracking-wider uppercase"
             style={{
               backgroundColor: `${primaryColor}18`,
               color: primaryColor,
@@ -101,7 +101,7 @@ export default function Template2({
           >
             Partner Storefront
           </span>
-          <h1 className="text-5xl font-black leading-tight lg:text-6xl">
+          <h1 className="text-5xl leading-tight font-black lg:text-6xl">
             {tagline}
           </h1>
           <p className="mt-5 max-w-md text-base leading-relaxed text-slate-500">
@@ -208,7 +208,7 @@ export default function Template2({
           className="mx-auto max-w-3xl rounded-3xl p-10 text-center text-white shadow-xl"
           style={{ backgroundColor: primaryColor }}
         >
-          <p className="text-2xl font-bold leading-relaxed">
+          <p className="text-2xl leading-relaxed font-bold">
             "{testimonialText}"
           </p>
           <p className="mt-6 text-sm font-semibold opacity-80">

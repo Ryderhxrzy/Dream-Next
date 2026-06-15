@@ -1,10 +1,11 @@
 import { Suspense } from "react"
-import CategoryListProductMain from "@/components/category/CategoryListProductMain"
-import type { Category } from "@/store/api/categoriesApi"
-import type { Product, ProductsResponse } from "@/store/api/productsApi"
-import { buildPageMetadata } from "@/app/seo"
 import { serverFetch } from "@/libs/serverFetch"
 import { getNavbarCategories } from "@/libs/serverStorefront"
+import type { Category } from "@/store/api/categoriesApi"
+import type { Product, ProductsResponse } from "@/store/api/productsApi"
+
+import CategoryListProductMain from "@/components/category/CategoryListProductMain"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Category Details",
@@ -293,9 +294,7 @@ const mapProductToDisplay = (
   }
 }
 
-async function getCategoryProducts(
-  slug: string
-): Promise<{
+async function getCategoryProducts(slug: string): Promise<{
   label?: string
   products?: DisplayProduct[]
   totalProducts?: number

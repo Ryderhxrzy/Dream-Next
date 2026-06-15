@@ -1,11 +1,12 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { usePathname } from "next/navigation"
-import { AiSupport } from "./AiSupport"
 import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
 import { extractPartnerSlugFromPath } from "@/libs/storefrontRouting"
 import type { WebPageItem } from "@/store/api/webPagesApi"
+import { usePathname } from "next/navigation"
+
+import { AiSupport } from "./AiSupport"
 
 type PublicWebPageItemsResponse = {
   items?: WebPageItem[]

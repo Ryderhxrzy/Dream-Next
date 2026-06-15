@@ -171,7 +171,7 @@ export default function SupplierInviteSetupForm({ token }: Props) {
       <div className="mx-auto max-w-xl">
         <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-8 shadow-2xl shadow-black/30">
           <div className="mb-8">
-            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">
+            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-xs font-semibold tracking-[0.18em] text-cyan-300 uppercase">
               Supplier Setup
             </div>
             <h1 className="mt-5 text-3xl font-bold tracking-tight text-white">
@@ -195,7 +195,7 @@ export default function SupplierInviteSetupForm({ token }: Props) {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid gap-4 rounded-2xl border border-slate-800 bg-slate-950/40 p-5 sm:grid-cols-2">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
                     Full Name
                   </p>
                   <p className="mt-1 text-sm font-medium text-white">
@@ -203,7 +203,7 @@ export default function SupplierInviteSetupForm({ token }: Props) {
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
                     Supplier Company
                   </p>
                   <p className="mt-1 text-sm font-medium text-white">
@@ -211,7 +211,7 @@ export default function SupplierInviteSetupForm({ token }: Props) {
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
                     Username
                   </p>
                   <p className="mt-1 text-sm font-medium text-white">
@@ -219,7 +219,7 @@ export default function SupplierInviteSetupForm({ token }: Props) {
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
                     Email
                   </p>
                   <p className="mt-1 text-sm font-medium text-white">
@@ -238,7 +238,7 @@ export default function SupplierInviteSetupForm({ token }: Props) {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Create your password"
-                    className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/20"
+                    className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -250,7 +250,7 @@ export default function SupplierInviteSetupForm({ token }: Props) {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Confirm your password"
-                    className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/20"
+                    className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 focus:outline-none"
                   />
                 </div>
               </div>

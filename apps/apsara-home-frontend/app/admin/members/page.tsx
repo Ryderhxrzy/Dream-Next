@@ -1,12 +1,13 @@
-import { redirect } from "next/navigation"
-import { getServerSession } from "next-auth"
-import MembersPageMain from "@/components/superAdmin/members/MembersPageMain"
-import { buildPageMetadata } from "@/app/seo"
 import { adminAuthOptions } from "@/libs/adminAuth"
 import type {
   MembersResponse,
   MembersStatsResponse,
 } from "@/store/api/membersApi"
+import { getServerSession } from "next-auth"
+import { redirect } from "next/navigation"
+
+import MembersPageMain from "@/components/superAdmin/members/MembersPageMain"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Admin Members",

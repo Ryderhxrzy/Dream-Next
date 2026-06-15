@@ -1,9 +1,11 @@
 "use client"
 
-import { motion } from "framer-motion"
-import { formatTimestamp, timeAgo } from "./types"
 import type { ActivityLog } from "@/store/api/activityLogsApi"
+import { motion } from "framer-motion"
+
 import AvatarImg from "@/components/superAdmin/AvatarImg"
+
+import { formatTimestamp, timeAgo } from "./types"
 
 const getInitials = (name: string) =>
   name
@@ -121,28 +123,28 @@ export default function ActivityLogsTable({ logs }: ActivityLogsTableProps) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.15 }}
-      className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
+      className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
     >
       <div className="overflow-x-auto">
         <table className="w-full text-left">
           <thead>
-            <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40">
-              <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+            <tr className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-700/40">
+              <th className="px-5 py-3 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
                 Member
               </th>
-              <th className="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              <th className="px-4 py-3 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
                 Action
               </th>
-              <th className="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              <th className="px-4 py-3 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
                 Detail
               </th>
-              <th className="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              <th className="px-4 py-3 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
                 Status
               </th>
-              <th className="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              <th className="px-4 py-3 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
                 IP / Device
               </th>
-              <th className="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              <th className="px-4 py-3 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
                 Time
               </th>
             </tr>
@@ -153,7 +155,7 @@ export default function ActivityLogsTable({ logs }: ActivityLogsTableProps) {
                 <td colSpan={6} className="px-5 py-14 text-center">
                   <div className="flex flex-col items-center gap-2">
                     <svg
-                      className="w-8 h-8 text-gray-300 dark:text-gray-600"
+                      className="h-8 w-8 text-gray-300 dark:text-gray-600"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -187,7 +189,7 @@ export default function ActivityLogsTable({ logs }: ActivityLogsTableProps) {
                 return (
                   <tr
                     key={log.id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                    className="transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50"
                   >
                     {/* Member */}
                     <td className="px-5 py-3.5">
@@ -213,7 +215,7 @@ export default function ActivityLogsTable({ logs }: ActivityLogsTableProps) {
                     {/* Activity Type */}
                     <td className="px-4 py-3.5">
                       <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${activityConfig.bg} ${activityConfig.text}`}
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${activityConfig.bg} ${activityConfig.text}`}
                       >
                         <span>{activityConfig.icon}</span>
                         {activityConfig.label}
@@ -221,9 +223,9 @@ export default function ActivityLogsTable({ logs }: ActivityLogsTableProps) {
                     </td>
 
                     {/* Description */}
-                    <td className="px-4 py-3.5 max-w-[220px]">
+                    <td className="max-w-[220px] px-4 py-3.5">
                       <p
-                        className="text-xs text-gray-600 dark:text-gray-400 truncate"
+                        className="truncate text-xs text-gray-600 dark:text-gray-400"
                         title={log.description}
                       >
                         {log.description || "N/A"}
@@ -232,7 +234,7 @@ export default function ActivityLogsTable({ logs }: ActivityLogsTableProps) {
 
                     {/* Action */}
                     <td className="px-4 py-3.5">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                         {log.action}
                       </span>
@@ -244,7 +246,7 @@ export default function ActivityLogsTable({ logs }: ActivityLogsTableProps) {
                         {log.ip_address || "N/A"}
                       </p>
                       <p
-                        className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 truncate max-w-[180px]"
+                        className="mt-0.5 max-w-[180px] truncate text-[11px] text-gray-500 dark:text-gray-400"
                         title={log.user_agent || undefined}
                       >
                         {formatUserAgent(log.user_agent)}
@@ -256,7 +258,7 @@ export default function ActivityLogsTable({ logs }: ActivityLogsTableProps) {
                       <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
                         {timeAgo(log.created_at)}
                       </p>
-                      <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                      <p className="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400">
                         {formatTimestamp(log.created_at)}
                       </p>
                     </td>
@@ -269,7 +271,7 @@ export default function ActivityLogsTable({ logs }: ActivityLogsTableProps) {
       </div>
 
       {/* Footer */}
-      <div className="px-5 py-3.5 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400">
+      <div className="border-t border-gray-200 px-5 py-3.5 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
         {logs.length} {logs.length === 1 ? "entry" : "entries"} shown · Latest
         first
       </div>

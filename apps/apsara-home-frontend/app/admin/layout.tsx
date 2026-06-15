@@ -1,8 +1,9 @@
 "use client"
 
-import { usePathname } from "next/navigation"
-import DashboardLayout from "@/components/superAdmin/DashboardLayout"
 import { SessionProvider } from "next-auth/react"
+import { usePathname } from "next/navigation"
+
+import DashboardLayout from "@/components/superAdmin/DashboardLayout"
 
 export default function AdminLayout({
   children,

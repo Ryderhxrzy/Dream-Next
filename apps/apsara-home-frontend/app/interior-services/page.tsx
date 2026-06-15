@@ -1,5 +1,6 @@
-import InteriorServicesPageMain from "@/components/interior-services/InteriorServicesPageMain"
 import Link from "next/link"
+
+import InteriorServicesPageMain from "@/components/interior-services/InteriorServicesPageMain"
 
 const InteriorservicesPage = () => {
   return (

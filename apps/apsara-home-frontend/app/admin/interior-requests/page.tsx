@@ -1,5 +1,5 @@
-import { buildPageMetadata } from "@/app/seo"
 import InteriorRequestsPageMain from "@/components/superAdmin/interiorRequests/InteriorRequestsPageMain"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Admin Interior Quotation Requests",

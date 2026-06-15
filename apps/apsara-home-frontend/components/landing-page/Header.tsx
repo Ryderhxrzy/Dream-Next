@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { ShoppingBag, Menu, X, User } from "lucide-react"
+import { useEffect, useState } from "react"
+import { AnimatePresence, motion } from "framer-motion"
+import { Menu, ShoppingBag, User, X } from "lucide-react"
 import { useSession } from "next-auth/react"
-import { usePathname } from "next/navigation"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
+
 import ThemeToggle from "@/components/ui/buttons/ThemeToggle"
 
 interface HeaderProps {
@@ -111,18 +112,18 @@ export default function Header({
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] as const }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      className={`fixed top-0 right-0 left-0 z-50 transition-all duration-500 ${
         isScrolled
-          ? "bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-soft"
+          ? "shadow-soft bg-white/90 backdrop-blur-md dark:bg-gray-900/90"
           : "bg-transparent"
       }`}
     >
       <div className="container mx-auto">
-        <div className="flex items-center justify-between h-20 px-4">
+        <div className="flex h-20 items-center justify-between px-4">
           {/* Logo */}
           <motion.a
             href={effectiveLogoHref}
-            className="flex items-center shrink-0"
+            className="flex shrink-0 items-center"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
@@ -135,7 +136,7 @@ export default function Header({
 
           {/* Desktop Navigation - Centered */}
           <nav
-            className={`${hideNavLinks ? "hidden" : "hidden lg:flex"} items-center gap-6 xl:gap-8 absolute left-1/2 -translate-x-1/2`}
+            className={`${hideNavLinks ? "hidden" : "hidden lg:flex"} absolute left-1/2 -translate-x-1/2 items-center gap-6 xl:gap-8`}
           >
             {navLinks.map((link, index) => {
               const sectionId = link.href.replace(/^\/?#/, "")
@@ -148,14 +149,13 @@ export default function Header({
                 <motion.a
                   key={link.name}
                   href={link.href}
-                  className={`font-medium text-[15px] relative group transition-all duration-300
-                    ${
-                      isActive
-                        ? "text-amber-500"
-                        : isScrolled || !isHome
-                          ? "text-black dark:text-white hover:text-amber-500"
-                          : "text-white hover:text-amber-400"
-                    }`}
+                  className={`group relative text-[15px] font-medium transition-all duration-300 ${
+                    isActive
+                      ? "text-amber-500"
+                      : isScrolled || !isHome
+                        ? "text-black hover:text-amber-500 dark:text-white"
+                        : "text-white hover:text-amber-400"
+                  }`}
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 + 0.2 }}
@@ -171,9 +171,9 @@ export default function Header({
           </nav>
 
           {/* Right Icons */}
-          <div className="flex items-center gap-4 shrink-0">
+          <div className="flex shrink-0 items-center gap-4">
             {/* User Icon with href */}
-            <div className="relative group">
+            <div className="group relative">
               <MotionLink
                 href={userHref}
                 aria-label="User account"
@@ -183,13 +183,13 @@ export default function Header({
               >
                 <User size={20} />
               </MotionLink>
-              <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2 whitespace-nowrap rounded-lg bg-gray-900/90 px-2.5 py-1 text-xs font-medium text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-lg">
+              <span className="pointer-events-none absolute top-full left-1/2 mt-2 -translate-x-1/2 rounded-lg bg-gray-900/90 px-2.5 py-1 text-xs font-medium whitespace-nowrap text-white opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100">
                 {status === "authenticated" ? "My Account" : "Login"}
               </span>
             </div>
 
             {/* Shopping Bag Icon with href */}
-            <div className="relative group">
+            <div className="group relative">
               <MotionLink
                 href={effectiveShopHref}
                 aria-label="Browse shop"
@@ -204,14 +204,14 @@ export default function Header({
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       exit={{ scale: 0 }}
-                      className="absolute -top-1 -right-1 w-5 h-5 bg-af-brass text-white text-xs font-bold rounded-full flex items-center justify-center"
+                      className="bg-af-brass absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold text-white"
                     >
                       {cartCount}
                     </motion.span>
                   )}
                 </AnimatePresence>
               </MotionLink>
-              <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2 whitespace-nowrap rounded-lg bg-gray-900/90 px-2.5 py-1 text-xs font-medium text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-lg">
+              <span className="pointer-events-none absolute top-full left-1/2 mt-2 -translate-x-1/2 rounded-lg bg-gray-900/90 px-2.5 py-1 text-xs font-medium whitespace-nowrap text-white opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100">
                 Browse Shop
               </span>
             </div>
@@ -229,7 +229,7 @@ export default function Header({
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className={`lg:hidden p-2 transition-colors ${isScrolled || !isHome ? "text-black dark:text-white" : "text-white"}`}
+              className={`p-2 transition-colors lg:hidden ${isScrolled || !isHome ? "text-black dark:text-white" : "text-white"}`}
             >
               {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </motion.button>
@@ -245,9 +245,9 @@ export default function Header({
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="lg:hidden bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-t border-af-cream dark:border-gray-700"
+            className="border-af-cream border-t bg-white/95 backdrop-blur-md lg:hidden dark:border-gray-700 dark:bg-gray-900/95"
           >
-            <nav className="flex flex-col p-6 gap-4">
+            <nav className="flex flex-col gap-4 p-6">
               {navLinks.map((link, index) => {
                 const sectionId = link.href.replace(/^\/?#/, "")
                 const isActive =
@@ -262,7 +262,7 @@ export default function Header({
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className={`font-medium text-lg py-2 transition-colors duration-200 ${isActive ? "text-amber-500" : "text-af-text dark:text-gray-100 hover:text-amber-500"}`}
+                    className={`py-2 text-lg font-medium transition-colors duration-200 ${isActive ? "text-amber-500" : "text-af-text hover:text-amber-500 dark:text-gray-100"}`}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     {link.name}

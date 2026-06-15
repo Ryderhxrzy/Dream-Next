@@ -147,7 +147,7 @@ export default function ProductDescriptionGenerator({
     <div className="rounded-2xl border border-cyan-100 bg-[linear-gradient(135deg,rgba(236,254,255,0.95),rgba(248,250,252,0.98))] p-4 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-700">
+          <p className="text-[11px] font-semibold tracking-[0.18em] text-cyan-700 uppercase">
             Smart Description Helper
           </p>
           <h3 className="mt-1 text-sm font-bold text-slate-900">
@@ -183,13 +183,13 @@ export default function ProductDescriptionGenerator({
 
       <div className="mt-4 grid gap-3 md:grid-cols-3">
         <label className="block">
-          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          <span className="mb-1.5 block text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
             Tone
           </span>
           <select
             value={tone}
             onChange={(e) => setTone(e.target.value as ToneOption)}
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 focus:border-cyan-400 focus:outline-none focus:ring-4 focus:ring-cyan-100"
+            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 focus:outline-none"
           >
             <option value="ecommerce">Ecommerce</option>
             <option value="warm">Warm</option>
@@ -198,13 +198,13 @@ export default function ProductDescriptionGenerator({
         </label>
 
         <label className="block">
-          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          <span className="mb-1.5 block text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
             Length
           </span>
           <select
             value={length}
             onChange={(e) => setLength(e.target.value as LengthOption)}
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 focus:border-cyan-400 focus:outline-none focus:ring-4 focus:ring-cyan-100"
+            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 focus:outline-none"
           >
             <option value="short">Short</option>
             <option value="medium">Medium</option>
@@ -213,14 +213,14 @@ export default function ProductDescriptionGenerator({
         </label>
 
         <label className="block md:col-span-1">
-          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          <span className="mb-1.5 block text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
             Extra Notes
           </span>
           <input
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Optional selling angle or usage note"
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:border-cyan-400 focus:outline-none focus:ring-4 focus:ring-cyan-100"
+            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 focus:outline-none"
           />
         </label>
       </div>

@@ -35,7 +35,7 @@ export default function WarehouseTab() {
           Select Supplier Company
         </p>
         <div className="relative">
-          <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-cyan-500">
+          <span className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-cyan-500">
             <svg
               className="h-5 w-5"
               fill="none"
@@ -64,7 +64,7 @@ export default function WarehouseTab() {
               )
             }
             disabled={isLoadingSuppliers}
-            className="w-full appearance-none rounded-2xl border border-cyan-200 bg-white py-3.5 pl-11 pr-10 text-sm font-medium text-slate-800 shadow-sm outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-cyan-500/30 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-cyan-500/20"
+            className="w-full appearance-none rounded-2xl border border-cyan-200 bg-white py-3.5 pr-10 pl-11 text-sm font-medium text-slate-800 shadow-sm transition outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-cyan-500/30 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-cyan-500/20"
           >
             <option value="">
               {isLoadingSuppliers
@@ -77,7 +77,7 @@ export default function WarehouseTab() {
               </option>
             ))}
           </select>
-          <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
+          <span className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-slate-400">
             <svg
               className="h-4 w-4"
               fill="none"
@@ -98,7 +98,7 @@ export default function WarehouseTab() {
       {/* Empty state — nothing selected */}
       {selectedSupplierId === null ? (
         <div className="animate-fade-up-in rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 px-6 py-14 text-center dark:border-slate-700 dark:bg-slate-900/60">
-          <div className="mx-auto mb-3 flex h-12 w-12 animate-float items-center justify-center rounded-2xl bg-cyan-50 dark:bg-cyan-500/10">
+          <div className="animate-float mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-50 dark:bg-cyan-500/10">
             <svg
               className="h-6 w-6 text-cyan-500"
               fill="none"

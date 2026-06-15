@@ -1,4 +1,5 @@
 import { buildPageMetadata } from "@/app/seo"
+
 import AddsContentClient from "./AddsContentClient"
 
 export const metadata = buildPageMetadata({

@@ -1,17 +1,18 @@
 "use client"
 
 import { useEffect } from "react"
-import TopBar from "@/components/layout/TopBar"
+import { setStoredReferralCode } from "@/libs/referral"
+
+import Footer from "@/components/landing-page/Footer"
+import ScrollToTop from "@/components/landing-page/ScrollToTop"
 import Navbar from "@/components/layout/Navbar"
+import TopBar from "@/components/layout/TopBar"
+import type { TopBarConfig } from "@/components/layout/TopBar"
 import TrustBar from "@/components/layout/TrustBar"
+import type { TrustBarConfig } from "@/components/layout/TrustBar"
 import ShopBuilderSections, {
   type ShopBuilderApiResponse,
 } from "@/components/sections/ShopBuilderSections"
-import Footer from "@/components/landing-page/Footer"
-import ScrollToTop from "@/components/landing-page/ScrollToTop"
-import type { TopBarConfig } from "@/components/layout/TopBar"
-import type { TrustBarConfig } from "@/components/layout/TrustBar"
-import { setStoredReferralCode } from "@/libs/referral"
 
 type ShopPageClientProps = {
   shopData: ShopBuilderApiResponse | null

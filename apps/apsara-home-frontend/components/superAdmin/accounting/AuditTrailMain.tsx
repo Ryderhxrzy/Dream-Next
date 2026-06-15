@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useGetAdminEncashmentRequestsQuery } from "@/store/api/encashmentApi"
+
 import AdminPagination from "@/components/superAdmin/AdminPagination"
 import AvatarImg from "@/components/superAdmin/AvatarImg"
 
@@ -186,33 +187,33 @@ export default function AuditTrailMain() {
   return (
     <div className="space-y-5">
       {/* ── Hero ── */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 dark:from-slate-900 dark:via-slate-900 dark:to-black shadow-xl">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 shadow-xl dark:from-slate-900 dark:via-slate-900 dark:to-black">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(99,102,241,0.15),transparent_55%)]" />
         <div className="absolute inset-0 opacity-[0.04]" style={STRIPE} />
         <div className="relative px-6 py-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <div className="flex flex-wrap items-center gap-2 mb-2">
-                <span className="rounded-md bg-white/10 border border-white/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-300">
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                <span className="rounded-md border border-white/20 bg-white/10 px-2.5 py-1 text-[10px] font-bold tracking-widest text-slate-300 uppercase">
                   Accounting
                 </span>
-                <span className="rounded-full bg-indigo-400/15 border border-indigo-400/30 px-2.5 py-1 text-[10px] font-semibold text-indigo-300">
+                <span className="rounded-full border border-indigo-400/30 bg-indigo-400/15 px-2.5 py-1 text-[10px] font-semibold text-indigo-300">
                   Compliance &amp; Governance
                 </span>
               </div>
-              <h1 className="text-2xl font-black text-white tracking-tight">
+              <h1 className="text-2xl font-black tracking-tight text-white">
                 Audit Trail
               </h1>
               <p className="mt-0.5 text-sm text-slate-400">
                 Review approval, rejection, and release activity logs
               </p>
             </div>
-            <div className="sm:text-right flex flex-col items-start sm:items-end gap-3">
+            <div className="flex flex-col items-start gap-3 sm:items-end sm:text-right">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+                <p className="mb-1 text-[10px] font-bold tracking-widest text-slate-500 uppercase">
                   Events Loaded
                 </p>
-                <p className="text-3xl font-black text-white tracking-tight">
+                <p className="text-3xl font-black tracking-tight text-white">
                   {data?.meta?.total ?? rows.length}
                 </p>
                 <p className="mt-0.5 text-xs text-slate-500">
@@ -222,10 +223,10 @@ export default function AuditTrailMain() {
               <button
                 onClick={handleExportCSV}
                 disabled={!rows.length}
-                className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white hover:bg-white/15 disabled:opacity-40 transition-colors"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-white/15 disabled:opacity-40"
               >
                 <svg
-                  className="w-3.5 h-3.5"
+                  className="h-3.5 w-3.5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -245,8 +246,8 @@ export default function AuditTrailMain() {
       </div>
 
       {/* ── Filters + Search ── */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700/60 dark:bg-slate-900 shadow-sm">
-        <div className="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-slate-100 dark:border-slate-700/60">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-900">
+        <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 px-4 py-3 dark:border-slate-700/60">
           {FILTERS.map(({ key, label, dot }) => (
             <button
               key={key}
@@ -256,8 +257,8 @@ export default function AuditTrailMain() {
               }}
               className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
                 statusFilter === key
-                  ? "bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900 shadow-sm"
-                  : "border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  ? "bg-slate-800 text-white shadow-sm dark:bg-slate-200 dark:text-slate-900"
+                  : "border border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
               }`}
             >
               <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
@@ -267,7 +268,7 @@ export default function AuditTrailMain() {
         </div>
         <div className="flex items-center gap-2.5 px-4 py-3">
           <svg
-            className="h-4 w-4 text-slate-400 shrink-0"
+            className="h-4 w-4 shrink-0 text-slate-400"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -286,12 +287,12 @@ export default function AuditTrailMain() {
               setPage(1)
             }}
             placeholder="Search by reference, affiliate name..."
-            className="flex-1 bg-transparent text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 outline-none"
+            className="flex-1 bg-transparent text-sm text-slate-700 placeholder-slate-400 outline-none dark:text-slate-200"
           />
           {(search || isFetching) && (
             <div className="flex items-center gap-2">
               {isFetching && (
-                <span className="h-1.5 w-12 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                <span className="h-1.5 w-12 animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
               )}
               {search && (
                 <button
@@ -299,7 +300,7 @@ export default function AuditTrailMain() {
                     setSearch("")
                     setPage(1)
                   }}
-                  className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                  className="text-xs text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-200"
                 >
                   Clear
                 </button>
@@ -310,8 +311,8 @@ export default function AuditTrailMain() {
       </div>
 
       {/* ── Audit Log ── */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700/60 dark:bg-slate-900 shadow-sm">
-        <div className="flex items-center gap-2.5 border-b border-slate-100 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/50 px-4 py-3">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-900">
+        <div className="flex items-center gap-2.5 border-b border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-700/60 dark:bg-slate-800/50">
           <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-200 dark:bg-slate-700">
             <svg
               className="h-4 w-4 text-slate-600 dark:text-slate-300"
@@ -327,18 +328,18 @@ export default function AuditTrailMain() {
               />
             </svg>
           </span>
-          <h2 className="text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+          <h2 className="text-xs font-bold tracking-wide text-slate-600 uppercase dark:text-slate-300">
             Activity Log
           </h2>
-          <span className="rounded-full bg-slate-200 dark:bg-slate-700 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+          <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">
             {data?.meta?.total ?? rows.length}
           </span>
         </div>
 
         {isError ? (
-          <div className="flex items-center gap-3 m-4 rounded-xl border border-red-200 bg-red-50 dark:border-red-500/30 dark:bg-red-500/10 px-4 py-3">
+          <div className="m-4 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 dark:border-red-500/30 dark:bg-red-500/10">
             <svg
-              className="shrink-0 h-5 w-5 text-red-500"
+              className="h-5 w-5 shrink-0 text-red-500"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -355,13 +356,13 @@ export default function AuditTrailMain() {
             </p>
           </div>
         ) : isLoading ? (
-          <div className="p-4 space-y-0">
+          <div className="space-y-0 p-4">
             {Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={i}
-                className="flex gap-4 py-4 border-b border-slate-50 dark:border-slate-800 animate-pulse"
+                className="flex animate-pulse gap-4 border-b border-slate-50 py-4 dark:border-slate-800"
               >
-                <div className="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-800 shrink-0" />
+                <div className="h-9 w-9 shrink-0 rounded-full bg-slate-100 dark:bg-slate-800" />
                 <div className="flex-1 space-y-2">
                   <div className="h-3 w-1/3 rounded bg-slate-100 dark:bg-slate-800" />
                   <div className="h-3 w-1/2 rounded bg-slate-100 dark:bg-slate-800" />
@@ -378,10 +379,10 @@ export default function AuditTrailMain() {
               return (
                 <div
                   key={row.id}
-                  className="flex items-start gap-4 px-4 py-4 hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors"
+                  className="flex items-start gap-4 px-4 py-4 transition-colors hover:bg-slate-50/60 dark:hover:bg-slate-800/30"
                 >
                   {/* Avatar */}
-                  <div className="shrink-0 relative">
+                  <div className="relative shrink-0">
                     <AvatarImg
                       src={row.affiliate_avatar}
                       name={row.affiliate_name ?? ""}
@@ -390,12 +391,12 @@ export default function AuditTrailMain() {
                       textSize="text-[10px]"
                     />
                     <span
-                      className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 ${cfg.dot}`}
+                      className={`absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 ${cfg.dot}`}
                     />
                   </div>
 
                   {/* Content */}
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
@@ -415,7 +416,7 @@ export default function AuditTrailMain() {
                               />
                             )}
                         </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                           <span className="font-medium text-slate-600 dark:text-slate-300">
                             {cfg.event}
                           </span>
@@ -426,18 +427,18 @@ export default function AuditTrailMain() {
                             {formatMoney(row.amount)}
                           </span>
                           {" via "}
-                          <span className="uppercase font-semibold">
+                          <span className="font-semibold uppercase">
                             {row.channel}
                           </span>
                         </p>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex shrink-0 items-center gap-2">
                         <span
                           className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${cfg.badge}`}
                         >
                           {cfg.label}
                         </span>
-                        <span className="text-[10px] text-slate-400 dark:text-slate-500 whitespace-nowrap">
+                        <span className="text-[10px] whitespace-nowrap text-slate-400 dark:text-slate-500">
                           {formatDate(eventTime)}
                         </span>
                       </div>
@@ -449,7 +450,7 @@ export default function AuditTrailMain() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center gap-3 py-12">
-            <div className="h-12 w-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
               <svg
                 className="h-6 w-6 text-slate-400"
                 fill="none"

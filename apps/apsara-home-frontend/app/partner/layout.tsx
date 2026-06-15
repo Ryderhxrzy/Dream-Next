@@ -1,9 +1,9 @@
 "use client"
 
 import { useEffect } from "react"
-import { usePathname } from "next/navigation"
 import { SessionProvider, useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+
 import PartnerDashboardLayout from "@/components/partner/DashboardLayout"
 
 function PartnerRouteGuard({ children }: { children: React.ReactNode }) {

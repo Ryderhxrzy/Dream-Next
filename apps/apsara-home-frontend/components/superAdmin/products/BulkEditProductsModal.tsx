@@ -1,13 +1,13 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { AnimatePresence, motion } from "framer-motion"
 import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
 import {
+  CreateProductPayload,
   Product,
   useUpdateProductMutation,
-  CreateProductPayload,
 } from "@/store/api/productsApi"
+import { AnimatePresence, motion } from "framer-motion"
 
 interface Props {
   products: Product[]
@@ -123,7 +123,7 @@ export default function BulkEditProductsModal({
                 }
                 className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl"
               >
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-6 py-5">
+                <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5 dark:border-slate-800">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-500 text-white shadow-md shadow-teal-500/25">
                       <svg
@@ -182,7 +182,7 @@ export default function BulkEditProductsModal({
                   )}
 
                   <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
                       Selected products
                     </p>
                     <div className="mt-2 flex flex-wrap gap-2">
@@ -210,7 +210,7 @@ export default function BulkEditProductsModal({
                       <select
                         value={categoryId}
                         onChange={(e) => setCategoryId(e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 outline-none transition-all focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 transition-all outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20"
                       >
                         <option value="">No change</option>
                         {categories.map((category) => (
@@ -228,7 +228,7 @@ export default function BulkEditProductsModal({
                       <select
                         value={status}
                         onChange={(e) => setStatus(e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 outline-none transition-all focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 transition-all outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20"
                       >
                         <option value="">No change</option>
                         <option value="1">Active</option>
@@ -314,7 +314,7 @@ function ToggleField({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as ToggleMode)}
-        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 outline-none transition-all focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20"
+        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 transition-all outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20"
       >
         <option value="unchanged">No change</option>
         <option value="enabled">Enable</option>

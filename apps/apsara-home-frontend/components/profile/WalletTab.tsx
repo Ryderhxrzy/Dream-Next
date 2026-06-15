@@ -1,6 +1,11 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import {
+  useCreateAffiliateVoucherMutation,
+  useGetWalletOverviewQuery,
+  WalletTypeFilter,
+} from "@/store/api/encashmentApi"
 import { AnimatePresence, motion } from "framer-motion"
 import {
   Activity,
@@ -11,16 +16,12 @@ import {
   TicketPercent,
   Zap,
 } from "lucide-react"
-import {
-  WalletTypeFilter,
-  useCreateAffiliateVoucherMutation,
-  useGetWalletOverviewQuery,
-} from "@/store/api/encashmentApi"
+
+import DownlineActivityTab from "./DownlineActivityTab"
+import NetworkEarningsTab from "./NetworkEarningsTab"
+import PerformanceTab from "./PerformanceTab"
 import PvWalletTab from "./PvWalletTab"
 import RewardsWalletTab from "./RewardsWalletTab"
-import NetworkEarningsTab from "./NetworkEarningsTab"
-import DownlineActivityTab from "./DownlineActivityTab"
-import PerformanceTab from "./PerformanceTab"
 
 const peso = (value: number) =>
   new Intl.NumberFormat("en-PH", {
@@ -294,24 +295,24 @@ export default function WalletTab({
   return (
     <div className="space-y-4">
       {/* Header Card */}
-      <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-slate-200/80 dark:border-slate-700/60 shadow-sm">
+      <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-700/60 dark:bg-gray-900">
         <div
           className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${currentWalletMeta.gradient}`}
         />
 
-        <div className="p-5 md:p-6 pt-6">
-          <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="p-5 pt-6 md:p-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex items-center gap-3">
               <div
                 className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${currentWalletMeta.gradient} shadow-lg`}
               >
-                <span className="text-white text-base font-bold">W</span>
+                <span className="text-base font-bold text-white">W</span>
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-white sm:text-lg leading-tight">
+                <h3 className="text-base leading-tight font-bold text-slate-900 sm:text-lg dark:text-white">
                   {currentWalletMeta.title}
                 </h3>
-                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 max-w-xs">
+                <p className="mt-0.5 max-w-xs text-xs text-slate-500 dark:text-slate-400">
                   {currentWalletMeta.subtitle}
                 </p>
               </div>
@@ -325,8 +326,8 @@ export default function WalletTab({
               disabled={isFetching}
               className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-1.5 text-xs font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
                 isFetching
-                  ? "border-slate-200 dark:border-slate-700 text-slate-400"
-                  : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  ? "border-slate-200 text-slate-400 dark:border-slate-700"
+                  : "border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
               }`}
             >
               <svg
@@ -358,8 +359,8 @@ export default function WalletTab({
                 }}
                 className={`relative shrink-0 rounded-lg px-4 py-2 text-xs font-semibold transition-all duration-200 ${
                   walletType === item.key
-                    ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm ring-1 ring-slate-200/80 dark:ring-slate-600/80"
-                    : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                    ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-700 dark:text-white dark:ring-slate-600/80"
+                    : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                 }`}
               >
                 <span className="flex items-center gap-1.5">
@@ -565,18 +566,18 @@ export default function WalletTab({
                     </div>
 
                     {/* Encashment capacity bar — inside cash section */}
-                    <div className="mt-3 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 bg-white dark:bg-slate-800/60 px-4 py-3.5">
-                      <div className="flex items-center justify-between mb-2.5">
+                    <div className="mt-3 rounded-2xl border border-slate-200/80 bg-white px-4 py-3.5 dark:border-slate-700/60 dark:bg-slate-800/60">
+                      <div className="mb-2.5 flex items-center justify-between">
                         <p className="text-xs font-bold text-slate-700 dark:text-slate-200">
                           Encashment Capacity
                         </p>
                         <span
                           className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
                             utilizationPct > 70
-                              ? "bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400"
+                              ? "bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400"
                               : utilizationPct > 40
-                                ? "bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
-                                : "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
+                                ? "bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
+                                : "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
                           }`}
                         >
                           {utilizationPct.toFixed(0)}% locked
@@ -691,12 +692,12 @@ export default function WalletTab({
                   </div>
 
                   {/* ── Wallet Flow Breakdown ── */}
-                  <div className="rounded-2xl border border-slate-200/80 dark:border-slate-700/60 bg-white dark:bg-slate-800/60 p-5">
+                  <div className="rounded-2xl border border-slate-200/80 bg-white p-5 dark:border-slate-700/60 dark:bg-slate-800/60">
                     <div className="mb-4">
                       <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
                         Wallet Flow Breakdown
                       </p>
-                      <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+                      <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">
                         Total credits and debits across all wallets
                       </p>
                     </div>
@@ -734,8 +735,8 @@ export default function WalletTab({
 
       {/* Ledger — only on the Overview tab (all wallets) */}
       {walletType === "all" && (
-        <div className="rounded-2xl border border-slate-200/80 dark:border-slate-700/60 bg-white dark:bg-gray-900 shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between gap-4 flex-wrap px-5 py-4 md:px-6 border-b border-slate-100 dark:border-slate-800">
+        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-700/60 dark:bg-gray-900">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 px-5 py-4 md:px-6 dark:border-slate-800">
             <div>
               <h3 className="text-sm font-bold text-slate-900 dark:text-white">
                 Wallet Ledger
@@ -746,7 +747,7 @@ export default function WalletTab({
             </div>
             <div className="flex items-center gap-2">
               {isFetching && (
-                <span className="flex items-center gap-1 text-[11px] font-medium text-slate-400 animate-pulse">
+                <span className="flex animate-pulse items-center gap-1 text-[11px] font-medium text-slate-400">
                   <svg
                     className="h-3 w-3 animate-spin"
                     fill="none"
@@ -763,7 +764,7 @@ export default function WalletTab({
                   Refreshing
                 </span>
               )}
-              <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                 {meta?.total ?? 0} entries
               </span>
             </div>
@@ -783,7 +784,7 @@ export default function WalletTab({
                   ].map((h) => (
                     <th
                       key={h}
-                      className={`px-4 py-3 first:pl-5 md:first:pl-6 last:pr-5 md:last:pr-6 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 ${h === "Amount" ? "text-right" : ""}`}
+                      className={`px-4 py-3 text-left text-[10px] font-bold tracking-widest text-slate-400 uppercase first:pl-5 last:pr-5 md:first:pl-6 md:last:pr-6 dark:text-slate-500 ${h === "Amount" ? "text-right" : ""}`}
                     >
                       {h}
                     </th>
@@ -795,7 +796,7 @@ export default function WalletTab({
                   <tr>
                     <td colSpan={6} className="py-16 text-center">
                       <div className="flex flex-col items-center gap-2">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800 text-xl">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-xl dark:bg-slate-800">
                           ◈
                         </div>
                         <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
@@ -818,17 +819,17 @@ export default function WalletTab({
                     return (
                       <tr
                         key={row.id}
-                        className="group hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors duration-150"
+                        className="group transition-colors duration-150 hover:bg-slate-50/60 dark:hover:bg-slate-800/30"
                       >
-                        <td className="px-4 py-3.5 first:pl-5 md:first:pl-6 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                        <td className="px-4 py-3.5 text-xs whitespace-nowrap text-slate-500 first:pl-5 md:first:pl-6 dark:text-slate-400">
                           {formatDate(row.created_at)}
                         </td>
                         <td className="px-4 py-3.5">
                           <span
                             className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
                               row.wallet_type === "cash"
-                                ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
-                                : "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+                                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                : "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
                             }`}
                           >
                             <span
@@ -841,8 +842,8 @@ export default function WalletTab({
                           <span
                             className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
                               isCredit
-                                ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
-                                : "bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400"
+                                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                : "bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
                             }`}
                           >
                             <span
@@ -854,7 +855,7 @@ export default function WalletTab({
                         <td className="px-4 py-3.5 text-xs font-medium text-slate-700 dark:text-slate-300">
                           {formatLedgerSource(row.source_type)}
                         </td>
-                        <td className="px-4 py-3.5 max-w-[180px]">
+                        <td className="max-w-[180px] px-4 py-3.5">
                           <p
                             className="truncate font-mono text-xs text-slate-600 dark:text-slate-300"
                             title={row.reference_no || row.notes || ""}
@@ -863,7 +864,7 @@ export default function WalletTab({
                           </p>
                         </td>
                         <td
-                          className={`px-4 py-3.5 last:pr-5 md:last:pr-6 text-right text-sm font-bold tabular-nums ${isCredit ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}
+                          className={`px-4 py-3.5 text-right text-sm font-bold tabular-nums last:pr-5 md:last:pr-6 ${isCredit ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}
                         >
                           {amountLabel}
                         </td>
@@ -875,7 +876,7 @@ export default function WalletTab({
             </table>
           </div>
 
-          <div className="flex items-center justify-between px-5 py-4 md:px-6 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center justify-between border-t border-slate-100 px-5 py-4 md:px-6 dark:border-slate-800">
             <p className="text-xs text-slate-400 dark:text-slate-500">
               Showing{" "}
               <span className="font-semibold text-slate-700 dark:text-slate-300">
@@ -891,7 +892,7 @@ export default function WalletTab({
                 type="button"
                 onClick={() => setPage((prev) => Math.max(1, prev - 1))}
                 disabled={!meta || page <= 1}
-                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
               >
                 <svg
                   className="h-3 w-3"
@@ -908,7 +909,7 @@ export default function WalletTab({
                 </svg>
                 Prev
               </button>
-              <div className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 min-w-[60px] text-center">
+              <div className="min-w-[60px] rounded-lg bg-slate-50 px-3 py-1.5 text-center text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
                 {page} / {meta?.last_page ?? 1}
               </div>
               <button
@@ -919,7 +920,7 @@ export default function WalletTab({
                   )
                 }
                 disabled={!meta || page >= (meta?.last_page ?? 1)}
-                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
               >
                 Next
                 <svg
@@ -958,10 +959,10 @@ function SectionLabel({
   return (
     <div className="flex items-center gap-2">
       <span className={`text-sm leading-none ${color}`}>{icon}</span>
-      <p className={`text-xs font-black uppercase tracking-widest ${color}`}>
+      <p className={`text-xs font-black tracking-widest uppercase ${color}`}>
         {label}
       </p>
-      <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800" />
+      <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
     </div>
   )
 }
@@ -998,17 +999,17 @@ function BalanceCard({
       className={`relative overflow-hidden rounded-2xl border bg-gradient-to-br ${gradient} ${border} p-4 transition-shadow hover:shadow-md`}
     >
       <div className="flex items-start justify-between">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <p className="text-[11px] font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">
           {label}
         </p>
         <span
-          className={`flex h-7 w-7 items-center justify-center rounded-lg text-sm ${iconBg} ${iconColor} font-bold shrink-0`}
+          className={`flex h-7 w-7 items-center justify-center rounded-lg text-sm ${iconBg} ${iconColor} shrink-0 font-bold`}
         >
           {icon}
         </span>
       </div>
       <p
-        className={`mt-3 font-black leading-tight ${large ? "text-xl" : "text-lg"} ${valueColor}`}
+        className={`mt-3 leading-tight font-black ${large ? "text-xl" : "text-lg"} ${valueColor}`}
       >
         {value}
       </p>
@@ -1070,7 +1071,7 @@ function EgcWalletPanel({
 
 function SkeletonCards() {
   return (
-    <div className="space-y-5 animate-pulse pt-1">
+    <div className="animate-pulse space-y-5 pt-1">
       <div className="space-y-2">
         <div className="h-4 w-32 rounded-lg bg-slate-100 dark:bg-slate-800" />
         <div className="grid grid-cols-3 gap-3">
@@ -1111,8 +1112,8 @@ function SkeletonCards() {
 
 function ErrorBanner({ msg }: { msg: string }) {
   return (
-    <div className="mt-3 flex items-center gap-3 rounded-xl border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-900/20 px-4 py-3">
-      <span className="text-rose-500 text-base">⚠</span>
+    <div className="mt-3 flex items-center gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 dark:border-rose-800 dark:bg-rose-900/20">
+      <span className="text-base text-rose-500">⚠</span>
       <p className="text-sm font-medium text-rose-700 dark:text-rose-400">
         {msg}
       </p>

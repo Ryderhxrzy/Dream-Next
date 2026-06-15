@@ -255,22 +255,22 @@ export default function ReportsMain() {
   return (
     <div className="space-y-5">
       {/* ── Hero ── */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 via-slate-800 to-slate-900 dark:from-slate-900 dark:via-slate-900 dark:to-black shadow-xl">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 via-slate-800 to-slate-900 shadow-xl dark:from-slate-900 dark:via-slate-900 dark:to-black">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(99,102,241,0.15),transparent_55%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(14,165,233,0.08),transparent_55%)]" />
         <div className="absolute inset-0 opacity-[0.03]" style={STRIPE} />
         <div className="relative px-6 py-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <div className="flex flex-wrap items-center gap-2 mb-2">
-                <span className="rounded-md bg-white/10 border border-white/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-300">
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                <span className="rounded-md border border-white/20 bg-white/10 px-2.5 py-1 text-[10px] font-bold tracking-widest text-slate-300 uppercase">
                   Accounting
                 </span>
-                <span className="rounded-full bg-indigo-400/15 border border-indigo-400/30 px-2.5 py-1 text-[10px] font-semibold text-indigo-300">
+                <span className="rounded-full border border-indigo-400/30 bg-indigo-400/15 px-2.5 py-1 text-[10px] font-semibold text-indigo-300">
                   9 report types
                 </span>
               </div>
-              <h1 className="text-2xl font-black text-white tracking-tight">
+              <h1 className="text-2xl font-black tracking-tight text-white">
                 Accounting Reports
               </h1>
               <p className="mt-0.5 text-sm text-slate-400">
@@ -278,25 +278,25 @@ export default function ReportsMain() {
               </p>
             </div>
             <div className="sm:text-right">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+              <p className="mb-1 text-[10px] font-bold tracking-widest text-slate-500 uppercase">
                 Quick Links
               </p>
               <div className="flex flex-wrap gap-2 sm:justify-end">
                 <Link
                   href="/admin/accounting/invoices"
-                  className="rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 px-3 py-1.5 text-xs font-semibold text-slate-300 transition-colors"
+                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-300 transition-colors hover:bg-white/10"
                 >
                   Invoices
                 </Link>
                 <Link
                   href="/admin/accounting/reconciliation"
-                  className="rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 px-3 py-1.5 text-xs font-semibold text-slate-300 transition-colors"
+                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-300 transition-colors hover:bg-white/10"
                 >
                   Reconciliation
                 </Link>
                 <Link
                   href="/admin/accounting/audit"
-                  className="rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 px-3 py-1.5 text-xs font-semibold text-slate-300 transition-colors"
+                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-300 transition-colors hover:bg-white/10"
                 >
                   Audit Trail
                 </Link>
@@ -310,18 +310,18 @@ export default function ReportsMain() {
       {REPORTS.map(({ group, items }) => (
         <div key={group} className="space-y-3">
           <div className="flex items-center gap-3">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+            <h2 className="text-xs font-bold tracking-widest text-slate-500 uppercase dark:text-slate-400">
               {group}
             </h2>
-            <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700/60" />
+            <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700/60" />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {items.map(
               ({ title, description, icon, from, to, shadow, tag, href }) => {
                 const isAvailable = tag === "Available"
                 const card = (
                   <div
-                    className={`group relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-900 shadow-sm ${isAvailable ? "hover:shadow-md transition-all duration-200 cursor-pointer" : "opacity-80"}`}
+                    className={`group relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-900 ${isAvailable ? "cursor-pointer transition-all duration-200 hover:shadow-md" : "opacity-80"}`}
                   >
                     <div
                       className={`relative overflow-hidden bg-gradient-to-br ${from} ${to} px-5 py-4 shadow-md ${shadow}`}
@@ -346,14 +346,14 @@ export default function ReportsMain() {
                       </div>
                     </div>
                     <div className="px-5 py-4">
-                      <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-1">
+                      <h3 className="mb-1 text-sm font-bold text-slate-800 dark:text-slate-200">
                         {title}
                       </h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                      <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
                         {description}
                       </p>
                       {isAvailable && (
-                        <div className="mt-3 flex items-center gap-1 text-xs font-semibold text-sky-600 dark:text-sky-400 group-hover:gap-2 transition-all">
+                        <div className="mt-3 flex items-center gap-1 text-xs font-semibold text-sky-600 transition-all group-hover:gap-2 dark:text-sky-400">
                           View report
                           <svg
                             className="h-3.5 w-3.5"

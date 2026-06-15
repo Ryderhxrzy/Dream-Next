@@ -133,7 +133,7 @@ const OtpInput = ({
     >
       {digits.map((digit, index) => (
         <div key={index} className="flex flex-col items-center gap-2">
-          <div className="flex h-12 w-12 items-center justify-center rounded-[18px] border border-gray-300 bg-white transition-all duration-200 focus-within:border-sky-400 focus-within:ring-2 focus-within:ring-sky-100 dark:border-white/18 dark:bg-white/12 dark:focus-within:border-sky-400/60 dark:focus-within:ring-sky-500/15 sm:h-14 sm:w-14">
+          <div className="flex h-12 w-12 items-center justify-center rounded-[18px] border border-gray-300 bg-white transition-all duration-200 focus-within:border-sky-400 focus-within:ring-2 focus-within:ring-sky-100 sm:h-14 sm:w-14 dark:border-white/18 dark:bg-white/12 dark:focus-within:border-sky-400/60 dark:focus-within:ring-sky-500/15">
             <input
               ref={(el) => {
                 inputRef.current[index] = el
@@ -151,7 +151,7 @@ const OtpInput = ({
               onPaste={handlePaste}
               onFocus={(e) => e.target.select()}
               aria-label={`Digit ${index + 1} of ${length}`}
-              className="h-full w-full rounded-[18px] bg-transparent text-center text-2xl font-bold text-gray-900 outline-none caret-transparent disabled:opacity-50 disabled:cursor-not-allowed dark:text-white"
+              className="h-full w-full rounded-[18px] bg-transparent text-center text-2xl font-bold text-gray-900 caret-transparent outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:text-white"
             />
           </div>
         </div>

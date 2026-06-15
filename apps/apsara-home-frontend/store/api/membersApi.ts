@@ -1,5 +1,5 @@
-import { Member } from "@/types/members/types"
-import { MemberStatus, MemberTier } from "@/types/members/types"
+import { Member, MemberStatus, MemberTier } from "@/types/members/types"
+
 import { baseApi } from "./baseApi"
 
 export interface MembersMeta {

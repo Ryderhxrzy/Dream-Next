@@ -78,19 +78,19 @@ export default function CategoryNav({
   }
 
   return (
-    <section className="py-16 md:py-24 bg-af-cream dark:bg-gray-900">
+    <section className="bg-af-cream py-16 md:py-24 dark:bg-gray-900">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-12"
+          className="mb-12 text-center"
         >
-          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl text-af-text dark:text-white font-semibold mb-4">
+          <h2 className="font-display text-af-text mb-4 text-3xl font-semibold md:text-4xl lg:text-5xl dark:text-white">
             Shop by Category
           </h2>
-          <p className="text-af-text-secondary dark:text-gray-400 text-lg max-w-xl mx-auto">
+          <p className="text-af-text-secondary mx-auto max-w-xl text-lg dark:text-gray-400">
             Find the perfect pieces for every room in your home
           </p>
         </motion.div>
@@ -108,10 +108,10 @@ export default function CategoryNav({
             whileHover={{ y: -4, scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => onSelectCategory(null)}
-            className={`relative px-6 py-3 rounded-full font-semibold text-sm md:text-base transition-all duration-300 ${
+            className={`relative rounded-full px-6 py-3 text-sm font-semibold transition-all duration-300 md:text-base ${
               selectedCategory === null
-                ? "bg-orange-500 text-white shadow-soft-lg"
-                : "bg-white dark:bg-gray-800 text-af-text dark:text-gray-100 shadow-soft hover:shadow-soft-lg dark:shadow-none dark:border dark:border-gray-700"
+                ? "shadow-soft-lg bg-orange-500 text-white"
+                : "text-af-text shadow-soft hover:shadow-soft-lg bg-white dark:border dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:shadow-none"
             }`}
             style={{
               boxShadow:
@@ -132,10 +132,10 @@ export default function CategoryNav({
               whileHover={{ y: -4, scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => onSelectCategory(category.id)}
-              className={`relative flex items-center gap-3 px-4 py-2 rounded-full font-semibold text-sm md:text-base transition-all duration-300 overflow-hidden ${
+              className={`relative flex items-center gap-3 overflow-hidden rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 md:text-base ${
                 selectedCategory === category.id
-                  ? "bg-orange-500 text-white shadow-soft-lg"
-                  : "bg-white dark:bg-gray-800 text-af-text dark:text-gray-100 shadow-soft hover:shadow-soft-lg dark:shadow-none dark:border dark:border-gray-700"
+                  ? "shadow-soft-lg bg-orange-500 text-white"
+                  : "text-af-text shadow-soft hover:shadow-soft-lg bg-white dark:border dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:shadow-none"
               }`}
               style={{
                 boxShadow:
@@ -144,11 +144,11 @@ export default function CategoryNav({
                     : "inset 0 2px 4px rgba(0,0,0,0.03), 0px 2px 8px rgba(0,0,0,0.04), 0px 8px 24px rgba(0,0,0,0.06)",
               }}
             >
-              <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+              <div className="h-8 w-8 flex-shrink-0 overflow-hidden rounded-full">
                 <img
                   src={category.image}
                   alt={category.name}
-                  className="w-full h-full object-cover"
+                  className="h-full w-full object-cover"
                 />
               </div>
               <span>{category.name}</span>

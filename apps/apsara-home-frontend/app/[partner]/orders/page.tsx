@@ -1,10 +1,11 @@
-import { buildPageMetadata } from "@/app/seo"
-import OrdersPageMain from "@/components/orders/OrdersPageMain"
 import { authOptions } from "@/libs/auth"
+import { getPartnerStorefrontBySlug } from "@/libs/partnerStorefrontServer"
 import { getNavbarCategories } from "@/libs/serverStorefront"
 import { getServerSession } from "next-auth"
 import { notFound, redirect } from "next/navigation"
-import { getPartnerStorefrontBySlug } from "@/libs/partnerStorefrontServer"
+
+import OrdersPageMain from "@/components/orders/OrdersPageMain"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Orders",

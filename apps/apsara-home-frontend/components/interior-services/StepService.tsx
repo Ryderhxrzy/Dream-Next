@@ -1,8 +1,9 @@
 "use client"
 
+import { motion } from "framer-motion"
+
 import { staggerContainer, staggerItem } from "./animation"
 import { BookingFormData, SERVICES } from "./types"
-import { motion } from "framer-motion"
 import { FormField, SelectField } from "./ui/Primitives"
 
 interface StepServiceProps {

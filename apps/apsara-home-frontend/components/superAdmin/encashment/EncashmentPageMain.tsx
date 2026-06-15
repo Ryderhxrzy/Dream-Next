@@ -1,9 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import Link from "next/link"
-import { motion, AnimatePresence } from "framer-motion"
-import { useSession } from "next-auth/react"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import {
   AdminEncashmentItem,
   AdminEncashmentStatus,
@@ -12,8 +10,10 @@ import {
   useRejectAdminEncashmentMutation,
   useReleaseAdminEncashmentMutation,
 } from "@/store/api/encashmentApi"
+import { AnimatePresence, motion } from "framer-motion"
+import { useSession } from "next-auth/react"
+import Link from "next/link"
 
-import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import AvatarImg from "@/components/superAdmin/AvatarImg"
 
 /* ── constants ── */
@@ -260,10 +260,10 @@ function DetailModal({
         initial={{ opacity: 0, scale: 0.96, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 12 }}
-        className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900 shadow-2xl z-10"
+        className="relative z-10 w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900"
       >
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-6 py-4 dark:border-slate-800">
           <div className="flex items-center gap-3">
             <AvatarImg
               src={item.affiliate_avatar}
@@ -289,19 +289,19 @@ function DetailModal({
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex shrink-0 items-center gap-2">
             <span
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${cfg.badge}`}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${cfg.badge}`}
             >
               <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />{" "}
               {cfg.label}
             </span>
             <button
               onClick={onClose}
-              className="h-8 w-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               <svg
-                className="w-4 h-4"
+                className="h-4 w-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -318,36 +318,36 @@ function DetailModal({
         </div>
 
         {/* Body */}
-        <div className="px-6 py-5 max-h-[65vh] overflow-y-auto space-y-4">
+        <div className="max-h-[65vh] space-y-4 overflow-y-auto px-6 py-5">
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-xl border border-teal-100 bg-teal-50 px-4 py-3 dark:border-teal-900/30 dark:bg-teal-500/10">
-              <p className="text-[10px] text-teal-600 dark:text-teal-400 font-semibold uppercase tracking-wide">
+              <p className="text-[10px] font-semibold tracking-wide text-teal-600 uppercase dark:text-teal-400">
                 Gross Request
               </p>
-              <p className="text-lg font-bold text-teal-700 dark:text-teal-300 mt-1">
+              <p className="mt-1 text-lg font-bold text-teal-700 dark:text-teal-300">
                 {formatMoney(item.amount)}
               </p>
-              <p className="text-xs text-teal-600 dark:text-teal-400 mt-1">
+              <p className="mt-1 text-xs text-teal-600 dark:text-teal-400">
                 Net payout: {formatMoney(item.net_amount ?? item.amount)}
               </p>
             </div>
             <div
-              className={`rounded-xl border px-4 py-3 ${(item.can_release_by_balance ?? true) ? "bg-emerald-50 border-emerald-100 dark:bg-emerald-500/10 dark:border-emerald-500/20" : "bg-red-50 border-red-100 dark:bg-red-500/10 dark:border-red-500/20"}`}
+              className={`rounded-xl border px-4 py-3 ${(item.can_release_by_balance ?? true) ? "border-emerald-100 bg-emerald-50 dark:border-emerald-500/20 dark:bg-emerald-500/10" : "border-red-100 bg-red-50 dark:border-red-500/20 dark:bg-red-500/10"}`}
             >
               <p
-                className={`text-[10px] font-semibold uppercase tracking-wide ${(item.can_release_by_balance ?? true) ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}`}
+                className={`text-[10px] font-semibold tracking-wide uppercase ${(item.can_release_by_balance ?? true) ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}`}
               >
                 Release Check
               </p>
               <p
-                className={`text-sm font-bold mt-1 ${(item.can_release_by_balance ?? true) ? "text-emerald-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300"}`}
+                className={`mt-1 text-sm font-bold ${(item.can_release_by_balance ?? true) ? "text-emerald-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300"}`}
               >
                 {(item.can_release_by_balance ?? true)
                   ? "Ready to Release"
                   : "Insufficient Balance"}
               </p>
               {item.can_release_by_balance === false && (
-                <p className="text-xs text-red-500 mt-0.5">
+                <p className="mt-0.5 text-xs text-red-500">
                   Shortfall: {formatMoney(item.balance_shortfall ?? 0)}
                 </p>
               )}
@@ -401,10 +401,10 @@ function DetailModal({
                 key={label}
                 className="rounded-xl border border-slate-100 bg-slate-50 px-3.5 py-3 dark:border-slate-800 dark:bg-slate-950"
               >
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                <p className="text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
                   {label}
                 </p>
-                <p className="text-sm font-medium text-slate-700 dark:text-slate-200 mt-1">
+                <p className="mt-1 text-sm font-medium text-slate-700 dark:text-slate-200">
                   {value}
                 </p>
               </div>
@@ -415,10 +415,10 @@ function DetailModal({
             payoutMeta ||
             item.admin_notes ||
             item.accounting_notes) && (
-            <div className="rounded-xl border border-slate-100 bg-slate-50 px-3.5 py-3 space-y-1.5 dark:border-slate-800 dark:bg-slate-950">
+            <div className="space-y-1.5 rounded-xl border border-slate-100 bg-slate-50 px-3.5 py-3 dark:border-slate-800 dark:bg-slate-950">
               {memberNotes && (
                 <p className="text-sm text-slate-700 dark:text-slate-300">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mr-2">
+                  <span className="mr-2 text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
                     Member:
                   </span>
                   {memberNotes}
@@ -426,10 +426,10 @@ function DetailModal({
               )}
               {payoutMeta && (
                 <div className="text-sm text-slate-700 dark:text-slate-300">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mr-2">
+                  <span className="mr-2 text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
                     Payout Details:
                   </span>
-                  <div className="mt-1 grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+                  <div className="mt-1 grid grid-cols-1 gap-1.5 text-xs text-slate-600 sm:grid-cols-2 dark:text-slate-400">
                     {payoutMeta.method_type && (
                       <p>
                         Method:{" "}
@@ -507,7 +507,7 @@ function DetailModal({
               )}
               {item.admin_notes && (
                 <p className="text-sm text-slate-700 dark:text-slate-300">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mr-2">
+                  <span className="mr-2 text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
                     Admin:
                   </span>
                   {item.admin_notes}
@@ -515,7 +515,7 @@ function DetailModal({
               )}
               {item.accounting_notes && (
                 <p className="text-sm text-slate-700 dark:text-slate-300">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mr-2">
+                  <span className="mr-2 text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
                     Accounting:
                   </span>
                   {item.accounting_notes}
@@ -529,11 +529,11 @@ function DetailModal({
               href={item.proof_url}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-2.5 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 hover:bg-emerald-100 dark:border-emerald-900/30 dark:bg-emerald-500/10 transition-colors"
+              className="flex items-center gap-2.5 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 transition-colors hover:bg-emerald-100 dark:border-emerald-900/30 dark:bg-emerald-500/10"
             >
-              <div className="h-8 w-8 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
                 <svg
-                  className="w-4 h-4"
+                  className="h-4 w-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -559,14 +559,14 @@ function DetailModal({
         </div>
 
         {(canApproveThis || canRejectThis || canReleaseThis) && (
-          <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2">
+          <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-6 py-4 dark:border-slate-800">
             {canRejectThis && (
               <button
                 onClick={() => {
                   onClose()
                   onAction("reject", item.id)
                 }}
-                className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors"
+                className="rounded-xl bg-red-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-600"
               >
                 Reject
               </button>
@@ -577,7 +577,7 @@ function DetailModal({
                   onClose()
                   onAction("approve", item.id)
                 }}
-                className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-sky-600 hover:bg-sky-700 transition-colors"
+                className="rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-sky-700"
               >
                 Approve
               </button>
@@ -588,7 +588,7 @@ function DetailModal({
                   onClose()
                   onAction("release", item.id)
                 }}
-                className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
+                className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
               >
                 Release
               </button>
@@ -674,14 +674,14 @@ function ActionModal({
         initial={{ opacity: 0, scale: 0.96, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 12 }}
-        className="relative w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900 shadow-2xl z-10"
+        className="relative z-10 w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900"
       >
-        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
+        <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4 dark:border-slate-800">
           <div
-            className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${meta.iconBg}`}
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${meta.iconBg}`}
           >
             <svg
-              className="w-5 h-5"
+              className="h-5 w-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -716,14 +716,14 @@ function ActionModal({
             <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100">
               {meta.title}
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">{noteHint}</p>
+            <p className="mt-0.5 text-xs text-slate-400">{noteHint}</p>
           </div>
           <button
             onClick={onClose}
-            className="h-8 w-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             <svg
-              className="w-4 h-4"
+              className="h-4 w-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -738,9 +738,9 @@ function ActionModal({
           </button>
         </div>
 
-        <div className="px-6 py-5 space-y-4">
+        <div className="space-y-4 px-6 py-5">
           <div>
-            <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 block mb-1.5">
+            <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-400">
               {noteLabel}{" "}
               {noteRequired ? <span className="text-red-400">*</span> : null}
             </label>
@@ -753,28 +753,28 @@ function ActionModal({
                   ? "Optional note for this approval..."
                   : "Write clear reason / details (min 5 characters)..."
               }
-              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3.5 py-2.5 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-sky-400 dark:focus:border-sky-500 focus:ring-1 focus:ring-sky-400/30 resize-none transition-all"
+              className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-700 transition-all outline-none placeholder:text-slate-400 focus:border-sky-400 focus:ring-1 focus:ring-sky-400/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500 dark:focus:border-sky-500"
             />
           </div>
 
           {action === "release" && (
             <div>
-              <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 block mb-1.5">
+              <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-400">
                 Release Screenshot Proof <span className="text-red-400">*</span>
               </label>
               <label
                 className={`flex items-center gap-3 rounded-xl border border-dashed px-4 py-3 transition-all ${
                   uploading
                     ? "cursor-wait border-sky-300 bg-sky-50/60 dark:border-sky-800 dark:bg-sky-900/20"
-                    : "cursor-pointer border-slate-300 dark:border-slate-600 hover:border-sky-400 hover:bg-sky-50/30 dark:hover:bg-slate-800/40"
+                    : "cursor-pointer border-slate-300 hover:border-sky-400 hover:bg-sky-50/30 dark:border-slate-600 dark:hover:bg-slate-800/40"
                 }`}
               >
-                <div className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-400 flex items-center justify-center shrink-0">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-400 dark:bg-slate-700">
                   {uploading ? (
-                    <span className="h-4 w-4 rounded-full border-2 border-sky-500 border-t-transparent animate-spin" />
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-sky-500 border-t-transparent" />
                   ) : (
                     <svg
-                      className="w-4 h-4"
+                      className="h-4 w-4"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -788,13 +788,13 @@ function ActionModal({
                     </svg>
                   )}
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
                     {uploading
                       ? "Uploading screenshot..."
                       : proofFileName || "Click to upload screenshot"}
                   </p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
+                  <p className="mt-0.5 text-[11px] text-slate-400">
                     {uploading
                       ? "Please wait, do not close this window."
                       : "PNG, JPG, WebP accepted"}
@@ -817,7 +817,7 @@ function ActionModal({
                   href={proofUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:underline"
+                  className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 hover:underline dark:text-emerald-400"
                 >
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />{" "}
                   Proof uploaded — view file
@@ -827,17 +827,17 @@ function ActionModal({
           )}
         </div>
 
-        <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex gap-2">
+        <div className="flex gap-2 border-t border-slate-100 px-6 py-4 dark:border-slate-800">
           <button
             onClick={onClose}
-            className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            className="flex-1 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
             disabled={busy || uploading}
-            className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60 transition-all ${meta.btn}`}
+            className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-bold text-white transition-all disabled:opacity-60 ${meta.btn}`}
           >
             {uploading ? "Uploading..." : busy ? "Processing..." : meta.label}
           </button>
@@ -1088,24 +1088,24 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
   return (
     <div className="space-y-5">
       {/* ── Hero ── */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 dark:from-slate-900 dark:to-black shadow-xl">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 shadow-xl dark:from-slate-900 dark:to-black">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(20,184,166,0.12),transparent_55%)]" />
         <div className="absolute inset-0 opacity-[0.04]" style={STRIPE} />
         <div className="relative px-6 py-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <div className="flex flex-wrap items-center gap-2 mb-2">
-                <span className="rounded-md bg-white/10 border border-white/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-300">
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                <span className="rounded-md border border-white/20 bg-white/10 px-2.5 py-1 text-[10px] font-bold tracking-widest text-slate-300 uppercase">
                   Finance
                 </span>
                 {(canApprove || canRelease) && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-500/15 border border-teal-500/30 px-2.5 py-1 text-[10px] font-semibold text-teal-300">
-                    <span className="h-1.5 w-1.5 rounded-full bg-teal-400 animate-pulse" />
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-teal-500/30 bg-teal-500/15 px-2.5 py-1 text-[10px] font-semibold text-teal-300">
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-teal-400" />
                     {role}
                   </span>
                 )}
               </div>
-              <h1 className="text-2xl font-black text-white tracking-tight">
+              <h1 className="text-2xl font-black tracking-tight text-white">
                 Encashment Requests
               </h1>
               <p className="mt-0.5 text-sm text-slate-400">
@@ -1117,10 +1117,10 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
               <button
                 onClick={handleExportCSV}
                 disabled={!data?.requests?.length}
-                className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white hover:bg-white/15 disabled:opacity-40 transition-colors"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-white/15 disabled:opacity-40"
               >
                 <svg
-                  className="w-3.5 h-3.5"
+                  className="h-3.5 w-3.5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -1139,7 +1139,7 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
 
           {/* KPI strip */}
           {counts && (
-            <div className="mt-5 pt-4 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="mt-5 grid grid-cols-2 gap-4 border-t border-white/10 pt-4 sm:grid-cols-4">
               {[
                 {
                   label: "Total",
@@ -1163,7 +1163,7 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
                 },
               ].map(({ label, value, color }) => (
                 <div key={label}>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+                  <p className="mb-1 text-[10px] font-bold tracking-widest text-slate-500 uppercase">
                     {label}
                   </p>
                   <p className={`text-2xl font-black tabular-nums ${color}`}>
@@ -1188,13 +1188,13 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
               className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all ${
                 isActive
                   ? `${color} shadow-md`
-                  : "border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
               }`}
             >
               {label}
               {cnt !== undefined && (
                 <span
-                  className={`rounded-full px-1.5 py-0.5 text-[10px] font-black ${isActive ? "bg-white/20 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"}`}
+                  className={`rounded-full px-1.5 py-0.5 text-[10px] font-black ${isActive ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"}`}
                 >
                   {cnt}
                 </span>
@@ -1205,11 +1205,11 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
       </div>
 
       {/* ── Toolbar ── */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-900 shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-900">
         <div className="flex flex-wrap items-center gap-3 px-4 py-3">
-          <div className="relative flex-1 min-w-[200px]">
+          <div className="relative min-w-[200px] flex-1">
             <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+              className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -1228,7 +1228,7 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
                 setPage(1)
               }}
               placeholder="Search reference, affiliate, email..."
-              className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-400 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 placeholder-slate-400 transition"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pr-4 pl-9 text-sm text-slate-700 placeholder-slate-400 transition focus:border-sky-400 focus:ring-2 focus:ring-sky-500/20 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
             />
           </div>
           <span
@@ -1246,9 +1246,9 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
 
       {/* ── Error ── */}
       {isError && (
-        <div className="flex items-center gap-3 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 px-4 py-3">
+        <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 dark:border-red-500/30 dark:bg-red-500/10">
           <svg
-            className="shrink-0 h-5 w-5 text-red-500"
+            className="h-5 w-5 shrink-0 text-red-500"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -1268,20 +1268,20 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
 
       {/* ── Table ── */}
       {isLoading ? (
-        <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-900 animate-pulse">
-          <div className="border-b border-slate-100 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/50 px-5 py-3">
-            <div className="h-4 w-36 bg-slate-200 dark:bg-slate-700 rounded-lg" />
+        <div className="animate-pulse overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700/60 dark:bg-slate-900">
+          <div className="border-b border-slate-100 bg-slate-50 px-5 py-3 dark:border-slate-700/60 dark:bg-slate-800/50">
+            <div className="h-4 w-36 rounded-lg bg-slate-200 dark:bg-slate-700" />
           </div>
           <div className="divide-y divide-slate-100 dark:divide-slate-700/50">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="px-4 py-4 flex items-center gap-4">
-                <div className="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-800 shrink-0" />
+              <div key={i} className="flex items-center gap-4 px-4 py-4">
+                <div className="h-9 w-9 shrink-0 rounded-full bg-slate-100 dark:bg-slate-800" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-3 w-36 bg-slate-100 dark:bg-slate-800 rounded" />
-                  <div className="h-2.5 w-24 bg-slate-100 dark:bg-slate-800 rounded" />
+                  <div className="h-3 w-36 rounded bg-slate-100 dark:bg-slate-800" />
+                  <div className="h-2.5 w-24 rounded bg-slate-100 dark:bg-slate-800" />
                 </div>
-                <div className="h-6 w-20 bg-slate-100 dark:bg-slate-800 rounded-full" />
-                <div className="h-7 w-16 bg-slate-100 dark:bg-slate-800 rounded-lg" />
+                <div className="h-6 w-20 rounded-full bg-slate-100 dark:bg-slate-800" />
+                <div className="h-7 w-16 rounded-lg bg-slate-100 dark:bg-slate-800" />
               </div>
             ))}
           </div>
@@ -1295,9 +1295,9 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
         >
           {isFetching && <div className="google-loading-bar" />}
 
-          <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-900 shadow-sm">
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-900">
             {/* Card header */}
-            <div className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/50 px-4 py-3">
+            <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-700/60 dark:bg-slate-800/50">
               <div className="flex items-center gap-2.5">
                 <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-100 dark:bg-teal-500/15">
                   <svg
@@ -1314,7 +1314,7 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
                     />
                   </svg>
                 </span>
-                <h2 className="text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                <h2 className="text-xs font-bold tracking-wide text-slate-600 uppercase dark:text-slate-300">
                   {activeNav.label}
                 </h2>
               </div>
@@ -1324,17 +1324,17 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
                     {formatMoney(pageTotal)}
                   </span>
                 )}
-                <span className="rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
                   {data?.requests?.length ?? 0} shown
                 </span>
               </div>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left min-w-[860px]">
+              <table className="w-full min-w-[860px] text-left">
                 <thead>
-                  <tr className="border-b border-slate-100 dark:border-slate-700/60 text-[11px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                    <th className="px-4 py-3 w-8">#</th>
+                  <tr className="border-b border-slate-100 text-[11px] font-bold tracking-wide text-slate-400 uppercase dark:border-slate-700/60 dark:text-slate-500">
+                    <th className="w-8 px-4 py-3">#</th>
                     <th className="px-4 py-3">Affiliate</th>
                     <th className="px-4 py-3">Amount</th>
                     <th className="px-4 py-3">Channel / Ref</th>
@@ -1368,10 +1368,10 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
                       return (
                         <tr
                           key={row.id}
-                          className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors group"
+                          className="group transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/40"
                         >
                           {/* # */}
-                          <td className="px-4 py-3.5 text-xs font-bold text-slate-400 dark:text-slate-600 tabular-nums">
+                          <td className="px-4 py-3.5 text-xs font-bold text-slate-400 tabular-nums dark:text-slate-600">
                             {offset}
                           </td>
 
@@ -1386,10 +1386,10 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
                                 textSize="text-[10px]"
                               />
                               <div>
-                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 leading-none">
+                                <p className="text-sm leading-none font-semibold text-slate-800 dark:text-slate-100">
                                   {row.affiliate_name || "Affiliate"}
                                 </p>
-                                <p className="text-xs text-slate-400 mt-0.5">
+                                <p className="mt-0.5 text-xs text-slate-400">
                                   {row.affiliate_email || "No email"}
                                 </p>
                                 {row.affiliate_tier &&
@@ -1407,10 +1407,10 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
 
                           {/* Amount */}
                           <td className="px-4 py-3.5">
-                            <p className="text-sm font-black text-slate-800 dark:text-white tabular-nums">
+                            <p className="text-sm font-black text-slate-800 tabular-nums dark:text-white">
                               {formatMoney(row.amount)}
                             </p>
-                            <p className="text-[11px] text-slate-400 mt-0.5">
+                            <p className="mt-0.5 text-[11px] text-slate-400">
                               Net: {formatMoney(row.net_amount ?? row.amount)}
                             </p>
                           </td>
@@ -1422,7 +1422,7 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
                             >
                               {row.channel}
                             </span>
-                            <p className="font-mono text-[11px] font-semibold text-slate-600 dark:text-slate-300 mt-1">
+                            <p className="mt-1 font-mono text-[11px] font-semibold text-slate-600 dark:text-slate-300">
                               {row.reference_no}
                             </p>
                             <p className="text-[11px] text-slate-400">
@@ -1439,11 +1439,11 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
                               </span>
                             </p>
                             {row.can_release_by_balance === false ? (
-                              <p className="text-[11px] font-semibold text-red-500 mt-0.5">
+                              <p className="mt-0.5 text-[11px] font-semibold text-red-500">
                                 -{formatMoney(row.balance_shortfall ?? 0)}
                               </p>
                             ) : row.status === "approved_by_admin" ? (
-                              <p className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                              <p className="mt-0.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
                                 OK to release
                               </p>
                             ) : null}
@@ -1462,10 +1462,10 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
                           </td>
 
                           {/* Date */}
-                          <td className="px-4 py-3.5 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                          <td className="px-4 py-3.5 text-xs whitespace-nowrap text-slate-500 dark:text-slate-400">
                             <p>{formatDateShort(row.created_at)}</p>
                             {row.released_at && (
-                              <p className="text-emerald-600 dark:text-emerald-400 mt-0.5">
+                              <p className="mt-0.5 text-emerald-600 dark:text-emerald-400">
                                 Rel: {formatDateShort(row.released_at)}
                               </p>
                             )}
@@ -1476,7 +1476,7 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
                             <div className="flex flex-wrap gap-1">
                               <button
                                 onClick={() => setSelectedRow(row)}
-                                className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                                className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                               >
                                 View
                               </button>
@@ -1485,7 +1485,7 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
                                   href={row.proof_url}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="rounded-lg border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors"
+                                  className="rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20"
                                 >
                                   Proof
                                 </a>
@@ -1496,7 +1496,7 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
                                   onClick={() =>
                                     openActionModal("approve", row.id)
                                   }
-                                  className="rounded-lg border border-sky-200 dark:border-sky-500/30 bg-sky-50 dark:bg-sky-500/10 px-2.5 py-1.5 text-xs font-semibold text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-500/20 transition-colors disabled:opacity-50"
+                                  className="rounded-lg border border-sky-200 bg-sky-50 px-2.5 py-1.5 text-xs font-semibold text-sky-700 transition-colors hover:bg-sky-100 disabled:opacity-50 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-300 dark:hover:bg-sky-500/20"
                                 >
                                   Approve
                                 </button>
@@ -1507,7 +1507,7 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
                                   onClick={() =>
                                     openActionModal("release", row.id)
                                   }
-                                  className="rounded-lg border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
+                                  className="rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20"
                                 >
                                   Release
                                 </button>
@@ -1518,7 +1518,7 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
                                   onClick={() =>
                                     openActionModal("reject", row.id)
                                   }
-                                  className="rounded-lg border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 px-2.5 py-1.5 text-xs font-semibold text-red-600 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors disabled:opacity-50"
+                                  className="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20"
                                 >
                                   Reject
                                 </button>
@@ -1532,7 +1532,7 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
                     <tr>
                       <td colSpan={8}>
                         <div className="flex flex-col items-center justify-center gap-3 py-14">
-                          <div className="h-12 w-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800">
                             <svg
                               className="h-6 w-6 text-slate-400"
                               fill="none"
@@ -1563,7 +1563,7 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
             </div>
 
             {/* Pagination */}
-            <div className="flex items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-700/60 px-4 py-3">
+            <div className="flex items-center justify-between gap-3 border-t border-slate-100 px-4 py-3 dark:border-slate-700/60">
               <span className="text-xs text-slate-400 dark:text-slate-500">
                 Showing{" "}
                 <span className="font-semibold text-slate-600 dark:text-slate-300">
@@ -1578,11 +1578,11 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={(data?.meta?.current_page ?? 1) <= 1}
-                  className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-40"
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                 >
                   Prev
                 </button>
-                <span className="rounded-lg bg-teal-50 dark:bg-teal-500/10 border border-teal-200 dark:border-teal-500/30 px-3 py-1.5 text-xs font-bold text-teal-700 dark:text-teal-300">
+                <span className="rounded-lg border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-bold text-teal-700 dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-300">
                   {data?.meta?.current_page ?? 1} / {data?.meta?.last_page ?? 1}
                 </span>
                 <button
@@ -1591,7 +1591,7 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
                     (data?.meta?.current_page ?? 1) >=
                     (data?.meta?.last_page ?? 1)
                   }
-                  className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-40"
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                 >
                   Next
                 </button>

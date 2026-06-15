@@ -1,3 +1,4 @@
+import KycVerificationPageMain from "@/components/superAdmin/members/KycVerificationPageMain"
 import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
@@ -6,8 +7,6 @@ export const metadata = buildPageMetadata({
   path: "/admin/members/kyc",
   noIndex: true,
 })
-
-import KycVerificationPageMain from "@/components/superAdmin/members/KycVerificationPageMain"
 
 export default function AdminMembersKycPage() {
   return <KycVerificationPageMain />

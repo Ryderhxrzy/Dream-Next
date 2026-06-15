@@ -2,32 +2,34 @@
 
 import { Bookmark } from "lucide-react"
 
-import PostCard from "@/components/community/PostCard"
-import { mapCommunityPostToCard } from "@/components/community/PostFeed"
-import { PostFeedSkeleton } from "@/components/community/PostCardSkeleton"
-import { useSavedPosts } from "@/lib/hooks/use-saved-posts"
 import { useCurrentUser } from "@/lib/hooks/use-current-user"
+import { useSavedPosts } from "@/lib/hooks/use-saved-posts"
+import PostCard from "@/components/community/PostCard"
+import { PostFeedSkeleton } from "@/components/community/PostCardSkeleton"
+import { mapCommunityPostToCard } from "@/components/community/PostFeed"
 
 export default function SavedPage() {
   const { data: posts, isLoading } = useSavedPosts()
   const { data: currentUser } = useCurrentUser()
 
   return (
-    <div className="max-w-2xl mx-auto space-y-3">
-      <div className="flex items-center gap-2 mb-1">
-        <Bookmark className="w-5 h-5 text-foreground" />
-        <h1 className="text-lg font-bold text-foreground">Saved Posts</h1>
+    <div className="mx-auto max-w-2xl space-y-3">
+      <div className="mb-1 flex items-center gap-2">
+        <Bookmark className="text-foreground h-5 w-5" />
+        <h1 className="text-foreground text-lg font-bold">Saved Posts</h1>
       </div>
 
       {isLoading ? (
         <PostFeedSkeleton count={3} />
       ) : !posts?.length ? (
-        <div className="rounded-xl border border-border bg-card p-8 text-center">
-          <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center mx-auto mb-2">
-            <Bookmark className="w-4 h-4 text-muted-foreground" />
+        <div className="border-border bg-card rounded-xl border p-8 text-center">
+          <div className="bg-accent mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full">
+            <Bookmark className="text-muted-foreground h-4 w-4" />
           </div>
-          <p className="text-sm font-medium text-foreground">No saved posts yet</p>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <p className="text-foreground text-sm font-medium">
+            No saved posts yet
+          </p>
+          <p className="text-muted-foreground mt-0.5 text-sm">
             Tap the ⋯ menu on any post and choose “Save post”.
           </p>
         </div>

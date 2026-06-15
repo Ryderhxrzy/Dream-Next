@@ -1,0 +1,32 @@
+# ── Dependencies ──
+**/node_modules/
+.pnpm-store/
+
+# ── Build outputs / generated ──
+**/.next/
+**/.turbo/
+**/dist/
+**/build/
+**/out/
+**/coverage/
+**/*.min.js
+**/public/sw.js
+**/public/workbox-*.js
+
+# ── Lockfiles ──
+pnpm-lock.yaml
+
+# ── Laravel / PHP backend (PHP is formatted by Laravel Pint, not Prettier) ──
+**/vendor/
+apps/apsara-home-backend/storage/
+apps/apsara-home-backend/bootstrap/cache/
+apps/apsara-home-backend/public/
+**/*.php
+
+# ── Generated artifacts ──
+graphify-out/
+graphify-out/**
+
+# ── Env files ──
+**/.env
+**/.env.*

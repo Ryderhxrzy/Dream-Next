@@ -1,7 +1,8 @@
-import { redirect } from "next/navigation"
-import type { Category } from "@/store/api/categoriesApi"
-import { buildPageMetadata } from "@/app/seo"
 import { serverFetch } from "@/libs/serverFetch"
+import type { Category } from "@/store/api/categoriesApi"
+import { redirect } from "next/navigation"
+
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Category",

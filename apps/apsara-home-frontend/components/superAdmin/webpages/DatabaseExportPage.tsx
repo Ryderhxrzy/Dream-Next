@@ -94,7 +94,7 @@ export default function DatabaseExportPage() {
   return (
     <div className="space-y-6 dark:bg-slate-950 dark:text-slate-100">
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <p className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-700 dark:text-cyan-400">
+        <p className="text-xs font-bold tracking-[0.22em] text-cyan-700 uppercase dark:text-cyan-400">
           Web Content
         </p>
         <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100">
@@ -127,7 +127,7 @@ export default function DatabaseExportPage() {
 
       {latestSummary && (
         <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-5">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-700">
+          <p className="text-xs font-bold tracking-[0.2em] text-emerald-700 uppercase">
             Latest Export
           </p>
           <p className="mt-2 text-sm text-emerald-900">
@@ -157,7 +157,7 @@ export default function DatabaseExportPage() {
         ) : (
           <div className="mt-4 space-y-3">
             <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700">
-              <div className="grid grid-cols-[1.6fr_0.7fr_0.9fr] bg-slate-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+              <div className="grid grid-cols-[1.6fr_0.7fr_0.9fr] bg-slate-50 px-4 py-2 text-xs font-semibold tracking-wide text-slate-500 uppercase dark:bg-slate-800 dark:text-slate-300">
                 <span>File</span>
                 <span>Size</span>
                 <span>Created</span>

@@ -1,24 +1,25 @@
 "use client"
 
-import Image from "next/image"
-import Link from "next/link"
-import { AnimatePresence, motion } from "framer-motion"
-import { Skeleton } from "@heroui/react/skeleton"
-import HeroSection from "./HeroSection"
-import FeaturedSections from "./FeaturedSections"
-import PromoBenners from "./PromoBenners"
-import NewsLetter from "./NewsLetter"
-import ItemCard from "../item/ItemCard"
-import ShopCategoryCarousel from "./ShopCategoryCarousel"
-import ShopNewsletterSignup from "./ShopNewsletterSignup"
-import type { Category } from "@/store/api/categoriesApi"
-import type { Product } from "@/store/api/productsApi"
-import type { WebPageItem } from "@/store/api/webPagesApi"
 import {
   buildPartnerCategoryLink,
   buildPartnerShopLink,
 } from "@/libs/partnerStorefront"
 import { buildStorefrontProductPath } from "@/libs/storefrontRouting"
+import type { Category } from "@/store/api/categoriesApi"
+import type { Product } from "@/store/api/productsApi"
+import type { WebPageItem } from "@/store/api/webPagesApi"
+import { Skeleton } from "@heroui/react/skeleton"
+import { AnimatePresence, motion } from "framer-motion"
+import Image from "next/image"
+import Link from "next/link"
+
+import ItemCard from "../item/ItemCard"
+import FeaturedSections from "./FeaturedSections"
+import HeroSection from "./HeroSection"
+import NewsLetter from "./NewsLetter"
+import PromoBenners from "./PromoBenners"
+import ShopCategoryCarousel from "./ShopCategoryCarousel"
+import ShopNewsletterSignup from "./ShopNewsletterSignup"
 
 type ShopSectionPayload = {
   fields?: Record<string, string>
@@ -56,7 +57,7 @@ const buildProductLink = (
 function CampaignBannerSkeleton() {
   return (
     <motion.section
-      className="!bg-white dark:!bg-gray-900 container mx-auto px-4 py-6"
+      className="container mx-auto !bg-white px-4 py-6 dark:!bg-gray-900"
       initial={{ opacity: 0, y: 26 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.42 }}
@@ -68,14 +69,14 @@ function CampaignBannerSkeleton() {
 
 function CategoryGridSkeleton() {
   return (
-    <motion.section className="!bg-white dark:!bg-gray-900 container mx-auto px-4 py-10">
-      <div className="mb-8 text-center space-y-3">
-        <Skeleton className="h-4 w-32 rounded mx-auto" />
-        <Skeleton className="h-8 w-64 rounded mx-auto" />
+    <motion.section className="container mx-auto !bg-white px-4 py-10 dark:!bg-gray-900">
+      <div className="mb-8 space-y-3 text-center">
+        <Skeleton className="mx-auto h-4 w-32 rounded" />
+        <Skeleton className="mx-auto h-8 w-64 rounded" />
       </div>
       <div className="flex gap-4 overflow-x-auto pb-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="flex-shrink-0 w-40 space-y-2">
+          <div key={i} className="w-40 flex-shrink-0 space-y-2">
             <Skeleton className="h-40 w-40 rounded-lg" />
             <Skeleton className="h-4 w-full rounded" />
             <Skeleton className="h-3 w-3/4 rounded" />
@@ -88,7 +89,7 @@ function CategoryGridSkeleton() {
 
 function FeaturedCollectionSkeleton() {
   return (
-    <motion.section className="!bg-gray-50 dark:!bg-gray-900 py-16">
+    <motion.section className="!bg-gray-50 py-16 dark:!bg-gray-900">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
           <Skeleton className="h-[500px] rounded-3xl" />
@@ -111,7 +112,7 @@ function FeaturedCollectionSkeleton() {
 
 function PromoSkeleton() {
   return (
-    <motion.section className="!bg-white dark:!bg-gray-900 py-12">
+    <motion.section className="!bg-white py-12 dark:!bg-gray-900">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {Array.from({ length: 2 }).map((_, i) => (
@@ -125,12 +126,12 @@ function PromoSkeleton() {
 
 function NewsletterSkeleton() {
   return (
-    <motion.section className="!bg-gray-50 dark:!bg-gray-900 py-16">
+    <motion.section className="!bg-gray-50 py-16 dark:!bg-gray-900">
       <div className="container mx-auto px-4 text-center">
-        <Skeleton className="h-8 w-64 rounded mx-auto mb-4" />
-        <Skeleton className="h-4 w-96 rounded mx-auto mb-8" />
-        <div className="flex gap-2 max-w-md mx-auto">
-          <Skeleton className="flex-1 h-10 rounded-lg" />
+        <Skeleton className="mx-auto mb-4 h-8 w-64 rounded" />
+        <Skeleton className="mx-auto mb-8 h-4 w-96 rounded" />
+        <div className="mx-auto flex max-w-md gap-2">
+          <Skeleton className="h-10 flex-1 rounded-lg" />
           <Skeleton className="h-10 w-24 rounded-lg" />
         </div>
       </div>
@@ -375,7 +376,7 @@ function AnnouncementsSection({ section }: { section: WebPageItem }) {
       className="!bg-white dark:!bg-gray-900"
     >
       <div className="container mx-auto px-4 py-4">
-        <div className="rounded-2xl border border-orange-100 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/20 px-3 py-2">
+        <div className="rounded-2xl border border-orange-100 bg-orange-50 px-3 py-2 dark:border-orange-800 dark:bg-orange-950/20">
           <div className="flex flex-wrap items-center gap-2">
             <AnimatePresence initial={false}>
               {chips.map((item, index) => (
@@ -385,7 +386,7 @@ function AnnouncementsSection({ section }: { section: WebPageItem }) {
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.92, y: -8 }}
                   transition={{ duration: 0.22, delay: index * 0.04 }}
-                  className="inline-flex rounded-full border border-orange-100 dark:border-orange-800 bg-white dark:bg-gray-800 px-3 py-1 text-xs font-semibold text-orange-700 dark:text-orange-400"
+                  className="inline-flex rounded-full border border-orange-100 bg-white px-3 py-1 text-xs font-semibold text-orange-700 dark:border-orange-800 dark:bg-gray-800 dark:text-orange-400"
                 >
                   {item}
                 </motion.span>
@@ -453,7 +454,7 @@ function CampaignBannersSection({
     <motion.section
       {...fadeUp}
       transition={{ duration: 0.5, delay: 0.04 }}
-      className="!bg-white dark:!bg-gray-900 container mx-auto px-4 py-6"
+      className="container mx-auto !bg-white px-4 py-6 dark:!bg-gray-900"
     >
       <AnimatePresence initial={false}>
         <motion.div
@@ -493,10 +494,10 @@ function CampaignBannersSection({
                 <div className="absolute inset-0 rounded-[32px] bg-gradient-to-t from-slate-950/65 via-transparent to-transparent" />
 
                 <div className="relative flex min-h-[280px] flex-col justify-end p-6 text-white md:min-h-[380px] md:p-10">
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-orange-300">
+                  <p className="mb-3 text-xs font-semibold tracking-[0.28em] text-orange-300 uppercase">
                     {eyebrow}
                   </p>
-                  <h2 className="max-w-xl text-3xl font-bold leading-tight md:text-5xl">
+                  <h2 className="max-w-xl text-3xl leading-tight font-bold md:text-5xl">
                     {title}
                   </h2>
                   <p className="mt-3 max-w-lg text-sm text-white/80 md:text-base">
@@ -534,7 +535,7 @@ function CategoryGridSection({
     <motion.section
       {...fadeUp}
       transition={{ duration: 0.5, delay: 0.08 }}
-      className="!bg-white dark:!bg-gray-900 container mx-auto px-4 py-10"
+      className="container mx-auto !bg-white px-4 py-10 dark:!bg-gray-900"
     >
       <motion.div
         initial={{ opacity: 0, y: 18 }}
@@ -548,7 +549,7 @@ function CategoryGridSection({
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.35 }}
           transition={{ duration: 0.35 }}
-          className="mb-2 text-sm font-semibold uppercase tracking-widest text-orange-500"
+          className="mb-2 text-sm font-semibold tracking-widest text-orange-500 uppercase"
         >
           {getField(section, "eyebrow") || "Shop by Category"}
         </motion.p>
@@ -557,7 +558,7 @@ function CategoryGridSection({
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.35 }}
           transition={{ duration: 0.45, delay: 0.05 }}
-          className="text-3xl font-bold text-slate-900 dark:text-gray-100 md:text-4xl"
+          className="text-3xl font-bold text-slate-900 md:text-4xl dark:text-gray-100"
         >
           {getField(section, "heading") || "Find Your Perfect Furniture"}
         </motion.h2>
@@ -609,7 +610,7 @@ function FeaturedCollectionSection({
     <motion.section
       {...fadeUp}
       transition={{ duration: 0.55, delay: 0.1 }}
-      className="!bg-gray-50 dark:!bg-gray-900 py-16"
+      className="!bg-gray-50 py-16 dark:!bg-gray-900"
     >
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
@@ -634,11 +635,11 @@ function FeaturedCollectionSection({
                 unoptimized
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
-              <div className="absolute bottom-8 left-8 right-8">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-orange-300">
+              <div className="absolute right-8 bottom-8 left-8">
+                <p className="mb-2 text-xs font-semibold tracking-widest text-orange-300 uppercase">
                   {getField(section, "left_eyebrow") || "Featured"}
                 </p>
-                <h2 className="mb-3 text-3xl font-bold leading-tight text-white">
+                <h2 className="mb-3 text-3xl leading-tight font-bold text-white">
                   {getField(section, "left_heading") ||
                     "Minimal & Simple Design"}
                 </h2>
@@ -659,7 +660,7 @@ function FeaturedCollectionSection({
             viewport={{ once: true, amount: 0.25 }}
             transition={{ duration: 0.55, delay: 0.06 }}
           >
-            <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-orange-500">
+            <p className="mb-2 text-sm font-semibold tracking-wider text-orange-500 uppercase">
               {getField(section, "right_eyebrow") || "Sale Items"}
             </p>
             <h2 className="mb-6 text-2xl font-bold text-slate-900 dark:text-gray-100">
@@ -686,7 +687,7 @@ function FeaturedCollectionSection({
                   ))}
                 </AnimatePresence>
               ) : (
-                <div className="col-span-2 rounded-2xl border border-dashed border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-10 text-center text-sm text-slate-400 dark:text-gray-500">
+                <div className="col-span-2 rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-10 text-center text-sm text-slate-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500">
                   Select a category in Shop Builder to display Top Picks.
                 </div>
               )}
@@ -750,7 +751,7 @@ function PromoPairSection({
     <motion.section
       {...fadeUp}
       transition={{ duration: 0.5, delay: 0.14 }}
-      className="!bg-white dark:!bg-gray-900 container mx-auto px-4 py-12"
+      className="container mx-auto !bg-white px-4 py-12 dark:!bg-gray-900"
     >
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <AnimatePresence initial={false}>
@@ -779,11 +780,11 @@ function PromoPairSection({
                 <div className="absolute inset-0 p-8">
                   <div className="flex h-full flex-col justify-end">
                     <p
-                      className={`mb-2 text-xs font-semibold uppercase tracking-widest ${promo.badge}`}
+                      className={`mb-2 text-xs font-semibold tracking-widest uppercase ${promo.badge}`}
                     >
                       {promo.eyebrow}
                     </p>
-                    <h3 className="mb-5 text-2xl font-bold leading-tight text-white">
+                    <h3 className="mb-5 text-2xl leading-tight font-bold text-white">
                       {promo.heading}
                     </h3>
                     <span className="inline-flex w-fit rounded-xl bg-white/15 px-5 py-2.5 text-sm font-semibold text-white backdrop-blur-sm">

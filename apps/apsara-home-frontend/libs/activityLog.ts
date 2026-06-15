@@ -1,6 +1,6 @@
-import { store } from "@/store/store"
 import { activityLogsApi } from "@/store/api/activityLogsApi"
 import type { ActivityLogPayload } from "@/store/api/activityLogsApi"
+import { store } from "@/store/store"
 
 export function getClientInfo() {
   if (typeof window === "undefined") {

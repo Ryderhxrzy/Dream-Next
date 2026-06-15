@@ -10,7 +10,7 @@ export default function ByRoomPage() {
   return (
     <>
       <div
-        className="fixed inset-0 -z-50 by-room-background"
+        className="by-room-background fixed inset-0 -z-50"
         style={
           {
             backgroundColor: "#faf8f5",
@@ -28,7 +28,7 @@ export default function ByRoomPage() {
         `,
         }}
       />
-      <main className="relative container mx-auto px-4 py-16 min-h-screen">
+      <main className="relative container mx-auto min-h-screen px-4 py-16">
         <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">
           Shop By Room
         </h1>

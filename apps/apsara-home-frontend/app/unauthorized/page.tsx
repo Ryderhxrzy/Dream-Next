@@ -1,6 +1,6 @@
+import { Ban, Info, Lock, Mail } from "lucide-react"
 import type { Metadata } from "next"
 import Link from "next/link"
-import { Ban, Info, Lock, Mail } from "lucide-react"
 
 type UnauthorizedPageProps = {
   searchParams?: Record<string, string | string[] | undefined>
@@ -58,26 +58,26 @@ export default function UnauthorizedPage() {
               className="h-14 w-14 text-[#1f66ff] sm:h-16 sm:w-16"
               strokeWidth={1.8}
             />
-            <span className="absolute bottom-6 right-4 rounded-full bg-white p-1 shadow-sm ring-2 ring-[#2d74ff]">
+            <span className="absolute right-4 bottom-6 rounded-full bg-white p-1 shadow-sm ring-2 ring-[#2d74ff]">
               <Ban
                 className="h-7 w-7 text-[#2d74ff] sm:h-8 sm:w-8"
                 strokeWidth={2}
               />
             </span>
-            <span className="absolute -left-7 top-1/2 h-2.5 w-2.5 rounded-full border-2 border-[#8eb1ff]" />
-            <span className="absolute -right-7 top-1/2 h-2.5 w-2.5 rounded-full border-2 border-[#8eb1ff]" />
-            <span className="absolute -left-2 top-3 text-2xl font-bold text-[#86aaf9]">
+            <span className="absolute top-1/2 -left-7 h-2.5 w-2.5 rounded-full border-2 border-[#8eb1ff]" />
+            <span className="absolute top-1/2 -right-7 h-2.5 w-2.5 rounded-full border-2 border-[#8eb1ff]" />
+            <span className="absolute top-3 -left-2 text-2xl font-bold text-[#86aaf9]">
               ×
             </span>
-            <span className="absolute -right-2 top-3 text-2xl font-bold text-[#86aaf9]">
+            <span className="absolute top-3 -right-2 text-2xl font-bold text-[#86aaf9]">
               ×
             </span>
-            <span className="absolute -left-2 bottom-3 text-2xl font-bold text-[#86aaf9]">
+            <span className="absolute bottom-3 -left-2 text-2xl font-bold text-[#86aaf9]">
               ×
             </span>
           </div>
 
-          <h1 className="bg-gradient-to-b from-[#2f79ff] to-[#1456e4] bg-clip-text text-6xl font-extrabold leading-none text-transparent drop-shadow-[0_6px_18px_rgba(28,96,255,0.25)] sm:text-7xl">
+          <h1 className="bg-gradient-to-b from-[#2f79ff] to-[#1456e4] bg-clip-text text-6xl leading-none font-extrabold text-transparent drop-shadow-[0_6px_18px_rgba(28,96,255,0.25)] sm:text-7xl">
             403
           </h1>
           <p className="mt-1 text-4xl font-bold tracking-tight text-[#0f2348] sm:mt-2 sm:text-5xl">

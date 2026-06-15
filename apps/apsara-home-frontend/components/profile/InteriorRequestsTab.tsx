@@ -1,28 +1,28 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { AnimatePresence, motion } from "framer-motion"
-import { useSearchParams } from "next/navigation"
-import {
-  Clock,
-  Eye,
-  FileText,
-  CalendarCheck,
-  CheckCircle2,
-  XCircle,
-  MessageSquare,
-  Inbox,
-  UserCheck,
-  AlertTriangle,
-  ChevronDown,
-  ArrowLeft,
-} from "lucide-react"
 import {
   InteriorRequestItem,
   InteriorRequestStatus,
   InteriorRequestUpdateType,
   useGetMyInteriorRequestsQuery,
 } from "@/store/api/interiorRequestsApi"
+import { AnimatePresence, motion } from "framer-motion"
+import {
+  AlertTriangle,
+  ArrowLeft,
+  CalendarCheck,
+  CheckCircle2,
+  ChevronDown,
+  Clock,
+  Eye,
+  FileText,
+  Inbox,
+  MessageSquare,
+  UserCheck,
+  XCircle,
+} from "lucide-react"
+import { useSearchParams } from "next/navigation"
 
 /* --- Config --- */
 const statusMeta: Record<
@@ -210,7 +210,7 @@ export default function InteriorRequestsTab() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 p-16">
+      <div className="flex items-center justify-center rounded-2xl border border-slate-200 bg-white p-16 dark:border-slate-700 dark:bg-gray-800">
         <div className="text-center">
           <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-sky-500 border-t-transparent" />
           <p className="mt-3 text-sm text-slate-500 dark:text-gray-400">
@@ -223,7 +223,7 @@ export default function InteriorRequestsTab() {
 
   if (isError) {
     return (
-      <div className="flex items-center gap-3 rounded-2xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 p-5">
+      <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-5 dark:border-red-800 dark:bg-red-900/30">
         <AlertTriangle className="h-5 w-5 shrink-0 text-red-500" />
         <p className="text-sm text-red-700 dark:text-red-400">
           Could not load your interior requests. Please try again.
@@ -237,7 +237,7 @@ export default function InteriorRequestsTab() {
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 p-10 text-center"
+        className="rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center dark:border-slate-700 dark:bg-gray-800"
       >
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-50 dark:bg-sky-900/30">
           <Inbox className="h-7 w-7 text-sky-400 dark:text-sky-500" />
@@ -261,7 +261,7 @@ export default function InteriorRequestsTab() {
       className="space-y-4"
     >
       {/* Header bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 px-5 py-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 dark:border-slate-700 dark:bg-gray-800">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-50 dark:bg-sky-900/30">
             <Inbox className="h-4.5 w-4.5 text-sky-500 dark:text-sky-400" />
@@ -275,13 +275,13 @@ export default function InteriorRequestsTab() {
             </p>
           </div>
         </div>
-        <span className="rounded-full border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-900/30 px-2.5 py-1 text-[11px] font-semibold text-sky-700 dark:text-sky-400">
+        <span className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[11px] font-semibold text-sky-700 dark:border-sky-800 dark:bg-sky-900/30 dark:text-sky-400">
           Authenticated access only
         </span>
       </div>
 
       {/* Status filter pills */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
+      <div className="scrollbar-hide flex items-center gap-1.5 overflow-x-auto pb-0.5">
         {[
           ["all", "All"] as const,
           ...statusOrder.map((s) => [s, statusMeta[s].label] as const),
@@ -294,12 +294,12 @@ export default function InteriorRequestsTab() {
               key={key}
               type="button"
               onClick={() => setStatusFilter(key)}
-              className={`shrink-0 flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
+              className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
                 active
                   ? key === "all"
-                    ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 border-slate-900 dark:border-slate-100"
+                    ? "border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900"
                     : `${statusMeta[key as InteriorRequestStatus].pill} border-current`
-                  : "bg-white dark:bg-gray-900 text-slate-500 dark:text-gray-400 border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500"
+                  : "border-slate-200 bg-white text-slate-500 hover:border-slate-400 dark:border-slate-700 dark:bg-gray-900 dark:text-gray-400 dark:hover:border-slate-500"
               }`}
             >
               {key !== "all" &&
@@ -308,7 +308,7 @@ export default function InteriorRequestsTab() {
               {label}
               {count > 0 && (
                 <span
-                  className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none ${active ? "bg-white/25" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"}`}
+                  className={`rounded-full px-1.5 py-0.5 text-[10px] leading-none font-bold ${active ? "bg-white/25" : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"}`}
                 >
                   {count}
                 </span>
@@ -321,8 +321,8 @@ export default function InteriorRequestsTab() {
       {/* Two-column layout */}
       <div className="grid gap-4 xl:grid-cols-[300px_minmax(0,1fr)]">
         {/* Request list */}
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 p-3">
-          <p className="mb-2.5 px-1 text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-gray-500">
+        <div className="rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-gray-800">
+          <p className="mb-2.5 px-1 text-[11px] font-semibold tracking-widest text-slate-400 uppercase dark:text-gray-500">
             My Requests
           </p>
           <AnimatePresence mode="wait">
@@ -353,15 +353,15 @@ export default function InteriorRequestsTab() {
                         setSelectedRequestId(request.id)
                         if (isMobile) setMobileDetailOpen(true)
                       }}
-                      className={`group w-full rounded-xl border-l-[3px] border border-slate-200 dark:border-slate-700 p-3.5 text-left transition-all ${meta.accent} ${
+                      className={`group w-full rounded-xl border border-l-[3px] border-slate-200 p-3.5 text-left transition-all dark:border-slate-700 ${meta.accent} ${
                         active
-                          ? "bg-slate-50 dark:bg-gray-700/60 shadow-sm"
-                          : "bg-white dark:bg-gray-800 hover:bg-slate-50 dark:hover:bg-gray-700/40"
+                          ? "bg-slate-50 shadow-sm dark:bg-gray-700/60"
+                          : "bg-white hover:bg-slate-50 dark:bg-gray-800 dark:hover:bg-gray-700/40"
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-gray-500">
+                          <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase dark:text-gray-500">
                             {request.reference}
                           </p>
                           <p className="mt-0.5 line-clamp-1 text-sm font-semibold text-slate-900 dark:text-white">
@@ -401,7 +401,7 @@ export default function InteriorRequestsTab() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -8 }}
               transition={{ duration: 0.22, ease: "easeOut" }}
-              className="hidden xl:block space-y-3.5"
+              className="hidden space-y-3.5 xl:block"
             >
               <RequestHeader selectedRequest={selectedRequest} />
               <ProjectInbox selectedRequest={selectedRequest} />
@@ -416,14 +416,14 @@ export default function InteriorRequestsTab() {
         initial={false}
         animate={{ x: isMobile && mobileDetailOpen ? 0 : "100%" }}
         transition={{ type: "tween", duration: 0.32, ease: [0.32, 0.72, 0, 1] }}
-        className="fixed inset-0 z-[100] flex flex-col bg-white dark:bg-gray-900 xl:hidden"
+        className="fixed inset-0 z-[100] flex flex-col bg-white xl:hidden dark:bg-gray-900"
       >
         {/* Mobile header with back button */}
-        <div className="flex shrink-0 items-center gap-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3">
+        <div className="flex shrink-0 items-center gap-3 border-b border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-900">
           <button
             type="button"
             onClick={() => setMobileDetailOpen(false)}
-            className="flex items-center gap-1.5 rounded-lg p-1 text-sky-600 dark:text-sky-400 transition active:bg-sky-50 dark:active:bg-sky-900/30"
+            className="flex items-center gap-1.5 rounded-lg p-1 text-sky-600 transition active:bg-sky-50 dark:text-sky-400 dark:active:bg-sky-900/30"
             aria-label="Back"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -472,10 +472,10 @@ function RequestHeader({
 }) {
   const meta = statusMeta[selectedRequest.status]
   return (
-    <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 p-5">
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-gray-800">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-gray-500">
+          <p className="text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase dark:text-gray-500">
             {selectedRequest.reference}
           </p>
           <h4 className="mt-1 text-lg font-bold text-slate-900 dark:text-white">
@@ -521,9 +521,9 @@ function RequestHeader({
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.18, delay: i * 0.05 }}
-            className="rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-gray-700/40 px-4 py-3"
+            className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-gray-700/40"
           >
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500">
+            <p className="text-[10px] font-semibold tracking-wide text-slate-400 uppercase dark:text-gray-500">
               {item.label}
             </p>
             <p className="mt-1 text-sm font-semibold text-slate-800 dark:text-gray-200">
@@ -544,18 +544,18 @@ function ProjectInbox({
 }) {
   const [open, setOpen] = useState(true)
   return (
-    <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 overflow-hidden">
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-gray-800">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between px-5 py-4 text-left hover:bg-slate-50 dark:hover:bg-gray-700/40 transition-colors"
+        className="flex w-full items-center justify-between px-5 py-4 text-left transition-colors hover:bg-slate-50 dark:hover:bg-gray-700/40"
       >
         <div className="flex items-center gap-2.5">
           <MessageSquare className="h-4 w-4 text-slate-400 dark:text-gray-500" />
           <span className="text-sm font-bold text-slate-900 dark:text-white">
             Project Inbox
           </span>
-          <span className="rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-gray-700/40 px-2 py-0.5 text-[10px] font-semibold text-slate-500 dark:text-gray-400">
+          <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold text-slate-500 dark:border-slate-700 dark:bg-gray-700/40 dark:text-gray-400">
             {selectedRequest.updates.length}{" "}
             {selectedRequest.updates.length === 1 ? "update" : "updates"}
           </span>
@@ -581,7 +581,7 @@ function ProjectInbox({
               </p>
 
               {selectedRequest.updates.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-gray-700/40 p-6 text-center">
+                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center dark:border-slate-700 dark:bg-gray-700/40">
                   <p className="text-sm text-slate-400 dark:text-gray-500">
                     No updates yet. Check back soon.
                   </p>
@@ -606,11 +606,11 @@ function ProjectInbox({
                             <span className="mt-2 h-full min-h-8 w-px bg-slate-200 dark:bg-slate-700" />
                           )}
                         </div>
-                        <div className="flex-1 rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-gray-700/40 px-4 py-3">
+                        <div className="flex-1 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-gray-700/40">
                           <div className="flex flex-wrap items-start justify-between gap-2">
                             <div className="flex items-center gap-2">
                               <span
-                                className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${meta.badge}`}
+                                className={`rounded-md px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase ${meta.badge}`}
                               >
                                 {meta.label}
                               </span>
@@ -648,8 +648,8 @@ function ProjectInbox({
 /* --- What's next --- */
 function WhatsNext() {
   return (
-    <div className="rounded-2xl border border-sky-200 dark:border-sky-800/60 bg-sky-50/60 dark:bg-sky-900/10 p-5">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-sky-500 dark:text-sky-400">
+    <div className="rounded-2xl border border-sky-200 bg-sky-50/60 p-5 dark:border-sky-800/60 dark:bg-sky-900/10">
+      <p className="text-[10px] font-bold tracking-widest text-sky-500 uppercase dark:text-sky-400">
         What Happens Next
       </p>
       <p className="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
@@ -678,11 +678,11 @@ function WhatsNext() {
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.18, delay: i * 0.06 }}
-            className="rounded-xl border border-sky-200 dark:border-sky-800/50 bg-white/80 dark:bg-gray-800/60 px-4 py-3.5"
+            className="rounded-xl border border-sky-200 bg-white/80 px-4 py-3.5 dark:border-sky-800/50 dark:bg-gray-800/60"
           >
-            <div className="flex items-center gap-2 mb-2">
+            <div className="mb-2 flex items-center gap-2">
               {item.icon}
-              <p className="text-xs font-bold uppercase tracking-wide text-sky-600 dark:text-sky-400">
+              <p className="text-xs font-bold tracking-wide text-sky-600 uppercase dark:text-sky-400">
                 {item.label}
               </p>
             </div>

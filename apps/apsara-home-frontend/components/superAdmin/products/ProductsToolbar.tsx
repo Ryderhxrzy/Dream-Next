@@ -1,6 +1,8 @@
 "use client"
 
 import { useMemo } from "react"
+import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
+import { useGetProductBrandsQuery } from "@/store/api/productBrandsApi"
 import { Button } from "@heroui/react/button"
 import { Card } from "@heroui/react/card"
 import { Chip } from "@heroui/react/chip"
@@ -9,8 +11,6 @@ import { ListBox } from "@heroui/react/list-box"
 import { ListBoxItem } from "@heroui/react/list-box-item"
 import { SearchField } from "@heroui/react/search-field"
 import { Select } from "@heroui/react/select"
-import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
-import { useGetProductBrandsQuery } from "@/store/api/productBrandsApi"
 
 interface ProductsToolbarProps {
   search: string
@@ -88,7 +88,7 @@ function ToolbarSelect({
             <ListBoxItem
               id={option.value}
               key={`${option.value}-${option.label}`}
-              className="rounded-xl text-slate-700 transition-colors hover:bg-slate-100 focus:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:bg-slate-800 data-[selected=true]:bg-sky-50 data-[selected=true]:text-sky-700 dark:data-[selected=true]:bg-sky-900/30 dark:data-[selected=true]:text-sky-200"
+              className="rounded-xl text-slate-700 transition-colors hover:bg-slate-100 focus:bg-slate-100 data-[selected=true]:bg-sky-50 data-[selected=true]:text-sky-700 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:bg-slate-800 dark:data-[selected=true]:bg-sky-900/30 dark:data-[selected=true]:text-sky-200"
             >
               {option.label}
             </ListBoxItem>
@@ -204,7 +204,7 @@ export default function ProductsToolbar({
                 >
                   <span>Duplicate item</span>
                   {duplicateCount > 0 ? (
-                    <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-bold leading-none text-current">
+                    <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] leading-none font-bold text-current">
                       {duplicateCount}
                     </span>
                   ) : null}
@@ -353,7 +353,7 @@ export default function ProductsToolbar({
           </div>
         </div>
 
-        <div className="flex flex-col gap-2 border-t border-slate-100 pt-3 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-2 border-t border-slate-100 pt-3 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800 dark:text-slate-400">
           <p>
             <span className="font-semibold text-slate-700 dark:text-slate-200">
               {resultCount.toLocaleString()}

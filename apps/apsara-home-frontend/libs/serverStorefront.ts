@@ -1,5 +1,5 @@
-import type { Category } from "@/store/api/categoriesApi"
 import { serverFetch } from "@/libs/serverFetch"
+import type { Category } from "@/store/api/categoriesApi"
 
 type ApiCategoriesResponse = {
   categories?: Category[]

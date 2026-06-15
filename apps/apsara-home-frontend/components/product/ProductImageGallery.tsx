@@ -1,10 +1,10 @@
 "use client"
 
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { CategoryProduct } from "@/libs/CategoryData"
 import { getEnhancedCloudinaryImageUrl } from "@/libs/cloudinary"
 import { AnimatePresence, motion } from "framer-motion"
 import Image from "next/image"
-import { useMemo, useState, useRef, useEffect, useCallback } from "react"
 
 interface ProductImageGalleryProps {
   product: CategoryProduct
@@ -234,7 +234,7 @@ const ProductImageGallery = ({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={() => setIsZoomed(false)}
-            className="fixed inset-0 z-[100] bg-black/92 flex flex-col items-center justify-center p-4"
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/92 p-4"
             style={{ cursor: zoomLevel > 1 ? "default" : "zoom-out" }}
           >
             {/* Image container */}
@@ -243,7 +243,7 @@ const ProductImageGallery = ({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.92, opacity: 0 }}
               transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-              className="relative w-full max-w-4xl aspect-square max-h-[68vh] overflow-hidden rounded-2xl"
+              className="relative aspect-square max-h-[68vh] w-full max-w-4xl overflow-hidden rounded-2xl"
               onClick={(e) => e.stopPropagation()}
               onWheel={onImageWheel}
             >
@@ -295,7 +295,7 @@ const ProductImageGallery = ({
                           : `${product.name} ${index + 1}`
                       }
                       fill
-                      className="object-contain pointer-events-none"
+                      className="pointer-events-none object-contain"
                       priority={index === 0}
                       draggable={false}
                     />
@@ -311,7 +311,7 @@ const ProductImageGallery = ({
                       e.stopPropagation()
                       goPrev()
                     }}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 z-20 h-11 w-11 rounded-full bg-white/15 hover:bg-white/30 text-white backdrop-blur-sm border border-white/10 transition-colors flex items-center justify-center"
+                    className="absolute top-1/2 left-3 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-white/15 text-white backdrop-blur-sm transition-colors hover:bg-white/30"
                     aria-label="Previous"
                   >
                     <svg
@@ -331,7 +331,7 @@ const ProductImageGallery = ({
                       e.stopPropagation()
                       goNext()
                     }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 z-20 h-11 w-11 rounded-full bg-white/15 hover:bg-white/30 text-white backdrop-blur-sm border border-white/10 transition-colors flex items-center justify-center"
+                    className="absolute top-1/2 right-3 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-white/15 text-white backdrop-blur-sm transition-colors hover:bg-white/30"
                     aria-label="Next"
                   >
                     <svg
@@ -351,14 +351,14 @@ const ProductImageGallery = ({
 
               {/* Zoom controls — desktop only, inside image box bottom-center */}
               <div
-                className="hidden sm:flex absolute bottom-3 left-1/2 -translate-x-1/2 z-20 items-center gap-1 bg-black/40 backdrop-blur-md rounded-full px-2 py-1.5 border border-white/10"
+                className="absolute bottom-3 left-1/2 z-20 hidden -translate-x-1/2 items-center gap-1 rounded-full border border-white/10 bg-black/40 px-2 py-1.5 backdrop-blur-md sm:flex"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Zoom out */}
                 <button
                   onClick={zoomOut}
                   disabled={isAtMinZoom}
-                  className="h-8 w-8 rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-white/15 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/15 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
                   aria-label="Zoom out"
                 >
                   <svg
@@ -377,7 +377,7 @@ const ProductImageGallery = ({
                 </button>
 
                 {/* Zoom level display */}
-                <span className="text-white/70 text-xs font-semibold tabular-nums min-w-[2.75rem] text-center select-none">
+                <span className="min-w-[2.75rem] text-center text-xs font-semibold text-white/70 tabular-nums select-none">
                   {zoomLevel.toFixed(1)}×
                 </span>
 
@@ -385,7 +385,7 @@ const ProductImageGallery = ({
                 <button
                   onClick={zoomIn}
                   disabled={isAtMaxZoom}
-                  className="h-8 w-8 rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-white/15 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/15 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
                   aria-label="Zoom in"
                 >
                   <svg
@@ -407,10 +407,10 @@ const ProductImageGallery = ({
                 {/* Divider + Reset — only shown when zoomed */}
                 {!isAtMinZoom && (
                   <>
-                    <div className="w-px h-4 bg-white/20 mx-1" />
+                    <div className="mx-1 h-4 w-px bg-white/20" />
                     <button
                       onClick={resetZoom}
-                      className="h-8 w-8 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/15 transition-colors"
+                      className="flex h-8 w-8 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/15 hover:text-white"
                       aria-label="Reset zoom"
                     >
                       <svg
@@ -432,14 +432,14 @@ const ProductImageGallery = ({
 
               {/* Hint: double-click or scroll to zoom — desktop */}
               {zoomLevel === 1 && (
-                <p className="hidden sm:block absolute top-3 left-1/2 -translate-x-1/2 z-20 text-white/30 text-[11px] font-medium select-none pointer-events-none whitespace-nowrap">
+                <p className="pointer-events-none absolute top-3 left-1/2 z-20 hidden -translate-x-1/2 text-[11px] font-medium whitespace-nowrap text-white/30 select-none sm:block">
                   Scroll or double-click to zoom
                 </p>
               )}
 
               {/* Hint: drag to pan — desktop, when zoomed */}
               {zoomLevel > 1 && (
-                <p className="hidden sm:block absolute top-3 left-1/2 -translate-x-1/2 z-20 text-white/30 text-[11px] font-medium select-none pointer-events-none whitespace-nowrap">
+                <p className="pointer-events-none absolute top-3 left-1/2 z-20 hidden -translate-x-1/2 text-[11px] font-medium whitespace-nowrap text-white/30 select-none sm:block">
                   Drag to pan
                 </p>
               )}
@@ -448,7 +448,7 @@ const ProductImageGallery = ({
             {/* Thumbnails */}
             {hasMultipleImages && (
               <div
-                className="flex gap-2 mt-4 overflow-x-auto justify-center"
+                className="mt-4 flex justify-center gap-2 overflow-x-auto"
                 style={{ scrollbarWidth: "none" }}
               >
                 {enhancedImages.map((img, index) => (
@@ -458,10 +458,10 @@ const ProductImageGallery = ({
                       e.stopPropagation()
                       goTo(index)
                     }}
-                    className={`relative shrink-0 h-14 w-14 rounded-xl overflow-hidden border-2 transition-all duration-200 ${
+                    className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-200 ${
                       safeActive === index
-                        ? "border-sky-400 scale-110"
-                        : "border-white/25 hover:border-white/50 opacity-60 hover:opacity-100"
+                        ? "scale-110 border-sky-400"
+                        : "border-white/25 opacity-60 hover:border-white/50 hover:opacity-100"
                     }`}
                   >
                     <Image
@@ -476,7 +476,7 @@ const ProductImageGallery = ({
             )}
 
             {hasMultipleImages && (
-              <p className="mt-3 text-white/40 text-xs font-medium tabular-nums">
+              <p className="mt-3 text-xs font-medium text-white/40 tabular-nums">
                 {safeActive + 1} / {galleryImages.length}
               </p>
             )}
@@ -484,7 +484,7 @@ const ProductImageGallery = ({
             {/* Close button */}
             <button
               onClick={() => setIsZoomed(false)}
-              className="absolute top-4 right-4 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors backdrop-blur-sm"
+              className="absolute top-4 right-4 rounded-full bg-white/10 p-2 text-white/70 backdrop-blur-sm transition-colors hover:bg-white/20 hover:text-white"
               aria-label="Close"
             >
               <svg
@@ -514,7 +514,7 @@ const ProductImageGallery = ({
           {/* Main image */}
           <div
             ref={galleryRef}
-            className="group relative aspect-[4/3] overflow-hidden rounded-2xl bg-white p-2 shadow-sm sm:rounded-3xl sm:aspect-[5/4] xl:aspect-[16/10] dark:bg-slate-900"
+            className="group relative aspect-[4/3] overflow-hidden rounded-2xl bg-white p-2 shadow-sm sm:aspect-[5/4] sm:rounded-3xl xl:aspect-[16/10] dark:bg-slate-900"
             onClick={() => {
               if (!didSwipeRef.current) setIsZoomed(true)
             }}
@@ -550,7 +550,7 @@ const ProductImageGallery = ({
                     e.stopPropagation()
                     goPrev()
                   }}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 z-10 h-9 w-9 rounded-full bg-white/75 dark:bg-slate-900/75 backdrop-blur-sm border border-white/60 dark:border-slate-700/60 text-slate-700 dark:text-slate-200 shadow-sm opacity-0 group-hover:opacity-100 hover:bg-white dark:hover:bg-slate-900 hover:text-sky-500 dark:hover:text-sky-400 transition-all duration-150 flex items-center justify-center"
+                  className="absolute top-1/2 left-3 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/60 bg-white/75 text-slate-700 opacity-0 shadow-sm backdrop-blur-sm transition-all duration-150 group-hover:opacity-100 hover:bg-white hover:text-sky-500 dark:border-slate-700/60 dark:bg-slate-900/75 dark:text-slate-200 dark:hover:bg-slate-900 dark:hover:text-sky-400"
                   aria-label="Previous image"
                 >
                   <svg
@@ -570,7 +570,7 @@ const ProductImageGallery = ({
                     e.stopPropagation()
                     goNext()
                   }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 z-10 h-9 w-9 rounded-full bg-white/75 dark:bg-slate-900/75 backdrop-blur-sm border border-white/60 dark:border-slate-700/60 text-slate-700 dark:text-slate-200 shadow-sm opacity-0 group-hover:opacity-100 hover:bg-white dark:hover:bg-slate-900 hover:text-sky-500 dark:hover:text-sky-400 transition-all duration-150 flex items-center justify-center"
+                  className="absolute top-1/2 right-3 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/60 bg-white/75 text-slate-700 opacity-0 shadow-sm backdrop-blur-sm transition-all duration-150 group-hover:opacity-100 hover:bg-white hover:text-sky-500 dark:border-slate-700/60 dark:bg-slate-900/75 dark:text-slate-200 dark:hover:bg-slate-900 dark:hover:text-sky-400"
                   aria-label="Next image"
                 >
                   <svg
@@ -590,7 +590,7 @@ const ProductImageGallery = ({
 
             {/* Dot indicators */}
             {hasMultipleImages && (
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5">
+              <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5">
                 {galleryImages.map((_, index) => (
                   <button
                     key={index}
@@ -610,7 +610,7 @@ const ProductImageGallery = ({
             )}
 
             {/* Zoom hint */}
-            <div className="absolute top-3 right-3 z-10 bg-black/25 backdrop-blur-sm text-white/80 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+            <div className="pointer-events-none absolute top-3 right-3 z-10 rounded-lg bg-black/25 p-1.5 text-white/80 opacity-0 backdrop-blur-sm transition-opacity duration-200 group-hover:opacity-100">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="13"
@@ -639,7 +639,7 @@ const ProductImageGallery = ({
                     behavior: "smooth",
                   })
                 }
-                className="hidden sm:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow text-slate-500 dark:text-slate-400 hover:border-sky-400 hover:text-sky-500 transition-all"
+                className="absolute top-1/2 left-0 z-10 hidden h-8 w-8 shrink-0 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow transition-all hover:border-sky-400 hover:text-sky-500 sm:flex dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
                 aria-label="Scroll thumbnails left"
               >
                 <svg
@@ -668,10 +668,10 @@ const ProductImageGallery = ({
                     }}
                     onClick={() => goTo(index)}
                     aria-label={`View image ${index + 1}`}
-                    className={`relative shrink-0 h-[68px] w-[68px] rounded-2xl overflow-hidden border-2 transition-all duration-200 ${
+                    className={`relative h-[68px] w-[68px] shrink-0 overflow-hidden rounded-2xl border-2 transition-all duration-200 ${
                       safeActive === index
-                        ? "border-sky-400 dark:border-sky-500 shadow-[0_0_0_3px_rgba(56,189,248,0.15)]"
-                        : "border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 opacity-70 hover:opacity-100"
+                        ? "border-sky-400 shadow-[0_0_0_3px_rgba(56,189,248,0.15)] dark:border-sky-500"
+                        : "border-slate-200 opacity-70 hover:border-slate-400 hover:opacity-100 dark:border-slate-700 dark:hover:border-slate-500"
                     }`}
                   >
                     <Image
@@ -692,7 +692,7 @@ const ProductImageGallery = ({
                     behavior: "smooth",
                   })
                 }
-                className="hidden sm:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow text-slate-500 dark:text-slate-400 hover:border-sky-400 hover:text-sky-500 transition-all"
+                className="absolute top-1/2 right-0 z-10 hidden h-8 w-8 shrink-0 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow transition-all hover:border-sky-400 hover:text-sky-500 sm:flex dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
                 aria-label="Scroll thumbnails right"
               >
                 <svg

@@ -1,7 +1,8 @@
 "use client"
 
-import { FormErrors, GuestForm } from "@/types/CustomerCheckout/types"
 import { AlertCircle, Check, Gift, WalletCards } from "lucide-react"
+
+import { FormErrors, GuestForm } from "@/types/CustomerCheckout/types"
 
 interface CustomerCheckoutContactFormProps {
   form: GuestForm
@@ -55,23 +56,23 @@ const Field = ({
     data-error-field={fieldKey}
     className="transition-transform duration-200"
   >
-    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
+    <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">
       {label}
-      {required && <span className="text-red-500 ml-0.5">*</span>}
+      {required && <span className="ml-0.5 text-red-500">*</span>}
     </label>
     <input
       type={type}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className={`w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border rounded-xl text-sm text-slate-700 dark:text-slate-200 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 transition-all ${
+      className={`w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm text-slate-700 placeholder-slate-300 transition-all focus:ring-2 focus:outline-none dark:bg-slate-900 dark:text-slate-200 dark:placeholder-slate-500 ${
         error
-          ? "border-red-300 dark:border-red-600 focus:ring-red-200 dark:focus:ring-red-900 focus:border-red-400 dark:focus:border-red-500"
-          : "border-slate-200 dark:border-slate-700 focus:ring-sky-200 dark:focus:ring-sky-900 focus:border-sky-400 dark:focus:border-sky-500"
+          ? "border-red-300 focus:border-red-400 focus:ring-red-200 dark:border-red-600 dark:focus:border-red-500 dark:focus:ring-red-900"
+          : "border-slate-200 focus:border-sky-400 focus:ring-sky-200 dark:border-slate-700 dark:focus:border-sky-500 dark:focus:ring-sky-900"
       }`}
     />
     {error && (
-      <p className="text-red-500 dark:text-red-400 text-[11px] mt-1">{error}</p>
+      <p className="mt-1 text-[11px] text-red-500 dark:text-red-400">{error}</p>
     )}
   </div>
 )
@@ -88,15 +89,15 @@ const CustomerCheckoutContactForm = ({
   cashbackStatus,
 }: CustomerCheckoutContactFormProps) => {
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
-      <h2 className="text-sm font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2.5">
-        <div className="h-6 w-6 rounded-full bg-sky-500 text-white text-xs font-bold flex items-center justify-center shrink-0">
+    <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
+      <h2 className="mb-4 flex items-center gap-2.5 text-sm font-bold text-slate-800 dark:text-white">
+        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sky-500 text-xs font-bold text-white">
           1
         </div>
         Contact information
       </h2>
       <div className="space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field
             label="Full Name"
             value={form.name}
@@ -128,11 +129,11 @@ const CustomerCheckoutContactForm = ({
 
         {/* DIVIDER */}
         <div className="flex items-center gap-3 pt-1">
-          <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
-          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium uppercase tracking-wider">
+          <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
+          <span className="text-[10px] font-medium tracking-wider text-slate-400 uppercase dark:text-slate-500">
             Optional
           </span>
-          <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+          <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
         </div>
 
         {/* REFERRAL + VOUCHER */}
@@ -141,11 +142,11 @@ const CustomerCheckoutContactForm = ({
             data-error-field="referred_by"
             className="transition-transform duration-200"
           >
-            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
-              Referred By <span className="text-red-500 ml-0.5">*</span>
+            <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">
+              Referred By <span className="ml-0.5 text-red-500">*</span>
             </label>
             <div className="relative">
-              <Gift className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
+              <Gift className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
               <input
                 type="text"
                 value={form.referred_by}
@@ -153,23 +154,23 @@ const CustomerCheckoutContactForm = ({
                 placeholder="Enter name or referral ID"
                 maxLength={60}
                 disabled={lockReferralField}
-                className={`w-full pl-10 pr-4 py-2.5 border rounded-xl text-sm placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 transition-all ${
+                className={`w-full rounded-xl border py-2.5 pr-4 pl-10 text-sm placeholder-slate-300 transition-all focus:ring-2 focus:outline-none dark:placeholder-slate-500 ${
                   lockReferralField
-                    ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300 cursor-not-allowed focus:ring-emerald-100 dark:focus:ring-emerald-900 focus:border-emerald-300 dark:focus:border-emerald-600"
+                    ? "cursor-not-allowed border-emerald-200 bg-emerald-50 text-emerald-800 focus:border-emerald-300 focus:ring-emerald-100 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300 dark:focus:border-emerald-600 dark:focus:ring-emerald-900"
                     : errors.referred_by
-                      ? "bg-white dark:bg-slate-900 border-red-300 dark:border-red-600 text-slate-700 dark:text-slate-200 focus:ring-red-200 dark:focus:ring-red-900 focus:border-red-400 dark:focus:border-red-500"
-                      : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 focus:ring-sky-200 dark:focus:ring-sky-900 focus:border-sky-400 dark:focus:border-sky-500"
+                      ? "border-red-300 bg-white text-slate-700 focus:border-red-400 focus:ring-red-200 dark:border-red-600 dark:bg-slate-900 dark:text-slate-200 dark:focus:border-red-500 dark:focus:ring-red-900"
+                      : "border-slate-200 bg-white text-slate-700 focus:border-sky-400 focus:ring-sky-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:focus:border-sky-500 dark:focus:ring-sky-900"
                 }`}
                 required
               />
             </div>
             {errors.referred_by ? (
-              <p className="text-red-500 dark:text-red-400 text-[11px] mt-1">
+              <p className="mt-1 text-[11px] text-red-500 dark:text-red-400">
                 {errors.referred_by}
               </p>
             ) : lockReferralField && referralSourceCode ? (
-              <p className="text-[11px] text-emerald-700 dark:text-emerald-300 mt-1.5 flex items-center gap-1">
-                <Check className="w-3 h-3 shrink-0" />
+              <p className="mt-1.5 flex items-center gap-1 text-[11px] text-emerald-700 dark:text-emerald-300">
+                <Check className="h-3 w-3 shrink-0" />
                 Shared shopping link detected. This checkout is locked to
                 <span className="font-semibold break-all">
                   {" "}
@@ -178,8 +179,8 @@ const CustomerCheckoutContactForm = ({
                 .
               </p>
             ) : (
-              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5 flex items-center gap-1">
-                <AlertCircle className="w-3 h-3 shrink-0" />
+              <p className="mt-1.5 flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
+                <AlertCircle className="h-3 w-3 shrink-0" />
                 Enter who referred you only if no affiliate shopping link was
                 shared with you.
               </p>
@@ -188,11 +189,11 @@ const CustomerCheckoutContactForm = ({
         )}
 
         <div>
-          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
+          <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">
             Voucher Coupon
           </label>
           <div className="relative">
-            <Gift className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
+            <Gift className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
             <input
               type="text"
               value={form.voucher_coupon}
@@ -201,25 +202,25 @@ const CustomerCheckoutContactForm = ({
               }
               placeholder="Enter voucher code"
               maxLength={30}
-              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-700 dark:text-slate-200 placeholder-slate-300 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-200 dark:focus:ring-sky-900 focus:border-sky-400 dark:focus:border-sky-500 transition-all tracking-widest font-mono uppercase"
+              className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pr-4 pl-10 font-mono text-sm tracking-widest text-slate-700 uppercase placeholder-slate-300 transition-all focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:placeholder-slate-500 dark:focus:border-sky-500 dark:focus:ring-sky-900"
             />
           </div>
           {voucherStatus?.loading ? (
-            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5">
+            <p className="mt-1.5 text-[11px] text-slate-400 dark:text-slate-500">
               Checking voucher…
             </p>
           ) : voucherStatus?.error ? (
-            <p className="text-[11px] text-rose-500 dark:text-rose-400 mt-1.5">
+            <p className="mt-1.5 text-[11px] text-rose-500 dark:text-rose-400">
               {voucherStatus.error}
             </p>
           ) : (voucherStatus?.appliedAmount ?? 0) > 0 ? (
-            <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1.5">
+            <p className="mt-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
               {voucherStatus?.message ||
                 `Voucher applied: -PHP ${(voucherStatus?.appliedAmount ?? 0).toLocaleString()}`}
             </p>
           ) : (
-            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5 flex items-center gap-1">
-              <AlertCircle className="w-3 h-3 shrink-0" />
+            <p className="mt-1.5 flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
+              <AlertCircle className="h-3 w-3 shrink-0" />
               Apply your voucher coupon code if available.
             </p>
           )}

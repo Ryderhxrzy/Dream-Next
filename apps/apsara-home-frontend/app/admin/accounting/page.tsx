@@ -1,3 +1,4 @@
+import AccountingDashboardMain from "@/components/superAdmin/accounting/AccountingDashboardMain"
 import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
@@ -6,8 +7,6 @@ export const metadata = buildPageMetadata({
   path: "/admin/accounting",
   noIndex: true,
 })
-
-import AccountingDashboardMain from "@/components/superAdmin/accounting/AccountingDashboardMain"
 
 export default function AccountingDashboardPage() {
   return <AccountingDashboardMain />

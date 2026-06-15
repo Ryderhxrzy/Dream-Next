@@ -1,33 +1,34 @@
 "use client"
 
 import React, { useEffect, useMemo, useRef, useState } from "react"
-import Image from "next/image"
-import { motion, AnimatePresence } from "framer-motion"
-import { useSession } from "next-auth/react"
+import { colorNameToHex, hexToColorName } from "@/libs/colorUtils"
+import { mergeVariantOptionLabelsMeta } from "@/libs/productVariantOptions"
+import { inferRoomTypeFromCategory, ROOM_OPTIONS } from "@/libs/roomConfig"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import { useGetAdminMeQuery } from "@/store/api/authApi"
+import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
+import { useGetProductBrandsQuery } from "@/store/api/productBrandsApi"
 import {
+  CreateProductPayload,
+  normalizeProduct,
+  Product,
   useCreateProductMutation,
   useFetchZqImportPreviewMutation,
   useImportZqProductsMutation,
-  CreateProductPayload,
-  Product,
-  normalizeProduct,
 } from "@/store/api/productsApi"
-import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
-import { useGetProductBrandsQuery } from "@/store/api/productBrandsApi"
-import { showErrorToast, showSuccessToast } from "@/libs/toast"
-import RichTextEditor from "@/components/ui/RichTextEditor"
-import ProductDescriptionGenerator from "@/components/superAdmin/products/ProductDescriptionGenerator"
-import ImagePositionEditorModal from "@/components/superAdmin/products/ImagePositionEditorModal"
-import BulkProductImportPanel from "@/components/superAdmin/products/BulkProductImportPanel"
-import { colorNameToHex, hexToColorName } from "@/libs/colorUtils"
-import { mergeVariantOptionLabelsMeta } from "@/libs/productVariantOptions"
-import { ROOM_OPTIONS, inferRoomTypeFromCategory } from "@/libs/roomConfig"
 import { Button } from "@heroui/react/button"
 import { Card } from "@heroui/react/card"
 import { ListBox } from "@heroui/react/list-box"
 import { ListBoxItem } from "@heroui/react/list-box-item"
 import { Select } from "@heroui/react/select"
+import { AnimatePresence, motion } from "framer-motion"
+import { useSession } from "next-auth/react"
+import Image from "next/image"
+
+import RichTextEditor from "@/components/ui/RichTextEditor"
+import BulkProductImportPanel from "@/components/superAdmin/products/BulkProductImportPanel"
+import ImagePositionEditorModal from "@/components/superAdmin/products/ImagePositionEditorModal"
+import ProductDescriptionGenerator from "@/components/superAdmin/products/ProductDescriptionGenerator"
 
 /* --- types ------------------------------------------------ */
 
@@ -189,7 +190,7 @@ const FLAG_CARDS: {
     activeCard: "border-amber-300 bg-amber-50 ring-2 ring-amber-200",
     activeIcon: "bg-amber-100 text-amber-600",
     icon: (
-      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
       </svg>
     ),
@@ -202,7 +203,7 @@ const FLAG_CARDS: {
     activeIcon: "bg-purple-100 text-purple-600",
     icon: (
       <svg
-        className="w-4 h-4"
+        className="h-4 w-4"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -224,7 +225,7 @@ const FLAG_CARDS: {
     activeIcon: "bg-rose-100 text-rose-600",
     icon: (
       <svg
-        className="w-4 h-4"
+        className="h-4 w-4"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -246,7 +247,7 @@ const FLAG_CARDS: {
     activeIcon: "bg-emerald-100 text-emerald-600",
     icon: (
       <svg
-        className="w-4 h-4"
+        className="h-4 w-4"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -756,19 +757,19 @@ function CalcRow({
             ? "text-blue-600"
             : "text-slate-800"
   return (
-    <div className="flex items-center justify-between px-3 py-2.5 gap-2">
+    <div className="flex items-center justify-between gap-2 px-3 py-2.5">
       <div className="min-w-0">
-        <div className="flex items-center gap-1 flex-wrap">
+        <div className="flex flex-wrap items-center gap-1">
           {badge && (
-            <span className="shrink-0 rounded-full bg-blue-50 px-1.5 py-0.5 text-[9px] md:text-[11px] font-bold text-blue-500">
+            <span className="shrink-0 rounded-full bg-blue-50 px-1.5 py-0.5 text-[9px] font-bold text-blue-500 md:text-[11px]">
               {badge}
             </span>
           )}
-          <span className="text-[11px] md:text-sm font-semibold text-slate-500">
+          <span className="text-[11px] font-semibold text-slate-500 md:text-sm">
             {label}
           </span>
         </div>
-        <div className="flex items-center gap-1 mt-0.5 font-mono text-[11px] md:text-xs text-slate-400 flex-wrap">
+        <div className="mt-0.5 flex flex-wrap items-center gap-1 font-mono text-[11px] text-slate-400 md:text-xs">
           <span>{a}</span>
           <span className="text-slate-300">{op}</span>
           <span>{b}</span>
@@ -777,7 +778,7 @@ function CalcRow({
         </div>
       </div>
       <span
-        className={`shrink-0 text-sm md:text-base font-bold tabular-nums ${rc}`}
+        className={`shrink-0 text-sm font-bold tabular-nums md:text-base ${rc}`}
       >
         {result}
       </span>
@@ -856,12 +857,12 @@ function PricingSummaryPanel({
     unit === "currency" ? `₱ ${fmt(value)}` : `${fmt(value)} pts`
 
   return (
-    <div className="rounded-2xl border border-blue-100 overflow-hidden shadow-sm">
+    <div className="overflow-hidden rounded-2xl border border-blue-100 shadow-sm">
       {/* -- Header -- */}
-      <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-500">
+      <div className="flex items-center justify-between bg-gradient-to-r from-blue-600 to-blue-500 px-4 py-3">
         <div className="flex items-center gap-2">
           <svg
-            className="w-3.5 h-3.5 text-white/80 shrink-0"
+            className="h-3.5 w-3.5 shrink-0 text-white/80"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -873,65 +874,65 @@ function PricingSummaryPanel({
               d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"
             />
           </svg>
-          <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-white">
+          <span className="text-[10px] font-bold tracking-widest text-white uppercase md:text-xs">
             {title}
           </span>
-          <span className="text-[10px] md:text-xs text-blue-200">
+          <span className="text-[10px] text-blue-200 md:text-xs">
             - live computation
           </span>
         </div>
-        <div className="text-right shrink-0">
-          <p className="text-[9px] md:text-[11px] font-semibold uppercase tracking-wide text-blue-200">
+        <div className="shrink-0 text-right">
+          <p className="text-[9px] font-semibold tracking-wide text-blue-200 uppercase md:text-[11px]">
             Member Price
           </p>
-          <p className="text-sm md:text-base font-bold text-white leading-none mt-0.5">
+          <p className="mt-0.5 text-sm leading-none font-bold text-white md:text-base">
             {summary.effectiveMemberPrice > 0 ? (
               `₱ ${mp}`
             ) : (
-              <span className="text-blue-300 text-xs italic">-</span>
+              <span className="text-xs text-blue-300 italic">-</span>
             )}
           </p>
         </div>
       </div>
 
-      <div className="bg-gradient-to-br from-slate-50 to-blue-50/60 divide-y divide-slate-100 dark:divide-slate-800/70">
+      <div className="divide-y divide-slate-100 bg-gradient-to-br from-slate-50 to-blue-50/60 dark:divide-slate-800/70">
         {/* -- Section 1: PV Computation (hero) -- */}
         <div className="px-4 py-3">
-          <p className="text-[9px] md:text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-2">
+          <p className="mb-2 text-[9px] font-bold tracking-widest text-slate-400 uppercase md:text-[11px]">
             PV Computation
           </p>
-          <div className="rounded-xl bg-white border border-teal-100 px-3 py-3">
+          <div className="rounded-xl border border-teal-100 bg-white px-3 py-3">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[10px] md:text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
+                <p className="mb-1 text-[10px] font-semibold tracking-wide text-slate-400 uppercase md:text-xs">
                   Transfer Price x Reversed PV Multiplier = PV Product
                 </p>
-                <div className="flex items-center gap-2 font-mono text-sm md:text-base flex-wrap">
+                <div className="flex flex-wrap items-center gap-2 font-mono text-sm md:text-base">
                   <span className="font-semibold text-slate-700">
                     {transfer}
                   </span>
-                  <span className="text-slate-300 text-base md:text-lg">x</span>
+                  <span className="text-base text-slate-300 md:text-lg">x</span>
                   <span className="font-semibold text-slate-700">{mult}</span>
-                  <span className="text-slate-300 text-base md:text-lg">=</span>
-                  <span className="font-bold text-teal-600 text-base md:text-lg">
+                  <span className="text-base text-slate-300 md:text-lg">=</span>
+                  <span className="text-base font-bold text-teal-600 md:text-lg">
                     {formulaPvStr} PV
                   </span>
                 </div>
-                <p className="text-[10px] md:text-xs text-slate-400 mt-2">
+                <p className="mt-2 text-[10px] text-slate-400 md:text-xs">
                   Encoded PV Product used in summary:{" "}
                   <span className="font-semibold text-slate-600">
                     {pvStr} PV
                   </span>
                 </p>
               </div>
-              <div className="shrink-0 text-right bg-teal-50 rounded-lg px-3 py-2 border border-teal-100">
-                <p className="text-[9px] md:text-[11px] font-semibold text-teal-500 uppercase tracking-wide">
+              <div className="shrink-0 rounded-lg border border-teal-100 bg-teal-50 px-3 py-2 text-right">
+                <p className="text-[9px] font-semibold tracking-wide text-teal-500 uppercase md:text-[11px]">
                   Auto PV
                 </p>
-                <p className="text-lg md:text-2xl font-bold text-teal-700 leading-none mt-0.5">
+                <p className="mt-0.5 text-lg leading-none font-bold text-teal-700 md:text-2xl">
                   {pvStr}
                 </p>
-                <p className="text-[9px] md:text-[11px] text-teal-400">
+                <p className="text-[9px] text-teal-400 md:text-[11px]">
                   PV units
                 </p>
               </div>
@@ -941,10 +942,10 @@ function PricingSummaryPanel({
 
         {/* -- Section 2: Price breakdown -- */}
         <div className="px-4 py-3">
-          <p className="text-[9px] md:text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-2">
+          <p className="mb-2 text-[9px] font-bold tracking-widest text-slate-400 uppercase md:text-[11px]">
             Low-End Price Breakdown
           </p>
-          <div className="rounded-xl bg-white border border-slate-100 overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/70 dark:divide-slate-800/70">
+          <div className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-100 bg-white dark:divide-slate-800/70">
             <CalcRow
               label="Retail Profit (SRP - Member Price)"
               a={`SRP ₱${fmt(summary.retailProfit + summary.effectiveMemberPrice)}`}
@@ -965,60 +966,60 @@ function PricingSummaryPanel({
 
         {/* -- Section 3: PV allocation preview -- */}
         <div className="px-4 py-3">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-[9px] md:text-[11px] font-bold uppercase tracking-widest text-slate-400">
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-[9px] font-bold tracking-widest text-slate-400 uppercase md:text-[11px]">
               PV Allocation Preview
             </p>
-            <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[9px] md:text-[11px] font-bold text-white">
+            <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[9px] font-bold text-white md:text-[11px]">
               100% of PV
             </span>
           </div>
-          <div className="rounded-xl bg-white border border-slate-100 overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/70 dark:divide-slate-800/70">
+          <div className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-100 bg-white dark:divide-slate-800/70">
             {allocationRows.map(({ label, rate, value, unit, note }, index) => (
               <div
                 key={`allocation-row-${index}`}
-                className="flex items-center justify-between px-3 py-2 gap-2"
+                className="flex items-center justify-between gap-2 px-3 py-2"
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="shrink-0 rounded-full bg-blue-50 px-1.5 py-0.5 text-[9px] md:text-[11px] font-bold text-blue-500">
+                    <span className="shrink-0 rounded-full bg-blue-50 px-1.5 py-0.5 text-[9px] font-bold text-blue-500 md:text-[11px]">
                       {rate}
                     </span>
-                    <span className="text-[11px] md:text-sm font-semibold text-slate-600 truncate">
+                    <span className="truncate text-[11px] font-semibold text-slate-600 md:text-sm">
                       {label}
                     </span>
                   </div>
-                  <p className="font-mono text-[11px] md:text-xs text-slate-400 mt-0.5">
+                  <p className="mt-0.5 font-mono text-[11px] text-slate-400 md:text-xs">
                     {pvStr} PV <span className="text-slate-300">x</span> {rate}{" "}
                     <span className="text-slate-300">=</span>{" "}
                     <span className="font-semibold text-slate-600">
                       {formatAllocationValue(value, unit)}
                     </span>
                   </p>
-                  <p className="text-[10px] md:text-[11px] text-slate-400 mt-1">
+                  <p className="mt-1 text-[10px] text-slate-400 md:text-[11px]">
                     {note}
                   </p>
                 </div>
-                <span className="shrink-0 text-sm md:text-base font-bold text-slate-800 tabular-nums">
+                <span className="shrink-0 text-sm font-bold text-slate-800 tabular-nums md:text-base">
                   {formatAllocationValue(value, unit)}
                 </span>
               </div>
             ))}
-            <div className="flex items-center justify-between px-3 py-2.5 bg-blue-600">
+            <div className="flex items-center justify-between bg-blue-600 px-3 py-2.5">
               <div className="flex items-center gap-2">
-                <span className="shrink-0 rounded-full bg-white/20 px-1.5 py-0.5 text-[9px] md:text-[11px] font-bold text-white">
+                <span className="shrink-0 rounded-full bg-white/20 px-1.5 py-0.5 text-[9px] font-bold text-white md:text-[11px]">
                   100%
                 </span>
                 <div>
-                  <p className="text-[11px] md:text-sm font-semibold text-white">
+                  <p className="text-[11px] font-semibold text-white md:text-sm">
                     Total PV Allocation
                   </p>
-                  <p className="font-mono text-[10px] md:text-xs text-blue-200">
+                  <p className="font-mono text-[10px] text-blue-200 md:text-xs">
                     All rows are derived from {pvStr} PV
                   </p>
                 </div>
               </div>
-              <span className="text-base md:text-lg font-bold text-white tabular-nums">
+              <span className="text-base font-bold text-white tabular-nums md:text-lg">
                 {fmtPv(summary.totalAllocation)} PV
               </span>
             </div>
@@ -1026,7 +1027,7 @@ function PricingSummaryPanel({
         </div>
 
         <div className="px-4 py-3">
-          <p className="text-[10px] md:text-xs text-blue-700 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
+          <p className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-[10px] text-blue-700 md:text-xs">
             {pricingTierLabel} pricing is shown here for costing reference only.
             Actual bonus payout still depends on qualification rules.
           </p>
@@ -1034,7 +1035,7 @@ function PricingSummaryPanel({
 
         {memberFallbackToSrp && (
           <div className="px-4 py-3">
-            <p className="text-[10px] md:text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+            <p className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-[10px] text-amber-600 md:text-xs">
               Enter a Member Price to compute Low-End retail profit and VAT.
             </p>
           </div>
@@ -1070,7 +1071,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2.5 pt-2">
       <div className="h-4 w-0.5 shrink-0 rounded-full bg-teal-400" />
-      <span className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
+      <span className="text-[10px] font-bold tracking-[0.22em] whitespace-nowrap text-slate-500 uppercase">
         {children}
       </span>
       <div className="h-px flex-1 bg-gradient-to-r from-slate-200 via-slate-100 to-transparent" />
@@ -1091,15 +1092,15 @@ function Field({
 }) {
   return (
     <div className="space-y-2" data-error-field={error ? "true" : undefined}>
-      <label className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+      <label className="block text-[11px] font-semibold tracking-[0.18em] text-slate-500 uppercase dark:text-slate-400">
         {label}
-        {required && <span className="text-red-400 ml-0.5">*</span>}
+        {required && <span className="ml-0.5 text-red-400">*</span>}
       </label>
       {children}
       {error && (
-        <p className="text-xs text-red-500 flex items-center gap-1">
+        <p className="flex items-center gap-1 text-xs text-red-500">
           <svg
-            className="w-3 h-3 shrink-0"
+            className="h-3 w-3 shrink-0"
             fill="currentColor"
             viewBox="0 0 20 20"
           >
@@ -1171,7 +1172,7 @@ function ModalSelectField({
       </Select.Trigger>
       <Select.Popover className="min-w-[var(--trigger-width)] rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         {searchable ? (
-          <div className="border-b border-slate-100 dark:border-slate-800 p-2">
+          <div className="border-b border-slate-100 p-2 dark:border-slate-800">
             <div className="flex min-h-10 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 transition-all duration-200 focus-within:border-teal-300 focus-within:bg-white dark:border-slate-700 dark:bg-slate-950 dark:focus-within:border-teal-400">
               <svg
                 className="h-4 w-4 text-slate-400"
@@ -2317,10 +2318,10 @@ export default function AddProductModal({
               exit={{ opacity: 0, scale: 0.95, y: 12 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
               onClick={(e) => e.stopPropagation()}
-              className="flex h-[100dvh] w-full max-w-none flex-col overflow-hidden rounded-none border-0 bg-white shadow-2xl dark:bg-slate-950 sm:h-[94vh] sm:max-w-6xl sm:rounded-2xl sm:border sm:border-slate-100 sm:dark:border-slate-800"
+              className="flex h-[100dvh] w-full max-w-none flex-col overflow-hidden rounded-none border-0 bg-white shadow-2xl sm:h-[94vh] sm:max-w-6xl sm:rounded-2xl sm:border sm:border-slate-100 dark:bg-slate-950 sm:dark:border-slate-800"
             >
               {/* -- Header -- */}
-              <div className="shrink-0 border-b border-slate-100 px-4 py-4 dark:border-slate-800 dark:bg-slate-950 sm:px-6 sm:py-5">
+              <div className="shrink-0 border-b border-slate-100 px-4 py-4 sm:px-6 sm:py-5 dark:border-slate-800 dark:bg-slate-950">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                   <div className="flex items-start gap-3 sm:items-center">
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-500 shadow-md shadow-teal-500/30 sm:h-10 sm:w-10">
@@ -2339,7 +2340,7 @@ export default function AddProductModal({
                       </svg>
                     </div>
                     <div>
-                      <h2 className="text-sm font-bold leading-none text-slate-800 dark:text-slate-100 sm:text-base">
+                      <h2 className="text-sm leading-none font-bold text-slate-800 sm:text-base dark:text-slate-100">
                         {isServicesView ? "Add New Service" : "Add New Product"}
                       </h2>
                       <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
@@ -2382,7 +2383,7 @@ export default function AddProductModal({
                       className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:opacity-40 dark:hover:bg-slate-800 dark:hover:text-slate-100"
                     >
                       <svg
-                        className="w-4 h-4"
+                        className="h-4 w-4"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -2406,7 +2407,7 @@ export default function AddProductModal({
                     ? handleSubmit
                     : (event) => event.preventDefault()
                 }
-                className="flex flex-col flex-1 min-h-0"
+                className="flex min-h-0 flex-1 flex-col"
               >
                 {entryMode === "csv" ? (
                   <BulkProductImportPanel
@@ -2417,14 +2418,14 @@ export default function AddProductModal({
                   />
                 ) : entryMode === "api" ? (
                   /* -- Global Supplier API Import Panel -- */
-                  <div className="flex flex-col flex-1 min-h-0">
+                  <div className="flex min-h-0 flex-1 flex-col">
                     {/* Endpoint banner */}
                     <div className="shrink-0 border-b border-slate-100 bg-slate-50 px-6 py-3">
-                      <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                      <p className="mb-1.5 text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
                         API Endpoint
                       </p>
                       <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5">
-                        <span className="shrink-0 rounded-md bg-sky-100 px-2 py-0.5 text-[10px] font-bold uppercase text-sky-700">
+                        <span className="shrink-0 rounded-md bg-sky-100 px-2 py-0.5 text-[10px] font-bold text-sky-700 uppercase">
                           POST
                         </span>
                         <code className="flex-1 truncate font-mono text-xs text-slate-700">
@@ -2437,11 +2438,11 @@ export default function AddProductModal({
                               "/api/admin/products/zq/fetch-preview"
                             )
                           }}
-                          className="shrink-0 text-slate-400 hover:text-slate-600 transition-colors"
+                          className="shrink-0 text-slate-400 transition-colors hover:text-slate-600"
                           title="Copy endpoint"
                         >
                           <svg
-                            className="w-3.5 h-3.5"
+                            className="h-3.5 w-3.5"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -2458,7 +2459,7 @@ export default function AddProductModal({
                     </div>
 
                     {/* Search + fetch controls */}
-                    <div className="shrink-0 flex items-center gap-3 border-b border-slate-100 px-6 py-3">
+                    <div className="flex shrink-0 items-center gap-3 border-b border-slate-100 px-6 py-3">
                       <input
                         type="text"
                         placeholder="Search keyword (optional)…"
@@ -2470,7 +2471,7 @@ export default function AddProductModal({
                             void handleFetchZq()
                           }
                         }}
-                        className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-400"
+                        className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-sky-400 focus:ring-2 focus:ring-sky-500/30 focus:outline-none"
                       />
                       <button
                         type="button"
@@ -2481,7 +2482,7 @@ export default function AddProductModal({
                         {isFetchingZq ? (
                           <>
                             <svg
-                              className="w-4 h-4 animate-spin"
+                              className="h-4 w-4 animate-spin"
                               fill="none"
                               viewBox="0 0 24 24"
                             >
@@ -2504,7 +2505,7 @@ export default function AddProductModal({
                         ) : (
                           <>
                             <svg
-                              className="w-4 h-4"
+                              className="h-4 w-4"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -2528,7 +2529,7 @@ export default function AddProductModal({
                         <div className="flex flex-col items-center gap-3 py-16 text-center">
                           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100">
                             <svg
-                              className="w-6 h-6 text-slate-300"
+                              className="h-6 w-6 text-slate-300"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -2552,9 +2553,9 @@ export default function AddProductModal({
                         </div>
                       ) : (
                         <table className="w-full text-sm">
-                          <thead className="sticky top-0 bg-slate-50 border-b border-slate-100 z-10">
+                          <thead className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50">
                             <tr>
-                              <th className="px-4 py-3 text-left w-10">
+                              <th className="w-10 px-4 py-3 text-left">
                                 <input
                                   type="checkbox"
                                   checked={
@@ -2565,22 +2566,22 @@ export default function AddProductModal({
                                   className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
                                 />
                               </th>
-                              <th className="px-4 py-3 text-left w-14 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                              <th className="w-14 px-4 py-3 text-left text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
                                 Image
                               </th>
-                              <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                              <th className="px-4 py-3 text-left text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
                                 Subject
                               </th>
-                              <th className="px-4 py-3 text-left w-28 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                              <th className="w-28 px-4 py-3 text-left text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
                                 Source
                               </th>
-                              <th className="px-4 py-3 text-left w-28 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                              <th className="w-28 px-4 py-3 text-left text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
                                 Status
                               </th>
-                              <th className="px-4 py-3 text-left w-32 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                              <th className="w-32 px-4 py-3 text-left text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
                                 Import Status
                               </th>
-                              <th className="px-4 py-3 text-left w-28 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                              <th className="w-28 px-4 py-3 text-left text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
                                 Published
                               </th>
                             </tr>
@@ -2610,13 +2611,13 @@ export default function AddProductModal({
                                       alt={item.subject}
                                       width={40}
                                       height={40}
-                                      className="h-10 w-10 rounded-lg object-cover border border-slate-100"
+                                      className="h-10 w-10 rounded-lg border border-slate-100 object-cover"
                                       unoptimized
                                     />
                                   ) : (
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 border border-slate-100">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-100 bg-slate-100">
                                       <svg
-                                        className="w-4 h-4 text-slate-300"
+                                        className="h-4 w-4 text-slate-300"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -2645,7 +2646,7 @@ export default function AddProductModal({
                                     >
                                       View source
                                       <svg
-                                        className="w-2.5 h-2.5"
+                                        className="h-2.5 w-2.5"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -2715,7 +2716,7 @@ export default function AddProductModal({
                           >
                             {isFetchingZq ? (
                               <svg
-                                className="w-3.5 h-3.5 animate-spin"
+                                className="h-3.5 w-3.5 animate-spin"
                                 fill="none"
                                 viewBox="0 0 24 24"
                               >
@@ -2735,7 +2736,7 @@ export default function AddProductModal({
                               </svg>
                             ) : (
                               <svg
-                                className="w-3.5 h-3.5"
+                                className="h-3.5 w-3.5"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -2755,7 +2756,7 @@ export default function AddProductModal({
                     </div>
 
                     {/* API panel footer */}
-                    <div className="shrink-0 flex items-center gap-3 border-t border-slate-100 bg-white px-6 py-4">
+                    <div className="flex shrink-0 items-center gap-3 border-t border-slate-100 bg-white px-6 py-4">
                       <p className="flex-1 text-xs text-slate-400">
                         {zqItems.length > 0 ? (
                           <>
@@ -2788,7 +2789,7 @@ export default function AddProductModal({
                         {isImportingZq ? (
                           <>
                             <svg
-                              className="w-4 h-4 animate-spin"
+                              className="h-4 w-4 animate-spin"
                               fill="none"
                               viewBox="0 0 24 24"
                             >
@@ -2811,7 +2812,7 @@ export default function AddProductModal({
                         ) : (
                           <>
                             <svg
-                              className="w-4 h-4"
+                              className="h-4 w-4"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -2859,7 +2860,7 @@ export default function AddProductModal({
                           >
                             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-md ring-1 ring-slate-100 transition-all group-hover:bg-teal-50 group-hover:ring-teal-200 dark:bg-slate-900 dark:ring-slate-800 dark:group-hover:bg-teal-950/40 dark:group-hover:ring-teal-800">
                               <svg
-                                className="w-6 h-6 text-slate-400 group-hover:text-teal-500 transition-colors"
+                                className="h-6 w-6 text-slate-400 transition-colors group-hover:text-teal-500"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -2897,7 +2898,7 @@ export default function AddProductModal({
                                 type="button"
                                 onClick={handleClearAllImages}
                                 disabled={isUploading}
-                                className="text-xs font-semibold text-slate-400 hover:text-red-500 transition-colors disabled:opacity-60"
+                                className="text-xs font-semibold text-slate-400 transition-colors hover:text-red-500 disabled:opacity-60"
                               >
                                 Clear all
                               </button>
@@ -2927,11 +2928,11 @@ export default function AddProductModal({
                                     src={preview}
                                     alt={`Preview ${index + 1}`}
                                     fill
-                                    className="object-cover pointer-events-none"
+                                    className="pointer-events-none object-cover"
                                     unoptimized
                                   />
                                   <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/40" />
-                                  <span className="absolute left-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/50 text-[10px] font-bold text-white">
+                                  <span className="absolute top-1.5 left-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/50 text-[10px] font-bold text-white">
                                     {index + 1}
                                   </span>
                                   {index === 0 && (
@@ -2957,7 +2958,7 @@ export default function AddProductModal({
                                       className="flex h-7 w-7 items-center justify-center rounded-full bg-red-500/90 text-white shadow hover:bg-red-600"
                                     >
                                       <svg
-                                        className="w-3.5 h-3.5"
+                                        className="h-3.5 w-3.5"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -2981,7 +2982,7 @@ export default function AddProductModal({
                                   className="group flex aspect-square cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 transition-all hover:border-teal-400 hover:bg-teal-50/30 dark:border-slate-700 dark:bg-slate-950/70 dark:hover:border-teal-500 dark:hover:bg-teal-950/20"
                                 >
                                   <svg
-                                    className="w-5 h-5 text-slate-300 group-hover:text-teal-400 transition-colors"
+                                    className="h-5 w-5 text-slate-300 transition-colors group-hover:text-teal-400"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -2993,7 +2994,7 @@ export default function AddProductModal({
                                       d="M12 4v16m8-8H4"
                                     />
                                   </svg>
-                                  <span className="text-[10px] font-medium text-slate-400 group-hover:text-teal-500 transition-colors">
+                                  <span className="text-[10px] font-medium text-slate-400 transition-colors group-hover:text-teal-500">
                                     Add
                                   </span>
                                 </label>
@@ -3009,7 +3010,7 @@ export default function AddProductModal({
                     {imageError && (
                       <p className="mt-1 flex items-center gap-1 text-xs text-red-500">
                         <svg
-                          className="w-3 h-3 shrink-0"
+                          className="h-3 w-3 shrink-0"
                           fill="currentColor"
                           viewBox="0 0 20 20"
                         >
@@ -3026,7 +3027,7 @@ export default function AddProductModal({
                     {serverError && (
                       <div className="flex items-start gap-2.5 rounded-xl border border-red-100 bg-red-50 p-3.5">
                         <svg
-                          className="w-4 h-4 text-red-500 shrink-0 mt-0.5"
+                          className="mt-0.5 h-4 w-4 shrink-0 text-red-500"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -3044,7 +3045,7 @@ export default function AddProductModal({
                     {draftRestored && (
                       <div className="flex items-start gap-2.5 rounded-xl border border-amber-100 bg-amber-50 p-3.5">
                         <svg
-                          className="w-4 h-4 text-amber-500 shrink-0 mt-0.5"
+                          className="mt-0.5 h-4 w-4 shrink-0 text-amber-500"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -3559,7 +3560,7 @@ export default function AddProductModal({
                                 !form.pd_assembly_required
                               )
                             }
-                            className={`flex items-center justify-between w-full px-3.5 py-2.5 rounded-xl border-2 transition-all ${
+                            className={`flex w-full items-center justify-between rounded-xl border-2 px-3.5 py-2.5 transition-all ${
                               form.pd_assembly_required
                                 ? "border-teal-300 bg-teal-50"
                                 : "border-slate-200 bg-white hover:border-slate-300"
@@ -3668,7 +3669,7 @@ export default function AddProductModal({
                                 value={computedMainPvDisplay}
                                 placeholder="0.00"
                                 disabled
-                                className={`${inputCls()} bg-slate-50 text-slate-600 cursor-not-allowed`}
+                                className={`${inputCls()} cursor-not-allowed bg-slate-50 text-slate-600`}
                               />
                               <p className="text-[11px] text-slate-500">
                                 Auto-computed from Dealer Price x Reversed PV
@@ -3806,7 +3807,7 @@ export default function AddProductModal({
                                 </p>
                               </div>
                             ) : (
-                              <div className="flex items-center p-1 bg-slate-100 rounded-xl gap-0.5">
+                              <div className="flex items-center gap-0.5 rounded-xl bg-slate-100 p-1">
                                 {[
                                   { value: "1", label: "Active" },
                                   { value: "0", label: "Inactive (Draft)" },
@@ -3816,7 +3817,7 @@ export default function AddProductModal({
                                     type="button"
                                     onPress={() => set("pd_status", opt.value)}
                                     variant="tertiary"
-                                    className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                                    className={`flex-1 rounded-lg py-1.5 text-xs font-semibold transition-all ${
                                       form.pd_status === opt.value
                                         ? opt.value === "1"
                                           ? "bg-white text-teal-700 shadow-sm"
@@ -3853,7 +3854,7 @@ export default function AddProductModal({
                                   setNewStyleInputs({})
                                 }
                               }}
-                              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border-2 transition-all ${
+                              className={`flex w-full items-center justify-between rounded-xl border-2 px-3.5 py-2.5 transition-all ${
                                 hasVariants
                                   ? "border-teal-300 bg-teal-50"
                                   : "border-slate-200 bg-white hover:border-slate-300"
@@ -3861,7 +3862,7 @@ export default function AddProductModal({
                             >
                               <div className="flex items-center gap-2.5">
                                 <svg
-                                  className={`w-4 h-4 ${hasVariants ? "text-teal-600" : "text-slate-400"}`}
+                                  className={`h-4 w-4 ${hasVariants ? "text-teal-600" : "text-slate-400"}`}
                                   fill="none"
                                   stroke="currentColor"
                                   viewBox="0 0 24 24"
@@ -3901,7 +3902,7 @@ export default function AddProductModal({
                                   !form.pd_manual_checkout_enabled
                                 )
                               }
-                              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border-2 transition-all ${
+                              className={`flex w-full items-center justify-between rounded-xl border-2 px-3.5 py-2.5 transition-all ${
                                 form.pd_manual_checkout_enabled
                                   ? "border-violet-300 bg-violet-50"
                                   : "border-slate-200 bg-white hover:border-slate-300"
@@ -3909,7 +3910,7 @@ export default function AddProductModal({
                             >
                               <div className="flex items-center gap-2.5">
                                 <svg
-                                  className={`w-4 h-4 ${form.pd_manual_checkout_enabled ? "text-violet-600" : "text-slate-400"}`}
+                                  className={`h-4 w-4 ${form.pd_manual_checkout_enabled ? "text-violet-600" : "text-slate-400"}`}
                                   fill="none"
                                   stroke="currentColor"
                                   viewBox="0 0 24 24"
@@ -3942,7 +3943,7 @@ export default function AddProductModal({
 
                         {/* -- Section: Product Badges -- */}
                         <SectionLabel>Product Badges</SectionLabel>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                           {FLAG_CARDS.map((flag) => {
                             const isActive = form[flag.key] as boolean
                             return (
@@ -3951,14 +3952,14 @@ export default function AddProductModal({
                                 type="button"
                                 onClick={() => set(flag.key, !isActive)}
                                 className={[
-                                  "relative flex flex-col gap-2 p-3 rounded-xl border-2 text-left transition-all",
+                                  "relative flex flex-col gap-2 rounded-xl border-2 p-3 text-left transition-all",
                                   isActive
                                     ? flag.activeCard
                                     : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-slate-600 dark:hover:bg-slate-800",
                                 ].join(" ")}
                               >
                                 <div
-                                  className={`h-7 w-7 rounded-lg flex items-center justify-center transition-colors ${isActive ? flag.activeIcon : "bg-slate-100 text-slate-400"}`}
+                                  className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${isActive ? flag.activeIcon : "bg-slate-100 text-slate-400"}`}
                                 >
                                   {flag.icon}
                                 </div>
@@ -3968,16 +3969,16 @@ export default function AddProductModal({
                                   >
                                     {flag.label}
                                   </p>
-                                  <p className="text-[10px] text-slate-400 leading-snug mt-0.5">
+                                  <p className="mt-0.5 text-[10px] leading-snug text-slate-400">
                                     {flag.desc}
                                   </p>
                                 </div>
                                 {isActive && (
                                   <div
-                                    className={`absolute top-2 right-2 h-3.5 w-3.5 rounded-full flex items-center justify-center ${flag.activeIcon}`}
+                                    className={`absolute top-2 right-2 flex h-3.5 w-3.5 items-center justify-center rounded-full ${flag.activeIcon}`}
                                   >
                                     <svg
-                                      className="w-2 h-2"
+                                      className="h-2 w-2"
                                       fill="currentColor"
                                       viewBox="0 0 20 20"
                                     >
@@ -4023,9 +4024,9 @@ export default function AddProductModal({
                             </div>
 
                             <div className="mt-4 flex items-center gap-2 rounded-xl border border-teal-100 bg-white/80 p-2.5 dark:border-teal-900/50 dark:bg-slate-950/70">
-                              <label className="shrink-0 cursor-pointer relative group">
+                              <label className="group relative shrink-0 cursor-pointer">
                                 <div
-                                  className="h-10 w-10 rounded-xl border-2 border-white ring-1 ring-slate-200 group-hover:ring-teal-400 transition-all shadow-sm"
+                                  className="h-10 w-10 rounded-xl border-2 border-white shadow-sm ring-1 ring-slate-200 transition-all group-hover:ring-teal-400"
                                   style={{
                                     backgroundColor:
                                       newGlobalColorInput.hex ?? "#94a3b8",
@@ -4043,7 +4044,7 @@ export default function AddProductModal({
                                         hexToColorName(hex),
                                     }))
                                   }}
-                                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                                 />
                               </label>
                               <div className="flex-1 space-y-1">
@@ -4063,7 +4064,7 @@ export default function AddProductModal({
                                     (e.preventDefault(), addGlobalColor())
                                   }
                                   placeholder="Global color / finish (e.g. Walnut Oak, Matte Black)"
-                                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400/40 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
+                                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-teal-400 focus:ring-2 focus:ring-teal-400/40 focus:outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
                                 />
                                 <p className="text-[11px] text-slate-400">
                                   New variants will automatically start with
@@ -4073,7 +4074,7 @@ export default function AddProductModal({
                               <button
                                 type="button"
                                 onClick={addGlobalColor}
-                                className="shrink-0 px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-semibold transition-colors"
+                                className="shrink-0 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-700"
                               >
                                 Add Color
                               </button>
@@ -4084,10 +4085,10 @@ export default function AddProductModal({
                                 {globalColors.map((color, colorIndex) => (
                                   <span
                                     key={`global-color-${colorIndex}-${getVariantColorKey(color)}`}
-                                    className="inline-flex items-center gap-1.5 rounded-full border border-teal-100 bg-white py-1 pl-1 pr-2.5 shadow-sm dark:border-teal-900/50 dark:bg-slate-900"
+                                    className="inline-flex items-center gap-1.5 rounded-full border border-teal-100 bg-white py-1 pr-2.5 pl-1 shadow-sm dark:border-teal-900/50 dark:bg-slate-900"
                                   >
                                     <span
-                                      className="h-5 w-5 rounded-full shrink-0 border border-slate-200"
+                                      className="h-5 w-5 shrink-0 rounded-full border border-slate-200"
                                       style={{ backgroundColor: color.hex }}
                                     />
                                     <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
@@ -4100,10 +4101,10 @@ export default function AddProductModal({
                                       onClick={() =>
                                         removeGlobalColor(colorIndex)
                                       }
-                                      className="text-slate-300 hover:text-red-500 transition-colors leading-none"
+                                      className="leading-none text-slate-300 transition-colors hover:text-red-500"
                                     >
                                       <svg
-                                        className="w-3.5 h-3.5"
+                                        className="h-3.5 w-3.5"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -4124,7 +4125,7 @@ export default function AddProductModal({
                             <div className="mt-4 space-y-4 rounded-xl border border-teal-100 bg-white/80 p-3 dark:border-teal-900/50 dark:bg-slate-950/70">
                               <div className="grid gap-3 md:grid-cols-[1.2fr_1fr]">
                                 <div className="space-y-1">
-                                  <label className="text-xs font-semibold text-slate-600 block">
+                                  <label className="block text-xs font-semibold text-slate-600">
                                     Variant Header
                                   </label>
                                   <input
@@ -4136,7 +4137,7 @@ export default function AddProductModal({
                                       )
                                     }
                                     placeholder="e.g. Thickness"
-                                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400/40 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
+                                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-teal-400 focus:ring-2 focus:ring-teal-400/40 focus:outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
                                   />
                                   <p className="text-[11px] text-slate-400">
                                     Set the display title shown on the product
@@ -4144,7 +4145,7 @@ export default function AddProductModal({
                                   </p>
                                 </div>
                                 <div className="space-y-1">
-                                  <label className="text-xs font-semibold text-slate-600 block">
+                                  <label className="block text-xs font-semibold text-slate-600">
                                     Add Custom Variant Values
                                   </label>
                                   <div className="flex gap-2">
@@ -4159,7 +4160,7 @@ export default function AddProductModal({
                                         addGlobalPrimaryValue())
                                       }
                                       placeholder="e.g. 1 inch, 2 inches"
-                                      className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400/40 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
+                                      className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-teal-400 focus:ring-2 focus:ring-teal-400/40 focus:outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
                                     />
                                     <button
                                       type="button"
@@ -4178,7 +4179,7 @@ export default function AddProductModal({
                                     (value, valueIndex) => (
                                       <span
                                         key={`global-primary-${valueIndex}-${value || "empty"}`}
-                                        className="inline-flex items-center gap-1.5 rounded-full border border-teal-100 bg-teal-50/70 pl-3 pr-2 py-1.5 shadow-sm"
+                                        className="inline-flex items-center gap-1.5 rounded-full border border-teal-100 bg-teal-50/70 py-1.5 pr-2 pl-3 shadow-sm"
                                       >
                                         <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
                                           {value}
@@ -4188,10 +4189,10 @@ export default function AddProductModal({
                                           onClick={() =>
                                             removeGlobalPrimaryValue(valueIndex)
                                           }
-                                          className="text-slate-300 hover:text-red-500 transition-colors leading-none"
+                                          className="leading-none text-slate-300 transition-colors hover:text-red-500"
                                         >
                                           <svg
-                                            className="w-3.5 h-3.5"
+                                            className="h-3.5 w-3.5"
                                             fill="none"
                                             stroke="currentColor"
                                             viewBox="0 0 24 24"
@@ -4211,7 +4212,7 @@ export default function AddProductModal({
                               )}
 
                               <div className="space-y-1">
-                                <label className="text-xs font-semibold text-slate-600 block">
+                                <label className="block text-xs font-semibold text-slate-600">
                                   Global Sizes
                                 </label>
                                 <div className="flex gap-2">
@@ -4225,7 +4226,7 @@ export default function AddProductModal({
                                       (e.preventDefault(), addGlobalSizeValue())
                                     }
                                     placeholder="e.g. 36 x 75, 48 x 75"
-                                    className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400/40 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
+                                    className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-teal-400 focus:ring-2 focus:ring-teal-400/40 focus:outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
                                   />
                                   <button
                                     type="button"
@@ -4246,7 +4247,7 @@ export default function AddProductModal({
                                   {globalSizeValues.map((value, valueIndex) => (
                                     <span
                                       key={`global-size-${valueIndex}-${value || "empty"}`}
-                                      className="inline-flex items-center gap-1.5 rounded-full border border-teal-100 bg-white py-1.5 pl-3 pr-2 shadow-sm dark:border-teal-900/50 dark:bg-slate-900"
+                                      className="inline-flex items-center gap-1.5 rounded-full border border-teal-100 bg-white py-1.5 pr-2 pl-3 shadow-sm dark:border-teal-900/50 dark:bg-slate-900"
                                     >
                                       <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
                                         {value}
@@ -4256,10 +4257,10 @@ export default function AddProductModal({
                                         onClick={() =>
                                           removeGlobalSizeValue(valueIndex)
                                         }
-                                        className="text-slate-300 hover:text-red-500 transition-colors leading-none"
+                                        className="leading-none text-slate-300 transition-colors hover:text-red-500"
                                       >
                                         <svg
-                                          className="w-3.5 h-3.5"
+                                          className="h-3.5 w-3.5"
                                           fill="none"
                                           stroke="currentColor"
                                           viewBox="0 0 24 24"
@@ -4281,9 +4282,9 @@ export default function AddProductModal({
 
                           {variants.length === 0 ? (
                             <div className="flex flex-col items-center gap-2 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 py-8 text-center dark:border-slate-700 dark:bg-slate-950/70">
-                              <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center">
+                              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100">
                                 <svg
-                                  className="w-5 h-5 text-slate-300"
+                                  className="h-5 w-5 text-slate-300"
                                   fill="none"
                                   stroke="currentColor"
                                   viewBox="0 0 24 24"
@@ -4320,7 +4321,7 @@ export default function AddProductModal({
                                   {/* Variant header */}
                                   <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950/70">
                                     <div className="flex items-center gap-2">
-                                      <div className="h-6 w-6 rounded-lg bg-teal-100 flex items-center justify-center">
+                                      <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-teal-100">
                                         <span className="text-[10px] font-bold text-teal-700">
                                           {index + 1}
                                         </span>
@@ -4329,43 +4330,43 @@ export default function AddProductModal({
                                         {variant.pv_name.trim() ||
                                           `Variant #${index + 1}`}
                                         {variantStyles.length > 1 && (
-                                          <span className="text-slate-400 font-normal ml-1">
+                                          <span className="ml-1 font-normal text-slate-400">
                                             (+{variantStyles.length - 1} more
                                             styles)
                                           </span>
                                         )}
                                         {variant.pv_style && (
-                                          <span className="text-slate-400 font-normal ml-1">
+                                          <span className="ml-1 font-normal text-slate-400">
                                             · {variant.pv_style}
                                           </span>
                                         )}
                                         {variant.pv_size && (
-                                          <span className="text-slate-400 font-normal ml-1">
+                                          <span className="ml-1 font-normal text-slate-400">
                                             · {variant.pv_size}
                                           </span>
                                         )}
                                         {(variant.pv_width ||
                                           variant.pv_dimension ||
                                           variant.pv_height) && (
-                                          <span className="text-slate-400 font-normal ml-1">
+                                          <span className="ml-1 font-normal text-slate-400">
                                             · {variant.pv_width || "-"}W x{" "}
                                             {variant.pv_dimension || "-"}D x{" "}
                                             {variant.pv_height || "-"}H
                                           </span>
                                         )}
                                         {variant.pv_colors.length > 0 && (
-                                          <span className="inline-flex items-center gap-1 ml-2">
+                                          <span className="ml-2 inline-flex items-center gap-1">
                                             {variant.pv_colors.map((c, ci) => (
                                               <span
                                                 key={ci}
-                                                className="h-3 w-3 rounded-full border border-slate-200 shrink-0"
+                                                className="h-3 w-3 shrink-0 rounded-full border border-slate-200"
                                                 style={{
                                                   backgroundColor: c.hex,
                                                 }}
                                                 title={c.name}
                                               />
                                             ))}
-                                            <span className="text-[10px] font-medium text-slate-400 ml-1">
+                                            <span className="ml-1 text-[10px] font-medium text-slate-400">
                                               {variant.pv_colors.length}
                                             </span>
                                           </span>
@@ -4373,16 +4374,16 @@ export default function AddProductModal({
                                       </p>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                      <span className="text-[10px] font-mono text-slate-400">
+                                      <span className="font-mono text-[10px] text-slate-400">
                                         {variant.pv_sku || autoSku}
                                       </span>
                                       <button
                                         type="button"
                                         onClick={() => removeVariant(index)}
-                                        className="h-6 w-6 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                        className="flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500"
                                       >
                                         <svg
-                                          className="w-3.5 h-3.5"
+                                          className="h-3.5 w-3.5"
                                           fill="none"
                                           stroke="currentColor"
                                           viewBox="0 0 24 24"
@@ -4400,13 +4401,13 @@ export default function AddProductModal({
 
                                   <div className="divide-y divide-slate-100 dark:divide-slate-800/70">
                                     {/* -- Identity -- */}
-                                    <div className="px-4 py-3.5 space-y-2.5">
-                                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    <div className="space-y-2.5 px-4 py-3.5">
+                                      <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                                         Identity
                                       </p>
                                       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                                         <div className="space-y-1">
-                                          <label className="text-[11px] font-semibold text-slate-500 block">
+                                          <label className="block text-[11px] font-semibold text-slate-500">
                                             Name{" "}
                                             <span className="font-normal text-slate-400">
                                               (recommended)
@@ -4426,14 +4427,14 @@ export default function AddProductModal({
                                           />
                                         </div>
                                         <div className="space-y-1">
-                                          <label className="text-[11px] font-semibold text-slate-500 block">
+                                          <label className="block text-[11px] font-semibold text-slate-500">
                                             Style
                                           </label>
                                           <p className="text-[10px] text-slate-400">
                                             Use this for layout/style choices
                                             that should not appear under Size.
                                           </p>
-                                          <div className="flex gap-2 items-center">
+                                          <div className="flex items-center gap-2">
                                             <input
                                               type="text"
                                               value={
@@ -4458,7 +4459,7 @@ export default function AddProductModal({
                                               onClick={() =>
                                                 addVariantExtraStyle(index)
                                               }
-                                              className="shrink-0 px-3 py-2 bg-teal-50 hover:bg-teal-100 text-teal-700 rounded-lg text-xs font-semibold transition-colors border border-teal-200"
+                                              className="shrink-0 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-xs font-semibold text-teal-700 transition-colors hover:bg-teal-100"
                                             >
                                               + Add
                                             </button>
@@ -4472,7 +4473,7 @@ export default function AddProductModal({
                                                     key={`${style}-${styleIndex}`}
                                                     className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2 py-0.5 shadow-sm"
                                                   >
-                                                    <span className="text-slate-600 font-medium text-[11px]">
+                                                    <span className="text-[11px] font-medium text-slate-600">
                                                       {style}
                                                     </span>
                                                     <button
@@ -4483,10 +4484,10 @@ export default function AddProductModal({
                                                           styleIndex
                                                         )
                                                       }
-                                                      className="text-slate-300 hover:text-red-500 transition-colors leading-none"
+                                                      className="leading-none text-slate-300 transition-colors hover:text-red-500"
                                                     >
                                                       <svg
-                                                        className="w-3 h-3"
+                                                        className="h-3 w-3"
                                                         fill="none"
                                                         stroke="currentColor"
                                                         viewBox="0 0 24 24"
@@ -4506,7 +4507,7 @@ export default function AddProductModal({
                                           )}
                                         </div>
                                         <div className="space-y-1">
-                                          <label className="text-[11px] font-semibold text-slate-500 block">
+                                          <label className="block text-[11px] font-semibold text-slate-500">
                                             Size
                                           </label>
                                           <input
@@ -4527,7 +4528,7 @@ export default function AddProductModal({
                                           </p>
                                         </div>
                                         <div className="space-y-1">
-                                          <label className="text-[11px] font-semibold text-slate-500 block">
+                                          <label className="block text-[11px] font-semibold text-slate-500">
                                             SKU{" "}
                                             <span className="font-normal text-slate-400">
                                               (optional)
@@ -4549,7 +4550,7 @@ export default function AddProductModal({
                                       </div>
                                       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                                         <div className="space-y-1">
-                                          <label className="text-[11px] font-semibold text-slate-500 block">
+                                          <label className="block text-[11px] font-semibold text-slate-500">
                                             Width / W (cm)
                                           </label>
                                           <input
@@ -4576,7 +4577,7 @@ export default function AddProductModal({
                                           />
                                         </div>
                                         <div className="space-y-1">
-                                          <label className="text-[11px] font-semibold text-slate-500 block">
+                                          <label className="block text-[11px] font-semibold text-slate-500">
                                             Length / L (cm)
                                           </label>
                                           <input
@@ -4603,7 +4604,7 @@ export default function AddProductModal({
                                           />
                                         </div>
                                         <div className="space-y-1">
-                                          <label className="text-[11px] font-semibold text-slate-500 block">
+                                          <label className="block text-[11px] font-semibold text-slate-500">
                                             Height / H (cm)
                                           </label>
                                           <input
@@ -4633,8 +4634,8 @@ export default function AddProductModal({
                                     </div>
 
                                     {/* -- Colors -- */}
-                                    <div className="px-4 py-3.5 space-y-2.5">
-                                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    <div className="space-y-2.5 px-4 py-3.5">
+                                      <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                                         Colors / Extra Option Values
                                       </p>
                                       {variant.pv_colors.length > 0 && (
@@ -4643,15 +4644,15 @@ export default function AddProductModal({
                                             (color, ci) => (
                                               <span
                                                 key={ci}
-                                                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white pl-1 pr-2 py-0.5 shadow-sm"
+                                                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white py-0.5 pr-2 pl-1 shadow-sm"
                                               >
                                                 <span
-                                                  className="h-4 w-4 rounded-full shrink-0 border border-slate-200"
+                                                  className="h-4 w-4 shrink-0 rounded-full border border-slate-200"
                                                   style={{
                                                     backgroundColor: color.hex,
                                                   }}
                                                 />
-                                                <span className="text-slate-600 font-medium text-[11px]">
+                                                <span className="text-[11px] font-medium text-slate-600">
                                                   {color.name !== color.hex
                                                     ? color.name
                                                     : color.hex}
@@ -4664,10 +4665,10 @@ export default function AddProductModal({
                                                       ci
                                                     )
                                                   }
-                                                  className="text-slate-300 hover:text-red-500 transition-colors leading-none ml-0.5"
+                                                  className="ml-0.5 leading-none text-slate-300 transition-colors hover:text-red-500"
                                                 >
                                                   <svg
-                                                    className="w-3 h-3"
+                                                    className="h-3 w-3"
                                                     fill="none"
                                                     stroke="currentColor"
                                                     viewBox="0 0 24 24"
@@ -4685,10 +4686,10 @@ export default function AddProductModal({
                                           )}
                                         </div>
                                       )}
-                                      <div className="flex gap-2 items-center p-2.5 rounded-lg bg-slate-50 border border-slate-200">
-                                        <label className="shrink-0 cursor-pointer relative group">
+                                      <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2.5">
+                                        <label className="group relative shrink-0 cursor-pointer">
                                           <div
-                                            className="h-9 w-9 rounded-lg border-2 border-white ring-1 ring-slate-200 group-hover:ring-teal-400 transition-all shadow-sm"
+                                            className="h-9 w-9 rounded-lg border-2 border-white shadow-sm ring-1 ring-slate-200 transition-all group-hover:ring-teal-400"
                                             style={{
                                               backgroundColor:
                                                 newColorInputs[index]?.hex ??
@@ -4717,7 +4718,7 @@ export default function AddProductModal({
                                                 },
                                               }))
                                             }}
-                                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                                           />
                                         </label>
                                         <div className="flex-1 space-y-1">
@@ -4750,9 +4751,9 @@ export default function AddProductModal({
                                               addVariantColor(index))
                                             }
                                             placeholder="Color / finish (e.g. Matte Black, Walnut Oak)"
-                                            className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-teal-400 focus:border-teal-400"
+                                            className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-700 placeholder-slate-400 focus:border-teal-400 focus:ring-1 focus:ring-teal-400 focus:outline-none"
                                           />
-                                          <p className="text-[10px] text-slate-400 px-0.5">
+                                          <p className="px-0.5 text-[10px] text-slate-400">
                                             Optional. Use this when you also
                                             need color or finish choices under
                                             the same variant row.
@@ -4761,7 +4762,7 @@ export default function AddProductModal({
                                         <button
                                           type="button"
                                           onClick={() => addVariantColor(index)}
-                                          className="shrink-0 px-3 py-2 bg-teal-50 hover:bg-teal-100 text-teal-700 rounded-lg text-xs font-semibold transition-colors border border-teal-200"
+                                          className="shrink-0 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-xs font-semibold text-teal-700 transition-colors hover:bg-teal-100"
                                         >
                                           + Add
                                         </button>
@@ -4769,13 +4770,13 @@ export default function AddProductModal({
                                     </div>
 
                                     {/* -- Pricing -- */}
-                                    <div className="px-4 py-3.5 space-y-2.5">
-                                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    <div className="space-y-2.5 px-4 py-3.5">
+                                      <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                                         Pricing
                                       </p>
                                       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
                                         <div className="space-y-1">
-                                          <label className="text-[11px] font-semibold text-slate-500 block">
+                                          <label className="block text-[11px] font-semibold text-slate-500">
                                             SRP (₱)
                                           </label>
                                           <input
@@ -4802,7 +4803,7 @@ export default function AddProductModal({
                                           />
                                         </div>
                                         <div className="space-y-1">
-                                          <label className="text-[11px] font-semibold text-slate-500 block">
+                                          <label className="block text-[11px] font-semibold text-slate-500">
                                             Dealer (₱)
                                           </label>
                                           <input
@@ -4829,7 +4830,7 @@ export default function AddProductModal({
                                           />
                                         </div>
                                         <div className="space-y-1">
-                                          <label className="text-[11px] font-semibold text-slate-500 block">
+                                          <label className="block text-[11px] font-semibold text-slate-500">
                                             Member (₱)
                                           </label>
                                           <input
@@ -4856,7 +4857,7 @@ export default function AddProductModal({
                                           />
                                         </div>
                                         <div className="space-y-1">
-                                          <label className="text-[11px] font-semibold text-slate-500 block">
+                                          <label className="block text-[11px] font-semibold text-slate-500">
                                             Reversed PV Multiplier
                                           </label>
                                           <input
@@ -4878,7 +4879,7 @@ export default function AddProductModal({
                                       </div>
                                       <div className="grid grid-cols-2 gap-3">
                                         <div className="space-y-1">
-                                          <label className="text-[11px] font-semibold text-slate-500 block">
+                                          <label className="block text-[11px] font-semibold text-slate-500">
                                             PV Product
                                           </label>
                                           <input
@@ -4893,11 +4894,11 @@ export default function AddProductModal({
                                             })}
                                             placeholder="0.00"
                                             disabled
-                                            className={`${variantInputCls} bg-slate-50 text-slate-600 cursor-not-allowed`}
+                                            className={`${variantInputCls} cursor-not-allowed bg-slate-50 text-slate-600`}
                                           />
                                         </div>
                                         <div className="space-y-1">
-                                          <label className="text-[11px] font-semibold text-slate-500 block">
+                                          <label className="block text-[11px] font-semibold text-slate-500">
                                             Retail Profit
                                           </label>
                                           <input
@@ -4955,13 +4956,13 @@ export default function AddProductModal({
                                     </div>
 
                                     {/* -- Inventory & Status -- */}
-                                    <div className="px-4 py-3.5 space-y-2.5">
-                                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    <div className="space-y-2.5 px-4 py-3.5">
+                                      <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                                         Inventory & Status
                                       </p>
                                       <div className="grid grid-cols-2 gap-3">
                                         <div className="space-y-1">
-                                          <label className="text-[11px] font-semibold text-slate-500 block">
+                                          <label className="block text-[11px] font-semibold text-slate-500">
                                             Stock Quantity
                                           </label>
                                           <input
@@ -4979,10 +4980,10 @@ export default function AddProductModal({
                                           />
                                         </div>
                                         <div className="space-y-1">
-                                          <label className="text-[11px] font-semibold text-slate-500 block">
+                                          <label className="block text-[11px] font-semibold text-slate-500">
                                             Status
                                           </label>
-                                          <div className="flex items-center p-0.5 bg-slate-100 rounded-lg gap-0.5">
+                                          <div className="flex items-center gap-0.5 rounded-lg bg-slate-100 p-0.5">
                                             {[
                                               { value: "1", label: "Active" },
                                               { value: "0", label: "Inactive" },
@@ -4997,7 +4998,7 @@ export default function AddProductModal({
                                                     opt.value
                                                   )
                                                 }
-                                                className={`flex-1 py-1.5 rounded-md text-[11px] font-semibold transition-all ${
+                                                className={`flex-1 rounded-md py-1.5 text-[11px] font-semibold transition-all ${
                                                   variant.pv_status ===
                                                   opt.value
                                                     ? opt.value === "1"
@@ -5015,15 +5016,15 @@ export default function AddProductModal({
                                     </div>
 
                                     {/* -- Images -- */}
-                                    <div className="px-4 py-3.5 space-y-2.5">
+                                    <div className="space-y-2.5 px-4 py-3.5">
                                       <div className="flex items-center justify-between">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                        <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                                           Images
                                         </p>
                                         <label
                                           onDragOver={preventFileDropNavigation}
                                           onDrop={handleVariantImageDrop(index)}
-                                          className="inline-flex cursor-pointer items-center gap-1.5 px-2.5 py-1 bg-slate-100 hover:bg-teal-50 hover:text-teal-700 text-slate-600 rounded-lg text-[11px] font-semibold transition-colors"
+                                          className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600 transition-colors hover:bg-teal-50 hover:text-teal-700"
                                         >
                                           <input
                                             type="file"
@@ -5038,7 +5039,7 @@ export default function AddProductModal({
                                             }
                                           />
                                           <svg
-                                            className="w-3.5 h-3.5"
+                                            className="h-3.5 w-3.5"
                                             fill="none"
                                             stroke="currentColor"
                                             viewBox="0 0 24 24"
@@ -5059,7 +5060,7 @@ export default function AddProductModal({
                                             (url, imageIndex) => (
                                               <div
                                                 key={`${url}-${imageIndex}`}
-                                                className="relative h-14 overflow-hidden rounded-lg border border-slate-200 group"
+                                                className="group relative h-14 overflow-hidden rounded-lg border border-slate-200"
                                               >
                                                 <Image
                                                   src={url}
@@ -5080,10 +5081,10 @@ export default function AddProductModal({
                                                       )
                                                     )
                                                   }
-                                                  className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                                  className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
                                                 >
                                                   <svg
-                                                    className="w-3.5 h-3.5 text-white"
+                                                    className="h-3.5 w-3.5 text-white"
                                                     fill="none"
                                                     stroke="currentColor"
                                                     viewBox="0 0 24 24"
@@ -5104,7 +5105,7 @@ export default function AddProductModal({
                                         <label
                                           onDragOver={preventFileDropNavigation}
                                           onDrop={handleVariantImageDrop(index)}
-                                          className="flex flex-col items-center justify-center gap-1.5 h-16 rounded-lg border-2 border-dashed border-slate-200 hover:border-teal-400 hover:bg-teal-50/30 transition-colors cursor-pointer"
+                                          className="flex h-16 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-slate-200 transition-colors hover:border-teal-400 hover:bg-teal-50/30"
                                         >
                                           <input
                                             type="file"
@@ -5119,7 +5120,7 @@ export default function AddProductModal({
                                             }
                                           />
                                           <svg
-                                            className="w-5 h-5 text-slate-300"
+                                            className="h-5 w-5 text-slate-300"
                                             fill="none"
                                             stroke="currentColor"
                                             viewBox="0 0 24 24"
@@ -5151,7 +5152,7 @@ export default function AddProductModal({
                             className="h-12 w-full rounded-2xl border-2 border-dashed border-slate-200 bg-white text-xs font-semibold text-slate-600 transition-all hover:border-teal-400 hover:bg-teal-50/40 hover:text-teal-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-teal-500 dark:hover:bg-teal-950/20 dark:hover:text-teal-300"
                           >
                             <svg
-                              className="w-4 h-4"
+                              className="h-4 w-4"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -5173,7 +5174,7 @@ export default function AddProductModal({
 
                 {/* Sticky footer */}
                 {entryMode === "manual" && (
-                  <div className="flex shrink-0 items-center gap-3 border-t border-slate-100 bg-white px-5 py-3.5 dark:border-slate-800 dark:bg-slate-950 sm:px-6">
+                  <div className="flex shrink-0 items-center gap-3 border-t border-slate-100 bg-white px-5 py-3.5 sm:px-6 dark:border-slate-800 dark:bg-slate-950">
                     <p className="flex-1 text-xs text-slate-400">
                       Fields marked{" "}
                       <span className="font-semibold text-red-400">*</span> are
@@ -5196,7 +5197,7 @@ export default function AddProductModal({
                       {isBusy ? (
                         <>
                           <svg
-                            className="w-4 h-4 animate-spin"
+                            className="h-4 w-4 animate-spin"
                             fill="none"
                             viewBox="0 0 24 24"
                           >
@@ -5219,7 +5220,7 @@ export default function AddProductModal({
                       ) : (
                         <>
                           <svg
-                            className="w-4 h-4"
+                            className="h-4 w-4"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"

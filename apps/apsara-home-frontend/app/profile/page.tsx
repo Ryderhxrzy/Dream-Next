@@ -1,10 +1,11 @@
-import { buildPageMetadata } from "@/app/seo"
-import ProfilePage from "@/components/profile/ProfilePage"
 import { authOptions } from "@/libs/auth"
+import { getNavbarCategories } from "@/libs/serverStorefront"
 import type { MeResponse } from "@/store/api/userApi"
 import { getServerSession } from "next-auth"
-import { getNavbarCategories } from "@/libs/serverStorefront"
 import { redirect } from "next/navigation"
+
+import ProfilePage from "@/components/profile/ProfilePage"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Profile",

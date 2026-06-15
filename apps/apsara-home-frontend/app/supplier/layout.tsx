@@ -2,6 +2,7 @@
 
 import { SessionProvider } from "next-auth/react"
 import { usePathname } from "next/navigation"
+
 import SupplierLayoutShell from "@/components/supplier/SupplierLayoutShell"
 
 const UNAUTHENTICATED_PATHS = [

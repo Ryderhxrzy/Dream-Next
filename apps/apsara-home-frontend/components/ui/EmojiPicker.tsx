@@ -494,10 +494,10 @@ export default function EmojiPicker({ onSelect, onClose }: Props) {
       ref={ref}
       className="absolute bottom-full left-0 z-50 mb-2 w-72 rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900"
     >
-      <div className="max-h-60 overflow-y-auto p-2 scrollbar-none [&::-webkit-scrollbar]:hidden">
+      <div className="max-h-60 scrollbar-none overflow-y-auto p-2 [&::-webkit-scrollbar]:hidden">
         {EMOJI_GROUPS.map((group) => (
           <div key={group.label} className="mb-2">
-            <p className="mb-1 px-1 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+            <p className="mb-1 px-1 text-[10px] font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
               {group.label}
             </p>
             <div className="flex flex-wrap gap-0.5">

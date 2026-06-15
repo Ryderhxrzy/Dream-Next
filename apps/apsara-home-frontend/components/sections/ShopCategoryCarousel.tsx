@@ -1,9 +1,9 @@
 "use client"
 
-import Image from "next/image"
-import Link from "next/link"
 import { useRef } from "react"
 import { AnimatePresence, motion } from "framer-motion"
+import Image from "next/image"
+import Link from "next/link"
 
 type CategoryCardItem = {
   id: number
@@ -56,8 +56,8 @@ export default function ShopCategoryCarousel({
                   unoptimized
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-5">
-                  <h3 className="text-lg font-bold leading-tight text-white transition-colors duration-300 group-hover:text-orange-300">
+                <div className="absolute right-0 bottom-0 left-0 p-5">
+                  <h3 className="text-lg leading-tight font-bold text-white transition-colors duration-300 group-hover:text-orange-300">
                     {card.name}
                   </h3>
                   <p className="mt-0.5 text-xs text-white/60">
@@ -94,7 +94,7 @@ export default function ShopCategoryCarousel({
         <button
           type="button"
           onClick={() => scrollCarousel("left")}
-          className="absolute left-0 top-1/2 z-10 hidden h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 dark:border-gray-600 bg-white/95 dark:bg-gray-800/95 text-slate-700 dark:text-gray-300 shadow-lg backdrop-blur md:inline-flex"
+          className="absolute top-1/2 left-0 z-10 hidden h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white/95 text-slate-700 shadow-lg backdrop-blur md:inline-flex dark:border-gray-600 dark:bg-gray-800/95 dark:text-gray-300"
           aria-label="Scroll categories left"
         >
           <svg
@@ -113,7 +113,7 @@ export default function ShopCategoryCarousel({
 
       <div
         ref={carouselRef}
-        className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex snap-x snap-mandatory [scrollbar-width:none] gap-4 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden"
       >
         <AnimatePresence initial={false}>
           {cards.map((card, index) => (
@@ -139,8 +139,8 @@ export default function ShopCategoryCarousel({
                   unoptimized
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-5">
-                  <h3 className="text-lg font-bold leading-tight text-white transition-colors duration-300 group-hover:text-orange-300">
+                <div className="absolute right-0 bottom-0 left-0 p-5">
+                  <h3 className="text-lg leading-tight font-bold text-white transition-colors duration-300 group-hover:text-orange-300">
                     {card.name}
                   </h3>
                   <p className="mt-0.5 text-xs text-white/60">
@@ -173,7 +173,7 @@ export default function ShopCategoryCarousel({
         <button
           type="button"
           onClick={() => scrollCarousel("right")}
-          className="absolute right-0 top-1/2 z-10 hidden h-12 w-12 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 dark:border-gray-600 bg-white/95 dark:bg-gray-800/95 text-slate-700 dark:text-gray-300 shadow-lg backdrop-blur md:inline-flex"
+          className="absolute top-1/2 right-0 z-10 hidden h-12 w-12 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white/95 text-slate-700 shadow-lg backdrop-blur md:inline-flex dark:border-gray-600 dark:bg-gray-800/95 dark:text-gray-300"
           aria-label="Scroll categories right"
         >
           <svg

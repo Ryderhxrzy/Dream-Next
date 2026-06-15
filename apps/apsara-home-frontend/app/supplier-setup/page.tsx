@@ -1,5 +1,5 @@
-import { buildPageMetadata } from "@/app/seo"
 import SupplierInviteSetupForm from "@/components/supplier/SupplierInviteSetupForm"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Supplier Account Setup",

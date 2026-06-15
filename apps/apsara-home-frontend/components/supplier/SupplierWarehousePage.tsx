@@ -8,6 +8,13 @@ import {
   type ReactNode,
 } from "react"
 import {
+  useCreateSupplierWarehouseMutation,
+  useDeleteSupplierWarehouseMutation,
+  useGetSupplierWarehousesQuery,
+  useUpdateSupplierWarehouseMutation,
+  type SupplierWarehouseProfile,
+} from "@/store/api/supplierWarehouseApi"
+import {
   AlertCircle,
   Building2,
   Camera,
@@ -29,13 +36,6 @@ import {
   Warehouse,
   X,
 } from "lucide-react"
-import {
-  useCreateSupplierWarehouseMutation,
-  useDeleteSupplierWarehouseMutation,
-  useGetSupplierWarehousesQuery,
-  useUpdateSupplierWarehouseMutation,
-  type SupplierWarehouseProfile,
-} from "@/store/api/supplierWarehouseApi"
 
 const buildGoogleMapsUrl = (query: string) => {
   const normalized = query.trim()
@@ -228,13 +228,13 @@ function WarehouseModal({
                   Warehouse Name <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
-                  <Building2 className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Building2 className="absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input
                     type="text"
                     value={name}
                     onChange={(event) => setName(event.target.value)}
                     placeholder="e.g. Main Warehouse, North Hub"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-indigo-500 dark:focus:ring-indigo-500/10"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pr-4 pl-10 text-sm text-slate-900 transition outline-none placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-indigo-500 dark:focus:ring-indigo-500/10"
                   />
                 </div>
               </div>
@@ -244,13 +244,13 @@ function WarehouseModal({
                   Warehouse Address <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
-                  <MapPin className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
+                  <MapPin className="absolute top-3 left-3.5 h-4 w-4 text-slate-400" />
                   <textarea
                     value={address}
                     onChange={(event) => setAddress(event.target.value)}
                     placeholder="Street, barangay, city, province"
                     rows={3}
-                    className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 pb-3 pl-10 pr-4 pt-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-indigo-500 dark:focus:ring-indigo-500/10"
+                    className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 pt-2.5 pr-4 pb-3 pl-10 text-sm text-slate-900 transition outline-none placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-indigo-500 dark:focus:ring-indigo-500/10"
                   />
                 </div>
               </div>
@@ -311,7 +311,7 @@ function WarehouseModal({
                           className="aspect-video w-full object-cover"
                         />
                         <div className="absolute inset-0 flex items-end justify-end p-3">
-                          <label className="cursor-pointer inline-flex items-center gap-1.5 rounded-xl bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm backdrop-blur-sm transition hover:bg-white">
+                          <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm backdrop-blur-sm transition hover:bg-white">
                             <Upload className="h-3 w-3" /> Change
                             <input
                               type="file"
@@ -581,7 +581,7 @@ export default function SupplierWarehousePage() {
       <div className="space-y-6 pb-10">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-indigo-600 dark:text-indigo-400">
+            <p className="text-[10px] font-bold tracking-[0.24em] text-indigo-600 uppercase dark:text-indigo-400">
               Supplier Warehouse
             </p>
             <h1 className="mt-1 text-[30px] font-black tracking-tight text-slate-900 dark:text-white">
@@ -684,7 +684,7 @@ export default function SupplierWarehousePage() {
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
                               <Building2 className="h-3 w-3 shrink-0 text-slate-400" />
-                              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
+                              <p className="text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase">
                                 Warehouse
                               </p>
                             </div>
@@ -783,7 +783,7 @@ export default function SupplierWarehousePage() {
                   <p className="text-lg font-bold text-slate-800 dark:text-slate-100">
                     No warehouses yet
                   </p>
-                  <p className="mt-1 text-sm text-slate-400 dark:text-slate-500 max-w-xs mx-auto">
+                  <p className="mx-auto mt-1 max-w-xs text-sm text-slate-400 dark:text-slate-500">
                     Add your first warehouse so your team can keep track of
                     multiple locations.
                   </p>
@@ -855,7 +855,7 @@ export default function SupplierWarehousePage() {
                 <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-white/20">
                   <Lightbulb className="h-4 w-4 text-white" />
                 </div>
-                <p className="text-[11px] font-black uppercase tracking-[0.28em] text-white">
+                <p className="text-[11px] font-black tracking-[0.28em] text-white uppercase">
                   Tips
                 </p>
               </div>

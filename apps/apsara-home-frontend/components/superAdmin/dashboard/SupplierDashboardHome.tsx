@@ -1,10 +1,16 @@
 "use client"
 
 import type { ElementType } from "react"
-import Image from "next/image"
-import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
-import { useSession } from "next-auth/react"
+import { useGetPublicProductBrandsQuery } from "@/store/api/productBrandsApi"
+import { useGetProductsQuery, type Product } from "@/store/api/productsApi"
+import { useGetSupplierServiceInquiriesQuery } from "@/store/api/serviceInquiriesApi"
+import { useGetSupplierOrdersQuery } from "@/store/api/supplierOrdersApi"
+import {
+  useGetSupplierCategoriesQuery,
+  useGetSuppliersQuery,
+  useGetSupplierUsersQuery,
+} from "@/store/api/suppliersApi"
 import {
   ArrowRight,
   ArrowUpRight,
@@ -17,17 +23,20 @@ import {
   Eye,
   Layers3,
   MessageSquare,
-  Settings,
   Package,
   RefreshCw,
+  Settings,
   ShieldCheck,
   ShoppingCart,
-  Truck,
   TrendingUp,
+  Truck,
   UserRound,
   Users,
   XCircle,
 } from "lucide-react"
+import { useSession } from "next-auth/react"
+import Image from "next/image"
+import Link from "next/link"
 import {
   Area,
   AreaChart,
@@ -42,15 +51,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
-import { useGetProductsQuery, type Product } from "@/store/api/productsApi"
-import { useGetPublicProductBrandsQuery } from "@/store/api/productBrandsApi"
-import {
-  useGetSupplierCategoriesQuery,
-  useGetSupplierUsersQuery,
-  useGetSuppliersQuery,
-} from "@/store/api/suppliersApi"
-import { useGetSupplierOrdersQuery } from "@/store/api/supplierOrdersApi"
-import { useGetSupplierServiceInquiriesQuery } from "@/store/api/serviceInquiriesApi"
 
 /* ── Formatters ─────────────────────────────────────────────────── */
 
@@ -537,12 +537,12 @@ export default function SupplierDashboardHome() {
       ════════════════════════════════════════════════════════ */}
       <div className="relative overflow-hidden rounded-2xl bg-linear-to-br from-sky-500 via-cyan-500 to-teal-500 p-6 text-white shadow-lg shadow-sky-200/60 dark:shadow-sky-900/30">
         {/* decorative blobs */}
-        <div className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
+        <div className="pointer-events-none absolute -top-10 -right-10 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
         <div className="pointer-events-none absolute -bottom-8 left-1/3 h-36 w-36 rounded-full bg-white/10 blur-2xl" />
 
         <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/70">
+            <p className="text-xs font-semibold tracking-[0.22em] text-white/70 uppercase">
               {dateLabel}
             </p>
             <h1 className="mt-1 text-2xl font-bold tracking-tight">
@@ -584,7 +584,7 @@ export default function SupplierDashboardHome() {
                   key={s.label}
                   className="rounded-xl bg-white/15 px-4 py-2.5 backdrop-blur-sm"
                 >
-                  <p className="text-lg font-bold leading-none">{s.value}</p>
+                  <p className="text-lg leading-none font-bold">{s.value}</p>
                   <p className="mt-0.5 text-[10px] font-medium text-white/75">
                     {s.label}
                   </p>
@@ -1396,7 +1396,7 @@ export default function SupplierDashboardHome() {
                       ].map((h) => (
                         <th
                           key={h}
-                          className={`px-4 py-3 text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500 ${h === "Actions" ? "text-center" : "text-left"}`}
+                          className={`px-4 py-3 text-[11px] font-extrabold tracking-[0.12em] text-slate-400 uppercase dark:text-slate-500 ${h === "Actions" ? "text-center" : "text-left"}`}
                         >
                           {h}
                         </th>
@@ -1458,7 +1458,7 @@ export default function SupplierDashboardHome() {
                               {dispStatus}
                             </span>
                           </td>
-                          <td className="px-4 py-3.5 text-[13px] text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                          <td className="px-4 py-3.5 text-[13px] whitespace-nowrap text-slate-500 dark:text-slate-400">
                             {fmtDate(inq.created_at ?? null)}
                           </td>
                           <td className="px-4 py-3.5 text-center">
@@ -1509,7 +1509,7 @@ export default function SupplierDashboardHome() {
                     ].map((h) => (
                       <th
                         key={h}
-                        className={`px-4 py-3 text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500 ${h === "Amount" ? "text-right" : h === "Actions" ? "text-center" : "text-left"}`}
+                        className={`px-4 py-3 text-[11px] font-extrabold tracking-[0.12em] text-slate-400 uppercase dark:text-slate-500 ${h === "Amount" ? "text-right" : h === "Actions" ? "text-center" : "text-left"}`}
                       >
                         {h}
                       </th>
@@ -1561,13 +1561,13 @@ export default function SupplierDashboardHome() {
                           Qty {order.quantity}
                         </p>
                       </td>
-                      <td className="px-4 py-3.5 text-[13px] text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                      <td className="px-4 py-3.5 text-[13px] whitespace-nowrap text-slate-500 dark:text-slate-400">
                         {fmtDate(order.created_at ?? null)}
                       </td>
                       <td className="px-4 py-3.5">
                         <FulfillmentBadge status={order.fulfillment_status} />
                       </td>
-                      <td className="px-4 py-3.5 text-right text-[13px] font-bold text-slate-700 dark:text-slate-200 whitespace-nowrap">
+                      <td className="px-4 py-3.5 text-right text-[13px] font-bold whitespace-nowrap text-slate-700 dark:text-slate-200">
                         {fmtMoney(Number(order.amount))}
                       </td>
                       <td className="px-4 py-3.5 text-center">
@@ -1823,7 +1823,7 @@ export default function SupplierDashboardHome() {
                       ].map((h) => (
                         <th
                           key={h}
-                          className={`px-4 py-3 text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500 ${h === "Actions" || h === "Quantity" || h === "Slots" ? "text-center" : "text-left"}`}
+                          className={`px-4 py-3 text-[11px] font-extrabold tracking-[0.12em] text-slate-400 uppercase dark:text-slate-500 ${h === "Actions" || h === "Quantity" || h === "Slots" ? "text-center" : "text-left"}`}
                         >
                           {h}
                         </th>
@@ -2016,7 +2016,7 @@ function SectionLabel({
   return (
     <div className="mb-3 flex items-center gap-2">
       <Icon className={`h-3.5 w-3.5 shrink-0 ${color}`} />
-      <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+      <span className="text-[11px] font-bold tracking-[0.2em] text-slate-500 uppercase dark:text-slate-400">
         {children}
       </span>
       <div className="flex-1 border-t border-slate-200/80 dark:border-slate-700/50" />
@@ -2047,7 +2047,7 @@ function StatCard({
       className="group relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-slate-700/50 dark:bg-slate-900"
     >
       {alert && (
-        <span className="absolute right-3 top-3 h-2 w-2 rounded-full bg-amber-400 ring-2 ring-white dark:ring-slate-900" />
+        <span className="absolute top-3 right-3 h-2 w-2 rounded-full bg-amber-400 ring-2 ring-white dark:ring-slate-900" />
       )}
       {/* Gradient icon blob */}
       <div
@@ -2163,7 +2163,7 @@ function FulfillmentBadge({ status }: { status: string }) {
   }
   return (
     <span
-      className={`inline-flex rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${cls}`}
+      className={`inline-flex rounded-full border px-2 py-0.5 text-[9px] font-bold tracking-wide uppercase ${cls}`}
     >
       {label}
     </span>
@@ -2216,7 +2216,7 @@ function InventoryBar({
   }[tone]
   return (
     <div
-      className={`flex items-center gap-4 rounded-2xl border border-slate-200/50 border-l-4 ${s.border} bg-white px-4 py-4 shadow-sm transition hover:shadow-md dark:border-slate-700/40 dark:bg-slate-800/60`}
+      className={`flex items-center gap-4 rounded-2xl border border-l-4 border-slate-200/50 ${s.border} bg-white px-4 py-4 shadow-sm transition hover:shadow-md dark:border-slate-700/40 dark:bg-slate-800/60`}
     >
       <div
         className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${s.numBg}`}
@@ -2281,7 +2281,7 @@ function TeamRow({
         <Icon className="h-4.5 w-4.5" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+        <p className="text-[10px] font-bold tracking-[0.16em] text-slate-400 uppercase dark:text-slate-500">
           {label}
         </p>
         <p className="mt-0.5 truncate text-[12.5px] font-semibold text-slate-800 dark:text-slate-100">
@@ -2289,7 +2289,7 @@ function TeamRow({
         </p>
       </div>
       <span
-        className={`inline-flex shrink-0 rounded-xl px-3 py-1 text-[10px] font-bold uppercase tracking-wide ${badgeCls}`}
+        className={`inline-flex shrink-0 rounded-xl px-3 py-1 text-[10px] font-bold tracking-wide uppercase ${badgeCls}`}
       >
         {badge}
       </span>
@@ -2330,7 +2330,7 @@ function SnapCard({
         >
           <Icon className="h-4 w-4" />
         </div>
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+        <p className="text-[10px] font-bold tracking-[0.18em] text-slate-400 uppercase dark:text-slate-500">
           {label}
         </p>
       </div>
@@ -2338,7 +2338,7 @@ function SnapCard({
         {value}
       </p>
       <div
-        className="pointer-events-none absolute -bottom-5 -right-5 h-16 w-16 rounded-full opacity-40"
+        className="pointer-events-none absolute -right-5 -bottom-5 h-16 w-16 rounded-full opacity-40"
         style={{
           background:
             "radial-gradient(circle, rgba(148,163,184,0.15), transparent)",
@@ -2406,7 +2406,7 @@ function ProductRow({
       </td>
       <td className="px-4 py-3.5">
         <span
-          className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1 text-[10px] font-bold uppercase tracking-wide ${active ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400"}`}
+          className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1 text-[10px] font-bold tracking-wide uppercase ${active ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400"}`}
         >
           <span
             className={`h-1.5 w-1.5 rounded-full ${active ? "bg-emerald-500" : "bg-slate-400"}`}
@@ -2414,7 +2414,7 @@ function ProductRow({
           {active ? "Active" : "Inactive"}
         </span>
       </td>
-      <td className="whitespace-nowrap px-4 py-3.5 text-[12px] text-slate-500 dark:text-slate-400">
+      <td className="px-4 py-3.5 text-[12px] whitespace-nowrap text-slate-500 dark:text-slate-400">
         {fmtDate(product.updatedAt ?? null)}
       </td>
       <td className="px-4 py-3.5 text-center">

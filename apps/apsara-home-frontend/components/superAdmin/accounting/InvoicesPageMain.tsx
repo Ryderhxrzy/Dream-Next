@@ -5,6 +5,7 @@ import {
   AdminEncashmentItem,
   useGetAdminEncashmentRequestsQuery,
 } from "@/store/api/encashmentApi"
+
 import AdminPagination from "@/components/superAdmin/AdminPagination"
 
 const formatMoney = (value: number) =>
@@ -170,30 +171,30 @@ export default function InvoicesPageMain() {
   return (
     <div className="space-y-5">
       {/* ── Hero ── */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-teal-700 via-teal-800 to-emerald-900 dark:from-teal-900 dark:via-slate-900 dark:to-black shadow-xl">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-teal-700 via-teal-800 to-emerald-900 shadow-xl dark:from-teal-900 dark:via-slate-900 dark:to-black">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.07),transparent_55%)]" />
         <div className="absolute inset-0 opacity-[0.04]" style={STRIPE} />
         <div className="relative px-6 py-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <div className="flex flex-wrap items-center gap-2 mb-2">
-                <span className="rounded-md bg-white/10 border border-white/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-teal-200">
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                <span className="rounded-md border border-white/20 bg-white/10 px-2.5 py-1 text-[10px] font-bold tracking-widest text-teal-200 uppercase">
                   Accounting
                 </span>
-                <span className="rounded-full bg-emerald-400/15 border border-emerald-400/30 px-2.5 py-1 text-[10px] font-semibold text-emerald-300">
+                <span className="rounded-full border border-emerald-400/30 bg-emerald-400/15 px-2.5 py-1 text-[10px] font-semibold text-emerald-300">
                   Released Payouts
                 </span>
               </div>
-              <h1 className="text-2xl font-black text-white tracking-tight">
+              <h1 className="text-2xl font-black tracking-tight text-white">
                 Invoices
               </h1>
               <p className="mt-0.5 text-sm text-teal-300/80">
                 Issued payout invoices from released encashment requests
               </p>
             </div>
-            <div className="flex flex-col sm:items-end gap-2">
+            <div className="flex flex-col gap-2 sm:items-end">
               <div className="sm:text-right">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-teal-400/60 mb-1">
+                <p className="mb-1 text-[10px] font-bold tracking-widest text-teal-400/60 uppercase">
                   Page Total Released
                 </p>
                 <p className="text-2xl font-black text-white tabular-nums">
@@ -204,7 +205,7 @@ export default function InvoicesPageMain() {
                 type="button"
                 onClick={() => openBulkPrintView(selectedRows)}
                 disabled={selectedRows.length === 0}
-                className="inline-flex items-center gap-2 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed border border-white/20 px-3 py-2 text-xs font-bold text-white transition-all"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-xs font-bold text-white transition-all hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <svg
                   className="h-4 w-4"
@@ -227,10 +228,10 @@ export default function InvoicesPageMain() {
       </div>
 
       {/* ── Filters ── */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700/60 dark:bg-slate-900 shadow-sm">
-        <div className="flex items-center gap-2.5 px-4 py-3 border-b border-slate-100 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/50">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-900">
+        <div className="flex items-center gap-2.5 border-b border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-700/60 dark:bg-slate-800/50">
           <svg
-            className="h-4 w-4 text-slate-400 shrink-0"
+            className="h-4 w-4 shrink-0 text-slate-400"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -249,12 +250,12 @@ export default function InvoicesPageMain() {
               setPage(1)
             }}
             placeholder="Search by invoice no, reference, or affiliate..."
-            className="flex-1 bg-transparent text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 outline-none"
+            className="flex-1 bg-transparent text-sm text-slate-700 placeholder-slate-400 outline-none dark:text-slate-200"
           />
         </div>
-        <div className="px-4 py-3 flex flex-wrap items-end gap-3">
+        <div className="flex flex-wrap items-end gap-3 px-4 py-3">
           <label className="flex flex-col gap-1">
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+            <span className="text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
               From
             </span>
             <input
@@ -264,11 +265,11 @@ export default function InvoicesPageMain() {
                 setReleasedFrom(e.target.value)
                 setPage(1)
               }}
-              className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 outline-none focus:border-sky-400 transition-colors"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition-colors outline-none focus:border-sky-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
             />
           </label>
           <label className="flex flex-col gap-1">
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+            <span className="text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
               To
             </span>
             <input
@@ -278,7 +279,7 @@ export default function InvoicesPageMain() {
                 setReleasedTo(e.target.value)
                 setPage(1)
               }}
-              className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 outline-none focus:border-sky-400 transition-colors"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition-colors outline-none focus:border-sky-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
             />
           </label>
           {(releasedFrom || releasedTo || search) && (
@@ -289,7 +290,7 @@ export default function InvoicesPageMain() {
                 setSearch("")
                 setPage(1)
               }}
-              className="rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+              className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-500 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
             >
               Clear Filters
             </button>
@@ -298,9 +299,9 @@ export default function InvoicesPageMain() {
       </div>
 
       {isError ? (
-        <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 dark:border-red-500/30 dark:bg-red-500/10 px-4 py-3">
+        <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 dark:border-red-500/30 dark:bg-red-500/10">
           <svg
-            className="shrink-0 h-5 w-5 text-red-500"
+            className="h-5 w-5 shrink-0 text-red-500"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -317,7 +318,7 @@ export default function InvoicesPageMain() {
           </p>
         </div>
       ) : isLoading ? (
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-900 p-4 space-y-2.5 animate-pulse">
+        <div className="animate-pulse space-y-2.5 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-900">
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
@@ -329,13 +330,13 @@ export default function InvoicesPageMain() {
       ) : (
         <div className="space-y-3">
           {isFetching && (
-            <div className="h-0.5 w-full rounded-full bg-teal-200 dark:bg-teal-500/30 overflow-hidden">
-              <div className="h-full w-1/3 bg-teal-500 rounded-full animate-pulse" />
+            <div className="h-0.5 w-full overflow-hidden rounded-full bg-teal-200 dark:bg-teal-500/30">
+              <div className="h-full w-1/3 animate-pulse rounded-full bg-teal-500" />
             </div>
           )}
 
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700/60 dark:bg-slate-900 shadow-sm">
-            <div className="flex items-center gap-2.5 border-b border-slate-100 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/50 px-4 py-3">
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-900">
+            <div className="flex items-center gap-2.5 border-b border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-700/60 dark:bg-slate-800/50">
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-100 dark:bg-teal-500/15">
                 <svg
                   className="h-4 w-4 text-teal-600 dark:text-teal-400"
@@ -351,18 +352,18 @@ export default function InvoicesPageMain() {
                   />
                 </svg>
               </span>
-              <h2 className="text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+              <h2 className="text-xs font-bold tracking-wide text-slate-600 uppercase dark:text-slate-300">
                 Invoice Records
               </h2>
-              <span className="rounded-full bg-slate-200 dark:bg-slate-700 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+              <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">
                 {data?.meta?.total ?? displayRows.length}
               </span>
             </div>
             <div className="overflow-auto">
               <table className="w-full min-w-[1000px]">
                 <thead>
-                  <tr className="border-b border-slate-100 dark:border-slate-700/60 text-left">
-                    <th className="px-4 py-3 w-10">
+                  <tr className="border-b border-slate-100 text-left dark:border-slate-700/60">
+                    <th className="w-10 px-4 py-3">
                       <input
                         type="checkbox"
                         checked={allSelectedOnPage}
@@ -382,7 +383,7 @@ export default function InvoicesPageMain() {
                     ].map((h) => (
                       <th
                         key={h}
-                        className="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500"
+                        className="px-4 py-3 text-[11px] font-bold tracking-wide text-slate-400 uppercase dark:text-slate-500"
                       >
                         {h}
                       </th>
@@ -394,7 +395,7 @@ export default function InvoicesPageMain() {
                     displayRows.map((row) => (
                       <tr
                         key={row.id}
-                        className={`hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors ${selectedIds.includes(row.id) ? "bg-teal-50/50 dark:bg-teal-500/5" : ""}`}
+                        className={`transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40 ${selectedIds.includes(row.id) ? "bg-teal-50/50 dark:bg-teal-500/5" : ""}`}
                       >
                         <td className="px-4 py-3">
                           <input
@@ -407,23 +408,23 @@ export default function InvoicesPageMain() {
                         </td>
                         <td className="px-4 py-3">
                           <span
-                            className={`text-xs font-bold font-mono ${row.invoice_no ? "text-teal-700 dark:text-teal-400" : "text-slate-400 dark:text-slate-500 italic"}`}
+                            className={`font-mono text-xs font-bold ${row.invoice_no ? "text-teal-700 dark:text-teal-400" : "text-slate-400 italic dark:text-slate-500"}`}
                           >
                             {row.invoice_no || "Pending"}
                           </span>
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2.5">
-                            <div className="shrink-0 h-8 w-8 rounded-full bg-gradient-to-br from-teal-600 to-emerald-700 flex items-center justify-center">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-teal-600 to-emerald-700">
                               <span className="text-[10px] font-black text-white">
                                 {getInitials(row.affiliate_name)}
                               </span>
                             </div>
                             <div className="min-w-0">
-                              <p className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate max-w-[140px]">
+                              <p className="max-w-[140px] truncate text-sm font-medium text-slate-700 dark:text-slate-300">
                                 {row.affiliate_name || "Affiliate"}
                               </p>
-                              <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate">
+                              <p className="truncate text-[10px] text-slate-400 dark:text-slate-500">
                                 {row.affiliate_email || ""}
                               </p>
                             </div>
@@ -433,11 +434,11 @@ export default function InvoicesPageMain() {
                           {row.reference_no}
                         </td>
                         <td className="px-4 py-3">
-                          <span className="inline-flex items-center rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 py-0.5 text-[11px] font-bold uppercase text-slate-600 dark:text-slate-300">
+                          <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[11px] font-bold text-slate-600 uppercase dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                             {row.channel}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-sm font-black tabular-nums text-teal-700 dark:text-teal-400">
+                        <td className="px-4 py-3 text-sm font-black text-teal-700 tabular-nums dark:text-teal-400">
                           {formatMoney(row.amount)}
                         </td>
                         <td className="px-4 py-3 text-xs text-slate-400 dark:text-slate-500">
@@ -447,13 +448,13 @@ export default function InvoicesPageMain() {
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => setSelectedRow(row)}
-                              className="rounded-lg border border-slate-200 dark:border-slate-700 px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                              className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                             >
                               View
                             </button>
                             <button
                               onClick={() => openPrintView(row)}
-                              className="rounded-lg border border-teal-200 dark:border-teal-500/30 bg-teal-50 dark:bg-teal-500/10 px-2.5 py-1.5 text-[11px] font-semibold text-teal-700 dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-500/20 transition-colors"
+                              className="rounded-lg border border-teal-200 bg-teal-50 px-2.5 py-1.5 text-[11px] font-semibold text-teal-700 transition-colors hover:bg-teal-100 dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-300 dark:hover:bg-teal-500/20"
                             >
                               Print
                             </button>
@@ -465,7 +466,7 @@ export default function InvoicesPageMain() {
                     <tr>
                       <td colSpan={8} className="py-12 text-center">
                         <div className="flex flex-col items-center gap-2">
-                          <div className="h-12 w-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
                             <svg
                               className="h-6 w-6 text-slate-400"
                               fill="none"
@@ -508,20 +509,20 @@ export default function InvoicesPageMain() {
 
       {/* ── Invoice Detail Modal ── */}
       {selectedRow && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700/60 dark:bg-slate-900 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/50 px-5 py-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700/60 dark:bg-slate-900">
+            <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-4 dark:border-slate-700/60 dark:bg-slate-800/50">
               <div>
                 <h2 className="text-base font-bold text-slate-800 dark:text-white">
                   Invoice Details
                 </h2>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 font-mono">
+                <p className="mt-0.5 font-mono text-xs text-slate-400 dark:text-slate-500">
                   {selectedRow.invoice_no || selectedRow.reference_no}
                 </p>
               </div>
               <button
                 onClick={() => setSelectedRow(null)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
                 aria-label="Close"
               >
                 <svg
@@ -551,12 +552,12 @@ export default function InvoicesPageMain() {
                 ].map(({ label, value }) => (
                   <div
                     key={label}
-                    className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2.5"
+                    className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5 dark:border-slate-800 dark:bg-slate-950"
                   >
-                    <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                    <p className="text-[10px] font-bold tracking-wide text-slate-400 uppercase dark:text-slate-500">
                       {label}
                     </p>
-                    <p className="mt-1 text-sm font-bold text-slate-800 dark:text-slate-200 font-mono">
+                    <p className="mt-1 font-mono text-sm font-bold text-slate-800 dark:text-slate-200">
                       {value}
                     </p>
                   </div>
@@ -564,8 +565,8 @@ export default function InvoicesPageMain() {
               </div>
 
               <div className="grid grid-cols-2 gap-3 text-sm">
-                <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2.5">
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-1">
+                <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5 dark:border-slate-800 dark:bg-slate-950">
+                  <p className="mb-1 text-[10px] font-bold tracking-wide text-slate-400 uppercase dark:text-slate-500">
                     Affiliate
                   </p>
                   <p className="font-semibold text-slate-800 dark:text-slate-200">
@@ -575,11 +576,11 @@ export default function InvoicesPageMain() {
                     {selectedRow.affiliate_email || "-"}
                   </p>
                 </div>
-                <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2.5">
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-1">
+                <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5 dark:border-slate-800 dark:bg-slate-950">
+                  <p className="mb-1 text-[10px] font-bold tracking-wide text-slate-400 uppercase dark:text-slate-500">
                     Payout Channel
                   </p>
-                  <p className="font-bold text-slate-800 dark:text-slate-200 uppercase">
+                  <p className="font-bold text-slate-800 uppercase dark:text-slate-200">
                     {selectedRow.channel}
                   </p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -591,29 +592,29 @@ export default function InvoicesPageMain() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 px-4 py-3">
-                <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-500/30 dark:bg-emerald-500/10">
+                <p className="text-[10px] font-bold tracking-wide text-emerald-600 uppercase dark:text-emerald-400">
                   Total Released Amount
                 </p>
-                <p className="mt-1 text-2xl font-black text-emerald-800 dark:text-emerald-300 tabular-nums">
+                <p className="mt-1 text-2xl font-black text-emerald-800 tabular-nums dark:text-emerald-300">
                   {formatMoney(selectedRow.amount)}
                 </p>
-                <p className="text-xs text-emerald-600 dark:text-emerald-500 mt-1">
+                <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-500">
                   Released at {formatDate(selectedRow.released_at)}
                 </p>
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800 px-5 py-3">
+            <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-3 dark:border-slate-800">
               <button
                 onClick={() => setSelectedRow(null)}
-                className="rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
               >
                 Close
               </button>
               <button
                 onClick={() => openPrintView(selectedRow)}
-                className="inline-flex items-center gap-2 rounded-lg border border-teal-200 dark:border-teal-500/30 bg-teal-50 dark:bg-teal-500/10 px-3 py-2 text-xs font-semibold text-teal-700 dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-500/20 transition-colors"
+                className="inline-flex items-center gap-2 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-xs font-semibold text-teal-700 transition-colors hover:bg-teal-100 dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-300 dark:hover:bg-teal-500/20"
               >
                 <svg
                   className="h-4 w-4"

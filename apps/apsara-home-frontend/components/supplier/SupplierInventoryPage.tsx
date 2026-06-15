@@ -1,34 +1,34 @@
 "use client"
 
-import { useCallback, useRef, useState, useMemo } from "react"
-import { cn } from "tailwind-variants"
-import Image from "next/image"
+import { useCallback, useMemo, useRef, useState } from "react"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
+import { useGetPublicProductBrandsQuery } from "@/store/api/productBrandsApi"
 import {
-  RefreshCw,
-  Search,
-  Warehouse,
+  Product,
+  useGetProductsQuery,
+  useGetZqCachedProductsQuery,
+  useLazyGetZqInventoryQuery,
+  useUpdateProductMutation,
+  ZqCachedProduct,
+} from "@/store/api/productsApi"
+import { useGetSuppliersQuery } from "@/store/api/suppliersApi"
+import {
+  Boxes,
+  ChevronRight,
+  Minus,
   PackageCheck,
   PackageMinus,
   PackageX,
-  Boxes,
   Plus,
-  Minus,
-  X,
+  RefreshCw,
+  Search,
   TrendingUp,
-  ChevronRight,
+  Warehouse,
+  X,
 } from "lucide-react"
 import { useSession } from "next-auth/react"
-import { useGetPublicProductBrandsQuery } from "@/store/api/productBrandsApi"
-import { useGetSuppliersQuery } from "@/store/api/suppliersApi"
-import {
-  useGetZqCachedProductsQuery,
-  useLazyGetZqInventoryQuery,
-  useGetProductsQuery,
-  useUpdateProductMutation,
-  ZqCachedProduct,
-  Product,
-} from "@/store/api/productsApi"
-import { showErrorToast, showSuccessToast } from "@/libs/toast"
+import Image from "next/image"
+import { cn } from "tailwind-variants"
 
 /* ═══════════════════════════════════════════════════════════
    SPARKLINE — smoothstep interpolation between real checkpoints
@@ -184,7 +184,7 @@ function StatCard({ stat }: { stat: StatDef }) {
     <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white px-5 pt-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       {/* Top row: icon+label left / sparkline right */}
       <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           {/* Icon + label */}
           <div className="flex items-center gap-2">
             <span
@@ -196,12 +196,12 @@ function StatCard({ stat }: { stat: StatDef }) {
             >
               {stat.icon}
             </span>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 leading-tight">
+            <span className="text-[10px] leading-tight font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
               {stat.label}
             </span>
           </div>
           {/* Big value */}
-          <p className="mt-3 text-[2.25rem] font-bold leading-none text-slate-900 dark:text-white">
+          <p className="mt-3 text-[2.25rem] leading-none font-bold text-slate-900 dark:text-white">
             {stat.displayValue}
           </p>
         </div>
@@ -217,7 +217,7 @@ function StatCard({ stat }: { stat: StatDef }) {
       </div>
 
       {/* Bottom: pct change */}
-      <div className="mt-3 pb-4 flex items-center gap-1.5">
+      <div className="mt-3 flex items-center gap-1.5 pb-4">
         <span
           className={cn(
             "flex items-center gap-0.5 text-[12px] font-bold",
@@ -253,7 +253,7 @@ function StatCard({ stat }: { stat: StatDef }) {
               />
             </svg>
           ) : (
-            <span className="font-bold leading-none">—</span>
+            <span className="leading-none font-bold">—</span>
           )}
           {Math.abs(pct)}%
         </span>
@@ -486,7 +486,7 @@ function AddStockModal({
               <Boxes className="h-4 w-4 text-indigo-500" />
             </div>
             <div className="flex-1">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              <p className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
                 Current Stock
               </p>
               <p className="text-xl font-bold text-slate-900 dark:text-slate-100">
@@ -527,7 +527,7 @@ function AddStockModal({
           {/* Input */}
           {hasVariants ? (
             <div className="max-h-60 space-y-2 overflow-y-auto pr-1">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              <p className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
                 {mode === "add"
                   ? "Units to add per variant"
                   : "Set qty per variant"}
@@ -598,7 +598,7 @@ function AddStockModal({
             </div>
           ) : (
             <div>
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              <p className="mb-2 text-[10px] font-bold tracking-wider text-slate-400 uppercase">
                 {mode === "add" ? "Units to add" : "Set exact quantity"}
               </p>
               <div className="flex items-center gap-2">
@@ -607,7 +607,7 @@ function AddStockModal({
                     key={d}
                     type="button"
                     onClick={() => step(d)}
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 text-xs font-bold hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-500 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800"
                   >
                     {d === -1 ? <Minus className="h-4 w-4" /> : d}
                   </button>
@@ -625,7 +625,7 @@ function AddStockModal({
                     key={d}
                     type="button"
                     onClick={() => step(d)}
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 text-xs font-bold hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-500 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800"
                   >
                     {d === 1 ? <Plus className="h-4 w-4" /> : `+${d}`}
                   </button>
@@ -752,7 +752,7 @@ function ProductInventoryRow({
 
       {/* Quantity */}
       <td className="px-6 py-4">
-        <p className="text-xl font-bold tabular-nums text-slate-900 dark:text-white">
+        <p className="text-xl font-bold text-slate-900 tabular-nums dark:text-white">
           {qty.toLocaleString()}
         </p>
         <p className="mt-0.5 text-[11px] text-slate-400">units</p>
@@ -873,7 +873,7 @@ function InventoryRow({
             )}
           </div>
           <div className="min-w-0">
-            <p className="line-clamp-2 text-[13px] font-semibold leading-snug text-slate-800 dark:text-slate-100">
+            <p className="line-clamp-2 text-[13px] leading-snug font-semibold text-slate-800 dark:text-slate-100">
               {product.subject}
             </p>
             <span className="mt-1.5 inline-block rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-mono text-[10px] text-slate-400 dark:border-slate-700 dark:bg-slate-800">
@@ -923,12 +923,12 @@ function InventoryRow({
           )}
           {data && (
             <div className="min-w-27.5 rounded-xl border border-violet-200/60 bg-[linear-gradient(135deg,rgba(139,92,246,0.06),rgba(99,102,241,0.04))] px-3 py-2">
-              <p className="text-[9px] font-bold uppercase tracking-widest text-violet-400">
+              <p className="text-[9px] font-bold tracking-widest text-violet-400 uppercase">
                 ZQ Live
               </p>
               <p
                 className={cn(
-                  "mt-0.5 text-base font-bold leading-none",
+                  "mt-0.5 text-base leading-none font-bold",
                   data.available === 0
                     ? "text-red-600"
                     : data.available <= 5
@@ -1281,7 +1281,7 @@ export default function SupplierInventoryPage() {
           <div>
             <p
               className={cn(
-                "text-[10px] font-bold uppercase tracking-[0.22em]",
+                "text-[10px] font-bold tracking-[0.22em] uppercase",
                 isZqSupplier
                   ? "text-violet-600 dark:text-violet-400"
                   : "text-indigo-600 dark:text-indigo-400"
@@ -1300,7 +1300,7 @@ export default function SupplierInventoryPage() {
           </div>
           <div className="flex shrink-0 items-center gap-2.5">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 placeholder="Search products..."
@@ -1309,7 +1309,7 @@ export default function SupplierInventoryPage() {
                   setSearch(e.target.value)
                   setPage(1)
                 }}
-                className="h-10 w-52 rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-700 placeholder-slate-400 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                className="h-10 w-52 rounded-xl border border-slate-200 bg-white pr-3 pl-9 text-sm text-slate-700 placeholder-slate-400 transition outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
               />
             </div>
             <button
@@ -1380,7 +1380,7 @@ export default function SupplierInventoryPage() {
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                    <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                       {s.label}
                     </p>
                     <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-slate-100">
@@ -1459,7 +1459,7 @@ export default function SupplierInventoryPage() {
                   {cols.map((col) => (
                     <th
                       key={col}
-                      className="px-6 py-3.5 text-left text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500"
+                      className="px-6 py-3.5 text-left text-[11px] font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500"
                     >
                       {col}
                     </th>

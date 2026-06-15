@@ -1,5 +1,5 @@
-import { buildPageMetadata } from "@/app/seo"
 import ZqProductPreviewClient from "@/components/superAdmin/products/ZqProductPreviewClient"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Global Supplier Product Preview",

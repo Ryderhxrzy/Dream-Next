@@ -1,5 +1,5 @@
-import { SplashScreen } from "@/components/shared/splash-screen";
+import { SplashScreen } from "@/components/shared/splash-screen"
 
 export default function Loading() {
-  return <SplashScreen />;
+  return <SplashScreen />
 }

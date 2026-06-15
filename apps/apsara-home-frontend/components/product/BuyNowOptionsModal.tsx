@@ -1,18 +1,20 @@
 "use client"
 
-import { CategoryProduct } from "@/libs/CategoryData"
-import { AnimatePresence, motion } from "framer-motion"
-import Image from "next/image"
 import { useMemo, useState } from "react"
-import Loading from "../Loading"
-import { usePathname, useRouter } from "next/navigation"
-import { useSession } from "next-auth/react"
-import { useGetPublicGeneralSettingsQuery } from "@/store/api/adminSettingsApi"
+import { CategoryProduct } from "@/libs/CategoryData"
 import { resolveCheckoutSource } from "@/libs/checkoutSource"
 import { extractPartnerSlugFromPath } from "@/libs/storefrontRouting"
+import { useGetPublicGeneralSettingsQuery } from "@/store/api/adminSettingsApi"
+import { AnimatePresence, motion } from "framer-motion"
+import { useSession } from "next-auth/react"
+import Image from "next/image"
+import { usePathname, useRouter } from "next/navigation"
+
+import OutlineButton from "@/components/ui/buttons/OutlineButton"
 import PrimaryButton from "@/components/ui/buttons/PrimaryButton"
 import SecondaryButton from "@/components/ui/buttons/SecondaryButton"
-import OutlineButton from "@/components/ui/buttons/OutlineButton"
+
+import Loading from "../Loading"
 
 type VariantOption = NonNullable<CategoryProduct["variants"]>[number]
 
@@ -295,12 +297,12 @@ const BuyNowOptionsModal = ({
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 16, scale: 0.97 }}
               transition={{ duration: 0.25, ease: "easeOut" }}
-              className="mx-auto w-full max-w-5xl rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 overflow-hidden"
+              className="mx-auto w-full max-w-5xl overflow-hidden rounded-3xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between bg-sky-500 dark:bg-sky-600 px-5 py-4 sm:px-7">
+              <div className="flex items-center justify-between bg-sky-500 px-5 py-4 sm:px-7 dark:bg-sky-600">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/25 bg-white/15 shrink-0">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/25 bg-white/15">
                     <svg
                       className="h-5 w-5 text-white"
                       fill="none"
@@ -316,10 +318,10 @@ const BuyNowOptionsModal = ({
                     </svg>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-sky-100">
+                    <p className="text-[10px] font-bold tracking-widest text-sky-100 uppercase">
                       AF Home | Secure Checkout
                     </p>
-                    <h2 className="text-lg font-bold leading-tight text-white">
+                    <h2 className="text-lg leading-tight font-bold text-white">
                       Review Before Checkout
                     </h2>
                   </div>
@@ -346,13 +348,13 @@ const BuyNowOptionsModal = ({
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-5">
-                <div className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 sm:p-6 lg:col-span-2 lg:border-b-0 lg:border-r">
-                  <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                <div className="border-b border-gray-200 bg-white p-5 sm:p-6 lg:col-span-2 lg:border-r lg:border-b-0 dark:border-gray-700 dark:bg-gray-800">
+                  <p className="mb-3 text-[10px] font-bold tracking-widest text-gray-400 uppercase dark:text-gray-500">
                     Order Summary
                   </p>
 
-                  <div className="flex gap-3.5 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3.5">
-                    <div className="relative h-[72px] w-[72px] shrink-0 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                  <div className="flex gap-3.5 rounded-2xl border border-gray-200 bg-white p-3.5 dark:border-gray-700 dark:bg-gray-800">
+                    <div className="relative h-[72px] w-[72px] shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-700">
                       <Image
                         src={selectedVariantImage}
                         alt={product.name}
@@ -362,28 +364,28 @@ const BuyNowOptionsModal = ({
                       />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="line-clamp-2 text-sm font-bold leading-snug text-gray-900 dark:text-white">
+                      <p className="line-clamp-2 text-sm leading-snug font-bold text-gray-900 dark:text-white">
                         {product.name}
                       </p>
                       <p className="mt-1.5 text-[15px] font-extrabold text-sky-500">
                         P{unitPrice.toLocaleString()}
                       </p>
                       <div className="mt-1.5 flex flex-wrap items-center gap-1">
-                        <span className="rounded-full border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-900/30 px-2 py-0.5 text-[10px] font-bold text-sky-600 dark:text-sky-400">
+                        <span className="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-600 dark:border-sky-800 dark:bg-sky-900/30 dark:text-sky-400">
                           Qty: {quantity}
                         </span>
                         {activeSelectedColor ? (
-                          <span className="rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-2 py-0.5 text-[10px] font-semibold text-gray-600 dark:text-gray-300">
+                          <span className="rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[10px] font-semibold text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                             {activeSelectedColor}
                           </span>
                         ) : null}
                         {activeSelectedStyle ? (
-                          <span className="rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-2 py-0.5 text-[10px] font-semibold text-gray-600 dark:text-gray-300">
+                          <span className="rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[10px] font-semibold text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                             {activeSelectedStyle}
                           </span>
                         ) : null}
                         {activeSelectedSize ? (
-                          <span className="rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-2 py-0.5 text-[10px] font-semibold text-gray-600 dark:text-gray-300">
+                          <span className="rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[10px] font-semibold text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                             {activeSelectedSize}
                           </span>
                         ) : null}
@@ -392,7 +394,7 @@ const BuyNowOptionsModal = ({
                   </div>
 
                   {activeSelectedType ? (
-                    <div className="mt-2 flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3.5 py-2 text-xs">
+                    <div className="mt-2 flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-xs dark:border-gray-700 dark:bg-gray-800">
                       <svg
                         className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
                         fill="none"
@@ -415,7 +417,7 @@ const BuyNowOptionsModal = ({
                     </div>
                   ) : null}
 
-                  <div className="mt-3 overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+                  <div className="mt-3 overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
                     <div className="space-y-3 px-4 py-4">
                       <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
                         <span>
@@ -454,7 +456,7 @@ const BuyNowOptionsModal = ({
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-sky-50 dark:bg-sky-900/20 px-4 py-3">
+                    <div className="flex items-center justify-between border-t border-gray-200 bg-sky-50 px-4 py-3 dark:border-gray-700 dark:bg-sky-900/20">
                       <span className="text-sm font-bold text-gray-900 dark:text-white">
                         Total Amount
                       </span>
@@ -464,7 +466,7 @@ const BuyNowOptionsModal = ({
                     </div>
                   </div>
 
-                  <div className="mt-2 flex items-center gap-2 rounded-xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 px-3 py-2">
+                  <div className="mt-2 flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-3 py-2 dark:border-green-800 dark:bg-green-900/20">
                     <svg
                       className="h-3.5 w-3.5 shrink-0 text-green-600 dark:text-green-400"
                       fill="none"
@@ -484,7 +486,7 @@ const BuyNowOptionsModal = ({
                     </p>
                   </div>
 
-                  <div className="mt-4 grid grid-cols-3 gap-2 border-t border-gray-200 dark:border-gray-700 pt-3">
+                  <div className="mt-4 grid grid-cols-3 gap-2 border-t border-gray-200 pt-3 dark:border-gray-700">
                     {[
                       {
                         label: "SSL Encrypted",
@@ -543,12 +545,12 @@ const BuyNowOptionsModal = ({
                     ].map((badge) => (
                       <div
                         key={badge.label}
-                        className="flex flex-col items-center gap-1 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-2"
+                        className="flex flex-col items-center gap-1 rounded-xl border border-gray-200 bg-gray-50 p-2 dark:border-gray-700 dark:bg-gray-800"
                       >
                         <span className="text-gray-400 dark:text-gray-500">
                           {badge.icon}
                         </span>
-                        <span className="text-center text-[9px] font-semibold leading-tight text-gray-400 dark:text-gray-500">
+                        <span className="text-center text-[9px] leading-tight font-semibold text-gray-400 dark:text-gray-500">
                           {badge.label}
                         </span>
                       </div>
@@ -557,11 +559,11 @@ const BuyNowOptionsModal = ({
                 </div>
 
                 <div className="p-5 sm:p-6 lg:col-span-3">
-                  <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                  <p className="mb-3 text-[10px] font-bold tracking-widest text-gray-400 uppercase dark:text-gray-500">
                     Checkout Preview
                   </p>
 
-                  <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
+                  <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
                     <p className="text-xs font-bold text-gray-700 dark:text-gray-300">
                       Payment options will be selected on the checkout page.
                     </p>
@@ -581,7 +583,7 @@ const BuyNowOptionsModal = ({
                         transition={{ duration: 0.22, ease: "easeOut" }}
                         className="overflow-hidden"
                       >
-                        <div className="mt-3 rounded-2xl border border-sky-200 dark:border-sky-900 bg-sky-50 dark:bg-sky-900/20 p-4">
+                        <div className="mt-3 rounded-2xl border border-sky-200 bg-sky-50 p-4 dark:border-sky-900 dark:bg-sky-900/20">
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <p className="flex items-center gap-1.5 text-xs font-bold text-sky-700 dark:text-sky-400">
@@ -615,7 +617,7 @@ const BuyNowOptionsModal = ({
                                 )
                                 setVariantPickerOpen((current) => !current)
                               }}
-                              className="!px-3 !py-2 !text-[11px] !rounded-xl"
+                              className="!rounded-xl !px-3 !py-2 !text-[11px]"
                             >
                               {variantPickerOpen
                                 ? "Hide Options"
@@ -631,22 +633,22 @@ const BuyNowOptionsModal = ({
                           activeVariant?.sku ? (
                             <div className="mt-3 flex flex-wrap gap-1.5">
                               {activeSelectedType ? (
-                                <span className="rounded-full border border-sky-200 dark:border-sky-800 bg-white dark:bg-gray-800 px-2.5 py-1 text-[10px] font-bold text-gray-700 dark:text-gray-300">
+                                <span className="rounded-full border border-sky-200 bg-white px-2.5 py-1 text-[10px] font-bold text-gray-700 dark:border-sky-800 dark:bg-gray-800 dark:text-gray-300">
                                   {activeSelectedType}
                                 </span>
                               ) : null}
                               {activeSelectedSize ? (
-                                <span className="rounded-full border border-sky-200 dark:border-sky-800 bg-white dark:bg-gray-800 px-2.5 py-1 text-[10px] font-bold text-gray-700 dark:text-gray-300">
+                                <span className="rounded-full border border-sky-200 bg-white px-2.5 py-1 text-[10px] font-bold text-gray-700 dark:border-sky-800 dark:bg-gray-800 dark:text-gray-300">
                                   {activeSelectedSize}
                                 </span>
                               ) : null}
                               {activeSelectedColor ? (
-                                <span className="rounded-full border border-sky-200 dark:border-sky-800 bg-white dark:bg-gray-800 px-2.5 py-1 text-[10px] font-bold text-gray-700 dark:text-gray-300">
+                                <span className="rounded-full border border-sky-200 bg-white px-2.5 py-1 text-[10px] font-bold text-gray-700 dark:border-sky-800 dark:bg-gray-800 dark:text-gray-300">
                                   {activeSelectedColor}
                                 </span>
                               ) : null}
                               {activeVariant?.sku ? (
-                                <span className="rounded-full border border-sky-200 dark:border-sky-800 bg-white dark:bg-gray-800 px-2.5 py-1 text-[10px] font-bold text-gray-700 dark:text-gray-300">
+                                <span className="rounded-full border border-sky-200 bg-white px-2.5 py-1 text-[10px] font-bold text-gray-700 dark:border-sky-800 dark:bg-gray-800 dark:text-gray-300">
                                   {activeVariant.sku}
                                 </span>
                               ) : null}
@@ -668,7 +670,7 @@ const BuyNowOptionsModal = ({
                                       <span className="mb-2 block text-sm font-semibold text-slate-700 dark:text-gray-300">
                                         Color{activeSelectedColor ? ": " : ""}
                                         {activeSelectedColor ? (
-                                          <span className="capitalize text-slate-600 dark:text-gray-400">
+                                          <span className="text-slate-600 capitalize dark:text-gray-400">
                                             {activeSelectedColor}
                                           </span>
                                         ) : null}
@@ -776,11 +778,11 @@ const BuyNowOptionsModal = ({
                                               className={`w-full rounded-lg border-2 px-3 py-2 text-left transition-all ${
                                                 isActive
                                                   ? "border-sky-400 text-sky-600 dark:border-sky-500 dark:text-sky-400"
-                                                  : "border-gray-200 text-slate-600 dark:border-gray-700 dark:text-gray-300 hover:border-sky-200 dark:hover:border-sky-900/50"
+                                                  : "border-gray-200 text-slate-600 hover:border-sky-200 dark:border-gray-700 dark:text-gray-300 dark:hover:border-sky-900/50"
                                               }`}
                                             >
                                               <div className="flex items-start gap-2">
-                                                <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700">
+                                                <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-700">
                                                   <Image
                                                     src={
                                                       variant.images?.[0] ||
@@ -798,7 +800,7 @@ const BuyNowOptionsModal = ({
                                                       {variantLabel}
                                                     </p>
                                                     {isActive ? (
-                                                      <span className="rounded-full bg-sky-100 dark:bg-sky-900/40 px-2 py-0.5 text-[10px] font-bold text-sky-600 dark:text-sky-400">
+                                                      <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold text-sky-600 dark:bg-sky-900/40 dark:text-sky-400">
                                                         Selected
                                                       </span>
                                                     ) : null}
@@ -825,7 +827,7 @@ const BuyNowOptionsModal = ({
                     )}
                   </AnimatePresence>
 
-                  <div className="mt-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
+                  <div className="mt-3 rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
                     <p className="mb-3 text-xs font-bold text-gray-700 dark:text-gray-300">
                       What happens next?
                     </p>
@@ -852,7 +854,7 @@ const BuyNowOptionsModal = ({
                             className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
                               step.active
                                 ? "bg-sky-500 text-white"
-                                : "bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400"
+                                : "bg-gray-300 text-gray-500 dark:bg-gray-600 dark:text-gray-400"
                             }`}
                           >
                             {step.n}
@@ -873,7 +875,7 @@ const BuyNowOptionsModal = ({
                         initial={{ opacity: 0, y: -8 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -8 }}
-                        className="mt-3 flex items-start gap-2.5 rounded-xl border border-sky-200 dark:border-sky-900 bg-sky-50 dark:bg-sky-900/20 px-4 py-3"
+                        className="mt-3 flex items-start gap-2.5 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 dark:border-sky-900 dark:bg-sky-900/20"
                       >
                         <svg
                           className="mt-0.5 h-4 w-4 shrink-0 text-sky-600 dark:text-sky-400"
@@ -899,8 +901,8 @@ const BuyNowOptionsModal = ({
                     {status !== "authenticated" ? (
                       <>
                         <div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700">
-                          <div className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-2.5">
-                            <p className="text-center text-[11px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                          <div className="border-b border-gray-200 bg-gray-50 px-4 py-2.5 dark:border-gray-700 dark:bg-gray-800">
+                            <p className="text-center text-[11px] font-bold tracking-widest text-gray-500 uppercase dark:text-gray-400">
                               How would you like to checkout?
                             </p>
                           </div>
@@ -909,9 +911,9 @@ const BuyNowOptionsModal = ({
                               type="button"
                               onClick={handleProceed}
                               disabled={loading}
-                              className="group flex flex-col items-center gap-2 p-4 transition-all duration-200 hover:bg-sky-50 dark:hover:bg-sky-900/10 disabled:opacity-60"
+                              className="group flex flex-col items-center gap-2 p-4 transition-all duration-200 hover:bg-sky-50 disabled:opacity-60 dark:hover:bg-sky-900/10"
                             >
-                              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-500 dark:bg-sky-600 transition-all hover:bg-sky-600 dark:hover:bg-sky-700">
+                              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-500 transition-all hover:bg-sky-600 dark:bg-sky-600 dark:hover:bg-sky-700">
                                 <svg
                                   className="h-5 w-5 text-white"
                                   fill="none"
@@ -935,7 +937,7 @@ const BuyNowOptionsModal = ({
                                 </div>
                               ) : (
                                 <>
-                                  <span className="text-xs font-bold text-gray-800 dark:text-white transition-colors group-hover:text-sky-600 dark:group-hover:text-sky-400">
+                                  <span className="text-xs font-bold text-gray-800 transition-colors group-hover:text-sky-600 dark:text-white dark:group-hover:text-sky-400">
                                     Sign In & Checkout
                                   </span>
                                   <span className="text-center text-[10px] leading-tight text-gray-400 dark:text-gray-500">
@@ -950,7 +952,7 @@ const BuyNowOptionsModal = ({
                               onClick={handleCustomerCheckout}
                               className="group flex flex-col items-center gap-2 p-4 transition-all duration-200 hover:bg-blue-50 dark:hover:bg-blue-900/10"
                             >
-                              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-500 dark:bg-gray-600 transition-all group-hover:bg-blue-500 dark:group-hover:bg-blue-600">
+                              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-500 transition-all group-hover:bg-blue-500 dark:bg-gray-600 dark:group-hover:bg-blue-600">
                                 <svg
                                   className="h-5 w-5 text-white"
                                   fill="none"
@@ -965,7 +967,7 @@ const BuyNowOptionsModal = ({
                                   />
                                 </svg>
                               </div>
-                              <span className="text-xs font-bold text-gray-800 dark:text-white transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                              <span className="text-xs font-bold text-gray-800 transition-colors group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
                                 Guest Checkout
                               </span>
                               <span className="text-center text-[10px] leading-tight text-gray-400 dark:text-gray-500">
@@ -973,7 +975,7 @@ const BuyNowOptionsModal = ({
                               </span>
                             </button>
                           </div>
-                          <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-sky-50 dark:bg-sky-900/20 px-4 py-2">
+                          <div className="flex items-center justify-between border-t border-gray-200 bg-sky-50 px-4 py-2 dark:border-gray-700 dark:bg-sky-900/20">
                             <span className="text-[11px] font-medium text-sky-700 dark:text-sky-400">
                               Order Total
                             </span>

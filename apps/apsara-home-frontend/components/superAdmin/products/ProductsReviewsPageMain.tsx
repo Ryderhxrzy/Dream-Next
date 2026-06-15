@@ -1,7 +1,16 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import Image from "next/image"
+import {
+  Product,
+  ProductReview,
+  ProductsResponse,
+  useDeleteProductReviewMutation,
+  useGetProductReviewsQuery,
+  useGetProductsQuery,
+  useLazyGetProductsQuery,
+} from "@/store/api/productsApi"
+import { AnimatePresence, motion } from "framer-motion"
 import {
   ChevronLeft,
   ChevronRight,
@@ -11,16 +20,7 @@ import {
   Trash2,
   X,
 } from "lucide-react"
-import { AnimatePresence, motion } from "framer-motion"
-import {
-  Product,
-  ProductReview,
-  ProductsResponse,
-  useDeleteProductReviewMutation,
-  useGetProductsQuery,
-  useGetProductReviewsQuery,
-  useLazyGetProductsQuery,
-} from "@/store/api/productsApi"
+import Image from "next/image"
 
 const clampRating = (value: number) => Math.max(0, Math.min(5, value))
 const formatRating = (value: number) => clampRating(value).toFixed(2)
@@ -668,7 +668,7 @@ export default function ProductsReviewsPageMain({
           <div className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900">
             <div className="flex items-start justify-between border-b border-slate-200 p-5 dark:border-slate-800">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+                <p className="text-xs font-semibold tracking-[0.16em] text-slate-500 uppercase dark:text-slate-400">
                   Product Reviews
                 </p>
                 <h2 className="mt-1 text-lg font-bold text-slate-900 dark:text-slate-100">
@@ -700,7 +700,7 @@ export default function ProductsReviewsPageMain({
                 <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/60">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      <p className="text-xs tracking-wide text-slate-500 uppercase dark:text-slate-400">
                         Average rating
                       </p>
                       <p className="text-xl font-bold text-slate-900 dark:text-slate-100">
@@ -768,7 +768,7 @@ export default function ProductsReviewsPageMain({
                                 unoptimized
                               />
                             ) : (
-                              <div className="flex h-full w-full items-center justify-center text-xs font-semibold uppercase text-slate-500 dark:text-slate-300">
+                              <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-slate-500 uppercase dark:text-slate-300">
                                 {(review.customer_name || "Customer")
                                   .trim()
                                   .charAt(0)}
@@ -794,7 +794,7 @@ export default function ProductsReviewsPageMain({
                           : "No comment provided."}
                       </p>
                       <div className="mt-4 flex items-center justify-between gap-3">
-                        <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                        <span className="text-[11px] font-semibold tracking-[0.18em] text-slate-400 uppercase dark:text-slate-500">
                           Admin action
                         </span>
                         <button
@@ -811,7 +811,7 @@ export default function ProductsReviewsPageMain({
                         review.review_image ||
                         review.review_video) && (
                         <div className="mt-3">
-                          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                          <p className="mb-2 text-[11px] font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">
                             Customer Media
                           </p>
                           <div className="flex gap-2">
@@ -878,13 +878,13 @@ export default function ProductsReviewsPageMain({
                                     />
                                   )}
                                   {item.type === "video" && (
-                                    <span className="pointer-events-none absolute left-1 top-1 rounded bg-black/65 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                                    <span className="pointer-events-none absolute top-1 left-1 rounded bg-black/65 px-1.5 py-0.5 text-[10px] font-semibold text-white">
                                       Video
                                     </span>
                                   )}
                                   {remaining > 0 &&
                                     idx === previewMedia.length - 1 && (
-                                      <span className="pointer-events-none absolute bottom-1 right-1 rounded-full bg-black/70 px-2 py-0.5 text-xs font-bold text-white">
+                                      <span className="pointer-events-none absolute right-1 bottom-1 rounded-full bg-black/70 px-2 py-0.5 text-xs font-bold text-white">
                                         +{remaining}
                                       </span>
                                     )}
@@ -910,7 +910,7 @@ export default function ProductsReviewsPageMain({
             onClick={() => setReviewDeleteTarget(null)}
           />
           <div className="relative z-[81] w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-red-600">
+            <p className="text-xs font-semibold tracking-[0.18em] text-red-600 uppercase">
               Delete Review
             </p>
             <h3 className="mt-2 text-lg font-bold text-slate-900 dark:text-slate-100">

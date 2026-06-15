@@ -1,8 +1,8 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
 import type { UnilevelAwardItem } from "@/store/api/encashmentApi"
+import { AnimatePresence, motion } from "framer-motion"
 
 const peso = (v: number) =>
   new Intl.NumberFormat("en-PH", {
@@ -238,12 +238,12 @@ export default function NetworkEarningsTab({
     <div className="space-y-5 pt-1">
       {/* ── 1. Hero Stats ── */}
       <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900 p-5 text-white shadow-xl md:p-6">
-        <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-sky-500/10 blur-3xl" />
+        <div className="pointer-events-none absolute -top-16 -right-16 h-64 w-64 rounded-full bg-sky-500/10 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-12 -left-12 h-48 w-48 rounded-full bg-cyan-400/10 blur-3xl" />
 
         <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-sky-400">
+            <p className="text-[11px] font-black tracking-[0.22em] text-sky-400 uppercase">
               Network Earnings
             </p>
             <h3 className="mt-1 text-xl font-black tracking-tight sm:text-2xl">
@@ -261,7 +261,7 @@ export default function NetworkEarningsTab({
             }`}
           >
             <span
-              className={`h-2 w-2 rounded-full animate-pulse ${isActive ? "bg-emerald-400" : "bg-amber-400"}`}
+              className={`h-2 w-2 animate-pulse rounded-full ${isActive ? "bg-emerald-400" : "bg-amber-400"}`}
             />
             {isActive ? "Active for Group Bonus" : "Inactive for Group Bonus"}
           </span>
@@ -300,15 +300,15 @@ export default function NetworkEarningsTab({
               key={card.label}
               className="rounded-xl bg-white/5 p-3.5 ring-1 ring-white/10 backdrop-blur-sm md:p-4"
             >
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                 {card.label}
               </p>
               <p
-                className={`mt-2 text-lg font-black leading-tight tabular-nums ${card.accent}`}
+                className={`mt-2 text-lg leading-tight font-black tabular-nums ${card.accent}`}
               >
                 {card.value}
               </p>
-              <p className="mt-0.5 text-[11px] text-slate-500 truncate">
+              <p className="mt-0.5 truncate text-[11px] text-slate-500">
                 {card.sub}
               </p>
             </div>
@@ -325,10 +325,10 @@ export default function NetworkEarningsTab({
       ) : (
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900/70">
           {/* Header */}
-          <div className="relative border-b border-slate-100 bg-gradient-to-r from-slate-50 to-sky-50/50 px-5 py-4 dark:border-slate-800 dark:from-slate-900 dark:to-sky-950/30 md:px-6">
+          <div className="relative border-b border-slate-100 bg-gradient-to-r from-slate-50 to-sky-50/50 px-5 py-4 md:px-6 dark:border-slate-800 dark:from-slate-900 dark:to-sky-950/30">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-[11px] font-black uppercase tracking-widest text-sky-500 dark:text-sky-400">
+                <p className="text-[11px] font-black tracking-widest text-sky-500 uppercase dark:text-sky-400">
                   Award Levels
                 </p>
                 <h4 className="mt-0.5 text-base font-black text-slate-900 dark:text-white">
@@ -339,7 +339,7 @@ export default function NetworkEarningsTab({
                 <span className="rounded-full bg-slate-100 px-3 py-1 dark:bg-slate-800">
                   {levels.length} level{levels.length !== 1 ? "s" : ""} active
                 </span>
-                <span className="hidden sm:inline rounded-full bg-slate-100 px-3 py-1 dark:bg-slate-800">
+                <span className="hidden rounded-full bg-slate-100 px-3 py-1 sm:inline dark:bg-slate-800">
                   Click a level to expand
                 </span>
               </div>
@@ -352,15 +352,15 @@ export default function NetworkEarningsTab({
               {/* Left spine column */}
               <div className="flex w-8 shrink-0 flex-col items-center md:w-10">
                 {/* "You" dot */}
-                <div className="mt-1 flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-sky-400 to-indigo-500 text-[9px] font-black text-white shadow-md ring-2 ring-white dark:ring-slate-900 md:h-8 md:w-8">
+                <div className="mt-1 flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-sky-400 to-indigo-500 text-[9px] font-black text-white shadow-md ring-2 ring-white md:h-8 md:w-8 dark:ring-slate-900">
                   You
                 </div>
                 {/* Full spine line */}
-                <div className="flex-1 w-px bg-slate-200 dark:bg-slate-700 my-1" />
+                <div className="my-1 w-px flex-1 bg-slate-200 dark:bg-slate-700" />
               </div>
 
               {/* Levels */}
-              <div className="flex-1 min-w-0 space-y-2 pl-1">
+              <div className="min-w-0 flex-1 space-y-2 pl-1">
                 {levels.map((lvl, li) => {
                   const c = colorOf(lvl.level)
                   const pctTotal =
@@ -380,12 +380,12 @@ export default function NetworkEarningsTab({
                       <div className="flex w-7 shrink-0 flex-col items-center md:w-9">
                         <div className="mt-3.5 h-px w-full bg-slate-200 dark:bg-slate-700" />
                         {!isLast && (
-                          <div className="flex-1 w-px bg-slate-200 dark:bg-slate-700" />
+                          <div className="w-px flex-1 bg-slate-200 dark:bg-slate-700" />
                         )}
                       </div>
 
                       {/* Level card */}
-                      <div className="flex-1 min-w-0 mb-1">
+                      <div className="mb-1 min-w-0 flex-1">
                         {/* Clickable header row */}
                         <button
                           type="button"
@@ -408,8 +408,8 @@ export default function NetworkEarningsTab({
 
                             {/* Info */}
                             <div className="min-w-0 flex-1">
-                              <div className="flex items-center justify-between gap-2 flex-wrap">
-                                <div className="flex items-center gap-2 flex-wrap">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div className="flex flex-wrap items-center gap-2">
                                   <span
                                     className={`text-sm font-black ${c.text}`}
                                   >
@@ -427,9 +427,9 @@ export default function NetworkEarningsTab({
                                     {lvl.count} tx
                                   </span>
                                 </div>
-                                <div className="flex items-center gap-3 shrink-0">
+                                <div className="flex shrink-0 items-center gap-3">
                                   <div className="text-right">
-                                    <p className="text-sm font-black tabular-nums text-slate-900 dark:text-white">
+                                    <p className="text-sm font-black text-slate-900 tabular-nums dark:text-white">
                                       {peso(lvl.bonus)}
                                     </p>
                                     <p className="text-[11px] text-slate-400">
@@ -484,12 +484,12 @@ export default function NetworkEarningsTab({
                               >
                                 {/* Formula */}
                                 <div className="mb-4">
-                                  <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                                  <p className="mb-2 text-[10px] font-black tracking-widest text-slate-400 uppercase dark:text-slate-500">
                                     Mathematical Formula
                                   </p>
                                   <div className="flex flex-wrap items-center gap-2">
-                                    <div className="rounded-xl bg-white/80 px-3 py-2 dark:bg-slate-900/60 shadow-sm ring-1 ring-white/50 dark:ring-slate-700/50">
-                                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+                                    <div className="rounded-xl bg-white/80 px-3 py-2 shadow-sm ring-1 ring-white/50 dark:bg-slate-900/60 dark:ring-slate-700/50">
+                                      <p className="text-[10px] font-bold tracking-wide text-slate-400 uppercase">
                                         Total PV
                                       </p>
                                       <p
@@ -501,8 +501,8 @@ export default function NetworkEarningsTab({
                                     <span className="text-lg font-black text-slate-300 dark:text-slate-600">
                                       ×
                                     </span>
-                                    <div className="rounded-xl bg-white/80 px-3 py-2 dark:bg-slate-900/60 shadow-sm ring-1 ring-white/50 dark:ring-slate-700/50">
-                                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+                                    <div className="rounded-xl bg-white/80 px-3 py-2 shadow-sm ring-1 ring-white/50 dark:bg-slate-900/60 dark:ring-slate-700/50">
+                                      <p className="text-[10px] font-bold tracking-wide text-slate-400 uppercase">
                                         Rate
                                       </p>
                                       <p
@@ -518,15 +518,15 @@ export default function NetworkEarningsTab({
                                     <div
                                       className={`rounded-xl ${c.badge} px-3 py-2 shadow-md`}
                                     >
-                                      <p className="text-[10px] font-bold uppercase tracking-wide text-white/70">
+                                      <p className="text-[10px] font-bold tracking-wide text-white/70 uppercase">
                                         Bonus
                                       </p>
-                                      <p className="text-base font-black tabular-nums text-white">
+                                      <p className="text-base font-black text-white tabular-nums">
                                         {peso(lvl.bonus)}
                                       </p>
                                     </div>
-                                    <div className="rounded-xl bg-white/80 px-3 py-2 dark:bg-slate-900/60 shadow-sm ring-1 ring-white/50 dark:ring-slate-700/50">
-                                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+                                    <div className="rounded-xl bg-white/80 px-3 py-2 shadow-sm ring-1 ring-white/50 dark:bg-slate-900/60 dark:ring-slate-700/50">
+                                      <p className="text-[10px] font-bold tracking-wide text-slate-400 uppercase">
                                         Avg PV/tx
                                       </p>
                                       <p
@@ -539,7 +539,7 @@ export default function NetworkEarningsTab({
                                 </div>
 
                                 {/* Contributors */}
-                                <p className="mb-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                                <p className="mb-2.5 text-[10px] font-black tracking-widest text-slate-400 uppercase dark:text-slate-500">
                                   Contributors — {members.length} member
                                   {members.length !== 1 ? "s" : ""}
                                 </p>
@@ -569,10 +569,10 @@ export default function NetworkEarningsTab({
                                             ).toUpperCase()}
                                           </div>
                                           <div className="min-w-0 flex-1">
-                                            <p className="break-words text-sm font-black leading-snug text-slate-900 dark:text-white">
+                                            <p className="text-sm leading-snug font-black break-words text-slate-900 dark:text-white">
                                               {member.name}
                                             </p>
-                                            <p className="mt-0.5 break-all text-[11px] font-medium leading-tight text-slate-400">
+                                            <p className="mt-0.5 text-[11px] leading-tight font-medium break-all text-slate-400">
                                               {member.username
                                                 ? `@${member.username}`
                                                 : (member.email ?? "Member")}
@@ -582,15 +582,15 @@ export default function NetworkEarningsTab({
 
                                         <div className="mt-3 flex items-end justify-between gap-3 border-t border-slate-200/70 pt-2.5 dark:border-slate-700/60">
                                           <div>
-                                            <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                            <p className="text-[10px] font-black tracking-wider text-slate-400 uppercase">
                                               Bonus
                                             </p>
-                                            <p className="text-sm font-black tabular-nums text-emerald-600 dark:text-emerald-400">
+                                            <p className="text-sm font-black text-emerald-600 tabular-nums dark:text-emerald-400">
                                               +{peso(member.totalBonus)}
                                             </p>
                                           </div>
                                           <div className="text-right">
-                                            <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                            <p className="text-[10px] font-black tracking-wider text-slate-400 uppercase">
                                               Activity
                                             </p>
                                             <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
@@ -655,10 +655,10 @@ export default function NetworkEarningsTab({
 
       {/* ── 3. Top Contributors ── */}
       {contributors.length > 0 && (
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900/70 md:p-6">
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 dark:border-slate-700 dark:bg-slate-900/70">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+              <p className="text-[11px] font-black tracking-widest text-slate-400 uppercase dark:text-slate-500">
                 Downline Activity
               </p>
               <h4 className="mt-0.5 text-base font-bold text-slate-900 dark:text-white">
@@ -711,8 +711,8 @@ export default function NetworkEarningsTab({
                           {c.txCount} tx
                         </p>
                       </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-sm font-black tabular-nums text-emerald-600 dark:text-emerald-400">
+                      <div className="shrink-0 text-right">
+                        <p className="text-sm font-black text-emerald-600 tabular-nums dark:text-emerald-400">
                           +{peso(c.totalBonus)}
                         </p>
                         <p className="text-[11px] text-slate-400">
@@ -742,9 +742,9 @@ export default function NetworkEarningsTab({
 
       {/* ── 4. Transaction Log ── */}
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900/70">
-        <div className="flex flex-col gap-2 border-b border-slate-100 px-5 py-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between md:px-6">
+        <div className="flex flex-col gap-2 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between md:px-6 dark:border-slate-800">
           <div>
-            <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+            <p className="text-[11px] font-black tracking-widest text-slate-400 uppercase dark:text-slate-500">
               Transaction Log
             </p>
             <h4 className="mt-0.5 text-base font-bold text-slate-900 dark:text-white">
@@ -794,7 +794,7 @@ export default function NetworkEarningsTab({
                 <col className="w-[150px]" />
               </colgroup>
               <thead>
-                <tr className="bg-slate-50/80 text-left text-[10px] font-black uppercase tracking-widest text-slate-400 dark:bg-slate-800/40 dark:text-slate-500">
+                <tr className="bg-slate-50/80 text-left text-[10px] font-black tracking-widest text-slate-400 uppercase dark:bg-slate-800/40 dark:text-slate-500">
                   {[
                     "Downline",
                     "Level",
@@ -806,7 +806,7 @@ export default function NetworkEarningsTab({
                   ].map((h) => (
                     <th
                       key={h}
-                      className={`whitespace-nowrap px-4 py-3 first:pl-5 last:pr-5 md:first:pl-6 md:last:pr-6 ${["PV", "Rate", "Bonus"].includes(h) ? "text-right" : ""}`}
+                      className={`px-4 py-3 whitespace-nowrap first:pl-5 last:pr-5 md:first:pl-6 md:last:pr-6 ${["PV", "Rate", "Bonus"].includes(h) ? "text-right" : ""}`}
                     >
                       {h}
                     </th>
@@ -855,21 +855,21 @@ export default function NetworkEarningsTab({
                           {award.checkout_id || formatDate(award.awarded_at)}
                         </p>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3.5 text-right font-bold tabular-nums text-slate-900 dark:text-white">
+                      <td className="px-4 py-3.5 text-right font-bold whitespace-nowrap text-slate-900 tabular-nums dark:text-white">
                         {num(pv)} PV
                       </td>
                       <td
-                        className={`whitespace-nowrap px-4 py-3.5 text-right font-black tabular-nums ${c.text}`}
+                        className={`px-4 py-3.5 text-right font-black whitespace-nowrap tabular-nums ${c.text}`}
                       >
                         {UNILEVEL_TOTAL_RATE_PERCENT}% / {UNILEVEL_LEVEL_SPLIT}
                       </td>
                       <td className="px-4 py-3.5">
-                        <code className="inline-flex whitespace-nowrap rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                        <code className="inline-flex rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold whitespace-nowrap text-slate-700 dark:bg-slate-800 dark:text-slate-200">
                           {num(pv)} ×{" "}
                           {(rate * 100).toFixed(2).replace(/\.00$/, "")}%
                         </code>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3.5 text-right text-base font-black tabular-nums text-emerald-600 last:pr-5 dark:text-emerald-400 md:last:pr-6">
+                      <td className="px-4 py-3.5 text-right text-base font-black whitespace-nowrap text-emerald-600 tabular-nums last:pr-5 md:last:pr-6 dark:text-emerald-400">
                         +{peso(bon)}
                       </td>
                     </tr>

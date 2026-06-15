@@ -1,6 +1,7 @@
-import { buildPageMetadata } from "@/app/seo"
-import Blogs from "@/components/Blogs"
 import { getNavbarCategories } from "@/libs/serverStorefront"
+
+import Blogs from "@/components/Blogs"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Blog",

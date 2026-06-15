@@ -1,11 +1,12 @@
-"use client";
+"use client"
 
-import Image from "next/image";
-import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { FadeUp, StaggerContainer, StaggerItem } from "@/components/ui/motion";
-import type { HeroContent } from "@/lib/dreambuild-cms";
+import { useCallback, useEffect, useRef, useState } from "react"
+import { AnimatePresence, motion } from "framer-motion"
+import Image from "next/image"
+import Link from "next/link"
+
+import type { HeroContent } from "@/lib/dreambuild-cms"
+import { FadeUp, StaggerContainer, StaggerItem } from "@/components/ui/motion"
 
 const defaultCarouselSlides = [
   {
@@ -28,46 +29,49 @@ const defaultCarouselSlides = [
     alt: "Elegant dining area",
     label: "Dining",
   },
-];
+]
 
 export function HeroSection({ content }: { content: HeroContent }) {
-  const carouselSlides = content.carouselSlides.length ? content.carouselSlides : defaultCarouselSlides;
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const carouselSlides = content.carouselSlides.length
+    ? content.carouselSlides
+    : defaultCarouselSlides
+  const [currentSlide, setCurrentSlide] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const startTimer = useCallback(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
+    if (timerRef.current) clearInterval(timerRef.current)
     timerRef.current = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % carouselSlides.length);
-    }, 4000);
-  }, [carouselSlides.length]);
+      setCurrentSlide((prev) => (prev + 1) % carouselSlides.length)
+    }, 4000)
+  }, [carouselSlides.length])
 
   useEffect(() => {
-    startTimer();
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [startTimer]);
+    startTimer()
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+  }, [startTimer])
 
   const goTo = (index: number) => {
-    setCurrentSlide(index);
-    startTimer();
-  };
+    setCurrentSlide(index)
+    startTimer()
+  }
 
   const handleDragEnd = (_: unknown, info: { offset: { x: number } }) => {
-    setIsDragging(false);
+    setIsDragging(false)
     if (info.offset.x < -50) {
-      goTo((currentSlide + 1) % carouselSlides.length);
+      goTo((currentSlide + 1) % carouselSlides.length)
     } else if (info.offset.x > 50) {
-      goTo((currentSlide - 1 + carouselSlides.length) % carouselSlides.length);
+      goTo((currentSlide - 1 + carouselSlides.length) % carouselSlides.length)
     }
-  };
+  }
 
   return (
     <section className="relative min-h-screen">
       {/* Hero Content */}
       <div className="mx-auto max-w-7xl px-6 pt-32 pb-20 lg:px-8 lg:pt-40 lg:pb-32">
         <div className="grid gap-16 lg:grid-cols-2 lg:items-center lg:gap-20">
-
           {/* Left Column */}
           <div className="max-w-2xl">
             <FadeUp delay={0.2}>
@@ -77,7 +81,7 @@ export function HeroSection({ content }: { content: HeroContent }) {
             </FadeUp>
 
             <FadeUp delay={0.3}>
-              <h1 className="mt-8 text-4xl font-medium leading-tight tracking-tight text-[var(--foreground)] text-balance sm:text-5xl lg:text-6xl">
+              <h1 className="mt-8 text-4xl leading-tight font-medium tracking-tight text-balance text-[var(--foreground)] sm:text-5xl lg:text-6xl">
                 {content.title}
               </h1>
             </FadeUp>
@@ -92,13 +96,13 @@ export function HeroSection({ content }: { content: HeroContent }) {
               <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
                 <Link
                   href={content.primaryButtonUrl}
-                  className="inline-flex items-center justify-center rounded-full bg-[var(--dark)] px-6 py-3.5 text-sm font-medium text-white transition-all hover:bg-[var(--dark-muted)] hover:scale-105"
+                  className="inline-flex items-center justify-center rounded-full bg-[var(--dark)] px-6 py-3.5 text-sm font-medium text-white transition-all hover:scale-105 hover:bg-[var(--dark-muted)]"
                 >
                   {content.primaryButtonText}
                 </Link>
                 <Link
                   href={content.secondaryButtonUrl}
-                  className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-white px-6 py-3.5 text-sm font-medium text-[var(--foreground)] transition-all hover:border-[var(--foreground)] hover:scale-105"
+                  className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-white px-6 py-3.5 text-sm font-medium text-[var(--foreground)] transition-all hover:scale-105 hover:border-[var(--foreground)]"
                 >
                   {content.secondaryButtonText}
                 </Link>
@@ -106,7 +110,10 @@ export function HeroSection({ content }: { content: HeroContent }) {
             </FadeUp>
 
             {/* Stats */}
-            <StaggerContainer className="mt-16 grid grid-cols-3 gap-8" staggerDelay={0.15}>
+            <StaggerContainer
+              className="mt-16 grid grid-cols-3 gap-8"
+              staggerDelay={0.15}
+            >
               {content.stats.map((item) => (
                 <StaggerItem key={item.label}>
                   <p className="text-3xl font-medium tracking-tight text-[var(--foreground)] lg:text-4xl">
@@ -124,7 +131,11 @@ export function HeroSection({ content }: { content: HeroContent }) {
           <motion.div
             initial={{ opacity: 0, x: 60 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.7, delay: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+            transition={{
+              duration: 0.7,
+              delay: 0.4,
+              ease: [0.25, 0.1, 0.25, 1],
+            }}
             className="relative"
           >
             <motion.div
@@ -133,7 +144,7 @@ export function HeroSection({ content }: { content: HeroContent }) {
               dragElastic={0.08}
               onDragStart={() => setIsDragging(true)}
               onDragEnd={handleDragEnd}
-              className={`relative overflow-hidden rounded-3xl aspect-[4/5] w-full shadow-2xl select-none ${
+              className={`relative aspect-[4/5] w-full overflow-hidden rounded-3xl shadow-2xl select-none ${
                 isDragging ? "cursor-grabbing" : "cursor-grab"
               }`}
             >
@@ -144,7 +155,7 @@ export function HeroSection({ content }: { content: HeroContent }) {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.98 }}
                   transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
-                  className="absolute inset-0 pointer-events-none"
+                  className="pointer-events-none absolute inset-0"
                 >
                   <Image
                     src={carouselSlides[currentSlide].src}
@@ -159,7 +170,7 @@ export function HeroSection({ content }: { content: HeroContent }) {
               </AnimatePresence>
 
               {/* Slide label + dots */}
-              <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between pointer-events-none">
+              <div className="pointer-events-none absolute right-6 bottom-6 left-6 flex items-end justify-between">
                 <AnimatePresence mode="wait">
                   <motion.p
                     key={`label-${currentSlide}`}
@@ -173,7 +184,7 @@ export function HeroSection({ content }: { content: HeroContent }) {
                   </motion.p>
                 </AnimatePresence>
 
-                <div className="flex items-center gap-2 pointer-events-auto">
+                <div className="pointer-events-auto flex items-center gap-2">
                   {carouselSlides.map((_, index) => (
                     <button
                       key={index}
@@ -199,7 +210,7 @@ export function HeroSection({ content }: { content: HeroContent }) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 1 }}
-              className="absolute -left-6 top-10 rounded-2xl border border-[var(--border)] bg-white p-5 shadow-xl"
+              className="absolute top-10 -left-6 rounded-2xl border border-[var(--border)] bg-white p-5 shadow-xl"
             >
               <p className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
                 Signature Style
@@ -209,9 +220,8 @@ export function HeroSection({ content }: { content: HeroContent }) {
               </p>
             </motion.div>
           </motion.div>
-
         </div>
       </div>
     </section>
-  );
+  )
 }

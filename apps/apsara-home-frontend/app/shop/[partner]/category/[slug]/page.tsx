@@ -1,7 +1,3 @@
-import { notFound, redirect } from "next/navigation"
-import { headers } from "next/headers"
-import CategoryListProductMain from "@/components/category/CategoryListProductMain"
-import { buildPageMetadata } from "@/app/seo"
 import {
   filterPartnerCategories,
   normalizeCategorySlug,
@@ -10,6 +6,12 @@ import {
 import { getPartnerStorefrontBySlug } from "@/libs/partnerStorefrontServer"
 import type { Category } from "@/store/api/categoriesApi"
 import type { Product } from "@/store/api/productsApi"
+import { headers } from "next/headers"
+import { notFound, redirect } from "next/navigation"
+
+import CategoryListProductMain from "@/components/category/CategoryListProductMain"
+import { buildPageMetadata } from "@/app/seo"
+
 export const dynamic = "force-dynamic"
 
 type PageProps = {

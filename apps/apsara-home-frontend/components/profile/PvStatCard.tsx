@@ -68,7 +68,7 @@ const PvStatCard = ({
         className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${s.bar}`}
       />
       <div
-        className={`pointer-events-none absolute -right-10 -top-12 h-28 w-28 rounded-full bg-gradient-to-br ${s.halo}`}
+        className={`pointer-events-none absolute -top-12 -right-10 h-28 w-28 rounded-full bg-gradient-to-br ${s.halo}`}
       />
       <div
         className={`relative flex min-h-[58px] items-center justify-between gap-4 border-b border-slate-100/80 px-5 py-3 ring-1 ring-inset ${s.badge} dark:border-slate-700/70`}
@@ -80,7 +80,7 @@ const PvStatCard = ({
             </span>
           )}
           <p
-            className={`whitespace-normal break-words text-[11px] font-black uppercase leading-snug tracking-[0.12em] ${s.label}`}
+            className={`text-[11px] leading-snug font-black tracking-[0.12em] break-words whitespace-normal uppercase ${s.label}`}
           >
             {label}
           </p>
@@ -95,7 +95,7 @@ const PvStatCard = ({
 
       <div className="relative px-5 pt-5">
         <p
-          className={`text-3xl font-black tabular-nums tracking-normal ${s.value}`}
+          className={`text-3xl font-black tracking-normal tabular-nums ${s.value}`}
         >
           {display}
         </p>

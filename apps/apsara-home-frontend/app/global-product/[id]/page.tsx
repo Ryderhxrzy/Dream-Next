@@ -1,14 +1,15 @@
+import { serverFetch } from "@/libs/serverFetch"
+import { getNavbarCategories } from "@/libs/serverStorefront"
+import type {
+  ZqCachedProduct,
+  ZqPublicProductResponse,
+} from "@/store/api/productsApi"
 import { notFound } from "next/navigation"
+
+import GlobalProductDetail from "@/components/globalProduct/GlobalProductDetail"
 import Footer from "@/components/landing-page/Footer"
 import ScrollToTop from "@/components/landing-page/ScrollToTop"
-import GlobalProductDetail from "@/components/globalProduct/GlobalProductDetail"
 import ProductPageWrapper from "@/components/product/ProductPageWrapper"
-import { getNavbarCategories } from "@/libs/serverStorefront"
-import { serverFetch } from "@/libs/serverFetch"
-import type {
-  ZqPublicProductResponse,
-  ZqCachedProduct,
-} from "@/store/api/productsApi"
 
 export const revalidate = 60
 

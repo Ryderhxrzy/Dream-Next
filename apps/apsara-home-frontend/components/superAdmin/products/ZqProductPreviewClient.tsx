@@ -2,15 +2,17 @@
 
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { useSession } from "next-auth/react"
-import { useImportZqToLocalMutation } from "@/store/api/productsApi"
 import { showErrorToast, showSuccessToast } from "@/libs/toast"
+import { useImportZqToLocalMutation } from "@/store/api/productsApi"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
+
+import ZqCustomerProductPreview from "@/components/supplier/zq/ZqCustomerProductPreview"
+
 import ZqProductPreviewPage, {
   extractZqImportDetail,
   type ZqImportDetailData,
 } from "./ZqProductPreviewPage"
-import ZqCustomerProductPreview from "@/components/supplier/zq/ZqCustomerProductPreview"
 
 export default function ZqProductPreviewClient({
   id,
@@ -137,7 +139,7 @@ export default function ZqProductPreviewClient({
   if (errorMessage || !detail) {
     return (
       <div className="space-y-4 rounded-3xl border border-rose-200 bg-rose-50 p-8 shadow-sm">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rose-600">
+        <p className="text-sm font-semibold tracking-[0.2em] text-rose-600 uppercase">
           {scopeLabel}
         </p>
         <h1 className="text-2xl font-bold text-slate-900">

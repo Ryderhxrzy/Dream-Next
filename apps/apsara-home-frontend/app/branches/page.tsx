@@ -1,6 +1,7 @@
-import { buildPageMetadata } from "@/app/seo"
-import CompanyBranchesPageMain from "@/components/branches/CompanyBranchesPageMain"
 import { getNavbarCategories } from "@/libs/serverStorefront"
+
+import CompanyBranchesPageMain from "@/components/branches/CompanyBranchesPageMain"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Our Branches",

@@ -1,18 +1,19 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
-import Link from "next/link"
-import Image from "next/image"
-import { motion, AnimatePresence } from "framer-motion"
-import { useSession } from "next-auth/react"
+import { useEffect, useMemo, useState } from "react"
 import {
   Category,
-  useGetCategoriesQuery,
   useDeleteCategoryMutation,
+  useGetCategoriesQuery,
 } from "@/store/api/categoriesApi"
+import { AnimatePresence, motion } from "framer-motion"
+import { useSession } from "next-auth/react"
+import Image from "next/image"
+import Link from "next/link"
+
 import AddCategoryModal from "./AddCategoryModal"
-import EditCategoryModal from "./EditCategoryModal"
 import BulkEditModal from "./BulkEditModal"
+import EditCategoryModal from "./EditCategoryModal"
 
 const CARD_COLORS = [
   {
@@ -110,22 +111,19 @@ function CategoryCard({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.2 }}
-      className={`group relative bg-white rounded-2xl border shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden
-        ${isSelected ? "border-violet-400 ring-2 ring-violet-300/50" : "border-slate-100 hover:border-slate-200"}`}
+      className={`group relative overflow-hidden rounded-2xl border bg-white shadow-sm transition-all duration-200 hover:shadow-md ${isSelected ? "border-violet-400 ring-2 ring-violet-300/50" : "border-slate-100 hover:border-slate-200"}`}
     >
       {/* Checkbox overlay */}
       <div
         onClick={() => onToggleSelect(category.id)}
-        className={`absolute top-3 left-3 z-10 transition-opacity duration-150 cursor-pointer
-          ${anySelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
+        className={`absolute top-3 left-3 z-10 cursor-pointer transition-opacity duration-150 ${anySelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
       >
         <div
-          className={`h-5 w-5 rounded-md border-2 flex items-center justify-center transition-all
-          ${isSelected ? "bg-violet-600 border-violet-600" : "bg-white border-slate-300 hover:border-violet-400"}`}
+          className={`flex h-5 w-5 items-center justify-center rounded-md border-2 transition-all ${isSelected ? "border-violet-600 bg-violet-600" : "border-slate-300 bg-white hover:border-violet-400"}`}
         >
           {isSelected && (
             <svg
-              className="w-3 h-3 text-white"
+              className="h-3 w-3 text-white"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -145,7 +143,7 @@ function CategoryCard({
         <div className="flex items-start gap-4">
           {/* Icon / image block */}
           <div
-            className={`h-12 w-12 rounded-xl ${color.bg} flex items-center justify-center shrink-0 shadow-sm overflow-hidden relative`}
+            className={`h-12 w-12 rounded-xl ${color.bg} relative flex shrink-0 items-center justify-center overflow-hidden shadow-sm`}
           >
             {category.image ? (
               <Image
@@ -156,35 +154,35 @@ function CategoryCard({
                 unoptimized
               />
             ) : (
-              <span className="text-white font-bold text-lg uppercase">
+              <span className="text-lg font-bold text-white uppercase">
                 {category.name.charAt(0)}
               </span>
             )}
           </div>
           {/* Content */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-bold text-slate-800 text-sm leading-tight">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-sm leading-tight font-bold text-slate-800">
                 {category.name}
               </h3>
               <span
-                className={`inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-md ${color.badge}`}
+                className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-bold ${color.badge}`}
               >
                 {category.product_count ?? 0} product
                 {(category.product_count ?? 0) === 1 ? "" : "s"}
               </span>
             </div>
             {category.url && category.url !== "0" && (
-              <p className={`text-xs font-mono mt-1 ${color.text} opacity-80`}>
+              <p className={`mt-1 font-mono text-xs ${color.text} opacity-80`}>
                 /{category.url}
               </p>
             )}
             {category.description ? (
-              <p className="text-slate-500 text-xs mt-2 line-clamp-2 leading-relaxed">
+              <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-slate-500">
                 {category.description}
               </p>
             ) : (
-              <p className="text-slate-300 text-xs mt-2 italic">
+              <p className="mt-2 text-xs text-slate-300 italic">
                 No description
               </p>
             )}
@@ -193,20 +191,20 @@ function CategoryCard({
       </div>
 
       {/* Footer */}
-      <div className="px-5 py-3 border-t border-slate-50 bg-slate-50/60 flex items-center justify-between">
+      <div className="flex items-center justify-between border-t border-slate-50 bg-slate-50/60 px-5 py-3">
         <div className="flex items-center gap-2">
-          <span className="text-slate-400 text-xs">ID #{category.id}</span>
+          <span className="text-xs text-slate-400">ID #{category.id}</span>
           {category.url && category.url !== "0" && (
             <a
               href={`/${category.url}`}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-400 hover:text-violet-600 transition-colors"
+              className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-400 transition-colors hover:text-violet-600"
               title="View in store"
             >
               <svg
-                className="w-3 h-3"
+                className="h-3 w-3"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -231,10 +229,10 @@ function CategoryCard({
           {!confirming && (
             <button
               onClick={() => onEdit(category)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-500 transition-colors hover:bg-blue-50 hover:text-blue-600"
             >
               <svg
-                className="w-3.5 h-3.5"
+                className="h-3.5 w-3.5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -263,10 +261,10 @@ function CategoryCard({
               >
                 <button
                   onClick={handleCancel}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-slate-500 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1.5 text-xs font-semibold text-slate-500 transition-colors hover:bg-slate-200"
                 >
                   <svg
-                    className="w-3.5 h-3.5"
+                    className="h-3.5 w-3.5"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -283,11 +281,11 @@ function CategoryCard({
                 <button
                   onClick={handleConfirm}
                   disabled={isThisDeleting}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors disabled:opacity-60"
+                  className="flex items-center gap-1.5 rounded-lg bg-red-500 px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-red-600 disabled:opacity-60"
                 >
                   {isThisDeleting ? (
                     <svg
-                      className="w-3.5 h-3.5 animate-spin"
+                      className="h-3.5 w-3.5 animate-spin"
                       fill="none"
                       viewBox="0 0 24 24"
                     >
@@ -307,7 +305,7 @@ function CategoryCard({
                     </svg>
                   ) : (
                     <svg
-                      className="w-3.5 h-3.5"
+                      className="h-3.5 w-3.5"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -333,10 +331,10 @@ function CategoryCard({
                 transition={{ duration: 0.12 }}
                 onClick={handleDeleteClick}
                 disabled={isThisDeleting}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-60"
+                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-60"
               >
                 <svg
-                  className="w-3.5 h-3.5"
+                  className="h-3.5 w-3.5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -487,12 +485,12 @@ export default function CategoriesPageMain() {
       >
         <Link
           href="/admin/products"
-          className="hover:text-slate-600 transition-colors"
+          className="transition-colors hover:text-slate-600"
         >
           Products
         </Link>
         <svg
-          className="w-3 h-3"
+          className="h-3 w-3"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -504,7 +502,7 @@ export default function CategoriesPageMain() {
             d="M9 5l7 7-7 7"
           />
         </svg>
-        <span className="text-slate-600 font-medium">Categories</span>
+        <span className="font-medium text-slate-600">Categories</span>
       </motion.div>
 
       {/* Header */}
@@ -517,16 +515,16 @@ export default function CategoriesPageMain() {
           <h1 className="text-xl font-bold text-slate-800">
             Product Categories
           </h1>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <p className="mt-0.5 text-sm text-slate-500">
             Organize your products into categories
           </p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-violet-500/30 shrink-0"
+          className="flex shrink-0 items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-violet-500/30 transition-colors hover:bg-violet-700"
         >
           <svg
-            className="w-4 h-4"
+            className="h-4 w-4"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -547,12 +545,12 @@ export default function CategoriesPageMain() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.05 }}
-        className="grid grid-cols-2 sm:grid-cols-3 gap-3"
+        className="grid grid-cols-2 gap-3 sm:grid-cols-3"
       >
-        <div className="bg-white rounded-2xl border border-slate-100 px-5 py-4 flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-violet-100 flex items-center justify-center shrink-0">
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white px-5 py-4">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-100">
             <svg
-              className="w-5 h-5 text-violet-600"
+              className="h-5 w-5 text-violet-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -566,17 +564,17 @@ export default function CategoriesPageMain() {
             </svg>
           </div>
           <div>
-            <p className="text-2xl font-bold text-slate-800 leading-none">
+            <p className="text-2xl leading-none font-bold text-slate-800">
               {isLoading ? "—" : total}
             </p>
-            <p className="text-xs text-slate-500 mt-0.5">Total Categories</p>
+            <p className="mt-0.5 text-xs text-slate-500">Total Categories</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-100 px-5 py-4 flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-teal-100 flex items-center justify-center shrink-0">
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white px-5 py-4">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-100">
             <svg
-              className="w-5 h-5 text-teal-600"
+              className="h-5 w-5 text-teal-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -590,19 +588,19 @@ export default function CategoriesPageMain() {
             </svg>
           </div>
           <div>
-            <p className="text-2xl font-bold text-slate-800 leading-none">
+            <p className="text-2xl leading-none font-bold text-slate-800">
               {isLoading
                 ? "—"
                 : rawCategories.filter((c) => c.description).length}
             </p>
-            <p className="text-xs text-slate-500 mt-0.5">With Description</p>
+            <p className="mt-0.5 text-xs text-slate-500">With Description</p>
           </div>
         </div>
 
-        <div className="hidden sm:flex bg-white rounded-2xl border border-slate-100 px-5 py-4 items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+        <div className="hidden items-center gap-3 rounded-2xl border border-slate-100 bg-white px-5 py-4 sm:flex">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100">
             <svg
-              className="w-5 h-5 text-amber-600"
+              className="h-5 w-5 text-amber-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -616,10 +614,10 @@ export default function CategoriesPageMain() {
             </svg>
           </div>
           <div>
-            <p className="text-2xl font-bold text-slate-800 leading-none">
+            <p className="text-2xl leading-none font-bold text-slate-800">
               {isLoading ? "—" : rawCategories.filter((c) => c.image).length}
             </p>
-            <p className="text-xs text-slate-500 mt-0.5">With Image</p>
+            <p className="mt-0.5 text-xs text-slate-500">With Image</p>
           </div>
         </div>
       </motion.div>
@@ -635,20 +633,18 @@ export default function CategoriesPageMain() {
         {!isLoading && categories.length > 0 && (
           <button
             onClick={toggleSelectAll}
-            className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-semibold transition-all
-              ${
-                allVisible
-                  ? "bg-violet-50 border-violet-300 text-violet-700"
-                  : "bg-white border-slate-200 text-slate-500 hover:border-violet-300 hover:text-violet-600"
-              }`}
+            className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all ${
+              allVisible
+                ? "border-violet-300 bg-violet-50 text-violet-700"
+                : "border-slate-200 bg-white text-slate-500 hover:border-violet-300 hover:text-violet-600"
+            }`}
           >
             <div
-              className={`h-4 w-4 rounded border-2 flex items-center justify-center transition-all shrink-0
-              ${allVisible ? "bg-violet-600 border-violet-600" : "border-slate-300"}`}
+              className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 transition-all ${allVisible ? "border-violet-600 bg-violet-600" : "border-slate-300"}`}
             >
               {allVisible && (
                 <svg
-                  className="w-2.5 h-2.5 text-white"
+                  className="h-2.5 w-2.5 text-white"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -667,9 +663,9 @@ export default function CategoriesPageMain() {
         )}
 
         {/* Search */}
-        <div className="relative flex-1 min-w-45 max-w-sm">
+        <div className="relative max-w-sm min-w-45 flex-1">
           <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"
+            className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -686,15 +682,15 @@ export default function CategoriesPageMain() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search categories..."
-            className="w-full pl-9 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition-all"
+            className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pr-8 pl-9 text-sm text-slate-700 placeholder-slate-400 transition-all focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 focus:outline-none"
           />
           {search && (
             <button
               onClick={() => setSearch("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+              className="absolute top-1/2 right-3 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-600"
             >
               <svg
-                className="w-3.5 h-3.5"
+                className="h-3.5 w-3.5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -715,7 +711,7 @@ export default function CategoriesPageMain() {
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as SortKey)}
-            className="appearance-none pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition-all cursor-pointer font-medium"
+            className="cursor-pointer appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pr-8 pl-3 text-sm font-medium text-slate-700 transition-all focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30 focus:outline-none"
           >
             <option value="order-asc">Order ↑</option>
             <option value="order-desc">Order ↓</option>
@@ -725,7 +721,7 @@ export default function CategoriesPageMain() {
             <option value="oldest">Oldest</option>
           </select>
           <svg
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none"
+            className="pointer-events-none absolute top-1/2 right-2.5 h-3.5 w-3.5 -translate-y-1/2 text-slate-400"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -741,7 +737,7 @@ export default function CategoriesPageMain() {
 
         {/* Count */}
         {!isLoading && (
-          <p className="text-sm text-slate-500 shrink-0 ml-auto">
+          <p className="ml-auto shrink-0 text-sm text-slate-500">
             {debouncedSearch ? (
               <>
                 <span className="font-semibold text-slate-700">
@@ -772,11 +768,11 @@ export default function CategoriesPageMain() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.18 }}
-            className="flex items-center gap-3 px-4 py-3 bg-violet-50 border border-violet-200 rounded-2xl"
+            className="flex items-center gap-3 rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3"
           >
-            <div className="h-7 w-7 rounded-lg bg-violet-600 flex items-center justify-center shrink-0">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-600">
               <svg
-                className="w-4 h-4 text-white"
+                className="h-4 w-4 text-white"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -789,23 +785,23 @@ export default function CategoriesPageMain() {
                 />
               </svg>
             </div>
-            <p className="text-sm font-semibold text-violet-800 flex-1">
+            <p className="flex-1 text-sm font-semibold text-violet-800">
               <span className="text-violet-600">{selectedIds.size}</span>{" "}
               categor{selectedIds.size === 1 ? "y" : "ies"} selected
             </p>
             <button
               onClick={clearSelection}
-              className="px-3 py-1.5 text-xs font-semibold text-violet-600 hover:bg-violet-100 rounded-lg transition-colors"
+              className="rounded-lg px-3 py-1.5 text-xs font-semibold text-violet-600 transition-colors hover:bg-violet-100"
             >
               Clear
             </button>
             <button
               onClick={() => setShowBulkEdit(true)}
               disabled={isBulkDeleting}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-60"
+              className="flex items-center gap-1.5 rounded-lg bg-teal-600 px-3.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-teal-700 disabled:opacity-60"
             >
               <svg
-                className="w-3.5 h-3.5"
+                className="h-3.5 w-3.5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -822,12 +818,12 @@ export default function CategoriesPageMain() {
             <button
               onClick={handleBulkDelete}
               disabled={isBulkDeleting}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-60"
+              className="flex items-center gap-1.5 rounded-lg bg-red-600 px-3.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-60"
             >
               {isBulkDeleting ? (
                 <>
                   <svg
-                    className="w-3.5 h-3.5 animate-spin"
+                    className="h-3.5 w-3.5 animate-spin"
                     fill="none"
                     viewBox="0 0 24 24"
                   >
@@ -850,7 +846,7 @@ export default function CategoriesPageMain() {
               ) : (
                 <>
                   <svg
-                    className="w-3.5 h-3.5"
+                    className="h-3.5 w-3.5"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -884,30 +880,30 @@ export default function CategoriesPageMain() {
           Failed to load categories. Please try again.
         </div>
       ) : isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-pulse">
+        <div className="grid animate-pulse grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
-              className="bg-white rounded-2xl border border-slate-100 p-5"
+              className="rounded-2xl border border-slate-100 bg-white p-5"
             >
               <div className="flex items-start gap-4">
-                <div className="h-12 w-12 rounded-xl bg-slate-200 shrink-0" />
+                <div className="h-12 w-12 shrink-0 rounded-xl bg-slate-200" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-3.5 rounded bg-slate-200 w-3/4" />
-                  <div className="h-2.5 rounded bg-slate-100 w-1/3" />
-                  <div className="h-2.5 rounded bg-slate-100 w-full" />
-                  <div className="h-2.5 rounded bg-slate-100 w-2/3" />
+                  <div className="h-3.5 w-3/4 rounded bg-slate-200" />
+                  <div className="h-2.5 w-1/3 rounded bg-slate-100" />
+                  <div className="h-2.5 w-full rounded bg-slate-100" />
+                  <div className="h-2.5 w-2/3 rounded bg-slate-100" />
                 </div>
               </div>
-              <div className="mt-4 pt-3 border-t border-slate-50 h-8 bg-slate-50 rounded" />
+              <div className="mt-4 h-8 rounded border-t border-slate-50 bg-slate-50 pt-3" />
             </div>
           ))}
         </div>
       ) : categories.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="h-16 w-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
             <svg
-              className="w-8 h-8 text-slate-300"
+              className="h-8 w-8 text-slate-300"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -920,12 +916,12 @@ export default function CategoriesPageMain() {
               />
             </svg>
           </div>
-          <p className="text-slate-600 font-semibold">
+          <p className="font-semibold text-slate-600">
             {debouncedSearch
               ? `No categories matching "${debouncedSearch}"`
               : "No categories yet"}
           </p>
-          <p className="text-slate-400 text-sm mt-1">
+          <p className="mt-1 text-sm text-slate-400">
             {debouncedSearch
               ? "Try a different search term."
               : 'Click "Add Category" to create your first one.'}
@@ -933,7 +929,7 @@ export default function CategoriesPageMain() {
         </div>
       ) : (
         <AnimatePresence>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {categories.map((cat, idx) => (
               <CategoryCard
                 key={cat.id}

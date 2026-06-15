@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
 import { adminAuthOptions } from "@/libs/adminAuth"
 import { partnerAuthOptions } from "@/libs/partnerAuth"
+import { getServerSession } from "next-auth"
+import { NextResponse } from "next/server"
 
 const RATE_LIMIT_WINDOW_MS = 60_000
 const RATE_LIMIT_MAX_REQUESTS = 20

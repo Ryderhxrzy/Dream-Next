@@ -1,5 +1,5 @@
-import { buildPageMetadata } from "@/app/seo"
 import SupplierCataloguePage from "@/components/supplier/SupplierCataloguePage"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "My Catalogue",

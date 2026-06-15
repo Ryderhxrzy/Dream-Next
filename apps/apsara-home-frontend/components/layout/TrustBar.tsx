@@ -77,16 +77,16 @@ export default function TrustBar({ items = [] }: TrustBarConfig = {}) {
   }
 
   return (
-    <div className="!bg-white dark:!bg-gray-900 border-b border-gray-100 dark:border-gray-800">
+    <div className="border-b border-gray-100 !bg-white dark:border-gray-800 dark:!bg-gray-900">
       <div className="container mx-auto px-4 py-4">
-        <div className="flex flex-wrap items-center gap-1 -ml-3">
+        <div className="-ml-3 flex flex-wrap items-center gap-1">
           {safeItems.map((item, i) => (
             <motion.div
               key={`${item.title}-${i}`}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1, duration: 0.4 }}
-              className="flex items-center gap-3 p-3 rounded-xl hover:bg-sky-50 dark:hover:bg-sky-950/20 transition-colors duration-300 group cursor-default"
+              className="group flex cursor-default items-center gap-3 rounded-xl p-3 transition-colors duration-300 hover:bg-sky-50 dark:hover:bg-sky-950/20"
             >
               <div className="shrink-0 text-sky-500 transition-transform duration-300 group-hover:scale-110">
                 {icons[i] ?? icons[icons.length - 1]}

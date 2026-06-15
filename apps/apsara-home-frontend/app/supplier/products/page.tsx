@@ -1,11 +1,12 @@
-import { buildPageMetadata } from "@/app/seo"
-import ProductsPageMain from "@/components/superAdmin/products/ProductsPageMain"
 import { supplierAuthOptions } from "@/libs/supplierAuth"
 import {
   normalizeProductsResponse,
   ProductsResponse,
 } from "@/store/api/productsApi"
 import { getServerSession } from "next-auth"
+
+import ProductsPageMain from "@/components/superAdmin/products/ProductsPageMain"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Supplier Products",

@@ -1,9 +1,11 @@
+import { Mail, MapPin, Phone } from "lucide-react"
 import Link from "next/link"
-import { MapPin, Phone, Mail } from "lucide-react"
-import { buildPageMetadata } from "@/app/seo"
-import TopBar from "@/components/layout/TopBar"
-import Navbar from "@/components/layout/Navbar"
+
 import Footer from "@/components/landing-page/Footer"
+import Navbar from "@/components/layout/Navbar"
+import TopBar from "@/components/layout/TopBar"
+import { buildPageMetadata } from "@/app/seo"
+
 import ContactForm from "./ContactForm"
 
 export const metadata = buildPageMetadata({
@@ -65,7 +67,7 @@ const quickStats = [
 
 export default function ContactUsPage() {
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white">
+    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
       <TopBar />
       <Navbar />
 
@@ -86,7 +88,7 @@ export default function ContactUsPage() {
                 <Mail className="h-7 w-7" />
               </div>
               <div>
-                <p className="text-xs font-bold uppercase tracking-widest opacity-70">
+                <p className="text-xs font-bold tracking-widest uppercase opacity-70">
                   AF Home · Support
                 </p>
                 <h1 className="mt-1 text-3xl font-bold tracking-tight md:text-4xl">
@@ -169,7 +171,7 @@ export default function ContactUsPage() {
               </div>
               <div className="divide-y divide-slate-100 dark:divide-slate-800">
                 <div className="px-5 py-4">
-                  <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                  <p className="mb-2 text-xs font-bold tracking-wider text-slate-400 uppercase dark:text-slate-500">
                     General Support
                   </p>
                   <a
@@ -184,7 +186,7 @@ export default function ContactUsPage() {
                   </p>
                 </div>
                 <div className="px-5 py-4">
-                  <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                  <p className="mb-2 text-xs font-bold tracking-wider text-slate-400 uppercase dark:text-slate-500">
                     Interior Projects &amp; Business
                   </p>
                   <div className="space-y-2">

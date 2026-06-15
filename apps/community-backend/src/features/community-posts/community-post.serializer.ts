@@ -1,8 +1,10 @@
-import type { CommunityPost } from "../../generated/prisma/client.js";
-import type { listCommunityPosts } from "./community-post.service.js";
-import type { CommunityPostImageUpload } from "./community-post.types.js";
+import type { CommunityPost } from "../../generated/prisma/client.js"
+import type { listCommunityPosts } from "./community-post.service.js"
+import type { CommunityPostImageUpload } from "./community-post.types.js"
 
-type CommunityPostListItem = Awaited<ReturnType<typeof listCommunityPosts>>[number];
+type CommunityPostListItem = Awaited<
+  ReturnType<typeof listCommunityPosts>
+>[number]
 
 export function serializeCommunityPost(post: CommunityPost) {
   return {
@@ -23,22 +25,22 @@ export function serializeCommunityPost(post: CommunityPost) {
     status: post.status,
     createdAt: post.createdAt,
     updatedAt: post.updatedAt,
-  };
+  }
 }
 
 export function serializeCommunityPostListItem(
   post: CommunityPostListItem,
-  viewerId?: bigint,
+  viewerId?: bigint
 ) {
   const authorName = [post.author.firstName, post.author.lastName]
     .filter(Boolean)
     .join(" ")
-    .trim();
+    .trim()
 
-  const going = post.rsvps.filter((r) => r.status === "GOING").length;
-  const interested = post.rsvps.filter((r) => r.status === "INTERESTED").length;
+  const going = post.rsvps.filter((r) => r.status === "GOING").length
+  const interested = post.rsvps.filter((r) => r.status === "INTERESTED").length
   const viewerRsvp =
-    post.rsvps.find((r) => r.userId === viewerId)?.status ?? null;
+    post.rsvps.find((r) => r.userId === viewerId)?.status ?? null
 
   return {
     ...serializeCommunityPost(post),
@@ -73,15 +75,17 @@ export function serializeCommunityPostListItem(
           },
         }
       : null,
-  };
+  }
 }
 
-export function serializeCommunityPostImageUpload(upload: CommunityPostImageUpload) {
+export function serializeCommunityPostImageUpload(
+  upload: CommunityPostImageUpload
+) {
   return {
     publicId: upload.publicId,
     imageUrl: upload.secureUrl,
     width: upload.width,
     height: upload.height,
     format: upload.format,
-  };
+  }
 }

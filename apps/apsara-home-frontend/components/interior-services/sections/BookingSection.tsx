@@ -1,11 +1,19 @@
 "use client"
 
-import { AnimatePresence, motion, useInView } from "framer-motion"
 import { useMemo, useRef, useState } from "react"
+import { useCreateInteriorRequestMutation } from "@/store/api/interiorRequestsApi"
+import { useMeQuery } from "@/store/api/userApi"
+import { AnimatePresence, motion, useInView } from "framer-motion"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { useMeQuery } from "@/store/api/userApi"
-import { useCreateInteriorRequestMutation } from "@/store/api/interiorRequestsApi"
+
+import { fadeUp, slideLeft, stepFade } from "../animation"
+import StepContact from "../StepContact"
+import StepIndicator from "../StepIndicator"
+import StepReview from "../StepReview"
+import StepSchedule from "../StepSchedule"
+import StepService from "../StepService"
+import SuccessState from "../SuccessState"
 import {
   BookingFormData,
   FORM_STEPS,
@@ -13,13 +21,6 @@ import {
   INITIAL_FORM_DATA,
 } from "../types"
 import { GhostButton, PrimaryButton, SectionLabel } from "../ui/Primitives"
-import { fadeUp, slideLeft, stepFade } from "../animation"
-import StepIndicator from "../StepIndicator"
-import SuccessState from "../SuccessState"
-import StepService from "../StepService"
-import StepSchedule from "../StepSchedule"
-import StepContact from "../StepContact"
-import StepReview from "../StepReview"
 
 const BookingSection = ({ id }: { id?: string }) => {
   const router = useRouter()
@@ -178,7 +179,7 @@ const BookingSection = ({ id }: { id?: string }) => {
       }}
     >
       <div
-        className="absolute top-0 right-0 h-[600px] w-[600px] rounded-full pointer-events-none opacity-60"
+        className="pointer-events-none absolute top-0 right-0 h-[600px] w-[600px] rounded-full opacity-60"
         style={{
           background:
             "radial-gradient(circle, rgba(212,165,20,0.12) 0%, transparent 65%)",
@@ -186,7 +187,7 @@ const BookingSection = ({ id }: { id?: string }) => {
         }}
       />
       <div
-        className="absolute bottom-0 left-0 h-[400px] w-[400px] rounded-full pointer-events-none opacity-40"
+        className="pointer-events-none absolute bottom-0 left-0 h-[400px] w-[400px] rounded-full opacity-40"
         style={{
           background:
             "radial-gradient(circle, rgba(17,17,17,0.06) 0%, transparent 65%)",
@@ -204,7 +205,7 @@ const BookingSection = ({ id }: { id?: string }) => {
               custom={0}
             >
               <SectionLabel>Book a Consultation</SectionLabel>
-              <h2 className="mb-5 font-['Cormorant_Garamond'] text-[clamp(2.4rem,4vw,3.8rem)] font-light leading-[1.08] text-slate-900">
+              <h2 className="mb-5 font-['Cormorant_Garamond'] text-[clamp(2.4rem,4vw,3.8rem)] leading-[1.08] font-light text-slate-900">
                 Begin Your
                 <br />
                 <em style={{ fontStyle: "italic" }}>Project</em>
@@ -230,7 +231,7 @@ const BookingSection = ({ id }: { id?: string }) => {
               variants={fadeUp}
               custom={0.28}
             >
-              <p className="text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-orange-700">
+              <p className="text-[0.72rem] font-semibold tracking-[0.12em] text-orange-700 uppercase">
                 Account-linked Booking
               </p>
               <p className="mt-1 text-[0.78rem] leading-relaxed text-orange-900">
@@ -300,7 +301,7 @@ const BookingSection = ({ id }: { id?: string }) => {
               variants={fadeUp}
               custom={0.5}
             >
-              <p className="mb-2 text-[0.7rem] uppercase tracking-[0.1em] text-slate-400">
+              <p className="mb-2 text-[0.7rem] tracking-[0.1em] text-slate-400 uppercase">
                 Prefer to call?
               </p>
               <p className="text-[0.9rem] text-slate-700">+63 912 345 6789</p>
@@ -344,7 +345,7 @@ const BookingSection = ({ id }: { id?: string }) => {
                       transition={{ duration: 0.3 }}
                       className="mb-6"
                     >
-                      <h3 className="font-['Cormorant_Garamond'] text-[1.4rem] font-light leading-tight text-slate-900">
+                      <h3 className="font-['Cormorant_Garamond'] text-[1.4rem] leading-tight font-light text-slate-900">
                         {stepLabels[currentStep - 1]}
                       </h3>
                       <div className="mt-2 h-px w-8 bg-[#d4a514]" />

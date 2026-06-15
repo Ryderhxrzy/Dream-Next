@@ -1,10 +1,11 @@
-import { notFound } from "next/navigation"
-import { buildPageMetadata } from "@/app/seo"
-import CustomerCheckoutMain from "@/components/checkout/customer/CustomerCheckoutMain"
-import { getNavbarCategories } from "@/libs/serverStorefront"
 import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
 import { getPartnerStorefrontBySlug } from "@/libs/partnerStorefrontServer"
+import { getNavbarCategories } from "@/libs/serverStorefront"
 import type { WebPageItem } from "@/store/api/webPagesApi"
+import { notFound } from "next/navigation"
+
+import CustomerCheckoutMain from "@/components/checkout/customer/CustomerCheckoutMain"
+import { buildPageMetadata } from "@/app/seo"
 
 export const dynamic = "force-dynamic"
 

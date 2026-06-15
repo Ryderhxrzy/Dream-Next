@@ -1,13 +1,11 @@
 "use client"
 
 /* eslint-disable react-hooks/set-state-in-effect */
-
 import { useEffect, useState } from "react"
-import { usePathname } from "next/navigation"
-import { useRouter } from "next/navigation"
-import type { Category } from "@/store/api/categoriesApi"
-import { ROOM_OPTIONS } from "@/libs/roomConfig"
 import { normalizeCategorySlug } from "@/libs/partnerStorefront"
+import { ROOM_OPTIONS } from "@/libs/roomConfig"
+import type { Category } from "@/store/api/categoriesApi"
+import { usePathname, useRouter } from "next/navigation"
 
 const toSlug = (value: string) =>
   value
@@ -310,16 +308,16 @@ export default function ProductFilter({
 
   return (
     <div
-      className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 sm:p-6 ${className}`}
+      className={`rounded-lg border border-gray-200 bg-white p-3 sm:p-6 dark:border-gray-700 dark:bg-gray-800 ${className}`}
     >
-      <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
+      <h3 className="mb-4 text-base font-bold text-gray-900 sm:mb-6 sm:text-lg dark:text-white">
         Filters
       </h3>
 
       {/* Category Filter for Category Page Only - Only show when categories exist and not room page */}
       {!isRoomPage && categories && categories.length > 0 && (
         <div className="mb-4 sm:mb-6">
-          <h4 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3">
+          <h4 className="mb-2 text-xs font-semibold text-gray-900 sm:mb-3 sm:text-sm dark:text-gray-100">
             Shop Category
           </h4>
           <div className="flex flex-wrap gap-1.5 sm:gap-2">
@@ -328,7 +326,7 @@ export default function ProductFilter({
                 onClick={() => {
                   router.push(getPartnerHomePath())
                 }}
-                className="px-3 py-1 rounded-full text-sm font-medium transition-colors cursor-pointer bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-sky-100 hover:text-sky-600 dark:hover:bg-sky-900/30 dark:hover:text-sky-400"
+                className="cursor-pointer rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-600 transition-colors hover:bg-sky-100 hover:text-sky-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-sky-900/30 dark:hover:text-sky-400"
               >
                 Home
               </button>
@@ -337,10 +335,10 @@ export default function ProductFilter({
               onClick={() => {
                 router.push(getAllCategoryPath())
               }}
-              className={`px-3 py-1 rounded-full text-sm font-medium transition-colors cursor-pointer ${
+              className={`cursor-pointer rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                 hasAllCategorySelected && !propSearch
                   ? "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
-                  : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-sky-100 hover:text-sky-600 dark:hover:bg-sky-900/30 dark:hover:text-sky-400"
+                  : "bg-gray-100 text-gray-600 hover:bg-sky-100 hover:text-sky-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-sky-900/30 dark:hover:text-sky-400"
               }`}
             >
               All Category
@@ -351,11 +349,11 @@ export default function ProductFilter({
                 onClick={() => {
                   router.push(getCategoryPath(category))
                 }}
-                className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
+                className={`cursor-pointer rounded-full px-2 py-1 text-xs font-medium transition-colors sm:px-3 sm:text-sm ${
                   currentCategory === category.name ||
                   propSearch === category.name
                     ? "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
-                    : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-sky-100 hover:text-sky-600 dark:hover:bg-sky-900/30 dark:hover:text-sky-400"
+                    : "bg-gray-100 text-gray-600 hover:bg-sky-100 hover:text-sky-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-sky-900/30 dark:hover:text-sky-400"
                 }`}
               >
                 {category.name}
@@ -368,7 +366,7 @@ export default function ProductFilter({
       {/* Room Filter for Room Page Only - Only show when isRoomPage is true */}
       {isRoomPage && (
         <div className="mb-4 sm:mb-6">
-          <h4 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3">
+          <h4 className="mb-2 text-xs font-semibold text-gray-900 sm:mb-3 sm:text-sm dark:text-gray-100">
             Shop By Room
           </h4>
           <div className="flex flex-wrap gap-1.5 sm:gap-2">
@@ -376,10 +374,10 @@ export default function ProductFilter({
               onClick={() => {
                 router.push("/by-room")
               }}
-              className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
+              className={`cursor-pointer rounded-full px-2 py-1 text-xs font-medium transition-colors sm:px-3 sm:text-sm ${
                 !currentRoom
                   ? "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
-                  : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-sky-100 hover:text-sky-600 dark:hover:bg-sky-900/30 dark:hover:text-sky-400"
+                  : "bg-gray-100 text-gray-600 hover:bg-sky-100 hover:text-sky-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-sky-900/30 dark:hover:text-sky-400"
               }`}
             >
               All Room
@@ -391,10 +389,10 @@ export default function ProductFilter({
                   const roomUrl = `/by-room/${room.slug}`
                   router.push(roomUrl)
                 }}
-                className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
+                className={`cursor-pointer rounded-full px-2 py-1 text-xs font-medium transition-colors sm:px-3 sm:text-sm ${
                   currentRoom === room.slug
                     ? "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
-                    : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-sky-100 hover:text-sky-600 dark:hover:bg-sky-900/30 dark:hover:text-sky-400"
+                    : "bg-gray-100 text-gray-600 hover:bg-sky-100 hover:text-sky-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-sky-900/30 dark:hover:text-sky-400"
                 }`}
               >
                 {room.label}
@@ -407,7 +405,7 @@ export default function ProductFilter({
       {/* Brand Filter for Category/Product Pages */}
       {!isBrandPage && brands && brands.length > 0 && (
         <div className="mb-4 sm:mb-6">
-          <h4 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3">
+          <h4 className="mb-2 text-xs font-semibold text-gray-900 sm:mb-3 sm:text-sm dark:text-gray-100">
             Shop By Brand
           </h4>
           <div className="mb-3">
@@ -416,7 +414,7 @@ export default function ProductFilter({
               placeholder="Search brands..."
               value={brandSearch}
               onChange={(e) => setBrandSearch(e.target.value)}
-              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-sky-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-500"
             />
           </div>
           {(() => {
@@ -443,10 +441,10 @@ export default function ProductFilter({
               <div className="flex flex-wrap gap-1.5 sm:gap-2">
                 <button
                   onClick={() => emitBrandChange("")}
-                  className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
+                  className={`cursor-pointer rounded-full px-2 py-1 text-xs font-medium transition-colors sm:px-3 sm:text-sm ${
                     !selectedBrand
                       ? "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
-                      : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-sky-100 hover:text-sky-600 dark:hover:bg-sky-900/30 dark:hover:text-sky-400"
+                      : "bg-gray-100 text-gray-600 hover:bg-sky-100 hover:text-sky-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-sky-900/30 dark:hover:text-sky-400"
                   }`}
                 >
                   All Brands
@@ -457,10 +455,10 @@ export default function ProductFilter({
                     <button
                       key={brand.id}
                       onClick={() => emitBrandChange(brand.name)}
-                      className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
+                      className={`cursor-pointer rounded-full px-2 py-1 text-xs font-medium transition-colors sm:px-3 sm:text-sm ${
                         selectedBrand === brand.name
                           ? "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
-                          : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-sky-100 hover:text-sky-600 dark:hover:bg-sky-900/30 dark:hover:text-sky-400"
+                          : "bg-gray-100 text-gray-600 hover:bg-sky-100 hover:text-sky-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-sky-900/30 dark:hover:text-sky-400"
                       }`}
                     >
                       {brand.name}
@@ -469,7 +467,7 @@ export default function ProductFilter({
                 {filteredBrands.length > 6 && (
                   <button
                     onClick={() => setShowAllBrands(!showAllBrands)}
-                    className="px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium transition-colors cursor-pointer bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-sky-100 hover:text-sky-600 dark:hover:bg-sky-900/30 dark:hover:text-sky-400"
+                    className="cursor-pointer rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 transition-colors hover:bg-sky-100 hover:text-sky-600 sm:px-3 sm:text-sm dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-sky-900/30 dark:hover:text-sky-400"
                   >
                     {showAllBrands
                       ? "Show Less"
@@ -477,7 +475,7 @@ export default function ProductFilter({
                   </button>
                 )}
                 {filteredBrands.length === 0 && (
-                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 w-full py-2">
+                  <p className="w-full py-2 text-xs text-gray-500 sm:text-sm dark:text-gray-400">
                     No brands found
                   </p>
                 )}
@@ -490,7 +488,7 @@ export default function ProductFilter({
       {/* Brand Filter for Brand Page Only */}
       {isBrandPage && brands && brands.length > 0 && (
         <div className="mb-4 sm:mb-6">
-          <h4 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3">
+          <h4 className="mb-2 text-xs font-semibold text-gray-900 sm:mb-3 sm:text-sm dark:text-gray-100">
             Shop By Brand
           </h4>
 
@@ -501,7 +499,7 @@ export default function ProductFilter({
               placeholder="Search brands..."
               value={brandSearch}
               onChange={(e) => setBrandSearch(e.target.value)}
-              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-sky-500 focus:outline-none sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-500"
             />
           </div>
 
@@ -516,10 +514,10 @@ export default function ProductFilter({
                   onClick={() => {
                     router.push("/by-brand")
                   }}
-                  className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
+                  className={`cursor-pointer rounded-full px-2 py-1 text-xs font-medium transition-colors sm:px-3 sm:text-sm ${
                     !currentBrand
                       ? "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
-                      : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-sky-100 hover:text-sky-600 dark:hover:bg-sky-900/30 dark:hover:text-sky-400"
+                      : "bg-gray-100 text-gray-600 hover:bg-sky-100 hover:text-sky-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-sky-900/30 dark:hover:text-sky-400"
                   }`}
                 >
                   All Brands
@@ -535,10 +533,10 @@ export default function ProductFilter({
                           `/by-brand?brand=${encodeURIComponent(brandSlug)}`
                         )
                       }}
-                      className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
+                      className={`cursor-pointer rounded-full px-2 py-1 text-xs font-medium transition-colors sm:px-3 sm:text-sm ${
                         currentBrand === brand.name
                           ? "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
-                          : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-sky-100 hover:text-sky-600 dark:hover:bg-sky-900/30 dark:hover:text-sky-400"
+                          : "bg-gray-100 text-gray-600 hover:bg-sky-100 hover:text-sky-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-sky-900/30 dark:hover:text-sky-400"
                       }`}
                     >
                       {brand.name}
@@ -547,7 +545,7 @@ export default function ProductFilter({
                 {filteredBrands.length > 8 && (
                   <button
                     onClick={() => setShowAllBrands(!showAllBrands)}
-                    className="px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium transition-colors cursor-pointer bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-sky-100 hover:text-sky-600 dark:hover:bg-sky-900/30 dark:hover:text-sky-400"
+                    className="cursor-pointer rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 transition-colors hover:bg-sky-100 hover:text-sky-600 sm:px-3 sm:text-sm dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-sky-900/30 dark:hover:text-sky-400"
                   >
                     {showAllBrands
                       ? "See Less"
@@ -555,7 +553,7 @@ export default function ProductFilter({
                   </button>
                 )}
                 {filteredBrands.length === 0 && (
-                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 w-full py-2">
+                  <p className="w-full py-2 text-xs text-gray-500 sm:text-sm dark:text-gray-400">
                     No brands found
                   </p>
                 )}
@@ -567,14 +565,14 @@ export default function ProductFilter({
 
       {/* Price Range Filter */}
       <div className="mb-4 sm:mb-6">
-        <h4 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3">
+        <h4 className="mb-2 text-xs font-semibold text-gray-900 sm:mb-3 sm:text-sm dark:text-gray-100">
           Price Range
         </h4>
 
         {/* Custom Range Inputs */}
-        <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+        <div className="mb-3 flex items-center gap-2 sm:mb-4 sm:gap-3">
           <div className="flex-1">
-            <label className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 block mb-1">
+            <label className="mb-1 block text-[10px] text-gray-500 sm:text-xs dark:text-gray-400">
               Min
             </label>
             <input
@@ -583,13 +581,13 @@ export default function ProductFilter({
               onChange={(e) =>
                 handleRangeInputChange("min", Number(e.target.value))
               }
-              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="w-full rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-xs text-gray-900 focus:ring-2 focus:ring-sky-500 focus:outline-none sm:px-3 sm:py-2 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
               placeholder="0"
             />
           </div>
-          <span className="text-gray-400 dark:text-gray-500 text-sm">-</span>
+          <span className="text-sm text-gray-400 dark:text-gray-500">-</span>
           <div className="flex-1">
-            <label className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 block mb-1">
+            <label className="mb-1 block text-[10px] text-gray-500 sm:text-xs dark:text-gray-400">
               Max
             </label>
             <input
@@ -598,7 +596,7 @@ export default function ProductFilter({
               onChange={(e) =>
                 handleRangeInputChange("max", Number(e.target.value))
               }
-              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="w-full rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-xs text-gray-900 focus:ring-2 focus:ring-sky-500 focus:outline-none sm:px-3 sm:py-2 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
               placeholder="10000"
             />
           </div>
@@ -610,10 +608,10 @@ export default function ProductFilter({
             <button
               key={preset.label}
               onClick={() => handlePresetClick(preset)}
-              className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
+              className={`w-full cursor-pointer rounded-lg px-2 py-1.5 text-left text-xs font-medium transition-colors sm:px-3 sm:py-2 sm:text-sm ${
                 priceRange[0] === preset.min && priceRange[1] === preset.max
                   ? "bg-sky-500 text-white"
-                  : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-sky-100 dark:hover:bg-sky-500/20 hover:text-sky-600 dark:hover:text-sky-400"
+                  : "bg-gray-100 text-gray-700 hover:bg-sky-100 hover:text-sky-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-400"
               }`}
             >
               {preset.label}
@@ -624,36 +622,36 @@ export default function ProductFilter({
 
       {/* Sort Filter */}
       <div className="mb-4 sm:mb-6">
-        <h4 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3">
+        <h4 className="mb-2 text-xs font-semibold text-gray-900 sm:mb-3 sm:text-sm dark:text-gray-100">
           Sort By Name
         </h4>
         <div className="space-y-1.5 sm:space-y-2">
           <button
             onClick={() => handleSortChange("default")}
-            className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
+            className={`w-full cursor-pointer rounded-lg px-2 py-1.5 text-left text-xs font-medium transition-colors sm:px-3 sm:py-2 sm:text-sm ${
               sortBy === "default"
                 ? "bg-sky-500 text-white"
-                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-sky-100 dark:hover:bg-sky-500/20 hover:text-sky-600 dark:hover:text-sky-400"
+                : "bg-gray-100 text-gray-700 hover:bg-sky-100 hover:text-sky-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-400"
             }`}
           >
             Default
           </button>
           <button
             onClick={() => handleSortChange("asc")}
-            className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
+            className={`w-full cursor-pointer rounded-lg px-2 py-1.5 text-left text-xs font-medium transition-colors sm:px-3 sm:py-2 sm:text-sm ${
               sortBy === "asc"
                 ? "bg-sky-500 text-white"
-                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-sky-100 dark:hover:bg-sky-500/20 hover:text-sky-600 dark:hover:text-sky-400"
+                : "bg-gray-100 text-gray-700 hover:bg-sky-100 hover:text-sky-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-400"
             }`}
           >
             A to Z
           </button>
           <button
             onClick={() => handleSortChange("desc")}
-            className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
+            className={`w-full cursor-pointer rounded-lg px-2 py-1.5 text-left text-xs font-medium transition-colors sm:px-3 sm:py-2 sm:text-sm ${
               sortBy === "desc"
                 ? "bg-sky-500 text-white"
-                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-sky-100 dark:hover:bg-sky-500/20 hover:text-sky-600 dark:hover:text-sky-400"
+                : "bg-gray-100 text-gray-700 hover:bg-sky-100 hover:text-sky-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-400"
             }`}
           >
             Z to A
@@ -663,14 +661,14 @@ export default function ProductFilter({
 
       {/* Discount Filter */}
       <div className="mb-4 sm:mb-6">
-        <label className="flex items-center gap-2 cursor-pointer">
+        <label className="flex cursor-pointer items-center gap-2">
           <input
             type="checkbox"
             checked={discountOnly}
             onChange={handleDiscountToggle}
-            className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sky-500 focus:ring-sky-500"
+            className="h-3.5 w-3.5 rounded border-gray-300 bg-white text-sky-500 focus:ring-sky-500 sm:h-4 sm:w-4 dark:border-gray-600 dark:bg-gray-700"
           />
-          <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">
+          <span className="text-xs text-gray-700 sm:text-sm dark:text-gray-300">
             Discounted Items Only
           </span>
         </label>
@@ -679,7 +677,7 @@ export default function ProductFilter({
       {/* Discount Percentage Filter */}
       {discountOnly && (
         <div className="mb-4 sm:mb-6">
-          <h4 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3">
+          <h4 className="mb-2 text-xs font-semibold text-gray-900 sm:mb-3 sm:text-sm dark:text-gray-100">
             Min Discount %
           </h4>
           <div className="space-y-1.5 sm:space-y-2">
@@ -687,10 +685,10 @@ export default function ProductFilter({
               <button
                 key={preset.value}
                 onClick={() => handleDiscountPercentageChange(preset.value)}
-                className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
+                className={`w-full cursor-pointer rounded-lg px-2 py-1.5 text-left text-xs font-medium transition-colors sm:px-3 sm:py-2 sm:text-sm ${
                   minDiscount === preset.value
                     ? "bg-sky-500 text-white"
-                    : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-sky-100 dark:hover:bg-sky-500/20 hover:text-sky-600 dark:hover:text-sky-400"
+                    : "bg-gray-100 text-gray-700 hover:bg-sky-100 hover:text-sky-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-400"
                 }`}
               >
                 {preset.label}
@@ -702,20 +700,20 @@ export default function ProductFilter({
 
       {/* Performance Value Filter */}
       <div className="mb-4 sm:mb-6">
-        <label className="flex items-center gap-2 cursor-pointer">
+        <label className="flex cursor-pointer items-center gap-2">
           <input
             type="checkbox"
             checked={hasPvOnly}
             onChange={handleHasPvOnlyToggle}
-            className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sky-500 focus:ring-sky-500"
+            className="h-3.5 w-3.5 rounded border-gray-300 bg-white text-sky-500 focus:ring-sky-500 sm:h-4 sm:w-4 dark:border-gray-600 dark:bg-gray-700"
           />
-          <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">
+          <span className="text-xs text-gray-700 sm:text-sm dark:text-gray-300">
             Has Performance Value
           </span>
-          <div className="relative group flex items-center">
+          <div className="group relative flex items-center">
             <button
               type="button"
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer flex items-center"
+              className="flex cursor-pointer items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               onMouseEnter={() => setShowPvInfo(true)}
               onMouseLeave={() => setShowPvInfo(false)}
             >
@@ -727,7 +725,7 @@ export default function ProductFilter({
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
-                className="sm:w-4 sm:h-4"
+                className="sm:h-4 sm:w-4"
               >
                 <circle cx="12" cy="12" r="10" />
                 <path d="M12 16v-4" />
@@ -735,7 +733,7 @@ export default function ProductFilter({
               </svg>
             </button>
             {showPvInfo && (
-              <div className="absolute bottom-full left-0 mb-1 sm:mb-2 w-40 sm:w-56 bg-gray-900 dark:bg-gray-700 text-white text-[10px] sm:text-xs rounded-lg p-1.5 sm:p-2 z-10">
+              <div className="absolute bottom-full left-0 z-10 mb-1 w-40 rounded-lg bg-gray-900 p-1.5 text-[10px] text-white sm:mb-2 sm:w-56 sm:p-2 sm:text-xs dark:bg-gray-700">
                 <p>
                   PV (Performance Value) represents the earning points you get
                   when you purchase a product. Higher PV means more value
@@ -750,7 +748,7 @@ export default function ProductFilter({
       {/* PV Range Sub-filter */}
       {hasPvOnly && (
         <div className="mb-4 sm:mb-6">
-          <h4 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3">
+          <h4 className="mb-2 text-xs font-semibold text-gray-900 sm:mb-3 sm:text-sm dark:text-gray-100">
             Min Performance Value
           </h4>
           <div className="space-y-1.5 sm:space-y-2">
@@ -758,10 +756,10 @@ export default function ProductFilter({
               <button
                 key={preset.label}
                 onClick={() => handlePvPresetClick(preset)}
-                className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
+                className={`w-full cursor-pointer rounded-lg px-2 py-1.5 text-left text-xs font-medium transition-colors sm:px-3 sm:py-2 sm:text-sm ${
                   pvRange[0] === preset.min && pvRange[1] === preset.max
                     ? "bg-sky-500 text-white"
-                    : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-sky-100 dark:hover:bg-sky-500/20 hover:text-sky-600 dark:hover:text-sky-400"
+                    : "bg-gray-100 text-gray-700 hover:bg-sky-100 hover:text-sky-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-400"
                 }`}
               >
                 {preset.label}
@@ -773,14 +771,14 @@ export default function ProductFilter({
 
       {/* Stock Filter */}
       <div className="mb-4 sm:mb-6">
-        <label className="flex items-center gap-2 cursor-pointer">
+        <label className="flex cursor-pointer items-center gap-2">
           <input
             type="checkbox"
             checked={inStockOnly}
             onChange={handleInStockToggle}
-            className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sky-500 focus:ring-sky-500"
+            className="h-3.5 w-3.5 rounded border-gray-300 bg-white text-sky-500 focus:ring-sky-500 sm:h-4 sm:w-4 dark:border-gray-600 dark:bg-gray-700"
           />
-          <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">
+          <span className="text-xs text-gray-700 sm:text-sm dark:text-gray-300">
             In Stock Only
           </span>
         </label>
@@ -809,7 +807,7 @@ export default function ProductFilter({
             brand: "",
           })
         }}
-        className="w-full rounded-lg py-2 text-sm font-semibold transition-colors cursor-pointer bg-sky-500 text-white hover:bg-sky-600 dark:hover:bg-sky-600"
+        className="w-full cursor-pointer rounded-lg bg-sky-500 py-2 text-sm font-semibold text-white transition-colors hover:bg-sky-600 dark:hover:bg-sky-600"
       >
         Clear Filters
       </button>

@@ -80,7 +80,7 @@ export default function ContactForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid sm:grid-cols-2 gap-4">
+      <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">
             Name
@@ -109,7 +109,7 @@ export default function ContactForm() {
           />
         </div>
       </div>
-      <div className="grid sm:grid-cols-2 gap-4">
+      <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">
             Phone Number
@@ -153,7 +153,7 @@ export default function ContactForm() {
       </div>
       <button
         type="submit"
-        className="w-full rounded-full bg-sky-500 hover:bg-sky-600 text-white text-sm font-semibold py-2.5 transition-colors"
+        className="w-full rounded-full bg-sky-500 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-sky-600"
       >
         Send Message
       </button>

@@ -1,18 +1,19 @@
-import Link from "next/link"
-import TopBar from "@/components/layout/TopBar"
-import Navbar from "@/components/layout/Navbar"
-import Footer from "@/components/layout/Footer"
 import { getNavbarCategories } from "@/libs/serverStorefront"
+import Link from "next/link"
+
+import Footer from "@/components/layout/Footer"
+import Navbar from "@/components/layout/Navbar"
+import TopBar from "@/components/layout/TopBar"
 
 export default async function ProductNotFound() {
   const navbarCategories = await getNavbarCategories()
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="flex min-h-screen flex-col bg-white">
       <TopBar />
       <Navbar initialCategories={navbarCategories} />
       <main className="flex-1">
         <section className="container mx-auto px-4 py-20">
-          <div className="max-w-2xl mx-auto text-center rounded-2xl border border-slate-200 bg-slate-50 px-6 py-12">
+          <div className="mx-auto max-w-2xl rounded-2xl border border-slate-200 bg-slate-50 px-6 py-12 text-center">
             <p className="text-sm font-semibold tracking-wide text-sky-600">
               PRODUCT NOT FOUND
             </p>
@@ -25,13 +26,13 @@ export default async function ProductNotFound() {
             <div className="mt-8 flex items-center justify-center gap-3">
               <Link
                 href="/category"
-                className="inline-flex items-center rounded-xl bg-sky-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-600 transition-colors"
+                className="inline-flex items-center rounded-xl bg-sky-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-sky-600"
               >
                 Browse Products
               </Link>
               <Link
                 href="/"
-                className="inline-flex items-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
+                className="inline-flex items-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
               >
                 Back to Home
               </Link>

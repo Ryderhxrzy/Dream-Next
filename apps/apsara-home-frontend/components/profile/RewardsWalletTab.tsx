@@ -120,8 +120,8 @@ function CopyButton({ text }: { text: string }) {
       title="Copy code"
       className={`ml-2 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold transition-all ${
         copied
-          ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
-          : "border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-gray-900 text-slate-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-gray-800 hover:text-slate-700 dark:hover:text-gray-300"
+          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+          : "border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:border-slate-700 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-300"
       }`}
     >
       {copied ? (
@@ -259,7 +259,7 @@ export default function RewardsWalletTab({
                 <TicketPercent className="h-6 w-6" strokeWidth={2.3} />
               </div>
               <div>
-                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-amber-600 dark:text-amber-300">
+                <p className="text-[11px] font-black tracking-[0.18em] text-amber-600 uppercase dark:text-amber-300">
                   AF-Voucher Balance
                 </p>
                 <p className="mt-1 text-3xl font-black tracking-tight text-slate-950 dark:text-white">
@@ -270,8 +270,8 @@ export default function RewardsWalletTab({
                 </p>
               </div>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left dark:border-slate-700 dark:bg-slate-800 sm:min-w-32 sm:text-center">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left sm:min-w-32 sm:text-center dark:border-slate-700 dark:bg-slate-800">
+              <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
                 Active Codes
               </p>
               <p className="mt-1 text-2xl font-black text-slate-900 dark:text-white">
@@ -289,7 +289,7 @@ export default function RewardsWalletTab({
                 <BadgePercent className="h-6 w-6" strokeWidth={2.3} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-rose-600 dark:text-rose-300">
+                <p className="text-[11px] font-black tracking-[0.18em] text-rose-600 uppercase dark:text-rose-300">
                   Personal Cashback Balance
                 </p>
                 <p className="mt-1 text-3xl font-black tracking-tight text-slate-950 dark:text-white">
@@ -303,7 +303,7 @@ export default function RewardsWalletTab({
             </div>
             <div className="mt-4 grid gap-2 sm:grid-cols-3">
               <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
-                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
+                <p className="text-[9px] font-bold tracking-widest text-slate-400 uppercase">
                   Earned
                 </p>
                 <p className="mt-1 text-sm font-black text-slate-900 dark:text-white">
@@ -311,7 +311,7 @@ export default function RewardsWalletTab({
                 </p>
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
-                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
+                <p className="text-[9px] font-bold tracking-widest text-slate-400 uppercase">
                   Reserved
                 </p>
                 <p className="mt-1 text-sm font-black text-slate-900 dark:text-white">
@@ -319,7 +319,7 @@ export default function RewardsWalletTab({
                 </p>
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
-                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
+                <p className="text-[9px] font-bold tracking-widest text-slate-400 uppercase">
                   Rate
                 </p>
                 <p className="mt-1 text-sm font-black text-slate-900 dark:text-white">
@@ -340,7 +340,7 @@ export default function RewardsWalletTab({
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         {/* Create Voucher */}
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-gray-900">
-          <div className="flex flex-col gap-4 border-b border-slate-100 bg-slate-50/80 px-5 py-4 dark:border-slate-700 dark:bg-gray-800/70 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-4 border-b border-slate-100 bg-slate-50/80 px-5 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-slate-700 dark:bg-gray-800/70">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-orange-500 shadow-sm ring-1 ring-slate-200 dark:bg-gray-900 dark:ring-slate-700">
                 <BadgePercent className="h-5 w-5" strokeWidth={2.3} />
@@ -356,7 +356,7 @@ export default function RewardsWalletTab({
             </div>
             <div className="inline-flex shrink-0 items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
               <Sparkles className="h-3.5 w-3.5" />
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+              <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
                 Active
               </p>
               <p className="text-sm font-black">{activeVoucherCount}</p>
@@ -366,11 +366,11 @@ export default function RewardsWalletTab({
           <div className="p-5 sm:p-6">
             <form className="space-y-5" onSubmit={handleCreateVoucher}>
               <div>
-                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1.5">
+                <label className="mb-1.5 block text-[10px] font-bold tracking-widest text-slate-500 uppercase dark:text-slate-400">
                   Discount Amount <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400 dark:text-slate-500">
+                  <span className="absolute top-1/2 left-4 -translate-y-1/2 text-sm font-black text-slate-400 dark:text-slate-500">
                     ₱
                   </span>
                   <input
@@ -379,7 +379,7 @@ export default function RewardsWalletTab({
                     step="0.01"
                     value={voucherAmount}
                     onChange={(e) => setVoucherAmount(e.target.value)}
-                    className="h-12 w-full rounded-2xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-amber-400 focus:ring-4 focus:ring-amber-100 dark:border-slate-700 dark:bg-gray-950 dark:text-white dark:focus:border-amber-600 dark:focus:ring-amber-900/40"
+                    className="h-12 w-full rounded-2xl border border-slate-200 bg-white py-2.5 pr-4 pl-9 text-sm font-semibold text-slate-900 transition outline-none placeholder:text-slate-400 focus:border-amber-400 focus:ring-4 focus:ring-amber-100 dark:border-slate-700 dark:bg-gray-950 dark:text-white dark:focus:border-amber-600 dark:focus:ring-amber-900/40"
                     placeholder="0.00"
                     required
                   />
@@ -388,10 +388,10 @@ export default function RewardsWalletTab({
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                  <label className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold tracking-widest text-slate-500 uppercase dark:text-slate-400">
                     <CalendarDays className="h-3.5 w-3.5" />
                     Valid Until{" "}
-                    <span className="font-normal normal-case text-slate-400 dark:text-slate-500">
+                    <span className="font-normal text-slate-400 normal-case dark:text-slate-500">
                       (optional)
                     </span>
                   </label>
@@ -400,17 +400,17 @@ export default function RewardsWalletTab({
                     min={todayStr}
                     value={expiresAt}
                     onChange={(e) => setExpiresAt(e.target.value)}
-                    className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-900 outline-none transition focus:border-amber-400 focus:ring-4 focus:ring-amber-100 dark:border-slate-700 dark:bg-gray-950 dark:text-white dark:focus:border-amber-600 dark:focus:ring-amber-900/40"
+                    className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-900 transition outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100 dark:border-slate-700 dark:bg-gray-950 dark:text-white dark:focus:border-amber-600 dark:focus:ring-amber-900/40"
                   />
                   <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
                     Leave blank for no expiry.
                   </p>
                 </div>
                 <div>
-                  <label className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                  <label className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold tracking-widest text-slate-500 uppercase dark:text-slate-400">
                     <Hash className="h-3.5 w-3.5" />
                     Max Uses{" "}
-                    <span className="font-normal normal-case text-slate-400 dark:text-slate-500">
+                    <span className="font-normal text-slate-400 normal-case dark:text-slate-500">
                       (optional)
                     </span>
                   </label>
@@ -420,7 +420,7 @@ export default function RewardsWalletTab({
                     step="1"
                     value={maxUses}
                     onChange={(e) => setMaxUses(e.target.value)}
-                    className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-amber-400 focus:ring-4 focus:ring-amber-100 dark:border-slate-700 dark:bg-gray-950 dark:text-white dark:focus:border-amber-600 dark:focus:ring-amber-900/40"
+                    className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-900 transition outline-none placeholder:text-slate-400 focus:border-amber-400 focus:ring-4 focus:ring-amber-100 dark:border-slate-700 dark:bg-gray-950 dark:text-white dark:focus:border-amber-600 dark:focus:ring-amber-900/40"
                     placeholder="e.g. 1"
                   />
                   <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
@@ -433,8 +433,8 @@ export default function RewardsWalletTab({
                 <div
                   className={`flex items-start gap-2.5 rounded-xl px-4 py-3 text-sm font-medium ${
                     message.type === "success"
-                      ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-200 dark:ring-emerald-800"
-                      : "bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 ring-1 ring-rose-200 dark:ring-rose-800"
+                      ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:ring-emerald-800"
+                      : "bg-rose-50 text-rose-700 ring-1 ring-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:ring-rose-800"
                   }`}
                 >
                   <span className="mt-0.5 shrink-0">
@@ -465,13 +465,13 @@ export default function RewardsWalletTab({
         {/* Program Notes */}
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-gray-900">
           <div className="border-b border-slate-100 bg-slate-50/80 px-5 py-4 dark:border-slate-700 dark:bg-gray-800/70">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+            <p className="text-[10px] font-black tracking-[0.18em] text-slate-400 uppercase dark:text-slate-500">
               Program Notes
             </p>
           </div>
-          <div className="px-5 pb-5 pt-4 space-y-3">
+          <div className="space-y-3 px-5 pt-4 pb-5">
             <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 dark:border-slate-700 dark:bg-gray-950">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+              <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
                 Cashback Rate
               </p>
               <p className="mt-1 text-2xl font-black text-slate-900 dark:text-white">
@@ -488,7 +488,7 @@ export default function RewardsWalletTab({
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 dark:border-slate-700 dark:bg-gray-950">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+              <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
                 AF-Voucher Pool
               </p>
               <p className="mt-1 text-2xl font-black text-slate-900 dark:text-white">
@@ -529,7 +529,7 @@ export default function RewardsWalletTab({
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-gray-900">
         <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/80 px-5 py-4 dark:border-slate-700 dark:bg-gray-800/70">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+            <p className="text-[10px] font-black tracking-[0.18em] text-slate-400 uppercase dark:text-slate-500">
               Issued Vouchers
             </p>
             <h3 className="mt-0.5 text-sm font-bold text-slate-900 dark:text-white">
@@ -580,8 +580,8 @@ export default function RewardsWalletTab({
                     key={voucher.id}
                     className={`relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-r ${gradient} p-4 shadow-[0_20px_60px_rgba(15,23,42,0.12)]`}
                   >
-                    <span className="pointer-events-none absolute left-0 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/20" />
-                    <span className="pointer-events-none absolute right-0 top-1/2 h-7 w-7 translate-x-1/2 -translate-y-1/2 rounded-full bg-white/20" />
+                    <span className="pointer-events-none absolute top-1/2 left-0 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/20" />
+                    <span className="pointer-events-none absolute top-1/2 right-0 h-7 w-7 translate-x-1/2 -translate-y-1/2 rounded-full bg-white/20" />
 
                     <div className="grid items-center gap-4 lg:grid-cols-[1.7fr_1.15fr_0.75fr]">
                       <div className="space-y-3 text-white">
@@ -593,7 +593,7 @@ export default function RewardsWalletTab({
                             />
                           </div>
                           <div>
-                            <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-white/80">
+                            <p className="text-[10px] font-bold tracking-[0.28em] text-white/80 uppercase">
                               discount voucher
                             </p>
                             <p className="mt-1 text-2xl font-black tracking-tight">
@@ -605,7 +605,7 @@ export default function RewardsWalletTab({
                           </div>
                         </div>
                         <div className="flex flex-wrap items-center gap-3">
-                          <span className="rounded-full bg-white/15 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white/90">
+                          <span className="rounded-full bg-white/15 px-3 py-2 text-xs font-semibold tracking-[0.2em] text-white/90 uppercase">
                             {voucher.code}
                           </span>
                           <CopyButton text={voucher.code} />
@@ -614,7 +614,7 @@ export default function RewardsWalletTab({
 
                       <div className="grid gap-3 rounded-2xl bg-white/10 p-3 text-sm text-white/95 ring-1 ring-white/10">
                         <div className="space-y-1">
-                          <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">
+                          <p className="text-[10px] tracking-[0.2em] text-white/70 uppercase">
                             Valid until
                           </p>
                           <p className="font-semibold">
@@ -624,13 +624,13 @@ export default function RewardsWalletTab({
                           </p>
                         </div>
                         <div className="space-y-1">
-                          <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">
+                          <p className="text-[10px] tracking-[0.2em] text-white/70 uppercase">
                             Uses
                           </p>
                           <p className="font-semibold">{usesText}</p>
                         </div>
                         <div className="space-y-1">
-                          <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">
+                          <p className="text-[10px] tracking-[0.2em] text-white/70 uppercase">
                             Created
                           </p>
                           <p className="font-semibold">
@@ -643,7 +643,7 @@ export default function RewardsWalletTab({
                         <div className="flex items-center justify-between gap-3">
                           <StatusBadge status={voucher.status} />
                         </div>
-                        <p className="text-right text-xs uppercase tracking-[0.2em] text-white/75">
+                        <p className="text-right text-xs tracking-[0.2em] text-white/75 uppercase">
                           {usesText}
                         </p>
                       </div>

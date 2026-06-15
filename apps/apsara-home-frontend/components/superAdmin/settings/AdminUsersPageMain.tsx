@@ -1,8 +1,15 @@
 "use client"
 
 import React, { useMemo, useRef, useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { useSession } from "next-auth/react"
+import {
+  ADMIN_PERMISSION_OPTIONS,
+  AdminPermissionId,
+  DEFAULT_ADMIN_PERMISSIONS,
+  normalizeAdminPermissions,
+  WEB_CONTENT_SECTION_OPTIONS,
+} from "@/libs/adminPermissions"
+import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import {
   AdminUserItem,
   CreateAdminUserResponse,
@@ -16,19 +23,12 @@ import {
 } from "@/store/api/adminUsersApi"
 import { useGetAdminMeQuery } from "@/store/api/authApi"
 import { useGetSuppliersQuery } from "@/store/api/suppliersApi"
-import { showErrorToast, showSuccessToast } from "@/libs/toast"
-import {
-  ADMIN_PERMISSION_OPTIONS,
-  AdminPermissionId,
-  DEFAULT_ADMIN_PERMISSIONS,
-  normalizeAdminPermissions,
-  WEB_CONTENT_SECTION_OPTIONS,
-} from "@/libs/adminPermissions"
-import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
 import {
   useGetAdminWebPageItemsQuery,
   type WebPageItem,
 } from "@/store/api/webPagesApi"
+import { AnimatePresence, motion } from "framer-motion"
+import { useSession } from "next-auth/react"
 
 /* ─── types ──────────────────────────────────────────────── */
 
@@ -71,7 +71,7 @@ const ROLE_OPTIONS = [
     description: "Full system access, manage all settings and users",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -92,7 +92,7 @@ const ROLE_OPTIONS = [
     description: "General administrative privileges across the platform",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -113,7 +113,7 @@ const ROLE_OPTIONS = [
     description: "Handle customer inquiries and support requests",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -134,7 +134,7 @@ const ROLE_OPTIONS = [
     description: "Manage website content and digital media assets",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -155,7 +155,7 @@ const ROLE_OPTIONS = [
     description: "Manage invoices, transactions, and financial records",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -176,7 +176,7 @@ const ROLE_OPTIONS = [
     description: "Oversee financial planning, budgets, and reporting",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -198,7 +198,7 @@ const ROLE_OPTIONS = [
       "Manage merchant-side orders, products, and shipping workflows",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -352,7 +352,7 @@ function formatMinutesSinceActive(value?: number | null) {
 
 const UserIcon = () => (
   <svg
-    className="w-4 h-4"
+    className="h-4 w-4"
     fill="none"
     stroke="currentColor"
     viewBox="0 0 24 24"
@@ -367,7 +367,7 @@ const UserIcon = () => (
 )
 const AtIcon = () => (
   <svg
-    className="w-4 h-4"
+    className="h-4 w-4"
     fill="none"
     stroke="currentColor"
     viewBox="0 0 24 24"
@@ -382,7 +382,7 @@ const AtIcon = () => (
 )
 const MailIcon = () => (
   <svg
-    className="w-4 h-4"
+    className="h-4 w-4"
     fill="none"
     stroke="currentColor"
     viewBox="0 0 24 24"
@@ -397,7 +397,7 @@ const MailIcon = () => (
 )
 const LockIcon = () => (
   <svg
-    className="w-4 h-4"
+    className="h-4 w-4"
     fill="none"
     stroke="currentColor"
     viewBox="0 0 24 24"
@@ -412,7 +412,7 @@ const LockIcon = () => (
 )
 const EyeIcon = () => (
   <svg
-    className="w-4 h-4"
+    className="h-4 w-4"
     fill="none"
     stroke="currentColor"
     viewBox="0 0 24 24"
@@ -433,7 +433,7 @@ const EyeIcon = () => (
 )
 const EyeOffIcon = () => (
   <svg
-    className="w-4 h-4"
+    className="h-4 w-4"
     fill="none"
     stroke="currentColor"
     viewBox="0 0 24 24"
@@ -447,7 +447,7 @@ const EyeOffIcon = () => (
   </svg>
 )
 const SpinIcon = () => (
-  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+  <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
     <circle
       className="opacity-25"
       cx="12"
@@ -493,13 +493,13 @@ function InputField({
 
   return (
     <div className="space-y-1.5">
-      <label className="text-xs font-semibold text-slate-600 block">
+      <label className="block text-xs font-semibold text-slate-600">
         {label}
-        {required && <span className="text-red-400 ml-0.5">*</span>}
+        {required && <span className="ml-0.5 text-red-400">*</span>}
       </label>
-      <div className="relative group">
+      <div className="group relative">
         {icon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-500 transition-colors pointer-events-none">
+          <div className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-teal-500">
             {icon}
           </div>
         )}
@@ -510,14 +510,14 @@ function InputField({
           onChange={(e) => onChange(e.target.value)}
           required={required}
           className={[
-            "w-full py-2.5 text-sm border rounded-xl",
-            "focus:outline-none focus:ring-2 transition-all",
+            "w-full rounded-xl border py-2.5 text-sm",
+            "transition-all focus:ring-2 focus:outline-none",
             "text-slate-700 placeholder-slate-400",
             icon ? "pl-10" : "pl-3.5",
             isPassword ? "pr-10" : "pr-3.5",
             error
-              ? "border-red-300 focus:ring-red-500/20 focus:border-red-400 bg-red-50/40"
-              : "border-slate-200 focus:ring-teal-500/30 focus:border-teal-400 hover:border-slate-300 bg-white",
+              ? "border-red-300 bg-red-50/40 focus:border-red-400 focus:ring-red-500/20"
+              : "border-slate-200 bg-white hover:border-slate-300 focus:border-teal-400 focus:ring-teal-500/30",
           ].join(" ")}
         />
         {isPassword && (
@@ -525,16 +525,16 @@ function InputField({
             type="button"
             tabIndex={-1}
             onClick={() => setShowPwd((s) => !s)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+            className="absolute top-1/2 right-3 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-600"
           >
             {showPwd ? <EyeOffIcon /> : <EyeIcon />}
           </button>
         )}
       </div>
       {error && (
-        <p className="text-xs text-red-500 flex items-center gap-1">
+        <p className="flex items-center gap-1 text-xs text-red-500">
           <svg
-            className="w-3 h-3 shrink-0"
+            className="h-3 w-3 shrink-0"
             fill="currentColor"
             viewBox="0 0 20 20"
           >
@@ -583,10 +583,10 @@ function PasswordStrengthBar({ password }: { password: string }) {
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2 pt-1">
-      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 whitespace-nowrap">
+      <span className="text-[10px] font-bold tracking-widest whitespace-nowrap text-slate-400 uppercase">
         {children}
       </span>
-      <div className="flex-1 h-px bg-slate-100" />
+      <div className="h-px flex-1 bg-slate-100" />
     </div>
   )
 }
@@ -604,10 +604,10 @@ function RoleCardGrid({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-xs font-semibold text-slate-600 block">
+      <label className="block text-xs font-semibold text-slate-600">
         Role <span className="text-red-400">*</span>
       </label>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {options.map((role) => {
           const isSelected = value === role.value
           const styles = ROLE_CARD_STYLES[role.colorKey]
@@ -617,14 +617,14 @@ function RoleCardGrid({
               type="button"
               onClick={() => onChange(role.value)}
               className={[
-                "relative flex flex-col gap-2 p-3 rounded-xl border-2 text-left transition-all duration-150",
+                "relative flex flex-col gap-2 rounded-xl border-2 p-3 text-left transition-all duration-150",
                 isSelected
                   ? `${styles.card} shadow-sm`
                   : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50",
               ].join(" ")}
             >
               <div
-                className={`h-8 w-8 rounded-lg flex items-center justify-center transition-colors ${
+                className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
                   isSelected ? styles.icon : "bg-slate-100 text-slate-400"
                 }`}
               >
@@ -638,16 +638,16 @@ function RoleCardGrid({
                 >
                   {role.label}
                 </p>
-                <p className="text-[10px] text-slate-400 leading-snug mt-0.5">
+                <p className="mt-0.5 text-[10px] leading-snug text-slate-400">
                   {role.description}
                 </p>
               </div>
               {isSelected && (
                 <div
-                  className={`absolute top-2 right-2 h-4 w-4 rounded-full flex items-center justify-center ${styles.icon}`}
+                  className={`absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full ${styles.icon}`}
                 >
                   <svg
-                    className="w-2.5 h-2.5"
+                    className="h-2.5 w-2.5"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >
@@ -678,7 +678,7 @@ function SupplierSelect({
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-xs font-semibold text-slate-600 block">
+      <label className="block text-xs font-semibold text-slate-600">
         Supplier Company <span className="text-red-400">*</span>
       </label>
       <select
@@ -686,7 +686,7 @@ function SupplierSelect({
         onChange={(e) =>
           onChange(e.target.value ? Number(e.target.value) : null)
         }
-        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/30"
+        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 focus:border-teal-400 focus:ring-2 focus:ring-teal-500/30 focus:outline-none"
       >
         <option value="">Select supplier company</option>
         {options.map((option) => (
@@ -724,20 +724,20 @@ function PermissionCheckboxGrid({
   return (
     <div className="space-y-2">
       <div>
-        <label className="text-xs font-semibold text-slate-600 block">
+        <label className="block text-xs font-semibold text-slate-600">
           Custom Access
         </label>
         <p className="mt-1 text-xs text-slate-400">
           Check only the sections this admin should be able to open.
         </p>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
         {ADMIN_PERMISSION_OPTIONS.map((permission) => {
           const isChecked = selected.has(permission.id)
           return (
             <label
               key={permission.id}
-              className={`flex items-start gap-3 rounded-xl border px-3.5 py-3 transition-all cursor-pointer ${
+              className={`flex cursor-pointer items-start gap-3 rounded-xl border px-3.5 py-3 transition-all ${
                 isChecked
                   ? "border-teal-300 bg-teal-50"
                   : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
@@ -753,7 +753,7 @@ function PermissionCheckboxGrid({
                 <span className="block text-sm font-semibold text-slate-700">
                   {permission.label}
                 </span>
-                <span className="mt-0.5 block text-xs text-slate-400 leading-relaxed">
+                <span className="mt-0.5 block text-xs leading-relaxed text-slate-400">
                   {permission.description}
                 </span>
               </span>
@@ -803,27 +803,27 @@ function ConfirmModal({
         exit={{ opacity: 0, scale: 0.93, y: 10 }}
         transition={{ type: "spring", stiffness: 400, damping: 30 }}
         onClick={(e) => e.stopPropagation()}
-        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10 overflow-hidden"
+        className="relative z-10 w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-2xl"
       >
-        <div className="px-6 pt-6 pb-5 flex flex-col items-center text-center gap-4">
+        <div className="flex flex-col items-center gap-4 px-6 pt-6 pb-5 text-center">
           <div
-            className={`h-14 w-14 rounded-2xl flex items-center justify-center ${iconBg}`}
+            className={`flex h-14 w-14 items-center justify-center rounded-2xl ${iconBg}`}
           >
             {icon}
           </div>
           <div>
             <h3 className="text-base font-bold text-slate-800">{title}</h3>
-            <div className="mt-1.5 text-sm text-slate-500 leading-relaxed">
+            <div className="mt-1.5 text-sm leading-relaxed text-slate-500">
               {description}
             </div>
           </div>
         </div>
-        <div className="px-6 pb-5 flex gap-2.5">
+        <div className="flex gap-2.5 px-6 pb-5">
           <button
             type="button"
             onClick={onClose}
             disabled={busy}
-            className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition"
+            className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
           >
             Cancel
           </button>
@@ -831,7 +831,7 @@ function ConfirmModal({
             type="button"
             onClick={onConfirm}
             disabled={busy}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-60 transition-all flex items-center justify-center gap-2 ${confirmClass}`}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold text-white transition-all disabled:opacity-60 ${confirmClass}`}
           >
             {busy ? (
               <>
@@ -880,11 +880,11 @@ function AdminActivityModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 16 }}
         onClick={(e) => e.stopPropagation()}
-        className="relative z-10 w-full max-w-3xl max-h-[86vh] overflow-hidden rounded-3xl bg-white shadow-2xl border border-slate-200"
+        className="relative z-10 max-h-[86vh] w-full max-w-3xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl"
       >
-        <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-start justify-between gap-4">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5 dark:border-slate-800">
           <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
+            <p className="text-xs font-bold tracking-widest text-slate-400 uppercase">
               Account Activity
             </p>
             <h3 className="mt-1 text-xl font-bold text-slate-800">
@@ -892,7 +892,7 @@ function AdminActivityModal({
             </h3>
             <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
               <span
-                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full border ${target.is_online ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-slate-50 text-slate-600 border-slate-200"}`}
+                className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 ${target.is_online ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-200 bg-slate-50 text-slate-600"}`}
               >
                 <span
                   className={`h-2 w-2 rounded-full ${target.is_online ? "bg-emerald-500" : "bg-slate-300"}`}
@@ -911,10 +911,10 @@ function AdminActivityModal({
           <button
             type="button"
             onClick={onClose}
-            className="h-9 w-9 rounded-full border border-slate-200 text-slate-400 hover:text-slate-600 hover:border-slate-300 transition flex items-center justify-center"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-400 transition hover:border-slate-300 hover:text-slate-600"
           >
             <svg
-              className="w-4 h-4"
+              className="h-4 w-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -929,12 +929,12 @@ function AdminActivityModal({
           </button>
         </div>
 
-        <div className="px-6 py-5 max-h-[58vh] overflow-y-auto space-y-3">
+        <div className="max-h-[58vh] space-y-3 overflow-y-auto px-6 py-5">
           {isLoading ? (
             Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={i}
-                className="h-18 rounded-2xl bg-slate-100 animate-pulse"
+                className="h-18 animate-pulse rounded-2xl bg-slate-100"
               />
             ))
           ) : logs.length === 0 ? (
@@ -956,12 +956,12 @@ function AdminActivityModal({
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <span
-                        className={`inline-flex px-2.5 py-1 rounded-full border text-[11px] font-semibold ${
+                        className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${
                           log.action === "created"
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
                             : log.action === "updated"
-                              ? "bg-amber-50 text-amber-700 border-amber-200"
-                              : "bg-red-50 text-red-700 border-red-200"
+                              ? "border-amber-200 bg-amber-50 text-amber-700"
+                              : "border-red-200 bg-red-50 text-red-700"
                         }`}
                       >
                         {log.action}
@@ -970,7 +970,7 @@ function AdminActivityModal({
                         {log.productName}
                       </span>
                       <span
-                        className={`inline-flex px-2 py-1 rounded-full text-[11px] font-semibold ${
+                        className={`inline-flex rounded-full px-2 py-1 text-[11px] font-semibold ${
                           log.status === "failed"
                             ? "bg-red-50 text-red-600"
                             : "bg-emerald-50 text-emerald-600"
@@ -983,7 +983,7 @@ function AdminActivityModal({
                       SKU: {log.productSku?.trim() ? log.productSku : "N/A"}
                     </p>
                   </div>
-                  <span className="text-xs text-slate-400 shrink-0">
+                  <span className="shrink-0 text-xs text-slate-400">
                     {formatDateTime(log.createdAt)}
                   </span>
                 </div>
@@ -992,7 +992,7 @@ function AdminActivityModal({
           )}
         </div>
 
-        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between text-xs text-slate-500">
+        <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50 px-6 py-4 text-xs text-slate-500">
           <span>
             Page{" "}
             <span className="font-semibold text-slate-700">
@@ -1008,7 +1008,7 @@ function AdminActivityModal({
               type="button"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={(meta?.current_page ?? 1) <= 1}
-              className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-white disabled:opacity-40 transition"
+              className="rounded-lg border border-slate-200 px-3 py-1.5 text-slate-600 transition hover:bg-white disabled:opacity-40"
             >
               Prev
             </button>
@@ -1018,7 +1018,7 @@ function AdminActivityModal({
                 setPage((p) => Math.min(meta?.last_page ?? 1, p + 1))
               }
               disabled={(meta?.current_page ?? 1) >= (meta?.last_page ?? 1)}
-              className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-white disabled:opacity-40 transition"
+              className="rounded-lg border border-slate-200 px-3 py-1.5 text-slate-600 transition hover:bg-white disabled:opacity-40"
             >
               Next
             </button>
@@ -1059,7 +1059,7 @@ function WebContentSectionPicker({
   return (
     <div className="space-y-3 rounded-2xl border border-amber-100 bg-amber-50/60 p-3">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
+        <p className="text-xs font-semibold tracking-[0.18em] text-amber-700 uppercase">
           Web Content Sections
         </p>
         <p className="mt-1 text-xs text-slate-500">
@@ -1098,7 +1098,7 @@ function WebContentSectionPicker({
 
       {showStorefronts && (
         <div className="rounded-xl border border-amber-100 bg-white p-3">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-amber-600">
+          <p className="mb-2 text-[11px] font-semibold tracking-wider text-amber-600 uppercase">
             Partner Storefronts Access
           </p>
           <p className="mb-3 text-[11px] text-slate-400">
@@ -1163,7 +1163,7 @@ function WebContentSectionPicker({
                     href={`/shop/${config.slug}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="mt-0.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 hover:bg-amber-100 transition"
+                    className="mt-0.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-100"
                   >
                     Open
                   </a>
@@ -1231,12 +1231,12 @@ function EditModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 12 }}
         onClick={(e) => e.stopPropagation()}
-        className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg z-10 overflow-hidden"
+        className="relative z-10 w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-xl"
       >
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
+        <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4 dark:border-slate-800">
           <div
-            className={`h-9 w-9 rounded-full bg-linear-to-br ${avatarGrad(target.name)} flex items-center justify-center text-white text-xs font-bold shrink-0`}
+            className={`h-9 w-9 rounded-full bg-linear-to-br ${avatarGrad(target.name)} flex shrink-0 items-center justify-center text-xs font-bold text-white`}
           >
             {getInitials(target.name)}
           </div>
@@ -1244,15 +1244,15 @@ function EditModal({
             <h3 className="text-sm font-bold text-slate-800">
               Edit Admin Account
             </h3>
-            <p className="text-xs text-slate-400 mt-0.5">@{target.username}</p>
+            <p className="mt-0.5 text-xs text-slate-400">@{target.username}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 transition"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100"
           >
             <svg
-              className="w-4 h-4"
+              className="h-4 w-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -1268,7 +1268,7 @@ function EditModal({
         </div>
 
         {/* Body */}
-        <div className="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
+        <div className="max-h-[70vh] space-y-4 overflow-y-auto px-6 py-5">
           <SectionLabel>Account Information</SectionLabel>
           <div className="grid grid-cols-2 gap-4">
             <InputField
@@ -1336,7 +1336,7 @@ function EditModal({
               transition={{ duration: 0.8, ease: "easeOut" }}
               className="rounded-2xl border border-teal-100 bg-teal-50/60 p-3"
             >
-              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">
+              <p className="mb-3 text-xs font-semibold tracking-[0.18em] text-teal-700 uppercase">
                 Choose Admin Access Before Saving
               </p>
               <PermissionCheckboxGrid
@@ -1380,18 +1380,18 @@ function EditModal({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-slate-100 flex gap-2">
+        <div className="flex gap-2 border-t border-slate-100 px-6 py-4">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50 transition"
+            className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={busy}
-            className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white bg-teal-600 hover:bg-teal-700 disabled:opacity-60 transition-all shadow-sm shadow-teal-500/20"
+            className="flex-1 rounded-xl bg-teal-600 py-2.5 text-sm font-bold text-white shadow-sm shadow-teal-500/20 transition-all hover:bg-teal-700 disabled:opacity-60"
           >
             {busy ? "Saving…" : "Save Changes"}
           </button>
@@ -1694,10 +1694,10 @@ export default function AdminUsersPageMain() {
 
   if (!canManageUsers) {
     return (
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 flex items-center gap-3">
-        <div className="h-9 w-9 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+      <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-5">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
           <svg
-            className="w-5 h-5"
+            className="h-5 w-5"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -1714,7 +1714,7 @@ export default function AdminUsersPageMain() {
           <p className="text-sm font-semibold text-amber-800">
             Access Restricted
           </p>
-          <p className="text-xs text-amber-600 mt-0.5">
+          <p className="mt-0.5 text-xs text-amber-600">
             Only admin managers can manage Users & Roles.
           </p>
         </div>
@@ -1736,10 +1736,10 @@ export default function AdminUsersPageMain() {
         animate={{ opacity: 1, y: 0 }}
       >
         <h1 className="text-xl font-bold text-slate-800">Users & Roles</h1>
-        <p className="text-sm text-slate-500 mt-0.5">
+        <p className="mt-0.5 text-sm text-slate-500">
           Create and manage internal admin accounts and their role permissions
         </p>
-        <p className="text-xs text-slate-400 mt-1">
+        <p className="mt-1 text-xs text-slate-400">
           Supplier company accounts should use the dedicated supplier portal,
           not admin roles.
         </p>
@@ -1751,16 +1751,16 @@ export default function AdminUsersPageMain() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.05 }}
         onSubmit={handleCreate}
-        className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden"
+        className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"
       >
         {/* Form header with live avatar */}
-        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
+        <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4 dark:border-slate-800">
           <div
-            className={`h-10 w-10 rounded-xl bg-linear-to-br ${nameGrad} flex items-center justify-center text-white text-sm font-bold shrink-0 transition-all duration-300`}
+            className={`h-10 w-10 rounded-xl bg-linear-to-br ${nameGrad} flex shrink-0 items-center justify-center text-sm font-bold text-white transition-all duration-300`}
           >
             {nameInitials ?? (
               <svg
-                className="w-5 h-5 opacity-60"
+                className="h-5 w-5 opacity-60"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -1778,17 +1778,17 @@ export default function AdminUsersPageMain() {
             <h2 className="text-sm font-bold text-slate-800">
               Invite Admin Account
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="mt-0.5 text-xs text-slate-400">
               The invited user will receive an email to verify the account and
               set their password.
             </p>
           </div>
         </div>
 
-        <div className="px-6 py-5 space-y-5">
+        <div className="space-y-5 px-6 py-5">
           {/* Account info */}
           <SectionLabel>Account Information</SectionLabel>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <InputField
               label="Full Name"
               placeholder="e.g. Juan dela Cruz"
@@ -1859,7 +1859,7 @@ export default function AdminUsersPageMain() {
               transition={{ duration: 0.8, ease: "easeOut" }}
               className="rounded-2xl border border-teal-100 bg-teal-50/60 p-3"
             >
-              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">
+              <p className="mb-3 text-xs font-semibold tracking-[0.18em] text-teal-700 uppercase">
                 Choose Admin Access Before Saving
               </p>
               <PermissionCheckboxGrid
@@ -1923,35 +1923,35 @@ export default function AdminUsersPageMain() {
                   href={latestInvite.setup_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="rounded-xl border border-teal-300 bg-white px-4 py-2 text-xs font-bold text-teal-700 hover:bg-teal-50 transition-colors"
+                  className="rounded-xl border border-teal-300 bg-white px-4 py-2 text-xs font-bold text-teal-700 transition-colors hover:bg-teal-50"
                 >
                   Open Link
                 </a>
                 <button
                   type="button"
                   onClick={copyInviteLink}
-                  className="rounded-xl border border-teal-300 bg-white px-4 py-2 text-xs font-bold text-teal-700 hover:bg-teal-50 transition-colors"
+                  className="rounded-xl border border-teal-300 bg-white px-4 py-2 text-xs font-bold text-teal-700 transition-colors hover:bg-teal-50"
                 >
                   Copy Link
                 </button>
               </div>
             </div>
-            <div className="mt-3 rounded-xl border border-teal-100 bg-white px-3 py-2 text-xs text-slate-600 break-all">
+            <div className="mt-3 rounded-xl border border-teal-100 bg-white px-3 py-2 text-xs break-all text-slate-600">
               {latestInvite.setup_url}
             </div>
           </div>
         )}
 
         {/* Form footer */}
-        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/50 px-6 py-4">
           <p className="text-xs text-slate-400">
-            Fields marked <span className="text-red-400 font-semibold">*</span>{" "}
+            Fields marked <span className="font-semibold text-red-400">*</span>{" "}
             are required
           </p>
           <button
             type="submit"
             disabled={isCreating}
-            className="flex items-center gap-2 px-6 py-2.5 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white rounded-xl text-sm font-bold disabled:opacity-60 transition-all shadow-sm shadow-teal-500/30"
+            className="flex items-center gap-2 rounded-xl bg-teal-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm shadow-teal-500/30 transition-all hover:bg-teal-700 active:bg-teal-800 disabled:opacity-60"
           >
             {isCreating ? (
               <>
@@ -1961,7 +1961,7 @@ export default function AdminUsersPageMain() {
             ) : (
               <>
                 <svg
-                  className="w-4 h-4"
+                  className="h-4 w-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -1985,13 +1985,13 @@ export default function AdminUsersPageMain() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden"
+        className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"
       >
         {/* Toolbar */}
-        <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3 flex-wrap">
-          <div className="relative flex-1 min-w-50">
+        <div className="flex flex-wrap items-center gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+          <div className="relative min-w-50 flex-1">
             <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+              className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -2010,7 +2010,7 @@ export default function AdminUsersPageMain() {
                 setPage(1)
               }}
               placeholder="Search name, username, email…"
-              className="w-full pl-9 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 bg-slate-50 text-slate-700 placeholder-slate-400 transition"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pr-4 pl-9 text-sm text-slate-700 placeholder-slate-400 transition focus:border-teal-400 focus:ring-2 focus:ring-teal-500/30 focus:outline-none"
             />
           </div>
           <select
@@ -2019,7 +2019,7 @@ export default function AdminUsersPageMain() {
               setActivityFilter(e.target.value as "active" | "inactive" | "")
               setPage(1)
             }}
-            className="px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 transition"
+            className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 transition focus:border-teal-400 focus:ring-2 focus:ring-teal-500/30 focus:outline-none"
           >
             <option value="">All Status</option>
             <option value="active">Active</option>
@@ -2031,7 +2031,7 @@ export default function AdminUsersPageMain() {
               setRoleFilter(e.target.value)
               setPage(1)
             }}
-            className="px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 transition"
+            className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 transition focus:border-teal-400 focus:ring-2 focus:ring-teal-500/30 focus:outline-none"
           >
             <option value="">All Roles</option>
             {allowedRoleOptions.map((option) => (
@@ -2061,16 +2061,16 @@ export default function AdminUsersPageMain() {
               </option>
             ))}
           </select>
-          <span className="text-xs text-slate-400 bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-full font-medium shrink-0">
+          <span className="shrink-0 rounded-full border border-slate-100 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-400">
             {data?.meta?.total ?? 0} accounts
           </span>
         </div>
 
         {/* Error */}
         {isError && (
-          <div className="px-5 py-3 border-b border-red-100 bg-red-50 text-sm text-red-700 flex items-center gap-2">
+          <div className="flex items-center gap-2 border-b border-red-100 bg-red-50 px-5 py-3 text-sm text-red-700">
             <svg
-              className="w-4 h-4 shrink-0"
+              className="h-4 w-4 shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -2094,29 +2094,29 @@ export default function AdminUsersPageMain() {
 
         {/* Table / Skeleton */}
         {isLoading ? (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800/70 dark:divide-slate-800/70 animate-pulse">
+          <div className="animate-pulse divide-y divide-slate-100 dark:divide-slate-800/70">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="px-5 py-4 flex items-center gap-4">
-                <div className="h-9 w-9 rounded-full bg-slate-100 shrink-0" />
+              <div key={i} className="flex items-center gap-4 px-5 py-4">
+                <div className="h-9 w-9 shrink-0 rounded-full bg-slate-100" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-3 w-32 bg-slate-100 rounded" />
-                  <div className="h-2.5 w-20 bg-slate-100 rounded" />
+                  <div className="h-3 w-32 rounded bg-slate-100" />
+                  <div className="h-2.5 w-20 rounded bg-slate-100" />
                 </div>
-                <div className="h-6 w-20 bg-slate-100 rounded-full" />
-                <div className="h-7 w-12 bg-slate-100 rounded-lg" />
+                <div className="h-6 w-20 rounded-full bg-slate-100" />
+                <div className="h-7 w-12 rounded-lg bg-slate-100" />
               </div>
             ))}
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left min-w-175">
+            <table className="w-full min-w-175 text-left">
               <thead>
-                <tr className="border-b border-slate-100 dark:border-slate-800 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60">
+                <tr className="border-b border-slate-100 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60">
                   {["Admin", "Username", "Email", "Role", "Actions"].map(
                     (h) => (
                       <th
                         key={h}
-                        className="px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide"
+                        className="px-5 py-3 text-xs font-semibold tracking-wide text-slate-400 uppercase"
                       >
                         {h}
                       </th>
@@ -2124,7 +2124,7 @@ export default function AdminUsersPageMain() {
                   )}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70 dark:divide-slate-800/70">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70">
                 {rows.length ? (
                   rows.map((row) => {
                     const roleKey = row.role.toLowerCase().replace(/\s+/g, "_")
@@ -2135,14 +2135,14 @@ export default function AdminUsersPageMain() {
                     return (
                       <tr
                         key={row.id}
-                        className="hover:bg-slate-50/70 transition-colors cursor-pointer"
+                        className="cursor-pointer transition-colors hover:bg-slate-50/70"
                         onClick={() => setActivityTarget(row)}
                       >
                         <td className="px-5 py-3.5">
                           <div className="flex items-center gap-3">
                             <div className="relative shrink-0">
                               <div
-                                className={`h-9 w-9 rounded-full bg-linear-to-br ${avatarGrad(row.name)} flex items-center justify-center text-white text-xs font-bold`}
+                                className={`h-9 w-9 rounded-full bg-linear-to-br ${avatarGrad(row.name)} flex items-center justify-center text-xs font-bold text-white`}
                               >
                                 {getInitials(row.name)}
                               </div>
@@ -2155,7 +2155,7 @@ export default function AdminUsersPageMain() {
                                 {row.name}
                               </p>
                               <p
-                                className={`text-[11px] mt-0.5 ${row.is_online ? "text-emerald-600" : "text-slate-400"}`}
+                                className={`mt-0.5 text-[11px] ${row.is_online ? "text-emerald-600" : "text-slate-400"}`}
                               >
                                 {row.is_online
                                   ? "Active now"
@@ -2167,7 +2167,7 @@ export default function AdminUsersPageMain() {
                           </div>
                         </td>
                         <td className="px-5 py-3.5">
-                          <span className="text-sm text-slate-600 font-mono">
+                          <span className="font-mono text-sm text-slate-600">
                             @{row.username}
                           </span>
                         </td>
@@ -2178,14 +2178,14 @@ export default function AdminUsersPageMain() {
                           <div className="space-y-1">
                             <div className="flex flex-wrap items-center gap-1.5">
                               <span
-                                className={`inline-flex px-2.5 py-1 rounded-full border text-[11px] font-semibold capitalize ${roleCls}`}
+                                className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold capitalize ${roleCls}`}
                               >
                                 {row.role.replace(/_/g, " ")}
                               </span>
                               {row.is_banned && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 border border-red-200 text-[10px] font-bold uppercase tracking-wide text-red-600">
+                                <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-100 px-2 py-0.5 text-[10px] font-bold tracking-wide text-red-600 uppercase">
                                   <svg
-                                    className="w-2.5 h-2.5"
+                                    className="h-2.5 w-2.5"
                                     fill="currentColor"
                                     viewBox="0 0 20 20"
                                   >
@@ -2216,10 +2216,10 @@ export default function AdminUsersPageMain() {
                                 openEditModal(row)
                               }}
                               title="Edit account"
-                              className="group relative h-8 w-8 rounded-lg border border-slate-200 text-slate-500 hover:border-teal-300 hover:bg-teal-50 hover:text-teal-600 disabled:opacity-40 transition-all flex items-center justify-center"
+                              className="group relative flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition-all hover:border-teal-300 hover:bg-teal-50 hover:text-teal-600 disabled:opacity-40"
                             >
                               <svg
-                                className="w-3.5 h-3.5"
+                                className="h-3.5 w-3.5"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -2242,7 +2242,7 @@ export default function AdminUsersPageMain() {
                               title={
                                 row.is_banned ? "Unban account" : "Ban account"
                               }
-                              className={`h-8 w-8 rounded-lg border flex items-center justify-center disabled:opacity-40 transition-all ${
+                              className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-all disabled:opacity-40 ${
                                 row.is_banned
                                   ? "border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
                                   : "border-amber-200 text-amber-500 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-600"
@@ -2250,7 +2250,7 @@ export default function AdminUsersPageMain() {
                             >
                               {row.is_banned ? (
                                 <svg
-                                  className="w-3.5 h-3.5"
+                                  className="h-3.5 w-3.5"
                                   fill="none"
                                   stroke="currentColor"
                                   viewBox="0 0 24 24"
@@ -2264,7 +2264,7 @@ export default function AdminUsersPageMain() {
                                 </svg>
                               ) : (
                                 <svg
-                                  className="w-3.5 h-3.5"
+                                  className="h-3.5 w-3.5"
                                   fill="none"
                                   stroke="currentColor"
                                   viewBox="0 0 24 24"
@@ -2286,10 +2286,10 @@ export default function AdminUsersPageMain() {
                                 setDeleteTarget(row)
                               }}
                               title="Delete account"
-                              className="h-8 w-8 rounded-lg border border-red-100 text-red-400 hover:border-red-300 hover:bg-red-50 hover:text-red-600 disabled:opacity-40 transition-all flex items-center justify-center"
+                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-100 text-red-400 transition-all hover:border-red-300 hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
                             >
                               <svg
-                                className="w-3.5 h-3.5"
+                                className="h-3.5 w-3.5"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -2309,10 +2309,10 @@ export default function AdminUsersPageMain() {
                                 setActivityTarget(row)
                               }}
                               title="View activity"
-                              className="h-8 w-8 rounded-lg border border-slate-200 text-slate-500 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 disabled:opacity-40 transition-all flex items-center justify-center"
+                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 disabled:opacity-40"
                             >
                               <svg
-                                className="w-3.5 h-3.5"
+                                className="h-3.5 w-3.5"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -2341,7 +2341,7 @@ export default function AdminUsersPageMain() {
                     <td colSpan={5} className="px-5 py-14 text-center">
                       <div className="flex flex-col items-center gap-2">
                         <svg
-                          className="w-8 h-8 text-slate-300"
+                          className="h-8 w-8 text-slate-300"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -2366,7 +2366,7 @@ export default function AdminUsersPageMain() {
         )}
 
         {/* Pagination */}
-        <div className="px-5 py-3.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+        <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3.5 text-xs text-slate-400">
           <span>
             Showing{" "}
             <span className="font-semibold text-slate-600">
@@ -2381,7 +2381,7 @@ export default function AdminUsersPageMain() {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={(data?.meta?.current_page ?? 1) <= 1}
-              className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 transition"
+              className="rounded-lg border border-slate-200 px-3 py-1.5 text-slate-600 transition hover:bg-slate-50 disabled:opacity-40"
             >
               Prev
             </button>
@@ -2393,7 +2393,7 @@ export default function AdminUsersPageMain() {
               disabled={
                 (data?.meta?.current_page ?? 1) >= (data?.meta?.last_page ?? 1)
               }
-              className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 transition"
+              className="rounded-lg border border-slate-200 px-3 py-1.5 text-slate-600 transition hover:bg-slate-50 disabled:opacity-40"
             >
               Next
             </button>
@@ -2437,7 +2437,7 @@ export default function AdminUsersPageMain() {
           <ConfirmModal
             icon={
               <svg
-                className="w-7 h-7"
+                className="h-7 w-7"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -2477,7 +2477,7 @@ export default function AdminUsersPageMain() {
             icon={
               banTarget.is_banned ? (
                 <svg
-                  className="w-7 h-7"
+                  className="h-7 w-7"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -2491,7 +2491,7 @@ export default function AdminUsersPageMain() {
                 </svg>
               ) : (
                 <svg
-                  className="w-7 h-7"
+                  className="h-7 w-7"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"

@@ -1,8 +1,17 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
+import {
+  createSupplierChatConversation,
+  fetchSupplierChatConversation,
+  fetchSupplierChatConversations,
+  sendSupplierChatMessage,
+  toggleSupplierChatReaction,
+  uploadSupplierChatAttachment,
+  type SupplierChatConversation,
+  type SupplierChatMessage,
+} from "@/libs/supplierChat"
 import { AnimatePresence, motion } from "framer-motion"
-import { useSession } from "next-auth/react"
 import {
   AlertCircle,
   CheckCheck,
@@ -23,16 +32,8 @@ import {
   Smile,
   X,
 } from "lucide-react"
-import {
-  createSupplierChatConversation,
-  fetchSupplierChatConversation,
-  fetchSupplierChatConversations,
-  sendSupplierChatMessage,
-  toggleSupplierChatReaction,
-  uploadSupplierChatAttachment,
-  type SupplierChatConversation,
-  type SupplierChatMessage,
-} from "@/libs/supplierChat"
+import { useSession } from "next-auth/react"
+
 import EmojiPicker from "@/components/ui/EmojiPicker"
 import LinkPreview from "@/components/ui/LinkPreview"
 
@@ -281,7 +282,7 @@ function Avatar({
       </div>
       {online !== undefined && (
         <span
-          className={`absolute bottom-0 right-0 ${dotClass} rounded-full border-2 border-white dark:border-slate-900 ${
+          className={`absolute right-0 bottom-0 ${dotClass} rounded-full border-2 border-white dark:border-slate-900 ${
             online ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-600"
           }`}
         />
@@ -767,7 +768,7 @@ export default function SupplierChatPage() {
   return (
     <div className="flex h-[calc(100vh-104px)] flex-col gap-3 lg:h-[calc(100vh-120px)]">
       <div className="shrink-0">
-        <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-indigo-600 dark:text-indigo-400">
+        <p className="text-[10px] font-bold tracking-[0.24em] text-indigo-600 uppercase dark:text-indigo-400">
           Supplier
         </p>
         <div className="mt-0.5 flex items-center gap-3">
@@ -785,9 +786,9 @@ export default function SupplierChatPage() {
         </p>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 lg:flex-row">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:flex-row dark:border-slate-800 dark:bg-slate-900">
         {/* Chat header — always visible */}
-        <div className="flex shrink-0 items-center gap-3 border-b border-slate-100 px-5 py-3.5 dark:border-slate-800 lg:hidden">
+        <div className="flex shrink-0 items-center gap-3 border-b border-slate-100 px-5 py-3.5 lg:hidden dark:border-slate-800">
           <Avatar
             label={chatAdminInitials}
             color="bg-indigo-600"
@@ -943,10 +944,10 @@ export default function SupplierChatPage() {
               <circle cx="184" cy="212" r="2" fill="#6366f1" />
               <circle cx="202" cy="212" r="2" fill="#6366f1" />
             </svg>
-            <span className="absolute left-[38%] top-[22%] h-3 w-3 rounded-full bg-orange-400/60" />
-            <span className="absolute left-[62%] top-[55%] h-2.5 w-2.5 rounded-full bg-teal-400/50" />
-            <span className="absolute left-[20%] top-[68%] h-2 w-2 rounded-full bg-violet-400/50" />
-            <span className="absolute left-[75%] top-[30%] h-2 w-2 rounded-full bg-sky-400/50" />
+            <span className="absolute top-[22%] left-[38%] h-3 w-3 rounded-full bg-orange-400/60" />
+            <span className="absolute top-[55%] left-[62%] h-2.5 w-2.5 rounded-full bg-teal-400/50" />
+            <span className="absolute top-[68%] left-[20%] h-2 w-2 rounded-full bg-violet-400/50" />
+            <span className="absolute top-[30%] left-[75%] h-2 w-2 rounded-full bg-sky-400/50" />
           </div>
           <div className="flex shrink-0 items-center gap-3 border-b border-slate-100 bg-white/80 px-5 py-3.5 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/80">
             <Avatar
@@ -958,7 +959,7 @@ export default function SupplierChatPage() {
               size="md"
             />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[15px] font-black uppercase tracking-wide text-slate-900 dark:text-white">
+              <p className="truncate text-[15px] font-black tracking-wide text-slate-900 uppercase dark:text-white">
                 {chatAdminName}
               </p>
               <p
@@ -981,7 +982,7 @@ export default function SupplierChatPage() {
           {/* Messages area */}
           <div
             ref={messagesContainerRef}
-            className="relative flex-1 overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden"
+            className="relative flex-1 scrollbar-none overflow-y-auto [&::-webkit-scrollbar]:hidden"
           >
             <div className="px-5 py-5">
               {isLoading ? (
@@ -997,7 +998,7 @@ export default function SupplierChatPage() {
                 </div>
               ) : error && conversations.length === 0 ? (
                 <div className="flex h-full items-center justify-center">
-                  <div className="flex flex-col items-center gap-4 text-center px-4">
+                  <div className="flex flex-col items-center gap-4 px-4 text-center">
                     <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 dark:bg-rose-500/10">
                       <AlertCircle className="h-6 w-6 text-rose-400" />
                     </div>
@@ -1147,7 +1148,7 @@ export default function SupplierChatPage() {
                                           />
                                         </button>
                                         {isTop && imgs.length > 1 && (
-                                          <div className="absolute bottom-2 right-2 flex h-6 min-w-[24px] items-center justify-center rounded-full bg-black/60 px-1.5 text-[11px] font-bold text-white">
+                                          <div className="absolute right-2 bottom-2 flex h-6 min-w-[24px] items-center justify-center rounded-full bg-black/60 px-1.5 text-[11px] font-bold text-white">
                                             {imgs.length}
                                           </div>
                                         )}
@@ -1215,7 +1216,7 @@ export default function SupplierChatPage() {
                               {/* Hover action bar */}
                               <div
                                 onMouseEnter={() => enterMsg(message.id)}
-                                className={`absolute -top-10 ${mine ? "right-0" : "left-0"} z-20 flex items-center gap-1 rounded-full border border-slate-100 bg-white px-3 py-1.5 shadow-xl transition-all duration-150 whitespace-nowrap ${isHovered ? "opacity-100 pointer-events-auto scale-100" : "opacity-0 pointer-events-none scale-95"}`}
+                                className={`absolute -top-10 ${mine ? "right-0" : "left-0"} z-20 flex items-center gap-1 rounded-full border border-slate-100 bg-white px-3 py-1.5 whitespace-nowrap shadow-xl transition-all duration-150 ${isHovered ? "pointer-events-auto scale-100 opacity-100" : "pointer-events-none scale-95 opacity-0"}`}
                               >
                                 {QUICK_EMOJIS.map((emoji) => (
                                   <button
@@ -1224,7 +1225,7 @@ export default function SupplierChatPage() {
                                     onClick={() =>
                                       toggleReaction(message, emoji)
                                     }
-                                    className={`text-2xl leading-none transition-all duration-150 hover:scale-150 hover:-translate-y-1 active:scale-90 ${myReaction === emoji ? "opacity-100 scale-110" : "opacity-70 hover:opacity-100"}`}
+                                    className={`text-2xl leading-none transition-all duration-150 hover:-translate-y-1 hover:scale-150 active:scale-90 ${myReaction === emoji ? "scale-110 opacity-100" : "opacity-70 hover:opacity-100"}`}
                                   >
                                     {emoji}
                                   </button>
@@ -1243,7 +1244,7 @@ export default function SupplierChatPage() {
                                 <div
                                   className={`mb-1 max-w-full rounded-t-xl border-l-4 px-3 py-1.5 text-xs ${mine ? "border-indigo-300 bg-indigo-100/60 text-indigo-800" : "border-slate-300 bg-slate-100 text-slate-600"}`}
                                 >
-                                  <p className="font-semibold mb-0.5">
+                                  <p className="mb-0.5 font-semibold">
                                     {replySource.sender_type === "supplier"
                                       ? "You"
                                       : chatAdminName}
@@ -1276,7 +1277,7 @@ export default function SupplierChatPage() {
                                           alt={
                                             message.attachment_name ?? "image"
                                           }
-                                          className="max-h-64 max-w-70 w-auto object-contain"
+                                          className="max-h-64 w-auto max-w-70 object-contain"
                                         />
                                       </button>
                                       <button
@@ -1287,7 +1288,7 @@ export default function SupplierChatPage() {
                                             message.attachment_name ?? "image"
                                           )
                                         }
-                                        className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition hover:bg-black/70 group-hover:opacity-100"
+                                        className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition group-hover:opacity-100 hover:bg-black/70"
                                         title="Download image"
                                       >
                                         <svg
@@ -1310,9 +1311,9 @@ export default function SupplierChatPage() {
                                       <video
                                         src={message.attachment_url}
                                         controls
-                                        className="max-h-64 max-w-70 w-auto rounded-2xl object-contain"
+                                        className="max-h-64 w-auto max-w-70 rounded-2xl object-contain"
                                       />
-                                      <div className="absolute right-2 top-2 flex gap-1.5 opacity-0 transition group-hover:opacity-100">
+                                      <div className="absolute top-2 right-2 flex gap-1.5 opacity-0 transition group-hover:opacity-100">
                                         <button
                                           type="button"
                                           onClick={() =>
@@ -1423,7 +1424,7 @@ export default function SupplierChatPage() {
                                       className={`relative ${activeReactions.length > 0 ? "mb-4" : ""}`}
                                     >
                                       <div
-                                        className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${mine ? "rounded-br-md bg-indigo-600 text-white" : "rounded-bl-md bg-white text-slate-800 border border-slate-200 shadow-sm"}`}
+                                        className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${mine ? "rounded-br-md bg-indigo-600 text-white" : "rounded-bl-md border border-slate-200 bg-white text-slate-800 shadow-sm"}`}
                                       >
                                         {message.message}
                                       </div>
@@ -1471,7 +1472,7 @@ export default function SupplierChatPage() {
                     <button
                       type="button"
                       onClick={() => removeAttachment(attachment.id)}
-                      className="absolute -right-2 -top-2 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-white text-slate-500 shadow hover:text-slate-700 dark:bg-slate-800"
+                      className="absolute -top-2 -right-2 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-white text-slate-500 shadow hover:text-slate-700 dark:bg-slate-800"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -1509,10 +1510,10 @@ export default function SupplierChatPage() {
                           <div
                             className={`flex h-20 w-20 flex-col items-center justify-center rounded-xl border shadow-sm ${badge.colors}`}
                           >
-                            <span className="text-3xl font-black leading-none">
+                            <span className="text-3xl leading-none font-black">
                               {badge.letter}
                             </span>
-                            <span className="mt-0.5 text-[9px] font-bold uppercase tracking-widest opacity-70">
+                            <span className="mt-0.5 text-[9px] font-bold tracking-widest uppercase opacity-70">
                               {badge.sub}
                             </span>
                           </div>
@@ -1532,7 +1533,7 @@ export default function SupplierChatPage() {
             {replyTo && (
               <div className="mb-2 flex items-start gap-2 rounded-xl border-l-4 border-indigo-500 bg-indigo-50 px-3 py-2 dark:bg-indigo-900/20">
                 <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
+                  <p className="text-[10px] font-bold tracking-wide text-indigo-600 uppercase dark:text-indigo-400">
                     Replying to{" "}
                     {replyTo.sender_type === "supplier"
                       ? "yourself"
@@ -1612,8 +1613,8 @@ export default function SupplierChatPage() {
           </div>
         </div>
 
-        <aside className="hidden w-72 shrink-0 border-l border-slate-100 bg-white dark:border-slate-800 dark:bg-slate-900 xl:flex xl:flex-col">
-          <div className="flex h-full flex-col overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden">
+        <aside className="hidden w-72 shrink-0 border-l border-slate-100 bg-white xl:flex xl:flex-col dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex h-full scrollbar-none flex-col overflow-y-auto [&::-webkit-scrollbar]:hidden">
             {/* Profile banner */}
             <div className="relative shrink-0">
               <div className="h-24 w-full rounded-none bg-linear-to-br from-indigo-100 via-violet-100 to-purple-100 dark:from-indigo-900/40 dark:via-violet-900/30 dark:to-purple-900/20" />
@@ -1634,7 +1635,7 @@ export default function SupplierChatPage() {
                     )}
                   </div>
                   {activeStatus !== "resolved" && (
-                    <span className="absolute bottom-1 right-1 h-4 w-4 rounded-full border-2 border-white bg-emerald-500 dark:border-slate-900" />
+                    <span className="absolute right-1 bottom-1 h-4 w-4 rounded-full border-2 border-white bg-emerald-500 dark:border-slate-900" />
                   )}
                 </div>
               </div>
@@ -1642,7 +1643,7 @@ export default function SupplierChatPage() {
 
             {/* Admin name + role + email */}
             <div className="mt-14 px-4 pb-4 text-center">
-              <p className="truncate text-xl font-black uppercase tracking-wide text-slate-900 dark:text-white">
+              <p className="truncate text-xl font-black tracking-wide text-slate-900 uppercase dark:text-white">
                 {chatAdminName}
               </p>
               <p className="mt-0.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
@@ -1659,23 +1660,23 @@ export default function SupplierChatPage() {
 
             {/* Search */}
             <div className="px-4 pt-4">
-              <p className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+              <p className="mb-2 flex items-center gap-1.5 text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase dark:text-slate-500">
                 <Search className="h-3.5 w-3.5" /> Search conversation
               </p>
               <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                <Search className="pointer-events-none absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
                   value={messageSearch}
                   onChange={(e) => setMessageSearch(e.target.value)}
                   placeholder="Search messages..."
-                  className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-8 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                  className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pr-8 pl-9 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 />
                 {messageSearch && (
                   <button
                     type="button"
                     onClick={() => setMessageSearch("")}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    className="absolute top-1/2 right-2.5 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
@@ -1735,11 +1736,11 @@ export default function SupplierChatPage() {
                         <div className="flex min-w-0 flex-col items-start gap-0.5">
                           <div className="flex items-center gap-1">
                             {icon}
-                            <span className="whitespace-nowrap text-[11px] font-semibold text-slate-800 dark:text-slate-100">
+                            <span className="text-[11px] font-semibold whitespace-nowrap text-slate-800 dark:text-slate-100">
                               {label}
                             </span>
                           </div>
-                          <span className="whitespace-nowrap text-[10px] text-slate-400 dark:text-slate-500">
+                          <span className="text-[10px] whitespace-nowrap text-slate-400 dark:text-slate-500">
                             {count} {count === 1 ? "item" : "items"}
                           </span>
                         </div>
@@ -1754,7 +1755,7 @@ export default function SupplierChatPage() {
                   <div
                     className={`overflow-hidden rounded-2xl border transition-all duration-300 ${openPanel ? "max-h-64 border-slate-100 opacity-100 dark:border-slate-800" : "max-h-0 border-transparent opacity-0"}`}
                   >
-                    <div className="max-h-64 overflow-y-auto p-3 scrollbar-none [&::-webkit-scrollbar]:hidden">
+                    <div className="max-h-64 scrollbar-none overflow-y-auto p-3 [&::-webkit-scrollbar]:hidden">
                       {openPanel === "media" &&
                         (mediaItems.length === 0 ? (
                           <p className="py-4 text-center text-xs text-slate-400">
@@ -2003,7 +2004,7 @@ export default function SupplierChatPage() {
                           setMediaModalIndex((mediaModal.activeIndex ?? 0) - 1)
                         }
                         disabled={(mediaModal.activeIndex ?? 0) === 0}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-xl text-white transition hover:scale-110 hover:bg-black/70 disabled:opacity-30"
+                        className="absolute top-1/2 left-4 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-xl text-white transition hover:scale-110 hover:bg-black/70 disabled:opacity-30"
                         aria-label="Previous"
                       >
                         ‹
@@ -2017,7 +2018,7 @@ export default function SupplierChatPage() {
                           (mediaModal.activeIndex ?? 0) ===
                           (mediaModal.urls?.length ?? 1) - 1
                         }
-                        className="absolute right-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-xl text-white transition hover:scale-110 hover:bg-black/70 disabled:opacity-30"
+                        className="absolute top-1/2 right-4 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-xl text-white transition hover:scale-110 hover:bg-black/70 disabled:opacity-30"
                         aria-label="Next"
                       >
                         ›

@@ -1,16 +1,20 @@
-"use client";
+"use client"
 
-import Image from "next/image";
-import Link from "next/link";
-import { FadeUp, StaggerContainer, StaggerItem } from "@/components/ui/motion";
+import Image from "next/image"
+import Link from "next/link"
+
+import { FadeUp, StaggerContainer, StaggerItem } from "@/components/ui/motion"
 
 export function Footer() {
-  const currentYear = new Date().getFullYear();
+  const currentYear = new Date().getFullYear()
 
   return (
     <footer className="border-t border-[var(--border)] bg-white">
       <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8 lg:py-16">
-        <StaggerContainer className="grid gap-10 lg:grid-cols-4 lg:gap-8" staggerDelay={0.1}>
+        <StaggerContainer
+          className="grid gap-10 lg:grid-cols-4 lg:gap-8"
+          staggerDelay={0.1}
+        >
           {/* Brand Column */}
           <StaggerItem className="lg:col-span-2">
             <Image
@@ -21,7 +25,7 @@ export function Footer() {
               className="h-8 w-auto object-contain"
             />
             <p className="mt-4 max-w-md text-sm leading-relaxed text-[var(--muted)]">
-              Interior design studio crafting modern residential spaces with 
+              Interior design studio crafting modern residential spaces with
               refined finishes and a distinctive design identity.
             </p>
           </StaggerItem>
@@ -79,7 +83,10 @@ export function Footer() {
         </StaggerContainer>
 
         {/* Bottom Bar */}
-        <FadeUp delay={0.3} className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-[var(--border)] pt-8 lg:flex-row">
+        <FadeUp
+          delay={0.3}
+          className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-[var(--border)] pt-8 lg:flex-row"
+        >
           <p className="text-sm text-[var(--muted)]">
             {currentYear} Dreambuild Design Studio. All rights reserved.
           </p>
@@ -100,5 +107,5 @@ export function Footer() {
         </FadeUp>
       </div>
     </footer>
-  );
+  )
 }

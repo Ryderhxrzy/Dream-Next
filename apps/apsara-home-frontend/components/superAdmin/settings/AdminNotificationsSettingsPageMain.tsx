@@ -29,9 +29,9 @@ export default function AdminNotificationsSettingsPageMain() {
   return (
     <div className="space-y-8">
       <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-slate-100 p-6 shadow-sm dark:border-slate-700 dark:from-slate-800 dark:via-slate-800 dark:to-slate-900">
-        <div className="pointer-events-none absolute -right-20 -top-16 h-48 w-48 rounded-full bg-amber-200/50 blur-3xl dark:bg-amber-600/20" />
+        <div className="pointer-events-none absolute -top-16 -right-20 h-48 w-48 rounded-full bg-amber-200/50 blur-3xl dark:bg-amber-600/20" />
         <div className="pointer-events-none absolute -bottom-24 -left-20 h-56 w-56 rounded-full bg-emerald-200/40 blur-3xl dark:bg-emerald-600/20" />
-        <p className="text-xs font-bold uppercase tracking-[0.32em] text-amber-700 dark:text-amber-300">
+        <p className="text-xs font-bold tracking-[0.32em] text-amber-700 uppercase dark:text-amber-300">
           Settings
         </p>
         <h1 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
@@ -45,7 +45,7 @@ export default function AdminNotificationsSettingsPageMain() {
 
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+          <p className="text-xs font-bold tracking-[0.2em] text-slate-500 uppercase dark:text-slate-400">
             Channels
           </p>
           <h2 className="mt-2 text-lg font-bold text-slate-900 dark:text-white">

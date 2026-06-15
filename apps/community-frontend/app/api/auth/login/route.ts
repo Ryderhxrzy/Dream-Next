@@ -1,13 +1,16 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server"
 
 const AFHOME_API_URL =
-  process.env.NEXT_PUBLIC_AFHOME_API_URL ?? "https://backend.afhome.ph";
+  process.env.NEXT_PUBLIC_AFHOME_API_URL ?? "https://backend.afhome.ph"
 
 export async function POST(request: NextRequest) {
-  const body = await request.json().catch(() => null);
+  const body = await request.json().catch(() => null)
 
   if (!body) {
-    return NextResponse.json({ message: "Invalid login request" }, { status: 422 });
+    return NextResponse.json(
+      { message: "Invalid login request" },
+      { status: 422 }
+    )
   }
 
   try {
@@ -18,22 +21,22 @@ export async function POST(request: NextRequest) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
-    });
+    })
 
-    const data = await response.json().catch(() => null);
+    const data = await response.json().catch(() => null)
 
     if (!response.ok) {
       return NextResponse.json(
         { message: data?.message ?? "Login failed" },
-        { status: response.status },
-      );
+        { status: response.status }
+      )
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json(data)
   } catch {
     return NextResponse.json(
       { message: "Unable to reach AF Home login service" },
-      { status: 502 },
-    );
+      { status: 502 }
+    )
   }
 }

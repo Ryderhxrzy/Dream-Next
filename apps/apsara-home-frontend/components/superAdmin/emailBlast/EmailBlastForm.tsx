@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Button } from "@heroui/react/button"
 import { useSession } from "next-auth/react"
 import toast from "react-hot-toast"
@@ -295,12 +295,12 @@ export default function EmailBlastForm() {
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
+    <div className="rounded-lg border border-gray-200 bg-white p-6">
       {!showPreview ? (
         <div className="space-y-4">
           {/* Recipients Field */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+            <label className="mb-1 block text-sm font-semibold text-gray-700">
               Recipients *
             </label>
             <textarea
@@ -308,9 +308,9 @@ export default function EmailBlastForm() {
               value={formData.recipients}
               readOnly
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm"
+              className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="mt-1 text-xs text-gray-500">
               {formData.recipients.split(",").filter((e) => e.trim()).length}{" "}
               recipient(s) selected
             </p>
@@ -318,7 +318,7 @@ export default function EmailBlastForm() {
 
           {/* Subject */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+            <label className="mb-1 block text-sm font-semibold text-gray-700">
               Subject *
             </label>
             <input
@@ -327,25 +327,25 @@ export default function EmailBlastForm() {
               value={formData.subject}
               onChange={(e) => handleChange("subject", e.target.value)}
               maxLength={255}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="mt-1 text-xs text-gray-500">
               {formData.subject.length}/255
             </p>
           </div>
 
           {/* Message with Rich Text Toolbar */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-semibold text-gray-700">
               Message *
             </label>
 
             {/* Toolbar */}
-            <div className="border border-gray-300 rounded-t-lg bg-gray-50 p-2 flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1 rounded-t-lg border border-gray-300 bg-gray-50 p-2">
               <button
                 type="button"
                 onClick={() => applyFormatting("bold")}
-                className="px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-100 text-sm font-bold"
+                className="rounded border border-gray-300 bg-white px-2 py-1 text-sm font-bold hover:bg-gray-100"
                 title="Bold"
               >
                 B
@@ -353,24 +353,24 @@ export default function EmailBlastForm() {
               <button
                 type="button"
                 onClick={() => applyFormatting("italic")}
-                className="px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-100 text-sm italic"
+                className="rounded border border-gray-300 bg-white px-2 py-1 text-sm italic hover:bg-gray-100"
               >
                 I
               </button>
               <button
                 type="button"
                 onClick={() => applyFormatting("underline")}
-                className="px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-100 text-sm underline"
+                className="rounded border border-gray-300 bg-white px-2 py-1 text-sm underline hover:bg-gray-100"
               >
                 U
               </button>
 
-              <div className="border-l border-gray-300 mx-1"></div>
+              <div className="mx-1 border-l border-gray-300"></div>
 
               <button
                 type="button"
                 onClick={() => applyFormatting("justifyLeft")}
-                className="px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-100 text-xs"
+                className="rounded border border-gray-300 bg-white px-2 py-1 text-xs hover:bg-gray-100"
                 title="Align Left"
               >
                 ⬅
@@ -378,7 +378,7 @@ export default function EmailBlastForm() {
               <button
                 type="button"
                 onClick={() => applyFormatting("justifyCenter")}
-                className="px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-100 text-xs"
+                className="rounded border border-gray-300 bg-white px-2 py-1 text-xs hover:bg-gray-100"
                 title="Align Center"
               >
                 ↔
@@ -386,18 +386,18 @@ export default function EmailBlastForm() {
               <button
                 type="button"
                 onClick={() => applyFormatting("justifyRight")}
-                className="px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-100 text-xs"
+                className="rounded border border-gray-300 bg-white px-2 py-1 text-xs hover:bg-gray-100"
                 title="Align Right"
               >
                 ➡
               </button>
 
-              <div className="border-l border-gray-300 mx-1"></div>
+              <div className="mx-1 border-l border-gray-300"></div>
 
               <button
                 type="button"
                 onClick={() => applyFormatting("insertUnorderedList")}
-                className="px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-100 text-xs"
+                className="rounded border border-gray-300 bg-white px-2 py-1 text-xs hover:bg-gray-100"
                 title="Bullet List"
               >
                 • List
@@ -405,25 +405,25 @@ export default function EmailBlastForm() {
               <button
                 type="button"
                 onClick={() => applyFormatting("insertOrderedList")}
-                className="px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-100 text-xs"
+                className="rounded border border-gray-300 bg-white px-2 py-1 text-xs hover:bg-gray-100"
                 title="Numbered List"
               >
                 1. List
               </button>
 
-              <div className="border-l border-gray-300 mx-1"></div>
+              <div className="mx-1 border-l border-gray-300"></div>
 
               <input
                 type="color"
                 onChange={(e) => applyFormatting("foreColor", e.target.value)}
-                className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
+                className="h-8 w-8 cursor-pointer rounded border border-gray-300"
                 title="Text Color"
               />
 
               <button
                 type="button"
                 onClick={() => applyFormatting("removeFormat")}
-                className="px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-100 text-xs"
+                className="rounded border border-gray-300 bg-white px-2 py-1 text-xs hover:bg-gray-100"
                 title="Clear Formatting"
               >
                 Clear
@@ -443,18 +443,18 @@ export default function EmailBlastForm() {
                   }))
                 }
               }}
-              className="w-full px-3 py-2 border border-t-0 border-gray-300 rounded-b-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-64 bg-white text-gray-900"
+              className="min-h-64 w-full rounded-b-lg border border-t-0 border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
               style={{ minHeight: "300px", wordWrap: "break-word" }}
               dir="ltr"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="mt-1 text-xs text-gray-500">
               HTML formatting supported
             </p>
           </div>
 
           {/* Banner Image */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+            <label className="mb-1 block text-sm font-semibold text-gray-700">
               Banner Image (optional)
             </label>
             <input
@@ -464,7 +464,7 @@ export default function EmailBlastForm() {
                 const file = e.target.files?.[0] || null
                 setFormData((prev) => ({ ...prev, bannerImage: file }))
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />
             {formData.bannerImage && (
               <div className="mt-2">
@@ -478,7 +478,7 @@ export default function EmailBlastForm() {
                   onClick={() =>
                     setFormData((prev) => ({ ...prev, bannerImage: null }))
                   }
-                  className="text-red-600 hover:text-red-700 text-sm font-semibold mt-1"
+                  className="mt-1 text-sm font-semibold text-red-600 hover:text-red-700"
                 >
                   Remove
                 </button>
@@ -488,27 +488,27 @@ export default function EmailBlastForm() {
 
           {/* Attachments */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+            <label className="mb-1 block text-sm font-semibold text-gray-700">
               Attachments (optional)
             </label>
             <input
               type="file"
               multiple
               onChange={handleAttachmentChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />
             {formData.attachments.length > 0 && (
               <div className="mt-2 space-y-1">
                 {formData.attachments.map((file, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between bg-gray-50 p-2 rounded border border-gray-200"
+                    className="flex items-center justify-between rounded border border-gray-200 bg-gray-50 p-2"
                   >
                     <span className="text-sm text-gray-700">{file.name}</span>
                     <button
                       type="button"
                       onClick={() => removeAttachment(index)}
-                      className="text-red-600 hover:text-red-700 text-sm font-semibold"
+                      className="text-sm font-semibold text-red-600 hover:text-red-700"
                     >
                       Remove
                     </button>
@@ -520,11 +520,11 @@ export default function EmailBlastForm() {
 
           {/* Select Members */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-semibold text-gray-700">
               Select Members * ({members.length} total)
             </label>
             {loadingMembers ? (
-              <div className="border border-gray-300 rounded-lg p-4 text-center text-gray-500">
+              <div className="rounded-lg border border-gray-300 p-4 text-center text-gray-500">
                 Loading members...
               </div>
             ) : (
@@ -535,14 +535,14 @@ export default function EmailBlastForm() {
                   placeholder="Search email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mb-2 w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
 
                 {/* Select All Button */}
                 <button
                   type="button"
                   onClick={handleSelectAll}
-                  className="w-full text-left px-2 py-2 hover:bg-blue-50 rounded font-semibold text-sm text-blue-600 mb-2 border border-gray-300 bg-white"
+                  className="mb-2 w-full rounded border border-gray-300 bg-white px-2 py-2 text-left text-sm font-semibold text-blue-600 hover:bg-blue-50"
                 >
                   {selectedMemberIds.length === members.length &&
                   members.length > 0
@@ -551,13 +551,13 @@ export default function EmailBlastForm() {
                 </button>
 
                 {/* Scrollable Member List */}
-                <div className="border border-gray-300 rounded-lg p-3 max-h-48 overflow-y-auto">
+                <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-300 p-3">
                   {(() => {
                     const filtered = members.filter((m) =>
                       m.email.toLowerCase().includes(searchTerm.toLowerCase())
                     )
                     return filtered.length === 0 ? (
-                      <p className="text-sm text-gray-500 p-2">
+                      <p className="p-2 text-sm text-gray-500">
                         {searchTerm
                           ? "No results found"
                           : "No members available"}
@@ -566,7 +566,7 @@ export default function EmailBlastForm() {
                       filtered.map((member) => (
                         <label
                           key={member.id}
-                          className="flex items-center px-2 py-2 hover:bg-gray-50 rounded cursor-pointer"
+                          className="flex cursor-pointer items-center rounded px-2 py-2 hover:bg-gray-50"
                         >
                           <input
                             type="checkbox"
@@ -574,7 +574,7 @@ export default function EmailBlastForm() {
                             onChange={() =>
                               handleMemberSelect(member.id, member.email)
                             }
-                            className="w-4 h-4"
+                            className="h-4 w-4"
                           />
                           <span className="ml-2 text-sm text-gray-700">
                             {member.email}
@@ -589,7 +589,7 @@ export default function EmailBlastForm() {
           </div>
 
           {/* Actions */}
-          <div className="flex gap-2 justify-end pt-2">
+          <div className="flex justify-end gap-2 pt-2">
             <Button variant="bordered" onPress={generatePreview}>
               Preview
             </Button>
@@ -612,7 +612,7 @@ export default function EmailBlastForm() {
         <div>
           <button
             onClick={() => setShowPreview(false)}
-            className="text-sm text-blue-600 font-semibold mb-4 hover:underline"
+            className="mb-4 text-sm font-semibold text-blue-600 hover:underline"
           >
             ← Back to Edit
           </button>
@@ -626,10 +626,10 @@ export default function EmailBlastForm() {
             }}
             title="Preview"
           />
-          <p className="text-xs text-gray-500 mt-2">
+          <p className="mt-2 text-xs text-gray-500">
             Subject: {formData.subject}
           </p>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="mt-1 text-xs text-gray-500">
             Recipients:{" "}
             {formData.recipients.split(",").filter((e) => e.trim()).length}
           </p>
@@ -638,19 +638,19 @@ export default function EmailBlastForm() {
 
       {/* Send Status Modal */}
       {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg max-w-md w-full mx-4">
+        <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
+          <div className="mx-4 w-full max-w-md rounded-lg bg-white shadow-lg">
             {loading ? (
               <>
-                <div className="px-6 py-4 border-b border-gray-200">
+                <div className="border-b border-gray-200 px-6 py-4">
                   <h2 className="text-lg font-semibold text-gray-800">
                     Sending Email Blast...
                   </h2>
                 </div>
                 <div className="px-6 py-8">
                   <div className="flex flex-col items-center justify-center gap-4">
-                    <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-                    <p className="text-gray-600 text-center">
+                    <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600"></div>
+                    <p className="text-center text-gray-600">
                       Processing your email blast. Please wait...
                     </p>
                   </div>
@@ -658,7 +658,7 @@ export default function EmailBlastForm() {
               </>
             ) : sendResult ? (
               <>
-                <div className="px-6 py-4 border-b border-gray-200">
+                <div className="border-b border-gray-200 px-6 py-4">
                   <h2 className="text-lg font-semibold text-gray-800">
                     Email Blast Result
                   </h2>
@@ -683,7 +683,7 @@ export default function EmailBlastForm() {
                           </p>
                           {sendResult.failed_emails &&
                             sendResult.failed_emails.length > 0 && (
-                              <div className="mt-2 bg-red-50 p-2 rounded text-sm max-h-40 overflow-y-auto">
+                              <div className="mt-2 max-h-40 overflow-y-auto rounded bg-red-50 p-2 text-sm">
                                 {sendResult.failed_emails.map((email, idx) => (
                                   <p key={idx} className="text-red-700">
                                     {email}
@@ -696,13 +696,13 @@ export default function EmailBlastForm() {
                     )}
 
                     {sendResult.failed_count === 0 && (
-                      <p className="text-green-600 text-center font-semibold">
+                      <p className="text-center font-semibold text-green-600">
                         All emails sent successfully!
                       </p>
                     )}
                   </div>
                 </div>
-                <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
+                <div className="flex justify-end border-t border-gray-200 px-6 py-4">
                   <Button color="primary" onPress={() => setIsOpen(false)}>
                     Done
                   </Button>

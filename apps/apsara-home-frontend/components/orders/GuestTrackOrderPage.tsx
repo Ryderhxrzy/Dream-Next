@@ -2,25 +2,26 @@
 
 import type { FormEvent } from "react"
 import { useMemo, useRef, useState } from "react"
-import Link from "next/link"
-import Image from "next/image"
-import { useSearchParams } from "next/navigation"
-import { motion } from "framer-motion"
-import { useSession } from "next-auth/react"
-import TopBar from "@/components/layout/TopBar"
-import Navbar from "@/components/layout/Navbar"
-import Footer from "@/components/landing-page/Footer"
-import ProductPageWrapper from "@/components/product/ProductPageWrapper"
-import PrimaryButton from "@/components/ui/buttons/PrimaryButton"
-import { TRACK_STEPS } from "@/types/Data"
 import formatDate from "@/helpers/FormatDate"
 import formatPrice from "@/helpers/FormatPrice"
+import type { Category } from "@/store/api/categoriesApi"
 import {
   useConfirmOrderMutation,
   useLazyTrackGuestOrderQuery,
   useRefundOrderMutation,
 } from "@/store/api/paymentApi"
-import type { Category } from "@/store/api/categoriesApi"
+import { motion } from "framer-motion"
+import { useSession } from "next-auth/react"
+import Image from "next/image"
+import Link from "next/link"
+import { useSearchParams } from "next/navigation"
+
+import { TRACK_STEPS } from "@/types/Data"
+import PrimaryButton from "@/components/ui/buttons/PrimaryButton"
+import Footer from "@/components/landing-page/Footer"
+import Navbar from "@/components/layout/Navbar"
+import TopBar from "@/components/layout/TopBar"
+import ProductPageWrapper from "@/components/product/ProductPageWrapper"
 
 const formatCourierLabel = (courier?: string | null) => {
   const normalized = String(courier ?? "")
@@ -166,7 +167,7 @@ type PartnerShellConfig = {
 function PartnerTrackOrderFooter({ partnerName }: { partnerName: string }) {
   return (
     <footer className="border-t border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-      <div className="mx-auto max-w-7xl px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-400 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-6 text-center text-sm text-slate-500 sm:px-6 lg:px-8 dark:text-slate-400">
         Orders from{" "}
         <span className="font-semibold text-slate-800 dark:text-slate-200">
           {partnerName}
@@ -286,13 +287,13 @@ export default function GuestTrackOrderPage({
             <div className="container mx-auto px-4 py-12 md:py-16">
               <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
                 <div>
-                  <span className="inline-flex rounded-full border border-orange-200 bg-white/90 dark:bg-white/10 dark:border-orange-500/30 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-orange-600 dark:text-orange-400">
+                  <span className="inline-flex rounded-full border border-orange-200 bg-white/90 px-3 py-1 text-[11px] font-bold tracking-[0.2em] text-orange-600 uppercase dark:border-orange-500/30 dark:bg-white/10 dark:text-orange-400">
                     {heroBadgeLabel}
                   </span>
-                  <h1 className="mt-4 max-w-2xl text-4xl font-black tracking-tight text-slate-900 dark:text-white md:text-5xl">
+                  <h1 className="mt-4 max-w-2xl text-4xl font-black tracking-tight text-slate-900 md:text-5xl dark:text-white">
                     {heroTitle}
                   </h1>
-                  <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 dark:text-gray-300 md:text-base">
+                  <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 md:text-base dark:text-gray-300">
                     {heroDescription}
                   </p>
 
@@ -304,9 +305,9 @@ export default function GuestTrackOrderPage({
                     ].map((item) => (
                       <div
                         key={item}
-                        className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-4"
+                        className="rounded-2xl border border-gray-200 bg-white px-4 py-4 dark:border-gray-700 dark:bg-gray-800"
                       >
-                        <div className="mb-2 h-8 w-8 rounded-xl bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 flex items-center justify-center">
+                        <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-xl bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="16"
@@ -345,10 +346,10 @@ export default function GuestTrackOrderPage({
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.35 }}
-                  className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 md:p-7"
+                  className="rounded-2xl border border-gray-200 bg-white p-5 md:p-7 dark:border-gray-700 dark:bg-gray-800"
                 >
                   <div className="mb-5">
-                    <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-orange-500 dark:text-orange-400">
+                    <p className="text-[11px] font-bold tracking-[0.24em] text-orange-500 uppercase dark:text-orange-400">
                       Track Order
                     </p>
                     <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-white">
@@ -372,7 +373,7 @@ export default function GuestTrackOrderPage({
 
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                      <label className="mb-2 block text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-gray-400">
+                      <label className="mb-2 block text-[11px] font-bold tracking-[0.18em] text-slate-500 uppercase dark:text-gray-400">
                         Order Number
                       </label>
                       <input
@@ -380,12 +381,12 @@ export default function GuestTrackOrderPage({
                         value={orderNumber}
                         onChange={(event) => setOrderNumber(event.target.value)}
                         placeholder="Example: cs_123456789"
-                        className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-4 py-3 text-sm text-slate-800 dark:text-white outline-none transition focus:border-orange-500 focus:bg-white dark:focus:bg-gray-800"
+                        className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-slate-800 transition outline-none focus:border-orange-500 focus:bg-white dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-800"
                       />
                     </div>
 
                     <div>
-                      <label className="mb-2 block text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-gray-400">
+                      <label className="mb-2 block text-[11px] font-bold tracking-[0.18em] text-slate-500 uppercase dark:text-gray-400">
                         Email or Mobile Number
                       </label>
                       <input
@@ -393,18 +394,18 @@ export default function GuestTrackOrderPage({
                         value={contact}
                         onChange={(event) => setContact(event.target.value)}
                         placeholder="Use the same contact detail from checkout"
-                        className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-4 py-3 text-sm text-slate-800 dark:text-white outline-none transition focus:border-orange-500 focus:bg-white dark:focus:bg-gray-800"
+                        className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-slate-800 transition outline-none focus:border-orange-500 focus:bg-white dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-800"
                       />
                     </div>
 
                     {error && (
-                      <div className="rounded-2xl border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-500/30 px-4 py-3 text-sm text-red-700 dark:text-red-400">
+                      <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-900/20 dark:text-red-400">
                         {error}
                       </div>
                     )}
 
                     {!error && hasSubmitted && !order && !isFetching && (
-                      <div className="rounded-2xl border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-500/30 px-4 py-3 text-sm text-amber-800 dark:text-amber-400">
+                      <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-900/20 dark:text-amber-400">
                         No result yet. Try checking the exact contact details
                         used in your checkout.
                       </div>
@@ -460,7 +461,7 @@ export default function GuestTrackOrderPage({
                     </PrimaryButton>
                   </form>
 
-                  <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 dark:bg-gray-800 dark:border-white/10 px-4 py-3 text-xs leading-6 text-slate-500 dark:text-gray-400">
+                  <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-xs leading-6 text-slate-500 dark:border-white/10 dark:bg-gray-800 dark:text-gray-400">
                     {isMemberSession ? (
                       <>
                         You are signed in. For full order history, open{" "}
@@ -470,7 +471,7 @@ export default function GuestTrackOrderPage({
                               ? `/${partnerShell.partnerSlug}/orders`
                               : "/orders"
                           }
-                          className="font-semibold text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300"
+                          className="font-semibold text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300"
                         >
                           My Orders
                         </Link>
@@ -482,7 +483,7 @@ export default function GuestTrackOrderPage({
                         Signed-in members can still use their regular{" "}
                         <Link
                           href="/orders"
-                          className="font-semibold text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300"
+                          className="font-semibold text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300"
                         >
                           My Orders
                         </Link>{" "}
@@ -505,12 +506,12 @@ export default function GuestTrackOrderPage({
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
               >
-                <div className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-5 py-5 md:px-7">
+                <div className="border-b border-gray-200 bg-gray-50 px-5 py-5 md:px-7 dark:border-gray-700 dark:bg-gray-800">
                   <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                     <div>
-                      <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-orange-500 dark:text-orange-400">
+                      <p className="text-[11px] font-bold tracking-[0.22em] text-orange-500 uppercase dark:text-orange-400">
                         Order Located
                       </p>
                       <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-white">
@@ -538,7 +539,7 @@ export default function GuestTrackOrderPage({
                         {statusConfig.label}
                       </span>
                       {order.shipment_status ? (
-                        <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 dark:bg-gray-800 dark:border-white/20 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-gray-300">
+                        <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:border-white/20 dark:bg-gray-800 dark:text-gray-300">
                           Shipment:{" "}
                           {getStatusConfig(order.shipment_status).label}
                         </span>
@@ -565,8 +566,8 @@ export default function GuestTrackOrderPage({
 
                 <div className="grid gap-6 px-5 py-6 md:px-7 lg:grid-cols-[1.25fr_0.75fr]">
                   <div className="space-y-6">
-                    <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-5">
-                      <p className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-slate-400 dark:text-gray-500">
+                    <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-800">
+                      <p className="mb-4 text-xs font-bold tracking-[0.22em] text-slate-400 uppercase dark:text-gray-500">
                         Tracking Progress
                       </p>
                       {statusConfig.step > 0 ? (
@@ -584,14 +585,14 @@ export default function GuestTrackOrderPage({
                                 >
                                   {index < TRACK_STEPS.length - 1 && (
                                     <div
-                                      className={`absolute left-1/2 top-3 h-0.5 w-full ${done ? "bg-orange-400" : "bg-slate-200 dark:bg-white/20"}`}
+                                      className={`absolute top-3 left-1/2 h-0.5 w-full ${done ? "bg-orange-400" : "bg-slate-200 dark:bg-white/20"}`}
                                     />
                                   )}
                                   <div
                                     className={`relative z-10 flex h-7 w-7 items-center justify-center rounded-full border-2 ${
                                       done
                                         ? "border-orange-500 bg-orange-500"
-                                        : "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+                                        : "border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800"
                                     }`}
                                   >
                                     {done ? (
@@ -612,7 +613,7 @@ export default function GuestTrackOrderPage({
                                     )}
                                   </div>
                                   <p
-                                    className={`text-center text-[11px] font-semibold leading-tight ${done ? "text-orange-600 dark:text-orange-400" : "text-slate-400 dark:text-gray-500"}`}
+                                    className={`text-center text-[11px] leading-tight font-semibold ${done ? "text-orange-600 dark:text-orange-400" : "text-slate-400 dark:text-gray-500"}`}
                                   >
                                     {step}
                                   </p>
@@ -622,7 +623,7 @@ export default function GuestTrackOrderPage({
                           </div>
                         </div>
                       ) : (
-                        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-4 text-sm text-slate-600 dark:text-gray-300">
+                        <div className="rounded-2xl border border-gray-200 bg-white px-4 py-4 text-sm text-slate-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                           This order is currently marked as{" "}
                           <span className="font-semibold text-slate-800 dark:text-gray-200">
                             {statusConfig.label}
@@ -633,7 +634,7 @@ export default function GuestTrackOrderPage({
                     </div>
 
                     <div>
-                      <p className="mb-3 text-xs font-bold uppercase tracking-[0.22em] text-slate-400 dark:text-gray-500">
+                      <p className="mb-3 text-xs font-bold tracking-[0.22em] text-slate-400 uppercase dark:text-gray-500">
                         Items In This Order
                       </p>
                       <div className="space-y-3">
@@ -644,14 +645,14 @@ export default function GuestTrackOrderPage({
                           return (
                             <div
                               key={item.id}
-                              className={`flex items-center gap-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 ${
+                              className={`flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800 ${
                                 isBlurred ? "opacity-80" : ""
                               }`}
                             >
                               <div className="h-16 w-16 overflow-hidden rounded-2xl bg-slate-100 dark:bg-gray-700">
                                 <div
                                   className={
-                                    isBlurred ? "filter blur-sm scale-105" : ""
+                                    isBlurred ? "scale-105 blur-sm filter" : ""
                                   }
                                 >
                                   <Image
@@ -670,7 +671,7 @@ export default function GuestTrackOrderPage({
                                     {item.name}
                                   </p>
                                   {isRefunded && (
-                                    <span className="shrink-0 inline-flex items-center rounded-xl border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+                                    <span className="inline-flex shrink-0 items-center rounded-xl border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
                                       Pending request
                                     </span>
                                   )}
@@ -717,8 +718,8 @@ export default function GuestTrackOrderPage({
                   </div>
 
                   <div className="space-y-4">
-                    <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-5">
-                      <p className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-slate-400 dark:text-gray-500">
+                    <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-800">
+                      <p className="mb-4 text-xs font-bold tracking-[0.22em] text-slate-400 uppercase dark:text-gray-500">
                         Order Summary
                       </p>
                       <div className="space-y-3 text-sm text-slate-600 dark:text-gray-300">
@@ -736,7 +737,7 @@ export default function GuestTrackOrderPage({
                               : formatPrice(order.shipping_fee)}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between border-t border-slate-200 dark:border-white/10 pt-3 text-base font-black text-slate-900 dark:text-white">
+                        <div className="flex items-center justify-between border-t border-slate-200 pt-3 text-base font-black text-slate-900 dark:border-white/10 dark:text-white">
                           <span>Total</span>
                           <span className="text-orange-600 dark:text-orange-400">
                             {formatPrice(order.total)}
@@ -745,13 +746,13 @@ export default function GuestTrackOrderPage({
                       </div>
                     </div>
 
-                    <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5">
-                      <p className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-slate-400 dark:text-gray-500">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+                      <p className="mb-4 text-xs font-bold tracking-[0.22em] text-slate-400 uppercase dark:text-gray-500">
                         Delivery Details
                       </p>
                       <div className="space-y-4 text-sm text-slate-600 dark:text-gray-300">
                         <div>
-                          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400 dark:text-gray-500">
+                          <p className="text-[11px] font-bold tracking-[0.18em] text-slate-400 uppercase dark:text-gray-500">
                             Payment Method
                           </p>
                           <p className="mt-1 font-semibold text-slate-800 dark:text-gray-200">
@@ -759,7 +760,7 @@ export default function GuestTrackOrderPage({
                           </p>
                         </div>
                         <div>
-                          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400 dark:text-gray-500">
+                          <p className="text-[11px] font-bold tracking-[0.18em] text-slate-400 uppercase dark:text-gray-500">
                             Shipping Address
                           </p>
                           <p className="mt-1 leading-6 text-slate-700 dark:text-gray-300">
@@ -767,7 +768,7 @@ export default function GuestTrackOrderPage({
                           </p>
                         </div>
                         <div>
-                          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400 dark:text-gray-500">
+                          <p className="text-[11px] font-bold tracking-[0.18em] text-slate-400 uppercase dark:text-gray-500">
                             Courier
                           </p>
                           <p className="mt-1 font-semibold text-slate-800 dark:text-gray-200">
@@ -775,7 +776,7 @@ export default function GuestTrackOrderPage({
                           </p>
                         </div>
                         <div>
-                          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400 dark:text-gray-500">
+                          <p className="text-[11px] font-bold tracking-[0.18em] text-slate-400 uppercase dark:text-gray-500">
                             Tracking Number
                           </p>
                           <p className="mt-1 font-mono text-sm font-semibold text-slate-800 dark:text-gray-200">
@@ -784,7 +785,7 @@ export default function GuestTrackOrderPage({
                         </div>
                         {order.shipped_at ? (
                           <div>
-                            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400 dark:text-gray-500">
+                            <p className="text-[11px] font-bold tracking-[0.18em] text-slate-400 uppercase dark:text-gray-500">
                               Shipped At
                             </p>
                             <p className="mt-1 font-semibold text-slate-800 dark:text-gray-200">
@@ -795,7 +796,7 @@ export default function GuestTrackOrderPage({
                       </div>
                     </div>
 
-                    <div className="rounded-2xl border border-orange-200 dark:border-orange-500/30 bg-orange-50 dark:bg-orange-900/20 p-5 text-sm leading-6 text-orange-900 dark:text-orange-200">
+                    <div className="rounded-2xl border border-orange-200 bg-orange-50 p-5 text-sm leading-6 text-orange-900 dark:border-orange-500/30 dark:bg-orange-900/20 dark:text-orange-200">
                       Need help with this order? Keep your order number ready
                       and contact support so the team can help you faster.
                     </div>
@@ -803,8 +804,8 @@ export default function GuestTrackOrderPage({
                 </div>
               </motion.div>
             ) : (
-              <div className="rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-6 py-14 text-center">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-orange-50 dark:bg-orange-500/20 text-orange-500 dark:text-orange-400">
+              <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-6 py-14 text-center dark:border-gray-700 dark:bg-gray-800">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-orange-50 text-orange-500 dark:bg-orange-500/20 dark:text-orange-400">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="28"
@@ -843,7 +844,7 @@ export default function GuestTrackOrderPage({
                 type="button"
                 onClick={() => setConfirmOpen(false)}
                 aria-label="Close"
-                className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 dark:border-slate-600 dark:bg-gray-800 dark:text-slate-300 dark:hover:bg-gray-700"
+                className="absolute top-4 right-4 inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 dark:border-slate-600 dark:bg-gray-800 dark:text-slate-300 dark:hover:bg-gray-700"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -908,7 +909,7 @@ export default function GuestTrackOrderPage({
               <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {/* images */}
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-gray-400">
+                  <label className="block text-[11px] font-bold tracking-[0.18em] text-slate-500 uppercase dark:text-gray-400">
                     Images
                   </label>
                   <label
@@ -953,7 +954,7 @@ export default function GuestTrackOrderPage({
 
                 {/* videos */}
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-gray-400">
+                  <label className="block text-[11px] font-bold tracking-[0.18em] text-slate-500 uppercase dark:text-gray-400">
                     Videos
                   </label>
                   <label
@@ -1044,7 +1045,7 @@ export default function GuestTrackOrderPage({
               className="absolute inset-0"
               onClick={() => setRefundOpen(false)}
             />
-            <div className="relative z-[71] w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-0 overflow-hidden dark:border-slate-700 dark:bg-gray-800">
+            <div className="relative z-[71] w-full max-w-lg overflow-hidden rounded-3xl border border-slate-200 bg-white p-0 dark:border-slate-700 dark:bg-gray-800">
               {/* Image header (matches refund.png) */}
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-black/0 to-black/25" />
@@ -1055,7 +1056,7 @@ export default function GuestTrackOrderPage({
                   type="button"
                   onClick={() => setRefundOpen(false)}
                   aria-label="Close"
-                  className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 dark:border-slate-600 dark:bg-gray-800 dark:text-slate-300 dark:hover:bg-gray-700"
+                  className="absolute top-4 right-4 inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 dark:border-slate-600 dark:bg-gray-800 dark:text-slate-300 dark:hover:bg-gray-700"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -1095,7 +1096,7 @@ export default function GuestTrackOrderPage({
 
                 <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-gray-400">
+                    <label className="block text-[11px] font-bold tracking-[0.18em] text-slate-500 uppercase dark:text-gray-400">
                       Images
                     </label>
                     <label
@@ -1139,7 +1140,7 @@ export default function GuestTrackOrderPage({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-gray-400">
+                    <label className="block text-[11px] font-bold tracking-[0.18em] text-slate-500 uppercase dark:text-gray-400">
                       Videos
                     </label>
                     <label

@@ -1,5 +1,5 @@
-import { buildPageMetadata } from "@/app/seo"
 import PaymentsVouchersPageMain from "@/components/superAdmin/payments/PaymentsVouchersPageMain"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Admin Vouchers",

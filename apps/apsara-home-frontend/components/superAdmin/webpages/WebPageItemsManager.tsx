@@ -1,6 +1,7 @@
 "use client"
 
 import { FormEvent, useMemo, useState } from "react"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import {
   useCreateAdminWebPageItemMutation,
   useDeleteAdminWebPageItemMutation,
@@ -9,7 +10,6 @@ import {
   WebPageItem,
   WebPageType,
 } from "@/store/api/webPagesApi"
-import { showErrorToast, showSuccessToast } from "@/libs/toast"
 
 type FormState = {
   key: string
@@ -172,12 +172,12 @@ export default function WebPageItemsManager({
     <div className="space-y-5 dark:bg-slate-950 dark:text-slate-100">
       <div>
         <h1 className="text-xl font-bold text-slate-800">{title}</h1>
-        <p className="text-sm text-slate-500 mt-0.5">{description}</p>
+        <p className="mt-0.5 text-sm text-slate-500">{description}</p>
       </div>
 
       <form
         onSubmit={handleSubmit}
-        className="rounded-2xl border border-slate-100 bg-white shadow-sm p-4 space-y-3"
+        className="space-y-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm"
       >
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-800">
@@ -194,7 +194,7 @@ export default function WebPageItemsManager({
           ) : null}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <input
             value={form.key}
             onChange={(e) => setForm((p) => ({ ...p, key: e.target.value }))}
@@ -225,7 +225,7 @@ export default function WebPageItemsManager({
           className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <input
             value={form.image_url}
             onChange={(e) =>
@@ -252,7 +252,7 @@ export default function WebPageItemsManager({
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
           <input
             type="number"
             min={0}
@@ -300,7 +300,7 @@ export default function WebPageItemsManager({
         </div>
       </form>
 
-      <div className="rounded-2xl border border-slate-100 bg-white shadow-sm p-4 space-y-3">
+      <div className="space-y-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between gap-3">
           <input
             value={search}
@@ -330,7 +330,7 @@ export default function WebPageItemsManager({
             Failed to load web page items.
           </div>
         ) : isLoading ? (
-          <div className="space-y-2 animate-pulse">
+          <div className="animate-pulse space-y-2">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="h-10 rounded bg-slate-100" />
             ))}
@@ -338,7 +338,7 @@ export default function WebPageItemsManager({
         ) : (
           <div className="overflow-auto">
             <table className="w-full min-w-[960px]">
-              <thead className="bg-slate-50 border-b border-slate-100 dark:border-slate-800">
+              <thead className="border-b border-slate-100 bg-slate-50 dark:border-slate-800">
                 <tr className="text-left text-xs text-slate-500">
                   <th className="px-3 py-2.5 font-semibold">Title</th>
                   <th className="px-3 py-2.5 font-semibold">Key</th>
@@ -353,13 +353,13 @@ export default function WebPageItemsManager({
                   rows.map((row) => (
                     <tr
                       key={row.id}
-                      className="border-b border-slate-100 dark:border-slate-800 last:border-b-0 text-sm"
+                      className="border-b border-slate-100 text-sm last:border-b-0 dark:border-slate-800"
                     >
                       <td className="px-3 py-2.5 text-slate-800">
                         <p className="font-medium">
                           {row.title || "(Untitled)"}
                         </p>
-                        <p className="text-xs text-slate-500 mt-0.5 truncate max-w-[260px]">
+                        <p className="mt-0.5 max-w-[260px] truncate text-xs text-slate-500">
                           {row.subtitle || row.body || "-"}
                         </p>
                       </td>

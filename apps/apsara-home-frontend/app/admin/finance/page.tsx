@@ -1,3 +1,4 @@
+import FinanceDashboardMain from "@/components/superAdmin/accounting/FinanceDashboardMain"
 import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
@@ -6,8 +7,6 @@ export const metadata = buildPageMetadata({
   path: "/admin/finance",
   noIndex: true,
 })
-
-import FinanceDashboardMain from "@/components/superAdmin/accounting/FinanceDashboardMain"
 
 export default function FinanceDashboardPage() {
   return <FinanceDashboardMain />

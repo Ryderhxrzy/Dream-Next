@@ -1,13 +1,13 @@
 "use client"
 
-import Link from "next/link"
-import { motion } from "framer-motion"
-import Image from "next/image"
-import { useSession } from "next-auth/react"
-import { useMeQuery } from "@/store/api/userApi"
 import { useMemo } from "react"
-import { usePathname } from "next/navigation"
 import { extractPartnerSlugFromPath } from "@/libs/storefrontRouting"
+import { useMeQuery } from "@/store/api/userApi"
+import { motion } from "framer-motion"
+import { useSession } from "next-auth/react"
+import Image from "next/image"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 const requirementItems = [
   "Valid government-issued ID",
@@ -29,7 +29,7 @@ const STEPS = [
     text: "Review the requirements, then continue to the profile encashment form.",
     icon: (
       <svg
-        className="w-4 h-4"
+        className="h-4 w-4"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -48,7 +48,7 @@ const STEPS = [
     text: "Your KYC documents and payout details are submitted together.",
     icon: (
       <svg
-        className="w-4 h-4"
+        className="h-4 w-4"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -67,7 +67,7 @@ const STEPS = [
     text: "Admin reviews the verification and payout request before release.",
     icon: (
       <svg
-        className="w-4 h-4"
+        className="h-4 w-4"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -192,14 +192,14 @@ export default function VerificationOverviewPage() {
             <div
               className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-medium sm:text-sm ${statusBadge}`}
             >
-              <span className={`h-2 w-2 rounded-full shrink-0 ${statusDot}`} />
+              <span className={`h-2 w-2 shrink-0 rounded-full ${statusDot}`} />
               {statusText}
             </div>
           </div>
 
           {/* Text content — centered on mobile, left on desktop */}
           <div className="mx-auto max-w-3xl text-center lg:text-left">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.3em] text-teal-700">
+            <p className="mb-2 text-xs font-semibold tracking-[0.3em] text-teal-700 uppercase">
               Encashment Verification
             </p>
             <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl md:text-4xl lg:text-5xl">
@@ -222,7 +222,7 @@ export default function VerificationOverviewPage() {
             transition={{ duration: 0.4, delay: 0.05 }}
             className="rounded-3xl border border-stone-200 bg-white/90 p-5 shadow-[0_22px_70px_rgba(15,23,42,0.06)] sm:rounded-[28px] sm:p-8"
           >
-            <div className="grid gap-6 sm:gap-8 sm:grid-cols-2">
+            <div className="grid gap-6 sm:grid-cols-2 sm:gap-8">
               <div>
                 <h2 className="text-base font-semibold text-slate-900 sm:text-lg">
                   Why this is required
@@ -232,7 +232,7 @@ export default function VerificationOverviewPage() {
                     <li key={item} className="flex items-start gap-3">
                       <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-teal-50 text-teal-600">
                         <svg
-                          className="w-3 h-3"
+                          className="h-3 w-3"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -260,7 +260,7 @@ export default function VerificationOverviewPage() {
                     <li key={item} className="flex items-start gap-3">
                       <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-orange-50 text-orange-500">
                         <svg
-                          className="w-3 h-3"
+                          className="h-3 w-3"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -295,7 +295,7 @@ export default function VerificationOverviewPage() {
                       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-600 text-white">
                         {icon}
                       </span>
-                      <span className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-700">
+                      <span className="text-xs font-semibold tracking-[0.2em] text-teal-700 uppercase">
                         Step {i + 1}
                       </span>
                     </div>
@@ -318,7 +318,7 @@ export default function VerificationOverviewPage() {
             transition={{ duration: 0.4, delay: 0.1 }}
             className="rounded-3xl border border-stone-200 bg-[#0f172a] p-5 text-white shadow-[0_24px_80px_rgba(15,23,42,0.2)] sm:rounded-[28px] sm:p-8"
           >
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-orange-300">
+            <p className="text-xs font-semibold tracking-[0.3em] text-orange-300 uppercase">
               Before You Continue
             </p>
             <h2 className="mt-3 text-xl font-semibold sm:mt-4 sm:text-2xl">
@@ -332,7 +332,7 @@ export default function VerificationOverviewPage() {
 
             <div className="mt-6 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4 sm:mt-8 sm:p-5">
               <div>
-                <div className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                <div className="text-xs tracking-[0.2em] text-slate-400 uppercase">
                   Current account
                 </div>
                 <div className="mt-1 text-sm font-medium text-white">
@@ -340,12 +340,12 @@ export default function VerificationOverviewPage() {
                 </div>
               </div>
               <div>
-                <div className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                <div className="text-xs tracking-[0.2em] text-slate-400 uppercase">
                   Verification status
                 </div>
                 <div className="mt-1 flex items-center gap-2">
                   <span
-                    className={`h-2 w-2 rounded-full shrink-0 ${statusDot}`}
+                    className={`h-2 w-2 shrink-0 rounded-full ${statusDot}`}
                   />
                   <span className="text-sm font-medium text-white">
                     {statusLabel}

@@ -73,12 +73,12 @@ export default function TopBar({
   ].filter((social) => Boolean(social.href?.trim()))
 
   return (
-    <div className="sticky top-0 z-[51] bg-gray-100 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 text-xs py-2 overflow-hidden">
-      <div className="container mx-auto px-4 flex items-center">
-        <div className="hidden md:flex items-center gap-5 shrink-0">
+    <div className="sticky top-0 z-[51] overflow-hidden border-b border-gray-200 bg-gray-100 py-2 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+      <div className="container mx-auto flex items-center px-4">
+        <div className="hidden shrink-0 items-center gap-5 md:flex">
           <a
             href={`tel:${phone.replace(/\s+/g, "")}`}
-            className="flex items-center gap-1.5 hover:text-sky-500 dark:hover:text-sky-400 transition-colors"
+            className="flex items-center gap-1.5 transition-colors hover:text-sky-500 dark:hover:text-sky-400"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -95,7 +95,7 @@ export default function TopBar({
           </a>
           <a
             href={`mailto:${email}`}
-            className="flex items-center gap-1.5 hover:text-sky-500 dark:hover:text-sky-400 transition-colors"
+            className="flex items-center gap-1.5 transition-colors hover:text-sky-500 dark:hover:text-sky-400"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -113,7 +113,7 @@ export default function TopBar({
           </a>
         </div>
 
-        <div className="flex-1 overflow-hidden mx-4">
+        <div className="mx-4 flex-1 overflow-hidden">
           <div
             className={`flex w-max whitespace-nowrap ${hideMarquee ? "" : "animate-marquee"}`}
           >
@@ -127,7 +127,7 @@ export default function TopBar({
           </div>
         </div>
 
-        <div className="hidden md:flex items-center gap-3 shrink-0 text-gray-500 dark:text-gray-500">
+        <div className="hidden shrink-0 items-center gap-3 text-gray-500 md:flex dark:text-gray-500">
           {socialLinks.map((social) => (
             <a
               key={social.label}
@@ -135,7 +135,7 @@ export default function TopBar({
               target="_blank"
               rel="noopener noreferrer"
               aria-label={social.label}
-              className="hover:text-sky-500 dark:hover:text-sky-400 transition-colors"
+              className="transition-colors hover:text-sky-500 dark:hover:text-sky-400"
             >
               <social.icon />
             </a>

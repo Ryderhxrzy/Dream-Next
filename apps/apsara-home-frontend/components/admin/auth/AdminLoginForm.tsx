@@ -1,15 +1,16 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import Image from "next/image"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import Loading from "@/components/Loading"
-import { signIn, signOut } from "next-auth/react"
+import { clearAdminSession, clearPartnerSession } from "@/libs/adminSession"
 import { baseApi, clearAccessTokenCache } from "@/store/api/baseApi"
 import { useAppDispatch } from "@/store/hooks"
-import { clearAdminSession, clearPartnerSession } from "@/libs/adminSession"
+import { AnimatePresence, motion } from "framer-motion"
+import { signIn, signOut } from "next-auth/react"
+import Image from "next/image"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+
 import PrimaryButton from "@/components/ui/buttons/PrimaryButton"
+import Loading from "@/components/Loading"
 
 const EyeIcon = ({ open }: { open: boolean }) =>
   open ? (
@@ -63,7 +64,7 @@ function FloatingInput({
     <div className="w-full">
       <label
         htmlFor={id}
-        className="block text-xs font-semibold text-gray-600 dark:text-white/80 mb-1.5"
+        className="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-white/80"
       >
         {label}
       </label>
@@ -75,10 +76,10 @@ function FloatingInput({
           onChange={onChange}
           placeholder=""
           autoComplete={autoComplete}
-          className="h-11 w-full rounded-[18px] border border-gray-300 dark:border-white/18 bg-white dark:bg-white/12 px-4 text-sm text-gray-900 dark:text-white outline-none transition-all duration-200 focus:border-sky-400 dark:focus:border-sky-400/60 focus:bg-white dark:focus:bg-white/18"
+          className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 transition-all duration-200 outline-none focus:border-sky-400 focus:bg-white dark:border-white/18 dark:bg-white/12 dark:text-white dark:focus:border-sky-400/60 dark:focus:bg-white/18"
         />
         {endContent && (
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/60">
+          <div className="absolute top-1/2 right-4 -translate-y-1/2 text-gray-400 dark:text-white/60">
             {endContent}
           </div>
         )}
@@ -315,14 +316,14 @@ const AdminLoginForm = ({
     }
   }
   return (
-    <div className="min-h-screen w-full flex items-center justify-center px-4 bg-gray-50 dark:bg-gray-900">
+    <div className="flex min-h-screen w-full items-center justify-center bg-gray-50 px-4 dark:bg-gray-900">
       <motion.div
         initial={{ opacity: 0, y: 32, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
         className="w-full max-w-md"
       >
-        <div className="bg-white/90 dark:bg-slate-800/85 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-8">
+        <div className="rounded-3xl border border-gray-200 bg-white/90 p-8 backdrop-blur-xl dark:border-white/10 dark:bg-slate-800/85">
           <AnimatePresence mode="wait">
             {isSuspendedRedirect || banMessage ? (
               <motion.div
@@ -341,10 +342,10 @@ const AdminLoginForm = ({
                       repeat: Infinity,
                       ease: "easeInOut",
                     }}
-                    className="h-20 w-20 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center"
+                    className="flex h-20 w-20 items-center justify-center rounded-2xl border border-red-500/20 bg-red-500/10"
                   >
                     <svg
-                      className="w-9 h-9 text-red-400"
+                      className="h-9 w-9 text-red-400"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -364,10 +365,10 @@ const AdminLoginForm = ({
                       repeat: Infinity,
                       ease: "easeInOut",
                     }}
-                    className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 border-2 border-white dark:border-slate-800 flex items-center justify-center"
+                    className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full border-2 border-white bg-red-500 dark:border-slate-800"
                   >
                     <svg
-                      className="w-2 h-2 text-white"
+                      className="h-2 w-2 text-white"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
@@ -379,15 +380,15 @@ const AdminLoginForm = ({
                     </svg>
                   </motion.span>
                 </div>
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1.5">
+                <h2 className="mb-1.5 text-lg font-bold text-gray-900 dark:text-white">
                   Account Suspended
                 </h2>
-                <p className="text-sm text-gray-500 dark:text-white/70 leading-relaxed mb-5">
+                <p className="mb-5 text-sm leading-relaxed text-gray-500 dark:text-white/70">
                   {banMessage ||
                     "Your session was ended because your account has been suspended by a Super Admin."}
                 </p>
-                <div className="w-full rounded-xl border border-red-200 bg-red-50 dark:border-red-400/20 dark:bg-red-500/20 px-4 py-3 mb-6 text-left">
-                  <p className="text-xs text-red-700 dark:text-red-300 leading-relaxed">
+                <div className="mb-6 w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-left dark:border-red-400/20 dark:bg-red-500/20">
+                  <p className="text-xs leading-relaxed text-red-700 dark:text-red-300">
                     You will not be able to access the admin portal until a
                     Super Admin lifts the restriction on your account.
                   </p>
@@ -402,7 +403,7 @@ const AdminLoginForm = ({
                     setLockoutSeconds(0)
                     if (isSuspendedRedirect) router.replace(loginPath)
                   }}
-                  className="w-full py-2.5 rounded-full border border-gray-300 dark:border-white/20 text-gray-500 dark:text-white/70 hover:text-gray-800 dark:hover:text-white hover:border-gray-400 dark:hover:border-white/40 text-sm font-medium transition-all"
+                  className="w-full rounded-full border border-gray-300 py-2.5 text-sm font-medium text-gray-500 transition-all hover:border-gray-400 hover:text-gray-800 dark:border-white/20 dark:text-white/70 dark:hover:border-white/40 dark:hover:text-white"
                 >
                   Back to Login
                 </button>
@@ -421,12 +422,12 @@ const AdminLoginForm = ({
                     alt="AF HOME"
                     width={80}
                     height={26}
-                    className="h-10 w-auto object-contain dark:brightness-0 dark:invert mb-4"
+                    className="mb-4 h-10 w-auto object-contain dark:brightness-0 dark:invert"
                   />
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+                  <h2 className="mb-1 text-2xl font-bold text-gray-900 dark:text-white">
                     Welcome back!
                   </h2>
-                  <p className="text-gray-500 dark:text-white/70 text-sm">
+                  <p className="text-sm text-gray-500 dark:text-white/70">
                     Sign in to your {isPartnerLogin ? "Partner" : "Admin"}{" "}
                     account
                   </p>
@@ -462,7 +463,7 @@ const AdminLoginForm = ({
                         <button
                           type="button"
                           onClick={() => setShowPass((p) => !p)}
-                          className="text-gray-400 dark:text-white/60 hover:text-gray-700 dark:hover:text-white/80 transition-colors"
+                          className="text-gray-400 transition-colors hover:text-gray-700 dark:text-white/60 dark:hover:text-white/80"
                         >
                           <EyeIcon open={showPass} />
                         </button>
@@ -532,7 +533,7 @@ const AdminLoginForm = ({
                               setIsLoading(false)
                             }
                           }}
-                          className="text-xs font-semibold text-sky-500 hover:text-sky-400 transition-colors"
+                          className="text-xs font-semibold text-sky-500 transition-colors hover:text-sky-400"
                         >
                           Resend Code
                         </button>
@@ -555,7 +556,7 @@ const AdminLoginForm = ({
                         !turnstileToken &&
                         !otpChallengeToken)
                     }
-                    className="w-full py-3 px-5 text-sm"
+                    className="w-full px-5 py-3 text-sm"
                   >
                     {isLoading ? (
                       <>
@@ -578,7 +579,7 @@ const AdminLoginForm = ({
           </AnimatePresence>
         </div>
 
-        <p className="text-center text-xs text-gray-400 dark:text-gray-600 mt-5">
+        <p className="mt-5 text-center text-xs text-gray-400 dark:text-gray-600">
           AF HOME {isPartnerLogin ? "Partner" : "Admin"} Portal &copy;{" "}
           {new Date().getFullYear()}
         </p>

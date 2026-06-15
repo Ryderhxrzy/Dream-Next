@@ -1,6 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
+
 import { php } from "./types"
 
 const STRIPE = {
@@ -122,7 +123,7 @@ export default function TopEarnersStats({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.05 }}
-      className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+      className="grid grid-cols-2 gap-4 lg:grid-cols-4"
     >
       {cards.map((card, i) => (
         <motion.div
@@ -134,17 +135,17 @@ export default function TopEarnersStats({
         >
           <div className="absolute inset-0 opacity-[0.08]" style={STRIPE} />
           <div className="relative flex items-start justify-between gap-2">
-            <div className="flex-1 min-w-0">
+            <div className="min-w-0 flex-1">
               <p
-                className={`text-[10px] font-bold uppercase tracking-widest ${card.muted} mb-2`}
+                className={`text-[10px] font-bold tracking-widest uppercase ${card.muted} mb-2`}
               >
                 {card.label}
               </p>
-              <p className="text-2xl font-black text-white tabular-nums truncate">
+              <p className="truncate text-2xl font-black text-white tabular-nums">
                 {card.value}
               </p>
             </div>
-            <div className="shrink-0 h-9 w-9 rounded-xl bg-white/15 flex items-center justify-center text-white">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/15 text-white">
               {card.icon}
             </div>
           </div>

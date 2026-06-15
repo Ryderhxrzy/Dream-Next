@@ -1,6 +1,7 @@
-import { buildPageMetadata } from "@/app/seo"
-import GuestTrackOrderPage from "@/components/orders/GuestTrackOrderPage"
 import { getNavbarCategories } from "@/libs/serverStorefront"
+
+import GuestTrackOrderPage from "@/components/orders/GuestTrackOrderPage"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Track Order",

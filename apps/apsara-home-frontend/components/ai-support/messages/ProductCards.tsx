@@ -11,22 +11,22 @@ export function ProductCards({ message }: { message: ProductCardsMessage }) {
         <a
           key={i}
           href={card.url}
-          className="flex gap-3 items-start bg-white border border-slate-100 rounded-xl p-2.5 shadow-sm hover:shadow-md hover:-translate-y-px transition-all duration-150 no-underline"
+          className="flex items-start gap-3 rounded-xl border border-slate-100 bg-white p-2.5 no-underline shadow-sm transition-all duration-150 hover:-translate-y-px hover:shadow-md"
         >
           {card.image && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={card.image}
               alt={card.name}
-              className="w-14 h-14 object-cover rounded-lg flex-shrink-0"
+              className="h-14 w-14 flex-shrink-0 rounded-lg object-cover"
             />
           )}
-          <div className="min-w-0 flex flex-col gap-0.5">
-            <span className="text-xs font-semibold text-slate-900 leading-snug">
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <span className="text-xs leading-snug font-semibold text-slate-900">
               {card.name}
             </span>
             {card.description && (
-              <span className="text-[11px] text-slate-500 leading-snug line-clamp-2">
+              <span className="line-clamp-2 text-[11px] leading-snug text-slate-500">
                 {card.description}
               </span>
             )}

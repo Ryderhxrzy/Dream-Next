@@ -2,13 +2,14 @@
 
 import { CategoryProduct } from "@/libs/CategoryData"
 import { displayColorName } from "@/libs/colorUtils"
-import { motion } from "framer-motion"
-import DOMPurify from "isomorphic-dompurify"
-import StarRating from "../ui/StarRating"
 import type {
   ProductReview,
   ProductReviewSummary,
 } from "@/store/api/productsApi"
+import { motion } from "framer-motion"
+import DOMPurify from "isomorphic-dompurify"
+
+import StarRating from "../ui/StarRating"
 
 interface ProductTabsProps {
   product: CategoryProduct
@@ -125,13 +126,13 @@ const ProductTabs = ({
       className="space-y-4"
     >
       {/* Description Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3">
+      <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+        <h3 className="mb-3 text-lg font-bold text-slate-900 dark:text-white">
           Description
         </h3>
         {sanitizedDescriptionHtml ? (
           <div
-            className="prose prose-sm max-w-none text-gray-600 dark:prose-invert dark:text-gray-300 prose-headings:scroll-mt-24 prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0"
+            className="prose prose-sm dark:prose-invert prose-headings:scroll-mt-24 prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0 max-w-none text-gray-600 dark:text-gray-300"
             dangerouslySetInnerHTML={{ __html: sanitizedDescriptionHtml }}
           />
         ) : cleanedDescription ? (
@@ -146,15 +147,15 @@ const ProductTabs = ({
             ))}
           </div>
         ) : (
-          <p className="text-gray-400 dark:text-gray-500 italic">
+          <p className="text-gray-400 italic dark:text-gray-500">
             No description available.
           </p>
         )}
       </div>
 
       {/* Specifications Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3">
+      <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+        <h3 className="mb-3 text-lg font-bold text-slate-900 dark:text-white">
           Specifications
         </h3>
         {(() => {
@@ -198,19 +199,19 @@ const ProductTabs = ({
               {rows.map((spec) => (
                 <div
                   key={spec.label}
-                  className="flex items-center justify-between px-4 py-2 text-sm border-b border-gray-100 dark:border-gray-700 last:border-b-0 bg-gray-50 dark:bg-gray-700/50 rounded"
+                  className="flex items-center justify-between rounded border-b border-gray-100 bg-gray-50 px-4 py-2 text-sm last:border-b-0 dark:border-gray-700 dark:bg-gray-700/50"
                 >
-                  <span className="font-semibold text-slate-700 dark:text-gray-200 w-36 shrink-0">
+                  <span className="w-36 shrink-0 font-semibold text-slate-700 dark:text-gray-200">
                     {spec.label}
                   </span>
-                  <span className="text-gray-500 dark:text-gray-300 text-right">
+                  <span className="text-right text-gray-500 dark:text-gray-300">
                     {spec.value}
                   </span>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-gray-400 dark:text-gray-500 italic text-sm">
+            <p className="text-sm text-gray-400 italic dark:text-gray-500">
               No specifications available.
             </p>
           )
@@ -218,18 +219,18 @@ const ProductTabs = ({
       </div>
 
       {/* Reviews Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3">
+      <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+        <h3 className="mb-3 text-lg font-bold text-slate-900 dark:text-white">
           Reviews ({reviewCount})
         </h3>
         <div className="space-y-3">
-          <div className="flex items-center gap-4 bg-sky-50 dark:bg-sky-900/20 rounded-xl p-4">
-            <div className="text-center shrink-0">
+          <div className="flex items-center gap-4 rounded-xl bg-sky-50 p-4 dark:bg-sky-900/20">
+            <div className="shrink-0 text-center">
               <div className="text-3xl font-bold text-sky-500 dark:text-sky-400">
                 {avgRating}
               </div>
               <StarRating rating={Math.round(Number(avgRating))} size={12} />
-              <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+              <div className="mt-1 text-xs text-gray-400 dark:text-gray-500">
                 {reviewCount} reviews
               </div>
             </div>
@@ -252,15 +253,15 @@ const ProductTabs = ({
                     >
                       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                     </svg>
-                    <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
+                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${pct}%` }}
                         transition={{ duration: 0.6, delay: star * 0.05 }}
-                        className="bg-sky-400 dark:bg-sky-500 h-full rounded-full"
+                        className="h-full rounded-full bg-sky-400 dark:bg-sky-500"
                       />
                     </div>
-                    <span className="w-4 text-gray-400 dark:text-gray-500 text-right">
+                    <span className="w-4 text-right text-gray-400 dark:text-gray-500">
                       {count}
                     </span>
                   </div>
@@ -276,28 +277,28 @@ const ProductTabs = ({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2 }}
-                className="border border-gray-100 dark:border-gray-700 rounded-xl p-4 hover:border-sky-100 dark:hover:border-sky-900/50 transition-all"
+                className="rounded-xl border border-gray-100 p-4 transition-all hover:border-sky-100 dark:border-gray-700 dark:hover:border-sky-900/50"
               >
-                <div className="flex items-start gap-3 mb-2">
+                <div className="mb-2 flex items-start gap-3">
                   {review.customer_avatar ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={review.customer_avatar}
                       alt={review.customer_name}
-                      className="w-8 h-8 rounded-full object-cover border border-sky-100 dark:border-sky-900/50 shrink-0"
+                      className="h-8 w-8 shrink-0 rounded-full border border-sky-100 object-cover dark:border-sky-900/50"
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center text-sky-600 dark:text-sky-400 text-xs font-bold shrink-0">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-100 text-xs font-bold text-sky-600 dark:bg-sky-900/30 dark:text-sky-400">
                       {getInitials(review.customer_name)}
                     </div>
                   )}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="text-sm font-semibold text-slate-800 dark:text-gray-200">
                         {review.customer_name}
                       </span>
                       {review.created_at && (
-                        <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">
+                        <span className="shrink-0 text-xs text-gray-400 dark:text-gray-500">
                           {formattedDate(review.created_at)}
                         </span>
                       )}
@@ -305,13 +306,13 @@ const ProductTabs = ({
                     <StarRating rating={review.rating} size={12} />
                   </div>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">
                   {review.review}
                 </p>
               </motion.div>
             ))
           ) : (
-            <div className="border border-dashed border-gray-200 dark:border-gray-700 rounded-xl p-4 text-center text-sm text-gray-400 dark:text-gray-500">
+            <div className="rounded-xl border border-dashed border-gray-200 p-4 text-center text-sm text-gray-400 dark:border-gray-700 dark:text-gray-500">
               No reviews yet. Be the first to share your experience.
             </div>
           )}

@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { useEffect, useState } from "react"
+import { AnimatePresence, motion } from "framer-motion"
 import { ArrowUp } from "lucide-react"
 
 export default function ScrollToTop() {
@@ -35,7 +35,7 @@ export default function ScrollToTop() {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.8 }}
           onClick={scrollToTop}
-          className="fixed bottom-6 right-24 z-50 p-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-colors duration-300 focus:outline-none cursor-pointer"
+          className="fixed right-24 bottom-6 z-50 cursor-pointer rounded-full border border-gray-200 bg-white p-3 text-gray-700 shadow-lg transition-colors duration-300 hover:border-orange-500 hover:bg-orange-500 hover:text-white focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
           aria-label="Scroll to top"
         >
           <ArrowUp size={24} />

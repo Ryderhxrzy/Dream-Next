@@ -1,23 +1,23 @@
 "use client"
 
-import { useState, useEffect, useRef, useId, useCallback, useMemo } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
+import { AnimatePresence, motion } from "framer-motion"
 import {
   BookOpen,
-  Server,
-  Zap,
-  Code2,
-  Layout,
-  CheckSquare,
-  FolderOpen,
   Bot,
-  Download,
-  Copy,
   Check,
-  Search,
+  CheckSquare,
   ChevronDown,
-  X,
+  Code2,
+  Copy,
+  Download,
+  FolderOpen,
+  Layout,
   Menu,
+  Search,
+  Server,
+  X,
+  Zap,
 } from "lucide-react"
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -348,27 +348,27 @@ function DiagramLightbox({
   return (
     <div className="fixed inset-0 z-[100] flex flex-col bg-black/95">
       {/* toolbar */}
-      <div className="flex items-center justify-between px-5 py-3 bg-[#161b22] border-b border-[#30363d] shrink-0">
+      <div className="flex shrink-0 items-center justify-between border-b border-[#30363d] bg-[#161b22] px-5 py-3">
         <div className="flex items-center gap-3">
-          <span className="text-xs text-[#8b949e] font-mono">
+          <span className="font-mono text-xs text-[#8b949e]">
             {Math.round(scale * 100)}% · scroll to zoom · drag to pan
           </span>
           <div className="flex items-center gap-1">
             <button
               onClick={() => zoomAt(0.83)}
-              className="px-2 py-1 rounded text-xs text-[#8b949e] hover:text-white hover:bg-[#21262d] transition-colors font-mono"
+              className="rounded px-2 py-1 font-mono text-xs text-[#8b949e] transition-colors hover:bg-[#21262d] hover:text-white"
             >
               +
             </button>
             <button
               onClick={() => zoomAt(1.2)}
-              className="px-2 py-1 rounded text-xs text-[#8b949e] hover:text-white hover:bg-[#21262d] transition-colors font-mono"
+              className="rounded px-2 py-1 font-mono text-xs text-[#8b949e] transition-colors hover:bg-[#21262d] hover:text-white"
             >
               −
             </button>
             <button
               onClick={reset}
-              className="px-2 py-1 rounded text-xs text-[#8b949e] hover:text-white hover:bg-[#21262d] transition-colors"
+              className="rounded px-2 py-1 text-xs text-[#8b949e] transition-colors hover:bg-[#21262d] hover:text-white"
             >
               Reset
             </button>
@@ -376,7 +376,7 @@ function DiagramLightbox({
         </div>
         <button
           onClick={onClose}
-          className="flex items-center gap-1.5 text-xs text-[#8b949e] hover:text-white transition-colors px-2 py-1 rounded hover:bg-[#21262d]"
+          className="flex items-center gap-1.5 rounded px-2 py-1 text-xs text-[#8b949e] transition-colors hover:bg-[#21262d] hover:text-white"
         >
           <X size={14} />
           Close
@@ -386,7 +386,7 @@ function DiagramLightbox({
       {/* canvas — SVG fills the container, viewBox controls what's visible */}
       <div
         ref={containerRef}
-        className="flex-1 min-h-0 overflow-hidden select-none bg-[#0d1117]"
+        className="min-h-0 flex-1 overflow-hidden bg-[#0d1117] select-none"
         style={{ cursor: isDragging ? "grabbing" : "grab" }}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
@@ -401,7 +401,7 @@ function DiagramLightbox({
         dangerouslySetInnerHTML={{ __html: displaySvg }}
       />
 
-      <div className="px-5 py-2 bg-[#161b22] border-t border-[#30363d] text-center text-[11px] text-[#8b949e] shrink-0">
+      <div className="shrink-0 border-t border-[#30363d] bg-[#161b22] px-5 py-2 text-center text-[11px] text-[#8b949e]">
         Double-click to reset · Pinch to zoom on mobile · Press Esc to close
       </div>
     </div>
@@ -466,22 +466,22 @@ function MermaidDiagram({ code }: { code: string }) {
       )}
 
       <div
-        className="my-6 rounded-xl overflow-hidden border border-[#21262d] bg-[#0d1117] group cursor-zoom-in"
+        className="group my-6 cursor-zoom-in overflow-hidden rounded-xl border border-[#21262d] bg-[#0d1117]"
         onClick={() => !loading && svg && setOpen(true)}
         title="Click to expand"
       >
         {/* titlebar */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-[#21262d] bg-[#161b22]">
+        <div className="flex items-center justify-between border-b border-[#21262d] bg-[#161b22] px-4 py-2">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#f85149]/80" />
-            <span className="w-2.5 h-2.5 rounded-full bg-[#3fb950]/80" />
-            <span className="w-2.5 h-2.5 rounded-full bg-[#d29922]/80" />
-            <span className="ml-2 text-[11px] text-[#8b949e] font-mono tracking-wide">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#f85149]/80" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#3fb950]/80" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#d29922]/80" />
+            <span className="ml-2 font-mono text-[11px] tracking-wide text-[#8b949e]">
               diagram
             </span>
           </div>
           {!loading && svg && (
-            <span className="text-[10px] text-[#8b949e] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+            <span className="flex items-center gap-1 text-[10px] text-[#8b949e] opacity-0 transition-opacity group-hover:opacity-100">
               <svg
                 width="11"
                 height="11"
@@ -499,13 +499,13 @@ function MermaidDiagram({ code }: { code: string }) {
 
         {/* content */}
         {loading ? (
-          <div className="flex items-center justify-center py-16 gap-2 text-[#8b949e] text-sm">
-            <div className="w-4 h-4 border-2 border-[#30363d] border-t-[#3d7a65] rounded-full animate-spin" />
+          <div className="flex items-center justify-center gap-2 py-16 text-sm text-[#8b949e]">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#30363d] border-t-[#3d7a65]" />
             Rendering diagram…
           </div>
         ) : (
           <div
-            className="p-5 overflow-hidden [&_svg]:max-w-full [&_svg]:h-auto pointer-events-none"
+            className="pointer-events-none overflow-hidden p-5 [&_svg]:h-auto [&_svg]:max-w-full"
             dangerouslySetInnerHTML={{ __html: svg }}
           />
         )}
@@ -532,7 +532,7 @@ function Badge({
   }
   return (
     <span
-      className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full ${map[color]}`}
+      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${map[color]}`}
     >
       {label}
     </span>
@@ -554,9 +554,9 @@ function Note({
   const icon = { info: "💡", warning: "⚠️", danger: "🔴" }
   return (
     <div
-      className={`flex gap-3 border-l-[3px] ${map[type]} rounded-r-lg px-4 py-3 mb-5 text-sm`}
+      className={`flex gap-3 border-l-[3px] ${map[type]} mb-5 rounded-r-lg px-4 py-3 text-sm`}
     >
-      <span className="shrink-0 mt-0.5">{icon[type]}</span>
+      <span className="mt-0.5 shrink-0">{icon[type]}</span>
       <div>{children}</div>
     </div>
   )
@@ -565,16 +565,16 @@ function Note({
 function CodeBlock({ code, lang = "bash" }: { code: string; lang?: string }) {
   const [copied, setCopied] = useState(false)
   return (
-    <div className="rounded-xl overflow-hidden border border-[#21262d] mb-5 text-sm">
-      <div className="flex items-center justify-between bg-[#161b22] px-4 py-2 border-b border-[#21262d]">
-        <span className="text-[11px] text-[#8b949e] font-mono">{lang}</span>
+    <div className="mb-5 overflow-hidden rounded-xl border border-[#21262d] text-sm">
+      <div className="flex items-center justify-between border-b border-[#21262d] bg-[#161b22] px-4 py-2">
+        <span className="font-mono text-[11px] text-[#8b949e]">{lang}</span>
         <button
           onClick={() => {
             navigator.clipboard.writeText(code)
             setCopied(true)
             setTimeout(() => setCopied(false), 2000)
           }}
-          className="flex items-center gap-1.5 text-[11px] text-[#8b949e] hover:text-white transition-colors"
+          className="flex items-center gap-1.5 text-[11px] text-[#8b949e] transition-colors hover:text-white"
         >
           {copied ? (
             <Check size={12} className="text-emerald-400" />
@@ -584,7 +584,7 @@ function CodeBlock({ code, lang = "bash" }: { code: string; lang?: string }) {
           {copied ? "Copied!" : "Copy"}
         </button>
       </div>
-      <pre className="bg-[#0d1117] text-[#e6edf3] p-4 overflow-x-auto leading-relaxed whitespace-pre font-mono text-[13px]">
+      <pre className="overflow-x-auto bg-[#0d1117] p-4 font-mono text-[13px] leading-relaxed whitespace-pre text-[#e6edf3]">
         {code}
       </pre>
     </div>
@@ -599,14 +599,14 @@ function InfoTable({
   rows: (string | React.ReactNode)[][]
 }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-gray-200 mb-6 text-sm">
+    <div className="mb-6 overflow-x-auto rounded-xl border border-gray-200 text-sm">
       <table className="w-full">
         <thead>
           <tr className="bg-[#2c5f4f]">
             {headers.map((h, i) => (
               <th
                 key={i}
-                className="px-4 py-3 text-left text-white font-semibold text-xs uppercase tracking-wider"
+                className="px-4 py-3 text-left text-xs font-semibold tracking-wider text-white uppercase"
               >
                 {h}
               </th>
@@ -639,7 +639,7 @@ function SectionHeading({
   return (
     <h2
       id={id}
-      className="text-2xl font-bold text-gray-900 mt-2 mb-3 scroll-mt-24"
+      className="mt-2 mb-3 scroll-mt-24 text-2xl font-bold text-gray-900"
     >
       {children}
     </h2>
@@ -656,16 +656,16 @@ function SubHeading({
   return (
     <h3
       id={id}
-      className="flex items-center gap-2 text-lg font-semibold text-gray-800 mt-10 mb-3 scroll-mt-24"
+      className="mt-10 mb-3 flex scroll-mt-24 items-center gap-2 text-lg font-semibold text-gray-800"
     >
-      <span className="block w-1 h-5 rounded-full bg-[#2c5f4f] shrink-0" />
+      <span className="block h-5 w-1 shrink-0 rounded-full bg-[#2c5f4f]" />
       {children}
     </h3>
   )
 }
 
 function Divider() {
-  return <hr className="border-gray-100 my-10" />
+  return <hr className="my-10 border-gray-100" />
 }
 
 function Pill({
@@ -683,7 +683,7 @@ function Pill({
   }
   return (
     <span
-      className={`text-xs font-mono px-1.5 py-0.5 rounded ${map[color] ?? map.gray}`}
+      className={`rounded px-1.5 py-0.5 font-mono text-xs ${map[color] ?? map.gray}`}
     >
       {children}
     </span>
@@ -701,7 +701,7 @@ function SectionTag({
 }) {
   return (
     <div
-      className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full mb-3 ${color}`}
+      className={`mb-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${color}`}
     >
       {icon}
       {children}
@@ -1023,26 +1023,26 @@ export default function Docs() {
     : NAV
 
   const SidebarContent = (
-    <nav className="h-full flex flex-col bg-white border-r border-gray-200">
-      <div className="px-5 py-5 border-b border-gray-100">
+    <nav className="flex h-full flex-col border-r border-gray-200 bg-white">
+      <div className="border-b border-gray-100 px-5 py-5">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-[#2c5f4f] flex items-center justify-center shrink-0">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#2c5f4f]">
             <BookOpen size={14} className="text-white" />
           </div>
           <div>
-            <div className="text-sm font-bold text-gray-900 leading-tight">
+            <div className="text-sm leading-tight font-bold text-gray-900">
               AF Home
             </div>
-            <div className="text-[10px] text-gray-400 uppercase tracking-widest">
+            <div className="text-[10px] tracking-widest text-gray-400 uppercase">
               Documentation
             </div>
           </div>
         </div>
       </div>
 
-      <div className="px-3 py-3 border-b border-gray-100">
-        <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
-          <Search size={13} className="text-gray-400 shrink-0" />
+      <div className="border-b border-gray-100 px-3 py-3">
+        <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+          <Search size={13} className="shrink-0 text-gray-400" />
           <input
             type="text"
             placeholder="Search…"
@@ -1058,7 +1058,7 @@ export default function Docs() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto py-3 px-2">
+      <div className="flex-1 overflow-y-auto px-2 py-3">
         {filteredNav.map((item) => {
           const Icon = item.icon
           const isOpen = !!openSections[item.id]
@@ -1072,19 +1072,19 @@ export default function Docs() {
                   scrollTo(item.id)
                   setActiveSection(item.id)
                 }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all ${isActive ? "bg-[#f0f7f4] text-[#2c5f4f] font-semibold" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"}`}
+                className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-all ${isActive ? "bg-[#f0f7f4] font-semibold text-[#2c5f4f]" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"}`}
               >
                 <Icon size={15} className="shrink-0" />
                 <span className="flex-1 text-left">{item.label}</span>
                 {hasSubs && (
                   <ChevronDown
                     size={13}
-                    className={`transition-transform text-gray-400 ${isOpen ? "rotate-180" : ""}`}
+                    className={`text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
                   />
                 )}
               </button>
               {hasSubs && isOpen && (
-                <div className="ml-7 mt-0.5 space-y-0.5">
+                <div className="mt-0.5 ml-7 space-y-0.5">
                   {item.sub!.map((sub) => (
                     <button
                       key={sub.id}
@@ -1092,7 +1092,7 @@ export default function Docs() {
                         scrollTo(sub.id)
                         setActiveSection(item.id)
                       }}
-                      className={`w-full text-left px-3 py-1.5 rounded-md text-xs transition-all ${activeId === sub.id ? "text-[#2c5f4f] font-semibold bg-[#f0f7f4]" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50"}`}
+                      className={`w-full rounded-md px-3 py-1.5 text-left text-xs transition-all ${activeId === sub.id ? "bg-[#f0f7f4] font-semibold text-[#2c5f4f]" : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"}`}
                     >
                       {sub.label}
                     </button>
@@ -1104,10 +1104,10 @@ export default function Docs() {
         })}
       </div>
 
-      <div className="px-4 py-3 border-t border-gray-100">
+      <div className="border-t border-gray-100 px-4 py-3">
         <button
           onClick={() => window.print()}
-          className="w-full flex items-center justify-center gap-2 text-xs text-gray-500 hover:text-gray-800 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+          className="flex w-full items-center justify-center gap-2 rounded-lg py-2 text-xs text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-800"
         >
           <Download size={13} />
           Export as PDF
@@ -1117,9 +1117,9 @@ export default function Docs() {
   )
 
   return (
-    <div className="docs-root flex h-screen bg-white overflow-hidden">
+    <div className="docs-root flex h-screen overflow-hidden bg-white">
       <style>{PRINT_CSS}</style>
-      <div className="docs-print-hide hidden lg:block w-64 shrink-0 h-full">
+      <div className="docs-print-hide hidden h-full w-64 shrink-0 lg:block">
         {SidebarContent}
       </div>
 
@@ -1138,7 +1138,7 @@ export default function Docs() {
               animate={{ x: 0 }}
               exit={{ x: -280 }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed left-0 top-0 bottom-0 z-50 w-72 lg:hidden"
+              className="fixed top-0 bottom-0 left-0 z-50 w-72 lg:hidden"
             >
               {SidebarContent}
             </motion.div>
@@ -1146,8 +1146,8 @@ export default function Docs() {
         )}
       </AnimatePresence>
 
-      <div className="docs-scroll flex-1 h-full overflow-y-auto">
-        <div className="docs-print-hide lg:hidden sticky top-0 z-30 bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3">
+      <div className="docs-scroll h-full flex-1 overflow-y-auto">
+        <div className="docs-print-hide sticky top-0 z-30 flex items-center gap-3 border-b border-gray-200 bg-white px-4 py-3 lg:hidden">
           <button onClick={() => setMobileOpen(true)} className="text-gray-500">
             <Menu size={20} />
           </button>
@@ -1156,7 +1156,7 @@ export default function Docs() {
           </span>
         </div>
 
-        <div className="docs-content max-w-3xl mx-auto px-6 py-10 pb-24 space-y-0">
+        <div className="docs-content mx-auto max-w-3xl space-y-0 px-6 py-10 pb-24">
           {/* ── Project Overview ─────────────────────────────────── */}
           <section id="overview" data-section>
             <SectionTag
@@ -1166,7 +1166,7 @@ export default function Docs() {
               System Overview
             </SectionTag>
             <SectionHeading>Project Overview</SectionHeading>
-            <p className="text-gray-600 text-[15px] leading-relaxed mb-6">
+            <p className="mb-6 text-[15px] leading-relaxed text-gray-600">
               AF Home (Apsara Furniture Home) is a full-stack e-commerce and
               membership platform for furniture and home products, serving
               public shoppers, registered members, admin operators, suppliers,
@@ -1340,7 +1340,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
               Architecture
             </SectionTag>
             <SectionHeading>Architecture</SectionHeading>
-            <p className="text-gray-600 text-[15px] leading-relaxed mb-6">
+            <p className="mb-6 text-[15px] leading-relaxed text-gray-600">
               Diagram-first reference. Use this as a quick map before editing
               any bounded area. Each section shows the visual diagram with key
               points.
@@ -1349,7 +1349,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
 
           <section id="arch-system" data-section className="pt-2">
             <SubHeading id="arch-system">System Shape</SubHeading>
-            <p className="text-sm text-gray-600 mb-1">
+            <p className="mb-1 text-sm text-gray-600">
               The browser communicates only with Next.js. Authenticated API
               calls go through RTK Query → NextAuth → Laravel. The browser never
               calls Laravel directly for protected resources.
@@ -1359,7 +1359,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
 
           <section id="arch-bounded" data-section className="pt-2">
             <SubHeading id="arch-bounded">Bounded Areas</SubHeading>
-            <p className="text-sm text-gray-600 mb-1">
+            <p className="mb-1 text-sm text-gray-600">
               Nine logical areas, each with its own frontend routes, RTK Query
               endpoints, Laravel controllers, services, and models.
             </p>
@@ -1368,7 +1368,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
 
           <section id="arch-frontend" data-section className="pt-2">
             <SubHeading id="arch-frontend">Frontend Architecture</SubHeading>
-            <p className="text-sm text-gray-600 mb-1">
+            <p className="mb-1 text-sm text-gray-600">
               <Pill>app/</Pill> contains route segments; everything else
               supports routes through shared UI, state, helpers, and types.
             </p>
@@ -1377,7 +1377,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
 
           <section id="arch-providers" data-section className="pt-2">
             <SubHeading id="arch-providers">Provider Stack</SubHeading>
-            <p className="text-sm text-gray-600 mb-1">
+            <p className="mb-1 text-sm text-gray-600">
               <Pill>components/Providers.tsx</Pill> wraps the entire
               application. Session, Redux, cart, wishlist, drawers, and toast
               are always available — do not re-mount them inside features.
@@ -1387,7 +1387,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
 
           <section id="arch-api" data-section className="pt-2">
             <SubHeading id="arch-api">API Request Flow</SubHeading>
-            <p className="text-sm text-gray-600 mb-1">
+            <p className="mb-1 text-sm text-gray-600">
               Complete sequence from user interaction to database and back.
               Bearer tokens come from HTTP-only NextAuth cookies — never from
               localStorage.
@@ -1397,7 +1397,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
 
           <section id="arch-session" data-section className="pt-2">
             <SubHeading id="arch-session">Session Route Selection</SubHeading>
-            <p className="text-sm text-gray-600 mb-1">
+            <p className="mb-1 text-sm text-gray-600">
               RTK Query&apos;s <Pill>baseApi</Pill> inspects the current URL
               prefix to pick the correct NextAuth session — one API client
               serves all four actor types.
@@ -1428,7 +1428,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
 
           <section id="arch-auth" data-section className="pt-2">
             <SubHeading id="arch-auth">Auth Architecture</SubHeading>
-            <p className="text-sm text-gray-600 mb-1">
+            <p className="mb-1 text-sm text-gray-600">
               Four separate NextAuth configurations manage four actor types.
               Partners use the admin model — <Pill>partner.actor</Pill>{" "}
               middleware differentiates them from full admins.
@@ -1438,7 +1438,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
 
           <section id="arch-backend" data-section className="pt-2">
             <SubHeading id="arch-backend">Backend Architecture</SubHeading>
-            <p className="text-sm text-gray-600 mb-1">
+            <p className="mb-1 text-sm text-gray-600">
               Strict layered flow: routes → middleware → controllers → services
               → models. Controllers stay thin; domain logic lives in services.
             </p>
@@ -1447,7 +1447,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
 
           <section id="arch-db" data-section className="pt-2">
             <SubHeading id="arch-db">Database Groups</SubHeading>
-            <p className="text-sm text-gray-600 mb-1">
+            <p className="mb-1 text-sm text-gray-600">
               Mixes standard Laravel infrastructure tables with legacy{" "}
               <Pill>tbl_*</Pill> domain tables. Do not rename legacy tables
               without a full migration + model + contract update plan.
@@ -1514,7 +1514,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
 
           <section id="arch-scale" data-section className="pt-2">
             <SubHeading id="arch-scale">Scalability Direction</SubHeading>
-            <p className="text-sm text-gray-600 mb-1">
+            <p className="mb-1 text-sm text-gray-600">
               The current architecture is a modular monolith. Scaling should
               happen progressively — consolidate RTK Query first, then domain
               structure, then extract services only when needed.
@@ -1598,26 +1598,26 @@ composer dev        # Full dev: server + queue + logs + Vite`}
               API Reference
             </SectionTag>
             <SectionHeading>API Endpoints</SectionHeading>
-            <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+            <p className="mb-4 text-sm leading-relaxed text-gray-600">
               All routes live in{" "}
-              <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[13px]">
+              <code className="rounded bg-gray-100 px-1 py-0.5 text-[13px] text-gray-800">
                 apps/apsara-home-backend/routes/api.php
               </code>{" "}
               and are served under the{" "}
-              <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[13px]">
+              <code className="rounded bg-gray-100 px-1 py-0.5 text-[13px] text-gray-800">
                 /api
               </code>{" "}
               prefix on the Laravel app (
-              <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[13px]">
+              <code className="rounded bg-gray-100 px-1 py-0.5 text-[13px] text-gray-800">
                 LARAVEL_API_URL
               </code>
               , e.g.{" "}
-              <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[13px]">
+              <code className="rounded bg-gray-100 px-1 py-0.5 text-[13px] text-gray-800">
                 http://localhost:8000
               </code>
               ). Protected endpoints use a Sanctum bearer token. Paths below
               omit the{" "}
-              <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[13px]">
+              <code className="rounded bg-gray-100 px-1 py-0.5 text-[13px] text-gray-800">
                 /api
               </code>{" "}
               prefix; · separates related routes.
@@ -1978,7 +1978,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
             />
             <Note type="info">
               Supplier voucher eligibility is managed through{" "}
-              <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[12px]">
+              <code className="rounded bg-gray-100 px-1 py-0.5 text-[12px] text-gray-800">
                 GET/PUT /supplier/payments/voucher-product-rules
               </code>
               . Supplier accounts only see products assigned to their supplier;
@@ -2149,21 +2149,21 @@ composer dev        # Full dev: server + queue + logs + Vite`}
 
           <section id="api-fields" data-section className="pt-2">
             <SubHeading id="api-fields">Request Fields &amp; Types</SubHeading>
-            <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+            <p className="mb-4 text-sm leading-relaxed text-gray-600">
               Request body fields for the main write endpoints, taken verbatim
               from each controller&apos;s
-              <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[13px]">
+              <code className="rounded bg-gray-100 px-1 py-0.5 text-[13px] text-gray-800">
                 $request-&gt;validate()
               </code>{" "}
               rules. &quot;Req&quot; = required. Password rules marked
               &quot;strict&quot; only apply when the
-              <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[13px]">
+              <code className="rounded bg-gray-100 px-1 py-0.5 text-[13px] text-gray-800">
                 strict_password_policy
               </code>{" "}
               setting is on.
             </p>
 
-            <div className="text-sm font-semibold text-gray-800 mt-6 mb-2 font-mono">
+            <div className="mt-6 mb-2 font-mono text-sm font-semibold text-gray-800">
               POST /auth/register
             </div>
             <InfoTable
@@ -2193,7 +2193,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
               ]}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">
+            <div className="mt-7 mb-2 font-mono text-sm font-semibold text-gray-800">
               POST /auth/login
             </div>
             <InfoTable
@@ -2206,7 +2206,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
               ]}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">
+            <div className="mt-7 mb-2 font-mono text-sm font-semibold text-gray-800">
               POST /auth/register/verify-otp · /username-change/submit
             </div>
             <InfoTable
@@ -2217,7 +2217,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
               ]}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">
+            <div className="mt-7 mb-2 font-mono text-sm font-semibold text-gray-800">
               POST /auth/forgot-password · /auth/reset-password
             </div>
             <InfoTable
@@ -2238,7 +2238,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
               ]}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">
+            <div className="mt-7 mb-2 font-mono text-sm font-semibold text-gray-800">
               POST /auth/change-password
             </div>
             <InfoTable
@@ -2257,7 +2257,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
               ]}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">
+            <div className="mt-7 mb-2 font-mono text-sm font-semibold text-gray-800">
               PUT /auth/me
             </div>
             <InfoTable
@@ -2276,7 +2276,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
               ]}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">
+            <div className="mt-7 mb-2 font-mono text-sm font-semibold text-gray-800">
               POST /cart/add · PUT /cart/&#123;id&#125;
             </div>
             <InfoTable
@@ -2294,7 +2294,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
               ]}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">
+            <div className="mt-7 mb-2 font-mono text-sm font-semibold text-gray-800">
               POST /payments/checkout-session
             </div>
             <InfoTable
@@ -2327,7 +2327,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
               ]}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">
+            <div className="mt-7 mb-2 font-mono text-sm font-semibold text-gray-800">
               POST /payments/validate-voucher
             </div>
             <InfoTable
@@ -2339,7 +2339,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
               ]}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">
+            <div className="mt-7 mb-2 font-mono text-sm font-semibold text-gray-800">
               POST /payments/validate-cashback · /payments/validate-egc
             </div>
             <InfoTable
@@ -2351,7 +2351,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
               ]}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">
+            <div className="mt-7 mb-2 font-mono text-sm font-semibold text-gray-800">
               POST /orders/&#123;id&#125;/refund · PATCH
               /admin/orders/&#123;id&#125;/status
             </div>
@@ -2373,7 +2373,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
               ]}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">
+            <div className="mt-7 mb-2 font-mono text-sm font-semibold text-gray-800">
               POST /encashment/requests · /payout-methods
             </div>
             <InfoTable
@@ -2402,7 +2402,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
               ]}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">
+            <div className="mt-7 mb-2 font-mono text-sm font-semibold text-gray-800">
               POST /encashment/verification-request
             </div>
             <InfoTable
@@ -2425,7 +2425,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
               ]}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">
+            <div className="mt-7 mb-2 font-mono text-sm font-semibold text-gray-800">
               POST /auth/addresses
             </div>
             <InfoTable
@@ -2444,7 +2444,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
               ]}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">
+            <div className="mt-7 mb-2 font-mono text-sm font-semibold text-gray-800">
               POST /admin/products · PUT /admin/products/&#123;id&#125;
             </div>
             <InfoTable
@@ -2487,27 +2487,27 @@ composer dev        # Full dev: server + queue + logs + Vite`}
                 ],
               ]}
             />
-            <p className="text-xs text-gray-500 -mt-3 mb-6">
+            <p className="-mt-3 mb-6 text-xs text-gray-500">
               PUT (update) is identical, except{" "}
-              <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[12px]">
+              <code className="rounded bg-gray-100 px-1 py-0.5 text-[12px] text-gray-800">
                 pd_name
               </code>
               ,{" "}
-              <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[12px]">
+              <code className="rounded bg-gray-100 px-1 py-0.5 text-[12px] text-gray-800">
                 pd_catid
               </code>
               ,{" "}
-              <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[12px]">
+              <code className="rounded bg-gray-100 px-1 py-0.5 text-[12px] text-gray-800">
                 pd_price_srp
               </code>{" "}
               become{" "}
-              <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[12px]">
+              <code className="rounded bg-gray-100 px-1 py-0.5 text-[12px] text-gray-800">
                 sometimes|required
               </code>
               .
             </p>
 
-            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">
+            <div className="mt-7 mb-2 font-mono text-sm font-semibold text-gray-800">
               POST /admin/member-tiers · /admin/shipping/rates
             </div>
             <InfoTable
@@ -2535,7 +2535,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
               ]}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">
+            <div className="mt-7 mb-2 font-mono text-sm font-semibold text-gray-800">
               PATCH /supplier/products/zq/pricing/&#123;externalId&#125;
             </div>
             <InfoTable
@@ -2548,7 +2548,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
               ]}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">
+            <div className="mt-7 mb-2 font-mono text-sm font-semibold text-gray-800">
               POST /webstore-requests
             </div>
             <InfoTable
@@ -2571,7 +2571,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
               ]}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-7 mb-2 font-mono">
+            <div className="mt-7 mb-2 font-mono text-sm font-semibold text-gray-800">
               POST /interior-requests
             </div>
             <InfoTable
@@ -2600,33 +2600,33 @@ composer dev        # Full dev: server + queue + logs + Vite`}
             <SubHeading id="api-responses">
               Query Params &amp; 200 Responses
             </SubHeading>
-            <p className="text-sm text-gray-600 mb-5 leading-relaxed">
+            <p className="mb-5 text-sm leading-relaxed text-gray-600">
               Query parameters and the JSON returned on a{" "}
-              <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[13px]">
+              <code className="rounded bg-gray-100 px-1 py-0.5 text-[13px] text-gray-800">
                 200
               </code>{" "}
               (or
-              <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[13px]">
+              <code className="rounded bg-gray-100 px-1 py-0.5 text-[13px] text-gray-800">
                 201
               </code>
               ) success, read straight from the controllers.
               <span className="font-semibold"> Bold</span> query params are
               required; the rest are optional. List endpoints that paginate
               return a
-              <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[13px]">
+              <code className="rounded bg-gray-100 px-1 py-0.5 text-[13px] text-gray-800">
                 meta
               </code>{" "}
               object (
-              <code className="px-1 py-0.5 rounded bg-gray-100 text-gray-800 text-[12px]">
+              <code className="rounded bg-gray-100 px-1 py-0.5 text-[12px] text-gray-800">
                 current_page, last_page, per_page, total, from, to
               </code>
               ).
             </p>
 
-            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">
+            <div className="mt-6 mb-1 font-mono text-sm font-semibold text-gray-800">
               GET /products · GET /admin/products
             </div>
-            <p className="text-xs text-gray-500 mb-1.5">
+            <p className="mb-1.5 text-xs text-gray-500">
               <span className="font-semibold text-gray-700">Query:</span>{" "}
               per_page (default 25, &quot;all&quot; = unlimited) · q · status ·
               cat_id · room_type · brand_type · supplier_id (admins only) · sort
@@ -2647,7 +2647,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
 }`}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">
+            <div className="mt-6 mb-1 font-mono text-sm font-semibold text-gray-800">
               GET /products/&#123;id&#125; · /products/slug/&#123;slug&#125;
             </div>
             <CodeBlock
@@ -2663,10 +2663,10 @@ composer dev        # Full dev: server + queue + logs + Vite`}
 // 404 -> { message }   if not found / not visible`}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">
+            <div className="mt-6 mb-1 font-mono text-sm font-semibold text-gray-800">
               GET /products/cards
             </div>
-            <p className="text-xs text-gray-500 mb-1.5">
+            <p className="mb-1.5 text-xs text-gray-500">
               <span className="font-semibold text-gray-700">Query:</span>{" "}
               per_page · q · cat_id · room_type · brand_type · include_all
               (bool, default false)
@@ -2685,10 +2685,10 @@ composer dev        # Full dev: server + queue + logs + Vite`}
 }`}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">
+            <div className="mt-6 mb-1 font-mono text-sm font-semibold text-gray-800">
               GET /categories · /rooms · /product-brands
             </div>
-            <p className="text-xs text-gray-500 mb-1.5">
+            <p className="mb-1.5 text-xs text-gray-500">
               <span className="font-semibold text-gray-700">Query:</span> q
               (categories &amp; brands) · supplier_id, used_only (categories)
             </p>
@@ -2709,10 +2709,10 @@ composer dev        # Full dev: server + queue + logs + Vite`}
 { brands: [ { id, name, image, status } ], total }`}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">
+            <div className="mt-6 mb-1 font-mono text-sm font-semibold text-gray-800">
               GET /search · /search/live (auth)
             </div>
-            <p className="text-xs text-gray-500 mb-1.5">
+            <p className="mb-1.5 text-xs text-gray-500">
               <span className="font-semibold text-gray-700">Query:</span>{" "}
               <span className="font-semibold">q (required, 1–255)</span> · page
               · limit (1–50, def 20) · category · brand · min_price · max_price
@@ -2738,7 +2738,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
 }`}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">
+            <div className="mt-6 mb-1 font-mono text-sm font-semibold text-gray-800">
               GET /cart · /wishlist (auth)
             </div>
             <CodeBlock
@@ -2764,7 +2764,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
 }`}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">
+            <div className="mt-6 mb-1 font-mono text-sm font-semibold text-gray-800">
               POST /cart/add · /payments/checkout-session ·
               /payments/validate-voucher
             </div>
@@ -2789,10 +2789,10 @@ composer dev        # Full dev: server + queue + logs + Vite`}
 // 422 { message }   if invalid`}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">
+            <div className="mt-6 mb-1 font-mono text-sm font-semibold text-gray-800">
               GET /payments/checkout-session/&#123;checkoutId&#125;
             </div>
-            <p className="text-xs text-gray-500 mb-1.5">
+            <p className="mb-1.5 text-xs text-gray-500">
               <span className="font-semibold text-gray-700">Query:</span>{" "}
               payment_mode (test | live, optional)
             </p>
@@ -2808,7 +2808,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
 }`}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">
+            <div className="mt-6 mb-1 font-mono text-sm font-semibold text-gray-800">
               GET /orders/history · /orders/counts (auth)
             </div>
             <CodeBlock
@@ -2839,10 +2839,10 @@ composer dev        # Full dev: server + queue + logs + Vite`}
 }`}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">
+            <div className="mt-6 mb-1 font-mono text-sm font-semibold text-gray-800">
               GET /orders/track (public)
             </div>
-            <p className="text-xs text-gray-500 mb-1.5">
+            <p className="mb-1.5 text-xs text-gray-500">
               <span className="font-semibold text-gray-700">Query:</span>{" "}
               <span className="font-semibold">order_number (required)</span> ·{" "}
               <span className="font-semibold">
@@ -2863,10 +2863,10 @@ composer dev        # Full dev: server + queue + logs + Vite`}
 // 404 { message }   on no match`}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">
+            <div className="mt-6 mb-1 font-mono text-sm font-semibold text-gray-800">
               GET /admin/orders
             </div>
-            <p className="text-xs text-gray-500 mb-1.5">
+            <p className="mb-1.5 text-xs text-gray-500">
               <span className="font-semibold text-gray-700">Query:</span> filter
               (default all) · q · page · per_page (1–100, def 20)
             </p>
@@ -2887,7 +2887,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
 }`}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">
+            <div className="mt-6 mb-1 font-mono text-sm font-semibold text-gray-800">
               GET /account/snapshot · /referral-tree (auth)
             </div>
             <CodeBlock
@@ -2919,10 +2919,10 @@ composer dev        # Full dev: server + queue + logs + Vite`}
 }`}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">
+            <div className="mt-6 mb-1 font-mono text-sm font-semibold text-gray-800">
               GET /encashment/wallet · /encashment/requests (auth)
             </div>
-            <p className="text-xs text-gray-500 mb-1.5">
+            <p className="mb-1.5 text-xs text-gray-500">
               <span className="font-semibold text-gray-700">
                 Query (wallet):
               </span>{" "}
@@ -2961,10 +2961,10 @@ composer dev        # Full dev: server + queue + logs + Vite`}
 201 { message, request: { ... }, eligibility, policy }`}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">
+            <div className="mt-6 mb-1 font-mono text-sm font-semibold text-gray-800">
               GET /admin/encashment · /admin/members
             </div>
-            <p className="text-xs text-gray-500 mb-1.5">
+            <p className="mb-1.5 text-xs text-gray-500">
               <span className="font-semibold text-gray-700">
                 Query (encashment):
               </span>{" "}
@@ -2994,10 +2994,10 @@ composer dev        # Full dev: server + queue + logs + Vite`}
 }`}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">
+            <div className="mt-6 mb-1 font-mono text-sm font-semibold text-gray-800">
               GET /address/* · /auth/addresses
             </div>
-            <p className="text-xs text-gray-500 mb-1.5">
+            <p className="mb-1.5 text-xs text-gray-500">
               <span className="font-semibold text-gray-700">Query:</span>{" "}
               provinces ← region_code · cities ← province_code | region_code ·
               barangays ← city_code (all optional)
@@ -3027,7 +3027,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
 }`}
             />
 
-            <div className="text-sm font-semibold text-gray-800 mt-6 mb-1 font-mono">
+            <div className="mt-6 mb-1 font-mono text-sm font-semibold text-gray-800">
               POST /auth/login · /auth/register · GET /auth/me
             </div>
             <CodeBlock
@@ -3066,7 +3066,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
               Code Standards
             </SectionTag>
             <SectionHeading>Code Standards</SectionHeading>
-            <ul className="space-y-2 text-sm text-gray-700 mb-6">
+            <ul className="mb-6 space-y-2 text-sm text-gray-700">
               {[
                 "Base all changes on the existing Next.js / Laravel split — no shared modules.",
                 "Prefer small, domain-scoped changes over broad rewrites.",
@@ -3077,7 +3077,7 @@ composer dev        # Full dev: server + queue + logs + Vite`}
                 "Default to writing no comments — only comment when the WHY is non-obvious.",
               ].map((t, i) => (
                 <li key={i} className="flex gap-2">
-                  <span className="text-[#2c5f4f] font-bold">→</span>
+                  <span className="font-bold text-[#2c5f4f]">→</span>
                   {t}
                 </li>
               ))}
@@ -3197,7 +3197,7 @@ headers: {
                 "Upload endpoints — file type, size, role validation",
               ].map((t, i) => (
                 <li key={i} className="flex gap-2">
-                  <span className="text-[#2c5f4f] font-bold">→</span>
+                  <span className="font-bold text-[#2c5f4f]">→</span>
                   {t}
                 </li>
               ))}
@@ -3623,7 +3623,7 @@ tests/
               AI Workflow Rules
             </SectionTag>
             <SectionHeading>AI Workflow Rules</SectionHeading>
-            <p className="text-gray-600 text-[15px] leading-relaxed mb-4">
+            <p className="mb-4 text-[15px] leading-relaxed text-gray-600">
               Rules for AI-assisted development on this codebase. These apply to
               any AI tool (Claude, Cursor, Copilot, etc.) generating or
               modifying code here.
@@ -3643,7 +3643,7 @@ tests/
                 "Distinguish observed vs. recommended — label recommendations clearly.",
               ].map((r, i) => (
                 <li key={i} className="flex gap-2">
-                  <span className="text-[#2c5f4f] font-bold shrink-0">→</span>
+                  <span className="shrink-0 font-bold text-[#2c5f4f]">→</span>
                   {r}
                 </li>
               ))}
@@ -3662,7 +3662,7 @@ tests/
                 "TypeScript strict mode is enabled — do not use any unless documented.",
               ].map((r, i) => (
                 <li key={i} className="flex gap-2">
-                  <span className="text-[#2c5f4f] font-bold shrink-0">→</span>
+                  <span className="shrink-0 font-bold text-[#2c5f4f]">→</span>
                   {r}
                 </li>
               ))}
@@ -3680,7 +3680,7 @@ tests/
                 "Add indexes for all new foreign keys and columns used in WHERE or ORDER BY clauses.",
               ].map((r, i) => (
                 <li key={i} className="flex gap-2">
-                  <span className="text-[#2c5f4f] font-bold shrink-0">→</span>
+                  <span className="shrink-0 font-bold text-[#2c5f4f]">→</span>
                   {r}
                 </li>
               ))}
@@ -3702,7 +3702,7 @@ tests/
                 "Generated documentation must use env var names (e.g. OPENAI_API_KEY) — never real values.",
               ].map((r, i) => (
                 <li key={i} className="flex gap-2">
-                  <span className="text-[#2c5f4f] font-bold shrink-0">→</span>
+                  <span className="shrink-0 font-bold text-[#2c5f4f]">→</span>
                   {r}
                 </li>
               ))}

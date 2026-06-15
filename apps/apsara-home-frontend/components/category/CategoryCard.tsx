@@ -30,7 +30,7 @@ const CategoryCard = ({ name, count, image, index = 0 }: CategoryCardProps) => {
         className="group relative cursor-pointer overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:border-indigo-200 hover:bg-slate-50"
       >
         {/* Top media */}
-        <div className="relative h-40 md:h-52 bg-gradient-to-b from-slate-50 to-white dark:from-slate-900/40 dark:to-slate-900">
+        <div className="relative h-40 bg-gradient-to-b from-slate-50 to-white md:h-52 dark:from-slate-900/40 dark:to-slate-900">
           <Image
             src={image}
             alt={name}
@@ -43,7 +43,7 @@ const CategoryCard = ({ name, count, image, index = 0 }: CategoryCardProps) => {
         <div className="p-4 md:p-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h3 className="truncate text-sm md:text-base font-semibold text-slate-900 dark:text-slate-100">
+              <h3 className="truncate text-sm font-semibold text-slate-900 md:text-base dark:text-slate-100">
                 {name}
               </h3>
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">

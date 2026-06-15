@@ -1,11 +1,12 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { useGetPublicSecuritySettingsQuery } from "@/store/api/adminSettingsApi"
+import { useChangePasswordMutation } from "@/store/api/userApi"
 import { signOut, useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { useChangePasswordMutation } from "@/store/api/userApi"
+
 import Loading from "@/components/Loading"
-import { useGetPublicSecuritySettingsQuery } from "@/store/api/adminSettingsApi"
 
 function getPasswordChecks(password: string, strict: boolean) {
   if (!strict) {
@@ -44,12 +45,12 @@ function Field({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 pr-11 text-sm text-gray-900 placeholder:text-gray-400 outline-none transition focus:border-sky-400 focus:bg-white focus:ring-2 focus:ring-sky-400/25 dark:border-white/20 dark:bg-white/12 dark:text-white dark:placeholder:text-white/50 dark:focus:border-sky-400/70 dark:focus:bg-white/18"
+          className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 pr-11 text-sm text-gray-900 transition outline-none placeholder:text-gray-400 focus:border-sky-400 focus:bg-white focus:ring-2 focus:ring-sky-400/25 dark:border-white/20 dark:bg-white/12 dark:text-white dark:placeholder:text-white/50 dark:focus:border-sky-400/70 dark:focus:bg-white/18"
         />
         <button
           type="button"
           onClick={() => setShow((prev) => !prev)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-gray-400 transition-colors hover:text-gray-700 dark:text-white/60 dark:hover:text-white/85"
+          className="absolute top-1/2 right-3 -translate-y-1/2 text-xs font-semibold text-gray-400 transition-colors hover:text-gray-700 dark:text-white/60 dark:hover:text-white/85"
         >
           {show ? "Hide" : "Show"}
         </button>
@@ -127,7 +128,7 @@ export default function ForcedPasswordChangeForm() {
         set a new password first before entering the shop.
       </p>
 
-      <div className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium leading-6 text-amber-800 shadow-sm dark:border-amber-300/35 dark:bg-amber-400/10 dark:text-amber-100 dark:shadow-[0_0_30px_rgba(251,191,36,0.08)]">
+      <div className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 font-medium text-amber-800 shadow-sm dark:border-amber-300/35 dark:bg-amber-400/10 dark:text-amber-100 dark:shadow-[0_0_30px_rgba(251,191,36,0.08)]">
         Your old migrated password was accepted once. Create a new secure
         password to continue.
       </div>

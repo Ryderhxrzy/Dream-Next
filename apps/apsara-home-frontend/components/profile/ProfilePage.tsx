@@ -1,43 +1,6 @@
 ﻿"use client"
 
 import {
-  MeResponse,
-  ReferralTreeNode,
-  AccountSnapshot,
-  useChangePasswordMutation,
-  useMeQuery,
-  useAccountSnapshotQuery,
-  useReferralTreeQuery,
-  useUpdateProfileMutation,
-  useUploadAvatarMutation,
-  useDismissProfileRewardModalMutation,
-  useSendUsernameChangeOtpMutation,
-  useSubmitUsernameChangeRequestMutation,
-  useSubmitWebstoreRequestMutation,
-  useUploadWebstoreReceiptMutation,
-  useCreateWebstorePaymentSessionMutation,
-  useLazyVerifyWebstorePaymentSessionQuery,
-  useUsernameChangeLatestQuery,
-  useWebstoreRequestLatestQuery,
-  useWebstoreRequestHistoryQuery,
-  useSyncWebstorePartnerAccountMutation,
-  useMemberActivityQuery,
-  useMemberSessionsQuery,
-  useRevokeMemberSessionMutation,
-  useLinkedAccountsQuery,
-  useLinkGoogleAccountMutation,
-  useUnlinkGoogleAccountMutation,
-  useLinkFacebookAccountMutation,
-  useUnlinkFacebookAccountMutation,
-  LinkedAccount,
-  useSetupTotpMutation,
-  useEnableTotpMutation,
-  useDisableTotpMutation,
-  SetupTotpResponse,
-  WebstoreRequest,
-} from "@/store/api/userApi"
-import { signOut, useSession } from "next-auth/react"
-import {
   ChangeEvent,
   DragEvent,
   FormEvent,
@@ -47,33 +10,72 @@ import {
   useRef,
   useState,
 } from "react"
-import Loading from "../Loading"
-import { AnimatePresence, motion } from "framer-motion"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { MemberTier } from "@/types/members/types"
-import TopBar from "@/components/layout/TopBar"
-import Navbar from "@/components/layout/Navbar"
-import Footer from "@/components/landing-page/Footer"
-import { showErrorToast, showSuccessToast } from "@/libs/toast"
-import { extractPartnerSlugFromPath } from "@/libs/storefrontRouting"
-import { computeEndDateRaw } from "@/libs/webstoreExpiry"
-import { useGetPublicWebPageItemsQuery } from "@/store/api/webPagesApi"
+import { containsBlockedWord } from "@/libs/badWords"
 import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
-import Icon from "./Icons"
-import getPasswordStrength from "./GetPasswordStrength"
+import { getProfileCompletion } from "@/libs/profileCompletion"
+import { extractPartnerSlugFromPath } from "@/libs/storefrontRouting"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
+import { computeEndDateRaw } from "@/libs/webstoreExpiry"
+import {
+  AccountSnapshot,
+  LinkedAccount,
+  MeResponse,
+  ReferralTreeNode,
+  SetupTotpResponse,
+  useAccountSnapshotQuery,
+  useChangePasswordMutation,
+  useCreateWebstorePaymentSessionMutation,
+  useDisableTotpMutation,
+  useDismissProfileRewardModalMutation,
+  useEnableTotpMutation,
+  useLazyVerifyWebstorePaymentSessionQuery,
+  useLinkedAccountsQuery,
+  useLinkFacebookAccountMutation,
+  useLinkGoogleAccountMutation,
+  useMemberActivityQuery,
+  useMemberSessionsQuery,
+  useMeQuery,
+  useReferralTreeQuery,
+  useRevokeMemberSessionMutation,
+  useSendUsernameChangeOtpMutation,
+  useSetupTotpMutation,
+  useSubmitUsernameChangeRequestMutation,
+  useSubmitWebstoreRequestMutation,
+  useSyncWebstorePartnerAccountMutation,
+  useUnlinkFacebookAccountMutation,
+  useUnlinkGoogleAccountMutation,
+  useUpdateProfileMutation,
+  useUploadAvatarMutation,
+  useUploadWebstoreReceiptMutation,
+  useUsernameChangeLatestQuery,
+  useWebstoreRequestHistoryQuery,
+  useWebstoreRequestLatestQuery,
+  WebstoreRequest,
+} from "@/store/api/userApi"
+import { useGetPublicWebPageItemsQuery } from "@/store/api/webPagesApi"
+import { AnimatePresence, motion } from "framer-motion"
+import { signOut, useSession } from "next-auth/react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+
+import { MemberTier } from "@/types/members/types"
+import { usePhAddress } from "@/hooks/usePhAddress"
+import Footer from "@/components/landing-page/Footer"
+import Navbar from "@/components/layout/Navbar"
+import TopBar from "@/components/layout/TopBar"
+
+import Loading from "../Loading"
+import WebstoreLearnMore from "../WebstoreLearnMore"
+import AvatarCropModal from "./AvatarCropModal"
+import EncashmentTab from "./EncashmentTab"
 import fadeUp from "./FadeUp"
+import getActivityIcon from "./GetActivityIcon"
+import getPasswordStrength from "./GetPasswordStrength"
+import Icon from "./Icons"
+import InteriorRequestsTab from "./InteriorRequestsTab"
+import LevelsTab from "./LevelsTab"
 import PasswordInput from "./PasswordInput"
 import Toggle from "./Toggle"
-import getActivityIcon from "./GetActivityIcon"
-import EncashmentTab from "./EncashmentTab"
 import WalletTab from "./WalletTab"
-import InteriorRequestsTab from "./InteriorRequestsTab"
-import AvatarCropModal from "./AvatarCropModal"
-import LevelsTab from "./LevelsTab"
-import WebstoreLearnMore from "../WebstoreLearnMore"
-import { usePhAddress } from "@/hooks/usePhAddress"
-import { containsBlockedWord } from "@/libs/badWords"
-import { getProfileCompletion } from "@/libs/profileCompletion"
 
 const TIER_BADGE_IMAGE: Record<MemberTier, string> = {
   "Home Starter": "/Badge/homeStarter.png",
@@ -1073,7 +1075,7 @@ const QrSkeleton = ({ sizeClass }: { sizeClass: string }) => (
   <div
     className={`relative overflow-hidden rounded-xl border border-purple-200 dark:border-purple-800 dark:bg-gray-800 ${sizeClass}`}
   >
-    <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-purple-100 dark:from-purple-900/20 via-white dark:via-gray-800 to-indigo-100 dark:to-indigo-900/20" />
+    <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-purple-100 via-white to-indigo-100 dark:from-purple-900/20 dark:via-gray-800 dark:to-indigo-900/20" />
     <div className="absolute inset-[18%] rounded-lg border border-dashed border-purple-200/80 dark:border-purple-700/50" />
     <div className="absolute inset-x-[24%] top-[24%] h-2 rounded-full bg-purple-200/70 dark:bg-purple-700/50" />
     <div className="absolute inset-x-[18%] top-[40%] h-2 rounded-full bg-purple-100/90 dark:bg-purple-800/40" />
@@ -1153,7 +1155,7 @@ const ReferralShareCard = ({
     : "h-36 w-36 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-gray-800 p-2"
 
   return (
-    <div className="rounded-2xl border border-slate-200 dark:border-slate-700 dark:bg-gray-800 p-4">
+    <div className="rounded-2xl border border-slate-200 p-4 dark:border-slate-700 dark:bg-gray-800">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-bold text-slate-700 dark:text-gray-300">
@@ -1163,7 +1165,7 @@ const ReferralShareCard = ({
             {description}
           </p>
         </div>
-        <span className="inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full border border-sky-200 bg-sky-50 px-2.5 py-0.5 text-[10px] font-semibold leading-none text-sky-700 dark:border-sky-700 dark:bg-sky-900/30 dark:text-sky-300">
+        <span className="inline-flex shrink-0 items-center justify-center rounded-full border border-sky-200 bg-sky-50 px-2.5 py-0.5 text-[10px] leading-none font-semibold whitespace-nowrap text-sky-700 dark:border-sky-700 dark:bg-sky-900/30 dark:text-sky-300">
           {badge}
         </span>
       </div>
@@ -1181,10 +1183,10 @@ const ReferralShareCard = ({
               )}
               {qrStatus === "error" ? (
                 <div
-                  className={`flex ${qrWrapperClass} items-center justify-center rounded-xl border border-sky-200 dark:border-sky-800 dark:bg-sky-900/30 p-3 text-center`}
+                  className={`flex ${qrWrapperClass} items-center justify-center rounded-xl border border-sky-200 p-3 text-center dark:border-sky-800 dark:bg-sky-900/30`}
                 >
                   <p
-                    className={`font-medium leading-snug text-sky-700 ${compact ? "text-[9px]" : "text-[11px]"}`}
+                    className={`leading-snug font-medium text-sky-700 ${compact ? "text-[9px]" : "text-[11px]"}`}
                   >
                     QR is still loading.
                   </p>
@@ -1204,10 +1206,10 @@ const ReferralShareCard = ({
             {compact && (
               <div className="min-w-0 flex-1">
                 <div className="mb-3 rounded-xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-gray-800">
-                  <p className="text-[10px] font-medium text-slate-400 dark:text-gray-500 mb-0.5">
+                  <p className="mb-0.5 text-[10px] font-medium text-slate-400 dark:text-gray-500">
                     {linkLabel}
                   </p>
-                  <p className="break-all text-[11px] leading-relaxed text-slate-600 dark:text-gray-300">
+                  <p className="text-[11px] leading-relaxed break-all text-slate-600 dark:text-gray-300">
                     {link}
                   </p>
                 </div>
@@ -1264,10 +1266,10 @@ const ReferralShareCard = ({
           {!compact && (
             <>
               <div className="mb-3 rounded-xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-gray-800">
-                <p className="text-[10px] font-medium text-slate-400 dark:text-gray-500 mb-0.5">
+                <p className="mb-0.5 text-[10px] font-medium text-slate-400 dark:text-gray-500">
                   {linkLabel}
                 </p>
-                <p className="break-all text-[11px] font-medium leading-relaxed text-slate-600 dark:text-gray-300">
+                <p className="text-[11px] leading-relaxed font-medium break-all text-slate-600 dark:text-gray-300">
                   {link}
                 </p>
               </div>
@@ -1275,7 +1277,7 @@ const ReferralShareCard = ({
                 <button
                   type="button"
                   onClick={onShare}
-                  className="flex items-center justify-center gap-1.5 rounded-xl bg-sky-500 px-2 py-2 text-xs font-semibold text-white hover:bg-sky-600 dark:hover:bg-sky-700 transition-colors"
+                  className="flex items-center justify-center gap-1.5 rounded-xl bg-sky-500 px-2 py-2 text-xs font-semibold text-white transition-colors hover:bg-sky-600 dark:hover:bg-sky-700"
                 >
                   <svg
                     className="h-3.5 w-3.5 shrink-0"
@@ -1293,7 +1295,7 @@ const ReferralShareCard = ({
                 <button
                   type="button"
                   onClick={onCopy}
-                  className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-gray-800 px-2 py-2 text-xs font-semibold text-slate-700 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-gray-700 transition-colors"
+                  className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 px-2 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                 >
                   <svg
                     className="h-3.5 w-3.5 shrink-0"
@@ -2743,23 +2745,23 @@ const ProfilePage = ({
     return (
       <div key={`${node.id}-${level}`} className="relative">
         {level > 0 && (
-          <span className="pointer-events-none absolute -left-3 top-5 h-px w-3 bg-purple-200" />
+          <span className="pointer-events-none absolute top-5 -left-3 h-px w-3 bg-purple-200" />
         )}
         <div className={`rounded-xl border px-3 py-2.5 ${levelClass}`}>
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className={`text-xs font-semibold truncate ${nameClass}`}>
+              <p className={`truncate text-xs font-semibold ${nameClass}`}>
                 {node.name}
                 {node.username ? ` (@${node.username})` : ""}
               </p>
-              <p className="text-[10px] text-slate-400 dark:text-gray-500 mt-0.5 truncate">
+              <p className="mt-0.5 truncate text-[10px] text-slate-400 dark:text-gray-500">
                 {node.email || "No email"}
               </p>
-              <p className="text-[10px] text-slate-400 dark:text-gray-500 mt-0.5">
+              <p className="mt-0.5 text-[10px] text-slate-400 dark:text-gray-500">
                 {formatJoinedAt(node.joined_at)}
               </p>
             </div>
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex shrink-0 items-center gap-1.5">
               <span
                 className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${verificationBadgeClass(node.verification_status)}`}
               >
@@ -2769,7 +2771,7 @@ const ProfilePage = ({
                 <button
                   type="button"
                   onClick={() => toggleTreeNode(node.id)}
-                  className="inline-flex items-center justify-center h-6 w-6 rounded-md border border-purple-200 dark:border-purple-700 bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors"
+                  className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-purple-200 bg-white text-purple-600 transition-colors hover:bg-purple-50 dark:border-purple-700 dark:bg-gray-800 dark:text-purple-400 dark:hover:bg-purple-900/30"
                   aria-label={
                     isExpanded
                       ? "Collapse referral node"
@@ -2881,10 +2883,10 @@ const ProfilePage = ({
         className="relative"
       >
         {level > 0 && (
-          <span className="pointer-events-none absolute -left-4 top-7 h-px w-4 bg-purple-200 dark:bg-purple-900/50" />
+          <span className="pointer-events-none absolute top-7 -left-4 h-px w-4 bg-purple-200 dark:bg-purple-900/50" />
         )}
         <div
-          className={`group rounded-2xl border transition-all duration-200 hover:shadow-md ${level === 0 ? "border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 shadow-sm" : "border-slate-100 dark:border-slate-700 bg-slate-50/70 dark:bg-gray-800/70"}`}
+          className={`group rounded-2xl border transition-all duration-200 hover:shadow-md ${level === 0 ? "border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-gray-800" : "border-slate-100 bg-slate-50/70 dark:border-slate-700 dark:bg-gray-800/70"}`}
         >
           <div className="flex items-center gap-3 p-3.5">
             {/* Avatar */}
@@ -2901,42 +2903,42 @@ const ProfilePage = ({
                 />
               ) : (
                 <div
-                  className={`h-11 w-11 rounded-2xl flex items-center justify-center font-bold text-sm text-white bg-gradient-to-br ${avatarGradient} shadow-sm`}
+                  className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br text-sm font-bold text-white ${avatarGradient} shadow-sm`}
                 >
                   {nodeInitials}
                 </div>
               )}
               <span
-                className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white ${vc.dot}`}
+                className={`absolute -right-0.5 -bottom-0.5 h-3.5 w-3.5 rounded-full border-2 border-white ${vc.dot}`}
               />
             </div>
 
             {/* Info */}
-            <div className="flex-1 min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 flex-wrap leading-tight">
-                    <p className="text-sm font-bold text-slate-800 dark:text-gray-200 truncate">
+                  <div className="flex flex-wrap items-center gap-1.5 leading-tight">
+                    <p className="truncate text-sm font-bold text-slate-800 dark:text-gray-200">
                       {node.name || "Unknown"}
                     </p>
                     {node.username && (
-                      <span className="text-[11px] text-slate-400 dark:text-gray-500 font-medium shrink-0">
+                      <span className="shrink-0 text-[11px] font-medium text-slate-400 dark:text-gray-500">
                         @{node.username}
                       </span>
                     )}
                     {level > 0 && (
-                      <span className="text-[10px] font-bold text-purple-500 bg-purple-50 border border-purple-100 px-1.5 py-0.5 rounded-full shrink-0">
+                      <span className="shrink-0 rounded-full border border-purple-100 bg-purple-50 px-1.5 py-0.5 text-[10px] font-bold text-purple-500">
                         L{level + 1}
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] text-slate-400 dark:text-gray-500 truncate mt-0.5">
+                  <p className="mt-0.5 truncate text-[11px] text-slate-400 dark:text-gray-500">
                     {node.email || "No email"}
                   </p>
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex shrink-0 items-center gap-1.5">
                   <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${vc.bg} ${vc.text} ${vc.border}`}
+                    className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${vc.bg} ${vc.text} ${vc.border}`}
                   >
                     <span className={`h-1.5 w-1.5 rounded-full ${vc.dot}`} />
                     {statusLabel}
@@ -2945,7 +2947,7 @@ const ProfilePage = ({
                     <button
                       type="button"
                       onClick={() => toggleTreeNode(node.id)}
-                      className="h-7 w-7 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 hover:border-purple-300 dark:hover:border-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-slate-400 dark:text-gray-500 hover:text-purple-500 dark:hover:text-purple-400 flex items-center justify-center transition-colors"
+                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 transition-colors hover:border-purple-300 hover:bg-purple-50 hover:text-purple-500 dark:border-slate-700 dark:bg-gray-800 dark:text-gray-500 dark:hover:border-purple-600 dark:hover:bg-purple-900/30 dark:hover:text-purple-400"
                       aria-label={isExpanded ? "Collapse" : "Expand"}
                     >
                       <Icon.ChevronRight
@@ -2956,12 +2958,12 @@ const ProfilePage = ({
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 mt-2 flex-wrap">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-sky-50 border border-sky-100 text-[11px] font-bold text-sky-700">
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center rounded-md border border-sky-100 bg-sky-50 px-2 py-0.5 text-[11px] font-bold text-sky-700">
                   PV {Number(nodePv).toLocaleString()}
                 </span>
                 {(node.children_count ?? children.length) > 0 && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 border border-purple-100 text-[11px] font-semibold text-purple-600">
+                  <span className="inline-flex items-center gap-1 rounded-md border border-purple-100 bg-purple-50 px-2 py-0.5 text-[11px] font-semibold text-purple-600">
                     <svg
                       className="h-3 w-3"
                       fill="none"
@@ -3001,7 +3003,7 @@ const ProfilePage = ({
               transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
               style={{ overflow: "hidden" }}
             >
-              <div className="relative mt-1.5 ml-6 space-y-1.5 border-l-2 border-purple-100 dark:border-purple-900/40 pl-4 pt-1">
+              <div className="relative mt-1.5 ml-6 space-y-1.5 border-l-2 border-purple-100 pt-1 pl-4 dark:border-purple-900/40">
                 {children.map((child) =>
                   renderReferralNodeFull(child, level + 1)
                 )}
@@ -6107,17 +6109,17 @@ const ProfilePage = ({
         transition={{ duration: 0.35 }}
         className="relative min-h-screen bg-gray-50 dark:bg-gray-900"
       >
-        <div className="container mx-auto px-4 py-8 md:py-10 max-w-[1400px]">
+        <div className="container mx-auto max-w-[1400px] px-4 py-8 md:py-10">
           {/* Header */}
           <div className="mb-8">
-            <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 mb-2">
+            <div className="mb-2 flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
               <span>Account</span>
               <Icon.ChevronRight className="h-3 w-3" />
-              <span className="text-gray-600 dark:text-gray-300 font-medium">
+              <span className="font-medium text-gray-600 dark:text-gray-300">
                 Profile
               </span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900 md:text-3xl dark:text-white">
               My Profile
             </h1>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -6155,9 +6157,9 @@ const ProfilePage = ({
           </AnimatePresence>
 
           {/* Tab navigation bar */}
-          <div className="sticky top-16 z-20 -mx-4 mb-6 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-100 dark:border-gray-700/60 shadow-sm">
+          <div className="sticky top-16 z-20 -mx-4 mb-6 border-b border-gray-100 bg-white/95 shadow-sm backdrop-blur-md dark:border-gray-700/60 dark:bg-gray-900/95">
             {/* Mobile/tablet horizontal scroll (hidden on xl+) */}
-            <nav className="flex overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden xl:hidden px-3 py-2 gap-1.5">
+            <nav className="flex [scrollbar-width:none] gap-1.5 overflow-x-auto px-3 py-2 xl:hidden [&::-webkit-scrollbar]:hidden">
               {(() => {
                 const shortLabel: Record<Tab, string> = {
                   profile: "Profile",
@@ -6178,17 +6180,17 @@ const ProfilePage = ({
                     key={key}
                     type="button"
                     onClick={() => handleTabChange(key)}
-                    className={`shrink-0 inline-flex flex-col items-center gap-1 rounded-xl px-3.5 py-2 text-[10px] font-semibold transition-all ${
+                    className={`inline-flex shrink-0 flex-col items-center gap-1 rounded-xl px-3.5 py-2 text-[10px] font-semibold transition-all ${
                       activeTab === key
-                        ? "bg-gradient-to-br from-sky-500 to-cyan-500 text-white shadow-sm shadow-sky-200/60 dark:shadow-sky-900/40 ring-1 ring-white/25"
-                        : "text-gray-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-gray-800 dark:hover:text-gray-200"
+                        ? "bg-gradient-to-br from-sky-500 to-cyan-500 text-white shadow-sm ring-1 shadow-sky-200/60 ring-white/25 dark:shadow-sky-900/40"
+                        : "text-gray-500 hover:bg-slate-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-slate-800/60 dark:hover:text-gray-200"
                     }`}
                   >
                     <span
-                      className={`relative grid place-items-center h-8 w-8 rounded-xl transition-all ${
+                      className={`relative grid h-8 w-8 place-items-center rounded-xl transition-all ${
                         activeTab === key
-                          ? "bg-white/20 backdrop-blur ring-1 ring-white/30"
-                          : "bg-white/60 dark:bg-gray-800/60 ring-1 ring-slate-200/70 dark:ring-slate-700/60 group-hover:ring-sky-200/70 dark:group-hover:ring-sky-700/60"
+                          ? "bg-white/20 ring-1 ring-white/30 backdrop-blur"
+                          : "bg-white/60 ring-1 ring-slate-200/70 group-hover:ring-sky-200/70 dark:bg-gray-800/60 dark:ring-slate-700/60 dark:group-hover:ring-sky-700/60"
                       }`}
                       aria-hidden="true"
                     >
@@ -6196,7 +6198,7 @@ const ProfilePage = ({
                         className={`h-4 w-4 transition-colors ${
                           activeTab === key
                             ? "text-white"
-                            : "text-slate-500 dark:text-gray-400 group-hover:text-sky-600 dark:group-hover:text-sky-400"
+                            : "text-slate-500 group-hover:text-sky-600 dark:text-gray-400 dark:group-hover:text-sky-400"
                         }`}
                       />
                     </span>
@@ -6207,17 +6209,17 @@ const ProfilePage = ({
             </nav>
 
             {/* Desktop horizontal bar (hidden below xl) */}
-            <nav className="hidden xl:block overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden px-4 py-2">
-              <div className="flex items-center gap-1 justify-between">
+            <nav className="hidden [scrollbar-width:none] overflow-x-auto px-4 py-2 xl:block [&::-webkit-scrollbar]:hidden">
+              <div className="flex items-center justify-between gap-1">
                 {TABS.map(({ key, label, Icon: TabIcon }) => (
                   <button
                     key={key}
                     type="button"
                     onClick={() => handleTabChange(key)}
-                    className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+                    className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all ${
                       activeTab === key
-                        ? "bg-sky-500 dark:bg-sky-600 text-white shadow-sm shadow-sky-200/60 dark:shadow-sky-900/40"
-                        : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/60 hover:text-gray-800 dark:hover:text-gray-200"
+                        ? "bg-sky-500 text-white shadow-sm shadow-sky-200/60 dark:bg-sky-600 dark:shadow-sky-900/40"
+                        : "text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-700/60 dark:hover:text-gray-200"
                     }`}
                   >
                     <TabIcon
@@ -6248,7 +6250,7 @@ const ProfilePage = ({
                       />
                     </div>
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/80">
+                      <p className="text-xs font-bold tracking-[0.22em] text-white/80 uppercase">
                         New Level
                       </p>
                       <h3 className="mt-1 text-2xl font-bold">
@@ -6281,16 +6283,16 @@ const ProfilePage = ({
             </motion.div>
           )}
 
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
             {/* Sidebar */}
-            <aside className="xl:col-span-4 space-y-4">
+            <aside className="space-y-4 xl:col-span-4">
               {/* Profile Card */}
               <motion.div
                 variants={fadeUp}
                 initial="hidden"
                 animate="visible"
                 custom={0}
-                className="rounded-2xl border border-slate-200/80 dark:border-slate-700/60 bg-white dark:bg-gray-900 overflow-hidden shadow-sm"
+                className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-700/60 dark:bg-gray-900"
               >
                 {/* Cover banner - tier-specific gradient */}
                 <div
@@ -6305,9 +6307,9 @@ const ProfilePage = ({
                     }}
                   />
                   {/* Decorative blobs */}
-                  <div className="absolute -bottom-14 -left-14 h-48 w-48 rounded-full bg-white/10 blur-3xl pointer-events-none" />
-                  <div className="absolute -top-8 right-1/4 h-32 w-32 rounded-full bg-white/8 blur-2xl pointer-events-none" />
-                  <div className="absolute bottom-0 right-0 h-24 w-32 bg-black/10 blur-2xl pointer-events-none" />
+                  <div className="pointer-events-none absolute -bottom-14 -left-14 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
+                  <div className="pointer-events-none absolute -top-8 right-1/4 h-32 w-32 rounded-full bg-white/8 blur-2xl" />
+                  <div className="pointer-events-none absolute right-0 bottom-0 h-24 w-32 bg-black/10 blur-2xl" />
                   {/* Subtle grid pattern */}
                   <div
                     className="absolute inset-0 opacity-[0.07]"
@@ -6319,28 +6321,28 @@ const ProfilePage = ({
 
                   {/* Rank label - top left */}
                   <div className="absolute top-3.5 left-4">
-                    <span className="text-[10px] font-black text-white/70 tracking-[0.25em] uppercase">
+                    <span className="text-[10px] font-black tracking-[0.25em] text-white/70 uppercase">
                       Member Profile
                     </span>
                   </div>
 
                   {/* Badge - top right with glass frame */}
                   <div className="absolute top-3 right-3 flex flex-col items-center gap-1.5">
-                    <div className="rounded-2xl bg-white/20 backdrop-blur-lg p-2 border border-white/35 shadow-2xl">
+                    <div className="rounded-2xl border border-white/35 bg-white/20 p-2 shadow-2xl backdrop-blur-lg">
                       <img
                         src={TIER_BADGE_IMAGE[loyaltyTier]}
                         alt={loyaltyTier}
                         className="h-16 w-16 object-contain drop-shadow-xl"
                       />
                     </div>
-                    <span className="text-[9px] font-black text-white tracking-[0.2em] uppercase bg-black/30 backdrop-blur-sm rounded-full px-2.5 py-0.5 border border-white/20 shadow-sm">
+                    <span className="rounded-full border border-white/20 bg-black/30 px-2.5 py-0.5 text-[9px] font-black tracking-[0.2em] text-white uppercase shadow-sm backdrop-blur-sm">
                       {loyaltyTier}
                     </span>
                   </div>
                 </div>
 
                 {/* Avatar - centered, floating over banner */}
-                <div className="flex flex-col items-center -mt-14 pb-5 px-5">
+                <div className="-mt-14 flex flex-col items-center px-5 pb-5">
                   <div ref={avatarSectionRef} className="relative mb-4">
                     {/* Tier-colored ring behind avatar */}
                     <div
@@ -6349,7 +6351,7 @@ const ProfilePage = ({
 
                     {/* Spin ring while uploading */}
                     {isUploadingAvatar && (
-                      <span className="pointer-events-none absolute -inset-2 rounded-full border-[3px] border-transparent border-t-white border-r-white/60 animate-spin z-20" />
+                      <span className="pointer-events-none absolute -inset-2 z-20 animate-spin rounded-full border-[3px] border-transparent border-t-white border-r-white/60" />
                     )}
 
                     {/* Avatar image or initials */}
@@ -6357,17 +6359,17 @@ const ProfilePage = ({
                       <button
                         type="button"
                         onClick={() => setIsAvatarPreviewOpen(true)}
-                        className="group relative cursor-zoom-in block"
+                        className="group relative block cursor-zoom-in"
                         aria-label="View profile photo"
                       >
                         <img
                           src={effectiveAvatarUrl}
                           alt={form.name || "Profile photo"}
-                          className="relative h-28 w-28 rounded-full object-cover ring-4 ring-white dark:ring-gray-900 shadow-2xl z-10"
+                          className="relative z-10 h-28 w-28 rounded-full object-cover shadow-2xl ring-4 ring-white dark:ring-gray-900"
                         />
-                        <div className="absolute inset-0 rounded-full bg-black/0 transition-colors group-hover:bg-black/35 flex items-center justify-center z-10">
+                        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-full bg-black/0 transition-colors group-hover:bg-black/35">
                           <svg
-                            className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg"
+                            className="h-6 w-6 text-white opacity-0 drop-shadow-lg transition-opacity group-hover:opacity-100"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -6383,7 +6385,7 @@ const ProfilePage = ({
                       </button>
                     ) : (
                       <div
-                        className={`relative h-28 w-28 rounded-full bg-gradient-to-br ${TIER_COVER[loyaltyTier].gradient} text-white text-3xl font-black flex items-center justify-center ring-4 ring-white dark:ring-gray-900 shadow-2xl z-10`}
+                        className={`relative h-28 w-28 rounded-full bg-gradient-to-br ${TIER_COVER[loyaltyTier].gradient} z-10 flex items-center justify-center text-3xl font-black text-white shadow-2xl ring-4 ring-white dark:ring-gray-900`}
                       >
                         {initials}
                       </div>
@@ -6391,7 +6393,7 @@ const ProfilePage = ({
 
                     {/* Edit badge — always visible, bottom-right */}
                     <label
-                      className="absolute bottom-0 right-0 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white dark:bg-gray-800 border-2 border-slate-200 dark:border-slate-600 shadow-lg hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-95 transition-all z-20"
+                      className="absolute right-0 bottom-0 z-20 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-2 border-slate-200 bg-white shadow-lg transition-all hover:bg-slate-50 active:scale-95 dark:border-slate-600 dark:bg-gray-800 dark:hover:bg-slate-700"
                       title="Change profile photo"
                       aria-label="Change profile photo"
                     >
@@ -6406,21 +6408,21 @@ const ProfilePage = ({
                   </div>
 
                   {/* User info - centered */}
-                  <h2 className="text-xl font-black text-slate-900 dark:text-white text-center leading-tight tracking-tight">
+                  <h2 className="text-center text-xl leading-tight font-black tracking-tight text-slate-900 dark:text-white">
                     {form.name || "AF Home User"}
                   </h2>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 text-center">
+                  <p className="mt-1 text-center text-xs text-slate-400 dark:text-slate-500">
                     {form.email}
                   </p>
                   {form.username && (
-                    <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-mono font-semibold mt-1.5 border border-slate-200 dark:border-slate-700">
+                    <span className="mt-1.5 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 font-mono text-xs font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
                       @{form.username}
                     </span>
                   )}
 
                   {/* Tier pill - premium version */}
                   <div
-                    className={`mt-3 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r ${TIER_COVER[loyaltyTier].gradient} shadow-md`}
+                    className={`mt-3 flex items-center gap-2 rounded-full bg-gradient-to-r px-3.5 py-1.5 ${TIER_COVER[loyaltyTier].gradient} shadow-md`}
                     style={{
                       boxShadow: `0 4px 14px ${TIER_COVER[loyaltyTier].glow}`,
                     }}
@@ -6428,50 +6430,50 @@ const ProfilePage = ({
                     <img
                       src={TIER_BADGE_IMAGE[loyaltyTier]}
                       alt={loyaltyTier}
-                      className="h-4 w-4 object-contain shrink-0 drop-shadow"
+                      className="h-4 w-4 shrink-0 object-contain drop-shadow"
                     />
-                    <span className="text-[11px] font-black text-white tracking-wide">
+                    <span className="text-[11px] font-black tracking-wide text-white">
                       {loyaltyTier}
                     </span>
-                    <span className="text-[10px] text-white/70 font-bold">
+                    <span className="text-[10px] font-bold text-white/70">
                       • Rank {effectiveRank}
                     </span>
                   </div>
 
                   {/* Account micro-stats */}
-                  <div className="mt-4 flex items-center divide-x divide-slate-200 dark:divide-slate-700 text-xs text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-800/60 w-full">
+                  <div className="mt-4 flex w-full items-center divide-x divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-500 dark:divide-slate-700 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-400">
                     {accountSnapshot?.loyalty?.join_date && (
-                      <div className="flex-1 text-center px-3 py-2">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                      <div className="flex-1 px-3 py-2 text-center">
+                        <p className="text-[10px] font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">
                           Joined
                         </p>
-                        <p className="font-bold text-slate-700 dark:text-slate-200 text-xs mt-0.5">
+                        <p className="mt-0.5 text-xs font-bold text-slate-700 dark:text-slate-200">
                           {formatExactJoinedDate(
                             accountSnapshot.loyalty.join_date
                           )}
                         </p>
                       </div>
                     )}
-                    <div className="flex-1 text-center px-3 py-2">
-                      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                    <div className="flex-1 px-3 py-2 text-center">
+                      <p className="text-[10px] font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">
                         Referrals
                       </p>
-                      <p className="font-black text-slate-700 dark:text-slate-200 text-sm mt-0.5">
+                      <p className="mt-0.5 text-sm font-black text-slate-700 dark:text-slate-200">
                         {accountSnapshot?.loyalty?.referral_count ?? 0}
                       </p>
                     </div>
-                    <div className="flex-1 text-center px-3 py-2">
-                      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                    <div className="flex-1 px-3 py-2 text-center">
+                      <p className="text-[10px] font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">
                         Rank
                       </p>
-                      <p className="font-black text-slate-700 dark:text-slate-200 text-sm mt-0.5">
+                      <p className="mt-0.5 text-sm font-black text-slate-700 dark:text-slate-200">
                         {effectiveRank}
                       </p>
                     </div>
                   </div>
 
                   {isUploadingAvatar && (
-                    <p className="mt-2 text-xs text-sky-500 font-semibold animate-pulse">
+                    <p className="mt-2 animate-pulse text-xs font-semibold text-sky-500">
                       Uploading photo…
                     </p>
                   )}
@@ -6479,20 +6481,20 @@ const ProfilePage = ({
                     <button
                       type="button"
                       onClick={() => setIsAvatarPreviewOpen(true)}
-                      className="mt-1.5 text-xs font-semibold text-sky-500 hover:text-sky-600 dark:hover:text-sky-400 hover:underline"
+                      className="mt-1.5 text-xs font-semibold text-sky-500 hover:text-sky-600 hover:underline dark:hover:text-sky-400"
                     >
                       View Photo
                     </button>
                   )}
 
                   {/* Profile completion */}
-                  <div className="mt-4 w-full p-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60">
-                    <div className="flex items-center justify-between mb-2.5">
+                  <div className="mt-4 w-full rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800/60">
+                    <div className="mb-2.5 flex items-center justify-between">
                       <div>
                         <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
                           Profile Completion
                         </span>
-                        <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                        <p className="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">
                           {completion >= 100
                             ? "Fully verified account."
                             : completion < 60
@@ -6506,7 +6508,7 @@ const ProfilePage = ({
                         {completion}%
                       </span>
                     </div>
-                    <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
+                    <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
                       <motion.div
                         className={`h-full rounded-full ${completion >= 100 ? "bg-gradient-to-r from-emerald-400 to-teal-400" : "bg-gradient-to-r from-sky-400 to-indigo-500"}`}
                         initial={{ width: 0 }}
@@ -6577,10 +6579,10 @@ const ProfilePage = ({
                         : nextCover
 
                     return (
-                      <div className="mt-4 w-full rounded-2xl overflow-hidden border border-slate-200/80 dark:border-slate-700/60 shadow-sm bg-white dark:bg-slate-900">
+                      <div className="mt-4 w-full overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-900">
                         {/* Header */}
                         <div
-                          className={`relative bg-gradient-to-r ${activeCover.gradient} px-4 py-3 flex items-center justify-between overflow-hidden`}
+                          className={`relative bg-gradient-to-r ${activeCover.gradient} flex items-center justify-between overflow-hidden px-4 py-3`}
                         >
                           <div
                             className="absolute inset-0 opacity-10"
@@ -6606,12 +6608,12 @@ const ProfilePage = ({
                               <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
                               <path d="M18 2H6v7a6 6 0 0 0 12 0V2z" />
                             </svg>
-                            <span className="text-xs font-black text-white tracking-wide uppercase">
+                            <span className="text-xs font-black tracking-wide text-white uppercase">
                               Rank Progress
                             </span>
                           </div>
                           {effectiveRank >= 5 ? (
-                            <span className="relative text-[10px] font-black bg-white/25 text-white rounded-full px-2.5 py-0.5 border border-white/30 backdrop-blur-sm">
+                            <span className="relative rounded-full border border-white/30 bg-white/25 px-2.5 py-0.5 text-[10px] font-black text-white backdrop-blur-sm">
                               MAX RANK
                             </span>
                           ) : (
@@ -6623,7 +6625,7 @@ const ProfilePage = ({
 
                         <div className="p-4">
                           {/* Badge comparison */}
-                          <div className="flex items-center justify-center gap-4 mb-4">
+                          <div className="mb-4 flex items-center justify-center gap-4">
                             <div className="flex flex-col items-center gap-1.5">
                               <div
                                 className={`rounded-2xl bg-gradient-to-br ${TIER_COVER[loyaltyTier].gradient} p-2 opacity-80 shadow-md`}
@@ -6635,7 +6637,7 @@ const ProfilePage = ({
                                 />
                               </div>
                               <div className="text-center">
-                                <p className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                                <p className="text-[9px] font-black tracking-wide text-slate-500 uppercase dark:text-slate-400">
                                   Current
                                 </p>
                                 <p className="text-[10px] font-bold text-slate-700 dark:text-slate-300">
@@ -6648,7 +6650,7 @@ const ProfilePage = ({
                               <>
                                 <div className="flex flex-col items-center gap-1">
                                   <div
-                                    className={`h-8 w-8 rounded-full bg-gradient-to-br ${nextCover.gradient} flex items-center justify-center shrink-0 shadow-lg`}
+                                    className={`h-8 w-8 rounded-full bg-gradient-to-br ${nextCover.gradient} flex shrink-0 items-center justify-center shadow-lg`}
                                     style={{
                                       boxShadow: `0 4px 12px ${nextCover.glow}`,
                                     }}
@@ -6667,7 +6669,7 @@ const ProfilePage = ({
                                       />
                                     </svg>
                                   </div>
-                                  <div className="h-1 w-8 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
+                                  <div className="h-1 w-8 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
                                     <motion.div
                                       className={`h-full rounded-full bg-gradient-to-r ${nextCover.gradient}`}
                                       initial={{ width: 0 }}
@@ -6693,7 +6695,7 @@ const ProfilePage = ({
                                     />
                                   </div>
                                   <div className="text-center">
-                                    <p className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                                    <p className="text-[9px] font-black tracking-wide text-slate-500 uppercase dark:text-slate-400">
                                       Next
                                     </p>
                                     <p className="text-[10px] font-bold text-slate-700 dark:text-slate-300">
@@ -6708,7 +6710,7 @@ const ProfilePage = ({
                           {/* Overall progress bar */}
                           {effectiveRank < 5 && (
                             <div className="mb-4">
-                              <div className="flex items-center justify-between mb-1.5">
+                              <div className="mb-1.5 flex items-center justify-between">
                                 <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500">
                                   Overall Progress
                                 </span>
@@ -6718,7 +6720,7 @@ const ProfilePage = ({
                                   {overallPct}%
                                 </span>
                               </div>
-                              <div className="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                              <div className="h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                                 <motion.div
                                   className={`h-full rounded-full ${overallPct >= 100 ? "bg-gradient-to-r from-emerald-400 to-teal-500" : `bg-gradient-to-r ${nextCover.gradient}`}`}
                                   initial={{ width: 0 }}
@@ -6736,7 +6738,7 @@ const ProfilePage = ({
                           <button
                             type="button"
                             onClick={() => handleTabChange("levels")}
-                            className={`w-full rounded-xl bg-gradient-to-r ${activeCover.gradient} px-3 py-2.5 text-xs font-black text-white hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 shadow-md`}
+                            className={`w-full rounded-xl bg-gradient-to-r ${activeCover.gradient} flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-black text-white shadow-md transition-all hover:opacity-90 active:scale-[0.98]`}
                             style={{
                               boxShadow: `0 4px 14px ${activeCover.glow}`,
                             }}
@@ -6765,11 +6767,11 @@ const ProfilePage = ({
                 {/* Referral section */}
                 {
                   <div className="px-5 pb-5">
-                    <div className="rounded-2xl border border-slate-200/80 dark:border-slate-700/60 bg-white dark:bg-slate-800/60 p-4">
+                    <div className="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/60 dark:bg-slate-800/60">
                       {/* Header */}
-                      <div className="flex items-center justify-between gap-2 mb-3">
+                      <div className="mb-3 flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
-                          <div className="h-7 w-7 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800 flex items-center justify-center shrink-0">
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-emerald-100 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/30">
                             <svg
                               className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400"
                               fill="none"
@@ -6795,7 +6797,7 @@ const ProfilePage = ({
                             Affiliate Referral QR
                           </p>
                         </div>
-                        <span className="rounded-full bg-sky-50 dark:bg-sky-900/30 border border-sky-200 dark:border-sky-800 px-2.5 py-0.5 text-[10px] font-semibold text-sky-700 dark:text-sky-400">
+                        <span className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-0.5 text-[10px] font-semibold text-sky-700 dark:border-sky-800 dark:bg-sky-900/30 dark:text-sky-400">
                           Ready to Share
                         </span>
                       </div>
@@ -6838,36 +6840,36 @@ const ProfilePage = ({
                       )}
 
                       {/* Network stats */}
-                      <div className="mt-4 border-t border-slate-100 dark:border-slate-700 pt-3.5">
-                        <div className="flex items-center justify-between gap-2 mb-3">
+                      <div className="mt-4 border-t border-slate-100 pt-3.5 dark:border-slate-700">
+                        <div className="mb-3 flex items-center justify-between gap-2">
                           <p className="text-xs font-bold text-slate-700 dark:text-gray-300">
                             Affiliate Network
                           </p>
                           {!isReferralTreeLoading && (
-                            <span className="text-[10px] font-semibold text-sky-700 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30 border border-sky-200 dark:border-sky-700 px-2 py-0.5 rounded-full">
+                            <span className="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-semibold text-sky-700 dark:border-sky-700 dark:bg-sky-900/30 dark:text-sky-400">
                               {referralSummary.totalNetwork} members
                             </span>
                           )}
                         </div>
-                        <div className="grid grid-cols-3 gap-2 mb-3">
-                          <div className="rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-gray-900 px-2 py-2.5 text-center">
-                            <p className="text-[10px] text-slate-500 dark:text-gray-400 font-medium mb-0.5">
+                        <div className="mb-3 grid grid-cols-3 gap-2">
+                          <div className="rounded-xl border border-slate-200 px-2 py-2.5 text-center dark:border-slate-700 dark:bg-gray-900">
+                            <p className="mb-0.5 text-[10px] font-medium text-slate-500 dark:text-gray-400">
                               Direct
                             </p>
                             <p className="text-base font-bold text-slate-800 dark:text-gray-200">
                               {referralSummary.directCount}
                             </p>
                           </div>
-                          <div className="rounded-xl border border-sky-200 dark:border-sky-800 dark:bg-sky-900/30 px-2 py-2.5 text-center">
-                            <p className="text-[10px] text-sky-500 dark:text-sky-400 font-medium mb-0.5">
+                          <div className="rounded-xl border border-sky-200 px-2 py-2.5 text-center dark:border-sky-800 dark:bg-sky-900/30">
+                            <p className="mb-0.5 text-[10px] font-medium text-sky-500 dark:text-sky-400">
                               Level 2
                             </p>
                             <p className="text-base font-bold text-sky-700 dark:text-sky-300">
                               {referralSummary.secondLevelCount}
                             </p>
                           </div>
-                          <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 dark:bg-emerald-900/30 px-2 py-2.5 text-center">
-                            <p className="text-[10px] text-emerald-500 dark:text-emerald-400 font-medium mb-0.5">
+                          <div className="rounded-xl border border-emerald-200 px-2 py-2.5 text-center dark:border-emerald-800 dark:bg-emerald-900/30">
+                            <p className="mb-0.5 text-[10px] font-medium text-emerald-500 dark:text-emerald-400">
                               Total
                             </p>
                             <p className="text-base font-bold text-emerald-700 dark:text-emerald-300">
@@ -6878,7 +6880,7 @@ const ProfilePage = ({
                         <button
                           type="button"
                           onClick={() => handleTabChange("referrals")}
-                          className="w-full flex items-center justify-center gap-2 rounded-xl bg-sky-500 px-3 py-2.5 text-xs font-semibold text-white hover:bg-sky-600 transition-colors shadow-sm"
+                          className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 px-3 py-2.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-sky-600"
                         >
                           <svg
                             className="h-3.5 w-3.5 shrink-0"
@@ -6909,13 +6911,13 @@ const ProfilePage = ({
                 initial="hidden"
                 animate="visible"
                 custom={1}
-                className="rounded-2xl border border-slate-200/80 dark:border-slate-700/60 bg-white dark:bg-gray-900 p-5 shadow-sm"
+                className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-700/60 dark:bg-gray-900"
               >
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-xs font-black tracking-widest text-slate-400 uppercase dark:text-slate-500">
                     Account Snapshot
                   </h3>
-                  <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-3" />
+                  <div className="ml-3 h-px flex-1 bg-slate-100 dark:bg-slate-800" />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {accountStats.map((item) => (
@@ -6923,13 +6925,13 @@ const ProfilePage = ({
                       key={item.label}
                       type="button"
                       onClick={item.onClick}
-                      className="group relative overflow-hidden rounded-xl border border-slate-100 dark:border-slate-700/60 bg-slate-50/80 dark:bg-slate-800/60 hover:border-sky-200 dark:hover:border-sky-700 hover:bg-sky-50/80 dark:hover:bg-sky-900/20 px-3 py-3 text-left transition-all duration-200 active:scale-[0.97]"
+                      className="group relative overflow-hidden rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-3 text-left transition-all duration-200 hover:border-sky-200 hover:bg-sky-50/80 active:scale-[0.97] dark:border-slate-700/60 dark:bg-slate-800/60 dark:hover:border-sky-700 dark:hover:bg-sky-900/20"
                     >
-                      <item.Icon className="h-4 w-4 text-slate-400 dark:text-slate-500 group-hover:text-sky-500 transition-colors" />
-                      <p className="text-xl font-black text-slate-800 dark:text-slate-100 mt-2 leading-none tabular-nums">
+                      <item.Icon className="h-4 w-4 text-slate-400 transition-colors group-hover:text-sky-500 dark:text-slate-500" />
+                      <p className="mt-2 text-xl leading-none font-black text-slate-800 tabular-nums dark:text-slate-100">
                         {item.value}
                       </p>
-                      <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-1 uppercase tracking-wide">
+                      <p className="mt-1 text-[10px] font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">
                         {item.label}
                       </p>
                     </button>
@@ -6943,13 +6945,13 @@ const ProfilePage = ({
                 initial="hidden"
                 animate="visible"
                 custom={2}
-                className="rounded-2xl border border-slate-200/80 dark:border-slate-700/60 bg-white dark:bg-gray-900 p-5 shadow-sm"
+                className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-700/60 dark:bg-gray-900"
               >
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-xs font-black tracking-widest text-slate-400 uppercase dark:text-slate-500">
                     Quick Actions
                   </h3>
-                  <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-3" />
+                  <div className="ml-3 h-px flex-1 bg-slate-100 dark:bg-slate-800" />
                 </div>
                 <div className="space-y-1.5">
                   {[
@@ -6980,16 +6982,16 @@ const ProfilePage = ({
                       key={item.label}
                       type="button"
                       onClick={() => router.push(item.href)}
-                      className="group w-full flex items-center justify-between gap-2.5 px-3.5 py-2.5 rounded-xl bg-slate-50/80 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-semibold text-slate-700 dark:text-slate-200 transition-all duration-150 active:scale-[0.98]"
+                      className="group flex w-full items-center justify-between gap-2.5 rounded-xl bg-slate-50/80 px-3.5 py-2.5 text-sm font-semibold text-slate-700 transition-all duration-150 hover:bg-slate-100 active:scale-[0.98] dark:bg-slate-800/60 dark:text-slate-200 dark:hover:bg-slate-800"
                     >
                       <div className="flex items-center gap-2.5">
                         <item.Icon
-                          className={`h-4 w-4 text-slate-400 dark:text-slate-500 transition-colors ${item.color}`}
+                          className={`h-4 w-4 text-slate-400 transition-colors dark:text-slate-500 ${item.color}`}
                         />
                         {item.label}
                       </div>
                       <svg
-                        className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600 group-hover:text-slate-400 dark:group-hover:text-slate-400 transition-colors"
+                        className="h-3.5 w-3.5 text-slate-300 transition-colors group-hover:text-slate-400 dark:text-slate-600 dark:group-hover:text-slate-400"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -7012,8 +7014,8 @@ const ProfilePage = ({
               ref={mainContentRef}
               className={
                 isMobile
-                  ? "fixed inset-0 z-[100] flex flex-col bg-white dark:bg-gray-900 overflow-hidden"
-                  : "xl:col-span-8 space-y-5"
+                  ? "fixed inset-0 z-[100] flex flex-col overflow-hidden bg-white dark:bg-gray-900"
+                  : "space-y-5 xl:col-span-8"
               }
               initial={false}
               animate={{ x: isMobile && !mobilePanelOpen ? "100%" : 0 }}
@@ -7054,7 +7056,7 @@ const ProfilePage = ({
               <div
                 className={
                   isMobile
-                    ? "min-h-0 flex-1 overflow-y-auto overscroll-contain touch-pan-y"
+                    ? "min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain"
                     : "overflow-visible"
                 }
               >
@@ -7077,7 +7079,7 @@ const ProfilePage = ({
                           <div className="flex flex-wrap items-start justify-between gap-4">
                             <div>
                               <p
-                                className={`text-xs font-semibold uppercase tracking-[0.22em] ${
+                                className={`text-xs font-semibold tracking-[0.22em] uppercase ${
                                   completion >= 100
                                     ? "text-sky-600 dark:text-sky-400"
                                     : "text-amber-700 dark:text-amber-300"
@@ -7103,7 +7105,7 @@ const ProfilePage = ({
                                   : "border-amber-200 dark:border-amber-800"
                               }`}
                             >
-                              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500">
+                              <p className="text-[11px] font-semibold tracking-wide text-slate-400 uppercase dark:text-gray-500">
                                 Completion
                               </p>
                               <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
@@ -7125,7 +7127,7 @@ const ProfilePage = ({
                                 {/* Decorative rays top-right */}
                                 <span
                                   aria-hidden="true"
-                                  className="absolute right-4 top-3 flex flex-col items-end gap-0.5"
+                                  className="absolute top-3 right-4 flex flex-col items-end gap-0.5"
                                 >
                                   {[14, 10, 7].map((w, i) => (
                                     <span
@@ -7139,11 +7141,11 @@ const ProfilePage = ({
                                 <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
                                   {/* Left: text */}
                                   <div className="min-w-0 flex-1">
-                                    <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
+                                    <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-black tracking-[0.16em] text-emerald-700 uppercase dark:bg-emerald-900/50 dark:text-emerald-300">
                                       <Icon.Trophy className="h-3.5 w-3.5" />
                                       Rewards achieved
                                     </div>
-                                    <h4 className="mt-3 text-xl font-black leading-snug text-slate-900 dark:text-white">
+                                    <h4 className="mt-3 text-xl leading-snug font-black text-slate-900 dark:text-white">
                                       Profile complete
                                       <br />
                                       reward unlocked 🎉
@@ -7276,7 +7278,7 @@ const ProfilePage = ({
                                         </div>
                                         {/* Label */}
                                         <p
-                                          className={`mt-3 text-[11px] font-black uppercase tracking-widest ${reward.labelColor}`}
+                                          className={`mt-3 text-[11px] font-black tracking-widest uppercase ${reward.labelColor}`}
                                         >
                                           {reward.label}
                                         </p>
@@ -7288,7 +7290,7 @@ const ProfilePage = ({
                                             delay: 0.35 + index * 0.1,
                                             duration: 0.45,
                                           }}
-                                          className="mt-0.5 text-4xl font-black tabular-nums text-slate-900 dark:text-white"
+                                          className="mt-0.5 text-4xl font-black text-slate-900 tabular-nums dark:text-white"
                                         >
                                           {reward.value}
                                         </motion.p>
@@ -7299,7 +7301,7 @@ const ProfilePage = ({
                                         {/* Decorative dots bottom-right */}
                                         <span
                                           aria-hidden="true"
-                                          className="absolute bottom-2 right-2 grid grid-cols-3 gap-0.5 opacity-50"
+                                          className="absolute right-2 bottom-2 grid grid-cols-3 gap-0.5 opacity-50"
                                         >
                                           {Array.from({ length: 9 }).map(
                                             (_, i) => (
@@ -7326,10 +7328,10 @@ const ProfilePage = ({
                               >
                                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                                   <div>
-                                    <p className="text-xs font-black uppercase tracking-[0.18em]">
+                                    <p className="text-xs font-black tracking-[0.18em] uppercase">
                                       Profile completion reward
                                     </p>
-                                    <p className="mt-1 text-sm font-semibold leading-6">
+                                    <p className="mt-1 text-sm leading-6 font-semibold">
                                       Complete all required sections to qualify
                                       for a one-time 50 AF-Voucher and 20 PV
                                       reward.
@@ -7376,7 +7378,7 @@ const ProfilePage = ({
                                       )
                                     }
                                   }}
-                                  className={`text-left rounded-xl border px-4 py-3 transition-colors disabled:cursor-wait ${
+                                  className={`rounded-xl border px-4 py-3 text-left transition-colors disabled:cursor-wait ${
                                     isSavingAddressItem
                                       ? "border-sky-200 bg-sky-50/80 text-slate-900 dark:border-sky-900/50 dark:bg-sky-950/20 dark:text-white"
                                       : item.done
@@ -7391,12 +7393,12 @@ const ProfilePage = ({
                                           {item.label}
                                         </p>
                                         {isSavingAddressItem ? (
-                                          <span className="inline-flex items-center rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-700 dark:bg-sky-900/40 dark:text-sky-300">
+                                          <span className="inline-flex items-center rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold tracking-wide text-sky-700 uppercase dark:bg-sky-900/40 dark:text-sky-300">
                                             Saving
                                           </span>
                                         ) : (
                                           !item.done && (
-                                            <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                                            <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold tracking-wide text-amber-700 uppercase dark:bg-amber-900/40 dark:text-amber-300">
                                               Required
                                             </span>
                                           )
@@ -7448,19 +7450,19 @@ const ProfilePage = ({
                         {/* Personal info form */}
                         <form
                           onSubmit={handleSaveProfile}
-                          className="rounded-2xl border border-slate-200 dark:border-slate-700 dark:bg-gray-800 p-5 md:p-6"
+                          className="rounded-2xl border border-slate-200 p-5 md:p-6 dark:border-slate-700 dark:bg-gray-800"
                         >
-                          <div className="flex items-center justify-between gap-3 mb-5">
+                          <div className="mb-5 flex items-center justify-between gap-3">
                             <div>
                               <h3 className="text-base font-bold text-slate-900 dark:text-white">
                                 Personal Information
                               </h3>
-                              <p className="text-xs text-slate-500 dark:text-gray-400 mt-0.5">
+                              <p className="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
                                 Update your name and contact details. Username
                                 changes require approval.
                               </p>
                             </div>
-                            <span className="text-xs px-2.5 py-1 rounded-full bg-sky-50 text-sky-600 font-medium border border-sky-100 whitespace-nowrap">
+                            <span className="rounded-full border border-sky-100 bg-sky-50 px-2.5 py-1 text-xs font-medium whitespace-nowrap text-sky-600">
                               Editable
                             </span>
                           </div>
@@ -7474,21 +7476,21 @@ const ProfilePage = ({
                                 transition={{ duration: 0.2 }}
                                 className={`mb-4 flex items-start gap-2.5 rounded-xl px-4 py-3 text-sm ${
                                   profileMsg.type === "success"
-                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800"
-                                    : "bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800"
+                                    ? "border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                    : "border border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400"
                                 }`}
                               >
                                 {profileMsg.type === "success" ? (
-                                  <Icon.Check className="h-4 w-4 mt-0.5 shrink-0" />
+                                  <Icon.Check className="mt-0.5 h-4 w-4 shrink-0" />
                                 ) : (
-                                  <Icon.Warning className="h-4 w-4 mt-0.5 shrink-0" />
+                                  <Icon.Warning className="mt-0.5 h-4 w-4 shrink-0" />
                                 )}
                                 {profileMsg.text}
                               </motion.div>
                             )}
                           </AnimatePresence>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             {[
                               {
                                 field: "name" as const,
@@ -7533,23 +7535,23 @@ const ProfilePage = ({
                                 required,
                               }) => (
                                 <div key={field} className="space-y-1.5">
-                                  <label className="text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wide flex items-center gap-1.5">
+                                  <label className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-gray-400">
                                     {label}
                                     {required && (
                                       <span className="text-red-500">*</span>
                                     )}
                                     {isEmail &&
                                       (profileData?.email_verified ? (
-                                        <span className="normal-case tracking-normal font-semibold text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 rounded-full px-1.5 py-0.5 leading-none">
+                                        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[10px] leading-none font-semibold tracking-normal text-emerald-600 normal-case dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">
                                           &#10003; Verified
                                         </span>
                                       ) : (
-                                        <span className="normal-case tracking-normal font-semibold text-[10px] text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30 border border-sky-200 dark:border-sky-800 rounded-full px-1.5 py-0.5 leading-none">
+                                        <span className="rounded-full border border-sky-200 bg-sky-50 px-1.5 py-0.5 text-[10px] leading-none font-semibold tracking-normal text-sky-600 normal-case dark:border-sky-800 dark:bg-sky-900/30 dark:text-sky-400">
                                           &#9888; Not Verified
                                         </span>
                                       ))}
                                     {disabled && !isEmail && (
-                                      <span className="normal-case tracking-normal font-normal text-[11px] text-slate-400 dark:text-gray-500 ml-1">
+                                      <span className="ml-1 text-[11px] font-normal tracking-normal text-slate-400 normal-case dark:text-gray-500">
                                         (cannot change)
                                       </span>
                                     )}
@@ -7562,10 +7564,10 @@ const ProfilePage = ({
                                     }
                                     disabled={disabled}
                                     placeholder={placeholder}
-                                    className={`w-full rounded-xl border px-3.5 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-sky-200 dark:focus:ring-sky-800/50 focus:border-sky-300 dark:focus:border-sky-600 ${
+                                    className={`w-full rounded-xl border px-3.5 py-2.5 text-sm transition-colors focus:border-sky-300 focus:ring-2 focus:ring-sky-200 focus:outline-none dark:focus:border-sky-600 dark:focus:ring-sky-800/50 ${
                                       disabled
-                                        ? "border-slate-200 dark:border-slate-700 dark:bg-gray-800 text-slate-400 dark:text-gray-500 cursor-not-allowed"
-                                        : "border-slate-200 dark:border-slate-700 text-slate-800 dark:text-gray-200 dark:bg-gray-900 hover:border-slate-300 dark:hover:border-slate-600"
+                                        ? "cursor-not-allowed border-slate-200 text-slate-400 dark:border-slate-700 dark:bg-gray-800 dark:text-gray-500"
+                                        : "border-slate-200 text-slate-800 hover:border-slate-300 dark:border-slate-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-slate-600"
                                     }`}
                                   />
                                   {field === "username" && (
@@ -7584,8 +7586,8 @@ const ProfilePage = ({
                               )
                             )}
 
-                            <div className="md:col-span-2 space-y-1.5">
-                              <label className="text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wide">
+                            <div className="space-y-1.5 md:col-span-2">
+                              <label className="text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-gray-400">
                                 Bio
                               </label>
                               <textarea
@@ -7593,19 +7595,19 @@ const ProfilePage = ({
                                 onChange={(e) => setBio(e.target.value)}
                                 rows={3}
                                 maxLength={200}
-                                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-sm text-slate-800 dark:text-gray-200 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-sky-200 dark:focus:ring-sky-800/50 focus:border-sky-300 dark:focus:border-sky-600 resize-none"
+                                className="w-full resize-none rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-sky-300 focus:ring-2 focus:ring-sky-200 focus:outline-none dark:border-slate-700 dark:bg-gray-900 dark:text-gray-200 dark:focus:border-sky-600 dark:focus:ring-sky-800/50"
                                 placeholder="Tell us something about your style, home setup, or shopping preferences"
                               />
-                              <p className="text-[11px] text-slate-400 dark:text-gray-500 text-right">
+                              <p className="text-right text-[11px] text-slate-400 dark:text-gray-500">
                                 {bio.length}/200
                               </p>
                             </div>
 
-                            <div className="md:col-span-2 space-y-1.5">
-                              <label className="text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wide">
+                            <div className="space-y-1.5 md:col-span-2">
+                              <label className="text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-gray-400">
                                 Invited By
                               </label>
-                              <div className="w-full rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-gray-800 px-3.5 py-2.5 text-sm text-slate-600 dark:text-gray-300 cursor-not-allowed">
+                              <div className="w-full cursor-not-allowed rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-600 dark:border-slate-700 dark:bg-gray-800 dark:text-gray-300">
                                 {profileData?.referrer_id ? (
                                   <>
                                     {profileData.referrer_name ||
@@ -7613,7 +7615,7 @@ const ProfilePage = ({
                                       "—"}
                                     {profileData.referrer_name &&
                                       profileData.referrer_username && (
-                                        <span className="text-slate-400 dark:text-gray-500 ml-1.5">
+                                        <span className="ml-1.5 text-slate-400 dark:text-gray-500">
                                           (@{profileData.referrer_username})
                                         </span>
                                       )}
@@ -7631,23 +7633,23 @@ const ProfilePage = ({
 
                           <div
                             ref={completeInformationRef}
-                            className="mt-6 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-gray-700/20 p-4 md:p-5"
+                            className="mt-6 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 md:p-5 dark:border-slate-700 dark:bg-gray-700/20"
                           >
-                            <div className="flex items-center justify-between gap-3 mb-4">
+                            <div className="mb-4 flex items-center justify-between gap-3">
                               <div>
                                 <h4 className="text-sm font-bold text-slate-900 dark:text-white">
                                   Complete Information
                                 </h4>
-                                <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">
+                                <p className="mt-0.5 text-[11px] text-slate-500 dark:text-gray-400">
                                   These fields match the older profile layout
                                   and help complete your account details.
                                 </p>
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                               <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wide">
+                                <label className="text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-gray-400">
                                   Middle Name
                                 </label>
                                 <input
@@ -7655,12 +7657,12 @@ const ProfilePage = ({
                                   value={form.middle_name}
                                   onChange={onOptionalChange("middle_name")}
                                   placeholder="Middle name"
-                                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-sm text-slate-800 dark:text-gray-200 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-sky-200 dark:focus:ring-sky-800/50 focus:border-sky-300 dark:focus:border-sky-600 hover:border-slate-300 dark:hover:border-slate-600"
+                                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 hover:border-slate-300 focus:border-sky-300 focus:ring-2 focus:ring-sky-200 focus:outline-none dark:border-slate-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-slate-600 dark:focus:border-sky-600 dark:focus:ring-sky-800/50"
                                 />
                               </div>
 
                               <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wide">
+                                <label className="text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-gray-400">
                                   Birth Date{" "}
                                   <span className="text-red-500">*</span>
                                 </label>
@@ -7668,18 +7670,18 @@ const ProfilePage = ({
                                   type="date"
                                   value={form.birth_date}
                                   onChange={onOptionalChange("birth_date")}
-                                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-sm text-slate-800 dark:text-gray-200 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-sky-200 dark:focus:ring-sky-800/50 focus:border-sky-300 dark:focus:border-sky-600 hover:border-slate-300 dark:hover:border-slate-600"
+                                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 hover:border-slate-300 focus:border-sky-300 focus:ring-2 focus:ring-sky-200 focus:outline-none dark:border-slate-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-slate-600 dark:focus:border-sky-600 dark:focus:ring-sky-800/50"
                                 />
                               </div>
 
                               <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wide">
+                                <label className="text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-gray-400">
                                   Gender <span className="text-red-500">*</span>
                                 </label>
                                 <select
                                   value={form.gender}
                                   onChange={onOptionalChange("gender")}
-                                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-sm text-slate-800 dark:text-gray-200 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-sky-200 dark:focus:ring-sky-800/50 focus:border-sky-300 dark:focus:border-sky-600 hover:border-slate-300 dark:hover:border-slate-600"
+                                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 hover:border-slate-300 focus:border-sky-300 focus:ring-2 focus:ring-sky-200 focus:outline-none dark:border-slate-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-slate-600 dark:focus:border-sky-600 dark:focus:ring-sky-800/50"
                                 >
                                   <option value="">Select Gender</option>
                                   <option value="male">Male</option>
@@ -7689,7 +7691,7 @@ const ProfilePage = ({
                               </div>
 
                               <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wide">
+                                <label className="text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-gray-400">
                                   Occupation{" "}
                                   <span className="text-red-500">*</span>
                                 </label>
@@ -7698,19 +7700,19 @@ const ProfilePage = ({
                                   value={form.occupation}
                                   onChange={onOptionalChange("occupation")}
                                   placeholder="Occupation"
-                                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-sm text-slate-800 dark:text-gray-200 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-sky-200 dark:focus:ring-sky-800/50 focus:border-sky-300 dark:focus:border-sky-600 hover:border-slate-300 dark:hover:border-slate-600"
+                                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 hover:border-slate-300 focus:border-sky-300 focus:ring-2 focus:ring-sky-200 focus:outline-none dark:border-slate-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-slate-600 dark:focus:border-sky-600 dark:focus:ring-sky-800/50"
                                 />
                               </div>
 
                               <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wide">
+                                <label className="text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-gray-400">
                                   Work Location{" "}
                                   <span className="text-red-500">*</span>
                                 </label>
                                 <select
                                   value={form.work_location}
                                   onChange={onWorkLocationChange}
-                                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-sm text-slate-800 dark:text-gray-200 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-sky-200 dark:focus:ring-sky-800/50 focus:border-sky-300 dark:focus:border-sky-600 hover:border-slate-300 dark:hover:border-slate-600"
+                                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 hover:border-slate-300 focus:border-sky-300 focus:ring-2 focus:ring-sky-200 focus:outline-none dark:border-slate-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-slate-600 dark:focus:border-sky-600 dark:focus:ring-sky-800/50"
                                 >
                                   <option value="local">Local</option>
                                   <option value="overseas">Overseas</option>
@@ -7718,7 +7720,7 @@ const ProfilePage = ({
                               </div>
 
                               <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wide">
+                                <label className="text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-gray-400">
                                   Country{" "}
                                   <span className="text-red-500">*</span>
                                 </label>
@@ -7726,10 +7728,10 @@ const ProfilePage = ({
                                   value={form.country}
                                   onChange={onOptionalChange("country")}
                                   disabled={form.work_location === "local"}
-                                  className={`w-full rounded-xl border px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-200 dark:focus:ring-sky-800/50 focus:border-sky-300 dark:focus:border-sky-600 ${
+                                  className={`w-full rounded-xl border px-3.5 py-2.5 text-sm focus:border-sky-300 focus:ring-2 focus:ring-sky-200 focus:outline-none dark:focus:border-sky-600 dark:focus:ring-sky-800/50 ${
                                     form.work_location === "local"
-                                      ? "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-gray-800 text-slate-400 dark:text-gray-500 cursor-not-allowed"
-                                      : "border-slate-200 dark:border-slate-700 text-slate-800 dark:text-gray-200 dark:bg-gray-900 hover:border-slate-300 dark:hover:border-slate-600"
+                                      ? "cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400 dark:border-slate-700 dark:bg-gray-800 dark:text-gray-500"
+                                      : "border-slate-200 text-slate-800 hover:border-slate-300 dark:border-slate-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-slate-600"
                                   }`}
                                 >
                                   {form.work_location === "local" ? (
@@ -7759,7 +7761,7 @@ const ProfilePage = ({
                                   setForm(buildProfileFormState())
                                   profileDraftDirtyRef.current = false
                                 }}
-                                className="rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-gray-700 transition-colors"
+                                className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-gray-300 dark:hover:bg-gray-700"
                               >
                                 Discard
                               </button>
@@ -7767,7 +7769,7 @@ const ProfilePage = ({
                             <button
                               type="submit"
                               disabled={isSaving || !hasChanges}
-                              className="inline-flex items-center gap-2 rounded-xl bg-sky-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-sky-600 dark:hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                              className="inline-flex items-center gap-2 rounded-xl bg-sky-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-sky-700"
                             >
                               {isSaving ? (
                                 <>
@@ -7785,20 +7787,20 @@ const ProfilePage = ({
                         </form>
 
                         {/* Saved Addresses */}
-                        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 dark:bg-gray-800 p-5 md:p-6">
-                          <div className="flex items-center justify-between mb-5">
+                        <div className="rounded-2xl border border-slate-200 p-5 md:p-6 dark:border-slate-700 dark:bg-gray-800">
+                          <div className="mb-5 flex items-center justify-between">
                             <div>
                               <h3 className="text-base font-bold text-slate-900 dark:text-white">
                                 Saved Addresses
                               </h3>
-                              <p className="text-xs text-slate-400 dark:text-gray-500 mt-0.5">
+                              <p className="mt-0.5 text-xs text-slate-400 dark:text-gray-500">
                                 Your shipping and billing locations.
                               </p>
                             </div>
                             <button
                               type="button"
                               onClick={handleOpenAddressModal}
-                              className="inline-flex items-center gap-1.5 text-sm font-semibold text-sky-400 dark:text-sky-500 hover:text-sky-300 dark:hover:text-sky-400 transition-colors px-3 py-1.5 rounded-lg hover:bg-sky-500/10 dark:hover:bg-sky-500/20"
+                              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold text-sky-400 transition-colors hover:bg-sky-500/10 hover:text-sky-300 dark:text-sky-500 dark:hover:bg-sky-500/20 dark:hover:text-sky-400"
                             >
                               {addresses.length
                                 ? "+ Edit Address"
@@ -7807,28 +7809,28 @@ const ProfilePage = ({
                           </div>
 
                           {addresses.length ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                               {addresses.map((addr) => (
                                 <div
                                   key={addr.id}
-                                  className="group relative rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-gray-800 hover:border-sky-200 dark:hover:border-sky-600 dark:hover:bg-sky-900/30 p-4 transition-colors"
+                                  className="group relative rounded-xl border border-slate-200 p-4 transition-colors hover:border-sky-200 dark:border-slate-700 dark:bg-gray-800 dark:hover:border-sky-600 dark:hover:bg-sky-900/30"
                                 >
                                   <div className="flex items-start justify-between gap-2">
                                     <div className="flex items-center gap-2">
-                                      <p className="text-xs font-semibold uppercase tracking-wide text-sky-600 dark:text-sky-400">
+                                      <p className="text-xs font-semibold tracking-wide text-sky-600 uppercase dark:text-sky-400">
                                         {addr.label}
                                       </p>
                                       {addr.isDefault && (
-                                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 font-medium">
+                                        <span className="rounded-full bg-sky-100 px-1.5 py-0.5 text-[10px] font-medium text-sky-600 dark:bg-sky-900/30 dark:text-sky-400">
                                           Default
                                         </span>
                                       )}
                                     </div>
-                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                                       <button
                                         type="button"
                                         onClick={handleOpenAddressModal}
-                                        className="p-1 rounded-lg text-slate-400 dark:text-gray-500 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-sky-100 dark:hover:bg-sky-900/30 transition-colors"
+                                        className="rounded-lg p-1 text-slate-400 transition-colors hover:bg-sky-100 hover:text-sky-600 dark:text-gray-500 dark:hover:bg-sky-900/30 dark:hover:text-sky-400"
                                       >
                                         <Icon.Edit className="h-3.5 w-3.5" />
                                       </button>
@@ -7840,14 +7842,14 @@ const ProfilePage = ({
                                   <p className="text-xs text-slate-500 dark:text-gray-400">
                                     {addr.phone}
                                   </p>
-                                  <p className="text-xs text-slate-500 dark:text-gray-400 mt-1.5 leading-relaxed">
+                                  <p className="mt-1.5 text-xs leading-relaxed text-slate-500 dark:text-gray-400">
                                     {addr.full}
                                   </p>
                                 </div>
                               ))}
                             </div>
                           ) : (
-                            <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-gray-800/70 px-4 py-8 text-center">
+                            <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-4 py-8 text-center dark:border-slate-700 dark:bg-gray-800/70">
                               <p className="text-sm font-semibold text-slate-700 dark:text-gray-300">
                                 No saved address yet
                               </p>
@@ -7870,23 +7872,23 @@ const ProfilePage = ({
                       >
                         <form
                           onSubmit={handleChangePassword}
-                          className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 p-5 md:p-6 shadow-sm"
+                          className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm md:p-6 dark:border-slate-700 dark:bg-gray-800"
                         >
                           <div className="mb-5 flex items-start gap-3">
-                            <div className="h-10 w-10 rounded-xl bg-blue-50 dark:bg-sky-900/30 text-blue-600 dark:text-sky-400 flex items-center justify-center shrink-0">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-sky-900/30 dark:text-sky-400">
                               <Icon.Shield className="h-4 w-4" />
                             </div>
                             <div>
                               <h3 className="text-base font-bold text-slate-900 dark:text-white">
                                 Change Password
                               </h3>
-                              <p className="text-xs text-slate-500 dark:text-gray-400 mt-0.5">
+                              <p className="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
                                 Use a strong, unique password for your account.
                               </p>
                             </div>
                             {(passwordChangeRequired ||
                               passwordChangeRequiredFromQuery) && (
-                              <div className="mt-3 rounded-2xl border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-900/30 px-4 py-3 text-sm text-sky-800 dark:text-sky-300">
+                              <div className="mt-3 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800 dark:border-sky-800 dark:bg-sky-900/30 dark:text-sky-300">
                                 Your account was signed in using a legacy
                                 password. Change it now to continue to the shop
                                 page.
@@ -7900,7 +7902,7 @@ const ProfilePage = ({
                                 initial={{ opacity: 0, y: -6 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -6 }}
-                                className="mb-4 flex items-center gap-2 rounded-xl px-4 py-3 text-sm bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-100 dark:border-red-800"
+                                className="mb-4 flex items-center gap-2 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400"
                               >
                                 <Icon.Warning className="h-4 w-4 shrink-0" />
                                 {pwError}
@@ -7911,7 +7913,7 @@ const ProfilePage = ({
                                 initial={{ opacity: 0, y: -6 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -6 }}
-                                className="mb-4 flex items-center gap-2 rounded-xl px-4 py-3 text-sm bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800"
+                                className="mb-4 flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400"
                               >
                                 <Icon.Check className="h-4 w-4 shrink-0" />
                                 Password changed successfully.
@@ -7955,7 +7957,7 @@ const ProfilePage = ({
                               {/* Password strength bar */}
                               {pwStrength && (
                                 <div className="mt-2 space-y-1">
-                                  <div className="h-1.5 rounded-full bg-slate-100 dark:bg-gray-700 overflow-hidden">
+                                  <div className="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-gray-700">
                                     <motion.div
                                       className={`h-full rounded-full ${pwStrength.color}`}
                                       initial={{ width: 0 }}
@@ -7963,7 +7965,7 @@ const ProfilePage = ({
                                       transition={{ duration: 0.3 }}
                                     />
                                   </div>
-                                  <p className="text-[11px] text-slate-500 dark:text-gray-400 text-right">
+                                  <p className="text-right text-[11px] text-slate-500 dark:text-gray-400">
                                     Password strength:{" "}
                                     <span className="font-semibold text-slate-700 dark:text-gray-300">
                                       {pwStrength.label}
@@ -7988,7 +7990,7 @@ const ProfilePage = ({
                               {security.confirmPassword &&
                                 security.newPassword !==
                                   security.confirmPassword && (
-                                  <p className="text-[11px] text-red-500 mt-1">
+                                  <p className="mt-1 text-[11px] text-red-500">
                                     Passwords do not match.
                                   </p>
                                 )}
@@ -8004,7 +8006,7 @@ const ProfilePage = ({
                                 !security.confirmPassword ||
                                 isChangingPassword
                               }
-                              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm shadow-blue-200"
+                              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-200 transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               {isChangingPassword
                                 ? "Updating Password..."
@@ -8014,24 +8016,24 @@ const ProfilePage = ({
                         </form>
 
                         {/* 2FA */}
-                        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 p-5 md:p-6 shadow-sm">
+                        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm md:p-6 dark:border-slate-700 dark:bg-gray-800">
                           <div className="mb-4 flex items-center justify-between gap-3">
                             <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-xl bg-blue-50 dark:bg-sky-900/30 text-blue-600 dark:text-sky-400 flex items-center justify-center shrink-0">
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-sky-900/30 dark:text-sky-400">
                                 <Icon.Shield className="h-4 w-4" />
                               </div>
                               <h3 className="text-base font-bold text-slate-900 dark:text-white">
                                 Two-Factor Authentication
                               </h3>
                             </div>
-                            <span className="rounded-full border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-900/20 px-2.5 py-1 text-[10px] font-semibold text-sky-600 dark:text-sky-400">
+                            <span className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[10px] font-semibold text-sky-600 dark:border-sky-800 dark:bg-sky-900/20 dark:text-sky-400">
                               Recommended
                             </span>
                           </div>
-                          <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-gray-800 px-4 py-3.5">
+                          <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-slate-50/70 px-4 py-3.5 dark:border-slate-700 dark:bg-gray-800">
                             <div className="flex items-start gap-3">
                               <div
-                                className={`mt-0.5 h-9 w-9 rounded-xl flex items-center justify-center ${prefs.twoFactorEnabled ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400" : "bg-slate-100 dark:bg-gray-700 text-slate-400 dark:text-gray-500"}`}
+                                className={`mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl ${prefs.twoFactorEnabled ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-slate-100 text-slate-400 dark:bg-gray-700 dark:text-gray-500"}`}
                               >
                                 <Icon.Shield className="h-4 w-4" />
                               </div>
@@ -8039,13 +8041,13 @@ const ProfilePage = ({
                                 <p className="text-sm font-semibold text-slate-800 dark:text-gray-200">
                                   New Device Approval (MFA)
                                 </p>
-                                <p className="text-xs text-slate-500 dark:text-gray-400 mt-0.5">
+                                <p className="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
                                   {prefs.twoFactorEnabled
                                     ? "New device logins need email approval: Yes, it is me / No, it is not me."
                                     : "Require email approval whenever your account signs in from a new device."}
                                 </p>
                                 {isUpdatingTwoFactor ? (
-                                  <p className="text-[11px] text-sky-600 dark:text-sky-400 mt-1">
+                                  <p className="mt-1 text-[11px] text-sky-600 dark:text-sky-400">
                                     Updating 2FA setting...
                                   </p>
                                 ) : null}
@@ -8060,21 +8062,21 @@ const ProfilePage = ({
                         </div>
 
                         {/* Authenticator App (TOTP) */}
-                        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 p-5 md:p-6 shadow-sm">
+                        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm md:p-6 dark:border-slate-700 dark:bg-gray-800">
                           <div className="mb-4">
                             <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-xl bg-blue-50 dark:bg-sky-900/30 text-blue-600 dark:text-sky-400 flex items-center justify-center shrink-0">
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-sky-900/30 dark:text-sky-400">
                                 <Icon.Activity className="h-4 w-4" />
                               </div>
                               <h3 className="text-base font-bold text-slate-900 dark:text-white">
                                 Authenticator App (TOTP)
                               </h3>
                               {/* Info icon inline next to label */}
-                              <div className="relative group">
+                              <div className="group relative">
                                 <button
                                   type="button"
                                   aria-label="Learn about TOTP"
-                                  className="h-5 w-5 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-gray-700 flex items-center justify-center text-slate-400 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 hover:border-sky-300 dark:hover:border-sky-700 transition-colors"
+                                  className="flex h-5 w-5 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-400 transition-colors hover:border-sky-300 hover:text-sky-600 dark:border-slate-700 dark:bg-gray-700 dark:text-gray-400 dark:hover:border-sky-700 dark:hover:text-sky-400"
                                 >
                                   <svg
                                     viewBox="0 0 24 24"
@@ -8091,12 +8093,12 @@ const ProfilePage = ({
                                   </svg>
                                 </button>
                                 {/* Tooltip panel */}
-                                <div className="pointer-events-none absolute left-0 top-7 z-50 w-72 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                  <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 shadow-xl shadow-slate-200/60 dark:shadow-black/40 px-4 py-4 space-y-3">
+                                <div className="pointer-events-none absolute top-7 left-0 z-50 w-72 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                                  <div className="space-y-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-xl shadow-slate-200/60 dark:border-slate-700 dark:bg-gray-800 dark:shadow-black/40">
                                     <p className="text-xs font-semibold text-sky-700 dark:text-sky-400">
                                       What is a TOTP / Authenticator App?
                                     </p>
-                                    <p className="text-xs text-slate-600 dark:text-gray-400 leading-relaxed">
+                                    <p className="text-xs leading-relaxed text-slate-600 dark:text-gray-400">
                                       A{" "}
                                       <span className="font-medium text-slate-700 dark:text-gray-300">
                                         Time-based One-Time Password (TOTP)
@@ -8106,12 +8108,12 @@ const ProfilePage = ({
                                       it cannot be reused or stolen.
                                     </p>
                                     <div>
-                                      <p className="text-xs font-semibold text-sky-700 dark:text-sky-400 mb-1.5">
+                                      <p className="mb-1.5 text-xs font-semibold text-sky-700 dark:text-sky-400">
                                         Why is it better than SMS?
                                       </p>
-                                      <ul className="text-xs text-slate-600 dark:text-gray-400 space-y-1.5 leading-relaxed">
+                                      <ul className="space-y-1.5 text-xs leading-relaxed text-slate-600 dark:text-gray-400">
                                         <li className="flex gap-2">
-                                          <span className="text-emerald-500 shrink-0">
+                                          <span className="shrink-0 text-emerald-500">
                                             ✓
                                           </span>
                                           <span>
@@ -8122,7 +8124,7 @@ const ProfilePage = ({
                                           </span>
                                         </li>
                                         <li className="flex gap-2">
-                                          <span className="text-emerald-500 shrink-0">
+                                          <span className="shrink-0 text-emerald-500">
                                             ✓
                                           </span>
                                           <span>
@@ -8134,7 +8136,7 @@ const ProfilePage = ({
                                           </span>
                                         </li>
                                         <li className="flex gap-2">
-                                          <span className="text-emerald-500 shrink-0">
+                                          <span className="shrink-0 text-emerald-500">
                                             ✓
                                           </span>
                                           <span>
@@ -8146,7 +8148,7 @@ const ProfilePage = ({
                                           </span>
                                         </li>
                                         <li className="flex gap-2">
-                                          <span className="text-emerald-500 shrink-0">
+                                          <span className="shrink-0 text-emerald-500">
                                             ✓
                                           </span>
                                           <span>
@@ -8167,7 +8169,7 @@ const ProfilePage = ({
                                 </div>
                               </div>
                             </div>
-                            <p className="text-xs text-slate-500 dark:text-gray-400 mt-0.5">
+                            <p className="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
                               Use Google Authenticator, Authy, or any
                               TOTP-compatible app to generate sign-in codes.
                             </p>
@@ -8180,7 +8182,7 @@ const ProfilePage = ({
                                 initial={{ opacity: 0, y: -6 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -6 }}
-                                className="mb-4 flex items-center gap-2 rounded-xl px-4 py-3 text-sm bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-100 dark:border-red-800"
+                                className="mb-4 flex items-center gap-2 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400"
                               >
                                 <Icon.Warning className="h-4 w-4 shrink-0" />
                                 {totpError}
@@ -8193,12 +8195,12 @@ const ProfilePage = ({
                               type="button"
                               onClick={handleInitiateTotpSetup}
                               disabled={totpLoading}
-                              className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-white px-5 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                              className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-white px-5 py-2.5 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               {totpLoading ? (
                                 <>
                                   <svg
-                                    className="animate-spin h-4 w-4"
+                                    className="h-4 w-4 animate-spin"
                                     xmlns="http://www.w3.org/2000/svg"
                                     fill="none"
                                     viewBox="0 0 24 24"
@@ -8239,9 +8241,9 @@ const ProfilePage = ({
                           )}
 
                           {totpStep === "idle" && totpEnabled && (
-                            <div className="flex items-center justify-between gap-4 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3">
+                            <div className="flex items-center justify-between gap-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-800 dark:bg-emerald-900/20">
                               <div className="flex items-center gap-3">
-                                <div className="h-8 w-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400">
                                   <Icon.Shield className="h-4 w-4" />
                                 </div>
                                 <div>
@@ -8260,7 +8262,7 @@ const ProfilePage = ({
                                   setTotpCode("")
                                   setTotpError(null)
                                 }}
-                                className="flex-shrink-0 text-xs font-semibold text-slate-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                                className="flex-shrink-0 text-xs font-semibold text-slate-500 transition-colors hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
                               >
                                 Remove
                               </button>
@@ -8275,7 +8277,7 @@ const ProfilePage = ({
                               className="space-y-4"
                             >
                               <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wide">
+                                <label className="text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-gray-400">
                                   Enter 6-digit code to confirm
                                 </label>
                                 <input
@@ -8291,7 +8293,7 @@ const ProfilePage = ({
                                   }}
                                   placeholder="Enter 6-digit code"
                                   maxLength={6}
-                                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-sm text-slate-800 dark:text-gray-200 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-red-200 dark:focus:ring-red-800/50 focus:border-red-300 dark:focus:border-red-600 transition-colors font-mono tracking-widest"
+                                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-mono text-sm tracking-widest text-slate-800 transition-colors focus:border-red-300 focus:ring-2 focus:ring-red-200 focus:outline-none dark:border-slate-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-red-600 dark:focus:ring-red-800/50"
                                 />
                               </div>
                               <div className="flex items-center gap-3">
@@ -8301,12 +8303,12 @@ const ProfilePage = ({
                                   disabled={
                                     totpLoading || totpCode.length !== 6
                                   }
-                                  className="inline-flex items-center gap-2 rounded-xl bg-red-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                  className="inline-flex items-center gap-2 rounded-xl bg-red-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                   {totpLoading ? (
                                     <>
                                       <svg
-                                        className="animate-spin h-4 w-4"
+                                        className="h-4 w-4 animate-spin"
                                         xmlns="http://www.w3.org/2000/svg"
                                         fill="none"
                                         viewBox="0 0 24 24"
@@ -8339,7 +8341,7 @@ const ProfilePage = ({
                                     setTotpError(null)
                                   }}
                                   disabled={totpLoading}
-                                  className="text-sm font-medium text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-200 transition-colors"
+                                  className="text-sm font-medium text-slate-500 transition-colors hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200"
                                 >
                                   Cancel
                                 </button>
@@ -8378,15 +8380,15 @@ const ProfilePage = ({
                                   damping: 28,
                                   stiffness: 280,
                                 }}
-                                className="fixed inset-x-0 top-0 z-[301] mx-auto w-full max-w-lg overflow-y-auto max-h-[92vh] bg-white dark:bg-gray-800 rounded-b-2xl shadow-2xl shadow-slate-900/20"
+                                className="fixed inset-x-0 top-0 z-[301] mx-auto max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-b-2xl bg-white shadow-2xl shadow-slate-900/20 dark:bg-gray-800"
                               >
                                 {/* Modal header */}
-                                <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 px-5 py-4">
+                                <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-700">
                                   <div>
                                     <h3 className="text-base font-bold text-slate-900 dark:text-white">
                                       Set Up Authenticator App
                                     </h3>
-                                    <p className="text-xs text-slate-500 dark:text-gray-400 mt-0.5">
+                                    <p className="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
                                       Follow the steps below to link your app.
                                     </p>
                                   </div>
@@ -8401,7 +8403,7 @@ const ProfilePage = ({
                                       }
                                     }}
                                     disabled={totpLoading}
-                                    className="h-8 w-8 flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-200 hover:bg-slate-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-40"
+                                    className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 dark:border-slate-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
                                   >
                                     <svg
                                       viewBox="0 0 24 24"
@@ -8419,7 +8421,7 @@ const ProfilePage = ({
                                 </div>
 
                                 {/* Modal body */}
-                                <div className="px-5 py-5 space-y-6">
+                                <div className="space-y-6 px-5 py-5">
                                   {/* Error */}
                                   <AnimatePresence>
                                     {totpError && (
@@ -8428,7 +8430,7 @@ const ProfilePage = ({
                                         initial={{ opacity: 0, y: -6 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         exit={{ opacity: 0, y: -6 }}
-                                        className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-100 dark:border-red-800"
+                                        className="flex items-center gap-2 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400"
                                       >
                                         <Icon.Warning className="h-4 w-4 shrink-0" />
                                         {totpError}
@@ -8438,7 +8440,7 @@ const ProfilePage = ({
 
                                   {/* Step 1 */}
                                   <div className="space-y-2">
-                                    <p className="text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wide">
+                                    <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-gray-400">
                                       Step 1 — Install an authenticator app
                                     </p>
                                     <p className="text-xs text-slate-500 dark:text-gray-400">
@@ -8467,7 +8469,7 @@ const ProfilePage = ({
                                       ].map((app) => (
                                         <div
                                           key={app.name}
-                                          className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-gray-900 px-3 py-1.5"
+                                          className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-slate-700 dark:bg-gray-900"
                                         >
                                           <span className="text-xs font-medium text-slate-700 dark:text-gray-300">
                                             {app.name}
@@ -8476,18 +8478,18 @@ const ProfilePage = ({
                                             href={app.android}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-[10px] font-semibold text-sky-600 dark:text-sky-400 hover:underline"
+                                            className="text-[10px] font-semibold text-sky-600 hover:underline dark:text-sky-400"
                                           >
                                             Android
                                           </a>
-                                          <span className="text-slate-300 dark:text-slate-600 text-[10px]">
+                                          <span className="text-[10px] text-slate-300 dark:text-slate-600">
                                             ·
                                           </span>
                                           <a
                                             href={app.ios}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-[10px] font-semibold text-sky-600 dark:text-sky-400 hover:underline"
+                                            className="text-[10px] font-semibold text-sky-600 hover:underline dark:text-sky-400"
                                           >
                                             iOS
                                           </a>
@@ -8498,14 +8500,14 @@ const ProfilePage = ({
 
                                   {/* Step 2 */}
                                   <div className="space-y-2">
-                                    <p className="text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wide">
+                                    <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-gray-400">
                                       Step 2 — Scan the QR code
                                     </p>
                                     <p className="text-xs text-slate-500 dark:text-gray-400">
                                       Open your authenticator app and scan the
                                       QR code to link your account.
                                     </p>
-                                    <div className="flex rounded-xl border border-slate-200 dark:border-slate-700 bg-white p-4 w-fit">
+                                    <div className="flex w-fit rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700">
                                       {/* eslint-disable-next-line @next/next/no-img-element */}
                                       <img
                                         src={totpSetupData.qr_code_url}
@@ -8514,11 +8516,11 @@ const ProfilePage = ({
                                       />
                                     </div>
                                     <div className="space-y-1">
-                                      <label className="text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wide">
+                                      <label className="text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-gray-400">
                                         Or enter this key manually
                                       </label>
-                                      <div className="flex items-center gap-2 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-gray-900 px-3.5 py-2.5">
-                                        <code className="flex-1 text-sm font-mono text-slate-800 dark:text-gray-200 tracking-widest break-all select-all">
+                                      <div className="flex w-full items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 dark:border-slate-700 dark:bg-gray-900">
+                                        <code className="flex-1 font-mono text-sm tracking-widest break-all text-slate-800 select-all dark:text-gray-200">
                                           {totpSetupData.secret}
                                         </code>
                                       </div>
@@ -8527,7 +8529,7 @@ const ProfilePage = ({
 
                                   {/* Step 3 */}
                                   <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wide">
+                                    <label className="text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-gray-400">
                                       Step 3 — Enter the 6-digit code
                                     </label>
                                     <input
@@ -8543,7 +8545,7 @@ const ProfilePage = ({
                                       }}
                                       placeholder="Enter 6-digit code"
                                       maxLength={6}
-                                      className="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-sm text-slate-800 dark:text-gray-200 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-sky-200 dark:focus:ring-sky-800/50 focus:border-sky-300 dark:focus:border-sky-600 transition-colors font-mono tracking-widest"
+                                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-mono text-sm tracking-widest text-slate-800 transition-colors focus:border-sky-300 focus:ring-2 focus:ring-sky-200 focus:outline-none dark:border-slate-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-sky-600 dark:focus:ring-sky-800/50"
                                     />
                                   </div>
 
@@ -8555,12 +8557,12 @@ const ProfilePage = ({
                                       disabled={
                                         totpLoading || totpCode.length !== 6
                                       }
-                                      className="inline-flex items-center gap-2 rounded-xl bg-sky-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-sky-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm shadow-sky-200"
+                                      className="inline-flex items-center gap-2 rounded-xl bg-sky-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-sky-200 transition-colors hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
                                       {totpLoading ? (
                                         <>
                                           <svg
-                                            className="animate-spin h-4 w-4"
+                                            className="h-4 w-4 animate-spin"
                                             xmlns="http://www.w3.org/2000/svg"
                                             fill="none"
                                             viewBox="0 0 24 24"
@@ -8596,7 +8598,7 @@ const ProfilePage = ({
                                         }
                                       }}
                                       disabled={totpLoading}
-                                      className="text-sm font-medium text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-200 transition-colors"
+                                      className="text-sm font-medium text-slate-500 transition-colors hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200"
                                     >
                                       Cancel
                                     </button>
@@ -8607,9 +8609,9 @@ const ProfilePage = ({
                           )}
                         </AnimatePresence>
 
-                        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 p-5 md:p-6 shadow-sm">
+                        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm md:p-6 dark:border-slate-700 dark:bg-gray-800">
                           <div className="mb-4 flex items-start gap-3">
-                            <div className="h-10 w-10 rounded-xl bg-blue-50 dark:bg-sky-900/30 text-blue-600 dark:text-sky-400 flex items-center justify-center shrink-0">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-sky-900/30 dark:text-sky-400">
                               <svg
                                 viewBox="0 0 24 24"
                                 fill="none"
@@ -8626,7 +8628,7 @@ const ProfilePage = ({
                               <h3 className="text-base font-bold text-slate-900 dark:text-white">
                                 Passkeys
                               </h3>
-                              <p className="text-xs text-slate-500 dark:text-gray-400 mt-0.5">
+                              <p className="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
                                 Add a passkey to sign in with Face ID,
                                 fingerprint, or device PIN.
                               </p>
@@ -8641,13 +8643,13 @@ const ProfilePage = ({
                                 setPasskeyName(event.target.value)
                               }
                               placeholder="Passkey name (optional, e.g. My iPhone)"
-                              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-sm text-slate-800 dark:text-gray-200 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-sky-800/50 focus:border-blue-300 dark:focus:border-sky-600"
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:border-blue-300 focus:ring-2 focus:ring-blue-100 focus:outline-none dark:border-slate-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-sky-600 dark:focus:ring-sky-800/50"
                             />
                             <button
                               type="button"
                               onClick={handleRegisterPasskey}
                               disabled={isRegisteringPasskey}
-                              className="inline-flex w-full sm:w-auto sm:min-w-[132px] whitespace-nowrap items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold whitespace-nowrap text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-[132px]"
                             >
                               {isRegisteringPasskey
                                 ? "Adding..."
@@ -8679,17 +8681,17 @@ const ProfilePage = ({
                                 return (
                                   <div
                                     key={item.id}
-                                    className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-gray-800 px-4 py-3"
+                                    className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50/70 px-4 py-3 dark:border-slate-700 dark:bg-gray-800"
                                   >
-                                    <div className="min-w-0 flex items-center gap-3">
-                                      <div className="h-8 w-8 rounded-lg bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0">
+                                    <div className="flex min-w-0 items-center gap-3">
+                                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400">
                                         <PasskeyMethodIcon method={method} />
                                       </div>
                                       <div className="min-w-0">
-                                        <p className="text-sm font-semibold text-slate-800 dark:text-gray-200 truncate">
+                                        <p className="truncate text-sm font-semibold text-slate-800 dark:text-gray-200">
                                           {item.name || "My Passkey"}
                                         </p>
-                                        <p className="text-xs text-slate-500 dark:text-gray-400 truncate">
+                                        <p className="truncate text-xs text-slate-500 dark:text-gray-400">
                                           {methodLabel} · Last used:{" "}
                                           {item.last_used_at
                                             ? formatRelativeTime(
@@ -8710,7 +8712,7 @@ const ProfilePage = ({
                                       disabled={removingPasskeyId === item.id}
                                       aria-label={`Remove passkey ${item.name || "My Passkey"}`}
                                       title="Remove passkey"
-                                      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors disabled:opacity-50"
+                                      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-500 transition-colors hover:bg-red-100 disabled:opacity-50 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40"
                                     >
                                       {removingPasskeyId === item.id ? (
                                         <svg
@@ -8776,11 +8778,11 @@ const ProfilePage = ({
                                   animate={{ opacity: 1, y: 0, scale: 1 }}
                                   exit={{ opacity: 0, y: 10, scale: 0.98 }}
                                   transition={{ duration: 0.18 }}
-                                  className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-900 p-5 shadow-2xl"
+                                  className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-gray-900"
                                   onClick={(event) => event.stopPropagation()}
                                 >
                                   <div className="flex items-start gap-3">
-                                    <div className="mt-0.5 h-9 w-9 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+                                    <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">
                                       <svg
                                         viewBox="0 0 24 24"
                                         fill="none"
@@ -8813,7 +8815,7 @@ const ProfilePage = ({
                                       type="button"
                                       onClick={() => setPasskeyToRemove(null)}
                                       disabled={Boolean(removingPasskeyId)}
-                                      className="inline-flex items-center rounded-lg border border-slate-300 dark:border-slate-600 px-3.5 py-2 text-sm font-semibold text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+                                      className="inline-flex items-center rounded-lg border border-slate-300 px-3.5 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-gray-200 dark:hover:bg-gray-800"
                                     >
                                       Cancel
                                     </button>
@@ -8823,7 +8825,7 @@ const ProfilePage = ({
                                         handleRemovePasskey(passkeyToRemove.id)
                                       }
                                       disabled={Boolean(removingPasskeyId)}
-                                      className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-red-700 transition-colors disabled:opacity-50"
+                                      className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
                                     >
                                       {removingPasskeyId ===
                                       passkeyToRemove.id ? (
@@ -8863,12 +8865,12 @@ const ProfilePage = ({
 
                         {/* Connected Accounts */}
                         {isCustomerSession && (
-                          <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 p-5 md:p-6">
+                          <div className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 dark:border-slate-700 dark:bg-gray-800">
                             <div className="mb-4">
                               <h3 className="text-base font-bold text-slate-900 dark:text-white">
                                 Connected Accounts
                               </h3>
-                              <p className="text-xs text-slate-500 dark:text-gray-400 mt-0.5">
+                              <p className="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
                                 Link social accounts to sign in without a
                                 password.
                               </p>
@@ -8877,7 +8879,7 @@ const ProfilePage = ({
                             <div className="space-y-3">
                               {/* Google */}
                               {isGoogleLinked ? (
-                                <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3">
+                                <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-800 dark:bg-emerald-900/20">
                                   <div className="flex items-center gap-3">
                                     <svg
                                       className="h-5 w-5 shrink-0"
@@ -8914,11 +8916,11 @@ const ProfilePage = ({
                                     type="button"
                                     onClick={handleUnlinkGoogle}
                                     disabled={isUnlinkingGoogle}
-                                    className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-50 shrink-0"
+                                    className="flex shrink-0 items-center gap-1.5 text-xs font-medium text-slate-500 transition-colors hover:text-red-600 disabled:opacity-50 dark:text-gray-400 dark:hover:text-red-400"
                                   >
                                     {isUnlinkingGoogle && (
                                       <svg
-                                        className="animate-spin h-3.5 w-3.5"
+                                        className="h-3.5 w-3.5 animate-spin"
                                         xmlns="http://www.w3.org/2000/svg"
                                         fill="none"
                                         viewBox="0 0 24 24"
@@ -8950,15 +8952,15 @@ const ProfilePage = ({
                                   disabled={
                                     isLinkingGoogle || googleLinkSuccess
                                   }
-                                  className={`flex items-center justify-center gap-2 w-full rounded-xl border px-4 py-3 text-sm font-medium transition-colors disabled:cursor-not-allowed ${
+                                  className={`flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-colors disabled:cursor-not-allowed ${
                                     googleLinkSuccess
-                                      ? "border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400"
-                                      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-gray-700 disabled:opacity-50"
+                                      ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400"
+                                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
                                   }`}
                                 >
                                   {isLinkingGoogle ? (
                                     <svg
-                                      className="animate-spin h-5 w-5 text-slate-400"
+                                      className="h-5 w-5 animate-spin text-slate-400"
                                       xmlns="http://www.w3.org/2000/svg"
                                       fill="none"
                                       viewBox="0 0 24 24"
@@ -9024,7 +9026,7 @@ const ProfilePage = ({
 
                               {/* Facebook */}
                               {isFacebookLinked ? (
-                                <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3">
+                                <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-800 dark:bg-emerald-900/20">
                                   <div className="flex items-center gap-3">
                                     <svg
                                       className="h-5 w-5 shrink-0"
@@ -9047,11 +9049,11 @@ const ProfilePage = ({
                                     type="button"
                                     onClick={handleUnlinkFacebook}
                                     disabled={isUnlinkingFacebook}
-                                    className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-50 shrink-0"
+                                    className="flex shrink-0 items-center gap-1.5 text-xs font-medium text-slate-500 transition-colors hover:text-red-600 disabled:opacity-50 dark:text-gray-400 dark:hover:text-red-400"
                                   >
                                     {isUnlinkingFacebook && (
                                       <svg
-                                        className="animate-spin h-3.5 w-3.5"
+                                        className="h-3.5 w-3.5 animate-spin"
                                         xmlns="http://www.w3.org/2000/svg"
                                         fill="none"
                                         viewBox="0 0 24 24"
@@ -9083,15 +9085,15 @@ const ProfilePage = ({
                                   disabled={
                                     isLinkingFacebook || facebookLinkSuccess
                                   }
-                                  className={`flex items-center justify-center gap-2 w-full rounded-xl border px-4 py-3 text-sm font-medium transition-colors disabled:cursor-not-allowed ${
+                                  className={`flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-colors disabled:cursor-not-allowed ${
                                     facebookLinkSuccess
-                                      ? "border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400"
-                                      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-gray-700 disabled:opacity-50"
+                                      ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400"
+                                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
                                   }`}
                                 >
                                   {isLinkingFacebook ? (
                                     <svg
-                                      className="animate-spin h-5 w-5 text-slate-400"
+                                      className="h-5 w-5 animate-spin text-slate-400"
                                       xmlns="http://www.w3.org/2000/svg"
                                       fill="none"
                                       viewBox="0 0 24 24"
@@ -9145,17 +9147,17 @@ const ProfilePage = ({
                         )}
 
                         {/* Danger zone */}
-                        <div className="rounded-2xl border border-red-100 dark:border-red-900/30 bg-white dark:bg-gray-800 p-5 md:p-6">
-                          <h3 className="text-base font-bold text-red-600 dark:text-red-400 mb-1 flex items-center gap-2">
+                        <div className="rounded-2xl border border-red-100 bg-white p-5 md:p-6 dark:border-red-900/30 dark:bg-gray-800">
+                          <h3 className="mb-1 flex items-center gap-2 text-base font-bold text-red-600 dark:text-red-400">
                             <Icon.Warning className="h-4 w-4" />
                             Danger Zone
                           </h3>
-                          <p className="text-xs text-slate-500 dark:text-gray-400 mb-4">
+                          <p className="mb-4 text-xs text-slate-500 dark:text-gray-400">
                             These actions are irreversible. Please be certain
                             before proceeding.
                           </p>
                           <div className="space-y-3">
-                            <div className="flex items-center justify-between rounded-xl border border-slate-100 dark:border-slate-700 px-4 py-3">
+                            <div className="flex items-center justify-between rounded-xl border border-slate-100 px-4 py-3 dark:border-slate-700">
                               <div>
                                 <p className="text-sm font-semibold text-slate-800 dark:text-gray-200">
                                   Sign Out
@@ -9175,13 +9177,13 @@ const ProfilePage = ({
                                   }
                                   signOut({ callbackUrl: "/login" })
                                 }}
-                                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-gray-300 hover:border-red-200 dark:hover:border-red-800 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 dark:border-slate-700 dark:text-gray-300 dark:hover:border-red-800 dark:hover:bg-red-900/30 dark:hover:text-red-400"
                               >
                                 <Icon.LogOut className="h-3.5 w-3.5" />
                                 Sign Out
                               </button>
                             </div>
-                            <div className="flex items-center justify-between rounded-xl border border-red-100 dark:border-red-900/30 bg-red-50/50 dark:bg-red-900/20 px-4 py-3">
+                            <div className="flex items-center justify-between rounded-xl border border-red-100 bg-red-50/50 px-4 py-3 dark:border-red-900/30 dark:bg-red-900/20">
                               <div>
                                 <p className="text-sm font-semibold text-red-700 dark:text-red-400">
                                   Delete Account
@@ -9192,7 +9194,7 @@ const ProfilePage = ({
                               </div>
                               <button
                                 type="button"
-                                className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 dark:border-red-800 bg-white dark:bg-gray-800 px-3 py-1.5 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-600 dark:hover:bg-red-700 hover:text-white hover:border-red-600 dark:hover:border-red-700 transition-colors"
+                                className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:border-red-600 hover:bg-red-600 hover:text-white dark:border-red-800 dark:bg-gray-800 dark:text-red-400 dark:hover:border-red-700 dark:hover:bg-red-700"
                               >
                                 <Icon.Trash className="h-3.5 w-3.5" />
                                 Delete
@@ -9210,9 +9212,9 @@ const ProfilePage = ({
                         {...tabMotionProps}
                         className="space-y-5"
                       >
-                        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 p-5 md:p-6 shadow-sm">
+                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6 dark:border-slate-700 dark:bg-gray-800">
                           <div className="mb-5 flex items-start gap-3">
-                            <div className="h-11 w-11 rounded-xl bg-blue-50 dark:bg-sky-900/30 text-blue-600 dark:text-sky-400 flex items-center justify-center shrink-0">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-sky-900/30 dark:text-sky-400">
                               <svg
                                 viewBox="0 0 24 24"
                                 fill="none"
@@ -9226,10 +9228,10 @@ const ProfilePage = ({
                               </svg>
                             </div>
                             <div>
-                              <h3 className="text-2lg font-bold tracking-tight text-slate-900 dark:text-white leading-none">
+                              <h3 className="text-2lg leading-none font-bold tracking-tight text-slate-900 dark:text-white">
                                 Notifications
                               </h3>
-                              <p className="text-sm text-slate-500 dark:text-gray-400 mt-2">
+                              <p className="mt-2 text-sm text-slate-500 dark:text-gray-400">
                                 Choose how you&apos;d like to be updated.
                               </p>
                             </div>
@@ -9320,17 +9322,17 @@ const ProfilePage = ({
                             ].map((item) => (
                               <div
                                 key={item.key}
-                                className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 px-4 py-3.5"
+                                className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 dark:border-slate-700 dark:bg-gray-800"
                               >
-                                <div className="flex items-center gap-4 min-w-0">
-                                  <div className="h-12 w-12 rounded-xl bg-slate-100 dark:bg-gray-700 text-blue-600 dark:text-sky-400 flex items-center justify-center shrink-0">
+                                <div className="flex min-w-0 items-center gap-4">
+                                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-blue-600 dark:bg-gray-700 dark:text-sky-400">
                                     {item.icon}
                                   </div>
                                   <div className="min-w-0">
-                                    <p className="text-l font-semibold leading-none tracking-tight text-slate-900 dark:text-gray-100">
+                                    <p className="text-l leading-none font-semibold tracking-tight text-slate-900 dark:text-gray-100">
                                       {item.label}
                                     </p>
-                                    <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
+                                    <p className="mt-1 text-sm text-slate-500 dark:text-gray-400">
                                       {item.desc}
                                     </p>
                                   </div>
@@ -9344,9 +9346,9 @@ const ProfilePage = ({
                           </div>
                         </div>
 
-                        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 p-5 md:p-6 shadow-sm">
+                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6 dark:border-slate-700 dark:bg-gray-800">
                           <div className="mb-5 flex items-start gap-3">
-                            <div className="h-11 w-11 rounded-xl bg-blue-50 dark:bg-sky-900/30 text-blue-600 dark:text-sky-400 flex items-center justify-center shrink-0">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-sky-900/30 dark:text-sky-400">
                               <svg
                                 viewBox="0 0 24 24"
                                 fill="none"
@@ -9360,15 +9362,15 @@ const ProfilePage = ({
                               </svg>
                             </div>
                             <div>
-                              <h3 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white leading-none">
+                              <h3 className="text-2xl leading-none font-bold tracking-tight text-slate-900 dark:text-white">
                                 Display & Regional
                               </h3>
-                              <p className="text-sm text-slate-500 dark:text-gray-400 mt-2">
+                              <p className="mt-2 text-sm text-slate-500 dark:text-gray-400">
                                 Customize your language and currency experience.
                               </p>
                             </div>
                           </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div className="space-y-1.5">
                               <label className="text-sm font-semibold text-slate-700 dark:text-gray-300">
                                 Language
@@ -9379,7 +9381,7 @@ const ProfilePage = ({
                                   fill="none"
                                   stroke="currentColor"
                                   strokeWidth={1.9}
-                                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-gray-500"
+                                  className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-gray-500"
                                   aria-hidden="true"
                                 >
                                   <circle cx="12" cy="12" r="9" />
@@ -9393,7 +9395,7 @@ const ProfilePage = ({
                                       language: e.target.value as "en" | "fil",
                                     }))
                                   }
-                                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 pl-10 pr-9 py-2.5 text-sm text-slate-800 dark:text-gray-200 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-sky-800/50 focus:border-blue-300 dark:focus:border-sky-600"
+                                  className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pr-9 pl-10 text-sm text-slate-800 focus:border-blue-300 focus:ring-2 focus:ring-blue-100 focus:outline-none dark:border-slate-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-sky-600 dark:focus:ring-sky-800/50"
                                 >
                                   <option value="en">English</option>
                                   <option value="fil">Filipino</option>
@@ -9410,7 +9412,7 @@ const ProfilePage = ({
                                   fill="none"
                                   stroke="currentColor"
                                   strokeWidth={1.9}
-                                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-gray-500"
+                                  className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-gray-500"
                                   aria-hidden="true"
                                 >
                                   <circle cx="12" cy="12" r="9" />
@@ -9425,7 +9427,7 @@ const ProfilePage = ({
                                       currency: e.target.value as "PHP" | "USD",
                                     }))
                                   }
-                                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 pl-10 pr-9 py-2.5 text-sm text-slate-800 dark:text-gray-200 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-sky-800/50 focus:border-blue-300 dark:focus:border-sky-600"
+                                  className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pr-9 pl-10 text-sm text-slate-800 focus:border-blue-300 focus:ring-2 focus:ring-blue-100 focus:outline-none dark:border-slate-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-sky-600 dark:focus:ring-sky-800/50"
                                 >
                                   <option value="PHP">
                                     ₱ Philippine Peso (PHP)
@@ -9439,7 +9441,7 @@ const ProfilePage = ({
                           <div className="mt-5 flex justify-end">
                             <button
                               type="button"
-                              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors shadow-sm shadow-blue-200 dark:shadow-sky-900/30"
+                              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-200 transition-colors hover:bg-blue-700 dark:shadow-sky-900/30"
                             >
                               <svg
                                 viewBox="0 0 24 24"
@@ -9495,26 +9497,26 @@ const ProfilePage = ({
                         className="space-y-5"
                       >
                         {/* Header card */}
-                        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 p-5 md:p-6">
-                          <div className="flex items-start justify-between gap-3 mb-5 flex-wrap">
+                        <div className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 dark:border-slate-700 dark:bg-gray-800">
+                          <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
                             <div>
                               <h3 className="text-base font-bold text-slate-900 dark:text-white">
                                 Referral Network
                               </h3>
-                              <p className="text-xs text-slate-500 dark:text-gray-400 mt-0.5">
+                              <p className="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
                                 Your affiliate tree, referral link, and
                                 commission overview.
                               </p>
                             </div>
                             {isVerified && (
-                              <span className="text-xs px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 font-semibold whitespace-nowrap">
+                              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold whitespace-nowrap text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                                 &#10003; Verified Affiliate
                               </span>
                             )}
                           </div>
 
                           {/* Stats row */}
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+                          <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
                             {[
                               {
                                 label: "Direct Referrals",
@@ -9566,7 +9568,7 @@ const ProfilePage = ({
                             ))}
                           </div>
 
-                          <div className="grid gap-4 mb-5 lg:grid-cols-2">
+                          <div className="mb-5 grid gap-4 lg:grid-cols-2">
                             <ReferralShareCard
                               title="Invite Members"
                               description="Best for people who want to sign up under your network."
@@ -9601,7 +9603,7 @@ const ProfilePage = ({
 
                           {/* Search + filter + controls */}
                           {isReferralTreeLoading ? (
-                            <div className="space-y-3 animate-pulse">
+                            <div className="animate-pulse space-y-3">
                               {[1, 2, 3].map((i) => (
                                 <div
                                   key={i}
@@ -9612,10 +9614,10 @@ const ProfilePage = ({
                           ) : (
                             <>
                               {/* Search + expand toggle */}
-                              <div className="flex items-center gap-2 mb-3">
+                              <div className="mb-3 flex items-center gap-2">
                                 <div className="relative flex-1">
                                   <svg
-                                    className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-gray-500 pointer-events-none"
+                                    className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-gray-500"
                                     fill="none"
                                     stroke="currentColor"
                                     strokeWidth={2}
@@ -9637,7 +9639,7 @@ const ProfilePage = ({
                                       setReferralPage(1)
                                     }}
                                     placeholder="Search name, username, email..."
-                                    className="w-full pl-9 pr-9 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400/60 dark:bg-gray-900 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 transition-colors"
+                                    className="w-full rounded-xl border border-slate-200 py-2.5 pr-9 pl-9 text-sm placeholder-slate-400 transition-colors focus:border-emerald-400/60 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none dark:border-slate-700 dark:bg-gray-900 dark:text-gray-200 dark:placeholder-gray-500"
                                   />
                                   {treeSearchQuery && (
                                     <button
@@ -9646,7 +9648,7 @@ const ProfilePage = ({
                                         setTreeSearchQuery("")
                                         setReferralPage(1)
                                       }}
-                                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-gray-300 transition-colors"
+                                      className="absolute top-1/2 right-3 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-gray-300"
                                     >
                                       <svg
                                         className="h-3.5 w-3.5"
@@ -9672,7 +9674,7 @@ const ProfilePage = ({
                                       ? handleCollapseAllTreeNodes
                                       : handleExpandAllTreeNodes
                                   }
-                                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-gray-400 hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition-colors hover:border-emerald-400 hover:text-emerald-600 dark:border-slate-700 dark:text-gray-400 dark:hover:text-emerald-400"
                                 >
                                   {Object.keys(expandedTreeNodes).length > 0 ? (
                                     <svg
@@ -9756,7 +9758,7 @@ const ProfilePage = ({
                                   },
                                 ]
                                 return (
-                                  <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 mb-3 scrollbar-hide">
+                                  <div className="scrollbar-hide mb-3 flex items-center gap-1.5 overflow-x-auto pb-0.5">
                                     {statusPills.map((pill) => (
                                       <button
                                         key={pill.key}
@@ -9789,7 +9791,7 @@ const ProfilePage = ({
                                   )
                                 return (
                                   <>
-                                    <div className="flex items-center justify-between mb-4">
+                                    <div className="mb-4 flex items-center justify-between">
                                       <p className="text-xs text-slate-500 dark:text-gray-400">
                                         {filteredReferralChildren.length > 0 ? (
                                           <>
@@ -9824,7 +9826,7 @@ const ProfilePage = ({
                                             setTreeStatusFilter("all")
                                             setReferralPage(1)
                                           }}
-                                          className="text-xs text-[#2c5f4f] hover:text-[#234d40] font-medium"
+                                          className="text-xs font-medium text-[#2c5f4f] hover:text-[#234d40]"
                                         >
                                           Clear filters
                                         </button>
@@ -9856,7 +9858,7 @@ const ProfilePage = ({
                                         </AnimatePresence>
 
                                         {totalPages > 1 && (
-                                          <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
+                                          <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4 dark:border-slate-700">
                                             <button
                                               type="button"
                                               disabled={referralPage <= 1}
@@ -9865,7 +9867,7 @@ const ProfilePage = ({
                                                   Math.max(1, p - 1)
                                                 )
                                               }
-                                              className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-gray-300 hover:border-[#2c5f4f]/40 hover:text-[#2c5f4f] dark:hover:bg-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                              className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-semibold text-slate-600 transition-colors hover:border-[#2c5f4f]/40 hover:text-[#2c5f4f] disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:text-gray-300 dark:hover:bg-gray-700"
                                             >
                                               <svg
                                                 className="h-3.5 w-3.5"
@@ -9878,9 +9880,9 @@ const ProfilePage = ({
                                               </svg>
                                               Prev
                                             </button>
-                                            <p className="text-xs text-slate-500 dark:text-gray-400 font-medium">
+                                            <p className="text-xs font-medium text-slate-500 dark:text-gray-400">
                                               Page{" "}
-                                              <span className="text-slate-800 dark:text-gray-300 font-bold">
+                                              <span className="font-bold text-slate-800 dark:text-gray-300">
                                                 {referralPage}
                                               </span>{" "}
                                               / {totalPages}
@@ -9895,7 +9897,7 @@ const ProfilePage = ({
                                                   Math.min(totalPages, p + 1)
                                                 )
                                               }
-                                              className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-gray-300 hover:border-[#2c5f4f]/40 hover:text-[#2c5f4f] dark:hover:bg-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                              className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-semibold text-slate-600 transition-colors hover:border-[#2c5f4f]/40 hover:text-[#2c5f4f] disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:text-gray-300 dark:hover:bg-gray-700"
                                             >
                                               Next
                                               <svg
@@ -9913,7 +9915,7 @@ const ProfilePage = ({
                                       </>
                                     ) : (
                                       <div className="py-12 text-center">
-                                        <div className="h-12 w-12 rounded-2xl bg-slate-100 dark:bg-gray-700 flex items-center justify-center mx-auto mb-3">
+                                        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 dark:bg-gray-700">
                                           <Icon.Network className="h-6 w-6 text-slate-400 dark:text-gray-500" />
                                         </div>
                                         <p className="text-sm font-semibold text-slate-700 dark:text-gray-300">
@@ -9921,7 +9923,7 @@ const ProfilePage = ({
                                             ? "No matches found"
                                             : "No referrals yet"}
                                         </p>
-                                        <p className="text-xs text-slate-400 dark:text-gray-500 mt-1">
+                                        <p className="mt-1 text-xs text-slate-400 dark:text-gray-500">
                                           {referralChildren.length > 0
                                             ? "Try a different search or filter"
                                             : "Share your referral link to start building your network"}
@@ -9943,18 +9945,18 @@ const ProfilePage = ({
                         {...tabMotionProps}
                         className="space-y-5"
                       >
-                        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 p-5 md:p-6">
+                        <div className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 dark:border-slate-700 dark:bg-gray-800">
                           <div className="mb-5">
                             <h3 className="text-base font-bold text-slate-900 dark:text-white">
                               Recent Activity
                             </h3>
-                            <p className="text-xs text-slate-500 dark:text-gray-400 mt-0.5">
+                            <p className="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
                               A log of your recent account actions.
                             </p>
                           </div>
                           <div className="space-y-2">
                             {isActivityLoading ? (
-                              <div className="space-y-2 animate-pulse">
+                              <div className="animate-pulse space-y-2">
                                 {[1, 2, 3].map((i) => (
                                   <div
                                     key={i}
@@ -9970,16 +9972,16 @@ const ProfilePage = ({
                                   initial="hidden"
                                   animate="visible"
                                   custom={i}
-                                  className="flex items-start gap-3.5 rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-gray-800/50 px-4 py-3.5 hover:border-slate-200 dark:hover:border-slate-600 transition-colors"
+                                  className="flex items-start gap-3.5 rounded-xl border border-slate-100 bg-slate-50/50 px-4 py-3.5 transition-colors hover:border-slate-200 dark:border-slate-700 dark:bg-gray-800/50 dark:hover:border-slate-600"
                                 >
-                                  <div className="mt-0.5 h-7 w-7 rounded-full bg-sky-100 dark:bg-sky-900/30 text-sky-500 dark:text-sky-400 flex items-center justify-center shrink-0">
+                                  <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-500 dark:bg-sky-900/30 dark:text-sky-400">
                                     {getActivityIcon(item.title)}
                                   </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-slate-800 dark:text-gray-200 truncate">
+                                  <div className="min-w-0 flex-1">
+                                    <p className="truncate text-sm font-medium text-slate-800 dark:text-gray-200">
                                       {item.title}
                                     </p>
-                                    <p className="text-xs text-slate-400 dark:text-gray-500 mt-0.5">
+                                    <p className="mt-0.5 text-xs text-slate-400 dark:text-gray-500">
                                       {item.time}
                                     </p>
                                   </div>
@@ -9999,7 +10001,7 @@ const ProfilePage = ({
                                 onClick={() =>
                                   setActivityPage((p) => Math.max(1, p - 1))
                                 }
-                                className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-gray-300 hover:border-[#2c5f4f]/40 hover:text-[#2c5f4f] dark:hover:bg-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-semibold text-slate-600 transition-colors hover:border-[#2c5f4f]/40 hover:text-[#2c5f4f] disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:text-gray-300 dark:hover:bg-gray-700"
                               >
                                 <svg
                                   className="h-3.5 w-3.5"
@@ -10012,9 +10014,9 @@ const ProfilePage = ({
                                 </svg>
                                 Prev
                               </button>
-                              <p className="text-xs text-slate-500 dark:text-gray-400 font-medium">
+                              <p className="text-xs font-medium text-slate-500 dark:text-gray-400">
                                 Page{" "}
-                                <span className="text-slate-800 dark:text-gray-300 font-bold">
+                                <span className="font-bold text-slate-800 dark:text-gray-300">
                                   {activityPage}
                                 </span>{" "}
                                 / {activityTotalPages}
@@ -10027,7 +10029,7 @@ const ProfilePage = ({
                                     Math.min(activityTotalPages, p + 1)
                                   )
                                 }
-                                className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-gray-300 hover:border-[#2c5f4f]/40 hover:text-[#2c5f4f] dark:hover:bg-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-semibold text-slate-600 transition-colors hover:border-[#2c5f4f]/40 hover:text-[#2c5f4f] disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:text-gray-300 dark:hover:bg-gray-700"
                               >
                                 Next
                                 <svg
@@ -10045,18 +10047,18 @@ const ProfilePage = ({
                         </div>
 
                         {/* Login sessions */}
-                        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 p-5 md:p-6">
+                        <div className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 dark:border-slate-700 dark:bg-gray-800">
                           <div className="mb-4">
                             <h3 className="text-base font-bold text-slate-900 dark:text-white">
                               Active Sessions
                             </h3>
-                            <p className="text-xs text-slate-500 dark:text-gray-400 mt-0.5">
+                            <p className="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
                               Devices currently logged into your account.
                             </p>
                           </div>
                           <div className="space-y-2">
                             {isSessionsLoading ? (
-                              <div className="space-y-2 animate-pulse">
+                              <div className="animate-pulse space-y-2">
                                 {[1, 2].map((i) => (
                                   <div
                                     key={i}
@@ -10072,26 +10074,26 @@ const ProfilePage = ({
                                 return (
                                   <div
                                     key={session.token_id || session.id}
-                                    className="rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-gray-800 px-4 py-3.5 flex items-center justify-between gap-4"
+                                    className="flex items-center justify-between gap-4 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3.5 dark:border-slate-700 dark:bg-gray-800"
                                   >
-                                    <div className="flex items-center gap-3 min-w-0">
+                                    <div className="flex min-w-0 items-center gap-3">
                                       <div
-                                        className={`h-8 w-8 rounded-lg flex items-center justify-center ${session.is_current ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400" : "bg-sky-100 dark:bg-sky-900/30 text-sky-500 dark:text-sky-400"}`}
+                                        className={`flex h-8 w-8 items-center justify-center rounded-lg ${session.is_current ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-sky-100 text-sky-500 dark:bg-sky-900/30 dark:text-sky-400"}`}
                                       >
                                         <Icon.Shield className="h-4 w-4" />
                                       </div>
                                       <div className="min-w-0">
-                                        <p className="text-sm font-semibold text-slate-800 dark:text-gray-200 truncate">
+                                        <p className="truncate text-sm font-semibold text-slate-800 dark:text-gray-200">
                                           {session.is_current
                                             ? `This device (${deviceType})`
                                             : `Other device (${deviceType})`}
                                         </p>
-                                        <p className="text-xs text-slate-500 dark:text-gray-400 truncate">
+                                        <p className="truncate text-xs text-slate-500 dark:text-gray-400">
                                           {resolved.platform} -{" "}
                                           {resolved.browser} -{" "}
                                           {resolveSessionLocation(session)}
                                         </p>
-                                        <p className="text-[11px] text-slate-400 dark:text-gray-500 mt-0.5">
+                                        <p className="mt-0.5 text-[11px] text-slate-400 dark:text-gray-500">
                                           {session.is_current
                                             ? `Online: ${formatOnlineDuration(session.created_at ?? null)}`
                                             : `Last active: ${formatRelativeTime(session.last_active_at ?? session.created_at ?? null)}`}
@@ -10100,8 +10102,8 @@ const ProfilePage = ({
                                     </div>
                                     <div className="flex items-center gap-2">
                                       {session.is_current ? (
-                                        <span className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-700 px-2 py-1 rounded-full whitespace-nowrap">
-                                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block" />
+                                        <span className="flex items-center gap-1.5 rounded-full border border-emerald-100 bg-emerald-50 px-2 py-1 text-[11px] font-semibold whitespace-nowrap text-emerald-600 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
                                           Active now
                                         </span>
                                       ) : null}
@@ -10120,7 +10122,7 @@ const ProfilePage = ({
                                             revokingTokenId ===
                                               session.token_id)
                                         }
-                                        className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 dark:border-red-800 bg-white dark:bg-gray-800 px-3 py-1.5 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-600 dark:hover:bg-red-700 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:bg-red-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-800 dark:bg-gray-800 dark:text-red-400 dark:hover:bg-red-700"
                                       >
                                         <Icon.LogOut className="h-3.5 w-3.5" />
                                         {isRevokingSession &&
@@ -10146,7 +10148,7 @@ const ProfilePage = ({
                                 onClick={() =>
                                   setSessionPage((p) => Math.max(1, p - 1))
                                 }
-                                className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-gray-300 hover:border-[#2c5f4f]/40 hover:text-[#2c5f4f] dark:hover:bg-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-semibold text-slate-600 transition-colors hover:border-[#2c5f4f]/40 hover:text-[#2c5f4f] disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:text-gray-300 dark:hover:bg-gray-700"
                               >
                                 <svg
                                   className="h-3.5 w-3.5"
@@ -10159,9 +10161,9 @@ const ProfilePage = ({
                                 </svg>
                                 Prev
                               </button>
-                              <p className="text-xs text-slate-500 dark:text-gray-400 font-medium">
+                              <p className="text-xs font-medium text-slate-500 dark:text-gray-400">
                                 Page{" "}
-                                <span className="text-slate-800 dark:text-gray-300 font-bold">
+                                <span className="font-bold text-slate-800 dark:text-gray-300">
                                   {sessionPage}
                                 </span>{" "}
                                 / {sessionTotalPages}
@@ -10174,7 +10176,7 @@ const ProfilePage = ({
                                     Math.min(sessionTotalPages, p + 1)
                                   )
                                 }
-                                className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-gray-300 hover:border-[#2c5f4f]/40 hover:text-[#2c5f4f] dark:hover:bg-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-semibold text-slate-600 transition-colors hover:border-[#2c5f4f]/40 hover:text-[#2c5f4f] disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:text-gray-300 dark:hover:bg-gray-700"
                               >
                                 Next
                                 <svg
@@ -10199,22 +10201,22 @@ const ProfilePage = ({
                         {...tabMotionProps}
                         className="space-y-5"
                       >
-                        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 p-5 md:p-6">
+                        <div className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 dark:border-slate-700 dark:bg-gray-800">
                           <div className="mb-4">
                             <h3 className="text-base font-bold text-slate-900 dark:text-white">
                               Change Username
                             </h3>
-                            <p className="text-xs text-slate-500 dark:text-gray-400 mt-0.5">
+                            <p className="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
                               Update the username used for your profile and
                               referral link.
                             </p>
                           </div>
 
-                          <div className="rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-gray-800 px-4 py-3 mb-4">
+                          <div className="mb-4 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-gray-800">
                             <p className="text-xs text-slate-500 dark:text-gray-400">
                               Current username
                             </p>
-                            <p className="text-sm font-semibold text-slate-800 dark:text-gray-200 mt-0.5">
+                            <p className="mt-0.5 text-sm font-semibold text-slate-800 dark:text-gray-200">
                               {profileData?.username
                                 ? `@${profileData.username}`
                                 : "Not set"}
@@ -10223,31 +10225,31 @@ const ProfilePage = ({
 
                           {usernameMsg && (
                             <div
-                              className={`mb-4 rounded-xl px-3.5 py-2.5 text-xs font-semibold ${usernameMsg.type === "success" ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-700" : "bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 border border-rose-100 dark:border-rose-700"}`}
+                              className={`mb-4 rounded-xl px-3.5 py-2.5 text-xs font-semibold ${usernameMsg.type === "success" ? "border border-emerald-100 bg-emerald-50 text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "border border-rose-100 bg-rose-50 text-rose-700 dark:border-rose-700 dark:bg-rose-900/30 dark:text-rose-400"}`}
                             >
                               {usernameMsg.text}
                             </div>
                           )}
 
                           {latestUsernameRequest && (
-                            <div className="mb-4 rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-gray-700/40 px-4 py-3">
+                            <div className="mb-4 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-gray-700/40">
                               <div className="flex items-center justify-between gap-3">
                                 <div>
                                   <p className="text-xs text-slate-500 dark:text-gray-400">
                                     Latest request
                                   </p>
-                                  <p className="text-sm font-semibold text-slate-800 dark:text-gray-200 mt-0.5">
+                                  <p className="mt-0.5 text-sm font-semibold text-slate-800 dark:text-gray-200">
                                     @{latestUsernameRequest.requested_username}
                                   </p>
                                 </div>
                                 <span
-                                  className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${
+                                  className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
                                     latestUsernameRequest.status === "approved"
-                                      ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800"
+                                      ? "border border-emerald-100 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400"
                                       : latestUsernameRequest.status ===
                                           "rejected"
-                                        ? "bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 border border-rose-100 dark:border-rose-800"
-                                        : "bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400 border border-sky-100 dark:border-sky-800"
+                                        ? "border border-rose-100 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-900/30 dark:text-rose-400"
+                                        : "border border-sky-100 bg-sky-50 text-sky-700 dark:border-sky-800 dark:bg-sky-900/30 dark:text-sky-400"
                                   }`}
                                 >
                                   {latestUsernameRequest.status ===
@@ -10257,7 +10259,7 @@ const ProfilePage = ({
                                 </span>
                               </div>
                               {latestUsernameRequest.review_notes && (
-                                <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-2">
+                                <p className="mt-2 text-[11px] text-slate-500 dark:text-gray-400">
                                   {latestUsernameRequest.review_notes}
                                 </p>
                               )}
@@ -10275,7 +10277,7 @@ const ProfilePage = ({
                             className="space-y-4"
                           >
                             <div className="space-y-1.5">
-                              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-400">
+                              <label className="text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-gray-400">
                                 New Username
                               </label>
                               <div className="flex items-center gap-2">
@@ -10303,10 +10305,10 @@ const ProfilePage = ({
                                   }}
                                   placeholder="your.username"
                                   disabled={hasPendingUsernameRequest}
-                                  className={`w-full rounded-xl border px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-200 dark:focus:ring-sky-900/50 focus:border-sky-300 ${
+                                  className={`w-full rounded-xl border px-3.5 py-2.5 text-sm focus:border-sky-300 focus:ring-2 focus:ring-sky-200 focus:outline-none dark:focus:ring-sky-900/50 ${
                                     hasPendingUsernameRequest
-                                      ? "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-gray-700/40 text-slate-400 dark:text-gray-500 cursor-not-allowed"
-                                      : "border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white bg-white dark:bg-gray-900"
+                                      ? "cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400 dark:border-slate-700 dark:bg-gray-700/40 dark:text-gray-500"
+                                      : "border-slate-200 bg-white text-slate-800 dark:border-slate-700 dark:bg-gray-900 dark:text-white"
                                   }`}
                                 />
                               </div>
@@ -10324,7 +10326,7 @@ const ProfilePage = ({
                                   hasPendingUsernameRequest ||
                                   isSendingUsernameOtp
                                 }
-                                className="inline-flex items-center gap-2 rounded-xl bg-sky-500 dark:bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-sky-600 dark:hover:bg-sky-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                                className="inline-flex items-center gap-2 rounded-xl bg-sky-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-sky-600 dark:hover:bg-sky-700"
                               >
                                 {isSendingUsernameOtp ? (
                                   <>
@@ -10351,14 +10353,14 @@ const ProfilePage = ({
                                   setUsernameOtpToken(null)
                                   setUsernameOtpSentTo(null)
                                 }}
-                                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 dark:text-gray-300 dark:hover:bg-gray-700 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-gray-300 dark:hover:bg-gray-700"
                               >
                                 Reset
                               </button>
                             </div>
 
                             {usernameOtpToken && !hasPendingUsernameRequest && (
-                              <div className="rounded-xl border border-sky-100 dark:border-sky-800 bg-sky-50/60 dark:bg-sky-900/20 px-4 py-3 space-y-3">
+                              <div className="space-y-3 rounded-xl border border-sky-100 bg-sky-50/60 px-4 py-3 dark:border-sky-800 dark:bg-sky-900/20">
                                 <div>
                                   <p className="text-xs font-semibold text-sky-700 dark:text-sky-300">
                                     Enter OTP
@@ -10379,13 +10381,13 @@ const ProfilePage = ({
                                       e.target.value.replace(/\\D/g, "")
                                     )
                                   }
-                                  className="w-full rounded-xl border border-sky-200 dark:border-sky-800 dark:bg-gray-900 dark:text-white bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-200 dark:focus:ring-sky-900/50 focus:border-sky-300"
+                                  className="w-full rounded-xl border border-sky-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:border-sky-300 focus:ring-2 focus:ring-sky-200 focus:outline-none dark:border-sky-800 dark:bg-gray-900 dark:text-white dark:focus:ring-sky-900/50"
                                   placeholder="4-digit code"
                                 />
                                 <button
                                   type="submit"
                                   disabled={isSubmittingUsernameChange}
-                                  className="inline-flex items-center gap-2 rounded-xl bg-slate-900 dark:bg-slate-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 dark:hover:bg-slate-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                                  className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-700 dark:hover:bg-slate-600"
                                 >
                                   {isSubmittingUsernameChange ? (
                                     <>
@@ -10485,10 +10487,10 @@ const ProfilePage = ({
                               </div>
                               <div className="relative hidden h-24 w-44 md:block">
                                 <div className="absolute inset-0 rounded-[22px] bg-gradient-to-br from-[#e7efff] to-[#f3f7ff]" />
-                                <div className="absolute -left-3 bottom-1 h-10 w-10 rounded-full bg-[#d9e7ff]" />
-                                <div className="absolute left-2 bottom-3 h-7 w-5 rounded-t-full bg-gradient-to-b from-[#5fd0c6] to-[#7be2d8]" />
-                                <div className="absolute left-5 bottom-3 h-10 w-6 rounded-t-full bg-gradient-to-b from-[#4ac1b7] to-[#70d9cf]" />
-                                <div className="absolute right-5 top-4 h-16 w-24 rounded-xl border border-[#d9e6ff] bg-white shadow-[0_8px_18px_rgba(80,120,220,0.16)]">
+                                <div className="absolute bottom-1 -left-3 h-10 w-10 rounded-full bg-[#d9e7ff]" />
+                                <div className="absolute bottom-3 left-2 h-7 w-5 rounded-t-full bg-gradient-to-b from-[#5fd0c6] to-[#7be2d8]" />
+                                <div className="absolute bottom-3 left-5 h-10 w-6 rounded-t-full bg-gradient-to-b from-[#4ac1b7] to-[#70d9cf]" />
+                                <div className="absolute top-4 right-5 h-16 w-24 rounded-xl border border-[#d9e6ff] bg-white shadow-[0_8px_18px_rgba(80,120,220,0.16)]">
                                   <div className="flex h-5 items-center gap-1.5 rounded-t-xl bg-[#cfdcff] px-2">
                                     <span className="h-1.5 w-1.5 rounded-full bg-[#f38cab]" />
                                     <span className="h-1.5 w-1.5 rounded-full bg-[#8db5ff]" />
@@ -10624,7 +10626,7 @@ const ProfilePage = ({
 
                             {webstoreMsg && (
                               <div
-                                className={`mb-4 rounded-xl px-3.5 py-2.5 text-xs font-semibold ${webstoreMsg.type === "success" ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-700" : "bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 border border-rose-100 dark:border-rose-700"}`}
+                                className={`mb-4 rounded-xl px-3.5 py-2.5 text-xs font-semibold ${webstoreMsg.type === "success" ? "border border-emerald-100 bg-emerald-50 text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "border border-rose-100 bg-rose-50 text-rose-700 dark:border-rose-700 dark:bg-rose-900/30 dark:text-rose-400"}`}
                               >
                                 {webstoreMsg.text}
                               </div>
@@ -10671,7 +10673,7 @@ const ProfilePage = ({
                                   }`}
                                 >
                                   <p
-                                    className={`text-[10px] text-center font-extrabold uppercase tracking-[0.18em] ${
+                                    className={`text-center text-[10px] font-extrabold tracking-[0.18em] uppercase ${
                                       activeWebstoreRequest &&
                                       webstoreRemainingBalance <= 0
                                         ? "text-emerald-600"
@@ -10684,7 +10686,7 @@ const ProfilePage = ({
                                       : "Remaining Balance"}
                                   </p>
                                   <p
-                                    className={`mt-1 text-lg font-black text-center tracking-tight ${
+                                    className={`mt-1 text-center text-lg font-black tracking-tight ${
                                       activeWebstoreRequest &&
                                       webstoreRemainingBalance <= 0
                                         ? "text-emerald-700"
@@ -10702,7 +10704,7 @@ const ProfilePage = ({
                               </div>
                               <div className="px-4 py-4 md:px-5">
                                 <div className="overflow-hidden rounded-2xl border border-[#d9e6ff] bg-white">
-                                  <div className="grid grid-cols-4 gap-0 border-b border-[#e7efff] bg-[#f4f8ff] px-4 py-3 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#6d82ab]">
+                                  <div className="grid grid-cols-4 gap-0 border-b border-[#e7efff] bg-[#f4f8ff] px-4 py-3 text-[11px] font-extrabold tracking-[0.16em] text-[#6d82ab] uppercase">
                                     <div>Plan</div>
                                     <div>Term</div>
                                     <div>Subscription Fee</div>
@@ -10739,7 +10741,7 @@ const ProfilePage = ({
                                               />
                                             </span>
                                             <div>
-                                              <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6d82ab] md:hidden">
+                                              <p className="text-[11px] font-semibold tracking-wide text-[#6d82ab] uppercase md:hidden">
                                                 Plan
                                               </p>
                                               <p className="text-sm font-bold text-[#163060]">
@@ -10749,7 +10751,7 @@ const ProfilePage = ({
                                           </div>
                                         </div>
                                         <div className="md:px-4 md:py-4">
-                                          <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6d82ab] md:hidden">
+                                          <p className="text-[11px] font-semibold tracking-wide text-[#6d82ab] uppercase md:hidden">
                                             Term
                                           </p>
                                           <p className="text-sm font-semibold text-[#163060]">
@@ -10757,7 +10759,7 @@ const ProfilePage = ({
                                           </p>
                                         </div>
                                         <div className="md:px-4 md:py-4">
-                                          <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6d82ab] md:hidden">
+                                          <p className="text-[11px] font-semibold tracking-wide text-[#6d82ab] uppercase md:hidden">
                                             Subscription Fee
                                           </p>
                                           <p className="text-sm font-semibold text-[#163060]">
@@ -10765,7 +10767,7 @@ const ProfilePage = ({
                                           </p>
                                         </div>
                                         <div className="md:px-4 md:py-4">
-                                          <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6d82ab] md:hidden">
+                                          <p className="text-[11px] font-semibold tracking-wide text-[#6d82ab] uppercase md:hidden">
                                             Effective Monthly
                                           </p>
                                           <p className="text-sm font-semibold text-[#163060]">
@@ -10802,7 +10804,7 @@ const ProfilePage = ({
                                             />
                                           </span>
                                           <div>
-                                            <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6d82ab] md:hidden">
+                                            <p className="text-[11px] font-semibold tracking-wide text-[#6d82ab] uppercase md:hidden">
                                               Plan
                                             </p>
                                             <div className="flex items-center gap-1.5">
@@ -10812,7 +10814,7 @@ const ProfilePage = ({
                                               {isRenewalMode &&
                                                 currentPlanKey ===
                                                   "quarterly" && (
-                                                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                                                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold tracking-wide text-emerald-700 uppercase">
                                                     Current
                                                   </span>
                                                 )}
@@ -10821,7 +10823,7 @@ const ProfilePage = ({
                                         </div>
                                       </div>
                                       <div className="md:px-4 md:py-4">
-                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6d82ab] md:hidden">
+                                        <p className="text-[11px] font-semibold tracking-wide text-[#6d82ab] uppercase md:hidden">
                                           Term
                                         </p>
                                         <p className="text-sm font-semibold text-[#163060]">
@@ -10829,7 +10831,7 @@ const ProfilePage = ({
                                         </p>
                                       </div>
                                       <div className="md:px-4 md:py-4">
-                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6d82ab] md:hidden">
+                                        <p className="text-[11px] font-semibold tracking-wide text-[#6d82ab] uppercase md:hidden">
                                           Subscription Fee
                                         </p>
                                         <p className="text-sm font-semibold text-[#163060]">
@@ -10837,7 +10839,7 @@ const ProfilePage = ({
                                         </p>
                                       </div>
                                       <div className="md:px-4 md:py-4">
-                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6d82ab] md:hidden">
+                                        <p className="text-[11px] font-semibold tracking-wide text-[#6d82ab] uppercase md:hidden">
                                           Effective Monthly
                                         </p>
                                         <p className="text-sm font-semibold text-[#163060]">
@@ -10873,7 +10875,7 @@ const ProfilePage = ({
                                             />
                                           </span>
                                           <div>
-                                            <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6d82ab] md:hidden">
+                                            <p className="text-[11px] font-semibold tracking-wide text-[#6d82ab] uppercase md:hidden">
                                               Plan
                                             </p>
                                             <div className="flex items-center gap-1.5">
@@ -10883,7 +10885,7 @@ const ProfilePage = ({
                                               {isRenewalMode &&
                                                 currentPlanKey ===
                                                   "semiAnnual" && (
-                                                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                                                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold tracking-wide text-emerald-700 uppercase">
                                                     Current
                                                   </span>
                                                 )}
@@ -10892,7 +10894,7 @@ const ProfilePage = ({
                                         </div>
                                       </div>
                                       <div className="md:px-4 md:py-4">
-                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6d82ab] md:hidden">
+                                        <p className="text-[11px] font-semibold tracking-wide text-[#6d82ab] uppercase md:hidden">
                                           Term
                                         </p>
                                         <p className="text-sm font-semibold text-[#163060]">
@@ -10900,7 +10902,7 @@ const ProfilePage = ({
                                         </p>
                                       </div>
                                       <div className="md:px-4 md:py-4">
-                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6d82ab] md:hidden">
+                                        <p className="text-[11px] font-semibold tracking-wide text-[#6d82ab] uppercase md:hidden">
                                           Subscription Fee
                                         </p>
                                         <p className="text-sm font-semibold text-[#163060]">
@@ -10908,7 +10910,7 @@ const ProfilePage = ({
                                         </p>
                                       </div>
                                       <div className="md:px-4 md:py-4">
-                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6d82ab] md:hidden">
+                                        <p className="text-[11px] font-semibold tracking-wide text-[#6d82ab] uppercase md:hidden">
                                           Effective Monthly
                                         </p>
                                         <p className="text-sm font-semibold text-[#163060]">
@@ -10945,19 +10947,19 @@ const ProfilePage = ({
                                           </span>
                                           <div className="flex items-center gap-2">
                                             <div>
-                                              <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6d82ab] md:hidden">
+                                              <p className="text-[11px] font-semibold tracking-wide text-[#6d82ab] uppercase md:hidden">
                                                 Plan
                                               </p>
                                               <p className="text-sm font-bold text-[#163060]">
                                                 Annual
                                               </p>
                                             </div>
-                                            <span className="rounded-full bg-[#e8f0ff] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#2f5bd8]">
+                                            <span className="rounded-full bg-[#e8f0ff] px-2 py-0.5 text-[10px] font-bold tracking-wide text-[#2f5bd8] uppercase">
                                               Best Value
                                             </span>
                                             {isRenewalMode &&
                                               currentPlanKey === "annual" && (
-                                                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                                                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold tracking-wide text-emerald-700 uppercase">
                                                   Current
                                                 </span>
                                               )}
@@ -10965,7 +10967,7 @@ const ProfilePage = ({
                                         </div>
                                       </div>
                                       <div className="md:px-4 md:py-4">
-                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6d82ab] md:hidden">
+                                        <p className="text-[11px] font-semibold tracking-wide text-[#6d82ab] uppercase md:hidden">
                                           Term
                                         </p>
                                         <p className="text-sm font-semibold text-[#163060]">
@@ -10973,7 +10975,7 @@ const ProfilePage = ({
                                         </p>
                                       </div>
                                       <div className="md:px-4 md:py-4">
-                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6d82ab] md:hidden">
+                                        <p className="text-[11px] font-semibold tracking-wide text-[#6d82ab] uppercase md:hidden">
                                           Subscription Fee
                                         </p>
                                         <p className="text-sm font-semibold text-[#163060]">
@@ -10981,7 +10983,7 @@ const ProfilePage = ({
                                         </p>
                                       </div>
                                       <div className="md:px-4 md:py-4">
-                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6d82ab] md:hidden">
+                                        <p className="text-[11px] font-semibold tracking-wide text-[#6d82ab] uppercase md:hidden">
                                           Effective Monthly
                                         </p>
                                         <p className="text-sm font-semibold text-[#163060]">
@@ -11144,7 +11146,7 @@ const ProfilePage = ({
                                     className={`w-full rounded-xl border px-4 py-3 text-sm ${
                                       hasExistingWebstoreRequest
                                         ? "border-[#d5def1] bg-slate-50 text-slate-500"
-                                        : "border-[#d5def1] bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-100 focus:border-sky-300"
+                                        : "border-[#d5def1] bg-white text-slate-800 focus:border-sky-300 focus:ring-2 focus:ring-sky-100 focus:outline-none"
                                     }`}
                                     placeholder="Enter full name"
                                     readOnly
@@ -11166,7 +11168,7 @@ const ProfilePage = ({
                                     className={`w-full rounded-xl border px-4 py-3 text-sm ${
                                       hasExistingWebstoreRequest
                                         ? "border-[#d5def1] bg-slate-50 text-slate-500"
-                                        : "border-[#d5def1] bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-100 focus:border-sky-300"
+                                        : "border-[#d5def1] bg-white text-slate-800 focus:border-sky-300 focus:ring-2 focus:ring-sky-100 focus:outline-none"
                                     }`}
                                     placeholder="Enter username"
                                     readOnly
@@ -11191,7 +11193,7 @@ const ProfilePage = ({
                                     className={`w-full rounded-xl border px-4 py-3 text-sm ${
                                       hasExistingWebstoreRequest
                                         ? "border-[#d5def1] bg-slate-50 text-slate-500"
-                                        : "border-[#d5def1] bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-100 focus:border-sky-300"
+                                        : "border-[#d5def1] bg-white text-slate-800 focus:border-sky-300 focus:ring-2 focus:ring-sky-100 focus:outline-none"
                                     }`}
                                     placeholder="Enter email"
                                     readOnly
@@ -11230,7 +11232,7 @@ const ProfilePage = ({
                                         ? "border-rose-300 bg-rose-50 text-rose-900 focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
                                         : hasExistingWebstoreRequest
                                           ? "border-[#d5def1] bg-slate-50 text-slate-500 opacity-80"
-                                          : "border-[#d5def1] bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-100 focus:border-sky-300"
+                                          : "border-[#d5def1] bg-white text-slate-800 focus:border-sky-300 focus:ring-2 focus:ring-sky-100 focus:outline-none"
                                     }`}
                                     placeholder="your-store-slug"
                                   />
@@ -11274,7 +11276,7 @@ const ProfilePage = ({
                                         ? "border-rose-300 bg-rose-50 text-rose-900 focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
                                         : hasExistingWebstoreRequest
                                           ? "border-[#d5def1] bg-slate-50 text-slate-500 opacity-80"
-                                          : "border-[#d5def1] bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-100 focus:border-sky-300"
+                                          : "border-[#d5def1] bg-white text-slate-800 focus:border-sky-300 focus:ring-2 focus:ring-sky-100 focus:outline-none"
                                     }`}
                                     placeholder="Storefront display name"
                                   />
@@ -11312,7 +11314,7 @@ const ProfilePage = ({
                                           billingOption: false,
                                         }))
                                       }}
-                                      className={`w-full appearance-none rounded-xl border bg-white px-4 py-3 pr-12 text-sm font-semibold text-[#163060] outline-none transition hover:border-[#9fb4ef] focus:border-[#4f7df0] focus:bg-[#fbfdff] focus:ring-2 focus:ring-sky-100 disabled:cursor-not-allowed disabled:opacity-70 ${
+                                      className={`w-full appearance-none rounded-xl border bg-white px-4 py-3 pr-12 text-sm font-semibold text-[#163060] transition outline-none hover:border-[#9fb4ef] focus:border-[#4f7df0] focus:bg-[#fbfdff] focus:ring-2 focus:ring-sky-100 disabled:cursor-not-allowed disabled:opacity-70 ${
                                         webstoreInvalidFields.billingOption
                                           ? "border-rose-300 bg-rose-50 focus:border-rose-400 focus:ring-rose-100"
                                           : "border-[#d5def1]"
@@ -11326,7 +11328,7 @@ const ProfilePage = ({
                                         Monthly Installment
                                       </option>
                                     </select>
-                                    <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#2457e7]">
+                                    <span className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-[#2457e7]">
                                       <svg
                                         viewBox="0 0 24 24"
                                         className="h-5 w-5"
@@ -11383,7 +11385,7 @@ const ProfilePage = ({
                                         })
                                       }
                                     }}
-                                    className={`w-full appearance-none rounded-xl border bg-white px-4 py-3 pr-12 text-sm font-semibold text-[#163060] outline-none transition hover:border-[#9fb4ef] focus:border-[#4f7df0] focus:bg-[#fbfdff] focus:ring-2 focus:ring-sky-100 disabled:cursor-not-allowed disabled:opacity-70 ${
+                                    className={`w-full appearance-none rounded-xl border bg-white px-4 py-3 pr-12 text-sm font-semibold text-[#163060] transition outline-none hover:border-[#9fb4ef] focus:border-[#4f7df0] focus:bg-[#fbfdff] focus:ring-2 focus:ring-sky-100 disabled:cursor-not-allowed disabled:opacity-70 ${
                                       webstoreInvalidFields.paymentMethod
                                         ? "border-rose-300 bg-rose-50 focus:border-rose-400 focus:ring-rose-100"
                                         : "border-[#d5def1]"
@@ -11401,7 +11403,7 @@ const ProfilePage = ({
                                       </option>
                                     ))}
                                   </select>
-                                  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#2457e7]">
+                                  <span className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-[#2457e7]">
                                     <svg
                                       viewBox="0 0 24 24"
                                       className="h-5 w-5"
@@ -11418,7 +11420,7 @@ const ProfilePage = ({
                                 </div>
                                 <div className="mt-2 rounded-2xl border border-[#dbe4f7] bg-[#f8fbff] px-4 py-3">
                                   <div className="flex flex-wrap items-center gap-2.5">
-                                    <p className="mr-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#6d7fa6]">
+                                    <p className="mr-1 text-[11px] font-bold tracking-[0.18em] text-[#6d7fa6] uppercase">
                                       Available Payment Method:
                                     </p>
                                     {WEBSTORE_AVAILABLE_PAYMENT_METHODS.map(
@@ -11484,9 +11486,9 @@ const ProfilePage = ({
                                     }}
                                     className={`mt-4 inline-flex items-center justify-center gap-3 rounded-[18px] px-6 py-3.5 text-[15px] font-semibold text-white shadow-[0_12px_28px_rgba(37,99,235,0.38)] transition disabled:cursor-not-allowed disabled:opacity-70 ${
                                       isSamePlanRenewal
-                                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-[0_12px_28px_rgba(5,150,105,0.35)]"
+                                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-[0_12px_28px_rgba(5,150,105,0.35)] hover:from-emerald-600 hover:to-emerald-700"
                                         : isPlanChangeRenewal
-                                          ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-[0_12px_28px_rgba(217,119,6,0.35)]"
+                                          ? "bg-gradient-to-r from-amber-500 to-orange-500 shadow-[0_12px_28px_rgba(217,119,6,0.35)] hover:from-amber-600 hover:to-orange-600"
                                           : "bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] hover:from-[#1d4ed8] hover:to-[#1e40af]"
                                     }`}
                                   >
@@ -11577,7 +11579,7 @@ const ProfilePage = ({
                                     <button
                                       type="button"
                                       onClick={() => setWebstoreTermsOpen(true)}
-                                      className="font-semibold text-sky-600 dark:text-sky-400 hover:underline"
+                                      className="font-semibold text-sky-600 hover:underline dark:text-sky-400"
                                     >
                                       Terms and Conditions
                                     </button>
@@ -11615,13 +11617,13 @@ const ProfilePage = ({
                                   <div className="inline-flex h-12 w-12 items-center justify-center rounded-3xl bg-[#eef1ff] text-[#2f5bff]">
                                     <Icon.Package className="h-7 w-7" />
                                   </div>
-                                  <h4 className="text-[18px] md:text-[20px] font-extrabold tracking-tight text-[#162449]">
+                                  <h4 className="text-[18px] font-extrabold tracking-tight text-[#162449] md:text-[20px]">
                                     Your Webstore Request
                                   </h4>
                                 </div>
                                 {activeWebstoreRequest?.status ? (
                                   <span
-                                    className={`inline-flex items-center gap-2 rounded-2xl px-3.5 py-2 text-[11px] md:text-[12px] font-bold leading-none ${
+                                    className={`inline-flex items-center gap-2 rounded-2xl px-3.5 py-2 text-[11px] leading-none font-bold md:text-[12px] ${
                                       activeWebstoreRequest.status ===
                                       "approved"
                                         ? "bg-emerald-50 text-emerald-700"
@@ -11666,11 +11668,11 @@ const ProfilePage = ({
                                           <path d="M9 12h6M9 16h6" />
                                         </svg>
                                       </span>
-                                      <p className="text-[11px] md:text-xs font-bold uppercase tracking-wide text-[#667293]">
+                                      <p className="text-[11px] font-bold tracking-wide text-[#667293] uppercase md:text-xs">
                                         Reference
                                       </p>
                                     </div>
-                                    <p className="mt-2.5 text-[17px] md:text-[18px] font-extrabold leading-tight text-[#17264a] break-words">
+                                    <p className="mt-2.5 text-[17px] leading-tight font-extrabold break-words text-[#17264a] md:text-[18px]">
                                       {activeWebstoreRequest.reference_no ||
                                         "-"}
                                     </p>
@@ -11697,11 +11699,11 @@ const ProfilePage = ({
                                           <path d="M16 3v4M8 3v4M3 10h18" />
                                         </svg>
                                       </span>
-                                      <p className="text-[11px] md:text-xs font-bold uppercase tracking-wide text-[#667293]">
+                                      <p className="text-[11px] font-bold tracking-wide text-[#667293] uppercase md:text-xs">
                                         Submitted
                                       </p>
                                     </div>
-                                    <p className="mt-2.5 text-[17px] md:text-[18px] font-extrabold leading-tight text-[#17264a] break-words">
+                                    <p className="mt-2.5 text-[17px] leading-tight font-extrabold break-words text-[#17264a] md:text-[18px]">
                                       {activeWebstoreRequest.created_at
                                         ? new Date(
                                             activeWebstoreRequest.created_at
@@ -11731,11 +11733,11 @@ const ProfilePage = ({
                                           <circle cx="12" cy="12" r="2" />
                                         </svg>
                                       </span>
-                                      <p className="text-[11px] md:text-xs font-bold uppercase tracking-wide text-[#667293]">
+                                      <p className="text-[11px] font-bold tracking-wide text-[#667293] uppercase md:text-xs">
                                         Slug Name
                                       </p>
                                     </div>
-                                    <p className="mt-2.5 text-[17px] md:text-[18px] font-extrabold leading-tight text-[#17264a] break-words">
+                                    <p className="mt-2.5 text-[17px] leading-tight font-extrabold break-words text-[#17264a] md:text-[18px]">
                                       {activeWebstoreRequest.slug_name || "-"}
                                     </p>
                                   </div>
@@ -11761,11 +11763,11 @@ const ProfilePage = ({
                                           <path d="M8 20h8M12 17v3" />
                                         </svg>
                                       </span>
-                                      <p className="text-[11px] md:text-xs font-bold uppercase tracking-wide text-[#667293]">
+                                      <p className="text-[11px] font-bold tracking-wide text-[#667293] uppercase md:text-xs">
                                         Display Name
                                       </p>
                                     </div>
-                                    <p className="mt-2.5 text-[17px] md:text-[18px] font-extrabold leading-tight text-[#17264a] break-words">
+                                    <p className="mt-2.5 text-[17px] leading-tight font-extrabold break-words text-[#17264a] md:text-[18px]">
                                       {activeWebstoreRequest.display_name ||
                                         "-"}
                                     </p>
@@ -11904,7 +11906,7 @@ const ProfilePage = ({
                                       ].map((col) => (
                                         <th
                                           key={col}
-                                          className="px-4 py-3 text-left text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#6d82ab] first:pl-6 last:pr-6"
+                                          className="px-4 py-3 text-left text-[11px] font-extrabold tracking-[0.16em] text-[#6d82ab] uppercase first:pl-6 last:pr-6"
                                         >
                                           {col}
                                         </th>
@@ -11918,7 +11920,7 @@ const ProfilePage = ({
                                         className="transition hover:bg-[#f8fbff]"
                                       >
                                         {/* # */}
-                                        <td className="py-4 pl-6 pr-4 text-xs font-bold text-[#8a9ec0]">
+                                        <td className="py-4 pr-4 pl-6 text-xs font-bold text-[#8a9ec0]">
                                           {(webstoreHistoryPage - 1) *
                                             WEBSTORE_HISTORY_PAGE_SIZE +
                                             idx +
@@ -12110,7 +12112,7 @@ const ProfilePage = ({
                                                   : "bg-amber-100 text-amber-700"
                                             return (
                                               <span
-                                                className={`inline-flex min-w-[78px] items-center justify-center rounded-full px-3 py-1 text-center text-[11px] font-bold uppercase tracking-wide whitespace-nowrap leading-none ${cls}`}
+                                                className={`inline-flex min-w-[78px] items-center justify-center rounded-full px-3 py-1 text-center text-[11px] leading-none font-bold tracking-wide whitespace-nowrap uppercase ${cls}`}
                                               >
                                                 {label}
                                               </span>
@@ -12118,7 +12120,7 @@ const ProfilePage = ({
                                           })()}
                                         </td>
                                         {/* Receipt */}
-                                        <td className="py-4 pl-4 pr-6">
+                                        <td className="py-4 pr-6 pl-4">
                                           {(() => {
                                             const receiptUrls =
                                               getWebstoreReceiptUrls(tx)
@@ -12376,7 +12378,7 @@ const ProfilePage = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[65] bg-black/60 backdrop-blur-sm p-4"
+              className="fixed inset-0 z-[65] bg-black/60 p-4 backdrop-blur-sm"
               onClick={() => setWebstoreTermsOpen(false)}
             >
               <motion.div
@@ -12428,7 +12430,7 @@ const ProfilePage = ({
                 <div className="px-5 py-4 md:px-6">
                   <div className="max-h-[68vh] overflow-y-auto rounded-2xl border border-[#dbe4f6] bg-white p-5">
                     <div
-                      className="prose prose-slate max-w-none text-[#42557e] prose-headings:text-[#1c2f57] prose-strong:text-[#1c2f57] [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6"
+                      className="prose prose-slate prose-headings:text-[#1c2f57] prose-strong:text-[#1c2f57] max-w-none text-[#42557e] [&_ol]:list-decimal [&_ol]:pl-6 [&_ul]:list-disc [&_ul]:pl-6"
                       dangerouslySetInnerHTML={{ __html: webstoreTermsBody }}
                     />
                   </div>
@@ -12465,7 +12467,7 @@ const ProfilePage = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm p-4"
+              className="fixed inset-0 z-[70] bg-black/60 p-4 backdrop-blur-sm"
               onClick={() => setWebstoreSyncSuccessOpen(false)}
             >
               <motion.div
@@ -12476,7 +12478,7 @@ const ProfilePage = ({
                 className="mx-auto mt-20 w-full max-w-md overflow-hidden rounded-3xl border border-[#d8e2f6] bg-white shadow-[0_24px_50px_rgba(30,64,175,0.18)]"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="px-6 pb-4 pt-6 text-center">
+                <div className="px-6 pt-6 pb-4 text-center">
                   <div className="mx-auto mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
                     <Icon.Check className="h-6 w-6" />
                   </div>
@@ -12533,7 +12535,7 @@ const ProfilePage = ({
                 <button
                   type="button"
                   onClick={() => dismissProfileRewardModal()}
-                  className="absolute right-4 top-4 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
+                  className="absolute top-4 right-4 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
                   aria-label="Close reward modal"
                 >
                   <svg
@@ -12602,7 +12604,7 @@ const ProfilePage = ({
                 ))}
 
                 {/* Header */}
-                <div className="px-6 pb-4 pt-10 text-center">
+                <div className="px-6 pt-10 pb-4 text-center">
                   {/* Checkmark circle */}
                   <motion.div
                     initial={{ scale: 0.5, opacity: 0 }}
@@ -12751,7 +12753,7 @@ const ProfilePage = ({
                           {reward.icon}
                         </motion.div>
                         <p
-                          className={`text-[10px] font-black uppercase tracking-widest ${reward.labelColor}`}
+                          className={`text-[10px] font-black tracking-widest uppercase ${reward.labelColor}`}
                         >
                           {reward.label}
                         </p>
@@ -12762,7 +12764,7 @@ const ProfilePage = ({
                             delay: 0.4 + index * 0.1,
                             duration: 0.4,
                           }}
-                          className="mt-1 text-4xl font-black tabular-nums text-slate-900 dark:text-white"
+                          className="mt-1 text-4xl font-black text-slate-900 tabular-nums dark:text-white"
                         >
                           {reward.value}
                         </motion.p>
@@ -12841,7 +12843,7 @@ const ProfilePage = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-md p-4"
+              className="fixed inset-0 z-[60] bg-black/80 p-4 backdrop-blur-md"
               onClick={handleCloseAddressModal}
             >
               <motion.div
@@ -12849,12 +12851,12 @@ const ProfilePage = ({
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.96, y: 8 }}
                 transition={{ duration: 0.18 }}
-                className="mx-auto mt-8 max-w-3xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 p-5 shadow-2xl"
+                className="mx-auto mt-8 max-w-3xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-gray-800"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-500">
+                    <p className="text-xs font-semibold tracking-[0.24em] text-sky-500 uppercase">
                       Address
                     </p>
                     <h3 className="mt-1 text-lg font-bold text-slate-900">
@@ -12872,7 +12874,7 @@ const ProfilePage = ({
 
                 <form onSubmit={handleSaveAddress} className="space-y-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <label className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
                       Street / House No. <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -12884,14 +12886,14 @@ const ProfilePage = ({
                           address: e.target.value,
                         }))
                       }
-                      className="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-sm text-slate-800 dark:text-gray-200 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-sky-200 dark:focus:ring-sky-800/50 focus:border-sky-300 dark:focus:border-sky-600"
+                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-sky-300 focus:ring-2 focus:ring-sky-200 focus:outline-none dark:border-slate-700 dark:bg-gray-900 dark:text-gray-200 dark:focus:border-sky-600 dark:focus:ring-sky-800/50"
                       placeholder="House no., street, building, unit"
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      <label className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
                         Region <span className="text-red-500">*</span>
                       </label>
                       <select
@@ -12901,7 +12903,7 @@ const ProfilePage = ({
                             e.target.options[e.target.selectedIndex]
                           phAddress.setRegion(e.target.value, option.text)
                         }}
-                        className="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-sm text-slate-800 dark:text-gray-200 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-sky-200 dark:focus:ring-sky-800/50 focus:border-sky-300 dark:focus:border-sky-600 disabled:bg-slate-50 dark:disabled:bg-gray-800 disabled:text-slate-400 dark:disabled:text-gray-500"
+                        className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-sky-300 focus:ring-2 focus:ring-sky-200 focus:outline-none disabled:bg-slate-50 disabled:text-slate-400 dark:border-slate-700 dark:bg-gray-900 dark:text-gray-200 dark:focus:border-sky-600 dark:focus:ring-sky-800/50 dark:disabled:bg-gray-800 dark:disabled:text-gray-500"
                       >
                         <option value="">
                           {phAddress.loadingRegions
@@ -12918,7 +12920,7 @@ const ProfilePage = ({
 
                     {!phAddress.noProvince ? (
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        <label className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
                           Province <span className="text-red-500">*</span>
                         </label>
                         <select
@@ -12931,7 +12933,7 @@ const ProfilePage = ({
                               e.target.options[e.target.selectedIndex]
                             phAddress.setProvince(e.target.value, option.text)
                           }}
-                          className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300 disabled:bg-slate-50 disabled:text-slate-400"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:border-sky-300 focus:ring-2 focus:ring-sky-200 focus:outline-none disabled:bg-slate-50 disabled:text-slate-400"
                         >
                           <option value="">
                             {phAddress.loadingProvinces
@@ -12947,19 +12949,19 @@ const ProfilePage = ({
                       </div>
                     ) : (
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        <label className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
                           Province <span className="text-red-500">*</span>
                         </label>
                         <input
                           value={phAddress.address.region}
                           disabled
-                          className="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-sm text-slate-400 dark:text-gray-500 dark:bg-gray-800"
+                          className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-400 dark:border-slate-700 dark:bg-gray-800 dark:text-gray-500"
                         />
                       </div>
                     )}
 
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      <label className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
                         City / Municipality{" "}
                         <span className="text-red-500">*</span>
                       </label>
@@ -12975,7 +12977,7 @@ const ProfilePage = ({
                             e.target.options[e.target.selectedIndex]
                           phAddress.setCity(e.target.value, option.text)
                         }}
-                        className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300 disabled:bg-slate-50 disabled:text-slate-400"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:border-sky-300 focus:ring-2 focus:ring-sky-200 focus:outline-none disabled:bg-slate-50 disabled:text-slate-400"
                       >
                         <option value="">
                           {phAddress.loadingCities || phAddress.loadingProvinces
@@ -12991,7 +12993,7 @@ const ProfilePage = ({
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      <label className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
                         Barangay <span className="text-red-500">*</span>
                       </label>
                       <select
@@ -13000,7 +13002,7 @@ const ProfilePage = ({
                           !phAddress.cityCode || phAddress.loadingBarangays
                         }
                         onChange={(e) => phAddress.setBarangay(e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-300 disabled:bg-slate-50 disabled:text-slate-400"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:border-sky-300 focus:ring-2 focus:ring-sky-200 focus:outline-none disabled:bg-slate-50 disabled:text-slate-400"
                       >
                         <option value="">
                           {phAddress.loadingBarangays
@@ -13016,7 +13018,7 @@ const ProfilePage = ({
                     </div>
 
                     <div className="space-y-1.5 md:col-span-2">
-                      <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      <label className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
                         ZIP Code <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -13028,7 +13030,7 @@ const ProfilePage = ({
                             zipCode: e.target.value,
                           }))
                         }
-                        className="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-sm text-slate-800 dark:text-gray-200 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-sky-200 dark:focus:ring-sky-800/50 focus:border-sky-300 dark:focus:border-sky-600 disabled:bg-slate-50 dark:disabled:bg-gray-800 disabled:text-slate-400 dark:disabled:text-gray-500"
+                        className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-sky-300 focus:ring-2 focus:ring-sky-200 focus:outline-none disabled:bg-slate-50 disabled:text-slate-400 dark:border-slate-700 dark:bg-gray-900 dark:text-gray-200 dark:focus:border-sky-600 dark:focus:ring-sky-800/50 dark:disabled:bg-gray-800 dark:disabled:text-gray-500"
                         placeholder="ZIP Code"
                       />
                     </div>
@@ -13100,7 +13102,7 @@ const ProfilePage = ({
                     transform: `scale(${avatarZoom})`,
                     transition: "transform 0.22s cubic-bezier(0.32,0.72,0,1)",
                   }}
-                  className="max-h-[72vh] max-w-[80vw] rounded-2xl object-contain shadow-2xl cursor-zoom-in select-none"
+                  className="max-h-[72vh] max-w-[80vw] cursor-zoom-in rounded-2xl object-contain shadow-2xl select-none"
                 />
 
                 <div className="flex items-center gap-3 rounded-2xl border border-white/15 bg-white/10 px-4 py-2 backdrop-blur-sm">
@@ -13109,7 +13111,7 @@ const ProfilePage = ({
                     onClick={() =>
                       setAvatarZoom((prev) => Math.max(1, prev - 0.5))
                     }
-                    className="text-white/70 hover:text-white transition-colors text-lg font-bold leading-none"
+                    className="text-lg leading-none font-bold text-white/70 transition-colors hover:text-white"
                     aria-label="Zoom out"
                   >
                     −
@@ -13122,7 +13124,7 @@ const ProfilePage = ({
                     onClick={() =>
                       setAvatarZoom((prev) => Math.min(4, prev + 0.5))
                     }
-                    className="text-white/70 hover:text-white transition-colors text-lg font-bold leading-none"
+                    className="text-lg leading-none font-bold text-white/70 transition-colors hover:text-white"
                     aria-label="Zoom in"
                   >
                     +
@@ -13131,7 +13133,7 @@ const ProfilePage = ({
                     <button
                       type="button"
                       onClick={() => setAvatarZoom(1)}
-                      className="ml-1 text-xs text-white/50 hover:text-white/90 transition-colors"
+                      className="ml-1 text-xs text-white/50 transition-colors hover:text-white/90"
                     >
                       Reset
                     </button>
@@ -13145,7 +13147,7 @@ const ProfilePage = ({
                   setIsAvatarPreviewOpen(false)
                   setAvatarZoom(1)
                 }}
-                className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/70 backdrop-blur-sm transition-all hover:bg-white/20 hover:text-white"
+                className="absolute top-5 right-5 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/70 backdrop-blur-sm transition-all hover:bg-white/20 hover:text-white"
                 aria-label="Close"
               >
                 <svg
@@ -13189,7 +13191,7 @@ const ProfilePage = ({
               >
                 <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-white backdrop-blur-sm">
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/60">
+                    <p className="text-xs font-semibold tracking-[0.22em] text-white/60 uppercase">
                       Receipt Preview
                     </p>
                     <p className="truncate text-sm font-bold">
@@ -13289,7 +13291,7 @@ const ProfilePage = ({
                       webstoreReceiptPreview.urls[webstoreReceiptPreview.idx]
                     }
                     alt={`${webstoreReceiptPreview.name} — receipt ${webstoreReceiptPreview.idx + 1}`}
-                    className="max-h-[78vh] w-full object-contain bg-[#f8fbff]"
+                    className="max-h-[78vh] w-full bg-[#f8fbff] object-contain"
                   />
                 </div>
               </motion.div>
@@ -13319,7 +13321,7 @@ const ProfilePage = ({
                   aria-label="Close"
                   disabled={isSubmittingReceipt}
                   onClick={() => setWebstoreReceiptUploadModalOpen(false)}
-                  className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white transition hover:bg-white/35 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="absolute top-4 right-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white transition hover:bg-white/35 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <svg
                     viewBox="0 0 24 24"
@@ -13409,7 +13411,7 @@ const ProfilePage = ({
                             ? undefined
                             : handleWebstoreReceiptDrop
                         }
-                        className={`rounded-[22px] border border-dashed bg-white p-5 outline-none transition focus-visible:ring-2 focus-visible:ring-sky-100 ${
+                        className={`rounded-[22px] border border-dashed bg-white p-5 transition outline-none focus-visible:ring-2 focus-visible:ring-sky-100 ${
                           isWebstoreReceiptPendingReview
                             ? "cursor-not-allowed border-[#d9e2f4] bg-[#f7f9fc] opacity-80"
                             : isDraggingReceipt
@@ -13479,7 +13481,7 @@ const ProfilePage = ({
                                         })
                                       }
                                     }}
-                                    className={`overflow-hidden rounded-2xl text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 ${
+                                    className={`overflow-hidden rounded-2xl text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:ring-2 focus:outline-none ${
                                       item.kind === "rejected"
                                         ? "border border-rose-200 bg-rose-50/70 focus:ring-rose-200"
                                         : "border border-[#d5def1] bg-[#f8fbff] focus:ring-sky-200"
@@ -13503,7 +13505,7 @@ const ProfilePage = ({
                                       </p>
                                       <div className="flex items-center gap-2">
                                         {item.kind === "rejected" ? (
-                                          <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-700">
+                                          <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold tracking-wide text-rose-700 uppercase">
                                             Rejected
                                           </span>
                                         ) : null}
@@ -13691,7 +13693,7 @@ const ProfilePage = ({
                 <button
                   type="button"
                   onClick={() => setWebstoreSuccessModalOpen(false)}
-                  className="absolute right-4 top-4 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-white/20 text-white backdrop-blur-sm transition hover:bg-white/30"
+                  className="absolute top-4 right-4 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-white/20 text-white backdrop-blur-sm transition hover:bg-white/30"
                   aria-label="Close success modal"
                 >
                   <svg
@@ -13738,15 +13740,15 @@ const ProfilePage = ({
                 <div className="flex-1 overflow-y-auto bg-white px-5 py-5 md:px-6 md:py-6">
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3">
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                      <p className="text-[11px] font-bold tracking-wide text-slate-400 uppercase">
                         Checkout ID
                       </p>
-                      <p className="mt-1 break-all text-sm font-semibold text-slate-900">
+                      <p className="mt-1 text-sm font-semibold break-all text-slate-900">
                         {webstorePaymentCheckoutId || webstoreCheckoutId || "-"}
                       </p>
                     </div>
                     <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3">
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                      <p className="text-[11px] font-bold tracking-wide text-slate-400 uppercase">
                         Status
                       </p>
                       <span className="mt-1 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">
@@ -13754,23 +13756,23 @@ const ProfilePage = ({
                       </span>
                     </div>
                     <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 md:col-span-2">
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                      <p className="text-[11px] font-bold tracking-wide text-slate-400 uppercase">
                         Payment Reference
                       </p>
-                      <p className="mt-1 break-all text-sm font-semibold text-slate-900">
+                      <p className="mt-1 text-sm font-semibold break-all text-slate-900">
                         {webstorePaymentReferenceId || "-"}
                       </p>
                     </div>
                     <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 md:col-span-2">
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                      <p className="text-[11px] font-bold tracking-wide text-slate-400 uppercase">
                         Payment Intent
                       </p>
-                      <p className="mt-1 break-all text-sm font-semibold text-slate-900">
+                      <p className="mt-1 text-sm font-semibold break-all text-slate-900">
                         {webstorePaymentIntentId || "-"}
                       </p>
                     </div>
                     <div className="rounded-3xl border border-slate-200 bg-white px-4 py-3">
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                      <p className="text-[11px] font-bold tracking-wide text-slate-400 uppercase">
                         Customer
                       </p>
                       <p className="mt-1 text-sm font-semibold text-slate-900">
@@ -13778,15 +13780,15 @@ const ProfilePage = ({
                       </p>
                     </div>
                     <div className="rounded-3xl border border-slate-200 bg-white px-4 py-3">
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                      <p className="text-[11px] font-bold tracking-wide text-slate-400 uppercase">
                         Email
                       </p>
-                      <p className="mt-1 break-all text-sm font-semibold text-slate-900">
+                      <p className="mt-1 text-sm font-semibold break-all text-slate-900">
                         {webstoreForm.email || "-"}
                       </p>
                     </div>
                     <div className="rounded-3xl border border-slate-200 bg-white px-4 py-3">
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                      <p className="text-[11px] font-bold tracking-wide text-slate-400 uppercase">
                         Plan
                       </p>
                       <p className="mt-1 text-sm font-semibold text-slate-900">
@@ -13794,7 +13796,7 @@ const ProfilePage = ({
                       </p>
                     </div>
                     <div className="rounded-3xl border border-slate-200 bg-white px-4 py-3">
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                      <p className="text-[11px] font-bold tracking-wide text-slate-400 uppercase">
                         Term
                       </p>
                       <p className="mt-1 text-sm font-semibold text-slate-900">
@@ -13802,7 +13804,7 @@ const ProfilePage = ({
                       </p>
                     </div>
                     <div className="rounded-3xl border border-slate-200 bg-white px-4 py-3">
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                      <p className="text-[11px] font-bold tracking-wide text-slate-400 uppercase">
                         Payment Method
                       </p>
                       <p className="mt-1 text-sm font-semibold text-slate-900">
@@ -13810,7 +13812,7 @@ const ProfilePage = ({
                       </p>
                     </div>
                     <div className="rounded-3xl border border-slate-200 bg-white px-4 py-3">
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                      <p className="text-[11px] font-bold tracking-wide text-slate-400 uppercase">
                         Billing
                       </p>
                       <p className="mt-1 text-sm font-semibold text-slate-900">
@@ -13818,7 +13820,7 @@ const ProfilePage = ({
                       </p>
                     </div>
                     <div className="rounded-3xl border border-slate-200 bg-white px-4 py-3">
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                      <p className="text-[11px] font-bold tracking-wide text-slate-400 uppercase">
                         Subscription Fee
                       </p>
                       <p className="mt-1 text-sm font-semibold text-slate-900">
@@ -13828,7 +13830,7 @@ const ProfilePage = ({
                       </p>
                     </div>
                     <div className="rounded-3xl border border-slate-200 bg-white px-4 py-3">
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                      <p className="text-[11px] font-bold tracking-wide text-slate-400 uppercase">
                         {webstorePaymentBreakdownLabel}
                       </p>
                       <p className="mt-1 text-sm font-semibold text-slate-900">

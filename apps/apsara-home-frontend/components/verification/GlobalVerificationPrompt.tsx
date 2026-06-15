@@ -1,11 +1,11 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { usePathname, useRouter } from "next/navigation"
-import { useSession } from "next-auth/react"
-import { AnimatePresence, motion } from "framer-motion"
-import { useMeQuery } from "@/store/api/userApi"
 import { extractPartnerSlugFromPath } from "@/libs/storefrontRouting"
+import { useMeQuery } from "@/store/api/userApi"
+import { AnimatePresence, motion } from "framer-motion"
+import { useSession } from "next-auth/react"
+import { usePathname, useRouter } from "next/navigation"
 
 const modalMotion = {
   hidden: { opacity: 0, scale: 0.96, y: 18 },
@@ -134,11 +134,11 @@ export default function GlobalVerificationPrompt() {
             transition={{ duration: 0.25, ease: "easeOut" }}
             className="relative w-full max-w-lg overflow-hidden rounded-[28px] border border-emerald-200 bg-white shadow-[0_30px_90px_rgba(15,23,42,0.22)]"
           >
-            <div className="bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.22),_transparent_52%),linear-gradient(180deg,#ecfdf5_0%,#ffffff_100%)] px-6 pb-6 pt-7">
+            <div className="bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.22),_transparent_52%),linear-gradient(180deg,#ecfdf5_0%,#ffffff_100%)] px-6 pt-7 pb-6">
               <button
                 type="button"
                 onClick={handleSuccessClose}
-                className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full border border-emerald-200 bg-white/80 text-slate-400 transition hover:text-slate-700"
+                className="absolute top-4 right-4 flex h-9 w-9 items-center justify-center rounded-full border border-emerald-200 bg-white/80 text-slate-400 transition hover:text-slate-700"
                 aria-label="Close verification success"
               >
                 <svg
@@ -172,7 +172,7 @@ export default function GlobalVerificationPrompt() {
                 </svg>
               </div>
 
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-600">
+              <p className="text-xs font-semibold tracking-[0.28em] text-emerald-600 uppercase">
                 Verification Approved
               </p>
               <h2 className="mt-3 text-2xl font-bold text-slate-900">
@@ -184,7 +184,7 @@ export default function GlobalVerificationPrompt() {
               </p>
 
               <div className="mt-5 rounded-2xl border border-emerald-100 bg-white/80 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                <p className="text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase">
                   What you can do now
                 </p>
                 <div className="mt-3 space-y-2">
@@ -232,11 +232,11 @@ export default function GlobalVerificationPrompt() {
             transition={{ duration: 0.25, ease: "easeOut" }}
             className="relative w-full max-w-md overflow-hidden rounded-[28px] border border-orange-200 bg-white shadow-[0_30px_90px_rgba(15,23,42,0.22)]"
           >
-            <div className="bg-[radial-gradient(circle_at_top,_rgba(251,146,60,0.22),_transparent_52%),linear-gradient(180deg,#fff7ed_0%,#ffffff_100%)] px-6 pb-6 pt-7">
+            <div className="bg-[radial-gradient(circle_at_top,_rgba(251,146,60,0.22),_transparent_52%),linear-gradient(180deg,#fff7ed_0%,#ffffff_100%)] px-6 pt-7 pb-6">
               <button
                 type="button"
                 onClick={handleClose}
-                className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full border border-orange-200 bg-white/80 text-slate-400 transition hover:text-slate-700"
+                className="absolute top-4 right-4 flex h-9 w-9 items-center justify-center rounded-full border border-orange-200 bg-white/80 text-slate-400 transition hover:text-slate-700"
                 aria-label="Close verification reminder"
               >
                 <svg
@@ -270,7 +270,7 @@ export default function GlobalVerificationPrompt() {
                 </svg>
               </div>
 
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-orange-500">
+              <p className="text-xs font-semibold tracking-[0.28em] text-orange-500 uppercase">
                 Verification Needed
               </p>
               <h2 className="mt-3 text-2xl font-bold text-slate-900">
@@ -282,7 +282,7 @@ export default function GlobalVerificationPrompt() {
               </p>
 
               <div className="mt-5 rounded-2xl border border-orange-100 bg-white/80 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                <p className="text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase">
                   Current status
                 </p>
                 <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1 text-sm font-semibold text-orange-700">

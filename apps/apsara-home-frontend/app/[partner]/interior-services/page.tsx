@@ -1,7 +1,8 @@
+import { getPartnerStorefrontBySlug } from "@/libs/partnerStorefrontServer"
 import type { Metadata } from "next"
 import Link from "next/link"
+
 import InteriorServicesPageMain from "@/components/interior-services/InteriorServicesPageMain"
-import { getPartnerStorefrontBySlug } from "@/libs/partnerStorefrontServer"
 
 type PageProps = {
   params: Promise<{ partner: string }>

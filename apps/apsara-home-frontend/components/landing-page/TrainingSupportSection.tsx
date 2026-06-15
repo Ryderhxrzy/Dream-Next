@@ -1,11 +1,11 @@
 import { motion } from "framer-motion"
 import {
-  GraduationCap,
   Calendar,
+  GraduationCap,
   Mic,
   PlayCircle,
-  Video,
   Users,
+  Video,
 } from "lucide-react"
 
 export default function TrainingSupportSection() {
@@ -64,23 +64,23 @@ export default function TrainingSupportSection() {
   return (
     <section
       id="training"
-      className="py-16 md:py-24 !bg-white dark:!bg-gray-950 overflow-hidden relative"
+      className="relative overflow-hidden !bg-white py-16 md:py-24 dark:!bg-gray-950"
     >
       {/* Background Decor */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute top-10 sm:top-20 -left-10 sm:-left-20 w-56 h-56 sm:w-72 sm:h-72 md:w-80 md:h-80 bg-orange-50 rounded-full mix-blend-multiply filter blur-3xl opacity-40 sm:opacity-50" />
-        <div className="absolute bottom-10 sm:bottom-20 -right-10 sm:-right-20 w-56 h-56 sm:w-72 sm:h-72 md:w-80 md:h-80 bg-blue-50 rounded-full mix-blend-multiply filter blur-3xl opacity-40 sm:opacity-50" />
+      <div className="pointer-events-none absolute top-0 left-0 h-full w-full overflow-hidden">
+        <div className="absolute top-10 -left-10 h-56 w-56 rounded-full bg-orange-50 opacity-40 mix-blend-multiply blur-3xl filter sm:top-20 sm:-left-20 sm:h-72 sm:w-72 sm:opacity-50 md:h-80 md:w-80" />
+        <div className="absolute -right-10 bottom-10 h-56 w-56 rounded-full bg-blue-50 opacity-40 mix-blend-multiply blur-3xl filter sm:-right-20 sm:bottom-20 sm:h-72 sm:w-72 sm:opacity-50 md:h-80 md:w-80" />
       </div>
 
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+      <div className="relative z-10 container mx-auto px-4">
+        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-16">
           {/* Text Content */}
           <div className="order-1">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-100 dark:bg-orange-500/10 text-orange-700 dark:text-orange-300 font-semibold text-sm mb-6"
+              className="mb-6 inline-flex items-center gap-2 rounded-full bg-orange-100 px-4 py-1.5 text-sm font-semibold text-orange-700 dark:bg-orange-500/10 dark:text-orange-300"
             >
               <GraduationCap size={14} />
               TRAININGS, EVENTS & SUPPORT
@@ -91,7 +91,7 @@ export default function TrainingSupportSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6 leading-tight"
+              className="mb-6 text-4xl leading-tight font-bold text-gray-900 md:text-5xl dark:text-white"
             >
               You’re Never Doing <br />
               <span className="text-orange-600">This Alone.</span>
@@ -102,7 +102,7 @@ export default function TrainingSupportSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
-              className="text-xl text-gray-600 dark:text-gray-400 mb-10 leading-relaxed"
+              className="mb-10 text-xl leading-relaxed text-gray-600 dark:text-gray-400"
             >
               AF Home provides ongoing training, tools, and events to help
               affiliates succeed—whether you’re a beginner or experienced
@@ -114,20 +114,20 @@ export default function TrainingSupportSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.3 }}
-              className="grid sm:grid-cols-2 gap-6"
+              className="grid gap-6 sm:grid-cols-2"
             >
               {highlights.map((item, index) => (
                 <div key={index} className="flex items-start gap-4">
                   <div
-                    className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${item.color}`}
+                    className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl ${item.color}`}
                   >
                     <item.icon size={22} />
                   </div>
                   <div className="pt-2">
-                    <h4 className="font-bold text-gray-900 dark:text-white text-lg leading-none mb-2">
+                    <h4 className="mb-2 text-lg leading-none font-bold text-gray-900 dark:text-white">
                       {item.text}
                     </h4>
-                    <div className="h-1 w-12 bg-gray-100 dark:bg-gray-700 rounded-full" />
+                    <div className="h-1 w-12 rounded-full bg-gray-100 dark:bg-gray-700" />
                   </div>
                 </div>
               ))}
@@ -135,51 +135,51 @@ export default function TrainingSupportSection() {
           </div>
 
           {/* Visual Content - Calendar & Webinar Library */}
-          <div className="order-2 relative perspective-1000">
+          <div className="perspective-1000 relative order-2">
             {/* Main Card - Webinar Grid */}
             <motion.div
               initial={{ opacity: 0, x: 50, rotateY: -5 }}
               whileInView={{ opacity: 1, x: 0, rotateY: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
-              className="relative z-10 bg-white dark:bg-gray-900 rounded-3xl shadow-2xl p-6 border border-gray-100 dark:border-gray-800"
+              className="relative z-10 rounded-3xl border border-gray-100 bg-white p-6 shadow-2xl dark:border-gray-800 dark:bg-gray-900"
             >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-gray-900 dark:text-white font-bold text-lg flex items-center gap-2">
+              <div className="mb-6 flex items-center justify-between">
+                <h3 className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white">
                   <Video size={20} className="text-orange-500" />
                   Training Library
                 </h3>
-                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
+                <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-500 dark:bg-gray-800 dark:text-gray-400">
                   50+ Videos
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {webinars.map((webinar, index) => (
                   <div key={index} className="group cursor-pointer">
-                    <div className="relative rounded-xl overflow-hidden mb-2 aspect-video bg-gray-100 dark:bg-gray-800">
+                    <div className="relative mb-2 aspect-video overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800">
                       <img
                         src={webinar.image}
                         alt={webinar.title}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 opacity-70 group-hover:opacity-100"
+                        className="h-full w-full object-cover opacity-70 transition-transform duration-500 group-hover:scale-110 group-hover:opacity-100"
                       />
-                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors" />
-                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <div className="w-8 h-8 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center">
+                      <div className="absolute inset-0 bg-black/20 transition-colors group-hover:bg-black/0" />
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 backdrop-blur-md">
                           <PlayCircle
                             size={16}
-                            className="text-white fill-white"
+                            className="fill-white text-white"
                           />
                         </div>
                       </div>
-                      <div className="absolute bottom-1 right-1 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded">
+                      <div className="absolute right-1 bottom-1 rounded bg-black/70 px-1.5 py-0.5 text-[10px] text-white">
                         {webinar.duration}
                       </div>
                     </div>
-                    <h4 className="text-gray-900 dark:text-white text-sm font-semibold leading-tight mb-1 group-hover:text-orange-400 transition-colors line-clamp-1">
+                    <h4 className="mb-1 line-clamp-1 text-sm leading-tight font-semibold text-gray-900 transition-colors group-hover:text-orange-400 dark:text-white">
                       {webinar.title}
                     </h4>
-                    <p className="text-gray-500 dark:text-gray-400 text-xs">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {webinar.category}
                     </p>
                   </div>
@@ -193,11 +193,11 @@ export default function TrainingSupportSection() {
               whileInView={{ opacity: 1, y: 0, x: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.3, duration: 0.6 }}
-              className="relative mt-6 sm:absolute sm:mt-0 sm:-bottom-10 sm:-left-10 z-20 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-5 w-full sm:w-64"
+              className="relative z-20 mt-6 w-full rounded-2xl border border-gray-100 bg-white p-5 shadow-xl sm:absolute sm:-bottom-10 sm:-left-10 sm:mt-0 sm:w-64 dark:border-gray-700 dark:bg-gray-800"
             >
-              <div className="flex items-center gap-2 mb-4">
+              <div className="mb-4 flex items-center gap-2">
                 <Calendar size={18} className="text-orange-500" />
-                <h4 className="font-bold text-gray-900 dark:text-white text-sm">
+                <h4 className="text-sm font-bold text-gray-900 dark:text-white">
                   Upcoming Events
                 </h4>
               </div>
@@ -205,16 +205,16 @@ export default function TrainingSupportSection() {
               <div className="space-y-3">
                 {events.map((event, index) => (
                   <div key={index} className="flex items-center gap-3">
-                    <div className="bg-orange-50 rounded-lg p-2 text-center min-w-[3rem]">
+                    <div className="min-w-[3rem] rounded-lg bg-orange-50 p-2 text-center">
                       <span className="block text-xs font-bold text-orange-600">
                         {event.month}
                       </span>
-                      <span className="block text-lg font-bold text-gray-900 dark:text-white leading-none">
+                      <span className="block text-lg leading-none font-bold text-gray-900 dark:text-white">
                         {event.day}
                       </span>
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">
+                      <p className="text-sm leading-tight font-semibold text-gray-900 dark:text-white">
                         {event.title}
                       </p>
                       <p className="text-xs text-gray-500">{event.time}</p>

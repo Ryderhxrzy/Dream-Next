@@ -1,5 +1,5 @@
 import { motion } from "framer-motion"
-import { Check, User, Smartphone, Home, TrendingUp, Heart } from "lucide-react"
+import { Check, Heart, Home, Smartphone, TrendingUp, User } from "lucide-react"
 
 export default function TargetAudienceSection() {
   const criteria = [
@@ -54,12 +54,12 @@ export default function TargetAudienceSection() {
   ]
 
   return (
-    <section className="py-24 bg-gray-50 dark:bg-gray-900 relative overflow-hidden">
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
+    <section className="relative overflow-hidden bg-gray-50 py-24 dark:bg-gray-900">
+      <div className="relative z-10 container mx-auto px-4">
+        <div className="grid items-center gap-16 lg:grid-cols-2">
           {/* Visual Content - Persona Grid */}
           <div className="order-2 lg:order-1">
-            <div className="grid grid-cols-2 gap-4 h-[600px]">
+            <div className="grid h-[600px] grid-cols-2 gap-4">
               {personas.map((persona, index) => (
                 <motion.div
                   key={index}
@@ -67,16 +67,16 @@ export default function TargetAudienceSection() {
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.15 }}
-                  className={`relative rounded-2xl overflow-hidden group ${persona.position}`}
+                  className={`group relative overflow-hidden rounded-2xl ${persona.position}`}
                 >
                   <img
                     src={persona.image}
                     alt={persona.label}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                   <div className="absolute bottom-4 left-4">
-                    <span className="text-white font-bold text-lg">
+                    <span className="text-lg font-bold text-white">
                       {persona.label}
                     </span>
                   </div>
@@ -91,7 +91,7 @@ export default function TargetAudienceSection() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-100 text-indigo-700 font-semibold text-sm mb-6"
+              className="mb-6 inline-flex items-center gap-2 rounded-full bg-indigo-100 px-4 py-1.5 text-sm font-semibold text-indigo-700"
             >
               <Check size={14} />
               WHO THIS IS FOR
@@ -102,7 +102,7 @@ export default function TargetAudienceSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-8 leading-tight"
+              className="mb-8 text-4xl leading-tight font-bold text-gray-900 md:text-5xl dark:text-white"
             >
               This Is for You If...
             </motion.h2>
@@ -115,14 +115,14 @@ export default function TargetAudienceSection() {
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: 0.2 + index * 0.1 }}
-                  className="flex items-center gap-4 group"
+                  className="group flex items-center gap-4"
                 >
                   <div
-                    className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors ${item.color} group-hover:scale-110 duration-300`}
+                    className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full transition-colors ${item.color} duration-300 group-hover:scale-110`}
                   >
                     <item.icon size={20} />
                   </div>
-                  <span className="text-lg text-gray-700 dark:text-gray-200 font-medium group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
+                  <span className="text-lg font-medium text-gray-700 transition-colors group-hover:text-gray-900 dark:text-gray-200 dark:group-hover:text-white">
                     {item.text}
                   </span>
                 </motion.div>
@@ -133,9 +133,9 @@ export default function TargetAudienceSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.8 }}
-              className="mt-10 p-6 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-lg"
+              className="mt-10 rounded-2xl border border-gray-100 bg-white p-6 shadow-lg dark:border-gray-700 dark:bg-gray-800"
             >
-              <p className="text-gray-600 dark:text-gray-300 italic">
+              <p className="text-gray-600 italic dark:text-gray-300">
                 &quot;Whether you&apos;re looking for a side hustle or a
                 full-time career, AF Home gives you the platform to succeed on
                 your own terms.&quot;

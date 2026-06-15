@@ -8,25 +8,27 @@ import {
   type FocusEvent,
   type ReactNode,
 } from "react"
-import { createPortal } from "react-dom"
-import { AnimatePresence, motion } from "framer-motion"
+import {
+  clearStoredReferralCode,
+  getStoredReferralCode,
+  normalizeReferralCode,
+} from "@/libs/referral"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
+import { useGetPublicSecuritySettingsQuery } from "@/store/api/adminSettingsApi"
 import {
   useLazyCheckEmailAvailabilityQuery,
   useLazyCheckReferralAvailabilityQuery,
   useLazyCheckUsernameAvailabilityQuery,
   useRegisterMutation,
 } from "@/store/api/authApi"
-import Loading from "./Loading"
+import { AnimatePresence, motion } from "framer-motion"
 import { useSearchParams } from "next/navigation"
-import { showErrorToast, showSuccessToast } from "@/libs/toast"
-import OtpVerification from "./auth/OtpVerification"
-import {
-  clearStoredReferralCode,
-  getStoredReferralCode,
-  normalizeReferralCode,
-} from "@/libs/referral"
+import { createPortal } from "react-dom"
+
 import PrimaryButton from "@/components/ui/buttons/PrimaryButton"
-import { useGetPublicSecuritySettingsQuery } from "@/store/api/adminSettingsApi"
+
+import OtpVerification from "./auth/OtpVerification"
+import Loading from "./Loading"
 
 const EyeIcon = ({ open }: { open: boolean }) =>
   open ? (
@@ -122,7 +124,7 @@ function FloatingInput({
           className={inputClass}
         />
         {endContent ? (
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/60">
+          <div className="absolute top-1/2 right-4 -translate-y-1/2 text-gray-400 dark:text-white/60">
             {endContent}
           </div>
         ) : null}
@@ -620,10 +622,10 @@ export default function SignUpForm({
       exit={{ opacity: 0, x: -24 }}
       transition={{ duration: 0.25 }}
     >
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+      <h2 className="mb-1 text-2xl font-bold text-gray-900 dark:text-white">
         Let&apos;s Get Started!
       </h2>
-      <p className="text-gray-500 dark:text-white/70 text-sm mb-5">
+      <p className="mb-5 text-sm text-gray-500 dark:text-white/70">
         {step === "otp"
           ? "Enter the 4-digit code we sent to your email to finish your registration."
           : otpEnabled
@@ -663,7 +665,7 @@ export default function SignUpForm({
             </div>
           ) : null}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-4">
+          <div className="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
             {/* First Name */}
             <div>
               <FloatingInput
@@ -803,7 +805,7 @@ export default function SignUpForm({
                   <button
                     type="button"
                     onClick={() => setShowPass((p) => !p)}
-                    className="text-gray-400 dark:text-white/60 hover:text-gray-700 dark:hover:text-white/80 transition-colors cursor-pointer"
+                    className="cursor-pointer text-gray-400 transition-colors hover:text-gray-700 dark:text-white/60 dark:hover:text-white/80"
                   >
                     <EyeIcon open={showPass} />
                   </button>
@@ -813,7 +815,7 @@ export default function SignUpForm({
                 {passwordRequirements.map((item) => (
                   <p
                     key={item.label}
-                    className={`text-[11px] flex items-center gap-2 ${item.passed ? "text-emerald-600 dark:text-emerald-300" : "text-gray-400 dark:text-white/55"}`}
+                    className={`flex items-center gap-2 text-[11px] ${item.passed ? "text-emerald-600 dark:text-emerald-300" : "text-gray-400 dark:text-white/55"}`}
                   >
                     <span
                       className={`inline-block h-1.5 w-1.5 rounded-full ${item.passed ? "bg-emerald-400" : "bg-gray-300 dark:bg-white/25"}`}
@@ -842,7 +844,7 @@ export default function SignUpForm({
                   <button
                     type="button"
                     onClick={() => setShowConfirm((p) => !p)}
-                    className="text-gray-400 dark:text-white/60 hover:text-gray-700 dark:hover:text-white/80 transition-colors cursor-pointer"
+                    className="cursor-pointer text-gray-400 transition-colors hover:text-gray-700 dark:text-white/60 dark:hover:text-white/80"
                   >
                     <EyeIcon open={showConfirm} />
                   </button>
@@ -858,7 +860,7 @@ export default function SignUpForm({
             </div>
 
             {/* Terms & Conditions — full width */}
-            <div className="sm:col-span-2 rounded-2xl border border-gray-200 bg-gray-50/70 px-4 py-3 dark:border-white/10 dark:bg-white/5">
+            <div className="rounded-2xl border border-gray-200 bg-gray-50/70 px-4 py-3 sm:col-span-2 dark:border-white/10 dark:bg-white/5">
               <button
                 type="button"
                 onClick={() => setShowTermsModal(true)}
@@ -879,7 +881,7 @@ export default function SignUpForm({
                     Terms and Conditions
                   </span>
                   .
-                  <span className="block mt-1 text-[11px] text-gray-500 dark:text-white/50">
+                  <span className="mt-1 block text-[11px] text-gray-500 dark:text-white/50">
                     Click here to review the agreement before continuing.
                   </span>
                 </span>
@@ -888,17 +890,17 @@ export default function SignUpForm({
 
             {/* Turnstile — full width */}
             {isMounted && turnstileSiteKey && (
-              <div className="sm:col-span-2 flex justify-center">
+              <div className="flex justify-center sm:col-span-2">
                 <div ref={turnstileRef} />
               </div>
             )}
 
             {/* Submit — full width */}
-            <div className="sm:col-span-2 flex gap-3 pt-2">
+            <div className="flex gap-3 pt-2 sm:col-span-2">
               <PrimaryButton
                 type="submit"
                 disabled={isLoading || (!!turnstileSiteKey && !turnstileToken)}
-                className="flex-1 py-3 px-5 text-sm"
+                className="flex-1 px-5 py-3 text-sm"
               >
                 {isLoading ? (
                   <>
@@ -932,16 +934,16 @@ export default function SignUpForm({
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 16, scale: 0.98 }}
                     transition={{ duration: 0.24, ease: "easeOut" }}
-                    className="flex max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-white/10 dark:bg-slate-900 sm:max-h-[calc(100dvh-3rem)]"
+                    className="flex max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl sm:max-h-[calc(100dvh-3rem)] dark:border-white/10 dark:bg-slate-900"
                   >
-                    <div className="shrink-0 flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4 dark:border-white/10 sm:px-6 sm:py-5">
+                    <div className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-200 px-5 py-4 sm:px-6 sm:py-5 dark:border-white/10">
                       <div>
                         <img
                           src="/Images/af_home_logo.png"
                           alt="AF Home"
                           className="h-10 w-auto sm:h-12"
                         />
-                        <h3 className="mt-3 text-lg font-bold text-slate-900 dark:text-white sm:text-xl">
+                        <h3 className="mt-3 text-lg font-bold text-slate-900 sm:text-xl dark:text-white">
                           Terms and Conditions
                         </h3>
                         <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-white/60">
@@ -984,7 +986,7 @@ export default function SignUpForm({
                       </div>
                     </div>
 
-                    <div className="shrink-0 flex flex-col gap-3 border-t border-slate-200 px-5 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 sm:flex-row sm:justify-end sm:px-6 sm:py-5 dark:border-white/10">
+                    <div className="flex shrink-0 flex-col gap-3 border-t border-slate-200 px-5 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:flex-row sm:justify-end sm:px-6 sm:py-5 dark:border-white/10">
                       <button
                         type="button"
                         onClick={() => setShowTermsModal(false)}

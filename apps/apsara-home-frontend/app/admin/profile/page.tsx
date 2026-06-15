@@ -1,5 +1,5 @@
-import { buildPageMetadata } from "@/app/seo"
 import AdminProfilePageMain from "@/components/superAdmin/profile/AdminProfilePageMain"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Admin Profile",

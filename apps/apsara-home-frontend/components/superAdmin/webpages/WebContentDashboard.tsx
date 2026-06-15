@@ -2,10 +2,10 @@
 
 import type { MouseEvent } from "react"
 import { useState } from "react"
-import Link from "next/link"
-import { useSession } from "next-auth/react"
-import { useGetAdminMeQuery } from "@/store/api/authApi"
 import { canAccessWebContentSection } from "@/libs/adminPermissions"
+import { useGetAdminMeQuery } from "@/store/api/authApi"
+import { useSession } from "next-auth/react"
+import Link from "next/link"
 
 type ContentCard = {
   title: string
@@ -177,13 +177,13 @@ export default function WebContentDashboard() {
 
   return (
     <div className="space-y-6 dark:bg-slate-950 dark:text-slate-100">
-      <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:p-6">
+      <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-6 dark:border-slate-800 dark:bg-slate-900">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-700 dark:text-cyan-400">
+            <p className="text-xs font-bold tracking-[0.22em] text-cyan-700 uppercase dark:text-cyan-400">
               CMS Workspace
             </p>
-            <h1 className="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100 md:text-2xl">
+            <h1 className="mt-2 text-xl font-bold text-slate-900 md:text-2xl dark:text-slate-100">
               Web Content
             </h1>
             <p className="mt-1 max-w-3xl text-sm leading-relaxed text-slate-500 dark:text-slate-400">
@@ -193,7 +193,7 @@ export default function WebContentDashboard() {
             </p>
           </div>
           <div className="rounded-2xl border border-cyan-100 bg-cyan-50 px-4 py-3 dark:border-cyan-900/40 dark:bg-cyan-950/30">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-cyan-700 dark:text-cyan-300">
+            <p className="text-[11px] font-semibold tracking-wide text-cyan-700 uppercase dark:text-cyan-300">
               Less Hassle
             </p>
             <p className="mt-1 text-sm font-medium text-cyan-900 dark:text-cyan-100">
@@ -322,7 +322,7 @@ export default function WebContentDashboard() {
         </div>
       )}
 
-      <section className="rounded-3xl border border-dashed border-cyan-200 bg-gradient-to-br from-cyan-50 to-sky-50 p-5 dark:border-cyan-900/40 dark:from-cyan-950/20 dark:to-sky-950/20 md:p-6">
+      <section className="rounded-3xl border border-dashed border-cyan-200 bg-gradient-to-br from-cyan-50 to-sky-50 p-5 md:p-6 dark:border-cyan-900/40 dark:from-cyan-950/20 dark:to-sky-950/20">
         <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
           Suggested Next Upgrade
         </h2>

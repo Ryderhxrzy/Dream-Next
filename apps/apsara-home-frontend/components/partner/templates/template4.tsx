@@ -69,12 +69,12 @@ function S({
       onKeyDown={(e) => e.key === "Enter" && onClick(id)}
       className={`group relative cursor-pointer transition-all outline-none ${
         selected
-          ? "ring-2 ring-inset ring-indigo-500"
-          : "hover:ring-1 hover:ring-inset hover:ring-indigo-300"
+          ? "ring-2 ring-indigo-500 ring-inset"
+          : "hover:ring-1 hover:ring-indigo-300 hover:ring-inset"
       }`}
     >
       <div
-        className={`pointer-events-none absolute left-2 top-2 z-50 rounded-lg px-2 py-1 text-[10px] font-semibold text-white shadow transition-opacity ${
+        className={`pointer-events-none absolute top-2 left-2 z-50 rounded-lg px-2 py-1 text-[10px] font-semibold text-white shadow transition-opacity ${
           selected
             ? "bg-indigo-600 opacity-100"
             : "bg-black/50 opacity-0 backdrop-blur-sm group-hover:opacity-100"
@@ -438,7 +438,7 @@ export default function Template4({
                 />
               ) : (
                 <div
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white text-xs font-black"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-black text-white"
                   style={{ backgroundColor: primaryColor }}
                 >
                   {storeName.charAt(0)}
@@ -531,7 +531,7 @@ export default function Template4({
 
       {/* @container so all breakpoints respond to THIS element's width, not the viewport */}
       <div
-        className="@container bg-white font-sans text-[#1e293b] overflow-x-clip"
+        className="@container overflow-x-clip bg-white font-sans text-[#1e293b]"
         style={{ fontFamily: "Inter, system-ui, sans-serif" }}
       >
         {/* ── Hero ─────────────────────────────────────────────── */}
@@ -543,7 +543,7 @@ export default function Template4({
         >
           <section className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-8 px-5 py-12 @md:grid-cols-2 @md:px-16 @md:py-20">
             <div className={heroTextAlign}>
-              <h1 className="text-3xl font-black leading-tight text-slate-900 @sm:text-4xl @lg:text-5xl">
+              <h1 className="text-3xl leading-tight font-black text-slate-900 @sm:text-4xl @lg:text-5xl">
                 {tagline}
               </h1>
               <p className="mt-4 text-sm leading-relaxed text-slate-500">
@@ -651,7 +651,7 @@ export default function Template4({
               >
                 <div className="mb-3 flex items-center gap-4 border-b border-slate-100 pb-3">
                   <span
-                    className="border-b-2 pb-3 -mb-3 text-xs font-semibold text-slate-800"
+                    className="-mb-3 border-b-2 pb-3 text-xs font-semibold text-slate-800"
                     style={{ borderColor: primaryColor }}
                   >
                     Overview
@@ -674,7 +674,7 @@ export default function Template4({
                       key={s.label}
                       className="rounded-lg bg-slate-50 px-2 py-2"
                     >
-                      <p className="text-[9px] text-slate-400 leading-tight">
+                      <p className="text-[9px] leading-tight text-slate-400">
                         {s.label}
                       </p>
                       <p className="mt-0.5 text-xs font-bold text-slate-800">
@@ -757,7 +757,7 @@ export default function Template4({
                     <p className="mb-1 text-[10px] font-semibold text-slate-500">
                       Top Products
                     </p>
-                    <svg viewBox="0 0 60 60" className="mx-auto w-14 h-14">
+                    <svg viewBox="0 0 60 60" className="mx-auto h-14 w-14">
                       <circle
                         cx="30"
                         cy="30"
@@ -838,7 +838,7 @@ export default function Template4({
           onClick={onSectionClick}
         >
           <section className="bg-slate-50 px-5 py-10 @md:px-16 @md:py-12">
-            <p className="mb-8 text-center text-xs font-semibold uppercase tracking-widest text-slate-400">
+            <p className="mb-8 text-center text-xs font-semibold tracking-widest text-slate-400 uppercase">
               Trusted by Businesses Worldwide
             </p>
             <div className="mx-auto grid max-w-5xl grid-cols-2 gap-6 @sm:grid-cols-3 @lg:grid-cols-5">
@@ -881,7 +881,7 @@ export default function Template4({
                   <span className="text-6xl">🏢</span>
                 </div>
               )}
-              <div className="absolute bottom-4 left-4 right-4 rounded-xl bg-white/90 px-4 py-3 backdrop-blur-sm shadow">
+              <div className="absolute right-4 bottom-4 left-4 rounded-xl bg-white/90 px-4 py-3 shadow backdrop-blur-sm">
                 <p className="text-xs font-bold text-slate-800">
                   Better Solutions
                 </p>
@@ -890,12 +890,12 @@ export default function Template4({
             </div>
             <div>
               <p
-                className="mb-3 text-xs font-bold uppercase tracking-widest"
+                className="mb-3 text-xs font-bold tracking-widest uppercase"
                 style={{ color: primaryColor }}
               >
                 About Us
               </p>
-              <h2 className="text-2xl font-black leading-tight text-slate-900 @sm:text-3xl @lg:text-4xl">
+              <h2 className="text-2xl leading-tight font-black text-slate-900 @sm:text-3xl @lg:text-4xl">
                 {aboutTitle}
               </h2>
               <p className="mt-4 text-sm leading-relaxed text-slate-500">
@@ -946,7 +946,7 @@ export default function Template4({
             <div className="mx-auto max-w-6xl">
               <div className="mb-10 text-center">
                 <p
-                  className="mb-2 text-xs font-bold uppercase tracking-widest"
+                  className="mb-2 text-xs font-bold tracking-widest uppercase"
                   style={{ color: primaryColor }}
                 >
                   Products
@@ -962,7 +962,7 @@ export default function Template4({
                 {features.map((f) => (
                   <div
                     key={f.title}
-                    className="flex flex-row items-start gap-4 rounded-xl border border-slate-100 p-4 @sm:flex-col @sm:gap-3 @sm:p-0 @sm:border-none"
+                    className="flex flex-row items-start gap-4 rounded-xl border border-slate-100 p-4 @sm:flex-col @sm:gap-3 @sm:border-none @sm:p-0"
                   >
                     <div
                       className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
@@ -991,12 +991,12 @@ export default function Template4({
             <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 @md:grid-cols-2">
               <div>
                 <p
-                  className="mb-3 text-xs font-bold uppercase tracking-widest"
+                  className="mb-3 text-xs font-bold tracking-widest uppercase"
                   style={{ color: primaryColor }}
                 >
                   Contact Us
                 </p>
-                <h2 className="text-2xl font-black leading-tight text-slate-900 @sm:text-3xl">
+                <h2 className="text-2xl leading-tight font-black text-slate-900 @sm:text-3xl">
                   {ctaTitle}
                 </h2>
                 <p className="mt-4 text-sm leading-relaxed text-slate-500">
@@ -1117,7 +1117,7 @@ export default function Template4({
                         >
                           {c.icon}
                         </div>
-                        <p className="break-all text-sm text-slate-600">
+                        <p className="text-sm break-all text-slate-600">
                           {c.text}
                         </p>
                       </div>
@@ -1146,7 +1146,7 @@ export default function Template4({
                   />
                 ) : (
                   <div
-                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white text-[10px] font-black"
+                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-black text-white"
                     style={{ backgroundColor: primaryColor }}
                   >
                     {storeName.charAt(0)}

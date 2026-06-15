@@ -1,7 +1,3 @@
-import { notFound, redirect } from "next/navigation"
-import { headers } from "next/headers"
-import PartnerStorefrontPage from "@/components/partner/PartnerStorefrontPage"
-import { serverFetch } from "@/libs/serverFetch"
 import {
   filterPartnerCategories,
   filterPartnerProducts,
@@ -11,10 +7,16 @@ import {
   getPartnerStorefrontBySlug,
   isStorefrontSubscriptionExpired,
 } from "@/libs/partnerStorefrontServer"
+import { serverFetch } from "@/libs/serverFetch"
 import type { Category } from "@/store/api/categoriesApi"
 import type { Product } from "@/store/api/productsApi"
 import type { WebPageItem } from "@/store/api/webPagesApi"
 import type { Metadata } from "next"
+import { headers } from "next/headers"
+import { notFound, redirect } from "next/navigation"
+
+import PartnerStorefrontPage from "@/components/partner/PartnerStorefrontPage"
+
 export const dynamic = "force-dynamic"
 
 type PageProps = {

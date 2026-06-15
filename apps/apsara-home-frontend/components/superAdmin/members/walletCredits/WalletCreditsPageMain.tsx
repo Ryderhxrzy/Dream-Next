@@ -1,14 +1,16 @@
 "use client"
 
-import { useState, useMemo } from "react"
-import { motion } from "framer-motion"
+import { useMemo, useState } from "react"
 import { useGetMembersQuery } from "@/store/api/membersApi"
+import { motion } from "framer-motion"
+
+import type { MemberStatus, MemberTier } from "@/types/members/types"
+
+import AdjustWalletModal from "./AdjustWalletModal"
 import { MemberWallet, SortKey } from "./types"
 import WalletCreditsStats from "./WalletCreditsStats"
-import WalletCreditsToolbar from "./WalletCreditsToolbar"
 import WalletCreditsTable from "./WalletCreditsTable"
-import AdjustWalletModal from "./AdjustWalletModal"
-import type { MemberStatus, MemberTier } from "@/types/members/types"
+import WalletCreditsToolbar from "./WalletCreditsToolbar"
 
 type TierFilter = "All Tiers" | MemberWallet["tier"]
 type StatusFilter = "All Status" | "Active" | "Pending" | "Blocked"
@@ -141,13 +143,13 @@ export default function WalletCreditsPageMain() {
       >
         <div>
           <h1 className="text-xl font-bold text-slate-800">Wallet & Credits</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <p className="mt-0.5 text-sm text-slate-500">
             Manage member cash and PV wallet balances
           </p>
         </div>
         <button className="flex items-center gap-2 rounded-[18px] border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all hover:border-slate-400 dark:border-white/18 dark:bg-white/12 dark:text-slate-200">
           <svg
-            className="w-4 h-4 text-teal-600"
+            className="h-4 w-4 text-teal-600"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -273,7 +275,7 @@ export default function WalletCreditsPageMain() {
             <div className="bg-gradient-to-br from-slate-950 via-sky-950 to-teal-900 px-6 py-5 text-white">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-sky-300">
+                  <p className="text-[11px] font-bold tracking-[0.24em] text-sky-300 uppercase">
                     PV allocation preview
                   </p>
                   <h2 className="mt-1 text-lg font-bold">
@@ -292,7 +294,7 @@ export default function WalletCreditsPageMain() {
               </div>
 
               <div className="mt-5 rounded-2xl border border-white/15 bg-white/10 p-4">
-                <p className="text-xs uppercase tracking-wide text-slate-300">
+                <p className="text-xs tracking-wide text-slate-300 uppercase">
                   PV basis
                 </p>
                 <p className="mt-1 text-3xl font-black text-cyan-200">
@@ -331,7 +333,7 @@ export default function WalletCreditsPageMain() {
                       <p className="text-lg font-black text-slate-950 dark:text-white">
                         {formatPvAmount(value)}
                       </p>
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                      <p className="text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
                         computed value
                       </p>
                     </div>

@@ -1,4 +1,5 @@
 import { Metadata } from "next"
+
 import RankingPageClient from "@/components/ranking/RankingPageClient"
 
 export const metadata: Metadata = {

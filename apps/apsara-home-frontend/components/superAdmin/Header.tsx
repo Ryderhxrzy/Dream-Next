@@ -1,15 +1,11 @@
 "use client"
 
-import { AnimatePresence, motion } from "framer-motion"
-import Image from "next/image"
-import Link from "next/link"
-import { signOut, useSession } from "next-auth/react"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { createPortal } from "react-dom"
 import { useEffect, useMemo, useRef, useState } from "react"
+import { normalizeAdminPermissions } from "@/libs/adminPermissions"
+import { clearAdminSession } from "@/libs/adminSession"
 import {
-  adminNotificationsApi,
   AdminNotificationItem,
+  adminNotificationsApi,
   useGetAdminNotificationsQuery,
   useMarkAdminNotificationReadMutation,
   useMarkAllAdminNotificationsReadMutation,
@@ -17,11 +13,17 @@ import {
 import { useGetAdminMeQuery } from "@/store/api/authApi"
 import { baseApi, clearAccessTokenCache } from "@/store/api/baseApi"
 import { useAppDispatch } from "@/store/hooks"
-import { clearAdminSession } from "@/libs/adminSession"
-import { normalizeAdminPermissions } from "@/libs/adminPermissions"
-import ThemeToggle from "@/components/ui/buttons/ThemeToggle"
-import SearchCommandPalette from "./SearchCommandPalette"
+import { AnimatePresence, motion } from "framer-motion"
+import { signOut, useSession } from "next-auth/react"
+import Image from "next/image"
+import Link from "next/link"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import Pusher from "pusher-js"
+import { createPortal } from "react-dom"
+
+import ThemeToggle from "@/components/ui/buttons/ThemeToggle"
+
+import SearchCommandPalette from "./SearchCommandPalette"
 
 interface HeaderProps {
   onMenuClick: () => void
@@ -627,15 +629,15 @@ const Header = ({ onMenuClick }: HeaderProps) => {
 
   return (
     <>
-      <header className="sticky top-0 z-10 shrink-0 border border-slate-100 dark:border-slate-800 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md">
+      <header className="sticky top-0 z-10 shrink-0 border border-slate-100 bg-white/90 backdrop-blur-md dark:border-slate-800 dark:bg-gray-900/90">
         {/* ── Main row ── */}
-        <div className="flex h-14 sm:h-16 items-center gap-2 sm:gap-4 px-4">
+        <div className="flex h-14 items-center gap-2 px-4 sm:h-16 sm:gap-4">
           <button
             onClick={onMenuClick}
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 lg:hidden"
+            className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100 lg:hidden dark:text-slate-400 dark:hover:bg-slate-800"
           >
             <svg
-              className="w-5 h-5"
+              className="h-5 w-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -663,9 +665,9 @@ const Header = ({ onMenuClick }: HeaderProps) => {
             <SearchCommandPalette />
           </div>
 
-          <div className="flex items-center gap-1 sm:gap-2 ml-auto">
+          <div className="ml-auto flex items-center gap-1 sm:gap-2">
             {isDashboardPage && (
-              <div className="hidden md:flex items-center gap-2">
+              <div className="hidden items-center gap-2 md:flex">
                 <div className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 dark:border-slate-800 dark:bg-slate-800/60">
                   <svg
                     className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500"
@@ -699,7 +701,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                   </select>
                 </div>
                 <div className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 dark:border-slate-800 dark:bg-slate-800/60">
-                  <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                  <span className="text-[11px] font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">
                     Today
                   </span>
                   <span className="text-xs font-medium text-slate-600 dark:text-slate-200">
@@ -732,7 +734,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                       onClick={() =>
                         updateDateRangeParams("custom", customStart, customEnd)
                       }
-                      className="px-2 py-0.5 text-[11px] font-semibold text-white bg-teal-600 rounded-md hover:bg-teal-700 transition-colors"
+                      className="rounded-md bg-teal-600 px-2 py-0.5 text-[11px] font-semibold text-white transition-colors hover:bg-teal-700"
                     >
                       Apply
                     </button>
@@ -767,7 +769,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                   transition={{ duration: 0.6, ease: "easeInOut" }}
                 >
                   <svg
-                    className="w-5 h-5"
+                    className="h-5 w-5"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -796,7 +798,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 8, scale: 0.95 }}
                     transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                    className="fixed left-2 right-2 top-16 z-50 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xl shadow-slate-900/10 dark:border-slate-700/60 dark:bg-slate-900 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-96"
+                    className="fixed top-16 right-2 left-2 z-50 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xl shadow-slate-900/10 sm:absolute sm:top-full sm:right-0 sm:left-auto sm:mt-2 sm:w-96 dark:border-slate-700/60 dark:bg-slate-900"
                   >
                     {/* Header */}
                     <div className="relative overflow-hidden">
@@ -896,10 +898,10 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                                 }}
                                 className={`group relative flex w-full cursor-pointer items-start gap-3.5 py-3.5 text-left transition-all duration-150 ${
                                   isFreshRealtime
-                                    ? "border-l-[3px] border-l-emerald-500 bg-emerald-50 pl-[17px] pr-5 shadow-[inset_0_0_0_1px_rgba(16,185,129,0.18)] hover:bg-emerald-100/70 dark:border-l-emerald-400 dark:bg-emerald-500/10 dark:shadow-[inset_0_0_0_1px_rgba(52,211,153,0.18)] dark:hover:bg-emerald-500/[0.16]"
+                                    ? "border-l-[3px] border-l-emerald-500 bg-emerald-50 pr-5 pl-[17px] shadow-[inset_0_0_0_1px_rgba(16,185,129,0.18)] hover:bg-emerald-100/70 dark:border-l-emerald-400 dark:bg-emerald-500/10 dark:shadow-[inset_0_0_0_1px_rgba(52,211,153,0.18)] dark:hover:bg-emerald-500/[0.16]"
                                     : isNew
-                                      ? "border-l-[3px] border-l-violet-500 bg-violet-50 pl-[17px] pr-5 hover:bg-violet-100/60 dark:border-l-violet-400 dark:bg-violet-500/10 dark:hover:bg-violet-500/[0.16]"
-                                      : "border-l-[3px] border-l-transparent pl-[17px] pr-5 hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                                      ? "border-l-[3px] border-l-violet-500 bg-violet-50 pr-5 pl-[17px] hover:bg-violet-100/60 dark:border-l-violet-400 dark:bg-violet-500/10 dark:hover:bg-violet-500/[0.16]"
+                                      : "border-l-[3px] border-l-transparent pr-5 pl-[17px] hover:bg-slate-50 dark:hover:bg-slate-800/40"
                                 }`}
                               >
                                 <div
@@ -917,18 +919,18 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                                     <div className="flex shrink-0 items-center gap-1.5">
                                       {notif.type && (
                                         <span
-                                          className={`shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase leading-none tracking-wider ${isNew ? "bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300" : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-500"}`}
+                                          className={`shrink-0 rounded-full px-1.5 py-0.5 text-[9px] leading-none font-bold tracking-wider uppercase ${isNew ? "bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300" : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-500"}`}
                                         >
                                           {notif.type.replace(/_/g, " ")}
                                         </span>
                                       )}
                                       {isNew && (
-                                        <span className="rounded-full bg-gradient-to-r from-violet-500 to-purple-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white leading-none shadow-sm shadow-violet-500/30">
+                                        <span className="rounded-full bg-gradient-to-r from-violet-500 to-purple-500 px-1.5 py-0.5 text-[9px] leading-none font-bold tracking-wider text-white uppercase shadow-sm shadow-violet-500/30">
                                           NEW
                                         </span>
                                       )}
                                       {isFreshRealtime && (
-                                        <span className="rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white leading-none shadow-sm shadow-emerald-500/30">
+                                        <span className="rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 px-1.5 py-0.5 text-[9px] leading-none font-bold tracking-wider text-white uppercase shadow-sm shadow-emerald-500/30">
                                           Just now
                                         </span>
                                       )}
@@ -974,7 +976,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                                 d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
                               />
                             </svg>
-                            <div className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 shadow-sm dark:bg-emerald-500/20">
+                            <div className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 shadow-sm dark:bg-emerald-500/20">
                               <svg
                                 className="h-3 w-3 text-emerald-500"
                                 fill="none"
@@ -1012,7 +1014,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                   setUserOpen(!userOpen)
                   setNotifOpen(false)
                 }}
-                className="flex items-center gap-2 rounded-xl py-1 pl-1 pr-2 sm:pr-3 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                className="flex items-center gap-2 rounded-xl py-1 pr-2 pl-1 transition-colors hover:bg-slate-100 sm:pr-3 dark:hover:bg-slate-800"
               >
                 {avatarSrc ? (
                   <Image
@@ -1023,14 +1025,14 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                     className="h-8 w-8 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="h-8 w-8 rounded-full bg-linear-to-br from-teal-400 to-teal-600 flex items-center justify-center">
-                    <span className="text-white font-bold text-xs">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-teal-400 to-teal-600">
+                    <span className="text-xs font-bold text-white">
                       {displayInitials}
                     </span>
                   </div>
                 )}
                 <div className="hidden text-left sm:block">
-                  <p className="text-xs font-semibold leading-none text-slate-800 dark:text-slate-100">
+                  <p className="text-xs leading-none font-semibold text-slate-800 dark:text-slate-100">
                     {displayName}
                   </p>
                   <p className="mt-0 text-xs text-slate-400 dark:text-slate-500">
@@ -1038,7 +1040,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                   </p>
                 </div>
                 <svg
-                  className="hidden h-4 w-4 text-slate-400 dark:text-slate-500 sm:block"
+                  className="hidden h-4 w-4 text-slate-400 sm:block dark:text-slate-500"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -1057,7 +1059,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                     initial={{ opacity: 0, y: 8, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                    className="absolute right-0 top-full z-50 mt-2 w-48 overflow-hidden rounded-2xl border border-slate-100 bg-white py-1 shadow-xl dark:border-slate-800 dark:bg-slate-900"
+                    className="absolute top-full right-0 z-50 mt-2 w-48 overflow-hidden rounded-2xl border border-slate-100 bg-white py-1 shadow-xl dark:border-slate-800 dark:bg-slate-900"
                   >
                     {userMenuItems.map((item) => (
                       <button
@@ -1097,7 +1099,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
         {/* end main row */}
 
         {/* ── Mobile search row ── */}
-        <div className="sm:hidden px-4 pb-3">
+        <div className="px-4 pb-3 sm:hidden">
           <SearchCommandPalette />
         </div>
 
@@ -1132,7 +1134,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                     setRealtimeNotification(null)
                   }
                 }}
-                className="fixed bottom-4 right-3 z-[130] w-[calc(100vw-1.5rem)] max-w-sm sm:bottom-5 sm:right-5"
+                className="fixed right-3 bottom-4 z-[130] w-[calc(100vw-1.5rem)] max-w-sm sm:right-5 sm:bottom-5"
               >
                 <Link
                   href={resolveNotificationHref(realtimeNotification)}
@@ -1141,7 +1143,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                     setRealtimeNotification(null)
                     handleNotificationClick(realtimeNotification)
                   }}
-                  className="block overflow-hidden rounded-2xl border border-emerald-200/80 bg-white shadow-2xl shadow-slate-900/15 ring-1 ring-emerald-100/70 transition hover:-translate-y-0.5 hover:shadow-emerald-900/15 dark:border-emerald-800/60 dark:bg-slate-900 dark:ring-emerald-900/30"
+                  className="block overflow-hidden rounded-2xl border border-emerald-200/80 bg-white shadow-2xl ring-1 shadow-slate-900/15 ring-emerald-100/70 transition hover:-translate-y-0.5 hover:shadow-emerald-900/15 dark:border-emerald-800/60 dark:bg-slate-900 dark:ring-emerald-900/30"
                 >
                   <div className="flex items-start gap-3 p-4">
                     <div
@@ -1157,7 +1159,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                         <p className="truncate text-sm font-bold text-slate-900 dark:text-white">
                           {realtimeNotification.title}
                         </p>
-                        <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                        <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold tracking-wide text-emerald-700 uppercase dark:bg-emerald-900/40 dark:text-emerald-300">
                           New
                         </span>
                       </div>

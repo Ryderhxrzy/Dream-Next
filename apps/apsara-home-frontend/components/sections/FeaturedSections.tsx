@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion"
 import Image from "next/image"
+
 import ProductCard from "../ui/ProductCard"
 
 const products = [
@@ -36,15 +37,15 @@ const products = [
 
 const FeaturedSections = () => {
   return (
-    <section className="bg-gray-50 dark:bg-gray-900 py-16">
+    <section className="bg-gray-50 py-16 dark:bg-gray-900">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
           <motion.div
             initial={{ opacity: 0, x: -40 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
-            className="relative rounded-3xl overflow-hidden aspect-[4/5] group cursor-pointer"
+            className="group relative aspect-[4/5] cursor-pointer overflow-hidden rounded-3xl"
           >
             <Image
               src="/Images/FeaturedSection/home_living.jpg"
@@ -53,18 +54,18 @@ const FeaturedSections = () => {
               className="object-cover transition-transform duration-700 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-            <div className="absolute bottom-8 left-8 rigt-8">
-              <p className="text-orange-400 text-xs font-semibold uppercase tracking-widest mb-2">
+            <div className="rigt-8 absolute bottom-8 left-8">
+              <p className="mb-2 text-xs font-semibold tracking-widest text-orange-400 uppercase">
                 Featured
               </p>
-              <h2 className="text-white text-3xl font-bold mb-3 leading-tight">
+              <h2 className="mb-3 text-3xl leading-tight font-bold text-white">
                 Minimal &<br />
                 Simple Design
               </h2>
-              <p className="text-white/60 text-sm mb-5">
+              <p className="mb-5 text-sm text-white/60">
                 Crafted for the moderm home.
               </p>
-              <button className="bg-orange-500 hover:bg-orange-600 active:scale-95 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center gap-2 group/btn">
+              <button className="group/btn flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-orange-600 active:scale-95">
                 Shop Collection
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -74,7 +75,7 @@ const FeaturedSections = () => {
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
-                  className="group-hover/btn:translate-x-1 transition-transform"
+                  className="transition-transform group-hover/btn:translate-x-1"
                 >
                   <polyline points="9 18 15 12 9 6" />
                 </svg>
@@ -89,10 +90,10 @@ const FeaturedSections = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
           >
-            <p className="text-orange-500 text-sm font-semibold uppercase tracking-wider mb-2">
+            <p className="mb-2 text-sm font-semibold tracking-wider text-orange-500 uppercase">
               Sale Items
             </p>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-gray-100 mb-6">
+            <h2 className="mb-6 text-2xl font-bold text-slate-900 dark:text-gray-100">
               Top Picks This Week
             </h2>
             <div className="grid grid-cols-2 gap-4">

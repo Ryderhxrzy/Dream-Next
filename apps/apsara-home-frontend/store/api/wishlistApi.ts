@@ -1,5 +1,6 @@
-import { baseApi } from "./baseApi"
 import type { FetchBaseQueryError } from "@reduxjs/toolkit/query"
+
+import { baseApi } from "./baseApi"
 
 export interface WishlistItem {
   wishlistId?: number

@@ -1,14 +1,6 @@
 "use client"
 
-import { Button } from "@heroui/react/button"
-import { motion } from "framer-motion"
-import MembersToolbar from "./MembersToolbar"
-import MembersStats from "./MembersStats"
-import type { MembersStatCardKey } from "./MembersStats"
-import MembersTable from "./MembersTable"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { Member, MemberStatus, MemberTier } from "@/types/members/types"
-import AddMemberModal from "./AddMemberModal"
 import {
   MembersMeta,
   MembersResponse,
@@ -16,10 +8,20 @@ import {
   MembersStatsResponse,
   useGetMembersQuery,
   useGetMembersStatsQuery,
-  useLazyGetMemberStatDetailsQuery,
   useLazyGetMembersQuery,
+  useLazyGetMemberStatDetailsQuery,
 } from "@/store/api/membersApi"
-import { useSearchParams, useRouter, usePathname } from "next/navigation"
+import { Button } from "@heroui/react/button"
+import { motion } from "framer-motion"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+
+import { Member, MemberStatus, MemberTier } from "@/types/members/types"
+
+import AddMemberModal from "./AddMemberModal"
+import MembersStats from "./MembersStats"
+import type { MembersStatCardKey } from "./MembersStats"
+import MembersTable from "./MembersTable"
+import MembersToolbar from "./MembersToolbar"
 
 interface MembersPageMainProps {
   initialData?: MembersResponse | null
@@ -685,7 +687,7 @@ const MembersPageMain = ({
                   <div className="border-b border-slate-100 px-5 py-4">
                     <div className="relative">
                       <svg
-                        className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                        className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -704,7 +706,7 @@ const MembersPageMain = ({
                           setStatModalSearch(event.target.value)
                         }
                         placeholder="Search member, email, address, tier..."
-                        className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 pl-10 text-sm text-gray-900 outline-none transition-all duration-200 focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
+                        className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 pl-10 text-sm text-gray-900 transition-all duration-200 outline-none focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
                       />
                     </div>
                     {debouncedStatModalSearch !== "" ? (
@@ -773,7 +775,7 @@ const MembersPageMain = ({
                         expandedReferralMembers.includes(member.id) &&
                         (member.referralChildren?.length ?? 0) > 0 ? (
                           <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
-                            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                            <p className="mb-2 text-[11px] font-semibold tracking-[0.16em] text-slate-400 uppercase">
                               Direct Members Under {member.name}
                             </p>
                             <div className="space-y-2">

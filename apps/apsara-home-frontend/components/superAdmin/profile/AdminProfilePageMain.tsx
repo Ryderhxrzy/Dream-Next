@@ -1,19 +1,19 @@
 "use client"
 
-import { motion } from "framer-motion"
-import Image from "next/image"
-import Link from "next/link"
 import { ChangeEvent, useRef, useState } from "react"
-import { useSession } from "next-auth/react"
-import {
-  useGetAdminMeQuery,
-  useUpdateAdminMeMutation,
-} from "@/store/api/authApi"
 import {
   ADMIN_PERMISSION_OPTIONS,
   normalizeAdminPermissions,
 } from "@/libs/adminPermissions"
 import { showErrorToast, showSuccessToast } from "@/libs/toast"
+import {
+  useGetAdminMeQuery,
+  useUpdateAdminMeMutation,
+} from "@/store/api/authApi"
+import { motion } from "framer-motion"
+import { useSession } from "next-auth/react"
+import Image from "next/image"
+import Link from "next/link"
 
 const getInitials = (name?: string | null) => {
   const value = (name ?? "").trim()
@@ -69,7 +69,7 @@ const describeAccess = (
 function ProfileField({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm shadow-slate-200/40">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+      <p className="text-[11px] font-semibold tracking-[0.18em] text-slate-400 uppercase">
         {label}
       </p>
       <p className="mt-2 text-sm font-semibold text-slate-800">{value}</p>
@@ -260,7 +260,7 @@ export default function AdminProfilePageMain() {
         />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.28),transparent_36%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.14),transparent_30%)]" />
 
-        <div className="relative px-6 pb-6 pt-8 lg:px-8">
+        <div className="relative px-6 pt-8 pb-6 lg:px-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="flex items-start gap-4">
               <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-[1.6rem] border border-white/35 bg-white/15 shadow-lg shadow-slate-900/10 backdrop-blur">
@@ -279,7 +279,7 @@ export default function AdminProfilePageMain() {
                 )}
               </div>
               <div className="pt-2 text-white">
-                <div className="inline-flex items-center rounded-full border border-white/30 bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em]">
+                <div className="inline-flex items-center rounded-full border border-white/30 bg-white/15 px-3 py-1 text-[11px] font-semibold tracking-[0.22em] uppercase">
                   Admin Profile
                 </div>
                 <h1 className="mt-3 text-3xl font-bold tracking-tight">
@@ -294,13 +294,13 @@ export default function AdminProfilePageMain() {
 
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-2xl border border-white/25 bg-white/12 px-4 py-3 text-white backdrop-blur">
-                <p className="text-[11px] uppercase tracking-[0.18em] text-white/70">
+                <p className="text-[11px] tracking-[0.18em] text-white/70 uppercase">
                   Role
                 </p>
                 <p className="mt-2 text-sm font-semibold">{formatRole(role)}</p>
               </div>
               <div className="rounded-2xl border border-white/25 bg-white/12 px-4 py-3 text-white backdrop-blur">
-                <p className="text-[11px] uppercase tracking-[0.18em] text-white/70">
+                <p className="text-[11px] tracking-[0.18em] text-white/70 uppercase">
                   Access
                 </p>
                 <p className="mt-2 text-sm font-semibold">
@@ -312,7 +312,7 @@ export default function AdminProfilePageMain() {
                 </p>
               </div>
               <div className="rounded-2xl border border-white/25 bg-white/12 px-4 py-3 text-white backdrop-blur">
-                <p className="text-[11px] uppercase tracking-[0.18em] text-white/70">
+                <p className="text-[11px] tracking-[0.18em] text-white/70 uppercase">
                   User Level
                 </p>
                 <p className="mt-2 text-sm font-semibold">
@@ -326,7 +326,7 @@ export default function AdminProfilePageMain() {
             <div className="rounded-[1.75rem] border border-slate-200 bg-white/96 p-5 shadow-lg shadow-slate-200/50 backdrop-blur">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+                  <p className="text-xs font-semibold tracking-[0.22em] text-slate-400 uppercase">
                     Account Overview
                   </p>
                   <p className="mt-1 text-sm text-slate-500">
@@ -369,7 +369,7 @@ export default function AdminProfilePageMain() {
 
             <div className="rounded-[1.75rem] border border-slate-200 bg-[linear-gradient(180deg,#ffffff,rgba(248,250,252,0.94))] p-5 shadow-sm">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+                <p className="text-xs font-semibold tracking-[0.22em] text-slate-400 uppercase">
                   Profile Picture
                 </p>
                 <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold text-slate-600">
@@ -442,7 +442,7 @@ export default function AdminProfilePageMain() {
                 </div>
               </div>
 
-              <p className="mt-5 text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+              <p className="mt-5 text-xs font-semibold tracking-[0.22em] text-slate-400 uppercase">
                 Quick Actions
               </p>
               <div className="mt-4 space-y-3">
@@ -557,7 +557,7 @@ export default function AdminProfilePageMain() {
 
           <div className="mt-5 space-y-4">
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+              <p className="text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase">
                 Current Role
               </p>
               <p className="mt-2 text-base font-semibold text-slate-800">
@@ -573,7 +573,7 @@ export default function AdminProfilePageMain() {
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+              <p className="text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase">
                 Operational Scope
               </p>
               <ul className="mt-3 space-y-2 text-sm text-slate-600">
@@ -590,7 +590,7 @@ export default function AdminProfilePageMain() {
             </div>
 
             <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+              <p className="text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase">
                 Next Upgrade
               </p>
               <p className="mt-2 text-sm leading-6 text-slate-600">

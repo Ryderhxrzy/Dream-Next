@@ -1,7 +1,7 @@
 "use client"
 
-import { motion } from "framer-motion"
 import type { ActivityLog } from "@/store/api/activityLogsApi"
+import { motion } from "framer-motion"
 
 interface ActivityLogsStatsProps {
   logs: ActivityLog[]
@@ -23,7 +23,7 @@ export default function ActivityLogsStats({ logs }: ActivityLogsStatsProps) {
       text: "text-teal-600 dark:text-teal-400",
       icon: (
         <svg
-          className="w-5 h-5"
+          className="h-5 w-5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -44,7 +44,7 @@ export default function ActivityLogsStats({ logs }: ActivityLogsStatsProps) {
       text: "text-blue-600 dark:text-blue-400",
       icon: (
         <svg
-          className="w-5 h-5"
+          className="h-5 w-5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -65,7 +65,7 @@ export default function ActivityLogsStats({ logs }: ActivityLogsStatsProps) {
       text: "text-emerald-600 dark:text-emerald-400",
       icon: (
         <svg
-          className="w-5 h-5"
+          className="h-5 w-5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -91,7 +91,7 @@ export default function ActivityLogsStats({ logs }: ActivityLogsStatsProps) {
       text: "text-purple-600 dark:text-purple-400",
       icon: (
         <svg
-          className="w-5 h-5"
+          className="h-5 w-5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -111,20 +111,20 @@ export default function ActivityLogsStats({ logs }: ActivityLogsStatsProps) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.05 }}
-      className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+      className="grid grid-cols-2 gap-4 lg:grid-cols-4"
     >
       {STATS.map((s, i) => (
         <div
           key={i}
-          className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex items-center gap-3"
+          className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
         >
           <div
-            className={`h-10 w-10 rounded-lg ${s.bg} ${s.text} flex items-center justify-center shrink-0`}
+            className={`h-10 w-10 rounded-lg ${s.bg} ${s.text} flex shrink-0 items-center justify-center`}
           >
             {s.icon}
           </div>
           <div className="min-w-0">
-            <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">
+            <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">
               {s.label}
             </p>
             <p className="text-xl font-bold text-gray-800 dark:text-white">

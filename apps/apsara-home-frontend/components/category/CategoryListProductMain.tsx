@@ -1,33 +1,33 @@
 "use client"
 
 /* eslint-disable react-hooks/rules-of-hooks, react-hooks/set-state-in-effect */
-
-import { motion, AnimatePresence } from "framer-motion"
-import Link from "next/link"
-import { useState, useMemo, useEffect, useRef } from "react"
-import { usePathname } from "next/navigation"
-import { useSession } from "next-auth/react"
-import { Skeleton } from "@heroui/react/skeleton"
-import Footer from "@/components/landing-page/Footer"
-import TopBar from "@/components/layout/TopBar"
-import Navbar from "@/components/layout/Navbar"
-import ItemCard from "@/components/item/ItemCard"
-import TopFilter from "@/components/item/TopFilter"
-import ProductFilter, { FilterState } from "@/components/item/ProductFilter"
-import ShareModal from "@/components/ui/ShareModal"
+import { useEffect, useMemo, useRef, useState } from "react"
 import {
-  CategoryProduct,
-  categoryMeta,
-  categoryProducts,
   CATEGORY_BRANDS,
+  categoryMeta,
+  CategoryProduct,
+  categoryProducts,
 } from "@/libs/CategoryData"
 import {
   buildStorefrontProductPath,
   extractPartnerSlugFromPath,
 } from "@/libs/storefrontRouting"
 import type { Category } from "@/store/api/categoriesApi"
-import { useGetPublicProductsQuery } from "@/store/api/productsApi"
 import { useGetPublicProductBrandsQuery } from "@/store/api/productBrandsApi"
+import { useGetPublicProductsQuery } from "@/store/api/productsApi"
+import { Skeleton } from "@heroui/react/skeleton"
+import { AnimatePresence, motion } from "framer-motion"
+import { useSession } from "next-auth/react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+
+import ShareModal from "@/components/ui/ShareModal"
+import ItemCard from "@/components/item/ItemCard"
+import ProductFilter, { FilterState } from "@/components/item/ProductFilter"
+import TopFilter from "@/components/item/TopFilter"
+import Footer from "@/components/landing-page/Footer"
+import Navbar from "@/components/layout/Navbar"
+import TopBar from "@/components/layout/TopBar"
 
 const containerVariants = {
   hidden: {},
@@ -119,10 +119,10 @@ const normalizeCategorySlug = (
 
 function TopFilterSkeleton() {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-2.5 sm:p-4">
+    <div className="rounded-lg border border-gray-200 bg-white p-2.5 sm:p-4 dark:border-gray-700 dark:bg-gray-800">
       <div className="flex flex-col gap-3 sm:gap-4">
         <Skeleton className="h-10 w-full rounded-xl" />
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3 sm:justify-end">
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end sm:gap-3">
           <Skeleton className="h-8 w-16 rounded-lg" />
           <Skeleton className="h-8 w-20 rounded-lg" />
           <Skeleton className="h-8 w-24 rounded-lg" />
@@ -135,7 +135,7 @@ function TopFilterSkeleton() {
 
 function ProductGridSkeleton() {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
       {Array.from({ length: 16 }).map((_, i) => (
         <div key={i} className="space-y-2">
           <Skeleton className="aspect-square w-full rounded-lg" />
@@ -339,7 +339,7 @@ export default function CategoryListProductMain({
     return (
       <>
         <div
-          className="fixed inset-0 -z-50 category-background"
+          className="category-background fixed inset-0 -z-50"
           style={
             {
               backgroundColor: "#faf8f5",
@@ -357,7 +357,7 @@ export default function CategoryListProductMain({
                     `,
           }}
         />
-        <div className="relative min-h-screen text-slate-900 dark:text-white flex flex-col">
+        <div className="relative flex min-h-screen flex-col text-slate-900 dark:text-white">
           {!isPartnerStorefrontRoute && <TopBar />}
           <Navbar
             initialCategories={initialCategories}
@@ -372,8 +372,8 @@ export default function CategoryListProductMain({
           />
 
           <main className="flex-1">
-            <div className="bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
-              <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div className="border-b border-gray-100 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
+              <div className="container mx-auto flex items-center justify-between px-4 py-3">
                 <h1 className="text-base font-bold text-slate-800 dark:text-white">
                   {categoryLabel}
                 </h1>
@@ -390,7 +390,7 @@ export default function CategoryListProductMain({
                   >
                     <polyline points="9 18 15 12 9 6" />
                   </svg>
-                  <span className="text-slate-600 dark:text-gray-300 font-semibold">
+                  <span className="font-semibold text-slate-600 dark:text-gray-300">
                     {categoryLabel}
                   </span>
                 </nav>
@@ -398,8 +398,8 @@ export default function CategoryListProductMain({
             </div>
 
             <div className="container mx-auto px-4 py-6 lg:py-8">
-              <div className="flex gap-6 items-start">
-                <aside className="hidden lg:block w-80 shrink-0 sticky top-4 z-10">
+              <div className="flex items-start gap-6">
+                <aside className="sticky top-4 z-10 hidden w-80 shrink-0 lg:block">
                   <ProductFilter
                     onFilterChange={() => undefined}
                     search=""
@@ -409,7 +409,7 @@ export default function CategoryListProductMain({
                     pvRange={[0, defaultPvMax]}
                     brands={publicBrandOptions}
                   />
-                  <div className="mt-4 rounded-2xl overflow-hidden aspect-square border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                  <div className="mt-4 aspect-square overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
                     <video
                       className="h-full w-full object-cover"
                       src={heroVideoSrc}
@@ -421,7 +421,7 @@ export default function CategoryListProductMain({
                   </div>
                 </aside>
 
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <ProductGridSkeleton />
                 </div>
               </div>
@@ -441,7 +441,7 @@ export default function CategoryListProductMain({
     return (
       <>
         <div
-          className="fixed inset-0 -z-50 category-background"
+          className="category-background fixed inset-0 -z-50"
           style={
             {
               backgroundColor: "#faf8f5",
@@ -459,7 +459,7 @@ export default function CategoryListProductMain({
                     `,
           }}
         />
-        <div className="relative min-h-screen text-slate-900 dark:text-white flex flex-col">
+        <div className="relative flex min-h-screen flex-col text-slate-900 dark:text-white">
           {!isPartnerStorefrontRoute && <TopBar />}
           <Navbar
             initialCategories={initialCategories}
@@ -474,7 +474,7 @@ export default function CategoryListProductMain({
           />
 
           <main className="flex-1">
-            <div className="bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
+            <div className="border-b border-gray-100 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
               <div className="container mx-auto px-4 py-3">
                 <h1 className="text-base font-bold text-slate-800 dark:text-white">
                   {categoryLabel}
@@ -484,7 +484,7 @@ export default function CategoryListProductMain({
 
             <div className="container mx-auto px-4 py-24">
               <div className="flex flex-col items-center justify-center text-center">
-                <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center mb-4">
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="28"
@@ -499,15 +499,15 @@ export default function CategoryListProductMain({
                     <line x1="12" y1="16" x2="12.01" y2="16" />
                   </svg>
                 </div>
-                <p className="text-slate-700 dark:text-gray-200 font-semibold mb-1">
+                <p className="mb-1 font-semibold text-slate-700 dark:text-gray-200">
                   Failed to load products
                 </p>
-                <p className="text-gray-400 dark:text-gray-500 text-sm mb-4">
+                <p className="mb-4 text-sm text-gray-400 dark:text-gray-500">
                   Something went wrong. Please try refreshing the page.
                 </p>
                 <button
                   onClick={() => window.location.reload()}
-                  className="text-sm font-semibold text-sky-500 dark:text-sky-400 hover:text-sky-600 dark:hover:text-sky-300 transition-colors"
+                  className="text-sm font-semibold text-sky-500 transition-colors hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-300"
                 >
                   Refresh page
                 </button>
@@ -808,7 +808,7 @@ export default function CategoryListProductMain({
   return (
     <>
       <div
-        className="fixed inset-0 -z-50 category-background"
+        className="category-background fixed inset-0 -z-50"
         style={
           {
             backgroundColor: "#faf8f5",
@@ -826,7 +826,7 @@ export default function CategoryListProductMain({
                 `,
         }}
       />
-      <div className="relative min-h-screen text-slate-900 dark:text-white flex flex-col">
+      <div className="relative flex min-h-screen flex-col text-slate-900 dark:text-white">
         {!isPartnerStorefrontRoute && <TopBar />}
         <Navbar
           initialCategories={initialCategories}
@@ -842,15 +842,15 @@ export default function CategoryListProductMain({
 
         <main className="flex-1">
           {/* Breadcrumb */}
-          <div className="bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
-            <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="border-b border-gray-100 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
+            <div className="container mx-auto flex items-center justify-between px-4 py-3">
               <h1 className="text-base font-bold text-slate-800 dark:text-white">
                 {categoryLabel}
               </h1>
               <nav className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
                 <Link
                   href={isPartnerStorefrontRoute ? partnerProductHref : "/"}
-                  className="hover:text-sky-500 dark:hover:text-sky-400 transition-colors font-medium"
+                  className="font-medium transition-colors hover:text-sky-500 dark:hover:text-sky-400"
                 >
                   Home
                 </Link>
@@ -865,7 +865,7 @@ export default function CategoryListProductMain({
                 >
                   <polyline points="9 18 15 12 9 6" />
                 </svg>
-                <span className="text-slate-600 dark:text-gray-300 font-semibold">
+                <span className="font-semibold text-slate-600 dark:text-gray-300">
                   {categoryLabel}
                 </span>
               </nav>
@@ -873,9 +873,9 @@ export default function CategoryListProductMain({
           </div>
 
           <div className="container mx-auto px-4 py-6 lg:py-8">
-            <div className="flex gap-6 items-start">
+            <div className="flex items-start gap-6">
               {/* --- PRODUCT FILTER SIDEBAR --- */}
-              <aside className="hidden lg:block w-80 shrink-0 sticky top-4 z-10">
+              <aside className="sticky top-4 z-10 hidden w-80 shrink-0 lg:block">
                 <ProductFilter
                   onFilterChange={handleFilterChange}
                   search={searchQuery}
@@ -886,7 +886,7 @@ export default function CategoryListProductMain({
                   brands={categoryBrandOptions}
                 />
                 {/* Video Section */}
-                <div className="mt-4 rounded-2xl overflow-hidden aspect-square border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                <div className="mt-4 aspect-square overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
                   <video
                     className="h-full w-full object-cover"
                     src={heroVideoSrc}
@@ -899,7 +899,7 @@ export default function CategoryListProductMain({
               </aside>
 
               {/* --- MAIN CONTENT --- */}
-              <div className="flex-1 min-w-0">
+              <div className="min-w-0 flex-1">
                 {/* Top Filter */}
                 <div ref={listingTopRef} className="mb-5">
                   <TopFilter
@@ -934,7 +934,7 @@ export default function CategoryListProductMain({
                       )}
                     </span>
                     {hasActiveFilters && (
-                      <span className="text-xs text-sky-500 dark:text-sky-400 font-medium">
+                      <span className="text-xs font-medium text-sky-500 dark:text-sky-400">
                         {activeFilterCount} filter
                         {activeFilterCount !== 1 ? "s" : ""} active
                       </span>
@@ -947,7 +947,7 @@ export default function CategoryListProductMain({
                   <ProductGridSkeleton />
                 ) : visibleCatalogRows.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-24 text-center">
-                    <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
+                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="28"
@@ -962,15 +962,15 @@ export default function CategoryListProductMain({
                         <line x1="21" y1="21" x2="16.65" y2="16.65" />
                       </svg>
                     </div>
-                    <p className="text-slate-700 dark:text-gray-200 font-semibold mb-1">
+                    <p className="mb-1 font-semibold text-slate-700 dark:text-gray-200">
                       No products found
                     </p>
-                    <p className="text-gray-400 dark:text-gray-500 text-sm mb-4">
+                    <p className="mb-4 text-sm text-gray-400 dark:text-gray-500">
                       Try adjusting your filters
                     </p>
                     <button
                       onClick={resetFilters}
-                      className="text-sm font-semibold text-sky-500 dark:text-sky-400 hover:text-sky-600 dark:hover:text-sky-300 transition-colors"
+                      className="text-sm font-semibold text-sky-500 transition-colors hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-300"
                     >
                       Clear all filters
                     </button>
@@ -979,7 +979,7 @@ export default function CategoryListProductMain({
                   <div
                     className={
                       viewMode === "grid"
-                        ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                        ? "grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4"
                         : "flex flex-col gap-3"
                     }
                   >
@@ -1030,7 +1030,7 @@ export default function CategoryListProductMain({
                           onChange={(event) =>
                             handleShowNumberChange(Number(event.target.value))
                           }
-                          className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold text-slate-700 transition-all hover:border-sky-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400/20 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+                          className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold text-slate-700 transition-all hover:border-sky-400 focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
                         >
                           {[25, 50, 75, 100, 150, 200].map((option) => (
                             <option key={option} value={option}>
@@ -1072,7 +1072,7 @@ export default function CategoryListProductMain({
                                   className={`h-9 w-9 shrink-0 rounded-lg border text-sm font-medium transition-colors ${
                                     page === boundedCurrentPage
                                       ? "border-sky-500 bg-sky-500 text-white shadow-sm"
-                                      : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-slate-700 dark:text-gray-200 hover:border-sky-400 hover:text-sky-500 dark:hover:border-sky-400"
+                                      : "border-gray-200 bg-white text-slate-700 hover:border-sky-400 hover:text-sky-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:border-sky-400"
                                   }`}
                                 >
                                   {page}
@@ -1180,12 +1180,12 @@ function ListViewProduct({
   return (
     <Link
       href={buildStorefrontProductPath(product.name, product.id, pathname)}
-      className="flex gap-2 sm:gap-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:border-sky-500 dark:hover:border-sky-400 transition-colors group relative"
+      className="group relative flex gap-2 overflow-hidden rounded-lg border border-gray-200 bg-white transition-colors hover:border-sky-500 sm:gap-4 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-sky-400"
     >
-      <div className="relative aspect-square w-20 sm:w-32 bg-gray-100 dark:bg-gray-700 overflow-hidden shrink-0 flex-shrink-0">
+      <div className="relative aspect-square w-20 flex-shrink-0 shrink-0 overflow-hidden bg-gray-100 sm:w-32 dark:bg-gray-700">
         {/* Discount Badge */}
         {showMemberPrice && !hideDiscountBadge && (
-          <div className="absolute top-2 left-2 bg-sky-500 text-white text-[10px] sm:text-xs font-bold px-2 py-1 z-10 max-w-[calc(100%-16px)]">
+          <div className="absolute top-2 left-2 z-10 max-w-[calc(100%-16px)] bg-sky-500 px-2 py-1 text-[10px] font-bold text-white sm:text-xs">
             {isLoggedIn
               ? `Enjoy ${Math.round(((srpPrice - memberPrice) / srpPrice) * 100)}% off`
               : `Register to get ${Math.round(((srpPrice - memberPrice) / srpPrice) * 100)}% discount`}
@@ -1195,7 +1195,7 @@ function ListViewProduct({
           <img
             src={product.image}
             alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
           <div className="flex h-full items-center justify-center text-gray-400 dark:text-gray-500">
@@ -1207,7 +1207,7 @@ function ListViewProduct({
               fill="none"
               stroke="currentColor"
               strokeWidth="1.5"
-              className="sm:w-12 sm:h-12"
+              className="sm:h-12 sm:w-12"
             >
               <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
               <circle cx="8.5" cy="8.5" r="1.5" />
@@ -1216,31 +1216,31 @@ function ListViewProduct({
           </div>
         )}
       </div>
-      <div className="flex flex-col justify-center flex-1 p-2 sm:p-4 relative min-w-0">
-        <h3 className="text-xs sm:text-base font-semibold text-gray-900 dark:text-white mb-1 sm:mb-2 line-clamp-2 group-hover:text-sky-500 dark:group-hover:text-sky-400 transition-colors">
+      <div className="relative flex min-w-0 flex-1 flex-col justify-center p-2 sm:p-4">
+        <h3 className="mb-1 line-clamp-2 text-xs font-semibold text-gray-900 transition-colors group-hover:text-sky-500 sm:mb-2 sm:text-base dark:text-white dark:group-hover:text-sky-400">
           {product.name}
         </h3>
-        <div className="flex items-baseline gap-1 sm:gap-2 mb-1 sm:mb-2 flex-wrap">
-          <span className="text-sm sm:text-lg font-bold text-sky-500 dark:text-sky-400">
+        <div className="mb-1 flex flex-wrap items-baseline gap-1 sm:mb-2 sm:gap-2">
+          <span className="text-sm font-bold text-sky-500 sm:text-lg dark:text-sky-400">
             {"\u20b1"}
             {displayPrice.toLocaleString()}
           </span>
           {strikePrice > displayPrice && (
-            <span className="text-xs sm:text-sm text-gray-400 dark:text-gray-500 line-through">
+            <span className="text-xs text-gray-400 line-through sm:text-sm dark:text-gray-500">
               {"\u20b1"}
               {strikePrice.toLocaleString()}
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
           {displayPv > 0 && (
-            <span className="inline-flex items-center rounded-full border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/30 px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[11px] font-semibold text-blue-700 dark:text-blue-300 whitespace-nowrap">
+            <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[9px] font-semibold whitespace-nowrap text-blue-700 sm:px-2 sm:text-[11px] dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
               PV {displayPv.toLocaleString()}
             </span>
           )}
         </div>
         {/* Sales/Ratings */}
-        <div className="flex items-center gap-1 mt-1">
+        <div className="mt-1 flex items-center gap-1">
           <div className="flex items-center">
             {[1, 2, 3, 4, 5].map((star) => (
               <svg
@@ -1266,14 +1266,14 @@ function ListViewProduct({
         </div>
 
         {/* Action Icons - Bottom */}
-        <div className="flex gap-1.5 sm:gap-2 mt-1.5 sm:mt-2">
+        <div className="mt-1.5 flex gap-1.5 sm:mt-2 sm:gap-2">
           <button
             onClick={(e) => {
               e.preventDefault()
               e.stopPropagation()
               // Add to wishlist functionality here
             }}
-            className="p-1.5 rounded-full bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-sky-100 dark:hover:bg-sky-900/20 hover:border-sky-300 dark:hover:border-sky-600 transition-all duration-200 cursor-pointer"
+            className="cursor-pointer rounded-full border border-gray-200 bg-gray-100 p-1.5 transition-all duration-200 hover:border-sky-300 hover:bg-sky-100 dark:border-gray-600 dark:bg-gray-700 dark:hover:border-sky-600 dark:hover:bg-sky-900/20"
             title="Add to Wishlist"
           >
             <svg
@@ -1284,7 +1284,7 @@ function ListViewProduct({
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
-              className="text-gray-700 dark:text-gray-300 hover:text-sky-500 dark:hover:text-sky-400 transition-colors"
+              className="text-gray-700 transition-colors hover:text-sky-500 dark:text-gray-300 dark:hover:text-sky-400"
             >
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
             </svg>
@@ -1295,7 +1295,7 @@ function ListViewProduct({
               e.stopPropagation()
               onShareClick(product)
             }}
-            className="p-1.5 rounded-full bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-sky-100 dark:hover:bg-sky-900/20 hover:border-sky-300 dark:hover:border-sky-600 transition-all duration-200 cursor-pointer"
+            className="cursor-pointer rounded-full border border-gray-200 bg-gray-100 p-1.5 transition-all duration-200 hover:border-sky-300 hover:bg-sky-100 dark:border-gray-600 dark:bg-gray-700 dark:hover:border-sky-600 dark:hover:bg-sky-900/20"
             title="Share"
           >
             <svg
@@ -1306,7 +1306,7 @@ function ListViewProduct({
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
-              className="text-gray-700 dark:text-gray-300 hover:text-sky-500 dark:hover:text-sky-400 transition-colors"
+              className="text-gray-700 transition-colors hover:text-sky-500 dark:text-gray-300 dark:hover:text-sky-400"
             >
               <circle cx="18" cy="5" r="3" />
               <circle cx="6" cy="12" r="3" />
@@ -1324,7 +1324,7 @@ function ListViewProduct({
             e.stopPropagation()
             // Add to cart functionality here
           }}
-          className="mt-1 sm:absolute sm:bottom-4 sm:right-4 flex items-center justify-center gap-1 sm:gap-2 rounded-full bg-sky-500 hover:bg-sky-600 px-2.5 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm font-semibold text-white sm:opacity-0 sm:translate-y-2 sm:group-hover:opacity-100 sm:group-hover:translate-y-0 transition-all duration-300 cursor-pointer w-full sm:w-auto"
+          className="mt-1 flex w-full cursor-pointer items-center justify-center gap-1 rounded-full bg-sky-500 px-2.5 py-1 text-xs font-semibold text-white transition-all duration-300 hover:bg-sky-600 sm:absolute sm:right-4 sm:bottom-4 sm:w-auto sm:translate-y-2 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm sm:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -1334,7 +1334,7 @@ function ListViewProduct({
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
-            className="sm:w-4 sm:h-4"
+            className="sm:h-4 sm:w-4"
           >
             <circle cx="9" cy="21" r="1" />
             <circle cx="20" cy="21" r="1" />

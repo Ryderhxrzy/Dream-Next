@@ -1,6 +1,7 @@
-import { buildPageMetadata } from "@/app/seo"
 import { getNavbarCategories } from "@/libs/serverStorefront"
+
 import PhotoGalleryPageClient from "@/components/media/PhotoGalleryPageClient"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Photo Gallery",

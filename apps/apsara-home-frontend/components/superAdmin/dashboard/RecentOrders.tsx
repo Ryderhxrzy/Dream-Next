@@ -1,11 +1,11 @@
 "use client"
 
-import Link from "next/link"
-import { motion } from "framer-motion"
 import {
   useGetAdminOrdersQuery,
   type AdminOrder,
 } from "@/store/api/adminOrdersApi"
+import { motion } from "framer-motion"
+import Link from "next/link"
 
 const statusConfig: Record<string, { bg: string; text: string; dot: string }> =
   {
@@ -143,22 +143,22 @@ const RecentOrders = () => {
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-gray-50 dark:bg-gray-800/60">
-              <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              <th className="px-6 py-3 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">
                 Order ID
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              <th className="px-6 py-3 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">
                 Customer
               </th>
-              <th className="hidden px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 md:table-cell">
+              <th className="hidden px-6 py-3 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase md:table-cell dark:text-gray-400">
                 Date
               </th>
-              <th className="hidden px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 sm:table-cell">
+              <th className="hidden px-6 py-3 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase sm:table-cell dark:text-gray-400">
                 Method
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              <th className="px-6 py-3 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">
                 Amount
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              <th className="px-6 py-3 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">
                 Status
               </th>
             </tr>
@@ -241,7 +241,7 @@ const RecentOrders = () => {
                             {customerName[0]?.toUpperCase() ?? "?"}
                           </span>
                         </div>
-                        <span className="whitespace-nowrap text-xs font-medium text-gray-700 dark:text-gray-200">
+                        <span className="text-xs font-medium whitespace-nowrap text-gray-700 dark:text-gray-200">
                           {customerName}
                         </span>
                       </div>

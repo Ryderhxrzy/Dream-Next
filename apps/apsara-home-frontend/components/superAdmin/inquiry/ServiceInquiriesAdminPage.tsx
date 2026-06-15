@@ -7,8 +7,8 @@ import {
   useUpdateAdminServiceInquiryStatusMutation,
 } from "@/store/api/serviceInquiriesApi"
 import type {
-  ServiceInquiryStatus,
   ServiceInquiryItem,
+  ServiceInquiryStatus,
 } from "@/store/api/serviceInquiriesApi"
 import toast from "react-hot-toast"
 
@@ -299,7 +299,7 @@ export default function ServiceInquiriesAdminPage() {
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative">
               <svg
-                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -313,7 +313,7 @@ export default function ServiceInquiriesAdminPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search inquiries…"
-                className="h-10 w-56 rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 transition-all focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="h-10 w-56 rounded-xl border border-slate-200 bg-slate-50 pr-3 pl-9 text-sm text-slate-800 transition-all outline-none placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
             </div>
             <select
@@ -427,7 +427,7 @@ export default function ServiceInquiriesAdminPage() {
                   ].map((col) => (
                     <th
                       key={col}
-                      className="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400"
+                      className="px-6 py-3 text-left text-[11px] font-semibold tracking-wider text-slate-400 uppercase"
                     >
                       {col}
                     </th>
@@ -569,10 +569,10 @@ export default function ServiceInquiriesAdminPage() {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-[9px] font-bold uppercase tracking-widest text-indigo-500">
+                  <p className="text-[9px] font-bold tracking-widest text-indigo-500 uppercase">
                     Service Inquiry
                   </p>
-                  <h3 className="text-base font-bold leading-tight text-slate-900 dark:text-white">
+                  <h3 className="text-base leading-tight font-bold text-slate-900 dark:text-white">
                     {selected.fullname}
                   </h3>
                 </div>
@@ -731,7 +731,7 @@ export default function ServiceInquiriesAdminPage() {
 
             {/* Status footer */}
             <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3 dark:border-slate-800">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                 Status
               </p>
               <div className="flex gap-2">
@@ -802,7 +802,7 @@ function ModalRow({
         {icon}
       </div>
       <div className="min-w-0">
-        <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+        <p className="text-[9px] font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
           {label}
         </p>
         <p className="mt-0.5 text-sm text-slate-800 dark:text-slate-100">

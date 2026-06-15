@@ -1,3 +1,11 @@
+import { adminAuthOptions } from "@/libs/adminAuth"
+import {
+  normalizeProductsResponse,
+  ProductsResponse,
+} from "@/store/api/productsApi"
+import { getServerSession } from "next-auth"
+
+import ProductsPageMain from "@/components/superAdmin/products/ProductsPageMain"
 import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
@@ -6,14 +14,6 @@ export const metadata = buildPageMetadata({
   path: "/admin/products",
   noIndex: true,
 })
-
-import ProductsPageMain from "@/components/superAdmin/products/ProductsPageMain"
-import { adminAuthOptions } from "@/libs/adminAuth"
-import {
-  normalizeProductsResponse,
-  ProductsResponse,
-} from "@/store/api/productsApi"
-import { getServerSession } from "next-auth"
 
 export const dynamic = "force-dynamic"
 

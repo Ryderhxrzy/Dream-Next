@@ -1,8 +1,9 @@
 import { Suspense } from "react"
+import { getRoomOptionBySlug } from "@/libs/roomConfig"
+import { getNavbarCategories } from "@/libs/serverStorefront"
+
 import CategoryListProductMain from "@/components/category/CategoryListProductMain"
 import { buildPageMetadata } from "@/app/seo"
-import { getNavbarCategories } from "@/libs/serverStorefront"
-import { getRoomOptionBySlug } from "@/libs/roomConfig"
 
 export const metadata = buildPageMetadata({
   title: "By Room Details",

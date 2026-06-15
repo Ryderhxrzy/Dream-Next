@@ -1,5 +1,5 @@
-import { buildPageMetadata } from "@/app/seo"
 import AdminTermsConditionSettingsPageMain from "@/components/superAdmin/settings/AdminTermsConditionSettingsPageMain"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Admin Settings Terms and Condition",

@@ -1,25 +1,25 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import {
-  FileDown,
-  Calendar,
-  Search,
-  ChevronDown,
-  X,
-  ShoppingCart,
-  DollarSign,
-  TrendingUp,
-  Package,
-  AlertCircle,
-  Clock,
-  Truck,
-  CheckCircle,
-  RotateCcw,
-  XCircle,
-  Filter,
-} from "lucide-react"
 import { useGetSupplierOrdersQuery } from "@/store/api/supplierOrdersApi"
+import {
+  AlertCircle,
+  Calendar,
+  CheckCircle,
+  ChevronDown,
+  Clock,
+  DollarSign,
+  FileDown,
+  Filter,
+  Package,
+  RotateCcw,
+  Search,
+  ShoppingCart,
+  TrendingUp,
+  Truck,
+  X,
+  XCircle,
+} from "lucide-react"
 
 /* ─── Types ───────────────────────────────────────────────────────────────── */
 
@@ -196,7 +196,7 @@ function StatCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+          <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
             {label}
           </p>
           <p className="mt-2 text-2xl font-bold text-slate-900">{value}</p>
@@ -536,24 +536,24 @@ export default function SupplierOrderReportsPage({
 
         <div className="flex flex-wrap items-end gap-3 px-5 py-4">
           {/* Search */}
-          <div className="flex-1 min-w-45">
-            <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-widest text-slate-400">
+          <div className="min-w-45 flex-1">
+            <label className="mb-1.5 block text-[10px] font-bold tracking-widest text-slate-400 uppercase">
               Search
             </label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+              <Search className="absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Customer, product, order #..."
-                className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-8 pr-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 transition focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pr-3 pl-8 text-sm text-slate-800 transition outline-none placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
               />
               {search && (
                 <button
                   type="button"
                   onClick={() => setSearch("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  className="absolute top-1/2 right-2.5 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -563,39 +563,39 @@ export default function SupplierOrderReportsPage({
 
           {/* Date From */}
           <div className="min-w-37.5">
-            <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-widest text-slate-400">
+            <label className="mb-1.5 block text-[10px] font-bold tracking-widest text-slate-400 uppercase">
               Date From
             </label>
             <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <Calendar className="pointer-events-none absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
               <input
                 type="date"
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
-                className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-8 pr-3 text-sm text-slate-800 outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pr-3 pl-8 text-sm text-slate-800 transition outline-none focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
               />
             </div>
           </div>
 
           {/* Date To */}
           <div className="min-w-37.5">
-            <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-widest text-slate-400">
+            <label className="mb-1.5 block text-[10px] font-bold tracking-widest text-slate-400 uppercase">
               Date To
             </label>
             <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <Calendar className="pointer-events-none absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
               <input
                 type="date"
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
-                className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-8 pr-3 text-sm text-slate-800 outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pr-3 pl-8 text-sm text-slate-800 transition outline-none focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
               />
             </div>
           </div>
 
           {/* Status filter dropdown */}
           <div className="min-w-40">
-            <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-widest text-slate-400">
+            <label className="mb-1.5 block text-[10px] font-bold tracking-widest text-slate-400 uppercase">
               Status
             </label>
             <div className="relative" ref={statusDropdownRef}>
@@ -618,7 +618,7 @@ export default function SupplierOrderReportsPage({
               </button>
 
               {statusOpen && (
-                <div className="absolute left-0 top-12 z-50 min-w-full overflow-hidden rounded-xl border border-slate-100 bg-white py-1 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+                <div className="absolute top-12 left-0 z-50 min-w-full overflow-hidden rounded-xl border border-slate-100 bg-white py-1 shadow-xl dark:border-slate-800 dark:bg-slate-900">
                   {STATUS_OPTIONS.map((opt) => (
                     <button
                       key={opt}
@@ -670,7 +670,7 @@ export default function SupplierOrderReportsPage({
                 className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold ring-1 transition hover:scale-105 ${
                   statusFilter === s
                     ? `${st.bg} ${st.text} ${st.ring} scale-105`
-                    : "bg-white text-slate-500 ring-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:ring-slate-700 dark:text-slate-400"
+                    : "bg-white text-slate-500 ring-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-400 dark:ring-slate-700"
                 }`}
               >
                 <span
@@ -723,7 +723,7 @@ export default function SupplierOrderReportsPage({
                 ].map((col) => (
                   <th
                     key={col}
-                    className="px-6 py-3.5 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500"
+                    className="px-6 py-3.5 text-left text-[10px] font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500"
                   >
                     {col}
                   </th>

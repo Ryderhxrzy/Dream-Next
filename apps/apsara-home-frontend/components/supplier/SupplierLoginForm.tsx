@@ -1,15 +1,16 @@
 "use client"
 
-import Link from "next/link"
 import { useEffect, useState } from "react"
-import { motion } from "framer-motion"
-import Image from "next/image"
-import { MoonStar, SunMedium } from "lucide-react"
-import { useTheme } from "next-themes"
-import { useRouter } from "next/navigation"
-import Loading from "@/components/Loading"
-import { signIn, signOut } from "next-auth/react"
 import { clearAccessTokenCache } from "@/store/api/baseApi"
+import { motion } from "framer-motion"
+import { MoonStar, SunMedium } from "lucide-react"
+import { signIn, signOut } from "next-auth/react"
+import { useTheme } from "next-themes"
+import Image from "next/image"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+
+import Loading from "@/components/Loading"
 
 const REMEMBER_SUPPLIER_LOGIN_KEY = "afhome_supplier_login"
 const TWO_FACTOR_PREFIX = "2FA_REQUIRED|"
@@ -177,9 +178,9 @@ export default function SupplierLoginForm() {
     <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-[linear-gradient(180deg,#f7fbff_0%,#eff6ff_38%,#f8fafc_100%)] px-4 text-slate-900 dark:bg-[radial-gradient(circle_at_top,#14263a_0%,#09111d_42%,#050914_100%)] dark:text-slate-100">
       <div className="absolute inset-0 bg-[linear-gradient(rgba(14,165,233,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(14,165,233,0.08)_1px,transparent_1px)] bg-[size:48px_48px] dark:bg-[linear-gradient(rgba(34,211,238,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(34,211,238,0.05)_1px,transparent_1px)]" />
       <div className="pointer-events-none absolute top-0 left-1/4 h-96 w-96 rounded-full bg-cyan-400/15 blur-3xl dark:bg-cyan-600/10" />
-      <div className="pointer-events-none absolute bottom-0 right-1/4 h-80 w-80 rounded-full bg-sky-400/15 blur-3xl dark:bg-teal-600/10" />
+      <div className="pointer-events-none absolute right-1/4 bottom-0 h-80 w-80 rounded-full bg-sky-400/15 blur-3xl dark:bg-teal-600/10" />
 
-      <div className="absolute right-4 top-4 z-20 sm:right-6 sm:top-6">
+      <div className="absolute top-4 right-4 z-20 sm:top-6 sm:right-6">
         <button
           type="button"
           onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
@@ -201,14 +202,14 @@ export default function SupplierLoginForm() {
         className="relative z-10 w-full max-w-sm"
       >
         <div className="rounded-2xl border border-sky-100/90 bg-white/92 p-8 shadow-2xl shadow-sky-100/70 backdrop-blur-xl dark:border-slate-700/60 dark:bg-slate-900/82 dark:shadow-black/40">
-          <div className="flex flex-col items-center mb-8">
+          <div className="mb-8 flex flex-col items-center">
             <div className="mb-4 rounded-xl border border-sky-200/80 bg-sky-50/90 p-3 dark:border-cyan-500/20 dark:bg-cyan-600/15">
               <Image
                 src="/Images/af_home_logo.png"
                 alt="AF HOME"
                 width={80}
                 height={26}
-                className="h-7 w-auto object-contain dark:brightness-0 dark:invert dark:opacity-90"
+                className="h-7 w-auto object-contain dark:opacity-90 dark:brightness-0 dark:invert"
               />
             </div>
             <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
@@ -227,7 +228,7 @@ export default function SupplierLoginForm() {
                 className="mb-3 flex items-center gap-2.5 rounded-2xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs text-red-600 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400"
               >
                 <svg
-                  className="shrink-0 w-3.5 h-3.5"
+                  className="h-3.5 w-3.5 shrink-0"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -248,7 +249,7 @@ export default function SupplierLoginForm() {
                 Email or Username
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500">
+                <span className="absolute top-1/2 left-3 -translate-y-1/2 text-slate-400 dark:text-slate-500">
                   <svg
                     width="15"
                     height="15"
@@ -267,7 +268,7 @@ export default function SupplierLoginForm() {
                   value={form.login}
                   onChange={set("login")}
                   required
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/95 py-2.5 pl-9 pr-4 text-sm text-slate-900 placeholder:text-slate-400 transition-all focus:outline-none focus:ring-2 focus:ring-cyan-500/30 dark:border-slate-700/80 dark:bg-slate-800/80 dark:text-white dark:placeholder:text-slate-500 dark:focus:ring-cyan-500/50"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/95 py-2.5 pr-4 pl-9 text-sm text-slate-900 transition-all placeholder:text-slate-400 focus:ring-2 focus:ring-cyan-500/30 focus:outline-none dark:border-slate-700/80 dark:bg-slate-800/80 dark:text-white dark:placeholder:text-slate-500 dark:focus:ring-cyan-500/50"
                 />
               </div>
             </div>
@@ -277,7 +278,7 @@ export default function SupplierLoginForm() {
                 Password
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500">
+                <span className="absolute top-1/2 left-3 -translate-y-1/2 text-slate-400 dark:text-slate-500">
                   <svg
                     width="15"
                     height="15"
@@ -296,12 +297,12 @@ export default function SupplierLoginForm() {
                   value={form.password}
                   onChange={set("password")}
                   required
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/95 py-2.5 pl-9 pr-11 text-sm text-slate-900 placeholder:text-slate-400 transition-all focus:outline-none focus:ring-2 focus:ring-cyan-500/30 dark:border-slate-700/80 dark:bg-slate-800/80 dark:text-white dark:placeholder:text-slate-500 dark:focus:ring-cyan-500/50"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/95 py-2.5 pr-11 pl-9 text-sm text-slate-900 transition-all placeholder:text-slate-400 focus:ring-2 focus:ring-cyan-500/30 focus:outline-none dark:border-slate-700/80 dark:bg-slate-800/80 dark:text-white dark:placeholder:text-slate-500 dark:focus:ring-cyan-500/50"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPass((prev) => !prev)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
+                  className="absolute top-1/2 right-3 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
                 >
                   <EyeIcon open={showPass} />
                 </button>
@@ -322,7 +323,7 @@ export default function SupplierLoginForm() {
                   required
                   inputMode="numeric"
                   placeholder="Enter 6-digit code"
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/95 px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition-all focus:outline-none focus:ring-2 focus:ring-cyan-500/30 dark:border-slate-700/80 dark:bg-slate-800/80 dark:text-white dark:placeholder:text-slate-500 dark:focus:ring-cyan-500/50"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/95 px-4 py-2.5 text-sm text-slate-900 transition-all placeholder:text-slate-400 focus:ring-2 focus:ring-cyan-500/30 focus:outline-none dark:border-slate-700/80 dark:bg-slate-800/80 dark:text-white dark:placeholder:text-slate-500 dark:focus:ring-cyan-500/50"
                 />
                 <div className="mt-2 flex items-center justify-between">
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">

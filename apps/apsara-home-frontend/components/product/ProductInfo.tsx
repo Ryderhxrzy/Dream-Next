@@ -1,35 +1,45 @@
 ﻿"use client"
 
-import Image from "next/image"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useCart } from "@/context/CartContext"
 import { CategoryProduct } from "@/libs/CategoryData"
+import { resolveCheckoutSource } from "@/libs/checkoutSource"
 import { displayColorName } from "@/libs/colorUtils"
 import { extractVariantOptionLabels } from "@/libs/productVariantOptions"
-import { motion } from "framer-motion"
-import { useCallback, useEffect, useMemo, useState } from "react"
-import { Link2, X as XIcon } from "lucide-react"
-import StarRating from "../ui/StarRating"
-import BuyNowOptionsModal from "./BuyNowOptionsModal"
-import ShareModal from "@/components/ui/ShareModal"
-import { useSession } from "next-auth/react"
-import { useMeQuery } from "@/store/api/userApi"
+import { extractPartnerSlugFromPath } from "@/libs/storefrontRouting"
 import { useGetPublicGeneralSettingsQuery } from "@/store/api/adminSettingsApi"
 import type { ProductReviewSummary } from "@/store/api/productsApi"
-import { useGetProductBrandQuery } from "@/store/api/productsApi"
-import { useHeartbeatProductViewerMutation } from "@/store/api/productsApi"
 import {
-  useGetWishlistQuery,
+  useGetProductBrandQuery,
+  useHeartbeatProductViewerMutation,
+} from "@/store/api/productsApi"
+import { useMeQuery } from "@/store/api/userApi"
+import {
   useAddWishlistMutation,
+  useGetWishlistQuery,
   useRemoveWishlistMutation,
   type WishlistItem,
 } from "@/store/api/wishlistApi"
-import OutlineButton from "@/components/ui/buttons/OutlineButton"
-import PrimaryButton from "@/components/ui/buttons/PrimaryButton"
-import { Package, Truck, CheckCircle, Eye } from "lucide-react"
+import { motion } from "framer-motion"
+import {
+  CheckCircle,
+  Eye,
+  Link2,
+  Package,
+  Truck,
+  X as XIcon,
+} from "lucide-react"
+import { useSession } from "next-auth/react"
+import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import toast from "react-hot-toast"
-import { resolveCheckoutSource } from "@/libs/checkoutSource"
-import { extractPartnerSlugFromPath } from "@/libs/storefrontRouting"
+
+import OutlineButton from "@/components/ui/buttons/OutlineButton"
+import PrimaryButton from "@/components/ui/buttons/PrimaryButton"
+import ShareModal from "@/components/ui/ShareModal"
+
+import StarRating from "../ui/StarRating"
+import BuyNowOptionsModal from "./BuyNowOptionsModal"
 
 const CartIcon = () => (
   <svg
@@ -1100,27 +1110,27 @@ const ProductInfo = ({
       className="space-y-6"
     >
       {/* Header Section */}
-      <div className="flex items-start justify-between gap-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex items-start justify-between gap-4 border-b border-gray-200 pb-4 dark:border-gray-700">
         <div className="flex-1">
           {product.brand && (
-            <span className="text-xs font-bold text-sky-500 uppercase tracking-wider">
+            <span className="text-xs font-bold tracking-wider text-sky-500 uppercase">
               {product.brand}
             </span>
           )}
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white leading-tight mt-1">
+          <h1 className="mt-1 text-2xl leading-tight font-bold text-slate-900 sm:text-3xl dark:text-white">
             {displayTitle}
           </h1>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex shrink-0 items-center gap-2">
           <motion.button
             onClick={handleWishlistToggle}
             disabled={isWishlistLoading}
             whileTap={{ scale: 0.8 }}
-            className={`p-2 rounded-xl border transition-all cursor-pointer ${
+            className={`cursor-pointer rounded-xl border p-2 transition-all ${
               wishlisted
                 ? "border-sky-200 text-sky-500 dark:border-sky-900/50 dark:text-sky-400"
-                : "border-gray-200 text-gray-400 dark:border-gray-700 dark:text-gray-500 hover:border-sky-200 hover:text-sky-500 dark:hover:border-sky-900/50 dark:hover:text-sky-400"
-            } ${isWishlistLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                : "border-gray-200 text-gray-400 hover:border-sky-200 hover:text-sky-500 dark:border-gray-700 dark:text-gray-500 dark:hover:border-sky-900/50 dark:hover:text-sky-400"
+            } ${isWishlistLoading ? "cursor-not-allowed opacity-50" : ""}`}
             title={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
           >
             {isWishlistLoading ? (
@@ -1140,7 +1150,7 @@ const ProductInfo = ({
             )}
           </motion.button>
           <button
-            className="p-2 rounded-xl border border-gray-200 text-gray-400 dark:border-gray-700 dark:text-gray-500 hover:border-sky-200 hover:text-sky-500 dark:hover:border-sky-900/50 dark:hover:text-sky-400 transition-all cursor-pointer"
+            className="cursor-pointer rounded-xl border border-gray-200 p-2 text-gray-400 transition-all hover:border-sky-200 hover:text-sky-500 dark:border-gray-700 dark:text-gray-500 dark:hover:border-sky-900/50 dark:hover:text-sky-400"
             onClick={() => setIsShareOpen(true)}
             type="button"
           >
@@ -1149,7 +1159,7 @@ const ProductInfo = ({
         </div>
       </div>
       {/* Rating & Badges */}
-      <div className="flex flex-wrap items-center gap-3 pb-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex flex-wrap items-center gap-3 border-b border-gray-200 pb-4 dark:border-gray-700">
         <div className="flex items-center gap-2">
           <StarRating rating={Math.round(avgRatingValue)} size={16} />
           <span className="text-sm font-bold text-slate-700 dark:text-gray-300">
@@ -1157,7 +1167,7 @@ const ProductInfo = ({
           </span>
           <button
             onClick={() => onReviewsClick?.()}
-            className="text-sm text-gray-400 dark:text-gray-500 hover:text-sky-500 dark:hover:text-sky-400 transition-colors"
+            className="text-sm text-gray-400 transition-colors hover:text-sky-500 dark:text-gray-500 dark:hover:text-sky-400"
           >
             ({reviewCount} review{reviewCount === 1 ? "" : "s"})
           </button>
@@ -1174,7 +1184,7 @@ const ProductInfo = ({
             </span>
           )}
           {categoryLabel && (
-            <span className="rounded-full border border-sky-200 dark:border-sky-900/50 px-2.5 py-1 text-[11px] font-semibold text-sky-600 dark:text-sky-400">
+            <span className="rounded-full border border-sky-200 px-2.5 py-1 text-[11px] font-semibold text-sky-600 dark:border-sky-900/50 dark:text-sky-400">
               {categoryLabel}
             </span>
           )}
@@ -1186,7 +1196,7 @@ const ProductInfo = ({
       </div>
       {/* Product Badges */}
       {(product.musthave || product.salespromo) && (
-        <div className="flex flex-wrap gap-2 pb-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-4 dark:border-gray-700">
           {product.musthave && (
             <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-700">
               Must Have
@@ -1202,20 +1212,20 @@ const ProductInfo = ({
       )}
 
       {/* Price Section */}
-      <div className="bg-gradient-to-r from-sky-50 to-sky-50 dark:from-sky-900/20 dark:to-sky-900/20 rounded-2xl p-6 border border-sky-100 dark:border-sky-900/30 mb-6">
-        <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
-          <div className="flex items-baseline gap-3 flex-wrap">
-            <span className="text-3xl sm:text-4xl font-bold text-sky-600 dark:text-sky-400">
+      <div className="mb-6 rounded-2xl border border-sky-100 bg-gradient-to-r from-sky-50 to-sky-50 p-6 dark:border-sky-900/30 dark:from-sky-900/20 dark:to-sky-900/20">
+        <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+          <div className="flex flex-wrap items-baseline gap-3">
+            <span className="text-3xl font-bold text-sky-600 sm:text-4xl dark:text-sky-400">
               {"\u20b1"}
               {displayPrice.toLocaleString()}
               {!shouldDisplayMemberPrice && (
-                <sup className="text-base font-bold text-sky-500 dark:text-sky-400 align-top">
+                <sup className="align-top text-base font-bold text-sky-500 dark:text-sky-400">
                   .00
                 </sup>
               )}
             </span>
             {displayOriginalPrice && (
-              <span className="text-lg text-gray-400 dark:text-gray-500 line-through">
+              <span className="text-lg text-gray-400 line-through dark:text-gray-500">
                 {"\u20b1"}
                 {displayOriginalPrice.toLocaleString()}
               </span>
@@ -1233,7 +1243,7 @@ const ProductInfo = ({
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex flex-wrap items-center gap-2">
           {!forceRealPrice && canUseMemberPrice && hasMemberPrice && (
             <span className="inline-flex items-center rounded-full border border-emerald-200 px-3 py-1 text-[11px] font-semibold text-emerald-700">
               Member Price Applied
@@ -1242,7 +1252,7 @@ const ProductInfo = ({
 
           {/* Hide PV + member-savings promotion for non-members */}
           {canUseMemberPrice && variantPv > 0 && (
-            <span className="inline-flex items-center rounded-full border border-blue-200 dark:border-blue-900/30 bg-blue-50 dark:bg-blue-900/20 px-3 py-1 text-xs font-semibold text-blue-700 dark:text-blue-400">
+            <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:border-blue-900/30 dark:bg-blue-900/20 dark:text-blue-400">
               PV {variantPv.toLocaleString()}
             </span>
           )}
@@ -1250,7 +1260,7 @@ const ProductInfo = ({
       </div>
 
       {/* Product Details */}
-      <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700/50 p-4 space-y-3 mb-6">
+      <div className="mb-6 space-y-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-700/50">
         {(displaySku || typeof displayStock === "number") && (
           <div className="flex flex-wrap items-center gap-4 text-sm">
             {displaySku && (
@@ -1279,7 +1289,7 @@ const ProductInfo = ({
         )}
         <div className="flex items-center gap-2">
           <div
-            className={`w-2 h-2 rounded-full border ${isInStock ? "border-green-500 bg-green-500 animate-pulse" : "border-red-400 bg-red-400"}`}
+            className={`h-2 w-2 rounded-full border ${isInStock ? "animate-pulse border-green-500 bg-green-500" : "border-red-400 bg-red-400"}`}
           />
           <span
             className={`text-sm font-semibold ${isInStock ? "text-green-600 dark:text-green-400" : "text-red-500 dark:text-red-400"}`}
@@ -1289,7 +1299,7 @@ const ProductInfo = ({
           {isInStock &&
             typeof displayStock === "number" &&
             displayStock <= 10 && (
-              <span className="text-sm text-sky-600 dark:text-sky-400 font-medium">
+              <span className="text-sm font-medium text-sky-600 dark:text-sky-400">
                 Only {displayStock} left
               </span>
             )}
@@ -1298,11 +1308,11 @@ const ProductInfo = ({
 
       {/* Variant Selection */}
       {hasRealVariants && (
-        <div className="space-y-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="space-y-4 border-b border-gray-200 pb-4 dark:border-gray-700">
           {selectedVariantLabel ||
           hasDisplayDimensions ||
           selectedVariantImage ? (
-            <div className="flex items-center gap-3 rounded-xl border border-sky-200 dark:border-sky-900/50 bg-sky-50 dark:bg-sky-900/20 p-3">
+            <div className="flex items-center gap-3 rounded-xl border border-sky-200 bg-sky-50 p-3 dark:border-sky-900/50 dark:bg-sky-900/20">
               {selectedVariantImage ? (
                 <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-sky-200 dark:border-sky-900/50">
                   <Image
@@ -1336,10 +1346,10 @@ const ProductInfo = ({
 
           {hasColorSelector && colorOptions.length > 0 && (
             <div>
-              <span className="text-sm font-semibold text-slate-700 dark:text-gray-300 block mb-2">
+              <span className="mb-2 block text-sm font-semibold text-slate-700 dark:text-gray-300">
                 Color{effectiveSelectedColor && ": "}
                 {effectiveSelectedColor && (
-                  <span className="text-slate-600 dark:text-gray-400 capitalize">
+                  <span className="text-slate-600 capitalize dark:text-gray-400">
                     {effectiveSelectedColor}
                   </span>
                 )}
@@ -1350,7 +1360,7 @@ const ProductInfo = ({
                     key={c.name}
                     title={c.name}
                     onClick={() => setSelectedColor(c.name)}
-                    className={`w-10 h-10 rounded-full transition-all duration-200 hover:scale-110 ${
+                    className={`h-10 w-10 rounded-full transition-all duration-200 hover:scale-110 ${
                       effectiveSelectedColor === c.name
                         ? "ring-4 ring-sky-400 dark:ring-sky-500"
                         : "ring-2 ring-transparent"
@@ -1368,7 +1378,7 @@ const ProductInfo = ({
 
           {hasPrimaryOptionSelector && variantNameOptions.length > 0 && (
             <div>
-              <span className="text-sm font-semibold text-slate-700 mb-2 block">
+              <span className="mb-2 block text-sm font-semibold text-slate-700">
                 {primaryOptionLabel}
               </span>
               <div className="grid grid-cols-2 gap-2">
@@ -1376,14 +1386,14 @@ const ProductInfo = ({
                   <button
                     key={variantOption.name}
                     onClick={() => setSelectedVariantName(variantOption.name)}
-                    className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg border-2 font-medium transition-all ${
+                    className={`flex items-center gap-2 rounded-lg border-2 px-3 py-2 text-sm font-medium transition-all ${
                       effectiveSelectedPrimaryName === variantOption.name
                         ? "border-sky-400 text-sky-600 dark:border-sky-500 dark:text-sky-400"
-                        : "border-gray-200 text-slate-600 dark:border-gray-700 dark:text-gray-300 hover:border-sky-200 dark:hover:border-sky-900/50"
+                        : "border-gray-200 text-slate-600 hover:border-sky-200 dark:border-gray-700 dark:text-gray-300 dark:hover:border-sky-900/50"
                     }`}
                   >
                     {variantOption.image && (
-                      <span className="relative h-8 w-8 overflow-hidden rounded border border-gray-200 shrink-0">
+                      <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded border border-gray-200">
                         <Image
                           src={variantOption.image}
                           alt={variantOption.name}
@@ -1402,7 +1412,7 @@ const ProductInfo = ({
 
           {shouldShowSecondaryOption && (
             <div>
-              <span className="text-sm font-semibold text-slate-700 mb-2 block">
+              <span className="mb-2 block text-sm font-semibold text-slate-700">
                 {secondaryOptionLabel}
               </span>
               <div className="grid grid-cols-2 gap-2">
@@ -1416,7 +1426,7 @@ const ProductInfo = ({
                     className={`rounded-lg border-2 px-3 py-2 text-left transition-all ${
                       effectiveSelectedSizeKey === sizeChoice.key
                         ? "border-sky-400 text-sky-600 dark:border-sky-500 dark:text-sky-400"
-                        : "border-gray-200 text-slate-600 dark:border-gray-700 dark:text-gray-300 hover:border-sky-200 dark:hover:border-sky-900/50"
+                        : "border-gray-200 text-slate-600 hover:border-sky-200 dark:border-gray-700 dark:text-gray-300 dark:hover:border-sky-900/50"
                     }`}
                   >
                     <span className="block text-sm font-medium">
@@ -1436,9 +1446,9 @@ const ProductInfo = ({
       )}
 
       {/* Shipping & Payment Info */}
-      <div className="bg-gradient-to-br from-slate-50 to-gray-50 dark:from-gray-800 dark:to-gray-800/50 rounded-2xl p-5 space-y-4 mb-6">
+      <div className="mb-6 space-y-4 rounded-2xl bg-gradient-to-br from-slate-50 to-gray-50 p-5 dark:from-gray-800 dark:to-gray-800/50">
         <div>
-          <h4 className="text-sm font-semibold text-slate-700 dark:text-gray-200 mb-3">
+          <h4 className="mb-3 text-sm font-semibold text-slate-700 dark:text-gray-200">
             Shipping & Delivery
           </h4>
           <div className="space-y-2">
@@ -1467,11 +1477,11 @@ const ProductInfo = ({
           </div>
         </div>
 
-        <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 font-medium">
+        <div className="border-t border-gray-200 pt-4 dark:border-gray-700">
+          <p className="mb-3 text-xs font-medium text-gray-500 dark:text-gray-400">
             We accept:
           </p>
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex flex-wrap items-center gap-3">
             {[
               {
                 src: "https://1000logos.net/wp-content/uploads/2023/05/GCash-Logo.png",
@@ -1524,26 +1534,26 @@ const ProductInfo = ({
           <span className="text-sm font-semibold text-slate-700 dark:text-gray-300">
             Quantity:
           </span>
-          <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+          <div className="flex items-center overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
             <button
               onClick={() => setQuantity((qty) => Math.max(1, qty - 1))}
-              className="px-4 py-2.5 text-gray-500 dark:text-gray-400 hover:text-sky-500 dark:hover:text-sky-400 transition-colors text-lg font-medium"
+              className="px-4 py-2.5 text-lg font-medium text-gray-500 transition-colors hover:text-sky-500 dark:text-gray-400 dark:hover:text-sky-400"
             >
               -
             </button>
-            <span className="px-5 py-2.5 text-sm font-bold text-slate-800 dark:text-gray-200 min-w-12 text-center border-x border-gray-200 dark:border-gray-700">
+            <span className="min-w-12 border-x border-gray-200 px-5 py-2.5 text-center text-sm font-bold text-slate-800 dark:border-gray-700 dark:text-gray-200">
               {quantity}
             </span>
             <button
               onClick={() => setQuantity((qty) => qty + 1)}
-              className="px-4 py-2.5 text-gray-500 dark:text-gray-400 hover:text-sky-500 dark:hover:text-sky-400 transition-colors text-lg font-medium"
+              className="px-4 py-2.5 text-lg font-medium text-gray-500 transition-colors hover:text-sky-500 dark:text-gray-400 dark:hover:text-sky-400"
             >
               +
             </button>
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <OutlineButton
             onClick={handleAddToCart}
             disabled={!isInStock || !isCheckoutAvailable}

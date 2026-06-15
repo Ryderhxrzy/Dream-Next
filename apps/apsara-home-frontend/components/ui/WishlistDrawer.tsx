@@ -1,14 +1,15 @@
 "use client"
 
-import { motion, AnimatePresence } from "framer-motion"
-import { usePathname, useRouter } from "next/navigation"
-import { useGetWishlistQuery } from "@/store/api/wishlistApi"
-import { useSession } from "next-auth/react"
 import { useEffect, useMemo, useState } from "react"
-import PrimaryButton from "@/components/ui/buttons/PrimaryButton"
 import { useWishlist } from "@/context/WishlistContext"
-import ItemCard from "@/components/item/ItemCard"
 import { extractPartnerSlugFromPath } from "@/libs/storefrontRouting"
+import { useGetWishlistQuery } from "@/store/api/wishlistApi"
+import { AnimatePresence, motion } from "framer-motion"
+import { useSession } from "next-auth/react"
+import { usePathname, useRouter } from "next/navigation"
+
+import PrimaryButton from "@/components/ui/buttons/PrimaryButton"
+import ItemCard from "@/components/item/ItemCard"
 
 const GUEST_WISHLIST_ITEMS_STORAGE_KEY = "partner_guest_wishlist_items"
 
@@ -137,9 +138,9 @@ export default function WishlistDrawer() {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className="fixed right-0 top-0 bottom-0 z-[60] flex w-full max-w-md flex-col bg-white dark:bg-gray-800 shadow-2xl"
+            className="fixed top-0 right-0 bottom-0 z-[60] flex w-full max-w-md flex-col bg-white shadow-2xl dark:bg-gray-800"
           >
-            <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 p-5">
+            <div className="flex items-center justify-between border-b border-gray-100 p-5 dark:border-gray-700">
               <div className="flex items-center gap-3">
                 <h2 className="text-lg font-bold text-slate-900 dark:text-white">
                   My Wishlist
@@ -152,7 +153,7 @@ export default function WishlistDrawer() {
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="rounded-xl p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 cursor-pointer text-slate-600 dark:text-gray-300"
+                className="cursor-pointer rounded-xl p-2 text-slate-600 transition-colors hover:bg-gray-100 active:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700 dark:active:bg-gray-600"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

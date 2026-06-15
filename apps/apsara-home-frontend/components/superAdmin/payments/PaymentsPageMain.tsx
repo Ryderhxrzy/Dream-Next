@@ -1,8 +1,8 @@
 "use client"
 
-import Link from "next/link"
-import { motion } from "framer-motion"
 import { useGetAdminPaymentsOverviewQuery } from "@/store/api/adminPaymentsApi"
+import { motion } from "framer-motion"
+import Link from "next/link"
 
 const formatMoney = (value: number) =>
   new Intl.NumberFormat("en-PH", {
@@ -76,7 +76,7 @@ function StatCard({
 
 function DashboardSkeleton() {
   return (
-    <div className="space-y-6 animate-pulse">
+    <div className="animate-pulse space-y-6">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {Array.from({ length: 4 }).map((_, index) => (
           <div
@@ -235,7 +235,7 @@ export default function PaymentsPageMain() {
                       ].map((label) => (
                         <th
                           key={label}
-                          className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-300"
+                          className="px-4 py-3 text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300"
                         >
                           {label}
                         </th>

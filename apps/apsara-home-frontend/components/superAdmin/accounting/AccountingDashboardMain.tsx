@@ -1,8 +1,9 @@
 "use client"
 
-import Link from "next/link"
 import { useMemo } from "react"
 import { useGetAdminEncashmentRequestsQuery } from "@/store/api/encashmentApi"
+import Link from "next/link"
+
 import AvatarImg from "@/components/superAdmin/AvatarImg"
 
 const formatMoney = (value: number) =>
@@ -122,7 +123,7 @@ export default function AccountingDashboardMain() {
   return (
     <div className="space-y-5">
       {/* ── Hero Header ── */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 via-slate-800 to-slate-900 dark:from-slate-900 dark:via-slate-900 dark:to-black shadow-xl">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 via-slate-800 to-slate-900 shadow-xl dark:from-slate-900 dark:via-slate-900 dark:to-black">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(14,165,233,0.14),transparent_55%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(16,185,129,0.09),transparent_55%)]" />
         <div className="absolute inset-0 opacity-[0.03]" style={STRIPE} />
@@ -130,16 +131,16 @@ export default function AccountingDashboardMain() {
           {/* Top row */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <div className="flex flex-wrap items-center gap-2 mb-2">
-                <span className="rounded-md bg-sky-500/15 border border-sky-500/25 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-sky-400">
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                <span className="rounded-md border border-sky-500/25 bg-sky-500/15 px-2.5 py-1 text-[10px] font-bold tracking-widest text-sky-400 uppercase">
                   Finance
                 </span>
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold text-emerald-400">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
                   Live · Auto-updated
                 </span>
               </div>
-              <h1 className="text-2xl font-black text-white tracking-tight">
+              <h1 className="text-2xl font-black tracking-tight text-white">
                 Accounting Dashboard
               </h1>
               <p className="mt-0.5 text-sm text-slate-400">
@@ -147,10 +148,10 @@ export default function AccountingDashboardMain() {
               </p>
             </div>
             <div className="sm:text-right">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+              <p className="mb-1 text-[10px] font-bold tracking-widest text-slate-500 uppercase">
                 Total Snapshot Volume
               </p>
-              <p className="text-3xl font-black text-white tracking-tight">
+              <p className="text-3xl font-black tracking-tight text-white">
                 {formatMoney(s.totalAmt)}
               </p>
               <p className="mt-0.5 text-xs text-slate-500">
@@ -159,7 +160,7 @@ export default function AccountingDashboardMain() {
             </div>
           </div>
           {/* Mini KPI strip */}
-          <div className="mt-5 pt-4 border-t border-white/[0.08] grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="mt-5 grid grid-cols-2 gap-4 border-t border-white/[0.08] pt-4 sm:grid-cols-4">
             {[
               {
                 label: "Awaiting Approval",
@@ -187,12 +188,12 @@ export default function AccountingDashboardMain() {
               },
             ].map(({ label, value, color, dot }) => (
               <div key={label} className="flex items-center gap-3">
-                <span className={`h-2 w-2 rounded-full shrink-0 ${dot}`} />
+                <span className={`h-2 w-2 shrink-0 rounded-full ${dot}`} />
                 <div>
-                  <p className={`text-xl font-black leading-tight ${color}`}>
+                  <p className={`text-xl leading-tight font-black ${color}`}>
                     {value}
                   </p>
-                  <p className="text-[10px] font-medium text-slate-500 leading-tight">
+                  <p className="text-[10px] leading-tight font-medium text-slate-500">
                     {label}
                   </p>
                 </div>
@@ -203,7 +204,7 @@ export default function AccountingDashboardMain() {
       </div>
 
       {/* ── Stat Cards ── */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
         {(
           [
             {
@@ -310,13 +311,13 @@ export default function AccountingDashboardMain() {
           >
             <div className="absolute inset-0 opacity-[0.06]" style={STRIPE} />
             <div className="relative flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
+              <div className="min-w-0 flex-1">
                 <p
-                  className={`text-[10px] font-bold uppercase tracking-widest ${muted}`}
+                  className={`text-[10px] font-bold tracking-widest uppercase ${muted}`}
                 >
                   {label}
                 </p>
-                <p className="mt-2 text-4xl font-black text-white leading-none">
+                <p className="mt-2 text-4xl leading-none font-black text-white">
                   {count}
                 </p>
                 <p
@@ -325,7 +326,7 @@ export default function AccountingDashboardMain() {
                   {formatMoney(amt)}
                 </p>
               </div>
-              <div className="shrink-0 flex h-9 w-9 items-center justify-center rounded-xl bg-white/15">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/15">
                 {icon}
               </div>
             </div>
@@ -334,10 +335,10 @@ export default function AccountingDashboardMain() {
       </div>
 
       {/* ── Pipeline + Channel Mix ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         {/* Processing Pipeline */}
-        <div className="lg:col-span-7 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700/60 dark:bg-slate-900 shadow-sm">
-          <div className="flex items-center gap-2.5 border-b border-slate-100 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/50 px-4 py-3">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:col-span-7 dark:border-slate-700/60 dark:bg-slate-900">
+          <div className="flex items-center gap-2.5 border-b border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-700/60 dark:bg-slate-800/50">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-200 dark:bg-slate-700">
               <svg
                 className="h-4 w-4 text-slate-600 dark:text-slate-300"
@@ -353,11 +354,11 @@ export default function AccountingDashboardMain() {
                 />
               </svg>
             </span>
-            <h2 className="text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+            <h2 className="text-xs font-bold tracking-wide text-slate-600 uppercase dark:text-slate-300">
               Processing Pipeline
             </h2>
           </div>
-          <div className="p-5 space-y-5">
+          <div className="space-y-5 p-5">
             {(
               [
                 {
@@ -403,9 +404,9 @@ export default function AccountingDashboardMain() {
               ] as const
             ).map(({ label, sub, count, amt, p, bar, cc, dot }) => (
               <div key={label}>
-                <div className="flex items-center gap-3 mb-2">
-                  <span className={`shrink-0 h-2 w-2 rounded-full ${dot}`} />
-                  <div className="flex-1 flex items-center justify-between gap-2 min-w-0">
+                <div className="mb-2 flex items-center gap-3">
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${dot}`} />
+                  <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
                     <div className="min-w-0">
                       <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                         {label}
@@ -414,18 +415,18 @@ export default function AccountingDashboardMain() {
                         {sub}
                       </span>
                     </div>
-                    <div className="shrink-0 flex items-center gap-2">
+                    <div className="flex shrink-0 items-center gap-2">
                       <span className={`text-sm font-black ${cc}`}>
                         {count}
                       </span>
                       <span className="text-xs text-slate-400">({p}%)</span>
-                      <span className="hidden sm:block text-xs font-medium tabular-nums text-slate-500 dark:text-slate-400">
+                      <span className="hidden text-xs font-medium text-slate-500 tabular-nums sm:block dark:text-slate-400">
                         {formatMoney(amt)}
                       </span>
                     </div>
                   </div>
                 </div>
-                <div className="ml-5 h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                <div className="ml-5 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                   <div
                     className={`h-full rounded-full ${bar} transition-all duration-700`}
                     style={{ width: `${p}%` }}
@@ -437,8 +438,8 @@ export default function AccountingDashboardMain() {
         </div>
 
         {/* Channel Mix */}
-        <div className="lg:col-span-5 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700/60 dark:bg-slate-900 shadow-sm">
-          <div className="flex items-center gap-2.5 border-b border-slate-100 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/50 px-4 py-3">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:col-span-5 dark:border-slate-700/60 dark:bg-slate-900">
+          <div className="flex items-center gap-2.5 border-b border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-700/60 dark:bg-slate-800/50">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-200 dark:bg-slate-700">
               <svg
                 className="h-4 w-4 text-slate-600 dark:text-slate-300"
@@ -454,14 +455,14 @@ export default function AccountingDashboardMain() {
                 />
               </svg>
             </span>
-            <h2 className="text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+            <h2 className="text-xs font-bold tracking-wide text-slate-600 uppercase dark:text-slate-300">
               Channel Mix
             </h2>
-            <span className="ml-auto text-[10px] font-medium tabular-nums text-slate-400 dark:text-slate-500">
+            <span className="ml-auto text-[10px] font-medium text-slate-400 tabular-nums dark:text-slate-500">
               {formatMoney(chanSum)}
             </span>
           </div>
-          <div className="p-5 space-y-5">
+          <div className="space-y-5 p-5">
             {(
               [
                 {
@@ -490,22 +491,22 @@ export default function AccountingDashboardMain() {
               const p = chanPct(amount)
               return (
                 <div key={label}>
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="mb-2 flex items-center justify-between">
                     <span
                       className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${badge}`}
                     >
                       {label}
                     </span>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold tabular-nums text-slate-700 dark:text-slate-200">
+                      <span className="text-xs font-bold text-slate-700 tabular-nums dark:text-slate-200">
                         {formatMoney(amount)}
                       </span>
-                      <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 w-8 text-right">
+                      <span className="w-8 text-right text-[10px] font-medium text-slate-400 dark:text-slate-500">
                         {p}%
                       </span>
                     </div>
                   </div>
-                  <div className="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                  <div className="h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                     <div
                       className={`h-full rounded-full ${bar} transition-all duration-700`}
                       style={{ width: `${p}%` }}
@@ -519,8 +520,8 @@ export default function AccountingDashboardMain() {
       </div>
 
       {/* ── Quick Actions ── */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700/60 dark:bg-slate-900 shadow-sm">
-        <div className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/50 px-4 py-3">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-900">
+        <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-700/60 dark:bg-slate-800/50">
           <div className="flex items-center gap-2.5">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-200 dark:bg-slate-700">
               <svg
@@ -537,18 +538,18 @@ export default function AccountingDashboardMain() {
                 />
               </svg>
             </span>
-            <h2 className="text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+            <h2 className="text-xs font-bold tracking-wide text-slate-600 uppercase dark:text-slate-300">
               Quick Actions
             </h2>
           </div>
           <Link
             href="/admin/encashment"
-            className="text-xs font-semibold text-sky-600 hover:text-sky-700 dark:text-sky-400 dark:hover:text-sky-300 transition-colors"
+            className="text-xs font-semibold text-sky-600 transition-colors hover:text-sky-700 dark:text-sky-400 dark:hover:text-sky-300"
           >
             Open Full Queue →
           </Link>
         </div>
-        <div className="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-4">
           {(
             [
               {
@@ -648,17 +649,17 @@ export default function AccountingDashboardMain() {
             <Link
               key={href}
               href={href}
-              className={`group relative overflow-hidden rounded-xl bg-gradient-to-br ${from} ${to} p-4 shadow-md ${shadow} hover:shadow-lg hover:scale-[1.02] transition-all duration-200 flex items-center gap-3`}
+              className={`group relative overflow-hidden rounded-xl bg-gradient-to-br ${from} ${to} p-4 shadow-md ${shadow} flex items-center gap-3 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg`}
             >
               <div className="absolute inset-0 opacity-[0.06]" style={STRIPE} />
-              <div className="relative shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-white/15">
+              <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15">
                 {icon}
               </div>
               <div className="relative min-w-0">
-                <p className="text-sm font-bold text-white leading-tight">
+                <p className="text-sm leading-tight font-bold text-white">
                   {label}
                 </p>
-                <p className="text-xs text-white/70 mt-0.5">{sub}</p>
+                <p className="mt-0.5 text-xs text-white/70">{sub}</p>
               </div>
             </Link>
           ))}
@@ -666,8 +667,8 @@ export default function AccountingDashboardMain() {
       </div>
 
       {/* ── Priority Queue ── */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700/60 dark:bg-slate-900 shadow-sm">
-        <div className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/50 px-4 py-3">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-900">
+        <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-700/60 dark:bg-slate-800/50">
           <div className="flex items-center gap-2.5">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-200 dark:bg-slate-700">
               <svg
@@ -684,10 +685,10 @@ export default function AccountingDashboardMain() {
                 />
               </svg>
             </span>
-            <h2 className="text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+            <h2 className="text-xs font-bold tracking-wide text-slate-600 uppercase dark:text-slate-300">
               Priority Queue
             </h2>
-            <span className="rounded-full bg-slate-200 dark:bg-slate-700 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+            <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">
               {s.queue.length}
             </span>
           </div>
@@ -697,9 +698,9 @@ export default function AccountingDashboardMain() {
         </div>
 
         {isError ? (
-          <div className="flex items-center gap-3 m-4 rounded-xl border border-red-200 bg-red-50 dark:border-red-500/30 dark:bg-red-500/10 px-4 py-3">
+          <div className="m-4 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 dark:border-red-500/30 dark:bg-red-500/10">
             <svg
-              className="shrink-0 h-5 w-5 text-red-500"
+              className="h-5 w-5 shrink-0 text-red-500"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -716,7 +717,7 @@ export default function AccountingDashboardMain() {
             </p>
           </div>
         ) : isLoading ? (
-          <div className="p-4 space-y-2.5 animate-pulse">
+          <div className="animate-pulse space-y-2.5 p-4">
             {Array.from({ length: 5 }).map((_, i) => (
               <div
                 key={i}
@@ -729,7 +730,7 @@ export default function AccountingDashboardMain() {
           <div className="overflow-auto">
             <table className="w-full min-w-[680px]">
               <thead>
-                <tr className="border-b border-slate-100 dark:border-slate-700/60 text-left">
+                <tr className="border-b border-slate-100 text-left dark:border-slate-700/60">
                   {[
                     "Affiliate",
                     "Reference",
@@ -741,7 +742,7 @@ export default function AccountingDashboardMain() {
                   ].map((h) => (
                     <th
                       key={h}
-                      className="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500"
+                      className="px-4 py-3 text-[11px] font-bold tracking-wide text-slate-400 uppercase dark:text-slate-500"
                     >
                       {h}
                     </th>
@@ -754,7 +755,7 @@ export default function AccountingDashboardMain() {
                   return (
                     <tr
                       key={row.id}
-                      className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
+                      className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40"
                     >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
@@ -765,7 +766,7 @@ export default function AccountingDashboardMain() {
                             bg="bg-gradient-to-br from-slate-600 to-slate-700"
                             textSize="text-[10px]"
                           />
-                          <span className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate max-w-[120px]">
+                          <span className="max-w-[120px] truncate text-sm font-medium text-slate-700 dark:text-slate-300">
                             {row.affiliate_name || "Affiliate"}
                           </span>
                         </div>
@@ -774,11 +775,11 @@ export default function AccountingDashboardMain() {
                         {row.reference_no}
                       </td>
                       <td className="px-4 py-3">
-                        <span className="inline-flex items-center rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 py-0.5 text-[11px] font-bold uppercase text-slate-600 dark:text-slate-300">
+                        <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[11px] font-bold text-slate-600 uppercase dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                           {row.channel}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm font-black tabular-nums text-slate-800 dark:text-white">
+                      <td className="px-4 py-3 text-sm font-black text-slate-800 tabular-nums dark:text-white">
                         {formatMoney(row.amount)}
                       </td>
                       <td className="px-4 py-3">
@@ -798,7 +799,7 @@ export default function AccountingDashboardMain() {
                               ? "/admin/encashment/approved_by_admin"
                               : "/admin/encashment/pending"
                           }
-                          className="inline-flex items-center gap-1 rounded-lg border border-sky-200 dark:border-sky-500/30 bg-sky-50 dark:bg-sky-500/10 px-2.5 py-1.5 text-[11px] font-semibold text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-500/20 transition-colors"
+                          className="inline-flex items-center gap-1 rounded-lg border border-sky-200 bg-sky-50 px-2.5 py-1.5 text-[11px] font-semibold text-sky-700 transition-colors hover:bg-sky-100 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-300 dark:hover:bg-sky-500/20"
                         >
                           Open →
                         </Link>
@@ -811,7 +812,7 @@ export default function AccountingDashboardMain() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center gap-3 py-12 text-slate-400 dark:text-slate-500">
-            <div className="h-14 w-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800">
               <svg
                 className="h-7 w-7 text-slate-400 dark:text-slate-500"
                 fill="none"
@@ -835,8 +836,8 @@ export default function AccountingDashboardMain() {
       </div>
 
       {/* ── Risk & Exceptions ── */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700/60 dark:bg-slate-900 shadow-sm">
-        <div className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/50 px-4 py-3">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-900">
+        <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-700/60 dark:bg-slate-800/50">
           <div className="flex items-center gap-2.5">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-100 dark:bg-red-500/15">
               <svg
@@ -853,7 +854,7 @@ export default function AccountingDashboardMain() {
                 />
               </svg>
             </span>
-            <h2 className="text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+            <h2 className="text-xs font-bold tracking-wide text-slate-600 uppercase dark:text-slate-300">
               Risk &amp; Exceptions
             </h2>
           </div>
@@ -861,11 +862,11 @@ export default function AccountingDashboardMain() {
             For finance audit
           </span>
         </div>
-        <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-3">
           {/* Rejected */}
           <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-red-500 to-rose-600 p-5 shadow-lg shadow-red-500/20">
             <div className="absolute inset-0 opacity-[0.06]" style={STRIPE} />
-            <div className="absolute right-4 top-4 opacity-20">
+            <div className="absolute top-4 right-4 opacity-20">
               <svg
                 className="h-14 w-14 text-white"
                 fill="none"
@@ -881,13 +882,13 @@ export default function AccountingDashboardMain() {
               </svg>
             </div>
             <div className="relative">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-red-100">
+              <p className="text-[10px] font-bold tracking-widest text-red-100 uppercase">
                 Rejected Requests
               </p>
-              <p className="mt-2 text-4xl font-black text-white leading-none">
+              <p className="mt-2 text-4xl leading-none font-black text-white">
                 {s.rejectedCnt}
               </p>
-              <p className="mt-1.5 text-xs font-medium tabular-nums text-red-100">
+              <p className="mt-1.5 text-xs font-medium text-red-100 tabular-nums">
                 {formatMoney(s.rejectedAmt)}
               </p>
             </div>
@@ -895,7 +896,7 @@ export default function AccountingDashboardMain() {
           {/* On Hold */}
           <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 p-5 shadow-lg shadow-amber-500/20">
             <div className="absolute inset-0 opacity-[0.06]" style={STRIPE} />
-            <div className="absolute right-4 top-4 opacity-20">
+            <div className="absolute top-4 right-4 opacity-20">
               <svg
                 className="h-14 w-14 text-white"
                 fill="none"
@@ -911,10 +912,10 @@ export default function AccountingDashboardMain() {
               </svg>
             </div>
             <div className="relative">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-amber-100">
+              <p className="text-[10px] font-bold tracking-widest text-amber-100 uppercase">
                 On Hold Queue
               </p>
-              <p className="mt-2 text-4xl font-black text-white leading-none">
+              <p className="mt-2 text-4xl leading-none font-black text-white">
                 {s.onHoldCnt}
               </p>
               <p className="mt-1.5 text-xs font-medium text-amber-100">
@@ -925,7 +926,7 @@ export default function AccountingDashboardMain() {
           {/* Throughput */}
           <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 p-5 shadow-lg shadow-emerald-500/20">
             <div className="absolute inset-0 opacity-[0.06]" style={STRIPE} />
-            <div className="absolute right-4 top-4 opacity-20">
+            <div className="absolute top-4 right-4 opacity-20">
               <svg
                 className="h-14 w-14 text-white"
                 fill="none"
@@ -941,10 +942,10 @@ export default function AccountingDashboardMain() {
               </svg>
             </div>
             <div className="relative">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-100">
+              <p className="text-[10px] font-bold tracking-widest text-emerald-100 uppercase">
                 Release Throughput
               </p>
-              <p className="mt-2 text-4xl font-black text-white leading-none">
+              <p className="mt-2 text-4xl leading-none font-black text-white">
                 {donePct}%
               </p>
               <p className="mt-1.5 text-xs font-medium text-emerald-100">

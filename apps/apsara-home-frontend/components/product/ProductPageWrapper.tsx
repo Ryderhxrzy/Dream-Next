@@ -1,8 +1,9 @@
 "use client"
 
-import TopBar from "@/components/layout/TopBar"
-import Navbar from "@/components/layout/Navbar"
 import type { Category } from "@/store/api/categoriesApi"
+
+import Navbar from "@/components/layout/Navbar"
+import TopBar from "@/components/layout/TopBar"
 
 interface ProductPageWrapperProps {
   children: React.ReactNode
@@ -32,7 +33,7 @@ export default function ProductPageWrapper({
   showGuestCartWishlist = false,
 }: ProductPageWrapperProps) {
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="flex min-h-screen flex-col bg-white">
       <div className="relative z-[55]">
         {!hideTopBar && <TopBar />}
         <Navbar

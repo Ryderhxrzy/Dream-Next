@@ -133,7 +133,7 @@ export default function AdsPopup() {
           <button
             type="button"
             onClick={() => setIsOpen(false)}
-            className="absolute right-2 top-2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-[#ECECEC] text-sm font-semibold text-slate-700 shadow-md transition hover:bg-white"
+            className="absolute top-2 right-2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-[#ECECEC] text-sm font-semibold text-slate-700 shadow-md transition hover:bg-white"
             aria-label="Close"
           >
             ✕

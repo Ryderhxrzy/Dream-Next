@@ -1,5 +1,6 @@
-import { buildPageMetadata } from "@/app/seo"
 import { getPartnerStorefrontBySlug } from "@/libs/partnerStorefrontServer"
+
+import { buildPageMetadata } from "@/app/seo"
 
 type PageProps = {
   params: Promise<{ partner: string }>

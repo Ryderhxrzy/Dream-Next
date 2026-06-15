@@ -1,14 +1,14 @@
-import type { Metadata } from "next"
-import { headers } from "next/headers"
+import { adminAuthOptions } from "@/libs/adminAuth"
+import { partnerAuthOptions } from "@/libs/partnerAuth"
 import {
   getPartnerStorefrontBySlug,
   getPartnerStorefrontRecordBySlug,
   isStorefrontSubscriptionExpired,
 } from "@/libs/partnerStorefrontServer"
+import type { Metadata } from "next"
 import { getServerSession } from "next-auth"
+import { headers } from "next/headers"
 import { notFound, redirect } from "next/navigation"
-import { partnerAuthOptions } from "@/libs/partnerAuth"
-import { adminAuthOptions } from "@/libs/adminAuth"
 
 type LayoutProps = {
   children: React.ReactNode

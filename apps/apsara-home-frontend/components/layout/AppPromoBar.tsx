@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 
 export default function AppPromoBar() {
   const [isOpen, setIsOpen] = useState(true)
@@ -54,14 +54,14 @@ export default function AppPromoBar() {
 
   return (
     <div
-      className="sticky top-0 z-10 md:hidden bg-gradient-to-r from-[#ef7f1a] to-[#d96f10] text-white px-4 py-2 transition-all duration-300 ease-in-out overflow-hidden"
+      className="sticky top-0 z-10 overflow-hidden bg-gradient-to-r from-[#ef7f1a] to-[#d96f10] px-4 py-2 text-white transition-all duration-300 ease-in-out md:hidden"
       style={{
         transform: isVisible ? "translateY(0)" : "translateY(-100%)",
         opacity: isVisible ? 1 : 0,
       }}
     >
-      <div className="mx-auto max-w-7xl flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 min-w-0">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="16"
@@ -74,20 +74,20 @@ export default function AppPromoBar() {
           >
             <path d="M6 19v-3m0-6v6m4-10v10m4-6v6m0-4v4" />
           </svg>
-          <p className="text-xs font-medium truncate">
+          <p className="truncate text-xs font-medium">
             Get a better experience with our mobile app
           </p>
         </div>
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex shrink-0 items-center gap-1">
           <button
             onClick={handleOpenApp}
-            className="bg-white text-[#ef7f1a] px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-gray-100 transition-colors whitespace-nowrap"
+            className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#ef7f1a] transition-colors hover:bg-gray-100"
           >
             Open App
           </button>
           <button
             onClick={() => setIsOpen(false)}
-            className="text-white hover:bg-white/20 p-1 rounded transition-colors"
+            className="rounded p-1 text-white transition-colors hover:bg-white/20"
             aria-label="Close"
           >
             <svg

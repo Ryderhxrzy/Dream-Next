@@ -42,9 +42,9 @@ export default function AdminSecuritySettingsPageMain() {
   return (
     <div className="space-y-8">
       <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-slate-100 p-6 shadow-sm dark:border-slate-700 dark:from-slate-800 dark:via-slate-800 dark:to-slate-900">
-        <div className="pointer-events-none absolute -right-20 -top-16 h-48 w-48 rounded-full bg-cyan-200/50 blur-3xl dark:bg-cyan-600/20" />
+        <div className="pointer-events-none absolute -top-16 -right-20 h-48 w-48 rounded-full bg-cyan-200/50 blur-3xl dark:bg-cyan-600/20" />
         <div className="pointer-events-none absolute -bottom-24 -left-20 h-56 w-56 rounded-full bg-emerald-200/40 blur-3xl dark:bg-emerald-600/20" />
-        <p className="text-xs font-bold uppercase tracking-[0.32em] text-cyan-700 dark:text-cyan-300">
+        <p className="text-xs font-bold tracking-[0.32em] text-cyan-700 uppercase dark:text-cyan-300">
           Settings
         </p>
         <h1 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
@@ -58,7 +58,7 @@ export default function AdminSecuritySettingsPageMain() {
 
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+          <p className="text-xs font-bold tracking-[0.2em] text-slate-500 uppercase dark:text-slate-400">
             Session & Access
           </p>
           <h2 className="mt-2 text-lg font-bold text-slate-900 dark:text-white">
@@ -72,7 +72,7 @@ export default function AdminSecuritySettingsPageMain() {
             <input
               value={sessionTimeout}
               onChange={(event) => setSessionTimeout(event.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 shadow-sm focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-100 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/20"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 shadow-sm focus:border-cyan-300 focus:ring-2 focus:ring-cyan-100 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/20"
               placeholder="30"
             />
           </label>
@@ -82,7 +82,7 @@ export default function AdminSecuritySettingsPageMain() {
             <input
               value={maxLoginAttempts}
               onChange={(event) => setMaxLoginAttempts(event.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 shadow-sm focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-100 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/20"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 shadow-sm focus:border-cyan-300 focus:ring-2 focus:ring-cyan-100 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/20"
               placeholder="5"
             />
           </label>
@@ -92,7 +92,7 @@ export default function AdminSecuritySettingsPageMain() {
             <input
               value={passwordMinLength}
               onChange={(event) => setPasswordMinLength(event.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 shadow-sm focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-100 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/20"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 shadow-sm focus:border-cyan-300 focus:ring-2 focus:ring-cyan-100 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/20"
               placeholder="8"
             />
           </label>
@@ -128,7 +128,7 @@ export default function AdminSecuritySettingsPageMain() {
 
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+          <p className="text-xs font-bold tracking-[0.2em] text-slate-500 uppercase dark:text-slate-400">
             Registration
           </p>
           <h2 className="mt-2 text-lg font-bold text-slate-900 dark:text-white">
