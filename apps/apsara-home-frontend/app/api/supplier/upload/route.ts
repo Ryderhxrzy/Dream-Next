@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
+import { supplierAuthOptions } from "@/libs/supplierAuth"
 import { v2 as cloudinary } from "cloudinary"
 import type { UploadApiOptions, UploadApiResponse } from "cloudinary"
 import { getServerSession } from "next-auth"
-import { supplierAuthOptions } from "@/libs/supplierAuth"
+import { NextRequest, NextResponse } from "next/server"
 
 export const runtime = "nodejs"
 export const maxDuration = 30

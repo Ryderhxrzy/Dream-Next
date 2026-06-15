@@ -1,5 +1,5 @@
 import { motion } from "framer-motion"
-import { Armchair, Box, Home, Hammer, Star } from "lucide-react"
+import { Armchair, Box, Hammer, Home, Star } from "lucide-react"
 
 const categories = [
   {
@@ -57,8 +57,8 @@ export default function ProductsBrandsSection() {
       className="relative overflow-hidden bg-gradient-to-b from-[#fbf7f2] via-white to-[#f8f3ec] py-24 dark:from-gray-950 dark:via-gray-950 dark:to-gray-900"
     >
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-24 top-10 h-72 w-72 rounded-full bg-orange-200/30 blur-3xl dark:bg-orange-500/10" />
-        <div className="absolute right-0 top-0 h-80 w-80 rounded-full bg-blue-200/20 blur-3xl dark:bg-blue-500/10" />
+        <div className="absolute top-10 -left-24 h-72 w-72 rounded-full bg-orange-200/30 blur-3xl dark:bg-orange-500/10" />
+        <div className="absolute top-0 right-0 h-80 w-80 rounded-full bg-blue-200/20 blur-3xl dark:bg-blue-500/10" />
       </div>
 
       <div className="relative container mx-auto px-4">
@@ -76,7 +76,7 @@ export default function ProductsBrandsSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="mb-6 text-4xl font-bold text-gray-900 dark:text-white md:text-5xl"
+            className="mb-6 text-4xl font-bold text-gray-900 md:text-5xl dark:text-white"
           >
             One Ecosystem. <br />
             <span className="bg-gradient-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
@@ -101,7 +101,7 @@ export default function ProductsBrandsSection() {
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            className="mb-8 text-center text-sm font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500"
+            className="mb-8 text-center text-sm font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500"
           >
             Trusted by Top Brands
           </motion.p>
@@ -114,7 +114,7 @@ export default function ProductsBrandsSection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.05 }}
-                className="flex h-16 w-32 items-center justify-center rounded-2xl border border-white/70 bg-white/80 p-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5 md:w-36"
+                className="flex h-16 w-32 items-center justify-center rounded-2xl border border-white/70 bg-white/80 p-3 shadow-sm backdrop-blur-sm md:w-36 dark:border-white/10 dark:bg-white/5"
               >
                 <img
                   src={brand.logo}
@@ -126,7 +126,7 @@ export default function ProductsBrandsSection() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-20 md:grid-cols-3 lg:grid-cols-5">
+        <div className="mb-20 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
           {categories.map((cat, index) => (
             <motion.div
               key={cat.title}

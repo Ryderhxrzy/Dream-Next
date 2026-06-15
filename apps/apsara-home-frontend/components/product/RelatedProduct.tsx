@@ -3,6 +3,7 @@
 import { CategoryProduct } from "@/libs/CategoryData"
 import { motion } from "framer-motion"
 import Link from "next/link"
+
 import ItemCard from "../item/ItemCard"
 
 const ChevronRight = () => (
@@ -41,19 +42,19 @@ const RelatedProducts = ({
       transition={{ duration: 0.5, delay: 0.4 }}
       className="mt-12 sm:mt-16"
     >
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <h2 className="text-xl font-bold text-slate-900 dark:text-gray-100">
           You Might Also Like
         </h2>
         <Link
           href={viewAllHref || `/category/${category}`}
-          className="text-sm text-sky-500 dark:text-sky-400 hover:text-sky-600 dark:hover:text-sky-300 font-semibold transition-colors flex items-center gap-1"
+          className="flex items-center gap-1 text-sm font-semibold text-sky-500 transition-colors hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-300"
         >
           View all <ChevronRight />
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
         {products
           .filter(
             (product): product is CategoryProduct & { id: number } =>

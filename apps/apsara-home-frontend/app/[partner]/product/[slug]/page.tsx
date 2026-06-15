@@ -1,23 +1,24 @@
-import Link from "next/link"
-import { notFound, redirect } from "next/navigation"
-import type { Metadata } from "next"
-import ScrollToTop from "@/components/landing-page/ScrollToTop"
-import ProductPageClient from "@/components/product/ProductPageClient"
-import { serverFetch } from "@/libs/serverFetch"
-import ProductTabs from "@/components/product/ProductTabs"
-import ProductPageWrapper from "@/components/product/ProductPageWrapper"
-import RelatedProducts from "@/components/product/RelatedProduct"
-import ProductQA from "@/components/product/ProductQA"
-import CompleteTheLook from "@/components/product/CompleteTheLook"
-import { buildPageMetadata } from "@/app/seo"
-import { getNavbarCategories } from "@/libs/serverStorefront"
+import type { CategoryProduct } from "@/libs/CategoryData"
+import { getPartnerStorefrontBySlug } from "@/libs/partnerStorefrontServer"
 import {
   buildCanonicalProductSlug,
   getProductPageData,
 } from "@/libs/productPageData"
-import { getPartnerStorefrontBySlug } from "@/libs/partnerStorefrontServer"
-import type { CategoryProduct } from "@/libs/CategoryData"
+import { serverFetch } from "@/libs/serverFetch"
+import { getNavbarCategories } from "@/libs/serverStorefront"
 import type { Product } from "@/store/api/productsApi"
+import type { Metadata } from "next"
+import Link from "next/link"
+import { notFound, redirect } from "next/navigation"
+
+import ScrollToTop from "@/components/landing-page/ScrollToTop"
+import CompleteTheLook from "@/components/product/CompleteTheLook"
+import ProductPageClient from "@/components/product/ProductPageClient"
+import ProductPageWrapper from "@/components/product/ProductPageWrapper"
+import ProductQA from "@/components/product/ProductQA"
+import ProductTabs from "@/components/product/ProductTabs"
+import RelatedProducts from "@/components/product/RelatedProduct"
+import { buildPageMetadata } from "@/app/seo"
 
 export const revalidate = 60
 
@@ -227,24 +228,24 @@ export default async function PartnerProductDetailPage({ params }: PageProps) {
       showGuestCartWishlist
     >
       <main className="flex-1 bg-white dark:bg-gray-900">
-        <div className="bg-gray-50 dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
+        <div className="border-b border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-900">
           <div className="container mx-auto px-4 py-3">
             <nav className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
               <Link
                 href={`/shop/${normalizedPartner}/product`}
-                className="hover:text-sky-500 dark:hover:text-sky-400 transition-colors font-medium"
+                className="font-medium transition-colors hover:text-sky-500 dark:hover:text-sky-400"
               >
                 Home
               </Link>
               <ChevronRight />
               <Link
                 href={`/shop/${normalizedPartner}/category/${dynamicData.categorySlug}`}
-                className="hover:text-sky-500 dark:hover:text-sky-400 transition-colors"
+                className="transition-colors hover:text-sky-500 dark:hover:text-sky-400"
               >
                 {dynamicData.categoryLabel}
               </Link>
               <ChevronRight />
-              <span className="text-slate-600 dark:text-gray-300 font-semibold truncate max-w-48">
+              <span className="max-w-48 truncate font-semibold text-slate-600 dark:text-gray-300">
                 {dynamicData.product.name}
               </span>
             </nav>
@@ -258,14 +259,14 @@ export default async function PartnerProductDetailPage({ params }: PageProps) {
             forceRealPrice={forceRealPrice}
             allowGuestWishlist
           />
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-10 mt-10">
+          <div className="mt-10 border-t border-gray-200 pt-10 dark:border-gray-700">
             <ProductTabs
               product={dynamicData.product}
               reviewSummary={dynamicData.reviewSummary}
               reviews={dynamicData.reviews ?? []}
             />
           </div>
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-10 mt-10">
+          <div className="mt-10 border-t border-gray-200 pt-10 dark:border-gray-700">
             <RelatedProducts
               products={relatedProducts}
               category={dynamicData.categorySlug}
@@ -273,10 +274,10 @@ export default async function PartnerProductDetailPage({ params }: PageProps) {
               forceRealPrice={forceRealPrice}
             />
           </div>
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-10 mt-10">
+          <div className="mt-10 border-t border-gray-200 pt-10 dark:border-gray-700">
             <ProductQA />
           </div>
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-10 mt-10">
+          <div className="mt-10 border-t border-gray-200 pt-10 dark:border-gray-700">
             <CompleteTheLook
               currentCategory={dynamicData.categorySlug}
               currentCategoryId={dynamicData.categoryId}

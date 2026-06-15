@@ -1,38 +1,38 @@
 "use client"
 
 import { Fragment, useMemo, useState } from "react"
-import { useSession } from "next-auth/react"
-import {
-  Store,
-  User,
-  Building2,
-  Mail,
-  Phone,
-  MapPin,
-  CheckCircle2,
-  FolderOpen,
-  UserPlus,
-  AtSign,
-  Send,
-  Lock,
-  ShieldCheck,
-  Copy,
-  Tag,
-} from "lucide-react"
 import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
 import {
   InviteSupplierUserResponse,
   SupplierItem,
   useCreateSupplierMutation,
-  useDeleteSupplierUserMutation,
   useDeleteSupplierMutation,
-  useGetSupplierUsersQuery,
+  useDeleteSupplierUserMutation,
   useGetSuppliersQuery,
+  useGetSupplierUsersQuery,
   useInviteSupplierUserMutation,
-  useUpdateSupplierUserMutation,
   useUpdateSupplierCategoriesMutation,
   useUpdateSupplierMutation,
+  useUpdateSupplierUserMutation,
 } from "@/store/api/suppliersApi"
+import {
+  AtSign,
+  Building2,
+  CheckCircle2,
+  Copy,
+  FolderOpen,
+  Lock,
+  Mail,
+  MapPin,
+  Phone,
+  Send,
+  ShieldCheck,
+  Store,
+  Tag,
+  User,
+  UserPlus,
+} from "lucide-react"
+import { useSession } from "next-auth/react"
 
 type SupplierCompanyForm = {
   name: string
@@ -504,7 +504,7 @@ export default function SuppliersPageMain() {
                 <Store className="h-7 w-7 text-sky-600 dark:text-sky-400" />
               </div>
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-sky-700 dark:text-sky-400">
+                <p className="text-[11px] font-bold tracking-[0.22em] text-sky-700 uppercase dark:text-sky-400">
                   Supplier Company
                 </p>
                 <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
@@ -518,7 +518,7 @@ export default function SuppliersPageMain() {
             </div>
             {/* Decorative illustration */}
             <div className="hidden shrink-0 sm:block">
-              <div className="relative w-40 h-28">
+              <div className="relative h-28 w-40">
                 <svg
                   className="absolute top-0 right-0 opacity-25"
                   width="56"
@@ -537,8 +537,8 @@ export default function SuppliersPageMain() {
                     ))
                   )}
                 </svg>
-                <div className="absolute bottom-0 right-4 w-32 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-md dark:border-slate-700 dark:bg-slate-800">
-                  <div className="flex items-center gap-2 mb-2.5">
+                <div className="absolute right-4 bottom-0 w-32 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-md dark:border-slate-700 dark:bg-slate-800">
+                  <div className="mb-2.5 flex items-center gap-2">
                     <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-sky-100">
                       <ShieldCheck className="h-3.5 w-3.5 text-sky-600" />
                     </div>
@@ -586,7 +586,7 @@ export default function SuppliersPageMain() {
                   {item.icon}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                  <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
                     {item.label}
                   </p>
                   {item.isStatus ? (
@@ -622,7 +622,7 @@ export default function SuppliersPageMain() {
                 <FolderOpen className="h-5 w-5 text-violet-600 dark:text-violet-400" />
               </div>
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-violet-600 dark:text-violet-400">
+                <p className="text-[11px] font-bold tracking-[0.2em] text-violet-600 uppercase dark:text-violet-400">
                   Allowed Categories
                 </p>
                 <h2 className="mt-0.5 text-lg font-bold text-slate-900 dark:text-slate-100">
@@ -663,7 +663,7 @@ export default function SuppliersPageMain() {
                 <UserPlus className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
               </div>
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-600 dark:text-cyan-400">
+                <p className="text-[11px] font-bold tracking-[0.2em] text-cyan-600 uppercase dark:text-cyan-400">
                   Supplier Access
                 </p>
                 <h2 className="mt-0.5 text-lg font-bold text-slate-900 dark:text-slate-100">
@@ -688,25 +688,25 @@ export default function SuppliersPageMain() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <FormField label="Full Name">
                     <div className="relative">
-                      <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <User className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-slate-400" />
                       <input
                         value={supplierInviteForm.fullname}
                         onChange={handleInviteInput("fullname")}
                         required
                         placeholder="Enter full name"
-                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-800 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pr-4 pl-10 text-sm text-slate-800 transition outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                       />
                     </div>
                   </FormField>
                   <FormField label="Username">
                     <div className="relative">
-                      <AtSign className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <AtSign className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-slate-400" />
                       <input
                         value={supplierInviteForm.username}
                         onChange={handleInviteInput("username")}
                         required
                         placeholder="Enter username"
-                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-800 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                        className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pr-4 pl-10 text-sm text-slate-800 transition outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                       />
                     </div>
                   </FormField>
@@ -714,13 +714,13 @@ export default function SuppliersPageMain() {
 
                 <FormField label="Email (Optional)">
                   <div className="relative">
-                    <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <Mail className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-slate-400" />
                     <input
                       type="email"
                       value={supplierInviteForm.email}
                       onChange={handleInviteInput("email")}
                       placeholder="Leave blank if you will send the setup link manually"
-                      className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-800 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                      className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pr-4 pl-10 text-sm text-slate-800 transition outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                     />
                   </div>
                 </FormField>
@@ -780,7 +780,7 @@ export default function SuppliersPageMain() {
       <div className="grid gap-6 xl:grid-cols-2">
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
           <div className="mb-5">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400 dark:text-slate-500">
+            <p className="text-xs font-bold tracking-[0.24em] text-slate-400 uppercase dark:text-slate-500">
               Step 1
             </p>
             <h2 className="mt-2 text-lg font-bold text-slate-900 dark:text-slate-100">
@@ -857,7 +857,7 @@ export default function SuppliersPageMain() {
             <button
               type="submit"
               disabled={isCreatingSupplier}
-              className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 dark:bg-cyan-600 dark:hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-600 dark:hover:bg-cyan-500"
             >
               {isCreatingSupplier
                 ? "Creating supplier..."
@@ -868,7 +868,7 @@ export default function SuppliersPageMain() {
 
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
           <div className="mb-5">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400 dark:text-slate-500">
+            <p className="text-xs font-bold tracking-[0.24em] text-slate-400 uppercase dark:text-slate-500">
               Step 2
             </p>
             <h2 className="mt-2 text-lg font-bold text-slate-900 dark:text-slate-100">
@@ -957,7 +957,7 @@ export default function SuppliersPageMain() {
         <div className="border-b border-slate-200/80 bg-[linear-gradient(135deg,rgba(240,249,255,0.9),rgba(255,255,255,0.96)_42%,rgba(236,254,255,0.88))] px-5 py-5 dark:border-white/8 dark:bg-[linear-gradient(135deg,rgba(8,47,73,0.28),rgba(15,23,42,0.96)_42%,rgba(8,145,178,0.12))]">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div className="min-w-0">
-              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200/80 bg-white/80 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.22em] text-cyan-700 shadow-sm dark:border-cyan-500/20 dark:bg-cyan-500/10 dark:text-cyan-200">
+              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200/80 bg-white/80 px-3 py-1 text-[11px] font-bold tracking-[0.22em] text-cyan-700 uppercase shadow-sm dark:border-cyan-500/20 dark:bg-cyan-500/10 dark:text-cyan-200">
                 <span className="h-2 w-2 rounded-full bg-cyan-500 shadow-[0_0_14px_rgba(6,182,212,0.8)]" />
                 Supplier Directory
               </div>
@@ -984,7 +984,7 @@ export default function SuppliersPageMain() {
 
             <div className="relative w-full xl:max-w-md">
               <svg
-                className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors duration-200 dark:text-slate-500"
+                className="pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors duration-200 dark:text-slate-500"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -1004,7 +1004,7 @@ export default function SuppliersPageMain() {
                   setSupplierPage(1)
                 }}
                 placeholder="Search supplier, email, or contact..."
-                className="w-full rounded-[20px] border border-white/70 bg-white/80 py-3.5 pl-11 pr-4 text-sm text-slate-800 shadow-sm outline-none transition-all duration-300 placeholder:text-slate-400 focus:-translate-y-0.5 focus:border-cyan-300 focus:shadow-[0_14px_35px_rgba(6,182,212,0.12)] focus:ring-4 focus:ring-cyan-100 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-cyan-400/40 dark:focus:shadow-[0_14px_35px_rgba(8,145,178,0.2)] dark:focus:ring-cyan-500/10"
+                className="w-full rounded-[20px] border border-white/70 bg-white/80 py-3.5 pr-4 pl-11 text-sm text-slate-800 shadow-sm transition-all duration-300 outline-none placeholder:text-slate-400 focus:-translate-y-0.5 focus:border-cyan-300 focus:shadow-[0_14px_35px_rgba(6,182,212,0.12)] focus:ring-4 focus:ring-cyan-100 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-cyan-400/40 dark:focus:shadow-[0_14px_35px_rgba(8,145,178,0.2)] dark:focus:ring-cyan-500/10"
               />
             </div>
           </div>
@@ -1014,19 +1014,19 @@ export default function SuppliersPageMain() {
           <table className="w-full min-w-[980px] text-sm">
             <thead className="bg-slate-50/90 dark:bg-slate-900/70">
               <tr className="border-b border-slate-200/80 dark:border-white/8">
-                <th className="px-5 py-4 text-left text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+                <th className="px-5 py-4 text-left text-[11px] font-bold tracking-[0.2em] text-slate-400 uppercase dark:text-slate-500">
                   Company
                 </th>
-                <th className="px-5 py-4 text-left text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+                <th className="px-5 py-4 text-left text-[11px] font-bold tracking-[0.2em] text-slate-400 uppercase dark:text-slate-500">
                   Contact
                 </th>
-                <th className="px-5 py-4 text-left text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+                <th className="px-5 py-4 text-left text-[11px] font-bold tracking-[0.2em] text-slate-400 uppercase dark:text-slate-500">
                   Email
                 </th>
-                <th className="px-5 py-4 text-left text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+                <th className="px-5 py-4 text-left text-[11px] font-bold tracking-[0.2em] text-slate-400 uppercase dark:text-slate-500">
                   Status
                 </th>
-                <th className="px-5 py-4 text-left text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+                <th className="px-5 py-4 text-left text-[11px] font-bold tracking-[0.2em] text-slate-400 uppercase dark:text-slate-500">
                   Actions
                 </th>
               </tr>
@@ -1091,7 +1091,7 @@ export default function SuppliersPageMain() {
                     </td>
                     <td className="px-5 py-4">
                       <span
-                        className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide transition-transform duration-300 group-hover:scale-[1.03] ${
+                        className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-bold tracking-wide uppercase transition-transform duration-300 group-hover:scale-[1.03] ${
                           supplier.status === 1
                             ? "border-emerald-200 bg-emerald-50 text-emerald-700 shadow-sm dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200"
                             : "border-slate-200 bg-slate-100 text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
@@ -1136,7 +1136,7 @@ export default function SuppliersPageMain() {
                           type="button"
                           onClick={() => setDeleteTarget(supplier)}
                           disabled={isDeletingSupplier}
-                          className="rounded-full border border-red-200/90 bg-red-50/75 px-3.5 py-2 text-xs font-semibold text-red-600 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-red-100 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="rounded-full border border-red-200/90 bg-red-50/75 px-3.5 py-2 text-xs font-semibold text-red-600 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/15"
                         >
                           Delete
                         </button>
@@ -1158,9 +1158,9 @@ export default function SuppliersPageMain() {
           </table>
         </div>
 
-        <div className="flex flex-col gap-4 border-t border-slate-200/80 bg-slate-50/85 px-5 py-4 dark:border-white/8 dark:bg-slate-900/70 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-4 border-t border-slate-200/80 bg-slate-50/85 px-5 py-4 md:flex-row md:items-center md:justify-between dark:border-white/8 dark:bg-slate-900/70">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+            <p className="text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase dark:text-slate-500">
               Pagination
             </p>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
@@ -1179,7 +1179,7 @@ export default function SuppliersPageMain() {
               type="button"
               onClick={() => setSupplierPage((prev) => Math.max(1, prev - 1))}
               disabled={normalizedSupplierPage <= 1}
-              className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
             >
               Previous
             </button>
@@ -1191,7 +1191,7 @@ export default function SuppliersPageMain() {
                 )
               }
               disabled={normalizedSupplierPage >= supplierTotalPages}
-              className="rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2.5 text-xs font-semibold text-cyan-700 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-cyan-100 dark:border-cyan-500/20 dark:bg-cyan-500/10 dark:text-cyan-200 dark:hover:bg-cyan-500/15 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2.5 text-xs font-semibold text-cyan-700 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-cyan-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-cyan-500/20 dark:bg-cyan-500/10 dark:text-cyan-200 dark:hover:bg-cyan-500/15"
             >
               Next
             </button>
@@ -1203,7 +1203,7 @@ export default function SuppliersPageMain() {
         <ModalShell onClose={() => setCategoryTarget(null)}>
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-700 dark:text-cyan-300">
+              <p className="text-xs font-bold tracking-[0.22em] text-cyan-700 uppercase dark:text-cyan-300">
                 Supplier Categories
               </p>
               <h3 className="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100">
@@ -1301,7 +1301,7 @@ export default function SuppliersPageMain() {
         <ModalShell onClose={cancelEditSupplier}>
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-700 dark:text-cyan-300">
+              <p className="text-xs font-bold tracking-[0.22em] text-cyan-700 uppercase dark:text-cyan-300">
                 Edit Supplier
               </p>
               <h3 className="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100">
@@ -1396,7 +1396,7 @@ export default function SuppliersPageMain() {
         <ModalShell onClose={() => setDeleteTarget(null)}>
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-red-500">
+              <p className="text-xs font-bold tracking-[0.22em] text-red-500 uppercase">
                 Delete Supplier
               </p>
               <h3 className="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100">
@@ -1596,7 +1596,7 @@ function SupplierUsersTree({ supplierId }: { supplierId: number }) {
   return (
     <div className="space-y-3">
       <div>
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+        <p className="text-xs font-bold tracking-[0.18em] text-slate-400 uppercase dark:text-slate-500">
           Supplier User Tree
         </p>
         <h4 className="mt-2 text-sm font-bold text-slate-900 dark:text-slate-100">
@@ -1650,7 +1650,7 @@ function SupplierUsersTree({ supplierId }: { supplierId: number }) {
                   type="button"
                   onClick={() => requestDelete(user)}
                   disabled={isDeleting || Boolean(user.is_main_supplier)}
-                  className="rounded-xl border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 dark:border-red-500/20 dark:text-red-300 dark:hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-xl border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-500/20 dark:text-red-300 dark:hover:bg-red-500/10"
                 >
                   Delete
                 </button>
@@ -1664,7 +1664,7 @@ function SupplierUsersTree({ supplierId }: { supplierId: number }) {
         <ModalShell onClose={() => setEditing(null)}>
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
+              <p className="text-xs font-bold tracking-[0.22em] text-slate-400 uppercase dark:text-slate-500">
                 Manage Account
               </p>
               <h3 className="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100">
@@ -1692,7 +1692,7 @@ function SupplierUsersTree({ supplierId }: { supplierId: number }) {
                     prev ? { ...prev, fullname: e.target.value } : prev
                   )
                 }
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-cyan-500/20"
+                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 transition outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-cyan-500/20"
                 required
               />
             </FormField>
@@ -1704,7 +1704,7 @@ function SupplierUsersTree({ supplierId }: { supplierId: number }) {
                     prev ? { ...prev, username: e.target.value } : prev
                   )
                 }
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-cyan-500/20"
+                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 transition outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-cyan-500/20"
                 required
               />
             </FormField>
@@ -1717,7 +1717,7 @@ function SupplierUsersTree({ supplierId }: { supplierId: number }) {
                     prev ? { ...prev, email: e.target.value } : prev
                   )
                 }
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-cyan-500/20"
+                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 transition outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-cyan-500/20"
                 placeholder="Optional"
               />
             </FormField>
@@ -1730,7 +1730,7 @@ function SupplierUsersTree({ supplierId }: { supplierId: number }) {
                     prev ? { ...prev, password: e.target.value } : prev
                   )
                 }
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-cyan-500/20"
+                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 transition outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-cyan-500/20"
                 placeholder="Leave blank if you don't want to change it"
               />
             </FormField>
@@ -1763,7 +1763,7 @@ function SupplierUsersTree({ supplierId }: { supplierId: number }) {
         <ModalShell onClose={() => setConfirmDelete(null)}>
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-red-600">
+              <p className="text-xs font-bold tracking-[0.22em] text-red-600 uppercase">
                 Confirm Delete
               </p>
               <h3 className="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100">
@@ -1893,7 +1893,7 @@ function SetupLinkCard({
 
   return (
     <div className="rounded-2xl border border-cyan-200 bg-cyan-50 p-4 dark:border-cyan-500/20 dark:bg-cyan-500/10">
-      <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-700">
+      <p className="text-xs font-bold tracking-[0.18em] text-cyan-700 uppercase">
         Setup Link Ready
       </p>
       <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
@@ -1901,7 +1901,7 @@ function SetupLinkCard({
           ? "An email was sent, and you can also copy the setup link below."
           : "No email was sent. Copy this setup link and send it manually to your supplier user."}
       </p>
-      <div className="mt-3 break-all rounded-2xl border border-cyan-100 bg-white px-4 py-3 text-sm text-slate-700 dark:border-cyan-500/20 dark:bg-slate-950 dark:text-slate-200">
+      <div className="mt-3 rounded-2xl border border-cyan-100 bg-white px-4 py-3 text-sm break-all text-slate-700 dark:border-cyan-500/20 dark:bg-slate-950 dark:text-slate-200">
         {displayUrl}
       </div>
       <button
@@ -1918,7 +1918,7 @@ function SetupLinkCard({
 function InfoCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+      <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
         {label}
       </p>
       <p className="mt-2 text-sm font-bold text-slate-800 dark:text-slate-100">

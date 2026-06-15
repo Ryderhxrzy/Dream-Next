@@ -355,14 +355,14 @@ export default function AdminGeneralSettingsPageMain() {
           <div className="space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                <p className="text-xs font-bold tracking-[0.2em] text-slate-500 uppercase dark:text-slate-400">
                   System Information
                 </p>
                 <h2 className="mt-2 text-lg font-bold text-slate-900 dark:text-white">
                   Brand & Contact
                 </h2>
               </div>
-              <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-semibold uppercase text-amber-700 dark:border-amber-700 dark:bg-amber-900/40 dark:text-amber-200">
+              <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-semibold text-amber-700 uppercase dark:border-amber-700 dark:bg-amber-900/40 dark:text-amber-200">
                 Top priority
               </span>
             </div>
@@ -409,7 +409,7 @@ export default function AdminGeneralSettingsPageMain() {
                 />
               </label>
 
-              <label className="space-y-2 text-sm font-semibold text-slate-700 dark:text-slate-300 md:col-span-2">
+              <label className="space-y-2 text-sm font-semibold text-slate-700 md:col-span-2 dark:text-slate-300">
                 Address
                 <input
                   value={address}
@@ -426,7 +426,7 @@ export default function AdminGeneralSettingsPageMain() {
         return (
           <div className="space-y-6">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+              <p className="text-xs font-bold tracking-[0.2em] text-slate-500 uppercase dark:text-slate-400">
                 Company Branches
               </p>
               <h2 className="mt-2 text-lg font-bold text-slate-900 dark:text-white">
@@ -440,7 +440,7 @@ export default function AdminGeneralSettingsPageMain() {
             <div className="space-y-3 rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 dark:border-slate-700 dark:from-slate-700/50 dark:to-slate-800">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                  <p className="text-xs font-semibold tracking-[0.18em] text-slate-500 uppercase dark:text-slate-400">
                     Manage Branches
                   </p>
                   <p className="text-sm text-slate-600 dark:text-slate-300">
@@ -485,7 +485,7 @@ export default function AdminGeneralSettingsPageMain() {
         return (
           <div className="space-y-6">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+              <p className="text-xs font-bold tracking-[0.2em] text-slate-500 uppercase dark:text-slate-400">
                 Assets
               </p>
               <h2 className="mt-2 text-lg font-bold text-slate-900 dark:text-white">
@@ -498,7 +498,7 @@ export default function AdminGeneralSettingsPageMain() {
 
             <div className="grid gap-5 md:grid-cols-2">
               <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 dark:border-slate-700 dark:from-slate-700/50 dark:to-slate-800">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                <p className="text-xs font-semibold tracking-[0.18em] text-slate-500 uppercase dark:text-slate-400">
                   Upload Logo
                 </p>
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
@@ -545,7 +545,7 @@ export default function AdminGeneralSettingsPageMain() {
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 dark:border-slate-700 dark:from-slate-700/50 dark:to-slate-800">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                <p className="text-xs font-semibold tracking-[0.18em] text-slate-500 uppercase dark:text-slate-400">
                   Upload Favicon
                 </p>
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
@@ -592,7 +592,7 @@ export default function AdminGeneralSettingsPageMain() {
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 md:col-span-2 dark:border-slate-700 dark:from-slate-700/50 dark:to-slate-800">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                <p className="text-xs font-semibold tracking-[0.18em] text-slate-500 uppercase dark:text-slate-400">
                   Upload Website QR Code
                 </p>
                 <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
@@ -650,7 +650,7 @@ export default function AdminGeneralSettingsPageMain() {
         return (
           <div className="space-y-6">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+              <p className="text-xs font-bold tracking-[0.2em] text-slate-500 uppercase dark:text-slate-400">
                 Localization
               </p>
               <h2 className="mt-2 text-lg font-bold text-slate-900 dark:text-white">
@@ -721,7 +721,7 @@ export default function AdminGeneralSettingsPageMain() {
           <div className="space-y-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                <p className="text-xs font-bold tracking-[0.2em] text-slate-500 uppercase dark:text-slate-400">
                   Checkout Payments
                 </p>
                 <h2 className="mt-2 text-lg font-bold text-slate-900 dark:text-white">
@@ -784,9 +784,9 @@ export default function AdminGeneralSettingsPageMain() {
   return (
     <div className="space-y-8">
       <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-slate-100 p-6 shadow-sm dark:border-slate-700 dark:from-slate-800 dark:via-slate-800 dark:to-slate-900">
-        <div className="pointer-events-none absolute -right-24 -top-20 h-48 w-48 rounded-full bg-cyan-200/50 blur-3xl dark:bg-cyan-600/20" />
+        <div className="pointer-events-none absolute -top-20 -right-24 h-48 w-48 rounded-full bg-cyan-200/50 blur-3xl dark:bg-cyan-600/20" />
         <div className="pointer-events-none absolute -bottom-24 -left-16 h-56 w-56 rounded-full bg-amber-200/40 blur-3xl dark:bg-amber-600/20" />
-        <p className="text-xs font-bold uppercase tracking-[0.32em] text-cyan-700 dark:text-cyan-300">
+        <p className="text-xs font-bold tracking-[0.32em] text-cyan-700 uppercase dark:text-cyan-300">
           Settings
         </p>
         <h1 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
@@ -799,9 +799,9 @@ export default function AdminGeneralSettingsPageMain() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
-        <aside className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800 lg:sticky lg:top-24 self-start">
+        <aside className="self-start rounded-3xl border border-slate-200 bg-white p-4 shadow-sm lg:sticky lg:top-24 dark:border-slate-700 dark:bg-slate-800">
           <div className="px-2 py-2">
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">
+            <p className="text-xs font-bold tracking-[0.22em] text-slate-500 uppercase dark:text-slate-400">
               Sections
             </p>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
@@ -819,7 +819,7 @@ export default function AdminGeneralSettingsPageMain() {
                   onClick={() => setActiveSection(tab.id)}
                   aria-current={active ? "page" : undefined}
                   className={clsx(
-                    "w-full flex items-center gap-3 rounded-2xl px-3 py-3 text-left transition-all",
+                    "flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition-all",
                     active
                       ? "bg-cyan-600 text-white shadow-sm ring-1 ring-cyan-500/40"
                       : "bg-white text-slate-700 ring-1 ring-slate-200 hover:-translate-y-0.5 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700 dark:hover:bg-slate-800/70"
@@ -973,7 +973,7 @@ export default function AdminGeneralSettingsPageMain() {
           <div className="relative w-full max-w-2xl rounded-3xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-700 dark:bg-slate-800">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                <p className="text-xs font-bold tracking-[0.2em] text-slate-500 uppercase dark:text-slate-400">
                   Branches
                 </p>
                 <h3 className="mt-2 text-lg font-bold text-slate-900 dark:text-white">
@@ -999,7 +999,7 @@ export default function AdminGeneralSettingsPageMain() {
                   <input
                     value={branchDraftName}
                     onChange={(event) => setBranchDraftName(event.target.value)}
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 shadow-sm focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-100 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/20"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 shadow-sm focus:border-cyan-300 focus:ring-2 focus:ring-cyan-100 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/20"
                     placeholder="Main Office"
                   />
                 </label>
@@ -1010,7 +1010,7 @@ export default function AdminGeneralSettingsPageMain() {
                     onChange={(event) =>
                       setBranchDraftAddress(event.target.value)
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 shadow-sm focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-100 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/20"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 shadow-sm focus:border-cyan-300 focus:ring-2 focus:ring-cyan-100 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/20"
                     placeholder="123 Makati Ave, Metro Manila"
                   />
                 </label>
@@ -1021,7 +1021,7 @@ export default function AdminGeneralSettingsPageMain() {
                     onChange={(event) =>
                       setBranchDraftGoogleMapLink(event.target.value)
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 shadow-sm focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-100 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/20"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 shadow-sm focus:border-cyan-300 focus:ring-2 focus:ring-cyan-100 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/20"
                     placeholder="https://maps.app.goo.gl/..."
                   />
                 </label>
@@ -1032,7 +1032,7 @@ export default function AdminGeneralSettingsPageMain() {
                     onChange={(event) =>
                       setBranchDraftWazeLink(event.target.value)
                     }
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 shadow-sm focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-100 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/20"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 shadow-sm focus:border-cyan-300 focus:ring-2 focus:ring-cyan-100 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/20"
                     placeholder="https://waze.com/ul?..."
                   />
                 </label>

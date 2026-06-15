@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from "react"
+
+import ServiceInquiriesAdminPage from "./ServiceInquiriesAdminPage"
 import UsernameChangeRequestsPage from "./UsernameChangeRequestsPage"
 import WebstoreRequestsPage from "./WebstoreRequestsPage"
-import ServiceInquiriesAdminPage from "./ServiceInquiriesAdminPage"
 
 type InquiryTab = "username" | "webstore" | "services"
 

@@ -2,6 +2,7 @@
 
 import type { FormEvent, ReactNode } from "react"
 import { useEffect, useMemo, useRef, useState } from "react"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import {
   useCreateAdminWebPageItemMutation,
   useDeleteAdminWebPageItemMutation,
@@ -10,7 +11,6 @@ import {
   type WebPageItem,
   type WebPageType,
 } from "@/store/api/webPagesApi"
-import { showErrorToast, showSuccessToast } from "@/libs/toast"
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
@@ -834,7 +834,7 @@ function FieldZone({
       }`}
     >
       <span
-        className={`pointer-events-none absolute -top-5 left-0 z-20 whitespace-nowrap rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white transition-opacity ${
+        className={`pointer-events-none absolute -top-5 left-0 z-20 rounded px-1.5 py-0.5 text-[9px] font-bold tracking-wider whitespace-nowrap text-white uppercase transition-opacity ${
           isActive
             ? "bg-cyan-500 opacity-100"
             : "bg-cyan-400 opacity-0 group-hover/fz:opacity-100"
@@ -908,7 +908,7 @@ function CanvasItem({
       }
       className={`group relative cursor-pointer rounded-3xl transition-all duration-150 ${
         isStatic
-          ? "opacity-80 ring-2 ring-dashed ring-amber-300 hover:opacity-100 hover:ring-amber-400"
+          ? "ring-dashed opacity-80 ring-2 ring-amber-300 hover:opacity-100 hover:ring-amber-400"
           : isSelected
             ? "ring-2 ring-cyan-500 ring-offset-4"
             : "ring-2 ring-transparent hover:ring-2 hover:ring-cyan-300 hover:ring-offset-4"
@@ -916,15 +916,15 @@ function CanvasItem({
     >
       {/* Badge */}
       {isStatic ? (
-        <span className="pointer-events-none absolute -right-1 -top-1 z-10 rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-700 shadow-sm ring-1 ring-amber-200">
+        <span className="pointer-events-none absolute -top-1 -right-1 z-10 rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-bold tracking-wider text-amber-700 uppercase shadow-sm ring-1 ring-amber-200">
           Static
         </span>
       ) : (
         <span
-          className={`pointer-events-none absolute -right-1 -top-1 z-10 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider shadow-sm transition-opacity ${
+          className={`pointer-events-none absolute -top-1 -right-1 z-10 rounded-full px-2 py-0.5 text-[9px] font-bold tracking-wider uppercase shadow-sm transition-opacity ${
             isSelected
               ? "bg-cyan-500 text-white opacity-100"
-              : "bg-white text-cyan-600 ring-1 ring-cyan-200 opacity-0 group-hover:opacity-100"
+              : "bg-white text-cyan-600 opacity-0 ring-1 ring-cyan-200 group-hover:opacity-100"
           }`}
         >
           {isSelected ? "✎ Editing" : "✎ Edit"}
@@ -990,12 +990,12 @@ function HeroCanvas({
               <div className="grid gap-10 p-8 lg:grid-cols-[1fr_340px] lg:items-center">
                 <div>
                   <FieldZone {...fz("eyebrow")}>
-                    <span className="inline-block rounded-full border border-stone-200 bg-white px-4 py-1.5 text-[10px] font-medium uppercase tracking-[0.18em] text-stone-500">
+                    <span className="inline-block rounded-full border border-stone-200 bg-white px-4 py-1.5 text-[10px] font-medium tracking-[0.18em] text-stone-500 uppercase">
                       {p.eyebrow || "Interior Design Studio"}
                     </span>
                   </FieldZone>
                   <FieldZone {...fz("title")} label="Title">
-                    <h2 className="mt-5 text-2xl font-medium leading-snug text-stone-900 lg:text-3xl">
+                    <h2 className="mt-5 text-2xl leading-snug font-medium text-stone-900 lg:text-3xl">
                       {item.title || (
                         <em className="font-normal text-stone-300">
                           Headline goes here…
@@ -1052,7 +1052,7 @@ function HeroCanvas({
                       </div>
                     )}
                     {imgs.length > 1 && (
-                      <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+                      <div className="absolute right-0 bottom-3 left-0 flex justify-center gap-1.5">
                         {imgs.map((_, i) => (
                           <span
                             key={i}
@@ -1095,7 +1095,7 @@ function ServicesCanvas({
       {/* Section header — mirrors landing page */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-stone-400">
+          <p className="inline-flex items-center gap-2 text-xs font-medium tracking-widest text-stone-400 uppercase">
             <span className="h-px w-8 bg-stone-300" />
             Interior Services
           </p>
@@ -1137,7 +1137,7 @@ function ServicesCanvas({
               <div className="relative">
                 {/* Oversized background number */}
                 <div
-                  className={`pointer-events-none absolute -top-8 select-none text-[7rem] font-bold leading-none tracking-tighter text-stone-200 ${isEven ? "right-0" : "left-0"}`}
+                  className={`pointer-events-none absolute -top-8 text-[7rem] leading-none font-bold tracking-tighter text-stone-200 select-none ${isEven ? "right-0" : "left-0"}`}
                 >
                   {serviceNum}
                 </div>
@@ -1147,7 +1147,7 @@ function ServicesCanvas({
                     <>
                       <div className="flex flex-col justify-center">
                         <FieldZone {...fz("service_number", "Service #")}>
-                          <p className="text-xs font-medium uppercase tracking-widest text-stone-400">
+                          <p className="text-xs font-medium tracking-widest text-stone-400 uppercase">
                             Service {serviceNum}
                           </p>
                         </FieldZone>
@@ -1194,7 +1194,7 @@ function ServicesCanvas({
                             className="h-full w-full object-cover"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-transparent" />
-                          <div className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm">
+                          <div className="absolute top-4 right-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm">
                             <span className="text-sm font-bold tracking-tight text-stone-900">
                               {serviceNum}
                             </span>
@@ -1213,7 +1213,7 @@ function ServicesCanvas({
                             className="h-full w-full object-cover"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-transparent" />
-                          <div className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm">
+                          <div className="absolute top-4 right-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm">
                             <span className="text-sm font-bold tracking-tight text-stone-900">
                               {serviceNum}
                             </span>
@@ -1222,7 +1222,7 @@ function ServicesCanvas({
                       </FieldZone>
                       <div className="flex flex-col justify-center">
                         <FieldZone {...fz("service_number", "Service #")}>
-                          <p className="text-xs font-medium uppercase tracking-widest text-stone-400">
+                          <p className="text-xs font-medium tracking-widest text-stone-400 uppercase">
                             Service {serviceNum}
                           </p>
                         </FieldZone>
@@ -1351,7 +1351,7 @@ function ProjectsCanvas({
                 <div className="p-4">
                   <FieldZone {...fz("tag", "Tag")}>
                     {p.tag && (
-                      <p className="text-[10px] font-medium uppercase tracking-widest text-stone-400">
+                      <p className="text-[10px] font-medium tracking-widest text-stone-400 uppercase">
                         {p.tag}
                       </p>
                     )}
@@ -1452,7 +1452,7 @@ function BlogsCanvasOld({
                 </FieldZone>
                 <div className="p-3">
                   <FieldZone {...fz("category", "Category / Date")}>
-                    <div className="flex flex-wrap gap-1 text-[9px] uppercase tracking-wider text-stone-400">
+                    <div className="flex flex-wrap gap-1 text-[9px] tracking-wider text-stone-400 uppercase">
                       {p.category && <span>{p.category}</span>}
                       {p.date && (
                         <>
@@ -1469,7 +1469,7 @@ function BlogsCanvasOld({
                     </div>
                   </FieldZone>
                   <FieldZone {...fz("title", "Title")}>
-                    <h3 className="mt-1.5 text-xs font-semibold leading-snug text-stone-900">
+                    <h3 className="mt-1.5 text-xs leading-snug font-semibold text-stone-900">
                       {item.title}
                     </h3>
                   </FieldZone>
@@ -1537,7 +1537,7 @@ function TestimonialsCanvas({
               <div className="rounded-3xl bg-white p-6 shadow-sm">
                 <p className="text-3xl leading-none text-stone-200">&quot;</p>
                 <FieldZone {...fz("body", "Quote")}>
-                  <p className="mt-2 line-clamp-4 text-sm italic leading-relaxed text-stone-700">
+                  <p className="mt-2 line-clamp-4 text-sm leading-relaxed text-stone-700 italic">
                     {item.body ?? item.subtitle}
                   </p>
                 </FieldZone>
@@ -1643,7 +1643,7 @@ function GalleryCanvasOld({
                       <div
                         className={`flex h-full items-center justify-center bg-gradient-to-br ${toneGrad[tone] ?? toneGrad.light}`}
                       >
-                        <p className="text-xs capitalize text-stone-400">
+                        <p className="text-xs text-stone-400 capitalize">
                           {tone}
                         </p>
                       </div>
@@ -1657,7 +1657,7 @@ function GalleryCanvasOld({
                     </p>
                   </FieldZone>
                   <FieldZone {...fz("tone", "Tone")}>
-                    <p className="text-[10px] capitalize text-stone-400">
+                    <p className="text-[10px] text-stone-400 capitalize">
                       {tone} · order {item.sort_order}
                     </p>
                   </FieldZone>
@@ -1798,7 +1798,7 @@ function ContactCanvas({
                 <FieldZone {...fz("email", "Email")}>
                   {p.email && (
                     <div className="rounded-xl bg-stone-50 px-4 py-3">
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-stone-400">
+                      <p className="text-[10px] font-semibold tracking-wider text-stone-400 uppercase">
                         Email
                       </p>
                       <p className="mt-1 text-sm text-stone-700">{p.email}</p>
@@ -1808,7 +1808,7 @@ function ContactCanvas({
                 <FieldZone {...fz("phone", "Phone")}>
                   {p.phone && (
                     <div className="rounded-xl bg-stone-50 px-4 py-3">
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-stone-400">
+                      <p className="text-[10px] font-semibold tracking-wider text-stone-400 uppercase">
                         Phone
                       </p>
                       <p className="mt-1 text-sm text-stone-700">{p.phone}</p>
@@ -1818,10 +1818,10 @@ function ContactCanvas({
                 <FieldZone {...fz("address", "Address")}>
                   {p.address && (
                     <div className="rounded-xl bg-stone-50 px-4 py-3">
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-stone-400">
+                      <p className="text-[10px] font-semibold tracking-wider text-stone-400 uppercase">
                         Address
                       </p>
-                      <p className="mt-1 whitespace-pre-line text-sm text-stone-700">
+                      <p className="mt-1 text-sm whitespace-pre-line text-stone-700">
                         {p.address}
                       </p>
                     </div>
@@ -1865,7 +1865,7 @@ function BlogsCanvas({
       {isLoading && <ProgressBar />}
       <div className="mb-5 flex flex-wrap items-end justify-between gap-4 border-b border-stone-300/60 pb-5">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-stone-500">
+          <p className="text-[10px] font-semibold tracking-[0.28em] text-stone-500 uppercase">
             Editorial Library
           </p>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight text-stone-950">
@@ -1906,7 +1906,7 @@ function BlogsCanvas({
         </div>
       ) : (
         <div className="overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-sm">
-          <div className="grid grid-cols-[minmax(0,1.6fr)_130px_110px_100px_190px] gap-4 border-b border-stone-100 bg-stone-50 px-5 py-3 text-[10px] font-bold uppercase tracking-[0.16em] text-stone-400">
+          <div className="grid grid-cols-[minmax(0,1.6fr)_130px_110px_100px_190px] gap-4 border-b border-stone-100 bg-stone-50 px-5 py-3 text-[10px] font-bold tracking-[0.16em] text-stone-400 uppercase">
             <span>Article</span>
             <span>Category</span>
             <span>Date</span>
@@ -1952,7 +1952,7 @@ function BlogsCanvas({
                   </FieldZone>
                 </div>
                 <FieldZone {...fz("category", "Category")}>
-                  <p className="truncate text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">
+                  <p className="truncate text-xs font-semibold tracking-[0.16em] text-stone-500 uppercase">
                     {p.category || "Uncategorized"}
                   </p>
                 </FieldZone>
@@ -1967,7 +1967,7 @@ function BlogsCanvas({
                   </p>
                 </FieldZone>
                 <div className="flex min-w-0 items-center justify-end gap-2">
-                  <span className="shrink-0 whitespace-nowrap rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-600">
+                  <span className="shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-bold tracking-wide whitespace-nowrap text-emerald-600 uppercase">
                     CMS
                   </span>
                   {item.id > 0 && (
@@ -1977,13 +1977,13 @@ function BlogsCanvas({
                         e.stopPropagation()
                         onRequestDelete?.(item)
                       }}
-                      className="shrink-0 whitespace-nowrap rounded-full border border-red-200 bg-red-50 px-3.5 py-1.5 text-[11px] font-bold text-red-600 transition-all duration-200 hover:-translate-y-0.5 hover:bg-red-100 hover:shadow-sm"
+                      className="shrink-0 rounded-full border border-red-200 bg-red-50 px-3.5 py-1.5 text-[11px] font-bold whitespace-nowrap text-red-600 transition-all duration-200 hover:-translate-y-0.5 hover:bg-red-100 hover:shadow-sm"
                       title="Delete this blog post"
                     >
                       Delete
                     </button>
                   )}
-                  <span className="shrink-0 whitespace-nowrap rounded-full bg-stone-950 px-3.5 py-1.5 text-[11px] font-bold text-white transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-sm">
+                  <span className="shrink-0 rounded-full bg-stone-950 px-3.5 py-1.5 text-[11px] font-bold whitespace-nowrap text-white transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-sm">
                     Edit
                   </span>
                 </div>
@@ -2018,7 +2018,7 @@ function GalleryCanvas({
       {isLoading && <ProgressBar />}
       <div className="mb-5 flex flex-wrap items-end justify-between gap-4 border-b border-stone-300/60 pb-5">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-stone-500">
+          <p className="text-[10px] font-semibold tracking-[0.28em] text-stone-500 uppercase">
             Visual Archive
           </p>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight text-stone-950">
@@ -2096,13 +2096,13 @@ function GalleryCanvas({
                             <p className="text-2xl font-light text-stone-400">
                               +
                             </p>
-                            <p className="mt-1 text-xs capitalize text-stone-400">
+                            <p className="mt-1 text-xs text-stone-400 capitalize">
                               {tone} image
                             </p>
                           </div>
                         </div>
                       )}
-                      <span className="absolute right-3 top-3 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-600">
+                      <span className="absolute top-3 right-3 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-bold tracking-wide text-emerald-600 uppercase">
                         CMS
                       </span>
                     </div>
@@ -2116,7 +2116,7 @@ function GalleryCanvas({
                           </p>
                         </FieldZone>
                         <FieldZone {...fz("tone", "Tone")}>
-                          <p className="mt-1 text-[11px] capitalize text-stone-400">
+                          <p className="mt-1 text-[11px] text-stone-400 capitalize">
                             {tone} · order {item.sort_order}
                           </p>
                         </FieldZone>
@@ -2260,7 +2260,7 @@ function CarouselImagesField({
                   ;(e.target as HTMLImageElement).style.display = "none"
                 }}
               />
-              <span className="absolute left-2 top-2 rounded bg-black/50 px-1.5 py-0.5 text-[9px] font-bold text-white">
+              <span className="absolute top-2 left-2 rounded bg-black/50 px-1.5 py-0.5 text-[9px] font-bold text-white">
                 {idx + 1}
               </span>
             </div>
@@ -2277,7 +2277,7 @@ function CarouselImagesField({
               value={url}
               onChange={(e) => updateUrl(idx, e.target.value)}
               placeholder="https://..."
-              className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-cyan-300 focus:ring-1 focus:ring-cyan-100"
+              className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 transition outline-none placeholder:text-slate-400 focus:border-cyan-300 focus:ring-1 focus:ring-cyan-100"
             />
             {/* Upload */}
             <label
@@ -2436,7 +2436,7 @@ function EditPanel({
       <div className="shrink-0 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+            <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
               {isCreatingFromStatic ? `New ${section.itemLabel}` : "Editing"}
             </p>
             {!isCreatingFromStatic && (
@@ -2594,7 +2594,7 @@ function EditPanel({
 
         {section.fields.length > 0 && (
           <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4 dark:border-cyan-900/30">
-            <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-cyan-700 dark:text-cyan-400">
+            <p className="mb-3 text-[10px] font-bold tracking-widest text-cyan-700 uppercase dark:text-cyan-400">
               {section.label} fields
             </p>
             <div className="space-y-3">
@@ -2808,7 +2808,7 @@ function BlogEditPanel({
       <div className="shrink-0 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600">
+            <p className="text-[10px] font-bold tracking-widest text-emerald-600 uppercase">
               DreamBuild Blog Article Builder
             </p>
             <p className="mt-1 text-sm font-bold text-slate-800 dark:text-slate-100">
@@ -2860,8 +2860,8 @@ function BlogEditPanel({
               />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
-            <div className="absolute bottom-3 left-4 right-4">
-              <span className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-stone-700">
+            <div className="absolute right-4 bottom-3 left-4">
+              <span className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold tracking-widest text-stone-700 uppercase">
                 {form.payload.category || "Category"}
               </span>
               <p className="mt-2 line-clamp-1 text-sm font-bold text-white">
@@ -2879,7 +2879,7 @@ function BlogEditPanel({
         </div>
 
         <div className="rounded-3xl border border-stone-200 bg-white p-4">
-          <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-stone-500">
+          <p className="mb-3 text-[10px] font-bold tracking-widest text-stone-500 uppercase">
             Landing card and article hero
           </p>
           <div className="space-y-3">
@@ -3021,7 +3021,7 @@ function BlogEditPanel({
         </div>
 
         <div className="rounded-3xl border border-stone-200 bg-white p-4">
-          <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-stone-500">
+          <p className="mb-3 text-[10px] font-bold tracking-widest text-stone-500 uppercase">
             Article content blocks
           </p>
           <div className="space-y-3">
@@ -3100,7 +3100,7 @@ function BlogEditPanel({
         </div>
 
         <div className="rounded-3xl border border-stone-200 bg-white p-4">
-          <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-stone-500">
+          <p className="mb-3 text-[10px] font-bold tracking-widest text-stone-500 uppercase">
             Gallery and FAQ
           </p>
           <div className="space-y-3">
@@ -3136,7 +3136,7 @@ function BlogEditPanel({
         </div>
 
         <div className="rounded-3xl border border-stone-200 bg-white p-4">
-          <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-stone-500">
+          <p className="mb-3 text-[10px] font-bold tracking-widest text-stone-500 uppercase">
             Publishing
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -3256,7 +3256,7 @@ function ProcessEditPanel({
       <div className="shrink-0 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-sky-600">
+            <p className="text-[10px] font-bold tracking-widest text-sky-600 uppercase">
               DreamBuild Process Step
             </p>
             <p className="mt-1 text-sm font-bold text-slate-800 dark:text-slate-100">
@@ -3309,7 +3309,7 @@ function ProcessEditPanel({
         </div>
 
         <div className="rounded-3xl border border-stone-200 bg-white p-4">
-          <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-stone-500">
+          <p className="mb-3 text-[10px] font-bold tracking-widest text-stone-500 uppercase">
             Process card content
           </p>
           <div className="space-y-3">
@@ -3361,7 +3361,7 @@ function ProcessEditPanel({
         </div>
 
         <div className="rounded-3xl border border-stone-200 bg-white p-4">
-          <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-stone-500">
+          <p className="mb-3 text-[10px] font-bold tracking-widest text-stone-500 uppercase">
             Publishing
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -3669,7 +3669,7 @@ export default function DreamBuildContentManager() {
       {/* ── 1. Dark sidebar ─────────────────────────────────────────── */}
       <aside className="flex w-52 shrink-0 flex-col overflow-hidden border-r border-white/5 bg-[#0f0f0f]">
         <div className="shrink-0 border-b border-white/10 px-5 py-4">
-          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-stone-500">
+          <p className="text-[10px] font-bold tracking-[0.22em] text-stone-500 uppercase">
             DreamBuild
           </p>
           <p className="mt-0.5 text-sm font-semibold text-white">
@@ -3677,7 +3677,7 @@ export default function DreamBuildContentManager() {
           </p>
         </div>
         <nav className="flex-1 overflow-y-auto py-2">
-          <p className="px-5 pb-1.5 pt-3 text-[10px] font-bold uppercase tracking-widest text-stone-600">
+          <p className="px-5 pt-3 pb-1.5 text-[10px] font-bold tracking-widest text-stone-600 uppercase">
             Sections
           </p>
           {sections.map((section) => (
@@ -3769,14 +3769,14 @@ export default function DreamBuildContentManager() {
                 event.preventDefault()
                 setIsResizingPanel(true)
               }}
-              className={`group absolute left-0 top-0 z-20 h-full w-2 cursor-col-resize transition ${
+              className={`group absolute top-0 left-0 z-20 h-full w-2 cursor-col-resize transition ${
                 isResizingPanel
                   ? "bg-emerald-400/40"
                   : "bg-transparent hover:bg-emerald-400/25"
               }`}
             >
               <span
-                className={`absolute left-1/2 top-1/2 h-12 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full transition ${
+                className={`absolute top-1/2 left-1/2 h-12 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full transition ${
                   isResizingPanel
                     ? "bg-emerald-600"
                     : "bg-slate-300 opacity-0 group-hover:opacity-100"
@@ -3862,7 +3862,7 @@ function DeleteConfirmModal({
         }
       `}</style>
       <div className="w-full max-w-md animate-[dreambuildModalPanelIn_180ms_ease-out] rounded-3xl border border-stone-200 bg-white p-6 shadow-2xl">
-        <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-red-500">
+        <p className="text-[10px] font-bold tracking-[0.22em] text-red-500 uppercase">
           Confirm delete
         </p>
         <h3 className="mt-2 text-xl font-semibold tracking-tight text-stone-950">
@@ -3880,7 +3880,7 @@ function DeleteConfirmModal({
             type="button"
             onClick={onCancel}
             disabled={isDeleting}
-            className="inline-flex min-w-24 items-center justify-center whitespace-nowrap rounded-full border border-stone-200 bg-white px-4 py-2 text-sm font-bold text-stone-600 transition-all duration-200 hover:-translate-y-0.5 hover:bg-stone-50 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-none"
+            className="inline-flex min-w-24 items-center justify-center rounded-full border border-stone-200 bg-white px-4 py-2 text-sm font-bold whitespace-nowrap text-stone-600 transition-all duration-200 hover:-translate-y-0.5 hover:bg-stone-50 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-none"
           >
             Cancel
           </button>
@@ -3888,7 +3888,7 @@ function DeleteConfirmModal({
             type="button"
             onClick={onConfirm}
             disabled={isDeleting}
-            className="inline-flex min-w-28 items-center justify-center whitespace-nowrap rounded-full bg-red-600 px-4 py-2 text-sm font-bold text-white shadow-sm shadow-red-600/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-red-700 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-sm"
+            className="inline-flex min-w-28 items-center justify-center rounded-full bg-red-600 px-4 py-2 text-sm font-bold whitespace-nowrap text-white shadow-sm shadow-red-600/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-red-700 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-sm"
           >
             {isDeleting ? "Deleting..." : "Delete"}
           </button>
@@ -3915,7 +3915,7 @@ function Field({
   const highlighted = Boolean(fieldKey && focusedField === fieldKey)
   return (
     <label
-      className={`block space-y-1.5 rounded-xl px-2 py-1.5 -mx-2 transition-colors duration-150 ${
+      className={`-mx-2 block space-y-1.5 rounded-xl px-2 py-1.5 transition-colors duration-150 ${
         highlighted ? "bg-cyan-50 ring-1 ring-cyan-200" : ""
       }`}
     >
@@ -3926,7 +3926,7 @@ function Field({
       >
         {label}
         {highlighted && (
-          <span className="ml-1.5 rounded bg-cyan-500 px-1 py-0.5 text-[8px] font-bold uppercase tracking-wider text-white">
+          <span className="ml-1.5 rounded bg-cyan-500 px-1 py-0.5 text-[8px] font-bold tracking-wider text-white uppercase">
             active
           </span>
         )}

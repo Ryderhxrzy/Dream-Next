@@ -1,11 +1,12 @@
 "use client"
 
-import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
-import VideoBackground from "@/components/VideoBackground"
 import { motion } from "framer-motion"
-import Header from "@/components/landing-page/Header"
+import Link from "next/link"
+
 import PrimaryButton from "@/components/ui/buttons/PrimaryButton"
+import Header from "@/components/landing-page/Header"
+import VideoBackground from "@/components/VideoBackground"
 
 type ResetPayload = {
   email: string
@@ -157,22 +158,22 @@ export default function ResetPasswordForm({ token }: Props) {
   }
 
   return (
-    <div className="relative min-h-screen w-full overflow-x-hidden overflow-y-auto flex flex-col">
+    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden overflow-y-auto">
       <VideoBackground />
-      <div className="absolute inset-0 bg-black/25 dark:bg-black/55 backdrop-blur-[2px]" />
+      <div className="absolute inset-0 bg-black/25 backdrop-blur-[2px] dark:bg-black/55" />
 
       <div className="relative z-20">
         <Header cartCount={0} />
       </div>
 
-      <div className="relative z-10 flex justify-center w-full px-4 flex-1 items-center py-10">
+      <div className="relative z-10 flex w-full flex-1 items-center justify-center px-4 py-10">
         <motion.div
           initial={{ opacity: 0, y: 32, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
           className="w-full max-w-md transition-all duration-300"
         >
-          <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-3xl shadow-2xl p-8">
+          <div className="rounded-3xl border border-gray-200 bg-white p-8 shadow-2xl dark:border-white/10 dark:bg-slate-800">
             <div className="mb-8">
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Reset Password
@@ -183,7 +184,7 @@ export default function ResetPasswordForm({ token }: Props) {
             </div>
 
             {isLoading ? (
-              <div className="rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 px-4 py-3 text-sm text-gray-600 dark:text-white/70">
+              <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600 dark:border-white/10 dark:bg-white/5 dark:text-white/70">
                 Loading reset details...
               </div>
             ) : error && !reset ? (
@@ -192,7 +193,7 @@ export default function ResetPasswordForm({ token }: Props) {
               </div>
             ) : reset ? (
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 p-4 text-sm text-gray-700 dark:text-white/80">
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700 dark:border-white/10 dark:bg-white/5 dark:text-white/80">
                   <p>
                     <span className="font-semibold text-gray-900 dark:text-white">
                       Name:
@@ -217,7 +218,7 @@ export default function ResetPasswordForm({ token }: Props) {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Create your new password"
                     required
-                    className="h-11 w-full rounded-[18px] border border-gray-300 dark:border-white/18 bg-white dark:bg-white/12 px-4 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 outline-none transition-all duration-200 focus:border-sky-400 dark:focus:border-sky-400/60 focus:bg-white dark:focus:bg-white/18"
+                    className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 transition-all duration-200 outline-none placeholder:text-gray-400 focus:border-sky-400 focus:bg-white dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder:text-white/40 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
                   />
                 </div>
 
@@ -231,11 +232,11 @@ export default function ResetPasswordForm({ token }: Props) {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Confirm your new password"
                     required
-                    className="h-11 w-full rounded-[18px] border border-gray-300 dark:border-white/18 bg-white dark:bg-white/12 px-4 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/40 outline-none transition-all duration-200 focus:border-sky-400 dark:focus:border-sky-400/60 focus:bg-white dark:focus:bg-white/18"
+                    className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 transition-all duration-200 outline-none placeholder:text-gray-400 focus:border-sky-400 focus:bg-white dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder:text-white/40 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
                   />
                 </div>
 
-                <div className="rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 p-4">
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-white/10 dark:bg-white/5">
                   <p className="text-sm font-semibold text-gray-900 dark:text-white">
                     Password requirements
                   </p>
@@ -306,7 +307,7 @@ export default function ResetPasswordForm({ token }: Props) {
                 <PrimaryButton
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-3 px-5 text-sm"
+                  className="w-full px-5 py-3 text-sm"
                 >
                   {isSubmitting ? "Resetting password..." : "Reset Password"}
                 </PrimaryButton>
@@ -316,7 +317,7 @@ export default function ResetPasswordForm({ token }: Props) {
             <p className="mt-6 text-center text-sm text-gray-500 dark:text-white/70">
               <Link
                 href="/login"
-                className="text-sky-500 hover:text-sky-400 font-semibold transition-colors"
+                className="font-semibold text-sky-500 transition-colors hover:text-sky-400"
               >
                 Back to login
               </Link>

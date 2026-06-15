@@ -1,8 +1,8 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts"
 import { useGetAdminOrdersQuery } from "@/store/api/adminOrdersApi"
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts"
 
 const COLORS = {
   Completed: "#14b8a6",

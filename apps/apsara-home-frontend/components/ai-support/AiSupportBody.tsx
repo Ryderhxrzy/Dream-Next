@@ -1,6 +1,13 @@
 "use client"
 
 import { useEffect, useRef } from "react"
+
+import { BrandCards } from "./messages/BrandCards"
+import { CategoryCards } from "./messages/CategoryCards"
+import { ImageMessage } from "./messages/ImageMessage"
+import { ProductCards } from "./messages/ProductCards"
+import { StepImages } from "./messages/StepImages"
+import { TextMessage } from "./messages/TextMessage"
 import type { ChatMessage } from "./types"
 
 const API_BASE = (process.env.NEXT_PUBLIC_LARAVEL_API_URL ?? "").replace(
@@ -8,12 +15,6 @@ const API_BASE = (process.env.NEXT_PUBLIC_LARAVEL_API_URL ?? "").replace(
   ""
 )
 const ROBOT_SRC = `${API_BASE}/Image/sir.png`
-import { TextMessage } from "./messages/TextMessage"
-import { ImageMessage } from "./messages/ImageMessage"
-import { ProductCards } from "./messages/ProductCards"
-import { BrandCards } from "./messages/BrandCards"
-import { CategoryCards } from "./messages/CategoryCards"
-import { StepImages } from "./messages/StepImages"
 
 interface Props {
   messages: ChatMessage[]
@@ -28,7 +29,7 @@ export function AiSupportBody({ messages, isLoading }: Props) {
   }, [messages, isLoading])
 
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 flex flex-col gap-3 bg-slate-50">
+    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto bg-slate-50 px-4 py-3">
       {messages.map((msg, i) => {
         if (msg.kind === "text") return <TextMessage key={i} message={msg} />
         if (msg.kind === "image") return <ImageMessage key={i} message={msg} />
@@ -44,18 +45,18 @@ export function AiSupportBody({ messages, isLoading }: Props) {
 
       {isLoading && (
         <div className="flex items-end gap-2">
-          <div className="w-10 h-10 overflow-hidden flex-shrink-0 rounded-none">
+          <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-none">
             <img
               src={ROBOT_SRC}
               alt="AI"
-              className="w-full h-full object-contain"
+              className="h-full w-full object-contain"
             />
           </div>
-          <div className="bg-gradient-to-br from-indigo-600 to-indigo-500 rounded-[18px] rounded-bl-[5px] px-4 py-3 shadow-md shadow-indigo-100">
-            <div className="flex gap-1 items-center">
-              <span className="w-1.5 h-1.5 bg-white/70 rounded-full animate-bounce [animation-delay:0ms]" />
-              <span className="w-1.5 h-1.5 bg-white/70 rounded-full animate-bounce [animation-delay:150ms]" />
-              <span className="w-1.5 h-1.5 bg-white/70 rounded-full animate-bounce [animation-delay:300ms]" />
+          <div className="rounded-[18px] rounded-bl-[5px] bg-gradient-to-br from-indigo-600 to-indigo-500 px-4 py-3 shadow-md shadow-indigo-100">
+            <div className="flex items-center gap-1">
+              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-white/70 [animation-delay:0ms]" />
+              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-white/70 [animation-delay:150ms]" />
+              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-white/70 [animation-delay:300ms]" />
             </div>
           </div>
         </div>

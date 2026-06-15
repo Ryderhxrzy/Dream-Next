@@ -99,7 +99,7 @@ export default function Template3({
         <div className="mx-auto grid max-w-7xl items-center gap-16 lg:grid-cols-2">
           <div>
             <div
-              className="mb-5 inline-block rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-white"
+              className="mb-5 inline-block rounded-full px-4 py-1.5 text-xs font-bold tracking-widest text-white uppercase"
               style={{
                 background: `linear-gradient(135deg, ${primaryColor}50, ${accentColor}30)`,
                 border: `1px solid ${accentColor}40`,
@@ -107,7 +107,7 @@ export default function Template3({
             >
               ✦ Premium Partner Store
             </div>
-            <h1 className="text-6xl font-black leading-none tracking-tight text-white lg:text-7xl">
+            <h1 className="text-6xl leading-none font-black tracking-tight text-white lg:text-7xl">
               {tagline}
             </h1>
             <p className="mt-6 max-w-md text-base leading-relaxed text-white/60">

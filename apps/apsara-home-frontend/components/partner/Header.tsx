@@ -1,11 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { signOut } from "next-auth/react"
-import { useRouter } from "next/navigation"
 import { clearPartnerSession } from "@/libs/adminSession"
 import { baseApi, clearAccessTokenCache } from "@/store/api/baseApi"
 import { useAppDispatch } from "@/store/hooks"
+import { signOut } from "next-auth/react"
+import { useRouter } from "next/navigation"
 
 interface PartnerHeaderProps {
   onMenuClick: () => void
@@ -35,13 +35,13 @@ export default function Header({ onMenuClick }: PartnerHeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95 lg:px-6">
+    <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur lg:px-6 dark:border-slate-800 dark:bg-slate-950/95">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={onMenuClick}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 lg:hidden"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-700 transition hover:bg-slate-100 lg:hidden dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
             aria-label="Open navigation"
           >
             <svg
@@ -55,7 +55,7 @@ export default function Header({ onMenuClick }: PartnerHeaderProps) {
             </svg>
           </button>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">
               Partner Portal
             </p>
             <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">
@@ -115,7 +115,7 @@ export default function Header({ onMenuClick }: PartnerHeaderProps) {
               type="button"
               onClick={() => setIsTutorialModalOpen(false)}
               aria-label="Close tutorial"
-              className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-sm font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              className="absolute top-3 right-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-sm font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
             >
               ×
             </button>

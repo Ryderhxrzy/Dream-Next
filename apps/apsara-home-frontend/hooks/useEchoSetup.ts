@@ -19,7 +19,6 @@ export function useEchoSetup() {
 
     try {
       ;(window as any).Pusher = Pusher
-
       ;(window as any).Echo = new Echo({
         broadcaster: "pusher",
         key: pusherKey,

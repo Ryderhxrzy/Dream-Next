@@ -36,7 +36,7 @@ export default function RankingFilters({
         {/* Search input */}
         <div className="relative flex-1">
           <span
-            className="absolute left-4 top-1/2 -translate-y-1/2"
+            className="absolute top-1/2 left-4 -translate-y-1/2"
             style={{ color: "#8B5CF6" }}
           >
             <svg
@@ -56,7 +56,7 @@ export default function RankingFilters({
             placeholder="Search name or email…"
             value={search}
             onChange={(e) => onSearch(e.target.value)}
-            className="w-full rounded-xl border-2 bg-white py-3 pl-12 pr-12 text-sm font-medium outline-none transition-all"
+            className="w-full rounded-xl border-2 bg-white py-3 pr-12 pl-12 text-sm font-medium transition-all outline-none"
             style={{
               borderColor: "#E2E8F0",
               color: "#1E293B",
@@ -75,7 +75,7 @@ export default function RankingFilters({
             <button
               type="button"
               onClick={() => onSearch("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full border-2 bg-white transition-colors hover:bg-slate-100"
+              className="absolute top-1/2 right-3 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border-2 bg-white transition-colors hover:bg-slate-100"
               style={{ borderColor: "#1E293B" }}
             >
               <svg
@@ -117,7 +117,7 @@ export default function RankingFilters({
                 whileTap={{ scale: 0.93 }}
                 type="button"
                 onClick={() => onPeriod(item.value)}
-                className="rounded-full border-2 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] transition-all"
+                className="rounded-full border-2 px-4 py-2 text-xs font-bold tracking-[0.18em] uppercase transition-all"
                 style={{
                   borderColor: "#1E293B",
                   backgroundColor: active ? color : "#fff",

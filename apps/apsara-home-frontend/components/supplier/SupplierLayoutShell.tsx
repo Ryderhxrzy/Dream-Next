@@ -1,22 +1,24 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { createPortal } from "react-dom"
-import Image from "next/image"
-import { AnimatePresence, motion } from "framer-motion"
-import { signOut, useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
-import { Bell, LogOut, Menu, MoonStar, Sparkles, SunMedium } from "lucide-react"
-import { useTheme } from "next-themes"
-import SupplierSidebar from "./SupplierSidebar"
-import { clearAccessTokenCache } from "@/store/api/baseApi"
-import { useGetSupplierMeQuery } from "@/store/api/suppliersApi"
 import { sendSupplierPresenceHeartbeat } from "@/libs/supplierChat"
+import { clearAccessTokenCache } from "@/store/api/baseApi"
 import {
   useGetSupplierOrderNotificationsQuery,
   type SupplierNotificationItem,
 } from "@/store/api/supplierOrdersApi"
+import { useGetSupplierMeQuery } from "@/store/api/suppliersApi"
+import { AnimatePresence, motion } from "framer-motion"
+import { Bell, LogOut, Menu, MoonStar, Sparkles, SunMedium } from "lucide-react"
+import { signOut, useSession } from "next-auth/react"
+import { useTheme } from "next-themes"
+import Image from "next/image"
+import { useRouter } from "next/navigation"
+import { createPortal } from "react-dom"
+
 import { useSupplierRealtimeOrders } from "@/hooks/useSupplierRealtimeOrders"
+
+import SupplierSidebar from "./SupplierSidebar"
 
 const SUPPLIER_NOTIFICATION_DURATION = 10
 
@@ -220,8 +222,8 @@ export default function SupplierLayoutShell({
   return (
     <div className="relative flex min-h-screen overflow-hidden bg-[linear-gradient(180deg,#f6fbff_0%,#eef4fb_42%,#edf2f7_100%)] text-slate-900 dark:bg-[radial-gradient(circle_at_top,#14263a_0%,#09111d_42%,#050914_100%)] dark:text-slate-100">
       <div className="pointer-events-none absolute inset-0 opacity-90">
-        <div className="absolute -left-28 -top-16 h-80 w-80 rounded-full bg-cyan-300/25 blur-3xl dark:bg-cyan-500/10" />
-        <div className="absolute -right-24 top-16 h-72 w-72 rounded-full bg-sky-300/20 blur-3xl dark:bg-indigo-500/10" />
+        <div className="absolute -top-16 -left-28 h-80 w-80 rounded-full bg-cyan-300/25 blur-3xl dark:bg-cyan-500/10" />
+        <div className="absolute top-16 -right-24 h-72 w-72 rounded-full bg-sky-300/20 blur-3xl dark:bg-indigo-500/10" />
         <div className="absolute -bottom-24 left-1/3 h-72 w-72 rounded-full bg-emerald-200/20 blur-3xl dark:bg-emerald-500/10" />
       </div>
 
@@ -253,27 +255,27 @@ export default function SupplierLayoutShell({
         ) : null}
       </AnimatePresence>
 
-      <div className="relative z-10 min-w-0 flex-1 flex flex-col h-screen overflow-hidden">
-        <header className="sticky top-0 z-20 h-16 border-b border-slate-200/80 bg-white/95 backdrop-blur-xl dark:border-slate-700/50 dark:bg-slate-900 shrink-0">
+      <div className="relative z-10 flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="sticky top-0 z-20 h-16 shrink-0 border-b border-slate-200/80 bg-white/95 backdrop-blur-xl dark:border-slate-700/50 dark:bg-slate-900">
           <div className="flex h-full items-center justify-between gap-4 px-4 lg:px-8">
             <div className="flex min-w-0 items-center gap-3 lg:gap-4">
               <button
                 type="button"
                 onClick={() => setMenuOpen(true)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-100 lg:hidden"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 lg:hidden dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-100"
               >
                 <Menu className="h-4 w-4" />
               </button>
 
               <div className="min-w-0">
-                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+                <div className="flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase dark:text-slate-500">
                   AF Home / Supplier
                 </div>
                 <div className="mt-1 flex min-w-0 flex-wrap items-center gap-2">
                   <h1 className="truncate text-sm font-bold text-slate-900 dark:text-white">
                     {supplierName}
                   </h1>
-                  <span className="inline-flex items-center rounded-full border border-slate-200/80 bg-white/80 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
+                  <span className="inline-flex items-center rounded-full border border-slate-200/80 bg-white/80 px-2 py-0.5 text-[9px] font-semibold tracking-wide text-slate-600 uppercase dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
                     {isMainSupplier ? "Main Supplier" : "Sub Supplier"}
                   </span>
                 </div>
@@ -316,7 +318,7 @@ export default function SupplierLayoutShell({
                 >
                   <Bell className="h-4 w-4" />
                   {unreadNotificationCount > 0 ? (
-                    <span className="absolute right-2.5 top-2.5 inline-flex min-h-4 min-w-4 items-center justify-center rounded-full bg-cyan-500 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white dark:ring-slate-950">
+                    <span className="absolute top-2.5 right-2.5 inline-flex min-h-4 min-w-4 items-center justify-center rounded-full bg-cyan-500 px-1 text-[10px] leading-none font-bold text-white ring-2 ring-white dark:ring-slate-950">
                       {unreadNotificationCount > 9
                         ? "9+"
                         : unreadNotificationCount}
@@ -331,7 +333,7 @@ export default function SupplierLayoutShell({
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 6, scale: 0.97 }}
                       transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                      className="absolute right-0 top-[calc(100%+0.6rem)] z-30 w-[340px] overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-xl shadow-slate-200/60 dark:border-white/8 dark:bg-slate-900 dark:shadow-black/40"
+                      className="absolute top-[calc(100%+0.6rem)] right-0 z-30 w-[340px] overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-xl shadow-slate-200/60 dark:border-white/8 dark:bg-slate-900 dark:shadow-black/40"
                     >
                       {/* Header */}
                       <div className="flex items-center justify-between px-4 py-3.5">
@@ -341,7 +343,7 @@ export default function SupplierLayoutShell({
                             Notifications
                           </span>
                           {unreadNotificationCount > 0 && (
-                            <span className="inline-flex items-center rounded-full bg-cyan-500 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">
+                            <span className="inline-flex items-center rounded-full bg-cyan-500 px-1.5 py-0.5 text-[10px] leading-none font-bold text-white">
                               {unreadNotificationCount > 9
                                 ? "9+"
                                 : unreadNotificationCount}
@@ -442,12 +444,12 @@ export default function SupplierLayoutShell({
                                         <Bell className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" />
                                       </div>
                                       {!isRead && (
-                                        <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-cyan-500 ring-2 ring-white dark:ring-slate-900" />
+                                        <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-cyan-500 ring-2 ring-white dark:ring-slate-900" />
                                       )}
                                     </div>
 
                                     <div className="min-w-0 flex-1">
-                                      <p className="line-clamp-1 text-[12.5px] font-semibold leading-snug text-slate-800 dark:text-slate-100">
+                                      <p className="line-clamp-1 text-[12.5px] leading-snug font-semibold text-slate-800 dark:text-slate-100">
                                         {item.title}
                                       </p>
                                       <p className="mt-0.5 line-clamp-2 text-[11.5px] leading-relaxed text-slate-500 dark:text-slate-400">
@@ -518,7 +520,7 @@ export default function SupplierLayoutShell({
                 className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-100"
               >
                 {supplierLogo ? (
-                  <div className="relative h-7 w-7 rounded-lg overflow-hidden bg-sky-100 dark:bg-sky-900/30 shrink-0">
+                  <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded-lg bg-sky-100 dark:bg-sky-900/30">
                     <Image
                       src={supplierLogo}
                       alt={supplierName}
@@ -566,7 +568,7 @@ export default function SupplierLayoutShell({
                     setRealtimeNotification(null)
                   }
                 }}
-                className="fixed bottom-4 right-3 z-130 w-[calc(100vw-1.5rem)] max-w-sm sm:bottom-5 sm:right-5"
+                className="fixed right-3 bottom-4 z-130 w-[calc(100vw-1.5rem)] max-w-sm sm:right-5 sm:bottom-5"
               >
                 <button
                   type="button"
@@ -574,7 +576,7 @@ export default function SupplierLayoutShell({
                     setRealtimeNotification(null)
                     router.push(realtimeNotification.href)
                   }}
-                  className="block w-full overflow-hidden rounded-2xl border border-cyan-200/80 bg-white text-left shadow-2xl shadow-slate-900/15 ring-1 ring-cyan-100/70 transition hover:-translate-y-0.5 hover:shadow-cyan-900/15 dark:border-cyan-800/60 dark:bg-slate-900 dark:ring-cyan-900/30"
+                  className="block w-full overflow-hidden rounded-2xl border border-cyan-200/80 bg-white text-left shadow-2xl ring-1 shadow-slate-900/15 ring-cyan-100/70 transition hover:-translate-y-0.5 hover:shadow-cyan-900/15 dark:border-cyan-800/60 dark:bg-slate-900 dark:ring-cyan-900/30"
                 >
                   <div className="flex items-start gap-3 p-4">
                     <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-cyan-100 dark:bg-cyan-500/10">
@@ -585,7 +587,7 @@ export default function SupplierLayoutShell({
                         <p className="truncate text-sm font-bold text-slate-900 dark:text-white">
                           {realtimeNotification.title}
                         </p>
-                        <span className="shrink-0 rounded-full bg-cyan-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300">
+                        <span className="shrink-0 rounded-full bg-cyan-100 px-2 py-0.5 text-[10px] font-bold tracking-wide text-cyan-700 uppercase dark:bg-cyan-900/40 dark:text-cyan-300">
                           New
                         </span>
                       </div>

@@ -1,10 +1,11 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { usePathname } from "next/navigation"
-import LoadingScreen from "@/components/ui/LoadingScreen"
 import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
 import type { WebPageItem } from "@/store/api/webPagesApi"
+import { usePathname } from "next/navigation"
+
+import LoadingScreen from "@/components/ui/LoadingScreen"
 
 type PartnerStorefrontApiResponse = {
   items?: WebPageItem[]

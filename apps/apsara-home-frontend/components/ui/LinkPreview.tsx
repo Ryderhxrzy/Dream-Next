@@ -51,7 +51,7 @@ export default function LinkPreview({
         href={url}
         target="_blank"
         rel="noopener noreferrer"
-        className={`block break-all text-xs underline underline-offset-2 ${mine ? "text-indigo-200" : "text-indigo-500 dark:text-indigo-300"}`}
+        className={`block text-xs break-all underline underline-offset-2 ${mine ? "text-indigo-200" : "text-indigo-500 dark:text-indigo-300"}`}
       >
         {url}
       </a>
@@ -95,7 +95,7 @@ export default function LinkPreview({
         />
       ) : null}
       <div className="px-3 py-2.5">
-        <div className="flex items-center gap-1.5 mb-1">
+        <div className="mb-1 flex items-center gap-1.5">
           <img
             src={data.favicon}
             alt=""
@@ -105,14 +105,14 @@ export default function LinkPreview({
             }}
           />
           <span
-            className={`truncate text-[10px] font-semibold uppercase tracking-wide ${mine ? "text-indigo-200" : "text-slate-400 dark:text-slate-500"}`}
+            className={`truncate text-[10px] font-semibold tracking-wide uppercase ${mine ? "text-indigo-200" : "text-slate-400 dark:text-slate-500"}`}
           >
             {data.siteName}
           </span>
         </div>
         {data.title ? (
           <p
-            className={`line-clamp-2 text-xs font-semibold leading-snug ${mine ? "text-white" : "text-slate-800 dark:text-slate-100"}`}
+            className={`line-clamp-2 text-xs leading-snug font-semibold ${mine ? "text-white" : "text-slate-800 dark:text-slate-100"}`}
           >
             {data.title}
           </p>

@@ -1,18 +1,18 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { useCommunityUiStore } from "@/store/community-ui.store"
 import { endOfMonth, endOfWeek } from "date-fns"
 import { motion } from "framer-motion"
-import { Search, Plus, CalendarDays, Loader2 } from "lucide-react"
+import { CalendarDays, Loader2, Plus, Search } from "lucide-react"
 
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { EventCard } from "@/components/community/EventCard"
-import { FeaturedEvent } from "@/components/community/events/FeaturedEvent"
-import { eventDateOf } from "@/components/community/events/event-utils"
 import { useEvents } from "@/lib/hooks/use-events"
-import { useCommunityUiStore } from "@/store/community-ui.store"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { EventCard } from "@/components/community/EventCard"
+import { eventDateOf } from "@/components/community/events/event-utils"
+import { FeaturedEvent } from "@/components/community/events/FeaturedEvent"
 
 type Tab = "upcoming" | "week" | "month" | "past"
 
@@ -53,28 +53,28 @@ export function EventsView() {
       (events ?? [])
         .filter((e) => eventDateOf(e) >= now)
         .sort((a, b) => +eventDateOf(a) - +eventDateOf(b))[0],
-    [events, now],
+    [events, now]
   )
 
   return (
     <div className="w-full space-y-5">
       {/* Header */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <h1 className="text-xl font-bold text-foreground">Events</h1>
-        <div className="relative flex-1 min-w-40 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+      <div className="flex flex-wrap items-center gap-3">
+        <h1 className="text-foreground text-xl font-bold">Events</h1>
+        <div className="relative max-w-sm min-w-40 flex-1">
+          <Search className="text-muted-foreground absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search events…"
-            className="pl-8 h-9 bg-muted border-border rounded-full text-sm"
+            className="bg-muted border-border h-9 rounded-full pl-8 text-sm"
           />
         </div>
         <Button
           onClick={() => openCreatePost("EVENT")}
-          className="h-9 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium ml-auto"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground ml-auto h-9 text-sm font-medium"
         >
-          <Plus className="w-4 h-4 mr-1.5" />
+          <Plus className="mr-1.5 h-4 w-4" />
           Create Event
         </Button>
       </div>
@@ -84,7 +84,7 @@ export function EventsView() {
 
       {/* Filter tabs */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex items-center gap-1 rounded-full bg-muted p-1">
+        <div className="bg-muted inline-flex items-center gap-1 rounded-full p-1">
           {TABS.map((t) => (
             <button
               key={t.value}
@@ -99,7 +99,7 @@ export function EventsView() {
               {tab === t.value && (
                 <motion.span
                   layoutId="events-tab"
-                  className="absolute inset-0 rounded-full bg-primary"
+                  className="bg-primary absolute inset-0 rounded-full"
                   transition={{ type: "spring", stiffness: 400, damping: 32 }}
                 />
               )}
@@ -111,15 +111,19 @@ export function EventsView() {
 
       {/* Grid */}
       {isLoading ? (
-        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
+        <div className="flex justify-center py-12">
+          <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
+        </div>
       ) : !filtered.length ? (
-        <div className="rounded-xl border border-border bg-card p-10 text-center">
-          <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center mx-auto mb-3">
-            <CalendarDays className="w-5 h-5 text-muted-foreground" />
+        <div className="border-border bg-card rounded-xl border p-10 text-center">
+          <div className="bg-accent mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full">
+            <CalendarDays className="text-muted-foreground h-5 w-5" />
           </div>
-          <p className="text-sm font-medium text-foreground">No {tab} events</p>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {tab === "upcoming" ? "Create an event to get the community together." : "No past events yet."}
+          <p className="text-foreground text-sm font-medium">No {tab} events</p>
+          <p className="text-muted-foreground mt-0.5 text-sm">
+            {tab === "upcoming"
+              ? "Create an event to get the community together."
+              : "No past events yet."}
           </p>
         </div>
       ) : (

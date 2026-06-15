@@ -4,12 +4,13 @@ Load this when the user asks a question against an existing graph, or runs `/gra
 
 Two traversal modes - choose based on the question:
 
-| Mode | Flag | Best for |
-|------|------|----------|
+| Mode          | Flag     | Best for                                                           |
+| ------------- | -------- | ------------------------------------------------------------------ |
 | BFS (default) | _(none)_ | "What is X connected to?" - broad context, nearest neighbors first |
-| DFS | `--dfs` | "How does X reach Y?" - trace a specific chain or dependency path |
+| DFS           | `--dfs`  | "How does X reach Y?" - trace a specific chain or dependency path  |
 
 First check the graph exists:
+
 ```bash
 $(cat graphify-out/.graphify_python) -c "
 from pathlib import Path
@@ -18,9 +19,11 @@ if not Path('graphify-out/graph.json').exists():
     raise SystemExit(1)
 "
 ```
+
 If it fails, stop and tell the user to run `/graphify <path>` first.
 
 Prefer the CLI when it is installed:
+
 ```bash
 graphify query "QUESTION"
 # or: graphify query "QUESTION" --dfs --budget 3000

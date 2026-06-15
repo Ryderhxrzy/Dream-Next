@@ -7,13 +7,13 @@ export function BrandCards({ message }: { message: BrandCardsMessage }) {
         <a
           key={i}
           href={card.url}
-          className="flex items-center justify-between bg-white border border-slate-100 rounded-xl px-3.5 py-2.5 shadow-sm hover:shadow-md hover:-translate-y-px transition-all duration-150 no-underline"
+          className="flex items-center justify-between rounded-xl border border-slate-100 bg-white px-3.5 py-2.5 no-underline shadow-sm transition-all duration-150 hover:-translate-y-px hover:shadow-md"
         >
           <span className="text-xs font-semibold text-slate-900">
             {card.name}
           </span>
           {card.count > 0 && (
-            <span className="text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full ml-2 whitespace-nowrap">
+            <span className="ml-2 rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap text-indigo-600">
               {card.count} products
             </span>
           )}
@@ -22,7 +22,7 @@ export function BrandCards({ message }: { message: BrandCardsMessage }) {
       {message.viewAllUrl && (
         <a
           href={message.viewAllUrl}
-          className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:underline mt-1 no-underline"
+          className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 no-underline hover:underline"
         >
           View all brands →
         </a>

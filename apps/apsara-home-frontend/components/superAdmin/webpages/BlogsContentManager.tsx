@@ -2,6 +2,7 @@
 
 import type { FormEvent, ReactNode } from "react"
 import { useEffect, useMemo, useRef, useState } from "react"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import {
   useCreateAdminWebPageItemMutation,
   useDeleteAdminWebPageItemMutation,
@@ -9,7 +10,6 @@ import {
   useUpdateAdminWebPageItemMutation,
   type WebPageItem,
 } from "@/store/api/webPagesApi"
-import { showErrorToast, showSuccessToast } from "@/libs/toast"
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
@@ -147,7 +147,7 @@ function FieldZone({
       }`}
     >
       <span
-        className={`pointer-events-none absolute -top-5 left-0 z-20 whitespace-nowrap rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white transition-opacity ${
+        className={`pointer-events-none absolute -top-5 left-0 z-20 rounded px-1.5 py-0.5 text-[9px] font-bold tracking-wider whitespace-nowrap text-white uppercase transition-opacity ${
           isActive
             ? "bg-cyan-500 opacity-100"
             : "bg-cyan-400 opacity-0 group-hover/fz:opacity-100"
@@ -204,10 +204,10 @@ function CanvasItem({
       }`}
     >
       <span
-        className={`pointer-events-none absolute -right-1 -top-1 z-10 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider shadow-sm transition-opacity ${
+        className={`pointer-events-none absolute -top-1 -right-1 z-10 rounded-full px-2 py-0.5 text-[9px] font-bold tracking-wider uppercase shadow-sm transition-opacity ${
           isSelected
             ? "bg-cyan-500 text-white opacity-100"
-            : "bg-white text-cyan-600 ring-1 ring-cyan-200 opacity-0 group-hover:opacity-100"
+            : "bg-white text-cyan-600 opacity-0 ring-1 ring-cyan-200 group-hover:opacity-100"
         }`}
       >
         {isSelected ? "✎ Editing" : "✎ Edit"}
@@ -248,7 +248,7 @@ function BlogsCanvas({
 
       {/* Section header */}
       <div className="mb-8">
-        <p className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-stone-400">
+        <p className="inline-flex items-center gap-2 text-xs font-medium tracking-widest text-stone-400 uppercase">
           <span className="h-px w-8 bg-stone-300" />
           Blog Posts
         </p>
@@ -297,7 +297,7 @@ function BlogsCanvas({
                 </FieldZone>
                 <div className="p-4">
                   <FieldZone {...fz("category", "Category / Date")}>
-                    <div className="flex flex-wrap gap-1 text-[9px] uppercase tracking-wider text-stone-400">
+                    <div className="flex flex-wrap gap-1 text-[9px] tracking-wider text-stone-400 uppercase">
                       {p.category && <span>{p.category}</span>}
                       {p.date && (
                         <>
@@ -314,7 +314,7 @@ function BlogsCanvas({
                     </div>
                   </FieldZone>
                   <FieldZone {...fz("title", "Title")}>
-                    <h3 className="mt-1.5 text-sm font-semibold leading-snug text-stone-900">
+                    <h3 className="mt-1.5 text-sm leading-snug font-semibold text-stone-900">
                       {item.title}
                     </h3>
                   </FieldZone>
@@ -426,7 +426,7 @@ function EditPanel({
       <div className="shrink-0 border-b border-slate-100 px-5 py-4">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+            <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
               {editTarget ? "Editing" : "New Blog Post"}
             </p>
             {editTarget && (
@@ -555,7 +555,7 @@ function EditPanel({
         </Field>
 
         <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4">
-          <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-cyan-700">
+          <p className="mb-3 text-[10px] font-bold tracking-widest text-cyan-700 uppercase">
             Blog fields
           </p>
           <div className="space-y-3">

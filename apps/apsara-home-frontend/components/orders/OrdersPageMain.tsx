@@ -1,19 +1,21 @@
 "use client"
 
-import { TABS } from "@/types/Data"
-import { usePathname, useRouter } from "next/navigation"
 import { useMemo, useState } from "react"
-import { AnimatePresence, motion } from "framer-motion"
+import type { Category } from "@/store/api/categoriesApi"
+import { useGetCheckoutHistoryQuery } from "@/store/api/paymentApi"
 import { Skeleton } from "@heroui/react/skeleton"
+import { AnimatePresence, motion } from "framer-motion"
+import { useSession } from "next-auth/react"
+import { usePathname, useRouter } from "next/navigation"
+
+import { TABS } from "@/types/Data"
+import Footer from "@/components/landing-page/Footer"
+import Navbar from "@/components/layout/Navbar"
+import TopBar from "@/components/layout/TopBar"
+import TrustBar from "@/components/layout/TrustBar"
+
 import Icon from "./Icons"
 import OrderCard from "./OrderCard"
-import { useSession } from "next-auth/react"
-import { useGetCheckoutHistoryQuery } from "@/store/api/paymentApi"
-import TopBar from "@/components/layout/TopBar"
-import Navbar from "@/components/layout/Navbar"
-import Footer from "@/components/landing-page/Footer"
-import TrustBar from "@/components/layout/TrustBar"
-import type { Category } from "@/store/api/categoriesApi"
 
 type TabKey = (typeof TABS)[number]["key"]
 
@@ -44,9 +46,9 @@ function OrdersPageSkeleton() {
       {Array.from({ length: 4 }).map((_, index) => (
         <div
           key={index}
-          className="rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-gray-800 overflow-hidden"
+          className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-slate-700 dark:bg-gray-800"
         >
-          <div className="flex flex-col gap-4 border-b border-gray-100 dark:border-slate-700 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-4 border-b border-gray-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-slate-700">
             <div className="flex items-center gap-3">
               <Skeleton className="h-9 w-9 rounded-xl" />
               <div className="space-y-2">
@@ -178,14 +180,14 @@ const OrdersPageMain = ({
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
-        className="relative overflow-hidden bg-white dark:bg-gray-950 min-h-screen border-t border-gray-200 dark:border-slate-800"
+        className="relative min-h-screen overflow-hidden border-t border-gray-200 bg-white dark:border-slate-800 dark:bg-gray-950"
       >
         <div className="container mx-auto px-4 py-8 md:py-10">
           {/* HEADER */}
           <div className="mb-7">
             <div className="flex items-end justify-between gap-4">
               <div>
-                <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-white">
+                <h1 className="text-2xl font-extrabold text-gray-900 md:text-3xl dark:text-white">
                   My Orders
                 </h1>
                 <p className="text-gray-600 dark:text-gray-400">
@@ -196,7 +198,7 @@ const OrdersPageMain = ({
                 type="button"
                 onClick={() => router.push("/shop")}
                 suppressHydrationWarning
-                className="inline-flex items-center gap-2 rounded-xl bg-sky-500 dark:bg-sky-600 hover:bg-sky-600 dark:hover:bg-sky-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors whitespace-nowrap"
+                className="inline-flex items-center gap-2 rounded-xl bg-sky-500 px-4 py-2.5 text-sm font-semibold whitespace-nowrap text-white transition-colors hover:bg-sky-600 dark:bg-sky-600 dark:hover:bg-sky-700"
               >
                 <Icon.ShoppingBag className="h-4 w-4" />
                 Shop More
@@ -205,19 +207,19 @@ const OrdersPageMain = ({
           </div>
           {/* SEARCH */}
           <div className="relative mb-5">
-            <Icon.Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
+            <Icon.Search className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by order number or item name..."
-              className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-gray-900 pl-10 pr-4 py-2.5 text-sm text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-200 dark:focus:ring-sky-900/50 focus:border-sky-300 placeholder:text-gray-400 dark:placeholder:text-gray-500"
+              className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pr-4 pl-10 text-sm text-gray-800 placeholder:text-gray-400 focus:border-sky-300 focus:ring-2 focus:ring-sky-200 focus:outline-none dark:border-slate-700 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-sky-900/50"
             />
             {search && (
               <button
                 type="button"
                 onClick={() => setSearch("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400"
+                className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400"
               >
                 <Icon.X className="h-4 w-4" />
               </button>
@@ -225,7 +227,7 @@ const OrdersPageMain = ({
           </div>
 
           {/* TABS */}
-          <div className="mb-5 flex items-center gap-1 overflow-x-auto pb-1 scrollbar-hide">
+          <div className="scrollbar-hide mb-5 flex items-center gap-1 overflow-x-auto pb-1">
             {TABS.map((tab) => {
               const count = tabCounts[tab.key] ?? 0
               const active = activeTab === tab.key
@@ -234,19 +236,19 @@ const OrdersPageMain = ({
                   key={tab.key}
                   type="button"
                   onClick={() => setActiveTab(tab.key)}
-                  className={`flex items-center gap-1.5 whitespace-nowrap rounded-xl px-3.5 py-2 text-sm font-medium transition-all ${
+                  className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-medium whitespace-nowrap transition-all ${
                     active
-                      ? "bg-sky-500 dark:bg-sky-600 text-white"
-                      : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-800 dark:hover:text-gray-200"
+                      ? "bg-sky-500 text-white dark:bg-sky-600"
+                      : "text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
                   }`}
                 >
                   {tab.label}
                   {count > 0 && (
                     <span
-                      className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${
+                      className={`rounded-full px-1.5 py-0.5 text-[11px] font-bold ${
                         active
                           ? "bg-white/20 text-white"
-                          : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+                          : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
                       }`}
                     >
                       {count}
@@ -260,7 +262,7 @@ const OrdersPageMain = ({
             <motion.div
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-4 rounded-2xl border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-900/30 px-4 py-3 text-sm text-sky-800 dark:text-sky-300"
+              className="mb-4 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800 dark:border-sky-800 dark:bg-sky-900/30 dark:text-sky-300"
             >
               Sign in required to view your checkout history.
             </motion.div>
@@ -270,7 +272,7 @@ const OrdersPageMain = ({
             <motion.div
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-4 rounded-2xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 px-4 py-3 text-sm text-red-700 dark:text-red-400"
+              className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400"
             >
               Failed to load your order history.
             </motion.div>
@@ -285,7 +287,7 @@ const OrdersPageMain = ({
                 animate={{ opacity: 1, y: 0 }}
                 className="space-y-4"
               >
-                <div className="rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-gray-800 px-5 py-4">
+                <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4 dark:border-slate-700 dark:bg-gray-800">
                   <Skeleton className="h-4 w-40 rounded" />
                   <Skeleton className="mt-3 h-3 w-64 max-w-full rounded" />
                 </div>
@@ -311,15 +313,15 @@ const OrdersPageMain = ({
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
-                  className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-200 dark:border-slate-700 bg-white dark:bg-gray-800 py-16 text-center"
+                  className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-white py-16 text-center dark:border-slate-700 dark:bg-gray-800"
                 >
-                  <div className="h-16 w-16 rounded-2xl bg-sky-50 dark:bg-sky-900/30 text-sky-300 dark:text-sky-500 flex items-center justify-center mb-4">
+                  <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-sky-50 text-sky-300 dark:bg-sky-900/30 dark:text-sky-500">
                     <Icon.Package className="h-8 w-8" />
                   </div>
                   <p className="text-base font-bold text-gray-800 dark:text-white">
                     No orders
                   </p>
-                  <p className="mt-1 text-sm text-gray-400 dark:text-gray-500 max-w-xs">
+                  <p className="mt-1 max-w-xs text-sm text-gray-400 dark:text-gray-500">
                     {search
                       ? `No results for ${search}. Try a different keyword.`
                       : "You don't have any orders in this category yet."}
@@ -335,7 +337,7 @@ const OrdersPageMain = ({
                           : `/login?callback=${encodeURIComponent(pathname || "/orders")}`
                       )
                     }}
-                    className="mt-5 inline-flex items-center gap-2 rounded-xl bg-sky-500 dark:bg-sky-600 hover:bg-sky-600 dark:hover:bg-sky-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
+                    className="mt-5 inline-flex items-center gap-2 rounded-xl bg-sky-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-sky-600 dark:bg-sky-600 dark:hover:bg-sky-700"
                   >
                     <Icon.ShoppingBag className="h-4 w-4" />
                     {authStatus === "authenticated"

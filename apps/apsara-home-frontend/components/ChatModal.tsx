@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useEffect, useRef, useState } from "react"
 import { motion } from "framer-motion"
 
 interface Message {
@@ -474,16 +474,16 @@ export default function ChatModal({ onClose }: { onClose: () => void }) {
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.9, y: 20 }}
       transition={{ duration: 0.2 }}
-      className="fixed bottom-24 right-6 z-[99] w-96 max-h-[600px] rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-2xl dark:shadow-black/50 overflow-hidden flex flex-col"
+      className="fixed right-6 bottom-24 z-[99] flex max-h-[600px] w-96 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800 dark:shadow-black/50"
       onClick={(e) => e.stopPropagation()}
     >
       {/* Header */}
-      <div className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-orange-50 to-white dark:from-orange-950/20 dark:to-gray-800 px-5 py-4 flex items-start justify-between shrink-0">
-        <div className="flex items-center gap-3 flex-1">
+      <div className="flex shrink-0 items-start justify-between border-b border-gray-200 bg-gradient-to-r from-orange-50 to-white px-5 py-4 dark:border-gray-700 dark:from-orange-950/20 dark:to-gray-800">
+        <div className="flex flex-1 items-center gap-3">
           {(step === "chat" || step === "form") && (
             <button
               onClick={handleGoBack}
-              className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
+              className="text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
               title="Back"
             >
               <svg
@@ -516,7 +516,7 @@ export default function ChatModal({ onClose }: { onClose: () => void }) {
         </div>
         <button
           onClick={onClose}
-          className="ml-4 flex-shrink-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+          className="ml-4 flex-shrink-0 text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           aria-label="Close"
         >
           <svg
@@ -537,13 +537,13 @@ export default function ChatModal({ onClose }: { onClose: () => void }) {
 
       {/* Conversations List Step */}
       {step === "list" && (
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex flex-1 flex-col overflow-hidden">
           {isLoadingConversations ? (
-            <div className="flex-1 flex items-center justify-center">
+            <div className="flex flex-1 items-center justify-center">
               <div className="text-center">
-                <div className="animate-spin mb-3">
+                <div className="mb-3 animate-spin">
                   <svg
-                    className="h-8 w-8 text-orange-500 mx-auto"
+                    className="mx-auto h-8 w-8 text-orange-500"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -562,9 +562,9 @@ export default function ChatModal({ onClose }: { onClose: () => void }) {
               </div>
             </div>
           ) : conversations.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center p-4 text-center">
+            <div className="flex flex-1 flex-col items-center justify-center p-4 text-center">
               <svg
-                className="h-12 w-12 text-gray-300 dark:text-gray-600 mb-3"
+                className="mb-3 h-12 w-12 text-gray-300 dark:text-gray-600"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -576,36 +576,36 @@ export default function ChatModal({ onClose }: { onClose: () => void }) {
                   d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
                 />
               </svg>
-              <p className="text-gray-600 dark:text-gray-400 font-semibold mb-1">
+              <p className="mb-1 font-semibold text-gray-600 dark:text-gray-400">
                 No conversations yet
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-500 mb-4">
+              <p className="mb-4 text-xs text-gray-500 dark:text-gray-500">
                 Start a new chat to get help
               </p>
               <button
                 onClick={handleStartNewChat}
-                className="rounded-lg bg-orange-500 text-white font-semibold py-2 px-4 hover:bg-orange-600 transition-colors text-sm"
+                className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-600"
               >
                 Start New Chat
               </button>
             </div>
           ) : (
             <>
-              <div className="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700">
+              <div className="flex-1 divide-y divide-gray-100 overflow-y-auto dark:divide-gray-700">
                 {conversations.map((conversation) => (
                   <motion.button
                     key={conversation.id}
                     onClick={() => handleSelectConversation(conversation)}
-                    className="w-full px-4 py-3 flex flex-col gap-2 transition-colors text-left hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                    className="flex w-full flex-col gap-2 px-4 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50"
                     whileHover={{ backgroundColor: "rgba(0,0,0,0.05)" }}
                   >
-                    <p className="font-semibold text-gray-900 dark:text-white text-sm">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
                       {conversation.subject}
                     </p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+                    <p className="line-clamp-2 text-xs text-gray-600 dark:text-gray-400">
                       {conversation.description}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-500">
                       {new Date(conversation.created_at).toLocaleDateString(
                         "en-PH"
                       )}
@@ -613,13 +613,13 @@ export default function ChatModal({ onClose }: { onClose: () => void }) {
                   </motion.button>
                 ))}
               </div>
-              <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shrink-0">
+              <div className="shrink-0 border-t border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
                 <button
                   onClick={handleStartNewChat}
-                  className="w-full rounded-lg bg-orange-500 text-white font-semibold py-2.5 hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-orange-500 py-2.5 font-semibold text-white transition-colors hover:bg-orange-600"
                 >
                   <svg
-                    className="w-4 h-4"
+                    className="h-4 w-4"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -643,13 +643,13 @@ export default function ChatModal({ onClose }: { onClose: () => void }) {
       {step === "form" && (
         <form
           onSubmit={handleFormSubmit}
-          className="flex-1 flex flex-col overflow-hidden"
+          className="flex flex-1 flex-col overflow-hidden"
         >
           {/* Ticket Information */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 space-y-4 overflow-y-auto p-4">
             {/* Subject Field */}
             <div>
-              <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+              <label className="mb-2 block text-sm font-semibold text-gray-900 dark:text-white">
                 Subject *
               </label>
               <input
@@ -665,7 +665,7 @@ export default function ChatModal({ onClose }: { onClose: () => void }) {
                   formErrors.subject
                     ? "border-red-500"
                     : "border-gray-200 dark:border-gray-700"
-                } bg-gray-50 dark:bg-gray-700 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-400/30 transition-all`}
+                } bg-gray-50 px-4 py-2.5 text-sm text-gray-900 transition-all placeholder:text-gray-500 focus:border-orange-400 focus:ring-2 focus:ring-orange-400/30 focus:outline-none dark:bg-gray-700 dark:text-gray-100 dark:placeholder:text-gray-400`}
               />
               {formErrors.subject && (
                 <p className="mt-1 text-xs text-red-500">
@@ -676,7 +676,7 @@ export default function ChatModal({ onClose }: { onClose: () => void }) {
 
             {/* Description Field */}
             <div>
-              <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+              <label className="mb-2 block text-sm font-semibold text-gray-900 dark:text-white">
                 Description *
               </label>
               <textarea
@@ -698,7 +698,7 @@ export default function ChatModal({ onClose }: { onClose: () => void }) {
                   formErrors.description
                     ? "border-red-500"
                     : "border-gray-200 dark:border-gray-700"
-                } bg-gray-50 dark:bg-gray-700 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-400/30 transition-all resize-none`}
+                } resize-none bg-gray-50 px-4 py-2.5 text-sm text-gray-900 transition-all placeholder:text-gray-500 focus:border-orange-400 focus:ring-2 focus:ring-orange-400/30 focus:outline-none dark:bg-gray-700 dark:text-gray-100 dark:placeholder:text-gray-400`}
               />
               {formErrors.description && (
                 <p className="mt-1 text-xs text-red-500">
@@ -707,7 +707,7 @@ export default function ChatModal({ onClose }: { onClose: () => void }) {
               )}
             </div>
 
-            <div className="rounded-lg border border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-900/20 p-3">
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-900/50 dark:bg-blue-900/20">
               <p className="text-xs text-blue-800 dark:text-blue-300">
                 <span className="font-semibold">💡 Tip:</span> Providing
                 detailed information helps us resolve your issue faster.
@@ -716,13 +716,13 @@ export default function ChatModal({ onClose }: { onClose: () => void }) {
           </div>
 
           {/* Submit Button */}
-          <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shrink-0">
+          <div className="shrink-0 border-t border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
             <button
               type="submit"
-              className="w-full rounded-lg bg-orange-500 text-white font-semibold py-2.5 hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-orange-500 py-2.5 font-semibold text-white transition-colors hover:bg-orange-600"
             >
               <svg
-                className="w-4 h-4"
+                className="h-4 w-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -744,24 +744,24 @@ export default function ChatModal({ onClose }: { onClose: () => void }) {
         <>
           {/* Conversation Info */}
           {chatContext.subject && (
-            <div className="px-5 py-3 bg-orange-50 dark:bg-orange-900/20 border-b border-gray-200 dark:border-gray-700 shrink-0">
+            <div className="shrink-0 border-b border-gray-200 bg-orange-50 px-5 py-3 dark:border-gray-700 dark:bg-orange-900/20">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 {chatContext.subject}
               </p>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+              <p className="mt-1 line-clamp-2 text-xs text-gray-600 dark:text-gray-400">
                 {chatContext.description}
               </p>
             </div>
           )}
 
           {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50 dark:bg-gray-900/30">
+          <div className="flex-1 space-y-3 overflow-y-auto bg-gray-50 p-4 dark:bg-gray-900/30">
             {isLoadingMessages ? (
-              <div className="flex items-center justify-center h-full">
+              <div className="flex h-full items-center justify-center">
                 <div className="text-center">
-                  <div className="animate-spin mb-3">
+                  <div className="mb-3 animate-spin">
                     <svg
-                      className="h-8 w-8 text-orange-500 mx-auto"
+                      className="mx-auto h-8 w-8 text-orange-500"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -780,7 +780,7 @@ export default function ChatModal({ onClose }: { onClose: () => void }) {
                 </div>
               </div>
             ) : messages.length === 0 ? (
-              <div className="flex items-center justify-center h-full">
+              <div className="flex h-full items-center justify-center">
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   No messages yet. Start the conversation!
                 </p>
@@ -798,20 +798,20 @@ export default function ChatModal({ onClose }: { onClose: () => void }) {
                     className={`max-w-xs ${message.type === "user" ? "" : "flex flex-col gap-1"}`}
                   >
                     {message.type === "agent" && message.agentName && (
-                      <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 px-2">
+                      <p className="px-2 text-xs font-semibold text-gray-600 dark:text-gray-400">
                         {message.agentName}
                       </p>
                     )}
                     <div
-                      className={`px-4 py-2 rounded-lg ${
+                      className={`rounded-lg px-4 py-2 ${
                         message.type === "user"
-                          ? "bg-orange-500 text-white rounded-br-none"
-                          : "bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-600 rounded-bl-none"
+                          ? "rounded-br-none bg-orange-500 text-white"
+                          : "rounded-bl-none border border-gray-200 bg-white text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                       }`}
                     >
                       <p className="text-sm">{message.text}</p>
                       <p
-                        className={`text-xs mt-1 ${message.type === "user" ? "text-orange-100" : "text-gray-500 dark:text-gray-400"}`}
+                        className={`mt-1 text-xs ${message.type === "user" ? "text-orange-100" : "text-gray-500 dark:text-gray-400"}`}
                       >
                         {formatTime(message.timestamp)}
                       </p>
@@ -823,15 +823,15 @@ export default function ChatModal({ onClose }: { onClose: () => void }) {
 
             {isTyping && (
               <div className="flex justify-start">
-                <div className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-600 px-4 py-2 rounded-lg rounded-bl-none">
+                <div className="rounded-lg rounded-bl-none border border-gray-200 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100">
                   <div className="flex space-x-2">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
+                    <div className="h-2 w-2 animate-bounce rounded-full bg-gray-400" />
                     <div
-                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                      className="h-2 w-2 animate-bounce rounded-full bg-gray-400"
                       style={{ animationDelay: "0.1s" }}
                     />
                     <div
-                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                      className="h-2 w-2 animate-bounce rounded-full bg-gray-400"
                       style={{ animationDelay: "0.2s" }}
                     />
                   </div>
@@ -843,19 +843,19 @@ export default function ChatModal({ onClose }: { onClose: () => void }) {
           </div>
 
           {/* Input Area */}
-          <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shrink-0">
+          <div className="shrink-0 border-t border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
             <form onSubmit={handleSendMessage} className="flex gap-2">
               <input
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Type your message..."
-                className="flex-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 px-4 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-400/30 transition-all"
+                className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-sm text-gray-900 transition-all placeholder:text-gray-500 focus:border-orange-400 focus:ring-2 focus:ring-orange-400/30 focus:outline-none dark:border-gray-700 dark:bg-gray-700 dark:text-gray-100 dark:placeholder:text-gray-400"
               />
               <button
                 type="submit"
                 disabled={!inputValue.trim() || isTyping || isSendingMessage}
-                className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500 text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
                 title="Send message"
               >
                 <svg

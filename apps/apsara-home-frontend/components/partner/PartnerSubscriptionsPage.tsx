@@ -1,30 +1,30 @@
 "use client"
 
-import { useState, useMemo, useEffect, useCallback } from "react"
-import { AnimatePresence, motion } from "framer-motion"
-import { useSearchParams } from "next/navigation"
-import {
-  RefreshCcw,
-  AlertTriangle,
-  ZoomIn,
-  Trash2,
-  FileText,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  Receipt,
-  ClipboardList,
-  CheckCircle2,
-  XCircle,
-  Wallet,
-} from "lucide-react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
-import { useGetAdminWebPageItemsQuery } from "@/store/api/webPagesApi"
 import {
-  useGetPartnerWebstoreRequestsQuery,
   useDeletePartnerWebstoreReceiptItemMutation,
+  useGetPartnerWebstoreRequestsQuery,
   type AdminWebstoreRequest,
 } from "@/store/api/adminInquiriesApi"
+import { useGetAdminWebPageItemsQuery } from "@/store/api/webPagesApi"
+import { AnimatePresence, motion } from "framer-motion"
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  FileText,
+  Receipt,
+  RefreshCcw,
+  Trash2,
+  Wallet,
+  X,
+  XCircle,
+  ZoomIn,
+} from "lucide-react"
+import { useSearchParams } from "next/navigation"
 
 const money = new Intl.NumberFormat("en-PH", {
   style: "currency",
@@ -343,7 +343,7 @@ function ReceiptThumb({
       <button
         type="button"
         onClick={() => onZoom((urls?.filter(Boolean) as string[]) ?? [])}
-        className="absolute bottom-0.5 right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-white/90 shadow hover:bg-white"
+        className="absolute right-0.5 bottom-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-white/90 shadow hover:bg-white"
       >
         <ZoomIn className="h-2.5 w-2.5 text-slate-600" />
       </button>
@@ -461,7 +461,7 @@ function ReceiptPreviewModal({
               <button
                 type="button"
                 onClick={prev}
-                className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-md transition hover:bg-white hover:shadow-lg"
+                className="absolute top-1/2 left-3 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow-md transition hover:bg-white hover:shadow-lg"
                 aria-label="Previous receipt"
               >
                 <ChevronLeft className="h-5 w-5 text-slate-700" />
@@ -469,7 +469,7 @@ function ReceiptPreviewModal({
               <button
                 type="button"
                 onClick={next}
-                className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-md transition hover:bg-white hover:shadow-lg"
+                className="absolute top-1/2 right-3 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow-md transition hover:bg-white hover:shadow-lg"
                 aria-label="Next receipt"
               >
                 <ChevronRight className="h-5 w-5 text-slate-700" />
@@ -489,7 +489,7 @@ function ReceiptPreviewModal({
                   setDirection(i > idx ? 1 : -1)
                   setIdx(i)
                 }}
-                className={`h-2 w-2 rounded-full transition ${i === idx ? "bg-indigo-500 w-4" : "bg-slate-300 hover:bg-slate-400"}`}
+                className={`h-2 w-2 rounded-full transition ${i === idx ? "w-4 bg-indigo-500" : "bg-slate-300 hover:bg-slate-400"}`}
               />
             ))}
           </div>
@@ -751,7 +751,7 @@ export default function PartnerSubscriptionsPage() {
               <Receipt className="h-7 w-7 text-indigo-600" />
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-indigo-500">
+              <p className="text-[10px] font-bold tracking-[0.18em] text-indigo-500 uppercase">
                 Subscription Transactions
               </p>
               <h1 className="mt-0.5 text-xl font-extrabold tracking-tight text-slate-900">
@@ -779,7 +779,7 @@ export default function PartnerSubscriptionsPage() {
           </button>
         </div>
         {/* Decorative right-side wave */}
-        <div className="pointer-events-none absolute right-0 top-0 h-full w-56 overflow-hidden rounded-r-2xl opacity-40">
+        <div className="pointer-events-none absolute top-0 right-0 h-full w-56 overflow-hidden rounded-r-2xl opacity-40">
           <svg
             viewBox="0 0 220 100"
             className="h-full w-full"
@@ -815,7 +815,7 @@ export default function PartnerSubscriptionsPage() {
               <ClipboardList className="h-5 w-5 text-violet-500" />
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                 Total
               </p>
               <p className="mt-0.5 text-3xl font-black text-slate-900">
@@ -855,7 +855,7 @@ export default function PartnerSubscriptionsPage() {
               <CheckCircle2 className="h-5 w-5 text-emerald-500" />
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                 Approved
               </p>
               <p className="mt-0.5 text-3xl font-black text-emerald-600">
@@ -895,7 +895,7 @@ export default function PartnerSubscriptionsPage() {
               <XCircle className="h-5 w-5 text-rose-500" />
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                 Rejected
               </p>
               <p className="mt-0.5 text-3xl font-black text-rose-500">
@@ -935,7 +935,7 @@ export default function PartnerSubscriptionsPage() {
               <Wallet className="h-5 w-5 text-indigo-600" />
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                 Total Paid
               </p>
               <p className="mt-0.5 text-2xl font-black text-indigo-700">
@@ -1016,7 +1016,7 @@ export default function PartnerSubscriptionsPage() {
                   {COLS.map((col) => (
                     <th
                       key={col}
-                      className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400"
+                      className="px-4 py-3 text-left text-[10px] font-bold tracking-[0.15em] text-slate-400 uppercase"
                     >
                       {col}
                     </th>

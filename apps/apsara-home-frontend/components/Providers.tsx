@@ -1,20 +1,21 @@
 "use client"
 
-import { AnimatePresence, motion } from "framer-motion"
+import { useEffect, useState } from "react"
 import { CartProvider } from "@/context/CartContext"
 import { WishlistProvider } from "@/context/WishlistContext"
-import CartDrawer from "@/components/ui/CartDrawer"
-import WishlistDrawer from "@/components/ui/WishlistDrawer"
-import { Provider as ReduxProvider } from "react-redux"
+import { useMeQuery } from "@/store/api/userApi"
+import { store } from "@/store/store"
+import { AnimatePresence, motion } from "framer-motion"
 import { SessionProvider, signOut, useSession } from "next-auth/react"
 import { ThemeProvider } from "next-themes"
-import { store } from "@/store/store"
 import { Toaster } from "react-hot-toast"
-import { useMeQuery } from "@/store/api/userApi"
-import { useEffect, useState } from "react"
+import { Provider as ReduxProvider } from "react-redux"
+
 import { useAccountDeletedListener } from "@/hooks/useAccountDeletedListener"
-import AdsPopup from "@/components/shop/AdsPopup"
 import { useEchoSetup } from "@/hooks/useEchoSetup"
+import CartDrawer from "@/components/ui/CartDrawer"
+import WishlistDrawer from "@/components/ui/WishlistDrawer"
+import AdsPopup from "@/components/shop/AdsPopup"
 
 function CustomerSessionGuard() {
   const { data: session, status } = useSession()
@@ -75,7 +76,7 @@ function CustomerBannedOverlay() {
                   />
                 </svg>
               </div>
-              <p className="mt-6 text-[11px] font-bold uppercase tracking-[0.24em] text-rose-300">
+              <p className="mt-6 text-[11px] font-bold tracking-[0.24em] text-rose-300 uppercase">
                 Account Restricted
               </p>
               <h3 className="mt-3 text-2xl font-bold text-white">
@@ -154,7 +155,7 @@ function CustomerDeletedOverlay() {
                   />
                 </svg>
               </div>
-              <p className="mt-6 text-[11px] font-bold uppercase tracking-[0.24em] text-amber-300">
+              <p className="mt-6 text-[11px] font-bold tracking-[0.24em] text-amber-300 uppercase">
                 Account Removed
               </p>
               <h3 className="mt-3 text-2xl font-bold text-white">

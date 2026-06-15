@@ -1,26 +1,22 @@
 ﻿"use client"
 
 import type { ReactNode } from "react"
-import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react"
-import Link from "next/link"
-import { useSession } from "next-auth/react"
-import { showErrorToast, showSuccessToast } from "@/libs/toast"
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react"
 import {
   buildPartnerStorefrontPublicUrl,
   getPartnerStorefrontConfig,
 } from "@/libs/partnerStorefront"
-import { Loader2, Trash2 } from "lucide-react"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
-import {
-  type Product,
-  useLazyGetProductsQuery,
-  useLazyGetPublicProductQuery,
-} from "@/store/api/productsApi"
 import {
   useDeletePartnerUserMutation,
   useGetPartnerUsersQuery,
 } from "@/store/api/partnerUsersApi"
-
+import {
+  useLazyGetProductsQuery,
+  useLazyGetPublicProductQuery,
+  type Product,
+} from "@/store/api/productsApi"
 import {
   useCreateAdminWebPageItemMutation,
   useDeleteAdminWebPageItemMutation,
@@ -28,6 +24,9 @@ import {
   useUpdateAdminWebPageItemMutation,
   type WebPageItem,
 } from "@/store/api/webPagesApi"
+import { Loader2, Trash2 } from "lucide-react"
+import { useSession } from "next-auth/react"
+import Link from "next/link"
 
 type DraftState = {
   id?: number
@@ -1478,7 +1477,7 @@ export default function PartnerStorefrontStudio() {
   const saving = isCreating || isUpdating || isDeleting || isDeletingPartnerUser
 
   return (
-    <div className="flex flex-col gap-5 lg:flex-row lg:items-start text-slate-900 dark:text-slate-100">
+    <div className="flex flex-col gap-5 text-slate-900 lg:flex-row lg:items-start dark:text-slate-100">
       {/* Delete modal */}
       {deleteModal.open ? (
         <div
@@ -1530,11 +1529,11 @@ export default function PartnerStorefrontStudio() {
       ) : null}
 
       {/* Sidebar */}
-      <aside className="lg:w-[290px] lg:shrink-0 space-y-3">
+      <aside className="space-y-3 lg:w-[290px] lg:shrink-0">
         <div className="rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-500 p-5 text-white shadow-lg shadow-emerald-900/20">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">
+              <p className="text-[10px] font-bold tracking-widest uppercase opacity-70">
                 Partner
               </p>
               <h1 className="mt-0.5 text-2xl font-bold tracking-tight">
@@ -1559,11 +1558,11 @@ export default function PartnerStorefrontStudio() {
 
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <p className="text-[11px] font-bold tracking-wider text-slate-400 uppercase dark:text-slate-500">
               Your Storefronts
             </p>
           </div>
-          <div className="max-h-[560px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="max-h-[560px] [scrollbar-width:none] divide-y divide-slate-100 overflow-y-auto dark:divide-slate-800 [&::-webkit-scrollbar]:hidden">
             {storefronts.length === 0 ? (
               <p className="p-5 text-sm text-slate-400 dark:text-slate-500">
                 {hasSpecificStorefrontIds
@@ -1604,7 +1603,7 @@ export default function PartnerStorefrontStudio() {
                           {config.displayName}
                         </p>
                         {active ? (
-                          <span className="shrink-0 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                          <span className="shrink-0 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-emerald-700 uppercase dark:bg-emerald-900/40 dark:text-emerald-300">
                             Selected
                           </span>
                         ) : null}
@@ -1626,7 +1625,7 @@ export default function PartnerStorefrontStudio() {
                           <label className="relative inline-flex cursor-pointer items-center">
                             <input
                               type="checkbox"
-                              className="sr-only peer"
+                              className="peer sr-only"
                               checked={isDiscountEnabled}
                               onChange={() => {
                                 const next = !isDiscountEnabled
@@ -1696,7 +1695,7 @@ export default function PartnerStorefrontStudio() {
                               className={`peer h-5 w-9 rounded-full border transition ${isDiscountEnabled ? "!border-emerald-500 !bg-emerald-500" : "border-slate-200 bg-slate-300 dark:border-slate-600 dark:bg-slate-700"}`}
                             />
                             <div
-                              className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${isDiscountEnabled ? "translate-x-4" : "translate-x-0"}`}
+                              className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${isDiscountEnabled ? "translate-x-4" : "translate-x-0"}`}
                             />
                           </label>
                         </div>
@@ -1912,7 +1911,7 @@ export default function PartnerStorefrontStudio() {
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 {/* Logo */}
                 <div className="space-y-2 xl:col-span-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                  <p className="text-[11px] font-semibold tracking-[0.18em] text-slate-500 uppercase dark:text-slate-400">
                     Logo
                   </p>
                   <div className={softCardClass}>
@@ -1976,7 +1975,7 @@ export default function PartnerStorefrontStudio() {
 
                 {/* Tab Logo */}
                 <div className="space-y-2 xl:col-span-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                  <p className="text-[11px] font-semibold tracking-[0.18em] text-slate-500 uppercase dark:text-slate-400">
                     Browser Tab Logo
                   </p>
                   <div className={softCardClass}>
@@ -2040,7 +2039,7 @@ export default function PartnerStorefrontStudio() {
 
                 {/* Hero Video */}
                 <div className="space-y-2 sm:col-span-2 xl:col-span-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                  <p className="text-[11px] font-semibold tracking-[0.18em] text-slate-500 uppercase dark:text-slate-400">
                     Hero Video
                   </p>
                   <div className={softCardClass}>
@@ -2092,7 +2091,7 @@ export default function PartnerStorefrontStudio() {
                         src={draft.heroVideoUrl}
                         controls
                         preload="metadata"
-                        className="mt-3 w-full max-h-56 rounded-xl border border-slate-200 bg-slate-900 dark:border-slate-700"
+                        className="mt-3 max-h-56 w-full rounded-xl border border-slate-200 bg-slate-900 dark:border-slate-700"
                       />
                     ) : null}
                   </div>
@@ -2105,7 +2104,7 @@ export default function PartnerStorefrontStudio() {
                 Referral Link
               </h3>
               <div className="space-y-2">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                <p className="text-[11px] font-semibold tracking-[0.18em] text-slate-500 uppercase dark:text-slate-400">
                   Referral Link
                 </p>
                 <input
@@ -2150,7 +2149,7 @@ export default function PartnerStorefrontStudio() {
                 Shop URL
               </h3>
               <div className="space-y-2">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                <p className="text-[11px] font-semibold tracking-[0.18em] text-slate-500 uppercase dark:text-slate-400">
                   Shop URL
                 </p>
                 <input
@@ -2202,7 +2201,7 @@ export default function PartnerStorefrontStudio() {
                 Domain Link(optional)
               </h3>
               <div className="space-y-2">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                <p className="text-[11px] font-semibold tracking-[0.18em] text-slate-500 uppercase dark:text-slate-400">
                   Domain Link
                 </p>
                 <input
@@ -2479,7 +2478,7 @@ export default function PartnerStorefrontStudio() {
                     onClick={() => toggleCategory(category.id)}
                     className={[
                       "group relative flex items-center justify-between gap-3 rounded-2xl border px-4 py-4 text-left transition",
-                      "focus:outline-none focus:ring-4 focus:ring-slate-200/70 dark:focus:ring-slate-700/40",
+                      "focus:ring-4 focus:ring-slate-200/70 focus:outline-none dark:focus:ring-slate-700/40",
                       active
                         ? "border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-900/40"
                         : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900/20 dark:hover:border-slate-600",
@@ -2547,7 +2546,7 @@ export default function PartnerStorefrontStudio() {
                 </p>
               </div>
               <label className="mt-3 block">
-                <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                <span className="mb-1 block text-[11px] font-semibold tracking-wider text-slate-400 uppercase dark:text-slate-500">
                   Category
                 </span>
                 <select
@@ -2595,7 +2594,7 @@ export default function PartnerStorefrontStudio() {
                       onClick={() => toggleFeaturedProduct(product.id)}
                       className={`relative w-full rounded-2xl border px-4 py-3 text-left transition ${isFeatured ? "border-emerald-300 bg-emerald-50/60 dark:border-emerald-700/70 dark:bg-emerald-900/20" : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-slate-600 dark:hover:bg-slate-800/60"}`}
                     >
-                      <span className="absolute right-3 top-3.5">
+                      <span className="absolute top-3.5 right-3">
                         <input
                           type="checkbox"
                           checked={isFeatured}
@@ -2613,13 +2612,13 @@ export default function PartnerStorefrontStudio() {
                               className="h-full w-full object-cover"
                             />
                           ) : (
-                            <div className="flex h-full w-full items-center justify-center text-xs font-semibold uppercase text-slate-400 dark:text-slate-500">
+                            <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-slate-400 uppercase dark:text-slate-500">
                               No Image
                             </div>
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="line-clamp-2 text-sm font-semibold leading-snug text-slate-900 dark:text-slate-100">
+                          <p className="line-clamp-2 text-sm leading-snug font-semibold text-slate-900 dark:text-slate-100">
                             {product.name}
                           </p>
                           <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
@@ -2663,7 +2662,7 @@ export default function PartnerStorefrontStudio() {
                 </span>
               </div>
               <label className="mt-3 block">
-                <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                <span className="mb-1 block text-[11px] font-semibold tracking-wider text-slate-400 uppercase dark:text-slate-500">
                   Filter Category
                 </span>
                 <select
@@ -2713,7 +2712,7 @@ export default function PartnerStorefrontStudio() {
                             className="h-full w-full object-cover"
                           />
                         ) : (
-                          <div className="flex h-full w-full items-center justify-center text-[9px] font-semibold uppercase text-slate-400 dark:text-slate-500">
+                          <div className="flex h-full w-full items-center justify-center text-[9px] font-semibold text-slate-400 uppercase dark:text-slate-500">
                             No Image
                           </div>
                         )}
@@ -2788,7 +2787,7 @@ function Field({
 }) {
   return (
     <label className={`block ${className}`}>
-      <span className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+      <span className="mb-3 block text-[11px] font-semibold tracking-[0.18em] text-slate-500 uppercase dark:text-slate-400">
         {label}
       </span>
       {children}

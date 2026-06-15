@@ -7,6 +7,7 @@ import {
   useGetAdminWebPageItemsQuery,
   useUpdateAdminWebPageItemMutation,
 } from "@/store/api/webPagesApi"
+
 import RichTextEditor from "@/components/ui/RichTextEditor"
 
 type TermsVariant = "general" | "webstore"
@@ -121,7 +122,7 @@ export default function AdminTermsConditionSettingsPageMain() {
           <select
             value={variant}
             onChange={(event) => setVariant(event.target.value as TermsVariant)}
-            className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-sky-900/35"
+            className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 transition outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-sky-900/35"
           >
             <option value="general">General</option>
             <option value="webstore">Webstore</option>
@@ -134,7 +135,7 @@ export default function AdminTermsConditionSettingsPageMain() {
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
-            className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-sky-900/35"
+            className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 transition outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-sky-900/35"
             placeholder="Terms and Conditions"
           />
         </div>

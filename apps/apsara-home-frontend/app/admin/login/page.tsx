@@ -1,3 +1,4 @@
+import AdminLoginForm from "@/components/admin/auth/AdminLoginForm"
 import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
@@ -6,8 +7,6 @@ export const metadata = buildPageMetadata({
   path: "/admin/login",
   noIndex: true,
 })
-
-import AdminLoginForm from "@/components/admin/auth/AdminLoginForm"
 
 export default function AdminLoginPage() {
   const turnstileSiteKey = process.env.ADMIN_LOGIN_CLOUDFLARE_SITE_KEY ?? ""

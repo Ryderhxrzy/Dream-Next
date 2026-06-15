@@ -1,4 +1,5 @@
 import Image from "next/image"
+
 import LegalPageShell from "@/components/legal/LegalPageShell"
 
 const stats = [
@@ -56,7 +57,7 @@ export default function AboutUsPage() {
               <div className="mb-4">
                 <AccentPill>AF Home • Crafted living</AccentPill>
               </div>
-              <h1 className="text-center text-4xl font-bold leading-tight text-white sm:text-5xl">
+              <h1 className="text-center text-4xl leading-tight font-bold text-white sm:text-5xl">
                 Designing Spaces for Everyday Joy
               </h1>
               <p className="mx-auto mt-4 max-w-3xl text-center text-base text-white/90 sm:text-lg">
@@ -79,7 +80,7 @@ export default function AboutUsPage() {
       </section>
 
       {/* About */}
-      <section className="mx-auto mt-12 grid gap-8 md:grid-cols-2 max-w-6xl">
+      <section className="mx-auto mt-12 grid max-w-6xl gap-8 md:grid-cols-2">
         <div className="space-y-4">
           <h2 className="text-3xl font-semibold text-slate-900 dark:text-white">
             About AF Home

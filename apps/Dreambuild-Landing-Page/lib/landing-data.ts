@@ -5,13 +5,13 @@ export const navigation = [
   { label: "Blogs", href: "/blogs" },
   { label: "Process", href: "#process" },
   { label: "Contact", href: "#contact" },
-];
+]
 
 export const stats = [
   { value: "150+", label: "interior concepts explored" },
   { value: "48", label: "spaces designed and styled" },
   { value: "10", label: "signature palette directions" },
-];
+]
 
 export const services = [
   {
@@ -53,7 +53,7 @@ export const services = [
     accent: "from-[#ddd1c6] via-[#f8f5f1] to-[#eee5db]",
     panel: "from-[#baa797] via-[#ded3c8] to-[#faf7f2]",
   },
-];
+]
 
 export const projects = [
   {
@@ -76,7 +76,7 @@ export const projects = [
     tag: "Living and Dining",
     size: "tall",
   },
-];
+]
 
 export const galleryItems = [
   { title: "Living Room Styling", tone: "dark" },
@@ -85,7 +85,7 @@ export const galleryItems = [
   { title: "Modern Kitchen Detail", tone: "soft" },
   { title: "Lounge Accent Composition", tone: "dark" },
   { title: "Warm Neutral Interior", tone: "light" },
-];
+]
 
 export const processSteps = [
   {
@@ -103,7 +103,7 @@ export const processSteps = [
     description:
       "Selections are organized into a presentation-ready design system that supports implementation with clarity.",
   },
-];
+]
 
 export const testimonials = [
   {
@@ -118,7 +118,7 @@ export const testimonials = [
     quote:
       "They translated our vague ideas into something polished and cohesive. The material palette alone changed the whole mood.",
   },
-];
+]
 
 export const blogPosts = [
   {
@@ -139,18 +139,15 @@ export const blogPosts = [
     sections: [
       {
         title: "Start With The Anchor",
-        body:
-          "Choose one dominant material story first: oak, walnut, rattan, linen, or warm stone. Repeating that story makes the space feel intentional instead of randomly decorated.",
+        body: "Choose one dominant material story first: oak, walnut, rattan, linen, or warm stone. Repeating that story makes the space feel intentional instead of randomly decorated.",
       },
       {
         title: "Layer Texture Before Color",
-        body:
-          "Warm modern rooms do not need many colors. They need matte, woven, brushed, and soft surfaces working together so neutral pieces still feel dimensional.",
+        body: "Warm modern rooms do not need many colors. They need matte, woven, brushed, and soft surfaces working together so neutral pieces still feel dimensional.",
       },
       {
         title: "Keep The Layout Conversational",
-        body:
-          "Pull seating away from the walls when possible, keep paths clear, and let the coffee table connect the main pieces without crowding the center.",
+        body: "Pull seating away from the walls when possible, keep paths clear, and let the coffee table connect the main pieces without crowding the center.",
       },
     ],
     faq: [
@@ -184,18 +181,15 @@ export const blogPosts = [
     sections: [
       {
         title: "Edit The Finish Palette",
-        body:
-          "Limit the room to two main finishes and one accent. This creates visual calm and helps inexpensive pieces feel more curated.",
+        body: "Limit the room to two main finishes and one accent. This creates visual calm and helps inexpensive pieces feel more curated.",
       },
       {
         title: "Use Height For Storage",
-        body:
-          "Tall cabinets, floating shelves, and vertical wall details draw the eye upward while keeping the floor open.",
+        body: "Tall cabinets, floating shelves, and vertical wall details draw the eye upward while keeping the floor open.",
       },
       {
         title: "Make Utility Look Intentional",
-        body:
-          "Small spaces need hardworking pieces. Choose storage that has a clear design language so practical items do not look temporary.",
+        body: "Small spaces need hardworking pieces. Choose storage that has a clear design language so practical items do not look temporary.",
       },
     ],
   },
@@ -217,18 +211,15 @@ export const blogPosts = [
     sections: [
       {
         title: "Plan The Daily Route",
-        body:
-          "Map how people move through the space at busy hours. Door swings, dining clearance, and storage access matter more than a beautiful mood board.",
+        body: "Map how people move through the space at busy hours. Door swings, dining clearance, and storage access matter more than a beautiful mood board.",
       },
       {
         title: "Decide Lighting Before Ceilings",
-        body:
-          "Ambient, task, and accent lighting should be planned before ceiling work begins so the final space feels layered.",
+        body: "Ambient, task, and accent lighting should be planned before ceiling work begins so the final space feels layered.",
       },
       {
         title: "Resolve Built-Ins Early",
-        body:
-          "Cabinets, wardrobes, media walls, and desks affect outlets, measurements, wall finishes, and budget timing.",
+        body: "Cabinets, wardrobes, media walls, and desks affect outlets, measurements, wall finishes, and budget timing.",
       },
     ],
   },
@@ -259,7 +250,7 @@ export const blogPosts = [
     date: "February 5, 2024",
     readTime: "6 min read",
   },
-];
+]
 
 export const allProjects = [
   {
@@ -268,7 +259,8 @@ export const allProjects = [
     tag: "Residential Interior",
     location: "Metro Manila",
     year: "2024",
-    description: "A serene family home featuring warm oak tones, textured plaster walls, and curated furniture that balances comfort with refined simplicity.",
+    description:
+      "A serene family home featuring warm oak tones, textured plaster walls, and curated furniture that balances comfort with refined simplicity.",
     scope: ["Full Interior Design", "Furniture Curation", "Lighting Design"],
   },
   {
@@ -277,7 +269,8 @@ export const allProjects = [
     tag: "Urban Living",
     location: "Makati City",
     year: "2024",
-    description: "A compact urban retreat transformed with soft textures, brass accents, and a neutral palette that maximizes perceived space.",
+    description:
+      "A compact urban retreat transformed with soft textures, brass accents, and a neutral palette that maximizes perceived space.",
     scope: ["Space Planning", "Material Selection", "Styling"],
   },
   {
@@ -286,8 +279,13 @@ export const allProjects = [
     tag: "Full Home Design",
     location: "Quezon City",
     year: "2023",
-    description: "A complete home transformation focusing on open-plan living, natural light optimization, and family-friendly durability.",
-    scope: ["Full Interior Design", "Renovation Consultation", "Furniture Design"],
+    description:
+      "A complete home transformation focusing on open-plan living, natural light optimization, and family-friendly durability.",
+    scope: [
+      "Full Interior Design",
+      "Renovation Consultation",
+      "Furniture Design",
+    ],
   },
   {
     id: "neutral-entertaining-space",
@@ -295,7 +293,8 @@ export const allProjects = [
     tag: "Living and Dining",
     location: "Bonifacio Global City",
     year: "2023",
-    description: "An elegant living and dining area designed for hosting, with statement lighting and a cohesive material story.",
+    description:
+      "An elegant living and dining area designed for hosting, with statement lighting and a cohesive material story.",
     scope: ["Living Room Design", "Dining Room Design", "Lighting Layout"],
   },
   {
@@ -304,7 +303,8 @@ export const allProjects = [
     tag: "Kitchen Design",
     location: "San Juan",
     year: "2023",
-    description: "A dated kitchen reimagined with sleek cabinetry, integrated appliances, and a waterfall island that anchors the space.",
+    description:
+      "A dated kitchen reimagined with sleek cabinetry, integrated appliances, and a waterfall island that anchors the space.",
     scope: ["Kitchen Design", "Cabinetry Design", "Material Coordination"],
   },
   {
@@ -313,7 +313,8 @@ export const allProjects = [
     tag: "Bedroom Design",
     location: "Alabang",
     year: "2023",
-    description: "A master suite sanctuary with layered textiles, indirect lighting, and a calm color palette promoting rest and relaxation.",
+    description:
+      "A master suite sanctuary with layered textiles, indirect lighting, and a calm color palette promoting rest and relaxation.",
     scope: ["Bedroom Design", "Closet Design", "Lighting Design"],
   },
-];
+]

@@ -1,30 +1,41 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import Image from "next/image";
-import { blogPosts as defaultBlogPosts } from "@/lib/landing-data";
-import type { DreamBuildBlogPost } from "@/lib/dreambuild-cms";
-import { FadeUp, SlideInLeft, StaggerContainer, StaggerItem, motion } from "@/components/ui/motion";
+import Image from "next/image"
+import Link from "next/link"
+
+import type { DreamBuildBlogPost } from "@/lib/dreambuild-cms"
+import { blogPosts as defaultBlogPosts } from "@/lib/landing-data"
+import {
+  FadeUp,
+  motion,
+  SlideInLeft,
+  StaggerContainer,
+  StaggerItem,
+} from "@/components/ui/motion"
 
 const blogImages = [
   "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=900&q=80",
   "https://images.unsplash.com/photo-1631679706909-1844bbd07221?w=700&q=80",
   "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=700&q=80",
   "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=700&q=80",
-];
+]
 
-export function BlogsSection({ blogPosts = defaultBlogPosts }: { blogPosts?: DreamBuildBlogPost[] }) {
-  const featured = blogPosts[0];
-  const rest = blogPosts.slice(1, 4);
+export function BlogsSection({
+  blogPosts = defaultBlogPosts,
+}: {
+  blogPosts?: DreamBuildBlogPost[]
+}) {
+  const featured = blogPosts[0]
+  const rest = blogPosts.slice(1, 4)
 
-  if (!featured) return null;
+  if (!featured) return null
 
   return (
     <section className="bg-[#f8f5f0] py-24 lg:py-36">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <FadeUp className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
-            <p className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-[var(--muted)]">
+            <p className="inline-flex items-center gap-2 text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
               <span className="h-px w-8 bg-[var(--muted)]" />
               Dreambuild Journal
             </p>
@@ -32,7 +43,8 @@ export function BlogsSection({ blogPosts = defaultBlogPosts }: { blogPosts?: Dre
               Design notes for rooms with intention.
             </h2>
             <p className="mt-4 text-base leading-relaxed text-[var(--muted)]">
-              Editorial guides, room-planning ideas, and finish decisions you can shape from the CMS.
+              Editorial guides, room-planning ideas, and finish decisions you
+              can shape from the CMS.
             </p>
           </div>
           <Link
@@ -59,8 +71,8 @@ export function BlogsSection({ blogPosts = defaultBlogPosts }: { blogPosts?: Dre
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-transparent" />
-                <div className="absolute left-5 top-5">
-                  <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-medium uppercase tracking-widest text-[var(--foreground)] backdrop-blur-sm">
+                <div className="absolute top-5 left-5">
+                  <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-medium tracking-widest text-[var(--foreground)] uppercase backdrop-blur-sm">
                     {featured.category}
                   </span>
                 </div>
@@ -73,7 +85,7 @@ export function BlogsSection({ blogPosts = defaultBlogPosts }: { blogPosts?: Dre
                     <span className="h-1 w-1 rounded-full bg-[var(--border)]" />
                     <span>{featured.readTime}</span>
                   </div>
-                  <h3 className="mt-5 text-2xl font-medium leading-snug tracking-tight text-[var(--foreground)] lg:text-3xl">
+                  <h3 className="mt-5 text-2xl leading-snug font-medium tracking-tight text-[var(--foreground)] lg:text-3xl">
                     {featured.title}
                   </h3>
                   <p className="mt-4 text-sm leading-relaxed text-[var(--muted)]">
@@ -82,7 +94,10 @@ export function BlogsSection({ blogPosts = defaultBlogPosts }: { blogPosts?: Dre
                   {(featured.takeaways?.length ?? 0) > 0 && (
                     <div className="mt-6 grid gap-2">
                       {featured.takeaways?.slice(0, 3).map((item) => (
-                        <span key={item} className="rounded-full bg-[#f5f0e8] px-4 py-2 text-xs font-medium text-[#6e5b4a]">
+                        <span
+                          key={item}
+                          className="rounded-full bg-[#f5f0e8] px-4 py-2 text-xs font-medium text-[#6e5b4a]"
+                        >
                           {item}
                         </span>
                       ))}
@@ -91,7 +106,7 @@ export function BlogsSection({ blogPosts = defaultBlogPosts }: { blogPosts?: Dre
                 </div>
 
                 <div className="mt-8 flex items-center justify-between border-t border-[var(--border)] pt-6">
-                  <span className="text-xs font-medium uppercase tracking-widest text-[var(--muted)]">
+                  <span className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
                     Featured Guide
                   </span>
                   <motion.span
@@ -107,7 +122,10 @@ export function BlogsSection({ blogPosts = defaultBlogPosts }: { blogPosts?: Dre
           </Link>
         </SlideInLeft>
 
-        <StaggerContainer className="mt-5 grid gap-5 md:grid-cols-3" staggerDelay={0.12}>
+        <StaggerContainer
+          className="mt-5 grid gap-5 md:grid-cols-3"
+          staggerDelay={0.12}
+        >
           {rest.map((post, i) => (
             <StaggerItem key={post.id}>
               <Link href={`/blogs/${post.id}`} className="group block h-full">
@@ -124,8 +142,8 @@ export function BlogsSection({ blogPosts = defaultBlogPosts }: { blogPosts?: Dre
                       className="object-cover transition-transform duration-700 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
-                    <div className="absolute left-4 top-4">
-                      <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-medium uppercase tracking-widest text-[var(--foreground)] backdrop-blur-sm">
+                    <div className="absolute top-4 left-4">
+                      <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-medium tracking-widest text-[var(--foreground)] uppercase backdrop-blur-sm">
                         {post.category}
                       </span>
                     </div>
@@ -138,7 +156,7 @@ export function BlogsSection({ blogPosts = defaultBlogPosts }: { blogPosts?: Dre
                         <span className="h-1 w-1 rounded-full bg-[var(--border)]" />
                         <span>{post.readTime}</span>
                       </div>
-                      <h3 className="mt-3 text-lg font-medium leading-snug tracking-tight text-[var(--foreground)]">
+                      <h3 className="mt-3 text-lg leading-snug font-medium tracking-tight text-[var(--foreground)]">
                         {post.title}
                       </h3>
                       <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-[var(--muted)]">
@@ -163,8 +181,15 @@ export function BlogsSection({ blogPosts = defaultBlogPosts }: { blogPosts?: Dre
         <FadeUp delay={0.15}>
           <div className="mt-8 flex items-center justify-between border-t border-[var(--border)] pt-8">
             <p className="text-sm text-[var(--muted)]">
-              Showing <span className="font-medium text-[var(--foreground)]">{Math.min(4, blogPosts.length)}</span> of{" "}
-              <span className="font-medium text-[var(--foreground)]">{blogPosts.length}</span> articles
+              Showing{" "}
+              <span className="font-medium text-[var(--foreground)]">
+                {Math.min(4, blogPosts.length)}
+              </span>{" "}
+              of{" "}
+              <span className="font-medium text-[var(--foreground)]">
+                {blogPosts.length}
+              </span>{" "}
+              articles
             </p>
             <Link
               href="/blogs"
@@ -176,5 +201,5 @@ export function BlogsSection({ blogPosts = defaultBlogPosts }: { blogPosts?: Dre
         </FadeUp>
       </div>
     </section>
-  );
+  )
 }

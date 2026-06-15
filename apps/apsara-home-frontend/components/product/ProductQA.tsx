@@ -1,7 +1,7 @@
 "use client"
 
-import { AnimatePresence, motion } from "framer-motion"
 import { useState } from "react"
+import { AnimatePresence, motion } from "framer-motion"
 
 const faqs = [
   {
@@ -60,16 +60,16 @@ const ProductQA = () => {
       transition={{ duration: 0.5, delay: 0.35 }}
       className="mt-12 sm:mt-16"
     >
-      <h2 className="text-xl font-bold text-slate-900 dark:text-gray-100 mb-6">
+      <h2 className="mb-6 text-xl font-bold text-slate-900 dark:text-gray-100">
         Frequently Asked Questions
       </h2>
 
-      <div className="divide-y divide-gray-100 dark:divide-gray-700 border border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden">
+      <div className="divide-y divide-gray-100 overflow-hidden rounded-2xl border border-gray-100 dark:divide-gray-700 dark:border-gray-700">
         {faqs.map((faq, i) => (
           <div key={faq.q}>
             <button
               onClick={() => toggle(i)}
-              className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left hover:bg-gray-50/60 dark:hover:bg-gray-800/60 transition-colors"
+              className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-gray-50/60 dark:hover:bg-gray-800/60"
             >
               <span
                 className={`text-sm font-semibold transition-colors ${openIndex === i ? "text-sky-500 dark:text-sky-400" : "text-slate-800 dark:text-gray-200"}`}
@@ -93,7 +93,7 @@ const ProductQA = () => {
                   transition={{ duration: 0.25, ease: "easeInOut" }}
                   className="overflow-hidden"
                 >
-                  <p className="px-5 pb-4 text-sm text-gray-500 dark:text-gray-300 leading-relaxed">
+                  <p className="px-5 pb-4 text-sm leading-relaxed text-gray-500 dark:text-gray-300">
                     {faq.a}
                   </p>
                 </motion.div>

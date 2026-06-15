@@ -2,9 +2,11 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { Trophy, ShoppingBag, Users, Calendar, TrendingUp } from "lucide-react"
+import { Calendar, ShoppingBag, TrendingUp, Trophy, Users } from "lucide-react"
+
 import TierBadge from "@/components/ui/TierBadge"
-import { TopEarner, STATUS_CONFIG, MEDALS, php } from "./types"
+
+import { MEDALS, php, STATUS_CONFIG, TopEarner } from "./types"
 
 function MemberAvatar({
   src,
@@ -31,13 +33,13 @@ function MemberAvatar({
         src={src}
         alt={name}
         onError={() => setErr(true)}
-        className={`rounded-full object-cover shrink-0 ${size}`}
+        className={`shrink-0 rounded-full object-cover ${size}`}
       />
     )
   }
   return (
     <div
-      className={`rounded-full shrink-0 flex items-center justify-center font-bold text-white ${size} ${bgCls}`}
+      className={`flex shrink-0 items-center justify-center rounded-full font-bold text-white ${size} ${bgCls}`}
     >
       {initials}
     </div>
@@ -74,14 +76,14 @@ function RankBadge({ rank }: { rank: number }) {
         >
           {medal.crown}
         </div>
-        <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+        <span className="text-[9px] font-black tracking-widest text-slate-400 uppercase dark:text-slate-500">
           {medal.label}
         </span>
       </div>
     )
   }
   return (
-    <div className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800 mx-auto">
+    <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
       <span className="text-xs font-black text-slate-500 dark:text-slate-400">
         #{rank}
       </span>
@@ -115,7 +117,7 @@ function TableRow({ earner, rank, maxEarnings }: TableRowProps) {
       }`}
     >
       {/* Rank */}
-      <td className="px-4 py-4 text-center w-16">
+      <td className="w-16 px-4 py-4 text-center">
         <RankBadge rank={rank} />
       </td>
 
@@ -129,7 +131,7 @@ function TableRow({ earner, rank, maxEarnings }: TableRowProps) {
             size="h-10 w-10 text-xs"
           />
           <div className="min-w-0">
-            <p className="text-sm font-bold leading-tight text-slate-800 dark:text-slate-100">
+            <p className="text-sm leading-tight font-bold text-slate-800 dark:text-slate-100">
               {earner.name}
             </p>
             <p className="mt-0.5 max-w-40 truncate text-[11px] text-slate-400 dark:text-slate-500">
@@ -145,8 +147,8 @@ function TableRow({ earner, rank, maxEarnings }: TableRowProps) {
       </td>
 
       {/* Earnings */}
-      <td className="px-4 py-4 min-w-42.5">
-        <p className="text-sm font-black tabular-nums text-teal-700 dark:text-teal-300">
+      <td className="min-w-42.5 px-4 py-4">
+        <p className="text-sm font-black text-teal-700 tabular-nums dark:text-teal-300">
           {php(earner.earnings)}
         </p>
         <div className="mt-2 h-2 w-full max-w-32.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
@@ -164,7 +166,7 @@ function TableRow({ earner, rank, maxEarnings }: TableRowProps) {
       <td className="px-4 py-4">
         <div className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-50 px-2.5 py-1.5 dark:bg-indigo-900/20">
           <ShoppingBag className="h-3 w-3 text-indigo-400 dark:text-indigo-400" />
-          <span className="text-xs font-bold tabular-nums text-indigo-700 dark:text-indigo-300">
+          <span className="text-xs font-bold text-indigo-700 tabular-nums dark:text-indigo-300">
             {earner.orders}
           </span>
         </div>
@@ -174,7 +176,7 @@ function TableRow({ earner, rank, maxEarnings }: TableRowProps) {
       <td className="px-4 py-4">
         <div className="inline-flex items-center gap-1.5 rounded-xl bg-violet-50 px-2.5 py-1.5 dark:bg-violet-900/20">
           <Users className="h-3 w-3 text-violet-400 dark:text-violet-400" />
-          <span className="text-xs font-bold tabular-nums text-violet-700 dark:text-violet-300">
+          <span className="text-xs font-bold text-violet-700 tabular-nums dark:text-violet-300">
             {earner.referrals}
           </span>
         </div>
@@ -184,7 +186,7 @@ function TableRow({ earner, rank, maxEarnings }: TableRowProps) {
       <td className="px-4 py-4">
         <div className="inline-flex items-center gap-1.5 rounded-xl bg-slate-50 px-2.5 py-1.5 dark:bg-slate-800">
           <TrendingUp className="h-3 w-3 text-slate-400" />
-          <span className="text-xs font-bold tabular-nums text-slate-600 dark:text-slate-300">
+          <span className="text-xs font-bold text-slate-600 tabular-nums dark:text-slate-300">
             {php(earner.totalSpent)}
           </span>
         </div>
@@ -193,9 +195,9 @@ function TableRow({ earner, rank, maxEarnings }: TableRowProps) {
       {/* Status */}
       <td className="px-4 py-4">
         <div
-          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold bg-white dark:bg-transparent border-slate-200 dark:border-slate-700`}
+          className={`inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold dark:border-slate-700 dark:bg-transparent`}
         >
-          <span className={`h-2 w-2 rounded-full shrink-0 ${status.dot}`} />
+          <span className={`h-2 w-2 shrink-0 rounded-full ${status.dot}`} />
           <span className={status.text}>{status.label}</span>
         </div>
       </td>
@@ -204,7 +206,7 @@ function TableRow({ earner, rank, maxEarnings }: TableRowProps) {
       <td className="px-4 py-4">
         <div className="inline-flex items-center gap-1.5 rounded-xl bg-sky-50 px-2.5 py-1.5 dark:bg-sky-900/20">
           <Calendar className="h-3 w-3 text-sky-400" />
-          <span className="text-[11px] font-semibold tabular-nums whitespace-nowrap text-sky-700 dark:text-sky-300">
+          <span className="text-[11px] font-semibold whitespace-nowrap text-sky-700 tabular-nums dark:text-sky-300">
             {new Date(earner.joinedAt).toLocaleDateString("en-PH", {
               month: "short",
               day: "numeric",
@@ -238,10 +240,10 @@ export default function TopEarnersTable({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}
-      className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-900 shadow-sm"
+      className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-900"
     >
       {/* Table header bar */}
-      <div className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-700/60 bg-slate-50/80 dark:bg-slate-800/50 px-5 py-4">
+      <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/80 px-5 py-4 dark:border-slate-700/60 dark:bg-slate-800/50">
         <div className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-500/15">
             <Trophy className="h-4 w-4 text-amber-600 dark:text-amber-400" />
@@ -249,11 +251,11 @@ export default function TopEarnersTable({
           <h2 className="text-sm font-bold text-slate-700 dark:text-slate-200">
             Full Rankings
           </h2>
-          <span className="rounded-full bg-slate-200 dark:bg-slate-700 px-2.5 py-0.5 text-[11px] font-bold text-slate-600 dark:text-slate-300">
+          <span className="rounded-full bg-slate-200 px-2.5 py-0.5 text-[11px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">
             {earners.length}
           </span>
         </div>
-        <span className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1 text-[11px] font-semibold capitalize text-slate-500 dark:text-slate-400">
+        <span className="rounded-xl border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-500 capitalize dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
           Sorted by {sortKey}
         </span>
       </div>
@@ -261,7 +263,7 @@ export default function TopEarnersTable({
       <div className="overflow-x-auto">
         <table className="w-full min-w-225 text-left">
           <thead>
-            <tr className="border-b border-slate-100 dark:border-slate-700/60 bg-white dark:bg-slate-900">
+            <tr className="border-b border-slate-100 bg-white dark:border-slate-700/60 dark:bg-slate-900">
               {[
                 { label: "Rank", cls: "text-center w-16" },
                 { label: "Member", cls: "" },
@@ -275,7 +277,7 @@ export default function TopEarnersTable({
               ].map(({ label, cls }) => (
                 <th
                   key={label}
-                  className={`px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 ${cls}`}
+                  className={`px-4 py-3 text-[10px] font-black tracking-widest text-slate-400 uppercase dark:text-slate-500 ${cls}`}
                 >
                   {label}
                 </th>
@@ -288,11 +290,11 @@ export default function TopEarnersTable({
               Array.from({ length: 8 }).map((_, i) => (
                 <tr key={i} className="animate-pulse">
                   <td className="px-4 py-4">
-                    <div className="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-800 mx-auto" />
+                    <div className="mx-auto h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-800" />
                   </td>
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 shrink-0" />
+                      <div className="h-10 w-10 shrink-0 rounded-full bg-slate-100 dark:bg-slate-800" />
                       <div className="space-y-2">
                         <div className="h-3 w-28 rounded-full bg-slate-100 dark:bg-slate-800" />
                         <div className="h-2.5 w-20 rounded-full bg-slate-100 dark:bg-slate-800" />
@@ -362,7 +364,7 @@ export default function TopEarnersTable({
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-700/60 bg-slate-50/60 dark:bg-slate-800/30 px-5 py-3.5">
+      <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/60 px-5 py-3.5 dark:border-slate-700/60 dark:bg-slate-800/30">
         <span className="text-xs text-slate-500 dark:text-slate-400">
           Showing{" "}
           <span className="font-bold text-slate-700 dark:text-slate-200">

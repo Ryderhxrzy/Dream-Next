@@ -1,10 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { AnimatePresence, motion } from "framer-motion"
 import { ShoppingBag, Users } from "lucide-react"
+
 import TierBadge from "@/components/ui/TierBadge"
-import { TopEarner, STATUS_CONFIG, MEDALS, php } from "./types"
+
+import { MEDALS, php, STATUS_CONFIG, TopEarner } from "./types"
 
 /* ─── Count-up hook ──────────────────────────────────────────────────────── */
 function useCountUp(target: number, duration = 1400, delay = 0) {
@@ -333,7 +335,7 @@ function PodiumCard({ earner, rank }: PodiumCardProps) {
         y: -6,
         transition: { type: "spring", stiffness: 300, damping: 20 },
       }}
-      className={`relative overflow-hidden rounded-2xl border flex flex-col items-center text-center p-5 cursor-default ${style.card} ${style.order} ${style.scale} ${style.shadow}`}
+      className={`relative flex cursor-default flex-col items-center overflow-hidden rounded-2xl border p-5 text-center ${style.card} ${style.order} ${style.scale} ${style.shadow}`}
     >
       {rank === 1 && <ConfettiLayer />}
 
@@ -348,7 +350,7 @@ function PodiumCard({ earner, rank }: PodiumCardProps) {
             stiffness: 300,
             damping: 15,
           }}
-          className={`mb-4 inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[11px] font-black uppercase tracking-widest shadow-sm ${style.badge}`}
+          className={`mb-4 inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[11px] font-black tracking-widest uppercase shadow-sm ${style.badge}`}
         >
           <span>{medal.crown}</span>
           <span>{medal.label} Place</span>
@@ -375,7 +377,7 @@ function PodiumCard({ earner, rank }: PodiumCardProps) {
             <div className="relative">
               {rank === 1 && (
                 <motion.span
-                  className="absolute -top-6 left-1/2 -translate-x-1/2 select-none text-4xl leading-none"
+                  className="absolute -top-6 left-1/2 -translate-x-1/2 text-4xl leading-none select-none"
                   animate={{ y: [0, -7, 0], rotate: [-5, 5, -5] }}
                   transition={{
                     duration: 2.4,
@@ -414,7 +416,7 @@ function PodiumCard({ earner, rank }: PodiumCardProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: cardDelay + 0.4 }}
         >
-          <p className="text-sm font-black leading-tight text-slate-800 dark:text-white">
+          <p className="text-sm leading-tight font-black text-slate-800 dark:text-white">
             {earner.name}
           </p>
           <p className="mt-0.5 max-w-40 truncate text-xs text-slate-400 dark:text-slate-500">
@@ -444,7 +446,7 @@ function PodiumCard({ earner, rank }: PodiumCardProps) {
           transition={{ delay: cardDelay + 0.55 }}
         >
           <p
-            className={`mb-0.5 text-[10px] font-semibold uppercase tracking-wide ${style.earningsLbl}`}
+            className={`mb-0.5 text-[10px] font-semibold tracking-wide uppercase ${style.earningsLbl}`}
           >
             Total Earnings
           </p>
@@ -454,7 +456,7 @@ function PodiumCard({ earner, rank }: PodiumCardProps) {
         </motion.div>
 
         {/* Mini stats — staggered */}
-        <div className="mt-2.5 w-full grid grid-cols-3 gap-1.5">
+        <div className="mt-2.5 grid w-full grid-cols-3 gap-1.5">
           {[
             {
               icon: (
@@ -558,7 +560,7 @@ export default function TopEarnersPodium({
         transition={{ duration: 0.3 }}
       >
         <div className="mb-3 flex items-center gap-2">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+          <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
             Podium
           </span>
           <span className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />

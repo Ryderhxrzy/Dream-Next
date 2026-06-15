@@ -1,8 +1,8 @@
 "use client"
 
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
 
 type ResponseState = {
   status: "idle" | "loading" | "success" | "error"
@@ -86,7 +86,7 @@ export default function MfaApprovalPage() {
   return (
     <main className="min-h-screen bg-slate-100 px-4 py-12">
       <div className="mx-auto max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
           AF Home Security
         </p>
         <h1 className="mt-1 text-2xl font-bold text-slate-900">{title}</h1>

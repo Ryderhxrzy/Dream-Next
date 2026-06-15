@@ -1,9 +1,10 @@
-import { notFound } from "next/navigation"
-import { buildPageMetadata } from "@/app/seo"
-import GuestTrackOrderPage from "@/components/orders/GuestTrackOrderPage"
-import { getNavbarCategories } from "@/libs/serverStorefront"
 import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
+import { getNavbarCategories } from "@/libs/serverStorefront"
 import type { WebPageItem } from "@/store/api/webPagesApi"
+import { notFound } from "next/navigation"
+
+import GuestTrackOrderPage from "@/components/orders/GuestTrackOrderPage"
+import { buildPageMetadata } from "@/app/seo"
 
 export const dynamic = "force-dynamic"
 

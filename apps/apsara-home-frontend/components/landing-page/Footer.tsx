@@ -1,10 +1,10 @@
 ﻿"use client"
 
+import { useGetPublicGeneralSettingsQuery } from "@/store/api/adminSettingsApi"
 import { motion } from "framer-motion"
+import { Facebook, Instagram, Mail, MapPin, Phone } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useGetPublicGeneralSettingsQuery } from "@/store/api/adminSettingsApi"
-import { Facebook, Instagram, MapPin, Phone, Mail } from "lucide-react"
 
 function TikTokIcon({ size = 18 }: { size?: number }) {
   return (
@@ -138,28 +138,28 @@ export default function Footer() {
   return (
     <footer
       id="contact"
-      className="bg-gray-100 dark:bg-gray-950 text-gray-900 dark:text-white"
+      className="bg-gray-100 text-gray-900 dark:bg-gray-950 dark:text-white"
     >
-      <div className="container mx-auto px-4 pt-16 md:pt-20 pb-8">
+      <div className="container mx-auto px-4 pt-16 pb-8 md:pt-20">
         <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-10 md:gap-8"
+          className="grid grid-cols-2 gap-10 md:grid-cols-4 md:gap-8 lg:grid-cols-5"
         >
           {/* Brand Column */}
           <motion.div
             variants={itemVariants}
             className="col-span-2 lg:col-span-1"
           >
-            <Link href="/" className="inline-flex items-start gap-5 mb-6">
+            <Link href="/" className="mb-6 inline-flex items-start gap-5">
               {/* Logo Image */}
               <div className="flex-shrink-0">
                 <img
                   src={logoUrl}
                   alt="AFhome Logo"
-                  className="w-32 h-auto object-contain"
+                  className="h-auto w-32 object-contain"
                   onError={(e) => {
                     ;(e.target as HTMLImageElement).src = "/af_home_logo.png"
                   }}
@@ -170,7 +170,7 @@ export default function Footer() {
                   <img
                     src={websiteQrCodeUrl}
                     alt="AF Home website QR code"
-                    className="h-20 w-20 rounded-md object-contain border border-gray-300 dark:border-gray-700"
+                    className="h-20 w-20 rounded-md border border-gray-300 object-contain dark:border-gray-700"
                     loading="lazy"
                     onError={(e) => {
                       ;(e.target as HTMLImageElement).style.display = "none"
@@ -179,7 +179,7 @@ export default function Footer() {
                 </div>
               ) : null}
             </Link>
-            <p className="text-gray-600 dark:text-white/70 text-sm leading-relaxed mb-6">
+            <p className="mb-6 text-sm leading-relaxed text-gray-600 dark:text-white/70">
               AF Home is not just a store. It&apos;s a home ecosystem built to
               grow with you.
             </p>
@@ -192,7 +192,7 @@ export default function Footer() {
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.1, y: -2 }}
                   whileTap={{ scale: 0.95 }}
-                  className="w-10 h-10 bg-gray-300/60 dark:bg-white/10 rounded-full flex items-center justify-center hover:bg-sky-500 hover:text-white transition-colors"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-300/60 transition-colors hover:bg-sky-500 hover:text-white dark:bg-white/10"
                   aria-label={social.label}
                 >
                   <social.icon size={18} />
@@ -203,7 +203,7 @@ export default function Footer() {
 
           {/* Company Links */}
           <motion.div variants={itemVariants}>
-            <h4 className="font-display font-semibold text-lg mb-6">
+            <h4 className="font-display mb-6 text-lg font-semibold">
               Informations
             </h4>
             <ul className="space-y-3">
@@ -211,10 +211,10 @@ export default function Footer() {
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className={`transition-colors text-sm ${
+                    className={`text-sm transition-colors ${
                       pathname === link.href
-                        ? "text-sky-500 dark:text-sky-400 font-semibold"
-                        : "text-gray-600 dark:text-white/70 hover:text-sky-500 dark:hover:text-sky-400"
+                        ? "font-semibold text-sky-500 dark:text-sky-400"
+                        : "text-gray-600 hover:text-sky-500 dark:text-white/70 dark:hover:text-sky-400"
                     }`}
                   >
                     {link.name}
@@ -226,17 +226,17 @@ export default function Footer() {
 
           {/* Support Links */}
           <motion.div variants={itemVariants}>
-            <h4 className="font-display font-semibold text-lg mb-6">Support</h4>
+            <h4 className="font-display mb-6 text-lg font-semibold">Support</h4>
             <ul className="space-y-3">
               {footerLinks.support.map((link) => (
                 <li key={link.name}>
                   {link.href.startsWith("/") ? (
                     <Link
                       href={link.href}
-                      className={`transition-colors text-sm ${
+                      className={`text-sm transition-colors ${
                         pathname === link.href
-                          ? "text-sky-500 dark:text-sky-400 font-semibold"
-                          : "text-gray-600 dark:text-white/70 hover:text-sky-500 dark:hover:text-sky-400"
+                          ? "font-semibold text-sky-500 dark:text-sky-400"
+                          : "text-gray-600 hover:text-sky-500 dark:text-white/70 dark:hover:text-sky-400"
                       }`}
                     >
                       {link.name}
@@ -244,7 +244,7 @@ export default function Footer() {
                   ) : (
                     <a
                       href={link.href}
-                      className="text-gray-600 dark:text-white/70 hover:text-sky-500 dark:hover:text-sky-400 transition-colors text-sm"
+                      className="text-sm text-gray-600 transition-colors hover:text-sky-500 dark:text-white/70 dark:hover:text-sky-400"
                     >
                       {link.name}
                     </a>
@@ -259,10 +259,10 @@ export default function Footer() {
             variants={itemVariants}
             className="col-span-2 md:col-span-1"
           >
-            <h4 className="font-display font-semibold text-lg mb-3">
+            <h4 className="font-display mb-3 text-lg font-semibold">
               Payments
             </h4>
-            <p className="text-gray-600 dark:text-white/70 text-sm mb-4">
+            <p className="mb-4 text-sm text-gray-600 dark:text-white/70">
               We accept:
             </p>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
@@ -284,30 +284,30 @@ export default function Footer() {
             variants={itemVariants}
             className="col-span-2 md:col-span-1"
           >
-            <h4 className="font-display font-semibold text-lg mb-6">
+            <h4 className="font-display mb-6 text-lg font-semibold">
               Contact Us
             </h4>
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
-                <MapPin size={18} className="text-sky-500 flex-shrink-0 mt-1" />
-                <span className="text-gray-600 dark:text-white/70 text-sm">
+                <MapPin size={18} className="mt-1 flex-shrink-0 text-sky-500" />
+                <span className="text-sm text-gray-600 dark:text-white/70">
                   {address}
                 </span>
               </li>
               <li className="flex items-center gap-3">
-                <Phone size={18} className="text-sky-500 flex-shrink-0" />
+                <Phone size={18} className="flex-shrink-0 text-sky-500" />
                 <a
                   href={`tel:${contactNumber}`}
-                  className="text-gray-600 dark:text-white/70 hover:text-sky-500 dark:hover:text-sky-400 transition-colors text-sm"
+                  className="text-sm text-gray-600 transition-colors hover:text-sky-500 dark:text-white/70 dark:hover:text-sky-400"
                 >
                   {contactNumber}
                 </a>
               </li>
               <li className="flex items-center gap-3">
-                <Mail size={18} className="text-sky-500 flex-shrink-0" />
+                <Mail size={18} className="flex-shrink-0 text-sky-500" />
                 <a
                   href={`mailto:${supportEmail}`}
-                  className="text-gray-600 dark:text-white/70 hover:text-sky-500 dark:hover:text-sky-400 transition-colors text-sm"
+                  className="text-sm text-gray-600 transition-colors hover:text-sky-500 dark:text-white/70 dark:hover:text-sky-400"
                 >
                   {supportEmail}
                 </a>
@@ -322,9 +322,9 @@ export default function Footer() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.5 }}
-          className="mt-10 pt-6 border-t border-gray-300 dark:border-white/10 flex flex-col md:flex-row justify-between items-center gap-4"
+          className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-gray-300 pt-6 md:flex-row dark:border-white/10"
         >
-          <p className="text-gray-500 dark:text-white/50 text-sm">
+          <p className="text-sm text-gray-500 dark:text-white/50">
             © {new Date().getFullYear()} AFhome. All rights reserved.
           </p>
           <div className="flex gap-6">
@@ -338,8 +338,8 @@ export default function Footer() {
                 href={href}
                 className={`text-sm transition-colors ${
                   pathname === href
-                    ? "text-sky-500 dark:text-sky-400 font-semibold"
-                    : "text-gray-500 dark:text-white/50 hover:text-gray-900 dark:hover:text-white"
+                    ? "font-semibold text-sky-500 dark:text-sky-400"
+                    : "text-gray-500 hover:text-gray-900 dark:text-white/50 dark:hover:text-white"
                 }`}
               >
                 {label}

@@ -1,7 +1,7 @@
 "use client"
 
-import { AnimatePresence, motion } from "framer-motion"
-import { type ReactNode, useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, type ReactNode } from "react"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import {
   useBulkDeleteAdminShippingRatesMutation,
   useCreateAdminShippingRateMutation,
@@ -10,7 +10,7 @@ import {
   useUpdateAdminShippingRateMutation,
   type ShippingRate,
 } from "@/store/api/shippingRatesApi"
-import { showErrorToast, showSuccessToast } from "@/libs/toast"
+import { AnimatePresence, motion } from "framer-motion"
 
 const emptyForm = {
   province: "",
@@ -244,11 +244,11 @@ function ShippingRateFormFields({
     <div className="space-y-4">
       <div>
         <div className="mb-1.5 flex items-center justify-between gap-3">
-          <label className="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+          <label className="block text-xs font-semibold tracking-[0.18em] text-slate-500 uppercase dark:text-slate-400">
             Province
           </label>
           {loadingProvinces ? (
-            <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-500">
+            <span className="inline-flex items-center gap-2 text-[11px] font-semibold tracking-[0.16em] text-sky-500 uppercase">
               <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-sky-200 border-t-sky-500 dark:border-sky-900 dark:border-t-sky-400" />
               Loading
             </span>
@@ -269,7 +269,7 @@ function ShippingRateFormFields({
               onFieldChange("city", "")
             }}
             disabled={disabled || loadingProvinces}
-            className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-11 text-sm text-slate-800 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-sky-900/30"
+            className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-11 text-sm text-slate-800 transition outline-none focus:border-sky-400 focus:ring-4 focus:ring-sky-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-sky-900/30"
           >
             <option value="">
               {loadingProvinces ? "Loading provinces..." : "Select Province"}
@@ -288,7 +288,7 @@ function ShippingRateFormFields({
               </option>
             ))}
           </select>
-          <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
+          <span className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-slate-400">
             <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
               <path d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z" />
             </svg>
@@ -301,11 +301,11 @@ function ShippingRateFormFields({
 
       <div>
         <div className="mb-1.5 flex items-center justify-between gap-3">
-          <label className="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+          <label className="block text-xs font-semibold tracking-[0.18em] text-slate-500 uppercase dark:text-slate-400">
             City / Municipality
           </label>
           {loadingCities ? (
-            <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-500">
+            <span className="inline-flex items-center gap-2 text-[11px] font-semibold tracking-[0.16em] text-sky-500 uppercase">
               <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-sky-200 border-t-sky-500 dark:border-sky-900 dark:border-t-sky-400" />
               Loading
             </span>
@@ -330,7 +330,7 @@ function ShippingRateFormFields({
               loadingCities ||
               !selectedProvinceCode
             }
-            className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-11 text-sm text-slate-800 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-sky-900/30"
+            className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-11 text-sm text-slate-800 transition outline-none focus:border-sky-400 focus:ring-4 focus:ring-sky-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-sky-900/30"
           >
             <option value="">
               {!selectedProvinceCode
@@ -348,7 +348,7 @@ function ShippingRateFormFields({
               </option>
             ))}
           </select>
-          <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
+          <span className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-slate-400">
             <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
               <path d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z" />
             </svg>
@@ -360,11 +360,11 @@ function ShippingRateFormFields({
       </div>
 
       <div>
-        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+        <label className="mb-1.5 block text-xs font-semibold tracking-[0.18em] text-slate-500 uppercase dark:text-slate-400">
           Shipping Fee
         </label>
         <div className="relative">
-          <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-400">
+          <span className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-sm font-semibold text-slate-400">
             PHP
           </span>
           <input
@@ -373,7 +373,7 @@ function ShippingRateFormFields({
             type="number"
             min="0"
             disabled={disabled}
-            className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-14 pr-4 text-sm text-slate-800 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-sky-900/30"
+            className="w-full rounded-2xl border border-slate-200 bg-white py-3 pr-4 pl-14 text-sm text-slate-800 transition outline-none focus:border-sky-400 focus:ring-4 focus:ring-sky-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-sky-900/30"
             placeholder="0"
           />
         </div>
@@ -463,7 +463,7 @@ function ShippingRateModal({
           <div className="border-b border-slate-100 px-6 py-5 dark:border-slate-800">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.24em] text-sky-500">
+                <p className="text-xs font-bold tracking-[0.24em] text-sky-500 uppercase">
                   Shipping Rate
                 </p>
                 <h3 className="mt-2 text-xl font-bold text-slate-900 dark:text-white">
@@ -727,14 +727,14 @@ export default function AdminShippingRatesPageMain() {
           transition={{ duration: 0.38, delay: 0.04, ease: [0.22, 1, 0.36, 1] }}
           className="relative overflow-hidden rounded-[30px] border border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,0.16),_transparent_32%),linear-gradient(135deg,_#ffffff,_#f8fbff_58%,_#eef6ff)] p-6 shadow-sm dark:border-slate-700 dark:bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,0.18),_transparent_28%),linear-gradient(135deg,_#0f172a,_#111827_58%,_#0b1220)]"
         >
-          <div className="pointer-events-none absolute -right-20 top-0 h-44 w-44 rounded-full bg-sky-200/40 blur-3xl dark:bg-sky-500/20" />
+          <div className="pointer-events-none absolute top-0 -right-20 h-44 w-44 rounded-full bg-sky-200/40 blur-3xl dark:bg-sky-500/20" />
           <div className="pointer-events-none absolute bottom-0 left-24 h-36 w-36 rounded-full bg-cyan-200/40 blur-3xl dark:bg-cyan-500/20" />
           <div className="relative flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
             <div className="max-w-3xl">
-              <p className="text-xs font-bold uppercase tracking-[0.28em] text-sky-600 dark:text-sky-400">
+              <p className="text-xs font-bold tracking-[0.28em] text-sky-600 uppercase dark:text-sky-400">
                 Shipping Control
               </p>
-              <h1 className="mt-3 font-serif text-3xl font-bold text-slate-950 dark:text-white sm:text-4xl">
+              <h1 className="mt-3 font-serif text-3xl font-bold text-slate-950 sm:text-4xl dark:text-white">
                 Shipping Rates
               </h1>
               <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
@@ -746,7 +746,7 @@ export default function AdminShippingRatesPageMain() {
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div className="rounded-2xl border border-white/70 bg-white/80 px-4 py-4 shadow-sm backdrop-blur dark:border-slate-700/80 dark:bg-slate-900/70">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                <p className="text-xs tracking-[0.2em] text-slate-500 uppercase dark:text-slate-400">
                   Total
                 </p>
                 <p className="mt-2 text-3xl font-bold text-slate-950 dark:text-white">
@@ -757,7 +757,7 @@ export default function AdminShippingRatesPageMain() {
                 </p>
               </div>
               <div className="rounded-2xl border border-emerald-100 bg-emerald-50/90 px-4 py-4 shadow-sm dark:border-emerald-900/70 dark:bg-emerald-950/40">
-                <p className="text-xs uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-400">
+                <p className="text-xs tracking-[0.2em] text-emerald-700 uppercase dark:text-emerald-400">
                   Active
                 </p>
                 <p className="mt-2 text-3xl font-bold text-emerald-800 dark:text-emerald-300">
@@ -768,7 +768,7 @@ export default function AdminShippingRatesPageMain() {
                 </p>
               </div>
               <div className="rounded-2xl border border-amber-100 bg-amber-50/90 px-4 py-4 shadow-sm dark:border-amber-900/70 dark:bg-amber-950/40">
-                <p className="text-xs uppercase tracking-[0.2em] text-amber-700 dark:text-amber-400">
+                <p className="text-xs tracking-[0.2em] text-amber-700 uppercase dark:text-amber-400">
                   Inactive
                 </p>
                 <p className="mt-2 text-3xl font-bold text-amber-800 dark:text-amber-300">
@@ -794,7 +794,7 @@ export default function AdminShippingRatesPageMain() {
             className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
           >
             <div className="rounded-[24px] bg-slate-950 px-5 py-5 text-white dark:bg-slate-800">
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-sky-300">
+              <p className="text-xs font-bold tracking-[0.22em] text-sky-300 uppercase">
                 Add New
               </p>
               <h2 className="mt-2 text-2xl font-bold">Create shipping rate</h2>
@@ -853,7 +853,7 @@ export default function AdminShippingRatesPageMain() {
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                   <div className="flex flex-wrap items-center gap-3">
-                    <p className="text-xs font-bold uppercase tracking-[0.22em] text-slate-400">
+                    <p className="text-xs font-bold tracking-[0.22em] text-slate-400 uppercase">
                       Directory
                     </p>
                     <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
@@ -876,7 +876,7 @@ export default function AdminShippingRatesPageMain() {
                   </p>
                   {selectedRateIds.length > 0 ? (
                     <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-sky-700 dark:bg-sky-950/40 dark:text-sky-300">
+                      <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-bold tracking-[0.16em] text-sky-700 uppercase dark:bg-sky-950/40 dark:text-sky-300">
                         {selectedRateIds.length} selected
                       </span>
                       <button
@@ -892,7 +892,7 @@ export default function AdminShippingRatesPageMain() {
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                   <label className="relative block">
-                    <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                    <span className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-slate-400">
                       <svg
                         className="h-4 w-4"
                         viewBox="0 0 24 24"
@@ -908,7 +908,7 @@ export default function AdminShippingRatesPageMain() {
                       value={searchTerm}
                       onChange={(event) => setSearchTerm(event.target.value)}
                       placeholder="Search province or city"
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-800 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-sky-900/30 sm:w-80"
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pr-4 pl-11 text-sm text-slate-800 transition outline-none focus:border-sky-400 focus:ring-4 focus:ring-sky-100 sm:w-80 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-sky-900/30"
                     />
                   </label>
                   <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-400">
@@ -999,7 +999,7 @@ export default function AdminShippingRatesPageMain() {
                       transition={{ duration: 0.28, ease: "easeOut" }}
                       className="overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50/60 dark:border-slate-700 dark:bg-slate-950/40"
                     >
-                      <div className="flex flex-col gap-3 border-b border-slate-200 bg-white px-5 py-4 dark:border-slate-700 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex flex-col gap-3 border-b border-slate-200 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-slate-700 dark:bg-slate-900">
                         <div className="flex items-center gap-3">
                           <input
                             type="checkbox"
@@ -1030,10 +1030,10 @@ export default function AdminShippingRatesPageMain() {
                             className="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-200"
                           />
                           <div>
-                            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-sky-500">
+                            <p className="text-[11px] font-bold tracking-[0.24em] text-sky-500 uppercase">
                               Province
                             </p>
-                            <h3 className="mt-1 text-xl font-bold uppercase tracking-[0.08em] text-slate-950 dark:text-white">
+                            <h3 className="mt-1 text-xl font-bold tracking-[0.08em] text-slate-950 uppercase dark:text-white">
                               {province}
                             </h3>
                           </div>
@@ -1080,7 +1080,7 @@ export default function AdminShippingRatesPageMain() {
                                       {rate.city}
                                     </h4>
                                     <span
-                                      className={`rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.18em] ${
+                                      className={`rounded-full px-2.5 py-1 text-[11px] font-bold tracking-[0.18em] uppercase ${
                                         rate.status
                                           ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
                                           : "bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
@@ -1111,7 +1111,7 @@ export default function AdminShippingRatesPageMain() {
 
                                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                                   <div className="rounded-2xl bg-sky-50 px-4 py-3 text-right dark:bg-sky-950/40">
-                                    <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-sky-500">
+                                    <p className="text-[11px] font-bold tracking-[0.2em] text-sky-500 uppercase">
                                       Fee
                                     </p>
                                     <p className="mt-1 text-lg font-bold text-sky-700 dark:text-sky-300">
@@ -1310,7 +1310,7 @@ export default function AdminShippingRatesPageMain() {
             </p>
           </div>
           <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/60">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+            <p className="text-xs font-bold tracking-[0.2em] text-slate-500 uppercase dark:text-slate-400">
               Selection Summary
             </p>
             <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">

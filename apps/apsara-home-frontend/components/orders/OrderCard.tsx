@@ -1,16 +1,18 @@
 "use client"
 
 import { useState } from "react"
-import { AnimatePresence, motion } from "framer-motion"
-import Icon from "./Icons"
-import Link from "next/link"
-import { TRACK_STEPS } from "@/types/Data"
 import formatDate from "@/helpers/FormatDate"
 import formatPrice from "@/helpers/FormatPrice"
 import {
   useConfirmOrderMutation,
   useRefundOrderMutation,
 } from "@/store/api/paymentApi"
+import { AnimatePresence, motion } from "framer-motion"
+import Link from "next/link"
+
+import { TRACK_STEPS } from "@/types/Data"
+
+import Icon from "./Icons"
 
 type OrderStatus =
   | "pending"
@@ -215,36 +217,36 @@ const OrderCard = ({ order }: OrderCardProps) => {
   return (
     <motion.div
       layout
-      className={`rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-gray-800 overflow-hidden transition-all duration-200 ${
+      className={`overflow-hidden rounded-2xl border border-gray-200 bg-white transition-all duration-200 dark:border-slate-700 dark:bg-gray-800 ${
         isRefunded
           ? "opacity-90 saturate-75"
           : "hover:border-sky-200 dark:hover:border-sky-700"
       }`}
     >
       {/* Card header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-4 border-b border-gray-100 dark:border-slate-700">
+      <div className="flex flex-col justify-between gap-3 border-b border-gray-100 px-5 py-4 sm:flex-row sm:items-center dark:border-slate-700">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-sky-50 dark:bg-sky-900/30 text-sky-500 dark:text-sky-400 flex items-center justify-center shrink-0">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-500 dark:bg-sky-900/30 dark:text-sky-400">
             <Icon.Package className="h-4 w-4" />
           </div>
           <div>
             <p className="text-sm font-bold text-gray-900 dark:text-white">
               Order #{order.order_number}
             </p>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+            <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
               {formatDate(order.created_at)}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2.5">
           <span
-            className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border ${cfg.badge}`}
+            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${cfg.badge}`}
           >
             <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
             {cfg.label}
           </span>
           {isShipmentCancelled && (
-            <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400">
               <span className="h-1.5 w-1.5 rounded-full bg-red-400 dark:bg-red-500" />
               Shipment Cancelled
             </span>
@@ -252,7 +254,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
           <button
             type="button"
             onClick={() => setExpanded((p) => !p)}
-            className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 transition-colors"
+            className="text-gray-400 transition-colors hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400"
           >
             <Icon.ChevronDown
               className={`h-4 w-4 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
@@ -292,23 +294,23 @@ const OrderCard = ({ order }: OrderCardProps) => {
               )
             })}
             {extraCount > 0 && (
-              <div className="h-10 w-10 rounded-lg border-2 border-white dark:border-gray-700 bg-gray-100 dark:bg-gray-700 flex items-center justify-center shrink-0">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border-2 border-white bg-gray-100 dark:border-gray-700 dark:bg-gray-700">
                 <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400">
                   +{extraCount}
                 </span>
               </div>
             )}
           </div>
-          <div className="flex-1 min-w-0">
+          <div className="min-w-0 flex-1">
             {(() => {
               const firstItem = order.items[0]
               const href = firstItem ? buildProductHref(firstItem) : null
               return (
-                <p className="text-sm text-gray-700 dark:text-gray-200 truncate">
+                <p className="truncate text-sm text-gray-700 dark:text-gray-200">
                   {href ? (
                     <Link
                       href={href}
-                      className="font-semibold text-slate-800 dark:text-gray-100 hover:text-sky-500 dark:hover:text-sky-400 transition-colors"
+                      className="font-semibold text-slate-800 transition-colors hover:text-sky-500 dark:text-gray-100 dark:hover:text-sky-400"
                     >
                       {firstItem?.name}
                     </Link>
@@ -325,11 +327,11 @@ const OrderCard = ({ order }: OrderCardProps) => {
                 </p>
               )
             })()}
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+            <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
               {order.items.reduce((s, i) => s + i.quantity, 0)} item(s)
             </p>
           </div>
-          <div className="text-right shrink-0">
+          <div className="shrink-0 text-right">
             {isRefunded && (
               <p className="mb-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
                 Pending request
@@ -339,7 +341,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
               {formatPrice(order.total)}
             </p>
             {order.shipping_fee === 0 ? (
-              <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+              <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
                 Free shipping
               </p>
             ) : (
@@ -351,11 +353,11 @@ const OrderCard = ({ order }: OrderCardProps) => {
         </div>
 
         {/* Action buttons */}
-        <div className="flex flex-wrap items-center gap-2 mt-4">
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           {order.status === "delivered" && (
             <button
               type="button"
-              className="inline-flex items-center gap-1.5 rounded-xl bg-sky-500 dark:bg-sky-600 hover:bg-sky-600 dark:hover:bg-sky-700 px-3.5 py-2 text-xs font-semibold text-white transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-sky-500 px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-sky-600 dark:bg-sky-600 dark:hover:bg-sky-700"
             >
               <Icon.RefreshCw className="h-3.5 w-3.5" /> Reorder
             </button>
@@ -365,7 +367,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
               <button
                 type="button"
                 onClick={() => setConfirmOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-500 dark:bg-emerald-600 hover:bg-emerald-600 dark:hover:bg-emerald-700 px-3.5 py-2 text-xs font-semibold text-white transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-500 px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-700"
               >
                 <Icon.Check className="h-3.5 w-3.5" /> Confirm Order
               </button>
@@ -386,7 +388,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
           <button
             type="button"
             onClick={() => setExpanded((p) => !p)}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 dark:border-slate-700 hover:border-sky-200 dark:hover:border-sky-700 hover:bg-sky-50 dark:hover:bg-sky-900/20 hover:text-sky-600 dark:hover:text-sky-400 px-3.5 py-2 text-xs font-semibold text-gray-600 dark:text-gray-400 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 px-3.5 py-2 text-xs font-semibold text-gray-600 transition-colors hover:border-sky-200 hover:bg-sky-50 hover:text-sky-600 dark:border-slate-700 dark:text-gray-400 dark:hover:border-sky-700 dark:hover:bg-sky-900/20 dark:hover:text-sky-400"
           >
             {expanded ? "Hide Details" : "View Details"}{" "}
             <Icon.ChevronRight
@@ -396,7 +398,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
           {order.status === "pending" && (
             <button
               type="button"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-900/20 px-3.5 py-2 text-xs font-semibold text-red-500 dark:text-red-400 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 px-3.5 py-2 text-xs font-semibold text-red-500 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
             >
               <Icon.X className="h-3.5 w-3.5" /> Cancel
             </button>
@@ -414,11 +416,11 @@ const OrderCard = ({ order }: OrderCardProps) => {
             transition={{ duration: 0.25, ease: "easeInOut" }}
             className="overflow-hidden"
           >
-            <div className="border-t border-gray-100 dark:border-slate-700 px-5 py-4 space-y-4 bg-gray-50/50 dark:bg-gray-700/40">
+            <div className="space-y-4 border-t border-gray-100 bg-gray-50/50 px-5 py-4 dark:border-slate-700 dark:bg-gray-700/40">
               {/* Tracking steps */}
               {isShipmentCancelled ? (
-                <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 px-4 py-3">
-                  <p className="text-xs font-bold uppercase tracking-widest text-red-600 dark:text-red-400">
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/30">
+                  <p className="text-xs font-bold tracking-widest text-red-600 uppercase dark:text-red-400">
                     Shipment Update
                   </p>
                   <p className="mt-1 text-sm font-semibold text-red-700 dark:text-red-300">
@@ -433,7 +435,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
                 order.status !== "cancelled" &&
                 order.status !== "refunded" && (
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">
+                    <p className="mb-3 text-xs font-bold tracking-widest text-gray-400 uppercase dark:text-gray-500">
                       Order Tracking
                     </p>
                     <div className="relative flex items-start justify-between gap-1">
@@ -445,19 +447,19 @@ const OrderCard = ({ order }: OrderCardProps) => {
                         return (
                           <div
                             key={step}
-                            className="flex-1 flex flex-col items-center gap-1.5 relative"
+                            className="relative flex flex-1 flex-col items-center gap-1.5"
                           >
                             {i < TRACK_STEPS.length - 1 && (
                               <div
-                                className={`absolute top-3 left-1/2 w-full h-0.5 ${done ? "bg-sky-400 dark:bg-sky-500" : "bg-gray-200 dark:bg-gray-600"}`}
+                                className={`absolute top-3 left-1/2 h-0.5 w-full ${done ? "bg-sky-400 dark:bg-sky-500" : "bg-gray-200 dark:bg-gray-600"}`}
                               />
                             )}
                             <div
-                              className={`relative z-10 h-6 w-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                              className={`relative z-10 flex h-6 w-6 items-center justify-center rounded-full border-2 transition-all ${
                                 done
-                                  ? "bg-sky-500 dark:bg-sky-600 border-sky-500 dark:border-sky-600"
-                                  : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600"
-                              } ${active ? "ring-2 ring-sky-200 dark:ring-sky-900/50 ring-offset-1" : ""}`}
+                                  ? "border-sky-500 bg-sky-500 dark:border-sky-600 dark:bg-sky-600"
+                                  : "border-gray-200 bg-white dark:border-gray-600 dark:bg-gray-800"
+                              } ${active ? "ring-2 ring-sky-200 ring-offset-1 dark:ring-sky-900/50" : ""}`}
                             >
                               {done ? (
                                 <Icon.Check className="h-3 w-3 text-white" />
@@ -466,7 +468,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
                               )}
                             </div>
                             <p
-                              className={`text-center text-[10px] font-medium leading-tight ${done ? "text-sky-600 dark:text-sky-400" : "text-gray-400 dark:text-gray-500"}`}
+                              className={`text-center text-[10px] leading-tight font-medium ${done ? "text-sky-600 dark:text-sky-400" : "text-gray-400 dark:text-gray-500"}`}
                             >
                               {step}
                             </p>
@@ -487,7 +489,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
                         <button
                           type="button"
                           onClick={() => setConfirmOpen(true)}
-                          className="mt-3 inline-flex items-center gap-2 rounded-xl bg-emerald-500 dark:bg-emerald-600 hover:bg-emerald-600 dark:hover:bg-emerald-700 px-3.5 py-2 text-xs font-semibold text-white transition-colors"
+                          className="mt-3 inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-700"
                         >
                           Confirm Order
                         </button>
@@ -504,7 +506,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
 
               {/* All items */}
               <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">
+                <p className="mb-2 text-xs font-bold tracking-widest text-gray-400 uppercase dark:text-gray-500">
                   Items Ordered
                 </p>
                 <div className="space-y-2">
@@ -517,7 +519,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
                     return (
                       <div
                         key={item.id}
-                        className="flex items-center gap-3 rounded-xl border border-gray-100 dark:border-slate-700 bg-white dark:bg-gray-900/50 px-3 py-2.5"
+                        className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white px-3 py-2.5 dark:border-slate-700 dark:bg-gray-900/50"
                       >
                         {href ? (
                           <Link href={href} className={imageClassName}>
@@ -538,12 +540,12 @@ const OrderCard = ({ order }: OrderCardProps) => {
                             />
                           </div>
                         )}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-gray-800 dark:text-gray-100">
                             {href ? (
                               <Link
                                 href={href}
-                                className="hover:text-sky-500 dark:hover:text-sky-400 transition-colors"
+                                className="transition-colors hover:text-sky-500 dark:hover:text-sky-400"
                               >
                                 {item.name}
                               </Link>
@@ -559,7 +561,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
                               {getSelectedOptions(item).map((option) => (
                                 <span
                                   key={option}
-                                  className="inline-flex items-center rounded-full border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-900/30 px-2.5 py-1 text-[11px] font-medium text-sky-700 dark:text-sky-400"
+                                  className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[11px] font-medium text-sky-700 dark:border-sky-800 dark:bg-sky-900/30 dark:text-sky-400"
                                 >
                                   {option}
                                 </span>
@@ -567,7 +569,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
                             </div>
                           )}
                         </div>
-                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 shrink-0">
+                        <p className="shrink-0 text-sm font-semibold text-gray-800 dark:text-gray-200">
                           {formatPrice(item.price * item.quantity)}
                         </p>
                       </div>
@@ -577,9 +579,9 @@ const OrderCard = ({ order }: OrderCardProps) => {
               </div>
 
               {/* Order summary */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="rounded-xl border border-gray-100 dark:border-slate-700 bg-white dark:bg-gray-900/50 px-4 py-3 space-y-1.5">
-                  <p className="text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5 rounded-xl border border-gray-100 bg-white px-4 py-3 dark:border-slate-700 dark:bg-gray-900/50">
+                  <p className="text-xs font-bold tracking-widest text-gray-400 uppercase dark:text-gray-500">
                     Order Summary
                   </p>
                   <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
@@ -591,7 +593,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
                     <span
                       className={
                         order.shipping_fee === 0
-                          ? "text-emerald-600 dark:text-emerald-400 font-medium"
+                          ? "font-medium text-emerald-600 dark:text-emerald-400"
                           : ""
                       }
                     >
@@ -600,7 +602,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
                         : formatPrice(order.shipping_fee)}
                     </span>
                   </div>
-                  <div className="flex justify-between text-sm font-bold text-gray-900 dark:text-white pt-1 border-t border-gray-100 dark:border-slate-700">
+                  <div className="flex justify-between border-t border-gray-100 pt-1 text-sm font-bold text-gray-900 dark:border-slate-700 dark:text-white">
                     <span>Total</span>
                     <span className="text-sky-600 dark:text-sky-400">
                       {formatPrice(order.total)}
@@ -608,26 +610,26 @@ const OrderCard = ({ order }: OrderCardProps) => {
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-gray-100 dark:border-slate-700 bg-white dark:bg-gray-900/50 px-4 py-3 space-y-2.5">
-                  <p className="text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                <div className="space-y-2.5 rounded-xl border border-gray-100 bg-white px-4 py-3 dark:border-slate-700 dark:bg-gray-900/50">
+                  <p className="text-xs font-bold tracking-widest text-gray-400 uppercase dark:text-gray-500">
                     Delivery Info
                   </p>
                   <div className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-400">
-                    <Icon.MapPin className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500 mt-0.5 shrink-0" />
+                    <Icon.MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500" />
                     <span className="leading-relaxed">
                       {order.shipping_address}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-                    <Icon.CreditCard className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500 shrink-0" />
+                    <Icon.CreditCard className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500" />
                     <span>{order.payment_method}</span>
                   </div>
                 </div>
               </div>
 
               {hasShipmentInfo && (
-                <div className="rounded-xl border border-teal-200 dark:border-teal-800 bg-teal-50/60 dark:bg-teal-900/20 px-4 py-3 space-y-2.5">
-                  <p className="text-xs font-bold uppercase tracking-widest text-teal-700 dark:text-teal-400">
+                <div className="space-y-2.5 rounded-xl border border-teal-200 bg-teal-50/60 px-4 py-3 dark:border-teal-800 dark:bg-teal-900/20">
+                  <p className="text-xs font-bold tracking-widest text-teal-700 uppercase dark:text-teal-400">
                     Shipment Details
                   </p>
                   {order.courier && (
@@ -647,12 +649,12 @@ const OrderCard = ({ order }: OrderCardProps) => {
                     </p>
                   )}
                   {order.tracking_no && (
-                    <div className="rounded-xl border border-teal-200 dark:border-teal-800 bg-white dark:bg-gray-900/50 px-3 py-2.5">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-teal-700 dark:text-teal-400">
+                    <div className="rounded-xl border border-teal-200 bg-white px-3 py-2.5 dark:border-teal-800 dark:bg-gray-900/50">
+                      <p className="text-[10px] font-bold tracking-widest text-teal-700 uppercase dark:text-teal-400">
                         Tracking Number
                       </p>
                       <div className="mt-1.5 flex items-center gap-2">
-                        <p className="min-w-0 flex-1 break-all font-mono text-sm font-semibold text-gray-900 dark:text-gray-200">
+                        <p className="min-w-0 flex-1 font-mono text-sm font-semibold break-all text-gray-900 dark:text-gray-200">
                           {order.tracking_no}
                         </p>
                         <button
@@ -664,7 +666,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
                               return
                             }
                           }}
-                          className="shrink-0 rounded-lg border border-teal-200 dark:border-teal-800 bg-teal-50 dark:bg-teal-900/30 px-2.5 py-1 text-[11px] font-semibold text-teal-700 dark:text-teal-400 transition hover:bg-teal-100 dark:hover:bg-teal-900/50"
+                          className="shrink-0 rounded-lg border border-teal-200 bg-teal-50 px-2.5 py-1 text-[11px] font-semibold text-teal-700 transition hover:bg-teal-100 dark:border-teal-800 dark:bg-teal-900/30 dark:text-teal-400 dark:hover:bg-teal-900/50"
                         >
                           Copy
                         </button>
@@ -692,10 +694,10 @@ const OrderCard = ({ order }: OrderCardProps) => {
             className="absolute inset-0"
             onClick={() => setConfirmOpen(false)}
           />
-          <div className="relative z-[71] w-full max-w-lg rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 p-6">
+          <div className="relative z-[71] w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-gray-800">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.22em] text-sky-600 dark:text-sky-400">
+                <p className="text-xs font-bold tracking-[0.22em] text-sky-600 uppercase dark:text-sky-400">
                   Confirm Delivery
                 </p>
                 <h3 className="mt-2 text-xl font-bold text-slate-900 dark:text-white">
@@ -708,7 +710,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
               <button
                 type="button"
                 onClick={() => setConfirmOpen(false)}
-                className="rounded-full border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-gray-400 hover:border-emerald-200 dark:hover:border-emerald-700 hover:text-emerald-700 dark:hover:text-emerald-400"
+                className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:border-emerald-200 hover:text-emerald-700 dark:border-slate-700 dark:text-gray-400 dark:hover:border-emerald-700 dark:hover:text-emerald-400"
               >
                 Close
               </button>
@@ -718,7 +720,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.25, ease: "easeOut" }}
-              className="mt-5 rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-900 p-4"
+              className="mt-5 rounded-3xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-gray-900"
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -746,15 +748,15 @@ const OrderCard = ({ order }: OrderCardProps) => {
                       whileTap={{ scale: 0.96 }}
                       className={`group relative flex h-11 w-11 items-center justify-center rounded-2xl border transition ${
                         active
-                          ? "border-sky-300 dark:border-sky-700 bg-sky-100 dark:bg-sky-900/40 text-sky-600 dark:text-sky-400"
-                          : "border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-700 text-slate-300 dark:text-gray-600"
+                          ? "border-sky-300 bg-sky-100 text-sky-600 dark:border-sky-700 dark:bg-sky-900/40 dark:text-sky-400"
+                          : "border-slate-200 bg-white text-slate-300 dark:border-slate-700 dark:bg-gray-700 dark:text-gray-600"
                       }`}
                       aria-label={`Rate ${value} star`}
                     >
                       <span
                         className={`absolute inset-0 rounded-2xl opacity-0 transition ${
                           active
-                            ? "bg-sky-200/60 dark:bg-sky-500/30 blur-md opacity-70"
+                            ? "bg-sky-200/60 opacity-70 blur-md dark:bg-sky-500/30"
                             : ""
                         }`}
                       />
@@ -785,7 +787,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
                 onChange={(e) => setReview(e.target.value)}
                 rows={4}
                 placeholder="Share your experience..."
-                className="mt-2 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-slate-700 dark:text-gray-100 placeholder:text-slate-400 dark:placeholder:text-gray-500 focus:border-sky-300 dark:focus:border-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:focus:ring-sky-900/50"
+                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:border-sky-300 focus:ring-2 focus:ring-sky-100 focus:outline-none dark:border-slate-700 dark:bg-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500 dark:focus:border-sky-700 dark:focus:ring-sky-900/50"
               />
             </div>
 
@@ -946,7 +948,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
               <button
                 type="button"
                 onClick={() => setConfirmOpen(false)}
-                className="rounded-full border border-slate-200 dark:border-slate-700 px-4 py-2 text-sm font-semibold text-slate-600 dark:text-gray-400 hover:border-sky-200 dark:hover:border-sky-700 hover:text-sky-700 dark:hover:text-sky-400"
+                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:border-sky-200 hover:text-sky-700 dark:border-slate-700 dark:text-gray-400 dark:hover:border-sky-700 dark:hover:text-sky-400"
               >
                 Cancel
               </button>
@@ -973,7 +975,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
                     return
                   }
                 }}
-                className="rounded-full bg-sky-500 dark:bg-sky-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-sky-600 dark:hover:bg-sky-700 disabled:opacity-60"
+                className="rounded-full bg-sky-500 px-5 py-2 text-sm font-semibold text-white transition hover:bg-sky-600 disabled:opacity-60 dark:bg-sky-600 dark:hover:bg-sky-700"
               >
                 {isConfirming ? "Submitting..." : "Order Completed"}
               </button>
@@ -987,10 +989,10 @@ const OrderCard = ({ order }: OrderCardProps) => {
             className="absolute inset-0"
             onClick={() => setRefundOpen(false)}
           />
-          <div className="relative z-[71] w-full max-w-lg rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 p-6">
+          <div className="relative z-[71] w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-gray-800">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.22em] text-rose-600 dark:text-rose-400">
+                <p className="text-xs font-bold tracking-[0.22em] text-rose-600 uppercase dark:text-rose-400">
                   Refund Request
                 </p>
                 <h3 className="mt-2 text-xl font-bold text-slate-900 dark:text-white">
@@ -1003,7 +1005,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
               <button
                 type="button"
                 onClick={() => setRefundOpen(false)}
-                className="rounded-full border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-gray-400"
+                className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:border-slate-700 dark:text-gray-400"
               >
                 Close
               </button>
@@ -1018,7 +1020,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
                 onChange={(e) => setRefundReason(e.target.value)}
                 rows={4}
                 placeholder="Explain why you are requesting a refund..."
-                className="mt-2 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-slate-700 dark:text-gray-100"
+                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 dark:border-slate-700 dark:bg-gray-700 dark:text-gray-100"
               />
             </div>
 
@@ -1127,7 +1129,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
               <button
                 type="button"
                 onClick={() => setRefundOpen(false)}
-                className="rounded-full border border-slate-200 dark:border-slate-700 px-4 py-2 text-sm font-semibold text-slate-600 dark:text-gray-400"
+                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 dark:border-slate-700 dark:text-gray-400"
               >
                 Cancel
               </button>

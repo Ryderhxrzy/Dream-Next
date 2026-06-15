@@ -1,5 +1,5 @@
-import { buildPageMetadata } from "@/app/seo"
 import ImportImagePageMain from "@/components/superAdmin/products/ImportImagePageMain"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Import Image",

@@ -1,21 +1,21 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import Image from "next/image"
-import {
-  ShoppingBag,
-  BarChart2,
-  AlignLeft,
-  Tag,
-  RotateCcw,
-  Filter,
-  ChevronDown,
-} from "lucide-react"
 import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
-import { useGetAdminMeQuery } from "@/store/api/authApi"
 import { useGetPartnerStorefrontOrdersQuery } from "@/store/api/adminOrdersApi"
-import { useGetAdminWebPageItemsQuery } from "@/store/api/webPagesApi"
+import { useGetAdminMeQuery } from "@/store/api/authApi"
 import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
+import { useGetAdminWebPageItemsQuery } from "@/store/api/webPagesApi"
+import {
+  AlignLeft,
+  BarChart2,
+  ChevronDown,
+  Filter,
+  RotateCcw,
+  ShoppingBag,
+  Tag,
+} from "lucide-react"
+import Image from "next/image"
 
 const money = new Intl.NumberFormat("en-PH", {
   style: "currency",
@@ -61,16 +61,16 @@ function EmptyOrdersIllustration() {
   return (
     <div className="relative mx-auto flex h-28 w-28 items-center justify-center">
       {/* sparkle dots */}
-      <span className="absolute left-0 top-4 text-teal-300 text-lg select-none">
+      <span className="absolute top-4 left-0 text-lg text-teal-300 select-none">
         +
       </span>
-      <span className="absolute right-1 top-2 text-teal-200 text-sm select-none">
+      <span className="absolute top-2 right-1 text-sm text-teal-200 select-none">
         +
       </span>
-      <span className="absolute left-3 bottom-2 text-teal-200 text-xs select-none">
+      <span className="absolute bottom-2 left-3 text-xs text-teal-200 select-none">
         ✦
       </span>
-      <span className="absolute right-2 bottom-4 text-teal-300 text-xs select-none">
+      <span className="absolute right-2 bottom-4 text-xs text-teal-300 select-none">
         ✦
       </span>
       {/* circle bg */}
@@ -280,7 +280,7 @@ export default function PartnerOrdersPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 self-start rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:self-auto">
+          <div className="flex items-center gap-2 self-start rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm sm:self-auto dark:border-slate-700 dark:bg-slate-800">
             <BarChart2 className="h-4 w-4 text-teal-600 dark:text-teal-400" />
             <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
               {isOrdersFetching && !loading ? "…" : partnerOrders.length} shown
@@ -294,13 +294,13 @@ export default function PartnerOrdersPage() {
         <div className="grid grid-cols-1 items-end gap-4 md:grid-cols-3">
           {/* Status */}
           <div>
-            <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+            <label className="mb-2 block text-[11px] font-bold tracking-widest text-slate-500 uppercase dark:text-slate-400">
               Status
             </label>
             <div className="relative">
-              <AlignLeft className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-teal-500" />
+              <AlignLeft className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-teal-500" />
               <select
-                className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-9 text-sm font-medium text-slate-800 shadow-sm outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pr-9 pl-10 text-sm font-medium text-slate-800 shadow-sm transition outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 disabled={loading}
@@ -311,19 +311,19 @@ export default function PartnerOrdersPage() {
                   </option>
                 ))}
               </select>
-              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <ChevronDown className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
             </div>
           </div>
 
           {/* Category */}
           <div>
-            <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+            <label className="mb-2 block text-[11px] font-bold tracking-widest text-slate-500 uppercase dark:text-slate-400">
               Category
             </label>
             <div className="relative">
-              <Tag className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-teal-500" />
+              <Tag className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-teal-500" />
               <select
-                className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-9 text-sm font-medium text-slate-800 shadow-sm outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pr-9 pl-10 text-sm font-medium text-slate-800 shadow-sm transition outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
                 disabled={loading || allowedCategoryIds.length === 0}
@@ -334,7 +334,7 @@ export default function PartnerOrdersPage() {
                   </option>
                 ))}
               </select>
-              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <ChevronDown className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
             </div>
           </div>
 
@@ -447,7 +447,7 @@ export default function PartnerOrdersPage() {
                   ].map((h) => (
                     <th
                       key={h}
-                      className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400"
+                      className="px-4 py-3 text-left text-[11px] font-bold tracking-widest text-slate-500 uppercase dark:text-slate-400"
                     >
                       {h}
                     </th>
@@ -547,7 +547,7 @@ export default function PartnerOrdersPage() {
 
                       <td className="px-4 py-3">
                         {order.payment_method ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold capitalize text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700 capitalize dark:bg-indigo-900/30 dark:text-indigo-300">
                             {String(order.payment_method).replace(/_/g, " ")}
                           </span>
                         ) : (

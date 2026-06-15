@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import {
   MemberKycItem,
   MemberKycStatus,
@@ -9,7 +9,8 @@ import {
   useGetMembersKycQuery,
   useRejectMemberKycMutation,
 } from "@/store/api/membersApi"
-import { showErrorToast, showSuccessToast } from "@/libs/toast"
+import { AnimatePresence, motion } from "framer-motion"
+
 import DataTableShell from "@/components/superAdmin/DataTableShell"
 
 /* --- helpers ----------------------------------------------- */
@@ -97,15 +98,15 @@ function StatCard({
 }) {
   return (
     <div
-      className={`bg-white border ${border} rounded-2xl p-4 dark:bg-slate-900`}
+      className={`border bg-white ${border} rounded-2xl p-4 dark:bg-slate-900`}
     >
-      <div className="flex items-center gap-3 mb-3">
+      <div className="mb-3 flex items-center gap-3">
         <div
-          className={`h-9 w-9 rounded-xl ${bg} ${text} flex items-center justify-center shrink-0`}
+          className={`h-9 w-9 rounded-xl ${bg} ${text} flex shrink-0 items-center justify-center`}
         >
           {icon}
         </div>
-        <p className="text-[11px] text-slate-400 font-medium leading-tight">
+        <p className="text-[11px] leading-tight font-medium text-slate-400">
           {label}
         </p>
       </div>
@@ -125,15 +126,15 @@ function DocCard({ label, url }: { label: string; url?: string | null }) {
       rel="noreferrer"
       className={`group flex flex-col items-center justify-center gap-2 rounded-2xl border p-5 transition-all ${
         hasUrl
-          ? "border-teal-100 bg-teal-50/50 hover:bg-teal-50 hover:border-teal-200 cursor-pointer"
-          : "border-slate-100 bg-slate-50 cursor-default opacity-60"
+          ? "cursor-pointer border-teal-100 bg-teal-50/50 hover:border-teal-200 hover:bg-teal-50"
+          : "cursor-default border-slate-100 bg-slate-50 opacity-60"
       }`}
     >
       <div
-        className={`h-10 w-10 rounded-xl flex items-center justify-center ${hasUrl ? "bg-teal-100 text-teal-600" : "bg-slate-200 text-slate-400"}`}
+        className={`flex h-10 w-10 items-center justify-center rounded-xl ${hasUrl ? "bg-teal-100 text-teal-600" : "bg-slate-200 text-slate-400"}`}
       >
         <svg
-          className="w-5 h-5"
+          className="h-5 w-5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -186,12 +187,12 @@ function DetailModal({
         initial={{ opacity: 0, scale: 0.95, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 12 }}
-        className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white z-10 dark:border-slate-800 dark:bg-slate-900"
+        className="relative z-10 w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
       >
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-6 py-4 dark:border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-linear-to-br from-teal-400 to-teal-600 flex items-center justify-center text-white text-sm font-bold shrink-0">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-teal-400 to-teal-600 text-sm font-bold text-white">
               {getInitials(name)}
             </div>
             <div>
@@ -203,17 +204,17 @@ function DetailModal({
           </div>
           <div className="flex items-center gap-2">
             <span
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${cfg.badge}`}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${cfg.badge}`}
             >
               <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
               {cfg.label}
             </span>
             <button
               onClick={onClose}
-              className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 transition"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100"
             >
               <svg
-                className="w-4 h-4"
+                className="h-4 w-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -230,7 +231,7 @@ function DetailModal({
         </div>
 
         {/* Body */}
-        <div className="px-6 py-5 max-h-[65vh] overflow-y-auto space-y-5">
+        <div className="max-h-[65vh] space-y-5 overflow-y-auto px-6 py-5">
           {/* Info grid */}
           <div className="grid grid-cols-2 gap-3">
             {[
@@ -248,10 +249,10 @@ function DetailModal({
                 key={label}
                 className="rounded-xl border border-slate-100 bg-slate-50 px-3.5 py-3"
               >
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                <p className="text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
                   {label}
                 </p>
-                <p className="text-sm font-medium text-slate-700 mt-1">
+                <p className="mt-1 text-sm font-medium text-slate-700">
                   {value}
                 </p>
               </div>
@@ -260,7 +261,7 @@ function DetailModal({
 
           {/* Address */}
           <div className="rounded-xl border border-slate-100 bg-slate-50 px-3.5 py-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">
+            <p className="mb-1 text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
               Address
             </p>
             <p className="text-sm text-slate-700">
@@ -278,10 +279,10 @@ function DetailModal({
 
           {/* Notes */}
           {item.review_notes && (
-            <div className="rounded-xl border border-slate-100 bg-slate-50 px-3.5 py-3 space-y-1.5">
+            <div className="space-y-1.5 rounded-xl border border-slate-100 bg-slate-50 px-3.5 py-3">
               {item.review_notes && (
                 <p className="text-sm text-slate-700">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mr-2">
+                  <span className="mr-2 text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
                     Review Note:
                   </span>
                   {item.review_notes}
@@ -292,7 +293,7 @@ function DetailModal({
 
           {/* Documents */}
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">
+            <p className="mb-2 text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
               Documents
             </p>
             <div className="grid grid-cols-3 gap-3">
@@ -305,13 +306,13 @@ function DetailModal({
 
         {/* Footer actions */}
         {isPending && (
-          <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-end gap-2">
+          <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-6 py-4">
             <button
               onClick={() => {
                 onClose()
                 onAction("reject", item.id)
               }}
-              className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-500 hover:bg-red-600 transition-all"
+              className="rounded-xl bg-red-500 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-red-600"
             >
               Reject
             </button>
@@ -320,7 +321,7 @@ function DetailModal({
                 onClose()
                 onAction("approve", item.id)
               }}
-              className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition-all"
+              className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-emerald-700"
             >
               Approve
             </button>
@@ -362,11 +363,11 @@ function ActionModal({
         initial={{ opacity: 0, scale: 0.95, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 12 }}
-        className="relative w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white z-60 dark:border-slate-800 dark:bg-slate-900"
+        className="relative z-60 w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
       >
-        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
+        <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4 dark:border-slate-800">
           <div
-            className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
               isApprove
                 ? "bg-emerald-50 text-emerald-600"
                 : "bg-red-50 text-red-500"
@@ -374,7 +375,7 @@ function ActionModal({
           >
             {isApprove ? (
               <svg
-                className="w-5 h-5"
+                className="h-5 w-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -388,7 +389,7 @@ function ActionModal({
               </svg>
             ) : (
               <svg
-                className="w-5 h-5"
+                className="h-5 w-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -406,7 +407,7 @@ function ActionModal({
             <h2 className="text-sm font-bold text-slate-800">
               {isApprove ? "Approve KYC Request" : "Reject KYC Request"}
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="mt-0.5 text-xs text-slate-400">
               {isApprove
                 ? "Optional note for the approval log."
                 : "Reason required for rejection."}
@@ -414,10 +415,10 @@ function ActionModal({
           </div>
           <button
             onClick={onClose}
-            className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 transition"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100"
           >
             <svg
-              className="w-4 h-4"
+              className="h-4 w-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -432,8 +433,8 @@ function ActionModal({
           </button>
         </div>
 
-        <div className="px-6 py-5 space-y-3">
-          <label className="text-xs font-semibold text-slate-600 block">
+        <div className="space-y-3 px-6 py-5">
+          <label className="block text-xs font-semibold text-slate-600">
             Review Note {!isApprove && <span className="text-red-400">*</span>}
           </label>
           <textarea
@@ -445,11 +446,11 @@ function ActionModal({
                 ? "Optional note for audit trail..."
                 : "Explain rejection reason (min 5 characters)..."
             }
-            className="w-full rounded-[18px] border border-gray-300 bg-white px-4 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 outline-none transition-all duration-200 focus:border-sky-400 focus:bg-white dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder:text-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18 resize-none"
+            className="w-full resize-none rounded-[18px] border border-gray-300 bg-white px-4 py-2.5 text-sm text-slate-700 transition-all duration-200 outline-none placeholder:text-slate-400 focus:border-sky-400 focus:bg-white dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder:text-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
           />
         </div>
 
-        <div className="px-6 py-4 border-t border-slate-100 flex gap-2">
+        <div className="flex gap-2 border-t border-slate-100 px-6 py-4">
           <button
             onClick={onClose}
             className="flex-1 rounded-[18px] border border-gray-300 px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-slate-400 dark:border-white/18 dark:text-slate-200"
@@ -459,7 +460,7 @@ function ActionModal({
           <button
             onClick={onConfirm}
             disabled={busy}
-            className={`flex-1 rounded-[18px] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60 transition-all ${
+            className={`flex-1 rounded-[18px] px-4 py-2.5 text-sm font-bold text-white transition-all disabled:opacity-60 ${
               isApprove
                 ? "bg-emerald-600 hover:bg-emerald-700"
                 : "bg-red-500 hover:bg-red-600"
@@ -495,19 +496,19 @@ function KycRow({
   const isPending = row.status === "pending_review" || row.status === "on_hold"
 
   return (
-    <tr className="hover:bg-slate-50/70 transition-colors">
+    <tr className="transition-colors hover:bg-slate-50/70">
       {/* Reference */}
       <td className="px-4 py-3.5">
         <p className="text-sm font-semibold text-slate-800">
           {row.reference_no}
         </p>
-        <p className="text-xs text-slate-400 mt-0.5">#{row.id}</p>
+        <p className="mt-0.5 text-xs text-slate-400">#{row.id}</p>
       </td>
 
       {/* Member */}
       <td className="px-4 py-3.5">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-full shrink-0 flex items-center justify-center text-white text-xs font-bold bg-linear-to-br from-teal-400 to-teal-600">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-teal-400 to-teal-600 text-xs font-bold text-white">
             {getInitials(name)}
           </div>
           <div>
@@ -524,13 +525,13 @@ function KycRow({
         <p className="text-sm font-medium text-slate-700">
           {row.id_type || "N/A"}
         </p>
-        <p className="text-xs text-slate-400 mt-0.5">
+        <p className="mt-0.5 text-xs text-slate-400">
           {row.id_number || "No ID number"}
         </p>
       </td>
 
       {/* Submitted */}
-      <td className="px-4 py-3.5 text-xs text-slate-500 whitespace-nowrap">
+      <td className="px-4 py-3.5 text-xs whitespace-nowrap text-slate-500">
         <p>{formatDate(row.created_at)}</p>
         {row.reviewed_at && (
           <p className="mt-0.5 text-slate-400">
@@ -542,7 +543,7 @@ function KycRow({
       {/* Status */}
       <td className="px-4 py-3.5">
         <span
-          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-semibold ${cfg.badge}`}
+          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${cfg.badge}`}
         >
           <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
           {cfg.label}
@@ -650,19 +651,19 @@ export default function KycVerificationPageMain() {
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-start justify-between gap-4 flex-wrap"
+        className="flex flex-wrap items-start justify-between gap-4"
       >
         <div>
           <h1 className="text-xl font-bold text-slate-800">
             KYC / Verifications
           </h1>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <p className="mt-0.5 text-sm text-slate-500">
             Review identity submissions before account activation
           </p>
         </div>
         <button className="flex items-center gap-2 rounded-[18px] border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all hover:border-slate-400 dark:border-white/18 dark:bg-white/12 dark:text-slate-200">
           <svg
-            className="w-4 h-4 text-teal-600"
+            className="h-4 w-4 text-teal-600"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -684,7 +685,7 @@ export default function KycVerificationPageMain() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+          className="grid grid-cols-2 gap-4 lg:grid-cols-4"
         >
           <StatCard
             label="Pending Review"
@@ -694,7 +695,7 @@ export default function KycVerificationPageMain() {
             border="border-sky-100"
             icon={
               <svg
-                className="w-5 h-5"
+                className="h-5 w-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -716,7 +717,7 @@ export default function KycVerificationPageMain() {
             border="border-emerald-100"
             icon={
               <svg
-                className="w-5 h-5"
+                className="h-5 w-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -738,7 +739,7 @@ export default function KycVerificationPageMain() {
             border="border-red-100"
             icon={
               <svg
-                className="w-5 h-5"
+                className="h-5 w-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -760,7 +761,7 @@ export default function KycVerificationPageMain() {
             border="border-slate-200"
             icon={
               <svg
-                className="w-5 h-5"
+                className="h-5 w-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -782,12 +783,12 @@ export default function KycVerificationPageMain() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="rounded-2xl border border-slate-200 bg-white p-4 space-y-3 dark:border-slate-800 dark:bg-slate-900"
+        className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900"
       >
         {/* Search */}
         <div className="relative">
           <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+            className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -806,7 +807,7 @@ export default function KycVerificationPageMain() {
               setPage(1)
             }}
             placeholder="Search reference, full name, ID number..."
-            className="h-11 w-full rounded-[18px] border border-gray-300 bg-white pl-9 pr-4 text-sm text-slate-900 outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-sky-400 focus:bg-white dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder:text-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
+            className="h-11 w-full rounded-[18px] border border-gray-300 bg-white pr-4 pl-9 text-sm text-slate-900 transition-all duration-200 outline-none placeholder:text-gray-400 focus:border-sky-400 focus:bg-white dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder:text-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
           />
         </div>
 
@@ -843,9 +844,9 @@ export default function KycVerificationPageMain() {
 
       {/* -- Error -- */}
       {isError && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-center gap-2">
+        <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           <svg
-            className="w-4 h-4 shrink-0"
+            className="h-4 w-4 shrink-0"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -863,20 +864,20 @@ export default function KycVerificationPageMain() {
 
       {/* -- Loading skeleton -- */}
       {isLoading ? (
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white animate-pulse dark:border-slate-800 dark:bg-slate-900">
-          <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex gap-3">
-            <div className="h-4 w-32 bg-slate-100 rounded-lg" />
+        <div className="animate-pulse overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+            <div className="h-4 w-32 rounded-lg bg-slate-100" />
           </div>
-          <div className="divide-y divide-slate-100 dark:divide-slate-800/70 dark:divide-slate-800/70">
+          <div className="divide-y divide-slate-100 dark:divide-slate-800/70">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="px-4 py-4 flex items-center gap-4">
-                <div className="h-9 w-9 rounded-full bg-slate-100 shrink-0" />
+              <div key={i} className="flex items-center gap-4 px-4 py-4">
+                <div className="h-9 w-9 shrink-0 rounded-full bg-slate-100" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-3 w-36 bg-slate-100 rounded" />
-                  <div className="h-2.5 w-24 bg-slate-100 rounded" />
+                  <div className="h-3 w-36 rounded bg-slate-100" />
+                  <div className="h-2.5 w-24 rounded bg-slate-100" />
                 </div>
-                <div className="h-6 w-20 bg-slate-100 rounded-full" />
-                <div className="h-7 w-16 bg-slate-100 rounded-lg" />
+                <div className="h-6 w-20 rounded-full bg-slate-100" />
+                <div className="h-7 w-16 rounded-lg bg-slate-100" />
               </div>
             ))}
           </div>
@@ -940,19 +941,19 @@ export default function KycVerificationPageMain() {
           >
             {isLoading ? (
               <div className="animate-pulse">
-                <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex gap-3">
-                  <div className="h-4 w-32 bg-slate-100 rounded-lg" />
+                <div className="flex gap-3 border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+                  <div className="h-4 w-32 rounded-lg bg-slate-100" />
                 </div>
                 <div className="divide-y divide-slate-100 dark:divide-slate-800/70">
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="px-4 py-4 flex items-center gap-4">
-                      <div className="h-9 w-9 rounded-full bg-slate-100 shrink-0" />
+                    <div key={i} className="flex items-center gap-4 px-4 py-4">
+                      <div className="h-9 w-9 shrink-0 rounded-full bg-slate-100" />
                       <div className="flex-1 space-y-2">
-                        <div className="h-3 w-36 bg-slate-100 rounded" />
-                        <div className="h-2.5 w-24 bg-slate-100 rounded" />
+                        <div className="h-3 w-36 rounded bg-slate-100" />
+                        <div className="h-2.5 w-24 rounded bg-slate-100" />
                       </div>
-                      <div className="h-6 w-20 bg-slate-100 rounded-full" />
-                      <div className="h-7 w-16 bg-slate-100 rounded-lg" />
+                      <div className="h-6 w-20 rounded-full bg-slate-100" />
+                      <div className="h-7 w-16 rounded-lg bg-slate-100" />
                     </div>
                   ))}
                 </div>
@@ -972,7 +973,7 @@ export default function KycVerificationPageMain() {
                       ].map((h) => (
                         <th
                           key={h}
-                          className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-400"
+                          className="px-4 py-3 text-xs font-semibold tracking-wide text-slate-400 uppercase"
                         >
                           {h}
                         </th>
@@ -995,7 +996,7 @@ export default function KycVerificationPageMain() {
                         <td colSpan={6} className="px-5 py-14 text-center">
                           <div className="flex flex-col items-center gap-2">
                             <svg
-                              className="w-8 h-8 text-slate-300"
+                              className="h-8 w-8 text-slate-300"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"

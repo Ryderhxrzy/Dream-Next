@@ -1,18 +1,19 @@
 "use client"
 
-import Link from "next/link"
-import { motion } from "framer-motion"
 import { useEffect, useState } from "react"
-import { usePathname } from "next/navigation"
+import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
+import { extractPartnerSlugFromPath } from "@/libs/storefrontRouting"
 import { useLazyVerifyCheckoutSessionQuery } from "@/store/api/paymentApi"
 import { useGetPublicWebPageItemsQuery } from "@/store/api/webPagesApi"
-import TopBar from "@/components/layout/TopBar"
-import Navbar from "@/components/layout/Navbar"
-import TrustBar from "@/components/layout/TrustBar"
-import Footer from "@/components/landing-page/Footer"
+import { motion } from "framer-motion"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+
 import LoadingScreen from "@/components/ui/LoadingScreen"
-import { extractPartnerSlugFromPath } from "@/libs/storefrontRouting"
-import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
+import Footer from "@/components/landing-page/Footer"
+import Navbar from "@/components/layout/Navbar"
+import TopBar from "@/components/layout/TopBar"
+import TrustBar from "@/components/layout/TrustBar"
 
 const LOCAL_PAYMENT_MODE_HOSTS = new Set(["localhost", "127.0.0.1"])
 
@@ -335,22 +336,22 @@ function CheckoutSuccessPage() {
   // -- ERROR -----------------------------------------------------
   if (error) {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-slate-50 to-red-50/30 flex items-center justify-center p-4">
+      <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-red-50/30 p-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
           className="w-full max-w-md"
         >
-          <div className="bg-white rounded-3xl border border-red-100 shadow-xl p-8 text-center">
+          <div className="rounded-3xl border border-red-100 bg-white p-8 text-center shadow-xl">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
-              className="h-20 w-20 rounded-full bg-red-100 flex items-center justify-center mx-auto"
+              className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-red-100"
             >
               <svg
-                className="w-10 h-10 text-red-500"
+                className="h-10 w-10 text-red-500"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -364,20 +365,20 @@ function CheckoutSuccessPage() {
               </svg>
             </motion.div>
 
-            <h1 className="text-xl font-black text-slate-800 mt-5">
+            <h1 className="mt-5 text-xl font-black text-slate-800">
               Verification Error
             </h1>
-            <p className="text-slate-400 text-sm mt-2 leading-relaxed">
+            <p className="mt-2 text-sm leading-relaxed text-slate-400">
               {error}
             </p>
 
             <div className="mt-7 flex flex-col gap-2.5">
               <Link
                 href={`${trackOrderBaseHref}?order=${encodeURIComponent(result?.checkout_id ?? "")}`}
-                className="w-full py-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-sky-200 text-slate-700 hover:text-sky-700 font-semibold text-sm text-center transition-all flex items-center justify-center gap-2"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-3 text-center text-sm font-semibold text-slate-700 transition-all hover:border-sky-200 hover:bg-slate-50 hover:text-sky-700"
               >
                 <svg
-                  className="w-4 h-4"
+                  className="h-4 w-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -393,10 +394,10 @@ function CheckoutSuccessPage() {
               </Link>
               <Link
                 href={homeHref}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white font-semibold text-sm text-center transition-all shadow-md shadow-sky-100 flex items-center justify-center gap-2"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-sky-600 py-3 text-center text-sm font-semibold text-white shadow-md shadow-sky-100 transition-all hover:from-sky-600 hover:to-sky-700"
               >
                 <svg
-                  className="w-4 h-4"
+                  className="h-4 w-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -459,26 +460,26 @@ function CheckoutSuccessPage() {
         showGuestCartWishlist={isPartnerStorefrontCheckout}
       />
       {!isPartnerStorefrontCheckout && <TrustBar />}
-      <main className="min-h-screen bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-slate-800">
-        <div className="container mx-auto px-4 py-10 md:py-14 flex items-center justify-center">
+      <main className="min-h-screen border-t border-gray-200 bg-white dark:border-slate-800 dark:bg-gray-950">
+        <div className="container mx-auto flex items-center justify-center px-4 py-10 md:py-14">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
             className="w-full max-w-md"
           >
-            <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-slate-700 shadow-none overflow-hidden">
+            <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-none dark:border-slate-700 dark:bg-gray-900">
               {/* Status Header */}
-              <div className="px-8 py-8 text-center border-b border-gray-100 dark:border-slate-700">
+              <div className="border-b border-gray-100 px-8 py-8 text-center dark:border-slate-700">
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: "spring", stiffness: 220, delay: 0.1 }}
-                  className={`h-20 w-20 rounded-full mx-auto flex items-center justify-center border ${isPaid ? "bg-emerald-500 border-emerald-500" : isPending ? "bg-sky-500 border-sky-500" : "bg-red-500 border-red-500"}`}
+                  className={`mx-auto flex h-20 w-20 items-center justify-center rounded-full border ${isPaid ? "border-emerald-500 bg-emerald-500" : isPending ? "border-sky-500 bg-sky-500" : "border-red-500 bg-red-500"}`}
                 >
                   {isPaid ? (
                     <svg
-                      className="w-10 h-10 text-white"
+                      className="h-10 w-10 text-white"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -492,7 +493,7 @@ function CheckoutSuccessPage() {
                     </svg>
                   ) : isPending ? (
                     <svg
-                      className="w-10 h-10 text-white"
+                      className="h-10 w-10 text-white"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -506,7 +507,7 @@ function CheckoutSuccessPage() {
                     </svg>
                   ) : (
                     <svg
-                      className="w-10 h-10 text-white"
+                      className="h-10 w-10 text-white"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -526,10 +527,10 @@ function CheckoutSuccessPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
                 >
-                  <h1 className={`text-2xl font-black mt-4 ${titleColor}`}>
+                  <h1 className={`mt-4 text-2xl font-black ${titleColor}`}>
                     {title}
                   </h1>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm mt-1.5 leading-relaxed">
+                  <p className="mt-1.5 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
                     {subtitle}
                   </p>
                 </motion.div>
@@ -540,33 +541,33 @@ function CheckoutSuccessPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
-                className="px-6 pb-6 pt-6 space-y-4"
+                className="space-y-4 px-6 pt-6 pb-6"
               >
                 {/* Transaction details */}
-                <div className="rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-gray-950 overflow-hidden divide-y divide-gray-100 dark:divide-slate-700">
+                <div className="divide-y divide-gray-100 overflow-hidden rounded-2xl border border-gray-200 bg-white dark:divide-slate-700 dark:border-slate-700 dark:bg-gray-950">
                   <div className="flex items-center justify-between px-4 py-3">
-                    <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
+                    <span className="text-[11px] font-semibold tracking-wide text-gray-400 uppercase">
                       Checkout ID
                     </span>
-                    <span className="text-xs font-mono font-semibold text-gray-700 dark:text-gray-200 truncate max-w-[190px]">
+                    <span className="max-w-[190px] truncate font-mono text-xs font-semibold text-gray-700 dark:text-gray-200">
                       {result?.checkout_id ?? "N/A"}
                     </span>
                   </div>
                   <div className="flex items-center justify-between px-4 py-3">
-                    <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
+                    <span className="text-[11px] font-semibold tracking-wide text-gray-400 uppercase">
                       Status
                     </span>
                     <span
-                      className={`text-xs font-bold px-2.5 py-1 rounded-full ${badgeClass}`}
+                      className={`rounded-full px-2.5 py-1 text-xs font-bold ${badgeClass}`}
                     >
                       {result?.status ?? "Unknown"}
                     </span>
                   </div>
                   <div className="flex items-center justify-between px-4 py-3">
-                    <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
+                    <span className="text-[11px] font-semibold tracking-wide text-gray-400 uppercase">
                       Payment Intent
                     </span>
-                    <span className="text-xs font-mono font-semibold text-gray-700 dark:text-gray-200 truncate max-w-[190px]">
+                    <span className="max-w-[190px] truncate font-mono text-xs font-semibold text-gray-700 dark:text-gray-200">
                       {result?.payment_intent_id ?? "N/A"}
                     </span>
                   </div>
@@ -575,33 +576,33 @@ function CheckoutSuccessPage() {
                 {(result?.customer?.name ||
                   result?.customer?.email ||
                   result?.customer?.phone) && (
-                  <div className="rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-gray-950 overflow-hidden divide-y divide-gray-100 dark:divide-slate-700">
+                  <div className="divide-y divide-gray-100 overflow-hidden rounded-2xl border border-gray-200 bg-white dark:divide-slate-700 dark:border-slate-700 dark:bg-gray-950">
                     <div className="px-4 py-2.5">
-                      <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
+                      <span className="text-[11px] font-semibold tracking-wide text-gray-400 uppercase">
                         Customer
                       </span>
                     </div>
                     <div className="flex items-center justify-between px-4 py-3">
-                      <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
+                      <span className="text-[11px] font-semibold tracking-wide text-gray-400 uppercase">
                         Name
                       </span>
-                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-200 truncate max-w-[190px]">
+                      <span className="max-w-[190px] truncate text-xs font-semibold text-gray-700 dark:text-gray-200">
                         {result?.customer?.name ?? "N/A"}
                       </span>
                     </div>
                     <div className="flex items-center justify-between px-4 py-3">
-                      <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
+                      <span className="text-[11px] font-semibold tracking-wide text-gray-400 uppercase">
                         Email
                       </span>
-                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-200 truncate max-w-[190px]">
+                      <span className="max-w-[190px] truncate text-xs font-semibold text-gray-700 dark:text-gray-200">
                         {result?.customer?.email ?? "N/A"}
                       </span>
                     </div>
                     <div className="flex items-center justify-between px-4 py-3">
-                      <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
+                      <span className="text-[11px] font-semibold tracking-wide text-gray-400 uppercase">
                         Phone
                       </span>
-                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-200 truncate max-w-[190px]">
+                      <span className="max-w-[190px] truncate text-xs font-semibold text-gray-700 dark:text-gray-200">
                         {result?.customer?.phone ?? "N/A"}
                       </span>
                     </div>
@@ -610,24 +611,24 @@ function CheckoutSuccessPage() {
 
                 {(result?.order_summary?.product_name ||
                   result?.order_summary?.description) && (
-                  <div className="rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-gray-950 overflow-hidden divide-y divide-gray-100 dark:divide-slate-700">
+                  <div className="divide-y divide-gray-100 overflow-hidden rounded-2xl border border-gray-200 bg-white dark:divide-slate-700 dark:border-slate-700 dark:bg-gray-950">
                     <div className="px-4 py-2.5">
-                      <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
+                      <span className="text-[11px] font-semibold tracking-wide text-gray-400 uppercase">
                         Order Summary
                       </span>
                     </div>
                     <div className="flex items-center justify-between px-4 py-3">
-                      <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
+                      <span className="text-[11px] font-semibold tracking-wide text-gray-400 uppercase">
                         Item
                       </span>
-                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-200 truncate max-w-[190px]">
+                      <span className="max-w-[190px] truncate text-xs font-semibold text-gray-700 dark:text-gray-200">
                         {result?.order_summary?.product_name ??
                           result?.order_summary?.description ??
                           "N/A"}
                       </span>
                     </div>
                     <div className="flex items-center justify-between px-4 py-3">
-                      <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
+                      <span className="text-[11px] font-semibold tracking-wide text-gray-400 uppercase">
                         Qty
                       </span>
                       <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">
@@ -635,7 +636,7 @@ function CheckoutSuccessPage() {
                       </span>
                     </div>
                     <div className="flex items-center justify-between px-4 py-3">
-                      <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
+                      <span className="text-[11px] font-semibold tracking-wide text-gray-400 uppercase">
                         Total
                       </span>
                       <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">
@@ -655,7 +656,7 @@ function CheckoutSuccessPage() {
                     transition={{ delay: 0.4 }}
                     className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-emerald-950/30"
                   >
-                    <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400 mb-3">
+                    <p className="mb-3 text-xs font-bold text-emerald-700 dark:text-emerald-400">
                       What happens next?
                     </p>
                     <div className="space-y-2.5">
@@ -665,9 +666,9 @@ function CheckoutSuccessPage() {
                         "You'll receive a shipping update soon",
                       ].map((step, i) => (
                         <div key={i} className="flex items-start gap-2.5">
-                          <div className="h-4 w-4 rounded-full bg-green-500 flex items-center justify-center shrink-0 mt-0.5">
+                          <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-green-500">
                             <svg
-                              className="w-2.5 h-2.5 text-white"
+                              className="h-2.5 w-2.5 text-white"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -680,7 +681,7 @@ function CheckoutSuccessPage() {
                               />
                             </svg>
                           </div>
-                          <p className="text-xs text-emerald-700 dark:text-emerald-300 leading-relaxed">
+                          <p className="text-xs leading-relaxed text-emerald-700 dark:text-emerald-300">
                             {step}
                           </p>
                         </div>
@@ -693,10 +694,10 @@ function CheckoutSuccessPage() {
                 <div className="flex flex-col gap-2.5 pt-1">
                   <Link
                     href={`${trackOrderBaseHref}?order=${encodeURIComponent(result?.checkout_id ?? "")}`}
-                    className="w-full py-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-sky-200 text-slate-700 hover:text-sky-700 dark:border-slate-700 dark:bg-gray-900 dark:hover:bg-gray-800 dark:text-gray-200 dark:hover:border-sky-800 font-semibold text-sm text-center transition-all flex items-center justify-center gap-2"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-3 text-center text-sm font-semibold text-slate-700 transition-all hover:border-sky-200 hover:bg-slate-50 hover:text-sky-700 dark:border-slate-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-sky-800 dark:hover:bg-gray-800"
                   >
                     <svg
-                      className="w-4 h-4"
+                      className="h-4 w-4"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -712,10 +713,10 @@ function CheckoutSuccessPage() {
                   </Link>
                   <Link
                     href={homeHref}
-                    className="w-full py-3 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-semibold text-sm text-center transition-all flex items-center justify-center gap-2 dark:bg-sky-600 dark:hover:bg-sky-700"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 py-3 text-center text-sm font-semibold text-white transition-all hover:bg-sky-600 dark:bg-sky-600 dark:hover:bg-sky-700"
                   >
                     <svg
-                      className="w-4 h-4"
+                      className="h-4 w-4"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -732,10 +733,10 @@ function CheckoutSuccessPage() {
                   {!isPartnerStorefrontCheckout && (
                     <Link
                       href="/orders"
-                      className="w-full py-3 rounded-xl border border-dashed border-slate-300 bg-transparent hover:bg-slate-50 hover:border-slate-400 text-slate-600 hover:text-slate-800 dark:border-slate-600 dark:hover:bg-slate-900/40 dark:hover:text-slate-200 font-semibold text-sm text-center transition-all flex items-center justify-center gap-2"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-transparent py-3 text-center text-sm font-semibold text-slate-600 transition-all hover:border-slate-400 hover:bg-slate-50 hover:text-slate-800 dark:border-slate-600 dark:hover:bg-slate-900/40 dark:hover:text-slate-200"
                     >
                       <svg
-                        className="w-4 h-4"
+                        className="h-4 w-4"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -753,9 +754,9 @@ function CheckoutSuccessPage() {
                 </div>
 
                 {/* Footer */}
-                <p className="text-center text-[11px] text-gray-400 dark:text-gray-500 flex items-center justify-center gap-1.5 pt-1">
+                <p className="flex items-center justify-center gap-1.5 pt-1 text-center text-[11px] text-gray-400 dark:text-gray-500">
                   <svg
-                    className="w-3 h-3"
+                    className="h-3 w-3"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -768,7 +769,7 @@ function CheckoutSuccessPage() {
                     />
                   </svg>
                   Secured by{" "}
-                  <span className="font-semibold text-gray-500 dark:text-gray-400 ml-0.5">
+                  <span className="ml-0.5 font-semibold text-gray-500 dark:text-gray-400">
                     PayMongo
                   </span>{" "}
                   · AF Home

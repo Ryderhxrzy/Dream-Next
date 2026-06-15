@@ -1,10 +1,10 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { motion } from "framer-motion"
-import { Search, ShoppingBag, Users, WalletCards, Zap } from "lucide-react"
 import type { DownlineActivityItem } from "@/store/api/encashmentApi"
 import { useGetDownlineActivityQuery } from "@/store/api/encashmentApi"
+import { motion } from "framer-motion"
+import { Search, ShoppingBag, Users, WalletCards, Zap } from "lucide-react"
 
 const peso = (value: number) =>
   new Intl.NumberFormat("en-PH", {
@@ -122,13 +122,13 @@ export default function DownlineActivityTab() {
   return (
     <div className="space-y-5 pt-1">
       <section className="relative overflow-hidden rounded-2xl border border-sky-200/70 bg-gradient-to-br from-sky-50 via-white to-emerald-50 p-5 dark:border-sky-800/50 dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950/30">
-        <div className="pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full bg-emerald-300/20 blur-3xl" />
+        <div className="pointer-events-none absolute -top-24 -right-20 h-56 w-56 rounded-full bg-emerald-300/20 blur-3xl" />
         <div className="relative flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-sky-600 dark:text-sky-400">
+            <p className="text-[11px] font-black tracking-[0.22em] text-sky-600 uppercase dark:text-sky-400">
               Downline Activity
             </p>
-            <h3 className="mt-1 text-xl font-black tracking-tight text-slate-950 dark:text-white sm:text-2xl">
+            <h3 className="mt-1 text-xl font-black tracking-tight text-slate-950 sm:text-2xl dark:text-white">
               Purchase monitor for your network
             </h3>
             <p className="mt-1 max-w-xl text-sm text-slate-500 dark:text-slate-400">
@@ -186,9 +186,9 @@ export default function DownlineActivityTab() {
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
-        <div className="flex flex-col gap-3 border-b border-slate-100 p-4 dark:border-slate-800 md:flex-row md:items-center md:justify-between md:p-5">
+        <div className="flex flex-col gap-3 border-b border-slate-100 p-4 md:flex-row md:items-center md:justify-between md:p-5 dark:border-slate-800">
           <div>
-            <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+            <p className="text-[11px] font-black tracking-widest text-slate-400 uppercase dark:text-slate-500">
               Activity Feed
             </p>
             <h4 className="mt-0.5 text-base font-bold text-slate-900 dark:text-white">
@@ -197,7 +197,7 @@ export default function DownlineActivityTab() {
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 value={searchInput}
                 onChange={(event) => setSearchInput(event.target.value)}
@@ -205,13 +205,13 @@ export default function DownlineActivityTab() {
                   if (event.key === "Enter") submitSearch()
                 }}
                 placeholder="Search buyer, product, order..."
-                className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-sky-900/40 sm:w-72"
+                className="h-10 w-full rounded-xl border border-slate-200 bg-white pr-3 pl-9 text-sm transition outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 sm:w-72 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-sky-900/40"
               />
             </div>
             <select
               value={level ?? "all"}
               onChange={(event) => setFilterLevel(event.target.value)}
-              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300"
+              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 transition outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300"
             >
               <option value="all">All levels</option>
               {levels.map((item) => (
@@ -223,7 +223,7 @@ export default function DownlineActivityTab() {
             <select
               value={status}
               onChange={(event) => setFilterStatus(event.target.value)}
-              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300"
+              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 transition outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300"
             >
               <option value="all">All status</option>
               <option value="pending">Pending</option>
@@ -286,7 +286,7 @@ export default function DownlineActivityTab() {
                 <col className="w-[230px]" />
               </colgroup>
               <thead>
-                <tr className="bg-slate-50/80 text-left text-[10px] font-black uppercase tracking-widest text-slate-400 dark:bg-slate-800/40 dark:text-slate-500">
+                <tr className="bg-slate-50/80 text-left text-[10px] font-black tracking-widest text-slate-400 uppercase dark:bg-slate-800/40 dark:text-slate-500">
                   {[
                     "Downline",
                     "Level",
@@ -323,10 +323,10 @@ export default function DownlineActivityTab() {
                             {(displayName(row)[0] ?? "?").toUpperCase()}
                           </div>
                           <div className="min-w-0">
-                            <p className="break-words font-bold leading-snug text-slate-900 dark:text-white">
+                            <p className="leading-snug font-bold break-words text-slate-900 dark:text-white">
                               {displayName(row)}
                             </p>
-                            <p className="break-all text-xs text-slate-400">
+                            <p className="text-xs break-all text-slate-400">
                               {row.buyer_username
                                 ? `@${row.buyer_username}`
                                 : (row.buyer_email ?? "Member")}
@@ -340,10 +340,10 @@ export default function DownlineActivityTab() {
                         </span>
                       </td>
                       <td className="px-4 py-3.5">
-                        <p className="break-words font-semibold leading-snug text-slate-800 dark:text-slate-200">
+                        <p className="leading-snug font-semibold break-words text-slate-800 dark:text-slate-200">
                           {row.product_name || "Order item"}
                         </p>
-                        <p className="mt-0.5 break-all text-xs text-slate-400">
+                        <p className="mt-0.5 text-xs break-all text-slate-400">
                           {row.checkout_id || `Order #${row.id}`}
                           {row.product_sku ? ` / ${row.product_sku}` : ""}
                         </p>
@@ -355,10 +355,10 @@ export default function DownlineActivityTab() {
                           {readableStatus(statusValue)}
                         </span>
                       </td>
-                      <td className="px-4 py-3.5 text-right font-black tabular-nums leading-snug text-blue-700 dark:text-blue-300">
+                      <td className="px-4 py-3.5 text-right leading-snug font-black text-blue-700 tabular-nums dark:text-blue-300">
                         {numberFmt(row.earned_pv)} PV
                       </td>
-                      <td className="px-4 py-3.5 text-right font-bold tabular-nums text-slate-700 dark:text-slate-200">
+                      <td className="px-4 py-3.5 text-right font-bold text-slate-700 tabular-nums dark:text-slate-200">
                         {peso(row.amount)}
                       </td>
                       <td className="px-4 py-3.5 text-right">
@@ -400,7 +400,7 @@ export default function DownlineActivityTab() {
           </div>
         )}
 
-        <div className="flex flex-col gap-3 border-t border-slate-100 px-5 py-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-t border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800">
           <p className="text-xs text-slate-400 dark:text-slate-500">
             Showing{" "}
             <span className="font-bold text-slate-700 dark:text-slate-300">
@@ -471,14 +471,14 @@ function SummaryCard({
       className={`rounded-2xl border p-4 shadow-sm ${SUMMARY_STYLES[color]}`}
     >
       <div className="flex items-start justify-between gap-3">
-        <p className="text-[10px] font-black uppercase tracking-widest opacity-75">
+        <p className="text-[10px] font-black tracking-widest uppercase opacity-75">
           {label}
         </p>
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/70 shadow-sm dark:bg-slate-950/50">
           <Icon className="h-4 w-4" />
         </span>
       </div>
-      <p className="mt-3 text-xl font-black leading-tight tabular-nums">
+      <p className="mt-3 text-xl leading-tight font-black tabular-nums">
         {value}
       </p>
       <p className="mt-0.5 text-[11px] font-semibold opacity-75">{sub}</p>

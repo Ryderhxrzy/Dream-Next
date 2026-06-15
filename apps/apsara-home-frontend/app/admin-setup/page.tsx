@@ -1,5 +1,5 @@
-import { buildPageMetadata } from "@/app/seo"
 import AdminInviteSetupForm from "@/components/admin/auth/AdminInviteSetupForm"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Admin Account Setup",

@@ -1,9 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import Image from "next/image"
+import { AnimatePresence, motion } from "framer-motion"
 import { Link2, X as XIcon } from "lucide-react"
+import Image from "next/image"
 import toast from "react-hot-toast"
 
 interface Product {
@@ -186,13 +186,13 @@ export default function ShareModal({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.98 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[101] flex items-end sm:items-center justify-center px-4 pb-6 sm:p-6"
+            className="fixed inset-0 z-[101] flex items-end justify-center px-4 pb-6 sm:items-center sm:p-6"
           >
-            <div className="relative w-full max-w-xl rounded-3xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 sm:p-6">
+            <div className="relative w-full max-w-xl rounded-3xl border border-gray-100 bg-white p-5 sm:p-6 dark:border-gray-700 dark:bg-gray-800">
               {/* Header */}
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                  <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase dark:text-gray-500">
                     Share to
                   </p>
                   <h3 className="text-lg font-bold text-slate-800 dark:text-gray-200">
@@ -201,7 +201,7 @@ export default function ShareModal({
                 </div>
                 <button
                   onClick={onClose}
-                  className="h-9 w-9 rounded-full border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 hover:border-sky-200 dark:hover:border-sky-900/50 transition-colors"
+                  className="h-9 w-9 rounded-full border border-gray-200 text-gray-500 transition-colors hover:border-sky-200 hover:text-sky-600 dark:border-gray-700 dark:text-gray-400 dark:hover:border-sky-900/50 dark:hover:text-sky-400"
                   type="button"
                 >
                   <span className="sr-only">Close</span>
@@ -210,7 +210,7 @@ export default function ShareModal({
               </div>
 
               {/* Product Info */}
-              <div className="mt-5 flex items-start gap-4 rounded-2xl border border-gray-100 dark:border-gray-700 p-4">
+              <div className="mt-5 flex items-start gap-4 rounded-2xl border border-gray-100 p-4 dark:border-gray-700">
                 {product.image && !imageError ? (
                   <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg">
                     <Image
@@ -223,7 +223,7 @@ export default function ShareModal({
                     />
                   </div>
                 ) : (
-                  <div className="h-20 w-20 shrink-0 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                  <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       width="32"
@@ -240,23 +240,23 @@ export default function ShareModal({
                     </svg>
                   </div>
                 )}
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   {brandName && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">
                       {brandName}
                     </p>
                   )}
-                  <h4 className="font-semibold text-gray-900 dark:text-white line-clamp-2 text-sm">
+                  <h4 className="line-clamp-2 text-sm font-semibold text-gray-900 dark:text-white">
                     {product.name}
                   </h4>
                   {displayPrice > 0 && (
-                    <div className="mt-2 flex items-baseline gap-2 flex-wrap">
+                    <div className="mt-2 flex flex-wrap items-baseline gap-2">
                       <span className="text-lg font-bold text-sky-500 dark:text-sky-400">
                         {"\u20b1"}
                         {displayPrice.toLocaleString()}
                       </span>
                       {showMemberPrice && (
-                        <span className="text-sm text-gray-400 dark:text-gray-500 line-through">
+                        <span className="text-sm text-gray-400 line-through dark:text-gray-500">
                           {"\u20b1"}
                           {srpPrice.toLocaleString()}
                         </span>
@@ -264,12 +264,12 @@ export default function ShareModal({
                     </div>
                   )}
                   {displayPrice > 0 && displaySku && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                       SKU: {displaySku}
                     </p>
                   )}
                   {displayPrice > 0 && displayPv > 0 && (
-                    <span className="inline-block mt-1 rounded-full border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:text-blue-300">
+                    <span className="mt-1 inline-block rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
                       PV {displayPv.toLocaleString()}
                     </span>
                   )}
@@ -277,15 +277,15 @@ export default function ShareModal({
               </div>
 
               {/* Social Sharing Buttons */}
-              <div className="mt-5 grid grid-cols-3 sm:grid-cols-6 gap-4">
+              <div className="mt-5 grid grid-cols-3 gap-4 sm:grid-cols-6">
                 {shareOptions.map((item) => (
                   <button
                     key={item.id}
                     onClick={item.action}
-                    className="flex flex-col items-center gap-2 text-center text-xs font-semibold text-slate-600 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors"
+                    className="flex flex-col items-center gap-2 text-center text-xs font-semibold text-slate-600 transition-colors hover:text-sky-600 dark:text-gray-400 dark:hover:text-sky-400"
                     type="button"
                   >
-                    <span className="flex h-14 w-14 items-center justify-center rounded-full border border-gray-200 dark:border-gray-600 text-slate-600 dark:text-gray-400">
+                    <span className="flex h-14 w-14 items-center justify-center rounded-full border border-gray-200 text-slate-600 dark:border-gray-600 dark:text-gray-400">
                       {"iconSrc" in item ? (
                         <Image
                           src={item.iconSrc as string}
@@ -304,17 +304,17 @@ export default function ShareModal({
               </div>
 
               {/* Share Link */}
-              <div className="mt-4 rounded-2xl border border-gray-100 dark:border-gray-700 px-4 py-3">
+              <div className="mt-4 rounded-2xl border border-gray-100 px-4 py-3 dark:border-gray-700">
                 <p className="text-xs font-semibold text-slate-500 dark:text-gray-400">
                   {displayPrice > 0 ? "Product" : "Brand"} share link
                 </p>
                 <div className="mt-1 flex items-center justify-between gap-3">
-                  <span className="text-xs text-slate-600 dark:text-gray-400 truncate">
+                  <span className="truncate text-xs text-slate-600 dark:text-gray-400">
                     {href}
                   </span>
                   <button
                     onClick={handleCopyShareLink}
-                    className="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300"
+                    className="text-xs font-semibold text-sky-600 hover:text-sky-700 dark:text-sky-400 dark:hover:text-sky-300"
                     type="button"
                   >
                     {shareCopied ? "Copied" : "Copy"}

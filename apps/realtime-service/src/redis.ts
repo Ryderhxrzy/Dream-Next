@@ -1,5 +1,6 @@
-import { Redis } from "ioredis";
-import { config } from "./config.js";
+import { Redis } from "ioredis"
+
+import { config } from "./config.js"
 
 export const subscriber = new Redis({
   host: config.redis.host,
@@ -7,11 +8,11 @@ export const subscriber = new Redis({
   password: config.redis.password,
   lazyConnect: true,
   retryStrategy: (times: number): number => Math.min(times * 500, 5000),
-});
+})
 
 subscriber.on("error", (error: Error) => {
-  console.error("Redis subscriber error:", error.message);
-});
+  console.error("Redis subscriber error:", error.message)
+})
 
 // Must match community-backend CHANNELS
 export const CHANNELS = {
@@ -25,4 +26,4 @@ export const CHANNELS = {
   MESSAGE_READ: "community:message_read",
   CONNECT_REQUEST: "community:connect_request",
   CONNECT_ACCEPTED: "community:connect_accepted",
-} as const;
+} as const

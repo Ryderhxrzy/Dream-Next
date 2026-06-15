@@ -1,3 +1,4 @@
+import AdminUsersPageMain from "@/components/superAdmin/settings/AdminUsersPageMain"
 import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
@@ -6,8 +7,6 @@ export const metadata = buildPageMetadata({
   path: "/admin/settings/users",
   noIndex: true,
 })
-
-import AdminUsersPageMain from "@/components/superAdmin/settings/AdminUsersPageMain"
 
 export default function AdminUsersSettingsPage() {
   return <AdminUsersPageMain />

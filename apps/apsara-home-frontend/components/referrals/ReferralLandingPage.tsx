@@ -1,10 +1,11 @@
 "use client"
 
-import Link from "next/link"
 import { useEffect, useMemo, useRef } from "react"
-import { useSession } from "next-auth/react"
-import { useMeQuery } from "@/store/api/userApi"
 import { setStoredReferralCode } from "@/libs/referral"
+import { useMeQuery } from "@/store/api/userApi"
+import { useSession } from "next-auth/react"
+import Link from "next/link"
+
 import AppPromoBar from "@/components/layout/AppPromoBar"
 
 type ReferralLandingPageProps = {
@@ -67,7 +68,7 @@ const ReferralLandingPage = ({ referralCode }: ReferralLandingPageProps) => {
         <div className="mx-auto max-w-5xl overflow-hidden rounded-[32px] border border-[#e6d9c4] bg-white shadow-[0_20px_80px_rgba(56,39,17,0.08)]">
           <div className="grid lg:grid-cols-[1.1fr_0.9fr]">
             <section className="px-8 py-12 md:px-12 md:py-16">
-              <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#b58a45]">
+              <p className="mb-4 text-[11px] font-semibold tracking-[0.24em] text-[#b58a45] uppercase">
                 AF Home Referral
               </p>
               <h1 className="max-w-xl font-['Cormorant_Garamond'] text-5xl leading-none text-[#2b2116] md:text-6xl">
@@ -159,9 +160,9 @@ const ReferralLandingPage = ({ referralCode }: ReferralLandingPageProps) => {
               </div>
             </section>
 
-            <aside className="border-t border-[#efe4d2] bg-[#fbf7ef] px-8 py-12 md:px-10 lg:border-l lg:border-t-0">
+            <aside className="border-t border-[#efe4d2] bg-[#fbf7ef] px-8 py-12 md:px-10 lg:border-t-0 lg:border-l">
               <div className="rounded-[24px] border border-[#eadbc2] bg-white p-6 shadow-sm">
-                <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-[#a4793a]">
+                <h2 className="text-sm font-semibold tracking-[0.18em] text-[#a4793a] uppercase">
                   What happens next?
                 </h2>
                 <ul className="mt-6 space-y-4 text-sm leading-6 text-slate-600">

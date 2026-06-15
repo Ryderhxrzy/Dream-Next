@@ -1,14 +1,13 @@
 "use client"
 
-import Link from "next/link"
-
-import { usePathname } from "next/navigation"
+import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
+import { useGetAdminMeQuery } from "@/store/api/authApi"
 import {
   useGetAdminWebPageItemsQuery,
   type WebPageItem,
 } from "@/store/api/webPagesApi"
-import { useGetAdminMeQuery } from "@/store/api/authApi"
-import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 interface PartnerSidebarProps {
   isOpen: boolean
@@ -244,7 +243,7 @@ export default function Sidebar({
 
       <aside
         className={[
-          "fixed left-0 top-0 z-40 h-screen border-r border-slate-200/80 bg-linear-to-b from-white to-slate-50/90 shadow-xl shadow-slate-900/5 transition-all dark:border-slate-800 dark:from-slate-950 dark:to-slate-950 lg:static lg:translate-x-0 lg:shadow-none",
+          "fixed top-0 left-0 z-40 h-screen border-r border-slate-200/80 bg-linear-to-b from-white to-slate-50/90 shadow-xl shadow-slate-900/5 transition-all lg:static lg:translate-x-0 lg:shadow-none dark:border-slate-800 dark:from-slate-950 dark:to-slate-950",
           isOpen ? "translate-x-0" : "-translate-x-full",
           isCollapsed ? "w-24" : "w-80",
         ].join(" ")}
@@ -266,7 +265,7 @@ export default function Sidebar({
                 </div>
                 {!isCollapsed ? (
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-300">
+                    <p className="text-[10px] font-semibold tracking-[0.2em] text-slate-300 uppercase">
                       Partner Portal
                     </p>
                     <p className="text-sm font-semibold text-white">
@@ -344,7 +343,7 @@ export default function Sidebar({
                 title={isCollapsed ? link.label : undefined}
               >
                 {isActive ? (
-                  <span className="absolute left-0 top-2 h-8 w-1 rounded-r-full bg-sky-500 dark:bg-sky-300" />
+                  <span className="absolute top-2 left-0 h-8 w-1 rounded-r-full bg-sky-500 dark:bg-sky-300" />
                 ) : null}
                 <span
                   className={[

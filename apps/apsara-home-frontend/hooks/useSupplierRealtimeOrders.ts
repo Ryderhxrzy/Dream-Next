@@ -1,12 +1,12 @@
 "use client"
 
 import { useEffect } from "react"
-import Pusher from "pusher-js"
-import { useAppDispatch } from "@/store/hooks"
 import {
   supplierOrdersApi,
   type SupplierNotificationItem,
 } from "@/store/api/supplierOrdersApi"
+import { useAppDispatch } from "@/store/hooks"
+import Pusher from "pusher-js"
 
 interface Options {
   accessToken: string | undefined | null

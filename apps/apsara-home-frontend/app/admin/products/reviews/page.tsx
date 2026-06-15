@@ -1,11 +1,12 @@
-import { buildPageMetadata } from "@/app/seo"
-import ProductsReviewsPageMain from "@/components/superAdmin/products/ProductsReviewsPageMain"
 import { adminAuthOptions } from "@/libs/adminAuth"
 import {
   normalizeProductsResponse,
   type ProductsResponse,
 } from "@/store/api/productsApi"
 import { getServerSession } from "next-auth"
+
+import ProductsReviewsPageMain from "@/components/superAdmin/products/ProductsReviewsPageMain"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Admin Products Reviews",

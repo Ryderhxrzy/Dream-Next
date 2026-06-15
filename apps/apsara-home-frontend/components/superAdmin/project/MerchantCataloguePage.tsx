@@ -1,13 +1,14 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import {
   useGetProductBrandsQuery,
   type ProductBrand,
 } from "@/store/api/productBrandsApi"
 import {
-  useGetAdminWebPageItemsQuery,
   useCreateAdminWebPageItemMutation,
+  useGetAdminWebPageItemsQuery,
   useUpdateAdminWebPageItemMutation,
 } from "@/store/api/webPagesApi"
 import { AnimatePresence, motion } from "framer-motion"
@@ -27,7 +28,6 @@ import {
   Video,
   X,
 } from "lucide-react"
-import { showErrorToast, showSuccessToast } from "@/libs/toast"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -103,7 +103,7 @@ function CoverPage({ brand }: { brand: ProductBrand }) {
           <img
             src={brand.image}
             alt=""
-            className="absolute inset-0 h-full w-full object-cover opacity-25 blur-sm scale-110"
+            className="absolute inset-0 h-full w-full scale-110 object-cover opacity-25 blur-sm"
             draggable={false}
           />
           <div className="absolute inset-0 bg-linear-to-b from-slate-900/30 via-slate-900/50 to-slate-900/95" />
@@ -112,7 +112,7 @@ function CoverPage({ brand }: { brand: ProductBrand }) {
 
       {/* Diagonal accent stripe */}
       <div
-        className="absolute inset-0 pointer-events-none overflow-hidden"
+        className="pointer-events-none absolute inset-0 overflow-hidden"
         aria-hidden
       >
         <div
@@ -139,9 +139,9 @@ function CoverPage({ brand }: { brand: ProductBrand }) {
       </div>
 
       {/* Brand logo – upper third */}
-      <div className="absolute left-1/2 top-[32%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-3">
+      <div className="absolute top-[32%] left-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-3">
         {brand.image ? (
-          <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-white/10 p-2 ring-1 ring-white/20 shadow-2xl backdrop-blur-sm">
+          <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-white/10 p-2 shadow-2xl ring-1 ring-white/20 backdrop-blur-sm">
             <img
               src={brand.image}
               alt={brand.name}
@@ -150,19 +150,19 @@ function CoverPage({ brand }: { brand: ProductBrand }) {
             />
           </div>
         ) : (
-          <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-white/10 text-4xl font-black text-white/70 ring-1 ring-white/20 shadow-2xl">
+          <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-white/10 text-4xl font-black text-white/70 shadow-2xl ring-1 ring-white/20">
             {brand.name[0]?.toUpperCase()}
           </div>
         )}
       </div>
 
       {/* Brand name + subtitle – lower-center */}
-      <div className="absolute bottom-[28%] left-0 right-0 px-7 text-center">
-        <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.35em] text-white/35">
+      <div className="absolute right-0 bottom-[28%] left-0 px-7 text-center">
+        <p className="mb-2 text-[9px] font-bold tracking-[0.35em] text-white/35 uppercase">
           Product Catalogue
         </p>
         <h1
-          className="font-black uppercase leading-tight tracking-wide text-white drop-shadow-xl"
+          className="leading-tight font-black tracking-wide text-white uppercase drop-shadow-xl"
           style={{ fontSize: "clamp(1.3rem, 3.5vw, 2.2rem)" }}
         >
           {brand.name}
@@ -170,9 +170,9 @@ function CoverPage({ brand }: { brand: ProductBrand }) {
       </div>
 
       {/* Bottom rule + year */}
-      <div className="absolute bottom-6 left-0 right-0 flex items-center gap-3 px-8">
+      <div className="absolute right-0 bottom-6 left-0 flex items-center gap-3 px-8">
         <div className="h-px flex-1 bg-white/12" />
-        <span className="text-[9px] font-semibold uppercase tracking-widest text-white/30">
+        <span className="text-[9px] font-semibold tracking-widest text-white/30 uppercase">
           {new Date().getFullYear()}
         </span>
         <div className="h-px flex-1 bg-white/12" />
@@ -235,7 +235,7 @@ function PageSlot({
   const page = pages[idx] ?? null
   if (!page) {
     return side === "left" ? (
-      <div className="h-full w-full bg-slate-800 flex items-center justify-center">
+      <div className="flex h-full w-full items-center justify-center bg-slate-800">
         <BookOpen className="h-10 w-10 text-slate-600" />
       </div>
     ) : (
@@ -258,7 +258,7 @@ function PageLabel({
   const idx = (spreadIdx - 1) * 2 + (side === "right" ? 1 : 0)
   if (idx >= pages.length) return null
   return (
-    <span className="absolute bottom-2.5 left-1/2 -translate-x-1/2 rounded-full bg-black/40 px-2 py-0.5 text-[10px] font-semibold text-white/70 pointer-events-none">
+    <span className="pointer-events-none absolute bottom-2.5 left-1/2 -translate-x-1/2 rounded-full bg-black/40 px-2 py-0.5 text-[10px] font-semibold text-white/70">
       {idx + 1}
     </span>
   )
@@ -583,7 +583,7 @@ function FlipbookViewer({ pages, brand, onClose }: FlipbookViewerProps) {
             className={`relative h-15.5 w-11.5 shrink-0 overflow-hidden rounded transition-all ${spread === 0 ? "ring-2 ring-violet-400 ring-offset-1 ring-offset-slate-900" : "opacity-40 hover:opacity-75"}`}
           >
             <div
-              className="h-full w-full bg-slate-800 flex items-center justify-center"
+              className="flex h-full w-full items-center justify-center bg-slate-800"
               style={{
                 backgroundImage: brand.image
                   ? `url(${brand.image})`
@@ -735,7 +735,7 @@ function BrandSelector({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.97 }}
             transition={{ duration: 0.14 }}
-            className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900"
+            className="absolute top-full right-0 left-0 z-20 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900"
           >
             <div className="p-2">
               <input
@@ -966,25 +966,25 @@ export default function MerchantCataloguePage() {
         }}
       >
         {/* Background decorative circles */}
-        <div className="pointer-events-none absolute bottom-0 right-64 h-32 w-32 rounded-full bg-violet-200/50" />
-        <div className="pointer-events-none absolute -bottom-6 right-56 h-20 w-20 rounded-full bg-violet-200/40" />
+        <div className="pointer-events-none absolute right-64 bottom-0 h-32 w-32 rounded-full bg-violet-200/50" />
+        <div className="pointer-events-none absolute right-56 -bottom-6 h-20 w-20 rounded-full bg-violet-200/40" />
 
         {/* Sparkle diamonds */}
-        <div className="pointer-events-none absolute right-52 top-5 h-3 w-3 rotate-45 bg-violet-400" />
-        <div className="pointer-events-none absolute bottom-6 right-36 h-2 w-2 rotate-45 bg-pink-400" />
+        <div className="pointer-events-none absolute top-5 right-52 h-3 w-3 rotate-45 bg-violet-400" />
+        <div className="pointer-events-none absolute right-36 bottom-6 h-2 w-2 rotate-45 bg-pink-400" />
 
         {/* Small icon button top-right */}
-        <button className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-2xl bg-white shadow-md ring-1 ring-violet-100 transition hover:bg-violet-50">
+        <button className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-2xl bg-white shadow-md ring-1 ring-violet-100 transition hover:bg-violet-50">
           <BookOpen className="h-5 w-5 text-violet-500" />
         </button>
 
         {/* Book illustration */}
-        <div className="pointer-events-none absolute right-10 top-1/2 -translate-y-1/2 select-none">
+        <div className="pointer-events-none absolute top-1/2 right-10 -translate-y-1/2 select-none">
           {/* Drop shadow */}
-          <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 h-6 w-40 rounded-full bg-violet-400/20 blur-lg" />
+          <div className="absolute -bottom-4 left-1/2 h-6 w-40 -translate-x-1/2 rounded-full bg-violet-400/20 blur-lg" />
 
           <div
-            className="flex items-stretch rounded-2xl shadow-2xl overflow-hidden"
+            className="flex items-stretch overflow-hidden rounded-2xl shadow-2xl"
             style={{ height: "130px" }}
           >
             {/* Left page – solid violet */}
@@ -1030,7 +1030,7 @@ export default function MerchantCataloguePage() {
 
       {/* Brand selector */}
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+        <p className="mb-3 text-[10px] font-bold tracking-widest text-slate-400 uppercase">
           Select Merchant
         </p>
         <BrandSelector
@@ -1199,7 +1199,7 @@ export default function MerchantCataloguePage() {
           {/* ── Right: sidebar ── */}
           <div className="space-y-4">
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <p className="mb-3 text-[9px] font-bold uppercase tracking-widest text-slate-400">
+              <p className="mb-3 text-[9px] font-bold tracking-widest text-slate-400 uppercase">
                 Active Brand
               </p>
               <div className="flex items-center gap-3">
@@ -1263,7 +1263,7 @@ export default function MerchantCataloguePage() {
                 <button
                   onClick={() => setViewerOpen(true)}
                   disabled={uploading || localPages.length === 0}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <BookOpen className="h-4 w-4" /> Open Flipbook
                 </button>
@@ -1272,7 +1272,7 @@ export default function MerchantCataloguePage() {
                   disabled={
                     saving || uploading || !isDirty || localPages.length === 0
                   }
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {saving ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -1286,7 +1286,7 @@ export default function MerchantCataloguePage() {
 
             {/* Tips */}
             <div className="rounded-2xl border border-violet-100 bg-violet-50/60 p-5">
-              <p className="mb-3 text-[9px] font-bold uppercase tracking-widest text-violet-500">
+              <p className="mb-3 text-[9px] font-bold tracking-widest text-violet-500 uppercase">
                 Tips
               </p>
               <ul className="space-y-2">

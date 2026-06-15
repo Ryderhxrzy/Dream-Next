@@ -1,3 +1,4 @@
+import AccountingSettingsMain from "@/components/superAdmin/accounting/AccountingSettingsMain"
 import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
@@ -6,8 +7,6 @@ export const metadata = buildPageMetadata({
   path: "/admin/accounting/settings",
   noIndex: true,
 })
-
-import AccountingSettingsMain from "@/components/superAdmin/accounting/AccountingSettingsMain"
 
 export default function AccountingSettingsPage() {
   return <AccountingSettingsMain />

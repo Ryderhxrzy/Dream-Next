@@ -1,8 +1,9 @@
 ﻿"use client"
 
 import { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { MemberWallet, AdjustType, WalletType } from "./types"
+import { AnimatePresence, motion } from "framer-motion"
+
+import { AdjustType, MemberWallet, WalletType } from "./types"
 
 interface AdjustWalletModalProps {
   member: MemberWallet | null
@@ -54,24 +55,24 @@ export default function AdjustWalletModal({
             initial={{ opacity: 0, scale: 0.95, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 12 }}
-            className="relative w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white z-10 dark:border-slate-800 dark:bg-slate-900"
+            className="relative z-10 w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
           >
             {/* Header */}
-            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-slate-800">
               <div>
                 <h2 className="text-sm font-bold text-slate-800">
                   Adjust Wallet
                 </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="mt-0.5 text-xs text-slate-400">
                   {member.name} Â· {member.email}
                 </p>
               </div>
               <button
                 onClick={onClose}
-                className="h-8 w-8 flex items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100"
               >
                 <svg
-                  className="w-4 h-4"
+                  className="h-4 w-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -86,14 +87,14 @@ export default function AdjustWalletModal({
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4 px-6 py-5">
               {/* Current balances */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2.5">
-                  <p className="text-[10px] text-emerald-600 font-semibold uppercase tracking-wide">
+                  <p className="text-[10px] font-semibold tracking-wide text-emerald-600 uppercase">
                     Cash Balance
                   </p>
-                  <p className="text-sm font-bold text-emerald-700 mt-0.5">
+                  <p className="mt-0.5 text-sm font-bold text-emerald-700">
                     â‚±
                     {member.cashBalance.toLocaleString("en-PH", {
                       minimumFractionDigits: 2,
@@ -101,10 +102,10 @@ export default function AdjustWalletModal({
                   </p>
                 </div>
                 <div className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2.5">
-                  <p className="text-[10px] text-blue-600 font-semibold uppercase tracking-wide">
+                  <p className="text-[10px] font-semibold tracking-wide text-blue-600 uppercase">
                     PV Balance
                   </p>
-                  <p className="text-sm font-bold text-blue-700 mt-0.5">
+                  <p className="mt-0.5 text-sm font-bold text-blue-700">
                     {member.pvBalance.toLocaleString("en-PH", {
                       minimumFractionDigits: 2,
                     })}{" "}
@@ -165,11 +166,11 @@ export default function AdjustWalletModal({
 
               {/* Amount */}
               <div>
-                <label className="text-xs font-semibold text-slate-600 mb-1.5 block">
+                <label className="mb-1.5 block text-xs font-semibold text-slate-600">
                   Amount {walletType === "cash" ? "(PHP)" : "(PV)"}
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 font-medium">
+                  <span className="absolute top-1/2 left-3 -translate-y-1/2 text-sm font-medium text-slate-400">
                     {walletType === "cash" ? "â‚±" : "PV"}
                   </span>
                   <input
@@ -180,14 +181,14 @@ export default function AdjustWalletModal({
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     required
-                    className="h-11 w-full rounded-[18px] border border-gray-300 bg-white pl-8 pr-4 text-sm text-slate-900 outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-sky-400 focus:bg-white dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder:text-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
+                    className="h-11 w-full rounded-[18px] border border-gray-300 bg-white pr-4 pl-8 text-sm text-slate-900 transition-all duration-200 outline-none placeholder:text-gray-400 focus:border-sky-400 focus:bg-white dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder:text-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
                   />
                 </div>
               </div>
 
               {/* Note */}
               <div>
-                <label className="text-xs font-semibold text-slate-600 mb-1.5 block">
+                <label className="mb-1.5 block text-xs font-semibold text-slate-600">
                   Note / Reason
                 </label>
                 <textarea
@@ -195,7 +196,7 @@ export default function AdjustWalletModal({
                   placeholder="e.g. Manual adjustment for bonus payoutâ€¦"
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  className="w-full rounded-[18px] border border-gray-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-sky-400 focus:bg-white dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder:text-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18 resize-none"
+                  className="w-full resize-none rounded-[18px] border border-gray-300 bg-white px-4 py-2.5 text-sm text-slate-900 transition-all duration-200 outline-none placeholder:text-gray-400 focus:border-sky-400 focus:bg-white dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder:text-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
                 />
               </div>
 

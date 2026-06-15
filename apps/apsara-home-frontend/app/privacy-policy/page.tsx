@@ -252,7 +252,7 @@ export default function PrivacyPolicyPage() {
             </svg>
           </div>
           <div className="flex-1">
-            <p className="text-xs font-bold uppercase tracking-widest opacity-70">
+            <p className="text-xs font-bold tracking-widest uppercase opacity-70">
               AF Home · Data Privacy
             </p>
             <h2 className="mt-1 text-xl font-bold">

@@ -1,13 +1,14 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { useSession, signOut } from "next-auth/react"
-import { usePathname } from "next/navigation"
-import { useGetAdminMeQuery } from "@/store/api/authApi"
 import { useHeartbeatAdminPresenceMutation } from "@/store/api/adminUsersApi"
-import Sidebar from "./Sidebar"
+import { useGetAdminMeQuery } from "@/store/api/authApi"
+import { AnimatePresence, motion } from "framer-motion"
+import { signOut, useSession } from "next-auth/react"
+import { usePathname } from "next/navigation"
+
 import Header from "./Header"
+import Sidebar from "./Sidebar"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -57,7 +58,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         isCollapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Header onMenuClick={() => setSidebarOpen(true)} />
         <main className="flex-1 overflow-y-auto bg-slate-100 p-4 lg:p-6 dark:bg-slate-950">
           {children}
@@ -77,8 +78,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             }}
           >
             {/* Glow behind card */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-96 h-96 bg-red-600/10 rounded-full blur-3xl" />
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <div className="h-96 w-96 rounded-full bg-red-600/10 blur-3xl" />
             </div>
 
             <motion.div
@@ -89,12 +90,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 duration: 0.45,
                 ease: [0.22, 1, 0.36, 1],
               }}
-              className="relative w-full max-w-md bg-slate-900/90 border border-red-500/20 rounded-3xl shadow-2xl shadow-black/60 overflow-hidden"
+              className="relative w-full max-w-md overflow-hidden rounded-3xl border border-red-500/20 bg-slate-900/90 shadow-2xl shadow-black/60"
             >
               {/* Top red accent bar */}
               <div className="h-1 w-full bg-linear-to-r from-red-600 via-red-400 to-red-600" />
 
-              <div className="px-8 py-10 flex flex-col items-center text-center">
+              <div className="flex flex-col items-center px-8 py-10 text-center">
                 {/* Pulsing lock */}
                 <div className="relative mb-7">
                   <motion.div
@@ -104,10 +105,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                       repeat: Infinity,
                       ease: "easeInOut",
                     }}
-                    className="h-24 w-24 rounded-2xl bg-red-500/10 border border-red-500/25 flex items-center justify-center"
+                    className="flex h-24 w-24 items-center justify-center rounded-2xl border border-red-500/25 bg-red-500/10"
                   >
                     <svg
-                      className="w-11 h-11 text-red-400"
+                      className="h-11 w-11 text-red-400"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -128,10 +129,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                       repeat: Infinity,
                       ease: "easeInOut",
                     }}
-                    className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-red-500 border-2 border-slate-900 flex items-center justify-center"
+                    className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-slate-900 bg-red-500"
                   >
                     <svg
-                      className="w-2.5 h-2.5 text-white"
+                      className="h-2.5 w-2.5 text-white"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
@@ -145,19 +146,19 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 </div>
 
                 {/* Heading */}
-                <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">
+                <h2 className="mb-2 text-2xl font-bold tracking-tight text-white">
                   Account Suspended
                 </h2>
-                <p className="text-sm text-slate-400 leading-relaxed mb-6">
+                <p className="mb-6 text-sm leading-relaxed text-slate-400">
                   Your admin account has been suspended by a Super Admin. You
                   can view this page but you cannot perform any actions.
                 </p>
 
                 {/* Info box */}
-                <div className="w-full rounded-2xl border border-red-500/15 bg-red-500/8 px-5 py-4 mb-8 text-left space-y-2">
+                <div className="mb-8 w-full space-y-2 rounded-2xl border border-red-500/15 bg-red-500/8 px-5 py-4 text-left">
                   <div className="flex items-start gap-2.5">
                     <svg
-                      className="w-4 h-4 text-red-400 mt-0.5 shrink-0"
+                      className="mt-0.5 h-4 w-4 shrink-0 text-red-400"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -169,7 +170,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                         d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
-                    <p className="text-xs text-red-300/80 leading-relaxed">
+                    <p className="text-xs leading-relaxed text-red-300/80">
                       To restore access, contact a{" "}
                       <span className="font-semibold text-red-300">
                         Super Admin
@@ -180,10 +181,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 </div>
 
                 {/* Logged in as */}
-                <div className="w-full flex items-center gap-3 rounded-xl border border-slate-700/60 bg-slate-800/60 px-4 py-3 mb-6">
-                  <div className="h-8 w-8 rounded-full bg-red-500/15 border border-red-500/20 flex items-center justify-center shrink-0">
+                <div className="mb-6 flex w-full items-center gap-3 rounded-xl border border-slate-700/60 bg-slate-800/60 px-4 py-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-red-500/20 bg-red-500/15">
                     <svg
-                      className="w-4 h-4 text-red-400"
+                      className="h-4 w-4 text-red-400"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -196,14 +197,14 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                       />
                     </svg>
                   </div>
-                  <div className="text-left min-w-0">
-                    <p className="text-xs text-slate-500 leading-none mb-0.5">
+                  <div className="min-w-0 text-left">
+                    <p className="mb-0.5 text-xs leading-none text-slate-500">
                       Logged in as
                     </p>
-                    <p className="text-sm font-semibold text-slate-300 truncate">
+                    <p className="truncate text-sm font-semibold text-slate-300">
                       {session?.user?.name ?? "Admin"}
                     </p>
-                    <p className="text-xs text-slate-500 truncate">
+                    <p className="truncate text-xs text-slate-500">
                       {session?.user?.email}
                     </p>
                   </div>
@@ -215,10 +216,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => signOut({ callbackUrl: "/admin/login" })}
-                  className="w-full py-3 rounded-xl border border-slate-700 text-slate-300 hover:border-slate-500 hover:text-white text-sm font-semibold transition-all flex items-center justify-center gap-2"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700 py-3 text-sm font-semibold text-slate-300 transition-all hover:border-slate-500 hover:text-white"
                 >
                   <svg
-                    className="w-4 h-4"
+                    className="h-4 w-4"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"

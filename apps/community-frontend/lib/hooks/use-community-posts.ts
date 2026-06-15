@@ -1,7 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useAuthStore } from "@/store/auth.store"
+import { useQuery } from "@tanstack/react-query"
 
-import { api } from "@/lib/api";
-import { useAuthStore } from "@/store/auth.store";
+import { api } from "@/lib/api"
 
 export type CommunityPostCategory =
   | "GENERAL"
@@ -9,66 +9,66 @@ export type CommunityPostCategory =
   | "EVENT"
   | "FOR_SALE"
   | "SAFETY"
-  | "FREE";
+  | "FREE"
 
 export type CommunityPost = {
-  id: string;
-  authorId: string;
-  category: CommunityPostCategory;
-  title: string;
-  content: string;
-  imageUrl: string | null;
-  eventDate: string | null;
-  eventTime: string | null;
-  eventEndTime: string | null;
-  location: string | null;
-  price: string | null;
-  condition: string | null;
-  createdAt: string;
+  id: string
+  authorId: string
+  category: CommunityPostCategory
+  title: string
+  content: string
+  imageUrl: string | null
+  eventDate: string | null
+  eventTime: string | null
+  eventEndTime: string | null
+  location: string | null
+  price: string | null
+  condition: string | null
+  createdAt: string
   author: {
-    id: string;
-    name: string;
-    firstName: string | null;
-    lastName: string | null;
-    email: string | null;
-    avatarUrl: string | null;
-  };
+    id: string
+    name: string
+    firstName: string | null
+    lastName: string | null
+    email: string | null
+    avatarUrl: string | null
+  }
   counts: {
-    comments: number;
-    reactions: number;
-    going: number;
-    interested: number;
-  };
-  viewerHasReacted: boolean;
-  viewerHasSaved: boolean;
-  viewerRsvp: "GOING" | "INTERESTED" | null;
-  repostOf: RepostOriginal | null;
-};
+    comments: number
+    reactions: number
+    going: number
+    interested: number
+  }
+  viewerHasReacted: boolean
+  viewerHasSaved: boolean
+  viewerRsvp: "GOING" | "INTERESTED" | null
+  repostOf: RepostOriginal | null
+}
 
 export type RepostOriginal = {
-  id: string;
-  authorId: string;
-  category: CommunityPostCategory;
-  title: string;
-  content: string;
-  imageUrl: string | null;
-  eventDate: string | null;
-  eventTime: string | null;
-  eventEndTime: string | null;
-  location: string | null;
-  createdAt: string;
+  id: string
+  authorId: string
+  category: CommunityPostCategory
+  title: string
+  content: string
+  imageUrl: string | null
+  eventDate: string | null
+  eventTime: string | null
+  eventEndTime: string | null
+  location: string | null
+  createdAt: string
   author: {
-    id: string;
-    name: string;
-    avatarUrl: string | null;
-  };
-};
+    id: string
+    name: string
+    avatarUrl: string | null
+  }
+}
 
 export function useCommunityPosts() {
-  const token = useAuthStore((state) => state.token);
+  const token = useAuthStore((state) => state.token)
 
   return useQuery({
     queryKey: ["community-posts"],
     queryFn: () => api<CommunityPost[]>("/posts", { token }),
-  });
+  })
 }

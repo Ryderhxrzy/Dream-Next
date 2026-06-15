@@ -1,16 +1,17 @@
 "use client"
 
-import VideoBackground from "@/components/VideoBackground"
 import { useEffect, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
+import { useSession } from "next-auth/react"
+import { useRouter, useSearchParams } from "next/navigation"
+
+import ForcedPasswordChangeForm from "@/components/auth/ForcedPasswordChangeForm"
 import AuthTabs from "@/components/AuthTabs"
+import Footer from "@/components/landing-page/Footer"
+import Header from "@/components/landing-page/Header"
 import LoginForm from "@/components/LoginForm"
 import SignUpForm from "@/components/SignUpForm"
-import ForcedPasswordChangeForm from "@/components/auth/ForcedPasswordChangeForm"
-import { useRouter, useSearchParams } from "next/navigation"
-import { useSession } from "next-auth/react"
-import Header from "@/components/landing-page/Header"
-import Footer from "@/components/landing-page/Footer"
+import VideoBackground from "@/components/VideoBackground"
 
 type Mode = "login" | "signup" | "force-password-change"
 const LOGIN_REDIRECT_GUARD_KEY = "afhome-skip-login-redirect"
@@ -142,9 +143,9 @@ export default function LoginPageClient({
     setManualMode(nextMode)
 
   return (
-    <div className="relative min-h-[100dvh] w-full overflow-x-hidden overflow-y-auto flex flex-col">
+    <div className="relative flex min-h-[100dvh] w-full flex-col overflow-x-hidden overflow-y-auto">
       <VideoBackground videoSrc={backgroundVideoUrl} />
-      <div className="absolute inset-0 bg-black/25 dark:bg-black/55 backdrop-blur-[2px]" />
+      <div className="absolute inset-0 bg-black/25 backdrop-blur-[2px] dark:bg-black/55" />
 
       <div className="relative z-20">
         <Header
@@ -158,7 +159,7 @@ export default function LoginPageClient({
       </div>
 
       <div
-        className={`relative z-10 flex justify-center w-full px-4 ${mode === "signup" ? "items-start pt-28 pb-10 sm:pt-32" : "min-h-[100dvh] items-center py-8"}`}
+        className={`relative z-10 flex w-full justify-center px-4 ${mode === "signup" ? "items-start pt-28 pb-10 sm:pt-32" : "min-h-[100dvh] items-center py-8"}`}
       >
         <motion.div
           initial={{ opacity: 0, y: 32, scale: 0.95 }}

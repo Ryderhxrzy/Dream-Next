@@ -1,7 +1,7 @@
 "use client"
 
-import { motion } from "framer-motion"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { motion } from "framer-motion"
 
 interface Props {
   isOpen: boolean
@@ -173,7 +173,7 @@ export function AiSupportToggle({ isOpen, onClick, robotSrc, logoSrc }: Props) {
         <button
           onClick={handlePeekTabClick}
           aria-label="Show AI Support"
-          className="relative w-full h-full bg-transparent border-0 p-0 cursor-pointer"
+          className="relative h-full w-full cursor-pointer border-0 bg-transparent p-0"
         >
           {/* Colored pull tab */}
           <div
@@ -181,7 +181,7 @@ export function AiSupportToggle({ isOpen, onClick, robotSrc, logoSrc }: Props) {
               peekSide === "left"
                 ? "right-0 rounded-r-xl"
                 : "left-0 rounded-l-xl"
-            } bg-gradient-to-b from-sky-500 to-indigo-500 w-6 h-14 flex items-center justify-center shadow-lg`}
+            } flex h-14 w-6 items-center justify-center bg-gradient-to-b from-sky-500 to-indigo-500 shadow-lg`}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -216,13 +216,13 @@ export function AiSupportToggle({ isOpen, onClick, robotSrc, logoSrc }: Props) {
           }}
           aria-label={isOpen ? "Close AI Support" : "Open AI Support"}
         >
-          <div className="relative w-full h-full flex items-center justify-center">
+          <div className="relative flex h-full w-full items-center justify-center">
             {/* Prompt bubble */}
             {!isOpen && (
               <div
-                className={`absolute ${bubbleStyle} bottom-7 max-w-[220px] min-w-[140px] rounded-2xl bg-white border border-indigo-100 shadow-lg shadow-slate-200 px-3 py-2 text-[12.5px] text-slate-700 pointer-events-none`}
+                className={`absolute ${bubbleStyle} pointer-events-none bottom-7 max-w-[220px] min-w-[140px] rounded-2xl border border-indigo-100 bg-white px-3 py-2 text-[12.5px] text-slate-700 shadow-lg shadow-slate-200`}
               >
-                <span className="block leading-snug whitespace-normal break-words">
+                <span className="block leading-snug break-words whitespace-normal">
                   {prompts[promptIndex]}
                 </span>
                 <span className={bubbleTailStyle} />
@@ -233,7 +233,7 @@ export function AiSupportToggle({ isOpen, onClick, robotSrc, logoSrc }: Props) {
             <motion.img
               src={robotSrc}
               alt="AI Support"
-              className="w-[70px] h-[82px] object-contain block relative z-10"
+              className="relative z-10 block h-[82px] w-[70px] object-contain"
               animate={{ rotate: [0, -13, 12, -10, 8, 0, 0, 0] }}
               transition={{
                 duration: 1.9,
@@ -245,15 +245,15 @@ export function AiSupportToggle({ isOpen, onClick, robotSrc, logoSrc }: Props) {
             />
 
             {/* Logo bubble */}
-            <div className="absolute -right-1.5 -top-2.5 z-20 pointer-events-none">
-              <div className="relative bg-white border-2 border-indigo-200 rounded-2xl shadow-lg shadow-indigo-100 px-1.5 py-1 flex items-center justify-center">
+            <div className="pointer-events-none absolute -top-2.5 -right-1.5 z-20">
+              <div className="relative flex items-center justify-center rounded-2xl border-2 border-indigo-200 bg-white px-1.5 py-1 shadow-lg shadow-indigo-100">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={logoSrc}
                   alt="AF"
-                  className="w-7 h-5 object-contain"
+                  className="h-5 w-7 object-contain"
                 />
-                <div className="absolute left-2.5 -bottom-[7px] w-2.5 h-2.5 bg-white border-r-2 border-b-2 border-indigo-200 rotate-45" />
+                <div className="absolute -bottom-[7px] left-2.5 h-2.5 w-2.5 rotate-45 border-r-2 border-b-2 border-indigo-200 bg-white" />
               </div>
             </div>
           </div>

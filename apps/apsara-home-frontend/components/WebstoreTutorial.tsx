@@ -1,41 +1,41 @@
 "use client"
 
-import { type ReactNode, useCallback, useEffect, useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { useCallback, useEffect, useState, type ReactNode } from "react"
+import { AnimatePresence, motion } from "framer-motion"
 import {
-  Store,
-  FileText,
-  ShieldCheck,
-  Palette,
-  ListChecks,
-  UserPlus,
-  LogIn,
-  LayoutDashboard,
-  ShoppingBag,
-  ReceiptText,
-  Users,
-  UserCog,
-  RefreshCw,
-  Download,
   ArrowRight,
-  CheckCircle2,
-  Sparkles,
-  Rocket,
-  Wallet,
   BadgeCheck,
-  Globe,
-  Clock,
-  TrendingUp,
   Building2,
-  ZoomIn,
-  X,
-  Play,
-  Pause,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  RotateCcw,
+  Clock,
+  Download,
+  FileText,
   Film,
+  Globe,
+  LayoutDashboard,
   LayoutTemplate,
+  ListChecks,
+  LogIn,
+  Palette,
+  Pause,
+  Play,
+  ReceiptText,
+  RefreshCw,
+  Rocket,
+  RotateCcw,
+  ShieldCheck,
+  ShoppingBag,
+  Sparkles,
+  Store,
+  TrendingUp,
+  UserCog,
+  UserPlus,
+  Users,
+  Wallet,
+  X,
+  ZoomIn,
 } from "lucide-react"
 
 type LightboxImage = { src: string; alt: string }
@@ -373,7 +373,7 @@ function StepImage({
         loading="eager"
         className="h-auto w-full origin-center transition-transform duration-900 ease-out group-hover:scale-[1.55]"
       />
-      <span className="no-print pointer-events-none absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-zinc-900/75 px-2.5 py-1 text-[11px] font-semibold text-white opacity-0 backdrop-blur transition-opacity duration-200 group-hover:opacity-100">
+      <span className="no-print pointer-events-none absolute top-3 right-3 inline-flex items-center gap-1.5 rounded-full bg-zinc-900/75 px-2.5 py-1 text-[11px] font-semibold text-white opacity-0 backdrop-blur transition-opacity duration-200 group-hover:opacity-100">
         <ZoomIn size={12} /> Click to zoom
       </span>
     </button>
@@ -548,7 +548,7 @@ function CinematicPlayer({ onClose }: { onClose: () => void }) {
             <Film size={15} />
           </span>
           <div className="leading-tight">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/45">
+            <p className="text-[10px] font-bold tracking-[0.2em] text-white/45 uppercase">
               {scene.kicker} · {scene.phase}
             </p>
             <p className="text-sm font-bold text-white">
@@ -598,9 +598,9 @@ function CinematicPlayer({ onClose }: { onClose: () => void }) {
               }}
             />
           </AnimatePresence>
-          <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/5" />
+          <div className="pointer-events-none absolute inset-0 ring-1 ring-white/5 ring-inset" />
           <span
-            className={`absolute left-4 top-4 rounded-full bg-linear-to-br ${scene.accent} px-3 py-1 text-[11px] font-black uppercase tracking-wider text-white shadow`}
+            className={`absolute top-4 left-4 rounded-full bg-linear-to-br ${scene.accent} px-3 py-1 text-[11px] font-black tracking-wider text-white uppercase shadow`}
           >
             Step {scene.n}
             {scene.part ? `.${scene.part}` : ""}
@@ -617,10 +617,10 @@ function CinematicPlayer({ onClose }: { onClose: () => void }) {
               exit={{ opacity: 0, x: -16 }}
               transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
             >
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/60">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-bold tracking-[0.2em] text-white/60 uppercase">
                 {scene.kicker} · {scene.phase}
               </span>
-              <h2 className="mt-4 text-3xl font-black leading-tight tracking-tight sm:text-4xl">
+              <h2 className="mt-4 text-3xl leading-tight font-black tracking-tight sm:text-4xl">
                 {scene.title}
               </h2>
               <p className="mt-4 max-w-md text-base leading-relaxed text-white/70">
@@ -632,7 +632,7 @@ function CinematicPlayer({ onClose }: { onClose: () => void }) {
       </div>
 
       {/* Controls */}
-      <div className="px-6 pb-5 pt-2">
+      <div className="px-6 pt-2 pb-5">
         {/* Progress segments */}
         <div className="mb-3 flex gap-1">
           {SCENES.map((_, i) => (
@@ -757,7 +757,7 @@ export default function WebstoreTutorial() {
               <Store size={18} />
             </span>
             <div className="leading-tight">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-700">
+              <p className="text-[11px] font-bold tracking-[0.18em] text-emerald-700 uppercase">
                 AF Home
               </p>
               <p className="text-sm font-bold text-zinc-800">
@@ -786,14 +786,14 @@ export default function WebstoreTutorial() {
 
       <main className="mx-auto max-w-5xl px-5 pb-24">
         {/* ── Hero ── */}
-        <section className="relative overflow-hidden rounded-3xl border border-zinc-200 bg-linear-to-br from-zinc-900 via-zinc-900 to-emerald-950 px-7 py-12 text-white print-break sm:px-12 sm:py-16">
-          <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-emerald-500/20 blur-3xl" />
+        <section className="print-break relative overflow-hidden rounded-3xl border border-zinc-200 bg-linear-to-br from-zinc-900 via-zinc-900 to-emerald-950 px-7 py-12 text-white sm:px-12 sm:py-16">
+          <div className="pointer-events-none absolute -top-16 -right-16 h-64 w-64 rounded-full bg-emerald-500/20 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-20 -left-10 h-64 w-64 rounded-full bg-teal-500/10 blur-3xl" />
           <div className="relative max-w-2xl">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-300">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-bold tracking-[0.2em] text-emerald-300 uppercase">
               <Sparkles size={13} /> Complete Guide
             </span>
-            <h1 className="mt-5 text-4xl font-black leading-tight tracking-tight sm:text-5xl">
+            <h1 className="mt-5 text-4xl leading-tight font-black tracking-tight sm:text-5xl">
               How to build your own
               <br className="hidden sm:block" /> AF Home Partner Webstore
             </h1>
@@ -829,7 +829,7 @@ export default function WebstoreTutorial() {
         </section>
 
         {/* ── Advantages (why avail) ── */}
-        <section className="mt-10 overflow-hidden rounded-3xl border border-emerald-200 bg-linear-to-br from-emerald-50 to-teal-50 p-6 print-break sm:p-8">
+        <section className="print-break mt-10 overflow-hidden rounded-3xl border border-emerald-200 bg-linear-to-br from-emerald-50 to-teal-50 p-6 sm:p-8">
           <div className="flex items-center gap-2.5">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-emerald-500 to-teal-500 text-white shadow-sm">
               <TrendingUp size={18} />
@@ -845,7 +845,7 @@ export default function WebstoreTutorial() {
           </div>
           <div className="mt-6 grid gap-x-6 gap-y-4 sm:grid-cols-2">
             {ADVANTAGES.map((a) => (
-              <div key={a.title} className="flex items-start gap-3 print-break">
+              <div key={a.title} className="print-break flex items-start gap-3">
                 <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-emerald-600 shadow-sm ring-1 ring-emerald-100">
                   {a.icon}
                 </span>
@@ -861,7 +861,7 @@ export default function WebstoreTutorial() {
         </section>
 
         {/* ── Benefits ── */}
-        <section className="mt-10 print-break">
+        <section className="print-break mt-10">
           <h2 className="text-xl font-black tracking-tight text-zinc-900">
             Why an AF Home Partner Webstore?
           </h2>
@@ -872,7 +872,7 @@ export default function WebstoreTutorial() {
             {BENEFITS.map((b) => (
               <div
                 key={b.title}
-                className="rounded-2xl border border-zinc-200 bg-white p-4 print-break"
+                className="print-break rounded-2xl border border-zinc-200 bg-white p-4"
               >
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
                   {b.icon}
@@ -896,12 +896,12 @@ export default function WebstoreTutorial() {
             className="mt-14 scroll-mt-20"
           >
             {/* Phase header */}
-            <div className="flex items-center gap-4 print-break">
+            <div className="print-break flex items-center gap-4">
               <span
                 className={`h-10 w-1.5 shrink-0 rounded-full bg-linear-to-b ${phase.accent}`}
               />
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400">
+                <p className="text-[11px] font-bold tracking-[0.2em] text-zinc-400 uppercase">
                   {phase.kicker}
                 </p>
                 <h2 className="text-2xl font-black tracking-tight text-zinc-900">
@@ -924,7 +924,7 @@ export default function WebstoreTutorial() {
                     duration: 0.45,
                     ease: [0.25, 0.46, 0.45, 0.94],
                   }}
-                  className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm print-break"
+                  className="print-break overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm"
                 >
                   <div className="flex flex-col gap-5 p-5 sm:p-6">
                     {/* Step header */}
@@ -936,11 +936,11 @@ export default function WebstoreTutorial() {
                       </span>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+                          <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-[11px] font-bold tracking-wider text-zinc-500 uppercase">
                             Step {step.n}
                           </span>
                         </div>
-                        <h3 className="mt-1.5 text-lg font-bold leading-snug text-zinc-900">
+                        <h3 className="mt-1.5 text-lg leading-snug font-bold text-zinc-900">
                           {step.title}
                         </h3>
                         <p className="mt-1.5 text-sm leading-relaxed text-zinc-600">
@@ -974,7 +974,7 @@ export default function WebstoreTutorial() {
         ))}
 
         {/* ── Closing CTA ── */}
-        <section className="mt-16 overflow-hidden rounded-3xl border border-emerald-200 bg-linear-to-br from-emerald-50 to-teal-50 px-7 py-12 text-center print-break">
+        <section className="print-break mt-16 overflow-hidden rounded-3xl border border-emerald-200 bg-linear-to-br from-emerald-50 to-teal-50 px-7 py-12 text-center">
           <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-linear-to-br from-emerald-500 to-teal-500 text-white shadow-sm">
             <CheckCircle2 size={28} />
           </span>

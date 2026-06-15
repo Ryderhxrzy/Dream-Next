@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 
 interface TopFilterProps {
   onSearchChange?: (search: string) => void
@@ -90,7 +90,7 @@ export default function TopFilter({
 
   return (
     <div
-      className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-2.5 sm:p-4 ${className}`}
+      className={`rounded-lg border border-gray-200 bg-white p-2.5 sm:p-4 dark:border-gray-700 dark:bg-gray-800 ${className}`}
     >
       <div className="flex flex-col gap-3 sm:gap-4">
         {/* Search bar */}
@@ -103,7 +103,7 @@ export default function TopFilter({
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
-            className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none"
+            className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-gray-400 sm:left-4 dark:text-gray-500"
           >
             <circle cx="11" cy="11" r="8" />
             <path d="m21 21-4.35-4.35" />
@@ -113,12 +113,12 @@ export default function TopFilter({
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Search..."
-            className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 py-2 sm:py-3 pl-9 sm:pl-12 pr-9 sm:pr-12 text-sm sm:text-base text-gray-700 dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-sky-400 focus:bg-white dark:focus:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-sky-400/30 transition-all"
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2 pr-9 pl-9 text-sm text-gray-700 transition-all placeholder:text-gray-400 focus:border-sky-400 focus:bg-white focus:ring-2 focus:ring-sky-400/30 focus:outline-none sm:py-3 sm:pr-12 sm:pl-12 sm:text-base dark:border-gray-700 dark:bg-gray-700 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:bg-gray-600"
           />
           {search && (
             <button
               onClick={() => handleSearchChange("")}
-              className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 transition-colors"
+              className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 transition-colors hover:text-gray-600 sm:right-4 dark:text-gray-500 dark:hover:text-gray-400"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -137,14 +137,14 @@ export default function TopFilter({
         </div>
 
         {/* Right side controls */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3 sm:justify-end">
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end sm:gap-3">
           {/* Clear filters button */}
           <button
             onClick={() => onClearFilters?.()}
-            className={`inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg border transition-colors ${
+            className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3 sm:py-2 sm:text-sm ${
               hasActiveFilters
-                ? "text-sky-500 dark:text-sky-400 hover:text-sky-600 dark:hover:text-sky-300 border-sky-200 dark:border-sky-900/30 bg-sky-50 dark:bg-sky-900/10 hover:bg-sky-100 dark:hover:bg-sky-900/20 cursor-pointer"
-                : "text-gray-400 dark:text-gray-600 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 cursor-not-allowed opacity-50"
+                ? "cursor-pointer border-sky-200 bg-sky-50 text-sky-500 hover:bg-sky-100 hover:text-sky-600 dark:border-sky-900/30 dark:bg-sky-900/10 dark:text-sky-400 dark:hover:bg-sky-900/20 dark:hover:text-sky-300"
+                : "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400 opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-600"
             }`}
             disabled={!hasActiveFilters}
             title={hasActiveFilters ? "Clear all filters" : "No active filters"}
@@ -166,13 +166,13 @@ export default function TopFilter({
 
           {/* Sort dropdown */}
           <div className="flex items-center gap-1.5 sm:gap-2">
-            <span className="hidden sm:inline text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">
+            <span className="hidden text-xs font-medium text-gray-600 sm:inline sm:text-sm dark:text-gray-400">
               Sort:
             </span>
             <select
               value={currentSort}
               onChange={(e) => handleSortChange(e.target.value)}
-              className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400/30 transition-all cursor-pointer hover:border-sky-300"
+              className="cursor-pointer rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs font-medium text-gray-700 transition-all hover:border-sky-300 focus:border-sky-400 focus:ring-2 focus:ring-sky-400/30 focus:outline-none sm:px-3 sm:py-2 sm:text-sm dark:border-gray-700 dark:bg-gray-700 dark:text-gray-200"
             >
               {SORT_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -184,7 +184,7 @@ export default function TopFilter({
 
           {showPageSizeControl && (
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <span className="hidden sm:inline text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">
+              <span className="hidden text-xs font-medium text-gray-600 sm:inline sm:text-sm dark:text-gray-400">
                 Show:
               </span>
               <select
@@ -194,7 +194,7 @@ export default function TopFilter({
                     e.target.value === "all" ? "all" : Number(e.target.value)
                   )
                 }
-                className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400/30 transition-all cursor-pointer hover:border-sky-300"
+                className="cursor-pointer rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs font-medium text-gray-700 transition-all hover:border-sky-300 focus:border-sky-400 focus:ring-2 focus:ring-sky-400/30 focus:outline-none sm:px-3 sm:py-2 sm:text-sm dark:border-gray-700 dark:bg-gray-700 dark:text-gray-200"
               >
                 {SHOW_NUMBER_OPTIONS.map((option) => (
                   <option key={option} value={option}>
@@ -206,14 +206,14 @@ export default function TopFilter({
           )}
 
           {/* View toggle */}
-          <div className="flex items-center gap-0.5 sm:gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5 sm:p-1">
+          <div className="flex items-center gap-0.5 rounded-lg bg-gray-100 p-0.5 sm:gap-1 sm:p-1 dark:bg-gray-700">
             <div className="relative">
               <button
                 onClick={() => handleViewTypeChange("grid")}
-                className={`p-1.5 sm:p-2 rounded-md transition-colors cursor-pointer hover:scale-105 ${
+                className={`cursor-pointer rounded-md p-1.5 transition-colors hover:scale-105 sm:p-2 ${
                   currentViewType === "grid"
-                    ? "bg-white dark:bg-gray-600 text-sky-500 shadow-sm"
-                    : "text-gray-600 dark:text-gray-300 hover:text-sky-500 dark:hover:text-sky-400"
+                    ? "bg-white text-sky-500 shadow-sm dark:bg-gray-600"
+                    : "text-gray-600 hover:text-sky-500 dark:text-gray-300 dark:hover:text-sky-400"
                 }`}
                 onMouseEnter={() => setShowGridTooltip(true)}
                 onMouseLeave={() => setShowGridTooltip(false)}
@@ -227,7 +227,7 @@ export default function TopFilter({
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
-                  className="sm:w-[18px] sm:h-[18px]"
+                  className="sm:h-[18px] sm:w-[18px]"
                 >
                   <rect x="3" y="3" width="7" height="7" />
                   <rect x="14" y="3" width="7" height="7" />
@@ -236,7 +236,7 @@ export default function TopFilter({
                 </svg>
               </button>
               {showGridTooltip && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded whitespace-nowrap z-10">
+                <div className="absolute top-full left-1/2 z-10 mt-2 -translate-x-1/2 rounded bg-gray-900 px-2 py-1 text-xs whitespace-nowrap text-white dark:bg-gray-700">
                   Grid View
                 </div>
               )}
@@ -244,10 +244,10 @@ export default function TopFilter({
             <div className="relative">
               <button
                 onClick={() => handleViewTypeChange("list")}
-                className={`p-1.5 sm:p-2 rounded-md transition-colors cursor-pointer hover:scale-105 ${
+                className={`cursor-pointer rounded-md p-1.5 transition-colors hover:scale-105 sm:p-2 ${
                   currentViewType === "list"
-                    ? "bg-white dark:bg-gray-600 text-sky-500 shadow-sm"
-                    : "text-gray-600 dark:text-gray-300 hover:text-sky-500 dark:hover:text-sky-400"
+                    ? "bg-white text-sky-500 shadow-sm dark:bg-gray-600"
+                    : "text-gray-600 hover:text-sky-500 dark:text-gray-300 dark:hover:text-sky-400"
                 }`}
                 onMouseEnter={() => setShowListTooltip(true)}
                 onMouseLeave={() => setShowListTooltip(false)}
@@ -261,7 +261,7 @@ export default function TopFilter({
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
-                  className="sm:w-[18px] sm:h-[18px]"
+                  className="sm:h-[18px] sm:w-[18px]"
                 >
                   <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                   <line x1="3" y1="9" x2="21" y2="9" />
@@ -269,7 +269,7 @@ export default function TopFilter({
                 </svg>
               </button>
               {showListTooltip && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded whitespace-nowrap z-10">
+                <div className="absolute top-full left-1/2 z-10 mt-2 -translate-x-1/2 rounded bg-gray-900 px-2 py-1 text-xs whitespace-nowrap text-white dark:bg-gray-700">
                   List View
                 </div>
               )}

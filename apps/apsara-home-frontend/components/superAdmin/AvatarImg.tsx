@@ -35,14 +35,14 @@ export default function AvatarImg({
         src={src}
         alt={name}
         onError={() => setErr(true)}
-        className={`rounded-full object-cover shrink-0 ${size} ${className}`}
+        className={`shrink-0 rounded-full object-cover ${size} ${className}`}
       />
     )
   }
 
   return (
     <div
-      className={`rounded-full shrink-0 flex items-center justify-center font-bold text-white ${size} ${bg} ${className}`}
+      className={`flex shrink-0 items-center justify-center rounded-full font-bold text-white ${size} ${bg} ${className}`}
     >
       <span className={textSize}>{initials}</span>
     </div>

@@ -1,4 +1,5 @@
 import type { FetchArgs, FetchBaseQueryError } from "@reduxjs/toolkit/query"
+
 import { baseApi } from "./baseApi"
 
 interface RegisterPayload {

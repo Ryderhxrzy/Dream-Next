@@ -1,8 +1,5 @@
 "use client"
 
-import { cn } from "tailwind-variants"
-import { Eye, Pencil, Trash2, TriangleAlert } from "lucide-react"
-import Image from "next/image"
 import {
   Fragment,
   useCallback,
@@ -12,6 +9,9 @@ import {
   type ReactNode,
 } from "react"
 import { Product, useLazyGetZqInventoryQuery } from "@/store/api/productsApi"
+import { Eye, Pencil, Trash2, TriangleAlert } from "lucide-react"
+import Image from "next/image"
+import { cn } from "tailwind-variants"
 
 interface ProductsTableProps {
   rows: Product[]
@@ -270,7 +270,7 @@ function TableChip({
   return (
     <span
       className={cn(
-        "inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold",
+        "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap",
         className
       )}
     >
@@ -282,7 +282,7 @@ function TableChip({
 function StockCell({ qty }: { qty: number }) {
   if (qty === 0) {
     return (
-      <span className="whitespace-nowrap font-semibold text-red-500">
+      <span className="font-semibold whitespace-nowrap text-red-500">
         {qty.toLocaleString()}
       </span>
     )
@@ -290,7 +290,7 @@ function StockCell({ qty }: { qty: number }) {
 
   if (qty <= 5) {
     return (
-      <span className="inline-flex items-center gap-1 whitespace-nowrap font-semibold text-orange-500">
+      <span className="inline-flex items-center gap-1 font-semibold whitespace-nowrap text-orange-500">
         <TriangleAlert className="h-3.5 w-3.5" />
         {qty.toLocaleString()}
       </span>
@@ -351,7 +351,7 @@ function ZqStockCell({ qty, sku }: { qty: number; sku: string }) {
         <span className="text-[10px] text-red-500">Failed</span>
       ) : data ? (
         <div className="rounded-lg border border-violet-200/70 bg-violet-50/60 px-2 py-1 text-right dark:border-violet-500/20 dark:bg-violet-500/8">
-          <p className="text-[9px] font-bold uppercase tracking-widest text-violet-400 dark:text-violet-500">
+          <p className="text-[9px] font-bold tracking-widest text-violet-400 uppercase dark:text-violet-500">
             ZQ Live
           </p>
           <p
@@ -605,7 +605,7 @@ export default function ProductsTable({
           <thead className="bg-slate-50/95 dark:bg-slate-900">
             {isServicesView ? (
               <tr>
-                <th className="w-12 min-w-12 border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                <th className="w-12 min-w-12 border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase dark:border-slate-800 dark:text-slate-400">
                   {!readOnly ? (
                     <input
                       type="checkbox"
@@ -616,28 +616,28 @@ export default function ProductsTable({
                     />
                   ) : null}
                 </th>
-                <th className="w-20 min-w-20 border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                <th className="w-20 min-w-20 border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase dark:border-slate-800 dark:text-slate-400">
                   Image
                 </th>
-                <th className="min-w-[200px] border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                <th className="min-w-[200px] border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase dark:border-slate-800 dark:text-slate-400">
                   {renderSortableHeader("Company Name", "name")}
                 </th>
-                <th className="min-w-[200px] border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                <th className="min-w-[200px] border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase dark:border-slate-800 dark:text-slate-400">
                   Type of Services
                 </th>
-                <th className="min-w-[160px] border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                <th className="min-w-[160px] border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase dark:border-slate-800 dark:text-slate-400">
                   Contact
                 </th>
-                <th className="min-w-[120px] border-b border-slate-200 px-4 py-4 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                <th className="min-w-[120px] border-b border-slate-200 px-4 py-4 text-center text-xs font-semibold tracking-wide text-slate-500 uppercase dark:border-slate-800 dark:text-slate-400">
                   {renderSortableHeader("Status", "status", "center")}
                 </th>
-                <th className="sticky right-0 z-20 min-w-[150px] border-b border-l border-slate-200 bg-slate-50/95 px-4 py-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 shadow-[-4px_0_8px_-2px_rgba(15,23,42,0.06)] dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.25)]">
+                <th className="sticky right-0 z-20 min-w-[150px] border-b border-l border-slate-200 bg-slate-50/95 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-500 uppercase shadow-[-4px_0_8px_-2px_rgba(15,23,42,0.06)] dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.25)]">
                   Actions
                 </th>
               </tr>
             ) : (
               <tr>
-                <th className="w-12 min-w-12 border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                <th className="w-12 min-w-12 border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase dark:border-slate-800 dark:text-slate-400">
                   {!readOnly ? (
                     <input
                       type="checkbox"
@@ -648,50 +648,50 @@ export default function ProductsTable({
                     />
                   ) : null}
                 </th>
-                <th className="w-20 min-w-20 border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                <th className="w-20 min-w-20 border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase dark:border-slate-800 dark:text-slate-400">
                   Image
                 </th>
-                <th className="min-w-[240px] border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                <th className="min-w-[240px] border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase dark:border-slate-800 dark:text-slate-400">
                   {renderSortableHeader("Product", "name")}
                 </th>
-                <th className="min-w-[140px] border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                <th className="min-w-[140px] border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase dark:border-slate-800 dark:text-slate-400">
                   {renderSortableHeader("SKU", "sku")}
                 </th>
-                <th className="min-w-[180px] border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                <th className="min-w-[180px] border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase dark:border-slate-800 dark:text-slate-400">
                   {renderSortableHeader("Supplier", "supplier")}
                 </th>
-                <th className="min-w-[180px] border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                <th className="min-w-[180px] border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase dark:border-slate-800 dark:text-slate-400">
                   {renderSortableHeader(
                     isZqMode ? "Source" : "Uploader",
                     "uploader"
                   )}
                 </th>
-                <th className="min-w-[110px] border-b border-slate-200 px-4 py-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                <th className="min-w-[110px] border-b border-slate-200 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-500 uppercase dark:border-slate-800 dark:text-slate-400">
                   {renderSortableHeader("Price", "priceSrp", "right")}
                 </th>
                 {!isZqMode ? (
-                  <th className="min-w-[110px] border-b border-slate-200 px-4 py-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                  <th className="min-w-[110px] border-b border-slate-200 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-500 uppercase dark:border-slate-800 dark:text-slate-400">
                     {renderSortableHeader("Dealer", "priceDp", "right")}
                   </th>
                 ) : null}
                 {!isZqMode ? (
-                  <th className="min-w-[110px] border-b border-slate-200 px-4 py-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                  <th className="min-w-[110px] border-b border-slate-200 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-500 uppercase dark:border-slate-800 dark:text-slate-400">
                     {renderSortableHeader("Member", "priceMember", "right")}
                   </th>
                 ) : null}
-                <th className="min-w-[100px] border-b border-slate-200 px-4 py-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                <th className="min-w-[100px] border-b border-slate-200 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-500 uppercase dark:border-slate-800 dark:text-slate-400">
                   {renderSortableHeader("Stock", "stock", "right")}
                 </th>
-                <th className="min-w-[140px] border-b border-slate-200 px-4 py-4 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                <th className="min-w-[140px] border-b border-slate-200 px-4 py-4 text-center text-xs font-semibold tracking-wide text-slate-500 uppercase dark:border-slate-800 dark:text-slate-400">
                   {isZqMode ? "Import Status" : "Badges"}
                 </th>
-                <th className="min-w-[120px] border-b border-slate-200 px-4 py-4 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                <th className="min-w-[120px] border-b border-slate-200 px-4 py-4 text-center text-xs font-semibold tracking-wide text-slate-500 uppercase dark:border-slate-800 dark:text-slate-400">
                   {renderSortableHeader("Status", "status", "center")}
                 </th>
-                <th className="min-w-[160px] border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                <th className="min-w-[160px] border-b border-slate-200 px-4 py-4 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase dark:border-slate-800 dark:text-slate-400">
                   {renderSortableHeader("Uploaded", "createdAt")}
                 </th>
-                <th className="sticky right-0 z-20 min-w-[150px] border-b border-l border-slate-200 bg-slate-50/95 px-4 py-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 shadow-[-4px_0_8px_-2px_rgba(15,23,42,0.06)] dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.25)]">
+                <th className="sticky right-0 z-20 min-w-[150px] border-b border-l border-slate-200 bg-slate-50/95 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-500 uppercase shadow-[-4px_0_8px_-2px_rgba(15,23,42,0.06)] dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.25)]">
                   Actions
                 </th>
               </tr>
@@ -811,7 +811,7 @@ export default function ProductsTable({
                         </p>
                       </td>
                       {/* Status */}
-                      <td className="min-w-[120px] whitespace-nowrap border-b border-slate-100 px-4 py-4 text-center dark:border-slate-800/70">
+                      <td className="min-w-[120px] border-b border-slate-100 px-4 py-4 text-center whitespace-nowrap dark:border-slate-800/70">
                         <span
                           className={cn(
                             "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold",
@@ -936,7 +936,7 @@ export default function ProductsTable({
 
                     <td className="border-b border-slate-100 px-4 py-4 dark:border-slate-800/70">
                       <div className="min-w-0">
-                        <p className="line-clamp-1 font-medium leading-snug text-slate-800 dark:text-slate-100">
+                        <p className="line-clamp-1 leading-snug font-medium text-slate-800 dark:text-slate-100">
                           {product.name || "N/A"}
                         </p>
                         <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -952,7 +952,7 @@ export default function ProductsTable({
                             </>
                           ) : (
                             <>
-                              <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500">
+                              <span className="font-mono text-[10px] text-slate-400 dark:text-slate-500">
                                 #{product.id}
                               </span>
                               {variantCount > 0 ? (
@@ -1008,7 +1008,7 @@ export default function ProductsTable({
                               : "Imported from database"}
                           </p>
                         ) : product.uploaderRole ? (
-                          <p className="line-clamp-1 text-[10px] uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
+                          <p className="line-clamp-1 text-[10px] tracking-[0.12em] text-slate-400 uppercase dark:text-slate-500">
                             {product.uploaderRole.replace(/_/g, " ")}
                           </p>
                         ) : product.uploaderEmail ? (
@@ -1019,16 +1019,16 @@ export default function ProductsTable({
                       </div>
                     </td>
 
-                    <td className="whitespace-nowrap border-b border-slate-100 px-4 py-4 text-right font-semibold text-slate-700 dark:border-slate-800/70 dark:text-slate-200">
+                    <td className="border-b border-slate-100 px-4 py-4 text-right font-semibold whitespace-nowrap text-slate-700 dark:border-slate-800/70 dark:text-slate-200">
                       {formatPrice(product.priceSrp)}
                     </td>
                     {!isZqMode ? (
-                      <td className="whitespace-nowrap border-b border-slate-100 px-4 py-4 text-right text-slate-500 dark:border-slate-800/70 dark:text-slate-400">
+                      <td className="border-b border-slate-100 px-4 py-4 text-right whitespace-nowrap text-slate-500 dark:border-slate-800/70 dark:text-slate-400">
                         {formatPrice(product.priceDp)}
                       </td>
                     ) : null}
                     {!isZqMode ? (
-                      <td className="whitespace-nowrap border-b border-slate-100 px-4 py-4 text-right text-slate-500 dark:border-slate-800/70 dark:text-slate-400">
+                      <td className="border-b border-slate-100 px-4 py-4 text-right whitespace-nowrap text-slate-500 dark:border-slate-800/70 dark:text-slate-400">
                         {formatPrice(product.priceMember ?? 0)}
                       </td>
                     ) : null}
@@ -1083,7 +1083,7 @@ export default function ProductsTable({
                       )}
                     </td>
 
-                    <td className="min-w-[120px] whitespace-nowrap border-b border-slate-100 px-4 py-4 text-center dark:border-slate-800/70">
+                    <td className="min-w-[120px] border-b border-slate-100 px-4 py-4 text-center whitespace-nowrap dark:border-slate-800/70">
                       <TableChip
                         className={
                           statusLabel === "Active"

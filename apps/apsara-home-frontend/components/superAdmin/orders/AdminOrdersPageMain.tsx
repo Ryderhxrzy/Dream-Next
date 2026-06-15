@@ -1,28 +1,17 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { motion } from "framer-motion"
-import { Button } from "@heroui/react/button"
-import { Card } from "@heroui/react/card"
-import { Chip } from "@heroui/react/chip"
-import { Label } from "@heroui/react/label"
-import { ListBox } from "@heroui/react/list-box"
-import { ListBoxItem } from "@heroui/react/list-box-item"
-import { Pagination } from "@heroui/react/pagination"
-import { SearchField } from "@heroui/react/search-field"
-import { Select } from "@heroui/react/select"
-import { useSession } from "next-auth/react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import {
   AdminCourier,
   AdminOrdersResponse,
   AdminShipmentStatus,
+  useApproveAdminOrderMutation,
   useBookAdminOrderCourierMutation,
   useCancelAdminOrderCourierMutation,
-  useGetAdminOrderCourierWaybillMutation,
-  useGetAdminOrderCourierEpodMutation,
-  useApproveAdminOrderMutation,
   useFetchAdminOrderZqDetailMutation,
+  useGetAdminOrderCourierEpodMutation,
+  useGetAdminOrderCourierWaybillMutation,
   useGetAdminOrdersQuery,
   usePushAdminOrderToZqMutation,
   useRejectAdminOrderMutation,
@@ -32,7 +21,18 @@ import {
   useUpdateAdminOrderShipmentStatusMutation,
 } from "@/store/api/adminOrdersApi"
 import { useGetAdminGeneralSettingsQuery } from "@/store/api/adminSettingsApi"
-import { showErrorToast, showSuccessToast } from "@/libs/toast"
+import { Button } from "@heroui/react/button"
+import { Card } from "@heroui/react/card"
+import { Chip } from "@heroui/react/chip"
+import { Label } from "@heroui/react/label"
+import { ListBox } from "@heroui/react/list-box"
+import { ListBoxItem } from "@heroui/react/list-box-item"
+import { Pagination } from "@heroui/react/pagination"
+import { SearchField } from "@heroui/react/search-field"
+import { Select } from "@heroui/react/select"
+import { motion } from "framer-motion"
+import { useSession } from "next-auth/react"
+import { useRouter, useSearchParams } from "next/navigation"
 
 /* ─── constants ────────────────────────────────────────────── */
 
@@ -411,7 +411,7 @@ function StatCard({
       <Card.Content className="px-5 py-5">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-400">
+            <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase dark:text-slate-400">
               {label}
             </p>
             <p className="mt-2.5 text-3xl font-bold text-slate-800 dark:text-white">
@@ -536,7 +536,7 @@ function AdminOrderStaticValue({
   return (
     <div className={className}>
       <span className="truncate">{label}</span>
-      <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+      <span className="text-[10px] font-bold tracking-wide text-slate-400 uppercase dark:text-slate-500">
         Locked
       </span>
     </div>
@@ -1116,26 +1116,26 @@ export default function AdminOrdersPageMain({
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-start justify-between gap-4 flex-wrap"
+        className="flex flex-wrap items-start justify-between gap-4"
       >
         <div>
           <h1 className="text-xl font-bold text-slate-800 dark:text-white">
             Orders
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
             Track checkout orders and handle approval workflow
           </p>
         </div>
         <div className="flex items-center gap-2">
           <span
-            className={`inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-semibold border ${
+            className={`inline-flex items-center rounded-xl border px-3 py-1.5 text-xs font-semibold ${
               canApprove
-                ? "bg-teal-50 text-teal-700 border-teal-200"
-                : "bg-slate-100 text-slate-500 border-slate-200"
+                ? "border-teal-200 bg-teal-50 text-teal-700"
+                : "border-slate-200 bg-slate-100 text-slate-500"
             }`}
           >
             <span
-              className={`h-1.5 w-1.5 rounded-full mr-1.5 ${canApprove ? "bg-teal-500" : "bg-slate-400"}`}
+              className={`mr-1.5 h-1.5 w-1.5 rounded-full ${canApprove ? "bg-teal-500" : "bg-slate-400"}`}
             />
             {role || "staff"}
           </span>
@@ -1145,7 +1145,7 @@ export default function AdminOrdersPageMain({
             className="rounded-[18px] border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all hover:border-slate-400 dark:border-white/18 dark:bg-white/12 dark:text-slate-200"
           >
             <svg
-              className="w-4 h-4 text-teal-600"
+              className="h-4 w-4 text-teal-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -1168,7 +1168,7 @@ export default function AdminOrdersPageMain({
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="grid grid-cols-2 lg:grid-cols-5 gap-4"
+          className="grid grid-cols-2 gap-4 lg:grid-cols-5"
         >
           <StatCard
             label="Total Orders"
@@ -1178,7 +1178,7 @@ export default function AdminOrdersPageMain({
             border="border-slate-200"
             icon={
               <svg
-                className="w-5 h-5"
+                className="h-5 w-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -1200,7 +1200,7 @@ export default function AdminOrdersPageMain({
             border="border-amber-100"
             icon={
               <svg
-                className="w-5 h-5"
+                className="h-5 w-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -1222,7 +1222,7 @@ export default function AdminOrdersPageMain({
             border="border-blue-100"
             icon={
               <svg
-                className="w-5 h-5"
+                className="h-5 w-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -1244,7 +1244,7 @@ export default function AdminOrdersPageMain({
             border="border-red-100"
             icon={
               <svg
-                className="w-5 h-5"
+                className="h-5 w-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -1266,7 +1266,7 @@ export default function AdminOrdersPageMain({
             border="border-emerald-100"
             icon={
               <svg
-                className="w-5 h-5"
+                className="h-5 w-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -1291,9 +1291,9 @@ export default function AdminOrdersPageMain({
         className="rounded-3xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900"
       >
         {/* Search */}
-        <div className="hidden relative flex-1 min-w-50">
+        <div className="relative hidden min-w-50 flex-1">
           <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+            className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -1312,7 +1312,7 @@ export default function AdminOrdersPageMain({
               setPage(1)
             }}
             placeholder="Search checkout ID, customer, product…"
-            className="h-11 w-full rounded-[18px] border border-gray-300 bg-white pl-9 pr-4 text-sm text-slate-900 outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-sky-400 focus:bg-white dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder:text-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
+            className="h-11 w-full rounded-[18px] border border-gray-300 bg-white pr-4 pl-9 text-sm text-slate-900 transition-all duration-200 outline-none placeholder:text-gray-400 focus:border-sky-400 focus:bg-white dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder:text-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
           />
         </div>
 
@@ -1329,10 +1329,10 @@ export default function AdminOrdersPageMain({
         </select>
 
         {/* Overdue toggle */}
-        <label className="hidden items-center gap-2 cursor-pointer select-none">
+        <label className="hidden cursor-pointer items-center gap-2 select-none">
           <div
             onClick={() => setOverdueFirst((v) => !v)}
-            className={`relative h-5 w-9 rounded-full transition-colors cursor-pointer ${overdueFirst ? "bg-teal-500" : "bg-slate-200"}`}
+            className={`relative h-5 w-9 cursor-pointer rounded-full transition-colors ${overdueFirst ? "bg-teal-500" : "bg-slate-200"}`}
           >
             <span
               className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${overdueFirst ? "translate-x-4" : ""}`}
@@ -1344,7 +1344,7 @@ export default function AdminOrdersPageMain({
         </label>
 
         {/* Active filter pill */}
-        <span className="hidden text-xs text-slate-400 bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-full font-medium ml-auto">
+        <span className="ml-auto hidden rounded-full border border-slate-100 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-400">
           {FILTER_LABELS[effectiveFilter] ?? "All Orders"}
         </span>
         <div className="flex w-full flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -1421,9 +1421,9 @@ export default function AdminOrdersPageMain({
 
       {/* ── Error ── */}
       {isError && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-center gap-2">
+        <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           <svg
-            className="w-4 h-4 shrink-0"
+            className="h-4 w-4 shrink-0"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -1441,14 +1441,14 @@ export default function AdminOrdersPageMain({
 
       {/* ── Loading ── */}
       {isLoading && !effectiveData ? (
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white animate-pulse dark:border-slate-800 dark:bg-slate-900">
-          <div className="border-b border-slate-100 dark:border-slate-800 px-5 py-4 dark:border-slate-800">
+        <div className="animate-pulse overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+          <div className="border-b border-slate-100 px-5 py-4 dark:border-slate-800">
             <div className="h-4 w-28 rounded-lg bg-slate-100 dark:bg-slate-800" />
           </div>
-          <div className="divide-y divide-slate-100 dark:divide-slate-800/70 dark:divide-slate-800/70 dark:divide-slate-800/60">
+          <div className="divide-y divide-slate-100 dark:divide-slate-800/60 dark:divide-slate-800/70">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="px-4 py-4 flex items-center gap-4">
-                <div className="h-9 w-9 rounded-full bg-slate-100 shrink-0 dark:bg-slate-800" />
+              <div key={i} className="flex items-center gap-4 px-4 py-4">
+                <div className="h-9 w-9 shrink-0 rounded-full bg-slate-100 dark:bg-slate-800" />
                 <div className="flex-1 space-y-2">
                   <div className="h-3 w-32 rounded bg-slate-100 dark:bg-slate-800" />
                   <div className="h-2.5 w-20 rounded bg-slate-100 dark:bg-slate-800" />
@@ -1496,47 +1496,47 @@ export default function AdminOrdersPageMain({
               >
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/40">
-                    <th className="min-w-[220px] px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-300">
+                    <th className="min-w-[220px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
                       Product
                     </th>
-                    <th className="min-w-[150px] px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-300">
+                    <th className="min-w-[150px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
                       Checkout
                     </th>
-                    <th className="min-w-[150px] px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-300">
+                    <th className="min-w-[150px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
                       Source
                     </th>
-                    <th className="min-w-[140px] px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-300">
+                    <th className="min-w-[140px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
                       Date
                     </th>
                     {effectiveFilter !== "returned_refunded" ? (
-                      <th className="min-w-[260px] px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-300">
+                      <th className="min-w-[260px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
                         Customer / Delivery
                       </th>
                     ) : null}
-                    <th className="min-w-[120px] px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-300">
+                    <th className="min-w-[120px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
                       Amount
                     </th>
                     {effectiveFilter === "returned_refunded" ? (
-                      <th className="min-w-[260px] px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-300">
+                      <th className="min-w-[260px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
                         Intent
                       </th>
                     ) : null}
                     {effectiveFilter !== "returned_refunded" ? (
-                      <th className="min-w-[140px] px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-300">
+                      <th className="min-w-[140px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
                         Approval
                       </th>
                     ) : null}
                     {effectiveFilter !== "returned_refunded" ? (
-                      <th className="min-w-[140px] px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-300">
+                      <th className="min-w-[140px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
                         SLA
                       </th>
                     ) : null}
                     {effectiveFilter !== "returned_refunded" ? (
-                      <th className="min-w-[340px] px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-300">
+                      <th className="min-w-[340px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
                         Tracking
                       </th>
                     ) : null}
-                    <th className="min-w-[200px] px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-300">
+                    <th className="min-w-[200px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
                       Actions
                     </th>
                   </tr>
@@ -1655,7 +1655,7 @@ export default function AdminOrdersPageMain({
                           key={order.id}
                           className={`group border-b border-slate-100 transition-colors dark:border-slate-800 ${
                             highlightedOrderId === order.id
-                              ? "bg-teal-50/80 ring-1 ring-inset ring-teal-200 animate-pulse dark:bg-teal-500/10 dark:ring-teal-500/30"
+                              ? "animate-pulse bg-teal-50/80 ring-1 ring-teal-200 ring-inset dark:bg-teal-500/10 dark:ring-teal-500/30"
                               : "bg-white hover:bg-slate-50/60 dark:bg-slate-900 dark:hover:bg-slate-800/50"
                           }`}
                         >
@@ -1690,14 +1690,14 @@ export default function AdminOrdersPageMain({
                               </div>
                               <div className="min-w-0 space-y-1">
                                 <div className="flex items-center gap-1.5">
-                                  <p className="line-clamp-1 text-[15px] font-semibold leading-5 text-slate-800 dark:text-slate-100">
+                                  <p className="line-clamp-1 text-[15px] leading-5 font-semibold text-slate-800 dark:text-slate-100">
                                     {order.product_name}
                                   </p>
                                   {showNewBadge ? (
                                     <Chip
                                       size="sm"
                                       variant="soft"
-                                      className="shrink-0 border border-sky-200 bg-sky-50 text-[10px] font-bold uppercase tracking-wide text-sky-700"
+                                      className="shrink-0 border border-sky-200 bg-sky-50 text-[10px] font-bold tracking-wide text-sky-700 uppercase"
                                     >
                                       New
                                     </Chip>
@@ -1715,7 +1715,7 @@ export default function AdminOrdersPageMain({
                             <p className="font-mono text-xs font-medium text-slate-800 dark:text-slate-100">
                               {order.checkout_id}
                             </p>
-                            <p className="mt-0.5 text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                            <p className="mt-0.5 text-[11px] tracking-wide text-slate-400 uppercase dark:text-slate-500">
                               {order.payment_status}
                             </p>
                           </td>
@@ -1761,11 +1761,11 @@ export default function AdminOrdersPageMain({
                           {effectiveFilter !== "returned_refunded" ? (
                             <td className="px-5 py-3.5 align-middle">
                               <div className="flex items-center gap-3">
-                                <div className="h-7 w-7 rounded-full bg-linear-to-br from-teal-400 to-teal-600 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
+                                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-teal-400 to-teal-600 text-[10px] font-bold text-white">
                                   {getInitials(order.customer_name)}
                                 </div>
                                 <div className="min-w-0 space-y-1">
-                                  <p className="line-clamp-1 text-[15px] font-semibold leading-5 text-slate-800 dark:text-slate-100">
+                                  <p className="line-clamp-1 text-[15px] leading-5 font-semibold text-slate-800 dark:text-slate-100">
                                     {order.customer_name || "N/A"}
                                   </p>
                                   <p className="line-clamp-1 text-[12px] leading-4 text-slate-400 dark:text-slate-500">
@@ -1777,7 +1777,7 @@ export default function AdminOrdersPageMain({
                                       "No phone provided"}
                                   </p>
                                   <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/70">
-                                    <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                    <p className="text-[10px] font-bold tracking-wide text-slate-400 uppercase dark:text-slate-500">
                                       Delivery Address
                                     </p>
                                     <p className="mt-1 line-clamp-3 text-[12px] leading-5 text-slate-600 dark:text-slate-300">
@@ -1800,7 +1800,7 @@ export default function AdminOrdersPageMain({
                                 Pending refund request
                               </p>
                             ) : null}
-                            <p className="mt-0.5 text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                            <p className="mt-0.5 text-[11px] tracking-wide text-slate-400 uppercase dark:text-slate-500">
                               {order.payment_method || "-"}
                             </p>
                           </td>
@@ -1819,7 +1819,7 @@ export default function AdminOrdersPageMain({
                               <Chip
                                 size="sm"
                                 variant="soft"
-                                className={`inline-flex min-w-[92px] items-center justify-center whitespace-nowrap border text-[11px] font-semibold ${approval.badge}`}
+                                className={`inline-flex min-w-[92px] items-center justify-center border text-[11px] font-semibold whitespace-nowrap ${approval.badge}`}
                               >
                                 <span
                                   className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${approval.dot}`}
@@ -1837,7 +1837,7 @@ export default function AdminOrdersPageMain({
                                   <Chip
                                     size="sm"
                                     variant="soft"
-                                    className={`inline-flex min-w-[92px] items-center justify-center whitespace-nowrap border text-[11px] font-semibold ${sla.badge}`}
+                                    className={`inline-flex min-w-[92px] items-center justify-center border text-[11px] font-semibold whitespace-nowrap ${sla.badge}`}
                                   >
                                     <span
                                       className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${sla.dot}`}
@@ -1907,7 +1907,7 @@ export default function AdminOrdersPageMain({
                                 {isZqMode ? (
                                   <div className="rounded-2xl border border-violet-200 bg-violet-50 p-3 dark:border-violet-500/30 dark:bg-violet-500/10">
                                     <div className="flex items-center justify-between gap-2">
-                                      <p className="text-[10px] font-bold uppercase tracking-wide text-violet-700">
+                                      <p className="text-[10px] font-bold tracking-wide text-violet-700 uppercase">
                                         Global Supplier Flow
                                       </p>
                                       <span
@@ -1924,13 +1924,13 @@ export default function AdminOrdersPageMain({
                                           : "Approve the order first before pushing it to Global Supplier."}
                                     </p>
                                     {order.zq_platform_order_id ? (
-                                      <p className="mt-2 break-all text-[11px] font-semibold text-slate-800 dark:text-slate-100">
+                                      <p className="mt-2 text-[11px] font-semibold break-all text-slate-800 dark:text-slate-100">
                                         Platform ID:{" "}
                                         {order.zq_platform_order_id}
                                       </p>
                                     ) : null}
                                     {order.zq_order_id ? (
-                                      <p className="mt-1 break-all text-[11px] text-slate-600 dark:text-slate-300">
+                                      <p className="mt-1 text-[11px] break-all text-slate-600 dark:text-slate-300">
                                         Global Supplier Order:{" "}
                                         {order.zq_order_id}
                                       </p>
@@ -1939,7 +1939,7 @@ export default function AdminOrdersPageMain({
                                 ) : isManualMode ? (
                                   <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-[#31405f] dark:bg-[#1b2640]">
                                     <div className="flex items-center justify-between gap-2">
-                                      <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                      <p className="text-[10px] font-bold tracking-wide text-slate-500 uppercase dark:text-slate-400">
                                         Manual Flow
                                       </p>
                                       <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:border-[#3a4b6d] dark:bg-[#121a2b] dark:text-slate-300">
@@ -2115,12 +2115,12 @@ export default function AdminOrdersPageMain({
                                 {order.courier ||
                                 order.tracking_no ||
                                 order.shipment_status ? (
-                                  <div className="space-y-2 text-[11px] text-slate-500 leading-relaxed dark:text-slate-300">
+                                  <div className="space-y-2 text-[11px] leading-relaxed text-slate-500 dark:text-slate-300">
                                     {order.zq_platform_order_id ||
                                     order.zq_status ? (
                                       <div className="rounded-xl border border-violet-200 bg-violet-50 p-2.5 dark:border-violet-500/30 dark:bg-violet-500/10">
                                         <div className="flex items-center justify-between gap-2">
-                                          <p className="text-[10px] font-bold uppercase tracking-wide text-violet-700">
+                                          <p className="text-[10px] font-bold tracking-wide text-violet-700 uppercase">
                                             Global Supplier
                                           </p>
                                           <span
@@ -2130,13 +2130,13 @@ export default function AdminOrdersPageMain({
                                           </span>
                                         </div>
                                         {order.zq_platform_order_id ? (
-                                          <p className="mt-1 break-all text-[11px] font-semibold text-slate-800 dark:text-slate-100">
+                                          <p className="mt-1 text-[11px] font-semibold break-all text-slate-800 dark:text-slate-100">
                                             Platform ID:{" "}
                                             {order.zq_platform_order_id}
                                           </p>
                                         ) : null}
                                         {order.zq_order_id ? (
-                                          <p className="mt-1 break-all text-[11px] text-slate-600 dark:text-slate-300">
+                                          <p className="mt-1 text-[11px] break-all text-slate-600 dark:text-slate-300">
                                             Global Supplier Order:{" "}
                                             {order.zq_order_id}
                                           </p>
@@ -2144,7 +2144,7 @@ export default function AdminOrdersPageMain({
                                       </div>
                                     ) : null}
                                     {order.courier ? (
-                                      <p className="uppercase tracking-wide dark:text-slate-400">
+                                      <p className="tracking-wide uppercase dark:text-slate-400">
                                         Courier:{" "}
                                         {formatCourierLabel(order.courier)}
                                       </p>
@@ -2157,11 +2157,11 @@ export default function AdminOrdersPageMain({
                                     ) : null}
                                     {order.tracking_no ? (
                                       <div className="rounded-xl border border-teal-200 bg-teal-50 p-2 dark:border-teal-500/25 dark:bg-[#1b2640]">
-                                        <p className="text-[10px] font-bold uppercase tracking-wide text-teal-700">
+                                        <p className="text-[10px] font-bold tracking-wide text-teal-700 uppercase">
                                           Tracking Number
                                         </p>
                                         <div className="mt-1 flex items-center gap-2">
-                                          <p className="min-w-0 flex-1 break-all text-sm font-bold text-slate-900 dark:text-white">
+                                          <p className="min-w-0 flex-1 text-sm font-bold break-all text-slate-900 dark:text-white">
                                             {order.tracking_no}
                                           </p>
                                           <Button
@@ -2446,7 +2446,7 @@ export default function AdminOrdersPageMain({
             </div>
 
             {totalPages > 1 && (
-              <div className="flex flex-col gap-3 border-t border-slate-100 px-4 py-4 dark:border-slate-800 md:flex-row md:items-center md:justify-between">
+              <div className="flex flex-col gap-3 border-t border-slate-100 px-4 py-4 md:flex-row md:items-center md:justify-between dark:border-slate-800">
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   Showing{" "}
                   <span className="font-semibold text-slate-700 dark:text-slate-200">
@@ -2540,7 +2540,7 @@ export default function AdminOrdersPageMain({
                 <div className="max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-[#0f172a]">
                   <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-500">
+                      <p className="text-xs font-semibold tracking-[0.2em] text-sky-500 uppercase">
                         Order Details
                       </p>
                       <h3 className="mt-1 text-xl font-bold text-slate-900 dark:text-white">
@@ -2563,7 +2563,7 @@ export default function AdminOrdersPageMain({
                   <div className="max-h-[calc(92vh-92px)] overflow-y-auto p-5">
                     <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
                       <div className="rounded-3xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-900/60">
-                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+                        <p className="text-xs font-bold tracking-[0.18em] text-slate-400 uppercase">
                           Product
                         </p>
                         <div className="mt-4 flex gap-4">
@@ -2587,7 +2587,7 @@ export default function AdminOrdersPageMain({
                             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                               {orderDetailPreview.product_sku || "No SKU"}
                             </p>
-                            <div className="mt-3 grid gap-2 text-sm text-slate-600 dark:text-slate-300 sm:grid-cols-2">
+                            <div className="mt-3 grid gap-2 text-sm text-slate-600 sm:grid-cols-2 dark:text-slate-300">
                               <span className="rounded-xl bg-white px-3 py-2 dark:bg-slate-800">
                                 Qty: <b>{orderDetailPreview.quantity}</b>
                               </span>
@@ -2619,12 +2619,12 @@ export default function AdminOrdersPageMain({
                       </div>
 
                       <div className="rounded-3xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
-                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+                        <p className="text-xs font-bold tracking-[0.18em] text-slate-400 uppercase">
                           Customer & Delivery
                         </p>
                         <div className="mt-4 grid gap-3 text-sm">
                           <div className="rounded-2xl border border-slate-100 p-3 dark:border-slate-800">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                            <p className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
                               Customer
                             </p>
                             <p className="mt-1 font-bold text-slate-900 dark:text-white">
@@ -2638,7 +2638,7 @@ export default function AdminOrdersPageMain({
                             </p>
                           </div>
                           <div className="rounded-2xl border border-slate-100 p-3 dark:border-slate-800">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                            <p className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
                               Delivery Address
                             </p>
                             <p className="mt-1 text-slate-700 dark:text-slate-300">
@@ -2652,7 +2652,7 @@ export default function AdminOrdersPageMain({
 
                     <div className="mt-4 grid gap-4 lg:grid-cols-3">
                       <div className="rounded-3xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
-                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+                        <p className="text-xs font-bold tracking-[0.18em] text-slate-400 uppercase">
                           Payment
                         </p>
                         <div className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
@@ -2673,7 +2673,7 @@ export default function AdminOrdersPageMain({
                         </div>
                       </div>
                       <div className="rounded-3xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
-                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+                        <p className="text-xs font-bold tracking-[0.18em] text-slate-400 uppercase">
                           Workflow
                         </p>
                         <div className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
@@ -2705,7 +2705,7 @@ export default function AdminOrdersPageMain({
                         </div>
                       </div>
                       <div className="rounded-3xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
-                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+                        <p className="text-xs font-bold tracking-[0.18em] text-slate-400 uppercase">
                           Shipment
                         </p>
                         <div className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
@@ -2736,7 +2736,7 @@ export default function AdminOrdersPageMain({
                     <div className="mt-4 rounded-3xl border border-sky-200 bg-sky-50/70 p-5 dark:border-sky-500/30 dark:bg-sky-500/10">
                       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                         <div>
-                          <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-600 dark:text-sky-300">
+                          <p className="text-xs font-bold tracking-[0.2em] text-sky-600 uppercase dark:text-sky-300">
                             PV Allocation Breakdown
                           </p>
                           <h4 className="mt-2 text-2xl font-black text-slate-900 dark:text-white">
@@ -2759,7 +2759,7 @@ export default function AdminOrdersPageMain({
                               key={row.label}
                               className="rounded-2xl border border-white/90 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
                             >
-                              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
+                              <p className="text-[11px] font-bold tracking-[0.16em] text-slate-400 uppercase">
                                 {row.label}
                               </p>
                               <div className="mt-3 flex items-end justify-between gap-2">
@@ -2795,9 +2795,9 @@ export default function AdminOrdersPageMain({
       {payloadPreview ? (
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/40 p-4">
           <div className="w-full max-w-3xl rounded-3xl border border-slate-200 bg-white shadow-2xl">
-            <div className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 px-5 py-4">
+            <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                <p className="text-xs font-semibold tracking-[0.2em] text-slate-400 uppercase">
                   Shipment Payload
                 </p>
                 <h3 className="mt-1 text-lg font-bold text-slate-900">
@@ -2834,7 +2834,7 @@ export default function AdminOrdersPageMain({
           <div className="w-full max-w-4xl rounded-3xl border border-slate-200 bg-white shadow-2xl">
             <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                <p className="text-xs font-semibold tracking-[0.2em] text-slate-400 uppercase">
                   Refund{" "}
                   {refundMediaPreview.kind === "image" ? "Images" : "Videos"}
                 </p>

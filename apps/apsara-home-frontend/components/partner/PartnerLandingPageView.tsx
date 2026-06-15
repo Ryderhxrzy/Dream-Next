@@ -1,10 +1,11 @@
+import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
+import type { WebPageItem } from "@/store/api/webPagesApi"
+
 import LandingPage from "@/components/landing-page/LandingPage"
 import Template1Component from "@/components/partner/templates/template1"
 import Template2Component from "@/components/partner/templates/template2"
 import Template3Component from "@/components/partner/templates/template3"
 import Template4Component from "@/components/partner/templates/template4"
-import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
-import type { WebPageItem } from "@/store/api/webPagesApi"
 
 type PartnerLandingPageViewProps = {
   partnerSlug: string

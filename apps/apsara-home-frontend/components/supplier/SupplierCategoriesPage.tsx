@@ -1,8 +1,8 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { useSession } from "next-auth/react"
 import { useGetSupplierCategoriesQuery } from "@/store/api/suppliersApi"
+import { useSession } from "next-auth/react"
 
 const PALETTE = [
   {
@@ -137,12 +137,12 @@ export default function SupplierCategoriesPage() {
         </div>
 
         {/* Decorative illustration */}
-        <div className="pointer-events-none absolute right-6 top-1/2 -translate-y-1/2 select-none">
+        <div className="pointer-events-none absolute top-1/2 right-6 -translate-y-1/2 select-none">
           <div className="relative h-40 w-44">
             {/* ── Sparkles ── */}
             {/* top-left */}
             <svg
-              className="absolute left-1 top-2 h-4 w-4 text-indigo-300"
+              className="absolute top-2 left-1 h-4 w-4 text-indigo-300"
               fill="none"
               stroke="currentColor"
               strokeWidth="2.2"
@@ -152,7 +152,7 @@ export default function SupplierCategoriesPage() {
             </svg>
             {/* top-right small */}
             <svg
-              className="absolute right-3 top-0 h-3 w-3 text-indigo-200"
+              className="absolute top-0 right-3 h-3 w-3 text-indigo-200"
               fill="none"
               stroke="currentColor"
               strokeWidth="2.5"
@@ -172,7 +172,7 @@ export default function SupplierCategoriesPage() {
             </svg>
             {/* bottom-right */}
             <svg
-              className="absolute bottom-2 right-1 h-4 w-4 text-indigo-300/70"
+              className="absolute right-1 bottom-2 h-4 w-4 text-indigo-300/70"
               fill="none"
               stroke="currentColor"
               strokeWidth="2.2"
@@ -182,7 +182,7 @@ export default function SupplierCategoriesPage() {
             </svg>
             {/* middle-right tiny */}
             <svg
-              className="absolute right-0 top-1/2 h-2.5 w-2.5 -translate-y-1/2 text-indigo-200/80"
+              className="absolute top-1/2 right-0 h-2.5 w-2.5 -translate-y-1/2 text-indigo-200/80"
               fill="none"
               stroke="currentColor"
               strokeWidth="2.5"
@@ -300,7 +300,7 @@ export default function SupplierCategoriesPage() {
       {!isLoading && !isError && categories.length > 0 && (
         <div className="animate-fade-up-in relative">
           <svg
-            className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+            className="pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-slate-400"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -316,7 +316,7 @@ export default function SupplierCategoriesPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by category name or URL…"
-            className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-indigo-500/40 dark:focus:ring-indigo-500/10"
+            className="w-full rounded-2xl border border-slate-200 bg-white py-3 pr-4 pl-11 text-sm transition outline-none placeholder:text-slate-400 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-indigo-500/40 dark:focus:ring-indigo-500/10"
           />
         </div>
       )}
@@ -335,7 +335,7 @@ export default function SupplierCategoriesPage() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="animate-fade-up-in rounded-3xl border border-dashed border-slate-200 bg-white px-6 py-14 text-center dark:border-slate-800 dark:bg-slate-950">
-          <div className="mx-auto mb-3 flex h-12 w-12 animate-float items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-500/10">
+          <div className="animate-float mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-500/10">
             <CategoryIcon className="h-6 w-6 text-indigo-400" />
           </div>
           <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">

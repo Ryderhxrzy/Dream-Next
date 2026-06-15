@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { createPortal } from "react-dom"
 import { useTheme } from "next-themes"
+import { createPortal } from "react-dom"
 
 /* ── Types ─────────────────────────────────────────────────────────
    A standalone, general-purpose toast system inspired by Apple's

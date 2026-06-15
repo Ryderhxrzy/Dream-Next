@@ -1,15 +1,16 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { AnimatePresence, motion } from "framer-motion"
-import AdminPagination from "@/components/superAdmin/AdminPagination"
-import DataTableShell from "@/components/superAdmin/DataTableShell"
-import { Member } from "@/types/members/types"
 import {
   AdminReferralNode,
   useGetMembersQuery,
   useGetMembersReferralTreeQuery,
 } from "@/store/api/membersApi"
+import { AnimatePresence, motion } from "framer-motion"
+
+import { Member } from "@/types/members/types"
+import AdminPagination from "@/components/superAdmin/AdminPagination"
+import DataTableShell from "@/components/superAdmin/DataTableShell"
 
 type ReferralStatus = AdminReferralNode["status"]
 type Tab = "tree" | "list"
@@ -228,7 +229,7 @@ function NetworkPreviewNode({
               fallbackClassName={`flex items-center justify-center ${level === 0 ? "bg-gradient-to-br from-cyan-500 via-teal-500 to-emerald-500" : "bg-gradient-to-br from-slate-500 to-slate-700"}`}
             />
             <span
-              className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white ${status.dot}`}
+              className={`absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2 border-white ${status.dot}`}
             />
           </div>
 
@@ -333,7 +334,7 @@ function TreeNodeCard({
               fallbackClassName={`flex items-center justify-center ${depth === 0 ? "bg-sky-500" : "bg-slate-500"}`}
             />
             <span
-              className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white ${status.dot}`}
+              className={`absolute -right-0.5 -bottom-0.5 h-3.5 w-3.5 rounded-full border-2 border-white ${status.dot}`}
             />
           </div>
 
@@ -386,7 +387,7 @@ function TreeNodeCard({
                   key={item.label}
                   className="rounded-2xl border border-slate-100 bg-slate-50/80 px-3 py-2.5"
                 >
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  <p className="text-[10px] font-semibold tracking-[0.18em] text-slate-400 uppercase">
                     {item.label}
                   </p>
                   <p className={`mt-1 text-sm font-bold ${item.valueClass}`}>
@@ -463,7 +464,7 @@ function ListRow({
 
   return (
     <>
-      <tr className="group border-b border-slate-100 dark:border-slate-800/80 bg-white/90 transition-all hover:bg-cyan-50/40">
+      <tr className="group border-b border-slate-100 bg-white/90 transition-all hover:bg-cyan-50/40 dark:border-slate-800/80">
         <td className="px-5 py-4">
           <div className="flex items-center gap-3">
             <Avatar
@@ -554,7 +555,7 @@ function ListRow({
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                    <p className="text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase">
                       Referral Explorer
                     </p>
                     <h3 className="mt-1 text-base font-bold text-slate-900">
@@ -575,7 +576,7 @@ function ListRow({
                         key={item.label}
                         className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-right dark:border-slate-800 dark:bg-slate-950"
                       >
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                        <p className="text-[10px] font-semibold tracking-[0.18em] text-slate-400 uppercase">
                           {item.label}
                         </p>
                         <p className="mt-1 text-sm font-bold text-slate-900">
@@ -668,7 +669,7 @@ export default function ReferralTreePageMain() {
       >
         <div className="flex flex-wrap items-start justify-between gap-5">
           <div className="max-w-2xl">
-            <span className="inline-flex items-center rounded-full border border-sky-100 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-700 dark:border-sky-900/40 dark:bg-slate-900 dark:text-sky-300">
+            <span className="inline-flex items-center rounded-full border border-sky-100 bg-white px-3 py-1 text-[11px] font-semibold tracking-[0.22em] text-sky-700 uppercase dark:border-sky-900/40 dark:bg-slate-900 dark:text-sky-300">
               Referral Overview
             </span>
             <h1 className="mt-4 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
@@ -682,7 +683,7 @@ export default function ReferralTreePageMain() {
 
           <div className="grid min-w-[250px] gap-3 sm:grid-cols-2">
             <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+              <p className="text-[11px] font-semibold tracking-[0.2em] text-slate-400 uppercase">
                 Visible roots
               </p>
               <p className="mt-2 text-2xl font-black text-slate-900">
@@ -693,7 +694,7 @@ export default function ReferralTreePageMain() {
               </p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+              <p className="text-[11px] font-semibold tracking-[0.2em] text-slate-400 uppercase">
                 Total members
               </p>
               <p className="mt-2 text-2xl font-black text-slate-900">
@@ -785,10 +786,10 @@ export default function ReferralTreePageMain() {
                 </svg>
               </div>
               <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                <p className="text-[11px] font-semibold tracking-[0.16em] text-slate-400 uppercase">
                   {stat.label}
                 </p>
-                <p className="mt-1 whitespace-nowrap text-xl font-black tabular-nums text-slate-900 dark:text-white">
+                <p className="mt-1 text-xl font-black whitespace-nowrap text-slate-900 tabular-nums dark:text-white">
                   {stat.value}
                 </p>
               </div>
@@ -806,7 +807,7 @@ export default function ReferralTreePageMain() {
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative min-w-[240px] flex-1">
             <svg
-              className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+              className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -826,7 +827,7 @@ export default function ReferralTreePageMain() {
                 setSearch(event.target.value)
                 setListPage(1)
               }}
-              className="h-11 w-full rounded-[18px] border border-gray-300 bg-white py-3 pl-10 pr-4 text-sm text-slate-900 outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-sky-400 focus:bg-white dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder:text-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
+              className="h-11 w-full rounded-[18px] border border-gray-300 bg-white py-3 pr-4 pl-10 text-sm text-slate-900 transition-all duration-200 outline-none placeholder:text-gray-400 focus:border-sky-400 focus:bg-white dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder:text-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
             />
           </div>
 
@@ -837,7 +838,7 @@ export default function ReferralTreePageMain() {
                 setSortBy(event.target.value as ReferralSortKey)
                 setListPage(1)
               }}
-              className="h-11 cursor-pointer appearance-none rounded-[18px] border border-gray-300 bg-white py-2.5 pl-4 pr-10 text-sm font-semibold text-slate-600 outline-none transition-all duration-200 hover:border-slate-400 focus:border-sky-400 dark:border-white/18 dark:bg-white/12 dark:text-slate-200 dark:focus:border-sky-400/60"
+              className="h-11 cursor-pointer appearance-none rounded-[18px] border border-gray-300 bg-white py-2.5 pr-10 pl-4 text-sm font-semibold text-slate-600 transition-all duration-200 outline-none hover:border-slate-400 focus:border-sky-400 dark:border-white/18 dark:bg-white/12 dark:text-slate-200 dark:focus:border-sky-400/60"
             >
               {sortOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -846,7 +847,7 @@ export default function ReferralTreePageMain() {
               ))}
             </select>
             <svg
-              className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+              className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-slate-400"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -961,22 +962,22 @@ export default function ReferralTreePageMain() {
               <table className="w-full min-w-[820px] text-left">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/40">
-                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    <th className="px-5 py-3 text-xs font-semibold tracking-[0.16em] text-slate-500 uppercase">
                       Member
                     </th>
-                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    <th className="px-4 py-3 text-xs font-semibold tracking-[0.16em] text-slate-500 uppercase">
                       Tier
                     </th>
-                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    <th className="px-4 py-3 text-xs font-semibold tracking-[0.16em] text-slate-500 uppercase">
                       Commission
                     </th>
-                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    <th className="px-4 py-3 text-xs font-semibold tracking-[0.16em] text-slate-500 uppercase">
                       Network
                     </th>
-                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    <th className="px-4 py-3 text-xs font-semibold tracking-[0.16em] text-slate-500 uppercase">
                       Status
                     </th>
-                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    <th className="px-4 py-3 text-xs font-semibold tracking-[0.16em] text-slate-500 uppercase">
                       Joined / Explore
                     </th>
                   </tr>
@@ -1039,7 +1040,7 @@ export default function ReferralTreePageMain() {
         transition={{ delay: 0.2 }}
         className="rounded-[28px] border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
       >
-        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+        <p className="mb-3 text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase">
           Tier Legend
         </p>
         <div className="flex flex-wrap gap-2">

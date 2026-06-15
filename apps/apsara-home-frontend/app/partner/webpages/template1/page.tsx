@@ -1,5 +1,5 @@
-import { buildPageMetadata } from "@/app/seo"
 import Template1 from "@/components/partner/templates/template1"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Template 1 — Modern Dark",

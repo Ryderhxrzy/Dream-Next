@@ -1,56 +1,56 @@
 "use client"
 
-import Image from "next/image"
-import { useMemo, useRef, useState, useEffect } from "react"
-import { AnimatePresence, motion } from "framer-motion"
-import { useSession } from "next-auth/react"
-import { useRouter, usePathname, useSearchParams } from "next/navigation"
-import { Fragment } from "react"
-import { useGetAdminMeQuery } from "@/store/api/authApi"
-import {
-  Product,
-  ZqCachedProduct,
-  ZqCategoryMappingItem,
-  ZqSyncProductsPayload,
-  ZqSyncProductsResponse,
-  useFetchZqImportPreviewMutation,
-  useGetProductsQuery,
-  useGetPublicProductsQuery,
-  useDeleteProductMutation,
-  useGetZqCachedProductsQuery,
-  useGetZqProductsSummaryQuery,
-  useGetZqCategoryMappingsQuery,
-  useUpsertZqCategoryMappingMutation,
-  useManualCheckoutApplyMutation,
-  useSyncZqProductsMutation,
-  ProductsResponse,
-} from "@/store/api/productsApi"
-
+import { Fragment, useEffect, useMemo, useRef, useState } from "react"
+import { revalidateStorefront } from "@/libs/revalidateStorefront"
+import { buildStorefrontProductPath } from "@/libs/storefrontRouting"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import {
   useGetAdminGeneralSettingsQuery,
   useUpdateAdminGeneralSettingsMutation,
 } from "@/store/api/adminSettingsApi"
+import { useGetAdminMeQuery } from "@/store/api/authApi"
+import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
 import { useGetPublicProductBrandsQuery } from "@/store/api/productBrandsApi"
 import {
-  useGetSuppliersQuery,
+  Product,
+  ProductsResponse,
+  useDeleteProductMutation,
+  useFetchZqImportPreviewMutation,
+  useGetProductsQuery,
+  useGetPublicProductsQuery,
+  useGetZqCachedProductsQuery,
+  useGetZqCategoryMappingsQuery,
+  useGetZqProductsSummaryQuery,
+  useManualCheckoutApplyMutation,
+  useSyncZqProductsMutation,
+  useUpsertZqCategoryMappingMutation,
+  ZqCachedProduct,
+  ZqCategoryMappingItem,
+  ZqSyncProductsPayload,
+  ZqSyncProductsResponse,
+} from "@/store/api/productsApi"
+import {
   useGetSupplierCategoriesQuery,
+  useGetSuppliersQuery,
 } from "@/store/api/suppliersApi"
-import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
-import ProductsToolbar from "./ProductsToolbar"
-import ProductsTable from "./ProductsTable"
+import { AnimatePresence, motion } from "framer-motion"
+import { useSession } from "next-auth/react"
+import Image from "next/image"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import * as XLSX from "xlsx"
+
+import PrimaryButton from "@/components/ui/buttons/PrimaryButton"
+import EditZqPricingModal from "@/components/superAdmin/products/EditZqPricingModal"
+import ImportZqPricingModal from "@/components/superAdmin/products/ImportZqPricingModal"
+import SupplierZqPricingModal from "@/components/supplier/SupplierZqPricingModal"
+
 import DataTableShell from "../DataTableShell"
 import AddProductModal from "./AddProductModal"
-import EditProductModal from "./EditProductModal"
 import BulkEditProductsModal from "./BulkEditProductsModal"
+import EditProductModal from "./EditProductModal"
 import ProductActivityLogsModal from "./ProductActivityLogsModal"
-import EditZqPricingModal from "@/components/superAdmin/products/EditZqPricingModal"
-import SupplierZqPricingModal from "@/components/supplier/SupplierZqPricingModal"
-import ImportZqPricingModal from "@/components/superAdmin/products/ImportZqPricingModal"
-import * as XLSX from "xlsx"
-import PrimaryButton from "@/components/ui/buttons/PrimaryButton"
-import { showErrorToast, showSuccessToast } from "@/libs/toast"
-import { revalidateStorefront } from "@/libs/revalidateStorefront"
-import { buildStorefrontProductPath } from "@/libs/storefrontRouting"
+import ProductsTable from "./ProductsTable"
+import ProductsToolbar from "./ProductsToolbar"
 
 interface ProductsPageMainProps {
   initialData?: ProductsResponse | null
@@ -641,11 +641,11 @@ function StatCard({
         {icon}
       </div>
       {/* Value */}
-      <p className="text-[28px] font-bold leading-none tracking-tight text-slate-900 dark:text-white">
+      <p className="text-[28px] leading-none font-bold tracking-tight text-slate-900 dark:text-white">
         {value}
       </p>
       {/* Label */}
-      <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">
+      <p className="mt-2 text-[11px] font-semibold tracking-[0.08em] text-slate-500 uppercase dark:text-slate-400">
         {label}
       </p>
       {sub && (
@@ -655,7 +655,7 @@ function StatCard({
       )}
       {/* Decorative glow orb */}
       <div
-        className={`pointer-events-none absolute -bottom-5 -right-5 h-20 w-20 rounded-full ${colorClass} opacity-30 blur-2xl transition-opacity duration-300 group-hover:opacity-50`}
+        className={`pointer-events-none absolute -right-5 -bottom-5 h-20 w-20 rounded-full ${colorClass} opacity-30 blur-2xl transition-opacity duration-300 group-hover:opacity-50`}
       />
     </div>
   )
@@ -711,7 +711,7 @@ function ManualCheckoutSelectionModal({
         >
           <div className="flex items-start justify-between gap-4 border-b border-slate-200/80 px-6 py-5 dark:border-slate-700/50">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-600">
+              <p className="text-xs font-semibold tracking-[0.2em] text-teal-600 uppercase">
                 {eyebrow}
               </p>
               <h2 className="mt-1 text-lg font-bold text-slate-900 dark:text-white">
@@ -742,23 +742,23 @@ function ManualCheckoutSelectionModal({
                 <table className="min-w-full text-sm">
                   <thead className="bg-slate-50 dark:bg-slate-800/70">
                     <tr className="border-b border-slate-200/80 dark:border-slate-700/50">
-                      <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-300">
+                      <th className="px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
                         Image
                       </th>
-                      <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-300">
+                      <th className="px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
                         Product
                       </th>
-                      <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-300">
+                      <th className="px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
                         Brand
                       </th>
-                      <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-300">
+                      <th className="px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
                         SKU
                       </th>
-                      <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-300">
+                      <th className="px-5 py-3.5 text-right text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
                         Stock
                       </th>
                       {isViewMode ? (
-                        <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-300">
+                        <th className="px-5 py-3.5 text-right text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
                           Action
                         </th>
                       ) : null}
@@ -935,7 +935,7 @@ function ZqSyncProgressModal({
           className="w-full max-w-xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl"
         >
           <div className="border-b border-slate-200/80 px-6 py-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-600">
+            <p className="text-xs font-semibold tracking-[0.2em] text-sky-600 uppercase">
               Global Supplier Product Fetch
             </p>
             <div className="mt-1 flex items-center gap-2">
@@ -1049,7 +1049,7 @@ function ZqSyncProgressModal({
                 }}
                 className="rounded-lg border border-slate-200/80 bg-slate-50 px-4 py-3"
               >
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <p className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
                   Batches
                 </p>
                 <p className="mt-1 text-xl font-bold text-slate-900">
@@ -1063,7 +1063,7 @@ function ZqSyncProgressModal({
                 }}
                 className="rounded-lg border border-slate-200/80 bg-slate-50 px-4 py-3"
               >
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <p className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
                   Total Found
                 </p>
                 <p className="mt-1 text-xl font-bold text-slate-900">
@@ -1077,7 +1077,7 @@ function ZqSyncProgressModal({
                 }}
                 className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3"
               >
-                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-500">
+                <p className="text-xs font-semibold tracking-wide text-emerald-500 uppercase">
                   Synced
                 </p>
                 <p className="mt-1 text-xl font-bold text-emerald-700">
@@ -1091,7 +1091,7 @@ function ZqSyncProgressModal({
                 }}
                 className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3"
               >
-                <p className="text-xs font-semibold uppercase tracking-wide text-amber-600">
+                <p className="text-xs font-semibold tracking-wide text-amber-600 uppercase">
                   Skipped
                 </p>
                 <p className="mt-1 text-xl font-bold text-amber-700">
@@ -1105,7 +1105,7 @@ function ZqSyncProgressModal({
                 }}
                 className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3"
               >
-                <p className="text-xs font-semibold uppercase tracking-wide text-rose-500">
+                <p className="text-xs font-semibold tracking-wide text-rose-500 uppercase">
                   Failed
                 </p>
                 <p className="mt-1 text-xl font-bold text-rose-700">
@@ -1127,7 +1127,7 @@ function ZqSyncProgressModal({
                       : "The counter will start moving as soon as you click Start Import."}
               </p>
               <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-500">
+                <p className="text-xs font-semibold tracking-wide text-emerald-500 uppercase">
                   Imported So Far
                 </p>
                 <motion.p
@@ -1231,7 +1231,7 @@ function ZqCategoryMappingPanel({
     <div className="rounded-2xl border border-sky-100 bg-white p-4 shadow-sm dark:border-slate-700/50 dark:bg-slate-900">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-sky-600">
+          <p className="text-xs font-bold tracking-[0.18em] text-sky-600 uppercase">
             AF HOME GLOBAL Category Mapping
           </p>
           <h3 className="mt-1 text-base font-bold text-slate-900 dark:text-slate-100">
@@ -1247,7 +1247,7 @@ function ZqCategoryMappingPanel({
           <select
             value={selectedZqKey}
             onChange={(event) => onSelectZq(event.target.value)}
-            className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-sky-300 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+            className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 transition outline-none focus:border-sky-300 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
           >
             <option value="">Select AF HOME GLOBAL category</option>
             {categories.map((category) => {
@@ -1276,7 +1276,7 @@ function ZqCategoryMappingPanel({
                 event.target.value ? Number(event.target.value) : undefined
               )
             }
-            className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-sky-300 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+            className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 transition outline-none focus:border-sky-300 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
           >
             <option value="">Needs Review / no category</option>
             {localCategories.map((category) => (
@@ -1293,7 +1293,7 @@ function ZqCategoryMappingPanel({
                 event.target.value as "" | "mapped" | "unmapped" | "missing"
               )
             }
-            className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-sky-300 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+            className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 transition outline-none focus:border-sky-300 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
           >
             <option value="">All mapping states</option>
             <option value="mapped">Mapped products</option>
@@ -2875,7 +2875,7 @@ export default function ProductsPageMain({
           className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900/40 dark:bg-red-900/20"
         >
           <svg
-            className="w-5 h-5 text-red-600 shrink-0 mt-0.5"
+            className="mt-0.5 h-5 w-5 shrink-0 text-red-600"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -2891,16 +2891,16 @@ export default function ProductsPageMain({
             <h3 className="font-semibold text-red-800 dark:text-red-300">
               Sync Failed
             </h3>
-            <p className="text-sm text-red-700 dark:text-red-400 mt-1">
+            <p className="mt-1 text-sm text-red-700 dark:text-red-400">
               {meilisearchError}
             </p>
           </div>
           <button
             onClick={() => setMeilisearchError(null)}
-            className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 shrink-0"
+            className="shrink-0 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
           >
             <svg
-              className="w-5 h-5"
+              className="h-5 w-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -2934,7 +2934,7 @@ export default function ProductsPageMain({
                 : "Manage your product catalog"}
           </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex shrink-0 items-center gap-2">
           {isSupplierPortal && !isSupplierServicesPortal ? (
             <button
               type="button"
@@ -2963,7 +2963,7 @@ export default function ProductsPageMain({
               type="button"
               onClick={handleToggleManualCheckoutMode}
               disabled={isSavingManualMode}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors border ${
+              className={`flex items-center gap-3 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors ${
                 manualHeaderToggle
                   ? "border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-900/40 dark:bg-teal-900/20 dark:text-teal-300"
                   : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
@@ -2991,14 +2991,14 @@ export default function ProductsPageMain({
               type="button"
               onClick={handleStartZqImport}
               disabled={isSyncingAllZq || isDiscoveringZqTotal}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors border ${
+              className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors ${
                 zqInlineActive
                   ? "border-sky-300 bg-sky-100 text-sky-800 dark:border-sky-900/40 dark:bg-sky-900/20 dark:text-sky-300"
-                  : "border-sky-200 bg-sky-50 hover:bg-sky-100 text-sky-700 dark:border-sky-900/40 dark:bg-sky-900/20 dark:text-sky-300 dark:hover:bg-sky-900/30"
+                  : "border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 dark:border-sky-900/40 dark:bg-sky-900/20 dark:text-sky-300 dark:hover:bg-sky-900/30"
               }`}
             >
               <svg
-                className="w-4 h-4"
+                className="h-4 w-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -3020,7 +3020,7 @@ export default function ProductsPageMain({
               className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
             >
               <svg
-                className="w-4 h-4"
+                className="h-4 w-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -3044,7 +3044,7 @@ export default function ProductsPageMain({
               {isSyncingMeilisearch ? (
                 <>
                   <svg
-                    className="w-4 h-4 animate-spin"
+                    className="h-4 w-4 animate-spin"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -3061,7 +3061,7 @@ export default function ProductsPageMain({
               ) : (
                 <>
                   <svg
-                    className="w-4 h-4"
+                    className="h-4 w-4"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -3080,10 +3080,10 @@ export default function ProductsPageMain({
           )}
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-semibold transition-colors shrink-0"
+            className="flex shrink-0 items-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-700"
           >
             <svg
-              className="w-4 h-4"
+              className="h-4 w-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -3108,7 +3108,7 @@ export default function ProductsPageMain({
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.04 }}
-          className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3"
+          className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5"
         >
           <StatCard
             label={
@@ -3128,7 +3128,7 @@ export default function ProductsPageMain({
             colorClass="bg-teal-100"
             icon={
               <svg
-                className="w-5 h-5 text-teal-600"
+                className="h-5 w-5 text-teal-600"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -3154,7 +3154,7 @@ export default function ProductsPageMain({
             colorClass="bg-emerald-100"
             icon={
               <svg
-                className="w-5 h-5 text-emerald-600"
+                className="h-5 w-5 text-emerald-600"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -3180,7 +3180,7 @@ export default function ProductsPageMain({
             colorClass="bg-slate-100"
             icon={
               <svg
-                className="w-5 h-5 text-slate-500"
+                className="h-5 w-5 text-slate-500"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -3205,7 +3205,7 @@ export default function ProductsPageMain({
               colorClass="bg-sky-100"
               icon={
                 <svg
-                  className="w-5 h-5 text-sky-600"
+                  className="h-5 w-5 text-sky-600"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -3232,7 +3232,7 @@ export default function ProductsPageMain({
               colorClass="bg-amber-100"
               icon={
                 <svg
-                  className="w-5 h-5 text-amber-600"
+                  className="h-5 w-5 text-amber-600"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -3264,7 +3264,7 @@ export default function ProductsPageMain({
             colorClass={lowStockCount > 0 ? "bg-orange-100" : "bg-slate-100"}
             icon={
               <svg
-                className={`w-5 h-5 ${lowStockCount > 0 ? "text-orange-500" : "text-slate-400"}`}
+                className={`h-5 w-5 ${lowStockCount > 0 ? "text-orange-500" : "text-slate-400"}`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -3392,9 +3392,9 @@ export default function ProductsPageMain({
           {selectedIds.length > 0 && (
             <div className="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 dark:border-red-900/40 dark:bg-red-950/20">
               <div className="flex items-center gap-2">
-                <div className="h-6 w-6 rounded-lg bg-red-100 flex items-center justify-center">
+                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-red-100">
                   <svg
-                    className="w-3.5 h-3.5 text-red-600"
+                    className="h-3.5 w-3.5 text-red-600"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -3434,7 +3434,7 @@ export default function ProductsPageMain({
                 <button
                   onClick={handleBulkDelete}
                   disabled={deletingIds.length > 0}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-semibold transition-colors disabled:opacity-60"
+                  className="flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-60"
                 >
                   {deletingIds.length > 0
                     ? "Deleting…"
@@ -3450,7 +3450,7 @@ export default function ProductsPageMain({
               <div className="flex items-center gap-4">
                 <div className="flex h-6 w-6 items-center justify-center rounded bg-slate-100 dark:bg-slate-800">
                   <svg
-                    className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300"
+                    className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -3499,7 +3499,7 @@ export default function ProductsPageMain({
                       <option value={1000}>1000</option>
                       <option value="all">All</option>
                     </select>
-                    <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2">
+                    <div className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2">
                       <svg
                         className="h-3 w-3 text-slate-400"
                         fill="none"
@@ -3728,8 +3728,8 @@ export default function ProductsPageMain({
 
 function SkeletonTable() {
   return (
-    <div className="space-y-3 rounded-2xl border border-slate-200/80 bg-white p-4 animate-pulse dark:border-slate-700/50 dark:bg-slate-950">
-      <div className="grid grid-cols-9 gap-3 mb-3">
+    <div className="animate-pulse space-y-3 rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-700/50 dark:bg-slate-950">
+      <div className="mb-3 grid grid-cols-9 gap-3">
         {Array.from({ length: 9 }).map((_, i) => (
           <div key={i} className="h-3 rounded bg-slate-200 dark:bg-slate-800" />
         ))}

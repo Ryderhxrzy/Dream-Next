@@ -2,6 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react"
 import { showErrorToast, showSuccessToast } from "@/libs/toast"
+import { useGetExpenseCategoriesQuery } from "@/store/api/expenseCategoriesApi"
 import {
   Expense,
   useCreateExpenseMutation,
@@ -10,7 +11,6 @@ import {
   useLazyGetExpensesQuery,
   useUpdateExpenseMutation,
 } from "@/store/api/expensesApi"
-import { useGetExpenseCategoriesQuery } from "@/store/api/expenseCategoriesApi"
 
 const formatMoney = (value: number) =>
   new Intl.NumberFormat("en-PH", {
@@ -409,11 +409,11 @@ export default function ExpensesPageMain() {
   return (
     <div className="space-y-6">
       <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-emerald-50 p-6 shadow-sm">
-        <div className="pointer-events-none absolute -right-24 -top-20 h-52 w-52 rounded-full bg-emerald-200/40 blur-3xl" />
+        <div className="pointer-events-none absolute -top-20 -right-24 h-52 w-52 rounded-full bg-emerald-200/40 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-amber-200/35 blur-3xl" />
         <div className="relative flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.28em] text-emerald-700">
+            <p className="text-xs font-bold tracking-[0.28em] text-emerald-700 uppercase">
               Accounting
             </p>
             <h1 className="mt-2 text-3xl font-bold text-slate-900">Expenses</h1>
@@ -442,7 +442,7 @@ export default function ExpensesPageMain() {
 
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
           <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
-            <p className="text-xs uppercase tracking-[0.16em] text-slate-500">
+            <p className="text-xs tracking-[0.16em] text-slate-500 uppercase">
               Records
             </p>
             <p className="mt-1 text-2xl font-bold text-slate-900">
@@ -450,7 +450,7 @@ export default function ExpensesPageMain() {
             </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
-            <p className="text-xs uppercase tracking-[0.16em] text-slate-500">
+            <p className="text-xs tracking-[0.16em] text-slate-500 uppercase">
               Total (Filtered)
             </p>
             <p className="mt-1 text-2xl font-bold text-emerald-700">
@@ -458,7 +458,7 @@ export default function ExpensesPageMain() {
             </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
-            <p className="text-xs uppercase tracking-[0.16em] text-slate-500">
+            <p className="text-xs tracking-[0.16em] text-slate-500 uppercase">
               Categories
             </p>
             <p className="mt-1 text-2xl font-bold text-slate-900">
@@ -547,7 +547,7 @@ export default function ExpensesPageMain() {
 
         <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200">
           <table className="w-full min-w-[900px]">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="border-b border-slate-200 bg-slate-50">
               <tr className="text-left text-xs font-semibold text-slate-500">
                 <th className="px-4 py-3">Category</th>
                 <th className="px-4 py-3">Sub-category</th>
@@ -581,7 +581,7 @@ export default function ExpensesPageMain() {
                 expenses.map((row) => (
                   <tr
                     key={row.id}
-                    className="border-b border-slate-100 last:border-b-0 text-sm"
+                    className="border-b border-slate-100 text-sm last:border-b-0"
                   >
                     <td className="px-4 py-3">
                       <p className="font-semibold text-slate-800">

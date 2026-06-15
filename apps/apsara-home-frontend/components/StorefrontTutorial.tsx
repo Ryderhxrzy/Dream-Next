@@ -1,32 +1,33 @@
 "use client"
 
-import { type ReactNode, useCallback, useEffect, useRef, useState } from "react"
-import Image from "next/image"
-import { motion, AnimatePresence } from "framer-motion"
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
+import type { Category } from "@/store/api/categoriesApi"
+import { AnimatePresence, motion } from "framer-motion"
 import {
-  Store,
-  Upload,
-  CheckCircle2,
-  Eye,
   ArrowRight,
-  ShoppingBag,
-  Play,
-  Pause,
+  CheckCircle2,
+  CreditCard,
+  Download,
+  Eye,
+  Link2,
   Maximize2,
   Minimize2,
-  RotateCcw,
-  Download,
-  Link2,
   Palette,
-  Tags,
+  Pause,
+  Play,
   Rocket,
+  RotateCcw,
+  ShoppingBag,
   ShoppingCart,
-  CreditCard,
+  Store,
+  Tags,
+  Upload,
 } from "lucide-react"
+import Image from "next/image"
+
+import ItemCard from "@/components/item/ItemCard"
 import ProductFilter from "@/components/item/ProductFilter"
 import TopFilter from "@/components/item/TopFilter"
-import ItemCard from "@/components/item/ItemCard"
-import type { Category } from "@/store/api/categoriesApi"
 
 /* ─── Types ─────────────────────────────────────────────────── */
 type Step =
@@ -232,7 +233,7 @@ function Cursor({
     <motion.div
       animate={{ left: x, top: y }}
       transition={{ duration: 0.55, ease: [0.25, 0.1, 0.25, 1] }}
-      className="absolute z-[100] pointer-events-none"
+      className="pointer-events-none absolute z-[100]"
       style={{ left: x, top: y }}
     >
       <motion.div
@@ -254,7 +255,7 @@ function Cursor({
           initial={{ scale: 0, opacity: 0.8 }}
           animate={{ scale: 3, opacity: 0 }}
           transition={{ duration: 0.38 }}
-          className="absolute -top-3 -left-3 w-6 h-6 rounded-full border-2 border-emerald-400"
+          className="absolute -top-3 -left-3 h-6 w-6 rounded-full border-2 border-emerald-400"
         />
       )}
     </motion.div>
@@ -282,7 +283,7 @@ function SectionTitleCard({ step }: { step: Step }) {
         times: [0, 0.18, 0.76, 1],
         ease: "easeInOut",
       }}
-      className="absolute right-5 top-5 z-[95] overflow-hidden rounded-2xl border border-white/24 bg-slate-950/68 px-4 py-3 text-white shadow-[0_18px_50px_rgba(15,23,42,0.28)] backdrop-blur-md"
+      className="absolute top-5 right-5 z-[95] overflow-hidden rounded-2xl border border-white/24 bg-slate-950/68 px-4 py-3 text-white shadow-[0_18px_50px_rgba(15,23,42,0.28)] backdrop-blur-md"
     >
       {[0, 1].map((index) => (
         <motion.div
@@ -316,7 +317,7 @@ function SectionTitleCard({ step }: { step: Step }) {
         </motion.div>
         <div className="min-w-0">
           <p
-            className="text-[10px] font-bold uppercase tracking-[0.22em]"
+            className="text-[10px] font-bold tracking-[0.22em] uppercase"
             style={{ color: card.color }}
           >
             {card.kicker}
@@ -364,7 +365,7 @@ function MotionGraphicsOverlay({
         transition={{ duration: 5.6, repeat: Infinity, ease: "linear" }}
       />
       <motion.div
-        className="absolute -right-20 top-20 h-32 w-[360px] rotate-[-18deg]"
+        className="absolute top-20 -right-20 h-32 w-[360px] rotate-[-18deg]"
         style={{
           background:
             "linear-gradient(90deg, transparent, rgba(20,184,166,0.16), transparent)",
@@ -389,7 +390,7 @@ function MotionGraphicsOverlay({
               repeat: Infinity,
               repeatDelay: 3.6,
             }}
-            className="rounded-md border border-white/30 bg-slate-950/58 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-white shadow-[0_12px_30px_rgba(15,23,42,0.22)] backdrop-blur"
+            className="rounded-md border border-white/30 bg-slate-950/58 px-3 py-1.5 text-[10px] font-bold tracking-[0.16em] text-white uppercase shadow-[0_12px_30px_rgba(15,23,42,0.22)] backdrop-blur"
           >
             {label}
           </motion.div>
@@ -596,9 +597,9 @@ function Callout({ text, delay = 0 }: { text: string; delay?: number }) {
       initial={{ opacity: 0, scale: 0.85, y: 4 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ delay, type: "spring", stiffness: 220, damping: 16 }}
-      className="absolute z-50 whitespace-nowrap bg-emerald-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5"
+      className="absolute z-50 flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1.5 text-[11px] font-bold whitespace-nowrap text-white shadow-lg"
     >
-      <div className="w-1.5 h-1.5 rounded-full bg-white/70" />
+      <div className="h-1.5 w-1.5 rounded-full bg-white/70" />
       {text}
     </motion.div>
   )
@@ -958,7 +959,7 @@ function Field({
 }) {
   return (
     <label className={`block ${className}`}>
-      <span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
+      <span className="mb-2 block text-[10px] font-bold tracking-[0.18em] text-slate-400 uppercase">
         {label}
       </span>
       {children}
@@ -973,9 +974,9 @@ const inpActive =
 /* ─── Sidebar ────────────────────────────────────────────────── */
 function Sidebar() {
   return (
-    <aside className="w-72 shrink-0 border-r border-slate-200 bg-white flex flex-col gap-3 p-4 overflow-y-auto">
+    <aside className="flex w-72 shrink-0 flex-col gap-3 overflow-y-auto border-r border-slate-200 bg-white p-4">
       <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-white via-emerald-50 to-cyan-50 p-4">
-        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-700">
+        <p className="text-[10px] font-bold tracking-[0.2em] text-emerald-700 uppercase">
           Partner Storefronts
         </p>
         <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-900">
@@ -995,7 +996,7 @@ function Sidebar() {
         </div>
       </div>
       <div className="rounded-2xl border border-slate-200 bg-white p-2">
-        <p className="px-2 py-1 text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
+        <p className="px-2 py-1 text-[10px] font-bold tracking-[0.15em] text-slate-400 uppercase">
           Your Storefronts
         </p>
         <div className="mt-1 rounded-xl border border-emerald-300 bg-emerald-50/60 px-3 py-2.5">
@@ -1006,7 +1007,7 @@ function Sidebar() {
               </p>
               <p className="text-xs text-slate-400">/livingco</p>
             </div>
-            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold tracking-wide text-emerald-700 uppercase">
               Active
             </span>
           </div>
@@ -1126,10 +1127,10 @@ function Step1Screen({ playing }: { playing: boolean }) {
 
   return (
     <div className="relative flex-1 overflow-hidden">
-      <div className="rounded-3xl border border-slate-200 bg-white shadow-sm p-5 m-4">
+      <div className="m-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="mb-4 flex items-center justify-between rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-50 to-cyan-50 px-4 py-3">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-700">
+            <p className="text-[10px] font-bold tracking-[0.18em] text-emerald-700 uppercase">
               Identity
             </p>
             <p className="mt-1 text-xs text-slate-500">
@@ -1215,13 +1216,13 @@ function Step1Screen({ playing }: { playing: boolean }) {
           {/* Dimmed fields */}
           <Field
             label="Referral &amp; Shop Link Upload"
-            className="opacity-30 pointer-events-none"
+            className="pointer-events-none opacity-30"
           >
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-400">
               Add referral &amp; shop link
             </div>
           </Field>
-          <Field label="Logo Upload" className="opacity-30 pointer-events-none">
+          <Field label="Logo Upload" className="pointer-events-none opacity-30">
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-400">
               Upload storefront logo
             </div>
@@ -1322,9 +1323,9 @@ function Step2Screen({ playing }: { playing: boolean }) {
 
   return (
     <div className="relative flex-1">
-      <div className="rounded-3xl border border-slate-200 bg-white shadow-sm p-5 m-4">
+      <div className="m-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="mb-4 rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-50 to-cyan-50 px-4 py-3">
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-700">
+          <p className="text-[10px] font-bold tracking-[0.18em] text-emerald-700 uppercase">
             Identity
           </p>
           <p className="mt-1 text-xs text-slate-500">
@@ -1341,12 +1342,12 @@ function Step2Screen({ playing }: { playing: boolean }) {
               </div>
             )}
             <Field label="Logo Upload">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 flex items-center justify-between">
+              <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
                 <div>
                   <p className="text-xs font-semibold text-slate-700">
                     Upload storefront logo
                   </p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">
+                  <p className="mt-0.5 text-[10px] text-slate-400">
                     PNG, JPG, or WebP
                   </p>
                 </div>
@@ -1367,10 +1368,10 @@ function Step2Screen({ playing }: { playing: boolean }) {
                   animate={{ opacity: 1, y: 0 }}
                   className="mt-2 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2"
                 >
-                  <div className="h-8 w-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-[9px] font-black text-emerald-700">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-100 bg-emerald-50 text-[9px] font-black text-emerald-700">
                     LC
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="text-xs font-semibold text-slate-800">
                       livingco-logo.png
                     </p>
@@ -1378,7 +1379,7 @@ function Step2Screen({ playing }: { playing: boolean }) {
                   </div>
                   <CheckCircle2
                     size={14}
-                    className="text-emerald-500 shrink-0"
+                    className="shrink-0 text-emerald-500"
                   />
                 </motion.div>
               )}
@@ -1398,17 +1399,17 @@ function Step2Screen({ playing }: { playing: boolean }) {
               </div>
             )}
             <Field label="Referral &amp; Shop Link Upload">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 mb-3">
+              <div className="mb-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
                 <p className="text-xs font-semibold text-slate-700">
                   Add referral &amp; shop link
                 </p>
-                <p className="text-[10px] text-slate-400 mt-0.5">
+                <p className="mt-0.5 text-[10px] text-slate-400">
                   Set both links for this storefront in one place.
                 </p>
               </div>
               <div className="space-y-2">
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400 mb-1">
+                  <p className="mb-1 text-[10px] font-bold tracking-[0.12em] text-slate-400 uppercase">
                     Referral Link
                   </p>
                   <input
@@ -1419,7 +1420,7 @@ function Step2Screen({ playing }: { playing: boolean }) {
                   />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400 mb-1">
+                  <p className="mb-1 text-[10px] font-bold tracking-[0.12em] text-slate-400 uppercase">
                     Shop URL
                   </p>
                   <div className="flex gap-2">
@@ -1427,9 +1428,9 @@ function Step2Screen({ playing }: { playing: boolean }) {
                       value={shopUrl}
                       readOnly
                       placeholder="https://www.afhome.ph/shop?ref=username"
-                      className={`${inp} text-[11px] flex-1`}
+                      className={`${inp} flex-1 text-[11px]`}
                     />
-                    <button className="rounded-xl border border-emerald-200 bg-white px-3 py-2 text-xs font-semibold text-emerald-700 whitespace-nowrap">
+                    <button className="rounded-xl border border-emerald-200 bg-white px-3 py-2 text-xs font-semibold whitespace-nowrap text-emerald-700">
                       Save Link
                     </button>
                   </div>
@@ -1559,9 +1560,9 @@ function Step3Screen({ playing }: { playing: boolean }) {
 
   return (
     <div className="relative flex-1 overflow-hidden">
-      <div className="rounded-3xl border border-slate-200 bg-white shadow-sm p-5 m-4">
+      <div className="m-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="mb-4 rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-50 to-cyan-50 px-4 py-3">
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-700">
+          <p className="text-[10px] font-bold tracking-[0.18em] text-emerald-700 uppercase">
             Identity
           </p>
           <p className="mt-1 text-xs text-slate-500">
@@ -1570,7 +1571,7 @@ function Step3Screen({ playing }: { playing: boolean }) {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="mb-4 grid grid-cols-2 gap-4">
           <div className="relative">
             {callout === "Pick your primary brand color" && (
               <div className="absolute -top-7 left-0 z-50">
@@ -1581,14 +1582,14 @@ function Step3Screen({ playing }: { playing: boolean }) {
               <motion.div
                 animate={{ backgroundColor: themeColor }}
                 transition={{ duration: 0.5 }}
-                className="h-14 w-full rounded-2xl border border-slate-200 mb-2"
+                className="mb-2 h-14 w-full rounded-2xl border border-slate-200"
               />
               <div className="flex items-center gap-2">
                 <div
-                  className="h-5 w-5 rounded-lg border border-slate-200 shrink-0"
+                  className="h-5 w-5 shrink-0 rounded-lg border border-slate-200"
                   style={{ backgroundColor: themeColor }}
                 />
-                <span className="text-xs font-mono text-slate-500">
+                <span className="font-mono text-xs text-slate-500">
                   {themeColor}
                 </span>
               </div>
@@ -1604,14 +1605,14 @@ function Step3Screen({ playing }: { playing: boolean }) {
               <motion.div
                 animate={{ backgroundColor: accentColor }}
                 transition={{ duration: 0.5 }}
-                className="h-14 w-full rounded-2xl border border-slate-200 mb-2"
+                className="mb-2 h-14 w-full rounded-2xl border border-slate-200"
               />
               <div className="flex items-center gap-2">
                 <div
-                  className="h-5 w-5 rounded-lg border border-slate-200 shrink-0"
+                  className="h-5 w-5 shrink-0 rounded-lg border border-slate-200"
                   style={{ backgroundColor: accentColor }}
                 />
-                <span className="text-xs font-mono text-slate-500">
+                <span className="font-mono text-xs text-slate-500">
                   {accentColor}
                 </span>
               </div>
@@ -1625,16 +1626,16 @@ function Step3Screen({ playing }: { playing: boolean }) {
             background: `linear-gradient(135deg, ${themeColor} 0%, ${accentColor} 100%)`,
           }}
           transition={{ duration: 0.5 }}
-          className="rounded-2xl h-16 flex items-center px-5 gap-4 mb-4"
+          className="mb-4 flex h-16 items-center gap-4 rounded-2xl px-5"
         >
-          <div className="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center text-white font-black text-xs">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 text-xs font-black text-white">
             LC
           </div>
           <div>
-            <p className="text-white font-bold text-sm">LivingCo Philippines</p>
-            <p className="text-white/70 text-xs">Modern Living, Delivered.</p>
+            <p className="text-sm font-bold text-white">LivingCo Philippines</p>
+            <p className="text-xs text-white/70">Modern Living, Delivered.</p>
           </div>
-          <div className="ml-auto bg-white/20 rounded-full px-3 py-1 text-white text-xs font-semibold">
+          <div className="ml-auto rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-white">
             Shop Now
           </div>
         </motion.div>
@@ -1851,7 +1852,7 @@ function Step4Screen({ playing }: { playing: boolean }) {
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="absolute top-3 left-1/2 -translate-x-1/2 z-50"
+            className="absolute top-3 left-1/2 z-50 -translate-x-1/2"
           >
             <Callout text={callout} />
           </motion.div>
@@ -1865,7 +1866,7 @@ function Step4Screen({ playing }: { playing: boolean }) {
           willChange: "transform",
         }}
       >
-        <div className="rounded-3xl border border-slate-200 bg-white shadow-sm p-5 m-4">
+        <div className="m-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <div>
               <h2 className="text-base font-semibold text-slate-900">
@@ -1925,8 +1926,8 @@ function Step4Screen({ playing }: { playing: boolean }) {
                 transition={{ duration: 0.3 }}
                 className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50/40 p-4"
               >
-                <div className="flex items-center gap-2 mb-3">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-emerald-700">
+                <div className="mb-3 flex items-center gap-2">
+                  <p className="text-[10px] font-bold tracking-[0.15em] text-emerald-700 uppercase">
                     Products in your store
                   </p>
                   <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-bold text-emerald-700">
@@ -1948,7 +1949,7 @@ function Step4Screen({ playing }: { playing: boolean }) {
                         initial={{ opacity: 0, x: -6 }}
                         animate={{ opacity: 1, x: 0 }}
                       >
-                        <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-slate-400 mb-1.5">
+                        <p className="mb-1.5 text-[9px] font-bold tracking-[0.12em] text-slate-400 uppercase">
                           {STEP4_CAT_LABELS[catId]}
                         </p>
                         <div className="space-y-0.5">
@@ -1959,7 +1960,7 @@ function Step4Screen({ playing }: { playing: boolean }) {
                               <motion.div
                                 key={key}
                                 animate={{ opacity: enabled ? 1 : 0.45 }}
-                                className="flex items-center gap-3 rounded-xl py-1.5 px-2"
+                                className="flex items-center gap-3 rounded-xl px-2 py-1.5"
                                 style={{
                                   background: enabled
                                     ? "rgba(255,255,255,0.75)"
@@ -1975,7 +1976,7 @@ function Step4Screen({ playing }: { playing: boolean }) {
                                       ? "#10b981"
                                       : "#fff",
                                   }}
-                                  className="w-4 h-4 rounded border-2 flex items-center justify-center shrink-0"
+                                  className="flex h-4 w-4 shrink-0 items-center justify-center rounded border-2"
                                 >
                                   {enabled && (
                                     <svg
@@ -1994,10 +1995,10 @@ function Step4Screen({ playing }: { playing: boolean }) {
                                     </svg>
                                   )}
                                 </motion.div>
-                                <span className="text-sm shrink-0">
+                                <span className="shrink-0 text-sm">
                                   {p.emoji}
                                 </span>
-                                <div className="flex-1 min-w-0">
+                                <div className="min-w-0 flex-1">
                                   <p
                                     className={`text-xs font-semibold ${enabled ? "text-slate-800" : "text-slate-400 line-through"}`}
                                   >
@@ -2005,12 +2006,12 @@ function Step4Screen({ playing }: { playing: boolean }) {
                                   </p>
                                 </div>
                                 <p
-                                  className={`text-xs font-bold shrink-0 ${enabled ? "text-emerald-700" : "text-slate-300"}`}
+                                  className={`shrink-0 text-xs font-bold ${enabled ? "text-emerald-700" : "text-slate-300"}`}
                                 >
                                   {p.price}
                                 </p>
                                 {!enabled && (
-                                  <span className="shrink-0 text-[8px] font-bold uppercase tracking-wide text-slate-400 border border-slate-200 rounded-full px-1.5 py-0.5">
+                                  <span className="shrink-0 rounded-full border border-slate-200 px-1.5 py-0.5 text-[8px] font-bold tracking-wide text-slate-400 uppercase">
                                     Hidden
                                   </span>
                                 )}
@@ -2073,9 +2074,9 @@ function Step5Screen({
 
   return (
     <div className="relative flex-1 overflow-hidden">
-      <div className="rounded-3xl border border-slate-200 bg-white shadow-sm p-5 m-4">
+      <div className="m-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="mb-4 rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-50 to-cyan-50 px-4 py-3">
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-700">
+          <p className="text-[10px] font-bold tracking-[0.18em] text-emerald-700 uppercase">
             Identity
           </p>
           <p className="mt-1 text-xs text-slate-500">
@@ -2084,7 +2085,7 @@ function Step5Screen({
         </div>
 
         {/* Summary */}
-        <div className="grid grid-cols-3 gap-3 mb-5">
+        <div className="mb-5 grid grid-cols-3 gap-3">
           {[
             {
               label: "Store URL",
@@ -2098,9 +2099,9 @@ function Step5Screen({
           ].map(({ label, value, isColor }) => (
             <div
               key={label}
-              className="rounded-xl bg-slate-50 border border-slate-200 px-3 py-2.5"
+              className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5"
             >
-              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 mb-1">
+              <p className="mb-1 text-[10px] font-bold tracking-[0.14em] text-slate-400 uppercase">
                 {label}
               </p>
               {isColor ? (
@@ -2109,12 +2110,12 @@ function Step5Screen({
                     className="h-4 w-4 rounded-md"
                     style={{ backgroundColor: value }}
                   />
-                  <span className="text-xs font-mono text-slate-600">
+                  <span className="font-mono text-xs text-slate-600">
                     {value}
                   </span>
                 </div>
               ) : (
-                <p className="text-xs font-semibold text-slate-700 truncate">
+                <p className="truncate text-xs font-semibold text-slate-700">
                   {value}
                 </p>
               )}
@@ -2150,12 +2151,12 @@ function Step5Screen({
               animate={{ opacity: 1, y: 0 }}
               className="mt-4 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3"
             >
-              <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+              <CheckCircle2 size={16} className="shrink-0 text-emerald-600" />
               <div>
                 <p className="text-sm font-semibold text-emerald-800">
                   Partner storefront saved.
                 </p>
-                <p className="text-xs text-emerald-600 mt-0.5">
+                <p className="mt-0.5 text-xs text-emerald-600">
                   Opening your live store…
                 </p>
               </div>
@@ -2323,7 +2324,7 @@ function CheckoutDemoOverlay({
       <motion.div
         initial={{ opacity: 0, y: -14, scale: 0.96 }}
         animate={{ opacity: stage >= 1 ? 1 : 0, y: 0, scale: 1 }}
-        className="absolute right-8 top-5 flex items-center gap-2 rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-bold text-emerald-700 shadow-[0_12px_34px_rgba(15,23,42,0.18)]"
+        className="absolute top-5 right-8 flex items-center gap-2 rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-bold text-emerald-700 shadow-[0_12px_34px_rgba(15,23,42,0.18)]"
       >
         <ShoppingCart size={16} />
         <span>Cart</span>
@@ -2345,10 +2346,10 @@ function CheckoutDemoOverlay({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 390, opacity: 0 }}
             transition={{ type: "spring", stiffness: 190, damping: 24 }}
-            className="absolute right-0 top-0 h-full w-[360px] border-l border-slate-200 bg-white shadow-[-28px_0_80px_rgba(15,23,42,0.18)]"
+            className="absolute top-0 right-0 h-full w-[360px] border-l border-slate-200 bg-white shadow-[-28px_0_80px_rgba(15,23,42,0.18)]"
           >
             <div className="border-b border-slate-100 px-5 py-4">
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-600">
+              <p className="text-[10px] font-bold tracking-[0.18em] text-emerald-600 uppercase">
                 Cart Summary
               </p>
               <h3 className="mt-1 text-lg font-black text-slate-900">
@@ -2414,7 +2415,7 @@ function CheckoutDemoOverlay({
                     <CreditCard size={19} className="text-slate-700" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                    <p className="text-[10px] font-bold tracking-[0.2em] text-slate-500 uppercase">
                       LivingCo Secure Checkout
                     </p>
                     <h2 className="text-lg font-black text-slate-900">
@@ -2543,7 +2544,7 @@ function CheckoutDemoOverlay({
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
+                <p className="text-[10px] font-bold tracking-[0.18em] text-slate-400 uppercase">
                   Order Summary
                 </p>
                 <div className="mt-4 flex gap-3 rounded-2xl bg-slate-50 p-3">
@@ -2622,7 +2623,7 @@ function CheckoutDemoOverlay({
             <div className="border-b border-slate-200 bg-white px-6 py-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-600">
+                  <p className="text-[10px] font-bold tracking-[0.22em] text-emerald-600 uppercase">
                     Checkout Success
                   </p>
                   <h2 className="text-lg font-black text-slate-900">
@@ -2657,7 +2658,7 @@ function CheckoutDemoOverlay({
                   </p>
                 </div>
                 <div className="space-y-4 px-6 py-6">
-                  <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white divide-y divide-gray-100">
+                  <div className="divide-y divide-gray-100 overflow-hidden rounded-2xl border border-gray-200 bg-white">
                     {[
                       ["Checkout ID", "AFH-2408"],
                       ["Status", "paid"],
@@ -2667,7 +2668,7 @@ function CheckoutDemoOverlay({
                         key={label}
                         className="flex items-center justify-between px-4 py-3"
                       >
-                        <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                        <span className="text-[11px] font-semibold tracking-wide text-gray-400 uppercase">
                           {label}
                         </span>
                         <span className="max-w-[190px] truncate text-xs font-semibold text-gray-700">
@@ -2913,7 +2914,7 @@ function PreviewScreen({ playing }: { playing: boolean }) {
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="absolute top-4 left-1/2 -translate-x-1/2 z-50"
+            className="absolute top-4 left-1/2 z-50 -translate-x-1/2"
           >
             <Callout text={callout} />
           </motion.div>
@@ -2944,7 +2945,7 @@ function PreviewScreen({ playing }: { playing: boolean }) {
                       </span>
                     </div>
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+                      <p className="text-xs font-semibold tracking-[0.22em] text-slate-500 uppercase">
                         Partner Store
                       </p>
                       <h1 className="text-3xl font-bold tracking-tight text-teal-700">
@@ -2968,7 +2969,7 @@ function PreviewScreen({ playing }: { playing: boolean }) {
             </section>
 
             <section className="mx-auto max-w-7xl px-6 py-8">
-              <p className="text-center text-[10px] font-bold uppercase tracking-[0.22em] text-blue-600">
+              <p className="text-center text-[10px] font-bold tracking-[0.22em] text-blue-600 uppercase">
                 Featured Products
               </p>
               <h2 className="mb-5 text-center text-2xl font-bold text-slate-900">
@@ -3120,7 +3121,7 @@ function PreviewScreen({ playing }: { playing: boolean }) {
                             stiffness: 260,
                             damping: 22,
                           }}
-                          className="pointer-events-none absolute bottom-[145px] right-3 z-[70] flex items-center gap-2 rounded-full bg-sky-500 px-4 py-2 text-sm font-bold text-white shadow-lg"
+                          className="pointer-events-none absolute right-3 bottom-[145px] z-[70] flex items-center gap-2 rounded-full bg-sky-500 px-4 py-2 text-sm font-bold text-white shadow-lg"
                         >
                           <ShoppingCart size={17} />
                           Add to Cart
@@ -3748,7 +3749,7 @@ export default function StorefrontTutorial() {
               >
                 {/* Safari chrome */}
                 <div
-                  className="shrink-0 flex flex-col"
+                  className="flex shrink-0 flex-col"
                   style={{
                     background: "#f0f0f0",
                     borderBottom: "1px solid #c8c8c8",
@@ -3760,10 +3761,10 @@ export default function StorefrontTutorial() {
                     style={{ height: 36 }}
                   >
                     <div
-                      className="flex items-center gap-2 bg-white rounded-t-lg px-4 h-8 border border-[#d0d0d0] text-[11px] text-slate-600 font-medium shadow-sm"
+                      className="flex h-8 items-center gap-2 rounded-t-lg border border-[#d0d0d0] bg-white px-4 text-[11px] font-medium text-slate-600 shadow-sm"
                       style={{ borderBottom: "none", marginBottom: -1 }}
                     >
-                      <div className="w-3 h-3 rounded-sm bg-emerald-500" />
+                      <div className="h-3 w-3 rounded-sm bg-emerald-500" />
                       {step === "preview"
                         ? "LivingCo Philippines — Partner Store"
                         : "Partner Storefronts — AF Home Admin"}
@@ -3771,26 +3772,26 @@ export default function StorefrontTutorial() {
                   </div>
                   {/* Toolbar */}
                   <div
-                    className="flex items-center px-4 gap-3 bg-white"
+                    className="flex items-center gap-3 bg-white px-4"
                     style={{ height: 44, borderTop: "1px solid #d8d8d8" }}
                   >
-                    <div className="flex gap-1.5 items-center mr-1">
+                    <div className="mr-1 flex items-center gap-1.5">
                       <div
-                        className="w-3 h-3 rounded-full"
+                        className="h-3 w-3 rounded-full"
                         style={{
                           background: "#FF5F57",
                           border: "0.5px solid rgba(0,0,0,0.12)",
                         }}
                       />
                       <div
-                        className="w-3 h-3 rounded-full"
+                        className="h-3 w-3 rounded-full"
                         style={{
                           background: "#FFBD2E",
                           border: "0.5px solid rgba(0,0,0,0.12)",
                         }}
                       />
                       <div
-                        className="w-3 h-3 rounded-full"
+                        className="h-3 w-3 rounded-full"
                         style={{
                           background: "#28C840",
                           border: "0.5px solid rgba(0,0,0,0.12)",
@@ -3809,7 +3810,7 @@ export default function StorefrontTutorial() {
                         key={currentUrlBar}
                         initial={{ opacity: 0.6 }}
                         animate={{ opacity: 1 }}
-                        className="flex items-center gap-1.5 bg-[#f0f0f0] rounded-lg px-3 h-7 border border-[#d0d0d0]"
+                        className="flex h-7 items-center gap-1.5 rounded-lg border border-[#d0d0d0] bg-[#f0f0f0] px-3"
                         style={{ width: 480 }}
                       >
                         <svg
@@ -3825,7 +3826,7 @@ export default function StorefrontTutorial() {
                           />
                         </svg>
                         <span
-                          className="text-[11.5px] text-[#444] flex-1 text-center"
+                          className="flex-1 text-center text-[11.5px] text-[#444]"
                           style={{
                             fontFamily:
                               "-apple-system, BlinkMacSystemFont, sans-serif",
@@ -3835,7 +3836,7 @@ export default function StorefrontTutorial() {
                         </span>
                       </motion.div>
                     </div>
-                    <div className="flex gap-2 text-[#999] select-none text-sm">
+                    <div className="flex gap-2 text-sm text-[#999] select-none">
                       <svg
                         width="16"
                         height="16"
@@ -3863,7 +3864,7 @@ export default function StorefrontTutorial() {
 
                 {/* Admin / Store body */}
                 <div
-                  className="flex bg-slate-50 relative"
+                  className="relative flex bg-slate-50"
                   style={{ height: "calc(100% - 80px)" }}
                 >
                   {/* Intro */}
@@ -3890,7 +3891,7 @@ export default function StorefrontTutorial() {
                               stiffness: 180,
                               damping: 14,
                             }}
-                            className="mx-auto mb-6 w-20 h-20 rounded-3xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-[0_0_60px_rgba(16,185,129,0.4)]"
+                            className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-[0_0_60px_rgba(16,185,129,0.4)]"
                           >
                             <Store size={36} className="text-white" />
                           </motion.div>
@@ -3898,7 +3899,7 @@ export default function StorefrontTutorial() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.3 }}
-                            className="text-emerald-400 text-sm font-bold tracking-widest uppercase mb-3"
+                            className="mb-3 text-sm font-bold tracking-widest text-emerald-400 uppercase"
                           >
                             AF Home
                           </motion.p>
@@ -3906,7 +3907,7 @@ export default function StorefrontTutorial() {
                             initial={{ opacity: 0, y: 16 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.5 }}
-                            className="text-white text-5xl font-black tracking-tight"
+                            className="text-5xl font-black tracking-tight text-white"
                           >
                             Partner Storefront
                           </motion.h1>
@@ -3914,7 +3915,7 @@ export default function StorefrontTutorial() {
                             initial={{ opacity: 0, y: 16 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.7 }}
-                            className="text-white text-5xl font-black tracking-tight"
+                            className="text-5xl font-black tracking-tight text-white"
                           >
                             Studio
                           </motion.h2>
@@ -3922,7 +3923,7 @@ export default function StorefrontTutorial() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 1 }}
-                            className="text-white/40 text-lg mt-4"
+                            className="mt-4 text-lg text-white/40"
                           >
                             How to set up your branded partner shop — step by
                             step
@@ -3931,7 +3932,7 @@ export default function StorefrontTutorial() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 1.3 }}
-                            className="mt-4 flex items-center justify-center gap-2 text-white/25 text-sm"
+                            className="mt-4 flex items-center justify-center gap-2 text-sm text-white/25"
                           >
                             <Eye size={14} /> 5 steps · ends with your live
                             store
@@ -3955,7 +3956,7 @@ export default function StorefrontTutorial() {
                             "linear-gradient(135deg, #064e3b 0%, #1e3a5f 50%, #0f172a 100%)",
                         }}
                       >
-                        <div className="text-center max-w-2xl">
+                        <div className="max-w-2xl text-center">
                           <motion.div
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
@@ -3964,7 +3965,7 @@ export default function StorefrontTutorial() {
                               stiffness: 180,
                               damping: 14,
                             }}
-                            className="mx-auto mb-6 w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-[0_0_50px_rgba(16,185,129,0.4)]"
+                            className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-[0_0_50px_rgba(16,185,129,0.4)]"
                           >
                             <ShoppingBag size={28} className="text-white" />
                           </motion.div>
@@ -3982,7 +3983,7 @@ export default function StorefrontTutorial() {
                                   duration: 0.6,
                                   ease: [0.25, 0.46, 0.45, 0.94],
                                 }}
-                                className={`font-black text-5xl leading-tight ${i === 2 ? "text-emerald-400" : "text-white"}`}
+                                className={`text-5xl leading-tight font-black ${i === 2 ? "text-emerald-400" : "text-white"}`}
                               >
                                 {line}
                               </motion.p>
@@ -3994,12 +3995,12 @@ export default function StorefrontTutorial() {
                             transition={{ delay: 1.2 }}
                             className="mt-10 flex items-center justify-center gap-3"
                           >
-                            <button className="bg-emerald-500 hover:bg-emerald-400 text-white font-bold px-8 py-3.5 rounded-2xl text-sm flex items-center gap-2 transition">
+                            <button className="flex items-center gap-2 rounded-2xl bg-emerald-500 px-8 py-3.5 text-sm font-bold text-white transition hover:bg-emerald-400">
                               Create Your Storefront <ArrowRight size={16} />
                             </button>
                             <button
                               onClick={() => goTo("intro")}
-                              className="border border-white/20 text-white/60 font-medium px-6 py-3.5 rounded-2xl text-sm transition hover:bg-white/5"
+                              className="rounded-2xl border border-white/20 px-6 py-3.5 text-sm font-medium text-white/60 transition hover:bg-white/5"
                             >
                               Watch Again
                             </button>
@@ -4023,15 +4024,15 @@ export default function StorefrontTutorial() {
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.3 }}
-                        className="flex-1 flex flex-col"
+                        className="flex flex-1 flex-col"
                       >
                         {/* Step header bar (progress only, not shown during preview) */}
                         {step !== "preview" && meta && (
                           <div className="shrink-0 border-b border-slate-200 bg-white px-5">
                             <div className="flex items-center gap-4 py-2.5">
                               <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-700">
+                                <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+                                <span className="text-[11px] font-bold tracking-[0.18em] text-emerald-700 uppercase">
                                   {meta.label}
                                 </span>
                               </div>
@@ -4058,7 +4059,7 @@ export default function StorefrontTutorial() {
                         )}
 
                         {/* Screen */}
-                        <div className="flex-1 relative overflow-hidden">
+                        <div className="relative flex-1 overflow-hidden">
                           {step === "step1" && (
                             <Step1Screen
                               key={stepRestartKey}
@@ -4119,7 +4120,7 @@ export default function StorefrontTutorial() {
                         duration: 0.4,
                         ease: [0.25, 0.46, 0.45, 0.94],
                       }}
-                      className="absolute z-40 left-0 right-0 flex justify-center"
+                      className="absolute right-0 left-0 z-40 flex justify-center"
                       style={{ bottom: 22 }}
                     >
                       <div

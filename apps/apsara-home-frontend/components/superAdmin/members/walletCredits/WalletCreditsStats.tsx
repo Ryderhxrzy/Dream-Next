@@ -1,6 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
+
 import { MemberWallet, php, pv } from "./types"
 
 const total = (wallets: MemberWallet[], key: keyof MemberWallet) =>
@@ -21,7 +22,7 @@ export default function WalletCreditsStats({
       border: "border-emerald-100",
       icon: (
         <svg
-          className="w-5 h-5"
+          className="h-5 w-5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -44,7 +45,7 @@ export default function WalletCreditsStats({
       border: "border-blue-100",
       icon: (
         <svg
-          className="w-5 h-5"
+          className="h-5 w-5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -67,7 +68,7 @@ export default function WalletCreditsStats({
       border: "border-sky-100",
       icon: (
         <svg
-          className="w-5 h-5"
+          className="h-5 w-5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -90,7 +91,7 @@ export default function WalletCreditsStats({
       border: "border-teal-100",
       icon: (
         <svg
-          className="w-5 h-5"
+          className="h-5 w-5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -111,25 +112,25 @@ export default function WalletCreditsStats({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.05 }}
-      className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+      className="grid grid-cols-2 gap-4 lg:grid-cols-4"
     >
       {stats.map((s, i) => (
         <div
           key={i}
-          className={`bg-white border ${s.border} rounded-2xl p-4 dark:bg-slate-900`}
+          className={`border bg-white ${s.border} rounded-2xl p-4 dark:bg-slate-900`}
         >
-          <div className="flex items-center gap-3 mb-3">
+          <div className="mb-3 flex items-center gap-3">
             <div
-              className={`h-9 w-9 rounded-xl ${s.bg} ${s.text} flex items-center justify-center shrink-0`}
+              className={`h-9 w-9 rounded-xl ${s.bg} ${s.text} flex shrink-0 items-center justify-center`}
             >
               {s.icon}
             </div>
-            <p className="text-[11px] text-slate-400 font-medium leading-tight">
+            <p className="text-[11px] leading-tight font-medium text-slate-400">
               {s.label}
             </p>
           </div>
           <p className="text-lg font-bold text-slate-800">{s.value}</p>
-          <p className="text-[11px] text-slate-400 mt-0.5">{s.sub}</p>
+          <p className="mt-0.5 text-[11px] text-slate-400">{s.sub}</p>
         </div>
       ))}
     </motion.div>

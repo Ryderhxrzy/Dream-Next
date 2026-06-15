@@ -1,25 +1,6 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { useSearchParams } from "next/navigation"
-import { useSession } from "next-auth/react"
-import {
-  LayoutList,
-  Clock,
-  FileText,
-  CalendarCheck,
-  CheckCircle2,
-  XCircle,
-  Eye,
-  MessageSquare,
-  BarChart3,
-  UserCheck,
-  AlertTriangle,
-  Send,
-  ChevronRight,
-  EyeOff,
-  Inbox,
-} from "lucide-react"
 import {
   InteriorRequestStatus,
   InteriorRequestUpdateType,
@@ -27,6 +8,25 @@ import {
   useReplyAdminInteriorRequestMutation,
   useUpdateAdminInteriorRequestMutation,
 } from "@/store/api/interiorRequestsApi"
+import {
+  AlertTriangle,
+  BarChart3,
+  CalendarCheck,
+  CheckCircle2,
+  ChevronRight,
+  Clock,
+  Eye,
+  EyeOff,
+  FileText,
+  Inbox,
+  LayoutList,
+  MessageSquare,
+  Send,
+  UserCheck,
+  XCircle,
+} from "lucide-react"
+import { useSession } from "next-auth/react"
+import { useSearchParams } from "next/navigation"
 
 /* ─── Status config ─────────────────────────────────────────────────────────── */
 const statusMeta: Record<
@@ -283,14 +283,14 @@ export default function InteriorRequestsPageMain() {
   return (
     <div className="space-y-5">
       {/* ── Page header ── */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 md:p-6">
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 dark:border-slate-800 dark:bg-slate-900">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-cyan-100 bg-cyan-50 dark:border-cyan-900/30 dark:bg-cyan-500/10">
               <Inbox className="h-5 w-5 text-cyan-600" />
             </div>
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-600">
+              <p className="text-[11px] font-bold tracking-[0.2em] text-cyan-600 uppercase">
                 Interior Services
               </p>
               <h1 className="mt-0.5 text-xl font-bold text-slate-900 md:text-2xl">
@@ -303,7 +303,7 @@ export default function InteriorRequestsPageMain() {
             </div>
           </div>
           <div className="rounded-xl border border-cyan-100 bg-cyan-50 px-4 py-3 dark:border-cyan-900/30 dark:bg-cyan-500/10">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-cyan-700">
+            <p className="text-[11px] font-semibold tracking-wide text-cyan-700 uppercase">
               Secure Delivery
             </p>
             <p className="mt-1 max-w-55 text-xs text-cyan-800">
@@ -347,7 +347,7 @@ export default function InteriorRequestsPageMain() {
             >
               <div className="shrink-0">{stat.icon}</div>
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                <p className="text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
                   {stat.label}
                 </p>
                 <p className="mt-0.5 text-2xl font-bold text-slate-900">
@@ -375,7 +375,7 @@ export default function InteriorRequestsPageMain() {
               onChange={(e) =>
                 setStatusFilter(e.target.value as "all" | InteriorRequestStatus)
               }
-              className="rounded-[18px] border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 outline-none transition-all focus:border-sky-400 dark:border-white/18 dark:bg-white/12 dark:text-slate-200 dark:focus:border-sky-400/60"
+              className="rounded-[18px] border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 transition-all outline-none focus:border-sky-400 dark:border-white/18 dark:bg-white/12 dark:text-slate-200 dark:focus:border-sky-400/60"
             >
               <option value="all">All Statuses</option>
               <option value="pending">Pending</option>
@@ -418,7 +418,7 @@ export default function InteriorRequestsPageMain() {
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+                        <p className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">
                           {request.reference}
                         </p>
                         <p className="mt-1 line-clamp-1 text-sm font-semibold text-slate-900">
@@ -456,10 +456,10 @@ export default function InteriorRequestsPageMain() {
         {selected ? (
           <div className="space-y-4">
             {/* Request header */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 md:p-6">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 dark:border-slate-800 dark:bg-slate-900">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
+                  <p className="text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase">
                     {selected.reference}
                   </p>
                   <h2 className="mt-1 text-xl font-bold text-slate-900">
@@ -513,7 +513,7 @@ export default function InteriorRequestsPageMain() {
                     key={item.label}
                     className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950"
                   >
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                    <p className="text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
                       {item.label}
                     </p>
                     <p className="mt-1 text-sm font-semibold text-slate-800">
@@ -525,7 +525,7 @@ export default function InteriorRequestsPageMain() {
 
               {selected.notes && (
                 <div className="mt-3 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-600">
+                  <p className="text-[11px] font-semibold tracking-wide text-amber-600 uppercase">
                     Client Notes
                   </p>
                   <p className="mt-1.5 text-sm leading-relaxed text-slate-700">
@@ -536,7 +536,7 @@ export default function InteriorRequestsPageMain() {
             </div>
 
             {/* Actions panel */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 md:p-6">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 dark:border-slate-800 dark:bg-slate-900">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h3 className="text-base font-bold text-slate-900">
@@ -577,11 +577,11 @@ export default function InteriorRequestsPageMain() {
               <div className="mt-5 grid gap-4 lg:grid-cols-[200px_minmax(0,1fr)]">
                 {/* Left: Status controls */}
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
-                  <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                  <p className="text-[11px] font-bold tracking-wide text-slate-400 uppercase">
                     Status Control
                   </p>
 
-                  <label className="mt-4 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  <label className="mt-4 block text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
                     Set Status
                   </label>
                   <select
@@ -589,7 +589,7 @@ export default function InteriorRequestsPageMain() {
                     onChange={(e) =>
                       setReplyStatus(e.target.value as InteriorRequestStatus)
                     }
-                    className="mt-2 w-full rounded-[18px] border border-gray-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition-all focus:border-sky-400 dark:border-white/18 dark:bg-white/12 dark:text-slate-200 dark:focus:border-sky-400/60"
+                    className="mt-2 w-full rounded-[18px] border border-gray-300 bg-white px-3 py-2 text-sm text-slate-700 transition-all outline-none focus:border-sky-400 dark:border-white/18 dark:bg-white/12 dark:text-slate-200 dark:focus:border-sky-400/60"
                   >
                     <option value="pending">Pending</option>
                     <option value="reviewing">Reviewing</option>
@@ -609,7 +609,7 @@ export default function InteriorRequestsPageMain() {
                   </button>
 
                   <div className="mt-4 border-t border-slate-200 pt-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                    <p className="text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
                       Working As
                     </p>
                     <p className="mt-1 text-sm font-semibold text-slate-800">
@@ -620,13 +620,13 @@ export default function InteriorRequestsPageMain() {
 
                 {/* Right: Post update */}
                 <div className="rounded-xl border border-slate-200 p-4">
-                  <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                  <p className="text-[11px] font-bold tracking-wide text-slate-400 uppercase">
                     Post Update
                   </p>
 
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
                     <div>
-                      <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      <label className="text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
                         Update Type
                       </label>
                       <select
@@ -636,7 +636,7 @@ export default function InteriorRequestsPageMain() {
                             e.target.value as InteriorRequestUpdateType
                           )
                         }
-                        className="mt-2 w-full rounded-[18px] border border-gray-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition-all focus:border-sky-400 dark:border-white/18 dark:bg-white/12 dark:text-slate-200 dark:focus:border-sky-400/60"
+                        className="mt-2 w-full rounded-[18px] border border-gray-300 bg-white px-3 py-2 text-sm text-slate-700 transition-all outline-none focus:border-sky-400 dark:border-white/18 dark:bg-white/12 dark:text-slate-200 dark:focus:border-sky-400/60"
                       >
                         <option value="message">Message</option>
                         <option value="estimate">Estimate</option>
@@ -645,20 +645,20 @@ export default function InteriorRequestsPageMain() {
                       </select>
                     </div>
                     <div>
-                      <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      <label className="text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
                         Title
                       </label>
                       <input
                         value={replyTitle}
                         onChange={(e) => setReplyTitle(e.target.value)}
                         placeholder="Short, customer-facing title"
-                        className="mt-2 w-full rounded-[18px] border border-gray-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition-all focus:border-sky-400 dark:border-white/18 dark:bg-white/12 dark:text-slate-200 dark:focus:border-sky-400/60"
+                        className="mt-2 w-full rounded-[18px] border border-gray-300 bg-white px-3 py-2 text-sm text-slate-700 transition-all outline-none focus:border-sky-400 dark:border-white/18 dark:bg-white/12 dark:text-slate-200 dark:focus:border-sky-400/60"
                       />
                     </div>
                   </div>
 
                   <div className="mt-3">
-                    <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                    <label className="text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
                       Message
                     </label>
                     <textarea
@@ -666,7 +666,7 @@ export default function InteriorRequestsPageMain() {
                       onChange={(e) => setReplyMessage(e.target.value)}
                       rows={4}
                       placeholder="Write the estimate note, schedule update, design message, or internal comment here."
-                      className="mt-2 w-full resize-none rounded-[18px] border border-gray-300 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition-all focus:border-sky-400 dark:border-white/18 dark:bg-white/12 dark:text-slate-200 dark:focus:border-sky-400/60"
+                      className="mt-2 w-full resize-none rounded-[18px] border border-gray-300 bg-white px-3 py-2.5 text-sm text-slate-700 transition-all outline-none focus:border-sky-400 dark:border-white/18 dark:bg-white/12 dark:text-slate-200 dark:focus:border-sky-400/60"
                     />
                   </div>
 
@@ -723,7 +723,7 @@ export default function InteriorRequestsPageMain() {
             </div>
 
             {/* Timeline */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 md:p-6">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 dark:border-slate-800 dark:bg-slate-900">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <h3 className="flex items-center gap-2 text-base font-bold text-slate-900">
@@ -764,7 +764,7 @@ export default function InteriorRequestsPageMain() {
                           <div className="flex flex-wrap items-start justify-between gap-2">
                             <div className="flex items-center gap-2">
                               <span
-                                className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${meta.badge}`}
+                                className={`rounded-md px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase ${meta.badge}`}
                               >
                                 {meta.label}
                               </span>

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion"
-import { Star, Quote } from "lucide-react"
+import { Quote, Star } from "lucide-react"
 
 const testimonials = [
   {
@@ -36,24 +36,24 @@ const testimonials = [
 
 export default function Testimonials() {
   return (
-    <section className="py-24 md:py-32 !bg-white dark:!bg-gray-950">
+    <section className="!bg-white py-24 md:py-32 dark:!bg-gray-950">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="mb-16 text-center"
         >
-          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl text-gray-900 dark:text-white font-semibold mb-4">
+          <h2 className="font-display mb-4 text-3xl font-semibold text-gray-900 md:text-4xl lg:text-5xl dark:text-white">
             What Our Clients Say
           </h2>
-          <p className="text-gray-600 dark:text-gray-400 text-lg max-w-xl mx-auto">
+          <p className="mx-auto max-w-xl text-lg text-gray-600 dark:text-gray-400">
             Stories from homeowners and designers who chose AFhome
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid gap-8 md:grid-cols-3">
           {testimonials.map((testimonial, index) => (
             <motion.div
               key={testimonial.id}
@@ -66,15 +66,15 @@ export default function Testimonials() {
                 ease: [0.16, 1, 0.3, 1] as const,
               }}
               whileHover={{ y: -8 }}
-              className="relative bg-stone-50 dark:bg-gray-800 rounded-3xl p-8 shadow-soft hover:shadow-soft-lg transition-all duration-500"
+              className="shadow-soft hover:shadow-soft-lg relative rounded-3xl bg-stone-50 p-8 transition-all duration-500 dark:bg-gray-800"
             >
               {/* Quote Icon */}
-              <div className="absolute -top-4 right-8 w-12 h-12 bg-af-brass rounded-full flex items-center justify-center shadow-soft">
+              <div className="bg-af-brass shadow-soft absolute -top-4 right-8 flex h-12 w-12 items-center justify-center rounded-full">
                 <Quote size={20} className="text-white" />
               </div>
 
               {/* Rating */}
-              <div className="flex gap-1 mb-4">
+              <div className="mb-4 flex gap-1">
                 {[...Array(testimonial.rating)].map((_, i) => (
                   <Star
                     key={i}
@@ -85,7 +85,7 @@ export default function Testimonials() {
               </div>
 
               {/* Content */}
-              <p className="text-gray-900 dark:text-gray-200 leading-relaxed mb-6">
+              <p className="mb-6 leading-relaxed text-gray-900 dark:text-gray-200">
                 &ldquo;{testimonial.content}&rdquo;
               </p>
 
@@ -94,13 +94,13 @@ export default function Testimonials() {
                 <img
                   src={testimonial.image}
                   alt={testimonial.name}
-                  className="w-12 h-12 rounded-full object-cover"
+                  className="h-12 w-12 rounded-full object-cover"
                 />
                 <div>
                   <h4 className="font-display font-semibold text-gray-900 dark:text-white">
                     {testimonial.name}
                   </h4>
-                  <span className="text-gray-600 dark:text-gray-400 text-sm">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
                     {testimonial.role}
                   </span>
                 </div>
@@ -115,7 +115,7 @@ export default function Testimonials() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 text-center"
+          className="mt-20 grid grid-cols-2 gap-8 text-center md:grid-cols-4"
         >
           {[
             { value: "10K+", label: "Happy Customers" },
@@ -130,10 +130,10 @@ export default function Testimonials() {
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
             >
-              <span className="font-display text-4xl md:text-5xl font-bold text-orange-500">
+              <span className="font-display text-4xl font-bold text-orange-500 md:text-5xl">
                 {stat.value}
               </span>
-              <p className="text-gray-600 dark:text-gray-400 mt-2">
+              <p className="mt-2 text-gray-600 dark:text-gray-400">
                 {stat.label}
               </p>
             </motion.div>

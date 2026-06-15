@@ -1,8 +1,9 @@
-import { buildPageMetadata } from "@/app/seo"
-import AssemblyGuidesPageClient from "@/components/assembly/AssemblyGuidesPageClient"
 import { readdir } from "fs/promises"
 import path from "path"
 import { getNavbarCategories } from "@/libs/serverStorefront"
+
+import AssemblyGuidesPageClient from "@/components/assembly/AssemblyGuidesPageClient"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Assembly",

@@ -1,5 +1,5 @@
-import { buildPageMetadata } from "@/app/seo"
 import WebPageItemsManager from "@/components/superAdmin/webpages/WebPageItemsManager"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Admin Web Pages Photo Gallery",

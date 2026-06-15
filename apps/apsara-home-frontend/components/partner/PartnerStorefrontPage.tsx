@@ -1,13 +1,14 @@
 "use client"
 
-import Link from "next/link"
 import { useEffect } from "react"
+import type { PartnerStorefrontConfig } from "@/libs/partnerStorefront"
 import { useSession } from "next-auth/react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
+
 import ShopBuilderSections, {
   type ShopBuilderApiResponse,
 } from "@/components/sections/ShopBuilderSections"
-import type { PartnerStorefrontConfig } from "@/libs/partnerStorefront"
 
 type Props = {
   partner: PartnerStorefrontConfig

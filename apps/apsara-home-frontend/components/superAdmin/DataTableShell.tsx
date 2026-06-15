@@ -26,7 +26,7 @@ export default function DataTableShell({
       className={`overflow-hidden rounded-lg border border-slate-200/80 bg-white/95 dark:border-slate-700/50 dark:bg-slate-900 ${className}`}
     >
       {(title || subtitle || badge || actions) && (
-        <div className="flex flex-col gap-3 border-b border-slate-200/80 bg-slate-50/50 px-5 py-4 dark:border-slate-700/50 dark:bg-slate-800/30 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-b border-slate-200/80 bg-slate-50/50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-slate-700/50 dark:bg-slate-800/30">
           <div className="min-w-0">
             {badge ? <div className="mb-2">{badge}</div> : null}
             {title ? (

@@ -1,15 +1,6 @@
 "use client"
 
-import { Button } from "@heroui/react/button"
-import { Card } from "@heroui/react/card"
-import { Chip } from "@heroui/react/chip"
-import { Member } from "@/types/members/types"
-import { motion, AnimatePresence } from "framer-motion"
-import MembersStatusBadge from "./MembersStatusBadge"
-import TierBadge from "@/components/ui/TierBadge"
 import { useEffect, useRef, useState } from "react"
-import AdminPagination from "@/components/superAdmin/AdminPagination"
-import { MemberStatus, MemberTier } from "@/types/members/types"
 import {
   useAssignSponsorMutation,
   useDeleteMemberMutation,
@@ -17,8 +8,18 @@ import {
   useLazyGetMembersQuery,
   useUpdateMemberMutation,
 } from "@/store/api/membersApi"
+import { Button } from "@heroui/react/button"
+import { Card } from "@heroui/react/card"
+import { Chip } from "@heroui/react/chip"
+import { AnimatePresence, motion } from "framer-motion"
 import { createPortal } from "react-dom"
+
+import { Member, MemberStatus, MemberTier } from "@/types/members/types"
+import TierBadge from "@/components/ui/TierBadge"
+import AdminPagination from "@/components/superAdmin/AdminPagination"
 import DataTableShell from "@/components/superAdmin/DataTableShell"
+
+import MembersStatusBadge from "./MembersStatusBadge"
 
 const avatarColors = [
   "bg-teal-500",
@@ -420,7 +421,7 @@ function EditMemberModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[120] bg-slate-900/50 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-[120] bg-slate-900/50 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <motion.div
@@ -428,13 +429,13 @@ function EditMemberModal({
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 10, scale: 0.98 }}
         transition={{ duration: 0.2 }}
-        className="mx-auto mt-8 flex w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 max-h-[90vh]"
+        className="mx-auto mt-8 flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="border-b border-slate-100 dark:border-slate-800 bg-[linear-gradient(135deg,#f8fafc,#ffffff)] px-6 py-5 dark:border-slate-800 dark:bg-[linear-gradient(135deg,rgba(15,23,42,0.98),rgba(30,41,59,0.98))]">
+        <div className="border-b border-slate-100 bg-[linear-gradient(135deg,#f8fafc,#ffffff)] px-6 py-5 dark:border-slate-800 dark:bg-[linear-gradient(135deg,rgba(15,23,42,0.98),rgba(30,41,59,0.98))]">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-600">
+              <p className="text-xs font-semibold tracking-[0.2em] text-teal-600 uppercase">
                 Edit Member
               </p>
               <h3 className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100">
@@ -454,8 +455,8 @@ function EditMemberModal({
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-1 flex-col min-h-0">
-          <div className="flex-1 min-h-0 overflow-y-auto space-y-5 px-6 py-5">
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
             {message && (
               <div
                 className={`rounded-2xl border px-4 py-3 text-sm ${message.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-rose-200 bg-rose-50 text-rose-700"}`}
@@ -466,51 +467,51 @@ function EditMemberModal({
 
             <div className="grid gap-4 md:grid-cols-2">
               <label className="block">
-                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <span className="mb-1.5 block text-xs font-semibold tracking-wide text-slate-500 uppercase">
                   Full Name
                 </span>
                 <input
                   value={form.name}
                   onChange={(e) => updateField("name", e.target.value)}
-                  className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 outline-none transition-all duration-200 focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
+                  className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 transition-all duration-200 outline-none focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <span className="mb-1.5 block text-xs font-semibold tracking-wide text-slate-500 uppercase">
                   Username
                 </span>
                 <input
                   value={form.username}
                   onChange={(e) => updateField("username", e.target.value)}
-                  className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 outline-none transition-all duration-200 focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
+                  className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 transition-all duration-200 outline-none focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
                 />
               </label>
               <label className="block md:col-span-2">
-                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <span className="mb-1.5 block text-xs font-semibold tracking-wide text-slate-500 uppercase">
                   Email
                 </span>
                 <input
                   type="email"
                   value={form.email}
                   onChange={(e) => updateField("email", e.target.value)}
-                  className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 outline-none transition-all duration-200 focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
+                  className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 transition-all duration-200 outline-none focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
                 />
               </label>
               <label className="block md:col-span-2">
-                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <span className="mb-1.5 block text-xs font-semibold tracking-wide text-slate-500 uppercase">
                   Contact Number
                 </span>
                 <input
                   value={form.contactNumber}
                   onChange={(e) => updateField("contactNumber", e.target.value)}
-                  className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 outline-none transition-all duration-200 focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
+                  className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 transition-all duration-200 outline-none focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
                 />
               </label>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
               <label className="block">
-                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <span className="mb-1.5 block text-xs font-semibold tracking-wide text-slate-500 uppercase">
                   Status
                 </span>
                 <select
@@ -518,7 +519,7 @@ function EditMemberModal({
                   onChange={(e) =>
                     updateField("status", e.target.value as MemberStatus)
                   }
-                  className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 outline-none transition-all duration-200 focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:focus:border-sky-400/60 dark:focus:bg-white/18"
+                  className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 transition-all duration-200 outline-none focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:focus:border-sky-400/60 dark:focus:bg-white/18"
                 >
                   <option value="active">Active</option>
                   <option value="pending">Pending</option>
@@ -527,7 +528,7 @@ function EditMemberModal({
                 </select>
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <span className="mb-1.5 block text-xs font-semibold tracking-wide text-slate-500 uppercase">
                   Tier
                 </span>
                 <select
@@ -535,7 +536,7 @@ function EditMemberModal({
                   onChange={(e) =>
                     updateField("tier", e.target.value as MemberTier)
                   }
-                  className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 outline-none transition-all duration-200 focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:focus:border-sky-400/60 dark:focus:bg-white/18"
+                  className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 transition-all duration-200 outline-none focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:focus:border-sky-400/60 dark:focus:bg-white/18"
                 >
                   <option value="Home Starter">Home Starter</option>
                   <option value="Home Builder">Home Builder</option>
@@ -551,7 +552,7 @@ function EditMemberModal({
             <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/50">
               <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-600 dark:text-teal-400">
+                  <p className="text-xs font-semibold tracking-[0.18em] text-teal-600 uppercase dark:text-teal-400">
                     Sponsor / Upline
                   </p>
                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -568,7 +569,7 @@ function EditMemberModal({
 
               <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto]">
                 <label className="block">
-                  <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <span className="mb-1.5 block text-xs font-semibold tracking-wide text-slate-500 uppercase">
                     Sponsor Username
                   </span>
                   <input
@@ -577,7 +578,7 @@ function EditMemberModal({
                       handleSponsorUsernameChange(e.target.value)
                     }
                     placeholder="Enter sponsor username"
-                    className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 outline-none transition-all duration-200 focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
+                    className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 transition-all duration-200 outline-none focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
                   />
                   {sponsorValidationStatus === "checking" && (
                     <p className="mt-2 flex items-center gap-2 text-xs font-medium text-sky-600 dark:text-sky-300">
@@ -615,68 +616,68 @@ function EditMemberModal({
 
             <div className="grid gap-4 md:grid-cols-2">
               <label className="block md:col-span-2">
-                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <span className="mb-1.5 block text-xs font-semibold tracking-wide text-slate-500 uppercase">
                   Address Line
                 </span>
                 <input
                   value={form.addressLine}
                   onChange={(e) => updateField("addressLine", e.target.value)}
-                  className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 outline-none transition-all duration-200 focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
+                  className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 transition-all duration-200 outline-none focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <span className="mb-1.5 block text-xs font-semibold tracking-wide text-slate-500 uppercase">
                   Barangay
                 </span>
                 <input
                   value={form.barangay}
                   onChange={(e) => updateField("barangay", e.target.value)}
-                  className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 outline-none transition-all duration-200 focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
+                  className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 transition-all duration-200 outline-none focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <span className="mb-1.5 block text-xs font-semibold tracking-wide text-slate-500 uppercase">
                   City
                 </span>
                 <input
                   value={form.city}
                   onChange={(e) => updateField("city", e.target.value)}
-                  className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 outline-none transition-all duration-200 focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
+                  className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 transition-all duration-200 outline-none focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <span className="mb-1.5 block text-xs font-semibold tracking-wide text-slate-500 uppercase">
                   Province
                 </span>
                 <input
                   value={form.province}
                   onChange={(e) => updateField("province", e.target.value)}
-                  className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 outline-none transition-all duration-200 focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
+                  className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 transition-all duration-200 outline-none focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <span className="mb-1.5 block text-xs font-semibold tracking-wide text-slate-500 uppercase">
                   Region
                 </span>
                 <input
                   value={form.region}
                   onChange={(e) => updateField("region", e.target.value)}
-                  className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 outline-none transition-all duration-200 focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
+                  className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 transition-all duration-200 outline-none focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <span className="mb-1.5 block text-xs font-semibold tracking-wide text-slate-500 uppercase">
                   Zip Code
                 </span>
                 <input
                   value={form.zipCode}
                   onChange={(e) => updateField("zipCode", e.target.value)}
-                  className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 outline-none transition-all duration-200 focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
+                  className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 transition-all duration-200 outline-none focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
                 />
               </label>
             </div>
           </div>
-          <div className="shrink-0 flex items-center justify-end gap-3 border-t border-slate-100 bg-white px-6 py-4 dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex shrink-0 items-center justify-end gap-3 border-t border-slate-100 bg-white px-6 py-4 dark:border-slate-800 dark:bg-slate-900">
             <Button
               type="button"
               onPress={onClose}
@@ -794,9 +795,9 @@ function MemberDetailsModal({
         className="my-auto flex max-h-[88vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 dark:border-slate-800 px-5 py-4">
+        <div className="flex items-start justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-600">
+            <p className="text-xs font-semibold tracking-[0.18em] text-teal-600 uppercase">
               Member Details
             </p>
             <h3 className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100">
@@ -808,7 +809,7 @@ function MemberDetailsModal({
           </Button>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto px-5 py-5">
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
           <div className="mb-5 flex items-center gap-4 rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/60">
             {member.avatar ? (
               <button
@@ -819,12 +820,12 @@ function MemberDetailsModal({
               >
                 <MemberAvatar
                   member={member}
-                  className="h-16 w-16 rounded-full ring-2 ring-white shadow"
+                  className="h-16 w-16 rounded-full shadow ring-2 ring-white"
                   initialsClassName="text-white font-bold text-lg"
                 />
-                <div className="absolute inset-0 rounded-full bg-black/0 transition-colors group-hover:bg-black/30 flex items-center justify-center">
+                <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/0 transition-colors group-hover:bg-black/30">
                   <svg
-                    className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow"
+                    className="h-5 w-5 text-white opacity-0 drop-shadow transition-opacity group-hover:opacity-100"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -841,7 +842,7 @@ function MemberDetailsModal({
             ) : (
               <MemberAvatar
                 member={member}
-                className="h-16 w-16 rounded-full shrink-0 ring-2 ring-white shadow"
+                className="h-16 w-16 shrink-0 rounded-full shadow ring-2 ring-white"
                 initialsClassName="text-white font-bold text-lg"
               />
             )}
@@ -877,7 +878,7 @@ function MemberDetailsModal({
           <div className="mb-4 rounded-xl border border-sky-100 bg-sky-50/70 p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-600">
+                <p className="text-xs font-semibold tracking-[0.18em] text-sky-600 uppercase">
                   Security
                 </p>
                 <p className="mt-1 text-sm font-semibold text-slate-900">
@@ -900,7 +901,7 @@ function MemberDetailsModal({
 
             {generatedPassword ? (
               <div className="mt-4 rounded-2xl border border-sky-200 bg-white px-4 py-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-500">
+                <p className="text-[11px] font-semibold tracking-[0.18em] text-sky-500 uppercase">
                   Temporary Password
                 </p>
                 <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
@@ -1041,14 +1042,14 @@ function MemberDetailsModal({
                   transform: `scale(${zoom})`,
                   transition: "transform 0.22s cubic-bezier(0.32,0.72,0,1)",
                 }}
-                className="max-h-[72vh] max-w-[80vw] rounded-2xl object-contain shadow-2xl cursor-zoom-in select-none"
+                className="max-h-[72vh] max-w-[80vw] cursor-zoom-in rounded-2xl object-contain shadow-2xl select-none"
               />
 
               <div className="flex items-center gap-3 rounded-2xl border border-white/15 bg-white/10 px-4 py-2 backdrop-blur-sm">
                 <button
                   type="button"
                   onClick={() => setZoom((prev) => Math.max(1, prev - 0.5))}
-                  className="text-white/70 hover:text-white transition-colors text-lg font-bold leading-none"
+                  className="text-lg leading-none font-bold text-white/70 transition-colors hover:text-white"
                   aria-label="Zoom out"
                 >
                   −
@@ -1059,7 +1060,7 @@ function MemberDetailsModal({
                 <button
                   type="button"
                   onClick={() => setZoom((prev) => Math.min(4, prev + 0.5))}
-                  className="text-white/70 hover:text-white transition-colors text-lg font-bold leading-none"
+                  className="text-lg leading-none font-bold text-white/70 transition-colors hover:text-white"
                   aria-label="Zoom in"
                 >
                   +
@@ -1068,7 +1069,7 @@ function MemberDetailsModal({
                   <button
                     type="button"
                     onClick={() => setZoom(1)}
-                    className="ml-1 text-xs text-white/50 hover:text-white/90 transition-colors"
+                    className="ml-1 text-xs text-white/50 transition-colors hover:text-white/90"
                   >
                     Reset
                   </button>
@@ -1082,7 +1083,7 @@ function MemberDetailsModal({
                 setPhotoOpen(false)
                 setZoom(1)
               }}
-              className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/70 backdrop-blur-sm transition-all hover:bg-white/20 hover:text-white"
+              className="absolute top-5 right-5 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/70 backdrop-blur-sm transition-all hover:bg-white/20 hover:text-white"
               aria-label="Close"
             >
               <svg
@@ -1201,7 +1202,7 @@ function MemberMenuPortal({
         className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
       >
         <svg
-          className="w-3.5 h-3.5"
+          className="h-3.5 w-3.5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -1314,7 +1315,7 @@ function MemberMenuPortal({
                 </button>
 
                 <div className="my-2 border-t border-slate-100 dark:border-slate-800" />
-                <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                <p className="px-3 pb-1 text-[11px] font-semibold tracking-[0.18em] text-slate-400 uppercase dark:text-slate-500">
                   Quick Status
                 </p>
                 {quickActions.map((a) => (
@@ -1538,37 +1539,37 @@ const MembersTable = ({
       <table className="min-w-full text-sm">
         <thead className="sticky top-0 z-10">
           <tr className="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/70">
-            <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">
+            <th className="px-5 py-3.5 text-left text-xs font-semibold tracking-[0.16em] text-slate-500 uppercase dark:text-slate-300">
               Member
             </th>
-            <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-300">
+            <th className="px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
               Status
             </th>
-            <th className="hidden px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-300 sm:table-cell">
+            <th className="hidden px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase sm:table-cell dark:text-slate-300">
               Tier
             </th>
-            <th className="hidden px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-300 md:table-cell">
+            <th className="hidden px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase md:table-cell dark:text-slate-300">
               Orders
             </th>
-            <th className="hidden px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-300 2xl:table-cell">
+            <th className="hidden px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase 2xl:table-cell dark:text-slate-300">
               Address
             </th>
-            <th className="hidden px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-300 md:table-cell">
+            <th className="hidden px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase md:table-cell dark:text-slate-300">
               Total Spent
             </th>
-            <th className="hidden px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-300 lg:table-cell">
+            <th className="hidden px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase lg:table-cell dark:text-slate-300">
               Earnings
             </th>
-            <th className="hidden px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-300 xl:table-cell">
+            <th className="hidden px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase xl:table-cell dark:text-slate-300">
               Wallet Credits
             </th>
-            <th className="hidden px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-300 lg:table-cell">
+            <th className="hidden px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase lg:table-cell dark:text-slate-300">
               Referrals
             </th>
-            <th className="hidden px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-300 xl:table-cell">
+            <th className="hidden px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase xl:table-cell dark:text-slate-300">
               Joined
             </th>
-            <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-300">
+            <th className="px-5 py-3.5 text-right text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
               Actions
             </th>
           </tr>
@@ -1599,19 +1600,19 @@ const MembersTable = ({
                     <div className="flex items-center gap-3">
                       <MemberAvatar
                         member={member}
-                        className="h-10 w-10 rounded-full shrink-0 shadow-sm ring-2 ring-white dark:ring-slate-800"
+                        className="h-10 w-10 shrink-0 rounded-full shadow-sm ring-2 ring-white dark:ring-slate-800"
                         initialsClassName="text-white font-bold text-xs"
                       />
                       <div className="min-w-0 space-y-1">
                         <div className="flex items-center gap-2">
-                          <p className="truncate text-[15px] font-semibold leading-5 text-slate-800 dark:text-slate-100">
+                          <p className="truncate text-[15px] leading-5 font-semibold text-slate-800 dark:text-slate-100">
                             {member.name}
                           </p>
                           {recentMeta.isRecent && (
                             <Chip
                               size="sm"
                               variant="soft"
-                              className="h-5 border border-blue-100 bg-blue-50 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-700"
+                              className="h-5 border border-blue-100 bg-blue-50 px-2 text-[10px] font-semibold tracking-[0.16em] text-blue-700 uppercase"
                             >
                               New
                             </Chip>
@@ -1644,40 +1645,40 @@ const MembersTable = ({
                   </td>
 
                   {/* Tier */}
-                  <td className="px-5 py-3.5 hidden sm:table-cell">
+                  <td className="hidden px-5 py-3.5 sm:table-cell">
                     <TierBadge tier={member.tier} />
                   </td>
 
                   {/* Orders */}
-                  <td className="px-5 py-3.5 hidden md:table-cell">
+                  <td className="hidden px-5 py-3.5 md:table-cell">
                     <span className="font-medium text-slate-700 dark:text-slate-200">
                       {member.orders}
                     </span>
                   </td>
 
                   {/* Address */}
-                  <td className="px-5 py-3.5 hidden 2xl:table-cell">
+                  <td className="hidden px-5 py-3.5 2xl:table-cell">
                     <span className="block max-w-xs truncate text-[12px] leading-5 text-slate-400 dark:text-slate-300">
                       {member.fullAddress || "No address provided"}
                     </span>
                   </td>
 
                   {/* Total Spent */}
-                  <td className="px-5 py-3.5 hidden md:table-cell">
-                    <span className="text-slate-800 font-semibold">
+                  <td className="hidden px-5 py-3.5 md:table-cell">
+                    <span className="font-semibold text-slate-800">
                       {formatPhp(member.totalSpent)}
                     </span>
                   </td>
 
                   {/* Earnings */}
-                  <td className="px-5 py-3.5 hidden lg:table-cell">
-                    <span className="text-teal-700 font-semibold">
+                  <td className="hidden px-5 py-3.5 lg:table-cell">
+                    <span className="font-semibold text-teal-700">
                       {formatPhp(member.earnings)}
                     </span>
                   </td>
 
                   {/* Wallet Credits */}
-                  <td className="px-5 py-3.5 hidden xl:table-cell">
+                  <td className="hidden px-5 py-3.5 xl:table-cell">
                     <div className="flex flex-col gap-0.5 leading-tight">
                       <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
@@ -1693,7 +1694,7 @@ const MembersTable = ({
                   </td>
 
                   {/* Referrals */}
-                  <td className="px-5 py-3.5 hidden lg:table-cell">
+                  <td className="hidden px-5 py-3.5 lg:table-cell">
                     <div className="flex items-center gap-1.5">
                       <span className="font-medium text-slate-700 dark:text-slate-200">
                         {member.referrals}
@@ -1705,7 +1706,7 @@ const MembersTable = ({
                   </td>
 
                   {/* Joined */}
-                  <td className="px-5 py-3.5 hidden xl:table-cell">
+                  <td className="hidden px-5 py-3.5 xl:table-cell">
                     <div className="flex flex-col">
                       <span className="text-[12px] font-medium text-slate-300 dark:text-slate-200">
                         {registeredDate}
@@ -1734,7 +1735,7 @@ const MembersTable = ({
                         onPress={() => setSelectedMember(member)}
                       >
                         <svg
-                          className="w-3.5 h-3.5"
+                          className="h-3.5 w-3.5"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -1761,7 +1762,7 @@ const MembersTable = ({
                         onPress={() => setEditingMember(member)}
                       >
                         <svg
-                          className="w-3.5 h-3.5"
+                          className="h-3.5 w-3.5"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -1782,7 +1783,7 @@ const MembersTable = ({
                         onPress={() => setDeleteTarget(member)}
                       >
                         <svg
-                          className="w-3.5 h-3.5"
+                          className="h-3.5 w-3.5"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -1840,7 +1841,7 @@ const MembersTable = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[130] bg-slate-900/55 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-[130] bg-slate-900/55 p-4 backdrop-blur-sm"
             onClick={() => setBanTarget(null)}
           >
             <motion.div
@@ -1883,7 +1884,7 @@ const MembersTable = ({
                   </svg>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                  <p className="text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase dark:text-slate-500">
                     Member Account
                   </p>
                   <h3 className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100">
@@ -1949,7 +1950,7 @@ const MembersTable = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[140] bg-slate-900/55 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-[140] bg-slate-900/55 p-4 backdrop-blur-sm"
             onClick={() => setDeleteTarget(null)}
           >
             <motion.div
@@ -1977,7 +1978,7 @@ const MembersTable = ({
                   </svg>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                  <p className="text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase dark:text-slate-500">
                     Delete Member
                   </p>
                   <h3 className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100">

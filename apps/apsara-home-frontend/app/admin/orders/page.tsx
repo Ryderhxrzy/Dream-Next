@@ -1,9 +1,10 @@
-import { redirect } from "next/navigation"
-import { getServerSession } from "next-auth"
-import AdminOrdersPageMain from "@/components/superAdmin/orders/AdminOrdersPageMain"
-import { buildPageMetadata } from "@/app/seo"
 import { adminAuthOptions } from "@/libs/adminAuth"
 import type { AdminOrdersResponse } from "@/store/api/adminOrdersApi"
+import { getServerSession } from "next-auth"
+import { redirect } from "next/navigation"
+
+import AdminOrdersPageMain from "@/components/superAdmin/orders/AdminOrdersPageMain"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Admin Orders",

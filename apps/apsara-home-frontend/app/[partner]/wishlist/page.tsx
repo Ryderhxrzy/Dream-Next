@@ -1,10 +1,11 @@
-import { buildPageMetadata } from "@/app/seo"
 import { authOptions } from "@/libs/auth"
+import { getPartnerStorefrontBySlug } from "@/libs/partnerStorefrontServer"
 import { getNavbarCategories } from "@/libs/serverStorefront"
 import { getServerSession } from "next-auth"
 import { notFound, redirect } from "next/navigation"
-import { getPartnerStorefrontBySlug } from "@/libs/partnerStorefrontServer"
+
 import Wishlist from "@/components/Wishlist"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Wishlist",

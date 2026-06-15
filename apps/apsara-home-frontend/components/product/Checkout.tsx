@@ -20,12 +20,12 @@ const Checkout = () => {
 
   return (
     <div className="container mx-auto px-4 py-10">
-      <div className="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
+      <div className="mx-auto grid max-w-3xl grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
           <p className="text-xs font-bold text-sky-500 uppercase">
             Test Checkout
           </p>
-          <h1 className="text-xl font-bold text-slate-900 mt-1">{item}</h1>
+          <h1 className="mt-1 text-xl font-bold text-slate-900">{item}</h1>
 
           <div className="mt-4 space-y-2 text-sm">
             <div className="flex justify-between">
@@ -50,14 +50,14 @@ const Checkout = () => {
           </p>
         </div>
 
-        <div className="bg-slate-900 text-white rounded-2xl p-5">
+        <div className="rounded-2xl bg-slate-900 p-5 text-white">
           <p className="text-sm font-semibold">Testing Mode</p>
-          <p className="text-xs text-slate-300 mt-2">
+          <p className="mt-2 text-xs text-slate-300">
             No webhook yet. Do not mark as paid automatically in production.
           </p>
           <Link
             href="/"
-            className="inline-block mt-4 text-sm text-sky-300 hover:text-sky-200"
+            className="mt-4 inline-block text-sm text-sky-300 hover:text-sky-200"
           >
             Back to Home
           </Link>

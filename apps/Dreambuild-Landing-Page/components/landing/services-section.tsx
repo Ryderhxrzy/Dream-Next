@@ -1,22 +1,32 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import Image from "next/image";
-import { services as defaultServices } from "@/lib/landing-data";
-import { FadeUp, SlideInLeft, SlideInRight, StaggerContainer, StaggerItem } from "@/components/ui/motion";
-import { motion } from "framer-motion";
+import { motion } from "framer-motion"
+import Image from "next/image"
+import Link from "next/link"
+
+import { services as defaultServices } from "@/lib/landing-data"
+import {
+  FadeUp,
+  SlideInLeft,
+  SlideInRight,
+  StaggerContainer,
+  StaggerItem,
+} from "@/components/ui/motion"
 
 const serviceImages = [
   "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=900&q=80",
   "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=900&q=80",
   "https://images.unsplash.com/photo-1631679706909-1844bbd07221?w=900&q=80",
-];
+]
 
-export function ServicesSection({ services = defaultServices }: { services?: typeof defaultServices }) {
+export function ServicesSection({
+  services = defaultServices,
+}: {
+  services?: typeof defaultServices
+}) {
   return (
     <section id="services" className="overflow-hidden py-24 lg:py-36">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-
         {/* Header */}
         <FadeUp className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -29,28 +39,29 @@ export function ServicesSection({ services = defaultServices }: { services?: typ
             </h2>
           </div>
           <p className="max-w-sm text-sm leading-relaxed text-[var(--muted)] lg:text-right">
-            Three focused service areas, each designed to move your space forward with clarity and intention.
+            Three focused service areas, each designed to move your space
+            forward with clarity and intention.
           </p>
         </FadeUp>
 
         {/* Services */}
-        <div className="mt-20 lg:mt-28 space-y-32 lg:space-y-40">
+        <div className="mt-20 space-y-32 lg:mt-28 lg:space-y-40">
           {services.map((service, index) => {
-            const isEven = index % 2 === 1;
+            const isEven = index % 2 === 1
             return (
               <div key={service.id} className="relative">
-
                 {/* Oversized background number */}
                 <div
-                  className={`pointer-events-none absolute -top-10 select-none text-[clamp(8rem,20vw,16rem)] font-bold leading-none tracking-tighter text-[var(--border)] opacity-30 ${
+                  className={`pointer-events-none absolute -top-10 text-[clamp(8rem,20vw,16rem)] leading-none font-bold tracking-tighter text-[var(--border)] opacity-30 select-none ${
                     isEven ? "right-0" : "left-0"
                   }`}
                 >
                   {service.id}
                 </div>
 
-                <div className={`relative grid items-center gap-12 lg:grid-cols-[1fr_1fr] lg:gap-16 ${isEven ? "" : ""}`}>
-
+                <div
+                  className={`relative grid items-center gap-12 lg:grid-cols-[1fr_1fr] lg:gap-16 ${isEven ? "" : ""}`}
+                >
                   {/* Image */}
                   {isEven ? (
                     <>
@@ -59,50 +70,77 @@ export function ServicesSection({ services = defaultServices }: { services?: typ
                         <ServiceContent service={service} />
                       </SlideInLeft>
                       <SlideInRight delay={0.15} className="lg:order-2">
-                        <ServiceImage src={serviceImages[index] ?? serviceImages[index % serviceImages.length]} alt={service.title} id={service.id} />
+                        <ServiceImage
+                          src={
+                            serviceImages[index] ??
+                            serviceImages[index % serviceImages.length]
+                          }
+                          alt={service.title}
+                          id={service.id}
+                        />
                       </SlideInRight>
                     </>
                   ) : (
                     <>
                       <SlideInLeft className="lg:order-1">
-                        <ServiceImage src={serviceImages[index] ?? serviceImages[index % serviceImages.length]} alt={service.title} id={service.id} />
+                        <ServiceImage
+                          src={
+                            serviceImages[index] ??
+                            serviceImages[index % serviceImages.length]
+                          }
+                          alt={service.title}
+                          id={service.id}
+                        />
                       </SlideInLeft>
-                      <SlideInRight delay={0.15} className="flex flex-col justify-center lg:order-2">
+                      <SlideInRight
+                        delay={0.15}
+                        className="flex flex-col justify-center lg:order-2"
+                      >
                         <ServiceContent service={service} />
                       </SlideInRight>
                     </>
                   )}
                 </div>
               </div>
-            );
+            )
           })}
         </div>
 
         {/* Bottom CTA */}
-        <FadeUp delay={0.1} className="mt-24 flex flex-col items-center gap-5 border-t border-[var(--border)] pt-16 text-center lg:mt-32">
+        <FadeUp
+          delay={0.1}
+          className="mt-24 flex flex-col items-center gap-5 border-t border-[var(--border)] pt-16 text-center lg:mt-32"
+        >
           <p className="text-lg font-medium text-[var(--foreground)]">
             Not sure which service fits your project?
           </p>
           <Link
             href="#contact"
-            className="inline-flex items-center gap-2 rounded-full bg-[var(--dark)] px-8 py-3.5 text-sm font-medium text-white transition-all hover:bg-[var(--dark-muted)] hover:scale-105"
+            className="inline-flex items-center gap-2 rounded-full bg-[var(--dark)] px-8 py-3.5 text-sm font-medium text-white transition-all hover:scale-105 hover:bg-[var(--dark-muted)]"
           >
             Book a Free Consult
             <span>→</span>
           </Link>
         </FadeUp>
-
       </div>
     </section>
-  );
+  )
 }
 
-function ServiceImage({ src, alt, id }: { src: string; alt: string; id: string }) {
+function ServiceImage({
+  src,
+  alt,
+  id,
+}: {
+  src: string
+  alt: string
+  id: string
+}) {
   return (
     <motion.div
       whileHover={{ scale: 1.01 }}
       transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-      className="group relative overflow-hidden rounded-3xl aspect-[4/3] shadow-xl"
+      className="group relative aspect-[4/3] overflow-hidden rounded-3xl shadow-xl"
     >
       <Image
         src={src}
@@ -114,14 +152,20 @@ function ServiceImage({ src, alt, id }: { src: string; alt: string; id: string }
       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-transparent" />
 
       {/* Number badge */}
-      <div className="absolute top-5 right-5 flex h-12 w-12 items-center justify-center rounded-full bg-white/90 backdrop-blur-sm shadow-md">
-        <span className="text-sm font-bold tracking-tight text-[var(--foreground)]">{id}</span>
+      <div className="absolute top-5 right-5 flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm">
+        <span className="text-sm font-bold tracking-tight text-[var(--foreground)]">
+          {id}
+        </span>
       </div>
     </motion.div>
-  );
+  )
 }
 
-function ServiceContent({ service }: { service: typeof defaultServices[number] }) {
+function ServiceContent({
+  service,
+}: {
+  service: (typeof defaultServices)[number]
+}) {
   return (
     <div>
       <p className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
@@ -145,11 +189,13 @@ function ServiceContent({ service }: { service: typeof defaultServices[number] }
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-white text-xs font-medium text-[var(--foreground)]">
                 {String(i + 1).padStart(2, "0")}
               </span>
-              <p className="pt-0.5 text-sm leading-relaxed text-[var(--muted)]">{bullet}</p>
+              <p className="pt-0.5 text-sm leading-relaxed text-[var(--muted)]">
+                {bullet}
+              </p>
             </div>
           </StaggerItem>
         ))}
       </StaggerContainer>
     </div>
-  );
+  )
 }

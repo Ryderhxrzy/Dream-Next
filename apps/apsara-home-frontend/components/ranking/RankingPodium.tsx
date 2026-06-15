@@ -1,10 +1,11 @@
 "use client"
 
 import { motion } from "framer-motion"
+
 import {
-  TopEarner,
-  php,
   getInitials,
+  php,
+  TopEarner,
 } from "@/components/superAdmin/members/topEarners/types"
 
 interface PodiumCardProps {
@@ -198,7 +199,7 @@ function PodiumCard({ earner, rank, isActive }: PodiumCardProps) {
       >
         {/* Decorative dot pattern top-right */}
         <div
-          className="pointer-events-none absolute right-0 top-0 h-24 w-24 opacity-20"
+          className="pointer-events-none absolute top-0 right-0 h-24 w-24 opacity-20"
           style={{
             backgroundImage:
               "radial-gradient(#1E293B 1.5px, transparent 1.5px)",
@@ -208,7 +209,7 @@ function PodiumCard({ earner, rank, isActive }: PodiumCardProps) {
 
         {/* Rank badge */}
         <div
-          className="absolute left-4 top-4 rounded-full border-2 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em]"
+          className="absolute top-4 left-4 rounded-full border-2 px-3 py-1 text-[10px] font-black tracking-[0.2em] uppercase"
           style={{
             borderColor: "#1E293B",
             backgroundColor: style.badge,
@@ -261,7 +262,7 @@ function PodiumCard({ earner, rank, isActive }: PodiumCardProps) {
             </motion.div>
 
             <h3
-              className={`mt-3 font-extrabold leading-tight ${style.nameSize}`}
+              className={`mt-3 leading-tight font-extrabold ${style.nameSize}`}
               style={{
                 fontFamily: '"Outfit", system-ui, sans-serif',
                 color: "#1E293B",
@@ -284,7 +285,7 @@ function PodiumCard({ earner, rank, isActive }: PodiumCardProps) {
           >
             <div className="flex items-end justify-between gap-2">
               <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                <p className="text-[10px] font-bold tracking-[0.2em] text-slate-500 uppercase">
                   Total Earnings
                 </p>
                 <p
@@ -298,7 +299,7 @@ function PodiumCard({ earner, rank, isActive }: PodiumCardProps) {
                 </p>
               </div>
               <div className="shrink-0 text-right">
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                <p className="text-[10px] font-bold tracking-[0.2em] text-slate-500 uppercase">
                   Referrals
                 </p>
                 <p
@@ -346,7 +347,7 @@ export default function RankingPodium({
           Top 3
         </h2>
         <div
-          className="flex items-center gap-1.5 rounded-full border-2 px-3 py-1 text-[11px] font-bold uppercase tracking-widest"
+          className="flex items-center gap-1.5 rounded-full border-2 px-3 py-1 text-[11px] font-bold tracking-widest uppercase"
           style={{
             borderColor: "#34D399",
             backgroundColor: "#34D39920",

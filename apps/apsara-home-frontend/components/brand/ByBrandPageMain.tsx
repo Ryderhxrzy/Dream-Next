@@ -1,31 +1,30 @@
 "use client"
 
-import Link from "next/link"
-import Image from "next/image"
-import { useMemo, useState, useRef, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { useSearchParams } from "next/navigation"
-import { usePathname } from "next/navigation"
-import { useSession } from "next-auth/react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { useAddToCartMutation } from "@/store/api/cartApi"
+import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
 import { useGetPublicProductBrandsQuery } from "@/store/api/productBrandsApi"
 import {
-  useGetPublicProductsQuery,
   useGetProductBrandQuery,
+  useGetPublicProductsQuery,
   useGetPublicZqProductsQuery,
   type ZqCachedProduct,
 } from "@/store/api/productsApi"
-import { useAddToCartMutation } from "@/store/api/cartApi"
-import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
 import { Skeleton } from "@heroui/react/skeleton"
+import { useSession } from "next-auth/react"
+import Image from "next/image"
+import Link from "next/link"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import toast from "react-hot-toast"
+
 import OutlineButton from "@/components/ui/buttons/OutlineButton"
 import PrimaryButton from "@/components/ui/buttons/PrimaryButton"
-import Footer from "@/components/landing-page/Footer"
-import ScrollToTop from "@/components/landing-page/ScrollToTop"
+import ShareModal from "@/components/ui/ShareModal"
 import ItemCard from "@/components/item/ItemCard"
 import ProductFilter, { FilterState } from "@/components/item/ProductFilter"
 import TopFilter from "@/components/item/TopFilter"
-import ShareModal from "@/components/ui/ShareModal"
-import toast from "react-hot-toast"
+import Footer from "@/components/landing-page/Footer"
+import ScrollToTop from "@/components/landing-page/ScrollToTop"
 
 const toSlug = (value: string) =>
   value
@@ -57,7 +56,7 @@ const zqComparePrice = (product: ZqCachedProduct) =>
   Number(product.priceMaxCents ?? product.priceMinCents ?? 0) / 100
 
 const renderAdBlock = () => (
-  <div className="mt-4 rounded-2xl overflow-hidden aspect-square border border-slate-100 bg-slate-50">
+  <div className="mt-4 aspect-square overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
     <video
       className="h-full w-full object-cover"
       src="/loginpageVideo/afhome.mp4"
@@ -87,10 +86,10 @@ function ZqBrandProductCard({
       href={`/global-product/${product.id}`}
       className="group relative flex min-h-[360px] flex-col overflow-hidden rounded-lg border border-sky-100 bg-white transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-lg dark:border-gray-700 dark:bg-gray-800"
     >
-      <div className="absolute left-0 top-0 z-10 rounded-br-sm bg-sky-500 px-2 py-1 text-[10px] font-bold text-white">
+      <div className="absolute top-0 left-0 z-10 rounded-br-sm bg-sky-500 px-2 py-1 text-[10px] font-bold text-white">
         Register to get 6% discount
       </div>
-      <div className="absolute right-2 top-2 z-10 flex flex-col gap-2">
+      <div className="absolute top-2 right-2 z-10 flex flex-col gap-2">
         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-gray-500 shadow-md ring-1 ring-gray-100 transition group-hover:text-sky-500">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -148,10 +147,10 @@ function ZqBrandProductCard({
         </div>
       </div>
       <div className="flex flex-1 flex-col border-t border-gray-100 p-3">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+        <p className="text-[11px] font-semibold tracking-wide text-gray-500 uppercase">
           {brandName}
         </p>
-        <h3 className="mt-1 line-clamp-2 min-h-[40px] text-sm font-semibold uppercase leading-snug text-slate-800 dark:text-gray-100">
+        <h3 className="mt-1 line-clamp-2 min-h-[40px] text-sm leading-snug font-semibold text-slate-800 uppercase dark:text-gray-100">
           {product.subject}
         </h3>
         <div className="mt-auto flex flex-wrap items-end gap-2 pt-3">
@@ -200,17 +199,17 @@ function ZqBrandItemCard({
   return (
     <Link
       href={`/global-product/${product.id}`}
-      className="flex flex-col group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:border-sky-500 dark:hover:border-sky-400 transition-colors cursor-pointer"
+      className="group flex cursor-pointer flex-col overflow-hidden rounded-lg border border-gray-200 bg-white transition-colors hover:border-sky-500 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-sky-400"
     >
-      <div className="relative aspect-square w-full bg-gray-100 dark:bg-gray-700 overflow-hidden border-b border-gray-200 dark:border-gray-700">
-        <div className="absolute top-2 right-2 flex flex-col gap-2 z-10">
+      <div className="relative aspect-square w-full overflow-hidden border-b border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-700">
+        <div className="absolute top-2 right-2 z-10 flex flex-col gap-2">
           <button
             onClick={(event) => {
               event.preventDefault()
               event.stopPropagation()
               toast.success("Added to wishlist")
             }}
-            className="p-2 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200 dark:border-gray-600 shadow-lg hover:bg-sky-500 hover:border-sky-500 dark:hover:bg-sky-500 dark:hover:border-sky-500 transition-all duration-200 cursor-pointer hover:cursor-hand"
+            className="hover:cursor-hand cursor-pointer rounded-full border border-gray-200 bg-white/90 p-2 shadow-lg backdrop-blur-md transition-all duration-200 hover:border-sky-500 hover:bg-sky-500 dark:border-gray-600 dark:bg-gray-800/90 dark:hover:border-sky-500 dark:hover:bg-sky-500"
             title="Add to Wishlist"
           >
             <svg
@@ -221,7 +220,7 @@ function ZqBrandItemCard({
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
-              className="text-gray-700 dark:text-gray-300 hover:text-white transition-colors"
+              className="text-gray-700 transition-colors hover:text-white dark:text-gray-300"
             >
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
             </svg>
@@ -240,7 +239,7 @@ function ZqBrandItemCard({
                   toast.error("Failed to copy link")
                 })
             }}
-            className="p-2 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200 dark:border-gray-600 shadow-lg hover:bg-sky-500 hover:border-sky-500 dark:hover:bg-sky-500 dark:hover:border-sky-500 transition-all duration-200 cursor-pointer hover:cursor-hand"
+            className="hover:cursor-hand cursor-pointer rounded-full border border-gray-200 bg-white/90 p-2 shadow-lg backdrop-blur-md transition-all duration-200 hover:border-sky-500 hover:bg-sky-500 dark:border-gray-600 dark:bg-gray-800/90 dark:hover:border-sky-500 dark:hover:bg-sky-500"
             title="Share"
           >
             <svg
@@ -251,7 +250,7 @@ function ZqBrandItemCard({
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
-              className="text-gray-700 dark:text-gray-300 hover:text-white transition-colors"
+              className="text-gray-700 transition-colors hover:text-white dark:text-gray-300"
             >
               <circle cx="18" cy="5" r="3" />
               <circle cx="6" cy="12" r="3" />
@@ -272,7 +271,7 @@ function ZqBrandItemCard({
 
         <div className="absolute top-0 left-0 flex flex-col">
           <div
-            className={`text-white text-xs font-bold px-2 py-1 ${showMemberPrice ? "bg-green-500" : "bg-sky-500"}`}
+            className={`px-2 py-1 text-xs font-bold text-white ${showMemberPrice ? "bg-green-500" : "bg-sky-500"}`}
           >
             {showMemberPrice
               ? `Member price · ${discount}% off`
@@ -280,7 +279,7 @@ function ZqBrandItemCard({
           </div>
         </div>
 
-        <div className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-sky-500 text-white shadow-lg transition-all duration-300 hover:bg-sky-600 sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2 sm:text-sm sm:font-semibold sm:opacity-0 sm:translate-y-2 sm:group-hover:opacity-100 sm:group-hover:translate-y-0">
+        <div className="absolute right-3 bottom-3 flex h-10 w-10 items-center justify-center rounded-full bg-sky-500 text-white shadow-lg transition-all duration-300 hover:bg-sky-600 sm:h-auto sm:w-auto sm:translate-y-2 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm sm:font-semibold sm:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="16"
@@ -298,26 +297,26 @@ function ZqBrandItemCard({
         </div>
       </div>
 
-      <div className="mt-1 flex flex-col gap-1 px-2.5 sm:px-3 py-2.5 sm:py-3">
-        <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">
+      <div className="mt-1 flex flex-col gap-1 px-2.5 py-2.5 sm:px-3 sm:py-3">
+        <p className="text-[10px] font-medium tracking-wide text-gray-500 uppercase sm:text-xs dark:text-gray-400">
           {brandName}
         </p>
-        <h3 className="line-clamp-2 text-xs sm:text-sm text-gray-800 dark:text-gray-200 leading-snug min-h-[2.5rem]">
+        <h3 className="line-clamp-2 min-h-[2.5rem] text-xs leading-snug text-gray-800 sm:text-sm dark:text-gray-200">
           {product.subject}
         </h3>
 
-        <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1 sm:gap-2">
-          <div className="flex items-baseline gap-1.5 sm:gap-2 flex-wrap">
-            <span className="text-sm sm:text-base font-bold text-sky-500 dark:text-sky-400">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
+          <div className="flex flex-wrap items-baseline gap-1.5 sm:gap-2">
+            <span className="text-sm font-bold text-sky-500 sm:text-base dark:text-sky-400">
               {formatPeso(price)}
             </span>
             {comparePrice && comparePrice > price && (
-              <span className="text-xs sm:text-sm text-gray-400 dark:text-gray-500 line-through">
+              <span className="text-xs text-gray-400 line-through sm:text-sm dark:text-gray-500">
                 {formatPeso(comparePrice)}
               </span>
             )}
           </div>
-          <span className="rounded-full border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/30 px-1 sm:px-2 py-0.5 text-[8px] sm:text-[11px] font-semibold text-blue-700 dark:text-blue-300 shrink-0 whitespace-nowrap w-fit">
+          <span className="w-fit shrink-0 rounded-full border border-blue-200 bg-blue-50 px-1 py-0.5 text-[8px] font-semibold whitespace-nowrap text-blue-700 sm:px-2 sm:text-[11px] dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
             PV 0
           </span>
         </div>
@@ -334,7 +333,7 @@ function ZqBrandItemCard({
                 fill="none"
                 stroke="#d1d5db"
                 strokeWidth="2"
-                className="sm:w-[10px] sm:h-[10px]"
+                className="sm:h-[10px] sm:w-[10px]"
               >
                 <path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
               </svg>
@@ -387,7 +386,7 @@ const highlightText = (text: string, query: string) => {
 
 function BrandCardSkeleton() {
   return (
-    <div className="flex flex-col items-center rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+    <div className="flex flex-col items-center rounded-lg border border-gray-200 p-4 dark:border-gray-700">
       <Skeleton className="h-20 w-20 shrink-0 rounded-lg" />
       <Skeleton className="mt-3 h-4 w-3/4 rounded" />
     </div>
@@ -396,7 +395,7 @@ function BrandCardSkeleton() {
 
 function ProductCardSkeleton() {
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
+    <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white dark:border-gray-700 dark:bg-gray-800">
       {/* Image skeleton */}
       <Skeleton className="aspect-square w-full" />
 
@@ -407,7 +406,7 @@ function ProductCardSkeleton() {
         <Skeleton className="h-4 w-3/4 rounded" />
 
         {/* Price */}
-        <div className="flex gap-2 items-center">
+        <div className="flex items-center gap-2">
           <Skeleton className="h-5 w-24 rounded" />
           <Skeleton className="h-4 w-20 rounded" />
         </div>
@@ -424,9 +423,9 @@ function ProductCardSkeleton() {
 
 function ProductListSkeleton() {
   return (
-    <div className="flex gap-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden p-4">
+    <div className="flex gap-4 overflow-hidden rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
       {/* Image skeleton */}
-      <Skeleton className="aspect-square w-32 rounded-lg shrink-0" />
+      <Skeleton className="aspect-square w-32 shrink-0 rounded-lg" />
 
       {/* Content skeleton */}
       <div className="flex-1 space-y-3 py-2">
@@ -434,7 +433,7 @@ function ProductListSkeleton() {
         <Skeleton className="h-5 w-3/4 rounded" />
 
         {/* Price */}
-        <div className="flex gap-3 items-center">
+        <div className="flex items-center gap-3">
           <Skeleton className="h-6 w-28 rounded" />
           <Skeleton className="h-5 w-24 rounded" />
         </div>
@@ -451,12 +450,12 @@ function ProductListSkeleton() {
 
 function TopFilterSkeleton() {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 space-y-4">
+    <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
       {/* Search bar skeleton */}
       <Skeleton className="h-10 w-full rounded-xl" />
 
       {/* Controls row skeleton */}
-      <div className="flex flex-wrap gap-3 justify-end">
+      <div className="flex flex-wrap justify-end gap-3">
         <Skeleton className="h-9 w-24 rounded-lg" />
         <Skeleton className="h-9 w-28 rounded-lg" />
         <Skeleton className="h-9 w-28 rounded-lg" />
@@ -504,10 +503,10 @@ function ProductFilterSkeleton() {
 
 function BrandProfileSkeleton() {
   return (
-    <div className="rounded-lg bg-white dark:bg-gray-800 p-6 border border-gray-200 dark:border-gray-700">
+    <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
         {/* Image skeleton */}
-        <Skeleton className="h-28 w-28 sm:h-32 sm:w-32 rounded-lg shrink-0 self-center sm:self-auto" />
+        <Skeleton className="h-28 w-28 shrink-0 self-center rounded-lg sm:h-32 sm:w-32 sm:self-auto" />
 
         {/* Content skeleton */}
         <div className="flex-1 space-y-4">
@@ -518,7 +517,7 @@ function BrandProfileSkeleton() {
           <Skeleton className="h-4 w-full rounded" />
 
           {/* Stats row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
+          <div className="grid grid-cols-2 gap-4 pt-2 sm:grid-cols-4">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="space-y-2">
                 <Skeleton className="h-4 w-full rounded" />
@@ -529,7 +528,7 @@ function BrandProfileSkeleton() {
         </div>
 
         {/* Back button skeleton */}
-        <Skeleton className="h-10 w-20 rounded-lg shrink-0 self-center sm:self-auto" />
+        <Skeleton className="h-10 w-20 shrink-0 self-center rounded-lg sm:self-auto" />
       </div>
     </div>
   )
@@ -537,12 +536,12 @@ function BrandProfileSkeleton() {
 
 function FeaturedProductsSkeleton() {
   return (
-    <div className="rounded-lg bg-white dark:bg-gray-800 p-6 border border-gray-200 dark:border-gray-700">
+    <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
       <div className="mb-4">
-        <Skeleton className="h-4 w-24 rounded mb-2" />
+        <Skeleton className="mb-2 h-4 w-24 rounded" />
         <Skeleton className="h-6 w-40 rounded" />
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <ProductCardSkeleton key={i} />
         ))}
@@ -553,11 +552,11 @@ function FeaturedProductsSkeleton() {
 
 function PageHeaderSkeleton() {
   return (
-    <div className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+    <div className="border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
       <div className="container mx-auto px-4 py-6">
         <div className="mt-4">
-          <Skeleton className="h-4 w-32 rounded mb-3" />
-          <Skeleton className="h-10 w-64 rounded mb-4" />
+          <Skeleton className="mb-3 h-4 w-32 rounded" />
+          <Skeleton className="mb-4 h-10 w-64 rounded" />
           <Skeleton className="h-5 w-full max-w-2xl rounded" />
         </div>
       </div>
@@ -952,7 +951,7 @@ export default function ByBrandPageMain() {
 
   return (
     <>
-      <div className="fixed inset-0 -z-50 by-brand-background" />
+      <div className="by-brand-background fixed inset-0 -z-50" />
       <style
         dangerouslySetInnerHTML={{
           __html: `
@@ -976,13 +975,13 @@ export default function ByBrandPageMain() {
         {isFetching ? (
           <PageHeaderSkeleton />
         ) : (
-          <div className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+          <div className="border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
             <div className="container mx-auto px-4 py-6">
               <div className="mt-4">
                 {selectedBrandItem && (
                   <button
                     onClick={() => router.back()}
-                    className="sm:hidden mb-3 flex items-center gap-1 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-sky-500 dark:hover:text-sky-400 transition-colors"
+                    className="mb-3 flex items-center gap-1 text-sm font-medium text-gray-500 transition-colors hover:text-sky-500 sm:hidden dark:text-gray-400 dark:hover:text-sky-400"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -998,10 +997,10 @@ export default function ByBrandPageMain() {
                     Back
                   </button>
                 )}
-                <p className="text-xs font-bold uppercase tracking-[0.35em] text-sky-500 dark:text-sky-400">
+                <p className="text-xs font-bold tracking-[0.35em] text-sky-500 uppercase dark:text-sky-400">
                   Shop by Brand
                 </p>
-                <h1 className="mt-2 text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
+                <h1 className="mt-2 text-3xl font-bold text-gray-900 sm:text-4xl dark:text-white">
                   {selectedBrand && selectedBrandItem
                     ? selectedBrandItem.name
                     : "All Brands"}
@@ -1015,7 +1014,7 @@ export default function ByBrandPageMain() {
           </div>
         )}
 
-        <div className="container mx-auto px-4 py-8 space-y-8">
+        <div className="container mx-auto space-y-8 px-4 py-8">
           {/* Brand Profile Card - only when brand selected */}
           {selectedBrandItem && isFetchingBrandProducts && (
             <BrandProfileSkeleton />
@@ -1023,11 +1022,11 @@ export default function ByBrandPageMain() {
 
           {selectedBrandItem && !isFetchingBrandProducts && (
             <>
-              <div className="rounded-lg bg-white dark:bg-gray-800 p-6 border border-gray-200 dark:border-gray-700 relative">
+              <div className="relative rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
                 {/* Share button - mobile only (absolute), desktop version is beside Back button */}
                 <button
                   onClick={() => setShareModalOpen(true)}
-                  className="sm:hidden absolute top-4 right-4 p-2 rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-sky-500 hover:border-sky-500 dark:hover:bg-sky-500 dark:hover:border-sky-500 hover:text-white transition-all duration-200 cursor-pointer"
+                  className="absolute top-4 right-4 cursor-pointer rounded-full border border-gray-200 bg-white p-2 transition-all duration-200 hover:border-sky-500 hover:bg-sky-500 hover:text-white sm:hidden dark:border-gray-600 dark:bg-gray-800 dark:hover:border-sky-500 dark:hover:bg-sky-500"
                   title="Share Brand"
                 >
                   <svg
@@ -1038,7 +1037,7 @@ export default function ByBrandPageMain() {
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="2"
-                    className="text-gray-700 dark:text-gray-300 hover:text-white transition-colors"
+                    className="text-gray-700 transition-colors hover:text-white dark:text-gray-300"
                   >
                     <circle cx="18" cy="5" r="3" />
                     <circle cx="6" cy="12" r="3" />
@@ -1049,7 +1048,7 @@ export default function ByBrandPageMain() {
                 </button>
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
                   <div
-                    className={`relative flex h-28 w-28 sm:h-32 sm:w-32 shrink-0 self-center sm:self-auto items-center justify-center overflow-hidden rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600`}
+                    className={`relative flex h-28 w-28 shrink-0 items-center justify-center self-center overflow-hidden rounded-lg border border-gray-200 bg-white sm:h-32 sm:w-32 sm:self-auto dark:border-gray-600 dark:bg-gray-700`}
                   >
                     {selectedBrandItem.image ? (
                       <Image
@@ -1066,29 +1065,29 @@ export default function ByBrandPageMain() {
                     )}
                   </div>
                   <div className="flex-1">
-                    <div className="flex flex-wrap items-center gap-3 justify-center sm:justify-start">
+                    <div className="flex flex-wrap items-center justify-center gap-3 sm:justify-start">
                       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                         {selectedBrandItem.name}
                       </h1>
                       <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
                           (selectedBrandItem.status ?? 0) === 0
-                            ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
-                            : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                            : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
                         }`}
                       >
                         <span
-                          className={`inline-block w-2 h-2 rounded-full ${(selectedBrandItem.status ?? 0) === 0 ? "bg-green-500" : "bg-gray-400"}`}
+                          className={`inline-block h-2 w-2 rounded-full ${(selectedBrandItem.status ?? 0) === 0 ? "bg-green-500" : "bg-gray-400"}`}
                         />
                         {(selectedBrandItem.status ?? 0) === 0
                           ? "Online"
                           : "Offline"}
                       </span>
                     </div>
-                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 text-center sm:text-left">
+                    <p className="mt-2 text-center text-sm text-gray-500 sm:text-left dark:text-gray-400">
                       Browse all products from this brand
                     </p>
-                    <div className="mt-3 flex flex-wrap items-center justify-center sm:justify-start gap-4 text-sm">
+                    <div className="mt-3 flex flex-wrap items-center justify-center gap-4 text-sm sm:justify-start">
                       <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -1178,10 +1177,10 @@ export default function ByBrandPageMain() {
                       </div>
                     </div>
                   </div>
-                  <div className="hidden sm:flex items-center gap-2 shrink-0">
+                  <div className="hidden shrink-0 items-center gap-2 sm:flex">
                     <button
                       onClick={() => setShareModalOpen(true)}
-                      className="p-2 rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-sky-500 hover:border-sky-500 dark:hover:bg-sky-500 dark:hover:border-sky-500 hover:text-white transition-all duration-200 cursor-pointer"
+                      className="cursor-pointer rounded-full border border-gray-200 bg-white p-2 transition-all duration-200 hover:border-sky-500 hover:bg-sky-500 hover:text-white dark:border-gray-600 dark:bg-gray-800 dark:hover:border-sky-500 dark:hover:bg-sky-500"
                       title="Share Brand"
                     >
                       <svg
@@ -1192,7 +1191,7 @@ export default function ByBrandPageMain() {
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="2"
-                        className="text-gray-700 dark:text-gray-300 hover:text-white transition-colors"
+                        className="text-gray-700 transition-colors hover:text-white dark:text-gray-300"
                       >
                         <circle cx="18" cy="5" r="3" />
                         <circle cx="6" cy="12" r="3" />
@@ -1203,7 +1202,7 @@ export default function ByBrandPageMain() {
                     </button>
                     <OutlineButton
                       onClick={() => router.back()}
-                      className="shrink-0 !px-4 !py-2.5 !text-sm flex items-center gap-1.5"
+                      className="flex shrink-0 items-center gap-1.5 !px-4 !py-2.5 !text-sm"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -1239,7 +1238,7 @@ export default function ByBrandPageMain() {
 
           {/* Search + Filters - only when no brand selected */}
           {!selectedBrand && (
-            <div className="rounded-xl bg-white dark:bg-gray-800 p-6 border border-gray-200 dark:border-gray-700">
+            <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
               <div className="flex flex-col gap-6">
                 {/* Search bar */}
                 <div className="relative">
@@ -1251,7 +1250,7 @@ export default function ByBrandPageMain() {
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="2"
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none"
+                    className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-gray-400 dark:text-gray-500"
                   >
                     <circle cx="11" cy="11" r="8" />
                     <path d="m21 21-4.35-4.35" />
@@ -1264,12 +1263,12 @@ export default function ByBrandPageMain() {
                       setLetterFilter("ALL")
                     }}
                     placeholder="Search brands..."
-                    className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 py-3 pl-12 pr-12 text-base text-gray-700 dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-sky-400 focus:bg-white dark:focus:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-sky-400/30 transition-all"
+                    className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pr-12 pl-12 text-base text-gray-700 transition-all placeholder:text-gray-400 focus:border-sky-400 focus:bg-white focus:ring-2 focus:ring-sky-400/30 focus:outline-none dark:border-gray-700 dark:bg-gray-700 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:bg-gray-600"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery("")}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 transition-colors"
+                      className="absolute top-1/2 right-4 -translate-y-1/2 text-gray-400 transition-colors hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -1299,10 +1298,10 @@ export default function ByBrandPageMain() {
                         <button
                           key={letter}
                           onClick={() => setLetterFilter(letter)}
-                          className={`rounded-lg px-4 py-2 text-sm font-semibold cursor-pointer transition-all ${
+                          className={`cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold transition-all ${
                             letterFilter === letter
                               ? "bg-sky-500 text-white"
-                              : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-sky-100 dark:hover:bg-sky-500/20 hover:text-sky-600 dark:hover:text-sky-400"
+                              : "bg-gray-100 text-gray-600 hover:bg-sky-100 hover:text-sky-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-400"
                           }`}
                         >
                           {letter}
@@ -1323,7 +1322,7 @@ export default function ByBrandPageMain() {
                           e.target.value as "name-asc" | "name-desc" | "default"
                         )
                       }
-                      className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400/30 transition-all"
+                      className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-all focus:border-sky-400 focus:ring-2 focus:ring-sky-400/30 focus:outline-none dark:border-gray-700 dark:bg-gray-700 dark:text-gray-200"
                     >
                       <option value="default">Default</option>
                       <option value="name-asc">Name: A to Z</option>
@@ -1345,7 +1344,7 @@ export default function ByBrandPageMain() {
                   ))}
                 </div>
               ) : brands.length === 0 ? (
-                <div className="flex flex-col items-center justify-center rounded-lg py-16 text-center border border-gray-200 dark:border-gray-700">
+                <div className="flex flex-col items-center justify-center rounded-lg border border-gray-200 py-16 text-center dark:border-gray-700">
                   <p className="text-lg font-medium text-gray-700 dark:text-gray-300">
                     No brands found
                   </p>
@@ -1355,7 +1354,7 @@ export default function ByBrandPageMain() {
                 </div>
               ) : (
                 <>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                  <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
                     Showing{" "}
                     <span className="font-semibold text-gray-700 dark:text-gray-300">
                       {brands.length}
@@ -1373,7 +1372,7 @@ export default function ByBrandPageMain() {
                         <Link
                           key={brand.id}
                           href={`/by-brand?brand=${encodeURIComponent(brandSlug)}`}
-                          className="group flex flex-col items-center rounded-lg border border-gray-200 dark:border-gray-700 p-4 text-center hover:border-sky-500 dark:hover:border-sky-400 transition-colors"
+                          className="group flex flex-col items-center rounded-lg border border-gray-200 p-4 text-center transition-colors hover:border-sky-500 dark:border-gray-700 dark:hover:border-sky-400"
                         >
                           <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded">
                             {brand.image ? (
@@ -1409,16 +1408,16 @@ export default function ByBrandPageMain() {
                 <FeaturedProductsSkeleton />
               ) : (
                 brandProducts.length > 0 && (
-                  <div className="rounded-lg bg-white dark:bg-gray-800 p-6 border border-gray-200 dark:border-gray-700">
+                  <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
                     <div className="mb-4">
-                      <p className="text-xs font-bold uppercase tracking-[0.3em] text-sky-500 dark:text-sky-400">
+                      <p className="text-xs font-bold tracking-[0.3em] text-sky-500 uppercase dark:text-sky-400">
                         Featured
                       </p>
                       <h3 className="mt-1 text-xl font-bold text-gray-900 dark:text-white">
                         Featured Products
                       </h3>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
                       {brandProducts.slice(0, 4).map((product) => (
                         <ItemCard
                           key={product.id}
@@ -1438,7 +1437,7 @@ export default function ByBrandPageMain() {
             !isFetchingProducts &&
             brandProducts.length > 0 && (
               <div
-                className="relative rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 h-64 md:h-80 bg-white dark:bg-gray-800"
+                className="relative h-64 overflow-hidden rounded-lg border border-gray-200 bg-white md:h-80 dark:border-gray-700 dark:bg-gray-800"
                 onTouchStart={(e) => {
                   ;(e.currentTarget as HTMLDivElement).dataset.touchX = String(
                     e.touches[0].clientX
@@ -1499,38 +1498,38 @@ export default function ByBrandPageMain() {
                 ))}
 
                 {/* Left Content Overlay */}
-                <div className="absolute left-0 top-0 bottom-0 w-28 sm:w-48 md:w-64 bg-gradient-to-r from-sky-500 to-sky-500/10 flex flex-col justify-center px-3 sm:px-6 z-10">
-                  <p className="text-xs font-bold uppercase tracking-[0.3em] text-white/90 hidden sm:block">
+                <div className="absolute top-0 bottom-0 left-0 z-10 flex w-28 flex-col justify-center bg-gradient-to-r from-sky-500 to-sky-500/10 px-3 sm:w-48 sm:px-6 md:w-64">
+                  <p className="hidden text-xs font-bold tracking-[0.3em] text-white/90 uppercase sm:block">
                     Featured
                   </p>
-                  <h2 className="mt-0 sm:mt-2 text-sm sm:text-xl font-bold text-white line-clamp-2">
+                  <h2 className="mt-0 line-clamp-2 text-sm font-bold text-white sm:mt-2 sm:text-xl">
                     {selectedBrandItem.name}
                   </h2>
-                  <p className="mt-1 text-xs sm:text-sm text-white/80 hidden sm:block">
+                  <p className="mt-1 hidden text-xs text-white/80 sm:block sm:text-sm">
                     Premium quality products
                   </p>
                 </div>
 
                 {/* Right Content Overlay */}
-                <div className="absolute right-0 top-0 bottom-0 w-20 sm:w-48 md:w-64 bg-gradient-to-l from-sky-400 to-sky-400/10 flex flex-col justify-center items-end px-3 sm:px-6 text-right z-10">
-                  <p className="text-xs font-bold uppercase tracking-[0.3em] text-white/90 hidden sm:block">
+                <div className="absolute top-0 right-0 bottom-0 z-10 flex w-20 flex-col items-end justify-center bg-gradient-to-l from-sky-400 to-sky-400/10 px-3 text-right sm:w-48 sm:px-6 md:w-64">
+                  <p className="hidden text-xs font-bold tracking-[0.3em] text-white/90 uppercase sm:block">
                     Exclusive
                   </p>
-                  <p className="mt-2 text-sm text-white/80 hidden sm:block">
+                  <p className="mt-2 hidden text-sm text-white/80 sm:block">
                     Limited Edition
                   </p>
                 </div>
 
                 {/* Navigation Dots */}
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+                <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 gap-2">
                   {brandProducts.slice(0, 5).map((_, index) => (
                     <button
                       key={index}
                       onClick={() => setCurrentSlide(index)}
-                      className={`w-3 h-3 rounded-full transition-colors border-2 cursor-pointer ${
+                      className={`h-3 w-3 cursor-pointer rounded-full border-2 transition-colors ${
                         currentSlide === index
-                          ? "bg-sky-500 border-sky-500"
-                          : "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+                          ? "border-sky-500 bg-sky-500"
+                          : "border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-700"
                       }`}
                     />
                   ))}
@@ -1545,7 +1544,7 @@ export default function ByBrandPageMain() {
                         : prev - 1
                     )
                   }
-                  className="hidden sm:flex absolute sm:left-48 md:left-64 top-1/2 -translate-y-1/2 w-10 h-10 items-center justify-center bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-full shadow-md transition-colors cursor-pointer z-20"
+                  className="absolute top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-md transition-colors hover:bg-gray-50 sm:left-48 sm:flex md:left-64 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -1567,7 +1566,7 @@ export default function ByBrandPageMain() {
                         : prev + 1
                     )
                   }
-                  className="hidden sm:flex absolute sm:right-48 md:right-64 top-1/2 -translate-y-1/2 w-10 h-10 items-center justify-center bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-full shadow-md transition-colors cursor-pointer z-20"
+                  className="absolute top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-md transition-colors hover:bg-gray-50 sm:right-48 sm:flex md:right-64 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -1588,7 +1587,7 @@ export default function ByBrandPageMain() {
           {selectedBrandItem && (
             <div className="flex flex-col gap-6 lg:flex-row">
               {/* Left Sidebar - Filter (desktop only, mobile uses bottom drawer) */}
-              <div className="hidden lg:block lg:w-72 shrink-0">
+              <div className="hidden shrink-0 lg:block lg:w-72">
                 {isLoadingBrandProducts ? (
                   <ProductFilterSkeleton />
                 ) : (
@@ -1607,11 +1606,11 @@ export default function ByBrandPageMain() {
               {/* Right Side - Products */}
               <div
                 ref={productsRef}
-                className="flex-1 rounded-lg bg-white dark:bg-gray-800 p-6 border border-gray-200 dark:border-gray-700"
+                className="flex-1 rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800"
               >
-                <div className="flex flex-col gap-2 border-b border-gray-100 dark:border-gray-700 pb-5 sm:flex-row sm:items-end sm:justify-between">
+                <div className="flex flex-col gap-2 border-b border-gray-100 pb-5 sm:flex-row sm:items-end sm:justify-between dark:border-gray-700">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.3em] text-sky-500 dark:text-sky-400">
+                    <p className="text-xs font-bold tracking-[0.3em] text-sky-500 uppercase dark:text-sky-400">
                       Brand Products
                     </p>
                     <h2 className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
@@ -1619,7 +1618,7 @@ export default function ByBrandPageMain() {
                     </h2>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center rounded-full bg-sky-50 dark:bg-sky-500/10 px-3 py-1 text-xs font-semibold text-sky-600 dark:text-sky-400 ring-1 ring-sky-200 dark:ring-sky-500/30">
+                    <span className="inline-flex items-center rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-600 ring-1 ring-sky-200 dark:bg-sky-500/10 dark:text-sky-400 dark:ring-sky-500/30">
                       {isLoadingBrandProducts
                         ? "Loading..."
                         : `${productTotalCount} product${productTotalCount !== 1 ? "s" : ""}`}
@@ -1627,7 +1626,7 @@ export default function ByBrandPageMain() {
                     {/* Mobile filter button */}
                     <button
                       onClick={() => setIsFilterDrawerOpen(true)}
-                      className="lg:hidden relative inline-flex items-center gap-2 rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:border-sky-400 hover:text-sky-500 transition-colors"
+                      className="relative inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:border-sky-400 hover:text-sky-500 lg:hidden dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -1675,7 +1674,7 @@ export default function ByBrandPageMain() {
                     />
                   )}
                   {!isLoadingBrandProducts && (
-                    <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mt-4">
+                    <div className="mt-4 flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
                       <span>
                         Showing{" "}
                         <span className="font-semibold text-slate-700 dark:text-gray-200">
@@ -1696,7 +1695,7 @@ export default function ByBrandPageMain() {
                     <div
                       className={
                         viewType === "grid"
-                          ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-6"
+                          ? "grid grid-cols-2 gap-4 pb-6 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4"
                           : "flex flex-col gap-4 pb-6"
                       }
                     >
@@ -1713,7 +1712,7 @@ export default function ByBrandPageMain() {
                     <>
                       {productDisplayCount === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 text-center">
-                          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500">
+                          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500">
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               width="28"
@@ -1743,7 +1742,7 @@ export default function ByBrandPageMain() {
                         <div
                           className={
                             viewType === "grid"
-                              ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-6"
+                              ? "grid grid-cols-2 gap-4 pb-6 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4"
                               : "flex flex-col gap-4 pb-6"
                           }
                         >
@@ -1758,17 +1757,17 @@ export default function ByBrandPageMain() {
                               <Link
                                 key={product.id}
                                 href={`/product/${toSlug(product.name)}-i${product.id}`}
-                                className="flex gap-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:border-sky-500 dark:hover:border-sky-400 transition-colors group relative"
+                                className="group relative flex gap-4 overflow-hidden rounded-lg border border-gray-200 bg-white transition-colors hover:border-sky-500 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-sky-400"
                               >
                                 {/* Action Icons */}
-                                <div className="absolute top-2 right-2 flex flex-col gap-2 z-10">
+                                <div className="absolute top-2 right-2 z-10 flex flex-col gap-2">
                                   <button
                                     onClick={(e) => {
                                       e.preventDefault()
                                       e.stopPropagation()
                                       toast.success("Added to wishlist")
                                     }}
-                                    className="p-2 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200 dark:border-gray-600 shadow-lg hover:bg-sky-500 hover:border-sky-500 dark:hover:bg-sky-500 dark:hover:border-sky-500 transition-all duration-200 cursor-pointer"
+                                    className="cursor-pointer rounded-full border border-gray-200 bg-white/90 p-2 shadow-lg backdrop-blur-md transition-all duration-200 hover:border-sky-500 hover:bg-sky-500 dark:border-gray-600 dark:bg-gray-800/90 dark:hover:border-sky-500 dark:hover:bg-sky-500"
                                     title="Add to Wishlist"
                                   >
                                     <svg
@@ -1779,7 +1778,7 @@ export default function ByBrandPageMain() {
                                       fill="none"
                                       stroke="currentColor"
                                       strokeWidth="2"
-                                      className="text-gray-700 dark:text-gray-300 hover:text-white transition-colors"
+                                      className="text-gray-700 transition-colors hover:text-white dark:text-gray-300"
                                     >
                                       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                                     </svg>
@@ -1806,7 +1805,7 @@ export default function ByBrandPageMain() {
                                     onMouseLeave={() =>
                                       setHoveringShareProductId(null)
                                     }
-                                    className="p-2 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200 dark:border-gray-600 shadow-lg hover:bg-sky-500 hover:border-sky-500 dark:hover:bg-sky-500 dark:hover:border-sky-500 transition-all duration-200 cursor-pointer"
+                                    className="cursor-pointer rounded-full border border-gray-200 bg-white/90 p-2 shadow-lg backdrop-blur-md transition-all duration-200 hover:border-sky-500 hover:bg-sky-500 dark:border-gray-600 dark:bg-gray-800/90 dark:hover:border-sky-500 dark:hover:bg-sky-500"
                                     title="Share"
                                   >
                                     {hoveringShareProductId === product.id ? (
@@ -1818,7 +1817,7 @@ export default function ByBrandPageMain() {
                                         fill="none"
                                         stroke="currentColor"
                                         strokeWidth="2"
-                                        className="text-gray-700 dark:text-gray-300 hover:text-white transition-colors"
+                                        className="text-gray-700 transition-colors hover:text-white dark:text-gray-300"
                                       >
                                         <rect
                                           x="9"
@@ -1839,7 +1838,7 @@ export default function ByBrandPageMain() {
                                         fill="none"
                                         stroke="currentColor"
                                         strokeWidth="2"
-                                        className="text-gray-700 dark:text-gray-300 hover:text-white transition-colors"
+                                        className="text-gray-700 transition-colors hover:text-white dark:text-gray-300"
                                       >
                                         <circle cx="18" cy="5" r="3" />
                                         <circle cx="6" cy="12" r="3" />
@@ -1860,13 +1859,13 @@ export default function ByBrandPageMain() {
                                     )}
                                   </button>
                                 </div>
-                                <div className="relative aspect-square w-32 bg-gray-100 dark:bg-gray-700 overflow-hidden shrink-0">
+                                <div className="relative aspect-square w-32 shrink-0 overflow-hidden bg-gray-100 dark:bg-gray-700">
                                   {product.image ? (
                                     <Image
                                       src={product.image}
                                       alt={product.name}
                                       fill
-                                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                                      className="object-cover transition-transform duration-300 group-hover:scale-105"
                                       unoptimized
                                     />
                                   ) : (
@@ -1894,11 +1893,11 @@ export default function ByBrandPageMain() {
                                     </div>
                                   )}
                                 </div>
-                                <div className="flex flex-col justify-center flex-1 p-4 relative">
-                                  <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-sky-500 dark:group-hover:text-sky-400 transition-colors">
+                                <div className="relative flex flex-1 flex-col justify-center p-4">
+                                  <h3 className="mb-2 line-clamp-2 text-base font-semibold text-gray-900 transition-colors group-hover:text-sky-500 dark:text-white dark:group-hover:text-sky-400">
                                     {product.name}
                                   </h3>
-                                  <div className="flex items-baseline gap-2 mb-2">
+                                  <div className="mb-2 flex items-baseline gap-2">
                                     <span className="text-lg font-bold text-sky-500 dark:text-sky-400">
                                       {"\u20b1"}
                                       {Number(
@@ -1913,7 +1912,7 @@ export default function ByBrandPageMain() {
                                             product.priceDp ??
                                             0
                                         ) && (
-                                        <span className="text-sm text-gray-400 dark:text-gray-500 line-through">
+                                        <span className="text-sm text-gray-400 line-through dark:text-gray-500">
                                           {"\u20b1"}
                                           {Number(
                                             product.priceSrp ??
@@ -1926,7 +1925,7 @@ export default function ByBrandPageMain() {
                                   <div className="flex items-center gap-2">
                                     {product.prodpv &&
                                       Number(product.prodpv) > 0 && (
-                                        <span className="inline-flex items-center rounded-full border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 text-[11px] font-semibold text-blue-700 dark:text-blue-300">
+                                        <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
                                           PV{" "}
                                           {Number(
                                             product.prodpv
@@ -1935,7 +1934,7 @@ export default function ByBrandPageMain() {
                                       )}
                                   </div>
                                   {/* Sales/Ratings */}
-                                  <div className="flex items-center gap-1 mt-1">
+                                  <div className="mt-1 flex items-center gap-1">
                                     <div className="flex items-center">
                                       {[1, 2, 3, 4, 5].map((star) => (
                                         <svg
@@ -1964,7 +1963,7 @@ export default function ByBrandPageMain() {
                                       handleAddToCart(product.id, e)
                                     }
                                     disabled={isAddingToCart}
-                                    className="mt-2 flex h-9 w-9 items-center justify-center rounded-full bg-sky-500 text-white shadow-sm transition-all duration-300 hover:bg-sky-600 sm:absolute sm:bottom-4 sm:right-4 sm:mt-0 sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2 sm:text-sm sm:font-semibold sm:opacity-0 sm:translate-y-2 sm:group-hover:opacity-100 sm:group-hover:translate-y-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="mt-2 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-sky-500 text-white shadow-sm transition-all duration-300 hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-50 sm:absolute sm:right-4 sm:bottom-4 sm:mt-0 sm:h-auto sm:w-auto sm:translate-y-2 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm sm:font-semibold sm:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100"
                                     title="Add to Cart"
                                     aria-label="Add to Cart"
                                   >
@@ -2039,7 +2038,7 @@ export default function ByBrandPageMain() {
                                   />
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <p className="text-xs font-semibold uppercase text-gray-500">
+                                  <p className="text-xs font-semibold text-gray-500 uppercase">
                                     {selectedBrandItem.name}
                                   </p>
                                   <h3 className="mt-1 line-clamp-2 font-semibold text-gray-900 dark:text-white">
@@ -2064,7 +2063,7 @@ export default function ByBrandPageMain() {
 
                 {/* Pagination */}
                 {!isFetchingBrandProducts && totalPages > 1 && (
-                  <div className="-mx-6 -mb-6 flex items-center justify-between border-t border-gray-100 dark:border-gray-700 pt-6 bg-white dark:bg-gray-800 px-6 pb-6">
+                  <div className="-mx-6 -mb-6 flex items-center justify-between border-t border-gray-100 bg-white px-6 pt-6 pb-6 dark:border-gray-700 dark:bg-gray-800">
                     <p className="text-sm text-gray-400 dark:text-gray-500">
                       Page{" "}
                       <span className="font-semibold text-gray-700 dark:text-gray-300">
@@ -2082,7 +2081,7 @@ export default function ByBrandPageMain() {
                           setProductPage((p) => Math.max(1, p - 1))
                         }
                         disabled={productPage === 1}
-                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 transition hover:border-sky-300 dark:hover:border-sky-500 hover:text-sky-500 dark:hover:text-sky-400 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+                        className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 transition hover:border-sky-300 hover:text-sky-500 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-400 dark:hover:border-sky-500 dark:hover:text-sky-400"
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -2123,10 +2122,10 @@ export default function ByBrandPageMain() {
                             <button
                               key={item}
                               onClick={() => setProductPage(item as number)}
-                              className={`flex h-9 w-9 items-center justify-center rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+                              className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl text-sm font-semibold transition-all ${
                                 productPage === item
                                   ? "bg-sky-500 text-white shadow-sm shadow-sky-200 dark:shadow-sky-900"
-                                  : "border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:border-sky-300 dark:hover:border-sky-500 hover:text-sky-500 dark:hover:text-sky-400"
+                                  : "border border-gray-200 bg-white text-gray-600 hover:border-sky-300 hover:text-sky-500 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-400 dark:hover:border-sky-500 dark:hover:text-sky-400"
                               }`}
                             >
                               {item}
@@ -2140,7 +2139,7 @@ export default function ByBrandPageMain() {
                           setProductPage((p) => Math.min(totalPages, p + 1))
                         }
                         disabled={productPage === totalPages}
-                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 transition hover:border-sky-300 dark:hover:border-sky-500 hover:text-sky-500 dark:hover:text-sky-400 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+                        className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 transition hover:border-sky-300 hover:text-sky-500 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-400 dark:hover:border-sky-500 dark:hover:text-sky-400"
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -2163,9 +2162,9 @@ export default function ByBrandPageMain() {
 
           {/* You May Also Like - only when brand selected */}
           {selectedBrandItem && (
-            <div className="rounded-lg bg-white dark:bg-gray-800 p-6 border border-gray-200 dark:border-gray-700">
+            <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
               <div className="mb-6">
-                <p className="text-xs font-bold uppercase tracking-[0.3em] text-sky-500 dark:text-sky-400">
+                <p className="text-xs font-bold tracking-[0.3em] text-sky-500 uppercase dark:text-sky-400">
                   You May Also Like
                 </p>
                 <h2 className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
@@ -2173,7 +2172,7 @@ export default function ByBrandPageMain() {
                 </h2>
               </div>
               {isFetching ? (
-                <div className="flex gap-4 overflow-x-auto pb-2 sm:grid sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 sm:overflow-x-visible sm:pb-0">
+                <div className="flex gap-4 overflow-x-auto pb-2 sm:grid sm:grid-cols-3 sm:overflow-x-visible sm:pb-0 lg:grid-cols-4 xl:grid-cols-6">
                   {Array.from({ length: 6 }).map((_, i) => (
                     <div key={i} className="w-36 shrink-0 sm:w-auto">
                       <BrandCardSkeleton />
@@ -2188,7 +2187,7 @@ export default function ByBrandPageMain() {
                   </p>
                 </div>
               ) : (
-                <div className="flex gap-4 overflow-x-auto pb-2 sm:grid sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 sm:overflow-x-visible sm:pb-0 -mx-6 px-6 sm:mx-0 sm:px-0">
+                <div className="-mx-6 flex gap-4 overflow-x-auto px-6 pb-2 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-x-visible sm:px-0 sm:pb-0 lg:grid-cols-4 xl:grid-cols-6">
                   {allBrands
                     .filter((b) => b.id !== selectedBrandItem.id)
                     .slice(0, 12)
@@ -2199,7 +2198,7 @@ export default function ByBrandPageMain() {
                         <Link
                           key={brand.id}
                           href={`/by-brand?brand=${encodeURIComponent(brandSlug)}`}
-                          className="group flex w-36 shrink-0 sm:w-auto flex-col items-center rounded-lg border border-gray-200 dark:border-gray-700 p-4 text-center hover:border-sky-500 dark:hover:border-sky-400 transition-colors"
+                          className="group flex w-36 shrink-0 flex-col items-center rounded-lg border border-gray-200 p-4 text-center transition-colors hover:border-sky-500 sm:w-auto dark:border-gray-700 dark:hover:border-sky-400"
                         >
                           <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded">
                             {brand.image ? (
@@ -2232,19 +2231,19 @@ export default function ByBrandPageMain() {
           <>
             {/* Backdrop */}
             <div
-              className={`fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 lg:hidden ${isFilterDrawerOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+              className={`fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 lg:hidden ${isFilterDrawerOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"}`}
               onClick={() => setIsFilterDrawerOpen(false)}
             />
             {/* Drawer */}
             <div
-              className={`fixed bottom-0 left-0 right-0 z-50 lg:hidden flex flex-col bg-white dark:bg-gray-800 rounded-t-2xl shadow-2xl transition-transform duration-300 ease-out max-h-[85vh] ${isFilterDrawerOpen ? "translate-y-0" : "translate-y-full"}`}
+              className={`fixed right-0 bottom-0 left-0 z-50 flex max-h-[85vh] flex-col rounded-t-2xl bg-white shadow-2xl transition-transform duration-300 ease-out lg:hidden dark:bg-gray-800 ${isFilterDrawerOpen ? "translate-y-0" : "translate-y-full"}`}
             >
               {/* Drag handle */}
-              <div className="flex justify-center pt-3 pb-1 shrink-0">
-                <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
+              <div className="flex shrink-0 justify-center pt-3 pb-1">
+                <div className="h-1 w-10 rounded-full bg-gray-300 dark:bg-gray-600" />
               </div>
               {/* Header */}
-              <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 dark:border-gray-700 shrink-0">
+              <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-5 py-3 dark:border-gray-700">
                 <div className="flex items-center gap-2">
                   <h3 className="text-base font-semibold text-gray-900 dark:text-white">
                     Filters
@@ -2257,7 +2256,7 @@ export default function ByBrandPageMain() {
                 </div>
                 <button
                   onClick={() => setIsFilterDrawerOpen(false)}
-                  className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  className="rounded-full p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -2274,7 +2273,7 @@ export default function ByBrandPageMain() {
                 </button>
               </div>
               {/* Scrollable filter content */}
-              <div className="overflow-y-auto flex-1 px-5 py-4">
+              <div className="flex-1 overflow-y-auto px-5 py-4">
                 <ProductFilter
                   onFilterChange={setFilters}
                   pvRange={filters.pvRange}
@@ -2285,10 +2284,10 @@ export default function ByBrandPageMain() {
                 />
               </div>
               {/* Footer */}
-              <div className="shrink-0 px-5 py-4 border-t border-gray-100 dark:border-gray-700">
+              <div className="shrink-0 border-t border-gray-100 px-5 py-4 dark:border-gray-700">
                 <button
                   onClick={() => setIsFilterDrawerOpen(false)}
-                  className="w-full py-3 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-semibold text-sm transition-colors"
+                  className="w-full rounded-xl bg-sky-500 py-3 text-sm font-semibold text-white transition-colors hover:bg-sky-600"
                 >
                   Show Results ({productDisplayCount})
                 </button>

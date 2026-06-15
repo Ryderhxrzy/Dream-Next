@@ -1,12 +1,13 @@
 "use client"
 
-import { useRouter } from "next/navigation"
 import { useMemo, useState } from "react"
-import { motion } from "framer-motion"
 import { useGetPublicWebPageItemsQuery } from "@/store/api/webPagesApi"
-import TopBar from "@/components/layout/TopBar"
-import Navbar from "@/components/layout/Navbar"
+import { motion } from "framer-motion"
+import { useRouter } from "next/navigation"
+
 import Footer from "@/components/landing-page/Footer"
+import Navbar from "@/components/layout/Navbar"
+import TopBar from "@/components/layout/TopBar"
 
 // NOTE: Dark mode in this app is driven by `next-themes` which sets a `.dark` class.
 // This page uses many `dark:` Tailwind utilities, so ensure the `.dark` class is present
@@ -139,7 +140,7 @@ export default function AssemblyGuidesPageClient({
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute bottom-40 -right-24 h-72 w-72 rounded-full bg-blue-300/20 blur-3xl"
+            className="absolute -right-24 bottom-40 h-72 w-72 rounded-full bg-blue-300/20 blur-3xl"
           />
         </div>
 
@@ -153,7 +154,7 @@ export default function AssemblyGuidesPageClient({
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-            className="relative overflow-hidden rounded-2xl border border-blue-200/70 bg-white/80 px-6 py-8 shadow-[0_0_0_1px_rgba(37,99,235,0.08)] backdrop-blur dark:bg-gray-900/60 dark:border-gray-800"
+            className="relative overflow-hidden rounded-2xl border border-blue-200/70 bg-white/80 px-6 py-8 shadow-[0_0_0_1px_rgba(37,99,235,0.08)] backdrop-blur dark:border-gray-800 dark:bg-gray-900/60"
           >
             <div
               aria-hidden
@@ -241,12 +242,12 @@ export default function AssemblyGuidesPageClient({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: 0.12 }}
-            className="mb-6 rounded-2xl border border-blue-200/70 bg-white/80 p-4 shadow-[0_0_0_1px_rgba(37,99,235,0.06)] backdrop-blur dark:bg-gray-900/60 dark:border-gray-800"
+            className="mb-6 rounded-2xl border border-blue-200/70 bg-white/80 p-4 shadow-[0_0_0_1px_rgba(37,99,235,0.06)] backdrop-blur dark:border-gray-800 dark:bg-gray-900/60"
           >
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
               <div className="relative flex-1">
                 <svg
-                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-500/70"
+                  className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-blue-500/70"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -263,13 +264,13 @@ export default function AssemblyGuidesPageClient({
                   value={search}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   placeholder="Search guides..."
-                  className="w-full rounded-xl border border-blue-200 bg-white px-10 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-200/60"
+                  className="w-full rounded-xl border border-blue-200 bg-white px-10 py-2.5 text-sm text-gray-900 transition outline-none placeholder:text-gray-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-200/60"
                 />
                 {search && (
                   <button
                     type="button"
                     onClick={() => handleSearchChange("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500/60 transition hover:text-blue-600"
+                    className="absolute top-1/2 right-3 -translate-y-1/2 text-blue-500/60 transition hover:text-blue-600"
                     aria-label="Clear search"
                   >
                     <svg
@@ -295,7 +296,7 @@ export default function AssemblyGuidesPageClient({
                   onChange={(e) =>
                     handleSortChange(e.target.value as "a-z" | "z-a")
                   }
-                  className="rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-200/60"
+                  className="rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 transition outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-200/60"
                 >
                   <option value="a-z">A to Z</option>
                   <option value="z-a">Z to A</option>
@@ -388,7 +389,7 @@ export default function AssemblyGuidesPageClient({
                         duration: 0.25,
                         delay: Math.min(idx * 0.03, 0.12),
                       }}
-                      className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-blue-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 dark:bg-slate-900/70 dark:border-slate-800"
+                      className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-blue-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900/70"
                     >
                       <div
                         aria-hidden
@@ -412,7 +413,7 @@ export default function AssemblyGuidesPageClient({
                           </svg>
                         </div>
 
-                        <h2 className="text-base font-semibold text-gray-900 line-clamp-2">
+                        <h2 className="line-clamp-2 text-base font-semibold text-gray-900">
                           {item.title || "Assembly Guide"}
                         </h2>
 

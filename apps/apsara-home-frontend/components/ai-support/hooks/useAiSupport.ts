@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useCallback, useRef } from "react"
-import type { ChatMessage, ApiResponse } from "../types"
+import { useCallback, useRef, useState } from "react"
+
+import type { ApiResponse, ChatMessage } from "../types"
 
 const STORAGE_KEY = "af_ai_support_history_v1"
 

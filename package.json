@@ -17,9 +17,14 @@
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f",
     "build": "pnpm -r build",
-    "lint": "pnpm -r lint"
+    "lint": "pnpm -r lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
-    "@types/node": "^25.9.2"
+    "@ianvs/prettier-plugin-sort-imports": "^4.7.0",
+    "@types/node": "^25.9.2",
+    "prettier": "3.8.3",
+    "prettier-plugin-tailwindcss": "^0.7.1"
   }
 }

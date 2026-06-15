@@ -227,7 +227,7 @@ export default function ImagePositionEditorModal({
             >
               {imageSrc ? (
                 <div
-                  className="absolute left-1/2 top-1/2 h-full w-full touch-none"
+                  className="absolute top-1/2 left-1/2 h-full w-full touch-none"
                   style={{
                     transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px)) scale(${zoom})`,
                   }}
@@ -236,7 +236,7 @@ export default function ImagePositionEditorModal({
                     src={imageSrc}
                     alt="Adjust preview"
                     fill
-                    className="object-cover select-none pointer-events-none"
+                    className="pointer-events-none object-cover select-none"
                     unoptimized
                   />
                 </div>
@@ -246,7 +246,7 @@ export default function ImagePositionEditorModal({
 
           <div className="space-y-4 rounded-3xl border border-slate-200 bg-slate-50 p-4">
             <div>
-              <label className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              <label className="text-xs font-semibold tracking-[0.18em] text-slate-500 uppercase">
                 Zoom
               </label>
               <input

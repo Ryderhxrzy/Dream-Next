@@ -1,9 +1,10 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import Image from "next/image"
-import RichTextEditor from "@/components/ui/RichTextEditor"
 import { colorNameToHex, hexToColorName } from "@/libs/colorUtils"
+import Image from "next/image"
+
+import RichTextEditor from "@/components/ui/RichTextEditor"
 
 declare global {
   interface Window {
@@ -319,17 +320,17 @@ export default function ImportImagePageMain() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 space-y-6">
+    <div className="min-h-screen space-y-6 bg-slate-50 p-6">
       {/* Header */}
       <div>
         <h1 className="text-xl font-bold text-slate-800">Import Image</h1>
-        <p className="text-sm text-slate-500 mt-0.5">
+        <p className="mt-0.5 text-sm text-slate-500">
           Upload images to Cloudinary and copy the resulting URL(s).
         </p>
       </div>
 
       {/* Upload card */}
-      <div className="rounded-2xl border border-slate-200 bg-white flex flex-col items-center justify-center gap-4 px-8 py-10 text-center">
+      <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-slate-200 bg-white px-8 py-10 text-center">
         <div className="rounded-2xl bg-teal-50 p-4">
           <svg
             className="h-8 w-8 text-teal-500"
@@ -363,7 +364,7 @@ export default function ImportImagePageMain() {
             type="button"
             onClick={openWidget}
             disabled={!scriptLoaded}
-            className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-teal-500/20 transition hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-teal-500/20 transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {scriptLoaded ? (
               <>
@@ -412,7 +413,7 @@ export default function ImportImagePageMain() {
             <button
               type="button"
               onClick={clearAll}
-              className="inline-flex items-center gap-2 rounded-xl border-2 border-red-300 bg-red-50 px-5 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-100 hover:border-red-400"
+              className="inline-flex items-center gap-2 rounded-xl border-2 border-red-300 bg-red-50 px-5 py-2.5 text-sm font-semibold text-red-600 transition hover:border-red-400 hover:bg-red-100"
             >
               <svg
                 className="h-4 w-4"
@@ -436,7 +437,7 @@ export default function ImportImagePageMain() {
       {/* Image grid */}
       {images.length > 0 && (
         <div>
-          <p className="text-xs text-slate-500 mb-2">
+          <p className="mb-2 text-xs text-slate-500">
             Drag images to reorder them. The order shown will be the order in
             the link.
           </p>
@@ -449,14 +450,14 @@ export default function ImportImagePageMain() {
                 onDragOver={handleDragOver}
                 onDrop={() => handleDrop(index)}
                 onDragEnd={handleDragEnd}
-                className={`group relative overflow-hidden rounded-2xl border bg-white shadow-sm cursor-move transition-all ${
+                className={`group relative cursor-move overflow-hidden rounded-2xl border bg-white shadow-sm transition-all ${
                   draggedIndex === index
-                    ? "border-teal-400 opacity-50 scale-95"
+                    ? "scale-95 border-teal-400 opacity-50"
                     : "border-slate-200 hover:border-teal-300"
                 }`}
               >
                 <div className="absolute top-2 left-2 z-10">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-800 text-white text-[10px] font-bold shadow">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-800 text-[10px] font-bold text-white shadow">
                     {index + 1}
                   </span>
                 </div>
@@ -498,7 +499,7 @@ export default function ImportImagePageMain() {
                 <button
                   type="button"
                   onClick={() => removeImage(img.publicId)}
-                  className="absolute bottom-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white shadow opacity-0 transition-opacity group-hover:opacity-100"
+                  className="absolute right-1.5 bottom-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white opacity-0 shadow transition-opacity group-hover:opacity-100"
                   title="Remove"
                 >
                   <svg
@@ -523,7 +524,7 @@ export default function ImportImagePageMain() {
 
       {/* Result URL panel */}
       {urls.length > 0 && (
-        <div className="rounded-2xl border border-emerald-200 bg-white overflow-hidden shadow-sm">
+        <div className="overflow-hidden rounded-2xl border border-emerald-200 bg-white shadow-sm">
           <div className="flex items-center justify-between gap-3 border-b border-emerald-100 bg-emerald-50 px-4 py-3">
             <div>
               <p className="text-sm font-semibold text-emerald-800">
@@ -531,7 +532,7 @@ export default function ImportImagePageMain() {
                   ? "Image URL"
                   : `Image URLs — ${urls.length} images, pipe-separated`}
               </p>
-              <p className="text-xs text-emerald-600 mt-0.5">
+              <p className="mt-0.5 text-xs text-emerald-600">
                 {urls.length > 1
                   ? "URLs are joined with | — paste directly into the image field."
                   : "Paste this URL into the image field."}
@@ -584,15 +585,15 @@ export default function ImportImagePageMain() {
             </button>
           </div>
 
-          <div className="px-4 py-3 space-y-2">
+          <div className="space-y-2 px-4 py-3">
             {urls.length > 1 && (
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">
+                <p className="mb-1 text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
                   Combined (pipe-separated)
                 </p>
                 <div
                   onClick={handleCopyAll}
-                  className="cursor-pointer select-all break-all rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-mono text-[11px] leading-relaxed text-slate-700 hover:border-emerald-300 hover:bg-emerald-50 transition"
+                  className="cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-mono text-[11px] leading-relaxed break-all text-slate-700 transition select-all hover:border-emerald-300 hover:bg-emerald-50"
                   title="Click to copy all"
                 >
                   {combinedUrl}
@@ -602,25 +603,25 @@ export default function ImportImagePageMain() {
 
             <div className="space-y-1.5">
               {urls.length > 1 && (
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                <p className="text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
                   Individual URLs
                 </p>
               )}
               {urls.map((url, i) => (
                 <div key={url} className="flex items-center gap-2">
                   {urls.length > 1 && (
-                    <span className="shrink-0 text-[10px] font-semibold text-slate-400 w-4 text-right">
+                    <span className="w-4 shrink-0 text-right text-[10px] font-semibold text-slate-400">
                       {i + 1}.
                     </span>
                   )}
-                  <div className="flex-1 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 group/row hover:border-teal-300 hover:bg-teal-50 transition">
-                    <span className="flex-1 break-all font-mono text-[11px] text-slate-700 select-all">
+                  <div className="group/row flex flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 transition hover:border-teal-300 hover:bg-teal-50">
+                    <span className="flex-1 font-mono text-[11px] break-all text-slate-700 select-all">
                       {url}
                     </span>
                     <button
                       type="button"
                       onClick={() => void handleCopyOne(url, i)}
-                      className="shrink-0 rounded-lg p-1 text-slate-400 opacity-0 group-hover/row:opacity-100 transition hover:bg-teal-100 hover:text-teal-600"
+                      className="shrink-0 rounded-lg p-1 text-slate-400 opacity-0 transition group-hover/row:opacity-100 hover:bg-teal-100 hover:text-teal-600"
                       title="Copy this URL"
                     >
                       {copiedIndex === i ? (
@@ -662,13 +663,13 @@ export default function ImportImagePageMain() {
       )}
 
       {/* ── Description Builder ───────────────────────────────────────────── */}
-      <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
           <div>
             <p className="text-sm font-semibold text-slate-800">
               Description Builder
             </p>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="mt-0.5 text-xs text-slate-500">
               Write and format your product description, then copy the HTML to
               paste into the product form.
             </p>
@@ -677,7 +678,7 @@ export default function ImportImagePageMain() {
             type="button"
             onClick={handleCopyDesc}
             disabled={!descHtml}
-            className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed ${
+            className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-40 ${
               descCopied
                 ? "bg-violet-500 text-white"
                 : "bg-violet-600 text-white hover:bg-violet-700"
@@ -721,7 +722,7 @@ export default function ImportImagePageMain() {
           </button>
         </div>
 
-        <div className="p-4 space-y-3">
+        <div className="space-y-3 p-4">
           <RichTextEditor
             value={descHtml}
             onChange={(html) => setDescHtml(html === "<p></p>" ? "" : html)}
@@ -730,8 +731,8 @@ export default function ImportImagePageMain() {
 
           {descHtml && (
             <div>
-              <div className="flex items-center justify-between gap-2 mb-1.5">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+              <div className="mb-1.5 flex items-center justify-between gap-2">
+                <p className="text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
                   HTML Output
                 </p>
                 <button
@@ -749,7 +750,7 @@ export default function ImportImagePageMain() {
               <div
                 onClick={handleCopyDesc}
                 title="Click to copy HTML"
-                className="cursor-pointer select-all rounded-xl border border-slate-200 bg-slate-950 px-4 py-3 font-mono text-[11px] leading-relaxed text-emerald-300 hover:border-violet-400 transition overflow-auto whitespace-pre-wrap break-words max-h-40"
+                className="max-h-40 cursor-pointer overflow-auto rounded-xl border border-slate-200 bg-slate-950 px-4 py-3 font-mono text-[11px] leading-relaxed break-words whitespace-pre-wrap text-emerald-300 transition select-all hover:border-violet-400"
               >
                 {descHtml}
               </div>
@@ -759,20 +760,20 @@ export default function ImportImagePageMain() {
       </div>
 
       {/* ── SKU Generator + Color to Hex (side by side) ───────────────────── */}
-      <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-100 px-4 py-3">
           <p className="text-sm font-semibold text-slate-800">
             SKU Generator &amp; Color to Hex
           </p>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="mt-0.5 text-xs text-slate-500">
             Generate a product SKU from a product name, or convert a color name
             to its hex code.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+        <div className="grid grid-cols-1 divide-y divide-slate-100 md:grid-cols-2 md:divide-x md:divide-y-0">
           {/* ── SKU Generator ── */}
-          <div className="p-4 space-y-3">
+          <div className="space-y-3 p-4">
             <p className="text-xs font-semibold text-slate-600">
               SKU Generator
             </p>
@@ -786,14 +787,14 @@ export default function ImportImagePageMain() {
                   setSkuCopied(false)
                 }}
                 placeholder="Product name (e.g. Jasper Sofa)"
-                className="flex-1 px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-teal-400 focus:border-teal-400"
+                className="flex-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm text-slate-700 placeholder-slate-400 focus:border-teal-400 focus:ring-1 focus:ring-teal-400 focus:outline-none"
               />
             </div>
 
             {generatedSku && (
               <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 leading-none mb-0.5">
+                <div className="min-w-0 flex-1">
+                  <p className="mb-0.5 text-[11px] leading-none font-semibold tracking-wide text-slate-400 uppercase">
                     Generated SKU
                   </p>
                   <p className="font-mono text-base font-bold text-slate-800">
@@ -850,15 +851,15 @@ export default function ImportImagePageMain() {
           </div>
 
           {/* ── Color to Hex ── */}
-          <div className="p-4 space-y-3">
+          <div className="space-y-3 p-4">
             <p className="text-xs font-semibold text-slate-600">Color to Hex</p>
 
             {/* Color input row — same pattern as AddProductModal */}
-            <div className="flex gap-2 items-center p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+            <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2.5">
               {/* Swatch / native color picker */}
-              <label className="shrink-0 cursor-pointer relative group">
+              <label className="group relative shrink-0 cursor-pointer">
                 <div
-                  className="h-9 w-9 rounded-lg border-2 border-white ring-1 ring-slate-200 group-hover:ring-teal-400 transition-all shadow-sm"
+                  className="h-9 w-9 rounded-lg border-2 border-white shadow-sm ring-1 ring-slate-200 transition-all group-hover:ring-teal-400"
                   style={{ backgroundColor: colorHex }}
                 />
                 <input
@@ -870,7 +871,7 @@ export default function ImportImagePageMain() {
                     setColorName(hexToColorName(hex))
                     setColorCopied(false)
                   }}
-                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                 />
               </label>
 
@@ -886,7 +887,7 @@ export default function ImportImagePageMain() {
                   setColorCopied(false)
                 }}
                 placeholder="Color name (e.g. Matte Black, Walnut, Navy Blue)"
-                className="flex-1 px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-teal-400 focus:border-teal-400"
+                className="flex-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm text-slate-700 placeholder-slate-400 focus:border-teal-400 focus:ring-1 focus:ring-teal-400 focus:outline-none"
               />
             </div>
 
@@ -896,9 +897,9 @@ export default function ImportImagePageMain() {
                 className="h-10 w-10 shrink-0 rounded-xl border border-slate-200 shadow-sm"
                 style={{ backgroundColor: colorHex }}
               />
-              <div className="flex-1 min-w-0">
+              <div className="min-w-0 flex-1">
                 {colorName.trim() && (
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 leading-none mb-0.5">
+                  <p className="mb-0.5 text-[11px] leading-none font-semibold tracking-wide text-slate-400 uppercase">
                     {colorName}
                   </p>
                 )}

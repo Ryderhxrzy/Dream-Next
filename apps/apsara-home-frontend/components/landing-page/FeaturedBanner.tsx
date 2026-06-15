@@ -15,21 +15,21 @@ export default function FeaturedBanner() {
     <section
       ref={ref}
       id="collections"
-      className="relative py-24 md:py-32 overflow-hidden"
+      className="relative overflow-hidden py-24 md:py-32"
     >
       {/* Background */}
       <motion.div style={{ y }} className="absolute inset-0">
         <img
           src="https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=1920&q=85"
           alt="Featured collection"
-          className="w-full h-[130%] object-cover"
+          className="h-[130%] w-full object-cover"
         />
         <div className="absolute inset-0 bg-blue-500/20" />
       </motion.div>
 
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4">
-        <div className="grid md:grid-cols-2 gap-12 items-center">
+        <div className="grid items-center gap-12 md:grid-cols-2">
           {/* Text Content */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
@@ -37,17 +37,17 @@ export default function FeaturedBanner() {
             viewport={{ once: true }}
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] as const }}
           >
-            <span className="font-mono text-orange-600 text-sm tracking-widest uppercase mb-4 block">
+            <span className="mb-4 block font-mono text-sm tracking-widest text-orange-600 uppercase">
               Exclusive Collection
             </span>
-            <h2 className="font-display text-4xl md:text-5xl lg:text-6xl text-white font-light leading-tight mb-6">
+            <h2 className="font-display mb-6 text-4xl leading-tight font-light text-white md:text-5xl lg:text-6xl">
               The{" "}
-              <span className="text-orange-500 font-semibold italic">
+              <span className="font-semibold text-orange-500 italic">
                 Artisan
               </span>{" "}
               Series
             </h2>
-            <p className="text-white/80 text-lg leading-relaxed mb-8 max-w-lg">
+            <p className="mb-8 max-w-lg text-lg leading-relaxed text-white/80">
               Discover our limited edition collection featuring handcrafted
               pieces from master artisans. Each item tells a story of
               exceptional craftsmanship and timeless design.
@@ -57,19 +57,19 @@ export default function FeaturedBanner() {
                 href="#shop"
                 whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
-                className="inline-flex items-center gap-2 bg-orange-500 text-white px-8 py-4 rounded-full font-semibold text-base transition-all duration-300 hover:bg-[#c4955f] shadow-soft-lg group"
+                className="shadow-soft-lg group inline-flex items-center gap-2 rounded-full bg-orange-500 px-8 py-4 text-base font-semibold text-white transition-all duration-300 hover:bg-[#c4955f]"
               >
                 Shop Collection
                 <ArrowRight
                   size={18}
-                  className="group-hover:translate-x-1 transition-transform"
+                  className="transition-transform group-hover:translate-x-1"
                 />
               </motion.a>
               <motion.a
                 href="#about"
                 whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
-                className="inline-flex items-center gap-2 text-white px-8 py-4 rounded-full font-semibold text-base border border-white/30 hover:bg-white/10 transition-all duration-300"
+                className="inline-flex items-center gap-2 rounded-full border border-white/30 px-8 py-4 text-base font-semibold text-white transition-all duration-300 hover:bg-white/10"
               >
                 Learn More
               </motion.a>
@@ -94,18 +94,18 @@ export default function FeaturedBanner() {
                 duration: 0.4,
                 ease: [0.34, 1.56, 0.64, 1] as const,
               }}
-              className="bg-white rounded-2xl overflow-hidden shadow-soft-lg"
+              className="shadow-soft-lg overflow-hidden rounded-2xl bg-white"
             >
               <img
                 src="https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=400&q=80"
                 alt="Artisan chair"
-                className="w-full aspect-square object-cover"
+                className="aspect-square w-full object-cover"
               />
               <div className="p-4">
-                <h4 className="font-display font-semibold text-af-text">
+                <h4 className="font-display text-af-text font-semibold">
                   Artisan Chair
                 </h4>
-                <span className="font-mono text-sm text-af-forest">$1,299</span>
+                <span className="text-af-forest font-mono text-sm">$1,299</span>
               </div>
             </motion.div>
             <motion.div
@@ -114,18 +114,18 @@ export default function FeaturedBanner() {
                 duration: 0.4,
                 ease: [0.34, 1.56, 0.64, 1] as const,
               }}
-              className="bg-white rounded-2xl overflow-hidden shadow-soft-lg mt-8"
+              className="shadow-soft-lg mt-8 overflow-hidden rounded-2xl bg-white"
             >
               <img
                 src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=80"
                 alt="Designer sofa"
-                className="w-full aspect-square object-cover"
+                className="aspect-square w-full object-cover"
               />
               <div className="p-4">
-                <h4 className="font-display font-semibold text-af-text">
+                <h4 className="font-display text-af-text font-semibold">
                   Designer Sofa
                 </h4>
-                <span className="font-mono text-sm text-af-forest">$3,499</span>
+                <span className="text-af-forest font-mono text-sm">$3,499</span>
               </div>
             </motion.div>
           </motion.div>

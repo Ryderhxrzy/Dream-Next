@@ -1,5 +1,5 @@
-import { buildPageMetadata } from "@/app/seo"
 import ProductsInventoryPageMain from "@/components/superAdmin/products/ProductsInventoryPageMain"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Admin Products Inventory",

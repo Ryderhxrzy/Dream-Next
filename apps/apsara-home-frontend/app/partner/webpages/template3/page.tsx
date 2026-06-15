@@ -1,5 +1,5 @@
-import { buildPageMetadata } from "@/app/seo"
 import Template3 from "@/components/partner/templates/template3"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Template 3 — Bold Gradient",

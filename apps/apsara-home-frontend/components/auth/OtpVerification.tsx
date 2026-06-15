@@ -1,15 +1,17 @@
 "use client"
 
+import { useEffect, useRef, useState } from "react"
 import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import {
   useResendRegisterOtpMutation,
   useVerifyRegisterOtpMutation,
 } from "@/store/api/authApi"
-import { useEffect, useRef, useState } from "react"
 import { motion } from "framer-motion"
-import OtpInput from "./OtpInput"
-import Loading from "../Loading"
+
 import PrimaryButton from "@/components/ui/buttons/PrimaryButton"
+
+import Loading from "../Loading"
+import OtpInput from "./OtpInput"
 
 interface OtpVerificationProps {
   email: string
@@ -217,7 +219,7 @@ const OtpVerification = ({
         <PrimaryButton
           type="submit"
           disabled={isVerifying || otp.length < 4}
-          className="w-full py-3 px-5 text-sm"
+          className="w-full px-5 py-3 text-sm"
         >
           {isVerifying ? (
             <>

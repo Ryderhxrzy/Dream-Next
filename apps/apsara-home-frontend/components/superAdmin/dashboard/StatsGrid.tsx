@@ -1,13 +1,14 @@
 "use client"
 
-import Link from "next/link"
-import { AnimatePresence, motion } from "framer-motion"
 import { useMemo, useState } from "react"
 import { useGetAdminOrdersQuery } from "@/store/api/adminOrdersApi"
 import { useGetAdminPaymentsOverviewQuery } from "@/store/api/adminPaymentsApi"
 import { useGetExpensesSummaryQuery } from "@/store/api/expensesApi"
 import { useGetMembersStatsQuery } from "@/store/api/membersApi"
 import { useGetSupplierStatsQuery } from "@/store/api/suppliersApi"
+import { AnimatePresence, motion } from "framer-motion"
+import Link from "next/link"
+
 import type { StatsGridInitialData } from "./statsGridTypes"
 
 interface StatCard {
@@ -73,7 +74,7 @@ const stats: StatCard[] = [
     valColor: "text-blue-700",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -99,7 +100,7 @@ const stats: StatCard[] = [
     valColor: "text-teal-700",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -125,7 +126,7 @@ const stats: StatCard[] = [
     valColor: "text-emerald-700",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -151,7 +152,7 @@ const stats: StatCard[] = [
     valColor: "text-red-700",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -177,7 +178,7 @@ const stats: StatCard[] = [
     valColor: "text-orange-700",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -203,7 +204,7 @@ const stats: StatCard[] = [
     valColor: "text-purple-700",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -229,7 +230,7 @@ const stats: StatCard[] = [
     valColor: "text-amber-700",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -255,7 +256,7 @@ const stats: StatCard[] = [
     valColor: "text-lime-700",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -281,7 +282,7 @@ const stats: StatCard[] = [
     valColor: "text-fuchsia-700",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -307,7 +308,7 @@ const stats: StatCard[] = [
     valColor: "text-rose-700",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -333,7 +334,7 @@ const stats: StatCard[] = [
     valColor: "text-indigo-700",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -359,7 +360,7 @@ const stats: StatCard[] = [
     valColor: "text-pink-700",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -385,7 +386,7 @@ const stats: StatCard[] = [
     valColor: "text-cyan-700",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -411,7 +412,7 @@ const stats: StatCard[] = [
     valColor: "text-sky-700",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -437,7 +438,7 @@ const stats: StatCard[] = [
     valColor: "text-emerald-700",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -463,7 +464,7 @@ const stats: StatCard[] = [
     valColor: "text-violet-700",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -810,7 +811,7 @@ const StatsGrid = ({ initialData }: StatsGridProps) => {
             >
               <div className="w-full">
                 <div className="mb-3 flex items-start justify-between gap-2">
-                  <p className="text-[11px] font-medium leading-tight text-gray-400 dark:text-gray-500">
+                  <p className="text-[11px] leading-tight font-medium text-gray-400 dark:text-gray-500">
                     {stat.label}
                   </p>
                   <div
@@ -868,7 +869,7 @@ const StatsGrid = ({ initialData }: StatsGridProps) => {
               className={`group h-full rounded-2xl border ${stat.border} ${stat.borderDark} bg-white p-4 transition-all duration-300 dark:bg-gray-800`}
             >
               <div className="mb-3 flex items-start justify-between gap-2">
-                <p className="text-[11px] font-medium leading-tight text-gray-400 dark:text-gray-500">
+                <p className="text-[11px] leading-tight font-medium text-gray-400 dark:text-gray-500">
                   {stat.label}
                 </p>
                 <div
@@ -946,7 +947,7 @@ const StatsGrid = ({ initialData }: StatsGridProps) => {
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
+                  <p className="text-[11px] font-bold tracking-[0.22em] text-slate-400 uppercase dark:text-slate-500">
                     Dashboard Metric
                   </p>
                   <h3 className="mt-2 text-xl font-bold text-slate-900 dark:text-white">
@@ -974,7 +975,7 @@ const StatsGrid = ({ initialData }: StatsGridProps) => {
                 transition={{ delay: 0.05, duration: 0.22, ease: "easeOut" }}
                 className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/70"
               >
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">
                   Summary
                 </p>
                 <div className="mt-3 flex items-start gap-2">

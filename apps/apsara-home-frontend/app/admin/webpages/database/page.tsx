@@ -1,5 +1,5 @@
-import { buildPageMetadata } from "@/app/seo"
 import DatabaseExportPage from "@/components/superAdmin/webpages/DatabaseExportPage"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Database Export",

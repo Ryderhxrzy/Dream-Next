@@ -1,26 +1,26 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import Link from "next/link"
-import Image from "next/image"
-import { usePathname, useRouter } from "next/navigation"
-import { signOut, useSession } from "next-auth/react"
-import { useGetAdminMeQuery, useLogoutMutation } from "@/store/api/authApi"
-import { useGetAdminOrdersQuery } from "@/store/api/adminOrdersApi"
-import {
-  useGetUsernameChangeRequestsQuery,
-  useGetWebstoreRequestsQuery,
-} from "@/store/api/adminInquiriesApi"
-import { membersApi, useGetMembersStatsQuery } from "@/store/api/membersApi"
-import { baseApi, clearAccessTokenCache } from "@/store/api/baseApi"
-import { useAppDispatch } from "@/store/hooks"
 import {
   canAccessWebContentSection,
   normalizeAdminPermissions,
 } from "@/libs/adminPermissions"
 import { clearAdminSession } from "@/libs/adminSession"
 import { fetchAdminSupplierChatConversations } from "@/libs/adminSupplierChat"
+import {
+  useGetUsernameChangeRequestsQuery,
+  useGetWebstoreRequestsQuery,
+} from "@/store/api/adminInquiriesApi"
+import { useGetAdminOrdersQuery } from "@/store/api/adminOrdersApi"
+import { useGetAdminMeQuery, useLogoutMutation } from "@/store/api/authApi"
+import { baseApi, clearAccessTokenCache } from "@/store/api/baseApi"
+import { membersApi, useGetMembersStatsQuery } from "@/store/api/membersApi"
+import { useAppDispatch } from "@/store/hooks"
+import { AnimatePresence, motion } from "framer-motion"
+import { signOut, useSession } from "next-auth/react"
+import Image from "next/image"
+import Link from "next/link"
+import { usePathname, useRouter } from "next/navigation"
 
 interface SubItem {
   label: string
@@ -64,7 +64,7 @@ const navItems: NavItem[] = [
     path: "/admin/dashboard",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -84,7 +84,7 @@ const navItems: NavItem[] = [
     path: "/admin/chat",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -105,7 +105,7 @@ const navItems: NavItem[] = [
     sectionLabel: "Communications",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -126,7 +126,7 @@ const navItems: NavItem[] = [
     sectionLabel: "Operations",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -157,7 +157,7 @@ const navItems: NavItem[] = [
     badge: 12,
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -177,7 +177,7 @@ const navItems: NavItem[] = [
     path: "/admin/interior-requests",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -197,7 +197,7 @@ const navItems: NavItem[] = [
     sectionLabel: "Finance",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -227,7 +227,7 @@ const navItems: NavItem[] = [
     label: "Accounting",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -259,7 +259,7 @@ const navItems: NavItem[] = [
     label: "Finance Office",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -286,7 +286,7 @@ const navItems: NavItem[] = [
     label: "Reports",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -313,7 +313,7 @@ const navItems: NavItem[] = [
     sectionLabel: "Catalog",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -344,7 +344,7 @@ const navItems: NavItem[] = [
     label: "Shipping",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -369,7 +369,7 @@ const navItems: NavItem[] = [
     path: "/admin/suppliers",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -390,7 +390,7 @@ const navItems: NavItem[] = [
     sectionLabel: "System",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -409,7 +409,7 @@ const navItems: NavItem[] = [
     label: "Project",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -435,7 +435,7 @@ const navItems: NavItem[] = [
     label: "Web Content",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -470,7 +470,7 @@ const navItems: NavItem[] = [
     label: "Expenses",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -493,7 +493,7 @@ const navItems: NavItem[] = [
     label: "Payments",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -517,7 +517,7 @@ const navItems: NavItem[] = [
     label: "Settings",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="h-5 w-5"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -1024,24 +1024,17 @@ export default function Sidebar({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-20 lg:hidden"
+            className="fixed inset-0 z-20 bg-black/60 backdrop-blur-sm lg:hidden"
           />
         )}
       </AnimatePresence>
 
       <aside
-        className={`
-        fixed top-0 left-0 h-[100dvh] z-30 flex flex-col
-        bg-white/95 dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-700/50 backdrop-blur-xl
-        transition-all duration-300 ease-in-out
-        ${isOpen ? "translate-x-0" : "-translate-x-full"}
-        ${isCollapsed ? "w-16" : "w-64"}
-        lg:translate-x-0 lg:sticky lg:top-0
-      `}
+        className={`fixed top-0 left-0 z-30 flex h-[100dvh] flex-col border-r border-slate-200/80 bg-white/95 backdrop-blur-xl transition-all duration-300 ease-in-out dark:border-slate-700/50 dark:bg-slate-900 ${isOpen ? "translate-x-0" : "-translate-x-full"} ${isCollapsed ? "w-16" : "w-64"} lg:sticky lg:top-0 lg:translate-x-0`}
       >
         {/* Logo */}
         <div
-          className={`flex items-center h-16 px-3 border-b border-slate-200/80 dark:border-slate-700/50 shrink-0 ${isCollapsed ? "justify-center" : "gap-2"}`}
+          className={`flex h-16 shrink-0 items-center border-b border-slate-200/80 px-3 dark:border-slate-700/50 ${isCollapsed ? "justify-center" : "gap-2"}`}
         >
           <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-xl bg-linear-to-br from-orange-50 to-cyan-50 ring-1 ring-slate-200 dark:bg-transparent dark:ring-0">
             <Image
@@ -1053,11 +1046,11 @@ export default function Sidebar({
             />
           </div>
           {!isCollapsed && (
-            <div className="flex-1 min-w-0">
-              <p className="text-slate-900 dark:text-white font-bold text-sm leading-none whitespace-nowrap">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm leading-none font-bold whitespace-nowrap text-slate-900 dark:text-white">
                 AF Home
               </p>
-              <p className="text-teal-600 dark:text-teal-400 text-xs mt-0.5">
+              <p className="mt-0.5 text-xs text-teal-600 dark:text-teal-400">
                 {displayRole}
               </p>
             </div>
@@ -1065,10 +1058,10 @@ export default function Sidebar({
           {!isCollapsed && (
             <button
               onClick={onToggleCollapse}
-              className="hidden lg:flex items-center justify-center h-7 w-7 rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors shrink-0"
+              className="hidden h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-900 lg:flex dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-white"
             >
               <svg
-                className="w-4 h-4"
+                className="h-4 w-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -1084,10 +1077,10 @@ export default function Sidebar({
           )}
           <button
             onClick={onClose}
-            className="lg:hidden text-slate-400 hover:text-slate-900 dark:hover:text-white ml-auto"
+            className="ml-auto text-slate-400 hover:text-slate-900 lg:hidden dark:hover:text-white"
           >
             <svg
-              className="w-5 h-5"
+              className="h-5 w-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -1104,7 +1097,7 @@ export default function Sidebar({
 
         {/* Navigation */}
         <nav
-          className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5"
+          className="flex-1 space-y-0.5 overflow-y-auto px-2 py-3"
           style={{ scrollbarWidth: "none" }}
         >
           {isCollapsed && (
@@ -1112,7 +1105,7 @@ export default function Sidebar({
               onClick={onToggleCollapse}
               title="Expand sidebar"
               aria-label="Expand sidebar"
-              className="hidden lg:flex w-full items-center justify-center mb-2 rounded-xl py-1 transition-colors"
+              className="mb-2 hidden w-full items-center justify-center rounded-xl py-1 transition-colors lg:flex"
             >
               <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-600 shadow-sm transition-colors hover:bg-indigo-100 dark:border-indigo-700/60 dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/50">
                 <svg
@@ -1152,10 +1145,10 @@ export default function Sidebar({
                   <div
                     className={`flex items-center gap-2 px-2 pb-1.5 ${visibleNavItems[0]?.id === item.id ? "pt-1" : "pt-4"}`}
                   >
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                    <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
                       {item.sectionLabel}
                     </span>
-                    <div className="flex-1 h-px bg-slate-100 dark:bg-slate-700/60" />
+                    <div className="h-px flex-1 bg-slate-100 dark:bg-slate-700/60" />
                   </div>
                 )}
                 {hasChildren ? (
@@ -1167,17 +1160,14 @@ export default function Sidebar({
                       toggleMenu(item.id)
                     }
                     title={isCollapsed ? item.label : undefined}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-200 group relative
-                      ${
-                        active
-                          ? "bg-sky-500 text-white dark:bg-sky-600 dark:text-white"
-                          : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100"
-                      }
-                      ${isCollapsed ? "justify-center" : ""}
-                    `}
+                    className={`group relative flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm transition-all duration-200 ${
+                      active
+                        ? "bg-sky-500 text-white dark:bg-sky-600 dark:text-white"
+                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                    } ${isCollapsed ? "justify-center" : ""} `}
                   >
                     <span
-                      className={`shrink-0 flex items-center justify-center h-7 w-7 rounded-lg transition-colors ${active ? "bg-white/20" : "bg-slate-100 dark:bg-slate-800 group-hover:bg-slate-200 dark:group-hover:bg-slate-700"}`}
+                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors ${active ? "bg-white/20" : "bg-slate-100 group-hover:bg-slate-200 dark:bg-slate-800 dark:group-hover:bg-slate-700"}`}
                     >
                       {item.icon}
                     </span>
@@ -1187,18 +1177,18 @@ export default function Sidebar({
                           {item.label}
                         </span>
                         {typeof item.badge === "number" && item.badge > 0 && (
-                          <span className="bg-sky-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold min-w-5 text-center">
+                          <span className="min-w-5 rounded-full bg-sky-500 px-1.5 py-0.5 text-center text-xs font-bold text-white">
                             {item.badge}
                           </span>
                         )}
                         {typeof item.badge === "string" && item.badge && (
-                          <span className="inline-flex items-center rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm animate-pulse">
+                          <span className="inline-flex animate-pulse items-center rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold tracking-wide text-white uppercase shadow-sm">
                             {item.badge}
                           </span>
                         )}
                         {!isAccounting && !isFinanceOfficer && (
                           <svg
-                            className={`w-4 h-4 shrink-0 transition-transform duration-200 ${menuOpen ? "rotate-180" : ""}`}
+                            className={`h-4 w-4 shrink-0 transition-transform duration-200 ${menuOpen ? "rotate-180" : ""}`}
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -1214,7 +1204,7 @@ export default function Sidebar({
                       </>
                     )}
                     {isCollapsed && (
-                      <span className="absolute left-full ml-3 px-2.5 py-1.5 bg-slate-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">
+                      <span className="pointer-events-none absolute left-full z-50 ml-3 rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-xs whitespace-nowrap text-white opacity-0 shadow-xl group-hover:opacity-100">
                         {item.label}
                       </span>
                     )}
@@ -1225,17 +1215,14 @@ export default function Sidebar({
                     prefetch
                     onClick={() => isOpen && onClose()}
                     title={isCollapsed ? item.label : undefined}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-200 group relative
-                      ${
-                        active
-                          ? "bg-sky-500 text-white dark:bg-sky-600 dark:text-white"
-                          : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100"
-                      }
-                      ${isCollapsed ? "justify-center" : ""}
-                    `}
+                    className={`group relative flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition-all duration-200 ${
+                      active
+                        ? "bg-sky-500 text-white dark:bg-sky-600 dark:text-white"
+                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                    } ${isCollapsed ? "justify-center" : ""} `}
                   >
                     <span
-                      className={`shrink-0 flex items-center justify-center h-7 w-7 rounded-lg transition-colors ${active ? "bg-white/20" : "bg-slate-100 dark:bg-slate-800 group-hover:bg-slate-200 dark:group-hover:bg-slate-700"}`}
+                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors ${active ? "bg-white/20" : "bg-slate-100 group-hover:bg-slate-200 dark:bg-slate-800 dark:group-hover:bg-slate-700"}`}
                     >
                       {item.icon}
                     </span>
@@ -1244,13 +1231,13 @@ export default function Sidebar({
                         <span className="flex-1 font-medium">{item.label}</span>
                         {typeof item.badge === "number" && item.badge > 0 && (
                           <span
-                            className={`text-white text-xs px-1.5 py-0.5 rounded-full font-bold min-w-5 text-center ${item.id === "chat" ? "bg-red-500 animate-pulse" : "bg-sky-500"}`}
+                            className={`min-w-5 rounded-full px-1.5 py-0.5 text-center text-xs font-bold text-white ${item.id === "chat" ? "animate-pulse bg-red-500" : "bg-sky-500"}`}
                           >
                             {item.badge > 99 ? "99+" : item.badge}
                           </span>
                         )}
                         {typeof item.badge === "string" && item.badge && (
-                          <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold uppercase tracking-wide text-white shadow-sm animate-pulse">
+                          <span className="absolute -top-1 -right-1 flex h-5 min-w-5 animate-pulse items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold tracking-wide text-white uppercase shadow-sm">
                             N
                           </span>
                         )}
@@ -1258,7 +1245,7 @@ export default function Sidebar({
                     )}
                     {isCollapsed && (
                       <>
-                        <span className="absolute left-full ml-3 px-2.5 py-1.5 bg-slate-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-xl border border-slate-700">
+                        <span className="pointer-events-none absolute left-full z-50 ml-3 rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-xs whitespace-nowrap text-white opacity-0 shadow-xl group-hover:opacity-100">
                           {item.label}
                         </span>
                         {typeof item.badge === "number" && item.badge > 0 && (
@@ -1299,13 +1286,11 @@ export default function Sidebar({
                                   prefetchMembersData()
                                 if (isOpen) onClose()
                               }}
-                              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-all duration-200 border-l-2
-                                ${
-                                  isExactActive(child.path)
-                                    ? "border-sky-500 text-sky-700 dark:text-sky-300 font-semibold bg-sky-50 dark:bg-sky-900/20"
-                                    : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/70"
-                                }
-                              `}
+                              className={`flex items-center gap-2 rounded-lg border-l-2 px-3 py-2 text-xs transition-all duration-200 ${
+                                isExactActive(child.path)
+                                  ? "border-sky-500 bg-sky-50 font-semibold text-sky-700 dark:bg-sky-900/20 dark:text-sky-300"
+                                  : "border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800/70 dark:hover:text-slate-200"
+                              } `}
                             >
                               <span className="flex-1 truncate">
                                 {child.label}
@@ -1316,7 +1301,7 @@ export default function Sidebar({
                                     className={`${
                                       isExactActive(child.path)
                                         ? "inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-700 dark:border-sky-900/50 dark:bg-sky-900/30 dark:text-sky-300"
-                                        : "min-w-5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold text-center bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                                        : "min-w-5 rounded-full bg-slate-100 px-1.5 py-0.5 text-center text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300"
                                     }`}
                                   >
                                     {child.badge}
@@ -1336,30 +1321,30 @@ export default function Sidebar({
 
         {/* Footer */}
         <div
-          className={`shrink-0 p-3 border-t border-slate-200/80 dark:border-slate-700/50`}
+          className={`shrink-0 border-t border-slate-200/80 p-3 dark:border-slate-700/50`}
         >
           {!isCollapsed && (
-            <div className="flex items-center gap-3 px-3 py-2.5 mb-2 rounded-2xl bg-linear-to-br from-slate-50 to-white ring-1 ring-slate-200 shadow-sm dark:from-slate-800 dark:to-slate-800 dark:ring-slate-700/70 dark:shadow-none">
+            <div className="mb-2 flex items-center gap-3 rounded-2xl bg-linear-to-br from-slate-50 to-white px-3 py-2.5 shadow-sm ring-1 ring-slate-200 dark:from-slate-800 dark:to-slate-800 dark:shadow-none dark:ring-slate-700/70">
               {avatarSrc ? (
                 <Image
                   src={avatarSrc}
                   alt={displayName}
                   width={32}
                   height={32}
-                  className="h-8 w-8 rounded-full object-cover shrink-0"
+                  className="h-8 w-8 shrink-0 rounded-full object-cover"
                 />
               ) : (
-                <div className="h-8 w-8 rounded-full bg-linear-to-br from-teal-400 to-cyan-500 flex items-center justify-center shrink-0">
-                  <span className="text-white font-bold text-xs">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-teal-400 to-cyan-500">
+                  <span className="text-xs font-bold text-white">
                     {displayInitials}
                   </span>
                 </div>
               )}
-              <div className="flex-1 min-w-0">
-                <p className="text-slate-900 dark:text-white text-xs font-semibold truncate">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-semibold text-slate-900 dark:text-white">
                   {displayName}
                 </p>
-                <p className="text-slate-500 dark:text-slate-400 text-xs truncate">
+                <p className="truncate text-xs text-slate-500 dark:text-slate-400">
                   {displayEmailText}
                 </p>
               </div>
@@ -1368,11 +1353,11 @@ export default function Sidebar({
           <button
             onClick={handleLogout}
             disabled={isLoggingOut}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all duration-200 w-full disabled:opacity-60 ${isCollapsed ? "justify-center" : ""}`}
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-500 transition-all duration-200 hover:bg-red-50 hover:text-red-500 disabled:opacity-60 dark:text-slate-400 dark:hover:bg-red-500/10 dark:hover:text-red-400 ${isCollapsed ? "justify-center" : ""}`}
           >
             {isLoggingOut ? (
               <svg
-                className="w-5 h-5 shrink-0 animate-spin"
+                className="h-5 w-5 shrink-0 animate-spin"
                 fill="none"
                 viewBox="0 0 24 24"
               >
@@ -1392,7 +1377,7 @@ export default function Sidebar({
               </svg>
             ) : (
               <svg
-                className="w-5 h-5 shrink-0"
+                className="h-5 w-5 shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"

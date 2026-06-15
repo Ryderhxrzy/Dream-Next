@@ -1,5 +1,5 @@
-import { buildPageMetadata } from "@/app/seo"
 import LegalPageShell from "@/components/legal/LegalPageShell"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Return & Refund",
@@ -105,7 +105,7 @@ const SECTIONS = [
               key={item.label}
               className="rounded-xl border border-sky-100 bg-sky-50/60 px-4 py-3 dark:border-sky-900/30 dark:bg-sky-950/20"
             >
-              <p className="text-xs font-bold uppercase tracking-wide text-sky-700 dark:text-sky-300">
+              <p className="text-xs font-bold tracking-wide text-sky-700 uppercase dark:text-sky-300">
                 {item.label}
               </p>
               <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
@@ -377,7 +377,7 @@ export default function ReturnsPage() {
             </svg>
           </div>
           <div className="flex-1">
-            <p className="text-xs font-bold uppercase tracking-widest opacity-70">
+            <p className="text-xs font-bold tracking-widest uppercase opacity-70">
               AF Home · Policy
             </p>
             <h2 className="mt-1 text-xl font-bold">Shop with confidence.</h2>

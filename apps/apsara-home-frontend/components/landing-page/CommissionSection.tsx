@@ -1,13 +1,14 @@
 import { motion } from "framer-motion"
 import {
-  Share2,
-  User,
-  Wallet,
-  ArrowRight,
   ArrowDown,
   ArrowLeft,
+  ArrowRight,
+  Share2,
   TrendingUp,
+  User,
+  Wallet,
 } from "lucide-react"
+
 import { Card, CardContent } from "@/components/ui/card"
 
 export default function CommissionSection() {
@@ -59,24 +60,24 @@ export default function CommissionSection() {
   return (
     <section
       id="earnings"
-      className="py-24 bg-gray-50 dark:bg-gray-900 overflow-hidden relative"
+      className="relative overflow-hidden bg-gray-50 py-24 dark:bg-gray-900"
     >
       {/* Background Elements */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute top-10 left-10 w-64 h-64 bg-orange-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob" />
-        <div className="absolute top-10 right-10 w-64 h-64 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000" />
-        <div className="absolute -bottom-32 left-20 w-64 h-64 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000" />
+      <div className="pointer-events-none absolute top-0 left-0 h-full w-full overflow-hidden">
+        <div className="animate-blob absolute top-10 left-10 h-64 w-64 rounded-full bg-orange-200 opacity-20 mix-blend-multiply blur-3xl filter" />
+        <div className="animate-blob animation-delay-2000 absolute top-10 right-10 h-64 w-64 rounded-full bg-purple-200 opacity-20 mix-blend-multiply blur-3xl filter" />
+        <div className="animate-blob animation-delay-4000 absolute -bottom-32 left-20 h-64 w-64 rounded-full bg-pink-200 opacity-20 mix-blend-multiply blur-3xl filter" />
       </div>
 
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
+      <div className="relative z-10 container mx-auto px-4">
+        <div className="grid items-center gap-16 lg:grid-cols-2">
           {/* Text Content */}
           <div className="text-center lg:text-left">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="inline-block px-4 py-1.5 rounded-full bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-300 font-semibold text-sm mb-6"
+              className="mb-6 inline-block rounded-full bg-green-100 px-4 py-1.5 text-sm font-semibold text-green-700 dark:bg-green-500/10 dark:text-green-300"
             >
               HOW YOU EARN
             </motion.div>
@@ -86,10 +87,10 @@ export default function CommissionSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6 leading-tight"
+              className="mb-6 text-4xl leading-tight font-bold text-gray-900 md:text-5xl dark:text-white"
             >
               Earn Every Time <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-500">
+              <span className="bg-gradient-to-r from-green-600 to-emerald-500 bg-clip-text text-transparent">
                 You Share.
               </span>
             </motion.h2>
@@ -99,7 +100,7 @@ export default function CommissionSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
-              className="text-xl text-gray-600 dark:text-gray-400 mb-8 leading-relaxed"
+              className="mb-8 text-xl leading-relaxed text-gray-600 dark:text-gray-400"
             >
               When someone buys using your affiliate link, you earn
               commissions—simple as that.
@@ -110,14 +111,14 @@ export default function CommissionSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.3 }}
-              className="grid gap-4 mb-10"
+              className="mb-10 grid gap-4"
             >
               {benefits.map((benefit, index) => (
                 <div
                   key={index}
-                  className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700"
+                  className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800"
                 >
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 dark:bg-green-500/10 flex items-center justify-center text-green-600 dark:text-green-300">
+                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-500/10 dark:text-green-300">
                     <TrendingUp size={16} />
                   </div>
                   <span className="font-medium text-gray-700 dark:text-gray-200">
@@ -132,7 +133,7 @@ export default function CommissionSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.4 }}
-              className="text-2xl font-caveat text-orange-600 font-bold rotate-1 inline-block"
+              className="font-caveat inline-block rotate-1 text-2xl font-bold text-orange-600"
             >
               Your content. Your network. Your income.
             </motion.p>
@@ -142,7 +143,7 @@ export default function CommissionSection() {
           <div className="relative">
             <div className="relative z-10 grid gap-6">
               {/* Process Flow */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 relative">
+              <div className="relative grid grid-cols-1 gap-6 lg:grid-cols-2">
                 {steps.map((step, index) => {
                   // Determine order for snake layout on desktop
                   // 0 -> 1
@@ -166,14 +167,14 @@ export default function CommissionSection() {
                       transition={{ delay: index * 0.15 }}
                       className={`relative ${orderClass}`}
                     >
-                      <Card className="h-full border-none shadow-lg hover:shadow-xl transition-all duration-300 relative z-10">
-                        <CardContent className="p-6 flex flex-col items-center text-center">
+                      <Card className="relative z-10 h-full border-none shadow-lg transition-all duration-300 hover:shadow-xl">
+                        <CardContent className="flex flex-col items-center p-6 text-center">
                           <div
-                            className={`w-14 h-14 rounded-2xl ${step.color} flex items-center justify-center mb-4`}
+                            className={`h-14 w-14 rounded-2xl ${step.color} mb-4 flex items-center justify-center`}
                           >
                             <step.icon size={28} />
                           </div>
-                          <h3 className="font-bold text-gray-900 dark:text-white mb-1">
+                          <h3 className="mb-1 font-bold text-gray-900 dark:text-white">
                             {step.title}
                           </h3>
                           <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -185,11 +186,7 @@ export default function CommissionSection() {
                       {/* Connecting Arrows (Desktop Only) */}
                       {step.arrow && (
                         <div
-                          className={`absolute z-20 hidden lg:flex items-center justify-center text-gray-300
-                          ${step.arrowPos === "right" ? "-right-5 top-1/2 -translate-y-1/2" : ""}
-                          ${step.arrowPos === "bottom" ? "-bottom-5 left-1/2 -translate-x-1/2" : ""}
-                          ${step.arrowPos === "left" ? "-left-5 top-1/2 -translate-y-1/2" : ""}
-                        `}
+                          className={`absolute z-20 hidden items-center justify-center text-gray-300 lg:flex ${step.arrowPos === "right" ? "top-1/2 -right-5 -translate-y-1/2" : ""} ${step.arrowPos === "bottom" ? "-bottom-5 left-1/2 -translate-x-1/2" : ""} ${step.arrowPos === "left" ? "top-1/2 -left-5 -translate-y-1/2" : ""} `}
                         >
                           <step.arrow size={24} strokeWidth={3} />
                         </div>
@@ -197,7 +194,7 @@ export default function CommissionSection() {
 
                       {/* Mobile Arrow (Down for all except last) */}
                       {index < steps.length - 1 && (
-                        <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 z-20 flex lg:hidden text-gray-300">
+                        <div className="absolute -bottom-5 left-1/2 z-20 flex -translate-x-1/2 text-gray-300 lg:hidden">
                           <ArrowDown size={20} />
                         </div>
                       )}
@@ -212,19 +209,19 @@ export default function CommissionSection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.6 }}
-                className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 relative overflow-hidden mt-6"
+                className="relative mt-6 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800"
               >
                 <div className="p-6">
-                  <div className="flex justify-between items-center mb-6">
+                  <div className="mb-6 flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                      <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
                         Total Earnings
                       </p>
                       <h3 className="text-3xl font-bold text-gray-900 dark:text-white">
                         ₱15,450.00
                       </h3>
                     </div>
-                    <div className="px-3 py-1 bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-300 rounded-full text-xs font-bold flex items-center gap-1">
+                    <div className="flex items-center gap-1 rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700 dark:bg-green-500/10 dark:text-green-300">
                       <TrendingUp size={12} />
                       +12%
                     </div>
@@ -233,7 +230,7 @@ export default function CommissionSection() {
                   {/* Mock Chart Area */}
                   <div className="relative h-24 w-full overflow-hidden">
                     <svg
-                      className="w-full h-full"
+                      className="h-full w-full"
                       viewBox="0 0 100 40"
                       preserveAspectRatio="none"
                     >
@@ -271,7 +268,7 @@ export default function CommissionSection() {
                     </svg>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-50 dark:border-gray-700">
+                  <div className="mt-4 grid grid-cols-3 gap-4 border-t border-gray-50 pt-4 dark:border-gray-700">
                     <div>
                       <p className="text-[10px] text-gray-400 uppercase">
                         Clicks

@@ -1,10 +1,10 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { useRouter, useSearchParams } from "next/navigation"
-import { signIn, useSession } from "next-auth/react"
 import { showErrorToast, showSuccessToast } from "@/libs/toast"
+import { AnimatePresence, motion } from "framer-motion"
+import { signIn, useSession } from "next-auth/react"
+import { useRouter, useSearchParams } from "next/navigation"
 import QRCodeStyling from "qr-code-styling"
 
 function resolveCallbackPath(value: string | null | undefined): string {
@@ -344,7 +344,7 @@ const QrModal = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm rounded-3xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-slate-800 shadow-2xl"
+            className="w-full max-w-sm rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-slate-800"
           >
             {/* Header */}
             <div className="mb-4 flex items-center justify-between">
@@ -353,7 +353,7 @@ const QrModal = ({
               </h2>
               <button
                 onClick={handleClose}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                className="text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-300"
               >
                 <svg
                   className="h-6 w-6"
@@ -383,7 +383,7 @@ const QrModal = ({
                 <div className="flex h-64 w-64 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 dark:border-white/10 dark:bg-white/5">
                   <div className="flex flex-col items-center gap-3">
                     <svg
-                      className="animate-spin h-8 w-8 text-sky-500"
+                      className="h-8 w-8 animate-spin text-sky-500"
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
@@ -408,7 +408,7 @@ const QrModal = ({
                   </div>
                 </div>
               ) : qrData ? (
-                <div className="relative rounded-lg border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5 shadow-sm flex items-center justify-center">
+                <div className="relative flex items-center justify-center rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
                   <div
                     ref={qrCanvasRef}
                     className="flex items-center justify-center"
@@ -441,7 +441,7 @@ const QrModal = ({
                 <button
                   onClick={handleRefresh}
                   disabled={isLoading}
-                  className="h-11 px-6 rounded-[14px] bg-sky-500 text-sm font-semibold text-white transition-colors hover:bg-sky-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="h-11 rounded-[14px] bg-sky-500 px-6 text-sm font-semibold text-white transition-colors hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isLoading ? "Generating..." : "Generate New QR Code"}
                 </button>
@@ -451,12 +451,12 @@ const QrModal = ({
             {/* Instructions */}
             <div className="space-y-4">
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white text-center">
+                <h3 className="text-center text-sm font-semibold text-gray-900 dark:text-white">
                   How to scan on mobile:
                 </h3>
                 <ol className="space-y-2 text-xs text-gray-600 dark:text-white/70">
                   <li className="flex gap-2">
-                    <span className="font-semibold text-sky-600 dark:text-sky-400 flex-shrink-0">
+                    <span className="flex-shrink-0 font-semibold text-sky-600 dark:text-sky-400">
                       1.
                     </span>
                     <span>
@@ -466,7 +466,7 @@ const QrModal = ({
                     </span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="font-semibold text-sky-600 dark:text-sky-400 flex-shrink-0">
+                    <span className="flex-shrink-0 font-semibold text-sky-600 dark:text-sky-400">
                       2.
                     </span>
                     <span>
@@ -475,7 +475,7 @@ const QrModal = ({
                     </span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="font-semibold text-sky-600 dark:text-sky-400 flex-shrink-0">
+                    <span className="flex-shrink-0 font-semibold text-sky-600 dark:text-sky-400">
                       3.
                     </span>
                     <span>
@@ -484,7 +484,7 @@ const QrModal = ({
                     </span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="font-semibold text-sky-600 dark:text-sky-400 flex-shrink-0">
+                    <span className="flex-shrink-0 font-semibold text-sky-600 dark:text-sky-400">
                       4.
                     </span>
                     <span>
@@ -493,7 +493,7 @@ const QrModal = ({
                     </span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="font-semibold text-sky-600 dark:text-sky-400 flex-shrink-0">
+                    <span className="flex-shrink-0 font-semibold text-sky-600 dark:text-sky-400">
                       5.
                     </span>
                     <span>Point your camera at this QR code</span>
@@ -508,7 +508,7 @@ const QrModal = ({
                   transition={{ delay: 0.5 }}
                   className="flex items-center justify-center gap-2 pt-2"
                 >
-                  <div className="h-1 w-1 rounded-full bg-sky-500 animate-pulse" />
+                  <div className="h-1 w-1 animate-pulse rounded-full bg-sky-500" />
                   <span className="text-xs text-gray-500 dark:text-white/50">
                     Waiting for scan...
                   </span>

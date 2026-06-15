@@ -1,45 +1,45 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuthStore } from "@/store/auth.store"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 
-import { api } from "@/lib/api";
-import { useAuthStore } from "@/store/auth.store";
+import { api } from "@/lib/api"
 
 type CreatePostInput = {
-  category: string;
-  title: string;
-  content: string;
-  image?: File | null;
-  eventDate?: Date | null;
-  eventTime?: string | null;
-  eventEndTime?: string | null;
-  location?: string | null;
-  price?: string | null;
-  condition?: string | null;
-};
+  category: string
+  title: string
+  content: string
+  image?: File | null
+  eventDate?: Date | null
+  eventTime?: string | null
+  eventEndTime?: string | null
+  location?: string | null
+  price?: string | null
+  condition?: string | null
+}
 
 type UploadImageResponse = {
-  imageUrl: string;
-  publicId: string;
-};
+  imageUrl: string
+  publicId: string
+}
 
 export function useCreateCommunityPost() {
-  const queryClient = useQueryClient();
-  const token = useAuthStore((state) => state.token);
+  const queryClient = useQueryClient()
+  const token = useAuthStore((state) => state.token)
 
   return useMutation({
     mutationFn: async (input: CreatePostInput) => {
-      let imageUrl: string | null = null;
+      let imageUrl: string | null = null
 
       if (input.image) {
-        const formData = new FormData();
-        formData.append("image", input.image);
+        const formData = new FormData()
+        formData.append("image", input.image)
 
         const upload = await api<UploadImageResponse>("/posts/images", {
           method: "POST",
           token,
           body: formData,
-        });
+        })
 
-        imageUrl = upload.imageUrl;
+        imageUrl = upload.imageUrl
       }
 
       return api("/posts", {
@@ -57,10 +57,10 @@ export function useCreateCommunityPost() {
           price: input.price,
           condition: input.condition,
         }),
-      });
+      })
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["community-posts"] });
+      await queryClient.invalidateQueries({ queryKey: ["community-posts"] })
     },
-  });
+  })
 }

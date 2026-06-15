@@ -1,13 +1,16 @@
 "use client"
 
+import { useEffect, useMemo, useState, type FormEvent } from "react"
+import { showErrorToast } from "@/libs/toast"
+import {
+  useFetchZqImportPreviewMutation,
+  type ZqCachedProduct,
+} from "@/store/api/productsApi"
+import { motion } from "framer-motion"
 import Image from "next/image"
 import Link from "next/link"
-import { useEffect, useMemo, useState, type FormEvent } from "react"
-import { motion } from "framer-motion"
-import { useFetchZqImportPreviewMutation } from "@/store/api/productsApi"
-import { showErrorToast } from "@/libs/toast"
+
 import EditZqPricingModal from "@/components/superAdmin/products/EditZqPricingModal"
-import { type ZqCachedProduct } from "@/store/api/productsApi"
 
 type ZqLiveProduct = {
   id: string
@@ -234,7 +237,7 @@ export default function ZqSupplierProductsPageMain({
           className="flex flex-wrap items-start justify-between gap-4"
         >
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-600">
+            <p className="text-xs font-semibold tracking-[0.2em] text-sky-600 uppercase">
               AF HOME GLOBAL SUPPLIER
             </p>
             <h1 className="mt-1 text-2xl font-bold text-slate-900">
@@ -322,7 +325,7 @@ export default function ZqSupplierProductsPageMain({
                 value={draftSearch}
                 onChange={(event) => setDraftSearch(event.target.value)}
                 placeholder="Search global supplier product name or external ID..."
-                className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-700 outline-none transition focus:border-sky-300 focus:bg-white"
+                className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-700 transition outline-none focus:border-sky-300 focus:bg-white"
               />
               <button
                 type="submit"
@@ -412,22 +415,22 @@ export default function ZqSupplierProductsPageMain({
             <table className="min-w-full text-sm">
               <thead className="bg-slate-50">
                 <tr className="border-b border-slate-200">
-                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <th className="px-5 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase">
                     Product
                   </th>
-                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <th className="px-5 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase">
                     Source
                   </th>
-                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <th className="px-5 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase">
                     Status
                   </th>
-                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <th className="px-5 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase">
                     Imported
                   </th>
-                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <th className="px-5 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase">
                     Created
                   </th>
-                  <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <th className="px-5 py-3 text-right text-xs font-semibold tracking-wide text-slate-500 uppercase">
                     Action
                   </th>
                 </tr>
@@ -497,7 +500,7 @@ export default function ZqSupplierProductsPageMain({
 function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="rounded-3xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+      <p className="text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase">
         {label}
       </p>
       <p className="mt-2 text-3xl font-bold text-slate-900">{value}</p>

@@ -1,18 +1,19 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { useGetPartnerMembersQuery } from "@/store/api/membersApi"
 import {
-  Users,
   BarChart2,
-  Search,
   ChevronDown,
-  RotateCcw,
-  Phone,
-  ChevronsUpDown,
   ChevronLeft,
   ChevronRight,
+  ChevronsUpDown,
+  Phone,
+  RotateCcw,
+  Search,
+  Users,
 } from "lucide-react"
-import { useGetPartnerMembersQuery } from "@/store/api/membersApi"
+
 import type { Member } from "@/types/members/types"
 
 type ApiError = {
@@ -206,7 +207,7 @@ export default function PartnerMembersPage() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2 self-start rounded-full border border-indigo-100 bg-white px-4 py-2 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:self-auto">
+            <div className="flex items-center gap-2 self-start rounded-full border border-indigo-100 bg-white px-4 py-2 shadow-sm sm:self-auto dark:border-slate-700 dark:bg-slate-800">
               <BarChart2 className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
               <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                 {isFetching && !loading ? "…" : filteredMembers.length} shown
@@ -218,11 +219,11 @@ export default function PartnerMembersPage() {
           <div className="mt-5 grid grid-cols-1 items-end gap-4 md:grid-cols-3">
             {/* Search — spans 2 cols */}
             <div className="md:col-span-2">
-              <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+              <label className="mb-2 block text-[11px] font-bold tracking-widest text-slate-500 uppercase dark:text-slate-400">
                 Search
               </label>
               <div className="relative">
-                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Search className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   type="search"
                   value={search}
@@ -231,19 +232,19 @@ export default function PartnerMembersPage() {
                     setPage(1)
                   }}
                   placeholder="Search by name, username, or email"
-                  className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm font-medium text-slate-800 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                  className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pr-4 pl-10 text-sm font-medium text-slate-800 shadow-sm transition outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 />
               </div>
             </div>
 
             {/* Sponsor */}
             <div>
-              <label className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+              <label className="mb-2 block text-[11px] font-bold tracking-widest text-slate-500 uppercase dark:text-slate-400">
                 Sponsor
               </label>
               <div className="relative">
                 <select
-                  className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-4 pr-9 text-sm font-medium text-slate-800 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                  className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pr-9 pl-4 text-sm font-medium text-slate-800 shadow-sm transition outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   value={sponsorFilter}
                   onChange={(e) => setSponsorFilter(e.target.value)}
                   disabled={loading}
@@ -255,7 +256,7 @@ export default function PartnerMembersPage() {
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <ChevronDown className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
               </div>
             </div>
           </div>
@@ -297,7 +298,7 @@ export default function PartnerMembersPage() {
                 <tr>
                   {COL_HEADERS.map((h) => (
                     <th key={h} className="px-5 py-3.5 text-left">
-                      <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                      <div className="flex items-center gap-1.5 text-[11px] font-bold tracking-widest text-slate-500 uppercase dark:text-slate-400">
                         {h} <ChevronsUpDown className="h-3 w-3 opacity-40" />
                       </div>
                     </th>
@@ -348,7 +349,7 @@ export default function PartnerMembersPage() {
                 <tr>
                   {COL_HEADERS.map((h) => (
                     <th key={h} className="px-5 py-3.5 text-left">
-                      <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                      <div className="flex items-center gap-1.5 text-[11px] font-bold tracking-widest text-slate-500 uppercase dark:text-slate-400">
                         {h} <ChevronsUpDown className="h-3 w-3 opacity-40" />
                       </div>
                     </th>
@@ -398,7 +399,7 @@ export default function PartnerMembersPage() {
                             )}
                           </div>
                           <div className="min-w-0">
-                            <p className="truncate text-[15px] font-bold leading-5 text-slate-900 dark:text-slate-100">
+                            <p className="truncate text-[15px] leading-5 font-bold text-slate-900 dark:text-slate-100">
                               {member.name}
                             </p>
                             <div className="mt-0.5 space-y-0.5">
@@ -493,7 +494,7 @@ export default function PartnerMembersPage() {
                     setPerPage(Number(e.target.value))
                     setPage(1)
                   }}
-                  className="appearance-none rounded-lg border border-slate-200 bg-white py-1 pl-3 pr-7 text-sm font-semibold text-slate-700 shadow-sm outline-none focus:border-indigo-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                  className="appearance-none rounded-lg border border-slate-200 bg-white py-1 pr-7 pl-3 text-sm font-semibold text-slate-700 shadow-sm outline-none focus:border-indigo-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                 >
                   {PER_PAGE_OPTIONS.map((n) => (
                     <option key={n} value={n}>
@@ -501,7 +502,7 @@ export default function PartnerMembersPage() {
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                <ChevronDown className="pointer-events-none absolute top-1/2 right-2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
               </div>
               <span>per page</span>
             </div>

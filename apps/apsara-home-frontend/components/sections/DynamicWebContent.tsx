@@ -1,8 +1,8 @@
 "use client"
 
+import { useGetPublicHomeContentQuery } from "@/store/api/webPagesApi"
 import Image from "next/image"
 import Link from "next/link"
-import { useGetPublicHomeContentQuery } from "@/store/api/webPagesApi"
 
 export default function DynamicWebContent() {
   const { data, isLoading, isError } = useGetPublicHomeContentQuery()
@@ -22,14 +22,14 @@ export default function DynamicWebContent() {
 
   return (
     <section className="bg-white">
-      <div className="container mx-auto px-4 py-4 space-y-4">
+      <div className="container mx-auto space-y-4 px-4 py-4">
         {announcements.length > 0 ? (
           <div className="rounded-2xl border border-orange-100 bg-orange-50 px-3 py-2">
             <div className="flex flex-wrap items-center gap-2">
               {announcements.map((item) => (
                 <span
                   key={item.id}
-                  className="inline-flex rounded-full bg-white px-3 py-1 text-xs font-semibold text-orange-700 border border-orange-100"
+                  className="inline-flex rounded-full border border-orange-100 bg-white px-3 py-1 text-xs font-semibold text-orange-700"
                 >
                   {item.title || item.body || "Announcement"}
                 </span>
@@ -39,10 +39,10 @@ export default function DynamicWebContent() {
         ) : null}
 
         {banners.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             {banners.map((item) => {
               const content = (
-                <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 h-40 md:h-48">
+                <div className="relative h-40 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 md:h-48">
                   {item.image_url ? (
                     <Image
                       src={item.image_url}
@@ -53,12 +53,12 @@ export default function DynamicWebContent() {
                     />
                   ) : null}
                   <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-black/10" />
-                  <div className="absolute inset-0 p-4 flex flex-col justify-end text-white">
+                  <div className="absolute inset-0 flex flex-col justify-end p-4 text-white">
                     <p className="text-sm font-bold">
                       {item.title || "Banner"}
                     </p>
                     {item.subtitle ? (
-                      <p className="text-xs text-white/85 mt-1">
+                      <p className="mt-1 text-xs text-white/85">
                         {item.subtitle}
                       </p>
                     ) : null}
@@ -77,7 +77,7 @@ export default function DynamicWebContent() {
         ) : null}
 
         {homeBlocks.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             {homeBlocks.map((item) => (
               <div
                 key={item.id}
@@ -87,17 +87,17 @@ export default function DynamicWebContent() {
                   {item.title || "Home Block"}
                 </p>
                 {item.subtitle ? (
-                  <p className="text-xs text-slate-500 mt-1">{item.subtitle}</p>
+                  <p className="mt-1 text-xs text-slate-500">{item.subtitle}</p>
                 ) : null}
                 {item.body ? (
-                  <p className="text-xs text-slate-600 mt-2 line-clamp-3">
+                  <p className="mt-2 line-clamp-3 text-xs text-slate-600">
                     {item.body}
                   </p>
                 ) : null}
                 {item.link_url ? (
                   <Link
                     href={item.link_url}
-                    className="inline-flex mt-3 text-xs font-semibold text-orange-600 hover:text-orange-700"
+                    className="mt-3 inline-flex text-xs font-semibold text-orange-600 hover:text-orange-700"
                   >
                     {item.button_text || "Explore"}
                   </Link>

@@ -1,10 +1,10 @@
 "use client"
 
-import { useEditor, EditorContent } from "@tiptap/react"
-import StarterKit from "@tiptap/starter-kit"
-import Underline from "@tiptap/extension-underline"
-import TextAlign from "@tiptap/extension-text-align"
 import { useEffect, useState } from "react"
+import TextAlign from "@tiptap/extension-text-align"
+import Underline from "@tiptap/extension-underline"
+import { EditorContent, useEditor } from "@tiptap/react"
+import StarterKit from "@tiptap/starter-kit"
 
 /* --- Toolbar button --- */
 function ToolBtn({
@@ -26,7 +26,7 @@ function ToolBtn({
         onClick()
       }}
       title={title}
-      className={`p-1.5 rounded-lg transition-colors text-sm leading-none ${
+      className={`rounded-lg p-1.5 text-sm leading-none transition-colors ${
         active
           ? "bg-teal-100 text-teal-700"
           : "text-slate-500 hover:bg-slate-100 hover:text-slate-700"
@@ -234,7 +234,7 @@ const Icon = {
       </text>
     </svg>
   ),
-  Divider: () => <div className="w-px h-4 bg-slate-200 mx-0.5" />,
+  Divider: () => <div className="mx-0.5 h-4 w-px bg-slate-200" />,
 }
 
 /* --- Main Component --- */
@@ -410,8 +410,8 @@ export default function RichTextEditor({
   )
 
   return (
-    <div className="border border-slate-200 rounded-xl overflow-hidden hover:border-slate-300 transition-all focus-within:ring-2 focus-within:ring-teal-500/30 focus-within:border-teal-400 bg-white">
-      <div className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 border-b border-slate-100 bg-slate-50/70">
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white transition-all focus-within:border-teal-400 focus-within:ring-2 focus-within:ring-teal-500/30 hover:border-slate-300">
+      <div className="flex flex-wrap items-center gap-0.5 border-b border-slate-100 bg-slate-50/70 px-2 py-1.5">
         {btn(
           () => editor.chain().focus().toggleBold().run(),
           editor.isActive("bold"),
@@ -473,7 +473,7 @@ export default function RichTextEditor({
 
       <div className="relative">
         {isEmpty && (
-          <p className="absolute top-2.5 left-3.5 text-sm text-slate-400 pointer-events-none select-none">
+          <p className="pointer-events-none absolute top-2.5 left-3.5 text-sm text-slate-400 select-none">
             {placeholder}
           </p>
         )}

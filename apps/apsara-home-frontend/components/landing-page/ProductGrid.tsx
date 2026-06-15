@@ -1,5 +1,6 @@
 import { motion } from "framer-motion"
 import Link from "next/link"
+
 import ProductCard, { Product } from "./ProductCard"
 
 const products: Product[] = [
@@ -126,25 +127,25 @@ export default function ProductGrid({
     : products
 
   return (
-    <section id="shop" className="py-16 md:py-24 bg-af-cream dark:bg-gray-900">
+    <section id="shop" className="bg-af-cream py-16 md:py-24 dark:bg-gray-900">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-12"
+          className="mb-12 text-center"
         >
-          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl text-af-text dark:text-white font-semibold mb-4">
+          <h2 className="font-display text-af-text mb-4 text-3xl font-semibold md:text-4xl lg:text-5xl dark:text-white">
             Featured Collection
           </h2>
-          <p className="text-af-text-secondary dark:text-gray-400 text-lg max-w-xl mx-auto">
+          <p className="text-af-text-secondary mx-auto max-w-xl text-lg dark:text-gray-400">
             Handpicked pieces that define modern elegance
           </p>
         </motion.div>
 
         {/* Bento Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-3 xl:grid-cols-4">
           {filteredProducts.map((product, index) => (
             <ProductCard
               key={product.id}
@@ -159,9 +160,9 @@ export default function ProductGrid({
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center py-20"
+            className="py-20 text-center"
           >
-            <p className="text-af-text-secondary dark:text-gray-400 text-lg">
+            <p className="text-af-text-secondary text-lg dark:text-gray-400">
               No products found in this category.
             </p>
           </motion.div>
@@ -173,13 +174,13 @@ export default function ProductGrid({
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="text-center mt-12"
+          className="mt-12 text-center"
         >
           <Link href="/category" className="inline-block">
             <motion.button
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
-              className="inline-flex items-center gap-2 border-2 border-orange-500 text-orange-500 px-8 py-4 rounded-full font-semibold text-base hover:bg-orange-500 hover:text-white transition-all duration-300 dark:border-orange-400 dark:text-orange-300 dark:hover:bg-orange-500 dark:hover:text-white"
+              className="inline-flex items-center gap-2 rounded-full border-2 border-orange-500 px-8 py-4 text-base font-semibold text-orange-500 transition-all duration-300 hover:bg-orange-500 hover:text-white dark:border-orange-400 dark:text-orange-300 dark:hover:bg-orange-500 dark:hover:text-white"
             >
               View All Products
             </motion.button>

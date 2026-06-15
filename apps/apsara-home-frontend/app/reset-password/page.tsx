@@ -1,5 +1,5 @@
-import { buildPageMetadata } from "@/app/seo"
 import ResetPasswordForm from "@/components/auth/ResetPasswordForm"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Reset Password",

@@ -1,8 +1,9 @@
 "use client"
 
-import Link from "next/link"
 import { useMemo } from "react"
 import { useGetAdminEncashmentRequestsQuery } from "@/store/api/encashmentApi"
+import Link from "next/link"
+
 import AvatarImg from "@/components/superAdmin/AvatarImg"
 
 const formatMoney = (v: number) =>
@@ -68,24 +69,24 @@ export default function FinanceDashboardMain() {
   return (
     <div className="space-y-5">
       {/* ── Hero ── */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-sky-700 via-sky-800 to-blue-900 dark:from-sky-900 dark:via-slate-900 dark:to-black shadow-xl">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-sky-700 via-sky-800 to-blue-900 shadow-xl dark:from-sky-900 dark:via-slate-900 dark:to-black">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.07),transparent_55%)]" />
         <div className="absolute inset-0 opacity-[0.04]" style={STRIPE} />
         <div className="relative px-6 py-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <div className="flex flex-wrap items-center gap-2 mb-2">
-                <span className="rounded-md bg-white/10 border border-white/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-sky-200">
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                <span className="rounded-md border border-white/20 bg-white/10 px-2.5 py-1 text-[10px] font-bold tracking-widest text-sky-200 uppercase">
                   Finance Officer
                 </span>
                 {count > 0 && (
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-400/15 px-2.5 py-1 text-[10px] font-semibold text-amber-300">
-                    <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-400" />
                     {count} awaiting release
                   </span>
                 )}
               </div>
-              <h1 className="text-2xl font-black text-white tracking-tight">
+              <h1 className="text-2xl font-black tracking-tight text-white">
                 Release Center
               </h1>
               <p className="mt-0.5 text-sm text-sky-300/80">
@@ -93,10 +94,10 @@ export default function FinanceDashboardMain() {
               </p>
             </div>
             <div className="sm:text-right">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-sky-400/60 mb-1">
+              <p className="mb-1 text-[10px] font-bold tracking-widest text-sky-400/60 uppercase">
                 Queue Release Amount
               </p>
-              <p className="text-3xl font-black text-white tracking-tight">
+              <p className="text-3xl font-black tracking-tight text-white">
                 {formatMoney(totalAmt)}
               </p>
               <p className="mt-0.5 text-xs text-sky-400/50">
@@ -104,7 +105,7 @@ export default function FinanceDashboardMain() {
               </p>
             </div>
           </div>
-          <div className="mt-5 pt-4 border-t border-white/[0.08] grid grid-cols-3 gap-4">
+          <div className="mt-5 grid grid-cols-3 gap-4 border-t border-white/[0.08] pt-4">
             {[
               {
                 label: "Ready for Release",
@@ -126,12 +127,12 @@ export default function FinanceDashboardMain() {
               },
             ].map(({ label, value, color, dot }) => (
               <div key={label} className="flex items-start gap-2.5">
-                <span className={`mt-1 h-2 w-2 rounded-full shrink-0 ${dot}`} />
+                <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${dot}`} />
                 <div>
-                  <p className={`text-sm font-black leading-tight ${color}`}>
+                  <p className={`text-sm leading-tight font-black ${color}`}>
                     {value}
                   </p>
-                  <p className="text-[10px] font-medium text-sky-500/60 leading-tight mt-0.5">
+                  <p className="mt-0.5 text-[10px] leading-tight font-medium text-sky-500/60">
                     {label}
                   </p>
                 </div>
@@ -142,7 +143,7 @@ export default function FinanceDashboardMain() {
       </div>
 
       {/* ── Channel Breakdown ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {(
           [
             {
@@ -174,7 +175,7 @@ export default function FinanceDashboardMain() {
           >
             <div className="absolute inset-0 opacity-[0.06]" style={STRIPE} />
             <div className="relative">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">
+              <p className="text-[10px] font-bold tracking-widest text-white/70 uppercase">
                 {label}
               </p>
               <p className="mt-1.5 text-2xl font-black text-white">
@@ -190,8 +191,8 @@ export default function FinanceDashboardMain() {
       </div>
 
       {/* ── Release Queue ── */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700/60 dark:bg-slate-900 shadow-sm">
-        <div className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/50 px-4 py-3">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-900">
+        <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-700/60 dark:bg-slate-800/50">
           <div className="flex items-center gap-2.5">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-100 dark:bg-sky-500/20">
               <svg
@@ -208,25 +209,25 @@ export default function FinanceDashboardMain() {
                 />
               </svg>
             </span>
-            <h2 className="text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+            <h2 className="text-xs font-bold tracking-wide text-slate-600 uppercase dark:text-slate-300">
               Release Queue
             </h2>
-            <span className="rounded-full bg-slate-200 dark:bg-slate-700 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+            <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">
               {queue.length}
             </span>
           </div>
           <Link
             href="/admin/encashment/approved_by_admin"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 hover:bg-sky-700 px-3 py-1.5 text-xs font-bold text-white transition-colors shadow-sm"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-sky-700"
           >
             Open Full Release Queue →
           </Link>
         </div>
 
         {isError ? (
-          <div className="flex items-center gap-3 m-4 rounded-xl border border-red-200 bg-red-50 dark:border-red-500/30 dark:bg-red-500/10 px-4 py-3">
+          <div className="m-4 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 dark:border-red-500/30 dark:bg-red-500/10">
             <svg
-              className="shrink-0 h-5 w-5 text-red-500"
+              className="h-5 w-5 shrink-0 text-red-500"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -243,7 +244,7 @@ export default function FinanceDashboardMain() {
             </p>
           </div>
         ) : isLoading ? (
-          <div className="p-4 space-y-2.5 animate-pulse">
+          <div className="animate-pulse space-y-2.5 p-4">
             {Array.from({ length: 5 }).map((_, i) => (
               <div
                 key={i}
@@ -256,7 +257,7 @@ export default function FinanceDashboardMain() {
           <div className="overflow-auto">
             <table className="w-full min-w-[720px]">
               <thead>
-                <tr className="border-b border-slate-100 dark:border-slate-700/60 text-left">
+                <tr className="border-b border-slate-100 text-left dark:border-slate-700/60">
                   {[
                     "Affiliate",
                     "Reference",
@@ -268,7 +269,7 @@ export default function FinanceDashboardMain() {
                   ].map((h) => (
                     <th
                       key={h}
-                      className="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500"
+                      className="px-4 py-3 text-[11px] font-bold tracking-wide text-slate-400 uppercase dark:text-slate-500"
                     >
                       {h}
                     </th>
@@ -279,7 +280,7 @@ export default function FinanceDashboardMain() {
                 {queue.slice(0, 10).map((row) => (
                   <tr
                     key={row.id}
-                    className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
+                    className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40"
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
@@ -290,7 +291,7 @@ export default function FinanceDashboardMain() {
                           bg="bg-gradient-to-br from-sky-600 to-blue-700"
                           textSize="text-[10px]"
                         />
-                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate max-w-[110px]">
+                        <span className="max-w-[110px] truncate text-sm font-medium text-slate-700 dark:text-slate-300">
                           {row.affiliate_name || "Affiliate"}
                         </span>
                       </div>
@@ -299,7 +300,7 @@ export default function FinanceDashboardMain() {
                       {row.reference_no}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="inline-flex items-center rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 py-0.5 text-[11px] font-bold uppercase text-slate-600 dark:text-slate-300">
+                      <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[11px] font-bold text-slate-600 uppercase dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                         {row.channel}
                       </span>
                     </td>
@@ -311,7 +312,7 @@ export default function FinanceDashboardMain() {
                         {row.account_number || ""}
                       </p>
                     </td>
-                    <td className="px-4 py-3 text-sm font-black tabular-nums text-slate-800 dark:text-white">
+                    <td className="px-4 py-3 text-sm font-black text-slate-800 tabular-nums dark:text-white">
                       {formatMoney(row.amount)}
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-400 dark:text-slate-500">
@@ -320,7 +321,7 @@ export default function FinanceDashboardMain() {
                     <td className="px-4 py-3">
                       <Link
                         href="/admin/encashment/approved_by_admin"
-                        className="inline-flex items-center gap-1 rounded-lg border border-sky-200 dark:border-sky-500/30 bg-sky-50 dark:bg-sky-500/10 px-2.5 py-1.5 text-[11px] font-semibold text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-500/20 transition-colors"
+                        className="inline-flex items-center gap-1 rounded-lg border border-sky-200 bg-sky-50 px-2.5 py-1.5 text-[11px] font-semibold text-sky-700 transition-colors hover:bg-sky-100 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-300 dark:hover:bg-sky-500/20"
                       >
                         Release →
                       </Link>
@@ -330,10 +331,10 @@ export default function FinanceDashboardMain() {
               </tbody>
             </table>
             {queue.length > 10 && (
-              <div className="flex items-center justify-center py-3 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-center border-t border-slate-100 py-3 dark:border-slate-800">
                 <Link
                   href="/admin/encashment/approved_by_admin"
-                  className="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:underline"
+                  className="text-xs font-semibold text-sky-600 hover:underline dark:text-sky-400"
                 >
                   View all {queue.length} items in the release queue →
                 </Link>
@@ -342,7 +343,7 @@ export default function FinanceDashboardMain() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center gap-3 py-14">
-            <div className="h-14 w-14 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-500/10">
               <svg
                 className="h-7 w-7 text-emerald-500"
                 fill="none"

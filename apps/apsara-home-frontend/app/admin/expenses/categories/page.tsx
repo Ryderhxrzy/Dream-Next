@@ -1,5 +1,5 @@
-import { buildPageMetadata } from "@/app/seo"
 import ExpenseCategoriesPageMain from "@/components/superAdmin/expenses/ExpenseCategoriesPageMain"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Admin Expense Categories",

@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { AnimatePresence, motion } from "framer-motion"
+
 import { MemberStatus, MemberTier } from "@/types/members/types"
 
 interface AddMemberForm {
@@ -138,7 +139,7 @@ export default function AddMemberModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={handleClose}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
           />
 
           {/* Modal */}
@@ -149,14 +150,14 @@ export default function AddMemberModal({
               exit={{ opacity: 0, scale: 0.95, y: 12 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-xl w-full max-w-md overflow-hidden"
+              className="w-full max-w-md overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900"
             >
               {/* Header */}
-              <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+              <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-6 py-5 dark:border-gray-700 dark:bg-gray-800">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-sky-500 dark:bg-sky-600 flex items-center justify-center">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-500 dark:bg-sky-600">
                     <svg
-                      className="w-5 h-5 text-white"
+                      className="h-5 w-5 text-white"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -170,10 +171,10 @@ export default function AddMemberModal({
                     </svg>
                   </div>
                   <div>
-                    <h2 className="text-gray-900 dark:text-white font-bold text-base leading-none">
+                    <h2 className="text-base leading-none font-bold text-gray-900 dark:text-white">
                       Add New Member
                     </h2>
-                    <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                       Enter member details to create account
                     </p>
                   </div>
@@ -181,10 +182,10 @@ export default function AddMemberModal({
                 <button
                   onClick={handleClose}
                   disabled={isLoading}
-                  className="h-8 w-8 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center justify-center disabled:opacity-50"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-700 disabled:opacity-50 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-300"
                 >
                   <svg
-                    className="w-4 h-4"
+                    className="h-4 w-4"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -200,12 +201,12 @@ export default function AddMemberModal({
               </div>
 
               {/* Form */}
-              <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4 px-6 py-5">
                 {/* Server Error Alert */}
                 {serverError && (
-                  <div className="flex items-start gap-3 p-3 rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950">
+                  <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950">
                     <svg
-                      className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0 mt-0.5"
+                      className="mt-0.5 h-4 w-4 shrink-0 text-red-600 dark:text-red-400"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
@@ -215,7 +216,7 @@ export default function AddMemberModal({
                         clipRule="evenodd"
                       />
                     </svg>
-                    <p className="text-red-700 dark:text-red-300 text-xs">
+                    <p className="text-xs text-red-700 dark:text-red-300">
                       {serverError}
                     </p>
                   </div>
@@ -223,14 +224,14 @@ export default function AddMemberModal({
 
                 {/* Full Name */}
                 <div>
-                  <div className="flex items-center justify-between mb-1.5">
+                  <div className="mb-1.5 flex items-center justify-between">
                     <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
                       Full Name <span className="text-red-500">*</span>
                     </label>
                     {form.name && !errors.name && (
-                      <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                      <span className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
                         <svg
-                          className="w-3 h-3"
+                          className="h-3 w-3"
                           fill="currentColor"
                           viewBox="0 0 20 20"
                         >
@@ -246,7 +247,7 @@ export default function AddMemberModal({
                   </div>
                   <div className="relative">
                     <svg
-                      className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none"
+                      className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -267,18 +268,17 @@ export default function AddMemberModal({
                       onBlur={() => handleFieldBlur("name")}
                       disabled={isLoading}
                       placeholder="e.g. Juan dela Cruz"
-                      className={`w-full pl-10 pr-4 py-2.5 border rounded-lg text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed
-                        ${
-                          errors.name && touched.name
-                            ? "h-11 w-full rounded-[18px] border border-red-300 bg-red-50 px-4 text-sm text-gray-900 placeholder-gray-500 outline-none transition-all duration-200 focus:border-red-500 focus:bg-red-50 focus:ring-0 dark:border-red-800 dark:bg-red-950 dark:text-white dark:placeholder-gray-500"
-                            : "h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 placeholder-gray-400 outline-none transition-all duration-200 focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55"
-                        }`}
+                      className={`w-full rounded-lg border py-2.5 pr-4 pl-10 text-sm transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
+                        errors.name && touched.name
+                          ? "h-11 w-full rounded-[18px] border border-red-300 bg-red-50 px-4 text-sm text-gray-900 placeholder-gray-500 transition-all duration-200 outline-none focus:border-red-500 focus:bg-red-50 focus:ring-0 dark:border-red-800 dark:bg-red-950 dark:text-white dark:placeholder-gray-500"
+                          : "h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 placeholder-gray-400 transition-all duration-200 outline-none focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55"
+                      }`}
                     />
                   </div>
                   {errors.name && touched.name && (
-                    <p className="text-red-600 dark:text-red-400 text-xs mt-1.5 flex items-start gap-1.5">
+                    <p className="mt-1.5 flex items-start gap-1.5 text-xs text-red-600 dark:text-red-400">
                       <svg
-                        className="w-3.5 h-3.5 shrink-0 mt-0.5"
+                        className="mt-0.5 h-3.5 w-3.5 shrink-0"
                         fill="currentColor"
                         viewBox="0 0 20 20"
                       >
@@ -295,14 +295,14 @@ export default function AddMemberModal({
 
                 {/* Email */}
                 <div>
-                  <div className="flex items-center justify-between mb-1.5">
+                  <div className="mb-1.5 flex items-center justify-between">
                     <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
                       Email Address <span className="text-red-500">*</span>
                     </label>
                     {form.email && !errors.email && (
-                      <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                      <span className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
                         <svg
-                          className="w-3 h-3"
+                          className="h-3 w-3"
                           fill="currentColor"
                           viewBox="0 0 20 20"
                         >
@@ -318,7 +318,7 @@ export default function AddMemberModal({
                   </div>
                   <div className="relative">
                     <svg
-                      className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none"
+                      className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -339,18 +339,17 @@ export default function AddMemberModal({
                       onBlur={() => handleFieldBlur("email")}
                       disabled={isLoading}
                       placeholder="e.g. juan@afhome.com"
-                      className={`w-full pl-10 pr-4 py-2.5 border rounded-lg text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed
-                        ${
-                          errors.email && touched.email
-                            ? "h-11 w-full rounded-[18px] border border-red-300 bg-red-50 px-4 text-sm text-gray-900 placeholder-gray-500 outline-none transition-all duration-200 focus:border-red-500 focus:bg-red-50 focus:ring-0 dark:border-red-800 dark:bg-red-950 dark:text-white dark:placeholder-gray-500"
-                            : "h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 placeholder-gray-400 outline-none transition-all duration-200 focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55"
-                        }`}
+                      className={`w-full rounded-lg border py-2.5 pr-4 pl-10 text-sm transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
+                        errors.email && touched.email
+                          ? "h-11 w-full rounded-[18px] border border-red-300 bg-red-50 px-4 text-sm text-gray-900 placeholder-gray-500 transition-all duration-200 outline-none focus:border-red-500 focus:bg-red-50 focus:ring-0 dark:border-red-800 dark:bg-red-950 dark:text-white dark:placeholder-gray-500"
+                          : "h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 placeholder-gray-400 transition-all duration-200 outline-none focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55"
+                      }`}
                     />
                   </div>
                   {errors.email && touched.email && (
-                    <p className="text-red-600 dark:text-red-400 text-xs mt-1.5 flex items-start gap-1.5">
+                    <p className="mt-1.5 flex items-start gap-1.5 text-xs text-red-600 dark:text-red-400">
                       <svg
-                        className="w-3.5 h-3.5 shrink-0 mt-0.5"
+                        className="mt-0.5 h-3.5 w-3.5 shrink-0"
                         fill="currentColor"
                         viewBox="0 0 20 20"
                       >
@@ -368,7 +367,7 @@ export default function AddMemberModal({
                 {/* Status + Tier side by side */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                    <label className="mb-1.5 block text-xs font-semibold text-gray-700 dark:text-gray-300">
                       Status
                     </label>
                     <select
@@ -380,7 +379,7 @@ export default function AddMemberModal({
                         }))
                       }
                       disabled={isLoading}
-                      className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 outline-none transition-all duration-200 focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="h-11 w-full cursor-pointer rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 transition-all duration-200 outline-none focus:border-sky-400 focus:bg-white focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
                     >
                       <option value="active">Active</option>
                       <option value="pending">Pending</option>
@@ -389,7 +388,7 @@ export default function AddMemberModal({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                    <label className="mb-1.5 block text-xs font-semibold text-gray-700 dark:text-gray-300">
                       Tier
                     </label>
                     <select
@@ -401,7 +400,7 @@ export default function AddMemberModal({
                         }))
                       }
                       disabled={isLoading}
-                      className="h-11 w-full rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 outline-none transition-all duration-200 focus:border-sky-400 focus:bg-white focus:ring-0 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="h-11 w-full cursor-pointer rounded-[18px] border border-gray-300 bg-white px-4 text-sm text-gray-900 transition-all duration-200 outline-none focus:border-sky-400 focus:bg-white focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/18 dark:bg-white/12 dark:text-white dark:placeholder-white/55 dark:focus:border-sky-400/60 dark:focus:bg-white/18"
                     >
                       <option value="Home Starter">🏠 Home Starter</option>
                       <option value="Home Builder">🧱 Home Builder</option>
@@ -417,9 +416,9 @@ export default function AddMemberModal({
                 </div>
 
                 {/* Info note */}
-                <div className="flex items-start gap-2.5 p-3 rounded-lg border border-sky-200 dark:border-sky-900 bg-sky-50 dark:bg-sky-950">
+                <div className="flex items-start gap-2.5 rounded-lg border border-sky-200 bg-sky-50 p-3 dark:border-sky-900 dark:bg-sky-950">
                   <svg
-                    className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0 mt-0.5"
+                    className="mt-0.5 h-4 w-4 shrink-0 text-sky-600 dark:text-sky-400"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -431,7 +430,7 @@ export default function AddMemberModal({
                       d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  <p className="text-xs text-sky-700 dark:text-sky-300 leading-relaxed">
+                  <p className="text-xs leading-relaxed text-sky-700 dark:text-sky-300">
                     Orders, earnings, and referral data will start at{" "}
                     <strong>0</strong> and update automatically as the member
                     uses the platform.
@@ -444,25 +443,23 @@ export default function AddMemberModal({
                     type="button"
                     onClick={handleClose}
                     disabled={isLoading}
-                    className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-100 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 rounded-lg bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={!canSubmit}
-                    className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2
-                      ${
-                        canSubmit
-                          ? "bg-sky-600 dark:bg-sky-700 hover:bg-sky-700 dark:hover:bg-sky-600 text-white"
-                          : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
-                      }
-                    `}
+                    className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${
+                      canSubmit
+                        ? "bg-sky-600 text-white hover:bg-sky-700 dark:bg-sky-700 dark:hover:bg-sky-600"
+                        : "cursor-not-allowed bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
+                    } `}
                   >
                     {isLoading ? (
                       <>
                         <svg
-                          className="w-4 h-4 animate-spin"
+                          className="h-4 w-4 animate-spin"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -479,7 +476,7 @@ export default function AddMemberModal({
                     ) : (
                       <>
                         <svg
-                          className="w-4 h-4"
+                          className="h-4 w-4"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"

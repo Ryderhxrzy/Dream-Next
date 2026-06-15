@@ -1,11 +1,11 @@
-import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaPg } from "@prisma/adapter-pg"
 
-import { config } from "../config/config.js";
-import { PrismaClient } from "../generated/prisma/client.js";
+import { config } from "../config/config.js"
+import { PrismaClient } from "../generated/prisma/client.js"
 
 const adapter = new PrismaPg(
   { connectionString: config.databaseUrl },
-  { schema: config.databaseSchema },
-);
+  { schema: config.databaseSchema }
+)
 
-export const prisma = new PrismaClient({ adapter });
+export const prisma = new PrismaClient({ adapter })

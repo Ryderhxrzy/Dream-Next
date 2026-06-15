@@ -1,6 +1,6 @@
 import path from "path"
-import type { NextConfig } from "next"
 import withSerwist from "@serwist/next"
+import type { NextConfig } from "next"
 
 const buildCpusRaw = Number(process.env.NEXT_BUILD_CPUS ?? "")
 const buildCpus =

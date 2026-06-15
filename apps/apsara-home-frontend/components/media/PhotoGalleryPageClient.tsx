@@ -1,14 +1,14 @@
 "use client"
 
-import { useState, useMemo } from "react"
-import Image from "next/image"
-import { motion, AnimatePresence } from "framer-motion"
-import TopBar from "@/components/layout/TopBar"
-import Navbar from "@/components/layout/Navbar"
-import Footer from "@/components/landing-page/Footer"
-import { useGetPublicWebPageItemsQuery } from "@/store/api/webPagesApi"
-
+import { useMemo, useState } from "react"
 import type { Category } from "@/store/api/categoriesApi"
+import { useGetPublicWebPageItemsQuery } from "@/store/api/webPagesApi"
+import { AnimatePresence, motion } from "framer-motion"
+import Image from "next/image"
+
+import Footer from "@/components/landing-page/Footer"
+import Navbar from "@/components/layout/Navbar"
+import TopBar from "@/components/layout/TopBar"
 
 type PhotoGalleryPageClientProps = {
   initialCategories?: Category[]
@@ -93,15 +93,15 @@ export default function PhotoGalleryPageClient({
             />
             <div
               aria-hidden
-              className="absolute -left-24 top-6 h-24 w-24 -z-10 rounded-full bg-blue-200/25 blur-3xl"
+              className="absolute top-6 -left-24 -z-10 h-24 w-24 rounded-full bg-blue-200/25 blur-3xl"
             />
             <div
               aria-hidden
-              className="absolute -right-24 bottom-6 h-24 w-24 -z-10 rounded-full bg-sky-200/25 blur-3xl"
+              className="absolute -right-24 bottom-6 -z-10 h-24 w-24 rounded-full bg-sky-200/25 blur-3xl"
             />
 
-            <div className="rounded-3xl border border-blue-200/70 bg-white/80 p-6 shadow-[0_0_0_1px_rgba(37,99,235,0.06)] backdrop-blur dark:bg-gray-900/60 dark:border-gray-800">
-              <div className="flex items-center justify-between gap-6 flex-wrap">
+            <div className="rounded-3xl border border-blue-200/70 bg-white/80 p-6 shadow-[0_0_0_1px_rgba(37,99,235,0.06)] backdrop-blur dark:border-gray-800 dark:bg-gray-900/60">
+              <div className="flex flex-wrap items-center justify-between gap-6">
                 <div className="flex items-start gap-4">
                   <div className="mt-1 flex h-11 w-11 items-center justify-center rounded-2xl border border-blue-200 bg-blue-50 text-blue-700">
                     {/* camera / photo icon */}
@@ -122,7 +122,7 @@ export default function PhotoGalleryPageClient({
                   </div>
 
                   <div>
-                    <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-gray-900 dark:text-white">
+                    <h1 className="text-4xl font-bold tracking-tight text-gray-900 md:text-5xl dark:text-white">
                       Photo Gallery
                     </h1>
                     <p className="mt-3 text-lg text-gray-600 dark:text-gray-400">
@@ -190,10 +190,10 @@ export default function PhotoGalleryPageClient({
                   setSelectedCategory(category)
                   setSelectedImageId(null)
                 }}
-                className={`px-4 py-2 rounded-xl font-medium transition-all ${
+                className={`rounded-xl px-4 py-2 font-medium transition-all ${
                   selectedCategory === category
                     ? "bg-blue-600 text-white shadow-sm hover:bg-blue-700"
-                    : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 border border-transparent hover:border-blue-100"
+                    : "border border-transparent bg-gray-100 text-gray-700 hover:border-blue-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                 }`}
               >
                 {category}
@@ -203,11 +203,11 @@ export default function PhotoGalleryPageClient({
 
           {/* Loading State */}
           {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
                 <div
                   key={i}
-                  className="aspect-square rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white animate-pulse"
+                  className="aspect-square animate-pulse rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white"
                 />
               ))}
             </div>
@@ -218,7 +218,7 @@ export default function PhotoGalleryPageClient({
               animate={{ opacity: 1, scale: 1 }}
               className="rounded-2xl border border-blue-200/70 bg-white/70 px-8 py-16 text-center shadow-sm"
             >
-              <div className="flex justify-center mb-4">
+              <div className="mb-4 flex justify-center">
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-blue-200 bg-blue-50 text-blue-600">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -250,7 +250,7 @@ export default function PhotoGalleryPageClient({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+              className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
             >
               <AnimatePresence>
                 {filteredItems.map((item, index) => (
@@ -260,10 +260,10 @@ export default function PhotoGalleryPageClient({
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ delay: index * 0.05 }}
-                    className="group cursor-pointer overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 transition-all hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-xl"
+                    className="group cursor-pointer overflow-hidden rounded-2xl border border-gray-200 bg-white transition-all hover:border-blue-400 hover:shadow-xl dark:border-gray-700 dark:bg-gray-800 dark:hover:border-blue-500"
                     onClick={() => setSelectedImageId(item.id)}
                   >
-                    <div className="relative aspect-square bg-gradient-to-br from-blue-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 overflow-hidden">
+                    <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-blue-50 to-gray-100 dark:from-gray-700 dark:to-gray-800">
                       {item.image_url ? (
                         <>
                           <Image
@@ -276,8 +276,8 @@ export default function PhotoGalleryPageClient({
                             loading="lazy"
                           />
                           {/* Overlay */}
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/35 transition-colors duration-300 flex items-center justify-center">
-                            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors duration-300 group-hover:bg-black/35">
+                            <div className="opacity-0 transition-opacity duration-300 group-hover:opacity-100">
                               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600/90">
                                 <svg
                                   className="h-7 w-7 text-white"
@@ -323,18 +323,18 @@ export default function PhotoGalleryPageClient({
                     {item.title && (
                       <div className="p-4">
                         <div className="mb-2">
-                          <span className="text-xs font-semibold text-blue-700 dark:text-sky-300 uppercase tracking-wide">
+                          <span className="text-xs font-semibold tracking-wide text-blue-700 uppercase dark:text-sky-300">
                             {typeof item.payload?.category === "string" &&
                             item.payload.category.trim() !== ""
                               ? item.payload.category
                               : "Gallery"}
                           </span>
                         </div>
-                        <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-1 group-hover:text-blue-700 dark:group-hover:text-sky-300 transition-colors">
+                        <h3 className="line-clamp-1 font-semibold text-gray-900 transition-colors group-hover:text-blue-700 dark:text-white dark:group-hover:text-sky-300">
                           {item.title}
                         </h3>
                         {item.subtitle && (
-                          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                          <p className="mt-1 line-clamp-2 text-sm text-gray-600 dark:text-gray-400">
                             {item.subtitle}
                           </p>
                         )}
@@ -355,7 +355,7 @@ export default function PhotoGalleryPageClient({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
             onClick={() => setSelectedImageId(null)}
           >
             <motion.div
@@ -366,13 +366,13 @@ export default function PhotoGalleryPageClient({
               onClick={(e) => e.stopPropagation()}
             >
               {/* Image Container */}
-              <div className="relative rounded-xl overflow-hidden bg-black">
+              <div className="relative overflow-hidden rounded-xl bg-black">
                 <Image
                   src={selectedImage.image_url || "/placeholder-image.jpg"}
                   alt={selectedImage.title || "Gallery image"}
                   width={1200}
                   height={800}
-                  className="h-auto w-auto max-h-[90vh] max-w-full object-contain"
+                  className="h-auto max-h-[90vh] w-auto max-w-full object-contain"
                   sizes="(max-width: 1024px) 100vw, 80vw"
                   quality={95}
                   priority
@@ -388,19 +388,19 @@ export default function PhotoGalleryPageClient({
               >
                 <h2 className="text-2xl font-bold">{selectedImage.title}</h2>
                 {selectedImage.subtitle && (
-                  <p className="mt-2 text-gray-300 text-lg">
+                  <p className="mt-2 text-lg text-gray-300">
                     {selectedImage.subtitle}
                   </p>
                 )}
                 {typeof selectedImage.payload?.category === "string" &&
                 selectedImage.payload.category.trim() !== "" ? (
                   <div className="mt-3">
-                    <span className="inline-block px-3 py-1 rounded-lg bg-sky-600 text-sm font-medium">
+                    <span className="inline-block rounded-lg bg-sky-600 px-3 py-1 text-sm font-medium">
                       {selectedImage.payload.category}
                     </span>
                   </div>
                 ) : null}
-                <p className="mt-3 text-gray-400 text-sm">
+                <p className="mt-3 text-sm text-gray-400">
                   Image {selectedIndex + 1} of {filteredItems.length}
                 </p>
               </motion.div>
@@ -410,7 +410,7 @@ export default function PhotoGalleryPageClient({
                 <button
                   onClick={handlePrevious}
                   disabled={selectedIndex === 0}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-all"
+                  className="flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-white transition-all hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <svg
                     className="h-5 w-5"
@@ -430,7 +430,7 @@ export default function PhotoGalleryPageClient({
 
                 <button
                   onClick={() => setSelectedImageId(null)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-all"
+                  className="flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-white transition-all hover:bg-white/20"
                 >
                   <svg
                     className="h-5 w-5"
@@ -451,7 +451,7 @@ export default function PhotoGalleryPageClient({
                 <button
                   onClick={handleNext}
                   disabled={selectedIndex === filteredItems.length - 1}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-all"
+                  className="flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-white transition-all hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Next
                   <svg

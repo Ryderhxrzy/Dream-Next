@@ -9,9 +9,10 @@ import {
   Gift,
   Globe2,
   Network,
-  Trophy,
   TrendingUp,
+  Trophy,
 } from "lucide-react"
+
 import PvStatCard from "./PvStatCard"
 
 type MonthlyActivation = {
@@ -53,7 +54,7 @@ const SectionHeader = ({
 }) => (
   <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
     <div>
-      <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-gray-500">
+      <p className="text-[11px] font-semibold tracking-widest text-slate-400 uppercase dark:text-gray-500">
         {eyebrow}
       </p>
       <h3 className="mt-1.5 text-xl font-semibold text-slate-900 dark:text-white">
@@ -132,7 +133,7 @@ const PvWalletTab = ({
       >
         {/* decorative circle */}
         <div
-          className={`pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full opacity-10 ${
+          className={`pointer-events-none absolute -top-8 -right-8 h-40 w-40 rounded-full opacity-10 ${
             isGroupBonusActive ? "bg-emerald-400" : "bg-amber-400"
           }`}
         />
@@ -148,11 +149,11 @@ const PvWalletTab = ({
             </div>
             <div>
               <p
-                className={`text-[11px] font-bold uppercase tracking-widest ${isGroupBonusActive ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}
+                className={`text-[11px] font-bold tracking-widest uppercase ${isGroupBonusActive ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}
               >
                 Group Purchase Bonus Qualification
               </p>
-              <h3 className="mt-2 text-2xl font-bold tabular-nums text-slate-900 dark:text-white">
+              <h3 className="mt-2 text-2xl font-bold text-slate-900 tabular-nums dark:text-white">
                 {activationCurrent.toLocaleString()}
                 <span className="ml-1 text-base font-medium text-slate-400 dark:text-gray-500">
                   / {activationTarget.toLocaleString()} PV
@@ -227,10 +228,10 @@ const PvWalletTab = ({
               key={item.label}
               className="rounded-xl border border-white/70 bg-white/60 px-4 py-3 backdrop-blur-sm dark:border-white/10 dark:bg-white/5"
             >
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500">
+              <p className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase dark:text-gray-500">
                 {item.label}
               </p>
-              <p className="mt-1 text-lg font-bold tabular-nums text-slate-900 dark:text-white">
+              <p className="mt-1 text-lg font-bold text-slate-900 tabular-nums dark:text-white">
                 {item.value}
                 <span className="ml-1 text-xs font-normal text-slate-400 dark:text-gray-500">
                   PV

@@ -13,11 +13,11 @@ export function ImageMessage({ message }: { message: ImageMessageType }) {
       className={`flex items-end gap-2 ${isBot ? "justify-start" : "justify-end"}`}
     >
       {isBot && (
-        <div className="w-10 h-10 overflow-hidden flex-shrink-0 rounded-none">
+        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-none">
           <img
             src={ROBOT_SRC}
             alt="AI"
-            className="w-full h-full object-contain"
+            className="h-full w-full object-contain"
           />
         </div>
       )}
@@ -25,17 +25,17 @@ export function ImageMessage({ message }: { message: ImageMessageType }) {
         href={message.url}
         target="_blank"
         rel="noopener noreferrer"
-        className={`max-w-[80%] rounded-[18px] overflow-hidden border block ${
+        className={`block max-w-[80%] overflow-hidden rounded-[18px] border ${
           isBot
-            ? "bg-white border-indigo-100 rounded-bl-[5px] shadow-md shadow-indigo-100"
-            : "bg-white border-slate-200 rounded-br-[5px] shadow-sm"
+            ? "rounded-bl-[5px] border-indigo-100 bg-white shadow-md shadow-indigo-100"
+            : "rounded-br-[5px] border-slate-200 bg-white shadow-sm"
         }`}
       >
-        <div className="w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36">
+        <div className="h-28 w-28 sm:h-32 sm:w-32 md:h-36 md:w-36">
           <img
             src={message.url}
             alt="Uploaded"
-            className="block w-full h-full object-cover"
+            className="block h-full w-full object-cover"
           />
         </div>
       </a>

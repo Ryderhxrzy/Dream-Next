@@ -1,11 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import TopBar from "@/components/layout/TopBar"
-import Navbar from "@/components/layout/Navbar"
-import Footer from "@/components/landing-page/Footer"
 import type { Category } from "@/store/api/categoriesApi"
+import { AnimatePresence, motion } from "framer-motion"
+
+import Footer from "@/components/landing-page/Footer"
+import Navbar from "@/components/layout/Navbar"
+import TopBar from "@/components/layout/TopBar"
 
 const FAQ_CATEGORIES = [
   {
@@ -195,7 +196,7 @@ export default function FaqPageClient({
                   </svg>
                 </div>
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-widest opacity-70">
+                  <p className="text-xs font-bold tracking-widest uppercase opacity-70">
                     AF Home · Help Center
                   </p>
                   <h1 className="mt-1 text-3xl font-bold tracking-tight md:text-4xl">
@@ -321,8 +322,8 @@ export default function FaqPageClient({
                           transition={{ duration: 0.22, ease: "easeInOut" }}
                           className="overflow-hidden"
                         >
-                          <div className="border-t border-sky-100 bg-sky-50/40 px-5 pb-5 pt-4 dark:border-sky-900/30 dark:bg-sky-950/10">
-                            <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300 whitespace-pre-line">
+                          <div className="border-t border-sky-100 bg-sky-50/40 px-5 pt-4 pb-5 dark:border-sky-900/30 dark:bg-sky-950/10">
+                            <p className="text-sm leading-relaxed whitespace-pre-line text-slate-600 dark:text-slate-300">
                               {faq.answer}
                             </p>
                           </div>

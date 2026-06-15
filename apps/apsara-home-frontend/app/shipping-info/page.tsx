@@ -1,5 +1,5 @@
-import { buildPageMetadata } from "@/app/seo"
 import LegalPageShell from "@/components/legal/LegalPageShell"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Shipping Info",
@@ -344,7 +344,7 @@ export default function ShippingInfoPage() {
             </svg>
           </div>
           <div className="flex-1">
-            <p className="text-xs font-bold uppercase tracking-widest opacity-70">
+            <p className="text-xs font-bold tracking-widest uppercase opacity-70">
               AF Home · Logistics
             </p>
             <h2 className="mt-1 text-xl font-bold">

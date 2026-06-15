@@ -92,12 +92,12 @@ export default function Template1({
         <div className="absolute inset-0 bg-linear-to-b from-[#0a0a0f]/60 via-transparent to-[#0a0a0f]" />
         <div className="relative z-10 flex flex-col items-center justify-center px-6 py-32 text-center">
           <span
-            className="mb-5 inline-block rounded-full border px-4 py-1 text-xs font-semibold uppercase tracking-widest"
+            className="mb-5 inline-block rounded-full border px-4 py-1 text-xs font-semibold tracking-widest uppercase"
             style={{ borderColor: `${primaryColor}60`, color: primaryColor }}
           >
             Partner Storefront
           </span>
-          <h1 className="max-w-3xl text-5xl font-black leading-tight lg:text-6xl">
+          <h1 className="max-w-3xl text-5xl leading-tight font-black lg:text-6xl">
             {tagline}
           </h1>
           <p className="mt-5 max-w-xl text-base leading-relaxed text-white/60">

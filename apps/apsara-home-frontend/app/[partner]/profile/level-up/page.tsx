@@ -1,11 +1,12 @@
-import { buildPageMetadata } from "@/app/seo"
-import LevelUpPage from "@/components/profile/LevelUpPage"
 import { authOptions } from "@/libs/auth"
 import { getPartnerStorefrontBySlug } from "@/libs/partnerStorefrontServer"
 import { getNavbarCategories } from "@/libs/serverStorefront"
 import type { MeResponse } from "@/store/api/userApi"
 import { getServerSession } from "next-auth"
 import { notFound, redirect } from "next/navigation"
+
+import LevelUpPage from "@/components/profile/LevelUpPage"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Level Up",

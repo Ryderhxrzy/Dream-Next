@@ -1,12 +1,12 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { motion } from "framer-motion"
-import { Users, UserCheck, Zap, RefreshCw } from "lucide-react"
 import {
-  WalletTypeFilter,
   useGetWalletOverviewQuery,
+  WalletTypeFilter,
 } from "@/store/api/encashmentApi"
+import { motion } from "framer-motion"
+import { RefreshCw, UserCheck, Users, Zap } from "lucide-react"
 
 type PvHistoryItem = {
   id: number
@@ -26,7 +26,7 @@ function PvProgressBar({ pct }: { pct: number }) {
   return (
     <div className="relative">
       {/* Track */}
-      <div className="h-4 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800 shadow-inner">
+      <div className="h-4 w-full overflow-hidden rounded-full bg-slate-200 shadow-inner dark:bg-slate-800">
         <motion.div
           className="h-full rounded-full bg-linear-to-r from-sky-400 via-cyan-400 to-teal-400 dark:from-sky-500 dark:via-cyan-400 dark:to-teal-400"
           style={{ boxShadow: "0 0 12px 2px rgba(34,211,238,0.45)" }}
@@ -40,7 +40,7 @@ function PvProgressBar({ pct }: { pct: number }) {
         {MILESTONES.map((m) => (
           <div key={m} className="flex flex-col items-center gap-0.5">
             <div className="h-1.5 w-0.5 rounded-full bg-slate-300 dark:bg-slate-600" />
-            <span className="text-[10px] font-semibold tabular-nums text-slate-400 dark:text-slate-500">
+            <span className="text-[10px] font-semibold text-slate-400 tabular-nums dark:text-slate-500">
               {m === 0
                 ? "0"
                 : m === 100
@@ -93,7 +93,7 @@ function StatBar({
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <span
-          className={`flex items-center gap-2 text-xs font-black uppercase tracking-widest ${lightText} dark:text-slate-300`}
+          className={`flex items-center gap-2 text-xs font-black tracking-widest uppercase ${lightText} dark:text-slate-300`}
         >
           <span
             className={`flex h-6 w-6 items-center justify-center rounded-lg text-xs ${lightBg} dark:bg-slate-700/60`}
@@ -102,7 +102,7 @@ function StatBar({
           </span>
           {label}
         </span>
-        <span className="text-sm font-black tabular-nums text-slate-800 dark:text-white">
+        <span className="text-sm font-black text-slate-800 tabular-nums dark:text-white">
           {fmt(value)}
         </span>
       </div>
@@ -118,7 +118,7 @@ function StatBar({
           transition={{ duration: 0.9, ease: "easeOut" }}
         />
       </div>
-      <div className="flex justify-between text-[10px] font-medium text-slate-400 dark:text-slate-500 tabular-nums">
+      <div className="flex justify-between text-[10px] font-medium text-slate-400 tabular-nums dark:text-slate-500">
         <span>0</span>
         <span>{fmt(max)}</span>
       </div>
@@ -148,7 +148,7 @@ function StatusBadge({ status }: { status: PvHistoryItem["status"] }) {
 /* ─── Skeleton ─── */
 function Skeleton() {
   return (
-    <div className="space-y-4 animate-pulse">
+    <div className="animate-pulse space-y-4">
       <div className="h-52 rounded-2xl bg-slate-200 dark:bg-slate-800" />
       <div className="grid grid-cols-3 gap-3">
         {[0, 1, 2].map((i) => (
@@ -243,7 +243,7 @@ const PerformanceTab = () => {
         <button
           type="button"
           onClick={() => refetch()}
-          className="mt-3 rounded-xl bg-rose-600 px-4 py-2 text-sm font-bold text-white hover:bg-rose-700 transition-colors"
+          className="mt-3 rounded-xl bg-rose-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-rose-700"
         >
           Retry
         </button>
@@ -258,19 +258,19 @@ const PerformanceTab = () => {
         <div className="h-1 w-full bg-linear-to-r from-sky-400 via-cyan-400 to-teal-400" />
 
         {/* Glow blob – dark mode only */}
-        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-cyan-400/5 blur-3xl dark:bg-cyan-400/10" />
+        <div className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-cyan-400/5 blur-3xl dark:bg-cyan-400/10" />
 
         <div className="relative p-6">
           {/* Label */}
-          <p className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.18em] text-sky-500 dark:text-sky-400">
+          <p className="flex items-center gap-2 text-sm font-black tracking-[0.18em] text-sky-500 uppercase dark:text-sky-400">
             <span className="text-xl">⚡</span> Direct Affiliate Performance
             Bonus
           </p>
 
           {/* Numbers row */}
-          <div className="mt-3 flex items-end justify-between gap-4 flex-wrap">
+          <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="text-4xl font-black tabular-nums text-slate-900 dark:text-white leading-none">
+              <p className="text-4xl leading-none font-black text-slate-900 tabular-nums dark:text-white">
                 {fmt(tranchePv)}
                 <span className="ml-2 text-lg font-semibold text-slate-400 dark:text-slate-500">
                   / {fmt(goalPv)} PV
@@ -284,10 +284,10 @@ const PerformanceTab = () => {
 
             {/* Progress badge */}
             <div className="flex flex-col items-center rounded-2xl border border-sky-200 bg-sky-50 px-5 py-3 dark:border-sky-500/20 dark:bg-sky-500/5">
-              <span className="text-[9px] font-black uppercase tracking-widest text-sky-500 dark:text-sky-400">
+              <span className="text-[9px] font-black tracking-widest text-sky-500 uppercase dark:text-sky-400">
                 Progress
               </span>
-              <span className="mt-0.5 text-3xl font-black tabular-nums text-sky-600 dark:text-sky-300">
+              <span className="mt-0.5 text-3xl font-black text-sky-600 tabular-nums dark:text-sky-300">
                 {progress.toFixed(1)}%
               </span>
               <span className="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">
@@ -312,14 +312,14 @@ const PerformanceTab = () => {
 
       {/* ── Milestone Reward ── */}
       <div className="relative overflow-hidden rounded-2xl border border-emerald-200 bg-linear-to-br from-emerald-50 to-teal-50/50 p-5 shadow-sm dark:border-emerald-800/50 dark:from-emerald-950/40 dark:to-teal-950/30">
-        <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-emerald-400/10" />
+        <div className="pointer-events-none absolute -top-8 -right-8 h-32 w-32 rounded-full bg-emerald-400/10" />
         <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-sm shadow-emerald-500/30">
               <span className="text-lg">🏆</span>
             </div>
             <div>
-              <p className="text-[11px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+              <p className="text-[11px] font-black tracking-widest text-emerald-600 uppercase dark:text-emerald-400">
                 Direct Affiliate Performance Bonus
               </p>
               <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
@@ -340,18 +340,18 @@ const PerformanceTab = () => {
           </div>
           <div className="flex shrink-0 gap-3">
             <div className="rounded-xl border border-emerald-200/70 bg-white/70 px-4 py-3 text-center backdrop-blur-sm dark:border-emerald-800/40 dark:bg-white/5">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+              <p className="text-[10px] font-bold tracking-wider text-emerald-600 uppercase dark:text-emerald-400">
                 Milestones
               </p>
-              <p className="mt-1 text-2xl font-black tabular-nums text-slate-900 dark:text-white">
+              <p className="mt-1 text-2xl font-black text-slate-900 tabular-nums dark:text-white">
                 {fmt(creditedMilestones)}
               </p>
             </div>
             <div className="rounded-xl border border-emerald-200/70 bg-white/70 px-4 py-3 text-center backdrop-blur-sm dark:border-emerald-800/40 dark:bg-white/5">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+              <p className="text-[10px] font-bold tracking-wider text-emerald-600 uppercase dark:text-emerald-400">
                 Cash Earned
               </p>
-              <p className="mt-1 text-2xl font-black tabular-nums text-emerald-600 dark:text-emerald-300">
+              <p className="mt-1 text-2xl font-black text-emerald-600 tabular-nums dark:text-emerald-300">
                 ₱{fmt(cashEarned)}
               </p>
             </div>
@@ -413,13 +413,13 @@ const PerformanceTab = () => {
                   strokeWidth={2}
                 />
               </div>
-              <p className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 leading-tight">
+              <p className="text-[11px] leading-tight font-black tracking-widest text-slate-500 uppercase dark:text-slate-400">
                 {card.label}
               </p>
             </div>
             {/* Value */}
             <p
-              className={`mt-4 text-4xl font-black tabular-nums leading-none ${card.num}`}
+              className={`mt-4 text-4xl leading-none font-black tabular-nums ${card.num}`}
             >
               {fmt(card.value)}
             </p>
@@ -429,7 +429,7 @@ const PerformanceTab = () => {
 
       {/* ── Referral Stat Bars ── */}
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700/50 dark:bg-slate-900">
-        <p className="mb-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+        <p className="mb-5 text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase dark:text-slate-500">
           ◈ Referral Breakdown
         </p>
         <div className="space-y-6">
@@ -474,7 +474,7 @@ const PerformanceTab = () => {
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-4 dark:border-slate-700/50 dark:bg-slate-800/50">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+            <p className="text-[10px] font-black tracking-[0.18em] text-slate-400 uppercase dark:text-slate-500">
               ◆ Transaction History
             </p>
             <p className="mt-0.5 text-base font-bold text-slate-800 dark:text-white">
@@ -517,7 +517,7 @@ const PerformanceTab = () => {
                     (h, i) => (
                       <th
                         key={h}
-                        className={`px-5 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 ${i === 4 ? "text-right" : "text-left"}`}
+                        className={`px-5 py-3 text-[10px] font-black tracking-widest text-slate-400 uppercase dark:text-slate-500 ${i === 4 ? "text-right" : "text-left"}`}
                       >
                         {h}
                       </th>
@@ -537,7 +537,7 @@ const PerformanceTab = () => {
                     <td className="px-5 py-3.5 text-xs text-slate-500 dark:text-slate-400">
                       {item.source}
                     </td>
-                    <td className="px-5 py-3.5 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                    <td className="px-5 py-3.5 text-xs whitespace-nowrap text-slate-500 dark:text-slate-400">
                       {new Date(item.created_at).toLocaleString("en-PH", {
                         timeZone: "Asia/Manila",
                         year: "numeric",
@@ -550,7 +550,7 @@ const PerformanceTab = () => {
                     <td className="px-5 py-3.5">
                       <StatusBadge status={item.status} />
                     </td>
-                    <td className="px-5 py-3.5 text-right font-black tabular-nums text-sky-600 dark:text-sky-400">
+                    <td className="px-5 py-3.5 text-right font-black text-sky-600 tabular-nums dark:text-sky-400">
                       +{fmt(item.amount)}
                       <span className="ml-1 text-[10px] font-medium text-slate-400 dark:text-slate-500">
                         PV

@@ -1,18 +1,20 @@
 "use client"
 
-import { useCallback, useEffect, useState, useRef } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import type { CategoryProduct } from "@/libs/CategoryData"
+import { resolveCheckoutSource } from "@/libs/checkoutSource"
+import { setStoredReferralCode } from "@/libs/referral"
+import { useGetPublicGeneralSettingsQuery } from "@/store/api/adminSettingsApi"
+import { useGetProductBrandQuery } from "@/store/api/productsApi"
+import type { ProductReviewSummary } from "@/store/api/productsApi"
+import { useSession } from "next-auth/react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+
+import ShareModal from "@/components/ui/ShareModal"
+
 import ProductImageGallery from "./ProductImageGallery"
 import ProductInfo from "./ProductInfo"
 import StickyAddToCart from "./StickyAddToCart"
-import { useGetProductBrandQuery } from "@/store/api/productsApi"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { setStoredReferralCode } from "@/libs/referral"
-import { resolveCheckoutSource } from "@/libs/checkoutSource"
-import { useSession } from "next-auth/react"
-import type { ProductReviewSummary } from "@/store/api/productsApi"
-import { useGetPublicGeneralSettingsQuery } from "@/store/api/adminSettingsApi"
-import ShareModal from "@/components/ui/ShareModal"
 
 interface ProductPageClientProps {
   product: CategoryProduct
@@ -75,11 +77,11 @@ const BrandCardComponent = ({
   // Loading state
   if (isLoading) {
     return (
-      <div className="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 animate-pulse">
+      <div className="flex animate-pulse items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
         <div className="h-12 w-12 shrink-0 rounded-lg bg-gray-200 dark:bg-gray-700" />
         <div className="flex-1 space-y-2">
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24" />
-          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-16" />
+          <div className="h-4 w-24 rounded bg-gray-200 dark:bg-gray-700" />
+          <div className="h-3 w-16 rounded bg-gray-200 dark:bg-gray-700" />
         </div>
       </div>
     )
@@ -90,17 +92,17 @@ const BrandCardComponent = ({
     console.error("Failed to load brand info for product", productId, error)
     // Show fallback brand card with placeholder
     return (
-      <div className="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-gray-200 dark:border-gray-600 bg-gradient-to-br from-gray-100 to-gray-100 dark:from-gray-700 dark:to-gray-700">
+      <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-gradient-to-br from-gray-100 to-gray-100 dark:border-gray-600 dark:from-gray-700 dark:to-gray-700">
           <span className="text-lg font-bold text-gray-400 dark:text-gray-500">
             ?
           </span>
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
             Brand Information
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             Unable to load brand details
           </p>
         </div>
@@ -132,16 +134,16 @@ const BrandCardComponent = ({
   const joinedDate = formatJoinedDate(brandInfo.joinedDate)
 
   return (
-    <div className="relative z-20 rounded-lg bg-white dark:bg-gray-800 p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+    <div className="relative z-20 rounded-lg border border-gray-200 bg-white p-4 sm:p-6 dark:border-gray-700 dark:bg-gray-800">
       {/* Content */}
       <div className="flex items-start gap-4 sm:items-center sm:gap-6">
         {/* Brand Image */}
-        <div className="relative flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 sm:h-32 sm:w-32">
+        <div className="relative flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-white sm:h-32 sm:w-32 dark:border-gray-600 dark:bg-gray-700">
           {brandInfo.image ? (
             <img
               src={brandInfo.image}
               alt={brandInfo.name}
-              className="object-contain p-2 w-full h-full"
+              className="h-full w-full object-contain p-2"
             />
           ) : (
             <span className="text-3xl font-extrabold tracking-wider text-gray-400 dark:text-gray-500">
@@ -159,14 +161,14 @@ const BrandCardComponent = ({
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <h2 className="text-xl font-bold leading-tight text-gray-900 dark:text-white sm:text-2xl">
+              <h2 className="text-xl leading-tight font-bold text-gray-900 sm:text-2xl dark:text-white">
                 {brandInfo.name}
               </h2>
               <span
                 className={`mt-2 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
                   isOnline
-                    ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
-                    : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                    : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
                 }`}
               >
                 <span
@@ -270,10 +272,10 @@ const BrandCardComponent = ({
       </div>
 
       {/* View Brand Button */}
-      <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+      <div className="mt-4 border-t border-gray-100 pt-4 dark:border-gray-700">
         <a
           href={`/by-brand?brand=${encodeURIComponent(brandSlug)}`}
-          className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold border border-sky-400 dark:border-sky-500 bg-transparent hover:bg-sky-50 dark:hover:bg-sky-900 text-sky-500 dark:text-sky-400 rounded-lg cursor-pointer transition-colors"
+          className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-sky-400 bg-transparent px-4 py-2.5 text-sm font-semibold text-sky-500 transition-colors hover:bg-sky-50 dark:border-sky-500 dark:text-sky-400 dark:hover:bg-sky-900"
         >
           View Brand
           <svg
@@ -454,7 +456,7 @@ const ProductPageClient = ({
 
   return (
     <>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start pb-20">
+      <div className="grid grid-cols-1 items-start gap-12 pb-20 lg:grid-cols-2">
         <div className="space-y-4">
           <div className="relative">
             <ProductImageGallery

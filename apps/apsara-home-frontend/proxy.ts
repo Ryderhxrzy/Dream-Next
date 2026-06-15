@@ -1,6 +1,6 @@
-import { NextResponse, NextRequest } from "next/server"
-import { getToken } from "next-auth/jwt"
 import { normalizeAdminPermissions } from "@/libs/adminPermissions"
+import { getToken } from "next-auth/jwt"
+import { NextRequest, NextResponse } from "next/server"
 
 const MOBILE_UA_RE =
   /Android|iPhone|iPod|BlackBerry|IEMobile|Opera Mini|CriOS|webOS/i

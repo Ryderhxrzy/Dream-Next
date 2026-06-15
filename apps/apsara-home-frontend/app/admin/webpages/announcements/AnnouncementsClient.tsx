@@ -1,12 +1,14 @@
 "use client"
 
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react"
 import {
   AlignCenter,
   AlignLeft,
   AlignRight,
-  CalendarDays,
   Bold,
+  CalendarDays,
   ChevronDown,
+  Clock3,
   Image as ImageIcon,
   Italic,
   Link as LinkIcon,
@@ -20,9 +22,7 @@ import {
   Strikethrough,
   Trash2,
   Underline,
-  Clock3,
 } from "lucide-react"
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react"
 import { useSession } from "next-auth/react"
 import toast from "react-hot-toast"
 
@@ -1093,7 +1093,7 @@ export default function AnnouncementsClient() {
               className="fixed z-9999 w-72 rounded-lg border border-[#c7d4ff] bg-white p-2 shadow-xl"
               style={{ top: emojiMenuPos.top, left: emojiMenuPos.left }}
             >
-              <div className="grid max-h-52 grid-cols-8 gap-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+              <div className="grid max-h-52 [scrollbar-width:none] grid-cols-8 gap-1 overflow-y-auto [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                 {EMOJIS.map((emoji) => (
                   <button
                     key={emoji}
@@ -1169,7 +1169,7 @@ export default function AnnouncementsClient() {
             clearImageSelection()
           }
         }}
-        className="min-h-[300px] max-h-[520px] overflow-y-auto space-y-4 bg-white px-4 py-5 text-[15px] leading-relaxed text-[#2f4177] focus:outline-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden [&_ul]:my-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:my-3 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-1 [&_img]:my-3 [&_img]:!h-auto [&_img]:!max-w-[320px] [&_img]:!w-auto [&_img]:rounded-lg [&_img]:border [&_img]:border-[#c7d4ff]"
+        className="max-h-[520px] min-h-[300px] [scrollbar-width:none] space-y-4 overflow-y-auto bg-white px-4 py-5 text-[15px] leading-relaxed text-[#2f4177] [-ms-overflow-style:none] focus:outline-none [&_img]:my-3 [&_img]:!h-auto [&_img]:!w-auto [&_img]:!max-w-[320px] [&_img]:rounded-lg [&_img]:border [&_img]:border-[#c7d4ff] [&_li]:my-1 [&_ol]:my-3 [&_ol]:list-decimal [&_ol]:pl-6 [&_ul]:my-3 [&_ul]:list-disc [&_ul]:pl-6 [&::-webkit-scrollbar]:hidden"
       />
 
       <div className="flex items-center justify-between border-t border-[#d6dff7] bg-[#eef3ff] px-4 py-2 text-xs text-[#4f75dc]">
@@ -1197,7 +1197,7 @@ export default function AnnouncementsClient() {
         }}
         placeholder="Type your SMS message here..."
         rows={10}
-        className="w-full rounded-xl border border-[#d6dff7] px-4 py-3 text-sm text-[#1a357f] placeholder:text-[#8fa0cf] focus:border-[#4f75dc] focus:outline-none focus:ring-2 focus:ring-[#dbe6ff]"
+        className="w-full rounded-xl border border-[#d6dff7] px-4 py-3 text-sm text-[#1a357f] placeholder:text-[#8fa0cf] focus:border-[#4f75dc] focus:ring-2 focus:ring-[#dbe6ff] focus:outline-none"
       />
       <div className="flex items-center justify-between text-xs text-[#4f75dc]">
         <span>Plain text only</span>
@@ -1221,7 +1221,7 @@ export default function AnnouncementsClient() {
           display: none !important;
         }
       `}</style>
-      <div className="space-y-5 rounded-2xl border border-[#dce5ff] bg-white p-4 shadow-sm xl:col-span-8 md:p-5">
+      <div className="space-y-5 rounded-2xl border border-[#dce5ff] bg-white p-4 shadow-sm md:p-5 xl:col-span-8">
         <section
           key={deliveryChannel}
           className={`space-y-3 ${deliveryChannel === "sms" ? "[&_[data-announcement-email-editor]]:hidden [&_img]:hidden" : ""}`}
@@ -1315,9 +1315,9 @@ export default function AnnouncementsClient() {
                 setTitle(event.target.value.slice(0, maxTitleLength))
               }
               placeholder="Enter announcement title"
-              className="w-full rounded-xl border border-[#d6dff7] px-4 py-3 pr-16 text-sm text-[#1a357f] placeholder:text-[#8fa0cf] focus:border-[#4f75dc] focus:outline-none focus:ring-2 focus:ring-[#dbe6ff]"
+              className="w-full rounded-xl border border-[#d6dff7] px-4 py-3 pr-16 text-sm text-[#1a357f] placeholder:text-[#8fa0cf] focus:border-[#4f75dc] focus:ring-2 focus:ring-[#dbe6ff] focus:outline-none"
             />
-            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#4f75dc]">
+            <span className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-xs font-semibold text-[#4f75dc]">
               {title.length}/{maxTitleLength}
             </span>
           </div>
@@ -1387,7 +1387,7 @@ export default function AnnouncementsClient() {
         </section>
       </div>
 
-      <aside className="space-y-4 rounded-2xl border border-[#dce5ff] bg-white p-4 shadow-sm xl:col-span-4 md:p-5">
+      <aside className="space-y-4 rounded-2xl border border-[#dce5ff] bg-white p-4 shadow-sm md:p-5 xl:col-span-4">
         <div className="flex items-start gap-3">
           <div className="grid h-10 w-10 place-items-center rounded-xl bg-[#2457e7] text-white shadow-sm">
             <Mail className="h-5 w-5" />
@@ -1561,7 +1561,7 @@ export default function AnnouncementsClient() {
           </div>
           {sendTimingMode === "scheduled" ? (
             <div className="space-y-2 rounded-lg border border-[#d6dff7] bg-[#f7f9ff] p-3">
-              <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#4f75dc]">
+              <label className="flex items-center gap-2 text-xs font-semibold tracking-[0.14em] text-[#4f75dc] uppercase">
                 <CalendarDays className="h-3.5 w-3.5" />
                 Send date & time
               </label>
@@ -1569,7 +1569,7 @@ export default function AnnouncementsClient() {
                 type="datetime-local"
                 value={scheduledFor}
                 onChange={(event) => setScheduledFor(event.target.value)}
-                className="w-full rounded-lg border border-[#c7d4ff] bg-white px-3 py-2 text-sm text-[#1a357f] focus:border-[#4f75dc] focus:outline-none focus:ring-2 focus:ring-[#dbe6ff]"
+                className="w-full rounded-lg border border-[#c7d4ff] bg-white px-3 py-2 text-sm text-[#1a357f] focus:border-[#4f75dc] focus:ring-2 focus:ring-[#dbe6ff] focus:outline-none"
               />
               <p className="text-[11px] leading-relaxed text-[#7f95d4]">
                 Scheduled announcements are queued and sent automatically when
@@ -1654,7 +1654,7 @@ export default function AnnouncementsClient() {
                 >
                   <div className="flex items-start justify-between gap-4 border-b border-white/70 bg-white/70 px-6 py-5 backdrop-blur">
                     <div className="space-y-1">
-                      <div className="inline-flex items-center gap-2 rounded-full border border-[#d9e4ff] bg-[#f3f7ff] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#5671b5]">
+                      <div className="inline-flex items-center gap-2 rounded-full border border-[#d9e4ff] bg-[#f3f7ff] px-3 py-1 text-xs font-semibold tracking-[0.18em] text-[#5671b5] uppercase">
                         {isEmailPreview ? "Email Preview" : "SMS Preview"}
                       </div>
                       <h3 className="text-2xl font-extrabold tracking-tight text-slate-900">
@@ -1676,11 +1676,11 @@ export default function AnnouncementsClient() {
                   </div>
 
                   <div className="grid max-h-[calc(92vh-88px)] gap-0 overflow-auto lg:grid-cols-[1.4fr_0.8fr]">
-                    <div className="border-b border-white/70 bg-gradient-to-b from-white/60 to-slate-50/80 p-5 lg:border-b-0 lg:border-r">
+                    <div className="border-b border-white/70 bg-gradient-to-b from-white/60 to-slate-50/80 p-5 lg:border-r lg:border-b-0">
                       {isEmailPreview ? (
                         <div className="mx-auto max-w-3xl overflow-hidden rounded-[26px] border border-slate-200 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
                           <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
-                            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                            <div className="flex items-center gap-2 text-xs font-semibold tracking-[0.16em] text-slate-500 uppercase">
                               <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
                               Email Client Preview
                             </div>
@@ -1691,7 +1691,7 @@ export default function AnnouncementsClient() {
 
                           <div className="space-y-4 px-5 py-5">
                             <div className="rounded-2xl border border-[#dfe7ff] bg-[#f8fbff] p-4">
-                              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                              <p className="text-[11px] font-semibold tracking-[0.18em] text-slate-400 uppercase">
                                 From
                               </p>
                               <p className="mt-1 text-sm font-semibold text-slate-900">
@@ -1705,7 +1705,7 @@ export default function AnnouncementsClient() {
                                   AF
                                 </div>
                                 <div>
-                                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                                  <p className="text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase">
                                     Announcement Preview
                                   </p>
                                   <p className="text-lg font-bold text-slate-900">
@@ -1715,7 +1715,7 @@ export default function AnnouncementsClient() {
                               </div>
 
                               <div
-                                className="preview-email prose max-w-none prose-headings:tracking-tight prose-p:leading-7 prose-img:rounded-2xl prose-img:border prose-img:border-slate-200"
+                                className="preview-email prose prose-headings:tracking-tight prose-p:leading-7 prose-img:rounded-2xl prose-img:border prose-img:border-slate-200 max-w-none"
                                 dangerouslySetInnerHTML={{
                                   __html: preview.body,
                                 }}
@@ -1729,7 +1729,7 @@ export default function AnnouncementsClient() {
                             <div className="rounded-[28px] bg-[#f7f9ff] p-4">
                               <div className="mb-4 flex items-center justify-between">
                                 <div>
-                                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                                  <p className="text-[11px] font-semibold tracking-[0.18em] text-slate-400 uppercase">
                                     SMS Preview
                                   </p>
                                   <p className="text-lg font-bold text-slate-900">
@@ -1744,7 +1744,7 @@ export default function AnnouncementsClient() {
                               <div className="rounded-[24px] bg-slate-900 p-4 text-white shadow-inner">
                                 <div className="mb-4 flex justify-end">
                                   <div className="max-w-[90%] rounded-[22px] rounded-tr-md bg-gradient-to-br from-[#2457e7] to-[#6d86ff] px-4 py-3 shadow-lg">
-                                    <p className="whitespace-pre-wrap break-words text-sm leading-6 text-white">
+                                    <p className="text-sm leading-6 break-words whitespace-pre-wrap text-white">
                                       {preview.plainText}
                                     </p>
                                   </div>
@@ -1762,7 +1762,7 @@ export default function AnnouncementsClient() {
 
                     <div className="space-y-4 p-5">
                       <div className="rounded-2xl border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur">
-                        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
+                        <p className="text-[11px] font-bold tracking-[0.18em] text-slate-400 uppercase">
                           Channel
                         </p>
                         <p className="mt-1 text-base font-bold text-slate-900">
@@ -1770,7 +1770,7 @@ export default function AnnouncementsClient() {
                         </p>
                       </div>
                       <div className="rounded-2xl border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur">
-                        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
+                        <p className="text-[11px] font-bold tracking-[0.18em] text-slate-400 uppercase">
                           Title
                         </p>
                         <p className="mt-1 text-base font-bold text-slate-900">
@@ -1778,7 +1778,7 @@ export default function AnnouncementsClient() {
                         </p>
                       </div>
                       <div className="rounded-2xl border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur">
-                        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
+                        <p className="text-[11px] font-bold tracking-[0.18em] text-slate-400 uppercase">
                           Recipients
                         </p>
                         <p className="mt-1 text-sm font-semibold text-slate-900">
@@ -1788,7 +1788,7 @@ export default function AnnouncementsClient() {
                         </p>
                       </div>
                       <div className="rounded-2xl border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur">
-                        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
+                        <p className="text-[11px] font-bold tracking-[0.18em] text-slate-400 uppercase">
                           Length
                         </p>
                         <p className="mt-1 text-sm font-semibold text-slate-900">
@@ -1798,7 +1798,7 @@ export default function AnnouncementsClient() {
                         </p>
                       </div>
                       <div className="rounded-2xl border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur">
-                        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
+                        <p className="text-[11px] font-bold tracking-[0.18em] text-slate-400 uppercase">
                           Notes
                         </p>
                         <p className="mt-1 text-sm leading-6 text-slate-700">

@@ -1,5 +1,5 @@
-import { buildPageMetadata } from "@/app/seo"
 import SuppliersTabsWrapper from "@/components/superAdmin/suppliers/SuppliersTabsWrapper"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Admin Suppliers",

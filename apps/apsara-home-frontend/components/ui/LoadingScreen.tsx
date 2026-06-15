@@ -25,9 +25,9 @@ export default function LoadingScreen({
       id="af-loading-screen"
       className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden bg-[#faf8f5] transition-colors dark:bg-[#07111f]"
     >
-      <div className="absolute -top-24 -right-24 h-80 w-80 animate-blob rounded-full bg-[#2c5f4f]/10 blur-3xl dark:bg-sky-500/12" />
-      <div className="absolute -bottom-20 -left-20 h-72 w-72 animate-blob rounded-full bg-[#d4a574]/15 blur-3xl animation-delay-2000 dark:bg-cyan-400/10" />
-      <div className="absolute top-1/3 -left-16 h-48 w-48 animate-blob rounded-full bg-[#2c5f4f]/8 blur-2xl animation-delay-4000 dark:bg-emerald-400/10" />
+      <div className="animate-blob absolute -top-24 -right-24 h-80 w-80 rounded-full bg-[#2c5f4f]/10 blur-3xl dark:bg-sky-500/12" />
+      <div className="animate-blob animation-delay-2000 absolute -bottom-20 -left-20 h-72 w-72 rounded-full bg-[#d4a574]/15 blur-3xl dark:bg-cyan-400/10" />
+      <div className="animate-blob animation-delay-4000 absolute top-1/3 -left-16 h-48 w-48 rounded-full bg-[#2c5f4f]/8 blur-2xl dark:bg-emerald-400/10" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(56,189,248,0.16),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(45,212,191,0.12),transparent_24%)] opacity-0 transition-opacity dark:opacity-100" />
 
       <div className="relative mb-8 flex items-center justify-center">
@@ -60,7 +60,7 @@ export default function LoadingScreen({
                 height={110}
                 loading="eager"
                 decoding="async"
-                className="h-[110px] w-[110px] object-contain drop-shadow-xl mix-blend-multiply dark:mix-blend-normal dark:drop-shadow-[0_0_32px_rgba(56,189,248,0.22)]"
+                className="h-[110px] w-[110px] object-contain mix-blend-multiply drop-shadow-xl dark:mix-blend-normal dark:drop-shadow-[0_0_32px_rgba(56,189,248,0.22)]"
               />
             ) : (
               <span className="block h-[110px] w-[110px]" />
@@ -70,7 +70,7 @@ export default function LoadingScreen({
       </div>
 
       <div
-        className="mb-10 flex flex-col items-center gap-1.5 animate-fade-up-in"
+        className="animate-fade-up-in mb-10 flex flex-col items-center gap-1.5"
         style={{ animationDelay: "0.4s", opacity: 0 }}
       >
         <p className="font-display text-2xl font-semibold tracking-[0.18em] text-[#1a1a1a] dark:text-slate-100">
@@ -82,13 +82,13 @@ export default function LoadingScreen({
             </span>
           ) : null}
         </p>
-        <p className="text-[10px] font-medium uppercase tracking-[0.4em] text-[#6b6b6b] dark:text-slate-400">
+        <p className="text-[10px] font-medium tracking-[0.4em] text-[#6b6b6b] uppercase dark:text-slate-400">
           {tagline}
         </p>
       </div>
 
       <div
-        className="flex items-center gap-2 animate-fade-up-in"
+        className="animate-fade-up-in flex items-center gap-2"
         style={{ animationDelay: "0.65s", opacity: 0 }}
       >
         {[0, 1, 2].map((i) => (
@@ -101,7 +101,7 @@ export default function LoadingScreen({
       </div>
 
       <div className="absolute bottom-0 left-0 h-[3px] w-full overflow-hidden bg-[#2c5f4f]/10 dark:bg-slate-800">
-        <div className="absolute inset-y-0 w-1/3 animate-loading-sweep bg-gradient-to-r from-transparent via-[#2c5f4f] to-transparent dark:via-cyan-300" />
+        <div className="animate-loading-sweep absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-[#2c5f4f] to-transparent dark:via-cyan-300" />
       </div>
     </div>
   )

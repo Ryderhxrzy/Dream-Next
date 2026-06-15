@@ -1,9 +1,7 @@
 "use client"
 
 import { useMemo, useRef, useState } from "react"
-import Link from "next/link"
-import Image from "next/image"
-import { motion, AnimatePresence } from "framer-motion"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import {
   ProductBrand,
   useCreateProductBrandMutation,
@@ -11,7 +9,9 @@ import {
   useGetProductBrandsQuery,
   useUpdateProductBrandMutation,
 } from "@/store/api/productBrandsApi"
-import { showErrorToast, showSuccessToast } from "@/libs/toast"
+import { AnimatePresence, motion } from "framer-motion"
+import Image from "next/image"
+import Link from "next/link"
 
 const getRequestErrorMessage = (err: unknown, fallback: string) => {
   const data = (
@@ -187,7 +187,7 @@ function BrandModal({
                   setName(e.target.value)
                   setError("")
                 }}
-                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-700 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20"
+                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-700 transition outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20"
                 placeholder="e.g. AF Appliance"
               />
             </div>
@@ -195,7 +195,7 @@ function BrandModal({
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-slate-600">
                 Brand Image{" "}
-                <span className="text-slate-400 font-normal">(optional)</span>
+                <span className="font-normal text-slate-400">(optional)</span>
               </label>
               <input
                 ref={fileInputRef}
@@ -701,15 +701,15 @@ export default function BrandsPageMain() {
       </div>
 
       {/* Table Card */}
-      <div className="rounded-3xl border border-slate-100 bg-white shadow-sm relative overflow-hidden">
+      <div className="relative overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
         <div className="pointer-events-none rounded-3xl bg-gradient-to-r from-teal-500/10 via-sky-500/10 to-emerald-500/10" />
         {/* Filters */}
         <div className="rounded-3xl border border-slate-100 bg-gradient-to-b from-slate-50/70 to-white p-5">
           <div className="flex flex-wrap items-center gap-3">
             {/* Search */}
-            <div className="relative flex-1 min-w-60 max-w-xs">
+            <div className="relative max-w-xs min-w-60 flex-1">
               <svg
-                className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -725,13 +725,13 @@ export default function BrandsPageMain() {
                 value={search}
                 onChange={(e) => handleSearch(e.target.value)}
                 placeholder="Search brands..."
-                className="w-full rounded-2xl border border-slate-200 bg-white py-2.5 pl-9 pr-9 text-sm text-slate-700 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20"
+                className="w-full rounded-2xl border border-slate-200 bg-white py-2.5 pr-9 pl-9 text-sm text-slate-700 transition outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20"
               />
               {search && (
                 <button
                   onClick={() => handleSearch("")}
                   aria-label="Clear search"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl p-1 text-slate-400 transition hover:bg-slate-50 hover:text-slate-600"
+                  className="absolute top-1/2 right-2 -translate-y-1/2 rounded-xl p-1 text-slate-400 transition hover:bg-slate-50 hover:text-slate-600"
                 >
                   <svg
                     className="h-4 w-4"
@@ -771,7 +771,7 @@ export default function BrandsPageMain() {
               <select
                 value={sortBy}
                 onChange={(e) => handleSort(e.target.value as SortOption)}
-                className="appearance-none rounded-2xl border border-slate-200 bg-white py-2.5 pl-3.5 pr-10 text-xs font-semibold text-slate-600 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20"
+                className="appearance-none rounded-2xl border border-slate-200 bg-white py-2.5 pr-10 pl-3.5 text-xs font-semibold text-slate-600 transition outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20"
               >
                 <option value="name_asc">Name A → Z</option>
                 <option value="name_desc">Name Z → A</option>
@@ -779,7 +779,7 @@ export default function BrandsPageMain() {
                 <option value="id_desc">ID Descending</option>
               </select>
               <svg
-                className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400"
+                className="pointer-events-none absolute top-1/2 right-3 h-3.5 w-3.5 -translate-y-1/2 text-slate-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -822,21 +822,21 @@ export default function BrandsPageMain() {
           <table className="min-w-full">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50 dark:border-slate-800/70 dark:bg-slate-900/40">
-                <th className="px-5 py-3.5 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                <th className="px-5 py-3.5 text-left text-[11px] font-bold tracking-wider text-slate-500 uppercase">
                   Brand
                 </th>
-                <th className="px-5 py-3.5 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                <th className="px-5 py-3.5 text-left text-[11px] font-bold tracking-wider text-slate-500 uppercase">
                   Image
                 </th>
-                <th className="px-5 py-3.5 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                <th className="px-5 py-3.5 text-left text-[11px] font-bold tracking-wider text-slate-500 uppercase">
                   Status
                 </th>
-                <th className="px-5 py-3.5 text-right text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                <th className="px-5 py-3.5 text-right text-[11px] font-bold tracking-wider text-slate-500 uppercase">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70 dark:divide-slate-800/70">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70">
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">

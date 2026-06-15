@@ -2,6 +2,7 @@
 
 import { useMemo } from "react"
 import { usePathname } from "next/navigation"
+
 import LoadingScreen from "@/components/ui/LoadingScreen"
 
 const normalizeSlug = (value: string) => {

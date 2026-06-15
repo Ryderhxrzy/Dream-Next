@@ -141,12 +141,12 @@ export default function ExpenseCategoriesPageMain() {
   return (
     <div className="space-y-6">
       <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-sky-50 p-6 shadow-sm">
-        <div className="pointer-events-none absolute -right-24 -top-20 h-52 w-52 rounded-full bg-cyan-200/40 blur-3xl" />
+        <div className="pointer-events-none absolute -top-20 -right-24 h-52 w-52 rounded-full bg-cyan-200/40 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-amber-200/35 blur-3xl" />
         <div className="relative">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.28em] text-cyan-700">
+              <p className="text-xs font-bold tracking-[0.28em] text-cyan-700 uppercase">
                 Expenses
               </p>
               <h1 className="mt-2 text-3xl font-bold text-slate-900">
@@ -167,7 +167,7 @@ export default function ExpenseCategoriesPageMain() {
 
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
-              <p className="text-xs uppercase tracking-[0.16em] text-slate-500">
+              <p className="text-xs tracking-[0.16em] text-slate-500 uppercase">
                 Total
               </p>
               <p className="mt-1 text-2xl font-bold text-slate-900">
@@ -175,7 +175,7 @@ export default function ExpenseCategoriesPageMain() {
               </p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
-              <p className="text-xs uppercase tracking-[0.16em] text-slate-500">
+              <p className="text-xs tracking-[0.16em] text-slate-500 uppercase">
                 Active
               </p>
               <p className="mt-1 text-2xl font-bold text-emerald-700">
@@ -183,7 +183,7 @@ export default function ExpenseCategoriesPageMain() {
               </p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
-              <p className="text-xs uppercase tracking-[0.16em] text-slate-500">
+              <p className="text-xs tracking-[0.16em] text-slate-500 uppercase">
                 Inactive
               </p>
               <p className="mt-1 text-2xl font-bold text-amber-700">
@@ -249,7 +249,7 @@ export default function ExpenseCategoriesPageMain() {
                 <div
                   aria-hidden="true"
                   className={
-                    "pointer-events-none absolute -left-20 -top-20 h-40 w-40 rounded-full blur-2xl transition-transform duration-300 " +
+                    "pointer-events-none absolute -top-20 -left-20 h-40 w-40 rounded-full blur-2xl transition-transform duration-300 " +
                     (category.status === 1
                       ? "bg-emerald-200/60 group-hover:translate-x-6 group-hover:translate-y-4"
                       : "bg-amber-200/60 group-hover:translate-x-6 group-hover:translate-y-4")
@@ -286,7 +286,7 @@ export default function ExpenseCategoriesPageMain() {
                     onClick={() => openEditModal(category)}
                     title="Edit expense category"
                     aria-label="Edit expense category"
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white/70 text-slate-700 shadow-sm transition hover:bg-white group-hover:border-slate-400"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white/70 text-slate-700 shadow-sm transition group-hover:border-slate-400 hover:bg-white"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -427,7 +427,7 @@ export default function ExpenseCategoriesPageMain() {
       {deleteTarget ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
           <div className="w-full max-w-md rounded-3xl border border-red-100 bg-white p-6 shadow-xl dark:border-red-500/20 dark:bg-slate-950">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-red-500">
+            <p className="text-xs font-bold tracking-[0.24em] text-red-500 uppercase">
               Confirm Delete
             </p>
             <h3 className="mt-2 text-lg font-bold text-slate-900 dark:text-slate-100">

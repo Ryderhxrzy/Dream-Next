@@ -1,11 +1,12 @@
 "use client"
 
 import { ChangeEvent, DragEvent, useRef, useState } from "react"
-import { staggerContainer, staggerItem } from "./animation"
-import { BookingFormData, SERVICES } from "./types"
 import { motion } from "framer-motion"
-import { FormField, InputField, TextareaField } from "./ui/Primitives"
+
+import { staggerContainer, staggerItem } from "./animation"
 import SummaryRow from "./SummaryRow"
+import { BookingFormData, SERVICES } from "./types"
+import { FormField, InputField, TextareaField } from "./ui/Primitives"
 
 interface StepReviewProps {
   form: BookingFormData
@@ -135,7 +136,7 @@ const StepReview = ({ form, onChange }: StepReviewProps) => {
             rows={5}
           />
         </FormField>
-        <p className="text-[0.68rem] text-slate-400 mt-2">
+        <p className="mt-2 text-[0.68rem] text-slate-400">
           The more detail you share, the better we can prepare for your
           consultation.
         </p>
@@ -217,7 +218,7 @@ const StepReview = ({ form, onChange }: StepReviewProps) => {
                   className="flex items-center justify-between gap-3 rounded-[4px] border border-indigo-100 bg-indigo-50/70 px-3 py-2"
                 >
                   <div className="min-w-0">
-                    <p className="text-[0.7rem] font-medium uppercase tracking-[0.08em] text-indigo-500">
+                    <p className="text-[0.7rem] font-medium tracking-[0.08em] text-indigo-500 uppercase">
                       {isImageReference(reference) ? "Image/File" : "Link"}
                     </p>
                     <a
@@ -246,7 +247,7 @@ const StepReview = ({ form, onChange }: StepReviewProps) => {
       {/* Review summary card */}
       <motion.div
         variants={staggerItem}
-        className="rounded-[6px] overflow-hidden"
+        className="overflow-hidden rounded-[6px]"
         style={{
           border: "1px solid rgba(99,102,241,0.15)",
           background:
@@ -254,14 +255,14 @@ const StepReview = ({ form, onChange }: StepReviewProps) => {
         }}
       >
         <div
-          className="px-5 py-3.5 border-b flex items-center justify-between"
+          className="flex items-center justify-between border-b px-5 py-3.5"
           style={{ borderColor: "rgba(99,102,241,0.1)" }}
         >
-          <span className="text-[0.68rem] tracking-[0.18em] uppercase text-indigo-600">
+          <span className="text-[0.68rem] tracking-[0.18em] text-indigo-600 uppercase">
             Booking Summary
           </span>
           <div className="flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+            <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-indigo-500" />
             <span className="text-[0.6rem] text-indigo-400">
               Ready to submit
             </span>
@@ -318,14 +319,14 @@ const StepReview = ({ form, onChange }: StepReviewProps) => {
       {/* Commitment note */}
       <motion.div
         variants={staggerItem}
-        className="flex items-start gap-3 p-4 rounded-[4px]"
+        className="flex items-start gap-3 rounded-[4px] p-4"
         style={{
           background: "rgba(99,102,241,0.03)",
           border: "1px solid rgba(99,102,241,0.1)",
         }}
       >
-        <span className="text-indigo-500 text-sm mt-0.5">✦</span>
-        <p className="text-[0.75rem] text-slate-500 leading-relaxed">
+        <span className="mt-0.5 text-sm text-indigo-500">✦</span>
+        <p className="text-[0.75rem] leading-relaxed text-slate-500">
           By submitting this form you're not committing to any contract. This is
           simply a consultation request — our team will reach out within{" "}
           <span className="text-slate-700">24 hours</span> to discuss your

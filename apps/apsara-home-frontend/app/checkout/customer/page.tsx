@@ -1,6 +1,7 @@
-import { buildPageMetadata } from "@/app/seo"
-import CustomerCheckoutMain from "@/components/checkout/customer/CustomerCheckoutMain"
 import { getNavbarCategories } from "@/libs/serverStorefront"
+
+import CustomerCheckoutMain from "@/components/checkout/customer/CustomerCheckoutMain"
+import { buildPageMetadata } from "@/app/seo"
 
 export const dynamic = "force-dynamic"
 

@@ -1,9 +1,9 @@
 "use client"
 
+import { MemberStatus, MemberTier } from "@/types/members/types"
 import DataFilterBar, {
   type DataFilterOption,
 } from "@/components/superAdmin/DataFilterBar"
-import { MemberStatus, MemberTier } from "@/types/members/types"
 
 interface MembersToolbarProps {
   search: string

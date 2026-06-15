@@ -1,5 +1,6 @@
 "use client"
 
+import { ReactNode } from "react"
 import { Button } from "@heroui/react/button"
 import { Card } from "@heroui/react/card"
 import { Label } from "@heroui/react/label"
@@ -7,7 +8,6 @@ import { ListBox } from "@heroui/react/list-box"
 import { ListBoxItem } from "@heroui/react/list-box-item"
 import { SearchField } from "@heroui/react/search-field"
 import { Select } from "@heroui/react/select"
-import { ReactNode } from "react"
 
 export type DataFilterOption<T extends string = string> = {
   value: T
@@ -60,7 +60,7 @@ function FilterSelect({
       }}
       className="w-full"
     >
-      <Select.Trigger className="h-11 flex min-h-11 w-full items-center justify-between rounded-[18px] border border-gray-300 dark:border-white/18 bg-white dark:bg-white/12 px-4 text-left text-sm text-gray-900 dark:text-white outline-none transition-all duration-200 focus:border-sky-400 dark:focus:border-sky-400/60 focus:bg-white dark:focus:bg-white/18">
+      <Select.Trigger className="flex h-11 min-h-11 w-full items-center justify-between rounded-[18px] border border-gray-300 bg-white px-4 text-left text-sm text-gray-900 transition-all duration-200 outline-none focus:border-sky-400 focus:bg-white dark:border-white/18 dark:bg-white/12 dark:text-white dark:focus:border-sky-400/60 dark:focus:bg-white/18">
         <span className="truncate">{selectedLabel}</span>
         <Select.Indicator className="h-4 w-4 text-gray-400 dark:text-white/60" />
       </Select.Trigger>
@@ -103,10 +103,10 @@ export default function DataFilterBar({
               className="w-full"
             >
               <Label className="sr-only">{searchLabel}</Label>
-              <SearchField.Group className="flex h-11 min-h-11 items-center gap-3 rounded-[18px] border border-gray-300 dark:border-white/18 bg-white dark:bg-white/12 px-4 transition-all duration-200 focus-within:border-sky-400 dark:focus-within:border-sky-400/60 focus-within:bg-white dark:focus-within:bg-white/18">
+              <SearchField.Group className="flex h-11 min-h-11 items-center gap-3 rounded-[18px] border border-gray-300 bg-white px-4 transition-all duration-200 focus-within:border-sky-400 focus-within:bg-white dark:border-white/18 dark:bg-white/12 dark:focus-within:border-sky-400/60 dark:focus-within:bg-white/18">
                 <SearchField.SearchIcon className="h-4 w-4 text-gray-400 dark:text-white/60" />
                 <SearchField.Input
-                  className="flex-1 border-none bg-transparent p-0 text-sm text-gray-900 dark:text-white outline-none placeholder:text-gray-400 dark:placeholder:text-white/55"
+                  className="flex-1 border-none bg-transparent p-0 text-sm text-gray-900 outline-none placeholder:text-gray-400 dark:text-white dark:placeholder:text-white/55"
                   placeholder="Search..."
                 />
                 {searchValue ? (
@@ -154,7 +154,7 @@ export default function DataFilterBar({
         ) : null}
 
         {summaryLeft || summaryRight ? (
-          <div className="flex flex-col gap-2 border-t border-slate-100 pt-3 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-300 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2 border-t border-slate-100 pt-3 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800 dark:text-slate-300">
             <div>{summaryLeft}</div>
             <div>{summaryRight}</div>
           </div>

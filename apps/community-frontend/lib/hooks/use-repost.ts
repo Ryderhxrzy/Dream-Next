@@ -1,11 +1,11 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuthStore } from "@/store/auth.store"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 
-import { api } from "@/lib/api";
-import { useAuthStore } from "@/store/auth.store";
+import { api } from "@/lib/api"
 
 export function useRepost() {
-  const queryClient = useQueryClient();
-  const token = useAuthStore((state) => state.token);
+  const queryClient = useQueryClient()
+  const token = useAuthStore((state) => state.token)
 
   return useMutation({
     mutationFn: ({ postId, caption }: { postId: string; caption: string }) =>
@@ -14,6 +14,7 @@ export function useRepost() {
         token,
         body: JSON.stringify({ caption }),
       }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["community-posts"] }),
-  });
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["community-posts"] }),
+  })
 }

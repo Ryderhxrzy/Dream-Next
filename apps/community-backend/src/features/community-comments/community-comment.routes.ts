@@ -1,21 +1,32 @@
-import { Hono } from "hono";
+import { Hono } from "hono"
 
-import { requireAuth } from "../../middleware/auth.middleware.js";
-import { listPostComments, createComment, createReply } from "./community-comment.service.js";
+import { requireAuth } from "../../middleware/auth.middleware.js"
+import {
+  createComment,
+  createReply,
+  listPostComments,
+} from "./community-comment.service.js"
 
-export const communityCommentRoutes = new Hono();
+export const communityCommentRoutes = new Hono()
 
-function serializeAuthor(author: { id: bigint; firstName: string | null; lastName: string | null; avatarUrl: string | null }) {
+function serializeAuthor(author: {
+  id: bigint
+  firstName: string | null
+  lastName: string | null
+  avatarUrl: string | null
+}) {
   return {
     id: author.id.toString(),
-    name: [author.firstName, author.lastName].filter(Boolean).join(" ") || "Community Member",
+    name:
+      [author.firstName, author.lastName].filter(Boolean).join(" ") ||
+      "Community Member",
     avatarUrl: author.avatarUrl,
-  };
+  }
 }
 
 communityCommentRoutes.get("/:postId/comments", async (c) => {
-  const postId = BigInt(c.req.param("postId") ?? "0");
-  const comments = await listPostComments(postId);
+  const postId = BigInt(c.req.param("postId") ?? "0")
+  const comments = await listPostComments(postId)
 
   return c.json(
     comments.map((comment) => ({
@@ -32,18 +43,18 @@ communityCommentRoutes.get("/:postId/comments", async (c) => {
         createdAt: reply.createdAt,
         author: serializeAuthor(reply.author),
       })),
-    })),
-  );
-});
+    }))
+  )
+})
 
 communityCommentRoutes.post("/:postId/comments", requireAuth, async (c) => {
-  const postId = BigInt(c.req.param("postId") ?? "0");
-  const body = await c.req.json().catch(() => null);
-  const content = typeof body?.content === "string" ? body.content.trim() : "";
+  const postId = BigInt(c.req.param("postId") ?? "0")
+  const body = await c.req.json().catch(() => null)
+  const content = typeof body?.content === "string" ? body.content.trim() : ""
 
-  if (!content) return c.json({ message: "Comment content is required" }, 422);
+  if (!content) return c.json({ message: "Comment content is required" }, 422)
 
-  const comment = await createComment(postId, c.get("customer").id, content);
+  const comment = await createComment(postId, c.get("customer").id, content)
 
   return c.json(
     {
@@ -54,29 +65,38 @@ communityCommentRoutes.post("/:postId/comments", requireAuth, async (c) => {
       author: serializeAuthor(comment.author),
       replies: [],
     },
-    201,
-  );
-});
+    201
+  )
+})
 
-communityCommentRoutes.post("/:postId/comments/:commentId/replies", requireAuth, async (c) => {
-  const postId = BigInt(c.req.param("postId") ?? "0");
-  const commentId = BigInt(c.req.param("commentId") ?? "0");
-  const body = await c.req.json().catch(() => null);
-  const content = typeof body?.content === "string" ? body.content.trim() : "";
+communityCommentRoutes.post(
+  "/:postId/comments/:commentId/replies",
+  requireAuth,
+  async (c) => {
+    const postId = BigInt(c.req.param("postId") ?? "0")
+    const commentId = BigInt(c.req.param("commentId") ?? "0")
+    const body = await c.req.json().catch(() => null)
+    const content = typeof body?.content === "string" ? body.content.trim() : ""
 
-  if (!content) return c.json({ message: "Reply content is required" }, 422);
+    if (!content) return c.json({ message: "Reply content is required" }, 422)
 
-  const reply = await createReply(postId, commentId, c.get("customer").id, content);
+    const reply = await createReply(
+      postId,
+      commentId,
+      c.get("customer").id,
+      content
+    )
 
-  return c.json(
-    {
-      id: reply.id.toString(),
-      postId: reply.postId.toString(),
-      parentId: reply.parentId?.toString() ?? null,
-      content: reply.content,
-      createdAt: reply.createdAt,
-      author: serializeAuthor(reply.author),
-    },
-    201,
-  );
-});
+    return c.json(
+      {
+        id: reply.id.toString(),
+        postId: reply.postId.toString(),
+        parentId: reply.parentId?.toString() ?? null,
+        content: reply.content,
+        createdAt: reply.createdAt,
+        author: serializeAuthor(reply.author),
+      },
+      201
+    )
+  }
+)

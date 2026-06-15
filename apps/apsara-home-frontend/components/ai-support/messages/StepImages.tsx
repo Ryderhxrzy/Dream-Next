@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
+
 import type { StepImagesMessage } from "../types"
 
 export function StepImages({ message }: { message: StepImagesMessage }) {
@@ -84,28 +85,28 @@ export function StepImages({ message }: { message: StepImagesMessage }) {
         <div className="flex flex-col items-start gap-1">
           <div className="text-[12px] text-slate-500">
             {" "}
-            <span className="text-orange-500 font-bold">A</span>
-            <span className="text-cyan-500 font-bold">F</span>Shop AI sent{" "}
+            <span className="font-bold text-orange-500">A</span>
+            <span className="font-bold text-cyan-500">F</span>Shop AI sent{" "}
             {images.length} photos
           </div>
           <button
             type="button"
             onClick={() => openAt(0)}
-            className="relative w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36"
+            className="relative h-28 w-28 sm:h-32 sm:w-32 md:h-36 md:w-36"
             aria-label="Open image viewer"
           >
-            <div className="absolute inset-0 rounded-[22px] bg-white shadow-md border border-slate-100" />
+            <div className="absolute inset-0 rounded-[22px] border border-slate-100 bg-white shadow-md" />
             {images.slice(0, 3).map((img, i) => (
               <img
                 key={i}
                 src={img.url}
                 alt={img.caption ?? `Step ${i + 1}`}
-                className={`absolute w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 object-cover rounded-[20px] border border-white shadow ${
+                className={`absolute h-24 w-24 rounded-[20px] border border-white object-cover shadow sm:h-28 sm:w-28 md:h-32 md:w-32 ${
                   i === 0
-                    ? "left-1 top-1 z-30"
+                    ? "top-1 left-1 z-30"
                     : i === 1
-                      ? "left-2.5 top-2.5 z-20"
-                      : "left-4 top-4 z-10"
+                      ? "top-2.5 left-2.5 z-20"
+                      : "top-4 left-4 z-10"
                 }`}
               />
             ))}
@@ -120,18 +121,18 @@ export function StepImages({ message }: { message: StepImagesMessage }) {
         images.map((img, i) => (
           <div
             key={i}
-            className="bg-white border border-slate-100 rounded-xl p-2 shadow-sm"
+            className="rounded-xl border border-slate-100 bg-white p-2 shadow-sm"
           >
             <button
               type="button"
               onClick={() => openAt(i)}
-              className="block w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 overflow-hidden rounded-xl"
+              className="block h-28 w-28 overflow-hidden rounded-xl sm:h-32 sm:w-32 md:h-36 md:w-36"
               aria-label={`Open image ${i + 1}`}
             >
               <img
                 src={img.url}
                 alt={img.caption ?? `Step ${i + 1}`}
-                className="w-full h-full object-cover"
+                className="h-full w-full object-cover"
               />
             </button>
             {img.caption && (
@@ -143,7 +144,7 @@ export function StepImages({ message }: { message: StepImagesMessage }) {
         <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm">
           <div className="absolute inset-0" onClick={() => setIsOpen(false)} />
           <div className="relative z-[61] flex h-full w-full flex-col items-center justify-center px-4 py-6">
-            <div className="absolute right-4 top-4 flex items-center gap-2 text-white">
+            <div className="absolute top-4 right-4 flex items-center gap-2 text-white">
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
@@ -155,7 +156,7 @@ export function StepImages({ message }: { message: StepImagesMessage }) {
             <button
               type="button"
               onClick={goPrev}
-              className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 px-3 py-2 text-white hover:bg-white/30"
+              className="absolute top-1/2 left-4 -translate-y-1/2 rounded-full bg-white/20 px-3 py-2 text-white hover:bg-white/30"
               aria-label="Previous image"
             >
               ‹
@@ -163,7 +164,7 @@ export function StepImages({ message }: { message: StepImagesMessage }) {
             <button
               type="button"
               onClick={goNext}
-              className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 px-3 py-2 text-white hover:bg-white/30"
+              className="absolute top-1/2 right-4 -translate-y-1/2 rounded-full bg-white/20 px-3 py-2 text-white hover:bg-white/30"
               aria-label="Next image"
             >
               ›

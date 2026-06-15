@@ -1,6 +1,7 @@
-import type { Metadata } from "next"
-import LoginPageClient from "@/components/auth/LoginPageClient"
 import { getPartnerStorefrontBySlug } from "@/libs/partnerStorefrontServer"
+import type { Metadata } from "next"
+
+import LoginPageClient from "@/components/auth/LoginPageClient"
 
 type PageProps = {
   params: Promise<{ partner: string }>

@@ -1,8 +1,14 @@
 "use client"
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { useRouter } from "next/navigation"
+import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
+import {
+  useGetAdminWebPageItemsQuery,
+  useUpdateAdminWebPageItemMutation,
+  type WebPageItem,
+} from "@/store/api/webPagesApi"
+import { AnimatePresence, motion } from "framer-motion"
 import {
   ArrowDown,
   ArrowLeft,
@@ -10,6 +16,7 @@ import {
   CheckCircle2,
   GripVertical,
   ImageIcon,
+  Layout,
   LayoutGrid,
   Loader2,
   Monitor,
@@ -17,19 +24,13 @@ import {
   Plus,
   Smartphone,
   Trash2,
+  TrendingUp,
   Type,
   Upload,
-  Layout,
   Zap,
-  TrendingUp,
 } from "lucide-react"
-import { showErrorToast, showSuccessToast } from "@/libs/toast"
-import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
-import {
-  useGetAdminWebPageItemsQuery,
-  useUpdateAdminWebPageItemMutation,
-  type WebPageItem,
-} from "@/store/api/webPagesApi"
+import { useRouter } from "next/navigation"
+
 import Template4Component from "@/components/partner/templates/template4"
 
 const mkId = () => Date.now().toString(36) + Math.random().toString(36).slice(2)
@@ -611,7 +612,7 @@ function RenderHero({
       >
         {b.badge && (
           <span
-            className="mb-4 inline-block rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-widest"
+            className="mb-4 inline-block rounded-full border px-3 py-1 text-xs font-semibold tracking-widest uppercase"
             style={{
               borderColor: `${b.primaryColor}60`,
               color: b.primaryColor,
@@ -621,7 +622,7 @@ function RenderHero({
           </span>
         )}
         <h1
-          className={`max-w-3xl font-black leading-tight text-white ${compact ? "text-3xl" : "text-3xl md:text-5xl lg:text-6xl"}`}
+          className={`max-w-3xl leading-tight font-black text-white ${compact ? "text-3xl" : "text-3xl md:text-5xl lg:text-6xl"}`}
         >
           {b.tagline}
         </h1>
@@ -673,7 +674,7 @@ function RenderStats({ b, compact }: { b: StatsBlock; compact?: boolean }) {
       className="px-5 py-10 md:px-10 md:py-14"
       style={{ backgroundColor: b.bg }}
     >
-      <div className={`mx-auto max-w-4xl grid gap-6 md:gap-10 ${cols}`}>
+      <div className={`mx-auto grid max-w-4xl gap-6 md:gap-10 ${cols}`}>
         {b.items.map((s, i) => (
           <div key={i} className="text-center">
             <p className="text-4xl font-black" style={{ color: b.valueColor }}>
@@ -796,7 +797,7 @@ function RenderTestimonial({
         style={{ backgroundColor: b.bg }}
       >
         <p
-          className="text-lg font-bold leading-relaxed md:text-2xl"
+          className="text-lg leading-relaxed font-bold md:text-2xl"
           style={{ color: b.textColor }}
         >
           "{b.text}"
@@ -870,14 +871,14 @@ function RenderAbout({ b, compact }: { b: AboutBlock; compact?: boolean }) {
           <div>
             {b.subheading && (
               <p
-                className="mb-2 text-xs font-bold uppercase tracking-widest"
+                className="mb-2 text-xs font-bold tracking-widest uppercase"
                 style={{ color: b.accentColor }}
               >
                 {b.subheading}
               </p>
             )}
             <h2
-              className={`font-black leading-tight ${compact ? "text-3xl" : "text-3xl md:text-4xl"}`}
+              className={`leading-tight font-black ${compact ? "text-3xl" : "text-3xl md:text-4xl"}`}
               style={{ color: b.textColor }}
             >
               {b.heading}
@@ -945,7 +946,7 @@ function RenderFooter({ b, compact }: { b: FooterBlock; compact?: boolean }) {
     >
       {/* Main footer content */}
       <div
-        className={`mx-auto max-w-6xl grid grid-cols-1 gap-8 py-10 ${compact ? "px-5" : "px-5 md:px-10 md:py-14 md:grid-cols-3 md:gap-10"}`}
+        className={`mx-auto grid max-w-6xl grid-cols-1 gap-8 py-10 ${compact ? "px-5" : "px-5 md:grid-cols-3 md:gap-10 md:px-10 md:py-14"}`}
       >
         {/* Brand */}
         <div>
@@ -963,7 +964,7 @@ function RenderFooter({ b, compact }: { b: FooterBlock; compact?: boolean }) {
         {b.links.length > 0 && (
           <div>
             <p
-              className="mb-4 text-[11px] font-bold uppercase tracking-widest"
+              className="mb-4 text-[11px] font-bold tracking-widest uppercase"
               style={{ opacity: 0.4 }}
             >
               Quick Links
@@ -993,7 +994,7 @@ function RenderFooter({ b, compact }: { b: FooterBlock; compact?: boolean }) {
         {(b.email || b.phone || b.address) && (
           <div>
             <p
-              className="mb-4 text-[11px] font-bold uppercase tracking-widest"
+              className="mb-4 text-[11px] font-bold tracking-widest uppercase"
               style={{ opacity: 0.4 }}
             >
               Contact
@@ -1354,7 +1355,7 @@ function NavProps({
       <div className="space-y-2">
         <p className={lCls}>
           Nav Links{" "}
-          <span className="normal-case font-normal text-slate-400">
+          <span className="font-normal text-slate-400 normal-case">
             (href = #section-id)
           </span>
         </p>
@@ -1364,7 +1365,7 @@ function NavProps({
             className="rounded-xl border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-800"
           >
             <div className="mb-1.5 flex items-center justify-between">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              <span className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">
                 Link {i + 1}
               </span>
               <button
@@ -1390,7 +1391,7 @@ function NavProps({
               <input
                 value={link.href}
                 onChange={(e) => updateLink(i, "href", e.target.value)}
-                className="flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-mono outline-none dark:border-slate-700 dark:bg-slate-900"
+                className="flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 font-mono text-xs outline-none dark:border-slate-700 dark:bg-slate-900"
                 placeholder="#section"
               />
             </div>
@@ -1477,8 +1478,8 @@ function HeroProps({
         </p>
       </F>
       {b.btnSecondaryHref !== "" ? (
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-2 space-y-1.5 dark:border-slate-700 dark:bg-slate-800">
-          <div className="flex items-center justify-between mb-1">
+        <div className="space-y-1.5 rounded-xl border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-800">
+          <div className="mb-1 flex items-center justify-between">
             <span className={lCls}>Secondary Button</span>
             <button
               type="button"
@@ -1513,7 +1514,7 @@ function HeroProps({
       {(b.badge1 !== undefined ||
         b.badge2 !== undefined ||
         b.badge3 !== undefined) && (
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5 space-y-2 dark:border-slate-700 dark:bg-slate-800">
+        <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-2.5 dark:border-slate-700 dark:bg-slate-800">
           <p className={lCls}>Trust Badges</p>
           <F label="Badge 1">
             <input
@@ -1579,8 +1580,8 @@ function StatsProps({
             key={i}
             className="rounded-xl border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-800"
           >
-            <div className="flex items-center justify-between gap-1.5 mb-1.5">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            <div className="mb-1.5 flex items-center justify-between gap-1.5">
+              <span className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">
                 Stat {i + 1}
               </span>
               <button
@@ -1697,7 +1698,7 @@ function FeaturesProps({
             className="space-y-1.5 rounded-xl border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-800"
           >
             <div className="mb-1.5 flex items-center justify-between">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              <span className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">
                 Feature {i + 1}
               </span>
               <button
@@ -1994,7 +1995,7 @@ function AboutProps({
             className="rounded-xl border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-800"
           >
             <div className="mb-1.5 flex items-center justify-between">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              <span className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">
                 Point {i + 1}
               </span>
               <button
@@ -2132,8 +2133,8 @@ function FooterProps({
             key={i}
             className="rounded-xl border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-800"
           >
-            <div className="flex items-center justify-between gap-1.5 mb-1.5">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            <div className="mb-1.5 flex items-center justify-between gap-1.5">
+              <span className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">
                 Link {i + 1}
               </span>
               <button
@@ -2159,7 +2160,7 @@ function FooterProps({
               <input
                 value={link.href}
                 onChange={(e) => updateLink(i, "href", e.target.value)}
-                className="flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-mono outline-none dark:border-slate-700 dark:bg-slate-900"
+                className="flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 font-mono text-xs outline-none dark:border-slate-700 dark:bg-slate-900"
                 placeholder="#section"
               />
             </div>
@@ -2384,7 +2385,7 @@ function applyColorTheme(blocks: Block[], color: string): Block[] {
 function TemplateThumbnail({ blocks }: { blocks: Block[] }) {
   return (
     <div
-      className="pointer-events-none absolute left-0 top-0 origin-top-left"
+      className="pointer-events-none absolute top-0 left-0 origin-top-left"
       style={{
         width: "1280px",
         transform: "scale(0.305)",
@@ -2643,17 +2644,16 @@ export default function LandingPageStudio() {
                     setCarouselIdx(TEMPLATE_META.indexOf(tpl))
                   }
                 }}
-                className={`group w-full flex flex-col overflow-hidden rounded-2xl border-2 bg-white text-left dark:bg-slate-900
-                  ${
-                    isCenter
-                      ? `shadow-2xl ${isActive ? "border-emerald-400" : "border-indigo-400"}`
-                      : `shadow-sm cursor-pointer ${isActive ? "border-emerald-300" : "border-slate-200 dark:border-slate-700"}`
-                  }`}
+                className={`group flex w-full flex-col overflow-hidden rounded-2xl border-2 bg-white text-left dark:bg-slate-900 ${
+                  isCenter
+                    ? `shadow-2xl ${isActive ? "border-emerald-400" : "border-indigo-400"}`
+                    : `cursor-pointer shadow-sm ${isActive ? "border-emerald-300" : "border-slate-200 dark:border-slate-700"}`
+                }`}
               >
                 <div className="relative h-52 overflow-hidden bg-slate-100 dark:bg-slate-800">
                   {tpl.id === "template4" ? (
                     <div
-                      className="pointer-events-none absolute left-0 top-0 origin-top-left"
+                      className="pointer-events-none absolute top-0 left-0 origin-top-left"
                       style={{
                         width: "1280px",
                         transform: "scale(0.305)",
@@ -2668,7 +2668,7 @@ export default function LandingPageStudio() {
                     <TemplateThumbnail blocks={thumbBlocks} />
                   )}
                   {isActive && (
-                    <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-emerald-500 px-2.5 py-1 text-[11px] font-bold text-white shadow">
+                    <div className="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-emerald-500 px-2.5 py-1 text-[11px] font-bold text-white shadow">
                       <CheckCircle2 className="h-3 w-3" /> Active
                     </div>
                   )}
@@ -2748,7 +2748,7 @@ export default function LandingPageStudio() {
                   setCarouselDir(-1)
                   setCarouselIdx((i) => wrap(i - 1))
                 }}
-                className="absolute -left-3 top-[calc(50%-32px)] -translate-y-1/2 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white shadow-md dark:border-slate-700 dark:bg-slate-800"
+                className="absolute top-[calc(50%-32px)] -left-3 z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white shadow-md dark:border-slate-700 dark:bg-slate-800"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -2774,7 +2774,7 @@ export default function LandingPageStudio() {
                   setCarouselDir(1)
                   setCarouselIdx((i) => wrap(i + 1))
                 }}
-                className="absolute -right-3 top-[calc(50%-32px)] -translate-y-1/2 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white shadow-md dark:border-slate-700 dark:bg-slate-800"
+                className="absolute top-[calc(50%-32px)] -right-3 z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white shadow-md dark:border-slate-700 dark:bg-slate-800"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -2918,7 +2918,7 @@ export default function LandingPageStudio() {
             {templateId === "template4" ? (
               /* Template4 renders its own complete design with per-section click-to-edit */
               <div
-                className="w-full rounded-xl bg-white shadow-2xl overflow-hidden"
+                className="w-full overflow-hidden rounded-xl bg-white shadow-2xl"
                 style={{ maxWidth: mobile ? 390 : "100%" }}
               >
                 <Template4Component
@@ -2960,7 +2960,7 @@ export default function LandingPageStudio() {
                   return (
                     <div
                       key={block.id}
-                      className={`group relative cursor-pointer outline-none transition-all ${isSelected ? "ring-2 ring-inset ring-indigo-500" : "hover:ring-1 hover:ring-inset hover:ring-indigo-300"}`}
+                      className={`group relative cursor-pointer transition-all outline-none ${isSelected ? "ring-2 ring-indigo-500 ring-inset" : "hover:ring-1 hover:ring-indigo-300 hover:ring-inset"}`}
                       onClick={(e) => {
                         e.stopPropagation()
                         setSelectedId(block.id)
@@ -2988,7 +2988,7 @@ export default function LandingPageStudio() {
                       {/* Selected toolbar */}
                       {isSelected && (
                         <div
-                          className="absolute left-2 top-2 z-30 flex items-center gap-1 rounded-xl bg-indigo-600 px-2 py-1 shadow-lg"
+                          className="absolute top-2 left-2 z-30 flex items-center gap-1 rounded-xl bg-indigo-600 px-2 py-1 shadow-lg"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <GripVertical className="h-3.5 w-3.5 cursor-grab text-white/70" />
@@ -3023,7 +3023,7 @@ export default function LandingPageStudio() {
                       )}
                       {/* Hover label */}
                       {!isSelected && (
-                        <div className="pointer-events-none absolute left-2 top-2 z-20 rounded-lg bg-black/50 px-2 py-0.5 text-[10px] font-semibold text-white opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
+                        <div className="pointer-events-none absolute top-2 left-2 z-20 rounded-lg bg-black/50 px-2 py-0.5 text-[10px] font-semibold text-white opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
                           {BLOCK_LABEL[block.type]}
                         </div>
                       )}
@@ -3106,7 +3106,7 @@ export default function LandingPageStudio() {
 
                 {/* Preset swatches */}
                 <div>
-                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                  <p className="mb-2 text-[10px] font-semibold tracking-wider text-slate-400 uppercase">
                     Presets
                   </p>
                   <div className="grid grid-cols-6 gap-2">
@@ -3121,7 +3121,7 @@ export default function LandingPageStudio() {
                         className="group relative flex h-8 w-8 items-center justify-center rounded-xl border-2 border-transparent transition hover:scale-110 hover:border-white hover:shadow-lg"
                         style={{ backgroundColor: theme.color }}
                       >
-                        <span className="pointer-events-none absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-slate-800 px-1.5 py-0.5 text-[9px] font-semibold text-white opacity-0 transition group-hover:opacity-100">
+                        <span className="pointer-events-none absolute -bottom-5 left-1/2 -translate-x-1/2 rounded bg-slate-800 px-1.5 py-0.5 text-[9px] font-semibold whitespace-nowrap text-white opacity-0 transition group-hover:opacity-100">
                           {theme.name}
                         </span>
                       </button>
@@ -3131,7 +3131,7 @@ export default function LandingPageStudio() {
 
                 {/* Custom color */}
                 <div>
-                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                  <p className="mb-2 text-[10px] font-semibold tracking-wider text-slate-400 uppercase">
                     Custom Color
                   </p>
                   <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
@@ -3151,7 +3151,7 @@ export default function LandingPageStudio() {
 
                 {/* What gets updated */}
                 <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/50">
-                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                  <p className="mb-2 text-[10px] font-semibold tracking-wider text-slate-400 uppercase">
                     What changes
                   </p>
                   <ul className="space-y-1">

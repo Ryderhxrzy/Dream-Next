@@ -1,10 +1,11 @@
 "use client"
 
-import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
-import { useAiSupport } from "./hooks/useAiSupport"
+import { usePathname } from "next/navigation"
+
 import { AiSupportPanel } from "./AiSupportPanel"
 import { AiSupportToggle } from "./AiSupportToggle"
+import { useAiSupport } from "./hooks/useAiSupport"
 
 const API_BASE = (process.env.NEXT_PUBLIC_LARAVEL_API_URL ?? "").replace(
   /\/+$/,

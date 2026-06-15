@@ -1,12 +1,12 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import Image from "next/image"
 import {
   ProductActivityLog,
   useGetProductActivityLogsQuery,
 } from "@/store/api/productsApi"
+import { AnimatePresence, motion } from "framer-motion"
+import Image from "next/image"
 
 interface ProductActivityLogsModalProps {
   isOpen: boolean
@@ -105,13 +105,13 @@ function ActivityRow({ log }: { log: ProductActivityLog }) {
     <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex flex-wrap items-center gap-2">
             <span
               className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold ${actionBadgeClass(safeAction)}`}
             >
               {actionLabel(safeAction)}
             </span>
-            <p className="text-sm font-semibold text-slate-800 truncate">
+            <p className="truncate text-sm font-semibold text-slate-800">
               {safeProductName}
             </p>
           </div>
@@ -126,7 +126,7 @@ function ActivityRow({ log }: { log: ProductActivityLog }) {
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
               {log.actorEmail ? <span>{log.actorEmail}</span> : null}
               {log.actorRole ? (
-                <span className="uppercase tracking-[0.12em]">
+                <span className="tracking-[0.12em] uppercase">
                   {log.actorRole.replace(/_/g, " ")}
                 </span>
               ) : null}
@@ -134,14 +134,14 @@ function ActivityRow({ log }: { log: ProductActivityLog }) {
           )}
         </div>
         <div
-          className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${statusBadgeClass(safeStatus)}`}
+          className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-[0.16em] uppercase ${statusBadgeClass(safeStatus)}`}
         >
           {safeStatus}
         </div>
       </div>
       {safeChanges.length > 0 ? (
         <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+          <p className="text-[11px] font-semibold tracking-[0.14em] text-slate-400 uppercase">
             Field Changes
           </p>
           <div className="mt-2 space-y-2">
@@ -154,7 +154,7 @@ function ActivityRow({ log }: { log: ProductActivityLog }) {
               return (
                 <div
                   key={`${fieldLabel}-${index}`}
-                  className="rounded-lg bg-white px-3 py-2 text-xs text-slate-600 border border-slate-100"
+                  className="rounded-lg border border-slate-100 bg-white px-3 py-2 text-xs text-slate-600"
                 >
                   <span className="font-semibold text-slate-700">
                     {fieldLabel}
@@ -163,7 +163,7 @@ function ActivityRow({ log }: { log: ProductActivityLog }) {
                   {isImageField(fieldLabel) ? (
                     <div className="mt-2 grid gap-3 sm:grid-cols-2">
                       <div>
-                        <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                        <p className="mb-2 text-[11px] font-semibold tracking-[0.12em] text-slate-400 uppercase">
                           Before
                         </p>
                         {splitImageValues(change.before).length > 0 ? (
@@ -192,7 +192,7 @@ function ActivityRow({ log }: { log: ProductActivityLog }) {
                         )}
                       </div>
                       <div>
-                        <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                        <p className="mb-2 text-[11px] font-semibold tracking-[0.12em] text-slate-400 uppercase">
                           After
                         </p>
                         {splitImageValues(change.after).length > 0 ? (
@@ -323,7 +323,7 @@ export default function ProductActivityLogsModal({
                 </div>
                 <div className="relative w-full sm:max-w-sm">
                   <svg
-                    className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                    className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -339,7 +339,7 @@ export default function ProductActivityLogsModal({
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
                     placeholder="Search product name or SKU..."
-                    className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                    className="h-11 w-full rounded-xl border border-slate-200 bg-white pr-4 pl-10 text-sm text-slate-700 transition outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                   />
                 </div>
               </div>

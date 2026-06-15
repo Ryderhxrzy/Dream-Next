@@ -1,18 +1,19 @@
 "use client"
 
-import { useSearchParams, useRouter } from "next/navigation"
-import { useMemo, useState, useRef, useEffect } from "react"
-import Link from "next/link"
-import { useSession } from "next-auth/react"
-import TopBar from "@/components/layout/TopBar"
-import Navbar from "@/components/layout/Navbar"
-import Footer from "@/components/landing-page/Footer"
-import ItemCard from "@/components/item/ItemCard"
-import { useGetPublicProductsQuery } from "@/store/api/productsApi"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
-import TopFilter from "@/components/item/TopFilter"
-import ProductFilter, { FilterState } from "@/components/item/ProductFilter"
+import { useGetPublicProductsQuery } from "@/store/api/productsApi"
 import type { Product } from "@/store/api/productsApi"
+import { useSession } from "next-auth/react"
+import Link from "next/link"
+import { useRouter, useSearchParams } from "next/navigation"
+
+import ItemCard from "@/components/item/ItemCard"
+import ProductFilter, { FilterState } from "@/components/item/ProductFilter"
+import TopFilter from "@/components/item/TopFilter"
+import Footer from "@/components/landing-page/Footer"
+import Navbar from "@/components/layout/Navbar"
+import TopBar from "@/components/layout/TopBar"
 
 const toSlug = (value: string) =>
   value
@@ -42,11 +43,11 @@ function SearchListViewProduct({
   return (
     <Link
       href={`/product/${toSlug(product.name)}-i${product.id}`}
-      className="flex gap-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:border-sky-500 dark:hover:border-sky-400 transition-colors group relative"
+      className="group relative flex gap-4 overflow-hidden rounded-lg border border-gray-200 bg-white transition-colors hover:border-sky-500 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-sky-400"
     >
       {/* Discount Badge */}
       {hasMemberPrice && (
-        <div className="absolute top-2 left-2 bg-sky-500 text-white text-xs font-bold px-2 py-1 z-10">
+        <div className="absolute top-2 left-2 z-10 bg-sky-500 px-2 py-1 text-xs font-bold text-white">
           {isLoggedIn
             ? `Enjoy ${Math.round(((srpPrice - memberPrice) / srpPrice) * 100)}% off`
             : `Register to get ${Math.round(((srpPrice - memberPrice) / srpPrice) * 100)}% discount`}
@@ -54,14 +55,14 @@ function SearchListViewProduct({
       )}
 
       {/* Action Icons */}
-      <div className="absolute top-2 right-2 flex flex-col gap-2 z-10">
+      <div className="absolute top-2 right-2 z-10 flex flex-col gap-2">
         <button
           onClick={(e) => {
             e.preventDefault()
             e.stopPropagation()
             // Add to wishlist functionality here
           }}
-          className="p-2 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200 dark:border-gray-600 shadow-lg hover:bg-sky-500 hover:border-sky-500 dark:hover:bg-sky-500 dark:hover:border-sky-500 transition-all duration-200 cursor-pointer"
+          className="cursor-pointer rounded-full border border-gray-200 bg-white/90 p-2 shadow-lg backdrop-blur-md transition-all duration-200 hover:border-sky-500 hover:bg-sky-500 dark:border-gray-600 dark:bg-gray-800/90 dark:hover:border-sky-500 dark:hover:bg-sky-500"
           title="Add to Wishlist"
         >
           <svg
@@ -72,7 +73,7 @@ function SearchListViewProduct({
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
-            className="text-gray-700 dark:text-gray-300 hover:text-white transition-colors"
+            className="text-gray-700 transition-colors hover:text-white dark:text-gray-300"
           >
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
           </svg>
@@ -91,7 +92,7 @@ function SearchListViewProduct({
                 // Show error message
               })
           }}
-          className="p-2 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200 dark:border-gray-600 shadow-lg hover:bg-sky-500 hover:border-sky-500 dark:hover:bg-sky-500 dark:hover:border-sky-500 transition-all duration-200 cursor-pointer"
+          className="cursor-pointer rounded-full border border-gray-200 bg-white/90 p-2 shadow-lg backdrop-blur-md transition-all duration-200 hover:border-sky-500 hover:bg-sky-500 dark:border-gray-600 dark:bg-gray-800/90 dark:hover:border-sky-500 dark:hover:bg-sky-500"
           title="Share"
         >
           <svg
@@ -102,7 +103,7 @@ function SearchListViewProduct({
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
-            className="text-gray-700 dark:text-gray-300 hover:text-white transition-colors"
+            className="text-gray-700 transition-colors hover:text-white dark:text-gray-300"
           >
             <circle cx="18" cy="5" r="3" />
             <circle cx="6" cy="12" r="3" />
@@ -113,12 +114,12 @@ function SearchListViewProduct({
         </button>
       </div>
 
-      <div className="relative aspect-square w-32 bg-gray-100 dark:bg-gray-700 overflow-hidden shrink-0">
+      <div className="relative aspect-square w-32 shrink-0 overflow-hidden bg-gray-100 dark:bg-gray-700">
         {product.image ? (
           <img
             src={product.image}
             alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
           <div className="flex h-full items-center justify-center text-gray-400 dark:text-gray-500">
@@ -139,17 +140,17 @@ function SearchListViewProduct({
         )}
       </div>
 
-      <div className="flex flex-col justify-center flex-1 p-4 relative">
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-sky-500 dark:group-hover:text-sky-400 transition-colors">
+      <div className="relative flex flex-1 flex-col justify-center p-4">
+        <h3 className="mb-2 line-clamp-2 text-base font-semibold text-gray-900 transition-colors group-hover:text-sky-500 dark:text-white dark:group-hover:text-sky-400">
           {product.name}
         </h3>
-        <div className="flex items-baseline gap-2 mb-2">
+        <div className="mb-2 flex items-baseline gap-2">
           <span className="text-lg font-bold text-sky-500 dark:text-sky-400">
             {"\u20b1"}
             {displayPrice.toLocaleString()}
           </span>
           {strikePrice > displayPrice && (
-            <span className="text-sm text-gray-400 dark:text-gray-500 line-through">
+            <span className="text-sm text-gray-400 line-through dark:text-gray-500">
               {"\u20b1"}
               {strikePrice.toLocaleString()}
             </span>
@@ -157,13 +158,13 @@ function SearchListViewProduct({
         </div>
         <div className="flex items-center gap-2">
           {displayPv > 0 && (
-            <span className="inline-flex items-center rounded-full border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 text-[11px] font-semibold text-blue-700 dark:text-blue-300">
+            <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
               PV {displayPv.toLocaleString()}
             </span>
           )}
         </div>
         {/* Sales/Ratings */}
-        <div className="flex items-center gap-1 mt-1">
+        <div className="mt-1 flex items-center gap-1">
           <div className="flex items-center">
             {[1, 2, 3, 4, 5].map((star) => (
               <svg
@@ -195,7 +196,7 @@ function SearchListViewProduct({
                 : "/search"
             router.push(`/login?callback=${encodeURIComponent(callbackPath)}`)
           }}
-          className="mt-2 flex h-9 w-9 items-center justify-center rounded-full bg-sky-500 text-white shadow-sm transition-all duration-300 hover:bg-sky-600 sm:absolute sm:bottom-4 sm:right-4 sm:mt-0 sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2 sm:text-sm sm:font-semibold sm:opacity-0 sm:translate-y-2 sm:group-hover:opacity-100 sm:group-hover:translate-y-0 cursor-pointer"
+          className="mt-2 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-sky-500 text-white shadow-sm transition-all duration-300 hover:bg-sky-600 sm:absolute sm:right-4 sm:bottom-4 sm:mt-0 sm:h-auto sm:w-auto sm:translate-y-2 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm sm:font-semibold sm:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100"
           title="Add to Cart"
           aria-label="Add to Cart"
         >
@@ -348,7 +349,7 @@ export default function SearchPage() {
   return (
     <>
       <div
-        className="fixed inset-0 -z-50 search-background"
+        className="search-background fixed inset-0 -z-50"
         style={
           {
             backgroundColor: "#faf8f5",
@@ -366,13 +367,13 @@ export default function SearchPage() {
         `,
         }}
       />
-      <div className="relative min-h-screen text-slate-900 dark:text-white flex flex-col">
+      <div className="relative flex min-h-screen flex-col text-slate-900 dark:text-white">
         <TopBar />
         <Navbar />
 
         <main className="flex-1">
           {/* Header */}
-          <div className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+          <div className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
             <div className="container mx-auto px-4 py-6">
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                 Search Results
@@ -401,12 +402,12 @@ export default function SearchPage() {
 
           <div className="container mx-auto px-4 py-8">
             {isLoading ? (
-              <div className="flex justify-center items-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-500" />
+              <div className="flex items-center justify-center py-12">
+                <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-sky-500" />
               </div>
             ) : filteredProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-4">
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="28"
@@ -421,23 +422,23 @@ export default function SearchPage() {
                     <line x1="21" y1="21" x2="16.65" y2="16.65" />
                   </svg>
                 </div>
-                <p className="text-gray-700 dark:text-gray-300 font-semibold mb-1">
+                <p className="mb-1 font-semibold text-gray-700 dark:text-gray-300">
                   No products found
                 </p>
-                <p className="text-gray-400 dark:text-gray-500 text-sm mb-6">
+                <p className="mb-6 text-sm text-gray-400 dark:text-gray-500">
                   Try searching with different keywords or adjusting filters
                 </p>
                 <Link
                   href="/"
-                  className="text-sky-500 hover:text-sky-600 font-semibold"
+                  className="font-semibold text-sky-500 hover:text-sky-600"
                 >
                   Back to home
                 </Link>
               </div>
             ) : (
-              <div className="flex gap-6 items-start">
+              <div className="flex items-start gap-6">
                 {/* Left Sidebar - Filter */}
-                <aside className="hidden lg:block w-80 shrink-0 sticky top-4">
+                <aside className="sticky top-4 hidden w-80 shrink-0 lg:block">
                   <ProductFilter
                     onFilterChange={setFilterState}
                     pvRange={filterState.pvRange}
@@ -447,7 +448,7 @@ export default function SearchPage() {
                 </aside>
 
                 {/* Right Side - Products */}
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   {/* Top Filter */}
                   <div ref={listingTopRef} className="mb-6">
                     <TopFilter
@@ -484,7 +485,7 @@ export default function SearchPage() {
                   <div
                     className={
                       viewMode === "grid"
-                        ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"
+                        ? "grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4"
                         : "flex flex-col gap-3"
                     }
                   >
@@ -513,7 +514,7 @@ export default function SearchPage() {
                           setCurrentPage(Math.max(1, currentPage - 1))
                         }
                         disabled={currentPage === 1}
-                        className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                        className="rounded-lg border border-gray-200 px-4 py-2 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:hover:bg-gray-800"
                       >
                         Previous
                       </button>
@@ -522,10 +523,10 @@ export default function SearchPage() {
                           <button
                             key={page}
                             onClick={() => setCurrentPage(page)}
-                            className={`px-3 py-2 rounded-lg font-medium transition-colors ${
+                            className={`rounded-lg px-3 py-2 font-medium transition-colors ${
                               currentPage === page
                                 ? "bg-sky-500 text-white"
-                                : "border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+                                : "border border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
                             }`}
                           >
                             {page}
@@ -537,7 +538,7 @@ export default function SearchPage() {
                           setCurrentPage(Math.min(totalPages, currentPage + 1))
                         }
                         disabled={currentPage === totalPages}
-                        className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                        className="rounded-lg border border-gray-200 px-4 py-2 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:hover:bg-gray-800"
                       >
                         Next
                       </button>

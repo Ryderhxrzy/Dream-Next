@@ -1,6 +1,7 @@
 "use client"
 
 import DataFilterBar from "@/components/superAdmin/DataFilterBar"
+
 import { MemberWallet, SortKey } from "./types"
 
 const SORT_OPTIONS: Array<{ key: SortKey; label: string }> = [

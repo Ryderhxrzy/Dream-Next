@@ -1,10 +1,10 @@
 "use client"
 
-import Link from "next/link"
 import { useEffect, useState } from "react"
-import { useSession } from "next-auth/react"
 import { useGetAdminMeQuery } from "@/store/api/authApi"
 import { useGetProductActivityLogsQuery } from "@/store/api/productsApi"
+import { useSession } from "next-auth/react"
+import Link from "next/link"
 
 const formatActivityDate = (value?: string | null) => {
   if (!value) return "Unknown time"
@@ -93,7 +93,7 @@ export default function RecentAdminProductActivity() {
     <div className="rounded-3xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
       <div className="flex items-center justify-between gap-3 border-b border-gray-200 px-6 py-5 dark:border-gray-700">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-700">
+          <p className="text-xs font-bold tracking-[0.22em] text-cyan-700 uppercase">
             Super Admin
           </p>
           <h2 className="mt-1 text-lg font-bold text-gray-900 dark:text-gray-100">
@@ -178,7 +178,7 @@ export default function RecentAdminProductActivity() {
               ))}
             </div>
 
-            <div className="flex flex-col gap-3 border-t border-gray-200 pt-4 dark:border-gray-700 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 border-t border-gray-200 pt-4 sm:flex-row sm:items-center sm:justify-between dark:border-gray-700">
               <p className="text-sm text-gray-500 dark:text-gray-300">
                 Page{" "}
                 <span className="font-semibold text-gray-700 dark:text-gray-100">

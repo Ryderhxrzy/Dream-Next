@@ -1,49 +1,50 @@
 "use client"
 
-import { useState, useEffect, useRef, useMemo } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import Link from "next/link"
-import Image from "next/image"
-import { createPortal } from "react-dom"
-import Pusher from "pusher-js"
-import { Card } from "@heroui/react/card"
-import { Label } from "@heroui/react/label"
-import { SearchField } from "@heroui/react/search-field"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useCart } from "@/context/CartContext"
-import { useSession, signOut } from "next-auth/react"
-import { useLogoutMutation } from "@/store/api/authApi"
-import { baseApi, clearAccessTokenCache } from "@/store/api/baseApi"
-import type { Category } from "@/store/api/categoriesApi"
-import { useGetPublicProductsQuery } from "@/store/api/productsApi"
-import {
-  useSaveSearchHistoryMutation,
-  useGetSearchHistoryQuery,
-  useClearSearchHistoryMutation,
-  useDeleteSearchHistoryItemMutation,
-} from "@/store/api/searchApi"
-import { useGetPublicWebPageItemsQuery } from "@/store/api/webPagesApi"
-import formatPrice from "@/helpers/FormatPrice"
-import { useMeQuery } from "@/store/api/userApi"
-import {
-  customerNotificationsApi,
-  CustomerNotificationItem,
-  useGetCustomerNotificationsQuery,
-} from "@/store/api/customerNotificationsApi"
-import { useGetWishlistQuery } from "@/store/api/wishlistApi"
 import { useWishlist } from "@/context/WishlistContext"
-import { useRouter, usePathname } from "next/navigation"
-import { useAppDispatch } from "@/store/hooks"
-import { ROOM_OPTIONS } from "@/libs/roomConfig"
-import { useGetPublicProductBrandsQuery } from "@/store/api/productBrandsApi"
+import formatPrice from "@/helpers/FormatPrice"
 import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
+import { getProfileCompletion } from "@/libs/profileCompletion"
+import { ROOM_OPTIONS } from "@/libs/roomConfig"
 import {
   buildStorefrontProductPath,
   extractPartnerSlugFromPath,
 } from "@/libs/storefrontRouting"
-import PrimaryButton from "@/components/ui/buttons/PrimaryButton"
+import { useLogoutMutation } from "@/store/api/authApi"
+import { baseApi, clearAccessTokenCache } from "@/store/api/baseApi"
+import type { Category } from "@/store/api/categoriesApi"
+import {
+  CustomerNotificationItem,
+  customerNotificationsApi,
+  useGetCustomerNotificationsQuery,
+} from "@/store/api/customerNotificationsApi"
+import { useGetPublicProductBrandsQuery } from "@/store/api/productBrandsApi"
+import { useGetPublicProductsQuery } from "@/store/api/productsApi"
+import {
+  useClearSearchHistoryMutation,
+  useDeleteSearchHistoryItemMutation,
+  useGetSearchHistoryQuery,
+  useSaveSearchHistoryMutation,
+} from "@/store/api/searchApi"
+import { useMeQuery } from "@/store/api/userApi"
+import { useGetPublicWebPageItemsQuery } from "@/store/api/webPagesApi"
+import { useGetWishlistQuery } from "@/store/api/wishlistApi"
+import { useAppDispatch } from "@/store/hooks"
+import { Card } from "@heroui/react/card"
+import { Label } from "@heroui/react/label"
+import { SearchField } from "@heroui/react/search-field"
+import { AnimatePresence, motion } from "framer-motion"
+import { signOut, useSession } from "next-auth/react"
+import Image from "next/image"
+import Link from "next/link"
+import { usePathname, useRouter } from "next/navigation"
+import Pusher from "pusher-js"
+import { createPortal } from "react-dom"
+
 import OutlineButton from "@/components/ui/buttons/OutlineButton"
+import PrimaryButton from "@/components/ui/buttons/PrimaryButton"
 import ThemeToggle from "@/components/ui/buttons/ThemeToggle"
-import { getProfileCompletion } from "@/libs/profileCompletion"
 import AppPromoBar from "@/components/layout/AppPromoBar"
 
 type NavLink = {
@@ -1305,7 +1306,7 @@ function NavbarInner({
               className="border-b border-sky-100 bg-sky-50/95 text-sm text-sky-700 dark:border-sky-900/50 dark:bg-sky-950/40 dark:text-sky-200"
             >
               <div className="container mx-auto flex min-h-11 items-center justify-between gap-4 px-4 py-2">
-                <p className="flex-1 font-medium leading-snug">
+                <p className="flex-1 leading-snug font-medium">
                   Your profile is incomplete.{" "}
                   <Link
                     href={profileHref}
@@ -1327,9 +1328,9 @@ function NavbarInner({
         </AnimatePresence>
 
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16 gap-4">
+          <div className="flex h-16 items-center justify-between gap-4">
             {/* Left Section - Logo */}
-            <Link href={logoHref} className="flex items-center shrink-0">
+            <Link href={logoHref} className="flex shrink-0 items-center">
               <Image
                 src={logoSrc}
                 alt={logoAlt}
@@ -1341,21 +1342,21 @@ function NavbarInner({
             </Link>
 
             {/* Search - Centered */}
-            <div className="flex-1 max-w-lg hidden md:flex md:justify-center">
+            <div className="hidden max-w-lg flex-1 md:flex md:justify-center">
               <SearchField aria-label="Open product search" className="w-full">
                 <Label className="sr-only">Search</Label>
                 <SearchField.Group
-                  className="flex h-10 cursor-pointer items-center gap-2.5 rounded-full border border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 shadow-sm transition-all duration-200 hover:border-slate-300 dark:hover:border-gray-600 hover:shadow-md"
+                  className="flex h-10 cursor-pointer items-center gap-2.5 rounded-full border border-slate-200 bg-white px-4 shadow-sm transition-all duration-200 hover:border-slate-300 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600"
                   onClick={() => setSearchModalOpen(true)}
                 >
-                  <SearchField.SearchIcon className="h-4 w-4 text-slate-400 shrink-0" />
+                  <SearchField.SearchIcon className="h-4 w-4 shrink-0 text-slate-400" />
                   <SearchField.Input
                     readOnly
                     placeholder="Search products..."
                     onFocus={() => setSearchModalOpen(true)}
-                    className="flex-1 cursor-pointer border-none bg-transparent p-0 text-sm text-slate-500 dark:text-gray-300 outline-none placeholder:text-slate-400 dark:placeholder:text-gray-500"
+                    className="flex-1 cursor-pointer border-none bg-transparent p-0 text-sm text-slate-500 outline-none placeholder:text-slate-400 dark:text-gray-300 dark:placeholder:text-gray-500"
                   />
-                  <kbd className="hidden lg:inline-flex items-center gap-0.5 rounded border border-slate-200 dark:border-gray-600 bg-slate-50 dark:bg-gray-700 px-1.5 py-0.5 text-[10px] font-medium text-slate-400 dark:text-gray-400 shadow-sm">
+                  <kbd className="hidden items-center gap-0.5 rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-slate-400 shadow-sm lg:inline-flex dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400">
                     Ctrl K
                   </kbd>
                 </SearchField.Group>
@@ -1369,7 +1370,7 @@ function NavbarInner({
                 <>
                   <button
                     onClick={() => setWishlistOpen(true)}
-                    className="relative p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer text-slate-600 dark:text-gray-300"
+                    className="relative cursor-pointer rounded-xl p-2 text-slate-600 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
                     title="Wishlist"
                   >
                     <svg
@@ -1384,7 +1385,7 @@ function NavbarInner({
                       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                     </svg>
                     {wishlist.length > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-sky-500 text-white text-[10px] rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center">
+                      <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-sky-500 px-1 text-[10px] text-white">
                         {wishlist.length > 99 ? "99+" : wishlist.length}
                       </span>
                     )}
@@ -1410,7 +1411,7 @@ function NavbarInner({
                         transition={{ duration: 0.6, ease: "easeInOut" }}
                       >
                         <svg
-                          className="w-5 h-5"
+                          className="h-5 w-5"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -1445,7 +1446,7 @@ function NavbarInner({
                             duration: 0.2,
                             ease: [0.16, 1, 0.3, 1],
                           }}
-                          className="fixed left-2 right-2 top-16 z-50 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xl shadow-slate-900/10 dark:border-slate-700/60 dark:bg-slate-900 sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-96"
+                          className="fixed top-16 right-2 left-2 z-50 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xl shadow-slate-900/10 sm:absolute sm:top-auto sm:right-0 sm:left-auto sm:mt-2 sm:w-96 dark:border-slate-700/60 dark:bg-slate-900"
                         >
                           {/* Header */}
                           <div className="relative overflow-hidden">
@@ -1566,10 +1567,10 @@ function NavbarInner({
                                           }}
                                           className={`group relative flex w-full items-start gap-3.5 py-3.5 text-left transition-all duration-150 ${
                                             isFreshRealtime
-                                              ? "border-l-[3px] border-l-emerald-500 bg-emerald-50 pl-[17px] pr-5 shadow-[inset_0_0_0_1px_rgba(16,185,129,0.18)] hover:bg-emerald-100/70 dark:border-l-emerald-400 dark:bg-emerald-500/10 dark:shadow-[inset_0_0_0_1px_rgba(52,211,153,0.18)] dark:hover:bg-emerald-500/[0.16]"
+                                              ? "border-l-[3px] border-l-emerald-500 bg-emerald-50 pr-5 pl-[17px] shadow-[inset_0_0_0_1px_rgba(16,185,129,0.18)] hover:bg-emerald-100/70 dark:border-l-emerald-400 dark:bg-emerald-500/10 dark:shadow-[inset_0_0_0_1px_rgba(52,211,153,0.18)] dark:hover:bg-emerald-500/[0.16]"
                                               : !isRead
-                                                ? "border-l-[3px] border-l-violet-500 bg-violet-50 pl-[17px] pr-5 hover:bg-violet-100/60 dark:border-l-violet-400 dark:bg-violet-500/10 dark:hover:bg-violet-500/[0.16]"
-                                                : "border-l-[3px] border-l-transparent pl-[17px] pr-5 hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                                                ? "border-l-[3px] border-l-violet-500 bg-violet-50 pr-5 pl-[17px] hover:bg-violet-100/60 dark:border-l-violet-400 dark:bg-violet-500/10 dark:hover:bg-violet-500/[0.16]"
+                                                : "border-l-[3px] border-l-transparent pr-5 pl-[17px] hover:bg-slate-50 dark:hover:bg-slate-800/40"
                                           }`}
                                         >
                                           {/* Type icon */}
@@ -1593,7 +1594,7 @@ function NavbarInner({
                                               <div className="flex shrink-0 items-center gap-1.5">
                                                 {item.count > 1 && (
                                                   <span
-                                                    className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none ${
+                                                    className={`rounded-full px-1.5 py-0.5 text-[10px] leading-none font-bold ${
                                                       !isRead
                                                         ? "bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300"
                                                         : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-500"
@@ -1603,12 +1604,12 @@ function NavbarInner({
                                                   </span>
                                                 )}
                                                 {!isRead && (
-                                                  <span className="rounded-full bg-gradient-to-r from-violet-500 to-purple-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white leading-none shadow-sm shadow-violet-500/30">
+                                                  <span className="rounded-full bg-gradient-to-r from-violet-500 to-purple-500 px-1.5 py-0.5 text-[9px] leading-none font-bold tracking-wider text-white uppercase shadow-sm shadow-violet-500/30">
                                                     NEW
                                                   </span>
                                                 )}
                                                 {isFreshRealtime && (
-                                                  <span className="rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white leading-none shadow-sm shadow-emerald-500/30">
+                                                  <span className="rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 px-1.5 py-0.5 text-[9px] leading-none font-bold tracking-wider text-white uppercase shadow-sm shadow-emerald-500/30">
                                                     Just now
                                                   </span>
                                                 )}
@@ -1635,7 +1636,7 @@ function NavbarInner({
                               </div>
                             ) : (
                               <div className="flex flex-col items-center justify-center gap-4 py-12">
-                                <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-800/60 shadow-inner">
+                                <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-100 to-slate-50 shadow-inner dark:from-slate-800 dark:to-slate-800/60">
                                   <svg
                                     className="h-7 w-7 text-slate-300 dark:text-slate-600"
                                     fill="none"
@@ -1649,7 +1650,7 @@ function NavbarInner({
                                       d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
                                     />
                                   </svg>
-                                  <div className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-500/20 shadow-sm">
+                                  <div className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 shadow-sm dark:bg-emerald-500/20">
                                     <svg
                                       className="h-3 w-3 text-emerald-500"
                                       fill="none"
@@ -1682,7 +1683,7 @@ function NavbarInner({
                   </div>
                   <button
                     onClick={() => setIsOpen(true)}
-                    className="relative p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700 transition-colors cursor-pointer text-slate-600 dark:text-gray-300"
+                    className="relative cursor-pointer rounded-xl p-2 text-slate-600 transition-colors hover:bg-gray-100 active:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-800 dark:active:bg-gray-700"
                     title="Cart"
                   >
                     <svg
@@ -1700,7 +1701,7 @@ function NavbarInner({
                     </svg>
 
                     {cartCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-sky-500 text-white text-[10px] rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center">
+                      <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-sky-500 px-1 text-[10px] text-white">
                         {cartCount}
                       </span>
                     )}
@@ -1709,7 +1710,7 @@ function NavbarInner({
                   <div className="hidden lg:flex">
                     <OutlineButton
                       href={trackOrderHref}
-                      className="!px-4 !py-2 !text-sm h-10"
+                      className="h-10 !px-4 !py-2 !text-sm"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -1738,7 +1739,7 @@ function NavbarInner({
                         setProfileMenuOpen((prev) => !prev)
                         setNotifMenuOpen(false)
                       }}
-                      className="flex items-center gap-2 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+                      className="flex cursor-pointer items-center gap-2 rounded-xl p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
                       title="Profile menu"
                     >
                       {avatarUrl ? (
@@ -1748,7 +1749,7 @@ function NavbarInner({
                           className="h-8 w-8 rounded-full object-cover"
                         />
                       ) : (
-                        <span className="flex items-center justify-center h-8 w-8 rounded-full bg-sky-100 text-sky-600 text-xs font-semibold uppercase">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 text-xs font-semibold text-sky-600 uppercase">
                           {user?.name?.charAt(0)?.toUpperCase() ?? "U"}
                         </span>
                       )}
@@ -1761,32 +1762,32 @@ function NavbarInner({
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 8, scale: 0.97 }}
                           transition={{ duration: 0.15 }}
-                          className="absolute right-0 mt-2 w-64 rounded-2xl border border-gray-200 dark:border-gray-800 !bg-white dark:!bg-gray-900 shadow-xl shadow-black/10 overflow-hidden z-50"
+                          className="absolute right-0 z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-gray-200 !bg-white shadow-xl shadow-black/10 dark:border-gray-800 dark:!bg-gray-900"
                         >
                           {/* User info header */}
-                          <div className="px-4 py-4 bg-gradient-to-br from-sky-50 to-sky-50 dark:from-sky-950/20 dark:to-gray-900 border-b border-sky-100 dark:border-sky-800/50">
+                          <div className="border-b border-sky-100 bg-gradient-to-br from-sky-50 to-sky-50 px-4 py-4 dark:border-sky-800/50 dark:from-sky-950/20 dark:to-gray-900">
                             <div className="flex items-center gap-3">
                               {avatarUrl ? (
                                 <img
                                   src={avatarUrl}
                                   alt={user?.name || "Profile"}
-                                  className="h-11 w-11 rounded-full object-cover ring-2 ring-white dark:ring-gray-700 shadow"
+                                  className="h-11 w-11 rounded-full object-cover shadow ring-2 ring-white dark:ring-gray-700"
                                 />
                               ) : (
-                                <span className="flex items-center justify-center h-11 w-11 rounded-full bg-sky-500 text-white text-sm font-bold uppercase ring-2 ring-white dark:ring-gray-700 shadow">
+                                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-sky-500 text-sm font-bold text-white uppercase shadow ring-2 ring-white dark:ring-gray-700">
                                   {user?.name?.charAt(0)?.toUpperCase() ?? "U"}
                                 </span>
                               )}
                               <div className="min-w-0 flex-1">
-                                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                                <p className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
                                   {user?.name ?? "User"}
                                 </p>
                                 {user?.email && (
-                                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                                  <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
                                     {user.email}
                                   </p>
                                 )}
-                                <span className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-full bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400 text-[10px] font-semibold">
+                                <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-sky-100 px-1.5 py-0.5 text-[10px] font-semibold text-sky-600 dark:bg-sky-900/30 dark:text-sky-400">
                                   <span className="h-1.5 w-1.5 rounded-full bg-sky-500" />
                                   Active
                                 </span>
@@ -1799,17 +1800,17 @@ function NavbarInner({
                             <Link
                               href={profileHref}
                               onClick={() => setProfileMenuOpen(false)}
-                              className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors group ${
+                              className={`group flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
                                 pathname.endsWith("/profile")
-                                  ? "bg-sky-50 dark:bg-sky-900/20 text-sky-700 dark:text-sky-400"
-                                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                                  ? "bg-sky-50 text-sky-700 dark:bg-sky-900/20 dark:text-sky-400"
+                                  : "text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
                               }`}
                             >
                               <span
-                                className={`flex items-center justify-center h-7 w-7 rounded-lg transition-colors shrink-0 ${
+                                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors ${
                                   pathname.endsWith("/profile")
                                     ? "bg-sky-100 dark:bg-sky-900/40"
-                                    : "bg-gray-100 dark:bg-gray-700 group-hover:bg-sky-100 dark:group-hover:bg-sky-900/30"
+                                    : "bg-gray-100 group-hover:bg-sky-100 dark:bg-gray-700 dark:group-hover:bg-sky-900/30"
                                 }`}
                               >
                                 <svg
@@ -1823,7 +1824,7 @@ function NavbarInner({
                                   className={`transition-colors ${
                                     pathname.endsWith("/profile")
                                       ? "text-sky-600 dark:text-sky-400"
-                                      : "text-gray-500 dark:text-gray-400 group-hover:text-sky-600"
+                                      : "text-gray-500 group-hover:text-sky-600 dark:text-gray-400"
                                   }`}
                                 >
                                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -1847,17 +1848,17 @@ function NavbarInner({
                             <Link
                               href={ordersHref}
                               onClick={() => setProfileMenuOpen(false)}
-                              className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors group ${
+                              className={`group flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
                                 pathname.endsWith("/orders")
-                                  ? "bg-sky-50 dark:bg-sky-900/20 text-sky-700 dark:text-sky-400"
-                                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                                  ? "bg-sky-50 text-sky-700 dark:bg-sky-900/20 dark:text-sky-400"
+                                  : "text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
                               }`}
                             >
                               <span
-                                className={`flex items-center justify-center h-7 w-7 rounded-lg transition-colors shrink-0 ${
+                                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors ${
                                   pathname.endsWith("/orders")
                                     ? "bg-sky-100 dark:bg-sky-900/40"
-                                    : "bg-gray-100 dark:bg-gray-700 group-hover:bg-sky-100 dark:group-hover:bg-sky-900/30"
+                                    : "bg-gray-100 group-hover:bg-sky-100 dark:bg-gray-700 dark:group-hover:bg-sky-900/30"
                                 }`}
                               >
                                 <svg
@@ -1871,7 +1872,7 @@ function NavbarInner({
                                   className={`transition-colors ${
                                     pathname.endsWith("/orders")
                                       ? "text-sky-600 dark:text-sky-400"
-                                      : "text-gray-500 dark:text-gray-400 group-hover:text-sky-600"
+                                      : "text-gray-500 group-hover:text-sky-600 dark:text-gray-400"
                                   }`}
                                 >
                                   <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
@@ -1896,17 +1897,17 @@ function NavbarInner({
                             <Link
                               href={wishlistHref}
                               onClick={() => setProfileMenuOpen(false)}
-                              className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors group ${
+                              className={`group flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
                                 pathname.endsWith("/wishlist")
-                                  ? "bg-sky-50 dark:bg-sky-900/20 text-sky-700 dark:text-sky-400"
-                                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                                  ? "bg-sky-50 text-sky-700 dark:bg-sky-900/20 dark:text-sky-400"
+                                  : "text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
                               }`}
                             >
                               <span
-                                className={`flex items-center justify-center h-7 w-7 rounded-lg transition-colors shrink-0 ${
+                                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors ${
                                   pathname.endsWith("/wishlist")
                                     ? "bg-sky-100 dark:bg-sky-900/40"
-                                    : "bg-gray-100 dark:bg-gray-700 group-hover:bg-sky-100 dark:group-hover:bg-sky-900/30"
+                                    : "bg-gray-100 group-hover:bg-sky-100 dark:bg-gray-700 dark:group-hover:bg-sky-900/30"
                                 }`}
                               >
                                 <svg
@@ -1920,7 +1921,7 @@ function NavbarInner({
                                   className={`transition-colors ${
                                     pathname.endsWith("/wishlist")
                                       ? "text-sky-600 dark:text-sky-400"
-                                      : "text-gray-500 dark:text-gray-400 group-hover:text-sky-600"
+                                      : "text-gray-500 group-hover:text-sky-600 dark:text-gray-400"
                                   }`}
                                 >
                                   <path d="m12 21-1.45-1.32C5.4 15.36 2 12.28 2 8.5A4.5 4.5 0 0 1 6.5 4 5 5 0 0 1 12 6.09 5 5 0 0 1 17.5 4 4.5 4.5 0 0 1 22 8.5c0 3.78-3.4 6.86-8.55 11.18z" />
@@ -1942,16 +1943,16 @@ function NavbarInner({
                           </div>
 
                           {/* Logout */}
-                          <div className="border-t border-gray-100 dark:border-gray-800 py-1.5">
+                          <div className="border-t border-gray-100 py-1.5 dark:border-gray-800">
                             <button
                               onClick={() => handleCustomerLogout()}
                               disabled={isLoggingOut}
-                              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-60 group"
+                              className="group flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-600 transition-colors hover:bg-red-50 disabled:opacity-60 dark:text-red-400 dark:hover:bg-red-900/20"
                             >
-                              <span className="flex items-center justify-center h-7 w-7 rounded-lg bg-red-50 dark:bg-red-900/20 group-hover:bg-red-100 dark:group-hover:bg-red-900/30 transition-colors shrink-0">
+                              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-red-50 transition-colors group-hover:bg-red-100 dark:bg-red-900/20 dark:group-hover:bg-red-900/30">
                                 {isLoggingOut ? (
                                   <svg
-                                    className="animate-spin h-3.5 w-3.5 text-red-500 dark:text-red-400"
+                                    className="h-3.5 w-3.5 animate-spin text-red-500 dark:text-red-400"
                                     fill="none"
                                     viewBox="0 0 24 24"
                                   >
@@ -2002,7 +2003,7 @@ function NavbarInner({
                     <>
                       <button
                         onClick={() => setWishlistOpen(true)}
-                        className="relative p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer text-slate-600 dark:text-gray-300"
+                        className="relative cursor-pointer rounded-xl p-2 text-slate-600 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
                         title="Wishlist"
                       >
                         <svg
@@ -2019,7 +2020,7 @@ function NavbarInner({
                       </button>
                       <button
                         onClick={() => setIsOpen(true)}
-                        className="relative p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700 transition-colors cursor-pointer text-slate-600 dark:text-gray-300"
+                        className="relative cursor-pointer rounded-xl p-2 text-slate-600 transition-colors hover:bg-gray-100 active:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-800 dark:active:bg-gray-700"
                         title="Cart"
                       >
                         <svg
@@ -2036,7 +2037,7 @@ function NavbarInner({
                           <path d="M1 1h4l2.68 12.39a2 2 0 0 0 2 1.61h7.72a2 2 0 0 0 2-1.61L23 6H6" />
                         </svg>
                         {cartCount > 0 && (
-                          <span className="absolute -top-1 -right-1 bg-sky-500 text-white text-[10px] rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center">
+                          <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-sky-500 px-1 text-[10px] text-white">
                             {cartCount}
                           </span>
                         )}
@@ -2046,7 +2047,7 @@ function NavbarInner({
                   <div className="hidden md:flex">
                     <OutlineButton
                       href={trackOrderHref}
-                      className="!px-4 !py-2 !text-sm h-10"
+                      className="h-10 !px-4 !py-2 !text-sm"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -2073,7 +2074,7 @@ function NavbarInner({
                     >
                       <PrimaryButton
                         href={signInHref}
-                        className="!px-5 !py-2 !text-sm !rounded-full h-10"
+                        className="h-10 !rounded-full !px-5 !py-2 !text-sm"
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -2095,12 +2096,12 @@ function NavbarInner({
                 </>
               )}
 
-              <div className="hidden md:block w-px h-5 bg-gray-200 mx-1" />
+              <div className="mx-1 hidden h-5 w-px bg-gray-200 md:block" />
               <ThemeToggle isScrolled={true} />
 
               <button
                 onClick={() => setMobileOpen(!mobileOpen)}
-                className="md:hidden p-2 rounded-xl hover:bg-gray-100 transition-colors ml-1"
+                className="ml-1 rounded-xl p-2 transition-colors hover:bg-gray-100 md:hidden"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -2129,14 +2130,14 @@ function NavbarInner({
           </div>
 
           {/* Mobile search */}
-          <div className="md:hidden pb-3">
+          <div className="pb-3 md:hidden">
             <SearchField aria-label="Open product search" className="w-full">
               <Label className="sr-only">Search</Label>
               <SearchField.Group
-                className="flex h-10 cursor-pointer items-center gap-2.5 rounded-full border border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 shadow-sm transition-all duration-200 hover:border-slate-300 dark:hover:border-gray-600"
+                className="flex h-10 cursor-pointer items-center gap-2.5 rounded-full border border-slate-200 bg-white px-4 shadow-sm transition-all duration-200 hover:border-slate-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600"
                 onClick={() => setSearchModalOpen(true)}
               >
-                <SearchField.SearchIcon className="h-4 w-4 text-slate-400 shrink-0" />
+                <SearchField.SearchIcon className="h-4 w-4 shrink-0 text-slate-400" />
                 <SearchField.Input
                   readOnly
                   placeholder="Search products..."
@@ -2151,9 +2152,9 @@ function NavbarInner({
         {!hideNavLinks && (
           <>
             {/* Desktop nav links */}
-            <div className="hidden md:block border-t border-gray-100 dark:border-gray-800">
+            <div className="hidden border-t border-gray-100 md:block dark:border-gray-800">
               <div className="container mx-auto px-4">
-                <nav className="flex items-center h-11">
+                <nav className="flex h-11 items-center">
                   {displayNavLinks.map((link, index) => {
                     const hasDropdown = link.dropdown || link.mega
                     return (
@@ -2167,11 +2168,11 @@ function NavbarInner({
                           <button
                             type="button"
                             onClick={() => open(link.label)}
-                            className={`relative px-4 h-full flex items-center text-sm font-medium transition-colors duration-200 group ${
+                            className={`group relative flex h-full items-center px-4 text-sm font-medium transition-colors duration-200 ${
                               pathname.startsWith(link.href) ||
                               activeDropdown === link.label
                                 ? "text-sky-500"
-                                : "text-gray-600 dark:text-gray-300 hover:text-sky-500"
+                                : "text-gray-600 hover:text-sky-500 dark:text-gray-300"
                             }`}
                           >
                             {link.label}
@@ -2192,7 +2193,7 @@ function NavbarInner({
                               <polyline points="6 9 12 15 18 9" />
                             </motion.svg>
                             <span
-                              className={`absolute bottom-0 left-4 right-4 h-0.5 bg-sky-500 transition-transform duration-300 origin-left ${
+                              className={`absolute right-4 bottom-0 left-4 h-0.5 origin-left bg-sky-500 transition-transform duration-300 ${
                                 pathname.startsWith(link.href)
                                   ? "scale-x-100"
                                   : "scale-x-0 group-hover:scale-x-100"
@@ -2202,15 +2203,15 @@ function NavbarInner({
                         ) : (
                           <Link
                             href={link.href}
-                            className={`relative px-4 h-full flex items-center text-sm font-medium transition-colors duration-200 group ${
+                            className={`group relative flex h-full items-center px-4 text-sm font-medium transition-colors duration-200 ${
                               pathname === link.href
                                 ? "text-sky-500"
-                                : "text-gray-600 dark:text-gray-300 hover:text-sky-500"
+                                : "text-gray-600 hover:text-sky-500 dark:text-gray-300"
                             }`}
                           >
                             {link.label}
                             <span
-                              className={`absolute bottom-0 left-4 right-4 h-0.5 bg-sky-500 transition-transform duration-300 origin-left ${
+                              className={`absolute right-4 bottom-0 left-4 h-0.5 origin-left bg-sky-500 transition-transform duration-300 ${
                                 pathname === link.href
                                   ? "scale-x-100"
                                   : "scale-x-0 group-hover:scale-x-100"
@@ -2235,22 +2236,22 @@ function NavbarInner({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              className="absolute left-0 right-0 !bg-white dark:!bg-gray-900 border-t border-gray-100 dark:border-gray-800 shadow-xl shadow-black/5 dark:shadow-black/30 hidden md:block"
+              className="absolute right-0 left-0 hidden border-t border-gray-100 !bg-white shadow-xl shadow-black/5 md:block dark:border-gray-800 dark:!bg-gray-900 dark:shadow-black/30"
               onMouseEnter={() => open(activeLink.label)}
               onMouseLeave={close}
             >
-              <div className="!bg-white dark:!bg-gray-900 container mx-auto px-4 py-4">
+              <div className="container mx-auto !bg-white px-4 py-4 dark:!bg-gray-900">
                 {activeLink.label === "Shop By Brand" ? (
                   <div className="flex flex-col gap-3">
-                    <div className="grid grid-cols-4 lg:grid-cols-8 gap-1">
+                    <div className="grid grid-cols-4 gap-1 lg:grid-cols-8">
                       {navbarBrandItems.length > 0 ? (
                         navbarBrandItems.map((item) => (
                           <Link
                             key={item.id}
                             href={item.href}
-                            className="group flex flex-col items-center gap-2 rounded-2xl px-2 py-3 text-center text-gray-600 dark:text-gray-400 transition-all duration-200 hover:bg-sky-50 dark:hover:bg-sky-950/20 hover:text-sky-500"
+                            className="group flex flex-col items-center gap-2 rounded-2xl px-2 py-3 text-center text-gray-600 transition-all duration-200 hover:bg-sky-50 hover:text-sky-500 dark:text-gray-400 dark:hover:bg-sky-950/20"
                           >
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800 transition-colors group-hover:bg-sky-100 dark:group-hover:bg-sky-950/30">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gray-100 transition-colors group-hover:bg-sky-100 dark:bg-gray-800 dark:group-hover:bg-sky-950/30">
                               {item.image ? (
                                 <Image
                                   src={item.image}
@@ -2261,7 +2262,7 @@ function NavbarInner({
                                   unoptimized
                                 />
                               ) : (
-                                <span className="text-sm font-bold text-gray-500 dark:text-gray-400 group-hover:text-sky-500 transition-colors">
+                                <span className="text-sm font-bold text-gray-500 transition-colors group-hover:text-sky-500 dark:text-gray-400">
                                   {item.label
                                     .split(/\s+/)
                                     .slice(0, 2)
@@ -2270,7 +2271,7 @@ function NavbarInner({
                                 </span>
                               )}
                             </div>
-                            <span className="text-xs font-medium leading-tight truncate w-full text-gray-700 dark:text-gray-300">
+                            <span className="w-full truncate text-xs leading-tight font-medium text-gray-700 dark:text-gray-300">
                               {item.label}
                             </span>
                           </Link>
@@ -2283,7 +2284,7 @@ function NavbarInner({
                     </div>
                     <Link
                       href="/by-brand"
-                      className="self-start inline-flex items-center gap-1.5 rounded-xl border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-950/20 px-4 py-2 text-sm font-semibold text-sky-600 dark:text-sky-400 transition-colors hover:bg-sky-100 dark:hover:bg-sky-950/30"
+                      className="inline-flex items-center gap-1.5 self-start rounded-xl border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-600 transition-colors hover:bg-sky-100 dark:border-sky-800 dark:bg-sky-950/20 dark:text-sky-400 dark:hover:bg-sky-950/30"
                     >
                       View All Brands
                       <svg
@@ -2320,17 +2321,17 @@ function NavbarInner({
                           <Link
                             key={`${activeLink.label}-${item.label}`}
                             href={item.href}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-200 group ${
+                            className={`group flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition-all duration-200 ${
                               isActive
-                                ? "bg-sky-50 dark:bg-sky-950/30 text-sky-600 font-medium"
-                                : "text-gray-700 dark:text-gray-300 hover:bg-sky-50 dark:hover:bg-sky-950/20 hover:text-sky-600"
+                                ? "bg-sky-50 font-medium text-sky-600 dark:bg-sky-950/30"
+                                : "text-gray-700 hover:bg-sky-50 hover:text-sky-600 dark:text-gray-300 dark:hover:bg-sky-950/20"
                             }`}
                           >
                             <span
-                              className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                              className={`h-1.5 w-1.5 rounded-full transition-colors ${
                                 isActive
                                   ? "bg-sky-400"
-                                  : "bg-gray-300 dark:bg-gray-600 group-hover:bg-sky-400"
+                                  : "bg-gray-300 group-hover:bg-sky-400 dark:bg-gray-600"
                               }`}
                             />
                             {item.label}
@@ -2352,12 +2353,12 @@ function NavbarInner({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              className="absolute left-0 right-0 !bg-white dark:!bg-gray-900 border-t border-gray-100 dark:border-gray-800 shadow-xl shadow-black/5 dark:shadow-black/30 hidden md:block"
+              className="absolute right-0 left-0 hidden border-t border-gray-100 !bg-white shadow-xl shadow-black/5 md:block dark:border-gray-800 dark:!bg-gray-900 dark:shadow-black/30"
               onMouseEnter={() => open(activeLink.label)}
               onMouseLeave={close}
             >
-              <div className="!bg-white dark:!bg-gray-900 container mx-auto px-4 py-5">
-                <div className="grid grid-cols-4 lg:grid-cols-8 gap-1">
+              <div className="container mx-auto !bg-white px-4 py-5 dark:!bg-gray-900">
+                <div className="grid grid-cols-4 gap-1 lg:grid-cols-8">
                   {Object.keys(activeLink.mega!).map((room) => {
                     const roomSlug = room.toLowerCase().replace(/\s+/g, "-")
                     const isActive = pathname.startsWith(`/by-room/${roomSlug}`)
@@ -2367,20 +2368,20 @@ function NavbarInner({
                         href={`/by-room/${roomSlug}`}
                         className={`group flex flex-col items-center gap-2 rounded-2xl px-2 py-3 text-center transition-all duration-200 ${
                           isActive
-                            ? "bg-sky-50 dark:bg-sky-950/30 text-sky-600"
-                            : "text-gray-700 dark:text-gray-300 hover:bg-sky-50 dark:hover:bg-sky-950/20 hover:text-sky-500"
+                            ? "bg-sky-50 text-sky-600 dark:bg-sky-950/30"
+                            : "text-gray-700 hover:bg-sky-50 hover:text-sky-500 dark:text-gray-300 dark:hover:bg-sky-950/20"
                         }`}
                       >
                         <div
                           className={`flex h-11 w-11 items-center justify-center rounded-xl transition-colors duration-200 ${
                             isActive
-                              ? "bg-sky-100 dark:bg-sky-950/40 text-sky-500"
-                              : "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 group-hover:bg-sky-100 dark:group-hover:bg-sky-950/30 group-hover:text-sky-500"
+                              ? "bg-sky-100 text-sky-500 dark:bg-sky-950/40"
+                              : "bg-gray-100 text-gray-400 group-hover:bg-sky-100 group-hover:text-sky-500 dark:bg-gray-800 dark:text-gray-500 dark:group-hover:bg-sky-950/30"
                           }`}
                         >
                           {roomIcons[room] ?? roomIcons.BEDROOM}
                         </div>
-                        <span className="text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">
+                        <span className="text-xs leading-tight font-medium text-gray-700 dark:text-gray-300">
                           {room.charAt(0) + room.slice(1).toLowerCase()}
                         </span>
                       </Link>
@@ -2400,11 +2401,11 @@ function NavbarInner({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.25, ease: "easeOut" }}
-              className="md:hidden border-t border-gray-100 dark:border-gray-800 !bg-white dark:!bg-gray-900 max-h-[70vh] overflow-y-auto"
+              className="max-h-[70vh] overflow-y-auto border-t border-gray-100 !bg-white md:hidden dark:border-gray-800 dark:!bg-gray-900"
             >
-              <nav className="container mx-auto px-4 py-3 flex flex-col gap-0.5">
+              <nav className="container mx-auto flex flex-col gap-0.5 px-4 py-3">
                 {isLoggedIn ? (
-                  <div className="mb-3 rounded-2xl border border-sky-100 dark:border-sky-900/50 overflow-hidden shadow-sm dark:shadow-none">
+                  <div className="mb-3 overflow-hidden rounded-2xl border border-sky-100 shadow-sm dark:border-sky-900/50 dark:shadow-none">
                     {/* Profile header */}
                     {(() => {
                       const rank = meData?.rank ?? 0
@@ -2440,7 +2441,7 @@ function NavbarInner({
                                 : "from-sky-400 to-sky-500"
                       return (
                         <div
-                          className={`bg-gradient-to-br ${gradient} px-4 pt-4 pb-10 relative overflow-hidden`}
+                          className={`bg-gradient-to-br ${gradient} relative overflow-hidden px-4 pt-4 pb-10`}
                         >
                           <div
                             className="absolute inset-0"
@@ -2449,17 +2450,17 @@ function NavbarInner({
                                 "radial-gradient(circle at 15% 60%, rgba(255,255,255,0.2) 0%, transparent 50%), radial-gradient(circle at 85% 15%, rgba(255,255,255,0.12) 0%, transparent 45%)",
                             }}
                           />
-                          <div className="absolute -bottom-6 -left-6 h-24 w-24 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+                          <div className="pointer-events-none absolute -bottom-6 -left-6 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
                           <div className="relative flex items-center justify-between">
                             <div>
-                              <p className="text-[10px] font-semibold text-white/70 uppercase tracking-widest mb-0.5">
+                              <p className="mb-0.5 text-[10px] font-semibold tracking-widest text-white/70 uppercase">
                                 Member Tier
                               </p>
-                              <p className="text-base font-bold text-white leading-tight">
+                              <p className="text-base leading-tight font-bold text-white">
                                 {tier}
                               </p>
                             </div>
-                            <div className="rounded-2xl bg-white/25 backdrop-blur-md p-2 border border-white/40 shadow-xl shrink-0">
+                            <div className="shrink-0 rounded-2xl border border-white/40 bg-white/25 p-2 shadow-xl backdrop-blur-md">
                               <img
                                 src={badgeImg}
                                 alt={tier}
@@ -2472,43 +2473,43 @@ function NavbarInner({
                     })()}
 
                     {/* Avatar + info */}
-                    <div className="px-4 -mt-8 pb-4 bg-white dark:bg-gray-800">
+                    <div className="-mt-8 bg-white px-4 pb-4 dark:bg-gray-800">
                       {/* Avatar row - overlapping the banner */}
-                      <div className="flex items-end justify-between mb-2">
+                      <div className="mb-2 flex items-end justify-between">
                         <div className="relative shrink-0">
                           {avatarUrl ? (
                             <img
                               src={avatarUrl}
                               alt={user?.name || "Profile"}
-                              className="h-16 w-16 rounded-2xl object-cover ring-4 ring-white dark:ring-gray-700 shadow-lg"
+                              className="h-16 w-16 rounded-2xl object-cover shadow-lg ring-4 ring-white dark:ring-gray-700"
                             />
                           ) : (
-                            <span className="flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-sky-400 to-sky-500 text-white text-xl font-bold ring-4 ring-white dark:ring-gray-700 shadow-lg">
+                            <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-400 to-sky-500 text-xl font-bold text-white shadow-lg ring-4 ring-white dark:ring-gray-700">
                               {user?.name?.charAt(0)?.toUpperCase() ?? "U"}
                             </span>
                           )}
-                          <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-400 border-2 border-white dark:border-gray-700" />
+                          <span className="absolute -right-1 -bottom-1 h-4 w-4 rounded-full border-2 border-white bg-emerald-400 dark:border-gray-700" />
                         </div>
                       </div>
                       {/* Name / email / username - clearly in white area */}
                       <div className="mb-3">
-                        <p className="text-base font-bold text-gray-900 dark:text-white leading-tight">
+                        <p className="text-base leading-tight font-bold text-gray-900 dark:text-white">
                           {user?.name ?? "User"}
                         </p>
                         {user?.email && (
-                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                          <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
                             {user.email}
                           </p>
                         )}
                         {meData?.username && (
-                          <p className="text-xs text-sky-500 dark:text-sky-400 font-medium mt-0.5">
+                          <p className="mt-0.5 text-xs font-medium text-sky-500 dark:text-sky-400">
                             @{meData.username}
                           </p>
                         )}
                       </div>
 
                       {/* Quick action links */}
-                      <div className="grid grid-cols-2 gap-2 mb-3">
+                      <div className="mb-3 grid grid-cols-2 gap-2">
                         {[
                           {
                             href: profileHref,
@@ -2557,9 +2558,9 @@ function NavbarInner({
                             key={item.href}
                             href={item.href}
                             onClick={() => setMobileOpen(false)}
-                            className="group flex items-center gap-2.5 rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 hover:border-sky-200 dark:hover:border-sky-800 hover:bg-sky-50 dark:hover:bg-sky-900/20 px-3 py-2.5 transition-colors"
+                            className="group flex items-center gap-2.5 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5 transition-colors hover:border-sky-200 hover:bg-sky-50 dark:border-gray-700 dark:bg-gray-700 dark:hover:border-sky-800 dark:hover:bg-sky-900/20"
                           >
-                            <span className="flex items-center justify-center h-8 w-8 rounded-lg bg-white dark:bg-gray-600 shadow-sm group-hover:bg-sky-100 dark:group-hover:bg-sky-900/30 transition-colors shrink-0">
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white shadow-sm transition-colors group-hover:bg-sky-100 dark:bg-gray-600 dark:group-hover:bg-sky-900/30">
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 width="14"
@@ -2568,16 +2569,16 @@ function NavbarInner({
                                 fill="none"
                                 stroke="currentColor"
                                 strokeWidth="2"
-                                className="text-gray-500 dark:text-gray-300 group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors"
+                                className="text-gray-500 transition-colors group-hover:text-sky-600 dark:text-gray-300 dark:group-hover:text-sky-400"
                               >
                                 {item.icon}
                               </svg>
                             </span>
                             <div className="min-w-0">
-                              <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 leading-tight">
+                              <p className="text-xs leading-tight font-semibold text-gray-800 dark:text-gray-200">
                                 {item.label}
                               </p>
-                              <p className="text-[10px] text-gray-400 dark:text-gray-500 leading-tight">
+                              <p className="text-[10px] leading-tight text-gray-400 dark:text-gray-500">
                                 {item.sub}
                               </p>
                             </div>
@@ -2592,11 +2593,11 @@ function NavbarInner({
                           setMobileOpen(false)
                         }}
                         disabled={isLoggingOut}
-                        className="w-full flex items-center justify-center gap-2 rounded-xl border border-red-100 dark:border-red-900/30 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 px-4 py-2.5 text-sm font-semibold text-red-600 dark:text-red-400 transition-colors disabled:opacity-60"
+                        className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-100 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-100 disabled:opacity-60 dark:border-red-900/30 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
                       >
                         {isLoggingOut ? (
                           <svg
-                            className="animate-spin h-4 w-4 shrink-0"
+                            className="h-4 w-4 shrink-0 animate-spin"
                             fill="none"
                             viewBox="0 0 24 24"
                           >
@@ -2635,9 +2636,9 @@ function NavbarInner({
                     </div>
                   </div>
                 ) : (
-                  <div className="mb-3 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
-                    <div className="bg-gradient-to-br from-slate-700 to-slate-900 px-4 py-5 flex items-center gap-3">
-                      <span className="flex items-center justify-center h-12 w-12 rounded-xl bg-white/10 border border-white/20 shrink-0">
+                  <div className="mb-3 overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800">
+                    <div className="flex items-center gap-3 bg-gradient-to-br from-slate-700 to-slate-900 px-4 py-5">
+                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/10">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           width="22"
@@ -2656,14 +2657,14 @@ function NavbarInner({
                         <p className="text-sm font-bold text-white">
                           Welcome to {logoAlt}
                         </p>
-                        <p className="text-xs text-white/60 mt-0.5">
+                        <p className="mt-0.5 text-xs text-white/60">
                           {hideSignIn
                             ? "Browse and track your orders."
                             : "Sign in to access your account"}
                         </p>
                       </div>
                     </div>
-                    <div className="bg-white dark:bg-gray-800 px-4 py-3 flex gap-2">
+                    <div className="flex gap-2 bg-white px-4 py-3 dark:bg-gray-800">
                       {!hideSignIn && (
                         <motion.div
                           whileTap={{ scale: 0.97 }}
@@ -2673,7 +2674,7 @@ function NavbarInner({
                           <PrimaryButton
                             href={signInHref}
                             onClick={() => setMobileOpen(false)}
-                            className="!w-full !px-4 !py-2.5 !text-sm !rounded-[18px]"
+                            className="!w-full !rounded-[18px] !px-4 !py-2.5 !text-sm"
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -2695,7 +2696,7 @@ function NavbarInner({
                       <Link
                         href={trackOrderHref}
                         onClick={() => setMobileOpen(false)}
-                        className={`${hideSignIn ? "w-full" : "flex-1"} flex items-center justify-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 transition-colors`}
+                        className={`${hideSignIn ? "w-full" : "flex-1"} flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600`}
                       >
                         Track Order
                       </Link>
@@ -2731,7 +2732,7 @@ function NavbarInner({
                               setMobileSearch("")
                               setMobileBrandSearch("")
                             }}
-                            className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-sky-500 dark:hover:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/20 rounded-xl transition-colors"
+                            className="flex w-full items-center justify-between rounded-xl px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-sky-50 hover:text-sky-500 dark:text-gray-300 dark:hover:bg-sky-900/20 dark:hover:text-sky-400"
                           >
                             {link.label}
                             <svg
@@ -2750,7 +2751,7 @@ function NavbarInner({
                         ) : (
                           <Link
                             href={link.href}
-                            className="block px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-sky-500 dark:hover:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/20 rounded-xl transition-colors"
+                            className="block rounded-xl px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-sky-50 hover:text-sky-500 dark:text-gray-300 dark:hover:bg-sky-900/20 dark:hover:text-sky-400"
                             onClick={() => setMobileOpen(false)}
                           >
                             {link.label}
@@ -2767,7 +2768,7 @@ function NavbarInner({
                           <div className="overflow-hidden">
                             {link.mega ? (
                               /* Mega menu - search + grouped rooms */
-                              <div className="ml-4 pl-4 border-l-2 border-sky-200 dark:border-sky-800 py-2 space-y-1">
+                              <div className="ml-4 space-y-1 border-l-2 border-sky-200 py-2 pl-4 dark:border-sky-800">
                                 {/* Search */}
                                 <div className="relative mb-3">
                                   <svg
@@ -2778,7 +2779,7 @@ function NavbarInner({
                                     fill="none"
                                     stroke="currentColor"
                                     strokeWidth="2"
-                                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none"
+                                    className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-gray-400 dark:text-gray-500"
                                   >
                                     <circle cx="11" cy="11" r="8" />
                                     <path d="m21 21-4.35-4.35" />
@@ -2790,12 +2791,12 @@ function NavbarInner({
                                       setMobileSearch(e.target.value)
                                     }
                                     placeholder="Search items..."
-                                    className="w-full pl-8 pr-8 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-xs text-gray-700 dark:text-gray-300 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-sky-400/50 dark:focus:ring-sky-500/30 focus:bg-white dark:focus:bg-gray-600 transition-all"
+                                    className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2 pr-8 pl-8 text-xs text-gray-700 transition-all placeholder:text-gray-400 focus:bg-white focus:ring-2 focus:ring-sky-400/50 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:placeholder:text-gray-500 dark:focus:bg-gray-600 dark:focus:ring-sky-500/30"
                                   />
                                   {mobileSearch && (
                                     <button
                                       onClick={() => setMobileSearch("")}
-                                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+                                      className="absolute top-1/2 right-2.5 -translate-y-1/2 text-gray-400"
                                     >
                                       <svg
                                         xmlns="http://www.w3.org/2000/svg"
@@ -2822,7 +2823,7 @@ function NavbarInner({
 
                                   if (rooms.length === 0)
                                     return (
-                                      <p className="px-3 py-3 text-xs text-gray-400 dark:text-gray-500 text-center">
+                                      <p className="px-3 py-3 text-center text-xs text-gray-400 dark:text-gray-500">
                                         No rooms found for &quot;
                                         <span className="text-sky-500 dark:text-sky-400">
                                           {mobileSearch}
@@ -2839,7 +2840,7 @@ function NavbarInner({
                                       <div key={room} className="mb-2">
                                         <Link
                                           href={`/by-room/${roomSlug}`}
-                                          className="flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:border-sky-300 dark:hover:border-sky-800 hover:bg-sky-50 dark:hover:bg-sky-900/20 hover:text-sky-500 dark:hover:text-sky-400 transition-colors"
+                                          className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm font-semibold text-gray-700 transition-colors hover:border-sky-300 hover:bg-sky-50 hover:text-sky-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-sky-800 dark:hover:bg-sky-900/20 dark:hover:text-sky-400"
                                           onClick={() => setMobileOpen(false)}
                                         >
                                           <span className="text-sky-500">
@@ -2857,7 +2858,7 @@ function NavbarInner({
                               </div>
                             ) : link.label === "Shop By Brand" ? (
                               /* Brand dropdown - search + logos */
-                              <div className="ml-4 pl-4 border-l-2 border-sky-200 dark:border-sky-800 py-2 space-y-2">
+                              <div className="ml-4 space-y-2 border-l-2 border-sky-200 py-2 pl-4 dark:border-sky-800">
                                 {/* Search */}
                                 <div className="relative">
                                   <svg
@@ -2868,7 +2869,7 @@ function NavbarInner({
                                     fill="none"
                                     stroke="currentColor"
                                     strokeWidth="2"
-                                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none"
+                                    className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-gray-400 dark:text-gray-500"
                                   >
                                     <circle cx="11" cy="11" r="8" />
                                     <path d="m21 21-4.35-4.35" />
@@ -2880,7 +2881,7 @@ function NavbarInner({
                                       setMobileBrandSearch(e.target.value)
                                     }
                                     placeholder="Search brands..."
-                                    className="w-full pl-8 pr-3 py-1.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-xs text-gray-700 dark:text-gray-300 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-sky-400/40 dark:focus:ring-sky-500/30"
+                                    className="w-full rounded-lg border border-gray-200 bg-gray-50 py-1.5 pr-3 pl-8 text-xs text-gray-700 placeholder:text-gray-400 focus:ring-2 focus:ring-sky-400/40 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:placeholder:text-gray-500 dark:focus:ring-sky-500/30"
                                   />
                                 </div>
                                 {/* Brand list with logos */}
@@ -2897,7 +2898,7 @@ function NavbarInner({
                                   <Link
                                     key={item.id}
                                     href={item.href}
-                                    className="flex items-center gap-2.5 rounded-xl border border-gray-100 dark:border-gray-700 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:border-sky-200 dark:hover:border-sky-800 hover:bg-sky-50 dark:hover:bg-sky-900/20 hover:text-sky-500 dark:hover:text-sky-400 transition-colors"
+                                    className="flex items-center gap-2.5 rounded-xl border border-gray-100 px-3 py-2 text-sm text-gray-600 transition-colors hover:border-sky-200 hover:bg-sky-50 hover:text-sky-500 dark:border-gray-700 dark:text-gray-400 dark:hover:border-sky-800 dark:hover:bg-sky-900/20 dark:hover:text-sky-400"
                                     onClick={() => setMobileOpen(false)}
                                   >
                                     <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-700">
@@ -2935,12 +2936,12 @@ function NavbarInner({
                               </div>
                             ) : (
                               /* Regular dropdown */
-                              <div className="ml-4 pl-4 border-l-2 border-sky-200 py-1">
+                              <div className="ml-4 border-l-2 border-sky-200 py-1 pl-4">
                                 {subItems.map((item) => (
                                   <Link
                                     key={item.label}
                                     href={item.href}
-                                    className="block px-3 py-1.5 text-sm text-gray-600 hover:text-sky-500 rounded-lg transition-colors"
+                                    className="block rounded-lg px-3 py-1.5 text-sm text-gray-600 transition-colors hover:text-sky-500"
                                     onClick={() => setMobileOpen(false)}
                                   >
                                     {item.label}
@@ -3007,14 +3008,14 @@ function NavbarInner({
                           style={{ height: 40 }}
                         >
                           <div
-                            className={`h-5 w-5 shrink-0 flex items-center justify-center rounded-full ${getNotificationIcon(realtimeNotification.title).bg}`}
+                            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${getNotificationIcon(realtimeNotification.title).bg}`}
                           >
                             {
                               getNotificationIcon(realtimeNotification.title)
                                 .icon
                             }
                           </div>
-                          <p className="text-[11px] font-semibold text-white truncate leading-none">
+                          <p className="truncate text-[11px] leading-none font-semibold text-white">
                             {realtimeNotification.title}
                           </p>
                         </motion.div>
@@ -3033,7 +3034,7 @@ function NavbarInner({
                           >
                             <div className="flex items-start gap-3 px-4 pt-3.5 pb-2.5">
                               <div
-                                className={`mt-0.5 h-9 w-9 shrink-0 flex items-center justify-center rounded-xl ${getNotificationIcon(realtimeNotification.title).bg}`}
+                                className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${getNotificationIcon(realtimeNotification.title).bg}`}
                               >
                                 {
                                   getNotificationIcon(
@@ -3043,10 +3044,10 @@ function NavbarInner({
                               </div>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-1.5">
-                                  <p className="truncate text-[13px] font-bold text-white leading-tight">
+                                  <p className="truncate text-[13px] leading-tight font-bold text-white">
                                     {realtimeNotification.title}
                                   </p>
-                                  <span className="shrink-0 rounded-full bg-emerald-500/25 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-400">
+                                  <span className="shrink-0 rounded-full bg-emerald-500/25 px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-emerald-400 uppercase">
                                     New
                                   </span>
                                 </div>
@@ -3061,7 +3062,7 @@ function NavbarInner({
                                   e.stopPropagation()
                                   setRealtimeNotification(null)
                                 }}
-                                className="mt-0.5 rounded-lg p-1 text-slate-600 hover:text-slate-400 transition-colors"
+                                className="mt-0.5 rounded-lg p-1 text-slate-600 transition-colors hover:text-slate-400"
                                 aria-label="Dismiss"
                               >
                                 <svg
@@ -3079,7 +3080,7 @@ function NavbarInner({
                                 </svg>
                               </button>
                             </div>
-                            <div className="mx-4 mb-3.5 h-[3px] rounded-full bg-[#2c2c2e] overflow-hidden">
+                            <div className="mx-4 mb-3.5 h-[3px] overflow-hidden rounded-full bg-[#2c2c2e]">
                               <motion.div
                                 className="h-full origin-left rounded-full bg-gradient-to-r from-emerald-400 via-teal-400 to-sky-400"
                                 initial={{ scaleX: 1 }}
@@ -3117,12 +3118,12 @@ function NavbarInner({
                       setRealtimeNotification(null)
                     }
                   }}
-                  className="fixed bottom-4 right-3 z-[130] w-[calc(100vw-1.5rem)] max-w-sm sm:bottom-5 sm:right-5"
+                  className="fixed right-3 bottom-4 z-[130] w-[calc(100vw-1.5rem)] max-w-sm sm:right-5 sm:bottom-5"
                 >
                   <Link
                     href={realtimeNotification.href}
                     onClick={() => setRealtimeNotification(null)}
-                    className="block overflow-hidden rounded-2xl border border-emerald-200/80 bg-white shadow-2xl shadow-slate-900/15 ring-1 ring-emerald-100/70 transition hover:-translate-y-0.5 hover:shadow-emerald-900/15 dark:border-emerald-800/60 dark:bg-slate-900 dark:ring-emerald-900/30"
+                    className="block overflow-hidden rounded-2xl border border-emerald-200/80 bg-white shadow-2xl ring-1 shadow-slate-900/15 ring-emerald-100/70 transition hover:-translate-y-0.5 hover:shadow-emerald-900/15 dark:border-emerald-800/60 dark:bg-slate-900 dark:ring-emerald-900/30"
                   >
                     <div className="flex items-start gap-3 p-4">
                       <div
@@ -3135,7 +3136,7 @@ function NavbarInner({
                           <p className="truncate text-sm font-bold text-slate-900 dark:text-white">
                             {realtimeNotification.title}
                           </p>
-                          <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                          <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold tracking-wide text-emerald-700 uppercase dark:bg-emerald-900/40 dark:text-emerald-300">
                             New
                           </span>
                         </div>
@@ -3214,7 +3215,7 @@ function NavbarInner({
                   >
                     <Card
                       variant="default"
-                      className="overflow-hidden rounded-2xl border border-slate-200 dark:border-gray-700 bg-white shadow-xl shadow-black/15 dark:bg-gray-800"
+                      className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-black/15 dark:border-gray-700 dark:bg-gray-800"
                     >
                       <Card.Content className="space-y-0 px-0 py-0">
                         <form
@@ -3224,21 +3225,21 @@ function NavbarInner({
                             handleProductSearchSubmit(searchModalQuery)
                           }}
                         >
-                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+                          <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:gap-3">
                             <SearchField
                               aria-label="Search products"
                               value={searchModalQuery}
                               onChange={setSearchModalQuery}
-                              className="flex-1 min-w-0"
+                              className="min-w-0 flex-1"
                             >
                               <Label className="sr-only">Search products</Label>
-                              <SearchField.Group className="flex items-center gap-2 sm:gap-3 rounded-xl border border-slate-200 bg-white px-3 sm:px-5 py-2.5 sm:py-3.5 transition-all duration-200 focus-within:border-sky-400 focus-within:ring-2 focus-within:ring-sky-100 dark:border-gray-700 dark:bg-gray-800 dark:focus-within:border-sky-500 dark:focus-within:ring-sky-900/50">
-                                <SearchField.SearchIcon className="h-4 sm:h-5 w-4 sm:w-5 shrink-0 text-slate-400 dark:text-gray-400" />
+                              <SearchField.Group className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 transition-all duration-200 focus-within:border-sky-400 focus-within:ring-2 focus-within:ring-sky-100 sm:gap-3 sm:px-5 sm:py-3.5 dark:border-gray-700 dark:bg-gray-800 dark:focus-within:border-sky-500 dark:focus-within:ring-sky-900/50">
+                                <SearchField.SearchIcon className="h-4 w-4 shrink-0 text-slate-400 sm:h-5 sm:w-5 dark:text-gray-400" />
                                 <SearchField.Input
                                   ref={searchInputRef}
                                   autoFocus
                                   placeholder="Search..."
-                                  className="flex-1 border-none bg-transparent p-0 text-sm sm:text-base text-slate-900 outline-none placeholder:text-slate-400 dark:text-gray-100 dark:placeholder:text-gray-500"
+                                  className="flex-1 border-none bg-transparent p-0 text-sm text-slate-900 outline-none placeholder:text-slate-400 sm:text-base dark:text-gray-100 dark:placeholder:text-gray-500"
                                 />
                                 {searchModalQuery && (
                                   <motion.button
@@ -3252,7 +3253,7 @@ function NavbarInner({
                                     title="Clear search"
                                   >
                                     <svg
-                                      className="h-3.5 sm:h-4 w-3.5 sm:w-4"
+                                      className="h-3.5 w-3.5 sm:h-4 sm:w-4"
                                       fill="none"
                                       stroke="currentColor"
                                       viewBox="0 0 24 24"
@@ -3279,7 +3280,7 @@ function NavbarInner({
                                     transition={{ duration: 0.1 }}
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
-                                    className="shrink-0 inline-flex cursor-pointer items-center gap-1 sm:gap-1.5 rounded-lg border border-sky-200 bg-sky-50 px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs font-semibold text-sky-600 transition hover:bg-sky-100 dark:border-sky-800 dark:bg-sky-900/30 dark:text-sky-400 dark:hover:bg-sky-900/50"
+                                    className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-lg border border-sky-200 bg-sky-50 px-2 py-1.5 text-[10px] font-semibold text-sky-600 transition hover:bg-sky-100 sm:gap-1.5 sm:px-3 sm:py-2 sm:text-xs dark:border-sky-800 dark:bg-sky-900/30 dark:text-sky-400 dark:hover:bg-sky-900/50"
                                     title="Press Enter to search"
                                   >
                                     <span>ENTER</span>
@@ -3294,7 +3295,7 @@ function NavbarInner({
                                 }}
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                className="shrink-0 inline-flex cursor-pointer items-center gap-1 sm:gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2 sm:px-2.5 py-1.5 sm:py-2 text-[10px] sm:text-xs font-semibold text-slate-500 transition hover:bg-slate-100 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600"
+                                className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-[10px] font-semibold text-slate-500 transition hover:bg-slate-100 sm:gap-1.5 sm:px-2.5 sm:py-2 sm:text-xs dark:border-gray-700 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600"
                                 title="Close search (Esc)"
                               >
                                 <span>ESC</span>
@@ -3341,20 +3342,20 @@ function NavbarInner({
                                   animate={{ opacity: 1 }}
                                   className="space-y-3"
                                 >
-                                  <div className="flex items-center justify-between px-2 mb-3">
-                                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-gray-400">
+                                  <div className="mb-3 flex items-center justify-between px-2">
+                                    <p className="text-xs font-semibold tracking-wider text-slate-600 uppercase dark:text-gray-400">
                                       Recent Searches
                                     </p>
                                   </div>
                                   {Array.from({ length: 4 }).map((_, i) => (
                                     <div
                                       key={i}
-                                      className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-700/50 animate-pulse"
+                                      className="flex animate-pulse items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-700/50"
                                     >
                                       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-200 dark:bg-gray-600" />
                                       <div className="flex-1 space-y-2">
-                                        <div className="h-4 bg-slate-200 rounded w-32 dark:bg-gray-600" />
-                                        <div className="h-3 bg-slate-200 rounded w-24 dark:bg-gray-600" />
+                                        <div className="h-4 w-32 rounded bg-slate-200 dark:bg-gray-600" />
+                                        <div className="h-3 w-24 rounded bg-slate-200 dark:bg-gray-600" />
                                       </div>
                                     </div>
                                   ))}
@@ -3395,7 +3396,7 @@ function NavbarInner({
                                   className="space-y-4"
                                 >
                                   <div className="flex items-center justify-between px-1">
-                                    <p className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-gray-300">
+                                    <p className="text-xs font-bold tracking-wider text-slate-700 uppercase dark:text-gray-300">
                                       Recent Searches
                                     </p>
                                     <button
@@ -3411,7 +3412,7 @@ function NavbarInner({
                                           )
                                         }
                                       }}
-                                      className="text-xs font-medium text-slate-500 hover:text-red-600 dark:text-gray-500 dark:hover:text-red-400 transition-colors"
+                                      className="text-xs font-medium text-slate-500 transition-colors hover:text-red-600 dark:text-gray-500 dark:hover:text-red-400"
                                       title="Clear all search history"
                                     >
                                       Clear all
@@ -3495,7 +3496,7 @@ function NavbarInner({
                             >
                               <div className="relative h-8 w-8">
                                 <div className="absolute inset-0 rounded-full border-2 border-sky-200 dark:border-sky-900" />
-                                <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-sky-500 dark:border-t-sky-400 animate-spin" />
+                                <div className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-sky-500 dark:border-t-sky-400" />
                               </div>
                               <p className="text-sm text-slate-600 dark:text-gray-400">
                                 Searching products...
@@ -3555,9 +3556,9 @@ function NavbarInner({
                                       setSearchModalOpen(false)
                                       setMobileOpen(false)
                                     }}
-                                    className="group relative flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 rounded-xl border border-slate-200 bg-white p-2 sm:p-3 transition-all hover:border-sky-300 hover:bg-sky-50 dark:border-gray-700 dark:bg-gray-700/50 dark:hover:border-sky-500/50 dark:hover:bg-gray-700"
+                                    className="group relative flex flex-col items-start gap-2 rounded-xl border border-slate-200 bg-white p-2 transition-all hover:border-sky-300 hover:bg-sky-50 sm:flex-row sm:items-center sm:gap-4 sm:p-3 dark:border-gray-700 dark:bg-gray-700/50 dark:hover:border-sky-500/50 dark:hover:bg-gray-700"
                                   >
-                                    <div className="relative h-16 w-16 sm:h-20 sm:w-20 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-gray-700">
+                                    <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100 sm:h-20 sm:w-20 dark:bg-gray-700">
                                       {product.image ? (
                                         <Image
                                           src={product.image}
@@ -3572,7 +3573,7 @@ function NavbarInner({
                                       )}
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                      <p className="line-clamp-2 sm:truncate text-xs sm:text-sm font-semibold text-slate-900 dark:text-gray-100">
+                                      <p className="line-clamp-2 text-xs font-semibold text-slate-900 sm:truncate sm:text-sm dark:text-gray-100">
                                         {highlightText(
                                           product.name,
                                           searchModalQuery
@@ -3580,7 +3581,7 @@ function NavbarInner({
                                           part.type === "highlight" ? (
                                             <span
                                               key={i}
-                                              className="bg-yellow-200 dark:bg-yellow-700 rounded px-0.5"
+                                              className="rounded bg-yellow-200 px-0.5 dark:bg-yellow-700"
                                             >
                                               {part.text}
                                             </span>
@@ -3589,14 +3590,14 @@ function NavbarInner({
                                           )
                                         )}
                                       </p>
-                                      <p className="mt-0.5 text-[10px] sm:text-xs text-slate-500 dark:text-gray-400">
+                                      <p className="mt-0.5 text-[10px] text-slate-500 sm:text-xs dark:text-gray-400">
                                         Match for &quot;
                                         {searchModalQuery.trim()}&quot;
                                       </p>
                                       {(product.priceMember !== null ||
                                         product.priceSrp !== null ||
                                         product.prodpv !== null) && (
-                                        <div className="mt-1 sm:mt-2 space-y-1 sm:space-y-1.5">
+                                        <div className="mt-1 space-y-1 sm:mt-2 sm:space-y-1.5">
                                           {(() => {
                                             const srpPrice =
                                               product.priceSrp ?? 0
@@ -3626,15 +3627,15 @@ function NavbarInner({
                                               return (
                                                 <>
                                                   <div className="flex flex-wrap items-center gap-1 sm:gap-2">
-                                                    <span className="text-xs sm:text-sm font-bold text-sky-600 dark:text-sky-400">
+                                                    <span className="text-xs font-bold text-sky-600 sm:text-sm dark:text-sky-400">
                                                       {formatPrice(
                                                         displayPrice
                                                       )}
                                                     </span>
-                                                    <span className="text-[10px] sm:text-xs text-slate-400 line-through dark:text-gray-500">
+                                                    <span className="text-[10px] text-slate-400 line-through sm:text-xs dark:text-gray-500">
                                                       {formatPrice(srpPrice)}
                                                     </span>
-                                                    <span className="inline-flex items-center rounded-full border border-green-200 bg-green-50 px-1.5 sm:px-2 py-0.5 text-[8px] sm:text-[10px] font-semibold text-green-700 dark:border-green-900/50 dark:bg-green-900/30 dark:text-green-300">
+                                                    <span className="inline-flex items-center rounded-full border border-green-200 bg-green-50 px-1.5 py-0.5 text-[8px] font-semibold text-green-700 sm:px-2 sm:text-[10px] dark:border-green-900/50 dark:bg-green-900/30 dark:text-green-300">
                                                       Save{" "}
                                                       {formatPrice(
                                                         srpPrice - memberPrice

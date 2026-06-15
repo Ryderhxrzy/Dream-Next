@@ -2,13 +2,13 @@
 
 import type { ChangeEvent, DragEvent, FormEvent } from "react"
 import { useEffect, useMemo, useState } from "react"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import {
   useCreateAdminWebPageItemMutation,
   useDeleteAdminWebPageItemMutation,
   useGetAdminWebPageItemsQuery,
   useUpdateAdminWebPageItemMutation,
 } from "@/store/api/webPagesApi"
-import { showErrorToast, showSuccessToast } from "@/libs/toast"
 
 type UploadAssetType = "image" | "video"
 
@@ -134,7 +134,7 @@ function FileDropzone({
         onDrop={handleDrop}
         className={`group flex min-h-24 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-4 py-5 text-center transition ${
           disabled
-            ? "cursor-not-allowed opacity-50 border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/60"
+            ? "cursor-not-allowed border-slate-200 bg-slate-50 opacity-50 dark:border-slate-700 dark:bg-slate-900/60"
             : isDragging
               ? "border-cyan-400 bg-cyan-50 dark:border-cyan-500 dark:bg-cyan-950/30"
               : "border-slate-300 bg-slate-50 hover:border-cyan-300 hover:bg-cyan-50/60 dark:border-slate-700 dark:bg-slate-900/60 dark:hover:border-cyan-700"
@@ -190,7 +190,7 @@ function FileDropzone({
                 type="button"
                 onClick={() => removeFile(i)}
                 disabled={disabled}
-                className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-rose-600 text-white shadow opacity-0 transition-opacity group-hover:opacity-100 disabled:cursor-not-allowed"
+                className="absolute top-1.5 right-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-rose-600 text-white opacity-0 shadow transition-opacity group-hover:opacity-100 disabled:cursor-not-allowed"
                 aria-label="Remove file"
               >
                 <svg
@@ -207,7 +207,7 @@ function FileDropzone({
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
-              <div className="absolute bottom-0 left-0 right-0 truncate bg-black/50 px-1.5 py-1 text-[10px] text-white opacity-0 transition-opacity group-hover:opacity-100">
+              <div className="absolute right-0 bottom-0 left-0 truncate bg-black/50 px-1.5 py-1 text-[10px] text-white opacity-0 transition-opacity group-hover:opacity-100">
                 {files[i]?.name}
               </div>
             </div>
@@ -509,7 +509,7 @@ export default function AdminProjectPageMain() {
 
   return (
     <div className="space-y-6 dark:bg-slate-950 dark:text-slate-100">
-      <div className="relative overflow-hidden rounded-3xl border border-sky-200/70 bg-gradient-to-br from-white via-sky-50 to-cyan-50 p-6 shadow-sm dark:border-slate-800 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900/40 dark:to-cyan-950/20 md:p-8">
+      <div className="relative overflow-hidden rounded-3xl border border-sky-200/70 bg-gradient-to-br from-white via-sky-50 to-cyan-50 p-6 shadow-sm md:p-8 dark:border-slate-800 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900/40 dark:to-cyan-950/20">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(34,211,238,0.18),transparent_45%),radial-gradient(circle_at_80%_0%,rgba(59,130,246,0.12),transparent_35%)]" />
         <div className="relative">
           <div className="flex items-center gap-3">
@@ -530,7 +530,7 @@ export default function AdminProjectPageMain() {
                 <path d="M8 9h.01" />
               </svg>
             </div>
-            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 md:text-2xl">
+            <h1 className="text-xl font-bold text-slate-900 md:text-2xl dark:text-slate-100">
               Project Gallery Uploads
             </h1>
           </div>
@@ -542,7 +542,7 @@ export default function AdminProjectPageMain() {
 
       <div className="grid gap-6 xl:grid-cols-2">
         {/* Photos */}
-        <section className="relative rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-white to-sky-50 p-5 shadow-sm dark:border-slate-800 dark:bg-gradient-to-br dark:from-slate-950/40 dark:via-slate-950/40 dark:to-sky-950/30 md:p-6">
+        <section className="relative rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-white to-sky-50 p-5 shadow-sm md:p-6 dark:border-slate-800 dark:bg-gradient-to-br dark:from-slate-950/40 dark:via-slate-950/40 dark:to-sky-950/30">
           {photoUploading && (
             <UploadOverlay
               done={photoProgress.done}
@@ -662,12 +662,12 @@ export default function AdminProjectPageMain() {
                           </div>
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                        <div className="absolute left-3 top-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                        <div className="absolute top-3 left-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
                           <span className="inline-flex items-center rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-cyan-700 shadow-sm">
                             {category || "Category"}
                           </span>
                         </div>
-                        <div className="absolute right-2 top-2 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                        <div className="absolute top-2 right-2 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
                           <button
                             type="button"
                             onClick={(e) => {
@@ -720,7 +720,7 @@ export default function AdminProjectPageMain() {
         </section>
 
         {/* Videos */}
-        <section className="relative rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-white to-cyan-50 p-5 shadow-sm dark:border-slate-800 dark:bg-gradient-to-br dark:from-slate-950/40 dark:via-slate-950/40 dark:to-cyan-950/30 md:p-6">
+        <section className="relative rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-white to-cyan-50 p-5 shadow-sm md:p-6 dark:border-slate-800 dark:bg-gradient-to-br dark:from-slate-950/40 dark:via-slate-950/40 dark:to-cyan-950/30">
           {videoUploading && (
             <UploadOverlay
               done={videoProgress.done}
@@ -824,12 +824,12 @@ export default function AdminProjectPageMain() {
                         </div>
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                      <div className="absolute left-3 top-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                      <div className="absolute top-3 left-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
                         <span className="inline-flex items-center rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-cyan-700 shadow-sm">
                           Video
                         </span>
                       </div>
-                      <div className="absolute right-2 top-2 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                      <div className="absolute top-2 right-2 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
                         <button
                           type="button"
                           onClick={(e) => {
@@ -893,7 +893,7 @@ export default function AdminProjectPageMain() {
           >
             <div className="flex items-start justify-between gap-4 p-4 sm:p-5">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-cyan-400">
+                <p className="text-xs font-semibold tracking-widest text-slate-500 uppercase dark:text-cyan-400">
                   {previewTarget.type === "photo-gallery"
                     ? "PHOTO PREVIEW"
                     : "VIDEO PREVIEW"}

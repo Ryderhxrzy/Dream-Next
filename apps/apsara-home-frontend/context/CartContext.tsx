@@ -1,25 +1,25 @@
 "use client"
 
 import { ReactNode, useEffect, useRef } from "react"
-import { useSession } from "next-auth/react"
-import { usePathname } from "next/navigation"
-import { useAppDispatch, useAppSelector } from "@/store/hooks"
+import { extractPartnerSlugFromPath } from "@/libs/storefrontRouting"
 import {
   useAddToCartMutation,
   useGetCartQuery,
   useRemoveCartItemMutation,
   useUpdateCartItemMutation,
 } from "@/store/api/cartApi"
-import { extractPartnerSlugFromPath } from "@/libs/storefrontRouting"
+import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import {
   addToCart as addToCartAction,
   removeFromCart as removeFromCartAction,
-  updateQuantity as updateQuantityAction,
-  setCartOpen,
-  toggleCartItemSelected as toggleCartItemSelectedAction,
-  setCartSelection as setCartSelectionAction,
   setCartItems,
+  setCartOpen,
+  setCartSelection as setCartSelectionAction,
+  toggleCartItemSelected as toggleCartItemSelectedAction,
+  updateQuantity as updateQuantityAction,
 } from "@/store/slices/cartSlice"
+import { useSession } from "next-auth/react"
+import { usePathname } from "next/navigation"
 
 const GUEST_CART_STORAGE_KEY_PREFIX = "guest_cart_items"
 

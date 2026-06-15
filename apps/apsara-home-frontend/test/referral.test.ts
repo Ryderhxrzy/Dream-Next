@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest"
 
 import {
-  REFERRAL_STORAGE_KEY,
   clearStoredReferralCode,
   getStoredReferralCode,
   normalizeReferralCode,
+  REFERRAL_STORAGE_KEY,
   setStoredReferralCode,
 } from "../libs/referral"
 

@@ -1,5 +1,5 @@
-import { buildPageMetadata } from "@/app/seo"
 import VerificationOverviewPage from "@/components/verification/VerificationOverviewPage"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Encashment Verification",

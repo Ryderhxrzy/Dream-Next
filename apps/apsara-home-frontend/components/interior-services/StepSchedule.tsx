@@ -1,10 +1,11 @@
 "use client"
 
+import { useState } from "react"
+import { motion } from "framer-motion"
+
 import { staggerContainer, staggerItem } from "./animation"
 import { BookingFormData, TIME_SLOTS } from "./types"
-import { motion } from "framer-motion"
 import { FormField, SelectField } from "./ui/Primitives"
-import { useState } from "react"
 
 interface StepScheduleProps {
   form: BookingFormData
@@ -54,7 +55,7 @@ const StepSchedule = ({ form, onChange }: StepScheduleProps) => {
               onChange={(e) => onChange("preferredDate", e.target.value)}
               onFocus={() => setDateFocused(true)}
               onBlur={() => setDateFocused(false)}
-              className="w-full bg-white text-slate-800 text-sm px-4 py-3 rounded-[4px] outline-none transition-all duration-300"
+              className="w-full rounded-[4px] bg-white px-4 py-3 text-sm text-slate-800 transition-all duration-300 outline-none"
               style={{
                 border: dateFocused
                   ? "1px solid rgba(99,102,241,0.7)"
@@ -104,7 +105,7 @@ const StepSchedule = ({ form, onChange }: StepScheduleProps) => {
 
       {/* Time slot visual picker */}
       <motion.div variants={staggerItem}>
-        <label className="text-[0.68rem] tracking-[0.14em] uppercase text-slate-500 font-medium block mb-3">
+        <label className="mb-3 block text-[0.68rem] font-medium tracking-[0.14em] text-slate-500 uppercase">
           Quick Time Select
         </label>
         <div className="flex flex-wrap gap-2">
@@ -115,7 +116,7 @@ const StepSchedule = ({ form, onChange }: StepScheduleProps) => {
                 key={slot}
                 type="button"
                 onClick={() => onChange("preferredTime", slot)}
-                className="text-[0.7rem] tracking-wide px-3.5 py-2 rounded-[3px] transition-all duration-250"
+                className="rounded-[3px] px-3.5 py-2 text-[0.7rem] tracking-wide transition-all duration-250"
                 style={{
                   border: isSelected
                     ? "1px solid rgba(99,102,241,0.6)"
@@ -139,14 +140,14 @@ const StepSchedule = ({ form, onChange }: StepScheduleProps) => {
       {/* Info note */}
       <motion.div
         variants={staggerItem}
-        className="flex items-start gap-3 p-4 rounded-[4px] border"
+        className="flex items-start gap-3 rounded-[4px] border p-4"
         style={{
           background: "rgba(99,102,241,0.04)",
           borderColor: "rgba(99,102,241,0.15)",
         }}
       >
-        <span className="text-indigo-500 text-sm mt-0.5 flex-shrink-0">ℹ</span>
-        <p className="text-[0.75rem] text-slate-500 leading-relaxed">
+        <span className="mt-0.5 flex-shrink-0 text-sm text-indigo-500">ℹ</span>
+        <p className="text-[0.75rem] leading-relaxed text-slate-500">
           Our team will confirm your appointment within 24 hours and may suggest
           an alternative slot if your preferred time is unavailable.
         </p>

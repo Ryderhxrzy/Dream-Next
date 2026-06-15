@@ -1,14 +1,15 @@
+import { getNavbarCategories } from "@/libs/serverStorefront"
+import type { Category } from "@/store/api/categoriesApi"
+import type { Product } from "@/store/api/productsApi"
+import type { WebPageItem } from "@/store/api/webPagesApi"
 import Image from "next/image"
 import Link from "next/link"
-import { buildPageMetadata } from "@/app/seo"
+
 import Footer from "@/components/layout/Footer"
 import Navbar from "@/components/layout/Navbar"
 import TopBar from "@/components/layout/TopBar"
 import TrustBar from "@/components/layout/TrustBar"
-import type { Category } from "@/store/api/categoriesApi"
-import type { Product } from "@/store/api/productsApi"
-import type { WebPageItem } from "@/store/api/webPagesApi"
-import { getNavbarCategories } from "@/libs/serverStorefront"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
   title: "Shop Redesign Preview",
@@ -99,13 +100,13 @@ function ProductCard({ product }: { product: Product }) {
           className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
         />
         {product.bestseller && (
-          <span className="absolute left-3 top-3 rounded-full bg-[#1a1a1a] px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-white">
+          <span className="absolute top-3 left-3 rounded-full bg-[#1a1a1a] px-3 py-1 text-[10px] font-semibold tracking-widest text-white uppercase">
             Bestseller
           </span>
         )}
       </div>
       <div className="flex flex-col gap-1">
-        <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#9a9086]">
+        <p className="text-[11px] font-medium tracking-[0.2em] text-[#9a9086] uppercase">
           {product.brand || "AF Home"}
         </p>
         <p className="line-clamp-1 text-sm font-semibold text-[#1a1a1a]">
@@ -147,15 +148,15 @@ export default async function RedesignPreviewPage() {
 
       <main>
         {/* 1 · HERO */}
-        <section className="pb-16 pt-10">
+        <section className="pt-10 pb-16">
           <div className={C}>
             <div className="grid items-center gap-12 lg:grid-cols-[1fr_1.1fr]">
               {/* Left — text */}
               <div className="flex flex-col gap-6">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#9a9086]">
+                <p className="text-[11px] font-semibold tracking-[0.3em] text-[#9a9086] uppercase">
                   AF Home · New Collection
                 </p>
-                <h1 className="font-display text-[clamp(2.8rem,6vw,5.5rem)] font-bold leading-[1.05] text-[#1a1a1a]">
+                <h1 className="font-display text-[clamp(2.8rem,6vw,5.5rem)] leading-[1.05] font-bold text-[#1a1a1a]">
                   Elevate Your
                   <br />
                   Living Space
@@ -170,7 +171,7 @@ export default async function RedesignPreviewPage() {
                 </p>
 
                 <div className="flex items-center gap-2.5">
-                  <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#9a9086]">
+                  <p className="text-[11px] font-medium tracking-[0.2em] text-[#9a9086] uppercase">
                     Finish:
                   </p>
                   {swatches.map((c, i) => (
@@ -235,17 +236,17 @@ export default async function RedesignPreviewPage() {
                 </div>
 
                 <div className="absolute -bottom-4 -left-4 flex h-20 w-20 flex-col items-center justify-center rounded-full bg-[#1a1a1a] text-white shadow-xl md:-left-6">
-                  <span className="text-[10px] font-medium uppercase tracking-widest text-white/60">
+                  <span className="text-[10px] font-medium tracking-widest text-white/60 uppercase">
                     from
                   </span>
-                  <span className="font-display text-lg font-bold leading-tight">
+                  <span className="font-display text-lg leading-tight font-bold">
                     {p(0)
                       ? formatMoney(getProductPrice(p(0))).replace("PHP", "₱")
                       : "₱5k"}
                   </span>
                 </div>
 
-                <div className="absolute -right-3 top-6 rounded-full border border-[#e4ddd3] bg-white/90 px-4 py-2 shadow-md backdrop-blur">
+                <div className="absolute top-6 -right-3 rounded-full border border-[#e4ddd3] bg-white/90 px-4 py-2 shadow-md backdrop-blur">
                   <p className="text-[11px] font-semibold text-[#1a1a1a]">
                     {categories[0]?.name || "Living Room"}
                   </p>
@@ -272,10 +273,10 @@ export default async function RedesignPreviewPage() {
         {/* 2 · BRAND TAGLINE */}
         <section className="border-y border-[#e4ddd3] bg-white py-20 text-center">
           <div className={C}>
-            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.32em] text-[#9a9086]">
+            <p className="mb-4 text-[11px] font-semibold tracking-[0.32em] text-[#9a9086] uppercase">
               The AF Home Difference
             </p>
-            <h2 className="font-display mx-auto max-w-3xl text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-tight text-[#1a1a1a]">
+            <h2 className="font-display mx-auto max-w-3xl text-[clamp(2rem,4.5vw,3.5rem)] leading-tight font-bold text-[#1a1a1a]">
               Luxury of craft meets the art of design — for spaces that become
               stories worth telling.
             </h2>
@@ -347,7 +348,7 @@ export default async function RedesignPreviewPage() {
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/10 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-5">
+                  <div className="absolute right-0 bottom-0 left-0 p-5">
                     <p className="font-display text-2xl font-bold text-white">
                       {cat.name}
                     </p>
@@ -386,10 +387,10 @@ export default async function RedesignPreviewPage() {
                     />
                   </div>
                   <div className="absolute -right-4 bottom-12 rounded-2xl border border-[#e4ddd3] bg-white p-4 shadow-lg">
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9a9086]">
+                    <p className="text-[10px] font-semibold tracking-widest text-[#9a9086] uppercase">
                       Featured
                     </p>
-                    <p className="mt-1 max-w-30 text-xs font-bold leading-snug text-[#1a1a1a]">
+                    <p className="mt-1 max-w-30 text-xs leading-snug font-bold text-[#1a1a1a]">
                       {p(3)?.name || "Premium Piece"}
                     </p>
                     <p className="mt-1 text-sm font-bold text-[#8b6f4e]">
@@ -401,10 +402,10 @@ export default async function RedesignPreviewPage() {
 
               {/* Right — text */}
               <div className="flex flex-col gap-6">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#9a9086]">
+                <p className="text-[11px] font-semibold tracking-[0.3em] text-[#9a9086] uppercase">
                   What Makes Us Different
                 </p>
-                <h2 className="font-display text-[clamp(2rem,4vw,3.5rem)] font-bold leading-tight text-[#1a1a1a]">
+                <h2 className="font-display text-[clamp(2rem,4vw,3.5rem)] leading-tight font-bold text-[#1a1a1a]">
                   What Made Is
                   <br />
                   <em className="not-italic" style={{ color: "#8b6f4e" }}>
@@ -462,7 +463,7 @@ export default async function RedesignPreviewPage() {
           <div className={C}>
             <div className="mb-10 flex items-end justify-between">
               <div>
-                <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-[#9a9086]">
+                <p className="mb-2 text-[11px] font-semibold tracking-[0.3em] text-[#9a9086] uppercase">
                   Just In
                 </p>
                 <h2 className="font-display text-3xl font-bold text-[#1a1a1a] md:text-4xl">
@@ -492,7 +493,7 @@ export default async function RedesignPreviewPage() {
           <div className={`${C} mb-8`}>
             <div className="flex items-end justify-between">
               <div>
-                <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-[#9a9086]">
+                <p className="mb-2 text-[11px] font-semibold tracking-[0.3em] text-[#9a9086] uppercase">
                   Customer Favourites
                 </p>
                 <h2 className="font-display text-3xl font-bold text-[#1a1a1a] md:text-4xl">
@@ -536,12 +537,12 @@ export default async function RedesignPreviewPage() {
               <div className="grid lg:grid-cols-2">
                 <div className="flex flex-col justify-center gap-6 p-10 md:p-14">
                   <p
-                    className="text-[11px] font-semibold uppercase tracking-[0.3em]"
+                    className="text-[11px] font-semibold tracking-[0.3em] uppercase"
                     style={{ color: "#c9a87a" }}
                   >
                     Limited Time
                   </p>
-                  <h2 className="font-display text-[clamp(2rem,4vw,3.2rem)] font-bold leading-tight text-white">
+                  <h2 className="font-display text-[clamp(2rem,4vw,3.2rem)] leading-tight font-bold text-white">
                     Up to 30% off
                     <br />
                     <em className="not-italic" style={{ color: "#c9a87a" }}>
@@ -581,7 +582,7 @@ export default async function RedesignPreviewPage() {
         {/* 8 · QUICK BROWSE */}
         <section className="py-12">
           <div className={C}>
-            <p className="mb-5 text-center text-[11px] font-semibold uppercase tracking-[0.3em] text-[#9a9086]">
+            <p className="mb-5 text-center text-[11px] font-semibold tracking-[0.3em] text-[#9a9086] uppercase">
               Quick Browse
             </p>
             <div className="flex flex-wrap justify-center gap-2.5">
@@ -613,7 +614,7 @@ export default async function RedesignPreviewPage() {
         {/* 9 · NEWSLETTER */}
         <section className="border-t border-[#e4ddd3] bg-white py-20 text-center">
           <div className={C}>
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.3em] text-[#9a9086]">
+            <p className="mb-3 text-[11px] font-semibold tracking-[0.3em] text-[#9a9086] uppercase">
               Stay Updated
             </p>
             <h2 className="font-display mx-auto mb-3 max-w-lg text-3xl font-bold text-[#1a1a1a] md:text-4xl">

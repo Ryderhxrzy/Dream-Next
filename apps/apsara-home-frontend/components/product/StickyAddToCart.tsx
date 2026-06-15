@@ -1,16 +1,17 @@
 "use client"
 
-import Image from "next/image"
-import { AnimatePresence, motion } from "framer-motion"
 import { useEffect, useState } from "react"
-import { useSession } from "next-auth/react"
 import { useCart } from "@/context/CartContext"
 import { CategoryProduct } from "@/libs/CategoryData"
 import { displayColorName } from "@/libs/colorUtils"
-import PrimaryButton from "@/components/ui/buttons/PrimaryButton"
-import OutlineButton from "@/components/ui/buttons/OutlineButton"
 import { useGetPublicGeneralSettingsQuery } from "@/store/api/adminSettingsApi"
+import { AnimatePresence, motion } from "framer-motion"
+import { useSession } from "next-auth/react"
+import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
+
+import OutlineButton from "@/components/ui/buttons/OutlineButton"
+import PrimaryButton from "@/components/ui/buttons/PrimaryButton"
 
 interface StickyAddToCartProps {
   product: CategoryProduct
@@ -182,7 +183,7 @@ const StickyAddToCart = ({
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -80, opacity: 0 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
-          className="fixed left-0 right-0 top-0 z-[60] border-b border-gray-200 bg-white shadow-md dark:bg-gray-900 dark:border-gray-700"
+          className="fixed top-0 right-0 left-0 z-[60] border-b border-gray-200 bg-white shadow-md dark:border-gray-700 dark:bg-gray-900"
         >
           <div className="container mx-auto flex items-center gap-3 px-4 py-2.5">
             <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-gray-50 dark:bg-gray-800">
@@ -203,7 +204,7 @@ const StickyAddToCart = ({
                   {displayPrice.toLocaleString()}
                 </p>
                 {canSeePv && !selectedVariant && (
-                  <span className="rounded-full border border-blue-200 dark:border-blue-900/30 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:text-blue-400">
+                  <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:border-blue-900/30 dark:bg-blue-900/20 dark:text-blue-400">
                     PV {displayPv.toLocaleString()}
                   </span>
                 )}
@@ -213,14 +214,14 @@ const StickyAddToCart = ({
               <OutlineButton
                 onClick={handleAddToCart}
                 disabled={!isInStock || !isCheckoutAvailable}
-                className="!px-4 !py-2 !text-sm !rounded-lg"
+                className="!rounded-lg !px-4 !py-2 !text-sm"
               >
                 <span className="hidden sm:inline">Add to Cart</span>
                 <span className="sm:hidden">Cart</span>
               </OutlineButton>
               <PrimaryButton
                 disabled={!isInStock || !isCheckoutAvailable}
-                className="!px-4 !py-2 !text-sm !rounded-lg"
+                className="!rounded-lg !px-4 !py-2 !text-sm"
               >
                 Buy Now
               </PrimaryButton>

@@ -1,10 +1,11 @@
 "use client"
 
 import { motion } from "framer-motion"
+
 import {
-  TopEarner,
-  php,
   getInitials,
+  php,
+  TopEarner,
 } from "@/components/superAdmin/members/topEarners/types"
 
 interface RankingLeaderboardProps {
@@ -117,22 +118,22 @@ export default function RankingLeaderboard({
           gap: "0.75rem",
         }}
       >
-        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+        <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
           Rank
         </span>
-        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+        <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
           Move
         </span>
-        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+        <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
           Member
         </span>
-        <span className="hidden text-[10px] font-black uppercase tracking-widest text-slate-400 sm:block">
+        <span className="hidden text-[10px] font-black tracking-widest text-slate-400 uppercase sm:block">
           Earnings
         </span>
-        <span className="hidden text-center text-[10px] font-black uppercase tracking-widest text-slate-400 sm:block">
+        <span className="hidden text-center text-[10px] font-black tracking-widest text-slate-400 uppercase sm:block">
           Referrals
         </span>
-        <span className="hidden text-[10px] font-black uppercase tracking-widest text-slate-400 lg:block">
+        <span className="hidden text-[10px] font-black tracking-widest text-slate-400 uppercase lg:block">
           Tier
         </span>
       </div>
@@ -176,10 +177,10 @@ export default function RankingLeaderboard({
                   color: tone.text,
                 }}
               >
-                <p className="text-[8px] font-black uppercase leading-none opacity-60">
+                <p className="text-[8px] leading-none font-black uppercase opacity-60">
                   Rank
                 </p>
-                <p className="text-xs font-black leading-tight">#{rank}</p>
+                <p className="text-xs leading-tight font-black">#{rank}</p>
               </div>
 
               <div className="flex items-center justify-start">

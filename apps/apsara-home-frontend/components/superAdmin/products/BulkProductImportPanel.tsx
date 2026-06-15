@@ -1,6 +1,10 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
+import { ROOM_OPTIONS } from "@/libs/roomConfig"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
+import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
+import { useGetProductBrandsQuery } from "@/store/api/productBrandsApi"
 import {
   BulkImportProductsPayload,
   BulkImportProductsResponse,
@@ -10,10 +14,6 @@ import {
   useBulkImportProductsMutation,
   useLazyGetProductsQuery,
 } from "@/store/api/productsApi"
-import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
-import { useGetProductBrandsQuery } from "@/store/api/productBrandsApi"
-import { showErrorToast, showSuccessToast } from "@/libs/toast"
-import { ROOM_OPTIONS } from "@/libs/roomConfig"
 
 interface BulkProductImportPanelProps {
   onClose: () => void
@@ -1511,7 +1511,7 @@ export default function BulkProductImportPanel({
   }
 
   return (
-    <div className="flex h-full flex-col relative">
+    <div className="relative flex h-full flex-col">
       {importErrorModal ? (
         <div className="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/50 px-4 backdrop-blur-sm">
           <div className="w-full max-w-2xl rounded-2xl border border-red-200 bg-white shadow-2xl">
@@ -1547,20 +1547,20 @@ export default function BulkProductImportPanel({
             <div className="max-h-[60vh] overflow-auto px-5 py-4">
               <div className="space-y-4">
                 <section className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
                     Message
                   </p>
-                  <pre className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-slate-700">
+                  <pre className="mt-2 text-xs leading-5 break-words whitespace-pre-wrap text-slate-700">
                     {importErrorModal.details}
                   </pre>
                 </section>
 
                 {importErrorModal.payload ? (
                   <section className="rounded-xl border border-slate-200 bg-white p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
                       Request Payload
                     </p>
-                    <pre className="mt-2 max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-slate-950 p-4 text-[11px] leading-5 text-slate-100">
+                    <pre className="mt-2 max-h-72 overflow-auto rounded-lg bg-slate-950 p-4 text-[11px] leading-5 break-words whitespace-pre-wrap text-slate-100">
                       {JSON.stringify(importErrorModal.payload, null, 2)}
                     </pre>
                   </section>
@@ -1568,7 +1568,7 @@ export default function BulkProductImportPanel({
 
                 {importErrorModal.checklist ? (
                   <section className="rounded-xl border border-slate-200 bg-white p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
                       Type Check
                     </p>
                     <div className="mt-3 space-y-2">
@@ -1597,10 +1597,10 @@ export default function BulkProductImportPanel({
                 ) : null}
 
                 <section className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">
+                  <p className="text-xs font-semibold tracking-wide text-amber-700 uppercase">
                     Likely Backend Checks
                   </p>
-                  <ul className="mt-2 space-y-1 text-xs leading-5 text-amber-900 list-disc list-inside">
+                  <ul className="mt-2 list-inside list-disc space-y-1 text-xs leading-5 text-amber-900">
                     <li>
                       Confirm the imported row has `pd_parent_sku` and `pd_type`
                       set correctly for create-or-update matching.
@@ -1658,7 +1658,7 @@ export default function BulkProductImportPanel({
               d="M4 12a8 8 0 018-8v8z"
             />
           </svg>
-          <div className="text-center space-y-1">
+          <div className="space-y-1 text-center">
             <p className="text-base font-bold text-slate-800">
               Importing products…
             </p>
@@ -1688,7 +1688,7 @@ export default function BulkProductImportPanel({
           </div>
         </div>
       )}
-      <div className="overflow-y-auto px-4 py-4 sm:px-6 sm:py-5 space-y-5">
+      <div className="space-y-5 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
         <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
           Upload one CSV file to create many products at once. Required columns:{" "}
           <span className="font-semibold">
@@ -1696,9 +1696,9 @@ export default function BulkProductImportPanel({
           </span>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 space-y-3">
+        <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
           {/* Source toggle */}
-          <div className="flex rounded-xl bg-slate-100 p-1 self-start w-fit">
+          <div className="flex w-fit self-start rounded-xl bg-slate-100 p-1">
             {[
               { value: "file", label: "CSV File" },
               { value: "link", label: "Google Sheet Link" },
@@ -1761,7 +1761,7 @@ export default function BulkProductImportPanel({
                   View Template (High End)
                 </a>
               ) : (
-                <span className="inline-flex items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-300 cursor-not-allowed">
+                <span className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-300">
                   View Template (High End)
                 </span>
               )}
@@ -1846,7 +1846,7 @@ export default function BulkProductImportPanel({
                     Template (High End)
                   </a>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-300 cursor-not-allowed">
+                  <span className="inline-flex cursor-not-allowed items-center gap-1.5 text-xs font-semibold text-slate-300">
                     Template (High End)
                   </span>
                 )}
@@ -1855,7 +1855,7 @@ export default function BulkProductImportPanel({
           )}
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 space-y-4">
+        <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-semibold text-slate-800">
@@ -1895,7 +1895,7 @@ export default function BulkProductImportPanel({
             <div className="grid gap-3 text-xs text-slate-500 sm:grid-cols-2">
               <div>
                 <p className="font-semibold text-slate-700">Important Notes</p>
-                <ul className="mt-2 space-y-1 text-slate-600 list-disc list-inside">
+                <ul className="mt-2 list-inside list-disc space-y-1 text-slate-600">
                   <li>
                     Column order doesn&apos;t matter — header names are matched
                     by name
@@ -1952,7 +1952,7 @@ export default function BulkProductImportPanel({
               </div>
               <div>
                 <p className="font-semibold text-slate-700">Field Reference</p>
-                <ul className="mt-2 space-y-0.5 text-slate-600 list-disc list-inside text-[11px]">
+                <ul className="mt-2 list-inside list-disc space-y-0.5 text-[11px] text-slate-600">
                   <li>
                     <span className="font-mono">pd_catid</span> — category name
                     or numeric category ID
@@ -1984,14 +1984,14 @@ export default function BulkProductImportPanel({
         </div>
 
         {fileName ? (
-          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 flex items-center justify-between gap-3">
-            <p className="text-sm text-slate-700 truncate">
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+            <p className="truncate text-sm text-slate-700">
               Selected file: <span className="font-semibold">{fileName}</span>
             </p>
             <button
               type="button"
               onClick={handleClear}
-              className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-100"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-100"
             >
               <svg
                 className="h-3.5 w-3.5"
@@ -2024,8 +2024,8 @@ export default function BulkProductImportPanel({
         ) : null}
 
         {importResults ? (
-          <div className="rounded-2xl border border-red-200 bg-red-50 overflow-hidden">
-            <div className="border-b border-red-100 px-4 py-3 flex items-center justify-between gap-3">
+          <div className="overflow-hidden rounded-2xl border border-red-200 bg-red-50">
+            <div className="flex items-center justify-between gap-3 border-b border-red-100 px-4 py-3">
               <div>
                 <p className="text-sm font-semibold text-red-800">
                   Import Errors
@@ -2055,24 +2055,24 @@ export default function BulkProductImportPanel({
                 </svg>
               </button>
             </div>
-            <div className="max-h-64 overflow-auto divide-y divide-red-100">
+            <div className="max-h-64 divide-y divide-red-100 overflow-auto">
               {importResults
                 .filter((r) => r.status === "failed")
                 .map((r) => (
                   <div key={r.row} className="px-4 py-3">
                     <div className="flex items-start gap-2">
-                      <span className="mt-0.5 shrink-0 inline-flex rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-600">
+                      <span className="mt-0.5 inline-flex shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-600">
                         Row {r.row}
                       </span>
                       <div className="min-w-0">
                         {(r.name || r.sku) && (
-                          <p className="text-xs font-semibold text-red-800 truncate">
+                          <p className="truncate text-xs font-semibold text-red-800">
                             {r.name ?? ""}
                             {r.name && r.sku ? " — " : ""}
                             {r.sku ? `SKU: ${r.sku}` : ""}
                           </p>
                         )}
-                        <p className="text-xs text-red-700 mt-0.5">
+                        <p className="mt-0.5 text-xs text-red-700">
                           {r.message}
                         </p>
                       </div>
@@ -2087,7 +2087,7 @@ export default function BulkProductImportPanel({
           <div className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                <p className="text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
                   New Products
                 </p>
                 <p className="mt-1 text-2xl font-bold text-emerald-600">
@@ -2096,7 +2096,7 @@ export default function BulkProductImportPanel({
                 <p className="text-xs text-slate-500">Will be created</p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                <p className="text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
                   Updated Products
                 </p>
                 <p className="mt-1 text-2xl font-bold text-blue-600">
@@ -2105,7 +2105,7 @@ export default function BulkProductImportPanel({
                 <p className="text-xs text-slate-500">Will be updated</p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                <p className="text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
                   Total Variants
                 </p>
                 <p className="mt-1 text-2xl font-bold text-violet-600">
@@ -2114,7 +2114,7 @@ export default function BulkProductImportPanel({
                 <p className="text-xs text-slate-500">Across all products</p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                <p className="text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
                   Mode
                 </p>
                 <p className="mt-1 text-lg font-bold text-slate-800">
@@ -2128,10 +2128,10 @@ export default function BulkProductImportPanel({
 
             {importAnalysis && (
               <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-2">
+                <p className="mb-2 text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
                   Import Breakdown
                 </p>
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 text-xs">
+                <div className="grid gap-2 text-xs sm:grid-cols-2 lg:grid-cols-4">
                   <div>
                     <span className="text-slate-600">
                       Variants in new products:
@@ -2166,8 +2166,8 @@ export default function BulkProductImportPanel({
               </div>
             )}
 
-            <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
-              <div className="border-b border-slate-100 px-4 py-3 flex items-start justify-between gap-3">
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+              <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-3">
                 <div>
                   <p className="text-sm font-semibold text-slate-800">
                     Upload Summary
@@ -2177,26 +2177,26 @@ export default function BulkProductImportPanel({
                   </p>
                 </div>
                 {importStats && (
-                  <div className="flex flex-wrap gap-2 text-[11px] shrink-0">
-                    <span className="inline-flex items-center rounded-full bg-teal-50 border border-teal-100 px-2.5 py-1 font-semibold text-teal-700">
+                  <div className="flex shrink-0 flex-wrap gap-2 text-[11px]">
+                    <span className="inline-flex items-center rounded-full border border-teal-100 bg-teal-50 px-2.5 py-1 font-semibold text-teal-700">
                       {importStats.total} product
                       {importStats.total !== 1 ? "s" : ""}
                     </span>
                     {importStats.totalVariants > 0 && (
-                      <span className="inline-flex items-center rounded-full bg-violet-50 border border-violet-100 px-2.5 py-1 font-semibold text-violet-700">
+                      <span className="inline-flex items-center rounded-full border border-violet-100 bg-violet-50 px-2.5 py-1 font-semibold text-violet-700">
                         {importStats.totalVariants} variant
                         {importStats.totalVariants !== 1 ? "s" : ""}
                       </span>
                     )}
                     {unchangedSkus.size > 0 && (
-                      <span className="inline-flex items-center rounded-full bg-slate-100 border border-slate-200 px-2.5 py-1 font-semibold text-slate-400">
+                      <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 font-semibold text-slate-400">
                         {unchangedSkus.size} unchanged
                       </span>
                     )}
                   </div>
                 )}
               </div>
-              <div className="max-h-80 overflow-auto divide-y divide-slate-100">
+              <div className="max-h-80 divide-y divide-slate-100 overflow-auto">
                 {previewRows.map((row) => (
                   <div
                     key={`${row.index}-${row.sku}-${row.name}`}
@@ -2218,7 +2218,7 @@ export default function BulkProductImportPanel({
                         </span>
                       )}
                       {unchangedSkus.has(row.sku) && (
-                        <span className="inline-flex rounded-full bg-slate-100 border border-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-400">
+                        <span className="inline-flex rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-400">
                           No changes
                         </span>
                       )}
@@ -2235,7 +2235,7 @@ export default function BulkProductImportPanel({
                             {row.variants.map((v, vi) => (
                               <div
                                 key={vi}
-                                className="flex flex-wrap gap-x-2 text-[11px] text-slate-400 pl-2 border-l-2 border-violet-200"
+                                className="flex flex-wrap gap-x-2 border-l-2 border-violet-200 pl-2 text-[11px] text-slate-400"
                               >
                                 <span className="font-medium text-slate-600">
                                   {v.pv_name ?? v.pv_sku ?? `Variant ${vi + 1}`}
@@ -2250,7 +2250,7 @@ export default function BulkProductImportPanel({
                                   )}
                                 {Number.isFinite(v.pv_prodpv) &&
                                   v.pv_prodpv! > 0 && (
-                                    <span className="text-teal-600 font-semibold">
+                                    <span className="font-semibold text-teal-600">
                                       PV: {v.pv_prodpv}
                                     </span>
                                   )}
@@ -2275,8 +2275,8 @@ export default function BulkProductImportPanel({
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
-              <div className="border-b border-slate-100 px-4 py-3 flex items-start justify-between gap-3">
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+              <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-3">
                 <div>
                   <p className="text-sm font-semibold text-slate-800">
                     Raw Preview
@@ -2285,12 +2285,12 @@ export default function BulkProductImportPanel({
                     Full table view of the uploaded CSV fields.
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-1.5 text-[11px] shrink-0">
-                  <span className="inline-flex items-center rounded-full bg-teal-50 border border-teal-100 px-2 py-0.5 font-semibold text-teal-700">
+                <div className="flex shrink-0 flex-wrap gap-1.5 text-[11px]">
+                  <span className="inline-flex items-center rounded-full border border-teal-100 bg-teal-50 px-2 py-0.5 font-semibold text-teal-700">
                     {selectedRowIndices.size} / {rawTableRowCount} selected
                   </span>
                   {Object.keys(editedCells).length > 0 && (
-                    <span className="inline-flex items-center rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 font-semibold text-amber-700">
+                    <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 font-semibold text-amber-700">
                       {Object.keys(editedCells).length} row
                       {Object.keys(editedCells).length !== 1 ? "s" : ""} edited
                     </span>
@@ -2325,7 +2325,7 @@ export default function BulkProductImportPanel({
                 <table className="min-w-[2400px] divide-y divide-slate-100 text-left text-[11px]">
                   <thead className="bg-slate-50">
                     <tr>
-                      <th className="sticky left-0 z-10 bg-slate-50 px-3 py-3 w-14">
+                      <th className="sticky left-0 z-10 w-14 bg-slate-50 px-3 py-3">
                         <div className="flex items-center gap-2">
                           <input
                             type="checkbox"
@@ -2347,7 +2347,7 @@ export default function BulkProductImportPanel({
                       ).map((header) => (
                         <th
                           key={header}
-                          className="px-3 py-3 font-semibold text-slate-600 whitespace-nowrap"
+                          className="px-3 py-3 font-semibold whitespace-nowrap text-slate-600"
                         >
                           {header}
                         </th>
@@ -2381,7 +2381,7 @@ export default function BulkProductImportPanel({
                                         {index + 1}
                                       </span>
                                       {isUnchanged && isSelected && (
-                                        <span className="inline-flex rounded-full bg-slate-200 px-1.5 py-0.5 text-[9px] font-semibold text-slate-400 leading-none whitespace-nowrap">
+                                        <span className="inline-flex rounded-full bg-slate-200 px-1.5 py-0.5 text-[9px] leading-none font-semibold whitespace-nowrap text-slate-400">
                                           no changes
                                         </span>
                                       )}
@@ -2391,7 +2391,7 @@ export default function BulkProductImportPanel({
                                 {VARIANT_PREVIEW_COLUMNS.map((header) => (
                                   <td
                                     key={`${index}-${header}`}
-                                    className="px-1 py-1 max-w-[200px]"
+                                    className="max-w-[200px] px-1 py-1"
                                   >
                                     {renderPreviewCell(
                                       index,
@@ -2429,7 +2429,7 @@ export default function BulkProductImportPanel({
                                         {preview.index}
                                       </span>
                                       {isUnchanged && isSelected && (
-                                        <span className="inline-flex rounded-full bg-slate-200 px-1.5 py-0.5 text-[9px] font-semibold text-slate-400 leading-none whitespace-nowrap">
+                                        <span className="inline-flex rounded-full bg-slate-200 px-1.5 py-0.5 text-[9px] leading-none font-semibold whitespace-nowrap text-slate-400">
                                           no changes
                                         </span>
                                       )}
@@ -2439,7 +2439,7 @@ export default function BulkProductImportPanel({
                                 {PREVIEW_COLUMNS.map((header) => (
                                   <td
                                     key={`${preview.index}-${header}`}
-                                    className="px-1 py-1 max-w-[200px]"
+                                    className="max-w-[200px] px-1 py-1"
                                   >
                                     {renderPreviewCell(
                                       i,
@@ -2460,8 +2460,8 @@ export default function BulkProductImportPanel({
         ) : null}
       </div>
 
-      <div className="shrink-0 border-t border-slate-100 bg-slate-50/60 px-4 py-3 sm:px-6 sm:py-4 flex items-center gap-3">
-        <p className="text-xs text-slate-400 flex-1">
+      <div className="flex shrink-0 items-center gap-3 border-t border-slate-100 bg-slate-50/60 px-4 py-3 sm:px-6 sm:py-4">
+        <p className="flex-1 text-xs text-slate-400">
           Manual add still works. This option is only for bulk CSV imports.
         </p>
         <button

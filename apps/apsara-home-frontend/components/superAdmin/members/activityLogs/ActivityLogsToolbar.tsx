@@ -1,7 +1,8 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { ActivityStatus, ACTION_FILTER_OPTIONS } from "./types"
+
+import { ACTION_FILTER_OPTIONS, ActivityStatus } from "./types"
 
 interface ActivityLogsToolbarProps {
   search: string
@@ -25,13 +26,13 @@ export default function ActivityLogsToolbar({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 }}
-      className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3"
+      className="space-y-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
     >
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex flex-wrap items-center gap-3">
         {/* Search */}
-        <div className="relative flex-1 min-w-[200px]">
+        <div className="relative min-w-[200px] flex-1">
           <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500"
+            className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -48,15 +49,15 @@ export default function ActivityLogsToolbar({
             placeholder="Search member, email or action detail..."
             value={search}
             onChange={(e) => onSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-500 dark:focus:ring-sky-400/40 dark:focus:border-sky-400 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition"
+            className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pr-4 pl-9 text-sm text-gray-700 placeholder-gray-400 transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/40 focus:outline-none dark:border-gray-700 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/40"
           />
           {search && (
             <button
               onClick={() => onSearch("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400"
+              className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400"
             >
               <svg
-                className="w-3.5 h-3.5"
+                className="h-3.5 w-3.5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -77,7 +78,7 @@ export default function ActivityLogsToolbar({
           value={actionFilter}
           onChange={(e) => onActionFilter(e.target.value)}
           disabled={isLoading}
-          className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 px-3 py-2 text-sm text-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-500 dark:focus:ring-sky-400/40 dark:focus:border-sky-400 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/40 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-100 dark:focus:border-sky-400 dark:focus:ring-sky-400/40"
         >
           <option value="all">All Activities</option>
           <option value="login">Login</option>
@@ -92,9 +93,9 @@ export default function ActivityLogsToolbar({
         </select>
 
         {/* Export */}
-        <button className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-700 dark:text-gray-100 rounded-lg text-sm font-semibold transition-colors ml-auto">
+        <button className="ml-auto flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-600">
           <svg
-            className="w-4 h-4 text-sky-500 dark:text-sky-400"
+            className="h-4 w-4 text-sky-500 dark:text-sky-400"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"

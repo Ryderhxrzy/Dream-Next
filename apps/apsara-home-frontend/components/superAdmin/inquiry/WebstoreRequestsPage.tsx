@@ -1,10 +1,15 @@
 ﻿"use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { AnimatePresence, motion } from "framer-motion"
+import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
+import { showErrorToast } from "@/libs/toast"
 import {
-  useApproveWebstoreRequestMutation,
+  computeEndDateRaw,
+  isWebstoreRequestExpired,
+} from "@/libs/webstoreExpiry"
+import {
   useApproveWebstoreReceiptMutation,
+  useApproveWebstoreRequestMutation,
   useDeleteWebstoreRequestMutation,
   useGetWebstoreRequestsQuery,
   useRejectWebstoreReceiptMutation,
@@ -14,12 +19,7 @@ import {
   useDeleteAdminWebPageItemMutation,
   useGetAdminWebPageItemsQuery,
 } from "@/store/api/webPagesApi"
-import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
-import { showErrorToast } from "@/libs/toast"
-import {
-  computeEndDateRaw,
-  isWebstoreRequestExpired,
-} from "@/libs/webstoreExpiry"
+import { AnimatePresence, motion } from "framer-motion"
 
 type RequestStatus =
   | "all"
@@ -931,7 +931,7 @@ export default function WebstoreRequestsPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as RequestStatus)}
-              className="rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-700 shadow-sm focus:border-cyan-300 focus:outline-none focus:ring-4 focus:ring-cyan-100/60 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/20"
+              className="rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-700 shadow-sm focus:border-cyan-300 focus:ring-4 focus:ring-cyan-100/60 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/20"
             >
               <option value="all">All Status ({counts.all})</option>
               <option value="pending_review">Pending ({counts.pending})</option>
@@ -1032,7 +1032,7 @@ export default function WebstoreRequestsPage() {
         {rows.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-xs uppercase text-slate-500 dark:bg-slate-950/40 dark:text-slate-400">
+              <thead className="bg-slate-50 text-xs text-slate-500 uppercase dark:bg-slate-950/40 dark:text-slate-400">
                 <tr>
                   <th className="px-5 py-3 text-left font-semibold">Ticket</th>
                   <th className="px-5 py-3 text-left font-semibold">
@@ -1265,7 +1265,7 @@ export default function WebstoreRequestsPage() {
               </div>
             </div>
 
-            <div className="p-5 space-y-3">
+            <div className="space-y-3 p-5">
               <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-800/50">
                 <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                   Display name
@@ -1349,7 +1349,7 @@ export default function WebstoreRequestsPage() {
           <div className="flex max-h-[92vh] w-full max-w-[980px] flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
             <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-600">
+                <p className="text-xs font-semibold tracking-[0.22em] text-sky-600 uppercase">
                   Webstore Request
                 </p>
                 <h3 className="mt-1 text-lg font-bold text-slate-900 dark:text-slate-100">
@@ -1407,11 +1407,11 @@ export default function WebstoreRequestsPage() {
                               />
                             </svg>
                           </span>
-                          <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">
+                          <p className="text-[11px] font-bold tracking-wide text-[#6d82ab] uppercase">
                             Customer
                           </p>
                         </div>
-                        <p className="mt-1 max-w-full break-words text-sm font-semibold leading-tight text-[#163060]">
+                        <p className="mt-1 max-w-full text-sm leading-tight font-semibold break-words text-[#163060]">
                           {details.customerName || "-"}
                         </p>
                       </div>
@@ -1434,15 +1434,15 @@ export default function WebstoreRequestsPage() {
                               />
                             </svg>
                           </span>
-                          <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">
+                          <p className="text-[11px] font-bold tracking-wide text-[#6d82ab] uppercase">
                             Plan &amp; Terms
                           </p>
                         </div>
                         <div className="mt-1 inline-flex flex-col items-center">
-                          <span className="max-w-full break-words text-center text-sm font-semibold leading-tight text-[#163060]">
+                          <span className="max-w-full text-center text-sm leading-tight font-semibold break-words text-[#163060]">
                             {formatPlanLabel(details.plan)}
                           </span>
-                          <span className="mt-1 inline-flex w-fit whitespace-nowrap rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-200 dark:ring-emerald-500/30">
+                          <span className="mt-1 inline-flex w-fit rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold whitespace-nowrap text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-200 dark:ring-emerald-500/30">
                             {formatPlanTermLabel(
                               details.plan,
                               details.planTerm
@@ -1469,17 +1469,17 @@ export default function WebstoreRequestsPage() {
                               />
                             </svg>
                           </span>
-                          <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">
+                          <p className="text-[11px] font-bold tracking-wide text-[#6d82ab] uppercase">
                             Sub fee &amp; Monthly cost
                           </p>
                         </div>
                         <div className="mt-1 inline-flex flex-col items-center">
-                          <span className="max-w-full break-words text-center text-sm font-semibold leading-tight text-[#163060]">
+                          <span className="max-w-full text-center text-sm leading-tight font-semibold break-words text-[#163060]">
                             {details.subscriptionFee != null
                               ? `₱${Number(details.subscriptionFee).toLocaleString()}`
                               : "-"}
                           </span>
-                          <span className="mt-1 inline-flex w-fit whitespace-nowrap rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-200 dark:ring-amber-500/30">
+                          <span className="mt-1 inline-flex w-fit rounded-full bg-amber-50 px-3 py-1 text-xs font-bold whitespace-nowrap text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-200 dark:ring-amber-500/30">
                             {details.effectiveMonthly != null
                               ? `₱${Number(details.effectiveMonthly).toLocaleString()}`
                               : "-"}
@@ -1505,15 +1505,15 @@ export default function WebstoreRequestsPage() {
                               />
                             </svg>
                           </span>
-                          <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">
+                          <p className="text-[11px] font-bold tracking-wide text-[#6d82ab] uppercase">
                             Billing &amp; Payment Method
                           </p>
                         </div>
                         <div className="mt-1 inline-flex flex-col items-center">
-                          <span className="max-w-full break-words text-center text-sm font-semibold leading-tight text-[#163060]">
+                          <span className="max-w-full text-center text-sm leading-tight font-semibold break-words text-[#163060]">
                             {formatBillingLabel(details.billingOption)}
                           </span>
-                          <span className="mt-1 inline-flex w-fit whitespace-nowrap rounded-full bg-sky-50 px-3 py-1 text-xs font-bold text-sky-700 ring-1 ring-sky-200 dark:bg-sky-500/10 dark:text-sky-200 dark:ring-sky-500/30">
+                          <span className="mt-1 inline-flex w-fit rounded-full bg-sky-50 px-3 py-1 text-xs font-bold whitespace-nowrap text-sky-700 ring-1 ring-sky-200 dark:bg-sky-500/10 dark:text-sky-200 dark:ring-sky-500/30">
                             {formatPaymentMethodLabel(details.paymentMethod)}
                           </span>
                         </div>
@@ -1537,11 +1537,11 @@ export default function WebstoreRequestsPage() {
                               />
                             </svg>
                           </span>
-                          <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">
+                          <p className="text-[11px] font-bold tracking-wide text-[#6d82ab] uppercase">
                             Start Date
                           </p>
                         </div>
-                        <p className="mt-1 max-w-full break-words text-center text-sm font-semibold leading-tight text-[#163060]">
+                        <p className="mt-1 max-w-full text-center text-sm leading-tight font-semibold break-words text-[#163060]">
                           {formatDate(
                             String(
                               details.billingOption ?? ""
@@ -1587,11 +1587,11 @@ export default function WebstoreRequestsPage() {
                               />
                             </svg>
                           </span>
-                          <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">
+                          <p className="text-[11px] font-bold tracking-wide text-[#6d82ab] uppercase">
                             End Date
                           </p>
                         </div>
-                        <p className="mt-1 max-w-full break-words text-center text-sm font-semibold leading-tight text-[#163060]">
+                        <p className="mt-1 max-w-full text-center text-sm leading-tight font-semibold break-words text-[#163060]">
                           {computeEndDate(
                             details.approvedAt,
                             details.billingOption,
@@ -1622,7 +1622,7 @@ export default function WebstoreRequestsPage() {
                             />
                           </svg>
                         </span>
-                        <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">
+                        <p className="text-[11px] font-bold tracking-wide text-[#6d82ab] uppercase">
                           Receipt
                         </p>
                       </div>
@@ -1731,7 +1731,7 @@ export default function WebstoreRequestsPage() {
                                       </div>
                                     </div>
                                   </button>
-                                  <div className="px-3 py-2 space-y-1.5">
+                                  <div className="space-y-1.5 px-3 py-2">
                                     <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
                                       {formatDateTime(receipt.submittedAt)}
                                     </p>
@@ -1867,7 +1867,7 @@ export default function WebstoreRequestsPage() {
                                             isApprovingReceipt ||
                                             isRejectingReceipt
                                           }
-                                          className="w-full rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200 dark:hover:bg-emerald-500/15"
+                                          className="w-full rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[9px] font-bold tracking-wide text-emerald-700 uppercase transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200 dark:hover:bg-emerald-500/15"
                                         >
                                           Approve
                                         </button>
@@ -1886,7 +1886,7 @@ export default function WebstoreRequestsPage() {
                                             isApprovingReceipt ||
                                             isRejectingReceipt
                                           }
-                                          className="w-full rounded-full border border-rose-200 bg-rose-50 px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-200 dark:hover:bg-rose-500/15"
+                                          className="w-full rounded-full border border-rose-200 bg-rose-50 px-2 py-1 text-[9px] font-bold tracking-wide text-rose-700 uppercase transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-200 dark:hover:bg-rose-500/15"
                                         >
                                           Reject
                                         </button>
@@ -1945,7 +1945,7 @@ export default function WebstoreRequestsPage() {
                       </div>
                     </div>
                     <div className="grid grid-cols-1 border-t border-slate-200/70 md:grid-cols-3">
-                      <div className="border-b border-slate-200 p-4 md:border-b-0 md:border-r dark:border-slate-800">
+                      <div className="border-b border-slate-200 p-4 md:border-r md:border-b-0 dark:border-slate-800">
                         <div className="flex items-center gap-2">
                           <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-50 text-emerald-500 ring-1 ring-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20">
                             <svg
@@ -1962,13 +1962,13 @@ export default function WebstoreRequestsPage() {
                               />
                             </svg>
                           </span>
-                          <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">
+                          <p className="text-[11px] font-bold tracking-wide text-[#6d82ab] uppercase">
                             Payment Reference No.
                           </p>
                         </div>
                         {latestReceiptReferenceId ? (
                           <>
-                            <p className="mt-1 break-words text-sm font-semibold leading-tight text-[#163060]">
+                            <p className="mt-1 text-sm leading-tight font-semibold break-words text-[#163060]">
                               {latestReceiptReferenceId}
                             </p>
                             {(() => {
@@ -2039,7 +2039,7 @@ export default function WebstoreRequestsPage() {
                           </span>
                         )}
                       </div>
-                      <div className="border-b border-slate-200 p-4 md:border-b-0 md:border-r dark:border-slate-800">
+                      <div className="border-b border-slate-200 p-4 md:border-r md:border-b-0 dark:border-slate-800">
                         <div className="flex items-center gap-2">
                           <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-sky-50 text-sky-500 ring-1 ring-sky-100 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/20">
                             <svg
@@ -2056,11 +2056,11 @@ export default function WebstoreRequestsPage() {
                               />
                             </svg>
                           </span>
-                          <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">
+                          <p className="text-[11px] font-bold tracking-wide text-[#6d82ab] uppercase">
                             Remaining Balance
                           </p>
                         </div>
-                        <p className="mt-1 break-words text-sm font-semibold leading-tight text-[#163060]">
+                        <p className="mt-1 text-sm leading-tight font-semibold break-words text-[#163060]">
                           {details.remainingBalance != null
                             ? `₱${Number(details.remainingBalance).toLocaleString()}`
                             : "-"}
@@ -2083,7 +2083,7 @@ export default function WebstoreRequestsPage() {
                               />
                             </svg>
                           </span>
-                          <p className="text-[11px] font-bold uppercase tracking-wide text-[#6d82ab]">
+                          <p className="text-[11px] font-bold tracking-wide text-[#6d82ab] uppercase">
                             Overall Payment Status
                           </p>
                         </div>
@@ -2266,7 +2266,7 @@ export default function WebstoreRequestsPage() {
                         )
                       }
                       disabled={receiptPreview.activeIndex === 0}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-xl text-slate-700 shadow-md backdrop-blur-sm transition hover:scale-110 hover:bg-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 dark:border-slate-700 dark:bg-slate-800/90 dark:text-slate-200 dark:hover:bg-slate-800"
+                      className="absolute top-1/2 left-3 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-xl text-slate-700 shadow-md backdrop-blur-sm transition hover:scale-110 hover:bg-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 dark:border-slate-700 dark:bg-slate-800/90 dark:text-slate-200 dark:hover:bg-slate-800"
                       aria-label="Previous receipt"
                     >
                       ‹
@@ -2282,7 +2282,7 @@ export default function WebstoreRequestsPage() {
                         receiptPreview.activeIndex ===
                         receiptPreview.urls.length - 1
                       }
-                      className="absolute right-3 top-1/2 -translate-y-1/2 inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-xl text-slate-700 shadow-md backdrop-blur-sm transition hover:scale-110 hover:bg-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 dark:border-slate-700 dark:bg-slate-800/90 dark:text-slate-200 dark:hover:bg-slate-800"
+                      className="absolute top-1/2 right-3 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-xl text-slate-700 shadow-md backdrop-blur-sm transition hover:scale-110 hover:bg-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 dark:border-slate-700 dark:bg-slate-800/90 dark:text-slate-200 dark:hover:bg-slate-800"
                       aria-label="Next receipt"
                     >
                       ›

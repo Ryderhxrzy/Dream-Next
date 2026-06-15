@@ -1,17 +1,19 @@
-import { notFound } from "next/navigation"
-import { headers } from "next/headers"
-import CategoryListProductMain from "@/components/category/CategoryListProductMain"
-import { buildPageMetadata } from "@/app/seo"
+import type { CategoryProduct } from "@/libs/CategoryData"
 import {
   filterPartnerCategories,
   getPartnerStorefrontConfig,
   resolvePartnerStorefrontPublicUrl,
 } from "@/libs/partnerStorefront"
 import { getPartnerStorefrontBySlug } from "@/libs/partnerStorefrontServer"
-import type { CategoryProduct } from "@/libs/CategoryData"
 import type { Category } from "@/store/api/categoriesApi"
 import type { Product } from "@/store/api/productsApi"
 import type { WebPageItem } from "@/store/api/webPagesApi"
+import { headers } from "next/headers"
+import { notFound } from "next/navigation"
+
+import CategoryListProductMain from "@/components/category/CategoryListProductMain"
+import { buildPageMetadata } from "@/app/seo"
+
 export const dynamic = "force-dynamic"
 
 type PageProps = {

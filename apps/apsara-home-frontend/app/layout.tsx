@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next"
+
 // import Script from "next/script";
 import "./globals.css"
-import Providers from "@/components/Providers"
+
 import { DynamicNotifyToaster } from "@/components/ui/DynamicNotify/DynamicNotify"
+import Providers from "@/components/Providers"
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -46,7 +48,7 @@ export default function RootLayout({
         <link rel="preload" as="image" href={`${apiBase}/Image/sir.png`} />
         <link rel="preload" as="image" href={`${apiBase}/Image/af.png`} />
       </head>
-      <body className="antialiased bg-white dark:bg-gray-900">
+      <body className="bg-white antialiased dark:bg-gray-900">
         <Providers>{children}</Providers>
         <DynamicNotifyToaster />
         {/* <Script

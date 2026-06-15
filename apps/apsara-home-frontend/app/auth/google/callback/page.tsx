@@ -137,11 +137,11 @@ export default function GoogleAuthCallback() {
   }, [searchParams])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-gray-900">
-      <div className="max-w-md w-full mx-4 p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-lg text-center">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-gray-900">
+      <div className="mx-4 w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-lg dark:bg-gray-800">
         {status === "processing" && (
           <div className="flex flex-col items-center gap-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-500"></div>
+            <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-sky-500"></div>
             <h1 className="text-xl font-semibold text-slate-800 dark:text-gray-200">
               Connecting to Google...
             </h1>
@@ -153,7 +153,7 @@ export default function GoogleAuthCallback() {
 
         {status === "success" && (
           <div className="flex flex-col items-center gap-4">
-            <div className="h-12 w-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
               <svg
                 className="h-6 w-6 text-emerald-600 dark:text-emerald-400"
                 fill="none"
@@ -179,7 +179,7 @@ export default function GoogleAuthCallback() {
 
         {status === "error" && (
           <div className="flex flex-col items-center gap-4">
-            <div className="h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
               <svg
                 className="h-6 w-6 text-red-600 dark:text-red-400"
                 fill="none"
@@ -202,7 +202,7 @@ export default function GoogleAuthCallback() {
             </p>
             <button
               onClick={() => window.close()}
-              className="mt-2 px-4 py-2 bg-slate-100 dark:bg-gray-700 hover:bg-slate-200 dark:hover:bg-gray-600 rounded-lg text-sm font-medium text-slate-700 dark:text-gray-300 transition-colors"
+              className="mt-2 rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
             >
               Close Window
             </button>

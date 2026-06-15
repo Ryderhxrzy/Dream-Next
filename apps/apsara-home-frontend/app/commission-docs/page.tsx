@@ -1,6 +1,7 @@
+import { adminAuthOptions } from "@/libs/adminAuth"
 import { getServerSession } from "next-auth"
 import { redirect } from "next/navigation"
-import { adminAuthOptions } from "@/libs/adminAuth"
+
 import CommissionDocs from "@/components/Comission-docs"
 
 export const metadata = {

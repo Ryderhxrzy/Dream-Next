@@ -1,5 +1,5 @@
-import { buildPageMetadata } from "@/app/seo"
 import ReferralLandingPage from "@/components/referrals/ReferralLandingPage"
+import { buildPageMetadata } from "@/app/seo"
 
 type ReferralPageProps = {
   params: Promise<{ code: string }>

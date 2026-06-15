@@ -1,12 +1,13 @@
-import { buildPageMetadata } from "@/app/seo"
-import ProfilePage from "@/components/profile/ProfilePage"
 import { authOptions } from "@/libs/auth"
-import type { MeResponse } from "@/store/api/userApi"
-import { getServerSession } from "next-auth"
-import { getNavbarCategories } from "@/libs/serverStorefront"
-import { notFound, redirect } from "next/navigation"
 import { getPartnerStorefrontBySlug } from "@/libs/partnerStorefrontServer"
+import { getNavbarCategories } from "@/libs/serverStorefront"
+import type { MeResponse } from "@/store/api/userApi"
 import type { Metadata } from "next"
+import { getServerSession } from "next-auth"
+import { notFound, redirect } from "next/navigation"
+
+import ProfilePage from "@/components/profile/ProfilePage"
+import { buildPageMetadata } from "@/app/seo"
 
 export const dynamic = "force-dynamic"
 

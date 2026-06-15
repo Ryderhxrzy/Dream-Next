@@ -1,12 +1,14 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { motion } from "framer-motion"
 import { useGetActivityLogsQuery } from "@/store/api/activityLogsApi"
-import ActivityLogsStats from "./ActivityLogsStats"
-import ActivityLogsToolbar from "./ActivityLogsToolbar"
-import ActivityLogsTable from "./ActivityLogsTable"
+import { motion } from "framer-motion"
+
 import Loading from "@/components/Loading"
+
+import ActivityLogsStats from "./ActivityLogsStats"
+import ActivityLogsTable from "./ActivityLogsTable"
+import ActivityLogsToolbar from "./ActivityLogsToolbar"
 
 const ActivityLogsPageMain = () => {
   const [search, setSearch] = useState("")
@@ -49,13 +51,13 @@ const ActivityLogsPageMain = () => {
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-start justify-between gap-4 flex-wrap"
+        className="flex flex-wrap items-start justify-between gap-4"
       >
         <div>
           <h1 className="text-xl font-bold text-gray-800 dark:text-white">
             Members Activity Logs
           </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
+          <p className="mt-0.5 text-sm text-gray-600 dark:text-gray-400">
             Track all member actions - logins, purchases, encashment, and more
           </p>
         </div>

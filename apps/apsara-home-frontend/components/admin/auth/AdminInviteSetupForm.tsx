@@ -201,7 +201,7 @@ export default function AdminInviteSetupForm({ token }: Props) {
       <div className="mx-auto max-w-xl">
         <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-8 shadow-2xl shadow-black/30">
           <div className="mb-8">
-            <div className="inline-flex items-center gap-2 rounded-full border border-teal-500/20 bg-teal-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-teal-300">
+            <div className="inline-flex items-center gap-2 rounded-full border border-teal-500/20 bg-teal-500/10 px-4 py-2 text-xs font-semibold tracking-[0.18em] text-teal-300 uppercase">
               Admin Setup
             </div>
             <h1 className="mt-5 text-3xl font-bold tracking-tight text-white">
@@ -229,7 +229,7 @@ export default function AdminInviteSetupForm({ token }: Props) {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid gap-4 rounded-2xl border border-slate-800 bg-slate-950/40 p-5 sm:grid-cols-2">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
                     Full Name
                   </p>
                   <p className="mt-1 text-sm font-medium text-white">
@@ -237,15 +237,15 @@ export default function AdminInviteSetupForm({ token }: Props) {
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
                     Role
                   </p>
-                  <p className="mt-1 text-sm font-medium capitalize text-white">
+                  <p className="mt-1 text-sm font-medium text-white capitalize">
                     {invite.role.replace(/_/g, " ")}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
                     Username
                   </p>
                   <p className="mt-1 text-sm font-medium text-white">
@@ -253,7 +253,7 @@ export default function AdminInviteSetupForm({ token }: Props) {
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
                     Email
                   </p>
                   <p className="mt-1 text-sm font-medium text-white">
@@ -353,12 +353,12 @@ export default function AdminInviteSetupForm({ token }: Props) {
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           placeholder="Create your password"
-                          className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 pr-20 text-sm text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+                          className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 pr-20 text-sm text-white placeholder:text-slate-500 focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20 focus:outline-none"
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword((prev) => !prev)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400 transition hover:text-white"
+                          className="absolute top-1/2 right-3 -translate-y-1/2 text-xs font-semibold text-slate-400 transition hover:text-white"
                         >
                           {showPassword ? "Hide" : "Show"}
                         </button>
@@ -374,14 +374,14 @@ export default function AdminInviteSetupForm({ token }: Props) {
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
                           placeholder="Confirm your password"
-                          className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 pr-20 text-sm text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+                          className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 pr-20 text-sm text-white placeholder:text-slate-500 focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20 focus:outline-none"
                         />
                         <button
                           type="button"
                           onClick={() =>
                             setShowConfirmPassword((prev) => !prev)
                           }
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400 transition hover:text-white"
+                          className="absolute top-1/2 right-3 -translate-y-1/2 text-xs font-semibold text-slate-400 transition hover:text-white"
                         >
                           {showConfirmPassword ? "Hide" : "Show"}
                         </button>
