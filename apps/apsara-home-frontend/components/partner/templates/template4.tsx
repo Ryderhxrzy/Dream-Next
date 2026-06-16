@@ -1,6 +1,28 @@
 'use client'
 
 import { useState } from 'react'
+import { motion } from 'framer-motion'
+
+const REVEAL = {
+  initial: { opacity: 0, y: 36 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: false, margin: '-80px' },
+  transition: { duration: 0.75, ease: [0.22, 1, 0.36, 1] },
+} as const
+
+const STAGGER_C = {
+  initial: 'hidden',
+  whileInView: 'visible',
+  viewport: { once: false, margin: '-80px' },
+  variants: { hidden: {}, visible: { transition: { staggerChildren: 0.13, delayChildren: 0.08 } } },
+} as const
+
+const STAGGER_I = {
+  variants: {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] } },
+  },
+} as const
 
 export interface Template4Props {
   storeName?: string
@@ -297,7 +319,10 @@ export default function Template4({
       {/* ── Hero ─────────────────────────────────────────────── */}
       <S id="hero" label="Hero" selected={sel('hero')} onClick={onSectionClick}>
         <section className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-8 px-4 py-10 @md:grid-cols-2 @md:px-16 @md:py-20">
-          <div className={heroTextAlign}>
+          <motion.div
+            className={heroTextAlign}
+            initial={{ opacity: 0, x: -40 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: false, margin: '-80px' }} transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
+          >
             <h1 className="text-2xl font-black leading-tight text-slate-900 @xs:text-3xl @sm:text-4xl @lg:text-5xl">{tagline}</h1>
             <p className="mt-3 text-sm leading-relaxed text-slate-500">{description}</p>
             <div className={`mt-5 flex flex-wrap gap-2 @sm:gap-3 ${heroBtnAlign}`}>
@@ -324,10 +349,13 @@ export default function Template4({
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
 
           {/* Dashboard mockup — hidden below @md */}
-          <div className="relative hidden @md:block">
+          <motion.div
+            className="relative hidden @md:block"
+            initial={{ opacity: 0, x: 40 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: false, margin: '-80px' }} transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
+          >
             <div className="relative rounded-2xl border border-slate-200 bg-white p-4 shadow-xl" style={{ boxShadow: '0 20px 60px -10px rgba(0,0,0,0.12)' }}>
               <div className="mb-3 flex items-center gap-4 border-b border-slate-100 pb-3">
                 <span className="border-b-2 pb-3 -mb-3 text-xs font-semibold text-slate-800" style={{ borderColor: primaryColor }}>Overview</span>
@@ -392,7 +420,7 @@ export default function Template4({
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         </section>
       </S>
 
@@ -402,24 +430,30 @@ export default function Template4({
           <p className="mb-6 text-center text-[11px] font-semibold uppercase tracking-widest text-slate-400 @sm:mb-8 @sm:text-xs">
             Trusted by Businesses Worldwide
           </p>
-          <div className="mx-auto flex max-w-5xl flex-wrap justify-center gap-6 @lg:flex-nowrap @lg:gap-8">
+          <motion.div
+            className="mx-auto flex max-w-5xl flex-wrap justify-center gap-6 @lg:flex-nowrap @lg:gap-8"
+            {...STAGGER_C}
+          >
             {statsData.map((s) => (
-              <div key={s.label} className="flex w-[calc(50%-12px)] flex-col items-center gap-2 text-center @sm:w-[calc(33.333%-16px)] @lg:w-auto @lg:flex-1">
+              <motion.div key={s.label} className="flex w-[calc(50%-12px)] flex-col items-center gap-2 text-center @sm:w-[calc(33.333%-16px)] @lg:w-auto @lg:flex-1" {...STAGGER_I}>
                 <div className="flex h-10 w-10 items-center justify-center rounded-full @sm:h-12 @sm:w-12" style={{ backgroundColor: s.bg }}>
                   {s.icon}
                 </div>
                 <p className="text-lg font-black text-slate-900 @sm:text-xl">{s.value}</p>
                 <p className="text-[10px] text-slate-400 @sm:text-[11px]">{s.label}</p>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </section>
       </S>
 
       {/* ── About ─────────────────────────────────────────────── */}
       <S id="about" label="About" selected={sel('about')} onClick={onSectionClick}>
         <section className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-8 px-4 py-10 @md:grid-cols-2 @md:px-16 @md:py-24">
-          <div className="relative overflow-hidden rounded-2xl shadow-lg @sm:rounded-3xl">
+          <motion.div
+            className="relative overflow-hidden rounded-2xl shadow-lg @sm:rounded-3xl"
+            initial={{ opacity: 0, x: -44 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: false, margin: '-80px' }} transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
+          >
             {aboutPhoto
               ? <img src={aboutPhoto} alt="About" className="h-48 w-full object-cover @xs:h-56 @sm:h-80 @md:h-96" />
               : <div className="flex h-48 items-center justify-center bg-slate-100 @xs:h-56 @sm:h-80"><span className="text-5xl @sm:text-6xl">🏢</span></div>
@@ -428,8 +462,10 @@ export default function Template4({
               <p className="text-xs font-bold text-slate-800">Better Solutions</p>
               <p className="text-[11px] text-slate-500">Better Future</p>
             </div>
-          </div>
-          <div>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, x: 44 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: false, margin: '-80px' }} transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
+          >
             <p className="mb-2 text-[11px] font-bold uppercase tracking-widest @sm:mb-3 @sm:text-xs" style={{ color: primaryColor }}>About Us</p>
             <h2 className="text-xl font-black leading-tight text-slate-900 @xs:text-2xl @sm:text-3xl @lg:text-4xl">{aboutTitle}</h2>
             <p className="mt-3 text-sm leading-relaxed text-slate-500">{aboutBody}</p>
@@ -447,7 +483,7 @@ export default function Template4({
             <button type="button" className="mt-6 rounded-lg bg-[#111827] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#1f2937] @sm:mt-8 @sm:px-6 @sm:py-3">
               Learn More About Us
             </button>
-          </div>
+          </motion.div>
         </section>
       </S>
 
@@ -455,14 +491,20 @@ export default function Template4({
       <S id="features" label="Features" selected={sel('features')} onClick={onSectionClick}>
         <section className="px-4 py-10 @md:px-16 @md:py-20">
           <div className="mx-auto max-w-6xl">
-            <div className="mb-8 text-center @sm:mb-10">
+            <motion.div
+              className="mb-8 text-center @sm:mb-10"
+              {...REVEAL}
+            >
               <p className="mb-2 text-[11px] font-bold uppercase tracking-widest @sm:text-xs" style={{ color: primaryColor }}>Products</p>
               <h2 className="text-xl font-black text-slate-900 @xs:text-2xl @sm:text-3xl">{featuresTitle}</h2>
               <p className="mt-2 text-sm text-slate-500">{featuresSubtitle}</p>
-            </div>
-            <div className="grid grid-cols-1 gap-3 @xs:grid-cols-2 @lg:grid-cols-3 @xl:grid-cols-5">
+            </motion.div>
+            <motion.div
+              className="grid grid-cols-1 gap-3 @xs:grid-cols-2 @lg:grid-cols-3 @xl:grid-cols-5"
+              {...STAGGER_C}
+            >
               {features.map((f) => (
-                <div key={f.title} className="flex flex-row items-start gap-3 rounded-xl border border-slate-100 p-3 @lg:flex-col @lg:border-none @lg:p-0">
+                <motion.div key={f.title} className="flex flex-row items-start gap-3 rounded-xl border border-slate-100 p-3 @lg:flex-col @lg:border-none @lg:p-0" {...STAGGER_I}>
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl @sm:h-10 @sm:w-10" style={{ backgroundColor: f.bg }}>
                     {f.icon}
                   </div>
@@ -470,9 +512,9 @@ export default function Template4({
                     <h3 className="text-sm font-bold text-slate-900">{f.title}</h3>
                     <p className="mt-1 text-xs leading-relaxed text-slate-500">{f.desc}</p>
                   </div>
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
         </section>
       </S>
@@ -481,7 +523,9 @@ export default function Template4({
       <S id="cta" label="CTA" selected={sel('cta')} onClick={onSectionClick}>
         <section className="bg-slate-50 px-4 py-10 @md:px-16 @md:py-20">
           <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-8 @md:grid-cols-2">
-            <div>
+            <motion.div
+              initial={{ opacity: 0, x: -40 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: false, margin: '-80px' }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            >
               <p className="mb-2 text-[11px] font-bold uppercase tracking-widest @sm:mb-3 @sm:text-xs" style={{ color: primaryColor }}>Contact Us</p>
               <h2 className="text-xl font-black leading-tight text-slate-900 @xs:text-2xl @sm:text-3xl">{ctaTitle}</h2>
               <p className="mt-3 text-sm leading-relaxed text-slate-500">{ctaSubtitle}</p>
@@ -491,8 +535,11 @@ export default function Template4({
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
               </button>
-            </div>
-            <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm @sm:p-8">
+            </motion.div>
+            <motion.div
+              className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm @sm:p-8"
+              initial={{ opacity: 0, x: 40 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: false, margin: '-80px' }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
+            >
               <div className="pointer-events-none absolute inset-0 opacity-5">
                 <svg viewBox="0 0 400 240" className="h-full w-full" preserveAspectRatio="xMidYMid slice">
                   {Array.from({ length: 12 }).map((_, i) => <line key={`v${i}`} x1={i * 36} y1="0" x2={i * 36} y2="240" stroke="#64748b" strokeWidth="0.5" />)}
@@ -513,7 +560,7 @@ export default function Template4({
                   </div>
                 ))}
               </div>
-            </div>
+            </motion.div>
           </div>
         </section>
       </S>

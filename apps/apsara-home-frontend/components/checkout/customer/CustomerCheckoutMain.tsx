@@ -14,6 +14,7 @@ import {
   useValidateVoucherMutation,
 } from "@/store/api/paymentApi"
 import { useLazyGetPublicProductQuery } from "@/store/api/productsApi"
+import { useAddWishlistMutation } from "@/store/api/wishlistApi"
 import { useGetPublicShippingRatesQuery } from "@/store/api/shippingRatesApi"
 import { useMeQuery } from "@/store/api/userApi"
 import { ArrowLeft, User } from "lucide-react"
@@ -300,6 +301,7 @@ const CustomerCheckoutMain = ({
   const [notice, setNotice] = useState("")
   const [createCheckoutSession, { isLoading: loading }] =
     useCreateCheckoutSessionMutation()
+  const [addWishlist] = useAddWishlistMutation()
   const [validateVoucher, { isLoading: voucherLoading }] =
     useValidateVoucherMutation()
   const [validateCashback, { isLoading: cashbackLoading }] =
@@ -338,7 +340,12 @@ const CustomerCheckoutMain = ({
       ...defaultForm,
       ...(isLoggedIn
         ? {
-            name: meData?.name || "",
+            name:
+              (meData?.first_name || meData?.last_name)
+                ? [meData?.first_name, meData?.last_name]
+                    .filter(Boolean)
+                    .join(" ")
+                : meData?.name || "",
             email: meData?.email || "",
             phone: meData?.phone || "",
             address: meData?.address || "",
@@ -984,6 +991,25 @@ const CustomerCheckoutMain = ({
         localStorage.removeItem("last_checkout_source_slug")
         sessionStorage.removeItem("last_checkout_source_slug")
       }
+      // Move ordered items to wishlist (logged-in users only, fire-and-forget)
+      if (isLoggedIn) {
+        const productIds: number[] = []
+        if (checkoutData.items && checkoutData.items.length > 0) {
+          for (const item of checkoutData.items) {
+            const pid = Number(item.productId)
+            if (pid > 0) productIds.push(pid)
+          }
+        } else {
+          const pid = Number(checkoutData.product?.id)
+          if (pid > 0) productIds.push(pid)
+        }
+        void Promise.all(
+          productIds.map((productId) =>
+            addWishlist({ product_id: productId }).catch(() => {})
+          )
+        )
+      }
+
       localStorage.removeItem("guest_checkout")
       window.location.href = data.checkout_url
     } catch (error) {

@@ -17,6 +17,7 @@ class Supplier extends Model
         's_email',
         's_contact',
         's_address',
+        's_logo',
         's_warehouse_name',
         's_warehouse_address',
         's_warehouse_latitude',

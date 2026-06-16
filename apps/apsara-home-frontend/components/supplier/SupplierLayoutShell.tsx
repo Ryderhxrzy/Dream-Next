@@ -520,12 +520,12 @@ export default function SupplierLayoutShell({
                 className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-100"
               >
                 {supplierLogo ? (
-                  <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded-lg bg-sky-100 dark:bg-sky-900/30">
+                  <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded-lg bg-white dark:bg-slate-800">
                     <Image
                       src={supplierLogo}
                       alt={supplierName}
                       fill
-                      className="object-cover"
+                      className="object-contain p-0.5"
                     />
                   </div>
                 ) : (

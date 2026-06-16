@@ -1,10 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { clearAccessTokenCache } from "@/store/api/baseApi"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import {
   useGetSupplierCategoriesQuery,
   useGetSupplierMeQuery,
+  useUpdateSupplierLogoMutation,
 } from "@/store/api/suppliersApi"
 import { AnimatePresence, motion } from "framer-motion"
 import {
@@ -106,6 +108,8 @@ export default function SupplierSidebar({
   const pathname = usePathname()
   const router = useRouter()
   const [openMenus, setOpenMenus] = useState<string[]>([])
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false)
+  const logoInputRef = useRef<HTMLInputElement>(null)
   const { data: session } = useSession()
 
   const supplierName =
@@ -113,10 +117,10 @@ export default function SupplierSidebar({
   const isMainSupplier = Boolean(session?.user?.isMainSupplier)
   const displayRole = formatRole(isMainSupplier)
 
-  const { data: supplierMe } = useGetSupplierMeQuery(undefined, {
-    skip: !session,
-  })
+  const { data: supplierMe, refetch: refetchSupplierMe } =
+    useGetSupplierMeQuery(undefined, { skip: !session })
   const supplierLogo = supplierMe?.supplier_logo ?? null
+  const [updateSupplierLogo] = useUpdateSupplierLogoMutation()
 
   const supplierId = Number(session?.user?.supplierId ?? 0)
   const { data: supplierCategoriesData } = useGetSupplierCategoriesQuery(
@@ -128,6 +132,34 @@ export default function SupplierSidebar({
   const isServicesView = (supplierCategoriesData?.categories ?? []).some(
     (c) => c.name.toLowerCase() === "services"
   )
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) {
+      showErrorToast("Image must be under 5 MB.")
+      return
+    }
+    setIsUploadingLogo(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      const res = await fetch("/api/supplier/upload", {
+        method: "POST",
+        body: formData,
+      })
+      const data = await res.json()
+      if (!res.ok || !data.url) throw new Error(data.error || "Upload failed.")
+      await updateSupplierLogo({ logo_url: data.url }).unwrap()
+      await refetchSupplierMe()
+      showSuccessToast("Profile image updated.")
+    } catch {
+      showErrorToast("Failed to update profile image.")
+    } finally {
+      setIsUploadingLogo(false)
+      if (logoInputRef.current) logoInputRef.current.value = ""
+    }
+  }
   const visibleMainItems = isServicesView ? servicesMainItems : mainItems
 
   const toggleMenu = (id: string) =>
@@ -196,20 +228,67 @@ export default function SupplierSidebar({
       {/* Profile Card */}
       <div className="border-b border-slate-200/80 px-2 py-3 dark:border-slate-700/50">
         <div className="flex items-start gap-3 rounded-xl border border-slate-200/80 bg-slate-50/50 p-3 dark:border-slate-700/50 dark:bg-slate-800/30">
-          {supplierLogo ? (
-            <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg bg-sky-100 dark:bg-sky-900/30">
-              <Image
-                src={supplierLogo}
-                alt={supplierName}
-                fill
-                className="object-cover"
-              />
-            </div>
-          ) : (
-            <div className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-500 text-xs font-bold text-white">
-              {getInitials(supplierName)}
-            </div>
-          )}
+          {/* Avatar — clickable to upload when isServicesView */}
+          <div className="relative shrink-0">
+            <input
+              ref={logoInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handleLogoUpload}
+            />
+            <button
+              type="button"
+              onClick={() => isServicesView && logoInputRef.current?.click()}
+              className={isServicesView ? "group relative" : ""}
+              aria-label={isServicesView ? "Upload profile image" : undefined}
+            >
+              {supplierLogo ? (
+                <div className="relative h-9 w-9 overflow-hidden rounded-lg bg-white dark:bg-slate-800">
+                  <Image
+                    src={supplierLogo}
+                    alt={supplierName}
+                    fill
+                    className="object-contain p-0.5"
+                  />
+                  {isServicesView && (
+                    <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/40 opacity-0 transition group-hover:opacity-100">
+                      {isUploadingLogo ? (
+                        <svg className="h-3.5 w-3.5 animate-spin text-white" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                        </svg>
+                      ) : (
+                        <svg className="h-3.5 w-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="relative inline-flex h-9 w-9 items-center justify-center rounded-lg bg-sky-500 text-xs font-bold text-white">
+                  {isUploadingLogo ? (
+                    <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                  ) : (
+                    getInitials(supplierName)
+                  )}
+                  {isServicesView && !isUploadingLogo && (
+                    <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/40 opacity-0 transition group-hover:opacity-100">
+                      <svg className="h-3.5 w-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              )}
+            </button>
+          </div>
           <div className="min-w-0 flex-1">
             <p className="text-[9px] font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500">
               Account

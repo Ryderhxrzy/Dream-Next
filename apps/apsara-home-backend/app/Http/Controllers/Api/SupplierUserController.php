@@ -45,6 +45,7 @@ class SupplierUserController extends Controller
                 'fullname' => (string) ($user->su_fullname ?: ''),
                 'username' => (string) ($user->su_username ?: ''),
                 'email' => (string) ($user->su_email ?? ''),
+                'avatar_url' => (string) ($user->su_avatar ?? ''),
                 'level_type' => (int) ($user->su_level_type ?? 0),
                 'is_main_supplier' => (int) ($user->su_level_type ?? 0) === 1,
                 'role_label' => (int) ($user->su_level_type ?? 0) === 1 ? 'Main Supplier' : 'Sub Supplier',
@@ -77,6 +78,7 @@ class SupplierUserController extends Controller
             'username' => 'required|string|max:45',
             'email' => 'nullable|email|max:255',
             'password' => 'nullable|string|min:8',
+            'avatar_url' => 'nullable|url|max:2048',
         ]);
 
         $query = SupplierUser::query()->where('su_id', $id);
@@ -123,6 +125,10 @@ class SupplierUserController extends Controller
             $updatePayload['su_password'] = Hash::make((string) $validated['password']);
         }
 
+        if (array_key_exists('avatar_url', $validated)) {
+            $updatePayload['su_avatar'] = $validated['avatar_url'] ?? null;
+        }
+
         $supplierUser->forceFill($updatePayload)->save();
 
         return response()->json([
@@ -133,6 +139,7 @@ class SupplierUserController extends Controller
                 'fullname' => (string) ($supplierUser->su_fullname ?: ''),
                 'username' => (string) ($supplierUser->su_username ?: ''),
                 'email' => (string) ($supplierUser->su_email ?? ''),
+                'avatar_url' => (string) ($supplierUser->su_avatar ?? ''),
                 'level_type' => (int) ($supplierUser->su_level_type ?? 0),
                 'is_main_supplier' => (int) ($supplierUser->su_level_type ?? 0) === 1,
                 'role_label' => (int) ($supplierUser->su_level_type ?? 0) === 1 ? 'Main Supplier' : 'Sub Supplier',

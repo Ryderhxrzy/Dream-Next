@@ -63,10 +63,10 @@ const REALTIME_NOTIFICATION_DURATION_SECONDS = 10
 
 const getCustomerNotificationReadKey = (item: {
   id: string
-  title: string
-  description: string
-  count: number
-}) => `${item.id}:${item.title}:${item.description}:${item.count}`
+  title?: string
+  description?: string
+  count?: number
+}) => item.id
 
 const normalizeCustomerNotificationTimestamp = (raw: string) => {
   const trimmed = raw.trim()

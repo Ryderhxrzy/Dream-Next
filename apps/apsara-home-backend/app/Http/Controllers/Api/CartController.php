@@ -479,10 +479,14 @@ class CartController extends Controller
             )
             ->get()
             ->map(function ($item) {
-                $availableStock = (int) ($item->variant_id ? ($item->variant_stock ?? 0) : ($item->product_stock ?? 0));
+                $productStock = $item->product_stock !== null ? (int) $item->product_stock : null;
+                $variantStock = $item->variant_stock !== null ? (int) $item->variant_stock : null;
+                $hasVariant = $item->variant_id !== null;
+                $stockKnown = $hasVariant ? $variantStock !== null : $productStock !== null;
+                $availableStock = $hasVariant ? ($variantStock ?? 0) : ($productStock ?? 0);
                 $currentQuantity = (int) ($item->crt_quantity ?? 0);
 
-                if ($availableStock > 0 && $currentQuantity > $availableStock) {
+                if ($stockKnown && $availableStock > 0 && $currentQuantity > $availableStock) {
                     DB::table('tbl_add_to_cart')
                         ->where('crt_id', $item->crt_id)
                         ->update([

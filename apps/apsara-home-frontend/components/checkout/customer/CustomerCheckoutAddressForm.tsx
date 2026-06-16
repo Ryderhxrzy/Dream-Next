@@ -349,8 +349,7 @@ export default function CustomerCheckoutAddressForm({
 
   const applyAddressToForm = useCallback(
     (address: CustomerAddress) => {
-      setField("name", address.full_name)
-      setField("phone", address.phone)
+      // Name and phone come from the profile — don't overwrite from saved address
       setField("address", address.address)
       setField("region", address.region)
       setField("province", address.province)
@@ -511,11 +510,11 @@ export default function CustomerCheckoutAddressForm({
     const nextAddress =
       addresses.find((address) => address.is_default) ?? addresses[0]
     if (nextAddress.id === selectedAddressId) return
+    // Only mark the card as selected — form fields already come from the profile
     queueMicrotask(() => {
       setSelectedAddressId(nextAddress.id)
-      applyAddressToForm(nextAddress)
     })
-  }, [addresses, applyAddressToForm, effectiveLoggedIn, selectedAddressId])
+  }, [addresses, effectiveLoggedIn, selectedAddressId])
 
   useEffect(() => {
     if (!isModalOpen || addresses.length > 0) return
@@ -853,10 +852,10 @@ export default function CustomerCheckoutAddressForm({
                           </div>
 
                           <p className="text-base leading-tight font-bold text-slate-900 dark:text-white">
-                            {selectedAddress.full_name}
+                            {form.name || selectedAddress.full_name}
                           </p>
                           <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-                            {selectedAddress.phone}
+                            {form.phone || selectedAddress.phone}
                           </p>
                           <p className="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
                             {selectedAddress.full_address}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import {
   useDeleteSupplierUserMutation,
   useGetSupplierUsersQuery,
@@ -10,8 +10,10 @@ import {
 import {
   AlertTriangle,
   AtSign,
+  Camera,
   Copy,
   Lock,
+  Loader2,
   Mail,
   Pencil,
   Send,
@@ -22,6 +24,8 @@ import {
   X,
 } from "lucide-react"
 import { useSession } from "next-auth/react"
+import Image from "next/image"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
 
 type InviteForm = { fullname: string; username: string; email: string }
 const defaultInviteForm: InviteForm = { fullname: "", username: "", email: "" }
@@ -32,6 +36,7 @@ type EditForm = {
   username: string
   email: string
   password: string
+  avatar_url: string
   is_main_supplier?: boolean
 }
 
@@ -207,6 +212,8 @@ export default function SupplierUsersPage() {
     id: number
     label: string
   } | null>(null)
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
 
   const users = useMemo(() => data?.users ?? [], [data?.users])
 
@@ -225,6 +232,33 @@ export default function SupplierUsersPage() {
       if (typeof dataValue?.message === "string") return dataValue.message
     }
     return fallback
+  }
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !editing) return
+    if (file.size > 5 * 1024 * 1024) {
+      showErrorToast("Image must be under 5 MB.")
+      return
+    }
+    setIsUploadingAvatar(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      const res = await fetch("/api/supplier/upload", {
+        method: "POST",
+        body: formData,
+      })
+      if (!res.ok) throw new Error("Upload failed")
+      const { url } = (await res.json()) as { url: string }
+      setEditing((prev) => (prev ? { ...prev, avatar_url: url } : prev))
+      showSuccessToast("Photo uploaded. Save changes to apply.")
+    } catch {
+      showErrorToast("Failed to upload photo. Please try again.")
+    } finally {
+      setIsUploadingAvatar(false)
+      if (avatarInputRef.current) avatarInputRef.current.value = ""
+    }
   }
 
   const handleInvite = async (e: React.FormEvent) => {
@@ -261,6 +295,7 @@ export default function SupplierUsersPage() {
         username: editing.username.trim(),
         email: editing.email.trim() || undefined,
         password: editing.password.trim() || undefined,
+        avatar_url: editing.avatar_url || undefined,
       }).unwrap()
       setFeedback({ type: "success", message: result.message })
       setEditing(null)
@@ -341,6 +376,7 @@ export default function SupplierUsersPage() {
     fullname: string
     username: string
     email: string
+    avatar_url?: string
     is_main_supplier?: boolean
   }) => {
     setFeedback(null)
@@ -351,6 +387,7 @@ export default function SupplierUsersPage() {
       username: user.username || "",
       email: user.email || "",
       password: "",
+      avatar_url: user.avatar_url || "",
       is_main_supplier: user.is_main_supplier,
     })
   }
@@ -537,11 +574,23 @@ export default function SupplierUsersPage() {
                     >
                       <div className="flex min-w-0 items-center gap-3">
                         {/* Avatar */}
+                        {user.avatar_url ? (
+                          <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
+                            <Image
+                              src={user.avatar_url}
+                              alt={user.fullname || user.username}
+                              fill
+                              className="object-cover"
+                              sizes="44px"
+                            />
+                          </div>
+                        ) : (
                         <div
                           className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold ${color.bg} ${color.text}`}
                         >
                           {inits}
                         </div>
+                        )}
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
@@ -627,6 +676,46 @@ export default function SupplierUsersPage() {
               </button>
             </div>
             <form onSubmit={handleUpdate} className="mt-5 space-y-4">
+              {/* Avatar upload */}
+              <div className="flex flex-col items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => avatarInputRef.current?.click()}
+                  disabled={isUploadingAvatar}
+                  className="group relative h-20 w-20 overflow-hidden rounded-full border-2 border-dashed border-slate-300 bg-white transition hover:border-cyan-400 disabled:cursor-not-allowed dark:border-slate-600 dark:bg-slate-800"
+                >
+                  {editing.avatar_url ? (
+                    <Image
+                      src={editing.avatar_url}
+                      alt="Profile"
+                      fill
+                      className="object-cover"
+                      sizes="80px"
+                    />
+                  ) : (
+                    <span className={`flex h-full w-full items-center justify-center text-xl font-bold ${avatarColor(editing.fullname || editing.username).bg} ${avatarColor(editing.fullname || editing.username).text}`}>
+                      {initials(editing.fullname, editing.username)}
+                    </span>
+                  )}
+                  <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition group-hover:opacity-100">
+                    {isUploadingAvatar ? (
+                      <Loader2 className="h-5 w-5 animate-spin text-white" />
+                    ) : (
+                      <Camera className="h-5 w-5 text-white" />
+                    )}
+                  </div>
+                </button>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                  Click to upload profile photo
+                </p>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => void handleAvatarUpload(e)}
+                />
+              </div>
               <Field label="Full Name">
                 <IconInput
                   icon={<User className="h-4 w-4" />}

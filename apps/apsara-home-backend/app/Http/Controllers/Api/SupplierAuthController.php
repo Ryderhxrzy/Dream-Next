@@ -281,14 +281,43 @@ class SupplierAuthController extends Controller
         return response()->json($this->transform($supplierUser));
     }
 
+    public function updateLogo(Request $request)
+    {
+        $supplierUser = $request->user();
+        if (! $supplierUser instanceof SupplierUser) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+
+        $validated = $request->validate([
+            'logo_url' => 'required|url|max:2048',
+        ]);
+
+        $supplierUser->loadMissing('supplier');
+        $supplier = $supplierUser->supplier;
+
+        if (! $supplier) {
+            return response()->json(['message' => 'Supplier not found.'], 404);
+        }
+
+        $supplier->s_logo = $validated['logo_url'];
+        $supplier->save();
+
+        return response()->json([
+            'message' => 'Profile image updated successfully.',
+            'supplier_logo' => $supplier->s_logo,
+        ]);
+    }
+
     private function transform(SupplierUser $supplierUser): array
     {
         $supplier = $supplierUser->supplier;
         $supplierName = (string) ($supplier?->s_company ?? $supplier?->s_name ?? '');
-        $supplierLogo = null;
 
-        // Get logo from ProductBrand table by intelligent matching
-        if ($supplier && ($supplier->s_company || $supplier->s_name)) {
+        // Prefer the explicitly-uploaded logo; fall back to brand image matching.
+        $supplierLogo = $supplier?->s_logo
+            ?? null;
+
+        if (! $supplierLogo && $supplier && ($supplier->s_company || $supplier->s_name)) {
             $brand = $this->findBrandForSupplier($supplier);
             $supplierLogo = $brand?->pb_image;
         }

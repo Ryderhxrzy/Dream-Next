@@ -75,7 +75,7 @@ const StickyAddToCart = ({ product, selectedVariant, forceRealPrice = false }: S
   const isInStock = stock > 0;
   const isCheckoutAvailable = !(Boolean(publicSettingsData?.settings?.enable_manual_checkout_mode) && !Boolean(product.manualCheckoutEnabled));
   const cartItemIdBase = product.id ? String(product.id) : product.name.toLowerCase().replace(/\s+/g, '-');
-  const cartItemId = selectedVariant?.sku ? `${cartItemIdBase}::${selectedVariant.sku}` : cartItemIdBase;
+  const cartItemId = selectedVariant?.id ? `${cartItemIdBase}::v${selectedVariant.id}` : cartItemIdBase;
   const cartItem = items.find((item) => item.productId === product.id) ?? items.find((item) => item.id === cartItemId);
   const isAlreadyInCart = items.some((item) => item.productId === product.id) || Boolean(cartItem);
 
@@ -119,7 +119,7 @@ const StickyAddToCart = ({ product, selectedVariant, forceRealPrice = false }: S
       selectedVariant?.color ? displayColorName(selectedVariant.color) : '',
     ].filter(Boolean).join(' ?? ');
     const cartItemIdBase = product.id ? String(product.id) : product.name.toLowerCase().replace(/\s+/g, '-');
-    const cartItemId = selectedVariant?.sku ? `${cartItemIdBase}::${selectedVariant.sku}` : cartItemIdBase;
+    const cartItemId = selectedVariant?.id ? `${cartItemIdBase}::v${selectedVariant.id}` : cartItemIdBase;
 
     addToCart({
       id: cartItemId,
