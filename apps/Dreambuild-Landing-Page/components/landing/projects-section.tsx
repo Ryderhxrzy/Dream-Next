@@ -3,15 +3,8 @@
 import Image from "next/image"
 import Link from "next/link"
 
-import { projects as defaultProjects } from "@/lib/landing-data"
 import { FadeUp, motion } from "@/components/ui/motion"
-
-const projectImages = [
-  "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800&q=80",
-  "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=800&q=80",
-  "https://images.unsplash.com/photo-1631679706909-1844bbd07221?w=800&q=80",
-  "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80",
-]
+import type { DreamBuildProject } from "@/lib/dreambuild-cms"
 
 // Bento layout config per card index
 const bentoConfig = [
@@ -29,10 +22,12 @@ const aspectConfig = [
 ]
 
 export function ProjectsSection({
-  projects = defaultProjects,
+  projects = [],
 }: {
-  projects?: typeof defaultProjects
+  projects?: DreamBuildProject[]
 }) {
+  if (projects.length === 0) return null
+
   return (
     <section id="projects" className="bg-white py-24 lg:py-36">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -44,7 +39,7 @@ export function ProjectsSection({
               Featured Projects
             </p>
             <h2 className="mt-4 text-3xl font-medium tracking-tight text-[var(--foreground)] sm:text-4xl lg:text-5xl">
-              Spaces we&apos;ve shaped and styled.
+              Spaces we took from bare to beautiful.
             </h2>
           </div>
           <Link
@@ -58,7 +53,10 @@ export function ProjectsSection({
 
         {/* Bento Grid */}
         <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:mt-14 lg:grid-cols-3 lg:grid-rows-2 lg:gap-4">
-          {projects.map((project, index) => (
+          {projects.map((project, index) => {
+            const projectHref = `/projects/${project.id}`
+
+            return (
             <motion.div
               key={project.title}
               initial={{ opacity: 0, y: 30 }}
@@ -74,7 +72,7 @@ export function ProjectsSection({
               }
             >
               <Link
-                href="/projects"
+                href={projectHref}
                 className="group relative block h-full overflow-hidden rounded-2xl"
               >
                 {/* Image */}
@@ -82,10 +80,7 @@ export function ProjectsSection({
                   className={`relative w-full overflow-hidden ${aspectConfig[index] ?? aspectConfig[index % aspectConfig.length]}`}
                 >
                   <Image
-                    src={
-                      projectImages[index] ??
-                      projectImages[index % projectImages.length]
-                    }
+                    src={project.image}
                     alt={project.title}
                     fill
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
@@ -138,7 +133,8 @@ export function ProjectsSection({
                 </div>
               </Link>
             </motion.div>
-          ))}
+            )
+          })}
         </div>
 
         {/* Bottom strip */}

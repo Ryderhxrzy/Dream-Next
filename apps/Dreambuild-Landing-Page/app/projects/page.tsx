@@ -1,8 +1,7 @@
-"use client"
-
+import Image from "next/image"
 import Link from "next/link"
 
-import { allProjects } from "@/lib/landing-data"
+import { getDreamBuildContent } from "@/lib/dreambuild-cms"
 import {
   FadeIn,
   FadeUp,
@@ -11,7 +10,9 @@ import {
 } from "@/components/ui/motion"
 import { Header } from "@/components/shared/header"
 
-export default function ProjectsPage() {
+export default async function ProjectsPage() {
+  const { projects } = await getDreamBuildContent()
+
   return (
     <main className="min-h-screen bg-[var(--background)]">
       <Header />
@@ -46,22 +47,31 @@ export default function ProjectsPage() {
       <section className="pb-20 lg:pb-32">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <StaggerContainer className="grid gap-8 md:grid-cols-2 lg:gap-12">
-            {allProjects.map((project, index) => (
+            {projects.length === 0 && (
+              <StaggerItem>
+                <div className="rounded-2xl border border-dashed border-[var(--border)] bg-white p-8">
+                  <p className="text-sm font-medium text-[var(--foreground)]">
+                    No featured projects yet.
+                  </p>
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
+                    Published project case studies from the DreamBuild CMS will appear here.
+                  </p>
+                </div>
+              </StaggerItem>
+            )}
+            {projects.map((project, index) => (
               <StaggerItem key={project.id}>
                 <article className="group">
                   <Link href={`/projects/${project.id}`} className="block">
                     <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-white transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-lg">
-                      <div className="overflow-hidden">
-                        <div
-                          className={`aspect-[4/3] transition-transform duration-700 group-hover:scale-105 ${
-                            index % 4 === 0
-                              ? "bg-gradient-to-br from-[#e8e0d4] via-[#d4c8b8] to-[#c0b0a0]"
-                              : index % 4 === 1
-                                ? "bg-gradient-to-br from-[#d8cec0] via-[#e8e0d4] to-[#ccc0b0]"
-                                : index % 4 === 2
-                                  ? "bg-gradient-to-br from-[#f0ebe3] via-[#e4dcd0] to-[#d0c4b4]"
-                                  : "bg-gradient-to-br from-[#e0d8cc] via-[#d0c4b4] to-[#c4b8a8]"
-                          }`}
+                      <div className="relative aspect-[4/3] overflow-hidden">
+                        <Image
+                          src={project.image}
+                          alt={project.title}
+                          fill
+                          sizes="(min-width: 768px) 50vw, 100vw"
+                          priority={index < 2}
+                          className="object-cover transition-transform duration-700 group-hover:scale-105"
                         />
                       </div>
                       <div className="p-6 lg:p-8">
@@ -73,10 +83,14 @@ export default function ProjectsPage() {
                           <span className="text-xs text-[var(--muted)]">
                             {project.location}
                           </span>
-                          <span className="h-1 w-1 rounded-full bg-[var(--border)]" />
-                          <span className="text-xs text-[var(--muted)]">
-                            {project.year}
-                          </span>
+                          {project.timeline && (
+                            <>
+                              <span className="h-1 w-1 rounded-full bg-[var(--border)]" />
+                              <span className="text-xs text-[var(--muted)]">
+                                {project.timeline}
+                              </span>
+                            </>
+                          )}
                         </div>
                         <h2 className="mt-4 text-xl font-medium tracking-tight text-[var(--foreground)] lg:text-2xl">
                           {project.title}
@@ -85,7 +99,7 @@ export default function ProjectsPage() {
                           {project.description}
                         </p>
                         <div className="mt-6 flex flex-wrap gap-2">
-                          {project.scope.map((item) => (
+                          {project.scopeItems.map((item) => (
                             <span
                               key={item}
                               className="rounded-full border border-[var(--border)] bg-[var(--background)] px-3 py-1 text-xs text-[var(--muted)]"

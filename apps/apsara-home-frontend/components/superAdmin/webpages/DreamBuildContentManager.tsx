@@ -11,13 +11,14 @@ import {
   type WebPageType,
 } from '@/store/api/webPagesApi'
 import { showErrorToast, showSuccessToast } from '@/libs/toast'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
 type SectionField = {
   key: string
   label: string
-  kind?: 'text' | 'textarea' | 'select' | 'image-list'
+  kind?: 'text' | 'textarea' | 'select' | 'image-list' | 'chips'
   options?: string[]
 }
 
@@ -90,10 +91,10 @@ const sections: DreamBuildSection[] = [
     itemLabel: 'Project',
     helper: 'Portfolio items shown on home and projects pages.',
     fields: [
-      { key: 'tag', label: 'Tag (e.g. Residential Interior)' },
-      { key: 'location', label: 'Location' },
-      { key: 'year', label: 'Year' },
-      { key: 'scope', label: 'Scope items (one per line)', kind: 'textarea' },
+      { key: 'tag', label: 'Tag (e.g. Full Solution - Design to Installation)' },
+      { key: 'city_area', label: 'City / Area' },
+      { key: 'scope_items', label: 'Scope', kind: 'chips' },
+      { key: 'timeline', label: 'Timeline (e.g. 8 weeks)' },
       { key: 'card_size', label: 'Card size', kind: 'select', options: ['short', 'tall'] },
     ],
   },
@@ -136,9 +137,8 @@ const sections: DreamBuildSection[] = [
       { key: 'section_eyebrow', label: 'Section eyebrow' },
       { key: 'section_title', label: 'Section title' },
       { key: 'cta_text', label: 'Header button text' },
-      { key: 'cta_url', label: 'Header button link' },
-      { key: 'tone', label: 'Tone', kind: 'select', options: ['light', 'dark', 'gold', 'soft'] },
-      { key: 'alt', label: 'Image alt text' },
+      { key: 'description', label: 'Description', kind: 'textarea' },
+      { key: 'address', label: 'Address' },
     ],
   },
   {
@@ -213,12 +213,7 @@ const STATIC_DEFAULTS: Record<string, WebPageItem[]> = {
       payload: { service_label: 'Solution', service_number: '03', bullets: 'Furniture, fixture, and built-in installation\nCurtains, lighting, and accessory fit-out\nFinal styling, QC walkthrough, and turnover' },
     },
   ],
-  'dreambuild-projects': [
-    { id: -1, type: 'dreambuild-projects', key: 'warm-minimalist', sort_order: 0, is_active: true, title: 'Warm Minimalist Residence', subtitle: null, body: 'A serene family home featuring warm oak tones, textured plaster walls, and curated furniture.', image_url: null, link_url: null, button_text: null, payload: { tag: 'Residential Interior', location: 'Metro Manila', year: '2024', card_size: 'tall', scope: 'Full Interior Design\nFurniture Curation\nLighting Design' } },
-    { id: -2, type: 'dreambuild-projects', key: 'soft-luxe-condo', sort_order: 1, is_active: true, title: 'Soft Luxe Condo Suite', subtitle: null, body: 'A compact urban retreat transformed with soft textures and brass accents.', image_url: null, link_url: null, button_text: null, payload: { tag: 'Urban Living', location: 'Makati City', year: '2024', card_size: 'short', scope: 'Space Planning\nMaterial Selection\nStyling' } },
-    { id: -3, type: 'dreambuild-projects', key: 'contemporary-family', sort_order: 2, is_active: true, title: 'Contemporary Family Home', subtitle: null, body: 'A complete home transformation focusing on open-plan living and natural light.', image_url: null, link_url: null, button_text: null, payload: { tag: 'Full Home Design', location: 'Quezon City', year: '2023', card_size: 'short', scope: 'Full Interior Design\nRenovation Consultation\nFurniture Design' } },
-    { id: -4, type: 'dreambuild-projects', key: 'neutral-entertaining', sort_order: 3, is_active: true, title: 'Neutral Entertaining Space', subtitle: null, body: 'An elegant living and dining area designed for hosting.', image_url: null, link_url: null, button_text: null, payload: { tag: 'Living and Dining', location: 'BGC', year: '2023', card_size: 'tall', scope: 'Living Room Design\nDining Room Design\nLighting Layout' } },
-  ],
+  'dreambuild-projects': [],
   'dreambuild-blogs': [
     { id: -1, type: 'dreambuild-blogs', key: 'warm-modern-living-room', sort_order: 0, is_active: true, title: 'How To Build A Warm Modern Living Room', subtitle: 'A practical guide to layering neutrals, textures, and statement pieces.', body: null, image_url: null, link_url: null, button_text: null, payload: { category: 'Styling Guide', date: 'March 15, 2024', read_time: '5 min read', slug: 'warm-modern-living-room', design_brief: 'Build the room around one warm anchor material, then balance it with breathable spacing, soft texture, and low-glare light.', takeaways: 'Start with a calm base palette\nRepeat wood or woven tones at least three times\nUse lighting layers instead of one bright ceiling source', sections: 'Start With The Anchor|Choose one dominant material story first: oak, walnut, rattan, linen, or warm stone. Repeating that story makes the space feel intentional instead of randomly decorated.\nLayer Texture Before Color|Warm modern rooms do not need many colors. They need matte, woven, brushed, and soft surfaces working together so neutral pieces still feel dimensional.\nKeep The Layout Conversational|Pull seating away from the walls when possible, keep paths clear, and let the coffee table connect the main pieces without crowding the center.' } },
     { id: -2, type: 'dreambuild-blogs', key: 'small-spaces-premium', sort_order: 1, is_active: true, title: 'Interior Finishes That Make Small Spaces Feel Premium', subtitle: 'Simple finish decisions that elevate condos and compact homes.', body: null, image_url: null, link_url: null, button_text: null, payload: { category: 'Design Tips', date: 'March 8, 2024', read_time: '4 min read', slug: 'small-spaces-premium', design_brief: 'Compact homes feel elevated when the finishes are consistent, tactile, and edited down to a few strong decisions.', takeaways: 'Use fewer finishes with better repetition\nChoose vertical storage that looks built-in\nAvoid glossy overload in small rooms', sections: 'Edit The Finish Palette|Limit the room to two main finishes and one accent. This creates visual calm and helps inexpensive pieces feel more curated.\nUse Height For Storage|Tall cabinets, floating shelves, and vertical wall details draw the eye upward while keeping the floor open.\nMake Utility Look Intentional|Small spaces need hardworking pieces. Choose storage that has a clear design language so practical items do not look temporary.' } },
@@ -231,14 +226,7 @@ const STATIC_DEFAULTS: Record<string, WebPageItem[]> = {
     { id: -1, type: 'dreambuild-testimonials', key: 'angela-m', sort_order: 0, is_active: true, title: 'Angela M.', subtitle: null, body: 'The space finally feels elevated but still personal. Every corner looks calm, intentional, and easy to live in.', image_url: null, link_url: null, button_text: null, payload: { client_name: 'Angela M.', client_role: 'Homeowner' } },
     { id: -2, type: 'dreambuild-testimonials', key: 'daniel-r', sort_order: 1, is_active: true, title: 'Daniel R.', subtitle: null, body: 'They translated our vague ideas into something polished and cohesive. The material palette alone changed the whole mood.', image_url: null, link_url: null, button_text: null, payload: { client_name: 'Daniel R.', client_role: 'Condo Client' } },
   ],
-  'dreambuild-gallery': [
-    { id: -1, type: 'dreambuild-gallery', key: 'living-room-styling', sort_order: 0, is_active: true, title: 'Living Room Styling', subtitle: null, body: null, image_url: null, link_url: null, button_text: null, payload: { section_eyebrow: 'Interior Gallery', section_title: 'A curated look at our aesthetic.', cta_text: 'See All Projects', cta_url: '/projects', tone: 'dark', alt: 'Living room with dark tones' } },
-    { id: -2, type: 'dreambuild-gallery', key: 'dining-space-layers', sort_order: 1, is_active: true, title: 'Dining Space Layers', subtitle: null, body: null, image_url: null, link_url: null, button_text: null, payload: { tone: 'light', alt: 'Dining area with light finish' } },
-    { id: -3, type: 'dreambuild-gallery', key: 'bedroom-material-story', sort_order: 2, is_active: true, title: 'Bedroom Material Story', subtitle: null, body: null, image_url: null, link_url: null, button_text: null, payload: { tone: 'gold', alt: 'Bedroom with warm gold tones' } },
-    { id: -4, type: 'dreambuild-gallery', key: 'modern-kitchen-detail', sort_order: 3, is_active: true, title: 'Modern Kitchen Detail', subtitle: null, body: null, image_url: null, link_url: null, button_text: null, payload: { tone: 'soft', alt: 'Kitchen with soft finish' } },
-    { id: -5, type: 'dreambuild-gallery', key: 'lounge-accent', sort_order: 4, is_active: true, title: 'Lounge Accent Composition', subtitle: null, body: null, image_url: null, link_url: null, button_text: null, payload: { tone: 'dark', alt: 'Lounge with accent pieces' } },
-    { id: -6, type: 'dreambuild-gallery', key: 'warm-neutral-interior', sort_order: 5, is_active: true, title: 'Warm Neutral Interior', subtitle: null, body: null, image_url: null, link_url: null, button_text: null, payload: { tone: 'light', alt: 'Warm neutral living space' } },
-  ],
+  'dreambuild-gallery': [],
   'dreambuild-process': [
     { id: -1, type: 'dreambuild-process', key: 'discover', sort_order: 0, is_active: true, title: 'Discover', subtitle: null, body: 'We collect references, understand how the client lives, and define the emotional tone the home should carry.', image_url: null, link_url: null, button_text: null, payload: { step_number: '01' } },
     { id: -2, type: 'dreambuild-process', key: 'shape', sort_order: 1, is_active: true, title: 'Shape', subtitle: null, body: 'Layouts, materials, finishes, and furniture language are refined into one coherent interior direction.', image_url: null, link_url: null, button_text: null, payload: { step_number: '02' } },
@@ -269,6 +257,13 @@ const slugify = (v: string) =>
 const toForm = (item: WebPageItem, section: DreamBuildSection): FormState => {
   const p = (item.payload ?? {}) as Record<string, unknown>
   const payloadFallback = (key: string) => {
+    if (section.id === 'dreambuild-gallery') {
+      if (key === 'section_eyebrow') return GALLERY_HEADER_DEFAULTS.eyebrow
+      if (key === 'section_title') return GALLERY_HEADER_DEFAULTS.title
+      if (key === 'cta_text') return GALLERY_HEADER_DEFAULTS.ctaText
+      if (key === 'cta_url') return GALLERY_HEADER_DEFAULTS.ctaUrl
+      return ''
+    }
     if (section.id !== 'dreambuild-services') return ''
     if (key === 'section_eyebrow') return SERVICES_HEADER_DEFAULTS.eyebrow
     if (key === 'section_title') return SERVICES_HEADER_DEFAULTS.title
@@ -312,10 +307,10 @@ const toPayload = (form: FormState, section: DreamBuildSection) => {
   const subtitle = section.id === 'dreambuild-services'
     ? null
     : form.subtitle.trim().slice(0, SUBTITLE_LIMIT) || undefined
-  const linkUrl = section.id === 'dreambuild-services'
+  const linkUrl = section.id === 'dreambuild-services' || section.id === 'dreambuild-gallery' || section.id === 'dreambuild-projects'
     ? null
     : form.link_url.trim() || undefined
-  const buttonText = section.id === 'dreambuild-services'
+  const buttonText = section.id === 'dreambuild-services' || section.id === 'dreambuild-projects'
     ? null
     : form.button_text.trim() || undefined
   const serviceNumberOrder = section.id === 'dreambuild-services'
@@ -338,6 +333,20 @@ const toPayload = (form: FormState, section: DreamBuildSection) => {
     payload,
   }
 }
+
+const stableValue = (value: unknown): unknown => {
+  if (Array.isArray(value)) return value.map(stableValue)
+  if (!value || typeof value !== 'object') return value
+
+  return Object.keys(value as Record<string, unknown>)
+    .sort()
+    .reduce<Record<string, unknown>>((acc, key) => {
+      acc[key] = stableValue((value as Record<string, unknown>)[key])
+      return acc
+    }, {})
+}
+
+const stableStringify = (value: unknown) => JSON.stringify(stableValue(value))
 
 const sortOrderFromForm = (form: FormState) => {
   const serviceNumberOrder = Number.parseInt(form.payload.service_number || '', 10) - 1
@@ -508,17 +517,27 @@ interface CanvasProps {
 }
 
 function HeroCanvas({ items, selected, onSelect, onAddNew, isLoading, onFieldFocus, focusedField }: CanvasProps) {
-  const isStatic = items.length === 0
-  const displayItems = isStatic ? (STATIC_DEFAULTS['dreambuild-hero'] ?? []) : items
+  const displayItems = [...items].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.id - b.id)
+
   return (
     <div className="mx-auto max-w-4xl space-y-5 p-8">
       {isLoading && <ProgressBar />}
-      {isStatic && <StaticBanner />}
+      {displayItems.length === 0 && (
+        <div className="rounded-3xl border border-dashed border-stone-300 bg-white/60 p-10 text-center">
+          <p className="text-sm font-semibold text-stone-900">No hero blocks yet</p>
+          <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-stone-500">
+            Add a hero block here to display the DreamBuild landing page hero from CMS records.
+          </p>
+          <div className="mx-auto mt-5 max-w-xs">
+            <AddNewButton onClick={onAddNew} label="Add hero block" />
+          </div>
+        </div>
+      )}
       {displayItems.map(item => {
         const p = (item.payload ?? {}) as Record<string, string>
         const imgs = (p.carousel_images ?? '').split('\n').filter(Boolean)
         const stats = [1, 2, 3].map(n => ({ v: p[`stat_${n}_value`], l: p[`stat_${n}_label`] })).filter(s => s.v || s.l)
-        const isThisSelected = !isStatic && selected?.id === item.id
+        const isThisSelected = selected?.id === item.id
         const fz = (fieldKey: string) => ({
           fieldKey,
           label: fieldKey.replace(/_/g, ' '),
@@ -526,13 +545,13 @@ function HeroCanvas({ items, selected, onSelect, onAddNew, isLoading, onFieldFoc
           isActive: isThisSelected && focusedField === fieldKey,
         })
         return (
-          <CanvasItem key={item.id} item={item} selected={selected} onSelect={onSelect} isStatic={isStatic}>
+          <CanvasItem key={item.id} item={item} selected={selected} onSelect={onSelect} isStatic={false}>
             <div className="overflow-hidden rounded-3xl bg-white shadow-md">
               <div className="grid gap-10 p-8 lg:grid-cols-[1fr_340px] lg:items-center">
                 <div>
                   <FieldZone {...fz('eyebrow')}>
                     <span className="inline-block rounded-full border border-stone-200 bg-white px-4 py-1.5 text-[10px] font-medium uppercase tracking-[0.18em] text-stone-500">
-                      {p.eyebrow || 'Interior Design Studio'}
+                      {p.eyebrow || <em className="font-normal text-stone-300">Eyebrow text</em>}
                     </span>
                   </FieldZone>
                   <FieldZone {...fz('title')} label="Title">
@@ -548,10 +567,10 @@ function HeroCanvas({ items, selected, onSelect, onAddNew, isLoading, onFieldFoc
                   <FieldZone {...fz('primary_button_text')} label="Primary CTA">
                     <div className="mt-6 flex flex-wrap gap-3">
                       <span className="rounded-full bg-stone-900 px-5 py-2.5 text-sm font-medium text-white">
-                        {p.primary_button_text || 'Explore Services'}
+                        {p.primary_button_text || 'Primary CTA'}
                       </span>
                       <span className="rounded-full border border-stone-300 px-5 py-2.5 text-sm font-medium text-stone-700">
-                        {p.secondary_button_text || 'View Projects'}
+                        {p.secondary_button_text || 'Secondary CTA'}
                       </span>
                     </div>
                   </FieldZone>
@@ -589,7 +608,7 @@ function HeroCanvas({ items, selected, onSelect, onAddNew, isLoading, onFieldFoc
           </CanvasItem>
         )
       })}
-      {!isStatic && <AddNewButton onClick={onAddNew} label="Add hero block" />}
+      {displayItems.length > 0 && <AddNewButton onClick={onAddNew} label="Add hero block" />}
     </div>
   )
 }
@@ -814,17 +833,52 @@ function ServicesCanvas({ items, selected, onSelect, onAddNew, isLoading, onFiel
 }
 
 function ProjectsCanvas({ items, selected, onSelect, onAddNew, isLoading, onFieldFocus, focusedField }: CanvasProps) {
-  const isStatic = items.length === 0
-  const displayItems = isStatic ? (STATIC_DEFAULTS['dreambuild-projects'] ?? []) : items
+  const displayItems = [...items].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.id - b.id)
   return (
     <div className="mx-auto max-w-4xl p-8">
       {isLoading && <ProgressBar />}
-      {isStatic && <StaticBanner />}
+      <div className="mb-8 flex items-end justify-between gap-6 border-b border-stone-200 pb-6">
+        <div>
+          <p className="inline-flex items-center gap-2 text-[10px] font-medium uppercase tracking-widest text-stone-500">
+            <span className="h-px w-8 bg-stone-400" />
+            Featured Projects
+          </p>
+          <h2 className="mt-3 max-w-xl text-3xl font-semibold tracking-tight text-stone-950">
+            Spaces we took from bare to beautiful.
+          </h2>
+        </div>
+        <button
+          type="button"
+          onClick={onAddNew}
+          className="inline-flex shrink-0 items-center gap-2 rounded-full bg-stone-950 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-stone-800"
+        >
+          <span className="text-base leading-none">+</span>
+          Add Project
+        </button>
+      </div>
+      {displayItems.length === 0 ? (
+        <div className="rounded-3xl border border-dashed border-stone-300 bg-white/60 p-10 text-center">
+          <p className="text-sm font-semibold text-stone-900">No featured projects yet</p>
+          <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-stone-500">
+            Add project case studies here. Only saved CMS project records will appear on DreamBuild.
+          </p>
+          <button
+            type="button"
+            onClick={onAddNew}
+            className="mt-5 inline-flex items-center gap-2 rounded-full bg-stone-950 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-stone-800"
+          >
+            <span className="text-base leading-none">+</span>
+            Add First Project
+          </button>
+        </div>
+      ) : (
       <div className="grid grid-cols-2 gap-4">
         {displayItems.map(item => {
           const p = (item.payload ?? {}) as Record<string, string>
-          const scope = (p.scope ?? '').split('\n').filter(Boolean)
-          const isThisSelected = !isStatic && selected?.id === item.id
+          const scope = (p.scope_items ?? p.scope_label ?? p.scope ?? '').split('\n').map(scopeItem => scopeItem.trim()).filter(Boolean)
+          const scopeLabel = scope.join(' + ')
+          const meta = [p.city_area, scopeLabel, p.timeline].filter(Boolean).join(' - ')
+          const isThisSelected = selected?.id === item.id
           const fz = (fieldKey: string, label: string) => ({
             fieldKey,
             label,
@@ -832,7 +886,7 @@ function ProjectsCanvas({ items, selected, onSelect, onAddNew, isLoading, onFiel
             isActive: isThisSelected && focusedField === fieldKey,
           })
           return (
-            <CanvasItem key={item.id} item={item} selected={selected} onSelect={onSelect} isStatic={isStatic}>
+            <CanvasItem key={item.id} item={item} selected={selected} onSelect={onSelect}>
               <div className="overflow-hidden rounded-3xl bg-white shadow-sm">
                 <FieldZone {...fz('image_url', 'Image')}>
                   <div className={`overflow-hidden bg-stone-100 ${p.card_size === 'tall' ? 'aspect-[3/4]' : 'aspect-video'}`}>
@@ -850,11 +904,8 @@ function ProjectsCanvas({ items, selected, onSelect, onAddNew, isLoading, onFiel
                   <FieldZone {...fz('title', 'Title')}>
                     <h3 className="mt-1 text-sm font-semibold text-stone-900">{item.title}</h3>
                   </FieldZone>
-                  <FieldZone {...fz('location', 'Location / Year')}>
-                    <div className="mt-1 flex gap-2 text-[11px] text-stone-400">
-                      {p.location && <span>{p.location}</span>}
-                      {p.year && <span>· {p.year}</span>}
-                    </div>
+                  <FieldZone {...fz('project_meta', 'Detail meta')}>
+                    {meta && <p className="mt-1 text-[11px] leading-relaxed text-stone-400">{meta}</p>}
                   </FieldZone>
                   <FieldZone {...fz('scope', 'Scope')}>
                     {scope.length > 0 && (
@@ -863,13 +914,16 @@ function ProjectsCanvas({ items, selected, onSelect, onAddNew, isLoading, onFiel
                       </div>
                     )}
                   </FieldZone>
+                  <FieldZone {...fz('body', 'Detail story')}>
+                    {item.body && <p className="mt-3 line-clamp-3 text-xs leading-relaxed text-stone-500">{item.body}</p>}
+                  </FieldZone>
                 </div>
               </div>
             </CanvasItem>
           )
         })}
       </div>
-      <AddNewButton onClick={onAddNew} label={isStatic ? '+ Add CMS project (will replace static)' : 'Add project'} />
+      )}
     </div>
   )
 }
@@ -988,7 +1042,7 @@ function TestimonialsCanvas({ items, selected, onSelect, onAddNew, isLoading, on
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function GalleryCanvasOld({ items, selected, onSelect, onAddNew, isLoading, onFieldFocus, focusedField }: CanvasProps) {
   const isStatic = items.length === 0
-  const displayItems = isStatic ? (STATIC_DEFAULTS['dreambuild-gallery'] ?? []) : items
+  const displayItems = items
   const toneGrad: Record<string, string> = {
     dark: 'from-stone-600 to-stone-900',
     light: 'from-stone-100 to-stone-200',
@@ -998,7 +1052,6 @@ function GalleryCanvasOld({ items, selected, onSelect, onAddNew, isLoading, onFi
   return (
     <div className="mx-auto max-w-4xl p-8">
       {isLoading && <ProgressBar />}
-      {isStatic && <StaticBanner />}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
         {displayItems.map(item => {
           const p = (item.payload ?? {}) as Record<string, string>
@@ -1271,14 +1324,13 @@ function BlogsCanvas({ items, selected, onSelect, onRequestDelete, onAddNew, isL
   )
 }
 
-function GalleryCanvas({ items, selected, onSelect, onAddNew, isLoading, onFieldFocus, focusedField }: CanvasProps) {
+function GalleryCanvas({ items, selected, onSelect, onRequestDelete, onAddNew, isLoading, onFieldFocus, focusedField }: CanvasProps) {
   const displayItems = items
   const headerItem = displayItems[0]
   const headerPayload = (headerItem?.payload ?? {}) as Record<string, string>
   const sectionEyebrow = headerPayload.section_eyebrow || GALLERY_HEADER_DEFAULTS.eyebrow
   const sectionTitle = headerPayload.section_title || GALLERY_HEADER_DEFAULTS.title
   const ctaText = headerPayload.cta_text || GALLERY_HEADER_DEFAULTS.ctaText
-  const ctaUrl = headerPayload.cta_url || GALLERY_HEADER_DEFAULTS.ctaUrl
   const headerItemWithDefaults: WebPageItem | null = headerItem
     ? {
       ...headerItem,
@@ -1287,7 +1339,6 @@ function GalleryCanvas({ items, selected, onSelect, onAddNew, isLoading, onField
         section_eyebrow: sectionEyebrow,
         section_title: sectionTitle,
         cta_text: ctaText,
-        cta_url: ctaUrl,
       },
     }
     : null
@@ -1297,13 +1348,6 @@ function GalleryCanvas({ items, selected, onSelect, onAddNew, isLoading, onField
     onFocus: (key: string) => headerItemWithDefaults && onFieldFocus?.(headerItemWithDefaults, key),
     isActive: selected?.id === headerItem?.id && focusedField === fieldKey,
   })
-  const toneGrad: Record<string, string> = {
-    dark: 'from-stone-600 to-stone-900',
-    light: 'from-stone-100 to-stone-200',
-    gold: 'from-amber-100 to-amber-300',
-    soft: 'from-rose-50 to-stone-100',
-  }
-
   return (
     <div className="mx-auto max-w-5xl p-8">
       {isLoading && <ProgressBar />}
@@ -1328,11 +1372,6 @@ function GalleryCanvas({ items, selected, onSelect, onAddNew, isLoading, onField
               <span>-&gt;</span>
             </span>
           </FieldZone>
-          <FieldZone {...headerField('cta_url', 'Header button link')}>
-            <span className="rounded-full bg-stone-100 px-3 py-2 text-[10px] font-semibold text-stone-500">
-              {ctaUrl}
-            </span>
-          </FieldZone>
           <button
             type="button"
             onClick={onAddNew}
@@ -1346,9 +1385,9 @@ function GalleryCanvas({ items, selected, onSelect, onAddNew, isLoading, onField
 
       {displayItems.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-stone-300 bg-white/60 p-10 text-center">
-          <p className="text-sm font-semibold text-stone-900">No CMS gallery items yet</p>
+          <p className="text-sm font-semibold text-stone-900">No gallery images yet</p>
           <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-stone-500">
-            DreamBuild will keep using the static gallery from the landing page. Add an item when you want to replace a fallback slot.
+            Add images here to build the gallery shown on the DreamBuild landing page.
           </p>
           <button
             type="button"
@@ -1361,9 +1400,13 @@ function GalleryCanvas({ items, selected, onSelect, onAddNew, isLoading, onField
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-        {displayItems.map(item => {
+        {displayItems.map((item) => {
           const p = (item.payload ?? {}) as Record<string, string>
-          const tone = p.tone || 'light'
+          const imageUrl = item.image_url || ''
+          const title = item.title || 'Untitled image'
+          const alt = p.alt || title
+          const description = p.description || 'Add a short description'
+          const address = p.address || 'Add address'
           const isThisSelected = selected?.id === item.id
           const fz = (fieldKey: string, label: string) => ({
             fieldKey,
@@ -1373,54 +1416,64 @@ function GalleryCanvas({ items, selected, onSelect, onAddNew, isLoading, onField
           })
 
           return (
-            <CanvasItem key={item.id} item={item} selected={selected} onSelect={onSelect} isStatic={false}>
+            <CanvasItem key={item.id} item={item} selected={selected} onSelect={onSelect}>
               <div className="group overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                 <FieldZone {...fz('image_url', 'Image')}>
                   <div className="relative aspect-square overflow-hidden">
-                    {item.image_url
+                    {imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      ? <img src={item.image_url} alt={p.alt ?? ''} className="h-full w-full object-cover" />
-                      : (
-                        <div className={`flex h-full items-center justify-center bg-gradient-to-br ${toneGrad[tone] ?? toneGrad.light}`}>
-                          <div className="text-center">
-                            <p className="text-2xl font-light text-stone-400">+</p>
-                            <p className="mt-1 text-xs capitalize text-stone-400">{tone} image</p>
-                          </div>
-                        </div>
-                      )}
-                    <span className="absolute right-3 top-3 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-600">
-                      CMS
-                    </span>
+                      <img src={imageUrl} alt={alt} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-cyan-50 text-center text-xs font-semibold text-cyan-700">
+                        <span className="text-2xl leading-none">+</span>
+                        Upload image
+                      </div>
+                    )}
+                    {item.id < 0 && (
+                      <span className="absolute right-3 top-3 rounded-full bg-cyan-500 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
+                        Draft
+                      </span>
+                    )}
                   </div>
                 </FieldZone>
                 <div className="px-4 py-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <FieldZone {...fz('title', 'Title')}>
-                        <p className="truncate text-sm font-semibold text-stone-900">{item.title || 'Untitled image'}</p>
+                        <p className="truncate text-sm font-semibold text-stone-900">{title}</p>
                       </FieldZone>
-                      <FieldZone {...fz('tone', 'Tone')}>
-                        <p className="mt-1 text-[11px] capitalize text-stone-400">{tone} · order {item.sort_order}</p>
+                      <FieldZone {...fz('description', 'Description')}>
+                        <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-stone-400">{description}</p>
+                      </FieldZone>
+                      <FieldZone {...fz('address', 'Address')}>
+                        <p className="mt-1 text-[11px] font-medium text-stone-500">{address}</p>
                       </FieldZone>
                     </div>
 
-                    {item.id > 0 && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onSelect(item)
-                          // Then delete using the existing Delete button in the editor panel
-                        }}
-                        className="shrink-0 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-[11px] font-bold text-red-600 transition hover:bg-red-100"
-                        title="Select this item first, then delete in the editor panel"
-                      >
-                        Delete
-                      </button>
-                    )}
                   </div>
 
-                  <p className="mt-3 text-[11px] font-bold text-stone-950">Edit</p>
+                  <div className="mt-3 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onSelect(item)
+                      }}
+                      className="rounded-full bg-stone-950 px-3 py-1.5 text-[11px] font-bold text-white transition hover:bg-stone-800"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onRequestDelete?.(item)
+                      }}
+                      className="rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-[11px] font-bold text-red-600 transition hover:bg-red-100"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </div>
             </CanvasItem>
@@ -1593,13 +1646,14 @@ function CarouselImagesField({
 
 function EditPanel({
   section, form, setForm, editTarget, isBusy, onSubmit, onDelete, onCancel,
-  focusedField, onUploadImage, isUploadingImage, serviceItems, onServiceTabSelect,
+  focusedField, onUploadImage, isUploadingImage, serviceItems, onServiceTabSelect, isSaveDisabled,
 }: {
   section: DreamBuildSection
   form: FormState
   setForm: React.Dispatch<React.SetStateAction<FormState>>
   editTarget: WebPageItem | null
   isBusy: boolean
+  isSaveDisabled: boolean
   onSubmit: (e: FormEvent) => void
   onDelete: () => void
   onCancel: () => void
@@ -1631,6 +1685,7 @@ function EditPanel({
         setForm={setForm}
         editTarget={editTarget}
         isBusy={isBusy}
+        isSaveDisabled={isSaveDisabled}
         onSubmit={onSubmit}
         onDelete={onDelete}
         onCancel={onCancel}
@@ -1648,6 +1703,7 @@ function EditPanel({
         setForm={setForm}
         editTarget={editTarget}
         isBusy={isBusy}
+        isSaveDisabled={isSaveDisabled}
         onSubmit={onSubmit}
         onDelete={onDelete}
         onCancel={onCancel}
@@ -1698,6 +1754,83 @@ function EditPanel({
       )}
     </Field>
   )
+
+  const renderGalleryImageField = () => {
+    const previewUrl = form.image_url
+    const hasCustomImage = Boolean(form.image_url)
+
+    return (
+      <Field label="Image URL" fieldKey="image_url" focusedField={focusedField}>
+        <div
+          data-field="image_url"
+          className="rounded-2xl border border-cyan-200 bg-cyan-50/70 p-3 shadow-sm ring-1 ring-cyan-100/60 dark:border-cyan-900/50 dark:bg-cyan-950/20 dark:ring-cyan-900/30"
+        >
+          <div className="relative mb-3 h-36 overflow-hidden rounded-2xl border border-cyan-100 bg-white">
+            {previewUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={previewUrl}
+                alt={form.title || 'Gallery image'}
+                className="h-full w-full object-cover"
+                onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+              />
+            ) : (
+              <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-white text-center text-xs font-semibold text-cyan-700">
+                <span className="text-2xl leading-none">+</span>
+                No image selected
+              </div>
+            )}
+            {hasCustomImage && (
+              <span className="absolute left-3 top-3 rounded-full bg-emerald-500 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-white shadow-sm">
+                Uploaded
+              </span>
+            )}
+          </div>
+          <input
+            data-field="image_url"
+            value={form.image_url}
+            onChange={e => setForm(p => ({ ...p, image_url: e.target.value }))}
+            placeholder="Paste URL or upload image"
+            className={inputClass}
+          />
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <label className={`inline-flex cursor-pointer items-center gap-2 rounded-2xl border px-3.5 py-2 text-xs font-semibold transition ${
+              isUploadingImage
+                ? 'cursor-wait border-cyan-200 bg-white/80 text-cyan-500'
+                : 'border-cyan-200 bg-white text-cyan-700 hover:border-cyan-300 hover:bg-cyan-50'
+            }`}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="16 16 12 12 8 16" />
+                <line x1="12" y1="12" x2="12" y2="21" />
+                <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
+              </svg>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="hidden"
+                disabled={isUploadingImage}
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) void onUploadImage?.(file)
+                  e.currentTarget.value = ''
+                }}
+              />
+              {isUploadingImage ? 'Uploading...' : 'Upload Image'}
+            </label>
+            {hasCustomImage && (
+              <button
+                type="button"
+                onClick={() => setForm(p => ({ ...p, image_url: '' }))}
+                className="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-white px-3.5 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50"
+              >
+                Remove image
+              </button>
+            )}
+          </div>
+        </div>
+      </Field>
+    )
+  }
 
   const renderServicesFields = () => (
     <>
@@ -1833,44 +1966,51 @@ function EditPanel({
     </>
   )
 
-  const renderSectionFields = () => (
-    section.fields.length > 0 && (
-      <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4 dark:border-cyan-900/30">
-        <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-cyan-700 dark:text-cyan-400">
-          {section.label} fields
-        </p>
-        <div className="space-y-3">
-          {section.fields.map(field => (
-            <Field key={field.key} label={field.label} fieldKey={field.key} focusedField={focusedField}>
-              {field.kind === 'image-list' ? (
-                <div data-field={field.key}>
-                  <CarouselImagesField
-                    value={form.payload[field.key] ?? ''}
-                    onChange={val => setForm(p => ({ ...p, payload: { ...p.payload, [field.key]: val } }))}
-                  />
-                </div>
-              ) : field.kind === 'select' ? (
-                <select data-field={field.key} value={form.payload[field.key] ?? ''} onChange={e => setForm(p => ({ ...p, payload: { ...p.payload, [field.key]: e.target.value } }))} className={inputClass}>
-                  <option value="">Select...</option>
-                  {(field.options ?? []).map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </select>
-              ) : field.key === 'bullets' ? (
-                <NumberedLinesField
-                  dataField={field.key}
-                  value={form.payload[field.key] ?? ''}
-                  onChange={val => setForm(p => ({ ...p, payload: { ...p.payload, [field.key]: val } }))}
-                />
-              ) : field.kind === 'textarea' ? (
-                <textarea data-field={field.key} value={form.payload[field.key] ?? ''} onChange={e => setForm(p => ({ ...p, payload: { ...p.payload, [field.key]: e.target.value } }))} rows={3} className={inputClass} />
-              ) : (
-                <input data-field={field.key} value={form.payload[field.key] ?? ''} onChange={e => setForm(p => ({ ...p, payload: { ...p.payload, [field.key]: e.target.value } }))} className={inputClass} />
-              )}
+  const renderGalleryFields = () => {
+    const galleryOrder = Number.parseInt(form.sort_order, 10) || 0
+    const isHeaderItem = galleryOrder === 0
+
+    return (
+      <>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+          <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+            Gallery image
+          </p>
+          <div className="space-y-3">
+            <Field label="Image title" fieldKey="title" focusedField={focusedField}>
+              <input data-field="title" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="Gallery image title" className={inputClass} />
             </Field>
-          ))}
+            {renderGalleryImageField()}
+            <Field label="Description" fieldKey="description" focusedField={focusedField}>
+              <textarea data-field="description" value={form.payload.description ?? ''} onChange={e => updatePayloadField('description', e.target.value)} rows={3} placeholder="Short detail shown in the gallery popup" className={inputClass} />
+            </Field>
+            <Field label="Address" fieldKey="address" focusedField={focusedField}>
+              <input data-field="address" value={form.payload.address ?? ''} onChange={e => updatePayloadField('address', e.target.value)} placeholder="Metro Manila" className={inputClass} />
+            </Field>
+          </div>
         </div>
-      </div>
+
+        {isHeaderItem && (
+          <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4 dark:border-cyan-900/30">
+            <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-cyan-700 dark:text-cyan-400">
+              Section header
+            </p>
+            <div className="space-y-3">
+              <Field label="Eyebrow" fieldKey="section_eyebrow" focusedField={focusedField}>
+                <input data-field="section_eyebrow" value={form.payload.section_eyebrow ?? ''} onChange={e => updatePayloadField('section_eyebrow', e.target.value)} placeholder="Interior Gallery" className={inputClass} />
+              </Field>
+              <Field label="Heading" fieldKey="section_title" focusedField={focusedField}>
+                <textarea data-field="section_title" value={form.payload.section_title ?? ''} onChange={e => updatePayloadField('section_title', e.target.value)} rows={2} placeholder="Designed, supplied, and installed by one team." className={inputClass} />
+              </Field>
+              <Field label="Button text" fieldKey="cta_text" focusedField={focusedField}>
+                <input data-field="cta_text" value={form.payload.cta_text ?? ''} onChange={e => updatePayloadField('cta_text', e.target.value)} placeholder="See All Projects" className={inputClass} />
+              </Field>
+            </div>
+          </div>
+        )}
+      </>
     )
-  )
+  }
 
   return (
     <form onSubmit={onSubmit} className="flex h-full flex-col overflow-hidden">
@@ -1902,28 +2042,28 @@ function EditPanel({
       </div>
 
       <div ref={scrollAreaRef} className="flex-1 space-y-3 overflow-y-auto p-5">
-        {isGallery && renderSectionFields()}
+        {isGallery && renderGalleryFields()}
         {isServices && renderServicesFields()}
 
-        {!isServices && (
-          <Field label="Title" fieldKey="title" focusedField={focusedField}>
+        {!isServices && !isGallery && (
+          <Field label={section.id === 'dreambuild-projects' ? 'Project title' : 'Title'} fieldKey="title" focusedField={focusedField}>
             <input data-field="title" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="Main title" className={inputClass} />
           </Field>
         )}
-        {section.id !== 'dreambuild-services' && !isGallery && (
+        {section.id !== 'dreambuild-services' && !isGallery && section.id !== 'dreambuild-projects' && (
           <Field label="Subtitle" fieldKey="subtitle" focusedField={focusedField}>
             <input data-field="subtitle" value={form.subtitle} onChange={e => setForm(p => ({ ...p, subtitle: e.target.value }))} placeholder="Short support text" className={inputClass} />
           </Field>
         )}
         {!isGallery && !isServices && (
-          <Field label="Body / description" fieldKey="body" focusedField={focusedField}>
-            <textarea data-field="body" value={form.body} onChange={e => setForm(p => ({ ...p, body: e.target.value }))} rows={3} placeholder="Longer copy, quote, or description" className={inputClass} />
+          <Field label={section.id === 'dreambuild-projects' ? 'Detail-page story' : 'Body / description'} fieldKey="body" focusedField={focusedField}>
+            <textarea data-field="body" value={form.body} onChange={e => setForm(p => ({ ...p, body: e.target.value }))} rows={section.id === 'dreambuild-projects' ? 6 : 3} placeholder={section.id === 'dreambuild-projects' ? 'The brief, design direction, supply/install notes, and final result.' : 'Longer copy, quote, or description'} className={inputClass} />
           </Field>
         )}
 
         {/* Image field with upload */}
-        {!isServices && (
-        <Field label="Image" fieldKey="image_url" focusedField={focusedField}>
+        {!isServices && !isGallery && (
+        <Field label={section.id === 'dreambuild-projects' ? 'Project image' : 'Image'} fieldKey="image_url" focusedField={focusedField}>
           <input
             data-field="image_url"
             value={form.image_url}
@@ -1961,7 +2101,7 @@ function EditPanel({
         </Field>
         )}
 
-        {section.id !== 'dreambuild-services' && !isGallery && (
+        {section.id !== 'dreambuild-services' && !isGallery && section.id !== 'dreambuild-projects' && (
           <>
             <Field label="Link URL" fieldKey="link_url" focusedField={focusedField}>
               <input data-field="link_url" value={form.link_url} onChange={e => setForm(p => ({ ...p, link_url: e.target.value }))} placeholder="/projects or https://..." className={inputClass} />
@@ -1998,6 +2138,12 @@ function EditPanel({
                       value={form.payload[field.key] ?? ''}
                       onChange={val => setForm(p => ({ ...p, payload: { ...p.payload, [field.key]: val } }))}
                     />
+                  ) : field.kind === 'chips' ? (
+                    <ChipListField
+                      dataField={field.key}
+                      value={form.payload[field.key] ?? ''}
+                      onChange={val => setForm(p => ({ ...p, payload: { ...p.payload, [field.key]: val } }))}
+                    />
                   ) : field.kind === 'textarea' ? (
                     <textarea data-field={field.key} value={form.payload[field.key] ?? ''} onChange={e => setForm(p => ({ ...p, payload: { ...p.payload, [field.key]: e.target.value } }))} rows={3} className={inputClass} />
                   ) : (
@@ -2009,7 +2155,7 @@ function EditPanel({
           </div>
         )}
 
-        {section.id !== 'dreambuild-services' && !isGallery && (
+        {section.id !== 'dreambuild-services' && !isGallery && section.id !== 'dreambuild-projects' && (
           <div className="grid grid-cols-2 gap-3">
             <Field label="Sort order" fieldKey="sort_order" focusedField={focusedField}>
               <input data-field="sort_order" type="number" min={0} value={form.sort_order} onChange={e => setForm(p => ({ ...p, sort_order: e.target.value }))} className={inputClass} />
@@ -2026,8 +2172,9 @@ function EditPanel({
           <input type="checkbox" checked={form.is_active} onChange={e => setForm(p => ({ ...p, is_active: e.target.checked }))} className="h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" />
           Active (visible on site)
         </label>
-        <button type="submit" disabled={isBusy} className="w-full rounded-2xl bg-cyan-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm shadow-cyan-700/20 transition hover:bg-cyan-800 disabled:cursor-not-allowed disabled:opacity-60">
-          {isBusy ? 'Saving…' : editTarget ? 'Save Changes' : `Create ${section.itemLabel}`}
+        <button type="submit" disabled={isSaveDisabled} className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-cyan-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm shadow-cyan-700/20 transition hover:bg-cyan-800 disabled:cursor-not-allowed disabled:opacity-60">
+          {isBusy && <LoadingSpinner className="h-3.5 w-3.5" label="Saving" />}
+          {isBusy ? 'Saving' : editTarget ? 'Save Changes' : `Create ${section.itemLabel}`}
         </button>
         {editTarget && (
           <button type="button" onClick={onDelete} className="w-full rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-bold text-red-600 transition hover:bg-red-100">
@@ -2042,7 +2189,7 @@ function EditPanel({
 // ─── Main component ─────────────────────────────────────────────────────────────
 
 function BlogEditPanel({
-  form, setForm, editTarget, isBusy, onSubmit, onDelete, onCancel,
+  form, setForm, editTarget, isBusy, isSaveDisabled, onSubmit, onDelete, onCancel,
   focusedField, onUploadImage, isUploadingImage,
 }: {
   section: DreamBuildSection
@@ -2050,6 +2197,7 @@ function BlogEditPanel({
   setForm: React.Dispatch<React.SetStateAction<FormState>>
   editTarget: WebPageItem | null
   isBusy: boolean
+  isSaveDisabled: boolean
   onSubmit: (e: FormEvent) => void
   onDelete: () => void
   onCancel: () => void
@@ -2232,8 +2380,9 @@ function BlogEditPanel({
           <input type="checkbox" checked={form.is_active} onChange={e => setForm(p => ({ ...p, is_active: e.target.checked }))} className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
           Active (visible on DreamBuild)
         </label>
-        <button type="submit" disabled={isBusy} className="w-full rounded-2xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm shadow-emerald-700/20 transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60">
-          {isBusy ? 'Saving...' : editTarget ? 'Save Blog Article' : 'Create Blog Article'}
+        <button type="submit" disabled={isSaveDisabled} className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm shadow-emerald-700/20 transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60">
+          {isBusy && <LoadingSpinner className="h-3.5 w-3.5" label="Saving" />}
+          {isBusy ? 'Saving' : editTarget ? 'Save Blog Article' : 'Create Blog Article'}
         </button>
         {editTarget && (
           <button type="button" onClick={onDelete} className="w-full rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-bold text-red-600 transition hover:bg-red-100">
@@ -2246,12 +2395,13 @@ function BlogEditPanel({
 }
 
 function ProcessEditPanel({
-  form, setForm, editTarget, isBusy, onSubmit, onDelete, onCancel, focusedField,
+  form, setForm, editTarget, isBusy, isSaveDisabled, onSubmit, onDelete, onCancel, focusedField,
 }: {
   form: FormState
   setForm: React.Dispatch<React.SetStateAction<FormState>>
   editTarget: WebPageItem | null
   isBusy: boolean
+  isSaveDisabled: boolean
   onSubmit: (e: FormEvent) => void
   onDelete: () => void
   onCancel: () => void
@@ -2365,8 +2515,9 @@ function ProcessEditPanel({
           <input type="checkbox" checked={form.is_active} onChange={e => setForm(p => ({ ...p, is_active: e.target.checked }))} className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500" />
           Active (visible on DreamBuild)
         </label>
-        <button type="submit" disabled={isBusy} className="w-full rounded-2xl bg-sky-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm shadow-sky-700/20 transition hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-60">
-          {isBusy ? 'Saving...' : editTarget ? 'Save Process Step' : 'Create Process Step'}
+        <button type="submit" disabled={isSaveDisabled} className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm shadow-sky-700/20 transition hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-60">
+          {isBusy && <LoadingSpinner className="h-3.5 w-3.5" label="Saving" />}
+          {isBusy ? 'Saving' : editTarget ? 'Save Process Step' : 'Create Process Step'}
         </button>
         {editTarget && (
           <button type="button" onClick={onDelete} className="w-full rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-bold text-red-600 transition hover:bg-red-100">
@@ -2405,6 +2556,18 @@ export default function DreamBuildContentManager() {
   const [deleteItem, { isLoading: isDeleting }] = useDeleteAdminWebPageItemMutation()
 
   const isBusy = isCreating || isUpdating
+  const isMissingRequiredProjectFields =
+    selectedSection.id === 'dreambuild-projects' &&
+    (!form.title.trim() || !form.image_url.trim())
+  const hasUnsavedChanges = useMemo(() => {
+    if (!editTarget || editTarget.id < 0) return true
+
+    const currentPayload = toPayload(form, selectedSection)
+    const savedPayload = toPayload(toForm(editTarget, selectedSection), selectedSection)
+
+    return stableStringify(currentPayload) !== stableStringify(savedPayload)
+  }, [editTarget, form, selectedSection])
+  const isSaveDisabled = isBusy || isMissingRequiredProjectFields || Boolean(editTarget && editTarget.id > 0 && !hasUnsavedChanges)
 
   useEffect(() => {
     if (!isResizingPanel) return
@@ -2444,11 +2607,19 @@ export default function DreamBuildContentManager() {
       const draft = draftForms[draftKeyFor(selectedSection.id, item.id)]
       return draft ? mergeItem(item, draft) : item
     })
+    const visibleSaved = selectedSection.id === 'dreambuild-gallery'
+      ? merged.filter(item => Boolean(item.image_url))
+      : selectedSection.id === 'dreambuild-projects'
+        ? merged.filter(item => Boolean(item.title) && Boolean(item.image_url))
+        : merged
 
-    if (!editTarget || editTarget.id < 0 || saved.some(item => item.id === editTarget.id)) return merged
+    if (!editTarget || saved.some(item => item.id === editTarget.id)) return visibleSaved
 
     const draft = draftForms[draftKeyFor(selectedSection.id, editTarget.id)] ?? form
-    return [...merged, mergeItem(editTarget, draft)]
+    if (selectedSection.id === 'dreambuild-projects' && (!draft.title.trim() || !draft.image_url.trim())) {
+      return visibleSaved
+    }
+    return [...visibleSaved, mergeItem(editTarget, draft)]
   }, [data?.items, draftForms, editTarget, form, selectedSection.id])
 
   const keepSavedItemOpen = (item: WebPageItem) => {
@@ -2470,7 +2641,7 @@ export default function DreamBuildContentManager() {
 
     setForm(next)
 
-    if (!editTarget || editTarget.id < 0) return
+    if (!editTarget) return
     setDraftForms(prev => ({ ...prev, [draftKeyFor(selectedSection.id, editTarget.id)]: next }))
   }
 
@@ -2510,6 +2681,74 @@ export default function DreamBuildContentManager() {
   const handleFieldFocus = (item: WebPageItem, fieldKey: string) => openPanel(item, fieldKey)
   const handleAddNew = () => {
     const nextStepNumber = String(displayItems.length + 1).padStart(2, '0')
+    const nextSortOrder = displayItems.length
+
+    if (selectedSection.id === 'dreambuild-gallery') {
+      const nextForm: FormState = {
+        ...emptyForm,
+        sort_order: String(nextSortOrder),
+        payload: {
+          description: '',
+          address: '',
+        },
+      }
+      const draftItem: WebPageItem = {
+        id: -Date.now(),
+        type: selectedSection.id,
+        key: `gallery-draft-${Date.now()}`,
+        sort_order: nextSortOrder,
+        is_active: true,
+        title: null,
+        subtitle: null,
+        body: null,
+        image_url: null,
+        link_url: null,
+        button_text: null,
+        payload: nextForm.payload,
+      }
+      setEditTarget(draftItem)
+      setForm(nextForm)
+      setPanelOpen(true)
+      setFocusedField('image_url')
+      setDeleteTarget(null)
+      return
+    }
+
+    if (selectedSection.id === 'dreambuild-projects') {
+      const draftId = -Date.now()
+      const nextForm: FormState = {
+        ...emptyForm,
+        sort_order: String(nextSortOrder),
+        payload: {
+          tag: '',
+          city_area: '',
+          scope_items: '',
+          timeline: '',
+          card_size: 'tall',
+        },
+      }
+      const draftItem: WebPageItem = {
+        id: draftId,
+        type: selectedSection.id,
+        key: `project-draft-${Date.now()}`,
+        sort_order: nextSortOrder,
+        is_active: true,
+        title: null,
+        subtitle: null,
+        body: null,
+        image_url: null,
+        link_url: null,
+        button_text: null,
+        payload: nextForm.payload,
+      }
+      setEditTarget(draftItem)
+      setForm(nextForm)
+      setPanelOpen(true)
+      setFocusedField('title')
+      setDeleteTarget(null)
+      return
+    }
+
     setEditTarget(null)
     setForm(selectedSection.id === 'dreambuild-blogs'
       ? {
@@ -2531,11 +2770,6 @@ export default function DreamBuildContentManager() {
           },
         }
       : selectedSection.id === 'dreambuild-services'
-        ? {
-          ...emptyForm,
-          sort_order: String(displayItems.length),
-        }
-      : selectedSection.id === 'dreambuild-gallery'
         ? {
           ...emptyForm,
           sort_order: String(displayItems.length),
@@ -2566,6 +2800,8 @@ export default function DreamBuildContentManager() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    if (editTarget && editTarget.id > 0 && !hasUnsavedChanges) return
+
     try {
       if (editTarget && editTarget.id > 0) {
         const response = await updateItem({ type: selectedSection.id, id: editTarget.id, data: toPayload(form, selectedSection) }).unwrap()
@@ -2584,7 +2820,11 @@ export default function DreamBuildContentManager() {
   }
 
   const handleRequestDelete = (item = editTarget) => {
-    if (!item || item.id < 0) return
+    if (!item) return
+    if (item.id < 0) {
+      resetForm()
+      return
+    }
     setDeleteTarget(item)
   }
 
@@ -2715,6 +2955,7 @@ export default function DreamBuildContentManager() {
               setForm={setDraftingForm}
               editTarget={editTarget}
               isBusy={isBusy}
+              isSaveDisabled={isSaveDisabled}
               onSubmit={handleSubmit}
               onDelete={() => handleRequestDelete()}
               onCancel={resetForm}
@@ -2804,7 +3045,14 @@ function DeleteConfirmModal({
             disabled={isDeleting}
             className="inline-flex min-w-28 items-center justify-center whitespace-nowrap rounded-full bg-red-600 px-4 py-2 text-sm font-bold text-white shadow-sm shadow-red-600/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-red-700 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-sm"
           >
-            {isDeleting ? 'Deleting...' : 'Delete'}
+            {isDeleting ? (
+              <span className="inline-flex items-center gap-2">
+                <LoadingSpinner className="h-3.5 w-3.5" label="Deleting" />
+                Deleting
+              </span>
+            ) : (
+              'Delete'
+            )}
           </button>
         </div>
       </div>
@@ -2876,6 +3124,88 @@ function NumberedLinesField({
           />
         </div>
       ))}
+    </div>
+  )
+}
+
+function ChipListField({
+  value,
+  onChange,
+  dataField,
+}: {
+  value: string
+  onChange: (value: string) => void
+  dataField: string
+}) {
+  const [draft, setDraft] = useState('')
+  const items = value.split('\n').map(item => item.trim()).filter(Boolean)
+
+  const commitItems = (nextItems: string[]) => {
+    const uniqueItems = nextItems
+      .map(item => item.trim())
+      .filter(Boolean)
+      .filter((item, index, all) => all.findIndex(other => other.toLowerCase() === item.toLowerCase()) === index)
+    onChange(uniqueItems.join('\n'))
+  }
+
+  const addItem = () => {
+    const nextItem = draft.trim()
+    if (!nextItem) return
+    commitItems([...items, nextItem])
+    setDraft('')
+  }
+
+  const removeItem = (itemToRemove: string) => {
+    commitItems(items.filter(item => item !== itemToRemove))
+  }
+
+  return (
+    <div
+      data-field={dataField}
+      className="space-y-2 rounded-2xl border border-cyan-200 bg-cyan-50/50 p-2 transition focus-within:border-cyan-300 focus-within:bg-white focus-within:ring-2 focus-within:ring-cyan-100"
+    >
+      <div className="flex gap-2">
+        <input
+          value={draft}
+          onChange={event => setDraft(event.target.value)}
+          onKeyDown={event => {
+            if (event.key === 'Enter') {
+              event.preventDefault()
+              addItem()
+            }
+          }}
+          placeholder="Add scope item"
+          className="min-w-0 flex-1 rounded-xl border border-cyan-100 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-100"
+        />
+        <button
+          type="button"
+          onClick={addItem}
+          disabled={!draft.trim()}
+          className="shrink-0 rounded-xl bg-cyan-700 px-3 py-2 text-xs font-bold text-white transition hover:bg-cyan-800 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Add
+        </button>
+      </div>
+      {items.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {items.map(item => (
+            <span
+              key={item}
+              className="inline-flex items-center gap-1 rounded-full border border-cyan-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700"
+            >
+              {item}
+              <button
+                type="button"
+                onClick={() => removeItem(item)}
+                className="ml-0.5 flex h-4 w-4 items-center justify-center rounded-full text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                aria-label={`Remove ${item}`}
+              >
+                x
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

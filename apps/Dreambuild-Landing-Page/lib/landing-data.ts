@@ -264,6 +264,15 @@ export const allProjects = [
     year: "2024",
     description:
       "A serene family home featuring warm oak tones, textured plaster walls, and curated furniture that balances comfort with refined simplicity.",
+    image:
+      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200&q=80",
+    galleryImages: [
+      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=900&q=80",
+      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=900&q=80",
+      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1200&q=80",
+      "https://images.unsplash.com/photo-1631679706909-1844bbd07221?w=900&q=80",
+      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=900&q=80",
+    ],
     scope: ["Full Interior Design", "Furniture Curation", "Lighting Design"],
   },
   {
@@ -274,6 +283,15 @@ export const allProjects = [
     year: "2024",
     description:
       "A compact urban retreat transformed with soft textures, brass accents, and a neutral palette that maximizes perceived space.",
+    image:
+      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1200&q=80",
+    galleryImages: [
+      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=900&q=80",
+      "https://images.unsplash.com/photo-1631679706909-1844bbd07221?w=900&q=80",
+      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200&q=80",
+      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=900&q=80",
+      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=900&q=80",
+    ],
     scope: ["Space Planning", "Material Selection", "Styling"],
   },
   {
@@ -284,6 +302,15 @@ export const allProjects = [
     year: "2023",
     description:
       "A complete home transformation focusing on open-plan living, natural light optimization, and family-friendly durability.",
+    image:
+      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1200&q=80",
+    galleryImages: [
+      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=900&q=80",
+      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=900&q=80",
+      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200&q=80",
+      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=900&q=80",
+      "https://images.unsplash.com/photo-1631679706909-1844bbd07221?w=900&q=80",
+    ],
     scope: [
       "Full Interior Design",
       "Renovation Consultation",
@@ -298,6 +325,15 @@ export const allProjects = [
     year: "2023",
     description:
       "An elegant living and dining area designed for hosting, with statement lighting and a cohesive material story.",
+    image:
+      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=1200&q=80",
+    galleryImages: [
+      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=900&q=80",
+      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=900&q=80",
+      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1200&q=80",
+      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=900&q=80",
+      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=900&q=80",
+    ],
     scope: ["Living Room Design", "Dining Room Design", "Lighting Layout"],
   },
   {
@@ -308,6 +344,15 @@ export const allProjects = [
     year: "2023",
     description:
       "A dated kitchen reimagined with sleek cabinetry, integrated appliances, and a waterfall island that anchors the space.",
+    image:
+      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1200&q=80",
+    galleryImages: [
+      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=900&q=80",
+      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=900&q=80",
+      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200&q=80",
+      "https://images.unsplash.com/photo-1631679706909-1844bbd07221?w=900&q=80",
+      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=900&q=80",
+    ],
     scope: ["Kitchen Design", "Cabinetry Design", "Material Coordination"],
   },
   {
@@ -318,6 +363,15 @@ export const allProjects = [
     year: "2023",
     description:
       "A master suite sanctuary with layered textiles, indirect lighting, and a calm color palette promoting rest and relaxation.",
+    image:
+      "https://images.unsplash.com/photo-1631679706909-1844bbd07221?w=1200&q=80",
+    galleryImages: [
+      "https://images.unsplash.com/photo-1631679706909-1844bbd07221?w=900&q=80",
+      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=900&q=80",
+      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1200&q=80",
+      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=900&q=80",
+      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=900&q=80",
+    ],
     scope: ["Bedroom Design", "Closet Design", "Lighting Design"],
   },
 ]

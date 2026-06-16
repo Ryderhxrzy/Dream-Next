@@ -2,7 +2,6 @@ import {
   blogPosts,
   galleryItems,
   processSteps,
-  projects,
   services,
   stats,
   testimonials,
@@ -65,6 +64,22 @@ export type ServicesHeaderContent = {
 export type GalleryContent = (typeof galleryItems)[number] & {
   image?: string;
   alt?: string;
+  description?: string;
+  address?: string;
+};
+
+export type DreamBuildProject = {
+  id: string;
+  title: string;
+  tag: string;
+  size: "short" | "tall";
+  image: string;
+  location: string;
+  scopeLabel: string;
+  scopeItems: string[];
+  timeline: string;
+  description: string;
+  story: string;
 };
 
 export type GalleryHeaderContent = {
@@ -79,7 +94,7 @@ export type DreamBuildContent = {
   services: typeof services;
   servicesHeader: ServicesHeaderContent;
   servicesCta: ServicesCtaContent;
-  projects: typeof projects;
+  projects: DreamBuildProject[];
   galleryItems: GalleryContent[];
   galleryHeader: GalleryHeaderContent;
   processSteps: ProcessStepContent[];
@@ -172,6 +187,13 @@ const contentTypes = [
 const text = (value: unknown, fallback: string) =>
   typeof value === "string" && value.trim() ? value.trim() : fallback;
 
+const slugify = (value: string) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
 const textList = (value: unknown, fallback: string[]) => {
   if (Array.isArray(value)) {
     const items = value.filter((item): item is string => typeof item === "string" && item.trim().length > 0).map((item) => item.trim());
@@ -231,6 +253,54 @@ const byIndex = <T>(items: CmsItem[], defaults: readonly T[], mapper: (item: Cms
     return item ? mapper(item, fallback, index) : fallback;
   });
 };
+
+const mapGalleryItems = (items: CmsItem[]): GalleryContent[] =>
+  items
+    .filter((item) => item.is_active && text(item.image_url, ""))
+    .sort((a, b) => a.sort_order - b.sort_order || a.id - b.id)
+    .map((item, index) => {
+      const payload = item.payload ?? {};
+      const fallback = galleryItems[index % galleryItems.length] ?? galleryItems[0];
+
+      return {
+        ...fallback,
+        title: text(item.title, `Gallery image ${index + 1}`),
+        image: text(item.image_url, ""),
+        alt: text(payload.alt, item.title || `Gallery image ${index + 1}`),
+        description: text(payload.description, ""),
+        address: text(payload.address, ""),
+        tone: text(payload.tone, fallback.tone) as typeof fallback.tone,
+      };
+    });
+
+const mapProjects = (items: CmsItem[]): DreamBuildProject[] =>
+  items
+    .filter((item) => item.is_active && text(item.title, "") && text(item.image_url, ""))
+    .sort((a, b) => a.sort_order - b.sort_order || a.id - b.id)
+    .map((item, index) => {
+      const payload = item.payload ?? {};
+      const title = text(item.title, `Featured project ${index + 1}`);
+      const id = slugify(text(item.key, "") || title) || `project-${item.id}`;
+      const scopeItems = textList(
+        payload.scope_items,
+        textList(payload.scope_label, ["Design", "Supply", "Installation"]),
+      );
+      const scopeLabel = scopeItems.join(" + ");
+
+      return {
+        id,
+        title,
+        tag: text(payload.tag, "Full Solution - Design to Installation"),
+        size: text(payload.card_size, index % 2 === 0 ? "tall" : "short") === "tall" ? "tall" : "short",
+        image: text(item.image_url, ""),
+        location: text(payload.city_area, text(payload.location, "Metro Manila")),
+        scopeLabel,
+        scopeItems,
+        timeline: text(payload.timeline, ""),
+        description: text(item.subtitle, text(item.body, "A closer look at the DreamBuild interior process.")),
+        story: text(item.body, "A closer look at the DreamBuild interior process."),
+      };
+    });
 
 const mapServices = (items: CmsItem[]): typeof services => {
   const seen = new Set<string>();
@@ -339,15 +409,7 @@ export async function getDreamBuildContent(): Promise<DreamBuildContent> {
       description: text(servicesHeaderPayload.section_description, defaultServicesHeader.description),
     },
     servicesCta: defaultServicesCta,
-    projects: byIndex(projectItems, projects, (item, fallback) => {
-      const payload = item.payload ?? {};
-      return {
-        ...fallback,
-        title: text(item.title, fallback.title),
-        tag: text(payload.tag, fallback.tag),
-        size: text(payload.card_size, fallback.size) as typeof fallback.size,
-      };
-    }),
+    projects: mapProjects(projectItems),
     blogPosts: byIndex(blogItems, blogPosts, (item, fallback) => {
       const payload = item.payload ?? {};
       const sections = pairsList(payload.sections, []);
@@ -382,16 +444,7 @@ export async function getDreamBuildContent(): Promise<DreamBuildContent> {
         quote: text(item.body, fallback.quote),
       };
     }),
-    galleryItems: byIndex(galleryCmsItems, galleryItems, (item, fallback) => {
-      const payload = item.payload ?? {};
-      return {
-        ...fallback,
-        title: text(item.title, fallback.title),
-        image: text(item.image_url, ""),
-        alt: text(payload.alt, item.title || fallback.title),
-        tone: text(payload.tone, fallback.tone) as typeof fallback.tone,
-      };
-    }),
+    galleryItems: mapGalleryItems(galleryCmsItems),
     galleryHeader: {
       eyebrow: text(galleryHeaderPayload.section_eyebrow, defaultGalleryHeader.eyebrow),
       title: text(galleryHeaderPayload.section_title, defaultGalleryHeader.title),
