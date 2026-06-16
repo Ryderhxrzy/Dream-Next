@@ -1560,6 +1560,7 @@ const ProfilePage = ({
   const [webstoreAcceptedTerms, setWebstoreAcceptedTerms] = useState(false)
   const [webstoreRenewalEnabled, setWebstoreRenewalEnabled] = useState(false)
   const [webstoreTermsOpen, setWebstoreTermsOpen] = useState(false)
+  const [webstoreTermsScrolledEnough, setWebstoreTermsScrolledEnough] = useState(false)
   const [webstoreMsg, setWebstoreMsg] = useState<AlertMsg | null>(null)
   const [showWebstoreTutorial, setShowWebstoreTutorial] = useState(false)
   const [showWebstoreLearnMore, setShowWebstoreLearnMore] = useState(false)
@@ -11558,13 +11559,15 @@ const ProfilePage = ({
                                     onChange={(e) => {
                                       if (isWebstoreSubscriptionLocked) return
                                       const nextChecked = e.target.checked
-                                      setWebstoreAcceptedTerms(nextChecked)
-                                      setWebstoreInvalidFields((prev) => ({
-                                        ...prev,
-                                        terms: false,
-                                      }))
                                       if (nextChecked) {
+                                        // Don't mark as accepted yet — wait for "I Agree"
                                         setWebstoreTermsOpen(true)
+                                      } else {
+                                        setWebstoreAcceptedTerms(false)
+                                        setWebstoreInvalidFields((prev) => ({
+                                          ...prev,
+                                          terms: false,
+                                        }))
                                       }
                                     }}
                                     className={`mt-0.5 h-4 w-4 accent-blue-600 ${
@@ -12375,24 +12378,29 @@ const ProfilePage = ({
         <AnimatePresence>
           {webstoreTermsOpen && (
             <motion.div
+              key="terms-modal"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[65] bg-black/60 p-4 backdrop-blur-sm"
-              onClick={() => setWebstoreTermsOpen(false)}
+              className="fixed inset-0 z-[150] bg-black/60 p-4 backdrop-blur-sm"
+              onAnimationStart={() => setWebstoreTermsScrolledEnough(false)}
+              onClick={() => {
+                setWebstoreTermsOpen(false)
+                if (!webstoreAcceptedTerms) setWebstoreAcceptedTerms(false)
+              }}
             >
               <motion.div
                 initial={{ opacity: 0, scale: 0.96, y: 8 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.96, y: 8 }}
                 transition={{ duration: 0.18 }}
-                className="mx-auto mt-6 max-w-5xl overflow-hidden rounded-3xl border border-[#d8e2f6] bg-white shadow-[0_24px_50px_rgba(30,64,175,0.18)]"
+                className="mx-auto mt-6 flex max-h-[calc(100vh-4rem)] max-w-5xl flex-col overflow-hidden rounded-3xl border border-[#d8e2f6] bg-white shadow-[0_24px_50px_rgba(30,64,175,0.18)]"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="border-b border-[#e3eaf8] px-5 py-5 md:px-6">
+                <div className="shrink-0 border-b border-[#e3eaf8] px-5 py-5 md:px-6">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-4">
-                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#e6efff] to-[#dbe8ff]">
+                      <div className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#e6efff] to-[#dbe8ff] md:flex">
                         <svg
                           viewBox="0 0 24 24"
                           className="h-8 w-8 text-[#3b82f6]"
@@ -12407,10 +12415,10 @@ const ProfilePage = ({
                         </svg>
                       </div>
                       <div>
-                        <h3 className="text-4xl font-bold tracking-tight text-[#0f1f44]">
+                        <h3 className="text-lg font-bold tracking-tight text-[#0f1f44] md:text-3xl">
                           {webstoreTermsTitle}
                         </h3>
-                        <p className="mt-1 text-lg text-[#60739b]">
+                        <p className="mt-1 text-sm text-[#60739b] md:text-base">
                           By submitting a Partner Webstore Request, you agree to
                           the following terms and conditions:
                         </p>
@@ -12418,7 +12426,12 @@ const ProfilePage = ({
                     </div>
                     <button
                       type="button"
-                      onClick={() => setWebstoreTermsOpen(false)}
+                      onClick={() => {
+                        setWebstoreTermsOpen(false)
+                        if (!webstoreAcceptedTerms) {
+                          setWebstoreAcceptedTerms(false)
+                        }
+                      }}
                       className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#d6e0f5] text-[#5e6f93] hover:bg-[#f6f9ff]"
                       aria-label="Close terms modal"
                     >
@@ -12427,8 +12440,16 @@ const ProfilePage = ({
                   </div>
                 </div>
 
-                <div className="px-5 py-4 md:px-6">
-                  <div className="max-h-[68vh] overflow-y-auto rounded-2xl border border-[#dbe4f6] bg-white p-5">
+                <div className="flex min-h-0 flex-1 flex-col px-5 py-4 md:px-6">
+                  <div
+                    className="min-h-0 flex-1 overflow-y-auto rounded-2xl border border-[#dbe4f6] bg-white p-5"
+                    onScroll={(e) => {
+                      const el = e.currentTarget
+                      const scrolled = el.scrollTop + el.clientHeight
+                      const half = el.scrollHeight * 0.5
+                      if (scrolled >= half) setWebstoreTermsScrolledEnough(true)
+                    }}
+                  >
                     <div
                       className="prose prose-slate prose-headings:text-[#1c2f57] prose-strong:text-[#1c2f57] max-w-none text-[#42557e] [&_ol]:list-decimal [&_ol]:pl-6 [&_ul]:list-disc [&_ul]:pl-6"
                       dangerouslySetInnerHTML={{ __html: webstoreTermsBody }}
@@ -12436,7 +12457,7 @@ const ProfilePage = ({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 border-t border-[#e3eaf8] bg-[#fbfdff] px-5 py-4 md:px-6">
+                <div className="flex shrink-0 items-center justify-between gap-3 border-t border-[#e3eaf8] bg-[#fbfdff] px-5 py-4 md:px-6">
                   <button
                     type="button"
                     onClick={() => setWebstoreTermsOpen(false)}
@@ -12444,19 +12465,25 @@ const ProfilePage = ({
                   >
                     Close
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setWebstoreAcceptedTerms(true)
-                      setWebstoreTermsOpen(false)
-                    }}
-                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] px-6 py-2.5 text-base font-semibold text-white shadow-[0_8px_20px_rgba(37,99,235,0.35)] hover:from-[#1d4ed8] hover:to-[#1e40af]"
-                  >
-                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/60 text-xs">
-                      ✓
+                  {webstoreTermsScrolledEnough ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setWebstoreAcceptedTerms(true)
+                        setWebstoreTermsOpen(false)
+                      }}
+                      className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] px-6 py-2.5 text-base font-semibold text-white shadow-[0_8px_20px_rgba(37,99,235,0.35)] hover:from-[#1d4ed8] hover:to-[#1e40af]"
+                    >
+                      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/60 text-xs">
+                        ✓
+                      </span>
+                      I Agree
+                    </button>
+                  ) : (
+                    <span className="text-xs text-[#8fa3c8]">
+                      Scroll to continue ↓
                     </span>
-                    I Agree
-                  </button>
+                  )}
                 </div>
               </motion.div>
             </motion.div>

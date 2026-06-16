@@ -29,6 +29,7 @@ class SupplierUser extends Authenticatable
         'su_last_logindate',
         'su_last_ipadd',
         'su_last_loginloc',
+        'su_avatar',
     ];
 
     protected $hidden = ['su_password'];

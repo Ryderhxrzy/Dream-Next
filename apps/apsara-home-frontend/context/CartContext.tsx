@@ -78,7 +78,7 @@ export function useCart(): CartContextType {
   const guestCartHydratedKeyRef = useRef<string>('')
   const partnerSlug = extractPartnerSlugFromPath(pathname)
   const guestCartStorageKey = `${GUEST_CART_STORAGE_KEY_PREFIX}:${partnerSlug || 'main'}`
-  const { data: cartData, isLoading: isCartLoading } = useGetCartQuery(undefined, {
+  const { data: cartData, isLoading: isCartLoading, refetch: refetchCart } = useGetCartQuery(undefined, {
     skip: !isLoggedIn,
   })
   const [addToCartApi] = useAddToCartMutation()
@@ -108,7 +108,9 @@ export function useCart(): CartContextType {
   useEffect(() => {
     if (isLoggedIn && cartData?.cart_items) {
       const backendItems: CartItem[] = cartData.cart_items.map((item) => ({
-        id: String(item.crt_id),
+        id: item.crt_variant_id
+          ? `${item.crt_product_id}::v${item.crt_variant_id}`
+          : String(item.crt_product_id),
         cartItemId: item.crt_id,
         productId: item.crt_product_id,
         variantId: item.crt_variant_id,
@@ -125,7 +127,10 @@ export function useCart(): CartContextType {
         selectedSize: item.crt_selected_size || null,
         selectedType: item.crt_selected_type || null,
         selectedSku: null,
-        availableStock: Number(item.variant_stock ?? item.product_stock ?? 0) || null,
+        availableStock: (() => {
+          const stock = item.variant_stock ?? item.product_stock
+          return stock !== undefined ? Number(stock) : null
+        })(),
       }))
       dispatch(setCartItems(backendItems))
     }
@@ -144,6 +149,16 @@ export function useCart(): CartContextType {
   }, [guestCartStorageKey, isLoggedIn, items])
 
   const addToCart = (item: Omit<CartItem, 'quantity'>) => {
+    const existing = items.find((i) => i.id === item.id)
+    if (
+      existing &&
+      typeof existing.availableStock === 'number' &&
+      (existing.availableStock === 0 || existing.quantity >= existing.availableStock)
+    ) {
+      dispatch(setCartOpen(true))
+      return
+    }
+
     dispatch(addToCartAction(item))
 
     if (isLoggedIn && typeof item.productId === 'number' && item.productId > 0) {
@@ -155,7 +170,7 @@ export function useCart(): CartContextType {
         selected_size: item.selectedSize ?? undefined,
         selected_type: item.selectedType ?? undefined,
       }).unwrap().catch(() => {
-        // RTK Query invalidation + server cart sync will reconcile state.
+        void refetchCart()
       })
     }
   }
@@ -190,7 +205,7 @@ export function useCart(): CartContextType {
       const cartItemId = items.find((item) => item.id === id)?.cartItemId ?? Number(id)
       if (Number.isFinite(cartItemId)) {
         void updateCartItemApi({ id: cartItemId, quantity: cappedQuantity }).unwrap().catch(() => {
-          // RTK Query invalidation will restore the server state if the request fails.
+          void refetchCart()
         })
       }
     }

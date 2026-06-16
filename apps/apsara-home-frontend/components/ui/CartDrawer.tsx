@@ -185,8 +185,7 @@ export default function CartDrawer() {
 
   const isAtMaxStock = (item: CartItem) =>
     typeof item.availableStock === 'number' &&
-    item.availableStock > 0 &&
-    item.quantity >= item.availableStock
+    (item.availableStock === 0 || item.quantity >= item.availableStock)
 
   return (
     <AnimatePresence>
@@ -278,7 +277,7 @@ export default function CartDrawer() {
                         </div>
 {brandItems.map((item) => (
   <motion.div
-    key={item.id}
+    key={item.productId ? (item.variantId ? `${item.productId}::v${item.variantId}` : String(item.productId)) : item.id}
     layout
     initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
@@ -369,7 +368,10 @@ export default function CartDrawer() {
           +
         </button>
       </div>
-      {typeof item.availableStock === 'number' && item.availableStock > 0 && (() => {
+      {typeof item.availableStock === 'number' && (() => {
+        if (item.availableStock === 0) {
+          return <p className="mt-1 text-[10px] font-semibold text-rose-500 dark:text-rose-400">Out of Stock</p>
+        }
         const remaining = item.availableStock - item.quantity
         if (remaining <= 0) {
           return <p className="mt-1 text-[10px] font-semibold text-rose-500 dark:text-rose-400">0 left in stock</p>

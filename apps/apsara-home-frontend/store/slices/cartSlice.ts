@@ -18,6 +18,7 @@ export interface CartItem {
   selectedSize?: string | null;
   selectedType?: string | null;
   selectedSku?: string | null;
+  availableStock?: number | null;
 }
 
 interface CartState {
@@ -42,7 +43,13 @@ const cartSlice = createSlice({
       const item = action.payload;
       const existing = state.items.find((i) => i.id === item.id);
       if (existing) {
-        existing.quantity += 1;
+        const maxQty =
+          typeof existing.availableStock === "number"
+            ? existing.availableStock
+            : Infinity;
+        if (existing.quantity < maxQty) {
+          existing.quantity += 1;
+        }
       } else {
         state.items.push({ ...item, quantity: 1 });
       }

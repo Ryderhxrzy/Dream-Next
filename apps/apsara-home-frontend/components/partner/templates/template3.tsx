@@ -1,5 +1,31 @@
 'use client'
 
+import { motion } from 'framer-motion'
+
+const REVEAL = {
+  initial: { opacity: 0, y: 36 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: false, margin: '-80px' },
+  transition: { duration: 0.75, ease: [0.22, 1, 0.36, 1] },
+} as const
+
+const STAGGER_C = {
+  initial: 'hidden',
+  whileInView: 'visible',
+  viewport: { once: false, margin: '-80px' },
+  variants: {
+    hidden: {},
+    visible: { transition: { staggerChildren: 0.13, delayChildren: 0.08 } },
+  },
+} as const
+
+const STAGGER_I = {
+  variants: {
+    hidden: { opacity: 0, y: 22 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] } },
+  },
+} as const
+
 export interface Template3Props {
   storeName?: string
   tagline?: string
@@ -68,7 +94,12 @@ export default function Template3({
       {/* Hero */}
       <section className="relative overflow-hidden px-10 py-16">
         <div className="mx-auto grid max-w-7xl items-center gap-16 lg:grid-cols-2">
-          <div>
+          <motion.div
+            initial={{ opacity: 0, x: -44 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: false, margin: '-80px' }}
+            transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
+          >
             <div className="mb-5 inline-block rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-white"
               style={{ background: `linear-gradient(135deg, ${primaryColor}50, ${accentColor}30)`, border: `1px solid ${accentColor}40` }}>
               ✦ Premium Partner Store
@@ -84,38 +115,49 @@ export default function Template3({
                 {heroBtnSecondary}
               </button>
             </div>
-          </div>
-          <div className="relative">
+          </motion.div>
+
+          <motion.div
+            className="relative"
+            initial={{ opacity: 0, x: 44 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: false, margin: '-80px' }}
+            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+          >
             <div className="absolute inset-0 rounded-3xl opacity-30 blur-3xl"
               style={{ background: `radial-gradient(circle, ${primaryColor}, transparent 70%)` }} />
             <div className="relative overflow-hidden rounded-3xl shadow-2xl" style={{ border: `1px solid ${accentColor}30` }}>
               <img src={heroImage} alt="Hero" className="h-125 w-full object-cover" />
               <div className="absolute inset-0" style={{ background: `linear-gradient(to top, ${primaryColor}60, transparent)` }} />
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Stats band */}
-      <section className="mx-10 my-6 overflow-hidden rounded-3xl" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
-        <div className="grid grid-cols-2 divide-x divide-white/10 md:grid-cols-4">
+      <motion.section
+        className="mx-10 my-6 overflow-hidden rounded-3xl"
+        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+        {...REVEAL}
+      >
+        <motion.div className="grid grid-cols-2 divide-x divide-white/10 md:grid-cols-4" {...STAGGER_C}>
           {stats.map((s) => (
-            <div key={s.label} className="px-8 py-7 text-center">
+            <motion.div key={s.label} className="px-8 py-7 text-center" {...STAGGER_I}>
               <p className="text-3xl font-black" style={{ color: accentColor }}>{s.value}</p>
               <p className="mt-1.5 text-xs text-white/50">{s.label}</p>
-            </div>
+            </motion.div>
           ))}
-        </div>
-      </section>
+        </motion.div>
+      </motion.section>
 
       {/* Features */}
       <section className="px-10 py-20">
         <div className="mx-auto max-w-6xl">
-          <div className="mb-14 text-center">
+          <motion.div className="mb-14 text-center" {...REVEAL}>
             <h2 className="text-3xl font-bold text-white">{featuresTitle}</h2>
             <p className="mt-2 text-sm text-white/50">{featuresSubtitle}</p>
-          </div>
-          <div className="grid gap-5 md:grid-cols-3">
+          </motion.div>
+          <motion.div className="grid gap-5 md:grid-cols-3" {...STAGGER_C}>
             {[
               { icon: '🛋️', title: 'Curated Catalog', desc: 'Access 500+ premium furniture pieces. All quality-checked.' },
               { icon: '🎨', title: 'Full Branding', desc: 'Your name, your logo. Completely white-labeled.' },
@@ -124,34 +166,45 @@ export default function Template3({
               { icon: '⚡', title: 'Instant Launch', desc: 'Live in days. No tech skills needed.' },
               { icon: '🔒', title: 'Secure Platform', desc: 'Enterprise-grade security on all transactions.' },
             ].map((f) => (
-              <div key={f.title} className="rounded-2xl p-6 transition hover:scale-[1.02]"
-                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <motion.div key={f.title} className="rounded-2xl p-6 transition hover:scale-[1.02]"
+                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+                {...STAGGER_I}
+              >
                 <div className="mb-4 text-3xl">{f.icon}</div>
                 <h3 className="mb-2 font-bold text-white">{f.title}</h3>
                 <p className="text-sm leading-relaxed text-white/50">{f.desc}</p>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* CTA */}
       <section className="px-10 py-24">
-        <div className="mx-auto max-w-3xl overflow-hidden rounded-3xl p-14 text-center"
-          style={{ background: `linear-gradient(135deg, ${primaryColor}60, ${accentColor}30)`, border: `1px solid ${accentColor}30` }}>
+        <motion.div
+          className="mx-auto max-w-3xl overflow-hidden rounded-3xl p-14 text-center"
+          style={{ background: `linear-gradient(135deg, ${primaryColor}60, ${accentColor}30)`, border: `1px solid ${accentColor}30` }}
+          initial={{ opacity: 0, y: 32, scale: 0.97 }}
+          whileInView={{ opacity: 1, y: 0, scale: 1 }}
+          viewport={{ once: false, margin: '-80px' }}
+          transition={{ duration: 0.78, ease: [0.22, 1, 0.36, 1] }}
+        >
           <h2 className="text-4xl font-black text-white">{ctaTitle}</h2>
           <p className="mt-4 text-base text-white/70">{ctaSubtitle}</p>
           <button type="button" className="mt-10 rounded-2xl px-12 py-4 text-sm font-bold text-white shadow-2xl transition hover:scale-105"
             style={{ background: `linear-gradient(135deg, ${primaryColor}, ${accentColor})` }}>
             {ctaBtnText} →
           </button>
-        </div>
+        </motion.div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/10 px-10 py-8 text-center text-xs text-white/30">
+      <motion.footer
+        className="border-t border-white/10 px-10 py-8 text-center text-xs text-white/30"
+        {...REVEAL}
+      >
         © {new Date().getFullYear()} {storeName} · Powered by Apsara Home
-      </footer>
+      </motion.footer>
     </div>
   )
 }

@@ -19,6 +19,26 @@ import Template4Component from '@/components/partner/templates/template4'
 
 const mkId = () => Date.now().toString(36) + Math.random().toString(36).slice(2)
 
+/* Scroll-reveal animation presets — spread onto motion.* elements; skip when compact=true */
+const REVEAL_PROPS = {
+  initial: { opacity: 0, y: 36 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: false, margin: '-80px' },
+  transition: { duration: 0.75, ease: [0.22, 1, 0.36, 1] },
+}
+const STAGGER_C = {
+  initial: 'hidden',
+  whileInView: 'visible',
+  viewport: { once: false, margin: '-80px' },
+  variants: { hidden: {}, visible: { transition: { staggerChildren: 0.13, delayChildren: 0.08 } } },
+}
+const STAGGER_I = {
+  variants: {
+    hidden: { opacity: 0, y: 22 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] } },
+  },
+}
+
 /* ─────────────────────────────────────────────────────────────
    Block type definitions
 ───────────────────────────────────────────────────────────── */
@@ -198,7 +218,10 @@ function RenderHero({ b, compact, shopSlug }: { b: HeroBlock; compact?: boolean;
     <section id="hero" className="relative overflow-hidden" style={{ minHeight: compact ? 400 : 520 }}>
       <img src={b.bgImage} alt="" className="absolute inset-0 h-full w-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
       <div className="absolute inset-0" style={{ backgroundColor: b.overlayColor, opacity: b.overlayOpacity / 100 }} />
-      <div className={`relative z-10 flex flex-col justify-center px-5 py-14 md:px-10 md:py-24 ${b.align === 'center' ? 'items-center text-center' : b.align === 'right' ? 'items-end text-right' : 'items-start'}`}>
+      <motion.div
+        className={`relative z-10 flex flex-col justify-center px-5 py-14 md:px-10 md:py-24 ${b.align === 'center' ? 'items-center text-center' : b.align === 'right' ? 'items-end text-right' : 'items-start'}`}
+        {...(compact ? {} : REVEAL_PROPS)}
+      >
         {b.badge && <span className="mb-4 inline-block rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-widest" style={{ borderColor: `${b.primaryColor}60`, color: b.primaryColor }}>{b.badge}</span>}
         <h1 className={`max-w-3xl font-black leading-tight text-white ${compact ? 'text-3xl' : 'text-3xl md:text-5xl lg:text-6xl'}`}>{b.tagline}</h1>
         <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/60 md:text-base">{b.description}</p>
@@ -210,7 +233,7 @@ function RenderHero({ b, compact, shopSlug }: { b: HeroBlock; compact?: boolean;
               : <button type="button" className="rounded-full border border-white/25 px-6 py-3 text-sm font-medium text-white/80">{b.btnSecondary}</button>
           )}
         </div>
-      </div>
+      </motion.div>
     </section>
   )
 }
@@ -220,14 +243,17 @@ function RenderStats({ b, compact }: { b: StatsBlock; compact?: boolean }) {
     : b.items.length <= 2 ? 'grid-cols-2' : b.items.length === 3 ? 'grid-cols-3' : 'grid-cols-2 md:grid-cols-4'
   return (
     <section id="stats" className="px-5 py-10 md:px-10 md:py-14" style={{ backgroundColor: b.bg }}>
-      <div className={`mx-auto max-w-4xl grid gap-6 md:gap-10 ${cols}`}>
+      <motion.div
+        className={`mx-auto max-w-4xl grid gap-6 md:gap-10 ${cols}`}
+        {...(compact ? {} : STAGGER_C)}
+      >
         {b.items.map((s, i) => (
-          <div key={i} className="text-center">
+          <motion.div key={i} className="text-center" {...(compact ? {} : STAGGER_I)}>
             <p className="text-4xl font-black" style={{ color: b.valueColor }}>{s.value}</p>
             <p className="mt-2 text-sm" style={{ color: b.labelColor }}>{s.label}</p>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </section>
   )
 }
@@ -237,53 +263,77 @@ function RenderFeatures({ b, compact }: { b: FeaturesBlock; compact?: boolean })
     <section id="features" className="px-5 py-12 md:px-10 md:py-16" style={{ backgroundColor: b.bg }}>
       <div className="mx-auto max-w-6xl">
         {(b.title || b.subtitle) && (
-          <div className="mb-8 text-center md:mb-12">
+          <motion.div
+            className="mb-8 text-center md:mb-12"
+            {...(compact ? {} : REVEAL_PROPS)}
+          >
             {b.title && <h2 className="text-2xl font-bold md:text-3xl" style={{ color: b.textColor }}>{b.title}</h2>}
             {b.subtitle && <p className="mt-2 text-sm opacity-60" style={{ color: b.textColor }}>{b.subtitle}</p>}
-          </div>
+          </motion.div>
         )}
-        <div className={`grid gap-4 md:gap-6 ${gridCols}`}>
+        <motion.div
+          className={`grid gap-4 md:gap-6 ${gridCols}`}
+          {...(compact ? {} : STAGGER_C)}
+        >
           {b.items.map((item, i) => (
-            <div key={i} className="rounded-2xl border border-black/5 p-6 shadow-sm" style={{ backgroundColor: b.cardBg }}>
+            <motion.div key={i} className="rounded-2xl border border-black/5 p-6 shadow-sm" style={{ backgroundColor: b.cardBg }} {...(compact ? {} : STAGGER_I)}>
               <div className="mb-4 text-3xl">{item.icon}</div>
               <h3 className="mb-2 font-semibold" style={{ color: b.textColor }}>{item.title}</h3>
               <p className="text-sm leading-relaxed opacity-60" style={{ color: b.textColor }}>{item.desc}</p>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   )
 }
 function RenderText({ b, compact }: { b: TextBlock; compact?: boolean }) {
   return (
-    <section className={`${compact ? 'px-5 py-10' : 'px-5 py-12 md:px-10 md:py-16'}`} style={{ backgroundColor: b.bg }}>
+    <motion.section
+      className={`${compact ? 'px-5 py-10' : 'px-5 py-12 md:px-10 md:py-16'}`}
+      style={{ backgroundColor: b.bg }}
+      {...(compact ? {} : REVEAL_PROPS)}
+    >
       <div className={`mx-auto max-w-3xl ${b.align === 'center' ? 'text-center' : b.align === 'right' ? 'text-right' : ''}`}>
         {b.title && <h2 className="text-2xl font-bold md:text-3xl" style={{ color: b.textColor }}>{b.title}</h2>}
         {b.body && <p className="mt-4 text-sm leading-relaxed opacity-70 md:text-base" style={{ color: b.textColor }}>{b.body}</p>}
       </div>
-    </section>
+    </motion.section>
   )
 }
 function RenderTestimonial({ b, compact }: { b: TestimonialBlock; compact?: boolean }) {
   return (
     <section className={`${compact ? 'px-4 py-10' : 'px-4 py-12 md:px-10 md:py-16'}`}>
-      <div className="mx-auto max-w-3xl rounded-2xl p-6 text-center md:rounded-3xl md:p-10" style={{ backgroundColor: b.bg }}>
+      <motion.div
+        className="mx-auto max-w-3xl rounded-2xl p-6 text-center md:rounded-3xl md:p-10"
+        style={{ backgroundColor: b.bg }}
+        {...(compact ? {} : {
+          initial: { opacity: 0, y: 24, scale: 0.97 },
+          whileInView: { opacity: 1, y: 0, scale: 1 },
+          viewport: { once: false, margin: '-80px' },
+          transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
+        })}
+      >
         <p className="text-lg font-bold leading-relaxed md:text-2xl" style={{ color: b.textColor }}>"{b.text}"</p>
         <p className="mt-4 text-sm font-semibold opacity-70" style={{ color: b.textColor }}>— {b.author}</p>
-      </div>
+      </motion.div>
     </section>
   )
 }
 function RenderCta({ b, compact }: { b: CtaBlock; compact?: boolean }) {
   return (
-    <section id="cta" className={`text-center ${compact ? 'px-5 py-14' : 'px-5 py-16 md:px-10 md:py-24'}`} style={{ backgroundColor: b.bg }}>
+    <motion.section
+      id="cta"
+      className={`text-center ${compact ? 'px-5 py-14' : 'px-5 py-16 md:px-10 md:py-24'}`}
+      style={{ backgroundColor: b.bg }}
+      {...(compact ? {} : REVEAL_PROPS)}
+    >
       <div className="mx-auto max-w-2xl">
         <h2 className="text-3xl font-black md:text-4xl" style={{ color: b.textColor }}>{b.title}</h2>
         <p className="mt-3 text-sm opacity-60 md:mt-4 md:text-base" style={{ color: b.textColor }}>{b.subtitle}</p>
         <button type="button" className="mt-8 rounded-2xl px-8 py-3.5 text-sm font-bold text-white shadow-xl md:mt-10 md:px-12 md:py-4" style={{ backgroundColor: b.btnColor }}>{b.btnText}</button>
       </div>
-    </section>
+    </motion.section>
   )
 }
 function RenderAbout({ b, compact }: { b: AboutBlock; compact?: boolean }) {
@@ -293,13 +343,28 @@ function RenderAbout({ b, compact }: { b: AboutBlock; compact?: boolean }) {
         <div className={`grid items-center gap-10 ${compact ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 md:gap-16'}`}>
           {/* Image */}
           {b.image && (
-            <div className="overflow-hidden rounded-3xl shadow-xl">
+            <motion.div
+              className="overflow-hidden rounded-3xl shadow-xl"
+              {...(compact ? {} : {
+                initial: { opacity: 0, x: -44 },
+                whileInView: { opacity: 1, x: 0 },
+                viewport: { once: false, margin: '-80px' },
+                transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] },
+              })}
+            >
               <img src={b.image} alt="About" className="h-72 w-full object-cover md:h-96"
                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
-            </div>
+            </motion.div>
           )}
           {/* Content */}
-          <div>
+          <motion.div
+            {...(compact ? {} : {
+              initial: { opacity: 0, x: 44 },
+              whileInView: { opacity: 1, x: 0 },
+              viewport: { once: false, margin: '-80px' },
+              transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1], delay: 0.1 },
+            })}
+          >
             {b.subheading && (
               <p className="mb-2 text-xs font-bold uppercase tracking-widest" style={{ color: b.accentColor }}>{b.subheading}</p>
             )}
@@ -319,7 +384,7 @@ function RenderAbout({ b, compact }: { b: AboutBlock; compact?: boolean }) {
                 ))}
               </ul>
             )}
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>
@@ -338,7 +403,10 @@ function RenderImage({ b }: { b: ImageBlock }) {
 }
 function RenderFooter({ b, compact }: { b: FooterBlock; compact?: boolean }) {
   return (
-    <footer style={{ backgroundColor: b.bg, borderTop: `1px solid ${b.textColor}15`, color: b.textColor }}>
+    <motion.footer
+      style={{ backgroundColor: b.bg, borderTop: `1px solid ${b.textColor}15`, color: b.textColor }}
+      {...(compact ? {} : REVEAL_PROPS)}
+    >
       {/* Main footer content */}
       <div className={`mx-auto max-w-6xl grid grid-cols-1 gap-8 py-10 ${compact ? 'px-5' : 'px-5 md:px-10 md:py-14 md:grid-cols-3 md:gap-10'}`}>
         {/* Brand */}
@@ -378,7 +446,7 @@ function RenderFooter({ b, compact }: { b: FooterBlock; compact?: boolean }) {
       <div className="border-t px-5 py-4 text-center text-xs" style={{ borderColor: `${b.textColor}15`, opacity: 0.4 }}>
         © {new Date().getFullYear()} {b.storeName} · {b.copyrightText}
       </div>
-    </footer>
+    </motion.footer>
   )
 }
 function BlockCanvas({ block, compact, shopSlug }: { block: Block; compact?: boolean; shopSlug?: string }) {
@@ -972,7 +1040,7 @@ function applyColorTheme(blocks: Block[], color: string): Block[] {
 function TemplateThumbnail({ blocks }: { blocks: Block[] }) {
   return (
     <div className="pointer-events-none absolute left-0 top-0 origin-top-left" style={{ width: '1280px', transform: 'scale(0.305)', transformOrigin: 'top left' }}>
-      {blocks.map((b) => <BlockCanvas key={b.id} block={b} />)}
+      {blocks.map((b) => <BlockCanvas key={b.id} block={b} compact={true} />)}
     </div>
   )
 }

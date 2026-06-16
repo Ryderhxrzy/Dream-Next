@@ -728,7 +728,7 @@ const ProductInfo = ({
         ? `${product.name} - ${selectedVariantTitleParts.join(' - ')}`
         : product.name;
     const cartItemIdBase = product.id ? String(product.id) : product.name.toLocaleLowerCase().replace(/\s+/g, '-');
-    const cartItemId = selectedVariant?.sku ? `${cartItemIdBase}::${selectedVariant.sku}` : cartItemIdBase;
+    const cartItemId = selectedVariant?.id ? `${cartItemIdBase}::v${selectedVariant.id}` : cartItemIdBase;
     const cartItem = items.find((item) => item.productId === product.id) ?? items.find((item) => item.id === cartItemId);
     const isAlreadyInCart = items.some((item) => item.productId === product.id) || Boolean(cartItem);
     const isInStock = typeof displayStock !== 'number' || displayStock > 0;

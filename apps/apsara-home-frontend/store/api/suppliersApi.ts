@@ -62,6 +62,7 @@ export interface SupplierPortalUser {
   fullname: string
   username: string
   email: string
+  avatar_url?: string
   level_type: number
   is_main_supplier?: boolean
   role_label?: string
@@ -88,6 +89,7 @@ export interface UpdateSupplierUserPayload {
   username: string
   email?: string
   password?: string
+  avatar_url?: string
 }
 
 export interface SupplierMeResponse {
@@ -219,6 +221,17 @@ export const suppliersApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Suppliers"],
     }),
+    updateSupplierLogo: builder.mutation<
+      { message: string; supplier_logo: string },
+      { logo_url: string }
+    >({
+      query: (body) => ({
+        url: "/api/supplier/auth/logo",
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["Suppliers"],
+    }),
   }),
 })
 
@@ -235,4 +248,5 @@ export const {
   useUpdateSupplierUserMutation,
   useUpdateSupplierCategoriesMutation,
   useDeleteSupplierUserMutation,
+  useUpdateSupplierLogoMutation,
 } = suppliersApi

@@ -315,7 +315,7 @@ export default function ProductCard({
       .filter(Boolean)
       .join(" ? ")
     const itemIdBase = typeof id === "number" ? String(id) : slug
-    const itemId = variant?.sku ? `${itemIdBase}::${variant.sku}` : itemIdBase
+    const itemId = variant?.id ? `${itemIdBase}::v${variant.id}` : itemIdBase
 
     addToCart({
       id: itemId,

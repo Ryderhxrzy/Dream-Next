@@ -11,6 +11,7 @@ use App\Models\CheckoutHistory;
 use App\Models\Customer;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\WebPageContent;
 use App\Services\Payments\PaymongoPaymentSyncService;
 use App\Services\Shipping\JntShippingService;
@@ -642,6 +643,30 @@ class AdminOrderController extends Controller
                 'ch_approved_at' => now(),
                 'ch_fulfillment_status' => $order->ch_fulfillment_status === 'pending' ? 'processing' : $order->ch_fulfillment_status,
             ])->save();
+
+            // Deduct stock on approval
+            $deductQty = max(1, (int) ($order->ch_quantity ?? 1));
+            $productId  = (int) ($order->ch_product_id ?? 0);
+            $sku        = trim((string) ($order->ch_product_sku ?? ''));
+
+            if ($productId > 0) {
+                // Deduct variant stock when the order has a SKU
+                if ($sku !== '') {
+                    ProductVariant::query()
+                        ->where('pv_pdid', $productId)
+                        ->where('pv_sku', $sku)
+                        ->update([
+                            'pv_qty' => DB::raw("GREATEST(0, COALESCE(pv_qty, 0) - {$deductQty})"),
+                        ]);
+                }
+
+                // Always deduct product-level stock
+                Product::query()
+                    ->where('pd_id', $productId)
+                    ->update([
+                        'pd_qty' => DB::raw("GREATEST(0, COALESCE(pd_qty, 0) - {$deductQty})"),
+                    ]);
+            }
         });
 
         \App\Models\OrderNotification::updateStatusForCheckout(

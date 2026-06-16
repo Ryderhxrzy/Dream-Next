@@ -654,6 +654,7 @@ Route::middleware(['auth:sanctum', 'admin.actor'])->group(function () {
 Route::middleware(['auth:sanctum', 'supplier.actor'])->prefix('supplier/auth')->group(function () {
     Route::post('/logout', [SupplierAuthController::class, 'logout']);
     Route::get('/me', [SupplierAuthController::class, 'me']);
+    Route::patch('/logo', [SupplierAuthController::class, 'updateLogo']);
 });
 
 Route::middleware(['auth:sanctum', 'supplier.actor'])->group(function () {
