@@ -16,9 +16,10 @@ export const stats = [
 export const services = [
   {
     id: "01",
-    title: "Full Interior Design",
+    serviceLabel: "Solution",
+    title: "Interior Design",
     description:
-      "A complete design service covering planning, mood direction, furniture curation, detailing, and the final visual language of the home.",
+      "Space planning, material direction, and a complete visual language - designed around how you actually live, and engineered to be sourced and installed without compromise.",
     bullets: [
       "Space planning with lifestyle-based zoning",
       "Material, color, and finish coordination",
@@ -29,26 +30,28 @@ export const services = [
   },
   {
     id: "02",
-    title: "Renovation Design",
+    serviceLabel: "Solution",
+    title: "Sourcing & Supply",
     description:
-      "For homes that need better flow, more refined finishes, and a stronger point of view before construction and procurement begin.",
+      "Two decades of direct factory relationships through our proprietary international supply chain mean designer-grade furniture, lighting, and finishing materials at prices showrooms can't touch.",
     bullets: [
-      "Kitchen, bath, and common area upgrades",
-      "Built-in, joinery, and ceiling direction",
-      "Lighting plans and visual consistency checks",
+      "Direct-from-factory furniture, lighting, and fixtures",
+      "Finishing materials, hardware, and soft furnishings",
+      "Consolidated shipping, QC inspection, and delivery",
     ],
     accent: "from-[#fcfaf7] via-[#e4dad0] to-[#b7a392]",
     panel: "from-[#f2ede6] via-[#d0c0b2] to-[#9f8a79]",
   },
   {
     id: "03",
-    title: "Styling and Finishing",
+    serviceLabel: "Solution",
+    title: "Installation & Finishing",
     description:
-      "The final layer that makes a home feel complete through accessories, texture balance, lighting ambiance, and soft luxury detailing.",
+      "Our crews install, assemble, and style everything we design and supply, then hand you a home that's photo-ready on day one.",
     bullets: [
-      "Decor styling and shelf composition",
-      "Curtain, textile, and soft-finish selection",
-      "Final-home shoot readiness and presentation polish",
+      "Furniture, fixture, and built-in installation",
+      "Curtains, lighting, and accessory fit-out",
+      "Final styling, QC walkthrough, and turnover",
     ],
     accent: "from-[#ddd1c6] via-[#f8f5f1] to-[#eee5db]",
     panel: "from-[#baa797] via-[#ded3c8] to-[#faf7f2]",

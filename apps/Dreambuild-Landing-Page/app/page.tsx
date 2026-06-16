@@ -19,8 +19,8 @@ export default async function Home() {
       <DreamBuildRealtimeRefresh />
       <Header />
       <HeroSection content={content.hero} />
-      <ServicesSection services={content.services} />
-      <GallerySection galleryItems={content.galleryItems} />
+      <ServicesSection services={content.services} header={content.servicesHeader} cta={content.servicesCta} />
+      <GallerySection galleryItems={content.galleryItems} header={content.galleryHeader} />
       <ProjectsSection projects={content.projects} />
       <BlogsSection blogPosts={content.blogPosts} />
       <ProcessSection processSteps={content.processSteps} />
