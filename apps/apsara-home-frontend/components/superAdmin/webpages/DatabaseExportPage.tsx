@@ -1,8 +1,8 @@
  'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { showErrorToast, showSuccessToast } from '@/libs/toast'
-import { useExportDatabaseMutation, useListDatabaseExportsQuery } from '@/store/api/adminDatabaseApi'
+import { useDownloadDatabaseExportMutation, useExportDatabaseMutation, useListDatabaseExportsQuery } from '@/store/api/adminDatabaseApi'
 
 type ApiErrorLike = {
   data?: {
@@ -35,13 +35,26 @@ const formatDate = (value?: string) => {
   })
 }
 
+function triggerBrowserDownload(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}
+
 export default function DatabaseExportPage() {
   const PER_PAGE = 10
   const [currentPage, setCurrentPage] = useState(1)
   const { data, isFetching, refetch } = useListDatabaseExportsQuery({ page: currentPage, per_page: PER_PAGE })
   const [exportDatabase, { isLoading }] = useExportDatabaseMutation()
+  const [downloadExport] = useDownloadDatabaseExportMutation()
   const [latestExportPreview, setLatestExportPreview] = useState<string>('')
   const [latestSummary, setLatestSummary] = useState<{ name: string; tables: number; rows: number; size: number; generatedAt: string; previewTable: string } | null>(null)
+  const lastAutoDownloadedPath = useRef<string | null>(null)
 
   const exportItems = useMemo(() => data?.exports ?? [], [data?.exports])
   const exportMeta = data?.meta
@@ -53,10 +66,46 @@ export default function DatabaseExportPage() {
     }
   }, [currentPage, exportMeta?.last_page])
 
+  // Auto-download when the scheduled 5pm export appears while the page is open.
+  useEffect(() => {
+    const checkScheduledExport = async () => {
+      const now = new Date()
+      // Only check during the 17:00–17:10 window (PH time assumed by server).
+      if (now.getHours() !== 17 || now.getMinutes() > 10) return
+
+      try {
+        const result = await refetch()
+        const latest = result.data?.exports?.[0]
+        if (!latest || lastAutoDownloadedPath.current === latest.path) return
+
+        const generatedAt = latest.generated_at ?? latest.last_modified_at
+        if (!generatedAt) return
+        const gen = new Date(generatedAt)
+        const isScheduledExport =
+          gen.toDateString() === now.toDateString() && gen.getHours() === 17
+
+        if (!isScheduledExport) return
+
+        const filename = latest.download_name ?? latest.name
+        const blob = await downloadExport({ path: latest.path, download_name: filename }).unwrap()
+        triggerBrowserDownload(blob, filename)
+        lastAutoDownloadedPath.current = latest.path
+        showSuccessToast('Daily database export downloaded automatically.')
+      } catch {
+        // silently ignore — polling errors should not disrupt the UI
+      }
+    }
+
+    const interval = setInterval(checkScheduledExport, 60_000)
+    return () => clearInterval(interval)
+  }, [downloadExport, refetch])
+
   const handleExport = async () => {
     try {
       const response = await exportDatabase().unwrap()
       const preview = response.export?.preview_csv ?? ''
+      const exportPath = response.export?.path ?? ''
+      const downloadName = response.export?.download_name ?? response.export?.name ?? 'database-export.zip'
 
       setLatestExportPreview(preview)
       setLatestSummary({
@@ -68,7 +117,17 @@ export default function DatabaseExportPage() {
         previewTable: response.export?.preview_table ?? 'N/A',
       })
 
-      // Auto-download is kept ON. Per-row download button remains removed.
+      // Auto-download the export file immediately after generation.
+      if (exportPath) {
+        try {
+          const blob = await downloadExport({ path: exportPath, download_name: downloadName }).unwrap()
+          triggerBrowserDownload(blob, downloadName)
+          lastAutoDownloadedPath.current = exportPath
+        } catch {
+          showErrorToast('Export created but file download failed. Contact support.')
+        }
+      }
+
       showSuccessToast(response.message || 'Database exported successfully.')
       setCurrentPage(1)
       await refetch()

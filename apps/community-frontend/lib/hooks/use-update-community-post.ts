@@ -1,23 +1,23 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuthStore } from "@/store/auth.store"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 
-import { api } from "@/lib/api";
-import { useAuthStore } from "@/store/auth.store";
+import { api } from "@/lib/api"
 
 type UpdatePostInput = {
-  category: string;
-  title: string;
-  content: string;
-  eventDate?: Date | null;
-  eventTime?: string | null;
-  eventEndTime?: string | null;
-  location?: string | null;
-  price?: string | null;
-  condition?: string | null;
-};
+  category: string
+  title: string
+  content: string
+  eventDate?: Date | null
+  eventTime?: string | null
+  eventEndTime?: string | null
+  location?: string | null
+  price?: string | null
+  condition?: string | null
+}
 
 export function useUpdateCommunityPost(postId: string) {
-  const queryClient = useQueryClient();
-  const token = useAuthStore((state) => state.token);
+  const queryClient = useQueryClient()
+  const token = useAuthStore((state) => state.token)
 
   return useMutation({
     mutationFn: (input: UpdatePostInput) =>
@@ -30,7 +30,7 @@ export function useUpdateCommunityPost(postId: string) {
         }),
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["community-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["community-posts"] })
     },
-  });
+  })
 }

@@ -2,7 +2,7 @@
 // animations.ts — Framer Motion variants used across the page
 // ─────────────────────────────────────────────────────────────────────────────
 
-import type { Variants } from "framer-motion";
+import type { Variants } from "framer-motion"
 
 export const fadeUp: Variants = {
   hidden: { opacity: 0, y: 40 },
@@ -15,7 +15,7 @@ export const fadeUp: Variants = {
       ease: [0.22, 1, 0.36, 1],
     },
   }),
-};
+}
 
 export const fadeIn: Variants = {
   hidden: { opacity: 0 },
@@ -23,7 +23,7 @@ export const fadeIn: Variants = {
     opacity: 1,
     transition: { duration: 0.7, delay, ease: "easeOut" },
   }),
-};
+}
 
 export const slideLeft: Variants = {
   hidden: { opacity: 0, x: 60 },
@@ -32,7 +32,7 @@ export const slideLeft: Variants = {
     x: 0,
     transition: { duration: 0.9, delay, ease: [0.22, 1, 0.36, 1] },
   }),
-};
+}
 
 export const slideRight: Variants = {
   hidden: { opacity: 0, x: -60 },
@@ -41,7 +41,7 @@ export const slideRight: Variants = {
     x: 0,
     transition: { duration: 0.9, delay, ease: [0.22, 1, 0.36, 1] },
   }),
-};
+}
 
 export const staggerContainer: Variants = {
   hidden: {},
@@ -51,7 +51,7 @@ export const staggerContainer: Variants = {
       delayChildren: 0.1,
     },
   },
-};
+}
 
 export const staggerItem: Variants = {
   hidden: { opacity: 0, y: 28 },
@@ -60,7 +60,7 @@ export const staggerItem: Variants = {
     y: 0,
     transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] },
   },
-};
+}
 
 export const scaleIn: Variants = {
   hidden: { opacity: 0, scale: 0.92 },
@@ -69,7 +69,7 @@ export const scaleIn: Variants = {
     scale: 1,
     transition: { duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] },
   }),
-};
+}
 
 export const lineGrow: Variants = {
   hidden: { scaleX: 0, originX: 0 },
@@ -77,7 +77,7 @@ export const lineGrow: Variants = {
     scaleX: 1,
     transition: { duration: 1, delay, ease: [0.22, 1, 0.36, 1] },
   }),
-};
+}
 
 export const stepFade: Variants = {
   hidden: { opacity: 0, x: 24 },
@@ -91,7 +91,7 @@ export const stepFade: Variants = {
     x: -24,
     transition: { duration: 0.3, ease: "easeIn" },
   },
-};
+}
 
 /** Clip-path reveal — great for large headings */
 export const clipReveal: Variants = {
@@ -101,7 +101,7 @@ export const clipReveal: Variants = {
     opacity: 1,
     transition: { duration: 0.9, delay, ease: [0.22, 1, 0.36, 1] },
   }),
-};
+}
 
 /** Subtle continuous float — for decorative blobs / image panels */
 export const floatY = {
@@ -109,7 +109,7 @@ export const floatY = {
     y: [0, -10, 0],
     transition: { duration: 5, repeat: Infinity, ease: "easeInOut" as const },
   },
-};
+}
 
 /** Stagger wrapper with a longer child delay — for stat rows etc. */
 export const staggerSlow: Variants = {
@@ -120,4 +120,4 @@ export const staggerSlow: Variants = {
       delayChildren: 0.5,
     },
   },
-};
+}

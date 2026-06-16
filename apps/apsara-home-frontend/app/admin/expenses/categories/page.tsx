@@ -1,10 +1,10 @@
-import { buildPageMetadata } from '@/app/seo'
-import ExpenseCategoriesPageMain from '@/components/superAdmin/expenses/ExpenseCategoriesPageMain'
+import ExpenseCategoriesPageMain from "@/components/superAdmin/expenses/ExpenseCategoriesPageMain"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
-  title: 'Admin Expense Categories',
-  description: 'Browse the Admin Expense Categories page on AF Home.',
-  path: '/admin/expenses/categories',
+  title: "Admin Expense Categories",
+  description: "Browse the Admin Expense Categories page on AF Home.",
+  path: "/admin/expenses/categories",
   noIndex: true,
 })
 

@@ -1,4 +1,4 @@
-import { baseApi } from './baseApi'
+import { baseApi } from "./baseApi"
 
 export interface AddsContentItem {
   id: number
@@ -12,55 +12,70 @@ export interface AddsContentItem {
 
 export const addsContentApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getAddsContentPublic: builder.query<{ items: AddsContentItem[] }, { page?: string } | void>({
+    getAddsContentPublic: builder.query<
+      { items: AddsContentItem[] },
+      { page?: string } | void
+    >({
       query: (params) => ({
-        url: '/api/web-pages/adds-content',
-        method: 'GET',
+        url: "/api/web-pages/adds-content",
+        method: "GET",
         params: params?.page ? { page: params.page } : undefined,
       }),
       keepUnusedDataFor: 0,
       refetchOnMountOrArgChange: true,
       refetchOnFocus: true,
       refetchOnReconnect: true,
-      providesTags: ['WebPages'],
+      providesTags: ["WebPages"],
     }),
     getAddsContent: builder.query<{ items: AddsContentItem[] }, void>({
       query: () => ({
-        url: '/api/admin/webpages/adds-content',
-        method: 'GET',
+        url: "/api/admin/webpages/adds-content",
+        method: "GET",
       }),
-      providesTags: ['WebPages'],
+      providesTags: ["WebPages"],
     }),
-    createAddsContent: builder.mutation<{ message: string; item: AddsContentItem }, FormData>({
+    createAddsContent: builder.mutation<
+      { message: string; item: AddsContentItem },
+      FormData
+    >({
       query: (body) => ({
-        url: '/api/admin/webpages/adds-content',
-        method: 'POST',
+        url: "/api/admin/webpages/adds-content",
+        method: "POST",
         body,
       }),
-      invalidatesTags: ['WebPages'],
+      invalidatesTags: ["WebPages"],
     }),
-    updateAddsContentStatus: builder.mutation<{ message: string; item: { id: number; status: number } }, { id: number; status: number }>({
+    updateAddsContentStatus: builder.mutation<
+      { message: string; item: { id: number; status: number } },
+      { id: number; status: number }
+    >({
       query: ({ id, status }) => ({
         url: `/api/admin/webpages/adds-content/${id}/status`,
-        method: 'PATCH',
+        method: "PATCH",
         body: { status },
       }),
-      invalidatesTags: ['WebPages'],
+      invalidatesTags: ["WebPages"],
     }),
-    updateAddsContent: builder.mutation<{ message: string; item: AddsContentItem }, { id: number; data: FormData }>({
+    updateAddsContent: builder.mutation<
+      { message: string; item: AddsContentItem },
+      { id: number; data: FormData }
+    >({
       query: ({ id, data }) => ({
         url: `/api/admin/webpages/adds-content/${id}`,
-        method: 'PATCH',
+        method: "PATCH",
         body: data,
       }),
-      invalidatesTags: ['WebPages'],
+      invalidatesTags: ["WebPages"],
     }),
-    deleteAddsContent: builder.mutation<{ message: string; id: number }, { id: number }>({
+    deleteAddsContent: builder.mutation<
+      { message: string; id: number },
+      { id: number }
+    >({
       query: ({ id }) => ({
         url: `/api/admin/webpages/adds-content/${id}`,
-        method: 'DELETE',
+        method: "DELETE",
       }),
-      invalidatesTags: ['WebPages'],
+      invalidatesTags: ["WebPages"],
     }),
   }),
 })

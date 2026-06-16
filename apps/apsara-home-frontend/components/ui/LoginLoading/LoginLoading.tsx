@@ -1,12 +1,12 @@
-'use client'
+"use client"
 
-import { useEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
-import { createPortal } from 'react-dom'
-import { useTheme } from 'next-themes'
+import { useEffect, useRef, useState } from "react"
+import { AnimatePresence, motion } from "framer-motion"
+import { useTheme } from "next-themes"
+import { createPortal } from "react-dom"
 
 /* ── Types ─────────────────────────────────────────────────────── */
-export type IslandStatus = 'loading' | 'success' | 'error'
+export type IslandStatus = "loading" | "success" | "error"
 
 type IslandState = {
   visible: boolean
@@ -21,10 +21,14 @@ type IslandState = {
 let _dispatch: ((s: IslandState) => void) | null = null
 
 export const dynamicIsland = {
-  loading: (message = 'Logging in…')          => _dispatch?.({ visible: true,  status: 'loading', message }),
-  success: (message = 'Welcome back!')        => _dispatch?.({ visible: true,  status: 'success', message }),
-  error:   (message = 'Something went wrong') => _dispatch?.({ visible: true,  status: 'error',   message }),
-  dismiss: ()                                 => _dispatch?.({ visible: false, status: 'loading', message: '' }),
+  loading: (message = "Logging in…") =>
+    _dispatch?.({ visible: true, status: "loading", message }),
+  success: (message = "Welcome back!") =>
+    _dispatch?.({ visible: true, status: "success", message }),
+  error: (message = "Something went wrong") =>
+    _dispatch?.({ visible: true, status: "error", message }),
+  dismiss: () =>
+    _dispatch?.({ visible: false, status: "loading", message: "" }),
 }
 
 /* ── Icons ─────────────────────────────────────────────────────── */
@@ -33,11 +37,26 @@ function Spinner() {
     <>
       <style>{`@keyframes di-spin { to { transform: rotate(360deg) } }`}</style>
       <svg
-        width="15" height="15" viewBox="0 0 15 15" fill="none"
-        style={{ animation: 'di-spin 0.7s linear infinite', flexShrink: 0 }}
+        width="15"
+        height="15"
+        viewBox="0 0 15 15"
+        fill="none"
+        style={{ animation: "di-spin 0.7s linear infinite", flexShrink: 0 }}
       >
-        <circle cx="7.5" cy="7.5" r="5.5" stroke="currentColor" strokeWidth="2" strokeOpacity="0.2" />
-        <path d="M7.5 2A5.5 5.5 0 0 1 13 7.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        <circle
+          cx="7.5"
+          cy="7.5"
+          r="5.5"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeOpacity="0.2"
+        />
+        <path
+          d="M7.5 2A5.5 5.5 0 0 1 13 7.5"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
       </svg>
     </>
   )
@@ -45,18 +64,24 @@ function Spinner() {
 
 function CheckIcon() {
   return (
-    <motion.svg width="15" height="15" viewBox="0 0 15 15" fill="none"
+    <motion.svg
+      width="15"
+      height="15"
+      viewBox="0 0 15 15"
+      fill="none"
       initial={{ scale: 0, rotate: -20 }}
       animate={{ scale: 1, rotate: 0 }}
-      transition={{ type: 'spring', stiffness: 500, damping: 22 }}
+      transition={{ type: "spring", stiffness: 500, damping: 22 }}
     >
       <motion.path
         d="M2.5 7.5L6 11L12.5 4"
-        stroke="currentColor" strokeWidth="2"
-        strokeLinecap="round" strokeLinejoin="round"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         initial={{ pathLength: 0 }}
         animate={{ pathLength: 1 }}
-        transition={{ duration: 0.3, ease: 'easeOut', delay: 0.08 }}
+        transition={{ duration: 0.3, ease: "easeOut", delay: 0.08 }}
       />
     </motion.svg>
   )
@@ -64,44 +89,56 @@ function CheckIcon() {
 
 function XIcon() {
   return (
-    <motion.svg width="15" height="15" viewBox="0 0 15 15" fill="none"
+    <motion.svg
+      width="15"
+      height="15"
+      viewBox="0 0 15 15"
+      fill="none"
       initial={{ scale: 0 }}
       animate={{ scale: 1 }}
-      transition={{ type: 'spring', stiffness: 500, damping: 22 }}
+      transition={{ type: "spring", stiffness: 500, damping: 22 }}
     >
-      <path d="M3 3l9 9M12 3l-9 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M3 3l9 9M12 3l-9 9"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </motion.svg>
   )
 }
 
 /* ── Status config ─────────────────────────────────────────────── */
-const CONFIG: Record<IslandStatus, {
-  icon: React.ReactNode
-  textDark: string
-  textLight: string
-  dotColor: string
-  glow: string
-}> = {
+const CONFIG: Record<
+  IslandStatus,
+  {
+    icon: React.ReactNode
+    textDark: string
+    textLight: string
+    dotColor: string
+    glow: string
+  }
+> = {
   loading: {
-    icon:      <Spinner />,
-    textDark:  '#ffffff',
-    textLight: '#1f2937',
-    dotColor:  '#34d399',
-    glow:      'rgba(52, 211, 153, 0.18)',
+    icon: <Spinner />,
+    textDark: "#ffffff",
+    textLight: "#1f2937",
+    dotColor: "#34d399",
+    glow: "rgba(52, 211, 153, 0.18)",
   },
   success: {
-    icon:      <CheckIcon />,
-    textDark:  '#6ee7b7',
-    textLight: '#059669',
-    dotColor:  '#34d399',
-    glow:      'rgba(52, 211, 153, 0.22)',
+    icon: <CheckIcon />,
+    textDark: "#6ee7b7",
+    textLight: "#059669",
+    dotColor: "#34d399",
+    glow: "rgba(52, 211, 153, 0.22)",
   },
   error: {
-    icon:      <XIcon />,
-    textDark:  '#fca5a5',
-    textLight: '#dc2626',
-    dotColor:  '#f87171',
-    glow:      'rgba(248, 113, 113, 0.18)',
+    icon: <XIcon />,
+    textDark: "#fca5a5",
+    textLight: "#dc2626",
+    dotColor: "#f87171",
+    glow: "rgba(248, 113, 113, 0.18)",
   },
 }
 
@@ -119,8 +156,8 @@ export function DynamicIslandToast() {
   const [mounted, setMounted] = useState(false)
   const [state, setState] = useState<IslandState>({
     visible: false,
-    status: 'loading',
-    message: '',
+    status: "loading",
+    message: "",
   })
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { resolvedTheme } = useTheme()
@@ -132,11 +169,11 @@ export function DynamicIslandToast() {
       setState(next)
       if (timer.current) clearTimeout(timer.current)
 
-      if (next.visible && next.status !== 'loading') {
-        const delay = next.status === 'success' ? 2400 : 3800
+      if (next.visible && next.status !== "loading") {
+        const delay = next.status === "success" ? 2400 : 3800
         timer.current = setTimeout(
-          () => setState(prev => ({ ...prev, visible: false })),
-          delay,
+          () => setState((prev) => ({ ...prev, visible: false })),
+          delay
         )
       }
     }
@@ -150,28 +187,34 @@ export function DynamicIslandToast() {
   if (!mounted) return null
 
   const cfg = CONFIG[state.status]
-  const isDark = resolvedTheme !== 'light'
+  const isDark = resolvedTheme !== "light"
   const textColor = isDark ? cfg.textDark : cfg.textLight
   const surface = isDark
     ? {
-        background: 'rgba(8, 8, 8, 0.9)',
-        border: '1px solid rgba(255,255,255,0.09)',
-        inset: 'inset 0 0 0 1px rgba(255,255,255,0.04)',
-        baseShadow: '0 14px 44px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.25)',
+        background: "rgba(8, 8, 8, 0.9)",
+        border: "1px solid rgba(255,255,255,0.09)",
+        inset: "inset 0 0 0 1px rgba(255,255,255,0.04)",
+        baseShadow: "0 14px 44px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.25)",
       }
     : {
-        background: 'rgba(255, 255, 255, 0.92)',
-        border: '1px solid rgba(15,23,42,0.08)',
-        inset: 'inset 0 0 0 1px rgba(255,255,255,0.7)',
-        baseShadow: '0 14px 44px rgba(15,23,42,0.16), 0 2px 8px rgba(15,23,42,0.08)',
+        background: "rgba(255, 255, 255, 0.92)",
+        border: "1px solid rgba(15,23,42,0.08)",
+        inset: "inset 0 0 0 1px rgba(255,255,255,0.7)",
+        baseShadow:
+          "0 14px 44px rgba(15,23,42,0.16), 0 2px 8px rgba(15,23,42,0.08)",
       }
 
   return createPortal(
     <div
       style={{
-        position: 'fixed', top: 18, left: 0, right: 0,
-        display: 'flex', justifyContent: 'center',
-        zIndex: 9999, pointerEvents: 'none',
+        position: "fixed",
+        top: 18,
+        left: 0,
+        right: 0,
+        display: "flex",
+        justifyContent: "center",
+        zIndex: 9999,
+        pointerEvents: "none",
       }}
     >
       <AnimatePresence mode="wait">
@@ -181,13 +224,19 @@ export function DynamicIslandToast() {
             layout
             initial={{ opacity: 0, y: -32, scaleX: 0.5, scaleY: 0.7 }}
             animate={
-              state.status === 'error'
-                ? { opacity: 1, y: 0, scaleX: 1, scaleY: 1, x: [0, -10, 10, -7, 7, -4, 4, 0] }
+              state.status === "error"
+                ? {
+                    opacity: 1,
+                    y: 0,
+                    scaleX: 1,
+                    scaleY: 1,
+                    x: [0, -10, 10, -7, 7, -4, 4, 0],
+                  }
                 : { opacity: 1, y: 0, scaleX: 1, scaleY: 1, x: 0 }
             }
-            exit={{ opacity: 0, y: -22, scaleY: 0.55, filter: 'blur(8px)' }}
+            exit={{ opacity: 0, y: -22, scaleY: 0.55, filter: "blur(8px)" }}
             transition={{
-              type: 'spring',
+              type: "spring",
               stiffness: 360,
               damping: 26,
               mass: 0.85,
@@ -196,40 +245,43 @@ export function DynamicIslandToast() {
               filter: { duration: 0.2 },
             }}
             style={{
-              display: 'inline-flex',
-              alignItems: 'center',
+              display: "inline-flex",
+              alignItems: "center",
               gap: 9,
               background: surface.background,
-              backdropFilter: 'blur(24px) saturate(180%)',
-              WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+              backdropFilter: "blur(24px) saturate(180%)",
+              WebkitBackdropFilter: "blur(24px) saturate(180%)",
               border: surface.border,
               borderRadius: 100,
-              padding: '10px 20px 10px 13px',
+              padding: "10px 20px 10px 13px",
               boxShadow: [
                 surface.baseShadow,
                 surface.inset,
                 `0 0 28px ${cfg.glow}`,
-              ].join(', '),
+              ].join(", "),
               minWidth: 164,
-              willChange: 'transform',
+              willChange: "transform",
             }}
           >
             {/* Pulsing dot — like the Dynamic Island camera */}
             <motion.div
               layout
               style={{
-                width: 10, height: 10, borderRadius: '50%',
-                background: cfg.dotColor, flexShrink: 0,
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                background: cfg.dotColor,
+                flexShrink: 0,
                 boxShadow: `0 0 8px ${cfg.dotColor}80`,
               }}
               animate={
-                state.status === 'loading'
+                state.status === "loading"
                   ? { scale: [1, 1.4, 1], opacity: [1, 0.65, 1] }
                   : { scale: 1, opacity: 1 }
               }
               transition={
-                state.status === 'loading'
-                  ? { repeat: Infinity, duration: 1.1, ease: 'easeInOut' }
+                state.status === "loading"
+                  ? { repeat: Infinity, duration: 1.1, ease: "easeInOut" }
                   : { duration: 0.25 }
               }
             />
@@ -238,10 +290,20 @@ export function DynamicIslandToast() {
             <motion.div
               key={state.status}
               layout
-              style={{ flexShrink: 0, display: 'flex', alignItems: 'center', color: textColor }}
+              style={{
+                flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+                color: textColor,
+              }}
               initial={{ opacity: 0, scale: 0.5 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ type: 'spring', stiffness: 420, damping: 24, delay: 0.05 }}
+              transition={{
+                type: "spring",
+                stiffness: 420,
+                damping: 24,
+                delay: 0.05,
+              }}
             >
               {cfg.icon}
             </motion.div>
@@ -253,14 +315,15 @@ export function DynamicIslandToast() {
                 initial={{ opacity: 0, x: 10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.18, ease: 'easeOut' }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
                 style={{
                   fontSize: 13.5,
                   fontWeight: 500,
-                  letterSpacing: '-0.015em',
+                  letterSpacing: "-0.015em",
                   color: textColor,
-                  whiteSpace: 'nowrap',
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif',
+                  whiteSpace: "nowrap",
+                  fontFamily:
+                    '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif',
                 }}
               >
                 {state.message}
@@ -270,6 +333,6 @@ export function DynamicIslandToast() {
         )}
       </AnimatePresence>
     </div>,
-    document.body,
+    document.body
   )
 }

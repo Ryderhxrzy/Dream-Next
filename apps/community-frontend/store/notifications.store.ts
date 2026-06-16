@@ -1,7 +1,7 @@
-import { create } from "zustand";
+import { create } from "zustand"
 
 export type Notification = {
-  id: string;
+  id: string
   type:
     | "new_post"
     | "new_comment"
@@ -10,19 +10,22 @@ export type Notification = {
     | "new_rsvp"
     | "new_repost"
     | "connect_request"
-    | "connect_accepted";
-  payload: Record<string, unknown>;
-  createdAt: string;
-  read: boolean;
-};
+    | "connect_accepted"
+  payload: Record<string, unknown>
+  createdAt: string
+  read: boolean
+}
 
 type NotificationsState = {
-  notifications: Notification[];
-  unreadCount: number;
-  setNotifications: (notifications: Notification[], unreadCount: number) => void;
-  addNotification: (type: Notification["type"], payload: Record<string, unknown>) => void;
-  markAllRead: () => void;
-};
+  notifications: Notification[]
+  unreadCount: number
+  setNotifications: (notifications: Notification[], unreadCount: number) => void
+  addNotification: (
+    type: Notification["type"],
+    payload: Record<string, unknown>
+  ) => void
+  markAllRead: () => void
+}
 
 export const useNotificationsStore = create<NotificationsState>((set) => ({
   notifications: [],
@@ -39,12 +42,12 @@ export const useNotificationsStore = create<NotificationsState>((set) => ({
       payload,
       createdAt: new Date().toISOString(),
       read: false,
-    };
+    }
 
     set((state) => ({
       notifications: [notification, ...state.notifications].slice(0, 50),
       unreadCount: state.unreadCount + 1,
-    }));
+    }))
   },
 
   markAllRead: () =>
@@ -52,4 +55,4 @@ export const useNotificationsStore = create<NotificationsState>((set) => ({
       notifications: state.notifications.map((n) => ({ ...n, read: true })),
       unreadCount: 0,
     })),
-}));
+}))

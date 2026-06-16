@@ -1,2 +1,2 @@
-export { AiSupport } from './AiSupport';
-export { default as ShopAiSupportGate } from './ShopAiSupportGate';
+export { AiSupport } from "./AiSupport"
+export { default as ShopAiSupportGate } from "./ShopAiSupportGate"

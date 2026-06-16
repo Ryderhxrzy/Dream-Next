@@ -13,6 +13,7 @@ import {
   setCartOpen,
   toggleCartItemSelected as toggleCartItemSelectedAction,
   setCartSelection as setCartSelectionAction,
+  setCartFocusedId as setCartFocusedIdAction,
   setCartItems,
 } from '@/store/slices/cartSlice'
 
@@ -42,12 +43,15 @@ export interface CartItem {
 interface CartContextType {
   items: CartItem[]
   selectedIds: string[]
+  focusedId: string | null
   selectedItems: CartItem[]
   addToCart: (item: Omit<CartItem, 'quantity'>) => void
   removeFromCart: (id: string) => void
   updateQuantity: (id: string, qty: number) => void
   toggleItemSelected: (id: string) => void
   setSelection: (ids: string[]) => void
+  focusItem: (id: string) => void
+  clearFocus: () => void
   selectAll: () => void
   clearSelection: () => void
   cartCount: number
@@ -69,7 +73,7 @@ export function useCart(): CartContextType {
   const { data: session, status } = useSession()
   const role = String(session?.user?.role ?? '').toLowerCase()
   const isLoggedIn = status === 'authenticated' && role === 'customer'
-  const { items, isOpen, selectedIds } = useAppSelector((state) => state.cart)
+  const { items, isOpen, selectedIds, focusedId } = useAppSelector((state) => state.cart)
   const guestCartHydratedRef = useRef(false)
   const guestCartHydratedKeyRef = useRef<string>('')
   const partnerSlug = extractPartnerSlugFromPath(pathname)
@@ -218,15 +222,28 @@ export function useCart(): CartContextType {
     dispatch(setCartSelectionAction({ ids }))
   }
 
+  const focusItem = (id: string) => {
+    dispatch(setCartSelectionAction({ ids: [id] }))
+    dispatch(setCartFocusedIdAction(id))
+    dispatch(setCartOpen(true))
+  }
+
+  const clearFocus = () => {
+    dispatch(setCartFocusedIdAction(null))
+  }
+
   return {
     items,
     selectedIds,
+    focusedId,
     selectedItems,
     addToCart,
     removeFromCart,
     updateQuantity,
     toggleItemSelected,
     setSelection,
+    focusItem,
+    clearFocus,
     selectAll,
     clearSelection,
     cartCount,

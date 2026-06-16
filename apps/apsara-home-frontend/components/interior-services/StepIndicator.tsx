@@ -1,45 +1,49 @@
-'use client';
+"use client"
 
-import { FORM_STEPS, FormStep } from "./types";
-import { motion } from "framer-motion";
+import { motion } from "framer-motion"
+
+import { FORM_STEPS, FormStep } from "./types"
 
 interface StepIndicatorProps {
-    currentStep: FormStep;
-    onStepClick: (step: FormStep) => void;
+  currentStep: FormStep
+  onStepClick: (step: FormStep) => void
 }
 
 const StepIndicator = ({ currentStep, onStepClick }: StepIndicatorProps) => {
   return (
-     <div className="flex items-center gap-0 mb-10">
+    <div className="mb-10 flex items-center gap-0">
       {FORM_STEPS.map((item, i) => {
-        const isCompleted = currentStep > item.step;
-        const isActive = currentStep === item.step;
+        const isCompleted = currentStep > item.step
+        const isActive = currentStep === item.step
         return (
-          <div key={item.step} className="flex items-center flex-1 last:flex-none">
+          <div
+            key={item.step}
+            className="flex flex-1 items-center last:flex-none"
+          >
             <button
               type="button"
               onClick={() => isCompleted && onStepClick(item.step)}
-              className="flex flex-col items-center gap-1.5 group"
+              className="group flex flex-col items-center gap-1.5"
               style={{ cursor: isCompleted ? "pointer" : "default" }}
             >
               <motion.div
-                className="w-8 h-8 rounded-full flex items-center justify-center text-[0.72rem] font-medium transition-all duration-300"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-[0.72rem] font-medium transition-all duration-300"
                 animate={{
                   background: isActive
                     ? "#111111"
                     : isCompleted
-                    ? "rgba(212,165,20,0.18)"
-                    : "rgba(15,23,42,0.05)",
+                      ? "rgba(212,165,20,0.18)"
+                      : "rgba(15,23,42,0.05)",
                   border: isActive
                     ? "1px solid #111111"
                     : isCompleted
-                    ? "1px solid rgba(212,165,20,0.45)"
-                    : "1px solid rgba(15,23,42,0.12)",
+                      ? "1px solid rgba(212,165,20,0.45)"
+                      : "1px solid rgba(15,23,42,0.12)",
                   color: isActive
                     ? "#ffffff"
                     : isCompleted
-                    ? "#9c7420"
-                    : "#94a3b8",
+                      ? "#9c7420"
+                      : "#94a3b8",
                 }}
                 transition={{ duration: 0.35 }}
               >
@@ -48,7 +52,11 @@ const StepIndicator = ({ currentStep, onStepClick }: StepIndicatorProps) => {
               <span
                 className="text-[0.6rem] tracking-[0.1em] uppercase transition-colors duration-300"
                 style={{
-                  color: isActive ? "#111111" : isCompleted ? "#9c7420" : "#cbd5e1",
+                  color: isActive
+                    ? "#111111"
+                    : isCompleted
+                      ? "#9c7420"
+                      : "#cbd5e1",
                 }}
               >
                 {item.label}
@@ -57,17 +65,17 @@ const StepIndicator = ({ currentStep, onStepClick }: StepIndicatorProps) => {
 
             {/* Connector */}
             {i < FORM_STEPS.length - 1 && (
-              <div className="flex-1 mx-3 h-px relative overflow-hidden mb-5">
+              <div className="relative mx-3 mb-5 h-px flex-1 overflow-hidden">
                 <div className="absolute inset-0 bg-amber-100/80" />
                 <motion.div
-                  className="absolute inset-0 bg-[#d4a514] origin-left"
+                  className="absolute inset-0 origin-left bg-[#d4a514]"
                   animate={{ scaleX: isCompleted ? 1 : 0 }}
                   transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                 />
               </div>
             )}
           </div>
-        );
+        )
       })}
     </div>
   )

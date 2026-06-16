@@ -1,15 +1,21 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { Header } from "@/components/shared/header";
-import { allProjects } from "@/lib/landing-data";
-import { FadeUp, FadeIn, StaggerContainer, StaggerItem } from "@/components/ui/motion";
+import Link from "next/link"
+
+import { allProjects } from "@/lib/landing-data"
+import {
+  FadeIn,
+  FadeUp,
+  StaggerContainer,
+  StaggerItem,
+} from "@/components/ui/motion"
+import { Header } from "@/components/shared/header"
 
 export default function ProjectsPage() {
   return (
     <main className="min-h-screen bg-[var(--background)]">
       <Header />
-      
+
       {/* Hero Section */}
       <section className="pt-32 pb-16 lg:pt-40 lg:pb-24">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -20,15 +26,16 @@ export default function ProjectsPage() {
               </p>
             </FadeUp>
             <FadeUp delay={0.1}>
-              <h1 className="mt-4 text-4xl font-medium tracking-tight text-[var(--foreground)] sm:text-5xl lg:text-6xl text-balance">
+              <h1 className="mt-4 text-4xl font-medium tracking-tight text-balance text-[var(--foreground)] sm:text-5xl lg:text-6xl">
                 Spaces we have shaped and styled
               </h1>
             </FadeUp>
             <FadeUp delay={0.2}>
               <p className="mt-6 text-lg leading-relaxed text-[var(--muted)]">
-                A curated collection of residential interiors that showcase our commitment 
-                to refined, livable design. Each project reflects our clients&apos; unique 
-                personalities while maintaining a cohesive aesthetic language.
+                A curated collection of residential interiors that showcase our
+                commitment to refined, livable design. Each project reflects our
+                clients&apos; unique personalities while maintaining a cohesive
+                aesthetic language.
               </p>
             </FadeUp>
           </div>
@@ -43,7 +50,7 @@ export default function ProjectsPage() {
               <StaggerItem key={project.id}>
                 <article className="group">
                   <Link href={`/projects/${project.id}`} className="block">
-                    <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-white transition-all duration-300 group-hover:shadow-lg group-hover:-translate-y-1">
+                    <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-white transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-lg">
                       <div className="overflow-hidden">
                         <div
                           className={`aspect-[4/3] transition-transform duration-700 group-hover:scale-105 ${
@@ -123,8 +130,8 @@ export default function ProjectsPage() {
           </FadeUp>
           <FadeUp delay={0.1}>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-[var(--muted)]">
-              Let&apos;s discuss your project and explore how we can bring your vision to life 
-              with thoughtful, refined design.
+              Let&apos;s discuss your project and explore how we can bring your
+              vision to life with thoughtful, refined design.
             </p>
           </FadeUp>
           <FadeUp delay={0.2}>
@@ -152,11 +159,12 @@ export default function ProjectsPage() {
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
               <p className="text-sm text-[var(--muted)]">
-                &copy; {new Date().getFullYear()} Dreambuild Design Studio. All rights reserved.
+                &copy; {new Date().getFullYear()} Dreambuild Design Studio. All
+                rights reserved.
               </p>
               <Link
                 href="/"
-                className="text-sm text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
+                className="text-sm text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
               >
                 Back to Home
               </Link>
@@ -165,5 +173,5 @@ export default function ProjectsPage() {
         </footer>
       </FadeIn>
     </main>
-  );
+  )
 }

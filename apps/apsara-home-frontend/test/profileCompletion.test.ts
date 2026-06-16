@@ -1,118 +1,121 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from "vitest"
 
-import { getProfileCompletion } from '../libs/profileCompletion'
+import { getProfileCompletion } from "../libs/profileCompletion"
 
-describe('getProfileCompletion', () => {
-  it('returns 0 percent when there is no profile', () => {
-    expect(getProfileCompletion(null)).toEqual({ percentage: 0, complete: false })
+describe("getProfileCompletion", () => {
+  it("returns 0 percent when there is no profile", () => {
+    expect(getProfileCompletion(null)).toEqual({
+      percentage: 0,
+      complete: false,
+    })
   })
 
-  it('uses the explicit backend completion percentage when present', () => {
+  it("uses the explicit backend completion percentage when present", () => {
     expect(
       getProfileCompletion({
         profile_completion_percentage: 67,
         profile_complete: false,
-      }),
+      })
     ).toEqual({ percentage: 67, complete: false })
   })
 
-  it('marks the profile complete when all required fields are filled', () => {
+  it("marks the profile complete when all required fields are filled", () => {
     expect(
       getProfileCompletion({
-        avatar_url: 'https://example.com/avatar.jpg',
-        name: 'Rafa Santos',
-        email: 'rafa@example.com',
-        phone: '09123456789',
-        username: 'rafa1122',
-        birth_date: '2000-01-01',
-        gender: 'male',
-        occupation: 'Developer',
-        work_location: 'local',
-        country: 'Philippines',
-        address: '123 Sample Street',
-        barangay: 'Barangay 1',
-        city: 'Quezon City',
-        province: 'Metro Manila',
-        region: 'NCR',
-        zip_code: '1100',
-      }),
+        avatar_url: "https://example.com/avatar.jpg",
+        name: "Rafa Santos",
+        email: "rafa@example.com",
+        phone: "09123456789",
+        username: "rafa1122",
+        birth_date: "2000-01-01",
+        gender: "male",
+        occupation: "Developer",
+        work_location: "local",
+        country: "Philippines",
+        address: "123 Sample Street",
+        barangay: "Barangay 1",
+        city: "Quezon City",
+        province: "Metro Manila",
+        region: "NCR",
+        zip_code: "1100",
+      })
     ).toEqual({ percentage: 100, complete: true })
   })
 
-  it('does not mark the profile complete when the profile photo is missing', () => {
+  it("does not mark the profile complete when the profile photo is missing", () => {
     expect(
       getProfileCompletion({
-        name: 'Rafa Santos',
-        email: 'rafa@example.com',
-        phone: '09123456789',
-        username: 'rafa1122',
-        birth_date: '2000-01-01',
-        gender: 'male',
-        occupation: 'Developer',
-        work_location: 'local',
-        country: 'Philippines',
-        address: '123 Sample Street',
-        barangay: 'Barangay 1',
-        city: 'Quezon City',
-        province: 'Metro Manila',
-        region: 'NCR',
-        zip_code: '1100',
-      }),
+        name: "Rafa Santos",
+        email: "rafa@example.com",
+        phone: "09123456789",
+        username: "rafa1122",
+        birth_date: "2000-01-01",
+        gender: "male",
+        occupation: "Developer",
+        work_location: "local",
+        country: "Philippines",
+        address: "123 Sample Street",
+        barangay: "Barangay 1",
+        city: "Quezon City",
+        province: "Metro Manila",
+        region: "NCR",
+        zip_code: "1100",
+      })
     ).toEqual({ percentage: 94, complete: false })
   })
 
-  it('does not mark the profile complete when address details are missing', () => {
+  it("does not mark the profile complete when address details are missing", () => {
     expect(
       getProfileCompletion({
-        avatar_url: 'https://example.com/avatar.jpg',
-        name: 'Rafa Santos',
-        email: 'rafa@example.com',
-        phone: '09123456789',
-        username: 'rafa1122',
-        birth_date: '2000-01-01',
-        gender: 'male',
-        occupation: 'Developer',
-        work_location: 'local',
-        country: 'Philippines',
-      }),
+        avatar_url: "https://example.com/avatar.jpg",
+        name: "Rafa Santos",
+        email: "rafa@example.com",
+        phone: "09123456789",
+        username: "rafa1122",
+        birth_date: "2000-01-01",
+        gender: "male",
+        occupation: "Developer",
+        work_location: "local",
+        country: "Philippines",
+      })
     ).toEqual({ percentage: 63, complete: false })
   })
 
-  it('infers local work location from Philippines and computes the right percentage', () => {
+  it("infers local work location from Philippines and computes the right percentage", () => {
     expect(
       getProfileCompletion({
-        avatar_url: 'https://example.com/avatar.jpg',
-        name: 'Rafa Santos',
-        email: 'rafa@example.com',
-        phone: '09123456789',
-        username: 'rafa1122',
-        birth_date: '',
+        avatar_url: "https://example.com/avatar.jpg",
+        name: "Rafa Santos",
+        email: "rafa@example.com",
+        phone: "09123456789",
+        username: "rafa1122",
+        birth_date: "",
         gender: null,
-        occupation: 'None',
-        country: 'Philippines',
-      }),
+        occupation: "None",
+        country: "Philippines",
+      })
     ).toEqual({ percentage: 44, complete: false })
   })
 
-  it('infers overseas work location from non-local country values', () => {
+  it("infers overseas work location from non-local country values", () => {
     expect(
       getProfileCompletion({
-        avatar_url: 'https://example.com/avatar.jpg',
-        name: 'Rafa Santos',
-        email: 'rafa@example.com',
-        phone: '09123456789',
-        username: 'rafa1122',
-        birth_date: '2000-01-01',
-        gender: 'female',
-        occupation: 'Designer',
-        country: 'Singapore',
-        address: '1 Orchard Road',
-        barangay: 'Central',
-        city: 'Singapore',
-        province: 'Singapore',
-        region: 'Singapore',
-        zip_code: '238823',
-      }),
+        avatar_url: "https://example.com/avatar.jpg",
+        name: "Rafa Santos",
+        email: "rafa@example.com",
+        phone: "09123456789",
+        username: "rafa1122",
+        birth_date: "2000-01-01",
+        gender: "female",
+        occupation: "Designer",
+        country: "Singapore",
+        address: "1 Orchard Road",
+        barangay: "Central",
+        city: "Singapore",
+        province: "Singapore",
+        region: "Singapore",
+        zip_code: "238823",
+      })
     ).toEqual({ percentage: 100, complete: true })
   })
 })

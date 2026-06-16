@@ -1,4 +1,4 @@
-import { baseApi } from './baseApi'
+import { baseApi } from "./baseApi"
 
 export interface AdminPaymentSummary {
   today_paid_amount: number
@@ -118,42 +118,57 @@ export interface UpdateAdminVoucherProductRulesResponse {
 
 export const adminPaymentsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getAdminPaymentsOverview: builder.query<AdminPaymentsOverviewResponse, void>({
+    getAdminPaymentsOverview: builder.query<
+      AdminPaymentsOverviewResponse,
+      void
+    >({
       query: () => ({
-        url: '/api/admin/payments/overview',
-        method: 'GET',
+        url: "/api/admin/payments/overview",
+        method: "GET",
       }),
-      providesTags: ['Orders', 'Encashment'],
+      providesTags: ["Orders", "Encashment"],
     }),
-    getAdminVoucherProductRules: builder.query<AdminVoucherProductRulesResponse, void>({
+    getAdminVoucherProductRules: builder.query<
+      AdminVoucherProductRulesResponse,
+      void
+    >({
       query: () => ({
-        url: '/api/admin/payments/voucher-product-rules',
-        method: 'GET',
+        url: "/api/admin/payments/voucher-product-rules",
+        method: "GET",
       }),
-      providesTags: ['Encashment'],
+      providesTags: ["Encashment"],
     }),
-    updateAdminVoucherProductRules: builder.mutation<UpdateAdminVoucherProductRulesResponse, UpdateAdminVoucherProductRulesPayload>({
+    updateAdminVoucherProductRules: builder.mutation<
+      UpdateAdminVoucherProductRulesResponse,
+      UpdateAdminVoucherProductRulesPayload
+    >({
       query: (body) => ({
-        url: '/api/admin/payments/voucher-product-rules',
-        method: 'PUT',
+        url: "/api/admin/payments/voucher-product-rules",
+        method: "PUT",
         body,
       }),
-      invalidatesTags: ['Encashment'],
+      invalidatesTags: ["Encashment"],
     }),
-    getSupplierVoucherProductRules: builder.query<AdminVoucherProductRulesResponse, void>({
+    getSupplierVoucherProductRules: builder.query<
+      AdminVoucherProductRulesResponse,
+      void
+    >({
       query: () => ({
-        url: '/api/supplier/payments/voucher-product-rules',
-        method: 'GET',
+        url: "/api/supplier/payments/voucher-product-rules",
+        method: "GET",
       }),
-      providesTags: ['Encashment'],
+      providesTags: ["Encashment"],
     }),
-    updateSupplierVoucherProductRules: builder.mutation<UpdateAdminVoucherProductRulesResponse, UpdateAdminVoucherProductRulesPayload>({
+    updateSupplierVoucherProductRules: builder.mutation<
+      UpdateAdminVoucherProductRulesResponse,
+      UpdateAdminVoucherProductRulesPayload
+    >({
       query: (body) => ({
-        url: '/api/supplier/payments/voucher-product-rules',
-        method: 'PUT',
+        url: "/api/supplier/payments/voucher-product-rules",
+        method: "PUT",
         body,
       }),
-      invalidatesTags: ['Encashment'],
+      invalidatesTags: ["Encashment"],
     }),
   }),
 })

@@ -1,4 +1,4 @@
-import { baseApi } from './baseApi'
+import { baseApi } from "./baseApi"
 
 export interface AdminGeneralSettings {
   system_name: string
@@ -45,78 +45,90 @@ export interface AdminNotificationSettings {
 
 export const adminSettingsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getPublicGeneralSettings: builder.query<{ settings: AdminGeneralSettings }, void>({
+    getPublicGeneralSettings: builder.query<
+      { settings: AdminGeneralSettings },
+      void
+    >({
       query: () => ({
-        url: '/api/settings/general',
-        method: 'GET',
-        cache: 'no-store',
+        url: "/api/settings/general",
+        method: "GET",
+        cache: "no-store",
       }),
-      providesTags: ['AdminSettings'],
+      providesTags: ["AdminSettings"],
     }),
-    getAdminGeneralSettings: builder.query<{ settings: AdminGeneralSettings }, void>({
+    getAdminGeneralSettings: builder.query<
+      { settings: AdminGeneralSettings },
+      void
+    >({
       query: () => ({
-        url: '/api/admin/settings/general',
-        method: 'GET',
-        cache: 'no-store',
+        url: "/api/admin/settings/general",
+        method: "GET",
+        cache: "no-store",
       }),
-      providesTags: ['AdminSettings'],
+      providesTags: ["AdminSettings"],
     }),
     updateAdminGeneralSettings: builder.mutation<
       { message: string; settings: AdminGeneralSettings },
       FormData
     >({
       query: (body) => ({
-        url: '/api/admin/settings/general',
-        method: 'POST',
+        url: "/api/admin/settings/general",
+        method: "POST",
         body,
       }),
-      invalidatesTags: ['AdminSettings'],
+      invalidatesTags: ["AdminSettings"],
     }),
     getPublicSecuritySettings: builder.query<PublicSecuritySettings, void>({
       query: () => ({
-        url: '/api/settings/security',
-        method: 'GET',
-        cache: 'no-store',
+        url: "/api/settings/security",
+        method: "GET",
+        cache: "no-store",
       }),
-      providesTags: ['AdminSettings'],
+      providesTags: ["AdminSettings"],
     }),
-    getAdminSecuritySettings: builder.query<{ settings: AdminSecuritySettings }, void>({
+    getAdminSecuritySettings: builder.query<
+      { settings: AdminSecuritySettings },
+      void
+    >({
       query: () => ({
-        url: '/api/admin/settings/security',
-        method: 'GET',
-        cache: 'no-store',
+        url: "/api/admin/settings/security",
+        method: "GET",
+        cache: "no-store",
       }),
-      providesTags: ['AdminSettings'],
+      providesTags: ["AdminSettings"],
     }),
     updateAdminSecuritySettings: builder.mutation<
       { message: string; settings: AdminSecuritySettings },
       AdminSecuritySettings
     >({
       query: (body) => ({
-        url: '/api/admin/settings/security',
-        method: 'POST',
+        url: "/api/admin/settings/security",
+        method: "POST",
         body,
       }),
-      invalidatesTags: ['AdminSettings'],
+      invalidatesTags: ["AdminSettings"],
     }),
-    getAdminNotificationSettings: builder.query<{ settings: AdminNotificationSettings }, void>({
+    getAdminNotificationSettings: builder.query<
+      { settings: AdminNotificationSettings },
+      void
+    >({
       query: () => ({
-        url: '/api/admin/settings/notifications',
-        method: 'GET',
-        cache: 'no-store',
+        url: "/api/admin/settings/notifications",
+        method: "GET",
+        cache: "no-store",
       }),
-      providesTags: ['AdminSettings'],
+      providesTags: ["AdminSettings"],
     }),
     updateAdminNotificationSettings: builder.mutation<
       { message: string; settings: AdminNotificationSettings },
       AdminNotificationSettings
     >({
       query: (body) => ({
-        url: '/api/admin/settings/notifications',
-        method: 'POST',
+        url: "/api/admin/settings/notifications",
+        method: "POST",
         body,
       }),
-      invalidatesTags: ['AdminSettings'],
+      invalidatesTags: ["AdminSettings"],
     }),
   }),
 })

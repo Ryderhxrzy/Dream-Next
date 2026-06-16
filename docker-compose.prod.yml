@@ -157,6 +157,25 @@ services:
       - dokploy-network
       - default
 
+  # Scheduler — runs php artisan schedule:work as a long-lived daemon so all
+  # Schedule::command() definitions in console.php fire on time (DB export at
+  # 17:00, payment sync every 5 min, etc.). WORKER_MODE=true skips migrations.
+  scheduler:
+    image: ghcr.io/dreamnext-af-home/afhome-backend:${IMAGE_TAG:-latest}
+    pull_policy: always
+    restart: unless-stopped
+    mem_limit: 256m
+    environment:
+      <<: *backend-env
+      WORKER_MODE: "true"
+    command: ["php", "artisan", "schedule:work"]
+    depends_on:
+      - redis
+      - backend
+    networks:
+      - dokploy-network
+      - default
+
   # Queue worker — processes database-queued jobs (scheduled + "send now"
   # announcement blasts, notifications). WORKER_MODE=true skips migrations and
   # cache clears so its periodic --max-time restarts never disturb the web app.
@@ -168,7 +187,20 @@ services:
     environment:
       <<: *backend-env
       WORKER_MODE: "true"
-    command: ["php", "artisan", "queue:work", "database", "--queue=default", "--sleep=3", "--tries=3", "--timeout=3000", "--max-time=3600", "--memory=512", "--backoff=10"]
+    command:
+      [
+        "php",
+        "artisan",
+        "queue:work",
+        "database",
+        "--queue=default",
+        "--sleep=3",
+        "--tries=3",
+        "--timeout=3000",
+        "--max-time=3600",
+        "--memory=512",
+        "--backoff=10",
+      ]
     depends_on:
       - redis
       - backend

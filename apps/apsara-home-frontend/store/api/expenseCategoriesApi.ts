@@ -1,4 +1,4 @@
-import { baseApi } from './baseApi'
+import { baseApi } from "./baseApi"
 
 export interface ExpenseCategory {
   id: number
@@ -22,23 +22,29 @@ interface ExpenseCategoryPayload {
 
 export const expenseCategoriesApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getExpenseCategories: builder.query<ExpenseCategoriesResponse, { search?: string } | void>({
+    getExpenseCategories: builder.query<
+      ExpenseCategoriesResponse,
+      { search?: string } | void
+    >({
       query: (params) => ({
-        url: '/api/admin/expenses/categories',
-        method: 'GET',
+        url: "/api/admin/expenses/categories",
+        method: "GET",
         params: {
           q: params?.search,
         },
       }),
-      providesTags: ['ExpenseCategories'],
+      providesTags: ["ExpenseCategories"],
     }),
-    createExpenseCategory: builder.mutation<{ message: string; category: ExpenseCategory }, ExpenseCategoryPayload>({
+    createExpenseCategory: builder.mutation<
+      { message: string; category: ExpenseCategory },
+      ExpenseCategoryPayload
+    >({
       query: (body) => ({
-        url: '/api/admin/expenses/categories',
-        method: 'POST',
+        url: "/api/admin/expenses/categories",
+        method: "POST",
         body,
       }),
-      invalidatesTags: ['ExpenseCategories'],
+      invalidatesTags: ["ExpenseCategories"],
     }),
     updateExpenseCategory: builder.mutation<
       { message: string; category: ExpenseCategory },
@@ -46,17 +52,17 @@ export const expenseCategoriesApi = baseApi.injectEndpoints({
     >({
       query: ({ id, data }) => ({
         url: `/api/admin/expenses/categories/${id}`,
-        method: 'PUT',
+        method: "PUT",
         body: data,
       }),
-      invalidatesTags: ['ExpenseCategories'],
+      invalidatesTags: ["ExpenseCategories"],
     }),
     deleteExpenseCategory: builder.mutation<{ message: string }, number>({
       query: (id) => ({
         url: `/api/admin/expenses/categories/${id}`,
-        method: 'DELETE',
+        method: "DELETE",
       }),
-      invalidatesTags: ['ExpenseCategories'],
+      invalidatesTags: ["ExpenseCategories"],
     }),
   }),
 })
@@ -67,4 +73,3 @@ export const {
   useUpdateExpenseCategoryMutation,
   useDeleteExpenseCategoryMutation,
 } = expenseCategoriesApi
-

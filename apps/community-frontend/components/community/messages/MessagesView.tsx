@@ -1,26 +1,27 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { useSearchParams } from "next/navigation"
+import { useAuthStore } from "@/store/auth.store"
+import { useChatUiStore } from "@/store/chat-ui.store"
+import { usePresenceStore } from "@/store/presence.store"
 import { useQueryClient } from "@tanstack/react-query"
+import { useSearchParams } from "next/navigation"
 import type { Socket } from "socket.io-client"
 
-import { cn } from "@/lib/utils"
-import { createChatSocket } from "@/lib/socket"
-import { useAuthStore } from "@/store/auth.store"
-import { usePresenceStore } from "@/store/presence.store"
-import { useChatUiStore } from "@/store/chat-ui.store"
 import { useCurrentUser } from "@/lib/hooks/use-current-user"
 import {
   useConversations,
+  useMarkConversationRead,
   useMessages,
   useSendMessage,
-  useMarkConversationRead,
   type ChatMessage,
   type MessagesData,
 } from "@/lib/hooks/use-messages"
-import { ConversationList } from "./ConversationList"
+import { createChatSocket } from "@/lib/socket"
+import { cn } from "@/lib/utils"
+
 import { ChatThread } from "./ChatThread"
+import { ConversationList } from "./ConversationList"
 
 export function MessagesView() {
   const searchParams = useSearchParams()
@@ -51,7 +52,8 @@ export function MessagesView() {
   const setActiveConversation = useChatUiStore((s) => s.setActiveConversation)
 
   const activeConvo = conversations?.find((c) => c.id === activeId)
-  const otherOnline = !!activeConvo?.otherUser && onlineIds.has(activeConvo.otherUser.id)
+  const otherOnline =
+    !!activeConvo?.otherUser && onlineIds.has(activeConvo.otherUser.id)
 
   const filteredConversations = useMemo(() => {
     let list = conversations ?? []
@@ -97,15 +99,21 @@ export function MessagesView() {
       queryClient.invalidateQueries({ queryKey: ["conversations"] })
     })
 
-    socket.on("user_typing", (data: { conversationId: string; userId: string; isTyping: boolean }) => {
-      if (data.userId === currentUser?.id) return
-      setOtherTyping(data.isTyping)
-    })
+    socket.on(
+      "user_typing",
+      (data: { conversationId: string; userId: string; isTyping: boolean }) => {
+        if (data.userId === currentUser?.id) return
+        setOtherTyping(data.isTyping)
+      }
+    )
 
-    socket.on("conversation_read", (data: { conversationId: string; readerId: string; readAt: string }) => {
-      if (data.readerId === currentUser?.id) return
-      setOtherReadAt(data.readAt)
-    })
+    socket.on(
+      "conversation_read",
+      (data: { conversationId: string; readerId: string; readAt: string }) => {
+        if (data.readerId === currentUser?.id) return
+        setOtherReadAt(data.readAt)
+      }
+    )
 
     return () => {
       socket.disconnect()
@@ -126,7 +134,9 @@ export function MessagesView() {
   }, [activeId])
 
   function scrollToBottom() {
-    requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }))
+    requestAnimationFrame(() =>
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+    )
   }
 
   useEffect(() => {
@@ -136,7 +146,11 @@ export function MessagesView() {
   function emitTyping(isTyping: boolean) {
     const socket = socketRef.current
     if (!socket || !activeId || !currentUser?.id) return
-    socket.emit("typing", { conversationId: activeId, userId: currentUser.id, isTyping })
+    socket.emit("typing", {
+      conversationId: activeId,
+      userId: currentUser.id,
+      isTyping,
+    })
   }
 
   function handleDraftChange(value: string) {
@@ -172,7 +186,7 @@ export function MessagesView() {
   }
 
   return (
-    <div className="w-full h-[calc(100vh-3.5rem-4rem)] lg:h-[calc(100vh-3.5rem)] flex overflow-hidden bg-card">
+    <div className="bg-card flex h-[calc(100vh-3.5rem-4rem)] w-full overflow-hidden lg:h-[calc(100vh-3.5rem)]">
       <ConversationList
         conversations={conversations}
         filtered={filteredConversations}
@@ -187,7 +201,12 @@ export function MessagesView() {
         className={cn(activeId && "hidden md:flex")}
       />
 
-      <div className={cn("flex-1 flex flex-col bg-background/30", !activeId && "hidden md:flex")}>
+      <div
+        className={cn(
+          "bg-background/30 flex flex-1 flex-col",
+          !activeId && "hidden md:flex"
+        )}
+      >
         <ChatThread
           activeConvo={activeConvo}
           messages={messages}

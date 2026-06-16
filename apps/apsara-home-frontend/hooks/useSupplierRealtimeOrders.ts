@@ -1,9 +1,12 @@
-'use client'
+"use client"
 
-import { useEffect } from 'react'
-import Pusher from 'pusher-js'
-import { useAppDispatch } from '@/store/hooks'
-import { supplierOrdersApi, type SupplierNotificationItem } from '@/store/api/supplierOrdersApi'
+import { useEffect } from "react"
+import {
+  supplierOrdersApi,
+  type SupplierNotificationItem,
+} from "@/store/api/supplierOrdersApi"
+import { useAppDispatch } from "@/store/hooks"
+import Pusher from "pusher-js"
 
 interface Options {
   accessToken: string | undefined | null
@@ -12,17 +15,32 @@ interface Options {
   onRealtimeNotification?: (item: SupplierNotificationItem) => void
 }
 
-export function useSupplierRealtimeOrders({ accessToken, supplierId, onNotification, onRealtimeNotification }: Options) {
+export function useSupplierRealtimeOrders({
+  accessToken,
+  supplierId,
+  onNotification,
+  onRealtimeNotification,
+}: Options) {
   const dispatch = useAppDispatch()
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
+    if (typeof window === "undefined") return
 
     const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY
     const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_LARAVEL_API_URL ?? '').replace(/\/+$/, '')
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_LARAVEL_API_URL ?? "").replace(
+      /\/+$/,
+      ""
+    )
 
-    if (!pusherKey || !pusherCluster || !apiBaseUrl || !accessToken || !supplierId) return
+    if (
+      !pusherKey ||
+      !pusherCluster ||
+      !apiBaseUrl ||
+      !accessToken ||
+      !supplierId
+    )
+      return
 
     const channelName = `private-supplier-${supplierId}`
 
@@ -30,10 +48,10 @@ export function useSupplierRealtimeOrders({ accessToken, supplierId, onNotificat
       cluster: pusherCluster,
       channelAuthorization: {
         endpoint: `${apiBaseUrl}/api/supplier/realtime/pusher/auth`,
-        transport: 'ajax',
+        transport: "ajax",
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          Accept: 'application/json',
+          Accept: "application/json",
         },
       },
     })
@@ -41,7 +59,12 @@ export function useSupplierRealtimeOrders({ accessToken, supplierId, onNotificat
     const channel = pusher.subscribe(channelName)
 
     const onOrderCreated = () => {
-      dispatch(supplierOrdersApi.util.invalidateTags(['Orders', 'SupplierNotifications']))
+      dispatch(
+        supplierOrdersApi.util.invalidateTags([
+          "Orders",
+          "SupplierNotifications",
+        ])
+      )
     }
 
     const onNotificationCreated = (event: {
@@ -56,36 +79,48 @@ export function useSupplierRealtimeOrders({ accessToken, supplierId, onNotificat
     }) => {
       const newItem: SupplierNotificationItem = {
         id: String(event.order_id ?? Date.now()),
-        title: event.title ?? 'New ZQ Order',
-        description: event.description ?? '',
+        title: event.title ?? "New ZQ Order",
+        description: event.description ?? "",
         count: 1,
-        href: event.href ?? '/supplier/orders',
+        href: event.href ?? "/supplier/orders",
         updated_at: event.created_at ?? new Date().toISOString(),
         payload: event.payload ?? null,
       }
 
       // Optimistically push the notification into the RTK Query cache immediately
       dispatch(
-        supplierOrdersApi.util.updateQueryData('getSupplierOrderNotifications', undefined, (draft) => {
-          const existingIndex = draft.items.findIndex((item) => item.id === newItem.id)
-          if (existingIndex >= 0) draft.items.splice(existingIndex, 1)
-          draft.items.unshift(newItem)
-          draft.unread_count = Number(draft.unread_count ?? 0) + 1
-        }),
+        supplierOrdersApi.util.updateQueryData(
+          "getSupplierOrderNotifications",
+          undefined,
+          (draft) => {
+            const existingIndex = draft.items.findIndex(
+              (item) => item.id === newItem.id
+            )
+            if (existingIndex >= 0) draft.items.splice(existingIndex, 1)
+            draft.items.unshift(newItem)
+            draft.unread_count = Number(draft.unread_count ?? 0) + 1
+          }
+        )
       )
 
       onRealtimeNotification?.(newItem)
       onNotification?.()
     }
 
-    channel.bind('order.created', onOrderCreated)
-    channel.bind('notification.created', onNotificationCreated)
+    channel.bind("order.created", onOrderCreated)
+    channel.bind("notification.created", onNotificationCreated)
 
     return () => {
-      channel.unbind('order.created', onOrderCreated)
-      channel.unbind('notification.created', onNotificationCreated)
+      channel.unbind("order.created", onOrderCreated)
+      channel.unbind("notification.created", onNotificationCreated)
       pusher.unsubscribe(channelName)
       pusher.disconnect()
     }
-  }, [accessToken, supplierId, dispatch, onNotification, onRealtimeNotification])
+  }, [
+    accessToken,
+    supplierId,
+    dispatch,
+    onNotification,
+    onRealtimeNotification,
+  ])
 }

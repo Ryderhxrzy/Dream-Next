@@ -1,13 +1,13 @@
-'use client';
+"use client"
 
-import Script from 'next/script';
+import Script from "next/script"
 
-const propertyId = process.env.NEXT_PUBLIC_TAWK_PROPERTY_ID;
-const widgetId = process.env.NEXT_PUBLIC_TAWK_WIDGET_ID;
+const propertyId = process.env.NEXT_PUBLIC_TAWK_PROPERTY_ID
+const widgetId = process.env.NEXT_PUBLIC_TAWK_WIDGET_ID
 
 export default function TawkToWidget() {
   if (!propertyId || !widgetId) {
-    return null;
+    return null
   }
 
   return (
@@ -26,6 +26,5 @@ export default function TawkToWidget() {
         })();
       `}
     </Script>
-  );
+  )
 }
-

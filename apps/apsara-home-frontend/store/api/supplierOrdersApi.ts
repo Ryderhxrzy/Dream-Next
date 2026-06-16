@@ -1,4 +1,4 @@
-import { baseApi } from './baseApi'
+import { baseApi } from "./baseApi"
 
 export interface SupplierOrder {
   id: number
@@ -40,23 +40,23 @@ export interface SupplierOrder {
 }
 
 export type SupplierFulfillmentStatus =
-  | 'processing'
-  | 'packed'
-  | 'shipped'
-  | 'out_for_delivery'
-  | 'delivered'
-  | 'cancelled'
-  | 'returned'
+  | "processing"
+  | "packed"
+  | "shipped"
+  | "out_for_delivery"
+  | "delivered"
+  | "cancelled"
+  | "returned"
 
 export type SupplierShipmentStatus =
-  | 'for_pickup'
-  | 'picked_up'
-  | 'in_transit'
-  | 'out_for_delivery'
-  | 'delivered'
-  | 'failed_delivery'
-  | 'cancelled'
-  | 'returned_to_sender'
+  | "for_pickup"
+  | "picked_up"
+  | "in_transit"
+  | "out_for_delivery"
+  | "delivered"
+  | "failed_delivery"
+  | "cancelled"
+  | "returned_to_sender"
 
 export interface SupplierOrdersResponse {
   orders: SupplierOrder[]
@@ -104,26 +104,32 @@ interface SupplierOrdersQuery {
 
 export const supplierOrdersApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getSupplierOrders: builder.query<SupplierOrdersResponse, SupplierOrdersQuery | void>({
+    getSupplierOrders: builder.query<
+      SupplierOrdersResponse,
+      SupplierOrdersQuery | void
+    >({
       query: (params) => ({
-        url: '/api/supplier/orders',
-        method: 'GET',
+        url: "/api/supplier/orders",
+        method: "GET",
         params: {
-          filter: params?.filter ?? 'all',
+          filter: params?.filter ?? "all",
           q: params?.search,
           page: params?.page ?? 1,
           per_page: params?.perPage ?? 20,
         },
       }),
       keepUnusedDataFor: 300,
-      providesTags: ['Orders'],
+      providesTags: ["Orders"],
     }),
-    getSupplierOrderNotifications: builder.query<SupplierNotificationsResponse, void>({
+    getSupplierOrderNotifications: builder.query<
+      SupplierNotificationsResponse,
+      void
+    >({
       query: () => ({
-        url: '/api/supplier/orders/notifications',
-        method: 'GET',
+        url: "/api/supplier/orders/notifications",
+        method: "GET",
       }),
-      providesTags: ['SupplierNotifications'],
+      providesTags: ["SupplierNotifications"],
     }),
     updateSupplierOrderFulfillment: builder.mutation<
       { message: string; order: SupplierOrder },
@@ -131,21 +137,26 @@ export const supplierOrdersApi = baseApi.injectEndpoints({
     >({
       query: ({ id, fulfillment_status }) => ({
         url: `/api/supplier/orders/${id}/fulfillment`,
-        method: 'PATCH',
+        method: "PATCH",
         body: { fulfillment_status },
       }),
-      invalidatesTags: ['Orders', 'SupplierNotifications'],
+      invalidatesTags: ["Orders", "SupplierNotifications"],
     }),
     updateSupplierOrderTracking: builder.mutation<
       { message: string; order: SupplierOrder },
-      { id: number; courier: string; tracking_no: string; shipment_status?: SupplierShipmentStatus }
+      {
+        id: number
+        courier: string
+        tracking_no: string
+        shipment_status?: SupplierShipmentStatus
+      }
     >({
       query: ({ id, ...body }) => ({
         url: `/api/supplier/orders/${id}/tracking`,
-        method: 'PATCH',
+        method: "PATCH",
         body,
       }),
-      invalidatesTags: ['Orders', 'SupplierNotifications'],
+      invalidatesTags: ["Orders", "SupplierNotifications"],
     }),
     approveSupplierOrder: builder.mutation<
       { message: string; order: SupplierOrder },
@@ -153,10 +164,10 @@ export const supplierOrdersApi = baseApi.injectEndpoints({
     >({
       query: ({ id, notes }) => ({
         url: `/api/supplier/orders/${id}/approve`,
-        method: 'POST',
+        method: "POST",
         body: notes ? { notes } : {},
       }),
-      invalidatesTags: ['Orders', 'SupplierNotifications'],
+      invalidatesTags: ["Orders", "SupplierNotifications"],
     }),
     pushSupplierOrderToZq: builder.mutation<
       { message: string; zq: Record<string, unknown>; order: SupplierOrder },
@@ -164,10 +175,10 @@ export const supplierOrdersApi = baseApi.injectEndpoints({
     >({
       query: ({ id }) => ({
         url: `/api/supplier/orders/${id}/push-to-zq`,
-        method: 'POST',
+        method: "POST",
         body: {},
       }),
-      invalidatesTags: ['Orders', 'SupplierNotifications'],
+      invalidatesTags: ["Orders", "SupplierNotifications"],
     }),
   }),
 })

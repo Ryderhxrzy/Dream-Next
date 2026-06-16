@@ -1,6 +1,12 @@
-"use client";
+"use client"
 
-import { FadeUp, SlideInLeft, SlideInRight, StaggerContainer, StaggerItem } from "@/components/ui/motion";
+import {
+  FadeUp,
+  SlideInLeft,
+  SlideInRight,
+  StaggerContainer,
+  StaggerItem,
+} from "@/components/ui/motion"
 
 export function WhoWeAreSection() {
   return (
@@ -13,21 +19,22 @@ export function WhoWeAreSection() {
               Who We Are
             </p>
             <h2 className="mt-4 text-3xl font-medium tracking-tight text-[var(--foreground)] sm:text-4xl lg:text-5xl">
-              A design studio focused on calm, modern, and highly livable interiors
+              A design studio focused on calm, modern, and highly livable
+              interiors
             </h2>
           </SlideInLeft>
 
           {/* Right Column */}
           <SlideInRight delay={0.2} className="flex flex-col justify-center">
             <p className="text-base leading-relaxed text-[var(--muted)]">
-              Dreambuild creates residential interiors that balance softness, structure, 
-              and clarity. We work on spaces that need a more refined material story, 
-              stronger visual consistency, and a design direction that feels elegant 
-              without looking overdone.
+              Dreambuild creates residential interiors that balance softness,
+              structure, and clarity. We work on spaces that need a more refined
+              material story, stronger visual consistency, and a design
+              direction that feels elegant without looking overdone.
             </p>
             <p className="mt-4 text-base leading-relaxed text-[var(--muted)]">
-              From planning and styling to presentation-ready concepts, we shape homes 
-              that feel intentional, warm, and easy to live in every day.
+              From planning and styling to presentation-ready concepts, we shape
+              homes that feel intentional, warm, and easy to live in every day.
             </p>
           </SlideInRight>
         </div>
@@ -36,7 +43,7 @@ export function WhoWeAreSection() {
         <div className="mt-16 grid gap-6 md:grid-cols-2 lg:mt-20">
           {/* Studio Values Card */}
           <FadeUp delay={0.1}>
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--background)] p-8 h-full">
+            <div className="h-full rounded-2xl border border-[var(--border)] bg-[var(--background)] p-8">
               <p className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
                 Studio Values
               </p>
@@ -63,7 +70,7 @@ export function WhoWeAreSection() {
 
           {/* Why Clients Choose Us Card */}
           <FadeUp delay={0.2}>
-            <div className="rounded-2xl bg-[var(--dark)] p-8 text-white h-full">
+            <div className="h-full rounded-2xl bg-[var(--dark)] p-8 text-white">
               <p className="text-xs font-medium tracking-widest text-[var(--accent)] uppercase">
                 Why Clients Choose Us
               </p>
@@ -90,5 +97,5 @@ export function WhoWeAreSection() {
         </div>
       </div>
     </section>
-  );
+  )
 }

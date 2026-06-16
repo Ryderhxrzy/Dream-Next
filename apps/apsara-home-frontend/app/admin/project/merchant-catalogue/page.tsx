@@ -1,10 +1,10 @@
-import { buildPageMetadata } from '@/app/seo'
-import MerchantCataloguePage from '@/components/superAdmin/project/MerchantCataloguePage'
+import MerchantCataloguePage from "@/components/superAdmin/project/MerchantCataloguePage"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
-  title: 'Merchant Catalogue',
-  description: 'Create and manage flipbook catalogues for merchant brands.',
-  path: '/admin/project/merchant-catalogue',
+  title: "Merchant Catalogue",
+  description: "Create and manage flipbook catalogues for merchant brands.",
+  path: "/admin/project/merchant-catalogue",
   noIndex: true,
 })
 

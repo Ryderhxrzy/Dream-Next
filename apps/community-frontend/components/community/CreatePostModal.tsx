@@ -1,42 +1,42 @@
-"use client";
+"use client"
 
-import { toast } from "sonner";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { format } from "date-fns";
-import { AnimatePresence, motion, type Transition } from "framer-motion";
-import { CalendarIcon, ImagePlus, Loader2, X } from "lucide-react";
-import { useEffect, useState } from "react";
-import { Controller, useForm, type Resolver } from "react-hook-form";
-import { z } from "zod/v4";
+import { useEffect, useState } from "react"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { format } from "date-fns"
+import { AnimatePresence, motion, type Transition } from "framer-motion"
+import { CalendarIcon, ImagePlus, Loader2, X } from "lucide-react"
+import { Controller, useForm, type Resolver } from "react-hook-form"
+import { toast } from "sonner"
+import { z } from "zod/v4"
 
-import { useCreateCommunityPost } from "@/lib/hooks/use-create-community-post";
-import { useUpdateCommunityPost } from "@/lib/hooks/use-update-community-post";
-import { Calendar } from "@/components/ui/calendar";
-import { Button } from "@/components/ui/button";
+import { useCreateCommunityPost } from "@/lib/hooks/use-create-community-post"
+import { useUpdateCommunityPost } from "@/lib/hooks/use-update-community-post"
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Calendar } from "@/components/ui/calendar"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { LocationSearch } from "@/components/ui/LocationSearch";
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { LocationSearch } from "@/components/ui/LocationSearch"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@/components/ui/popover"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { TimePicker } from "@/components/ui/TimePicker";
-import { cn } from "@/lib/utils";
+} from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { TimePicker } from "@/components/ui/TimePicker"
 
 const categories = [
   { value: "GENERAL", label: "General" },
@@ -45,7 +45,7 @@ const categories = [
   { value: "FOR_SALE", label: "For Sale" },
   { value: "SAFETY", label: "Safety" },
   { value: "FREE", label: "Free" },
-] as const;
+] as const
 
 const conditions = [
   { value: "BRAND_NEW", label: "Brand New" },
@@ -53,7 +53,7 @@ const conditions = [
   { value: "GOOD", label: "Good" },
   { value: "FAIR", label: "Fair" },
   { value: "FOR_PARTS", label: "For Parts" },
-] as const;
+] as const
 
 const createPostSchema = z.object({
   category: z.enum([
@@ -73,43 +73,52 @@ const createPostSchema = z.object({
   location: z.string().optional().nullable(),
   price: z.string().optional().nullable(),
   condition: z.string().optional().nullable(),
-});
+})
 
-type CreatePostValues = z.infer<typeof createPostSchema>;
+type CreatePostValues = z.infer<typeof createPostSchema>
 
 type EditPost = {
-  id: string;
-  category: CreatePostValues["category"];
-  title: string;
-  content: string;
-  imageUrl?: string | null;
-  eventDate?: string | null;
-  eventTime?: string | null;
-  eventEndTime?: string | null;
-  location?: string | null;
-  price?: string | null;
-  condition?: string | null;
-};
-
-interface CreatePostModalProps {
-  open: boolean;
-  onClose: () => void;
-  editPost?: EditPost;
-  presetCategory?: string;
+  id: string
+  category: CreatePostValues["category"]
+  title: string
+  content: string
+  imageUrl?: string | null
+  eventDate?: string | null
+  eventTime?: string | null
+  eventEndTime?: string | null
+  location?: string | null
+  price?: string | null
+  condition?: string | null
 }
 
-export function CreatePostModal({ open, onClose, editPost, presetCategory }: CreatePostModalProps) {
-  const isEditMode = !!editPost;
-  const [imagePreview, setImagePreview] = useState<string | null>(editPost?.imageUrl ?? null);
-  const createPost = useCreateCommunityPost();
-  const updatePost = useUpdateCommunityPost(editPost?.id ?? "");
+interface CreatePostModalProps {
+  open: boolean
+  onClose: () => void
+  editPost?: EditPost
+  presetCategory?: string
+}
 
-  const mutation = isEditMode ? updatePost : createPost;
+export function CreatePostModal({
+  open,
+  onClose,
+  editPost,
+  presetCategory,
+}: CreatePostModalProps) {
+  const isEditMode = !!editPost
+  const [imagePreview, setImagePreview] = useState<string | null>(
+    editPost?.imageUrl ?? null
+  )
+  const createPost = useCreateCommunityPost()
+  const updatePost = useUpdateCommunityPost(editPost?.id ?? "")
+
+  const mutation = isEditMode ? updatePost : createPost
 
   const form = useForm<CreatePostValues>({
-    resolver: zodResolver(createPostSchema as never) as Resolver<CreatePostValues>,
+    resolver: zodResolver(
+      createPostSchema as never
+    ) as Resolver<CreatePostValues>,
     defaultValues: getDefaultValues(),
-  });
+  })
 
   useEffect(() => {
     if (open && editPost) {
@@ -124,80 +133,83 @@ export function CreatePostModal({ open, onClose, editPost, presetCategory }: Cre
         location: editPost.location ?? "",
         price: editPost.price ?? "",
         condition: editPost.condition ?? "BRAND_NEW",
-      });
-      setImagePreview(editPost.imageUrl ?? null);
+      })
+      setImagePreview(editPost.imageUrl ?? null)
     } else if (open && presetCategory) {
-      form.reset({ ...getDefaultValues(), category: presetCategory as CreatePostValues["category"] });
-      setImagePreview(null);
+      form.reset({
+        ...getDefaultValues(),
+        category: presetCategory as CreatePostValues["category"],
+      })
+      setImagePreview(null)
     } else if (!open) {
-      form.reset(getDefaultValues());
-      setImagePreview(null);
+      form.reset(getDefaultValues())
+      setImagePreview(null)
     }
-  }, [open, editPost, presetCategory, form]);
+  }, [open, editPost, presetCategory, form])
 
-  const category = form.watch("category");
-  const title = form.watch("title");
-  const content = form.watch("content");
-  const eventDate = form.watch("eventDate");
+  const category = form.watch("category")
+  const title = form.watch("title")
+  const content = form.watch("content")
+  const eventDate = form.watch("eventDate")
 
-  const showImage = ["GENERAL", "FOR_SALE", "FREE"].includes(category);
-  const showEvent = category === "EVENT";
-  const showForSale = category === "FOR_SALE";
-  const showLocation = ["EVENT", "SAFETY"].includes(category);
+  const showImage = ["GENERAL", "FOR_SALE", "FREE"].includes(category)
+  const showEvent = category === "EVENT"
+  const showForSale = category === "FOR_SALE"
+  const showLocation = ["EVENT", "SAFETY"].includes(category)
 
   function handleImageChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0] ?? null;
-    form.setValue("image", file, { shouldDirty: true, shouldValidate: true });
+    const file = event.target.files?.[0] ?? null
+    form.setValue("image", file, { shouldDirty: true, shouldValidate: true })
 
     if (!file) {
-      setImagePreview(null);
-      return;
+      setImagePreview(null)
+      return
     }
 
-    const reader = new FileReader();
-    reader.onload = () => setImagePreview(reader.result as string);
-    reader.readAsDataURL(file);
+    const reader = new FileReader()
+    reader.onload = () => setImagePreview(reader.result as string)
+    reader.readAsDataURL(file)
   }
 
   function handleCategoryChange(value: CreatePostValues["category"]) {
-    form.setValue("category", value, { shouldDirty: true });
-    form.setValue("image", null);
-    form.setValue("eventDate", null);
-    form.setValue("eventTime", "");
-    form.setValue("eventEndTime", "");
-    form.setValue("location", "");
-    form.setValue("price", "");
-    form.setValue("condition", "BRAND_NEW");
-    setImagePreview(null);
+    form.setValue("category", value, { shouldDirty: true })
+    form.setValue("image", null)
+    form.setValue("eventDate", null)
+    form.setValue("eventTime", "")
+    form.setValue("eventEndTime", "")
+    form.setValue("location", "")
+    form.setValue("price", "")
+    form.setValue("condition", "BRAND_NEW")
+    setImagePreview(null)
   }
 
   function handleClose() {
-    form.reset(getDefaultValues());
-    setImagePreview(null);
-    onClose();
+    form.reset(getDefaultValues())
+    setImagePreview(null)
+    onClose()
   }
 
   function onSubmit(values: CreatePostValues) {
     if (isEditMode) {
       updatePost.mutate(values, {
         onSuccess: () => {
-          handleClose();
-          toast.success("Post updated successfully!");
+          handleClose()
+          toast.success("Post updated successfully!")
         },
         onError: (error) => {
-          toast.error(error.message ?? "Failed to update. Please try again.");
+          toast.error(error.message ?? "Failed to update. Please try again.")
         },
-      });
+      })
     } else {
       createPost.mutate(values, {
         onSuccess: () => {
-          handleClose();
-          toast.success("Post shared to the community!");
+          handleClose()
+          toast.success("Post shared to the community!")
         },
         onError: (error) => {
-          toast.error(error.message ?? "Failed to post. Please try again.");
+          toast.error(error.message ?? "Failed to post. Please try again.")
         },
-      });
+      })
     }
   }
 
@@ -205,36 +217,39 @@ export function CreatePostModal({ open, onClose, editPost, presetCategory }: Cre
     hidden: { opacity: 0, y: 8, height: 0 },
     visible: { opacity: 1, y: 0, height: "auto" },
     exit: { opacity: 0, y: -4, height: 0 },
-  };
+  }
 
-  const transition: Transition = { duration: 0.18 };
+  const transition: Transition = { duration: 0.18 }
 
   return (
     <Dialog
       open={open}
       onOpenChange={(nextOpen) => {
-        if (!nextOpen) handleClose();
+        if (!nextOpen) handleClose()
       }}
     >
       <AnimatePresence>
         {open && (
-          <DialogContent forceMount className="sm:max-w-lg p-0">
+          <DialogContent forceMount className="p-0 sm:max-w-lg">
             <motion.div
               initial={{ opacity: 0, scale: 0.96, y: 8 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 8 }}
               transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className="p-6 overflow-visible"
+              className="overflow-visible p-6"
             >
               <DialogHeader className="mb-4">
-                <DialogTitle className="text-base font-semibold text-foreground">
+                <DialogTitle className="text-foreground text-base font-semibold">
                   {isEditMode ? "Edit Post" : "Post to Community"}
                 </DialogTitle>
               </DialogHeader>
 
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
                 <div className="space-y-1.5">
-                  <Label className="text-sm font-medium text-foreground/90">
+                  <Label className="text-foreground/90 text-sm font-medium">
                     Category
                   </Label>
                   <Controller
@@ -245,7 +260,7 @@ export function CreatePostModal({ open, onClose, editPost, presetCategory }: Cre
                         value={field.value}
                         onValueChange={handleCategoryChange}
                       >
-                        <SelectTrigger className="h-9 bg-muted border-border text-sm">
+                        <SelectTrigger className="bg-muted border-border h-9 text-sm">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -261,12 +276,12 @@ export function CreatePostModal({ open, onClose, editPost, presetCategory }: Cre
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-sm font-medium text-foreground/90">
+                  <Label className="text-foreground/90 text-sm font-medium">
                     Title
                   </Label>
                   <Input
                     placeholder={getTitlePlaceholder(category)}
-                    className="h-9 bg-muted border-border text-sm"
+                    className="bg-muted border-border h-9 text-sm"
                     {...form.register("title")}
                   />
                 </div>
@@ -283,7 +298,7 @@ export function CreatePostModal({ open, onClose, editPost, presetCategory }: Cre
                       className="space-y-3 overflow-hidden"
                     >
                       <div className="space-y-1.5">
-                        <Label className="text-sm font-medium text-foreground/90">
+                        <Label className="text-foreground/90 text-sm font-medium">
                           Date
                         </Label>
                         <Controller
@@ -296,21 +311,26 @@ export function CreatePostModal({ open, onClose, editPost, presetCategory }: Cre
                                   type="button"
                                   variant="outline"
                                   className={cn(
-                                    "w-full h-9 justify-start text-sm font-normal bg-muted border-border",
-                                    !field.value && "text-muted-foreground",
+                                    "bg-muted border-border h-9 w-full justify-start text-sm font-normal",
+                                    !field.value && "text-muted-foreground"
                                   )}
                                 >
-                                  <CalendarIcon className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
+                                  <CalendarIcon className="text-muted-foreground mr-2 h-3.5 w-3.5" />
                                   {field.value
                                     ? format(field.value, "MMM d, yyyy")
                                     : "Pick a date"}
                                 </Button>
                               </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="start">
+                              <PopoverContent
+                                className="w-auto p-0"
+                                align="start"
+                              >
                                 <Calendar
                                   mode="single"
                                   selected={field.value ?? undefined}
-                                  onSelect={(date) => field.onChange(date ?? null)}
+                                  onSelect={(date) =>
+                                    field.onChange(date ?? null)
+                                  }
                                   disabled={{ before: new Date() }}
                                 />
                               </PopoverContent>
@@ -321,7 +341,7 @@ export function CreatePostModal({ open, onClose, editPost, presetCategory }: Cre
 
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
-                          <Label className="text-sm font-medium text-foreground/90">
+                          <Label className="text-foreground/90 text-sm font-medium">
                             Start Time
                           </Label>
                           <Controller
@@ -338,7 +358,7 @@ export function CreatePostModal({ open, onClose, editPost, presetCategory }: Cre
                         </div>
 
                         <div className="space-y-1.5">
-                          <Label className="text-sm font-medium text-foreground/90">
+                          <Label className="text-foreground/90 text-sm font-medium">
                             End Time
                           </Label>
                           <Controller
@@ -369,7 +389,7 @@ export function CreatePostModal({ open, onClose, editPost, presetCategory }: Cre
                       transition={transition}
                       className="relative z-10 space-y-1.5 overflow-visible"
                     >
-                      <Label className="text-sm font-medium text-foreground/90">
+                      <Label className="text-foreground/90 text-sm font-medium">
                         Location
                       </Label>
                       <Controller
@@ -400,18 +420,18 @@ export function CreatePostModal({ open, onClose, editPost, presetCategory }: Cre
                       className="grid grid-cols-2 gap-3 overflow-hidden"
                     >
                       <div className="space-y-1.5">
-                        <Label className="text-sm font-medium text-foreground/90">
+                        <Label className="text-foreground/90 text-sm font-medium">
                           Price (PHP)
                         </Label>
                         <Input
                           type="number"
                           placeholder="0.00"
-                          className="h-9 bg-muted border-border text-sm"
+                          className="bg-muted border-border h-9 text-sm"
                           {...form.register("price")}
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-sm font-medium text-foreground/90">
+                        <Label className="text-foreground/90 text-sm font-medium">
                           Condition
                         </Label>
                         <Controller
@@ -422,7 +442,7 @@ export function CreatePostModal({ open, onClose, editPost, presetCategory }: Cre
                               value={field.value ?? "BRAND_NEW"}
                               onValueChange={field.onChange}
                             >
-                              <SelectTrigger className="h-9 bg-muted border-border text-sm">
+                              <SelectTrigger className="bg-muted border-border h-9 text-sm">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -444,12 +464,12 @@ export function CreatePostModal({ open, onClose, editPost, presetCategory }: Cre
                 </AnimatePresence>
 
                 <div className="space-y-1.5">
-                  <Label className="text-sm font-medium text-foreground/90">
+                  <Label className="text-foreground/90 text-sm font-medium">
                     Details
                   </Label>
                   <Textarea
                     placeholder={getContentPlaceholder(category)}
-                    className="bg-muted border-border text-sm resize-none min-h-24"
+                    className="bg-muted border-border min-h-24 resize-none text-sm"
                     {...form.register("content")}
                   />
                 </div>
@@ -465,7 +485,7 @@ export function CreatePostModal({ open, onClose, editPost, presetCategory }: Cre
                       transition={transition}
                       className="space-y-1.5 overflow-hidden"
                     >
-                      <Label className="text-sm font-medium text-foreground/90">
+                      <Label className="text-foreground/90 text-sm font-medium">
                         Photo (optional)
                       </Label>
                       <AnimatePresence mode="wait">
@@ -476,22 +496,22 @@ export function CreatePostModal({ open, onClose, editPost, presetCategory }: Cre
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.97 }}
                             transition={{ duration: 0.15 }}
-                            className="relative rounded-lg overflow-hidden border border-border"
+                            className="border-border relative overflow-hidden rounded-lg border"
                           >
                             <img
                               src={imagePreview}
                               alt=""
-                              className="w-full h-40 object-cover"
+                              className="h-40 w-full object-cover"
                             />
                             <button
                               type="button"
                               onClick={() => {
-                                form.setValue("image", null);
-                                setImagePreview(null);
+                                form.setValue("image", null)
+                                setImagePreview(null)
                               }}
-                              className="absolute top-2 right-2 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-black/80 transition-colors"
+                              className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80"
                             >
-                              <X className="w-3 h-3" />
+                              <X className="h-3 w-3" />
                             </button>
                           </motion.div>
                         ) : (
@@ -501,10 +521,10 @@ export function CreatePostModal({ open, onClose, editPost, presetCategory }: Cre
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.15 }}
-                            className="flex flex-col items-center justify-center gap-2 border border-dashed border-border rounded-lg h-24 cursor-pointer hover:bg-accent transition-colors"
+                            className="border-border hover:bg-accent flex h-24 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed transition-colors"
                           >
-                            <ImagePlus className="w-5 h-5 text-muted-foreground" />
-                            <span className="text-xs text-muted-foreground">
+                            <ImagePlus className="text-muted-foreground h-5 w-5" />
+                            <span className="text-muted-foreground text-xs">
                               Click to upload a photo
                             </span>
                             <input
@@ -531,18 +551,23 @@ export function CreatePostModal({ open, onClose, editPost, presetCategory }: Cre
                     type="button"
                     variant="ghost"
                     onClick={handleClose}
-                    className="h-9 text-sm text-foreground/80"
+                    className="text-foreground/80 h-9 text-sm"
                   >
                     Cancel
                   </Button>
-                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                  >
                     <Button
                       type="submit"
-                      className="h-9 px-5 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium min-w-[80px]"
-                      disabled={mutation.isPending || !title.trim() || !content.trim()}
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground h-9 min-w-[80px] px-5 text-sm font-medium"
+                      disabled={
+                        mutation.isPending || !title.trim() || !content.trim()
+                      }
                     >
                       {mutation.isPending ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className="h-4 w-4 animate-spin" />
                       ) : isEditMode ? (
                         "Save changes"
                       ) : (
@@ -557,7 +582,7 @@ export function CreatePostModal({ open, onClose, editPost, presetCategory }: Cre
         )}
       </AnimatePresence>
     </Dialog>
-  );
+  )
 }
 
 function getDefaultValues(): CreatePostValues {
@@ -572,20 +597,20 @@ function getDefaultValues(): CreatePostValues {
     location: "",
     price: "",
     condition: "BRAND_NEW",
-  };
+  }
 }
 
 function getTitlePlaceholder(category: CreatePostValues["category"]) {
-  if (category === "QUESTION") return "What would you like to ask?";
-  if (category === "FOR_SALE") return "What are you selling?";
-  if (category === "FREE") return "What are you giving away?";
-  if (category === "SAFETY") return "Describe the safety concern";
-  if (category === "EVENT") return "Event name";
-  return "What's on your mind?";
+  if (category === "QUESTION") return "What would you like to ask?"
+  if (category === "FOR_SALE") return "What are you selling?"
+  if (category === "FREE") return "What are you giving away?"
+  if (category === "SAFETY") return "Describe the safety concern"
+  if (category === "EVENT") return "Event name"
+  return "What's on your mind?"
 }
 
 function getContentPlaceholder(category: CreatePostValues["category"]) {
-  if (category === "QUESTION") return "Add more context to your question...";
-  if (category === "SAFETY") return "Describe what happened and where...";
-  return "Share more details with your community...";
+  if (category === "QUESTION") return "Add more context to your question..."
+  if (category === "SAFETY") return "Describe what happened and where..."
+  return "Share more details with your community..."
 }

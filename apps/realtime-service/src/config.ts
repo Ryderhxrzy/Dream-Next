@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "dotenv/config"
 
 export const config = {
   port: Number(process.env.PORT ?? 4001),
@@ -10,4 +10,4 @@ export const config = {
     port: Number(process.env.REDIS_PORT ?? 6379),
     password: process.env.REDIS_PASSWORD ?? undefined,
   },
-};
+}

@@ -1,14 +1,13 @@
-"use client";
+"use client"
 
-import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion } from "framer-motion"
+import Image from "next/image"
 
-const letters = "DREAMBUILD".split("");
+const letters = "DREAMBUILD".split("")
 
 export function SplashScreen() {
   return (
     <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden bg-[#0d0d0d]">
-
       {/* ── Lamp pendulum ── */}
       <motion.div
         style={{ transformOrigin: "top center" }}
@@ -17,9 +16,9 @@ export function SplashScreen() {
         transition={{
           duration: 2.8,
           ease: "easeOut",
-          times: [0, 0.22, 0.42, 0.57, 0.69, 0.80, 0.88, 0.94, 1],
+          times: [0, 0.22, 0.42, 0.57, 0.69, 0.8, 0.88, 0.94, 1],
         }}
-        className="absolute top-0 left-1/2 -translate-x-1/2 flex flex-col items-center z-20"
+        className="absolute top-0 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center"
       >
         {/* Cord */}
         <motion.div
@@ -57,22 +56,23 @@ export function SplashScreen() {
 
       {/* ── Screen flicker flashes ── */}
       <motion.div
-        className="absolute inset-0 pointer-events-none z-10"
+        className="pointer-events-none absolute inset-0 z-10"
         initial={{ opacity: 0 }}
         animate={{ opacity: [0, 0.18, 0, 0.28, 0, 0.08] }}
         transition={{
           duration: 0.65,
           delay: 2.85,
-          times: [0, 0.18, 0.38, 0.58, 0.80, 1],
+          times: [0, 0.18, 0.38, 0.58, 0.8, 1],
         }}
         style={{
-          background: "radial-gradient(circle at 50% 25%, rgba(255,210,50,0.6), transparent 60%)",
+          background:
+            "radial-gradient(circle at 50% 25%, rgba(255,210,50,0.6), transparent 60%)",
         }}
       />
 
       {/* ── Soft light beam from bulb ── */}
       <motion.div
-        className="absolute pointer-events-none z-10"
+        className="pointer-events-none absolute z-10"
         style={{
           top: 168,
           left: "50%",
@@ -96,8 +96,14 @@ export function SplashScreen() {
 
       {/* ── Bright hotspot at bulb ── */}
       <motion.div
-        className="absolute pointer-events-none z-10"
-        style={{ top: 158, left: "50%", width: 120, height: 120, marginLeft: -60 }}
+        className="pointer-events-none absolute z-10"
+        style={{
+          top: 158,
+          left: "50%",
+          width: 120,
+          height: 120,
+          marginLeft: -60,
+        }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 3.5 }}
@@ -195,7 +201,6 @@ export function SplashScreen() {
           />
         ))}
       </motion.div>
-
     </div>
-  );
+  )
 }

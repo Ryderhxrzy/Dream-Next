@@ -1,6 +1,7 @@
-import { motion } from "framer-motion";
-import { UserPlus, Share2, Wallet } from "lucide-react";
-import PrimaryButton from "@/components/ui/buttons/PrimaryButton";
+import { motion } from "framer-motion"
+import { Share2, UserPlus, Wallet } from "lucide-react"
+
+import PrimaryButton from "@/components/ui/buttons/PrimaryButton"
 
 const steps = [
   {
@@ -30,31 +31,34 @@ const steps = [
     color: "bg-green-100 text-green-600",
     border: "border-green-200",
   },
-];
+]
 
 export default function HowItWorksSection() {
   return (
-    <section id="how-it-works" className="py-24 bg-white dark:bg-gray-900 overflow-hidden">
+    <section
+      id="how-it-works"
+      className="overflow-hidden bg-white py-24 dark:bg-gray-900"
+    >
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="mb-16 text-center"
         >
-          <span className="inline-block px-4 py-1.5 rounded-full bg-orange-100 dark:bg-orange-500/10 text-orange-600 dark:text-orange-300 font-semibold text-sm mb-4">
+          <span className="mb-4 inline-block rounded-full bg-orange-100 px-4 py-1.5 text-sm font-semibold text-orange-600 dark:bg-orange-500/10 dark:text-orange-300">
             SIMPLE PROCESS
           </span>
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white leading-tight mb-4">
+          <h2 className="mb-4 text-4xl leading-tight font-bold text-gray-900 md:text-5xl dark:text-white">
             How It Works
           </h2>
-          <p className="text-xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
+          <p className="mx-auto max-w-2xl text-xl text-gray-500 dark:text-gray-400">
             Start earning in 3 easy steps - no experience needed.
           </p>
         </motion.div>
 
-        <div className="relative grid md:grid-cols-3 gap-8 md:gap-6">
-          <div className="hidden md:block absolute top-14 left-[calc(16.67%+1rem)] right-[calc(16.67%+1rem)] h-0.5 bg-gradient-to-r from-blue-200 via-orange-200 to-green-200 z-0" />
+        <div className="relative grid gap-8 md:grid-cols-3 md:gap-6">
+          <div className="absolute top-14 right-[calc(16.67%+1rem)] left-[calc(16.67%+1rem)] z-0 hidden h-0.5 bg-gradient-to-r from-blue-200 via-orange-200 to-green-200 md:block" />
 
           {steps.map((step, index) => (
             <motion.div
@@ -66,18 +70,18 @@ export default function HowItWorksSection() {
               className="relative z-10 flex flex-col items-center text-center"
             >
               <div
-                className={`w-28 h-28 rounded-full ${step.color} border-4 ${step.border} flex flex-col items-center justify-center mb-6 shadow-md bg-white dark:bg-gray-800`}
+                className={`h-28 w-28 rounded-full ${step.color} border-4 ${step.border} mb-6 flex flex-col items-center justify-center bg-white shadow-md dark:bg-gray-800`}
               >
                 <step.icon size={36} className={step.color.split(" ")[1]} />
-                <span className="text-xs font-bold text-gray-400 dark:text-gray-500 mt-1">
+                <span className="mt-1 text-xs font-bold text-gray-400 dark:text-gray-500">
                   {step.step}
                 </span>
               </div>
 
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+              <h3 className="mb-3 text-xl font-bold text-gray-900 dark:text-white">
                 {step.title}
               </h3>
-              <p className="text-gray-500 dark:text-gray-400 leading-relaxed max-w-xs">
+              <p className="max-w-xs leading-relaxed text-gray-500 dark:text-gray-400">
                 {step.description}
               </p>
             </motion.div>
@@ -89,7 +93,7 @@ export default function HowItWorksSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.5 }}
-          className="text-center mt-16"
+          className="mt-16 text-center"
         >
           <PrimaryButton href="/login">
             Get Started - It&apos;s Free
@@ -97,6 +101,5 @@ export default function HowItWorksSection() {
         </motion.div>
       </div>
     </section>
-  );
+  )
 }
-

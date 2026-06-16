@@ -191,6 +191,7 @@ Route::get('/products/zq/cached/{id}', [ProductController::class, 'publicCachedZ
 Route::get('/products/slug/{slug}', [ProductController::class, 'showBySlug']);
 Route::get('/products/cards', [ProductController::class, 'indexCards']);
 Route::get('/products/{id}/reviews', [ProductController::class, 'reviews']);
+Route::get('/products/{id}/related', [ProductController::class, 'related']);
 Route::get('/products/{id}/summary', [ProductController::class, 'showSummary']);
 Route::get('/products/{id}', [ProductController::class, 'show']);
 Route::get('/products/{id}/brand', [ProductController::class, 'brand']);
@@ -321,6 +322,7 @@ Route::middleware(['auth:sanctum', 'customer.actor'])->group(function () {
     Route::get('/interior-requests', [InteriorRequestController::class, 'myRequests']);
     Route::get('/interior-requests/{id}', [InteriorRequestController::class, 'show']);
     Route::get('/wishlist', [WishlistController::class, 'index']);
+    Route::get('/wishlist/recommendations', [WishlistController::class, 'recommendations']);
     Route::post('/wishlist', [WishlistController::class, 'store']);
     Route::delete('/wishlist/{productId}', [WishlistController::class, 'destroy']);
     Route::middleware('throttle:cart-write')->group(function () {

@@ -1,37 +1,38 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { format, formatDistanceToNowStrict } from "date-fns";
-import { ArrowUp } from "lucide-react";
+import { useState } from "react"
+import { format, formatDistanceToNowStrict } from "date-fns"
+import { ArrowUp } from "lucide-react"
 
-import PostCard, { type Post, type PostType } from "./PostCard";
-import { formatEventTimeRange } from "@/components/community/events/event-utils";
-import { PostFeedSkeleton } from "./PostCardSkeleton";
 import {
-  type CommunityPost,
   useCommunityPosts,
-} from "@/lib/hooks/use-community-posts";
-import { useCurrentUser } from "@/lib/hooks/use-current-user";
-import { useNotifications } from "@/lib/hooks/use-notifications";
+  type CommunityPost,
+} from "@/lib/hooks/use-community-posts"
+import { useCurrentUser } from "@/lib/hooks/use-current-user"
+import { useNotifications } from "@/lib/hooks/use-notifications"
+import { formatEventTimeRange } from "@/components/community/events/event-utils"
+
+import PostCard, { type Post, type PostType } from "./PostCard"
+import { PostFeedSkeleton } from "./PostCardSkeleton"
 
 const PostFeed = () => {
-  const postsQuery = useCommunityPosts();
-  const { data: currentUser } = useCurrentUser();
-  const { notifications } = useNotifications();
-  const [lastSeenCount, setLastSeenCount] = useState(0);
+  const postsQuery = useCommunityPosts()
+  const { data: currentUser } = useCurrentUser()
+  const { notifications } = useNotifications()
+  const [lastSeenCount, setLastSeenCount] = useState(0)
 
   const newPostCount = notifications.filter(
     (n) => n.type === "new_post" && !n.read
-  ).length;
+  ).length
 
   function handleRefresh() {
-    postsQuery.refetch();
-    setLastSeenCount(notifications.length);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    postsQuery.refetch()
+    setLastSeenCount(notifications.length)
+    window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
   if (postsQuery.isLoading) {
-    return <PostFeedSkeleton count={3} />;
+    return <PostFeedSkeleton count={3} />
   }
 
   if (postsQuery.isError) {
@@ -39,20 +40,20 @@ const PostFeed = () => {
       <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
         {postsQuery.error.message}
       </div>
-    );
+    )
   }
 
-  const posts = postsQuery.data ?? [];
+  const posts = postsQuery.data ?? []
 
   if (posts.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-card p-8 text-center">
-        <p className="text-sm font-medium text-foreground">No posts yet</p>
-        <p className="mt-1 text-sm text-muted-foreground">
+      <div className="border-border bg-card rounded-xl border p-8 text-center">
+        <p className="text-foreground text-sm font-medium">No posts yet</p>
+        <p className="text-muted-foreground mt-1 text-sm">
           Be the first to post something for the community.
         </p>
       </div>
-    );
+    )
   }
 
   return (
@@ -60,10 +61,11 @@ const PostFeed = () => {
       {newPostCount > 0 && (
         <button
           onClick={handleRefresh}
-          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border bg-card text-sm font-medium text-foreground hover:bg-accent transition-colors shadow-sm"
+          className="border-border bg-card text-foreground hover:bg-accent flex w-full items-center justify-center gap-2 rounded-xl border py-2.5 text-sm font-medium shadow-sm transition-colors"
         >
-          <ArrowUp className="w-4 h-4" />
-          {newPostCount === 1 ? "1 new post" : `${newPostCount} new posts`} — tap to refresh
+          <ArrowUp className="h-4 w-4" />
+          {newPostCount === 1 ? "1 new post" : `${newPostCount} new posts`} —
+          tap to refresh
         </button>
       )}
       {posts.map((post) => (
@@ -76,8 +78,8 @@ const PostFeed = () => {
         />
       ))}
     </div>
-  );
-};
+  )
+}
 
 export function mapCommunityPostToCard(post: CommunityPost): Post {
   return {
@@ -98,21 +100,21 @@ export function mapCommunityPostToCard(post: CommunityPost): Post {
     liked: post.viewerHasReacted,
     commentCount: post.counts.comments,
     event: mapEvent(post),
-  };
+  }
 }
 
 function mapPostType(category: CommunityPost["category"]): PostType {
-  if (category === "QUESTION") return "question";
-  if (category === "EVENT") return "event";
-  return "normal";
+  if (category === "QUESTION") return "question"
+  if (category === "EVENT") return "event"
+  return "normal"
 }
 
 function mapEvent(post: CommunityPost): Post["event"] {
   if (post.category !== "EVENT" || !post.eventDate) {
-    return undefined;
+    return undefined
   }
 
-  const eventDate = new Date(post.eventDate);
+  const eventDate = new Date(post.eventDate)
 
   return {
     month: format(eventDate, "MMM").toUpperCase(),
@@ -128,7 +130,7 @@ function mapEvent(post: CommunityPost): Post["event"] {
     interested: post.viewerRsvp === "INTERESTED",
     goingCount: post.counts.going,
     interestedCount: post.counts.interested,
-  };
+  }
 }
 
 function getInitials(name: string) {
@@ -137,7 +139,7 @@ function getInitials(name: string) {
     .filter(Boolean)
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase())
-    .join("");
+    .join("")
 }
 
-export default PostFeed;
+export default PostFeed

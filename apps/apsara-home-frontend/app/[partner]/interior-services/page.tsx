@@ -1,47 +1,65 @@
-import type { Metadata } from 'next'
-import Link from 'next/link'
-import InteriorServicesPageMain from '@/components/interior-services/InteriorServicesPageMain'
-import { getPartnerStorefrontBySlug } from '@/libs/partnerStorefrontServer'
+import { getPartnerStorefrontBySlug } from "@/libs/partnerStorefrontServer"
+import type { Metadata } from "next"
+import Link from "next/link"
+
+import InteriorServicesPageMain from "@/components/interior-services/InteriorServicesPageMain"
 
 type PageProps = {
   params: Promise<{ partner: string }>
 }
 
-const BLANK_FAVICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E"
+const BLANK_FAVICON =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E"
 
-const resolveAssetUrl = (rawValue: string | null | undefined, apiUrl?: string) => {
-  const value = String(rawValue ?? '').trim()
-  if (!value) return ''
-  if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('data:')) return value
-  if (value.startsWith('/Images/')) return value
-  if (!apiUrl) return value.startsWith('/') ? value : `/${value}`
-  return `${apiUrl.replace(/\/$/, '')}/${value.replace(/^\/+/, '')}`
+const resolveAssetUrl = (
+  rawValue: string | null | undefined,
+  apiUrl?: string
+) => {
+  const value = String(rawValue ?? "").trim()
+  if (!value) return ""
+  if (
+    value.startsWith("http://") ||
+    value.startsWith("https://") ||
+    value.startsWith("data:")
+  )
+    return value
+  if (value.startsWith("/Images/")) return value
+  if (!apiUrl) return value.startsWith("/") ? value : `/${value}`
+  return `${apiUrl.replace(/\/$/, "")}/${value.replace(/^\/+/, "")}`
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
   const { partner } = await params
   const storefront = await getPartnerStorefrontBySlug(partner)
   const partnerTitle = storefront?.displayName ?? partner
   const title = `${partnerTitle} | Interior Services`
-  const apiUrl = process.env.LARAVEL_API_URL ?? process.env.NEXT_PUBLIC_LARAVEL_API_URL
-  const iconUrl = resolveAssetUrl(storefront?.tabLogoUrl || storefront?.logoUrl, apiUrl)
+  const apiUrl =
+    process.env.LARAVEL_API_URL ?? process.env.NEXT_PUBLIC_LARAVEL_API_URL
+  const iconUrl = resolveAssetUrl(
+    storefront?.tabLogoUrl || storefront?.logoUrl,
+    apiUrl
+  )
 
   return {
     title,
     description: `Interior services by ${partnerTitle}.`,
     icons: iconUrl
       ? {
-          icon: [{ url: iconUrl, type: 'image/png' }],
+          icon: [{ url: iconUrl, type: "image/png" }],
           apple: iconUrl,
         }
       : {
-          icon: [{ url: BLANK_FAVICON, type: 'image/svg+xml' }],
+          icon: [{ url: BLANK_FAVICON, type: "image/svg+xml" }],
           apple: BLANK_FAVICON,
         },
   }
 }
 
-export default async function PartnerInteriorServicesPage({ params }: PageProps) {
+export default async function PartnerInteriorServicesPage({
+  params,
+}: PageProps) {
   const { partner } = await params
 
   return (

@@ -1,4 +1,4 @@
-import { baseApi } from './baseApi'
+import { baseApi } from "./baseApi"
 
 export interface ShippingRate {
   id: number
@@ -26,50 +26,59 @@ export const shippingRatesApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getPublicShippingRates: builder.query<ShippingRatesResponse, void>({
       query: () => ({
-        url: '/api/shipping-rates',
-        method: 'GET',
-        cache: 'no-store',
+        url: "/api/shipping-rates",
+        method: "GET",
+        cache: "no-store",
       }),
-      providesTags: ['ShippingRates'],
+      providesTags: ["ShippingRates"],
     }),
     getAdminShippingRates: builder.query<ShippingRatesResponse, void>({
       query: () => ({
-        url: '/api/admin/shipping/rates',
-        method: 'GET',
-        cache: 'no-store',
+        url: "/api/admin/shipping/rates",
+        method: "GET",
+        cache: "no-store",
       }),
-      providesTags: ['ShippingRates'],
+      providesTags: ["ShippingRates"],
     }),
-    createAdminShippingRate: builder.mutation<{ message: string; rate: ShippingRate }, ShippingRatePayload>({
+    createAdminShippingRate: builder.mutation<
+      { message: string; rate: ShippingRate },
+      ShippingRatePayload
+    >({
       query: (body) => ({
-        url: '/api/admin/shipping/rates',
-        method: 'POST',
+        url: "/api/admin/shipping/rates",
+        method: "POST",
         body,
       }),
-      invalidatesTags: ['ShippingRates'],
+      invalidatesTags: ["ShippingRates"],
     }),
-    updateAdminShippingRate: builder.mutation<{ message: string; rate: ShippingRate }, ShippingRatePayload & { id: number }>({
+    updateAdminShippingRate: builder.mutation<
+      { message: string; rate: ShippingRate },
+      ShippingRatePayload & { id: number }
+    >({
       query: ({ id, ...body }) => ({
         url: `/api/admin/shipping/rates/${id}`,
-        method: 'PUT',
+        method: "PUT",
         body,
       }),
-      invalidatesTags: ['ShippingRates'],
+      invalidatesTags: ["ShippingRates"],
     }),
     deleteAdminShippingRate: builder.mutation<{ message: string }, number>({
       query: (id) => ({
         url: `/api/admin/shipping/rates/${id}`,
-        method: 'DELETE',
+        method: "DELETE",
       }),
-      invalidatesTags: ['ShippingRates'],
+      invalidatesTags: ["ShippingRates"],
     }),
-    bulkDeleteAdminShippingRates: builder.mutation<{ message: string; deleted_count: number }, number[]>({
+    bulkDeleteAdminShippingRates: builder.mutation<
+      { message: string; deleted_count: number },
+      number[]
+    >({
       query: (ids) => ({
-        url: '/api/admin/shipping/rates',
-        method: 'DELETE',
+        url: "/api/admin/shipping/rates",
+        method: "DELETE",
         body: { ids },
       }),
-      invalidatesTags: ['ShippingRates'],
+      invalidatesTags: ["ShippingRates"],
     }),
   }),
 })

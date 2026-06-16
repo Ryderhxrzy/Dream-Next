@@ -1,5 +1,5 @@
-import path from "path";
-import type { NextConfig } from "next";
+import path from "path"
+import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
   // Self-contained server bundle for small, low-RAM production images.
@@ -13,6 +13,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-};
+}
 
-export default nextConfig;
+export default nextConfig

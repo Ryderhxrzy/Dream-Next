@@ -1,13 +1,13 @@
-import path from "path";
-import withPWAInit from "next-pwa";
-import type { NextConfig } from "next";
+import path from "path"
+import type { NextConfig } from "next"
+import withPWAInit from "next-pwa"
 
 const withPWA = withPWAInit({
   dest: "public",
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === "development",
-});
+})
 
 const nextConfig: NextConfig = {
   // Self-contained server bundle for small, low-RAM production images.
@@ -29,6 +29,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-};
+}
 
-export default withPWA(nextConfig);
+export default withPWA(nextConfig)

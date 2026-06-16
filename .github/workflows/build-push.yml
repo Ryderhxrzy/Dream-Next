@@ -9,7 +9,7 @@ on:
     branches: [main, feature/renewal]
   pull_request:
     branches: [main]
-  workflow_dispatch: {}   # manual "rebuild all" from the Actions tab
+  workflow_dispatch: {} # manual "rebuild all" from the Actions tab
 
 concurrency:
   group: build-push-${{ github.ref }}
@@ -26,9 +26,9 @@ jobs:
     environment: "AF HOME ENV URL"
     permissions:
       contents: read
-      packages: write   # required to push to GHCR with GITHUB_TOKEN
+      packages: write # required to push to GHCR with GITHUB_TOKEN
     strategy:
-      fail-fast: false   # one service failing must not cancel the others
+      fail-fast: false # one service failing must not cancel the others
       matrix:
         include:
           - name: afhome-frontend

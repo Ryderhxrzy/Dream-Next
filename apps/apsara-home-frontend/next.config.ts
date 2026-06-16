@@ -1,11 +1,12 @@
-import path from "path";
-import type { NextConfig } from "next";
-import withSerwist from "@serwist/next";
+import path from "path"
+import withSerwist from "@serwist/next"
+import type { NextConfig } from "next"
 
-const buildCpusRaw = Number(process.env.NEXT_BUILD_CPUS ?? "");
-const buildCpus = Number.isFinite(buildCpusRaw) && buildCpusRaw > 0 ? buildCpusRaw : undefined;
-const useWorkerThreads = process.env.NEXT_WORKER_THREADS === "1";
-const isDev = process.env.NODE_ENV !== "production";
+const buildCpusRaw = Number(process.env.NEXT_BUILD_CPUS ?? "")
+const buildCpus =
+  Number.isFinite(buildCpusRaw) && buildCpusRaw > 0 ? buildCpusRaw : undefined
+const useWorkerThreads = process.env.NEXT_WORKER_THREADS === "1"
+const isDev = process.env.NODE_ENV !== "production"
 
 const securityHeaders = [
   {
@@ -32,7 +33,7 @@ const securityHeaders = [
     key: "X-Permitted-Cross-Domain-Policies",
     value: "none",
   },
-];
+]
 
 const csp = [
   "default-src 'self'",
@@ -48,7 +49,7 @@ const csp = [
   "connect-src 'self' http://localhost:* http://127.0.0.1:* https: wss:",
   "frame-src 'self' https://upload-widget.cloudinary.com https://challenges.cloudflare.com https://www.youtube.com https://player.vimeo.com https://www.google.com https://maps.google.com",
   "upgrade-insecure-requests",
-].join("; ");
+].join("; ")
 
 const nextConfig: NextConfig = {
   // Produce a self-contained server bundle (.next/standalone) for small,
@@ -104,17 +105,17 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-        {
-          source: "/(.*)",
-          headers: [
-            ...securityHeaders,
-            {
-              key: "Content-Security-Policy",
-              value: csp,
-            },
-          ],
-        },
-      ];
+      {
+        source: "/(.*)",
+        headers: [
+          ...securityHeaders,
+          {
+            key: "Content-Security-Policy",
+            value: csp,
+          },
+        ],
+      },
+    ]
   },
   typescript: {
     ignoreBuildErrors: true,
@@ -157,11 +158,11 @@ const nextConfig: NextConfig = {
     // Windows often blocks atomic renames inside webpack's persistent cache packs (EPERM).
     // Disabling the persistent cache for production builds avoids intermittent build failures.
     if (!dev) {
-      config.cache = false;
+      config.cache = false
     }
-    return config;
+    return config
   },
-};
+}
 
 export default withSerwist({
   swSrc: "sw.ts",
@@ -169,6 +170,4 @@ export default withSerwist({
   // Disable SW by default to avoid navigation no-response regressions in production.
   // Set ENABLE_SW=1 only when explicitly validating PWA behavior.
   disable: process.env.ENABLE_SW !== "1",
-})(nextConfig);
-
-
+})(nextConfig)

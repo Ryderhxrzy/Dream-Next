@@ -1,13 +1,21 @@
-'use client'
+"use client"
 
-import { useMemo } from 'react'
-import Navbar from '@/components/layout/Navbar'
-import TopBar from '@/components/layout/TopBar'
-import Footer from '@/components/landing-page/Footer'
-import ScrollToTop from '@/components/landing-page/ScrollToTop'
-import { useGetPublicGeneralSettingsQuery } from '@/store/api/adminSettingsApi'
-import type { Category } from '@/store/api/categoriesApi'
-import { Building2, Factory, MapPin, Store, Navigation, Map as MapIcon } from 'lucide-react'
+import { useMemo } from "react"
+import { useGetPublicGeneralSettingsQuery } from "@/store/api/adminSettingsApi"
+import type { Category } from "@/store/api/categoriesApi"
+import {
+  Building2,
+  Factory,
+  Map as MapIcon,
+  MapPin,
+  Navigation,
+  Store,
+} from "lucide-react"
+
+import Footer from "@/components/landing-page/Footer"
+import ScrollToTop from "@/components/landing-page/ScrollToTop"
+import Navbar from "@/components/layout/Navbar"
+import TopBar from "@/components/layout/TopBar"
 
 type Branch = {
   name: string
@@ -16,31 +24,59 @@ type Branch = {
   waze_link?: string
 }
 
-type BranchTag = 'HEAD OFFICE' | 'FACTORY OUTLET' | 'SM STORE' | 'STORE' | 'BRANCH'
+type BranchTag =
+  | "HEAD OFFICE"
+  | "FACTORY OUTLET"
+  | "SM STORE"
+  | "STORE"
+  | "BRANCH"
 
 const getBranchTag = (name: string): BranchTag => {
   const normalized = name.trim().toLowerCase()
-  if (!normalized) return 'BRANCH'
-  if (normalized.includes('head office') || normalized.includes('main office')) return 'HEAD OFFICE'
-  if (normalized.includes('factory')) return 'FACTORY OUTLET'
-  if (normalized.includes('sm ')) return 'SM STORE'
-  if (normalized.includes('store') || normalized.includes('branch')) return 'STORE'
-  return 'BRANCH'
+  if (!normalized) return "BRANCH"
+  if (normalized.includes("head office") || normalized.includes("main office"))
+    return "HEAD OFFICE"
+  if (normalized.includes("factory")) return "FACTORY OUTLET"
+  if (normalized.includes("sm ")) return "SM STORE"
+  if (normalized.includes("store") || normalized.includes("branch"))
+    return "STORE"
+  return "BRANCH"
 }
 
-const tagStyles: Record<BranchTag, { badge: string; icon: typeof Building2 }> = {
-  'HEAD OFFICE':    { badge: 'bg-sky-100 text-sky-700 ring-sky-200 dark:bg-sky-500/15 dark:text-sky-200 dark:ring-sky-500/30',       icon: Building2 },
-  'FACTORY OUTLET': { badge: 'bg-cyan-50 text-cyan-700 ring-cyan-200 dark:bg-cyan-500/10 dark:text-cyan-200 dark:ring-cyan-500/30',   icon: Factory   },
-  'SM STORE':       { badge: 'bg-indigo-50 text-indigo-700 ring-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-200 dark:ring-indigo-500/30', icon: Store },
-  STORE:            { badge: 'bg-sky-50 text-sky-600 ring-sky-200 dark:bg-sky-500/10 dark:text-sky-200 dark:ring-sky-500/20',         icon: Store     },
-  BRANCH:           { badge: 'bg-slate-100 text-slate-600 ring-slate-200 dark:bg-white/10 dark:text-white/70 dark:ring-white/15',     icon: Building2 },
-}
+const tagStyles: Record<BranchTag, { badge: string; icon: typeof Building2 }> =
+  {
+    "HEAD OFFICE": {
+      badge:
+        "bg-sky-100 text-sky-700 ring-sky-200 dark:bg-sky-500/15 dark:text-sky-200 dark:ring-sky-500/30",
+      icon: Building2,
+    },
+    "FACTORY OUTLET": {
+      badge:
+        "bg-cyan-50 text-cyan-700 ring-cyan-200 dark:bg-cyan-500/10 dark:text-cyan-200 dark:ring-cyan-500/30",
+      icon: Factory,
+    },
+    "SM STORE": {
+      badge:
+        "bg-indigo-50 text-indigo-700 ring-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-200 dark:ring-indigo-500/30",
+      icon: Store,
+    },
+    STORE: {
+      badge:
+        "bg-sky-50 text-sky-600 ring-sky-200 dark:bg-sky-500/10 dark:text-sky-200 dark:ring-sky-500/20",
+      icon: Store,
+    },
+    BRANCH: {
+      badge:
+        "bg-slate-100 text-slate-600 ring-slate-200 dark:bg-white/10 dark:text-white/70 dark:ring-white/15",
+      icon: Building2,
+    },
+  }
 
 const normalizeExternalUrl = (value: string) => {
   const trimmed = value.trim()
-  if (!trimmed) return ''
+  if (!trimmed) return ""
   if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(trimmed)) return trimmed
-  return `https://${trimmed.replace(/^\/+/, '')}`
+  return `https://${trimmed.replace(/^\/+/, "")}`
 }
 
 const parseBranches = (raw?: string | null): Branch[] => {
@@ -50,10 +86,11 @@ const parseBranches = (raw?: string | null): Branch[] => {
     if (!Array.isArray(parsed)) return []
     return parsed
       .map((item) => ({
-        name: typeof item?.name === 'string' ? item.name : '',
-        address: typeof item?.address === 'string' ? item.address : '',
-        google_map_link: typeof item?.google_map_link === 'string' ? item.google_map_link : '',
-        waze_link: typeof item?.waze_link === 'string' ? item.waze_link : '',
+        name: typeof item?.name === "string" ? item.name : "",
+        address: typeof item?.address === "string" ? item.address : "",
+        google_map_link:
+          typeof item?.google_map_link === "string" ? item.google_map_link : "",
+        waze_link: typeof item?.waze_link === "string" ? item.waze_link : "",
       }))
       .filter((item) => item.name.trim() || item.address.trim())
   } catch {
@@ -61,10 +98,17 @@ const parseBranches = (raw?: string | null): Branch[] => {
   }
 }
 
-export default function CompanyBranchesPageMain({ initialCategories = [] }: { initialCategories?: Category[] }) {
+export default function CompanyBranchesPageMain({
+  initialCategories = [],
+}: {
+  initialCategories?: Category[]
+}) {
   const { data, isFetching } = useGetPublicGeneralSettingsQuery()
   const settings = data?.settings
-  const branches = useMemo(() => parseBranches(settings?.branches), [settings?.branches])
+  const branches = useMemo(
+    () => parseBranches(settings?.branches),
+    [settings?.branches]
+  )
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
@@ -81,10 +125,15 @@ export default function CompanyBranchesPageMain({ initialCategories = [] }: { in
                   <MapPin className="h-7 w-7" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-widest opacity-70">AF Home · Locations</p>
-                  <h1 className="mt-1 text-3xl font-bold tracking-tight md:text-4xl">Our Branches</h1>
+                  <p className="text-xs font-bold tracking-widest uppercase opacity-70">
+                    AF Home · Locations
+                  </p>
+                  <h1 className="mt-1 text-3xl font-bold tracking-tight md:text-4xl">
+                    Our Branches
+                  </h1>
                   <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/80">
-                    Find the nearest AF Home branch and open directions instantly using Google Maps or Waze.
+                    Find the nearest AF Home branch and open directions
+                    instantly using Google Maps or Waze.
                   </p>
                 </div>
               </div>
@@ -93,11 +142,15 @@ export default function CompanyBranchesPageMain({ initialCategories = [] }: { in
                 <div className="flex flex-wrap gap-3">
                   <div className="rounded-xl bg-white/15 px-4 py-2.5 text-center">
                     <p className="text-sm font-bold">{branches.length}</p>
-                    <p className="text-[10px] font-medium opacity-70">Locations</p>
+                    <p className="text-[10px] font-medium opacity-70">
+                      Locations
+                    </p>
                   </div>
                   <div className="rounded-xl bg-white/15 px-4 py-2.5 text-center">
                     <p className="text-sm font-bold">Nationwide</p>
-                    <p className="text-[10px] font-medium opacity-70">Coverage</p>
+                    <p className="text-[10px] font-medium opacity-70">
+                      Coverage
+                    </p>
                   </div>
                 </div>
               ) : null}
@@ -110,7 +163,10 @@ export default function CompanyBranchesPageMain({ initialCategories = [] }: { in
           {isFetching ? (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="animate-pulse rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900/60">
+                <div
+                  key={i}
+                  className="animate-pulse rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900/60"
+                >
                   <div className="flex items-center justify-between">
                     <div className="h-6 w-28 rounded-full bg-slate-200 dark:bg-slate-700" />
                     <div className="h-10 w-10 rounded-2xl bg-slate-200 dark:bg-slate-700" />
@@ -131,10 +187,14 @@ export default function CompanyBranchesPageMain({ initialCategories = [] }: { in
                 const query = (branch.address || branch.name).trim()
                 const googleHref = branch.google_map_link?.trim()
                   ? normalizeExternalUrl(branch.google_map_link)
-                  : query ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}` : ''
+                  : query
+                    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
+                    : ""
                 const wazeHref = branch.waze_link?.trim()
                   ? normalizeExternalUrl(branch.waze_link)
-                  : query ? `https://waze.com/ul?q=${encodeURIComponent(query)}&navigate=yes` : ''
+                  : query
+                    ? `https://waze.com/ul?q=${encodeURIComponent(query)}&navigate=yes`
+                    : ""
 
                 const tag = getBranchTag(branch.name)
                 const { badge, icon: TagIcon } = tagStyles[tag]
@@ -149,7 +209,9 @@ export default function CompanyBranchesPageMain({ initialCategories = [] }: { in
 
                     <div className="p-5">
                       <div className="flex items-center justify-between gap-3">
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ring-1 ${badge}`}>
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase ring-1 ${badge}`}
+                        >
                           {tag}
                         </span>
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 transition group-hover:border-sky-200 group-hover:bg-sky-50 group-hover:text-sky-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:group-hover:border-sky-800 dark:group-hover:bg-sky-900/30 dark:group-hover:text-sky-300">
@@ -168,7 +230,7 @@ export default function CompanyBranchesPageMain({ initialCategories = [] }: { in
                         </div>
                       ) : null}
 
-                      {(googleHref || wazeHref) ? (
+                      {googleHref || wazeHref ? (
                         <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
                           {googleHref ? (
                             <a
@@ -204,8 +266,12 @@ export default function CompanyBranchesPageMain({ initialCategories = [] }: { in
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-50 text-sky-400 dark:bg-sky-900/30 dark:text-sky-500">
                 <MapPin className="h-7 w-7" />
               </div>
-              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">No branches added yet.</p>
-              <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">Check back soon for branch locations.</p>
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                No branches added yet.
+              </p>
+              <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                Check back soon for branch locations.
+              </p>
             </div>
           )}
         </section>

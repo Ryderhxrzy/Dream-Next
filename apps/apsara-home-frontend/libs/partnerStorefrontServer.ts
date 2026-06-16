@@ -2,8 +2,8 @@ import {
   getPartnerStorefrontConfig,
   normalizeStorefrontHost,
   type PartnerStorefrontConfig,
-} from '@/libs/partnerStorefront'
-import type { WebPageItem } from '@/store/api/webPagesApi'
+} from "@/libs/partnerStorefront"
+import type { WebPageItem } from "@/store/api/webPagesApi"
 
 type PublicWebPageItemsResponse = {
   items?: WebPageItem[]
@@ -22,7 +22,10 @@ const REQUEST_TIMEOUT_MS = 10000
 const MAX_RETRIES = 2
 const STOREFRONT_REVALIDATE_SECONDS = 120
 
-async function fetchWithTimeout(input: string, init?: RequestInit): Promise<Response> {
+async function fetchWithTimeout(
+  input: string,
+  init?: RequestInit
+): Promise<Response> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
 
@@ -37,25 +40,29 @@ async function fetchWithTimeout(input: string, init?: RequestInit): Promise<Resp
 }
 
 async function fetchPartnerStorefrontItems(
-  options: StorefrontFetchOptions = { fresh: true },
+  options: StorefrontFetchOptions = { fresh: true }
 ): Promise<WebPageItem[] | null> {
-  const apiUrl = process.env.LARAVEL_API_URL ?? process.env.NEXT_PUBLIC_LARAVEL_API_URL
+  const apiUrl =
+    process.env.LARAVEL_API_URL ?? process.env.NEXT_PUBLIC_LARAVEL_API_URL
   if (!apiUrl) return null
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt += 1) {
     try {
-      const response = await fetchWithTimeout(`${apiUrl}/api/web-pages/partner-storefronts`, {
-        method: 'GET',
-        headers: { Accept: 'application/json' },
-        ...(options.fresh
-          ? { cache: 'no-store' as const }
-          : {
-              next: {
-                revalidate: STOREFRONT_REVALIDATE_SECONDS,
-                tags: ['storefront:partner-storefronts'],
-              },
-            }),
-      })
+      const response = await fetchWithTimeout(
+        `${apiUrl}/api/web-pages/partner-storefronts`,
+        {
+          method: "GET",
+          headers: { Accept: "application/json" },
+          ...(options.fresh
+            ? { cache: "no-store" as const }
+            : {
+                next: {
+                  revalidate: STOREFRONT_REVALIDATE_SECONDS,
+                  tags: ["storefront:partner-storefronts"],
+                },
+              }),
+        }
+      )
       if (!response.ok) continue
 
       const json = (await response.json()) as PublicWebPageItemsResponse
@@ -70,7 +77,7 @@ async function fetchPartnerStorefrontItems(
 
 export async function getPartnerStorefrontBySlug(
   partnerSlug: string,
-  options: StorefrontFetchOptions = {},
+  options: StorefrontFetchOptions = {}
 ): Promise<PartnerStorefrontConfig | null> {
   const record = await getPartnerStorefrontRecordBySlug(partnerSlug, {
     fresh: options.fresh ?? true,
@@ -81,9 +88,11 @@ export async function getPartnerStorefrontBySlug(
 
 export async function getPartnerStorefrontRecordBySlug(
   partnerSlug: string,
-  options: StorefrontFetchOptions = { fresh: true },
+  options: StorefrontFetchOptions = { fresh: true }
 ): Promise<PartnerStorefrontRecord | null> {
-  const normalized = String(partnerSlug ?? '').trim().toLowerCase()
+  const normalized = String(partnerSlug ?? "")
+    .trim()
+    .toLowerCase()
   if (!normalized) return null
 
   const items = await fetchPartnerStorefrontItems(options)
@@ -104,33 +113,48 @@ export async function getPartnerStorefrontRecordBySlug(
 
 export async function getPartnerStorefrontItemBySlug(
   partnerSlug: string,
-  options: StorefrontFetchOptions = { fresh: true },
+  options: StorefrontFetchOptions = { fresh: true }
 ): Promise<WebPageItem | null> {
-  const normalized = String(partnerSlug ?? '').trim().toLowerCase()
+  const normalized = String(partnerSlug ?? "")
+    .trim()
+    .toLowerCase()
   if (!normalized) return null
 
   const items = await fetchPartnerStorefrontItems(options)
   if (!items) return null
 
-  return items.find((item) => {
-    const config = getPartnerStorefrontConfig(item)
-    return config?.slug === normalized
-  }) ?? null
+  return (
+    items.find((item) => {
+      const config = getPartnerStorefrontConfig(item)
+      return config?.slug === normalized
+    }) ?? null
+  )
 }
 
-export async function isStorefrontSubscriptionExpired(slug: string): Promise<boolean> {
-  const normalized = String(slug ?? '').trim().toLowerCase()
+export async function isStorefrontSubscriptionExpired(
+  slug: string
+): Promise<boolean> {
+  const normalized = String(slug ?? "")
+    .trim()
+    .toLowerCase()
   if (!normalized) return false
 
   // Prefer 127.0.0.1 over localhost to avoid IPv6 resolution issues on Windows.
-  const apiUrl = (process.env.LARAVEL_API_URL ?? process.env.NEXT_PUBLIC_LARAVEL_API_URL ?? '')
-    .replace(/^http:\/\/localhost\b/, 'http://127.0.0.1')
+  const apiUrl = (
+    process.env.LARAVEL_API_URL ??
+    process.env.NEXT_PUBLIC_LARAVEL_API_URL ??
+    ""
+  ).replace(/^http:\/\/localhost\b/, "http://127.0.0.1")
   if (!apiUrl) return false
 
   try {
     const response = await fetch(
       `${apiUrl}/api/storefront-subscriptions/${encodeURIComponent(normalized)}`,
-      { method: 'GET', headers: { Accept: 'application/json' }, cache: 'no-store' },
+      {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      }
     )
     if (!response.ok) return false
     const json = (await response.json()) as { is_expired?: boolean }
@@ -142,7 +166,7 @@ export async function isStorefrontSubscriptionExpired(slug: string): Promise<boo
 
 export async function getPartnerStorefrontRecordByHost(
   requestHost: string,
-  options: StorefrontFetchOptions = { fresh: true },
+  options: StorefrontFetchOptions = { fresh: true }
 ): Promise<PartnerStorefrontRecord | null> {
   const normalizedHost = normalizeStorefrontHost(requestHost)
   if (!normalizedHost) return null
@@ -152,7 +176,7 @@ export async function getPartnerStorefrontRecordByHost(
 
   const storefrontItem = items.find((item) => {
     const config = getPartnerStorefrontConfig(item)
-    return normalizeStorefrontHost(config?.domainLink ?? '') === normalizedHost
+    return normalizeStorefrontHost(config?.domainLink ?? "") === normalizedHost
   })
   const config = getPartnerStorefrontConfig(storefrontItem)
   if (!config || !storefrontItem) return null

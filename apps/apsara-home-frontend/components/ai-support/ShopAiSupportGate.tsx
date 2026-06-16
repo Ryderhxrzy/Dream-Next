@@ -1,11 +1,12 @@
-'use client'
+"use client"
 
-import { useEffect, useMemo, useState } from 'react'
-import { usePathname } from 'next/navigation'
-import { AiSupport } from './AiSupport'
-import { getPartnerStorefrontConfig } from '@/libs/partnerStorefront'
-import { extractPartnerSlugFromPath } from '@/libs/storefrontRouting'
-import type { WebPageItem } from '@/store/api/webPagesApi'
+import { useEffect, useMemo, useState } from "react"
+import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
+import { extractPartnerSlugFromPath } from "@/libs/storefrontRouting"
+import type { WebPageItem } from "@/store/api/webPagesApi"
+import { usePathname } from "next/navigation"
+
+import { AiSupport } from "./AiSupport"
 
 type PublicWebPageItemsResponse = {
   items?: WebPageItem[]
@@ -14,11 +15,14 @@ type PublicWebPageItemsResponse = {
 export default function ShopAiSupportGate() {
   const pathname = usePathname()
   const shouldHide =
-    pathname.startsWith('/admin') ||
-    pathname.startsWith('/partner') ||
-    pathname.startsWith('/ranking') ||
-    pathname.endsWith('-setup')
-  const partnerSlug = useMemo(() => extractPartnerSlugFromPath(pathname), [pathname])
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/partner") ||
+    pathname.startsWith("/ranking") ||
+    pathname.endsWith("-setup")
+  const partnerSlug = useMemo(
+    () => extractPartnerSlugFromPath(pathname),
+    [pathname]
+  )
   const [partnerAiVisible, setPartnerAiVisible] = useState(false)
 
   useEffect(() => {
@@ -26,18 +30,21 @@ export default function ShopAiSupportGate() {
     if (!partnerSlug) return
 
     let cancelled = false
-    const apiUrl = process.env.NEXT_PUBLIC_LARAVEL_API_URL?.replace(/\/+$/, '')
+    const apiUrl = process.env.NEXT_PUBLIC_LARAVEL_API_URL?.replace(/\/+$/, "")
     if (!apiUrl) {
       return
     }
 
     const run = async () => {
       try {
-        const response = await fetch(`${apiUrl}/api/web-pages/partner-storefronts`, {
-          method: 'GET',
-          headers: { Accept: 'application/json' },
-          cache: 'no-store',
-        })
+        const response = await fetch(
+          `${apiUrl}/api/web-pages/partner-storefronts`,
+          {
+            method: "GET",
+            headers: { Accept: "application/json" },
+            cache: "no-store",
+          }
+        )
 
         if (!response.ok) {
           if (!cancelled) setPartnerAiVisible(false)

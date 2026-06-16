@@ -1,11 +1,16 @@
-import { Suspense } from 'react'
-import CategoryListProductMain from '@/components/category/CategoryListProductMain'
-import { buildPageMetadata } from '@/app/seo'
-import { getNavbarCategories } from '@/libs/serverStorefront'
-import { getRoomOptionBySlug } from '@/libs/roomConfig'
+import { Suspense } from "react"
+import { getRoomOptionBySlug } from "@/libs/roomConfig"
+import { getNavbarCategories } from "@/libs/serverStorefront"
 
-export const metadata = buildPageMetadata({ title: 'By Room Details', description: 'Browse the By Room Details page on AF Home.', path: '/by-room/[...slug]' })
-export const dynamic = 'force-dynamic'
+import CategoryListProductMain from "@/components/category/CategoryListProductMain"
+import { buildPageMetadata } from "@/app/seo"
+
+export const metadata = buildPageMetadata({
+  title: "By Room Details",
+  description: "Browse the By Room Details page on AF Home.",
+  path: "/by-room/[...slug]",
+})
+export const dynamic = "force-dynamic"
 
 type ByRoomDetailsPageProps = {
   params: Promise<{ slug: string[] }>
@@ -32,23 +37,27 @@ interface DisplayProduct {
 
 const titleFromSlug = (slug: string) =>
   slug
-    .split('-')
+    .split("-")
     .filter(Boolean)
     .map((chunk) => chunk.charAt(0).toUpperCase() + chunk.slice(1))
-    .join(' ')
+    .join(" ")
 
-const resolveImageUrl = (rawImage: string | null | undefined, apiUrl?: string) => {
-  if (!rawImage) return '/Images/HeroSection/chairs_stools.jpg'
-  if (rawImage.startsWith('http://') || rawImage.startsWith('https://')) return rawImage
-  if (rawImage.startsWith('/')) return rawImage
+const resolveImageUrl = (
+  rawImage: string | null | undefined,
+  apiUrl?: string
+) => {
+  if (!rawImage) return "/Images/HeroSection/chairs_stools.jpg"
+  if (rawImage.startsWith("http://") || rawImage.startsWith("https://"))
+    return rawImage
+  if (rawImage.startsWith("/")) return rawImage
   if (!apiUrl) return `/${rawImage}`
-  return `${apiUrl.replace(/\/$/, '')}/${rawImage.replace(/^\/+/, '')}`
+  return `${apiUrl.replace(/\/$/, "")}/${rawImage.replace(/^\/+/, "")}`
 }
 
 const toNumber = (value: unknown): number => {
-  if (typeof value === 'number') return Number.isFinite(value) ? value : 0
-  if (typeof value === 'string') {
-    const normalized = value.replace(/[^0-9.-]/g, '')
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0
+  if (typeof value === "string") {
+    const normalized = value.replace(/[^0-9.-]/g, "")
     const parsed = Number(normalized)
     return Number.isFinite(parsed) ? parsed : 0
   }
@@ -57,22 +66,29 @@ const toNumber = (value: unknown): number => {
 }
 
 const toBoolean = (value: unknown): boolean => {
-  if (typeof value === 'boolean') return value
-  if (typeof value === 'number') return value === 1
-  if (typeof value === 'string') return ['1', 'true', 'yes'].includes(value.trim().toLowerCase())
+  if (typeof value === "boolean") return value
+  if (typeof value === "number") return value === 1
+  if (typeof value === "string")
+    return ["1", "true", "yes"].includes(value.trim().toLowerCase())
   return false
 }
 
 const toStringArray = (value: unknown): string[] => {
   if (Array.isArray(value)) {
-    return value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+    return value.filter(
+      (item): item is string =>
+        typeof item === "string" && item.trim().length > 0
+    )
   }
 
-  if (typeof value === 'string' && value.trim().length > 0) {
+  if (typeof value === "string" && value.trim().length > 0) {
     try {
       const parsed = JSON.parse(value) as unknown
       if (Array.isArray(parsed)) {
-        return parsed.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+        return parsed.filter(
+          (item): item is string =>
+            typeof item === "string" && item.trim().length > 0
+        )
       }
     } catch {
       return [value]
@@ -92,24 +108,33 @@ const resolveDisplayStock = (row: LooseRecord): number => {
   })
 
   if (activeVariants.length === 0) return 0
-  return activeVariants.reduce((sum, variant) => sum + Math.max(0, toNumber((variant as LooseRecord).qty)), 0)
+  return activeVariants.reduce(
+    (sum, variant) => sum + Math.max(0, toNumber((variant as LooseRecord).qty)),
+    0
+  )
 }
 
-const mapProductToDisplay = (row: LooseRecord, apiUrl?: string): DisplayProduct => {
+const mapProductToDisplay = (
+  row: LooseRecord,
+  apiUrl?: string
+): DisplayProduct => {
   let badge: string | undefined
-  if (toBoolean(row.salespromo)) badge = 'SALE'
-  else if (toBoolean(row.bestseller)) badge = 'BEST SELLER'
-  else if (toBoolean(row.musthave)) badge = 'MUST HAVE'
+  if (toBoolean(row.salespromo)) badge = "SALE"
+  else if (toBoolean(row.bestseller)) badge = "BEST SELLER"
+  else if (toBoolean(row.musthave)) badge = "MUST HAVE"
 
-  const rawImage = typeof row.image === 'string' ? row.image : null
+  const rawImage = typeof row.image === "string" ? row.image : null
   const rawImages = toStringArray(row.images)
 
   return {
     id: toNumber(row.id) || undefined,
-    name: String(row.name ?? 'Untitled Product'),
-    createdAt: typeof row.createdAt === 'string'
-      ? row.createdAt
-      : (typeof row.pd_date === 'string' ? row.pd_date : null),
+    name: String(row.name ?? "Untitled Product"),
+    createdAt:
+      typeof row.createdAt === "string"
+        ? row.createdAt
+        : typeof row.pd_date === "string"
+          ? row.pd_date
+          : null,
     price: toNumber(row.priceSrp),
     priceMember: toNumber(row.priceMember) || undefined,
     priceDp: toNumber(row.priceDp) || undefined,
@@ -125,16 +150,20 @@ const mapProductToDisplay = (row: LooseRecord, apiUrl?: string): DisplayProduct 
 
 const matchesKeyword = (row: LooseRecord, keywordSlug?: string) => {
   if (!keywordSlug) return true
-  const keyword = keywordSlug.replace(/-/g, ' ').toLowerCase()
+  const keyword = keywordSlug.replace(/-/g, " ").toLowerCase()
   const haystack = [row.name, row.description, row.specifications]
-    .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
-    .join(' ')
+    .filter(
+      (value): value is string =>
+        typeof value === "string" && value.trim().length > 0
+    )
+    .join(" ")
     .toLowerCase()
   return haystack.includes(keyword)
 }
 
 async function getRoomProducts(roomSlug: string, keywordSlug?: string) {
-  const apiUrl = process.env.LARAVEL_API_URL ?? process.env.NEXT_PUBLIC_LARAVEL_API_URL
+  const apiUrl =
+    process.env.LARAVEL_API_URL ?? process.env.NEXT_PUBLIC_LARAVEL_API_URL
   const room = getRoomOptionBySlug(roomSlug)
   const fallbackLabel = titleFromSlug(roomSlug)
 
@@ -144,15 +173,15 @@ async function getRoomProducts(roomSlug: string, keywordSlug?: string) {
 
   try {
     const productsUrl = new URL(`${apiUrl}/api/products`)
-    productsUrl.searchParams.set('page', '1')
-    productsUrl.searchParams.set('per_page', '200')
-    productsUrl.searchParams.set('status', '1')
-    productsUrl.searchParams.set('room_type', String(room.id))
+    productsUrl.searchParams.set("page", "1")
+    productsUrl.searchParams.set("per_page", "200")
+    productsUrl.searchParams.set("status", "1")
+    productsUrl.searchParams.set("room_type", String(room.id))
 
     const response = await fetch(productsUrl.toString(), {
-      method: 'GET',
-      headers: { Accept: 'application/json' },
-      cache: 'no-store',
+      method: "GET",
+      headers: { Accept: "application/json" },
+      cache: "no-store",
     })
 
     if (!response.ok) {
@@ -163,7 +192,9 @@ async function getRoomProducts(roomSlug: string, keywordSlug?: string) {
     const rows = Array.isArray(json.products) ? json.products : []
 
     return {
-      label: keywordSlug ? `${room.label} - ${titleFromSlug(keywordSlug)}` : room.label,
+      label: keywordSlug
+        ? `${room.label} - ${titleFromSlug(keywordSlug)}`
+        : room.label,
       products: rows
         .map((item) => item as LooseRecord)
         .filter((row) => matchesKeyword(row, keywordSlug))
@@ -174,7 +205,13 @@ async function getRoomProducts(roomSlug: string, keywordSlug?: string) {
   }
 }
 
-async function RoomContent({ roomSlug, keywordSlug }: { roomSlug: string; keywordSlug?: string }) {
+async function RoomContent({
+  roomSlug,
+  keywordSlug,
+}: {
+  roomSlug: string
+  keywordSlug?: string
+}) {
   const { label, products } = await getRoomProducts(roomSlug, keywordSlug)
   const navbarCategories = await getNavbarCategories()
 
@@ -201,9 +238,11 @@ function RoomLoadingFallback({ roomSlug }: { roomSlug: string }) {
   )
 }
 
-export default async function ByRoomDetailsPage({ params }: ByRoomDetailsPageProps) {
+export default async function ByRoomDetailsPage({
+  params,
+}: ByRoomDetailsPageProps) {
   const { slug } = await params
-  const roomSlug = slug[0] ?? ''
+  const roomSlug = slug[0] ?? ""
   const keywordSlug = slug[1]
 
   return (

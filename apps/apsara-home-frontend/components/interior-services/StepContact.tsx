@@ -1,13 +1,14 @@
-'use client';
+"use client"
 
-import { motion } from "framer-motion";
-import { BookingFormData } from "./types";
-import { staggerContainer, staggerItem } from "./animation";
-import { FormField, InputField, SelectField } from "./ui/Primitives";
+import { motion } from "framer-motion"
+
+import { staggerContainer, staggerItem } from "./animation"
+import { BookingFormData } from "./types"
+import { FormField, InputField, SelectField } from "./ui/Primitives"
 
 interface StepContactProps {
-  form: BookingFormData;
-  onChange: (field: keyof BookingFormData, value: string | string[]) => void;
+  form: BookingFormData
+  onChange: (field: keyof BookingFormData, value: string | string[]) => void
 }
 
 const REFERRAL_OPTIONS = [
@@ -17,7 +18,7 @@ const REFERRAL_OPTIONS = [
   { value: "referral", label: "Friend / Colleague referral" },
   { value: "press", label: "Magazine / Press feature" },
   { value: "other", label: "Other" },
-];
+]
 
 const StepContact = ({ form, onChange }: StepContactProps) => {
   return (
@@ -77,7 +78,10 @@ const StepContact = ({ form, onChange }: StepContactProps) => {
         </FormField>
       </motion.div>
 
-      <motion.div variants={staggerItem} className="flex items-start gap-3 pt-2">
+      <motion.div
+        variants={staggerItem}
+        className="flex items-start gap-3 pt-2"
+      >
         <div
           className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-[2px] border border-indigo-300"
           style={{ background: "rgba(99,102,241,0.08)" }}
@@ -85,13 +89,16 @@ const StepContact = ({ form, onChange }: StepContactProps) => {
           <span className="text-[9px] text-indigo-500">✓</span>
         </div>
         <p className="text-[0.72rem] leading-relaxed text-slate-400">
-          I agree that AF Home may contact me regarding my enquiry. My information
-          will never be shared with third parties. Read our{" "}
-          <span className="cursor-pointer text-indigo-500 hover:underline">Privacy Policy</span>.
+          I agree that AF Home may contact me regarding my enquiry. My
+          information will never be shared with third parties. Read our{" "}
+          <span className="cursor-pointer text-indigo-500 hover:underline">
+            Privacy Policy
+          </span>
+          .
         </p>
       </motion.div>
     </motion.div>
-  );
-};
+  )
+}
 
-export default StepContact;
+export default StepContact

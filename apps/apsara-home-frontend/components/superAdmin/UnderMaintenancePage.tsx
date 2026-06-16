@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 type Props = {
   title: string
@@ -7,7 +7,7 @@ type Props = {
 
 export default function UnderMaintenancePage({
   title,
-  description = 'This section is still being built. Please check back later.',
+  description = "This section is still being built. Please check back later.",
 }: Props) {
   return (
     <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-950">
@@ -27,16 +27,28 @@ export default function UnderMaintenancePage({
 
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
-            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Status</p>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Feature setup in progress</p>
+            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+              Status
+            </p>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+              Feature setup in progress
+            </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
-            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Access</p>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Page is available but not yet finalized</p>
+            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+              Access
+            </p>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+              Page is available but not yet finalized
+            </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
-            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Next</p>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">UI and workflow will be added soon</p>
+            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+              Next
+            </p>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+              UI and workflow will be added soon
+            </p>
           </div>
         </div>
       </div>

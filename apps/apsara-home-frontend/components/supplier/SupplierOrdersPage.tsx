@@ -348,7 +348,7 @@ function Spinner() {
 }
 
 export default function SupplierOrdersPage({ initialData }: { initialData?: SupplierOrdersResponse }) {
-  const { data: session } = useSession()
+  const { data: session, status: sessionStatus } = useSession()
   const supplierId = Number(session?.user?.supplierId ?? 0)
   const supplierName = session?.user?.supplierName ?? null
   const { data: supplierCategoriesData } = useGetSupplierCategoriesQuery(supplierId, {
@@ -363,6 +363,11 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
     return String(supplierName ?? '').toLowerCase().includes('service')
   }, [supplierCategoriesData?.categories, supplierName])
 
+  // True while we haven't yet determined which view to show — prevents the wrong
+  // view from flashing during the initial session / categories fetch.
+  const isViewResolving =
+    sessionStatus === 'loading' || (supplierId > 0 && supplierCategoriesData === undefined)
+
   const activeFilterOptions  = isServicesView ? INQUIRY_FILTER_OPTIONS  : ORDER_FILTER_OPTIONS
   const activeFulfillOptions = isServicesView ? INQUIRY_FULFILLMENT_OPTIONS : FULFILLMENT_OPTIONS
 
@@ -375,6 +380,8 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
   const [filterOpen, setFilterOpen]   = useState(false)
   const [selectedInquiry, setSelectedInquiry] = useState<ServiceInquiryItem | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null)
+  const [dateFrom, setDateFrom]       = useState('')
+  const [dateTo, setDateTo]           = useState('')
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(search.trim()), 350)
@@ -431,6 +438,16 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
     else if (filter === 'to_ship')    source = source.filter(i => i.status === 'new' && !isCreatedToday(i.created_at))
     else if (filter === 'to_receive') source = source.filter(i => i.status === 'responded')
     else if (filter === 'completed')  source = source.filter(i => i.status === 'closed')
+    if (dateFrom) {
+      const from = new Date(dateFrom)
+      from.setHours(0, 0, 0, 0)
+      source = source.filter(i => new Date(i.created_at) >= from)
+    }
+    if (dateTo) {
+      const to = new Date(dateTo)
+      to.setHours(23, 59, 59, 999)
+      source = source.filter(i => new Date(i.created_at) <= to)
+    }
     const q = debouncedSearch.trim().toLowerCase()
     if (q) {
       source = source.filter((item) =>
@@ -439,7 +456,7 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
       )
     }
     return source
-  }, [debouncedSearch, inquiryData?.inquiries, filter])
+  }, [debouncedSearch, inquiryData?.inquiries, filter, dateFrom, dateTo])
 
   const inquiryCounts = inquiryData?.counts
 
@@ -448,12 +465,34 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
       await updateInquiryStatus({ id, status }).unwrap()
       showSuccessToast('Inquiry status updated.')
       if (selectedInquiry?.id === id) {
-        setSelectedInquiry((prev) => (prev ? { ...prev, status } : prev))
+        setSelectedInquiry(null)
       }
       await refetchInquiries()
     } catch (e) {
       showErrorToast(getApiError(e, 'Failed to update inquiry status.'))
     }
+  }
+
+  function handleExportCsv() {
+    const headers = ['Name', 'Email', 'Contact', 'Address', 'Service', 'Status', 'Intent', 'Date']
+    const rows = inquiryRows.map((i) => [
+      i.fullname ?? '',
+      i.email ?? '',
+      i.contact ?? '',
+      i.address ?? '',
+      i.product?.pd_name ?? '',
+      getInquiryStatusLabel(i.status, i.created_at),
+      i.intent ?? '',
+      formatInquiryDate(i.created_at),
+    ].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))
+    const csv = [headers.join(','), ...rows].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `service-inquiries${dateFrom ? `-from-${dateFrom}` : ''}${dateTo ? `-to-${dateTo}` : ''}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   async function handleDeleteInquiry(id: number) {
@@ -498,6 +537,14 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
   }
 
   const activeLabel = activeFilterOptions.find(o => o.value === filter)?.label ?? (isServicesView ? 'All Inquiries' : 'All Orders')
+
+  if (isViewResolving) {
+    return (
+      <div className="flex items-center justify-center gap-2.5 py-32 text-slate-400">
+        <Spinner /><span className="text-sm">Loading...</span>
+      </div>
+    )
+  }
 
   if (isServicesView) {
     const allInquiries = inquiryData?.inquiries ?? []
@@ -604,6 +651,43 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                 <option value="to_receive">Complete</option>
                 <option value="completed">Closed</option>
               </select>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-slate-400 dark:text-slate-500">From</span>
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+                <span className="text-xs text-slate-400 dark:text-slate-500">To</span>
+                <input
+                  type="date"
+                  value={dateTo}
+                  min={dateFrom || undefined}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+                {(dateFrom || dateTo) && (
+                  <button
+                    type="button"
+                    onClick={() => { setDateFrom(''); setDateTo('') }}
+                    className="h-10 rounded-xl border border-slate-200 px-2.5 text-xs text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={handleExportCsv}
+                disabled={inquiryRows.length === 0}
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-emerald-700/40 dark:bg-emerald-500/10 dark:text-emerald-300"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Export CSV
+              </button>
               <button
                 type="button"
                 onClick={() => refetchInquiries()}

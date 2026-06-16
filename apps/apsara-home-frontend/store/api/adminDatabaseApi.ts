@@ -1,4 +1,4 @@
-import { baseApi } from './baseApi'
+import { baseApi } from "./baseApi"
 
 export interface DatabaseExportItem {
   path: string
@@ -45,34 +45,43 @@ export interface DeleteDatabaseExportResponse {
 
 export const adminDatabaseApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    listDatabaseExports: builder.query<ListDatabaseExportsResponse, { page?: number; per_page?: number } | void>({
+    listDatabaseExports: builder.query<
+      ListDatabaseExportsResponse,
+      { page?: number; per_page?: number } | void
+    >({
       query: (params) => {
         const queryParams = params ?? undefined
         return {
-          url: '/api/admin/web-pages/database/exports',
-          method: 'GET',
+          url: "/api/admin/web-pages/database/exports",
+          method: "GET",
           ...(queryParams ? { params: queryParams } : {}),
         }
       },
     }),
     exportDatabase: builder.mutation<ExportDatabaseResponse, void>({
       query: () => ({
-        url: '/api/admin/web-pages/database/exports',
-        method: 'POST',
+        url: "/api/admin/web-pages/database/exports",
+        method: "POST",
       }),
     }),
-    downloadDatabaseExport: builder.mutation<Blob, DownloadDatabaseExportPayload>({
+    downloadDatabaseExport: builder.mutation<
+      Blob,
+      DownloadDatabaseExportPayload
+    >({
       query: (body) => ({
-        url: '/api/admin/web-pages/database/exports/download',
-        method: 'POST',
+        url: "/api/admin/web-pages/database/exports/download",
+        method: "POST",
         body,
         responseHandler: (response) => response.blob(),
       }),
     }),
-    deleteDatabaseExport: builder.mutation<DeleteDatabaseExportResponse, DeleteDatabaseExportPayload>({
+    deleteDatabaseExport: builder.mutation<
+      DeleteDatabaseExportResponse,
+      DeleteDatabaseExportPayload
+    >({
       query: (body) => ({
-        url: '/api/admin/web-pages/database/exports',
-        method: 'DELETE',
+        url: "/api/admin/web-pages/database/exports",
+        method: "DELETE",
         body,
       }),
     }),

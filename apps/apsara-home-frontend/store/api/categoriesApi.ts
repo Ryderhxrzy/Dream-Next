@@ -1,4 +1,4 @@
-import { baseApi } from './baseApi'
+import { baseApi } from "./baseApi"
 
 export interface Category {
   id: number
@@ -31,8 +31,8 @@ export interface CreateCategoryPayload {
 }
 
 const normalizeCategoryText = (value: string) => {
-  const trimmed = (value ?? '').trim()
-  if (!trimmed) return ''
+  const trimmed = (value ?? "").trim()
+  if (!trimmed) return ""
   if (/[\u00C2\u00C3]/.test(trimmed)) {
     try {
       const decoded = decodeURIComponent(escape(trimmed))
@@ -44,7 +44,9 @@ const normalizeCategoryText = (value: string) => {
   return trimmed
 }
 
-const normalizeCategoriesResponse = (response: CategoriesResponse): CategoriesResponse => ({
+const normalizeCategoriesResponse = (
+  response: CategoriesResponse
+): CategoriesResponse => ({
   ...response,
   categories: (response.categories ?? []).map((category) => ({
     ...category,
@@ -55,10 +57,13 @@ const normalizeCategoriesResponse = (response: CategoriesResponse): CategoriesRe
 
 export const categoriesApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getCategories: builder.query<CategoriesResponse, GetCategoriesParams | void>({
+    getCategories: builder.query<
+      CategoriesResponse,
+      GetCategoriesParams | void
+    >({
       query: (params) => ({
-        url: '/api/categories',
-        method: 'GET',
+        url: "/api/categories",
+        method: "GET",
         params: {
           q: params?.search,
           page: params?.page,
@@ -67,31 +72,38 @@ export const categoriesApi = baseApi.injectEndpoints({
           used_only: params?.used_only,
         },
       }),
-      transformResponse: (response: CategoriesResponse) => normalizeCategoriesResponse(response),
-      providesTags: ['Categories'],
+      transformResponse: (response: CategoriesResponse) =>
+        normalizeCategoriesResponse(response),
+      providesTags: ["Categories"],
     }),
-    createCategory: builder.mutation<{ message: string; category: Partial<Category> }, CreateCategoryPayload>({
+    createCategory: builder.mutation<
+      { message: string; category: Partial<Category> },
+      CreateCategoryPayload
+    >({
       query: (body) => ({
-        url: '/api/admin/categories',
-        method: 'POST',
+        url: "/api/admin/categories",
+        method: "POST",
         body,
       }),
-      invalidatesTags: ['Categories'],
+      invalidatesTags: ["Categories"],
     }),
-    updateCategory: builder.mutation<{ message: string }, { id: number; data: Partial<CreateCategoryPayload> }>({
+    updateCategory: builder.mutation<
+      { message: string },
+      { id: number; data: Partial<CreateCategoryPayload> }
+    >({
       query: ({ id, data }) => ({
         url: `/api/admin/categories/${id}`,
-        method: 'PUT',
+        method: "PUT",
         body: data,
       }),
-      invalidatesTags: ['Categories'],
+      invalidatesTags: ["Categories"],
     }),
     deleteCategory: builder.mutation<{ message: string }, number>({
       query: (id) => ({
         url: `/api/admin/categories/${id}`,
-        method: 'DELETE',
+        method: "DELETE",
       }),
-      invalidatesTags: ['Categories'],
+      invalidatesTags: ["Categories"],
     }),
   }),
 })

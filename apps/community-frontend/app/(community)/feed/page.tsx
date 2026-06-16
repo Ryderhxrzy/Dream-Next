@@ -1,8 +1,8 @@
-import PostFeed from "@/components/community/PostFeed";
+import PostFeed from "@/components/community/PostFeed"
 
 export default function FeedPage() {
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="mx-auto max-w-2xl">
       {/* <p className="text-gray-500 text-sm">Feed coming soon...</p> */}
       <PostFeed />
     </div>

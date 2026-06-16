@@ -423,12 +423,25 @@ export default function ItemCard({
     }
   }
 
-  const baseSrp = (product.originalPrice ? Number(product.originalPrice) : undefined) ?? (product.price ? Number(product.price) : undefined) ?? 0
+  const baseSrp =
+    (product.originalPrice ? Number(product.originalPrice) : undefined) ?? (product.price ? Number(product.price) : undefined) ?? 0
+
   const srpPrice = (product.priceSrp ? Number(product.priceSrp) : undefined) ?? baseSrp
-  const memberPrice = (product.priceMember ? Number(product.priceMember) : undefined) ?? (product.priceDp ? Number(product.priceDp) : undefined) ?? 0
+
+  const memberPrice =
+    (product.priceMember ? Number(product.priceMember) : undefined) ?? (product.priceDp ? Number(product.priceDp) : undefined) ?? 0
+
   const hasMemberPrice = memberPrice > 0 && memberPrice < srpPrice
-  const displayPrice = srpPrice
-  const strikePrice = product.originalPrice && product.originalPrice > srpPrice ? product.originalPrice : 0
+
+  const canUseMemberPrice = isLoggedIn && status === 'authenticated'
+  const shouldDisplayMemberPrice = hasMemberPrice && !forceRealPrice && canUseMemberPrice
+
+  const displayPrice = shouldDisplayMemberPrice ? memberPrice : srpPrice
+
+  const strikePrice =
+    product.originalPrice && product.originalPrice > srpPrice && !shouldDisplayMemberPrice
+      ? Number(product.originalPrice)
+      : 0
   const displayPv = Number(product.prodpv ?? 0)
   const getVariantDisplayPrice = (variant?: ProductVariant) => {
     const variantSrp = (variant?.priceSrp ? Number(variant.priceSrp) : undefined) ?? srpPrice
@@ -865,20 +878,20 @@ export default function ItemCard({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.18, ease: 'easeOut' }}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4"
+          className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 p-0 sm:items-center sm:p-4"
           onClick={() => setInquireModalOpen(false)}
         >
           <motion.div
             key="inquire-modal-panel"
-            initial={{ y: 24, opacity: 0, scale: 0.97 }}
-            animate={{ y: 0, opacity: 1, scale: 1 }}
-            exit={{ y: 24, opacity: 0, scale: 0.97 }}
+            initial={{ y: 40, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 40, opacity: 0 }}
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-            className="w-full max-w-md overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900"
+            className="w-full max-w-md overflow-hidden rounded-t-2xl sm:rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-start justify-between px-5 py-5">
+            <div className="flex items-start justify-between px-4 sm:px-5 py-4 sm:py-5">
               <div className="flex items-center gap-3">
                 <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-sky-50 dark:bg-sky-900/30">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-sky-500">
@@ -924,7 +937,7 @@ export default function ItemCard({
               </div>
             ) : (
               <>
-                <div className="space-y-4 px-6 py-5">
+                <div className="max-h-[55vh] overflow-y-auto space-y-4 px-4 sm:px-6 py-4 sm:py-5">
                   {/* Full Name */}
                   <div>
                     <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">
@@ -1045,7 +1058,7 @@ export default function ItemCard({
                 </div>
 
                 {/* Footer */}
-                <div className="flex gap-3 border-t border-gray-100 px-5 py-4 dark:border-gray-800">
+                <div className="flex gap-3 border-t border-gray-100 px-4 sm:px-5 py-3 sm:py-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-4 dark:border-gray-800">
                   <button
                     type="button"
                     onClick={() => setInquireModalOpen(false)}

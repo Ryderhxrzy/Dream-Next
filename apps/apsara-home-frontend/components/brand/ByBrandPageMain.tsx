@@ -20,6 +20,7 @@ import ItemCard from '@/components/item/ItemCard'
 import ProductFilter, { FilterState } from '@/components/item/ProductFilter'
 import TopFilter from '@/components/item/TopFilter'
 import ShareModal from '@/components/ui/ShareModal'
+import BrandCatalogueFlipbook from '@/components/brand/BrandCatalogueFlipbook'
 import toast from 'react-hot-toast'
 
 const toSlug = (value: string) =>
@@ -871,6 +872,9 @@ export default function ByBrandPageMain() {
                       </svg>
                       <span>Joined: {brandInfo?.joinedDate ? new Date(brandInfo.joinedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Jan 2024'}</span>
                     </div>
+                  </div>
+                  <div className="mt-3 flex justify-center sm:justify-start">
+                    <BrandCatalogueFlipbook brand={selectedBrandItem} />
                   </div>
                 </div>
                 <div className="hidden sm:flex items-center gap-2 shrink-0">

@@ -1,11 +1,12 @@
-import { Topbar } from "@/components/layout/Topbar"
-import Sidebar from "@/components/layout/Sidebar"
-import RightPanel from "@/components/layout/RightPanel"
-import { MobileBottomNav } from "@/components/layout/MobileBottomNav"
-import { MainContent } from "@/components/layout/MainContent"
+import { NotificationsProvider } from "@/providers/notifications-provider"
+
 import { CommunityModals } from "@/components/community/CommunityModals"
 import { CommunityAuthGuard } from "@/components/layout/CommunityAuthGuard"
-import { NotificationsProvider } from "@/providers/notifications-provider"
+import { MainContent } from "@/components/layout/MainContent"
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav"
+import RightPanel from "@/components/layout/RightPanel"
+import Sidebar from "@/components/layout/Sidebar"
+import { Topbar } from "@/components/layout/Topbar"
 
 export default function CommunityLayout({
   children,
@@ -15,7 +16,7 @@ export default function CommunityLayout({
   return (
     <CommunityAuthGuard>
       <NotificationsProvider>
-        <div className="min-h-screen bg-background">
+        <div className="bg-background min-h-screen">
           <Topbar />
           <div className="flex">
             <Sidebar />

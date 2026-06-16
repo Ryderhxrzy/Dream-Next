@@ -1,3 +1,5 @@
+import { CountUp } from "@/components/ui/CountUp"
+
 async function getCommunityStats() {
   try {
     const fetchOptions: RequestInit & { next: { revalidate: number } } = {
@@ -15,8 +17,6 @@ async function getCommunityStats() {
   }
 }
 
-import { CountUp } from "@/components/ui/CountUp"
-
 export default async function AuthLayout({
   children,
 }: {
@@ -24,9 +24,9 @@ export default async function AuthLayout({
 }) {
   const totalMembers = await getCommunityStats()
   return (
-    <div className="min-h-screen flex">
+    <div className="flex min-h-screen">
       {/* Left Panel — Dark Branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative bg-zinc-950 flex-col justify-between p-12 overflow-hidden">
+      <div className="relative hidden flex-col justify-between overflow-hidden bg-zinc-950 p-12 lg:flex lg:w-1/2">
         {/* Subtle grid background */}
         <div
           className="absolute inset-0 opacity-[0.04]"
@@ -37,30 +37,47 @@ export default async function AuthLayout({
         />
 
         {/* Glow accent */}
-        <div className="absolute top-0 left-0 w-96 h-96 bg-white/3 rounded-full -translate-x-1/2 -translate-y-1/2" />
+        <div className="absolute top-0 left-0 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/3" />
 
         {/* Logo */}
         <div className="relative flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center">
-            <svg className="w-4 h-4 text-zinc-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white">
+            <svg
+              className="h-4 w-4 text-zinc-950"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2.5}
+                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+              />
             </svg>
           </div>
-          <span className="text-white font-semibold text-base tracking-tight">AF Nexus</span>
+          <span className="text-base font-semibold tracking-tight text-white">
+            AF Nexus
+          </span>
         </div>
 
         {/* Main content */}
         <div className="relative space-y-8">
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-3 py-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              <span className="text-zinc-300 text-xs font-medium">142 members online now</span>
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              <span className="text-xs font-medium text-zinc-300">
+                142 members online now
+              </span>
             </div>
-            <h2 className="text-4xl font-bold text-white leading-tight tracking-tight">
-              Your community,<br />all in one place.
+            <h2 className="text-4xl leading-tight font-bold tracking-tight text-white">
+              Your community,
+              <br />
+              all in one place.
             </h2>
-            <p className="text-zinc-400 text-base leading-relaxed">
-              Connect with neighbors, discover local events, and stay informed about what matters in your area.
+            <p className="text-base leading-relaxed text-zinc-400">
+              Connect with neighbors, discover local events, and stay informed
+              about what matters in your area.
             </p>
           </div>
 
@@ -73,23 +90,24 @@ export default async function AuthLayout({
             ].map((stat) => (
               <div key={stat.label}>
                 <p className="text-2xl font-bold text-white">{stat.value}</p>
-                <p className="text-zinc-500 text-xs mt-0.5">{stat.label}</p>
+                <p className="mt-0.5 text-xs text-zinc-500">{stat.label}</p>
               </div>
             ))}
           </div>
 
           {/* Testimonial */}
-          <div className="border border-zinc-800 rounded-2xl p-5 space-y-3">
-            <p className="text-zinc-300 text-sm leading-relaxed">
-              "Finally a place where our neighborhood can actually talk to each other. Found a great plumber in 10 minutes!"
+          <div className="space-y-3 rounded-2xl border border-zinc-800 p-5">
+            <p className="text-sm leading-relaxed text-zinc-300">
+              "Finally a place where our neighborhood can actually talk to each
+              other. Found a great plumber in 10 minutes!"
             </p>
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center text-xs font-semibold text-white">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-700 text-xs font-semibold text-white">
                 SJ
               </div>
               <div>
-                <p className="text-white text-xs font-medium">Sarah J.</p>
-                <p className="text-zinc-500 text-xs">Maplewood Heights</p>
+                <p className="text-xs font-medium text-white">Sarah J.</p>
+                <p className="text-xs text-zinc-500">Maplewood Heights</p>
               </div>
             </div>
           </div>
@@ -97,12 +115,12 @@ export default async function AuthLayout({
 
         {/* Footer */}
         <div className="relative">
-          <p className="text-zinc-600 text-xs">© 2025 AF Nexus · Apsara Home</p>
+          <p className="text-xs text-zinc-600">© 2025 AF Nexus · Apsara Home</p>
         </div>
       </div>
 
       {/* Right Panel — Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center bg-white p-8">
+      <div className="flex w-full items-center justify-center bg-white p-8 lg:w-1/2">
         {children}
       </div>
     </div>

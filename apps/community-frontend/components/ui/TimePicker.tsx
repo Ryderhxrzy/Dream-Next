@@ -1,13 +1,19 @@
 "use client"
 
-import { useEffect, useRef } from "react"
-import { useState } from "react"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Button } from "@/components/ui/button"
+import { useEffect, useRef, useState } from "react"
 import { Clock } from "lucide-react"
-import { cn } from "@/lib/utils"
 
-const hours   = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0"))
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+
+const hours = Array.from({ length: 12 }, (_, i) =>
+  String(i + 1).padStart(2, "0")
+)
 const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0"))
 const periods = ["AM", "PM"]
 
@@ -17,13 +23,17 @@ interface TimePickerProps {
   placeholder?: string
 }
 
-export function TimePicker({ value, onChange, placeholder = "Pick a time" }: TimePickerProps) {
-  const [open, setOpen]     = useState(false)
-  const [hour, setHour]     = useState("12")
+export function TimePicker({
+  value,
+  onChange,
+  placeholder = "Pick a time",
+}: TimePickerProps) {
+  const [open, setOpen] = useState(false)
+  const [hour, setHour] = useState("12")
   const [minute, setMinute] = useState("00")
   const [period, setPeriod] = useState("AM")
 
-  const hourRef   = useRef<HTMLDivElement>(null)
+  const hourRef = useRef<HTMLDivElement>(null)
   const minuteRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -31,7 +41,9 @@ export function TimePicker({ value, onChange, placeholder = "Pick a time" }: Tim
       const [h, m] = value.split(":")
       const hNum = parseInt(h)
       setPeriod(hNum >= 12 ? "PM" : "AM")
-      setHour(String(hNum > 12 ? hNum - 12 : hNum === 0 ? 12 : hNum).padStart(2, "0"))
+      setHour(
+        String(hNum > 12 ? hNum - 12 : hNum === 0 ? 12 : hNum).padStart(2, "0")
+      )
       setMinute(m ?? "00")
     }
   }, [])
@@ -41,7 +53,7 @@ export function TimePicker({ value, onChange, placeholder = "Pick a time" }: Tim
     if (!open) return
     setTimeout(() => {
       const activeHour = hourRef.current?.querySelector("[data-active='true']")
-      const activeMin  = minuteRef.current?.querySelector("[data-active='true']")
+      const activeMin = minuteRef.current?.querySelector("[data-active='true']")
       activeHour?.scrollIntoView({ block: "center" })
       activeMin?.scrollIntoView({ block: "center" })
     }, 50)
@@ -54,16 +66,25 @@ export function TimePicker({ value, onChange, placeholder = "Pick a time" }: Tim
     onChange(`${String(h24).padStart(2, "0")}:${m}`)
   }
 
-  function selectHour(h: string)   { setHour(h);   apply(h, minute, period) }
-  function selectMinute(m: string) { setMinute(m); apply(hour, m, period) }
-  function selectPeriod(p: string) { setPeriod(p); apply(hour, minute, p) }
+  function selectHour(h: string) {
+    setHour(h)
+    apply(h, minute, period)
+  }
+  function selectMinute(m: string) {
+    setMinute(m)
+    apply(hour, m, period)
+  }
+  function selectPeriod(p: string) {
+    setPeriod(p)
+    apply(hour, minute, p)
+  }
 
   const displayTime = value
     ? (() => {
         const [h, m] = value.split(":")
         const hNum = parseInt(h)
-        const p    = hNum >= 12 ? "PM" : "AM"
-        const h12  = hNum > 12 ? hNum - 12 : hNum === 0 ? 12 : hNum
+        const p = hNum >= 12 ? "PM" : "AM"
+        const h12 = hNum > 12 ? hNum - 12 : hNum === 0 ? 12 : hNum
         return `${String(h12).padStart(2, "0")}:${m} ${p}`
       })()
     : null
@@ -75,18 +96,17 @@ export function TimePicker({ value, onChange, placeholder = "Pick a time" }: Tim
           type="button"
           variant="outline"
           className={cn(
-            "w-full h-9 justify-start text-sm font-normal bg-muted border-border",
+            "bg-muted border-border h-9 w-full justify-start text-sm font-normal",
             !displayTime && "text-muted-foreground"
           )}
         >
-          <Clock className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
+          <Clock className="text-muted-foreground mr-2 h-3.5 w-3.5" />
           {displayTime ?? placeholder}
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent className="w-auto p-0 overflow-hidden" align="start">
-        <div className="flex divide-x divide-border">
-
+      <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+        <div className="divide-border flex divide-x">
           {/* Hours */}
           <div
             ref={hourRef}
@@ -102,7 +122,7 @@ export function TimePicker({ value, onChange, placeholder = "Pick a time" }: Tim
                   data-active={hour === h}
                   onClick={() => selectHour(h)}
                   className={cn(
-                    "w-full px-3 py-2 text-sm text-center transition-colors hover:bg-accent",
+                    "hover:bg-accent w-full px-3 py-2 text-center text-sm transition-colors",
                     hour === h
                       ? "bg-primary text-primary-foreground font-semibold"
                       : "text-foreground"
@@ -129,7 +149,7 @@ export function TimePicker({ value, onChange, placeholder = "Pick a time" }: Tim
                   data-active={minute === m}
                   onClick={() => selectMinute(m)}
                   className={cn(
-                    "w-full px-3 py-2 text-sm text-center transition-colors hover:bg-accent",
+                    "hover:bg-accent w-full px-3 py-2 text-center text-sm transition-colors",
                     minute === m
                       ? "bg-primary text-primary-foreground font-semibold"
                       : "text-foreground"
@@ -142,14 +162,14 @@ export function TimePicker({ value, onChange, placeholder = "Pick a time" }: Tim
           </div>
 
           {/* AM/PM */}
-          <div className="flex flex-col py-1 w-16">
+          <div className="flex w-16 flex-col py-1">
             {periods.map((p) => (
               <button
                 key={p}
                 type="button"
                 onClick={() => selectPeriod(p)}
                 className={cn(
-                  "w-full px-3 py-2 text-sm text-center transition-colors hover:bg-accent",
+                  "hover:bg-accent w-full px-3 py-2 text-center text-sm transition-colors",
                   period === p
                     ? "bg-primary text-primary-foreground font-semibold"
                     : "text-foreground"
@@ -159,7 +179,6 @@ export function TimePicker({ value, onChange, placeholder = "Pick a time" }: Tim
               </button>
             ))}
           </div>
-
         </div>
       </PopoverContent>
     </Popover>

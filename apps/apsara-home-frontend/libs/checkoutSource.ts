@@ -6,10 +6,10 @@ export interface CheckoutSourceMeta {
 }
 
 const DEFAULT_HOSTS = new Set([
-  'afhome.ph',
-  'www.afhome.ph',
-  'localhost',
-  '127.0.0.1',
+  "afhome.ph",
+  "www.afhome.ph",
+  "localhost",
+  "127.0.0.1",
 ])
 
 function normalizeHost(value: string): string | null {
@@ -19,25 +19,27 @@ function normalizeHost(value: string): string | null {
 
 function normalizePath(value: string): string {
   const trimmed = value.trim()
-  if (!trimmed) return '/'
-  return trimmed.startsWith('/') ? trimmed : `/${trimmed}`
+  if (!trimmed) return "/"
+  return trimmed.startsWith("/") ? trimmed : `/${trimmed}`
 }
 
 function toDisplayLabel(slug: string): string {
   return slug
-    .split('-')
+    .split("-")
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ')
+    .join(" ")
 }
 
-export function resolveCheckoutSource(pathname?: string | null): CheckoutSourceMeta {
-  if (typeof window === 'undefined') {
+export function resolveCheckoutSource(
+  pathname?: string | null
+): CheckoutSourceMeta {
+  if (typeof window === "undefined") {
     return {}
   }
 
   const host = normalizeHost(window.location.hostname)
-  const currentPath = normalizePath(pathname ?? window.location.pathname ?? '/')
+  const currentPath = normalizePath(pathname ?? window.location.pathname ?? "/")
   const storefrontMatch =
     currentPath.match(/^\/shop\/([^/?#]+)/i) ||
     currentPath.match(/^\/([^/?#]+)\/(product|category)(?=\/|$)/i)

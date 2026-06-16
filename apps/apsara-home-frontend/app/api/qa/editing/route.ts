@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { adminAuthOptions } from '@/libs/adminAuth'
+import { adminAuthOptions } from "@/libs/adminAuth"
+import { getServerSession } from "next-auth"
+import { NextResponse } from "next/server"
 
 const LARAVEL_EDITING = `${process.env.LARAVEL_API_URL}/api/admin/qa/editing`
 
@@ -11,7 +11,8 @@ type AdminSessionUser = { accessToken?: string }
 export async function POST(request: Request) {
   const session = await getServerSession(adminAuthOptions)
   const token = (session?.user as AdminSessionUser | undefined)?.accessToken
-  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!token)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   let body: unknown
   try {
@@ -22,10 +23,10 @@ export async function POST(request: Request) {
 
   try {
     const res = await fetch(LARAVEL_EDITING, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
+        "Content-Type": "application/json",
+        Accept: "application/json",
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(body),
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
     const data = await res.json().catch(() => ({}))
     return NextResponse.json(data, { status: res.status })
   } catch (error) {
-    console.error('QA editing ping failed:', error)
-    return NextResponse.json({ error: 'failed' }, { status: 502 })
+    console.error("QA editing ping failed:", error)
+    return NextResponse.json({ error: "failed" }, { status: 502 })
   }
 }

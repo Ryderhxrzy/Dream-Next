@@ -1,8 +1,15 @@
-'use client'
+"use client"
 
-import React, { useMemo, useRef, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useSession } from 'next-auth/react'
+import React, { useMemo, useRef, useState } from "react"
+import {
+  ADMIN_PERMISSION_OPTIONS,
+  AdminPermissionId,
+  DEFAULT_ADMIN_PERMISSIONS,
+  normalizeAdminPermissions,
+  WEB_CONTENT_SECTION_OPTIONS,
+} from "@/libs/adminPermissions"
+import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import {
   AdminUserItem,
   CreateAdminUserResponse,
@@ -13,19 +20,15 @@ import {
   useGetAdminUsersQuery,
   useUnbanAdminUserMutation,
   useUpdateAdminUserMutation,
-} from '@/store/api/adminUsersApi'
-import { useGetAdminMeQuery } from '@/store/api/authApi'
-import { useGetSuppliersQuery } from '@/store/api/suppliersApi'
-import { showErrorToast, showSuccessToast } from '@/libs/toast'
+} from "@/store/api/adminUsersApi"
+import { useGetAdminMeQuery } from "@/store/api/authApi"
+import { useGetSuppliersQuery } from "@/store/api/suppliersApi"
 import {
-  ADMIN_PERMISSION_OPTIONS,
-  AdminPermissionId,
-  DEFAULT_ADMIN_PERMISSIONS,
-  normalizeAdminPermissions,
-  WEB_CONTENT_SECTION_OPTIONS,
-} from '@/libs/adminPermissions'
-import { getPartnerStorefrontConfig } from '@/libs/partnerStorefront'
-import { useGetAdminWebPageItemsQuery, type WebPageItem } from '@/store/api/webPagesApi'
+  useGetAdminWebPageItemsQuery,
+  type WebPageItem,
+} from "@/store/api/webPagesApi"
+import { AnimatePresence, motion } from "framer-motion"
+import { useSession } from "next-auth/react"
 
 /* ─── types ──────────────────────────────────────────────── */
 
@@ -35,7 +38,7 @@ type CreateForm = {
   email: string
   user_level_id: number
   supplier_id: number | null
-  admin_permissions: string[]  // AdminPermissionId[] for level 2, wc:* strings for level 4
+  admin_permissions: string[] // AdminPermissionId[] for level 2, wc:* strings for level 4
   storefront_ids: number[]
 }
 
@@ -44,117 +47,252 @@ type EditForm = CreateForm & {
 }
 
 const initialForm: CreateForm = {
-  name: '', username: '', email: '', user_level_id: 3, supplier_id: null, admin_permissions: [], storefront_ids: [],
+  name: "",
+  username: "",
+  email: "",
+  user_level_id: 3,
+  supplier_id: null,
+  admin_permissions: [],
+  storefront_ids: [],
 }
 
 const initialEditForm: EditForm = {
   ...initialForm,
-  password: '',
+  password: "",
 }
 
 /* ─── config ─────────────────────────────────────────────── */
 
 const ROLE_OPTIONS = [
   {
-    value: 1, label: 'Super Admin', colorKey: 'purple',
-    description: 'Full system access, manage all settings and users',
+    value: 1,
+    label: "Super Admin",
+    colorKey: "purple",
+    description: "Full system access, manage all settings and users",
     icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+      <svg
+        className="h-5 w-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={1.8}
+          d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+        />
       </svg>
     ),
   },
   {
-    value: 2, label: 'Admin', colorKey: 'teal',
-    description: 'General administrative privileges across the platform',
+    value: 2,
+    label: "Admin",
+    colorKey: "teal",
+    description: "General administrative privileges across the platform",
     icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+      <svg
+        className="h-5 w-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={1.8}
+          d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+        />
       </svg>
     ),
   },
   {
-    value: 3, label: 'CSR', colorKey: 'blue',
-    description: 'Handle customer inquiries and support requests',
+    value: 3,
+    label: "CSR",
+    colorKey: "blue",
+    description: "Handle customer inquiries and support requests",
     icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+      <svg
+        className="h-5 w-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={1.8}
+          d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"
+        />
       </svg>
     ),
   },
   {
-    value: 4, label: 'Web Content', colorKey: 'amber',
-    description: 'Manage website content and digital media assets',
+    value: 4,
+    label: "Web Content",
+    colorKey: "amber",
+    description: "Manage website content and digital media assets",
     icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      <svg
+        className="h-5 w-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={1.8}
+          d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
       </svg>
     ),
   },
   {
-    value: 5, label: 'Accounting', colorKey: 'emerald',
-    description: 'Manage invoices, transactions, and financial records',
+    value: 5,
+    label: "Accounting",
+    colorKey: "emerald",
+    description: "Manage invoices, transactions, and financial records",
     icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+      <svg
+        className="h-5 w-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={1.8}
+          d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+        />
       </svg>
     ),
   },
   {
-    value: 6, label: 'Finance Officer', colorKey: 'indigo',
-    description: 'Oversee financial planning, budgets, and reporting',
+    value: 6,
+    label: "Finance Officer",
+    colorKey: "indigo",
+    description: "Oversee financial planning, budgets, and reporting",
     icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      <svg
+        className="h-5 w-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={1.8}
+          d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
       </svg>
     ),
   },
   {
-    value: 7, label: 'Merchant Admin', colorKey: 'rose',
-    description: 'Manage merchant-side orders, products, and shipping workflows',
+    value: 7,
+    label: "Merchant Admin",
+    colorKey: "rose",
+    description:
+      "Manage merchant-side orders, products, and shipping workflows",
     icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 7l1.664 9.152A2 2 0 006.632 18h10.736a2 2 0 001.968-1.848L21 7M7 7V5a2 2 0 012-2h6a2 2 0 012 2v2M9 11h6" />
+      <svg
+        className="h-5 w-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={1.8}
+          d="M3 7l1.664 9.152A2 2 0 006.632 18h10.736a2 2 0 001.968-1.848L21 7M7 7V5a2 2 0 012-2h6a2 2 0 012 2v2M9 11h6"
+        />
       </svg>
     ),
   },
 ]
 
 /* Full Tailwind class strings — must be static for purge */
-const ROLE_CARD_STYLES: Record<string, { card: string; icon: string; label: string }> = {
-  purple:  { card: 'border-purple-300 bg-purple-50 ring-2 ring-purple-200',  icon: 'bg-purple-100 text-purple-600',  label: 'text-purple-700'  },
-  teal:    { card: 'border-teal-300 bg-teal-50 ring-2 ring-teal-200',        icon: 'bg-teal-100 text-teal-600',      label: 'text-teal-700'    },
-  blue:    { card: 'border-blue-300 bg-blue-50 ring-2 ring-blue-200',        icon: 'bg-blue-100 text-blue-600',      label: 'text-blue-700'    },
-  amber:   { card: 'border-amber-300 bg-amber-50 ring-2 ring-amber-200',     icon: 'bg-amber-100 text-amber-600',    label: 'text-amber-700'   },
-  emerald: { card: 'border-emerald-300 bg-emerald-50 ring-2 ring-emerald-200', icon: 'bg-emerald-100 text-emerald-600', label: 'text-emerald-700' },
-  indigo:  { card: 'border-indigo-300 bg-indigo-50 ring-2 ring-indigo-200',  icon: 'bg-indigo-100 text-indigo-600',  label: 'text-indigo-700'  },
-  rose:    { card: 'border-rose-300 bg-rose-50 ring-2 ring-rose-200',        icon: 'bg-rose-100 text-rose-600',      label: 'text-rose-700'    },
-  cyan:    { card: 'border-cyan-300 bg-cyan-50 ring-2 ring-cyan-200',        icon: 'bg-cyan-100 text-cyan-600',      label: 'text-cyan-700'    },
+const ROLE_CARD_STYLES: Record<
+  string,
+  { card: string; icon: string; label: string }
+> = {
+  purple: {
+    card: "border-purple-300 bg-purple-50 ring-2 ring-purple-200",
+    icon: "bg-purple-100 text-purple-600",
+    label: "text-purple-700",
+  },
+  teal: {
+    card: "border-teal-300 bg-teal-50 ring-2 ring-teal-200",
+    icon: "bg-teal-100 text-teal-600",
+    label: "text-teal-700",
+  },
+  blue: {
+    card: "border-blue-300 bg-blue-50 ring-2 ring-blue-200",
+    icon: "bg-blue-100 text-blue-600",
+    label: "text-blue-700",
+  },
+  amber: {
+    card: "border-amber-300 bg-amber-50 ring-2 ring-amber-200",
+    icon: "bg-amber-100 text-amber-600",
+    label: "text-amber-700",
+  },
+  emerald: {
+    card: "border-emerald-300 bg-emerald-50 ring-2 ring-emerald-200",
+    icon: "bg-emerald-100 text-emerald-600",
+    label: "text-emerald-700",
+  },
+  indigo: {
+    card: "border-indigo-300 bg-indigo-50 ring-2 ring-indigo-200",
+    icon: "bg-indigo-100 text-indigo-600",
+    label: "text-indigo-700",
+  },
+  rose: {
+    card: "border-rose-300 bg-rose-50 ring-2 ring-rose-200",
+    icon: "bg-rose-100 text-rose-600",
+    label: "text-rose-700",
+  },
+  cyan: {
+    card: "border-cyan-300 bg-cyan-50 ring-2 ring-cyan-200",
+    icon: "bg-cyan-100 text-cyan-600",
+    label: "text-cyan-700",
+  },
 }
 
 const ROLE_COLORS: Record<string, string> = {
-  super_admin:     'bg-purple-50 text-purple-700 border-purple-200',
-  admin:           'bg-teal-50 text-teal-700 border-teal-200',
-  csr:             'bg-blue-50 text-blue-700 border-blue-200',
-  web_content:     'bg-amber-50 text-amber-700 border-amber-200',
-  accounting:      'bg-emerald-50 text-emerald-700 border-emerald-200',
-  finance_officer: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-  merchant_admin:  'bg-rose-50 text-rose-700 border-rose-200',
-  supplier_admin:  'bg-cyan-50 text-cyan-700 border-cyan-200',
+  super_admin: "bg-purple-50 text-purple-700 border-purple-200",
+  admin: "bg-teal-50 text-teal-700 border-teal-200",
+  csr: "bg-blue-50 text-blue-700 border-blue-200",
+  web_content: "bg-amber-50 text-amber-700 border-amber-200",
+  accounting: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  finance_officer: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  merchant_admin: "bg-rose-50 text-rose-700 border-rose-200",
+  supplier_admin: "bg-cyan-50 text-cyan-700 border-cyan-200",
 }
 
 const AVATAR_COLORS = [
-  'from-teal-400 to-teal-600', 'from-purple-400 to-purple-600',
-  'from-blue-400 to-blue-600', 'from-indigo-400 to-indigo-600',
-  'from-emerald-400 to-emerald-600',
+  "from-teal-400 to-teal-600",
+  "from-purple-400 to-purple-600",
+  "from-blue-400 to-blue-600",
+  "from-indigo-400 to-indigo-600",
+  "from-emerald-400 to-emerald-600",
 ]
 
 /* ─── utilities ──────────────────────────────────────────── */
 
 const getInitials = (name: string) =>
-  name.split(' ').filter(Boolean).map(p => p[0]).join('').slice(0, 2).toUpperCase()
+  name
+    .split(" ")
+    .filter(Boolean)
+    .map((p) => p[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase()
 
-const avatarGrad = (name: string) => AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length]
+const avatarGrad = (name: string) =>
+  AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length]
 
 function getPasswordStrength(password: string) {
   if (!password) return null
@@ -164,14 +302,37 @@ function getPasswordStrength(password: string) {
   if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score++
   if (/[0-9]/.test(password)) score++
   if (/[^A-Za-z0-9]/.test(password)) score++
-  if (score <= 1) return { level: 1, label: 'Weak',       color: 'bg-red-500',     textColor: 'text-red-500'     }
-  if (score === 2) return { level: 2, label: 'Fair',       color: 'bg-orange-400',  textColor: 'text-orange-500'  }
-  if (score === 3) return { level: 3, label: 'Good',       color: 'bg-yellow-400',  textColor: 'text-yellow-600'  }
-  return               { level: Math.min(score, 5), label: score >= 5 ? 'Very Strong' : 'Strong', color: 'bg-emerald-500', textColor: 'text-emerald-600' }
+  if (score <= 1)
+    return {
+      level: 1,
+      label: "Weak",
+      color: "bg-red-500",
+      textColor: "text-red-500",
+    }
+  if (score === 2)
+    return {
+      level: 2,
+      label: "Fair",
+      color: "bg-orange-400",
+      textColor: "text-orange-500",
+    }
+  if (score === 3)
+    return {
+      level: 3,
+      label: "Good",
+      color: "bg-yellow-400",
+      textColor: "text-yellow-600",
+    }
+  return {
+    level: Math.min(score, 5),
+    label: score >= 5 ? "Very Strong" : "Strong",
+    color: "bg-emerald-500",
+    textColor: "text-emerald-600",
+  }
 }
 
 function formatDateTime(value?: string | null) {
-  if (!value) return ''
+  if (!value) return ""
 
   const parsed = new Date(value)
   if (Number.isNaN(parsed.getTime())) return value
@@ -180,45 +341,165 @@ function formatDateTime(value?: string | null) {
 }
 
 function formatMinutesSinceActive(value?: number | null) {
-  if (value === null || value === undefined) return 'No recent activity'
+  if (value === null || value === undefined) return "No recent activity"
   const normalized = Math.max(0, Math.floor(value))
-  if (normalized <= 0) return 'Active now'
-  if (normalized === 1) return 'Active 1 minute ago'
+  if (normalized <= 0) return "Active now"
+  if (normalized === 1) return "Active 1 minute ago"
   return `Active ${normalized} minutes ago`
 }
 
 /* ─── icons ──────────────────────────────────────────────── */
 
-const UserIcon  = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-const AtIcon    = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" /></svg>
-const MailIcon  = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-const LockIcon  = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-const EyeIcon   = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-const EyeOffIcon = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
-const SpinIcon  = () => <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+const UserIcon = () => (
+  <svg
+    className="h-4 w-4"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+    />
+  </svg>
+)
+const AtIcon = () => (
+  <svg
+    className="h-4 w-4"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
+    />
+  </svg>
+)
+const MailIcon = () => (
+  <svg
+    className="h-4 w-4"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+    />
+  </svg>
+)
+const LockIcon = () => (
+  <svg
+    className="h-4 w-4"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+    />
+  </svg>
+)
+const EyeIcon = () => (
+  <svg
+    className="h-4 w-4"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+    />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+    />
+  </svg>
+)
+const EyeOffIcon = () => (
+  <svg
+    className="h-4 w-4"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+    />
+  </svg>
+)
+const SpinIcon = () => (
+  <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+    <circle
+      className="opacity-25"
+      cx="12"
+      cy="12"
+      r="10"
+      stroke="currentColor"
+      strokeWidth="4"
+    />
+    <path
+      className="opacity-75"
+      fill="currentColor"
+      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+    />
+  </svg>
+)
 
 /* ─── InputField ─────────────────────────────────────────── */
 
 function InputField({
-  label, placeholder, type = 'text', value, onChange, required,
-  icon, error, helper,
+  label,
+  placeholder,
+  type = "text",
+  value,
+  onChange,
+  required,
+  icon,
+  error,
+  helper,
 }: {
-  label: string; placeholder: string; type?: string
-  value: string; onChange: (v: string) => void; required?: boolean
-  icon?: React.ReactNode; error?: string; helper?: string
+  label: string
+  placeholder: string
+  type?: string
+  value: string
+  onChange: (v: string) => void
+  required?: boolean
+  icon?: React.ReactNode
+  error?: string
+  helper?: string
 }) {
   const [showPwd, setShowPwd] = useState(false)
-  const isPassword = type === 'password'
-  const inputType  = isPassword ? (showPwd ? 'text' : 'password') : type
+  const isPassword = type === "password"
+  const inputType = isPassword ? (showPwd ? "text" : "password") : type
 
   return (
     <div className="space-y-1.5">
-      <label className="text-xs font-semibold text-slate-600 block">
-        {label}{required && <span className="text-red-400 ml-0.5">*</span>}
+      <label className="block text-xs font-semibold text-slate-600">
+        {label}
+        {required && <span className="ml-0.5 text-red-400">*</span>}
       </label>
-      <div className="relative group">
+      <div className="group relative">
         {icon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-500 transition-colors pointer-events-none">
+          <div className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-teal-500">
             {icon}
           </div>
         )}
@@ -226,34 +507,42 @@ function InputField({
           type={inputType}
           placeholder={placeholder}
           value={value}
-          onChange={e => onChange(e.target.value)}
+          onChange={(e) => onChange(e.target.value)}
           required={required}
           className={[
-            'w-full py-2.5 text-sm border rounded-xl',
-            'focus:outline-none focus:ring-2 transition-all',
-            'text-slate-700 placeholder-slate-400',
-            icon ? 'pl-10' : 'pl-3.5',
-            isPassword ? 'pr-10' : 'pr-3.5',
+            "w-full rounded-xl border py-2.5 text-sm",
+            "transition-all focus:ring-2 focus:outline-none",
+            "text-slate-700 placeholder-slate-400",
+            icon ? "pl-10" : "pl-3.5",
+            isPassword ? "pr-10" : "pr-3.5",
             error
-              ? 'border-red-300 focus:ring-red-500/20 focus:border-red-400 bg-red-50/40'
-              : 'border-slate-200 focus:ring-teal-500/30 focus:border-teal-400 hover:border-slate-300 bg-white',
-          ].join(' ')}
+              ? "border-red-300 bg-red-50/40 focus:border-red-400 focus:ring-red-500/20"
+              : "border-slate-200 bg-white hover:border-slate-300 focus:border-teal-400 focus:ring-teal-500/30",
+          ].join(" ")}
         />
         {isPassword && (
           <button
             type="button"
             tabIndex={-1}
-            onClick={() => setShowPwd(s => !s)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+            onClick={() => setShowPwd((s) => !s)}
+            className="absolute top-1/2 right-3 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-600"
           >
             {showPwd ? <EyeOffIcon /> : <EyeIcon />}
           </button>
         )}
       </div>
       {error && (
-        <p className="text-xs text-red-500 flex items-center gap-1">
-          <svg className="w-3 h-3 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+        <p className="flex items-center gap-1 text-xs text-red-500">
+          <svg
+            className="h-3 w-3 shrink-0"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fillRule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+              clipRule="evenodd"
+            />
           </svg>
           {error}
         </p>
@@ -275,7 +564,7 @@ function PasswordStrengthBar({ password }: { password: string }) {
           <div
             key={i}
             className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
-              strength && i < strength.level ? strength.color : 'bg-slate-100'
+              strength && i < strength.level ? strength.color : "bg-slate-100"
             }`}
           />
         ))}
@@ -294,10 +583,10 @@ function PasswordStrengthBar({ password }: { password: string }) {
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2 pt-1">
-      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 whitespace-nowrap">
+      <span className="text-[10px] font-bold tracking-widest whitespace-nowrap text-slate-400 uppercase">
         {children}
       </span>
-      <div className="flex-1 h-px bg-slate-100" />
+      <div className="h-px flex-1 bg-slate-100" />
     </div>
   )
 }
@@ -315,11 +604,11 @@ function RoleCardGrid({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-xs font-semibold text-slate-600 block">
+      <label className="block text-xs font-semibold text-slate-600">
         Role <span className="text-red-400">*</span>
       </label>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-        {options.map(role => {
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        {options.map((role) => {
           const isSelected = value === role.value
           const styles = ROLE_CARD_STYLES[role.colorKey]
           return (
@@ -328,31 +617,45 @@ function RoleCardGrid({
               type="button"
               onClick={() => onChange(role.value)}
               className={[
-                'relative flex flex-col gap-2 p-3 rounded-xl border-2 text-left transition-all duration-150',
+                "relative flex flex-col gap-2 rounded-xl border-2 p-3 text-left transition-all duration-150",
                 isSelected
                   ? `${styles.card} shadow-sm`
-                  : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50',
-              ].join(' ')}
+                  : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50",
+              ].join(" ")}
             >
-              <div className={`h-8 w-8 rounded-lg flex items-center justify-center transition-colors ${
-                isSelected ? styles.icon : 'bg-slate-100 text-slate-400'
-              }`}>
+              <div
+                className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
+                  isSelected ? styles.icon : "bg-slate-100 text-slate-400"
+                }`}
+              >
                 {role.icon}
               </div>
               <div>
-                <p className={`text-xs font-bold transition-colors ${
-                  isSelected ? styles.label : 'text-slate-700'
-                }`}>
+                <p
+                  className={`text-xs font-bold transition-colors ${
+                    isSelected ? styles.label : "text-slate-700"
+                  }`}
+                >
                   {role.label}
                 </p>
-                <p className="text-[10px] text-slate-400 leading-snug mt-0.5">
+                <p className="mt-0.5 text-[10px] leading-snug text-slate-400">
                   {role.description}
                 </p>
               </div>
               {isSelected && (
-                <div className={`absolute top-2 right-2 h-4 w-4 rounded-full flex items-center justify-center ${styles.icon}`}>
-                  <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                <div
+                  className={`absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full ${styles.icon}`}
+                >
+                  <svg
+                    className="h-2.5 w-2.5"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </div>
               )}
@@ -375,13 +678,15 @@ function SupplierSelect({
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-xs font-semibold text-slate-600 block">
+      <label className="block text-xs font-semibold text-slate-600">
         Supplier Company <span className="text-red-400">*</span>
       </label>
       <select
-        value={value ?? ''}
-        onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}
-        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/30"
+        value={value ?? ""}
+        onChange={(e) =>
+          onChange(e.target.value ? Number(e.target.value) : null)
+        }
+        className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 focus:border-teal-400 focus:ring-2 focus:ring-teal-500/30 focus:outline-none"
       >
         <option value="">Select supplier company</option>
         {options.map((option) => (
@@ -390,7 +695,9 @@ function SupplierSelect({
           </option>
         ))}
       </select>
-      <p className="text-xs text-slate-400">This controls which company data the supplier account can access.</p>
+      <p className="text-xs text-slate-400">
+        This controls which company data the supplier account can access.
+      </p>
     </div>
   )
 }
@@ -417,23 +724,23 @@ function PermissionCheckboxGrid({
   return (
     <div className="space-y-2">
       <div>
-        <label className="text-xs font-semibold text-slate-600 block">
+        <label className="block text-xs font-semibold text-slate-600">
           Custom Access
         </label>
         <p className="mt-1 text-xs text-slate-400">
           Check only the sections this admin should be able to open.
         </p>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
         {ADMIN_PERMISSION_OPTIONS.map((permission) => {
           const isChecked = selected.has(permission.id)
           return (
             <label
               key={permission.id}
-              className={`flex items-start gap-3 rounded-xl border px-3.5 py-3 transition-all cursor-pointer ${
+              className={`flex cursor-pointer items-start gap-3 rounded-xl border px-3.5 py-3 transition-all ${
                 isChecked
-                  ? 'border-teal-300 bg-teal-50'
-                  : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+                  ? "border-teal-300 bg-teal-50"
+                  : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
               }`}
             >
               <input
@@ -443,8 +750,12 @@ function PermissionCheckboxGrid({
                 className="mt-0.5 h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
               />
               <span className="block">
-                <span className="block text-sm font-semibold text-slate-700">{permission.label}</span>
-                <span className="mt-0.5 block text-xs text-slate-400 leading-relaxed">{permission.description}</span>
+                <span className="block text-sm font-semibold text-slate-700">
+                  {permission.label}
+                </span>
+                <span className="mt-0.5 block text-xs leading-relaxed text-slate-400">
+                  {permission.description}
+                </span>
               </span>
             </label>
           )
@@ -480,7 +791,9 @@ function ConfirmModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <motion.div
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
         onClick={onClose}
         className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
       />
@@ -488,31 +801,46 @@ function ConfirmModal({
         initial={{ opacity: 0, scale: 0.93, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.93, y: 10 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-        onClick={e => e.stopPropagation()}
-        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10 overflow-hidden"
+        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+        onClick={(e) => e.stopPropagation()}
+        className="relative z-10 w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-2xl"
       >
-        <div className="px-6 pt-6 pb-5 flex flex-col items-center text-center gap-4">
-          <div className={`h-14 w-14 rounded-2xl flex items-center justify-center ${iconBg}`}>
+        <div className="flex flex-col items-center gap-4 px-6 pt-6 pb-5 text-center">
+          <div
+            className={`flex h-14 w-14 items-center justify-center rounded-2xl ${iconBg}`}
+          >
             {icon}
           </div>
           <div>
             <h3 className="text-base font-bold text-slate-800">{title}</h3>
-            <div className="mt-1.5 text-sm text-slate-500 leading-relaxed">{description}</div>
+            <div className="mt-1.5 text-sm leading-relaxed text-slate-500">
+              {description}
+            </div>
           </div>
         </div>
-        <div className="px-6 pb-5 flex gap-2.5">
+        <div className="flex gap-2.5 px-6 pb-5">
           <button
-            type="button" onClick={onClose} disabled={busy}
-            className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition"
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
           >
             Cancel
           </button>
           <button
-            type="button" onClick={onConfirm} disabled={busy}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-60 transition-all flex items-center justify-center gap-2 ${confirmClass}`}
+            type="button"
+            onClick={onConfirm}
+            disabled={busy}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold text-white transition-all disabled:opacity-60 ${confirmClass}`}
           >
-            {busy ? <><SpinIcon />{confirmLabel}…</> : confirmLabel}
+            {busy ? (
+              <>
+                <SpinIcon />
+                {confirmLabel}…
+              </>
+            ) : (
+              confirmLabel
+            )}
           </button>
         </div>
       </motion.div>
@@ -530,14 +858,20 @@ function AdminActivityModal({
   onClose: () => void
 }) {
   const [page, setPage] = useState(1)
-  const { data, isLoading } = useGetAdminUserActivityQuery({ id: target.id, page, perPage: 8 })
+  const { data, isLoading } = useGetAdminUserActivityQuery({
+    id: target.id,
+    page,
+    perPage: 8,
+  })
   const logs = data?.logs ?? []
   const meta = data?.meta
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <motion.div
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
         onClick={onClose}
         className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
       />
@@ -545,70 +879,149 @@ function AdminActivityModal({
         initial={{ opacity: 0, scale: 0.95, y: 16 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 16 }}
-        onClick={e => e.stopPropagation()}
-        className="relative z-10 w-full max-w-3xl max-h-[86vh] overflow-hidden rounded-3xl bg-white shadow-2xl border border-slate-200"
+        onClick={(e) => e.stopPropagation()}
+        className="relative z-10 max-h-[86vh] w-full max-w-3xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl"
       >
-        <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-start justify-between gap-4">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5 dark:border-slate-800">
           <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Account Activity</p>
-            <h3 className="mt-1 text-xl font-bold text-slate-800">{target.name}</h3>
+            <p className="text-xs font-bold tracking-widest text-slate-400 uppercase">
+              Account Activity
+            </p>
+            <h3 className="mt-1 text-xl font-bold text-slate-800">
+              {target.name}
+            </h3>
             <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full border ${target.is_online ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
-                <span className={`h-2 w-2 rounded-full ${target.is_online ? 'bg-emerald-500' : 'bg-slate-300'}`} />
-                {target.is_online ? 'Active' : 'Offline'}
+              <span
+                className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 ${target.is_online ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-200 bg-slate-50 text-slate-600"}`}
+              >
+                <span
+                  className={`h-2 w-2 rounded-full ${target.is_online ? "bg-emerald-500" : "bg-slate-300"}`}
+                />
+                {target.is_online ? "Active" : "Offline"}
               </span>
               <span>@{target.username}</span>
-              <span>{formatMinutesSinceActive(target.minutes_since_active)}</span>
-              {target.last_active_path ? <span>{target.last_active_path}</span> : null}
+              <span>
+                {formatMinutesSinceActive(target.minutes_since_active)}
+              </span>
+              {target.last_active_path ? (
+                <span>{target.last_active_path}</span>
+              ) : null}
             </div>
           </div>
-          <button type="button" onClick={onClose} className="h-9 w-9 rounded-full border border-slate-200 text-slate-400 hover:text-slate-600 hover:border-slate-300 transition flex items-center justify-center">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-400 transition hover:border-slate-300 hover:text-slate-600"
+          >
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
           </button>
         </div>
 
-        <div className="px-6 py-5 max-h-[58vh] overflow-y-auto space-y-3">
+        <div className="max-h-[58vh] space-y-3 overflow-y-auto px-6 py-5">
           {isLoading ? (
-            Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-18 rounded-2xl bg-slate-100 animate-pulse" />)
+            Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-18 animate-pulse rounded-2xl bg-slate-100"
+              />
+            ))
           ) : logs.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-5 py-10 text-center">
-              <p className="text-sm font-semibold text-slate-600">No recorded actions yet</p>
-              <p className="mt-1 text-sm text-slate-400">Recent product actions for this account will appear here.</p>
+              <p className="text-sm font-semibold text-slate-600">
+                No recorded actions yet
+              </p>
+              <p className="mt-1 text-sm text-slate-400">
+                Recent product actions for this account will appear here.
+              </p>
             </div>
           ) : (
             logs.map((log) => (
-              <div key={log.id} className="rounded-2xl border border-slate-200 px-4 py-3">
+              <div
+                key={log.id}
+                className="rounded-2xl border border-slate-200 px-4 py-3"
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className={`inline-flex px-2.5 py-1 rounded-full border text-[11px] font-semibold ${
-                        log.action === 'created' ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                        : log.action === 'updated' ? 'bg-amber-50 text-amber-700 border-amber-200'
-                        : 'bg-red-50 text-red-700 border-red-200'
-                      }`}>
+                      <span
+                        className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${
+                          log.action === "created"
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                            : log.action === "updated"
+                              ? "border-amber-200 bg-amber-50 text-amber-700"
+                              : "border-red-200 bg-red-50 text-red-700"
+                        }`}
+                      >
                         {log.action}
                       </span>
-                      <span className="text-sm font-semibold text-slate-800">{log.productName}</span>
-                      <span className={`inline-flex px-2 py-1 rounded-full text-[11px] font-semibold ${
-                        log.status === 'failed' ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'
-                      }`}>
+                      <span className="text-sm font-semibold text-slate-800">
+                        {log.productName}
+                      </span>
+                      <span
+                        className={`inline-flex rounded-full px-2 py-1 text-[11px] font-semibold ${
+                          log.status === "failed"
+                            ? "bg-red-50 text-red-600"
+                            : "bg-emerald-50 text-emerald-600"
+                        }`}
+                      >
                         {log.status}
                       </span>
                     </div>
-                    <p className="mt-1 text-xs text-slate-500">SKU: {log.productSku?.trim() ? log.productSku : 'N/A'}</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      SKU: {log.productSku?.trim() ? log.productSku : "N/A"}
+                    </p>
                   </div>
-                  <span className="text-xs text-slate-400 shrink-0">{formatDateTime(log.createdAt)}</span>
+                  <span className="shrink-0 text-xs text-slate-400">
+                    {formatDateTime(log.createdAt)}
+                  </span>
                 </div>
               </div>
             ))
           )}
         </div>
 
-        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between text-xs text-slate-500">
-          <span>Page <span className="font-semibold text-slate-700">{meta?.current_page ?? 1}</span> / <span className="font-semibold text-slate-700">{meta?.last_page ?? 1}</span></span>
+        <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50 px-6 py-4 text-xs text-slate-500">
+          <span>
+            Page{" "}
+            <span className="font-semibold text-slate-700">
+              {meta?.current_page ?? 1}
+            </span>{" "}
+            /{" "}
+            <span className="font-semibold text-slate-700">
+              {meta?.last_page ?? 1}
+            </span>
+          </span>
           <div className="flex items-center gap-2">
-            <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={(meta?.current_page ?? 1) <= 1} className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-white disabled:opacity-40 transition">Prev</button>
-            <button type="button" onClick={() => setPage(p => Math.min(meta?.last_page ?? 1, p + 1))} disabled={(meta?.current_page ?? 1) >= (meta?.last_page ?? 1)} className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-white disabled:opacity-40 transition">Next</button>
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={(meta?.current_page ?? 1) <= 1}
+              className="rounded-lg border border-slate-200 px-3 py-1.5 text-slate-600 transition hover:bg-white disabled:opacity-40"
+            >
+              Prev
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setPage((p) => Math.min(meta?.last_page ?? 1, p + 1))
+              }
+              disabled={(meta?.current_page ?? 1) >= (meta?.last_page ?? 1)}
+              className="rounded-lg border border-slate-200 px-3 py-1.5 text-slate-600 transition hover:bg-white disabled:opacity-40"
+            >
+              Next
+            </button>
           </div>
         </div>
       </motion.div>
@@ -628,36 +1041,43 @@ function WebContentSectionPicker({
 }: {
   value: string[]
   onChange: (v: string[]) => void
-  storefronts: Array<{ item: WebPageItem; config: NonNullable<ReturnType<typeof getPartnerStorefrontConfig>> }>
+  storefronts: Array<{
+    item: WebPageItem
+    config: NonNullable<ReturnType<typeof getPartnerStorefrontConfig>>
+  }>
   isStorefrontsLoading?: boolean
   storefrontIds: number[]
   onStorefrontsChange: (ids: number[]) => void
 }) {
   const toggle = (id: string) =>
-    value.includes(id) ? onChange(value.filter(v => v !== id)) : onChange([...value, id])
+    value.includes(id)
+      ? onChange(value.filter((v) => v !== id))
+      : onChange([...value, id])
 
-  const showStorefronts = value.includes('wc:partner-storefronts')
+  const showStorefronts = value.includes("wc:partner-storefronts")
 
   return (
     <div className="space-y-3 rounded-2xl border border-amber-100 bg-amber-50/60 p-3">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
+        <p className="text-xs font-semibold tracking-[0.18em] text-amber-700 uppercase">
           Web Content Sections
         </p>
         <p className="mt-1 text-xs text-slate-500">
           Tick the sections this account can manage.
-          <span className="ml-1 font-medium text-amber-600">Leave all unchecked = full access to all sections.</span>
+          <span className="ml-1 font-medium text-amber-600">
+            Leave all unchecked = full access to all sections.
+          </span>
         </p>
       </div>
 
       <div className="grid gap-2 sm:grid-cols-2">
-        {WEB_CONTENT_SECTION_OPTIONS.map(opt => (
+        {WEB_CONTENT_SECTION_OPTIONS.map((opt) => (
           <label
             key={opt.id}
             className={`flex cursor-pointer items-start gap-3 rounded-xl border bg-white px-3 py-2.5 text-xs transition ${
               value.includes(opt.id)
-                ? 'border-amber-300 ring-1 ring-amber-200'
-                : 'border-amber-100 hover:border-amber-200'
+                ? "border-amber-300 ring-1 ring-amber-200"
+                : "border-amber-100 hover:border-amber-200"
             }`}
           >
             <input
@@ -668,7 +1088,9 @@ function WebContentSectionPicker({
             />
             <div>
               <p className="font-semibold text-slate-700">{opt.label}</p>
-              <p className="mt-0.5 text-[11px] text-slate-400">{opt.description}</p>
+              <p className="mt-0.5 text-[11px] text-slate-400">
+                {opt.description}
+              </p>
             </div>
           </label>
         ))}
@@ -676,17 +1098,33 @@ function WebContentSectionPicker({
 
       {showStorefronts && (
         <div className="rounded-xl border border-amber-100 bg-white p-3">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-amber-600">
+          <p className="mb-2 text-[11px] font-semibold tracking-wider text-amber-600 uppercase">
             Partner Storefronts Access
           </p>
           <p className="mb-3 text-[11px] text-slate-400">
-            Pick which specific storefronts this account can manage. Leave all unchecked = all storefronts.
+            Pick which specific storefronts this account can manage. Leave all
+            unchecked = all storefronts.
           </p>
           {isStorefrontsLoading ? (
             <div className="flex items-center gap-2 rounded-lg border border-dashed border-amber-200 px-3 py-2 text-[11px] font-medium text-amber-700">
-              <svg className="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              <svg
+                className="h-3.5 w-3.5 animate-spin"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                />
               </svg>
               Loading partner storefronts...
             </div>
@@ -697,28 +1135,35 @@ function WebContentSectionPicker({
           ) : (
             <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
               {storefronts.map(({ item, config }) => (
-                <label key={item.id} className="flex items-start gap-3 rounded-xl border border-amber-100 bg-amber-50/40 px-3 py-2 text-xs text-slate-700">
+                <label
+                  key={item.id}
+                  className="flex items-start gap-3 rounded-xl border border-amber-100 bg-amber-50/40 px-3 py-2 text-xs text-slate-700"
+                >
                   <input
                     type="checkbox"
                     checked={storefrontIds.includes(item.id)}
                     onChange={() =>
                       onStorefrontsChange(
                         storefrontIds.includes(item.id)
-                          ? storefrontIds.filter(id => id !== item.id)
-                          : [...storefrontIds, item.id],
+                          ? storefrontIds.filter((id) => id !== item.id)
+                          : [...storefrontIds, item.id]
                       )
                     }
                     className="mt-1 h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
                   />
                   <div className="flex-1">
-                    <p className="text-xs font-semibold text-slate-700">{config.displayName}</p>
-                    <p className="mt-0.5 text-[11px] text-slate-500">/{config.slug}</p>
+                    <p className="text-xs font-semibold text-slate-700">
+                      {config.displayName}
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-slate-500">
+                      /{config.slug}
+                    </p>
                   </div>
                   <a
                     href={`/shop/${config.slug}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="mt-0.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 hover:bg-amber-100 transition"
+                    className="mt-0.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-100"
                   >
                     Open
                   </a>
@@ -733,9 +1178,20 @@ function WebContentSectionPicker({
 }
 
 function EditModal({
-  target, form, busy, onChange, onSubmit, onClose, supplierOptions, roleOptions, storefronts, isStorefrontsLoading,
+  target,
+  form,
+  busy,
+  onChange,
+  onSubmit,
+  onClose,
+  supplierOptions,
+  roleOptions,
+  storefronts,
+  isStorefrontsLoading,
 }: {
-  target: AdminUserItem; form: EditForm; busy: boolean
+  target: AdminUserItem
+  form: EditForm
+  busy: boolean
   onChange: (patch: Partial<EditForm>) => void
   onSubmit: (e: React.SyntheticEvent) => void
   onClose: () => void
@@ -748,18 +1204,24 @@ function EditModal({
   isStorefrontsLoading: boolean
 }) {
   const permissionsRef = useRef<HTMLDivElement | null>(null)
-  const [isPermissionsSpotlightActive, setIsPermissionsSpotlightActive] = useState(false)
+  const [isPermissionsSpotlightActive, setIsPermissionsSpotlightActive] =
+    useState(false)
 
   const spotlightPermissions = () => {
     setIsPermissionsSpotlightActive(true)
-    permissionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    permissionsRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    })
     window.setTimeout(() => setIsPermissionsSpotlightActive(false), 1600)
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <motion.div
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
         onClick={onClose}
         className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
       />
@@ -768,41 +1230,70 @@ function EditModal({
         initial={{ opacity: 0, scale: 0.95, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 12 }}
-        onClick={e => e.stopPropagation()}
-        className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg z-10 overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+        className="relative z-10 w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-xl"
       >
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
-          <div className={`h-9 w-9 rounded-full bg-linear-to-br ${avatarGrad(target.name)} flex items-center justify-center text-white text-xs font-bold shrink-0`}>
+        <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4 dark:border-slate-800">
+          <div
+            className={`h-9 w-9 rounded-full bg-linear-to-br ${avatarGrad(target.name)} flex shrink-0 items-center justify-center text-xs font-bold text-white`}
+          >
             {getInitials(target.name)}
           </div>
           <div className="flex-1">
-            <h3 className="text-sm font-bold text-slate-800">Edit Admin Account</h3>
-            <p className="text-xs text-slate-400 mt-0.5">@{target.username}</p>
+            <h3 className="text-sm font-bold text-slate-800">
+              Edit Admin Account
+            </h3>
+            <p className="mt-0.5 text-xs text-slate-400">@{target.username}</p>
           </div>
           <button
-            type="button" onClick={onClose}
-            className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 transition"
+            type="button"
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
 
         {/* Body */}
-        <div className="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
+        <div className="max-h-[70vh] space-y-4 overflow-y-auto px-6 py-5">
           <SectionLabel>Account Information</SectionLabel>
           <div className="grid grid-cols-2 gap-4">
-            <InputField label="Full Name" placeholder="Full name" value={form.name} onChange={v => onChange({ name: v })} required icon={<UserIcon />} />
-            <InputField label="Username"  placeholder="Username"  value={form.username} onChange={v => onChange({ username: v })} required icon={<AtIcon />} />
+            <InputField
+              label="Full Name"
+              placeholder="Full name"
+              value={form.name}
+              onChange={(v) => onChange({ name: v })}
+              required
+              icon={<UserIcon />}
+            />
+            <InputField
+              label="Username"
+              placeholder="Username"
+              value={form.username}
+              onChange={(v) => onChange({ username: v })}
+              required
+              icon={<AtIcon />}
+            />
           </div>
           <InputField
             label="Email Address"
             type="email"
             placeholder="Optional email"
             value={form.email}
-            onChange={v => onChange({ email: v })}
+            onChange={(v) => onChange({ email: v })}
             icon={<MailIcon />}
             helper="Optional. Leave blank if this account does not need email recovery."
           />
@@ -810,13 +1301,16 @@ function EditModal({
           <RoleCardGrid
             value={form.user_level_id}
             options={roleOptions}
-            onChange={v => {
+            onChange={(v) => {
               onChange({
                 user_level_id: v,
                 storefront_ids: v === 4 ? form.storefront_ids : [],
-                admin_permissions: v === 2
-                  ? (form.admin_permissions.length ? form.admin_permissions : DEFAULT_ADMIN_PERMISSIONS)
-                  : [],
+                admin_permissions:
+                  v === 2
+                    ? form.admin_permissions.length
+                      ? form.admin_permissions
+                      : DEFAULT_ADMIN_PERMISSIONS
+                    : [],
               })
               if (v === 2) {
                 window.setTimeout(() => spotlightPermissions(), 80)
@@ -827,16 +1321,29 @@ function EditModal({
             <motion.div
               ref={permissionsRef}
               initial={false}
-              animate={isPermissionsSpotlightActive ? { scale: [1, 1.01, 1], boxShadow: ['0 0 0 rgba(20,184,166,0)', '0 0 0 10px rgba(20,184,166,0.12)', '0 0 0 rgba(20,184,166,0)'] } : { scale: 1, boxShadow: '0 0 0 rgba(20,184,166,0)' }}
-              transition={{ duration: 0.8, ease: 'easeOut' }}
+              animate={
+                isPermissionsSpotlightActive
+                  ? {
+                      scale: [1, 1.01, 1],
+                      boxShadow: [
+                        "0 0 0 rgba(20,184,166,0)",
+                        "0 0 0 10px rgba(20,184,166,0.12)",
+                        "0 0 0 rgba(20,184,166,0)",
+                      ],
+                    }
+                  : { scale: 1, boxShadow: "0 0 0 rgba(20,184,166,0)" }
+              }
+              transition={{ duration: 0.8, ease: "easeOut" }}
               className="rounded-2xl border border-teal-100 bg-teal-50/60 p-3"
             >
-              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">
+              <p className="mb-3 text-xs font-semibold tracking-[0.18em] text-teal-700 uppercase">
                 Choose Admin Access Before Saving
               </p>
               <PermissionCheckboxGrid
                 value={normalizeAdminPermissions(form.admin_permissions)}
-                onChange={(admin_permissions) => onChange({ admin_permissions })}
+                onChange={(admin_permissions) =>
+                  onChange({ admin_permissions })
+                }
               />
             </motion.div>
           )}
@@ -850,35 +1357,43 @@ function EditModal({
           {form.user_level_id === 4 && (
             <WebContentSectionPicker
               value={form.admin_permissions}
-              onChange={admin_permissions => onChange({ admin_permissions })}
+              onChange={(admin_permissions) => onChange({ admin_permissions })}
               storefronts={storefronts}
               isStorefrontsLoading={isStorefrontsLoading}
               storefrontIds={form.storefront_ids}
-              onStorefrontsChange={storefront_ids => onChange({ storefront_ids })}
+              onStorefrontsChange={(storefront_ids) =>
+                onChange({ storefront_ids })
+              }
             />
           )}
           <SectionLabel>Security</SectionLabel>
           <InputField
-            label="New Password" type="password" placeholder="Leave blank to keep current"
-            value={form.password} onChange={v => onChange({ password: v })}
-            icon={<LockIcon />} helper="Leave blank to keep the current password"
+            label="New Password"
+            type="password"
+            placeholder="Leave blank to keep current"
+            value={form.password}
+            onChange={(v) => onChange({ password: v })}
+            icon={<LockIcon />}
+            helper="Leave blank to keep the current password"
           />
           {form.password && <PasswordStrengthBar password={form.password} />}
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-slate-100 flex gap-2">
+        <div className="flex gap-2 border-t border-slate-100 px-6 py-4">
           <button
-            type="button" onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50 transition"
+            type="button"
+            onClick={onClose}
+            className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50"
           >
             Cancel
           </button>
           <button
-            type="submit" disabled={busy}
-            className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white bg-teal-600 hover:bg-teal-700 disabled:opacity-60 transition-all shadow-sm shadow-teal-500/20"
+            type="submit"
+            disabled={busy}
+            className="flex-1 rounded-xl bg-teal-600 py-2.5 text-sm font-bold text-white shadow-sm shadow-teal-500/20 transition-all hover:bg-teal-700 disabled:opacity-60"
           >
-            {busy ? 'Saving…' : 'Save Changes'}
+            {busy ? "Saving…" : "Save Changes"}
           </button>
         </div>
       </motion.form>
@@ -890,42 +1405,58 @@ function EditModal({
 
 export default function AdminUsersPageMain() {
   const { data: session } = useSession()
-  const sessionRole = String(session?.user?.role ?? '').toLowerCase()
-  const sessionUserLevelId = Number((session?.user as { userLevelId?: number } | undefined)?.userLevelId ?? 0)
-  const sessionAccessToken = String((session?.user as { accessToken?: string } | undefined)?.accessToken ?? '')
+  const sessionRole = String(session?.user?.role ?? "").toLowerCase()
+  const sessionUserLevelId = Number(
+    (session?.user as { userLevelId?: number } | undefined)?.userLevelId ?? 0
+  )
+  const sessionAccessToken = String(
+    (session?.user as { accessToken?: string } | undefined)?.accessToken ?? ""
+  )
   const adminIdentityKey = sessionAccessToken
-    ? `${String((session?.user as { id?: string } | undefined)?.id ?? 'unknown')}:${sessionAccessToken}`
+    ? `${String((session?.user as { id?: string } | undefined)?.id ?? "unknown")}:${sessionAccessToken}`
     : undefined
-  const { data: adminMe } = useGetAdminMeQuery(adminIdentityKey, { skip: !sessionAccessToken })
+  const { data: adminMe } = useGetAdminMeQuery(adminIdentityKey, {
+    skip: !sessionAccessToken,
+  })
   const role = String(adminMe?.role ?? sessionRole).toLowerCase()
   const userLevelId = Number(adminMe?.user_level_id ?? sessionUserLevelId)
-  const isSuperAdmin = role === 'super_admin' || userLevelId === 1
-  const isAdmin = role === 'admin' || userLevelId === 2
+  const isSuperAdmin = role === "super_admin" || userLevelId === 1
+  const isAdmin = role === "admin" || userLevelId === 2
   const canManageUsers = isSuperAdmin || isAdmin
-  const [latestInvite, setLatestInvite] = useState<CreateAdminUserResponse | null>(null)
-  const { data: suppliersData } = useGetSuppliersQuery(undefined, { skip: !isSuperAdmin })
+  const [latestInvite, setLatestInvite] =
+    useState<CreateAdminUserResponse | null>(null)
+  const { data: suppliersData } = useGetSuppliersQuery(undefined, {
+    skip: !isSuperAdmin,
+  })
   const {
     data: storefrontData,
     isLoading: isLoadingStorefronts,
     isFetching: isFetchingStorefronts,
   } = useGetAdminWebPageItemsQuery({
-    type: 'partner-storefront',
+    type: "partner-storefront",
     page: 1,
     perPage: 100,
-    status: 'all',
+    status: "all",
   })
 
-  const [search,          setSearch]          = useState('')
-  const [roleFilter,      setRoleFilter]      = useState('')
-  const [activityFilter,  setActivityFilter]  = useState<'active' | 'inactive' | ''>('')
-  const [page,            setPage]            = useState(1)
-  const [createForm,      setCreateForm]      = useState<CreateForm>(initialForm)
-  const [busyUpdateId,    setBusyUpdateId]    = useState<number | null>(null)
-  const [editTarget,      setEditTarget]      = useState<AdminUserItem | null>(null)
-  const [activityTarget,  setActivityTarget]  = useState<AdminUserItem | null>(null)
-  const [editForm,        setEditForm]        = useState<EditForm>(initialEditForm)
+  const [search, setSearch] = useState("")
+  const [roleFilter, setRoleFilter] = useState("")
+  const [activityFilter, setActivityFilter] = useState<
+    "active" | "inactive" | ""
+  >("")
+  const [page, setPage] = useState(1)
+  const [createForm, setCreateForm] = useState<CreateForm>(initialForm)
+  const [busyUpdateId, setBusyUpdateId] = useState<number | null>(null)
+  const [editTarget, setEditTarget] = useState<AdminUserItem | null>(null)
+  const [activityTarget, setActivityTarget] = useState<AdminUserItem | null>(
+    null
+  )
+  const [editForm, setEditForm] = useState<EditForm>(initialEditForm)
   const createPermissionsRef = useRef<HTMLDivElement | null>(null)
-  const [isCreatePermissionsSpotlightActive, setIsCreatePermissionsSpotlightActive] = useState(false)
+  const [
+    isCreatePermissionsSpotlightActive,
+    setIsCreatePermissionsSpotlightActive,
+  ] = useState(false)
 
   const { data, isLoading, isFetching, isError } = useGetAdminUsersQuery(
     {
@@ -938,27 +1469,30 @@ export default function AdminUsersPageMain() {
     {
       skip: !canManageUsers,
       pollingInterval: 20_000,
-    },
+    }
   )
-  const [createAdminUser, { isLoading: isCreating }] = useCreateAdminUserMutation()
+  const [createAdminUser, { isLoading: isCreating }] =
+    useCreateAdminUserMutation()
   const [updateAdminUser] = useUpdateAdminUserMutation()
   const [deleteAdminUser] = useDeleteAdminUserMutation()
   const [banAdminUser] = useBanAdminUserMutation()
   const [unbanAdminUser] = useUnbanAdminUserMutation()
   const [deleteTarget, setDeleteTarget] = useState<AdminUserItem | null>(null)
   const [banTarget, setBanTarget] = useState<AdminUserItem | null>(null)
-  const latestInviteRoleLabel = latestInvite?.invite.role_label
-    ?? latestInvite?.invite.role?.replace(/_/g, ' ')
-    ?? 'Admin'
+  const latestInviteRoleLabel =
+    latestInvite?.invite.role_label ??
+    latestInvite?.invite.role?.replace(/_/g, " ") ??
+    "Admin"
   const latestInviteExpiresAt = formatDateTime(latestInvite?.invite.expires_at)
 
   const rows = useMemo(() => data?.users ?? [], [data?.users])
   const supplierOptions = useMemo(
-    () => (suppliersData?.suppliers ?? []).map((supplier) => ({
-      id: supplier.id,
-      label: supplier.company || supplier.name,
-    })),
-    [suppliersData?.suppliers],
+    () =>
+      (suppliersData?.suppliers ?? []).map((supplier) => ({
+        id: supplier.id,
+        label: supplier.company || supplier.name,
+      })),
+    [suppliersData?.suppliers]
   )
   const storefronts = useMemo(
     () =>
@@ -967,25 +1501,43 @@ export default function AdminUsersPageMain() {
           item,
           config: getPartnerStorefrontConfig(item),
         }))
-        .filter((entry): entry is { item: WebPageItem; config: NonNullable<ReturnType<typeof getPartnerStorefrontConfig>> } => Boolean(entry.config))
-        .sort((a, b) => a.config.displayName.localeCompare(b.config.displayName)),
-    [storefrontData?.items],
+        .filter(
+          (
+            entry
+          ): entry is {
+            item: WebPageItem
+            config: NonNullable<ReturnType<typeof getPartnerStorefrontConfig>>
+          } => Boolean(entry.config)
+        )
+        .sort((a, b) =>
+          a.config.displayName.localeCompare(b.config.displayName)
+        ),
+    [storefrontData?.items]
   )
-  const isStorefrontsLoading = isLoadingStorefronts || (isFetchingStorefronts && storefronts.length === 0)
+  const isStorefrontsLoading =
+    isLoadingStorefronts || (isFetchingStorefronts && storefronts.length === 0)
   const allowedRoleOptions = useMemo(() => {
     if (isSuperAdmin) return ROLE_OPTIONS
-    if (isAdmin) return ROLE_OPTIONS.filter((roleOption) => [3, 4, 5, 6, 7].includes(roleOption.value))
+    if (isAdmin)
+      return ROLE_OPTIONS.filter((roleOption) =>
+        [3, 4, 5, 6, 7].includes(roleOption.value)
+      )
     return []
   }, [isAdmin, isSuperAdmin])
 
   const spotlightCreatePermissions = () => {
     setIsCreatePermissionsSpotlightActive(true)
-    createPermissionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    createPermissionsRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    })
     window.setTimeout(() => setIsCreatePermissionsSpotlightActive(false), 1600)
   }
 
   const toggleStorefrontSelection = (current: number[], id: number) =>
-    current.includes(id) ? current.filter((item) => item !== id) : [...current, id]
+    current.includes(id)
+      ? current.filter((item) => item !== id)
+      : [...current, id]
 
   const handleCreate = async (e: React.SyntheticEvent) => {
     e.preventDefault()
@@ -993,8 +1545,11 @@ export default function AdminUsersPageMain() {
       const result = await createAdminUser({
         ...createForm,
         email: createForm.email.trim() || undefined,
-        admin_permissions: [2, 4].includes(createForm.user_level_id) ? createForm.admin_permissions : [],
-        storefront_ids: createForm.user_level_id === 4 ? createForm.storefront_ids : [],
+        admin_permissions: [2, 4].includes(createForm.user_level_id)
+          ? createForm.admin_permissions
+          : [],
+        storefront_ids:
+          createForm.user_level_id === 4 ? createForm.storefront_ids : [],
       }).unwrap()
       showSuccessToast(result.message)
       setLatestInvite(result)
@@ -1002,15 +1557,24 @@ export default function AdminUsersPageMain() {
         ...initialForm,
         user_level_id: prev.user_level_id,
         supplier_id: prev.user_level_id === 8 ? prev.supplier_id : null,
-        admin_permissions: prev.user_level_id === 2
-          ? (prev.admin_permissions.length ? prev.admin_permissions : DEFAULT_ADMIN_PERMISSIONS)
-          : [],
+        admin_permissions:
+          prev.user_level_id === 2
+            ? prev.admin_permissions.length
+              ? prev.admin_permissions
+              : DEFAULT_ADMIN_PERMISSIONS
+            : [],
         storefront_ids: prev.user_level_id === 4 ? prev.storefront_ids : [],
       }))
     } catch (err: unknown) {
-      const apiErr = err as { data?: { message?: string; errors?: Record<string, string[]> } }
-      const msg = (apiErr?.data?.errors ? Object.values(apiErr.data.errors)[0]?.[0] : undefined)
-        || apiErr?.data?.message || 'Failed to create admin account.'
+      const apiErr = err as {
+        data?: { message?: string; errors?: Record<string, string[]> }
+      }
+      const msg =
+        (apiErr?.data?.errors
+          ? Object.values(apiErr.data.errors)[0]?.[0]
+          : undefined) ||
+        apiErr?.data?.message ||
+        "Failed to create admin account."
       showErrorToast(msg)
     }
   }
@@ -1021,16 +1585,17 @@ export default function AdminUsersPageMain() {
       name: row.name,
       username: row.username,
       email: row.email,
-      password: '',
+      password: "",
       user_level_id: row.user_level_id,
       supplier_id: row.supplier_id ?? null,
-      admin_permissions: row.user_level_id === 2
-        ? (normalizeAdminPermissions(row.admin_permissions).length
-          ? normalizeAdminPermissions(row.admin_permissions)
-          : DEFAULT_ADMIN_PERMISSIONS)
-        : row.user_level_id === 4
-          ? (row.admin_permissions ?? []).filter(p => p.startsWith('wc:'))
-          : [],
+      admin_permissions:
+        row.user_level_id === 2
+          ? normalizeAdminPermissions(row.admin_permissions).length
+            ? normalizeAdminPermissions(row.admin_permissions)
+            : DEFAULT_ADMIN_PERMISSIONS
+          : row.user_level_id === 4
+            ? (row.admin_permissions ?? []).filter((p) => p.startsWith("wc:"))
+            : [],
       storefront_ids: row.storefront_ids ?? [],
     })
   }
@@ -1041,22 +1606,36 @@ export default function AdminUsersPageMain() {
     setBusyUpdateId(editTarget.id)
     try {
       await updateAdminUser({
-        id: editTarget.id, name: editForm.name, username: editForm.username,
-        email: editForm.email, user_level_id: editForm.user_level_id,
+        id: editTarget.id,
+        name: editForm.name,
+        username: editForm.username,
+        email: editForm.email,
+        user_level_id: editForm.user_level_id,
         supplier_id: editForm.user_level_id === 8 ? editForm.supplier_id : null,
-        admin_permissions: [2, 4].includes(editForm.user_level_id) ? editForm.admin_permissions : [],
-        storefront_ids: editForm.user_level_id === 4 ? editForm.storefront_ids : [],
+        admin_permissions: [2, 4].includes(editForm.user_level_id)
+          ? editForm.admin_permissions
+          : [],
+        storefront_ids:
+          editForm.user_level_id === 4 ? editForm.storefront_ids : [],
         password: editForm.password.trim() || undefined,
       }).unwrap()
       showSuccessToast(`Updated account for ${editTarget.username}.`)
       setEditTarget(null)
       setEditForm(initialEditForm)
     } catch (err: unknown) {
-      const apiErr = err as { data?: { message?: string; errors?: Record<string, string[]> } }
-      const msg = (apiErr?.data?.errors ? Object.values(apiErr.data.errors)[0]?.[0] : undefined)
-        || apiErr?.data?.message || 'Failed to update admin account.'
+      const apiErr = err as {
+        data?: { message?: string; errors?: Record<string, string[]> }
+      }
+      const msg =
+        (apiErr?.data?.errors
+          ? Object.values(apiErr.data.errors)[0]?.[0]
+          : undefined) ||
+        apiErr?.data?.message ||
+        "Failed to update admin account."
       showErrorToast(msg)
-    } finally { setBusyUpdateId(null) }
+    } finally {
+      setBusyUpdateId(null)
+    }
   }
 
   const handleDelete = async () => {
@@ -1067,8 +1646,13 @@ export default function AdminUsersPageMain() {
       showSuccessToast(`Deleted account ${deleteTarget.username}.`)
       setDeleteTarget(null)
     } catch (err: unknown) {
-      showErrorToast((err as { data?: { message?: string } })?.data?.message || 'Failed to delete admin account.')
-    } finally { setBusyUpdateId(null) }
+      showErrorToast(
+        (err as { data?: { message?: string } })?.data?.message ||
+          "Failed to delete admin account."
+      )
+    } finally {
+      setBusyUpdateId(null)
+    }
   }
 
   const handleBanToggle = async () => {
@@ -1077,15 +1661,24 @@ export default function AdminUsersPageMain() {
     try {
       if (banTarget.is_banned) {
         await unbanAdminUser({ id: banTarget.id }).unwrap()
-        showSuccessToast(`Unbanned ${banTarget.username}. They can now log in again.`)
+        showSuccessToast(
+          `Unbanned ${banTarget.username}. They can now log in again.`
+        )
       } else {
         await banAdminUser({ id: banTarget.id }).unwrap()
-        showSuccessToast(`Banned ${banTarget.username}. They can no longer log in.`)
+        showSuccessToast(
+          `Banned ${banTarget.username}. They can no longer log in.`
+        )
       }
       setBanTarget(null)
     } catch (err: unknown) {
-      showErrorToast((err as { data?: { message?: string } })?.data?.message || 'Failed to update ban status.')
-    } finally { setBusyUpdateId(null) }
+      showErrorToast(
+        (err as { data?: { message?: string } })?.data?.message ||
+          "Failed to update ban status."
+      )
+    } finally {
+      setBusyUpdateId(null)
+    }
   }
 
   /* ── Access guard ── */
@@ -1093,23 +1686,37 @@ export default function AdminUsersPageMain() {
     if (!latestInvite?.setup_url) return
     try {
       await navigator.clipboard.writeText(latestInvite.setup_url)
-      showSuccessToast('Setup link copied.')
+      showSuccessToast("Setup link copied.")
     } catch {
-      showErrorToast('Unable to copy setup link.')
+      showErrorToast("Unable to copy setup link.")
     }
   }
 
   if (!canManageUsers) {
     return (
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 flex items-center gap-3">
-        <div className="h-9 w-9 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+      <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-5">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
+          <svg
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+            />
           </svg>
         </div>
         <div>
-          <p className="text-sm font-semibold text-amber-800">Access Restricted</p>
-          <p className="text-xs text-amber-600 mt-0.5">Only admin managers can manage Users & Roles.</p>
+          <p className="text-sm font-semibold text-amber-800">
+            Access Restricted
+          </p>
+          <p className="mt-0.5 text-xs text-amber-600">
+            Only admin managers can manage Users & Roles.
+          </p>
         </div>
       </div>
     )
@@ -1117,15 +1724,25 @@ export default function AdminUsersPageMain() {
 
   /* Live avatar preview as name is typed */
   const nameInitials = createForm.name ? getInitials(createForm.name) : null
-  const nameGrad     = createForm.name ? avatarGrad(createForm.name) : 'from-slate-300 to-slate-400'
+  const nameGrad = createForm.name
+    ? avatarGrad(createForm.name)
+    : "from-slate-300 to-slate-400"
 
   return (
     <div className="space-y-6">
       {/* ── Page Header ── */}
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
         <h1 className="text-xl font-bold text-slate-800">Users & Roles</h1>
-        <p className="text-sm text-slate-500 mt-0.5">Create and manage internal admin accounts and their role permissions</p>
-        <p className="text-xs text-slate-400 mt-1">Supplier company accounts should use the dedicated supplier portal, not admin roles.</p>
+        <p className="mt-0.5 text-sm text-slate-500">
+          Create and manage internal admin accounts and their role permissions
+        </p>
+        <p className="mt-1 text-xs text-slate-400">
+          Supplier company accounts should use the dedicated supplier portal,
+          not admin roles.
+        </p>
       </motion.div>
 
       {/* ── Create Form ── */}
@@ -1134,44 +1751,67 @@ export default function AdminUsersPageMain() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.05 }}
         onSubmit={handleCreate}
-        className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden"
+        className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"
       >
         {/* Form header with live avatar */}
-        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
-          <div className={`h-10 w-10 rounded-xl bg-linear-to-br ${nameGrad} flex items-center justify-center text-white text-sm font-bold shrink-0 transition-all duration-300`}>
+        <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4 dark:border-slate-800">
+          <div
+            className={`h-10 w-10 rounded-xl bg-linear-to-br ${nameGrad} flex shrink-0 items-center justify-center text-sm font-bold text-white transition-all duration-300`}
+          >
             {nameInitials ?? (
-              <svg className="w-5 h-5 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              <svg
+                className="h-5 w-5 opacity-60"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
               </svg>
             )}
           </div>
           <div>
-            <h2 className="text-sm font-bold text-slate-800">Invite Admin Account</h2>
-            <p className="text-xs text-slate-400 mt-0.5">The invited user will receive an email to verify the account and set their password.</p>
+            <h2 className="text-sm font-bold text-slate-800">
+              Invite Admin Account
+            </h2>
+            <p className="mt-0.5 text-xs text-slate-400">
+              The invited user will receive an email to verify the account and
+              set their password.
+            </p>
           </div>
         </div>
 
-        <div className="px-6 py-5 space-y-5">
+        <div className="space-y-5 px-6 py-5">
           {/* Account info */}
           <SectionLabel>Account Information</SectionLabel>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <InputField
-              label="Full Name" placeholder="e.g. Juan dela Cruz"
+              label="Full Name"
+              placeholder="e.g. Juan dela Cruz"
               value={createForm.name}
-              onChange={v => setCreateForm(p => ({ ...p, name: v }))}
-              required icon={<UserIcon />}
+              onChange={(v) => setCreateForm((p) => ({ ...p, name: v }))}
+              required
+              icon={<UserIcon />}
             />
             <InputField
-              label="Username" placeholder="e.g. juandc"
+              label="Username"
+              placeholder="e.g. juandc"
               value={createForm.username}
-              onChange={v => setCreateForm(p => ({ ...p, username: v }))}
-              required icon={<AtIcon />}
+              onChange={(v) => setCreateForm((p) => ({ ...p, username: v }))}
+              required
+              icon={<AtIcon />}
             />
           </div>
           <InputField
-            label="Email Address" type="email" placeholder="Optional email for resets and notices"
+            label="Email Address"
+            type="email"
+            placeholder="Optional email for resets and notices"
             value={createForm.email}
-            onChange={v => setCreateForm(p => ({ ...p, email: v }))}
+            onChange={(v) => setCreateForm((p) => ({ ...p, email: v }))}
             icon={<MailIcon />}
             helper="Optional. Leave blank if you will share the setup link manually."
           />
@@ -1181,16 +1821,19 @@ export default function AdminUsersPageMain() {
           <RoleCardGrid
             value={createForm.user_level_id}
             options={allowedRoleOptions}
-            onChange={v => {
+            onChange={(v) => {
               setLatestInvite(null)
-              setCreateForm(p => ({
+              setCreateForm((p) => ({
                 ...p,
                 user_level_id: v,
                 supplier_id: v === 8 ? p.supplier_id : null,
                 storefront_ids: v === 4 ? p.storefront_ids : [],
-                admin_permissions: v === 2
-                  ? (p.admin_permissions.length ? p.admin_permissions : DEFAULT_ADMIN_PERMISSIONS)
-                  : [],
+                admin_permissions:
+                  v === 2
+                    ? p.admin_permissions.length
+                      ? p.admin_permissions
+                      : DEFAULT_ADMIN_PERMISSIONS
+                    : [],
               }))
               if (v === 2) {
                 window.setTimeout(() => spotlightCreatePermissions(), 80)
@@ -1201,34 +1844,53 @@ export default function AdminUsersPageMain() {
             <motion.div
               ref={createPermissionsRef}
               initial={false}
-              animate={isCreatePermissionsSpotlightActive ? { scale: [1, 1.01, 1], boxShadow: ['0 0 0 rgba(20,184,166,0)', '0 0 0 10px rgba(20,184,166,0.12)', '0 0 0 rgba(20,184,166,0)'] } : { scale: 1, boxShadow: '0 0 0 rgba(20,184,166,0)' }}
-              transition={{ duration: 0.8, ease: 'easeOut' }}
+              animate={
+                isCreatePermissionsSpotlightActive
+                  ? {
+                      scale: [1, 1.01, 1],
+                      boxShadow: [
+                        "0 0 0 rgba(20,184,166,0)",
+                        "0 0 0 10px rgba(20,184,166,0.12)",
+                        "0 0 0 rgba(20,184,166,0)",
+                      ],
+                    }
+                  : { scale: 1, boxShadow: "0 0 0 rgba(20,184,166,0)" }
+              }
+              transition={{ duration: 0.8, ease: "easeOut" }}
               className="rounded-2xl border border-teal-100 bg-teal-50/60 p-3"
             >
-              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">
+              <p className="mb-3 text-xs font-semibold tracking-[0.18em] text-teal-700 uppercase">
                 Choose Admin Access Before Saving
               </p>
               <PermissionCheckboxGrid
                 value={normalizeAdminPermissions(createForm.admin_permissions)}
-                onChange={(admin_permissions) => setCreateForm((prev) => ({ ...prev, admin_permissions }))}
+                onChange={(admin_permissions) =>
+                  setCreateForm((prev) => ({ ...prev, admin_permissions }))
+                }
               />
             </motion.div>
           )}
           {createForm.user_level_id === 8 && (
             <SupplierSelect
               value={createForm.supplier_id}
-              onChange={(supplierId) => setCreateForm((prev) => ({ ...prev, supplier_id: supplierId }))}
+              onChange={(supplierId) =>
+                setCreateForm((prev) => ({ ...prev, supplier_id: supplierId }))
+              }
               options={supplierOptions}
             />
           )}
           {createForm.user_level_id === 4 && (
             <WebContentSectionPicker
               value={createForm.admin_permissions}
-              onChange={admin_permissions => setCreateForm(p => ({ ...p, admin_permissions }))}
+              onChange={(admin_permissions) =>
+                setCreateForm((p) => ({ ...p, admin_permissions }))
+              }
               storefronts={storefronts}
               isStorefrontsLoading={isStorefrontsLoading}
               storefrontIds={createForm.storefront_ids}
-              onStorefrontsChange={storefront_ids => setCreateForm(p => ({ ...p, storefront_ids }))}
+              onStorefrontsChange={(storefront_ids) =>
+                setCreateForm((p) => ({ ...p, storefront_ids }))
+              }
             />
           )}
         </div>
@@ -1237,15 +1899,23 @@ export default function AdminUsersPageMain() {
           <div className="mx-6 mb-5 rounded-2xl border border-teal-200 bg-teal-50 p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <p className="text-sm font-bold text-teal-800">{latestInviteRoleLabel} setup link ready</p>
+                <p className="text-sm font-bold text-teal-800">
+                  {latestInviteRoleLabel} setup link ready
+                </p>
                 <p className="mt-1 text-xs text-teal-700">
-                  {latestInvite.delivery === 'email_and_link'
+                  {latestInvite.delivery === "email_and_link"
                     ? `The ${latestInviteRoleLabel.toLowerCase()} invite email was sent, and you can also share this setup link manually.`
                     : `Share this setup link directly with your ${latestInviteRoleLabel.toLowerCase()} so they can set their password.`}
                 </p>
                 <p className="mt-2 text-xs text-slate-500">
-                  Role: <span className="font-semibold text-slate-700">{latestInviteRoleLabel}</span>
-                  {' '}· Username: <span className="font-semibold text-slate-700">{latestInvite.invite.username}</span>
+                  Role:{" "}
+                  <span className="font-semibold text-slate-700">
+                    {latestInviteRoleLabel}
+                  </span>{" "}
+                  · Username:{" "}
+                  <span className="font-semibold text-slate-700">
+                    {latestInvite.invite.username}
+                  </span>
                 </p>
               </div>
               <div className="flex shrink-0 gap-2">
@@ -1253,41 +1923,55 @@ export default function AdminUsersPageMain() {
                   href={latestInvite.setup_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="rounded-xl border border-teal-300 bg-white px-4 py-2 text-xs font-bold text-teal-700 hover:bg-teal-50 transition-colors"
+                  className="rounded-xl border border-teal-300 bg-white px-4 py-2 text-xs font-bold text-teal-700 transition-colors hover:bg-teal-50"
                 >
                   Open Link
                 </a>
                 <button
                   type="button"
                   onClick={copyInviteLink}
-                  className="rounded-xl border border-teal-300 bg-white px-4 py-2 text-xs font-bold text-teal-700 hover:bg-teal-50 transition-colors"
+                  className="rounded-xl border border-teal-300 bg-white px-4 py-2 text-xs font-bold text-teal-700 transition-colors hover:bg-teal-50"
                 >
                   Copy Link
                 </button>
               </div>
             </div>
-            <div className="mt-3 rounded-xl border border-teal-100 bg-white px-3 py-2 text-xs text-slate-600 break-all">
+            <div className="mt-3 rounded-xl border border-teal-100 bg-white px-3 py-2 text-xs break-all text-slate-600">
               {latestInvite.setup_url}
             </div>
           </div>
         )}
 
         {/* Form footer */}
-        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/50 px-6 py-4">
           <p className="text-xs text-slate-400">
-            Fields marked <span className="text-red-400 font-semibold">*</span> are required
+            Fields marked <span className="font-semibold text-red-400">*</span>{" "}
+            are required
           </p>
           <button
             type="submit"
             disabled={isCreating}
-            className="flex items-center gap-2 px-6 py-2.5 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white rounded-xl text-sm font-bold disabled:opacity-60 transition-all shadow-sm shadow-teal-500/30"
+            className="flex items-center gap-2 rounded-xl bg-teal-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm shadow-teal-500/30 transition-all hover:bg-teal-700 active:bg-teal-800 disabled:opacity-60"
           >
             {isCreating ? (
-              <><SpinIcon />Creating…</>
+              <>
+                <SpinIcon />
+                Creating…
+              </>
             ) : (
               <>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                  />
                 </svg>
                 Create Invite Link
               </>
@@ -1301,25 +1985,41 @@ export default function AdminUsersPageMain() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden"
+        className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"
       >
         {/* Toolbar */}
-        <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3 flex-wrap">
-          <div className="relative flex-1 min-w-50">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        <div className="flex flex-wrap items-center gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+          <div className="relative min-w-50 flex-1">
+            <svg
+              className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
             </svg>
             <input
               value={search}
-              onChange={e => { setSearch(e.target.value); setPage(1) }}
+              onChange={(e) => {
+                setSearch(e.target.value)
+                setPage(1)
+              }}
               placeholder="Search name, username, email…"
-              className="w-full pl-9 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 bg-slate-50 text-slate-700 placeholder-slate-400 transition"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pr-4 pl-9 text-sm text-slate-700 placeholder-slate-400 transition focus:border-teal-400 focus:ring-2 focus:ring-teal-500/30 focus:outline-none"
             />
           </div>
           <select
             value={activityFilter}
-            onChange={e => { setActivityFilter(e.target.value as 'active' | 'inactive' | ''); setPage(1) }}
-            className="px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 transition"
+            onChange={(e) => {
+              setActivityFilter(e.target.value as "active" | "inactive" | "")
+              setPage(1)
+            }}
+            className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 transition focus:border-teal-400 focus:ring-2 focus:ring-teal-500/30 focus:outline-none"
           >
             <option value="">All Status</option>
             <option value="active">Active</option>
@@ -1327,36 +2027,60 @@ export default function AdminUsersPageMain() {
           </select>
           <select
             value={roleFilter}
-            onChange={e => { setRoleFilter(e.target.value); setPage(1) }}
-            className="px-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 transition"
+            onChange={(e) => {
+              setRoleFilter(e.target.value)
+              setPage(1)
+            }}
+            className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 transition focus:border-teal-400 focus:ring-2 focus:ring-teal-500/30 focus:outline-none"
           >
             <option value="">All Roles</option>
             {allowedRoleOptions.map((option) => (
-              <option key={option.value} value={
-                option.value === 1 ? 'super_admin'
-                : option.value === 2 ? 'admin'
-                : option.value === 3 ? 'csr'
-                : option.value === 4 ? 'web_content'
-                : option.value === 5 ? 'accounting'
-                : option.value === 6 ? 'finance_officer'
-                : option.value === 7 ? 'merchant_admin'
-                : option.value === 8 ? 'supplier_admin'
-                : ''
-              }>
+              <option
+                key={option.value}
+                value={
+                  option.value === 1
+                    ? "super_admin"
+                    : option.value === 2
+                      ? "admin"
+                      : option.value === 3
+                        ? "csr"
+                        : option.value === 4
+                          ? "web_content"
+                          : option.value === 5
+                            ? "accounting"
+                            : option.value === 6
+                              ? "finance_officer"
+                              : option.value === 7
+                                ? "merchant_admin"
+                                : option.value === 8
+                                  ? "supplier_admin"
+                                  : ""
+                }
+              >
                 {option.label}
               </option>
             ))}
           </select>
-          <span className="text-xs text-slate-400 bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-full font-medium shrink-0">
+          <span className="shrink-0 rounded-full border border-slate-100 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-400">
             {data?.meta?.total ?? 0} accounts
           </span>
         </div>
 
         {/* Error */}
         {isError && (
-          <div className="px-5 py-3 border-b border-red-100 bg-red-50 text-sm text-red-700 flex items-center gap-2">
-            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <div className="flex items-center gap-2 border-b border-red-100 bg-red-50 px-5 py-3 text-sm text-red-700">
+            <svg
+              className="h-4 w-4 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
             Failed to load admin users.
           </div>
@@ -1370,144 +2094,268 @@ export default function AdminUsersPageMain() {
 
         {/* Table / Skeleton */}
         {isLoading ? (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800/70 dark:divide-slate-800/70 animate-pulse">
+          <div className="animate-pulse divide-y divide-slate-100 dark:divide-slate-800/70">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="px-5 py-4 flex items-center gap-4">
-                <div className="h-9 w-9 rounded-full bg-slate-100 shrink-0" />
+              <div key={i} className="flex items-center gap-4 px-5 py-4">
+                <div className="h-9 w-9 shrink-0 rounded-full bg-slate-100" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-3 w-32 bg-slate-100 rounded" />
-                  <div className="h-2.5 w-20 bg-slate-100 rounded" />
+                  <div className="h-3 w-32 rounded bg-slate-100" />
+                  <div className="h-2.5 w-20 rounded bg-slate-100" />
                 </div>
-                <div className="h-6 w-20 bg-slate-100 rounded-full" />
-                <div className="h-7 w-12 bg-slate-100 rounded-lg" />
+                <div className="h-6 w-20 rounded-full bg-slate-100" />
+                <div className="h-7 w-12 rounded-lg bg-slate-100" />
               </div>
             ))}
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left min-w-175">
+            <table className="w-full min-w-175 text-left">
               <thead>
-                <tr className="border-b border-slate-100 dark:border-slate-800 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60">
-                  {['Admin', 'Username', 'Email', 'Role', 'Actions'].map(h => (
-                    <th key={h} className="px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">{h}</th>
-                  ))}
+                <tr className="border-b border-slate-100 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60">
+                  {["Admin", "Username", "Email", "Role", "Actions"].map(
+                    (h) => (
+                      <th
+                        key={h}
+                        className="px-5 py-3 text-xs font-semibold tracking-wide text-slate-400 uppercase"
+                      >
+                        {h}
+                      </th>
+                    )
+                  )}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70 dark:divide-slate-800/70">
-                {rows.length ? rows.map(row => {
-                  const roleKey = row.role.toLowerCase().replace(/\s+/g, '_')
-                  const roleCls = ROLE_COLORS[roleKey] ?? 'bg-slate-100 text-slate-600 border-slate-200'
-                  const isBusy  = busyUpdateId === row.id
-                  return (
-                    <tr key={row.id} className="hover:bg-slate-50/70 transition-colors cursor-pointer" onClick={() => setActivityTarget(row)}>
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-3">
-                          <div className="relative shrink-0">
-                            <div className={`h-9 w-9 rounded-full bg-linear-to-br ${avatarGrad(row.name)} flex items-center justify-center text-white text-xs font-bold`}>
-                              {getInitials(row.name)}
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70">
+                {rows.length ? (
+                  rows.map((row) => {
+                    const roleKey = row.role.toLowerCase().replace(/\s+/g, "_")
+                    const roleCls =
+                      ROLE_COLORS[roleKey] ??
+                      "bg-slate-100 text-slate-600 border-slate-200"
+                    const isBusy = busyUpdateId === row.id
+                    return (
+                      <tr
+                        key={row.id}
+                        className="cursor-pointer transition-colors hover:bg-slate-50/70"
+                        onClick={() => setActivityTarget(row)}
+                      >
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center gap-3">
+                            <div className="relative shrink-0">
+                              <div
+                                className={`h-9 w-9 rounded-full bg-linear-to-br ${avatarGrad(row.name)} flex items-center justify-center text-xs font-bold text-white`}
+                              >
+                                {getInitials(row.name)}
+                              </div>
+                              <span
+                                className={`absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2 border-white ${row.is_online ? "bg-emerald-500" : "bg-slate-300"}`}
+                              />
                             </div>
-                            <span className={`absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2 border-white ${row.is_online ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-slate-800">
+                                {row.name}
+                              </p>
+                              <p
+                                className={`mt-0.5 text-[11px] ${row.is_online ? "text-emerald-600" : "text-slate-400"}`}
+                              >
+                                {row.is_online
+                                  ? "Active now"
+                                  : formatMinutesSinceActive(
+                                      row.minutes_since_active
+                                    )}
+                              </p>
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-slate-800">{row.name}</p>
-                            <p className={`text-[11px] mt-0.5 ${row.is_online ? 'text-emerald-600' : 'text-slate-400'}`}>
-                              {row.is_online ? 'Active now' : formatMinutesSinceActive(row.minutes_since_active)}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <span className="text-sm text-slate-600 font-mono">@{row.username}</span>
-                      </td>
-                      <td className="px-5 py-3.5 text-sm text-slate-500">{row.email}</td>
-                      <td className="px-5 py-3.5">
-                        <div className="space-y-1">
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <span className={`inline-flex px-2.5 py-1 rounded-full border text-[11px] font-semibold capitalize ${roleCls}`}>
-                              {row.role.replace(/_/g, ' ')}
-                            </span>
-                            {row.is_banned && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 border border-red-200 text-[10px] font-bold uppercase tracking-wide text-red-600">
-                                <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                                </svg>
-                                Banned
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <span className="font-mono text-sm text-slate-600">
+                            @{row.username}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5 text-sm text-slate-500">
+                          {row.email}
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <div className="space-y-1">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span
+                                className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold capitalize ${roleCls}`}
+                              >
+                                {row.role.replace(/_/g, " ")}
                               </span>
+                              {row.is_banned && (
+                                <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-100 px-2 py-0.5 text-[10px] font-bold tracking-wide text-red-600 uppercase">
+                                  <svg
+                                    className="h-2.5 w-2.5"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                  >
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                                      clipRule="evenodd"
+                                    />
+                                  </svg>
+                                  Banned
+                                </span>
+                              )}
+                            </div>
+                            {row.supplier_name && (
+                              <p className="text-[11px] text-slate-400">
+                                {row.supplier_name}
+                              </p>
                             )}
                           </div>
-                          {row.supplier_name && (
-                            <p className="text-[11px] text-slate-400">{row.supplier_name}</p>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-1">
-                          {/* Edit */}
-                          <button
-                            disabled={isBusy}
-                            onClick={(event) => { event.stopPropagation(); openEditModal(row) }}
-                            title="Edit account"
-                            className="group relative h-8 w-8 rounded-lg border border-slate-200 text-slate-500 hover:border-teal-300 hover:bg-teal-50 hover:text-teal-600 disabled:opacity-40 transition-all flex items-center justify-center"
-                          >
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                          </button>
-                          {/* Ban / Unban */}
-                          <button
-                            disabled={isBusy}
-                            onClick={(event) => { event.stopPropagation(); setBanTarget(row) }}
-                            title={row.is_banned ? 'Unban account' : 'Ban account'}
-                            className={`h-8 w-8 rounded-lg border flex items-center justify-center disabled:opacity-40 transition-all ${
-                              row.is_banned
-                                ? 'border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
-                                : 'border-amber-200 text-amber-500 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-600'
-                            }`}
-                          >
-                            {row.is_banned ? (
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center gap-1">
+                            {/* Edit */}
+                            <button
+                              disabled={isBusy}
+                              onClick={(event) => {
+                                event.stopPropagation()
+                                openEditModal(row)
+                              }}
+                              title="Edit account"
+                              className="group relative flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition-all hover:border-teal-300 hover:bg-teal-50 hover:text-teal-600 disabled:opacity-40"
+                            >
+                              <svg
+                                className="h-3.5 w-3.5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                />
                               </svg>
-                            ) : (
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </button>
+                            {/* Ban / Unban */}
+                            <button
+                              disabled={isBusy}
+                              onClick={(event) => {
+                                event.stopPropagation()
+                                setBanTarget(row)
+                              }}
+                              title={
+                                row.is_banned ? "Unban account" : "Ban account"
+                              }
+                              className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-all disabled:opacity-40 ${
+                                row.is_banned
+                                  ? "border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+                                  : "border-amber-200 text-amber-500 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-600"
+                              }`}
+                            >
+                              {row.is_banned ? (
+                                <svg
+                                  className="h-3.5 w-3.5"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"
+                                  />
+                                </svg>
+                              ) : (
+                                <svg
+                                  className="h-3.5 w-3.5"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                                  />
+                                </svg>
+                              )}
+                            </button>
+                            {/* Delete */}
+                            <button
+                              disabled={isBusy}
+                              onClick={(event) => {
+                                event.stopPropagation()
+                                setDeleteTarget(row)
+                              }}
+                              title="Delete account"
+                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-100 text-red-400 transition-all hover:border-red-300 hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
+                            >
+                              <svg
+                                className="h-3.5 w-3.5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                />
                               </svg>
-                            )}
-                          </button>
-                          {/* Delete */}
-                          <button
-                            disabled={isBusy}
-                            onClick={(event) => { event.stopPropagation(); setDeleteTarget(row) }}
-                            title="Delete account"
-                            className="h-8 w-8 rounded-lg border border-red-100 text-red-400 hover:border-red-300 hover:bg-red-50 hover:text-red-600 disabled:opacity-40 transition-all flex items-center justify-center"
-                          >
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                          <button
-                            disabled={isBusy}
-                            onClick={(event) => { event.stopPropagation(); setActivityTarget(row) }}
-                            title="View activity"
-                            className="h-8 w-8 rounded-lg border border-slate-200 text-slate-500 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 disabled:opacity-40 transition-all flex items-center justify-center"
-                          >
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                }) : (
+                            </button>
+                            <button
+                              disabled={isBusy}
+                              onClick={(event) => {
+                                event.stopPropagation()
+                                setActivityTarget(row)
+                              }}
+                              title="View activity"
+                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 disabled:opacity-40"
+                            >
+                              <svg
+                                className="h-3.5 w-3.5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })
+                ) : (
                   <tr>
                     <td colSpan={5} className="px-5 py-14 text-center">
                       <div className="flex flex-col items-center gap-2">
-                        <svg className="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        <svg
+                          className="h-8 w-8 text-slate-300"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                          />
                         </svg>
-                        <p className="text-sm font-semibold text-slate-500">No admin users found</p>
+                        <p className="text-sm font-semibold text-slate-500">
+                          No admin users found
+                        </p>
                       </div>
                     </td>
                   </tr>
@@ -1518,25 +2366,34 @@ export default function AdminUsersPageMain() {
         )}
 
         {/* Pagination */}
-        <div className="px-5 py-3.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+        <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3.5 text-xs text-slate-400">
           <span>
-            Showing{' '}
-            <span className="font-semibold text-slate-600">{data?.meta?.from ?? 0}–{data?.meta?.to ?? 0}</span>
-            {' '}of <span className="font-semibold text-slate-600">{data?.meta?.total ?? 0}</span>
+            Showing{" "}
+            <span className="font-semibold text-slate-600">
+              {data?.meta?.from ?? 0}–{data?.meta?.to ?? 0}
+            </span>{" "}
+            of{" "}
+            <span className="font-semibold text-slate-600">
+              {data?.meta?.total ?? 0}
+            </span>
           </span>
           <div className="flex items-center gap-1.5">
             <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={(data?.meta?.current_page ?? 1) <= 1}
-              className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 transition"
+              className="rounded-lg border border-slate-200 px-3 py-1.5 text-slate-600 transition hover:bg-slate-50 disabled:opacity-40"
             >
               Prev
             </button>
-            <span className="px-2">{data?.meta?.current_page ?? 1} / {data?.meta?.last_page ?? 1}</span>
+            <span className="px-2">
+              {data?.meta?.current_page ?? 1} / {data?.meta?.last_page ?? 1}
+            </span>
             <button
-              onClick={() => setPage(p => p + 1)}
-              disabled={(data?.meta?.current_page ?? 1) >= (data?.meta?.last_page ?? 1)}
-              className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 transition"
+              onClick={() => setPage((p) => p + 1)}
+              disabled={
+                (data?.meta?.current_page ?? 1) >= (data?.meta?.last_page ?? 1)
+              }
+              className="rounded-lg border border-slate-200 px-3 py-1.5 text-slate-600 transition hover:bg-slate-50 disabled:opacity-40"
             >
               Next
             </button>
@@ -1551,9 +2408,12 @@ export default function AdminUsersPageMain() {
             target={editTarget}
             form={editForm}
             busy={busyUpdateId === editTarget.id}
-            onChange={patch => setEditForm(prev => ({ ...prev, ...patch }))}
+            onChange={(patch) => setEditForm((prev) => ({ ...prev, ...patch }))}
             onSubmit={handleEditSubmit}
-            onClose={() => { setEditTarget(null); setEditForm(initialEditForm) }}
+            onClose={() => {
+              setEditTarget(null)
+              setEditForm(initialEditForm)
+            }}
             supplierOptions={supplierOptions}
             roleOptions={allowedRoleOptions}
             storefronts={storefronts}
@@ -1576,17 +2436,29 @@ export default function AdminUsersPageMain() {
         {deleteTarget && (
           <ConfirmModal
             icon={
-              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              <svg
+                className="h-7 w-7"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.8}
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
               </svg>
             }
             iconBg="bg-red-100 text-red-500"
             title="Delete Admin Account"
             description={
               <>
-                Are you sure you want to permanently delete{' '}
-                <span className="font-semibold text-slate-700">@{deleteTarget.username}</span>?
-                This action cannot be undone.
+                Are you sure you want to permanently delete{" "}
+                <span className="font-semibold text-slate-700">
+                  @{deleteTarget.username}
+                </span>
+                ? This action cannot be undone.
               </>
             }
             confirmLabel="Delete"
@@ -1604,36 +2476,68 @@ export default function AdminUsersPageMain() {
           <ConfirmModal
             icon={
               banTarget.is_banned ? (
-                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                <svg
+                  className="h-7 w-7"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.8}
+                    d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"
+                  />
                 </svg>
               ) : (
-                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                <svg
+                  className="h-7 w-7"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.8}
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                  />
                 </svg>
               )
             }
-            iconBg={banTarget.is_banned ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}
-            title={banTarget.is_banned ? 'Unban Admin Account' : 'Ban Admin Account'}
+            iconBg={
+              banTarget.is_banned
+                ? "bg-emerald-100 text-emerald-600"
+                : "bg-amber-100 text-amber-600"
+            }
+            title={
+              banTarget.is_banned ? "Unban Admin Account" : "Ban Admin Account"
+            }
             description={
               banTarget.is_banned ? (
                 <>
-                  Restore login access for{' '}
-                  <span className="font-semibold text-slate-700">@{banTarget.username}</span>?
-                  They will be able to log in again.
+                  Restore login access for{" "}
+                  <span className="font-semibold text-slate-700">
+                    @{banTarget.username}
+                  </span>
+                  ? They will be able to log in again.
                 </>
               ) : (
                 <>
-                  Ban <span className="font-semibold text-slate-700">@{banTarget.username}</span>?
-                  Their account will be restricted and they will not be able to log in until unbanned.
+                  Ban{" "}
+                  <span className="font-semibold text-slate-700">
+                    @{banTarget.username}
+                  </span>
+                  ? Their account will be restricted and they will not be able
+                  to log in until unbanned.
                 </>
               )
             }
-            confirmLabel={banTarget.is_banned ? 'Unban' : 'Ban'}
+            confirmLabel={banTarget.is_banned ? "Unban" : "Ban"}
             confirmClass={
               banTarget.is_banned
-                ? 'bg-emerald-500 hover:bg-emerald-600 shadow-sm shadow-emerald-500/20'
-                : 'bg-amber-500 hover:bg-amber-600 shadow-sm shadow-amber-500/20'
+                ? "bg-emerald-500 hover:bg-emerald-600 shadow-sm shadow-emerald-500/20"
+                : "bg-amber-500 hover:bg-amber-600 shadow-sm shadow-amber-500/20"
             }
             busy={busyUpdateId === banTarget.id}
             onConfirm={() => void handleBanToggle()}

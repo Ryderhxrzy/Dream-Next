@@ -1,10 +1,10 @@
-"use client";
+"use client"
 
-import Image from "next/image";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useState } from "react"
+import { AnimatePresence, motion } from "framer-motion"
+import Image from "next/image"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 const navigation = [
   { label: "Home", href: "/", sectionId: null },
@@ -14,56 +14,56 @@ const navigation = [
   { label: "Blogs", href: "/blogs", sectionId: null },
   { label: "Process", href: "/#process", sectionId: "process" },
   { label: "Contact", href: "/#contact", sectionId: "contact" },
-];
+]
 
 export function Header() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<string | null>(null);
-  const pathname = usePathname();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [activeSection, setActiveSection] = useState<string | null>(null)
+  const pathname = usePathname()
 
   // Track scroll position for homepage sections
   useEffect(() => {
     if (pathname !== "/") {
-      setActiveSection(null);
-      return;
+      setActiveSection(null)
+      return
     }
 
     const sectionIds = navigation
       .map((item) => item.sectionId)
-      .filter(Boolean) as string[];
+      .filter(Boolean) as string[]
 
-    const observers: IntersectionObserver[] = [];
+    const observers: IntersectionObserver[] = []
 
     sectionIds.forEach((id) => {
-      const el = document.getElementById(id);
-      if (!el) return;
+      const el = document.getElementById(id)
+      if (!el) return
 
       const observer = new IntersectionObserver(
         ([entry]) => {
-          if (entry.isIntersecting) setActiveSection(id);
+          if (entry.isIntersecting) setActiveSection(id)
         },
         { rootMargin: "-20% 0px -55% 0px" }
-      );
+      )
 
-      observer.observe(el);
-      observers.push(observer);
-    });
+      observer.observe(el)
+      observers.push(observer)
+    })
 
-    return () => observers.forEach((o) => o.disconnect());
-  }, [pathname]);
+    return () => observers.forEach((o) => o.disconnect())
+  }, [pathname])
 
   const isActive = (item: (typeof navigation)[number]) => {
     if (item.sectionId) {
-      return pathname === "/" && activeSection === item.sectionId;
+      return pathname === "/" && activeSection === item.sectionId
     }
     if (item.href === "/") {
-      return pathname === "/";
+      return pathname === "/"
     }
-    return pathname === item.href || pathname.startsWith(item.href + "/");
-  };
+    return pathname === item.href || pathname.startsWith(item.href + "/")
+  }
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-[var(--background)]/80 backdrop-blur-md border-b border-[var(--border)]">
+    <header className="fixed top-0 right-0 left-0 z-50 border-b border-[var(--border)] bg-[var(--background)]/80 backdrop-blur-md">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center">
@@ -80,7 +80,7 @@ export function Header() {
           {/* Desktop Navigation */}
           <nav className="hidden items-center gap-8 md:flex">
             {navigation.map((item) => {
-              const active = isActive(item);
+              const active = isActive(item)
               return (
                 <Link
                   key={item.href}
@@ -90,7 +90,7 @@ export function Header() {
                   <span
                     className={`text-sm transition-colors duration-200 ${
                       active
-                        ? "text-[var(--foreground)] font-medium"
+                        ? "font-medium text-[var(--foreground)]"
                         : "text-[var(--muted)] hover:text-[var(--foreground)]"
                     }`}
                   >
@@ -99,12 +99,16 @@ export function Header() {
                   {active && (
                     <motion.span
                       layoutId="nav-underline"
-                      className="absolute -bottom-0.5 left-0 right-0 h-0.5 rounded-full bg-[var(--foreground)]"
-                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      className="absolute right-0 -bottom-0.5 left-0 h-0.5 rounded-full bg-[var(--foreground)]"
+                      transition={{
+                        type: "spring",
+                        stiffness: 380,
+                        damping: 30,
+                      }}
                     />
                   )}
                 </Link>
-              );
+              )
             })}
           </nav>
 
@@ -124,7 +128,9 @@ export function Header() {
             >
               <div className="flex flex-col gap-1">
                 <motion.span
-                  animate={mobileMenuOpen ? { rotate: 45, y: 6 } : { rotate: 0, y: 0 }}
+                  animate={
+                    mobileMenuOpen ? { rotate: 45, y: 6 } : { rotate: 0, y: 0 }
+                  }
                   className="h-0.5 w-4 bg-[var(--foreground)]"
                 />
                 <motion.span
@@ -132,7 +138,11 @@ export function Header() {
                   className="h-0.5 w-4 bg-[var(--foreground)]"
                 />
                 <motion.span
-                  animate={mobileMenuOpen ? { rotate: -45, y: -6 } : { rotate: 0, y: 0 }}
+                  animate={
+                    mobileMenuOpen
+                      ? { rotate: -45, y: -6 }
+                      : { rotate: 0, y: 0 }
+                  }
                   className="h-0.5 w-4 bg-[var(--foreground)]"
                 />
               </div>
@@ -153,7 +163,7 @@ export function Header() {
           >
             <nav className="flex flex-col gap-1 py-4">
               {navigation.map((item) => {
-                const active = isActive(item);
+                const active = isActive(item)
                 return (
                   <Link
                     key={item.href}
@@ -161,8 +171,8 @@ export function Header() {
                     onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center justify-between rounded-lg px-3 py-2.5 text-sm transition-colors ${
                       active
-                        ? "bg-[var(--accent-soft)] text-[var(--foreground)] font-medium"
-                        : "text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--accent-soft)]"
+                        ? "bg-[var(--accent-soft)] font-medium text-[var(--foreground)]"
+                        : "text-[var(--muted)] hover:bg-[var(--accent-soft)] hover:text-[var(--foreground)]"
                     }`}
                   >
                     {item.label}
@@ -170,7 +180,7 @@ export function Header() {
                       <span className="h-1.5 w-1.5 rounded-full bg-[var(--foreground)]" />
                     )}
                   </Link>
-                );
+                )
               })}
               <Link
                 href="/#contact"
@@ -184,5 +194,5 @@ export function Header() {
         )}
       </AnimatePresence>
     </header>
-  );
+  )
 }

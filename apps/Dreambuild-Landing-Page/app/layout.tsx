@@ -1,6 +1,8 @@
-import type { Metadata } from "next";
-import "./globals.css";
-import { SplashWrapper } from "@/components/shared/splash-wrapper";
+import type { Metadata } from "next"
+
+import "./globals.css"
+
+import { SplashWrapper } from "@/components/shared/splash-wrapper"
 
 export const metadata: Metadata = {
   title: "Dreambuild Interior Services",
@@ -13,19 +15,23 @@ export const metadata: Metadata = {
     ],
     apple: "/icons/icon-192.png",
   },
-};
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
-    <html lang="en" data-scroll-behavior="smooth" className="h-full antialiased">
-      <body className="min-h-full flex flex-col">
+    <html
+      lang="en"
+      data-scroll-behavior="smooth"
+      className="h-full antialiased"
+    >
+      <body className="flex min-h-full flex-col">
         <SplashWrapper />
         {children}
       </body>
     </html>
-  );
+  )
 }

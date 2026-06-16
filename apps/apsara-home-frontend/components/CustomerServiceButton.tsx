@@ -1,17 +1,18 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import ChatModal from './ChatModal'
-import { usePathname } from 'next/navigation'
-import { extractPartnerSlugFromPath } from '@/libs/storefrontRouting'
+import { useState } from "react"
+import { extractPartnerSlugFromPath } from "@/libs/storefrontRouting"
+import { AnimatePresence, motion } from "framer-motion"
+import { usePathname } from "next/navigation"
+
+import ChatModal from "./ChatModal"
 
 export default function CustomerServiceButton() {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
   const partnerSlug = extractPartnerSlugFromPath(pathname)
 
-  if (pathname.startsWith('/ranking') || Boolean(partnerSlug)) return null
+  if (pathname.startsWith("/ranking") || Boolean(partnerSlug)) return null
 
   return (
     <>
@@ -24,7 +25,7 @@ export default function CustomerServiceButton() {
             exit={{ opacity: 0, scale: 0 }}
             transition={{ duration: 0.2 }}
             onClick={() => setIsOpen(true)}
-            className="fixed bottom-6 right-6 z-[100] flex h-12 w-12 items-center justify-center rounded-full bg-orange-500 dark:bg-orange-600 text-white border border-orange-600 dark:border-orange-700 transition-all duration-200"
+            className="fixed right-6 bottom-6 z-[100] flex h-12 w-12 items-center justify-center rounded-full border border-orange-600 bg-orange-500 text-white transition-all duration-200 dark:border-orange-700 dark:bg-orange-600"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
             title="Customer Service"

@@ -9,24 +9,28 @@ export function computeEndDateRaw(
     approvalStatus?: string | null
     approvedAt?: string | null
   }> | null,
-  planTermMonths?: number | null,
+  planTermMonths?: number | null
 ): Date | null {
   if (!startRaw) return null
   const startDate = new Date(startRaw)
   if (Number.isNaN(startDate.getTime())) return null
 
   const endDate = new Date(startDate)
-  const normalizedBilling = String(billing ?? '').toLowerCase()
+  const normalizedBilling = String(billing ?? "").toLowerCase()
 
-  if (normalizedBilling === 'monthly') {
-    const requestApproved = String(overallStatus ?? '').toLowerCase() === 'approved'
+  if (normalizedBilling === "monthly") {
+    const requestApproved =
+      String(overallStatus ?? "").toLowerCase() === "approved"
     const continuationMonths = Array.isArray(receiptItems)
-      ? receiptItems.filter((r) =>
-          r?.type === 'webstore_payment_continuation'
-          && (r?.approvalStatus === 'approved' || Boolean(r?.approvedAt)),
+      ? receiptItems.filter(
+          (r) =>
+            r?.type === "webstore_payment_continuation" &&
+            (r?.approvalStatus === "approved" || Boolean(r?.approvedAt))
         ).length
       : 0
-    endDate.setMonth(endDate.getMonth() + (requestApproved ? 1 : 0) + continuationMonths)
+    endDate.setMonth(
+      endDate.getMonth() + (requestApproved ? 1 : 0) + continuationMonths
+    )
     return endDate
   }
 
@@ -36,10 +40,10 @@ export function computeEndDateRaw(
     return endDate
   }
 
-  const raw = String(term ?? '').toLowerCase()
+  const raw = String(term ?? "").toLowerCase()
   const dayMatch = raw.match(/(\d+)\s*day/)
   const monthMatch = raw.match(/(\d+)\s*month/)
-  const normalizedPlan = String(plan ?? '').toLowerCase()
+  const normalizedPlan = String(plan ?? "").toLowerCase()
 
   let months = 0
   let days = 0
@@ -47,13 +51,16 @@ export function computeEndDateRaw(
     days = Number(dayMatch[1])
   } else if (monthMatch) {
     months = Number(monthMatch[1])
-  } else if (normalizedPlan === 'quarterly') {
+  } else if (normalizedPlan === "quarterly") {
     months = 3
-  } else if (normalizedPlan === 'semi_annual' || normalizedPlan === 'semi-annual') {
+  } else if (
+    normalizedPlan === "semi_annual" ||
+    normalizedPlan === "semi-annual"
+  ) {
     months = 6
-  } else if (normalizedPlan === 'annual') {
+  } else if (normalizedPlan === "annual") {
     months = 12
-  } else if (normalizedPlan === 'test') {
+  } else if (normalizedPlan === "test") {
     days = 2
   }
 
@@ -62,8 +69,15 @@ export function computeEndDateRaw(
   // renewals properly push the end date forward by a full period.
   const approvedContinuations = Array.isArray(receiptItems)
     ? receiptItems
-        .filter((r) => r?.type === 'webstore_payment_continuation' && (r?.approvalStatus === 'approved' || Boolean(r?.approvedAt)))
-        .map((r) => { const t = r?.approvedAt ? new Date(r.approvedAt) : null; return t && !Number.isNaN(t.getTime()) ? t : null })
+        .filter(
+          (r) =>
+            r?.type === "webstore_payment_continuation" &&
+            (r?.approvalStatus === "approved" || Boolean(r?.approvedAt))
+        )
+        .map((r) => {
+          const t = r?.approvedAt ? new Date(r.approvedAt) : null
+          return t && !Number.isNaN(t.getTime()) ? t : null
+        })
         .filter((d): d is Date => d !== null)
         .sort((a, b) => a.getTime() - b.getTime())
     : []
@@ -104,7 +118,7 @@ export function isWebstoreRequestExpired(item: {
     approved_at?: string | null
   }> | null
 }): boolean {
-  if (String(item.status ?? '').toLowerCase() !== 'approved') return false
+  if (String(item.status ?? "").toLowerCase() !== "approved") return false
   const mappedReceipts = (item.receipt_items ?? []).map((r) => ({
     type: r.type ?? null,
     approvalStatus: r.approval_status ?? null,
@@ -117,7 +131,7 @@ export function isWebstoreRequestExpired(item: {
     item.plan_term,
     item.status,
     mappedReceipts,
-    item.plan_term_months,
+    item.plan_term_months
   )
   if (!endDate) return false
   return endDate < new Date()

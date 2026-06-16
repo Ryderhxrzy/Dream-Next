@@ -132,9 +132,23 @@ class AdminAccess
         }
 
         if ($level === 4) {
+            $rawPermissions = $admin->admin_permissions ?? [];
+            $wcSections = self::normalizeWebContentSectionPermissions($rawPermissions);
+
+            // admin_permissions for level-4 stores storefront IDs as integers alongside wc:* strings.
+            // When the user has assigned storefronts, auto-grant wc:partner-storefronts so the
+            // partner storefronts API (which requires that permission) is accessible.
+            $hasStorefrontIds = ! empty(array_filter(
+                is_array($rawPermissions) ? $rawPermissions : [],
+                static fn ($item) => is_numeric($item) && (int) $item > 0,
+            ));
+            if ($hasStorefrontIds && ! in_array('wc:partner-storefronts', $wcSections, true)) {
+                $wcSections[] = 'wc:partner-storefronts';
+            }
+
             return array_values(array_unique(array_merge(
                 self::defaultPermissionsForLevel($level),
-                self::normalizeWebContentSectionPermissions($admin->admin_permissions ?? []),
+                $wcSections,
             )));
         }
 

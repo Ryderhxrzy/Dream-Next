@@ -3,42 +3,42 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface ServiceItem {
-  id: string;
-  icon: string;
-  image: string;
-  title: string;
-  tagline: string;
-  description: string;
-  features: string[];
-  accentColor: string;
-  bgGradient: string;
+  id: string
+  icon: string
+  image: string
+  title: string
+  tagline: string
+  description: string
+  features: string[]
+  accentColor: string
+  bgGradient: string
 }
 
 export interface BookingFormData {
   // Service
-  serviceType: string;
-  projectType: string;
-  propertyType: string;
-  projectScope: string;
-  budget: string;
-  stylePreference: string;
+  serviceType: string
+  projectType: string
+  propertyType: string
+  projectScope: string
+  budget: string
+  stylePreference: string
   // Schedule
-  preferredDate: string;
-  preferredTime: string;
-  flexibility: string;
-  targetTimeline: string;
+  preferredDate: string
+  preferredTime: string
+  flexibility: string
+  targetTimeline: string
   // Contact
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
   // Notes
-  notes: string;
-  referral: string;
-  inspirationFiles: string[];
+  notes: string
+  referral: string
+  inspirationFiles: string[]
 }
 
-export type FormStep = 1 | 2 | 3 | 4;
+export type FormStep = 1 | 2 | 3 | 4
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -113,7 +113,7 @@ export const SERVICES: ServiceItem[] = [
     accentColor: "#1f2937",
     bgGradient: "from-stone-100/70 to-transparent",
   },
-];
+]
 
 export const TIME_SLOTS = [
   "9:00 AM",
@@ -125,14 +125,14 @@ export const TIME_SLOTS = [
   "3:00 PM",
   "4:00 PM",
   "5:00 PM",
-];
+]
 
 export const FORM_STEPS = [
   { step: 1 as FormStep, label: "Service" },
   { step: 2 as FormStep, label: "Schedule" },
   { step: 3 as FormStep, label: "Contact" },
   { step: 4 as FormStep, label: "Review" },
-];
+]
 
 export const INITIAL_FORM_DATA: BookingFormData = {
   serviceType: "",
@@ -152,4 +152,4 @@ export const INITIAL_FORM_DATA: BookingFormData = {
   notes: "",
   referral: "",
   inspirationFiles: [],
-};
+}

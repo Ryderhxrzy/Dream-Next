@@ -12,12 +12,12 @@ const SESSION_TIMEOUT_MS = 8_000
 export type SupplierChatMessage = {
   id: number
   conversation_id: number
-  sender_type: 'admin' | 'supplier'
+  sender_type: "admin" | "supplier"
   sender_admin_id: number | null
   sender_supplier_user_id: number | null
   message: string
   attachment_url: string | null
-  attachment_type: 'image' | 'video' | 'file' | null
+  attachment_type: "image" | "video" | "file" | null
   attachment_name: string | null
   is_read: boolean
   read_at: string | null
@@ -29,7 +29,7 @@ export type SupplierChatMessage = {
 export type SupplierChatConversation = {
   id: number
   subject: string
-  status: 'open' | 'pending' | 'resolved'
+  status: "open" | "pending" | "resolved"
   company: {
     id: number
     name: string
@@ -51,7 +51,7 @@ export type SupplierChatConversation = {
   last_message: {
     id: number
     message: string
-    sender_type: 'admin' | 'supplier'
+    sender_type: "admin" | "supplier"
     sent_at: string | null
   } | null
   message_count: number
@@ -68,8 +68,8 @@ type ApiEnvelope<T> = {
 }
 
 const getApiBaseUrl = () => {
-  const base = String(process.env.NEXT_PUBLIC_LARAVEL_API_URL ?? '').trim()
-  return base.replace(/\/+$/, '')
+  const base = String(process.env.NEXT_PUBLIC_LARAVEL_API_URL ?? "").trim()
+  return base.replace(/\/+$/, "")
 }
 
 const CHAT_REQUEST_TIMEOUT_MS = 15000
@@ -81,24 +81,29 @@ async function getAdminAccessToken(): Promise<string> {
   }
 
   const controller = new AbortController()
-  const timeoutId = window.setTimeout(() => controller.abort(), SESSION_TIMEOUT_MS)
+  const timeoutId = window.setTimeout(
+    () => controller.abort(),
+    SESSION_TIMEOUT_MS
+  )
 
   let response: Response
   try {
-    response = await fetch('/api/admin/auth/session', {
-      method: 'GET',
-      cache: 'no-store',
-      credentials: 'include',
+    response = await fetch("/api/admin/auth/session", {
+      method: "GET",
+      cache: "no-store",
+      credentials: "include",
       signal: controller.signal,
       headers: {
-        Accept: 'application/json',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        Pragma: 'no-cache',
+        Accept: "application/json",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
       },
     })
   } catch (err: unknown) {
     if (controller.signal.aborted) {
-      throw new Error('Admin session request timed out. Please refresh the page.')
+      throw new Error(
+        "Admin session request timed out. Please refresh the page."
+      )
     }
     throw err
   } finally {
@@ -106,54 +111,68 @@ async function getAdminAccessToken(): Promise<string> {
   }
 
   if (!response.ok) {
-    throw new Error('Your admin session has expired. Please sign in again.')
+    throw new Error("Your admin session has expired. Please sign in again.")
   }
 
   const session = (await response.json()) as AdminSession
   const accessToken = session?.user?.accessToken
 
   if (!accessToken) {
-    throw new Error('Your admin session is missing an access token.')
+    throw new Error("Your admin session is missing an access token.")
   }
 
   _adminTokenCache = { value: accessToken, expiresAt: now + TOKEN_CACHE_TTL_MS }
   return accessToken
 }
 
-async function adminSupplierChatRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function adminSupplierChatRequest<T>(
+  path: string,
+  init: RequestInit = {}
+): Promise<T> {
   const apiBase = getApiBaseUrl()
   if (!apiBase) {
-    throw new Error('Admin supplier chat API is not configured.')
+    throw new Error("Admin supplier chat API is not configured.")
   }
 
   const accessToken = await getAdminAccessToken()
   const controller = new AbortController()
-  const timeoutId = window.setTimeout(() => controller.abort(), CHAT_REQUEST_TIMEOUT_MS)
+  const timeoutId = window.setTimeout(
+    () => controller.abort(),
+    CHAT_REQUEST_TIMEOUT_MS
+  )
   const response = await fetch(`${apiBase}${path}`, {
     ...init,
     signal: controller.signal,
-    cache: 'no-store',
+    cache: "no-store",
     headers: {
-      Accept: 'application/json',
+      Accept: "application/json",
       Authorization: `Bearer ${accessToken}`,
-      ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(init.body ? { "Content-Type": "application/json" } : {}),
       ...(init.headers ?? {}),
     },
   }).catch((error: unknown) => {
     if (controller.signal.aborted) {
-      throw new Error('Admin supplier chat request timed out. Please try again.')
+      throw new Error(
+        "Admin supplier chat request timed out. Please try again."
+      )
     }
     throw error
   })
 
   try {
-    const data = (await response.json().catch(() => null)) as T | ApiEnvelope<unknown> | null
+    const data = (await response.json().catch(() => null)) as
+      | T
+      | ApiEnvelope<unknown>
+      | null
 
     if (!response.ok) {
       const message =
-        typeof data === 'object' && data && 'message' in data && typeof data.message === 'string'
+        typeof data === "object" &&
+        data &&
+        "message" in data &&
+        typeof data.message === "string"
           ? data.message
-          : 'Unable to load admin supplier chats.'
+          : "Unable to load admin supplier chats."
       throw new Error(message)
     }
 
@@ -163,91 +182,113 @@ async function adminSupplierChatRequest<T>(path: string, init: RequestInit = {})
   }
 }
 
-export async function fetchAdminSupplierChatConversations(search = '') {
-  const query = search.trim() ? `?search=${encodeURIComponent(search.trim())}` : ''
-  const response = await adminSupplierChatRequest<{ data: SupplierChatConversation[] }>(
-    `/api/admin/supplier-chat/conversations${query}`,
-  )
+export async function fetchAdminSupplierChatConversations(search = "") {
+  const query = search.trim()
+    ? `?search=${encodeURIComponent(search.trim())}`
+    : ""
+  const response = await adminSupplierChatRequest<{
+    data: SupplierChatConversation[]
+  }>(`/api/admin/supplier-chat/conversations${query}`)
   return response.data ?? []
 }
 
-export async function fetchAdminSupplierChatConversation(conversationId: number) {
-  const response = await adminSupplierChatRequest<{ data: SupplierChatConversation }>(
-    `/api/admin/supplier-chat/conversations/${conversationId}`,
-  )
+export async function fetchAdminSupplierChatConversation(
+  conversationId: number
+) {
+  const response = await adminSupplierChatRequest<{
+    data: SupplierChatConversation
+  }>(`/api/admin/supplier-chat/conversations/${conversationId}`)
   return response.data
 }
 
 type AttachmentPayload = {
   attachment_url: string
-  attachment_type: 'image' | 'video' | 'file'
+  attachment_type: "image" | "video" | "file"
   attachment_name: string
 }
 
 export async function sendAdminSupplierChatMessage(
   conversationId: number,
   message: string,
-  attachment?: AttachmentPayload,
+  attachment?: AttachmentPayload
 ) {
-  const response = await adminSupplierChatRequest<{ data: SupplierChatMessage }>(
-    `/api/admin/supplier-chat/conversations/${conversationId}/messages`,
-    {
-      method: 'POST',
-      body: JSON.stringify({ message: message || undefined, ...attachment }),
-    },
-  )
+  const response = await adminSupplierChatRequest<{
+    data: SupplierChatMessage
+  }>(`/api/admin/supplier-chat/conversations/${conversationId}/messages`, {
+    method: "POST",
+    body: JSON.stringify({ message: message || undefined, ...attachment }),
+  })
   return response.data
 }
 
-export async function uploadAdminChatAttachment(file: File): Promise<AttachmentPayload> {
+export async function uploadAdminChatAttachment(
+  file: File
+): Promise<AttachmentPayload> {
   const form = new FormData()
-  form.append('file', file)
-  form.append('folder', 'supplier-chat')
-  const assetType = file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : 'pdf'
-  form.append('asset_type', assetType)
-  const res = await fetch('/api/admin/upload', { method: 'POST', body: form })
+  form.append("file", file)
+  form.append("folder", "supplier-chat")
+  const assetType = file.type.startsWith("image/")
+    ? "image"
+    : file.type.startsWith("video/")
+      ? "video"
+      : "pdf"
+  form.append("asset_type", assetType)
+  const res = await fetch("/api/admin/upload", { method: "POST", body: form })
   const json = (await res.json()) as { url?: string; error?: string }
-  if (!res.ok || !json.url) throw new Error(json.error ?? 'Upload failed.')
-  const attachmentType: 'image' | 'video' | 'file' =
-    file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : 'file'
-  return { attachment_url: json.url, attachment_type: attachmentType, attachment_name: file.name }
+  if (!res.ok || !json.url) throw new Error(json.error ?? "Upload failed.")
+  const attachmentType: "image" | "video" | "file" = file.type.startsWith(
+    "image/"
+  )
+    ? "image"
+    : file.type.startsWith("video/")
+      ? "video"
+      : "file"
+  return {
+    attachment_url: json.url,
+    attachment_type: attachmentType,
+    attachment_name: file.name,
+  }
 }
 
 export async function toggleAdminChatReaction(
   conversationId: number,
   messageId: number,
-  emoji: string,
+  emoji: string
 ): Promise<SupplierChatMessage> {
-  const response = await adminSupplierChatRequest<{ data: SupplierChatMessage }>(
+  const response = await adminSupplierChatRequest<{
+    data: SupplierChatMessage
+  }>(
     `/api/admin/supplier-chat/conversations/${conversationId}/messages/${messageId}/react`,
-    { method: 'POST', body: JSON.stringify({ emoji }) },
+    { method: "POST", body: JSON.stringify({ emoji }) }
   )
   return response.data
 }
 
-export async function deleteAdminSupplierChatMessage(conversationId: number, messageId: number): Promise<void> {
+export async function deleteAdminSupplierChatMessage(
+  conversationId: number,
+  messageId: number
+): Promise<void> {
   await adminSupplierChatRequest<{ message?: string }>(
     `/api/admin/supplier-chat/conversations/${conversationId}/messages/${messageId}`,
-    { method: 'DELETE' },
+    { method: "DELETE" }
   )
 }
 
 export async function createAdminSupplierChatConversation(
   supplierUserId: number,
   subject: string,
-  message: string,
+  message: string
 ) {
-  const response = await adminSupplierChatRequest<{ data: SupplierChatConversation }>(
-    '/api/admin/supplier-chat/conversations',
-    {
-      method: 'POST',
-      body: JSON.stringify({
-        supplier_user_id: supplierUserId,
-        subject,
-        message,
-      }),
-    },
-  )
+  const response = await adminSupplierChatRequest<{
+    data: SupplierChatConversation
+  }>("/api/admin/supplier-chat/conversations", {
+    method: "POST",
+    body: JSON.stringify({
+      supplier_user_id: supplierUserId,
+      subject,
+      message,
+    }),
+  })
 
   return response.data
 }

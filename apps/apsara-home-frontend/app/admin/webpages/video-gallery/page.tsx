@@ -1,10 +1,10 @@
-import { buildPageMetadata } from '@/app/seo'
-import WebPageItemsManager from '@/components/superAdmin/webpages/WebPageItemsManager'
+import WebPageItemsManager from "@/components/superAdmin/webpages/WebPageItemsManager"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
-  title: 'Admin Web Pages Video Gallery',
-  description: 'Manage video gallery content.',
-  path: '/admin/webpages/video-gallery',
+  title: "Admin Web Pages Video Gallery",
+  description: "Manage video gallery content.",
+  path: "/admin/webpages/video-gallery",
   noIndex: true,
 })
 
@@ -17,4 +17,3 @@ export default function AdminWebPagesVideoGalleryPage() {
     />
   )
 }
-

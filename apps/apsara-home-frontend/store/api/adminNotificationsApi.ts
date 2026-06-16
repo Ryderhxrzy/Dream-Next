@@ -1,6 +1,10 @@
-import { baseApi } from './baseApi'
+import { baseApi } from "./baseApi"
 
-export type AdminNotificationSeverity = 'info' | 'warning' | 'critical' | 'success'
+export type AdminNotificationSeverity =
+  | "info"
+  | "warning"
+  | "critical"
+  | "success"
 
 export interface AdminNotificationItem {
   id: string
@@ -25,58 +29,66 @@ export const adminNotificationsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getAdminNotifications: builder.query<AdminNotificationsResponse, void>({
       query: () => ({
-        url: '/api/admin/orders/notifications',
-        method: 'GET',
+        url: "/api/admin/orders/notifications",
+        method: "GET",
       }),
-      providesTags: ['AdminNotifications'],
+      providesTags: ["AdminNotifications"],
     }),
     markAdminNotificationRead: builder.mutation<{ message: string }, string>({
       query: (id) => ({
         url: `/api/admin/orders/notifications/${id}/read`,
-        method: 'POST',
+        method: "POST",
       }),
       async onQueryStarted(id, { dispatch, queryFulfilled }) {
         const patchResult = dispatch(
-          adminNotificationsApi.util.updateQueryData('getAdminNotifications', undefined, (draft) => {
-            const target = draft.items.find((item) => item.id === id);
-            if (!target || target.is_read) return;
-            target.is_read = true;
-            target.count = 0;
-            draft.unread_count = Math.max(0, (draft.unread_count ?? 0) - 1);
-          })
-        );
+          adminNotificationsApi.util.updateQueryData(
+            "getAdminNotifications",
+            undefined,
+            (draft) => {
+              const target = draft.items.find((item) => item.id === id)
+              if (!target || target.is_read) return
+              target.is_read = true
+              target.count = 0
+              draft.unread_count = Math.max(0, (draft.unread_count ?? 0) - 1)
+            }
+          )
+        )
 
         try {
-          await queryFulfilled;
+          await queryFulfilled
         } catch {
-          patchResult.undo();
+          patchResult.undo()
         }
       },
-      invalidatesTags: ['AdminNotifications'],
+      invalidatesTags: ["AdminNotifications"],
     }),
     markAllAdminNotificationsRead: builder.mutation<{ message: string }, void>({
       query: () => ({
-        url: '/api/admin/orders/notifications/read-all',
-        method: 'POST',
+        url: "/api/admin/orders/notifications/read-all",
+        method: "POST",
       }),
       async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
         const patchResult = dispatch(
-          adminNotificationsApi.util.updateQueryData('getAdminNotifications', undefined, (draft) => {
-            draft.unread_count = 0;
-            draft.items.forEach((item) => {
-              item.is_read = true;
-              item.count = 0;
-            });
-          })
-        );
+          adminNotificationsApi.util.updateQueryData(
+            "getAdminNotifications",
+            undefined,
+            (draft) => {
+              draft.unread_count = 0
+              draft.items.forEach((item) => {
+                item.is_read = true
+                item.count = 0
+              })
+            }
+          )
+        )
 
         try {
-          await queryFulfilled;
+          await queryFulfilled
         } catch {
-          patchResult.undo();
+          patchResult.undo()
         }
       },
-      invalidatesTags: ['AdminNotifications'],
+      invalidatesTags: ["AdminNotifications"],
     }),
   }),
 })

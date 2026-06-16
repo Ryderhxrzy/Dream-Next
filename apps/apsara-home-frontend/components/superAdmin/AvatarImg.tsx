@@ -1,6 +1,6 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
+import { useState } from "react"
 
 interface AvatarImgProps {
   src?: string | null
@@ -14,13 +14,20 @@ interface AvatarImgProps {
 export default function AvatarImg({
   src,
   name,
-  size     = 'h-9 w-9',
-  bg       = 'bg-gradient-to-br from-slate-500 to-slate-600',
-  textSize = 'text-xs',
-  className = '',
+  size = "h-9 w-9",
+  bg = "bg-gradient-to-br from-slate-500 to-slate-600",
+  textSize = "text-xs",
+  className = "",
 }: AvatarImgProps) {
   const [err, setErr] = useState(false)
-  const initials = (name ?? '').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?'
+  const initials =
+    (name ?? "")
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((w) => w[0])
+      .join("")
+      .toUpperCase() || "?"
 
   if (src && !err) {
     return (
@@ -28,13 +35,15 @@ export default function AvatarImg({
         src={src}
         alt={name}
         onError={() => setErr(true)}
-        className={`rounded-full object-cover shrink-0 ${size} ${className}`}
+        className={`shrink-0 rounded-full object-cover ${size} ${className}`}
       />
     )
   }
 
   return (
-    <div className={`rounded-full shrink-0 flex items-center justify-center font-bold text-white ${size} ${bg} ${className}`}>
+    <div
+      className={`flex shrink-0 items-center justify-center rounded-full font-bold text-white ${size} ${bg} ${className}`}
+    >
       <span className={textSize}>{initials}</span>
     </div>
   )

@@ -1,55 +1,70 @@
-'use client'
+"use client"
 
-import { useState, useMemo } from 'react'
-import { motion } from 'framer-motion'
-import { useGetMembersQuery } from '@/store/api/membersApi'
-import { MemberWallet, SortKey } from './types'
-import WalletCreditsStats from './WalletCreditsStats'
-import WalletCreditsToolbar from './WalletCreditsToolbar'
-import WalletCreditsTable from './WalletCreditsTable'
-import AdjustWalletModal from './AdjustWalletModal'
-import type { MemberStatus, MemberTier } from '@/types/members/types'
+import { useMemo, useState } from "react"
+import { useGetMembersQuery } from "@/store/api/membersApi"
+import { motion } from "framer-motion"
 
-type TierFilter = 'All Tiers' | MemberWallet['tier']
-type StatusFilter = 'All Status' | 'Active' | 'Pending' | 'Blocked'
+import type { MemberStatus, MemberTier } from "@/types/members/types"
+
+import AdjustWalletModal from "./AdjustWalletModal"
+import { MemberWallet, SortKey } from "./types"
+import WalletCreditsStats from "./WalletCreditsStats"
+import WalletCreditsTable from "./WalletCreditsTable"
+import WalletCreditsToolbar from "./WalletCreditsToolbar"
+
+type TierFilter = "All Tiers" | MemberWallet["tier"]
+type StatusFilter = "All Status" | "Active" | "Pending" | "Blocked"
 
 const PV_ALLOCATION_ROWS = [
-  { label: 'Cashback / e-GC', rate: 0.04, rateLabel: '4%', tone: 'emerald' },
-  { label: 'Unilevel Pool', rate: 0.06, rateLabel: '6%', tone: 'sky' },
-  { label: '50K Points Reward', rate: 0.029, rateLabel: '2.9%', tone: 'amber' },
-  { label: 'Global Purchase Bonus', rate: 0.01, rateLabel: '1%', tone: 'violet' },
-  { label: 'Product Purchase Points', rate: 0.861, rateLabel: '86.1%', tone: 'slate' },
+  { label: "Cashback / e-GC", rate: 0.04, rateLabel: "4%", tone: "emerald" },
+  { label: "Unilevel Pool", rate: 0.06, rateLabel: "6%", tone: "sky" },
+  { label: "50K Points Reward", rate: 0.029, rateLabel: "2.9%", tone: "amber" },
+  {
+    label: "Global Purchase Bonus",
+    rate: 0.01,
+    rateLabel: "1%",
+    tone: "violet",
+  },
+  {
+    label: "Product Purchase Points",
+    rate: 0.861,
+    rateLabel: "86.1%",
+    tone: "slate",
+  },
 ] as const
 
 const formatPvAmount = (value: number) =>
-  new Intl.NumberFormat('en-PH', {
+  new Intl.NumberFormat("en-PH", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value)
 
 const statusToQuery = (status: StatusFilter): MemberStatus | undefined => {
-  if (status === 'Active') return 'active'
-  if (status === 'Pending') return 'pending'
-  if (status === 'Blocked') return 'blocked'
+  if (status === "Active") return "active"
+  if (status === "Pending") return "pending"
+  if (status === "Blocked") return "blocked"
   return undefined
 }
 
-const mapMemberStatus = (status: MemberStatus): MemberWallet['status'] => {
-  if (status === 'active') return 'active'
-  if (status === 'blocked') return 'blocked'
-  return 'pending'
+const mapMemberStatus = (status: MemberStatus): MemberWallet["status"] => {
+  if (status === "active") return "active"
+  if (status === "blocked") return "blocked"
+  return "pending"
 }
 
 export default function WalletCreditsPageMain() {
-  const [search,        setSearch]        = useState('')
-  const [tierFilter,    setTierFilter]    = useState<TierFilter>('All Tiers')
-  const [statusFilter,  setStatusFilter]  = useState<StatusFilter>('All Status')
-  const [sortKey,       setSortKey]       = useState<SortKey>('cashBalance')
-  const [adjustTarget,  setAdjustTarget]  = useState<MemberWallet | null>(null)
-  const [breakdownTarget, setBreakdownTarget] = useState<MemberWallet | null>(null)
+  const [search, setSearch] = useState("")
+  const [tierFilter, setTierFilter] = useState<TierFilter>("All Tiers")
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("All Status")
+  const [sortKey, setSortKey] = useState<SortKey>("cashBalance")
+  const [adjustTarget, setAdjustTarget] = useState<MemberWallet | null>(null)
+  const [breakdownTarget, setBreakdownTarget] = useState<MemberWallet | null>(
+    null
+  )
   const [page, setPage] = useState(1)
 
-  const queryTier = tierFilter === 'All Tiers' ? undefined : tierFilter as MemberTier
+  const queryTier =
+    tierFilter === "All Tiers" ? undefined : (tierFilter as MemberTier)
   const queryStatus = statusToQuery(statusFilter)
   const { data, isLoading, isFetching, isError, refetch } = useGetMembersQuery({
     page,
@@ -61,8 +76,15 @@ export default function WalletCreditsPageMain() {
 
   const walletRows = useMemo<MemberWallet[]>(() => {
     return (data?.members ?? []).map((member) => {
-      const cashBalance = Number(member.walletCashBalance ?? member.walletCashCredits ?? member.earnings ?? 0)
-      const pvBalance = Number(member.walletPvBalance ?? member.walletPvCredits ?? 0)
+      const cashBalance = Number(
+        member.walletCashBalance ??
+          member.walletCashCredits ??
+          member.earnings ??
+          0
+      )
+      const pvBalance = Number(
+        member.walletPvBalance ?? member.walletPvCredits ?? 0
+      )
       const lockedAmount = 0
 
       return {
@@ -75,10 +97,14 @@ export default function WalletCreditsPageMain() {
         cashBalance,
         pvBalance,
         cashCredits: Number(member.walletCashCredits ?? 0),
-        cashDebits: Math.max(0, Number(member.walletCashCredits ?? 0) - cashBalance),
+        cashDebits: Math.max(
+          0,
+          Number(member.walletCashCredits ?? 0) - cashBalance
+        ),
         lockedAmount,
         availableAmount: Math.max(0, cashBalance - lockedAmount),
-        lastTransaction: member.lastActiveAt || member.joinedAt || new Date().toISOString(),
+        lastTransaction:
+          member.lastActiveAt || member.joinedAt || new Date().toISOString(),
       }
     })
   }, [data?.members])
@@ -91,14 +117,20 @@ export default function WalletCreditsPageMain() {
   }, [sortKey, walletRows])
 
   const handleAdjustSubmit = (
-    memberId:   number,
-    walletType: 'cash' | 'pv',
-    adjustType: 'credit' | 'debit',
-    amount:     number,
-    note:       string
+    memberId: number,
+    walletType: "cash" | "pv",
+    adjustType: "credit" | "debit",
+    amount: number,
+    note: string
   ) => {
     // TODO: call API — PATCH /api/admin/wallets/:memberId/adjust
-    console.log('Adjust wallet:', { memberId, walletType, adjustType, amount, note })
+    console.log("Adjust wallet:", {
+      memberId,
+      walletType,
+      adjustType,
+      amount,
+      note,
+    })
   }
 
   return (
@@ -111,11 +143,23 @@ export default function WalletCreditsPageMain() {
       >
         <div>
           <h1 className="text-xl font-bold text-slate-800">Wallet & Credits</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Manage member cash and PV wallet balances</p>
+          <p className="mt-0.5 text-sm text-slate-500">
+            Manage member cash and PV wallet balances
+          </p>
         </div>
         <button className="flex items-center gap-2 rounded-[18px] border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all hover:border-slate-400 dark:border-white/18 dark:bg-white/12 dark:text-slate-200">
-          <svg className="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          <svg
+            className="h-4 w-4 text-teal-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            />
           </svg>
           Export CSV
         </button>
@@ -124,10 +168,23 @@ export default function WalletCreditsPageMain() {
       <WalletCreditsStats wallets={filtered} />
 
       <WalletCreditsToolbar
-        search={search}             onSearch={(value) => { setSearch(value); setPage(1) }}
-        tierFilter={tierFilter}     onTierFilter={(value) => { setTierFilter(value as TierFilter); setPage(1) }}
-        statusFilter={statusFilter} onStatusFilter={(value) => { setStatusFilter(value as StatusFilter); setPage(1) }}
-        sortKey={sortKey}           onSortKey={setSortKey}
+        search={search}
+        onSearch={(value) => {
+          setSearch(value)
+          setPage(1)
+        }}
+        tierFilter={tierFilter}
+        onTierFilter={(value) => {
+          setTierFilter(value as TierFilter)
+          setPage(1)
+        }}
+        statusFilter={statusFilter}
+        onStatusFilter={(value) => {
+          setStatusFilter(value as StatusFilter)
+          setPage(1)
+        }}
+        sortKey={sortKey}
+        onSortKey={setSortKey}
       />
 
       {isError && (
@@ -152,8 +209,15 @@ export default function WalletCreditsPageMain() {
       {data?.meta && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900">
           <span>
-            Showing <span className="font-semibold text-slate-800 dark:text-slate-100">{data.meta.from ?? 0}-{data.meta.to ?? 0}</span>
-            {' '}of <span className="font-semibold text-slate-800 dark:text-slate-100">{data.meta.total}</span> real members
+            Showing{" "}
+            <span className="font-semibold text-slate-800 dark:text-slate-100">
+              {data.meta.from ?? 0}-{data.meta.to ?? 0}
+            </span>{" "}
+            of{" "}
+            <span className="font-semibold text-slate-800 dark:text-slate-100">
+              {data.meta.total}
+            </span>{" "}
+            real members
           </span>
           <div className="flex items-center gap-2">
             <button
@@ -211,9 +275,15 @@ export default function WalletCreditsPageMain() {
             <div className="bg-gradient-to-br from-slate-950 via-sky-950 to-teal-900 px-6 py-5 text-white">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-sky-300">PV allocation preview</p>
-                  <h2 className="mt-1 text-lg font-bold">{breakdownTarget.name}</h2>
-                  <p className="text-xs text-slate-300">{breakdownTarget.email}</p>
+                  <p className="text-[11px] font-bold tracking-[0.24em] text-sky-300 uppercase">
+                    PV allocation preview
+                  </p>
+                  <h2 className="mt-1 text-lg font-bold">
+                    {breakdownTarget.name}
+                  </h2>
+                  <p className="text-xs text-slate-300">
+                    {breakdownTarget.email}
+                  </p>
                 </div>
                 <button
                   onClick={() => setBreakdownTarget(null)}
@@ -224,12 +294,15 @@ export default function WalletCreditsPageMain() {
               </div>
 
               <div className="mt-5 rounded-2xl border border-white/15 bg-white/10 p-4">
-                <p className="text-xs uppercase tracking-wide text-slate-300">PV basis</p>
+                <p className="text-xs tracking-wide text-slate-300 uppercase">
+                  PV basis
+                </p>
                 <p className="mt-1 text-3xl font-black text-cyan-200">
                   {formatPvAmount(breakdownTarget.pvBalance)} PV
                 </p>
                 <p className="mt-1 text-xs text-slate-300">
-                  Display-only computation. Actual posted credits still come from order delivery and backend wallet ledger.
+                  Display-only computation. Actual posted credits still come
+                  from order delivery and backend wallet ledger.
                 </p>
               </div>
             </div>
@@ -247,15 +320,22 @@ export default function WalletCreditsPageMain() {
                         <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-sky-700 ring-1 ring-sky-100 dark:bg-slate-950 dark:ring-slate-800">
                           {row.rateLabel}
                         </span>
-                        <p className="text-sm font-bold text-slate-900 dark:text-white">{row.label}</p>
+                        <p className="text-sm font-bold text-slate-900 dark:text-white">
+                          {row.label}
+                        </p>
                       </div>
                       <p className="mt-2 font-mono text-xs text-slate-500 dark:text-slate-400">
-                        {formatPvAmount(breakdownTarget.pvBalance)} PV x {row.rateLabel} = {formatPvAmount(value)}
+                        {formatPvAmount(breakdownTarget.pvBalance)} PV x{" "}
+                        {row.rateLabel} = {formatPvAmount(value)}
                       </p>
                     </div>
                     <div className="text-left sm:text-right">
-                      <p className="text-lg font-black text-slate-950 dark:text-white">{formatPvAmount(value)}</p>
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">computed value</p>
+                      <p className="text-lg font-black text-slate-950 dark:text-white">
+                        {formatPvAmount(value)}
+                      </p>
+                      <p className="text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
+                        computed value
+                      </p>
                     </div>
                   </div>
                 )

@@ -1,4 +1,4 @@
-import { format, isToday, isYesterday } from "date-fns";
+import { format, isToday, isYesterday } from "date-fns"
 
 export function initials(name: string) {
   return name
@@ -6,18 +6,46 @@ export function initials(name: string) {
     .filter(Boolean)
     .slice(0, 2)
     .map((p) => p[0]?.toUpperCase())
-    .join("");
+    .join("")
 }
 
 export function dateLabel(d: Date) {
-  if (isToday(d)) return "Today";
-  if (isYesterday(d)) return "Yesterday";
-  return format(d, "MMMM d, yyyy");
+  if (isToday(d)) return "Today"
+  if (isYesterday(d)) return "Yesterday"
+  return format(d, "MMMM d, yyyy")
 }
 
 export const EMOJIS = [
-  "😀", "😂", "🥰", "😍", "😎", "🤩", "😭", "😅",
-  "👍", "👏", "🙏", "🔥", "❤️", "💯", "🎉", "✨",
-  "😴", "🤔", "😱", "😤", "🥳", "😇", "🤝", "👋",
-  "🍕", "☕", "🏠", "🚗", "📦", "💬", "✅", "❓",
-];
+  "😀",
+  "😂",
+  "🥰",
+  "😍",
+  "😎",
+  "🤩",
+  "😭",
+  "😅",
+  "👍",
+  "👏",
+  "🙏",
+  "🔥",
+  "❤️",
+  "💯",
+  "🎉",
+  "✨",
+  "😴",
+  "🤔",
+  "😱",
+  "😤",
+  "🥳",
+  "😇",
+  "🤝",
+  "👋",
+  "🍕",
+  "☕",
+  "🏠",
+  "🚗",
+  "📦",
+  "💬",
+  "✅",
+  "❓",
+]

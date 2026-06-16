@@ -1,14 +1,15 @@
-import { buildPageMetadata } from '@/app/seo'
-import ZqProductPreviewClient from '@/components/superAdmin/products/ZqProductPreviewClient'
+import ZqProductPreviewClient from "@/components/superAdmin/products/ZqProductPreviewClient"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
-  title: 'Global Supplier Product Preview',
-  description: 'Preview an AF HOME GLOBAL SUPPLIER product inside the supplier portal.',
-  path: '/supplier/products/zq-preview',
+  title: "Global Supplier Product Preview",
+  description:
+    "Preview an AF HOME GLOBAL SUPPLIER product inside the supplier portal.",
+  path: "/supplier/products/zq-preview",
   noIndex: true,
 })
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
 export default async function SupplierZqProductPreviewPage({
   params,

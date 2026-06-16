@@ -1,13 +1,14 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import SuppliersPageMain from './SuppliersPageMain'
-import WarehouseTab from './WarehouseTab'
+import { useState } from "react"
 
-type SuppliersTab = 'suppliers' | 'warehouse'
+import SuppliersPageMain from "./SuppliersPageMain"
+import WarehouseTab from "./WarehouseTab"
+
+type SuppliersTab = "suppliers" | "warehouse"
 
 export default function SuppliersTabsWrapper() {
-  const [tab, setTab] = useState<SuppliersTab>('suppliers')
+  const [tab, setTab] = useState<SuppliersTab>("suppliers")
 
   return (
     <div className="space-y-4">
@@ -15,22 +16,22 @@ export default function SuppliersTabsWrapper() {
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={() => setTab('suppliers')}
+            onClick={() => setTab("suppliers")}
             className={
-              tab === 'suppliers'
-                ? 'rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white'
-                : 'rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200'
+              tab === "suppliers"
+                ? "rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white"
+                : "rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
             }
           >
             Suppliers
           </button>
           <button
             type="button"
-            onClick={() => setTab('warehouse')}
+            onClick={() => setTab("warehouse")}
             className={
-              tab === 'warehouse'
-                ? 'rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white'
-                : 'rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200'
+              tab === "warehouse"
+                ? "rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white"
+                : "rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
             }
           >
             Warehouse
@@ -38,8 +39,8 @@ export default function SuppliersTabsWrapper() {
         </div>
       </div>
 
-      {tab === 'suppliers' && <SuppliersPageMain />}
-      {tab === 'warehouse' && <WarehouseTab />}
+      {tab === "suppliers" && <SuppliersPageMain />}
+      {tab === "warehouse" && <WarehouseTab />}
     </div>
   )
 }

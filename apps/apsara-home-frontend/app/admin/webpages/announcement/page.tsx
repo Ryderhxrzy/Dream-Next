@@ -1,10 +1,10 @@
-import { buildPageMetadata } from '@/app/seo'
-import WebPageItemsManager from '@/components/superAdmin/webpages/WebPageItemsManager'
+import WebPageItemsManager from "@/components/superAdmin/webpages/WebPageItemsManager"
+import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
-  title: 'Admin Web Pages Announcement',
-  description: 'Manage website announcements.',
-  path: '/admin/webpages/announcement',
+  title: "Admin Web Pages Announcement",
+  description: "Manage website announcements.",
+  path: "/admin/webpages/announcement",
   noIndex: true,
 })
 
@@ -17,4 +17,3 @@ export default function AdminWebPagesAnnouncementPage() {
     />
   )
 }
-

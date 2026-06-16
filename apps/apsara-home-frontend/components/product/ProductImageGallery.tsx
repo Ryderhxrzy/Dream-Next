@@ -1,181 +1,227 @@
-'use client';
+"use client"
 
-import { CategoryProduct } from '@/libs/CategoryData';
-import { getEnhancedCloudinaryImageUrl } from '@/libs/cloudinary';
-import { AnimatePresence, motion } from 'framer-motion';
-import Image from 'next/image';
-import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { CategoryProduct } from "@/libs/CategoryData"
+import { getEnhancedCloudinaryImageUrl } from "@/libs/cloudinary"
+import { AnimatePresence, motion } from "framer-motion"
+import Image from "next/image"
 
 interface ProductImageGalleryProps {
-  product: CategoryProduct;
-  selectedVariantImages?: string[];
-  preferredActiveImage?: string;
+  product: CategoryProduct
+  selectedVariantImages?: string[]
+  preferredActiveImage?: string
 }
 
-const MIN_ZOOM = 1;
-const MAX_ZOOM = 3;
-const ZOOM_STEP = 0.5;
+const MIN_ZOOM = 1
+const MAX_ZOOM = 3
+const ZOOM_STEP = 0.5
 
-const ProductImageGallery = ({ product, selectedVariantImages, preferredActiveImage }: ProductImageGalleryProps) => {
-  const primaryImage = product.image;
+const ProductImageGallery = ({
+  product,
+  selectedVariantImages,
+  preferredActiveImage,
+}: ProductImageGalleryProps) => {
+  const primaryImage = product.image
   const baseImages = useMemo(
-    () => (product.images && product.images.length > 0 ? product.images.filter(Boolean) : [product.image].filter(Boolean)),
-    [product.image, product.images],
-  );
-  const variantImages = useMemo(() => selectedVariantImages?.filter(Boolean) ?? [], [selectedVariantImages]);
+    () =>
+      product.images && product.images.length > 0
+        ? product.images.filter(Boolean)
+        : [product.image].filter(Boolean),
+    [product.image, product.images]
+  )
+  const variantImages = useMemo(
+    () => selectedVariantImages?.filter(Boolean) ?? [],
+    [selectedVariantImages]
+  )
   const galleryImages = useMemo(() => {
-    const merged = Array.from(new Set([primaryImage, ...variantImages, ...baseImages].filter(Boolean)));
-    return merged;
-  }, [baseImages, primaryImage, variantImages]);
+    const merged = Array.from(
+      new Set([primaryImage, ...variantImages, ...baseImages].filter(Boolean))
+    )
+    return merged
+  }, [baseImages, primaryImage, variantImages])
 
-  const hasMultipleImages = galleryImages.length > 1;
+  const hasMultipleImages = galleryImages.length > 1
 
   const initialActiveIndex = useMemo(() => {
-    if (!preferredActiveImage) return 0;
-    const idx = galleryImages.findIndex((img) => img === preferredActiveImage);
-    return idx >= 0 ? idx : 0;
-  }, [galleryImages, preferredActiveImage]);
+    if (!preferredActiveImage) return 0
+    const idx = galleryImages.findIndex((img) => img === preferredActiveImage)
+    return idx >= 0 ? idx : 0
+  }, [galleryImages, preferredActiveImage])
 
-  const [activeImage, setActiveImage] = useState(initialActiveIndex);
-  const [isZoomed, setIsZoomed] = useState(false);
+  const [activeImage, setActiveImage] = useState(initialActiveIndex)
+  const [isZoomed, setIsZoomed] = useState(false)
 
   // Lightbox zoom + pan state
-  const [zoomLevel, setZoomLevel] = useState(1);
-  const [panX, setPanX] = useState(0);
-  const [panY, setPanY] = useState(0);
-  const isDragging = useRef(false);
-  const dragMoved = useRef(false);
-  const dragStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
+  const [zoomLevel, setZoomLevel] = useState(1)
+  const [panX, setPanX] = useState(0)
+  const [panY, setPanY] = useState(0)
+  const isDragging = useRef(false)
+  const dragMoved = useRef(false)
+  const dragStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 })
 
   // Swipe (main gallery)
-  const touchStartX = useRef<number | null>(null);
-  const touchStartY = useRef<number | null>(null);
-  const didSwipeRef = useRef(false);
-  const galleryRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number | null>(null)
+  const touchStartY = useRef<number | null>(null)
+  const didSwipeRef = useRef(false)
+  const galleryRef = useRef<HTMLDivElement>(null)
 
   // Thumbnail strip scroll
-  const thumbContainerRef = useRef<HTMLDivElement>(null);
-  const thumbButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const thumbContainerRef = useRef<HTMLDivElement>(null)
+  const thumbButtonRefs = useRef<(HTMLButtonElement | null)[]>([])
 
-  const safeActive = galleryImages.length > 0 ? Math.min(Math.max(activeImage, 0), galleryImages.length - 1) : 0;
+  const safeActive =
+    galleryImages.length > 0
+      ? Math.min(Math.max(activeImage, 0), galleryImages.length - 1)
+      : 0
 
   const resetZoom = useCallback(() => {
-    setZoomLevel(1);
-    setPanX(0);
-    setPanY(0);
-  }, []);
+    setZoomLevel(1)
+    setPanX(0)
+    setPanY(0)
+  }, [])
 
   // Reset zoom when switching slide or closing
-  useEffect(() => { resetZoom(); }, [safeActive, resetZoom]);
-  useEffect(() => { if (!isZoomed) resetZoom(); }, [isZoomed, resetZoom]);
+  useEffect(() => {
+    resetZoom()
+  }, [safeActive, resetZoom])
+  useEffect(() => {
+    if (!isZoomed) resetZoom()
+  }, [isZoomed, resetZoom])
 
   // Auto-scroll thumbnail strip to keep active thumb visible
   useEffect(() => {
-    const container = thumbContainerRef.current;
-    const thumb = thumbButtonRefs.current[safeActive];
-    if (!container || !thumb) return;
-    const cLeft = container.scrollLeft;
-    const cWidth = container.clientWidth;
-    const tLeft = thumb.offsetLeft;
-    const tWidth = thumb.offsetWidth;
+    const container = thumbContainerRef.current
+    const thumb = thumbButtonRefs.current[safeActive]
+    if (!container || !thumb) return
+    const cLeft = container.scrollLeft
+    const cWidth = container.clientWidth
+    const tLeft = thumb.offsetLeft
+    const tWidth = thumb.offsetWidth
     if (tLeft < cLeft + 8) {
-      container.scrollTo({ left: tLeft - 8, behavior: 'smooth' });
+      container.scrollTo({ left: tLeft - 8, behavior: "smooth" })
     } else if (tLeft + tWidth > cLeft + cWidth - 8) {
-      container.scrollTo({ left: tLeft + tWidth - cWidth + 8, behavior: 'smooth' });
+      container.scrollTo({
+        left: tLeft + tWidth - cWidth + 8,
+        behavior: "smooth",
+      })
     }
-  }, [safeActive]);
+  }, [safeActive])
 
-  const zoomIn = useCallback(() => setZoomLevel((prev) => Math.min(+(prev + ZOOM_STEP).toFixed(1), MAX_ZOOM)), []);
+  const zoomIn = useCallback(
+    () =>
+      setZoomLevel((prev) =>
+        Math.min(+(prev + ZOOM_STEP).toFixed(1), MAX_ZOOM)
+      ),
+    []
+  )
   const zoomOut = useCallback(() => {
     setZoomLevel((prev) => {
-      const next = Math.max(+(prev - ZOOM_STEP).toFixed(1), MIN_ZOOM);
-      if (next === MIN_ZOOM) { setPanX(0); setPanY(0); }
-      return next;
-    });
-  }, []);
+      const next = Math.max(+(prev - ZOOM_STEP).toFixed(1), MIN_ZOOM)
+      if (next === MIN_ZOOM) {
+        setPanX(0)
+        setPanY(0)
+      }
+      return next
+    })
+  }, [])
 
   const enhancedImages = useMemo(
     () =>
       galleryImages.map((src) => ({
         original: src,
-        large: getEnhancedCloudinaryImageUrl(src, { width: 1400, height: 1400, crop: 'limit', effect: 'e_improve' }),
-        thumb: getEnhancedCloudinaryImageUrl(src, { width: 220, height: 220, crop: 'fill', effect: 'e_improve' }),
+        large: getEnhancedCloudinaryImageUrl(src, {
+          width: 1400,
+          height: 1400,
+          crop: "limit",
+          effect: "e_improve",
+        }),
+        thumb: getEnhancedCloudinaryImageUrl(src, {
+          width: 220,
+          height: 220,
+          crop: "fill",
+          effect: "e_improve",
+        }),
       })),
-    [galleryImages],
-  );
+    [galleryImages]
+  )
 
-  const goNext = () => setActiveImage((p) => (p + 1) % galleryImages.length);
-  const goPrev = () => setActiveImage((p) => (p - 1 + galleryImages.length) % galleryImages.length);
-  const goTo = (i: number) => { if (i !== safeActive) setActiveImage(i); };
+  const goNext = () => setActiveImage((p) => (p + 1) % galleryImages.length)
+  const goPrev = () =>
+    setActiveImage((p) => (p - 1 + galleryImages.length) % galleryImages.length)
+  const goTo = (i: number) => {
+    if (i !== safeActive) setActiveImage(i)
+  }
 
   // Main gallery swipe
   useEffect(() => {
-    const el = galleryRef.current;
-    if (!el) return;
+    const el = galleryRef.current
+    if (!el) return
     const handleMove = (e: TouchEvent) => {
-      if (touchStartX.current === null || touchStartY.current === null) return;
-      const dx = Math.abs((e.touches[0]?.clientX ?? 0) - touchStartX.current);
-      const dy = Math.abs((e.touches[0]?.clientY ?? 0) - touchStartY.current);
-      if (dx > dy && dx > 8) e.preventDefault();
-    };
-    el.addEventListener('touchmove', handleMove, { passive: false });
-    return () => el.removeEventListener('touchmove', handleMove);
-  }, []);
+      if (touchStartX.current === null || touchStartY.current === null) return
+      const dx = Math.abs((e.touches[0]?.clientX ?? 0) - touchStartX.current)
+      const dy = Math.abs((e.touches[0]?.clientY ?? 0) - touchStartY.current)
+      if (dx > dy && dx > 8) e.preventDefault()
+    }
+    el.addEventListener("touchmove", handleMove, { passive: false })
+    return () => el.removeEventListener("touchmove", handleMove)
+  }, [])
 
   const onTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0]?.clientX ?? null;
-    touchStartY.current = e.touches[0]?.clientY ?? null;
-    didSwipeRef.current = false;
-  };
+    touchStartX.current = e.touches[0]?.clientX ?? null
+    touchStartY.current = e.touches[0]?.clientY ?? null
+    didSwipeRef.current = false
+  }
   const onTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX.current === null) return;
-    const diff = (e.changedTouches[0]?.clientX ?? 0) - touchStartX.current;
+    if (touchStartX.current === null) return
+    const diff = (e.changedTouches[0]?.clientX ?? 0) - touchStartX.current
     if (Math.abs(diff) > 40) {
-      diff < 0 ? goNext() : goPrev();
-      didSwipeRef.current = true;
+      diff < 0 ? goNext() : goPrev()
+      didSwipeRef.current = true
     }
-    touchStartX.current = null;
-    touchStartY.current = null;
-  };
+    touchStartX.current = null
+    touchStartY.current = null
+  }
 
   // Lightbox drag-to-pan
   const onImageMouseDown = (e: React.MouseEvent) => {
-    if (zoomLevel <= 1) return;
-    e.preventDefault();
-    isDragging.current = true;
-    dragMoved.current = false;
-    dragStart.current = { x: e.clientX, y: e.clientY, panX, panY };
-  };
+    if (zoomLevel <= 1) return
+    e.preventDefault()
+    isDragging.current = true
+    dragMoved.current = false
+    dragStart.current = { x: e.clientX, y: e.clientY, panX, panY }
+  }
   const onImageMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging.current) return;
-    const dx = e.clientX - dragStart.current.x;
-    const dy = e.clientY - dragStart.current.y;
-    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragMoved.current = true;
-    setPanX(dragStart.current.panX + dx / zoomLevel);
-    setPanY(dragStart.current.panY + dy / zoomLevel);
-  };
+    if (!isDragging.current) return
+    const dx = e.clientX - dragStart.current.x
+    const dy = e.clientY - dragStart.current.y
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragMoved.current = true
+    setPanX(dragStart.current.panX + dx / zoomLevel)
+    setPanY(dragStart.current.panY + dy / zoomLevel)
+  }
   const onImageMouseUp = (e: React.MouseEvent) => {
-    if (dragMoved.current) e.stopPropagation();
-    isDragging.current = false;
-  };
-  const onImageMouseLeave = () => { isDragging.current = false; };
+    if (dragMoved.current) e.stopPropagation()
+    isDragging.current = false
+  }
+  const onImageMouseLeave = () => {
+    isDragging.current = false
+  }
 
   // Scroll wheel to zoom
   const onImageWheel = (e: React.WheelEvent) => {
-    e.stopPropagation();
-    if (e.deltaY < 0) zoomIn();
-    else zoomOut();
-  };
+    e.stopPropagation()
+    if (e.deltaY < 0) zoomIn()
+    else zoomOut()
+  }
 
   // Double-click to toggle zoom
   const onImageDoubleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (zoomLevel >= MAX_ZOOM) resetZoom();
-    else zoomIn();
-  };
+    e.stopPropagation()
+    if (zoomLevel >= MAX_ZOOM) resetZoom()
+    else zoomIn()
+  }
 
-  const isAtMinZoom = zoomLevel <= MIN_ZOOM;
-  const isAtMaxZoom = zoomLevel >= MAX_ZOOM;
+  const isAtMinZoom = zoomLevel <= MIN_ZOOM
+  const isAtMaxZoom = zoomLevel >= MAX_ZOOM
 
   return (
     <>
@@ -188,8 +234,8 @@ const ProductImageGallery = ({ product, selectedVariantImages, preferredActiveIm
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={() => setIsZoomed(false)}
-            className="fixed inset-0 z-[100] bg-black/92 flex flex-col items-center justify-center p-4"
-            style={{ cursor: zoomLevel > 1 ? 'default' : 'zoom-out' }}
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/92 p-4"
+            style={{ cursor: zoomLevel > 1 ? "default" : "zoom-out" }}
           >
             {/* Image container */}
             <motion.div
@@ -197,7 +243,7 @@ const ProductImageGallery = ({ product, selectedVariantImages, preferredActiveIm
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.92, opacity: 0 }}
               transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-              className="relative w-full max-w-4xl aspect-square max-h-[68vh] overflow-hidden rounded-2xl"
+              className="relative aspect-square max-h-[68vh] w-full max-w-4xl overflow-hidden rounded-2xl"
               onClick={(e) => e.stopPropagation()}
               onWheel={onImageWheel}
             >
@@ -205,31 +251,51 @@ const ProductImageGallery = ({ product, selectedVariantImages, preferredActiveIm
                 <div
                   key={img.original}
                   className="absolute inset-0 transition-transform duration-[350ms] ease-out will-change-transform"
-                  style={{ transform: `translateX(${(index - safeActive) * 100}%)` }}
+                  style={{
+                    transform: `translateX(${(index - safeActive) * 100}%)`,
+                  }}
                 >
                   {/* Zoom + pan wrapper — only active slide gets transform */}
                   <div
                     className="absolute inset-0 transition-transform duration-200 ease-out select-none"
                     style={{
-                      transform: index === safeActive
-                        ? `scale(${zoomLevel}) translate(${panX}px, ${panY}px)`
-                        : undefined,
-                      transformOrigin: 'center center',
-                      cursor: index === safeActive && zoomLevel > 1
-                        ? (isDragging.current ? 'grabbing' : 'grab')
-                        : 'default',
+                      transform:
+                        index === safeActive
+                          ? `scale(${zoomLevel}) translate(${panX}px, ${panY}px)`
+                          : undefined,
+                      transformOrigin: "center center",
+                      cursor:
+                        index === safeActive && zoomLevel > 1
+                          ? isDragging.current
+                            ? "grabbing"
+                            : "grab"
+                          : "default",
                     }}
-                    onMouseDown={index === safeActive ? onImageMouseDown : undefined}
-                    onMouseMove={index === safeActive ? onImageMouseMove : undefined}
-                    onMouseUp={index === safeActive ? onImageMouseUp : undefined}
-                    onMouseLeave={index === safeActive ? onImageMouseLeave : undefined}
-                    onDoubleClick={index === safeActive ? onImageDoubleClick : undefined}
+                    onMouseDown={
+                      index === safeActive ? onImageMouseDown : undefined
+                    }
+                    onMouseMove={
+                      index === safeActive ? onImageMouseMove : undefined
+                    }
+                    onMouseUp={
+                      index === safeActive ? onImageMouseUp : undefined
+                    }
+                    onMouseLeave={
+                      index === safeActive ? onImageMouseLeave : undefined
+                    }
+                    onDoubleClick={
+                      index === safeActive ? onImageDoubleClick : undefined
+                    }
                   >
                     <Image
                       src={img.large || img.original}
-                      alt={index === 0 ? product.name : `${product.name} ${index + 1}`}
+                      alt={
+                        index === 0
+                          ? product.name
+                          : `${product.name} ${index + 1}`
+                      }
                       fill
-                      className="object-contain pointer-events-none"
+                      className="pointer-events-none object-contain"
                       priority={index === 0}
                       draggable={false}
                     />
@@ -241,41 +307,77 @@ const ProductImageGallery = ({ product, selectedVariantImages, preferredActiveIm
               {hasMultipleImages && zoomLevel === 1 && (
                 <>
                   <button
-                    onClick={(e) => { e.stopPropagation(); goPrev(); }}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 z-20 h-11 w-11 rounded-full bg-white/15 hover:bg-white/30 text-white backdrop-blur-sm border border-white/10 transition-colors flex items-center justify-center"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      goPrev()
+                    }}
+                    className="absolute top-1/2 left-3 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-white/15 text-white backdrop-blur-sm transition-colors hover:bg-white/30"
                     aria-label="Previous"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><polyline points="15 18 9 12 15 6" /></svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="22"
+                      height="22"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                    >
+                      <polyline points="15 18 9 12 15 6" />
+                    </svg>
                   </button>
                   <button
-                    onClick={(e) => { e.stopPropagation(); goNext(); }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 z-20 h-11 w-11 rounded-full bg-white/15 hover:bg-white/30 text-white backdrop-blur-sm border border-white/10 transition-colors flex items-center justify-center"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      goNext()
+                    }}
+                    className="absolute top-1/2 right-3 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-white/15 text-white backdrop-blur-sm transition-colors hover:bg-white/30"
                     aria-label="Next"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><polyline points="9 18 15 12 9 6" /></svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="22"
+                      height="22"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                    >
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
                   </button>
                 </>
               )}
 
               {/* Zoom controls — desktop only, inside image box bottom-center */}
               <div
-                className="hidden sm:flex absolute bottom-3 left-1/2 -translate-x-1/2 z-20 items-center gap-1 bg-black/40 backdrop-blur-md rounded-full px-2 py-1.5 border border-white/10"
+                className="absolute bottom-3 left-1/2 z-20 hidden -translate-x-1/2 items-center gap-1 rounded-full border border-white/10 bg-black/40 px-2 py-1.5 backdrop-blur-md sm:flex"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Zoom out */}
                 <button
                   onClick={zoomOut}
                   disabled={isAtMinZoom}
-                  className="h-8 w-8 rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-white/15 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/15 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
                   aria-label="Zoom out"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /><line x1="8" y1="11" x2="14" y2="11" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    <line x1="8" y1="11" x2="14" y2="11" />
                   </svg>
                 </button>
 
                 {/* Zoom level display */}
-                <span className="text-white/70 text-xs font-semibold tabular-nums min-w-[2.75rem] text-center select-none">
+                <span className="min-w-[2.75rem] text-center text-xs font-semibold text-white/70 tabular-nums select-none">
                   {zoomLevel.toFixed(1)}×
                 </span>
 
@@ -283,26 +385,45 @@ const ProductImageGallery = ({ product, selectedVariantImages, preferredActiveIm
                 <button
                   onClick={zoomIn}
                   disabled={isAtMaxZoom}
-                  className="h-8 w-8 rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-white/15 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/15 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
                   aria-label="Zoom in"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-                    <line x1="11" y1="8" x2="11" y2="14" /><line x1="8" y1="11" x2="14" y2="11" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    <line x1="11" y1="8" x2="11" y2="14" />
+                    <line x1="8" y1="11" x2="14" y2="11" />
                   </svg>
                 </button>
 
                 {/* Divider + Reset — only shown when zoomed */}
                 {!isAtMinZoom && (
                   <>
-                    <div className="w-px h-4 bg-white/20 mx-1" />
+                    <div className="mx-1 h-4 w-px bg-white/20" />
                     <button
                       onClick={resetZoom}
-                      className="h-8 w-8 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/15 transition-colors"
+                      className="flex h-8 w-8 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/15 hover:text-white"
                       aria-label="Reset zoom"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                      >
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                        <path d="M3 3v5h5" />
                       </svg>
                     </button>
                   </>
@@ -311,14 +432,14 @@ const ProductImageGallery = ({ product, selectedVariantImages, preferredActiveIm
 
               {/* Hint: double-click or scroll to zoom — desktop */}
               {zoomLevel === 1 && (
-                <p className="hidden sm:block absolute top-3 left-1/2 -translate-x-1/2 z-20 text-white/30 text-[11px] font-medium select-none pointer-events-none whitespace-nowrap">
+                <p className="pointer-events-none absolute top-3 left-1/2 z-20 hidden -translate-x-1/2 text-[11px] font-medium whitespace-nowrap text-white/30 select-none sm:block">
                   Scroll or double-click to zoom
                 </p>
               )}
 
               {/* Hint: drag to pan — desktop, when zoomed */}
               {zoomLevel > 1 && (
-                <p className="hidden sm:block absolute top-3 left-1/2 -translate-x-1/2 z-20 text-white/30 text-[11px] font-medium select-none pointer-events-none whitespace-nowrap">
+                <p className="pointer-events-none absolute top-3 left-1/2 z-20 hidden -translate-x-1/2 text-[11px] font-medium whitespace-nowrap text-white/30 select-none sm:block">
                   Drag to pan
                 </p>
               )}
@@ -326,33 +447,57 @@ const ProductImageGallery = ({ product, selectedVariantImages, preferredActiveIm
 
             {/* Thumbnails */}
             {hasMultipleImages && (
-              <div className="flex gap-2 mt-4 overflow-x-auto justify-center" style={{ scrollbarWidth: 'none' }}>
+              <div
+                className="mt-4 flex justify-center gap-2 overflow-x-auto"
+                style={{ scrollbarWidth: "none" }}
+              >
                 {enhancedImages.map((img, index) => (
                   <button
                     key={index}
-                    onClick={(e) => { e.stopPropagation(); goTo(index); }}
-                    className={`relative shrink-0 h-14 w-14 rounded-xl overflow-hidden border-2 transition-all duration-200 ${
-                      safeActive === index ? 'border-sky-400 scale-110' : 'border-white/25 hover:border-white/50 opacity-60 hover:opacity-100'
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      goTo(index)
+                    }}
+                    className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-200 ${
+                      safeActive === index
+                        ? "scale-110 border-sky-400"
+                        : "border-white/25 opacity-60 hover:border-white/50 hover:opacity-100"
                     }`}
                   >
-                    <Image src={img.thumb || img.original} alt={`View ${index + 1}`} fill className="object-cover" />
+                    <Image
+                      src={img.thumb || img.original}
+                      alt={`View ${index + 1}`}
+                      fill
+                      className="object-cover"
+                    />
                   </button>
                 ))}
               </div>
             )}
 
             {hasMultipleImages && (
-              <p className="mt-3 text-white/40 text-xs font-medium tabular-nums">{safeActive + 1} / {galleryImages.length}</p>
+              <p className="mt-3 text-xs font-medium text-white/40 tabular-nums">
+                {safeActive + 1} / {galleryImages.length}
+              </p>
             )}
 
             {/* Close button */}
             <button
               onClick={() => setIsZoomed(false)}
-              className="absolute top-4 right-4 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors backdrop-blur-sm"
+              className="absolute top-4 right-4 rounded-full bg-white/10 p-2 text-white/70 backdrop-blur-sm transition-colors hover:bg-white/20 hover:text-white"
               aria-label="Close"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             </button>
           </motion.div>
@@ -360,14 +505,19 @@ const ProductImageGallery = ({ product, selectedVariantImages, preferredActiveIm
       </AnimatePresence>
 
       {/* ── Gallery ── */}
-      <motion.div initial={{ opacity: 0, x: -24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.45 }}>
+      <motion.div
+        initial={{ opacity: 0, x: -24 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.45 }}
+      >
         <div className="flex flex-col gap-3">
-
           {/* Main image */}
           <div
             ref={galleryRef}
-            className="group relative aspect-[4/3] overflow-hidden rounded-2xl bg-white p-2 shadow-sm sm:rounded-3xl sm:aspect-[5/4] xl:aspect-[16/10] dark:bg-slate-900"
-            onClick={() => { if (!didSwipeRef.current) setIsZoomed(true); }}
+            className="group relative aspect-[4/3] overflow-hidden rounded-2xl bg-white p-2 shadow-sm sm:aspect-[5/4] sm:rounded-3xl xl:aspect-[16/10] dark:bg-slate-900"
+            onClick={() => {
+              if (!didSwipeRef.current) setIsZoomed(true)
+            }}
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
           >
@@ -375,11 +525,15 @@ const ProductImageGallery = ({ product, selectedVariantImages, preferredActiveIm
               <div
                 key={img.original}
                 className="absolute inset-0 transition-transform duration-[350ms] ease-out will-change-transform"
-                style={{ transform: `translateX(${(index - safeActive) * 100}%)` }}
+                style={{
+                  transform: `translateX(${(index - safeActive) * 100}%)`,
+                }}
               >
                 <Image
                   src={img.large || img.original}
-                  alt={index === 0 ? product.name : `${product.name} ${index + 1}`}
+                  alt={
+                    index === 0 ? product.name : `${product.name} ${index + 1}`
+                  }
                   fill
                   className="object-contain p-1"
                   priority={index < 3}
@@ -392,34 +546,63 @@ const ProductImageGallery = ({ product, selectedVariantImages, preferredActiveIm
             {hasMultipleImages && (
               <>
                 <button
-                  onClick={(e) => { e.stopPropagation(); goPrev(); }}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 z-10 h-9 w-9 rounded-full bg-white/75 dark:bg-slate-900/75 backdrop-blur-sm border border-white/60 dark:border-slate-700/60 text-slate-700 dark:text-slate-200 shadow-sm opacity-0 group-hover:opacity-100 hover:bg-white dark:hover:bg-slate-900 hover:text-sky-500 dark:hover:text-sky-400 transition-all duration-150 flex items-center justify-center"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    goPrev()
+                  }}
+                  className="absolute top-1/2 left-3 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/60 bg-white/75 text-slate-700 opacity-0 shadow-sm backdrop-blur-sm transition-all duration-150 group-hover:opacity-100 hover:bg-white hover:text-sky-500 dark:border-slate-700/60 dark:bg-slate-900/75 dark:text-slate-200 dark:hover:bg-slate-900 dark:hover:text-sky-400"
                   aria-label="Previous image"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <polyline points="15 18 9 12 15 6" />
+                  </svg>
                 </button>
                 <button
-                  onClick={(e) => { e.stopPropagation(); goNext(); }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 z-10 h-9 w-9 rounded-full bg-white/75 dark:bg-slate-900/75 backdrop-blur-sm border border-white/60 dark:border-slate-700/60 text-slate-700 dark:text-slate-200 shadow-sm opacity-0 group-hover:opacity-100 hover:bg-white dark:hover:bg-slate-900 hover:text-sky-500 dark:hover:text-sky-400 transition-all duration-150 flex items-center justify-center"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    goNext()
+                  }}
+                  className="absolute top-1/2 right-3 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/60 bg-white/75 text-slate-700 opacity-0 shadow-sm backdrop-blur-sm transition-all duration-150 group-hover:opacity-100 hover:bg-white hover:text-sky-500 dark:border-slate-700/60 dark:bg-slate-900/75 dark:text-slate-200 dark:hover:bg-slate-900 dark:hover:text-sky-400"
                   aria-label="Next image"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
                 </button>
               </>
             )}
 
             {/* Dot indicators */}
             {hasMultipleImages && (
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5">
+              <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5">
                 {galleryImages.map((_, index) => (
                   <button
                     key={index}
-                    onClick={(e) => { e.stopPropagation(); goTo(index); }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      goTo(index)
+                    }}
                     aria-label={`Image ${index + 1}`}
                     className={`h-1.5 rounded-full transition-all duration-250 ${
                       index === safeActive
-                        ? 'w-5 bg-white shadow-[0_0_6px_rgba(255,255,255,0.6)]'
-                        : 'w-1.5 bg-white/40 hover:bg-white/70'
+                        ? "w-5 bg-white shadow-[0_0_6px_rgba(255,255,255,0.6)]"
+                        : "w-1.5 bg-white/40 hover:bg-white/70"
                     }`}
                   />
                 ))}
@@ -427,10 +610,20 @@ const ProductImageGallery = ({ product, selectedVariantImages, preferredActiveIm
             )}
 
             {/* Zoom hint */}
-            <div className="absolute top-3 right-3 z-10 bg-black/25 backdrop-blur-sm text-white/80 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-                <line x1="11" y1="8" x2="11" y2="14" /><line x1="8" y1="11" x2="14" y2="11" />
+            <div className="pointer-events-none absolute top-3 right-3 z-10 rounded-lg bg-black/25 p-1.5 text-white/80 opacity-0 backdrop-blur-sm transition-opacity duration-200 group-hover:opacity-100">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                <line x1="11" y1="8" x2="11" y2="14" />
+                <line x1="8" y1="11" x2="14" y2="11" />
               </svg>
             </div>
           </div>
@@ -440,50 +633,86 @@ const ProductImageGallery = ({ product, selectedVariantImages, preferredActiveIm
             <div className="relative">
               {/* Scroll left — desktop */}
               <button
-                onClick={() => thumbContainerRef.current?.scrollBy({ left: -200, behavior: 'smooth' })}
-                className="hidden sm:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow text-slate-500 dark:text-slate-400 hover:border-sky-400 hover:text-sky-500 transition-all"
+                onClick={() =>
+                  thumbContainerRef.current?.scrollBy({
+                    left: -200,
+                    behavior: "smooth",
+                  })
+                }
+                className="absolute top-1/2 left-0 z-10 hidden h-8 w-8 shrink-0 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow transition-all hover:border-sky-400 hover:text-sky-500 sm:flex dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
                 aria-label="Scroll thumbnails left"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
               </button>
 
               <div
                 ref={thumbContainerRef}
                 className="flex gap-2 overflow-x-auto pb-0.5 sm:px-10"
-                style={{ scrollbarWidth: 'none' }}
+                style={{ scrollbarWidth: "none" }}
               >
                 {enhancedImages.map((img, index) => (
                   <button
                     key={index}
-                    ref={(el) => { thumbButtonRefs.current[index] = el; }}
+                    ref={(el) => {
+                      thumbButtonRefs.current[index] = el
+                    }}
                     onClick={() => goTo(index)}
                     aria-label={`View image ${index + 1}`}
-                    className={`relative shrink-0 h-[68px] w-[68px] rounded-2xl overflow-hidden border-2 transition-all duration-200 ${
+                    className={`relative h-[68px] w-[68px] shrink-0 overflow-hidden rounded-2xl border-2 transition-all duration-200 ${
                       safeActive === index
-                        ? 'border-sky-400 dark:border-sky-500 shadow-[0_0_0_3px_rgba(56,189,248,0.15)]'
-                        : 'border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 opacity-70 hover:opacity-100'
+                        ? "border-sky-400 shadow-[0_0_0_3px_rgba(56,189,248,0.15)] dark:border-sky-500"
+                        : "border-slate-200 opacity-70 hover:border-slate-400 hover:opacity-100 dark:border-slate-700 dark:hover:border-slate-500"
                     }`}
                   >
-                    <Image src={img.thumb || img.original} alt={`View ${index + 1}`} fill className="object-cover" />
+                    <Image
+                      src={img.thumb || img.original}
+                      alt={`View ${index + 1}`}
+                      fill
+                      className="object-cover"
+                    />
                   </button>
                 ))}
               </div>
 
               {/* Scroll right — desktop */}
               <button
-                onClick={() => thumbContainerRef.current?.scrollBy({ left: 200, behavior: 'smooth' })}
-                className="hidden sm:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow text-slate-500 dark:text-slate-400 hover:border-sky-400 hover:text-sky-500 transition-all"
+                onClick={() =>
+                  thumbContainerRef.current?.scrollBy({
+                    left: 200,
+                    behavior: "smooth",
+                  })
+                }
+                className="absolute top-1/2 right-0 z-10 hidden h-8 w-8 shrink-0 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow transition-all hover:border-sky-400 hover:text-sky-500 sm:flex dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
                 aria-label="Scroll thumbnails right"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
               </button>
             </div>
           )}
-
         </div>
       </motion.div>
     </>
-  );
-};
+  )
+}
 
-export default ProductImageGallery;
+export default ProductImageGallery
