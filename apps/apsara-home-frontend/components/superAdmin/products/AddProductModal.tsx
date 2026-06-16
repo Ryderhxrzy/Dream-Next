@@ -1397,6 +1397,21 @@ export default function AddProductModal({
     () => selectedCategory?.name?.toLowerCase() === "services",
     [selectedCategory]
   )
+
+  // Auto-select the Services category when the modal opens in services view.
+  // draftRestored is included so this re-runs after the draft restoration effect
+  // overwrites pd_catid — ensuring the services category is always pre-selected.
+  useEffect(() => {
+    if (!isOpen || !isServicesView || categories.length === 0) return
+    const servicesCategory = categories.find(
+      (c) => c.name?.toLowerCase() === "services"
+    )
+    if (servicesCategory && !form.pd_catid) {
+      setForm((prev) => ({ ...prev, pd_catid: String(servicesCategory.id) }))
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, isServicesView, categories, draftRestored])
+
   const selectedBrand = useMemo(
     () => brands.find((brand) => String(brand.id) === form.pd_brand_type),
     [brands, form.pd_brand_type]

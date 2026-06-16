@@ -8,6 +8,7 @@ import { store } from "@/store/store"
 import { AnimatePresence, motion } from "framer-motion"
 import { SessionProvider, signOut, useSession } from "next-auth/react"
 import { ThemeProvider } from "next-themes"
+import { usePathname } from "next/navigation"
 import { Toaster } from "react-hot-toast"
 import { Provider as ReduxProvider } from "react-redux"
 
@@ -177,6 +178,50 @@ function CustomerDeletedOverlay() {
   )
 }
 
+function CustomerProviderTree({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+
+  // Supplier routes have their own SessionProvider with a different basePath.
+  // Including the root customer SessionProvider here would overwrite NextAuth's
+  // module-level basePath singleton and cause signIn/signOut to hit the wrong
+  // endpoint (/api/auth instead of /api/supplier/auth), redirecting to "/".
+  if (pathname?.startsWith("/supplier")) {
+    return <>{children}</>
+  }
+
+  return (
+    <SessionProvider>
+      <CartProvider>
+        <WishlistProvider>
+          <EchoInitializer />
+          <CustomerSessionGuard />
+          <AccountDeletedListener />
+          <CustomerBannedOverlay />
+          <CustomerDeletedOverlay />
+          {children}
+          <AdsPopup />
+          <CartDrawer />
+          <WishlistDrawer />
+          <Toaster
+            position="top-center"
+            toastOptions={{
+              duration: 3000,
+              style: {
+                borderRadius: "12px",
+                background: "#ffffff",
+                color: "#1f2937",
+                border: "1px solid #fed7aa",
+                boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
+                fontSize: "14px",
+              },
+            }}
+          />
+        </WishlistProvider>
+      </CartProvider>
+    </SessionProvider>
+  )
+}
+
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider
@@ -185,37 +230,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       enableSystem={false}
       disableTransitionOnChange
     >
-      <SessionProvider>
-        <ReduxProvider store={store}>
-          <CartProvider>
-            <WishlistProvider>
-              <EchoInitializer />
-              <CustomerSessionGuard />
-              <AccountDeletedListener />
-              <CustomerBannedOverlay />
-              <CustomerDeletedOverlay />
-              {children}
-              <AdsPopup />
-              <CartDrawer />
-              <WishlistDrawer />
-              <Toaster
-                position="top-center"
-                toastOptions={{
-                  duration: 3000,
-                  style: {
-                    borderRadius: "12px",
-                    background: "#ffffff",
-                    color: "#1f2937",
-                    border: "1px solid #fed7aa",
-                    boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
-                    fontSize: "14px",
-                  },
-                }}
-              />
-            </WishlistProvider>
-          </CartProvider>
-        </ReduxProvider>
-      </SessionProvider>
+      <ReduxProvider store={store}>
+        <CustomerProviderTree>{children}</CustomerProviderTree>
+      </ReduxProvider>
     </ThemeProvider>
   )
 }

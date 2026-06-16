@@ -30,7 +30,6 @@ pnpm-debug.log*
 test-results/
 apps/test-results/
 storage/logs/
-graphify-out/
 
 # Laravel/runtime generated files
 bootstrap/cache/*.php
@@ -45,12 +44,5 @@ Thumbs.db
 .vscode/
 .idea/
 
-#graphify 
-graphify-out/cache/
-graphify-out/20*/
-graphify-out/.graphify_*
-graphify-out/graph.json
-graphify-out/GRAPH_REPORT.md
-graphify-out/manifest.json
-graphify-out/cost.json
-graphify-out/_*.py
+# Graphify auto-generated
+graphify-out/

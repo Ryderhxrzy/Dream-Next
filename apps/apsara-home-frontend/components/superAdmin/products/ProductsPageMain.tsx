@@ -3668,7 +3668,7 @@ export default function ProductsPageMain({
         }}
         onSaved={handleProductsSaved}
         isSupplierPortal={isSupplierPortal}
-        isServicesView={isSupplierServicesPortal}
+        isServicesView={isServicesView}
       />
       <ProductActivityLogsModal
         isOpen={showActivityLogs}
