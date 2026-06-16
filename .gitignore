@@ -43,3 +43,6 @@ storage/framework/views/
 Thumbs.db
 .vscode/
 .idea/
+
+# Graphify auto-generated
+graphify-out/
