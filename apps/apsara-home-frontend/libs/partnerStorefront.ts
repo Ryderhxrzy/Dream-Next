@@ -232,7 +232,11 @@ export const filterPartnerProducts = (
 export const buildPartnerShopLink = (href: string, partnerSlug?: string) => {
   if (!partnerSlug) return href
   const value = href.trim()
-  if (value === "" || !value.startsWith("/shop")) return value
+  if (value === "") return value
+  if (value === "/shop" || value.startsWith("/shop?") || value.startsWith("/shop#")) {
+    return `/${partnerSlug}${value.slice("/shop".length)}`
+  }
+  if (!value.startsWith("/shop")) return value
   return value.replace(/^\/shop(?=\/|\?|$)/, `/shop/${partnerSlug}`)
 }
 

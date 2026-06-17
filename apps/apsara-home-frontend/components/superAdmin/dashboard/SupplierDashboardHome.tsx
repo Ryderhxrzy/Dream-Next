@@ -75,6 +75,8 @@ const fmtMoney = (value: number) =>
 
 const fmtK = (v: number) => (v >= 1000 ? `₱${(v / 1000).toFixed(0)}k` : `₱${v}`)
 
+const stripHtml = (html: string) => html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()
+
 const lastNDays = (n: number) =>
   Array.from({ length: n }, (_, i) => {
     const d = new Date()
@@ -1547,7 +1549,7 @@ export default function SupplierDashboardHome() {
                             </p>
                             {order.product_description ? (
                               <p className="max-w-[200px] truncate text-[11px] text-slate-400 dark:text-slate-500">
-                                {order.product_description}
+                                {stripHtml(order.product_description)}
                               </p>
                             ) : null}
                           </div>
@@ -2386,7 +2388,7 @@ function ProductRow({
             </p>
             {product.description ? (
               <p className="max-w-55 truncate text-[11px] text-slate-400 dark:text-slate-500">
-                {product.description}
+                {stripHtml(product.description)}
               </p>
             ) : null}
           </div>

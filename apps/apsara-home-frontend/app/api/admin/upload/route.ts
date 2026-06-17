@@ -168,6 +168,7 @@ export async function POST(req: NextRequest) {
     //   - images: 10MB, videos: 15MB
     const isProjectGallery = folderType === "project-gallery"
     const isMerchantCatalogue = folderType === "merchant-catalogues"
+    const isPartnerStorefronts = folderType === "partner-storefronts"
 
     const maxSizeBytes = isPdf
       ? 20 * 1024 * 1024
@@ -176,17 +177,20 @@ export async function POST(req: NextRequest) {
           ? 15 * 1024 * 1024
           : isMerchantCatalogue
             ? 25 * 1024 * 1024
-            : 150 * 1024 * 1024
+            : isPartnerStorefronts
+              ? 20 * 1024 * 1024
+              : 150 * 1024 * 1024
         : isProjectGallery
           ? 10 * 1024 * 1024
           : 5 * 1024 * 1024
 
-    // No minimum video size for project-gallery or merchant-catalogues.
+    // No minimum video size for project-gallery, merchant-catalogues, or partner-storefronts.
     const minVideoSizeBytes = 5 * 1024 * 1024
     if (
       isVideo &&
       !isProjectGallery &&
       !isMerchantCatalogue &&
+      !isPartnerStorefronts &&
       file.size < minVideoSizeBytes
     ) {
       return NextResponse.json(
@@ -203,7 +207,7 @@ export async function POST(req: NextRequest) {
           error: isPdf
             ? "File too large. Maximum size is 20MB for PDF files."
             : isVideo
-              ? `File too large. Maximum size is ${isProjectGallery ? "15MB" : isMerchantCatalogue ? "25MB" : "150MB"} for video files.`
+              ? `File too large. Maximum size is ${isProjectGallery ? "15MB" : isMerchantCatalogue ? "25MB" : isPartnerStorefronts ? "20MB" : "150MB"} for video files.`
               : `File too large. Maximum size is ${isProjectGallery ? "10MB" : "5MB"}.`,
         },
         { status: 400 }

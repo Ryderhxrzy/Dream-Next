@@ -1,88 +1,115 @@
-import { notFound } from 'next/navigation'
-import { headers } from 'next/headers'
-import PartnerLandingPageView from '@/components/partner/PartnerLandingPageView'
-import { resolvePartnerStorefrontPublicUrl } from '@/libs/partnerStorefront'
-import {
-  getPartnerStorefrontBySlug,
-  getPartnerStorefrontItemBySlug,
-  isStorefrontSubscriptionExpired,
-} from '@/libs/partnerStorefrontServer'
-import type { Metadata } from 'next'
-export const dynamic = 'force-dynamic'
+import type { Metadata } from "next"
+import { headers } from "next/headers"
+import { notFound } from "next/navigation"
+
+import PartnerStorefrontPage from "@/components/partner/PartnerStorefrontPage"
+import { buildPageMetadata } from "@/app/seo"
+import { getPartnerStorefrontBySlug } from "@/libs/partnerStorefrontServer"
+import { resolvePartnerStorefrontPublicUrl } from "@/libs/partnerStorefront"
+import { serverFetch } from "@/libs/serverFetch"
+import type { ShopBuilderApiResponse } from "@/components/sections/ShopBuilderSections"
+
+export const dynamic = "force-dynamic"
 
 type PageProps = {
   params: Promise<{
     partner: string
   }>
-  searchParams?: Promise<{
-    preview?: string
-  }>
 }
 
-const BLANK_FAVICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E"
+type ApiCategoriesResponse = {
+  categories?: ShopBuilderApiResponse["categories"]
+}
+
+type ApiProductsResponse = {
+  products?: ShopBuilderApiResponse["products"]
+}
+
+type ApiWebPagesResponse = {
+  items?: ShopBuilderApiResponse["items"]
+}
+
+async function getShopBuilderData(): Promise<ShopBuilderApiResponse | null> {
+  const apiUrl =
+    process.env.LARAVEL_API_URL ?? process.env.NEXT_PUBLIC_LARAVEL_API_URL
+  if (!apiUrl) return null
+
+  try {
+    const [webPagesRes, categoriesRes, productsRes] = await Promise.all([
+      serverFetch(`${apiUrl}/api/web-pages/shop-builder`, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      }),
+      serverFetch(`${apiUrl}/api/categories?page=1&per_page=100&used_only=1`, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      }),
+      serverFetch(`${apiUrl}/api/products?page=1&per_page=200&status=1`, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      }),
+    ])
+
+    if (!webPagesRes.ok || !categoriesRes.ok || !productsRes.ok) return null
+
+    const webPagesJson = (await webPagesRes.json()) as ApiWebPagesResponse
+    const categoriesJson = (await categoriesRes.json()) as ApiCategoriesResponse
+    const productsJson = (await productsRes.json()) as ApiProductsResponse
+
+    return {
+      items: webPagesJson.items ?? [],
+      categories: categoriesJson.categories ?? [],
+      products: productsJson.products ?? [],
+    }
+  } catch {
+    return null
+  }
+}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const resolved = await params
-  const requestHeaders = await headers()
-  const requestHost = requestHeaders.get('x-forwarded-host') ?? requestHeaders.get('host') ?? ''
-  const RAW_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://afhome.ph'
-  const SITE_URL = RAW_SITE_URL.startsWith('http') ? RAW_SITE_URL : `https://${RAW_SITE_URL}`
-  const partnerName = resolved.partner
-    .split(/[\s-]+/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ')
-  const title = partnerName.toLowerCase().endsWith('shop') ? partnerName : `${partnerName} Shop`
-  const description = `Browse the curated storefront for ${resolved.partner}.`
-  const path = `/shop/${resolved.partner}`
-  const partnerConfig = await getPartnerStorefrontBySlug(resolved.partner)
-  const resolvedPublicShopUrl = resolvePartnerStorefrontPublicUrl(partnerConfig, requestHost)
-  const canonicalUrl = resolvedPublicShopUrl || `${SITE_URL}${path}`
-  const metadata: Metadata = {
-    title,
-    description,
-    alternates: { canonical: canonicalUrl },
-    openGraph: {
-      title,
-      description,
-      url: canonicalUrl,
-      siteName: 'AF Home',
-      type: 'website',
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-    },
-  }
+  const normalizedPartner = resolved.partner.trim().toLowerCase()
+  const storefront = await getPartnerStorefrontBySlug(normalizedPartner)
+  const displayName =
+    storefront?.displayName?.trim() || normalizedPartner || "Partner Store"
 
-  const iconUrl = partnerConfig?.tabLogoUrl || partnerConfig?.logoUrl
-
-  metadata.icons = iconUrl
-    ? {
-      icon: [{ url: iconUrl, type: 'image/png' }],
-      apple: iconUrl,
-    }
-    : {
-      icon: [{ url: BLANK_FAVICON, type: 'image/svg+xml' }],
-      apple: BLANK_FAVICON,
-    }
-
-  return metadata
+  return buildPageMetadata({
+    title: displayName,
+    description: `Discover premium furniture, appliances, and inspired spaces on ${displayName}.`,
+    path: `/shop/${normalizedPartner}`,
+  })
 }
 
 export default async function PartnerShopPage({ params }: PageProps) {
   const resolved = await params
-
-  const expired = await isStorefrontSubscriptionExpired(resolved.partner)
-  if (expired) {
+  const normalizedPartner = resolved.partner.trim().toLowerCase()
+  if (!normalizedPartner) {
     notFound()
   }
 
-  const storefrontItem = await getPartnerStorefrontItemBySlug(resolved.partner)
-  if (!storefrontItem) {
+  const requestHeaders = await headers()
+  const requestHost =
+    requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? ""
+
+  const storefront = await getPartnerStorefrontBySlug(normalizedPartner)
+  if (!storefront) {
     notFound()
   }
 
-  return <PartnerLandingPageView partnerSlug={resolved.partner} storefrontItem={storefrontItem} />
+  const shopData = await getShopBuilderData()
+  const publicShopUrl =
+    resolvePartnerStorefrontPublicUrl(storefront, requestHost) ||
+    storefront.publicShopUrl ||
+    `/shop/${normalizedPartner}`
+
+  return (
+    <PartnerStorefrontPage
+      partner={storefront}
+      data={shopData}
+      publicShopUrl={publicShopUrl}
+    />
+  )
 }

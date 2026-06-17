@@ -142,10 +142,7 @@ function OpenPreviewButton({
   displayName: string
 }) {
   const previewSlug = toSlug(slug || displayName)
-  const previewPath =
-    previewSlug === "jujutsu-kaisen"
-      ? `/${previewSlug}`
-      : `/shop/${previewSlug}`
+  const previewPath = `/${previewSlug}`
   const previewHref =
     typeof window !== "undefined"
       ? `${window.location.origin}${previewPath}`
@@ -2049,7 +2046,7 @@ export default function PartnerStorefrontStudio() {
                           Storefront hero video
                         </p>
                         <p className="mt-0.5 text-xs text-slate-400">
-                          MP4, MOV, WEBM · Min 5MB
+                          MP4, MOV, WEBM · Max 20MB
                         </p>
                       </div>
                       <div className="flex items-center gap-2">

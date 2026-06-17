@@ -12,6 +12,7 @@ import { headers } from "next/headers"
 import { notFound } from "next/navigation"
 
 import CategoryListProductMain from "@/components/category/CategoryListProductMain"
+
 import { buildPageMetadata } from "@/app/seo"
 
 export const dynamic = "force-dynamic"
@@ -235,7 +236,7 @@ export async function generateMetadata({ params }: PageProps) {
   }
 }
 
-async function getPartnerProductPageData(partnerSlug: string) {
+export async function getPartnerProductPageData(partnerSlug: string) {
   const apiUrl =
     process.env.LARAVEL_API_URL ?? process.env.NEXT_PUBLIC_LARAVEL_API_URL
   if (!apiUrl) return null
@@ -390,22 +391,29 @@ async function getPartnerProductPageData(partnerSlug: string) {
 
 export default async function PartnerProductPage({ params }: PageProps) {
   const resolved = await params
-  const payload = await getPartnerProductPageData(resolved.partner)
+  const normalizedPartner = resolved.partner.trim().toLowerCase()
   const requestHeaders = await headers()
   const requestHost =
     requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? ""
-  const partnerPublicShopUrl = resolvePartnerStorefrontPublicUrl(
-    payload?.partner ?? null,
-    requestHost
-  )
 
-  if (!payload) {
+  const expired = await isStorefrontSubscriptionExpired(normalizedPartner)
+  if (expired) {
     notFound()
   }
 
+  const payload = await getPartnerProductPageData(normalizedPartner)
+  if (!payload || !payload.partner) {
+    notFound()
+  }
+
+  const partnerPublicShopUrl = resolvePartnerStorefrontPublicUrl(
+    payload.partner ?? null,
+    requestHost
+  )
+
   return (
     <CategoryListProductMain
-      slug={`${resolved.partner}-products`}
+      slug={`${normalizedPartner}-products`}
       initialCategoryLabel="All Products"
       initialProducts={payload.products}
       initialCategories={payload.categories}
@@ -414,12 +422,10 @@ export default async function PartnerProductPage({ params }: PageProps) {
           payload.partner?.logoUrl ||
           payload.partner?.tabLogoUrl ||
           "/Images/af_home_logo.png",
-        displayName: payload.partner?.displayName || resolved.partner,
-        productHref: `${partnerPublicShopUrl || `/shop/${resolved.partner}`}/product`,
+        displayName: payload.partner?.displayName || normalizedPartner,
+        productHref: `${partnerPublicShopUrl || `/shop/${normalizedPartner}`}/product`,
         heroVideoUrl: payload.partner?.heroVideoUrl || undefined,
-        enableActivateDiscount: Boolean(
-          payload.partner?.enableActivateDiscount
-        ),
+        enableActivateDiscount: Boolean(payload.partner?.enableActivateDiscount),
       }}
     />
   )

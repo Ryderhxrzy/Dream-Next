@@ -48,6 +48,15 @@ export interface Template1Props {
   stat4Value?: string
   stat4Label?: string
   shopSlug?: string
+  navLogo?: string
+  navLinks?: { label: string; href: string }[]
+  ctaEmail?: string
+  ctaPhone?: string
+  ctaAddress?: string
+  aboutTitle?: string
+  aboutBody?: string
+  aboutImage?: string
+  aboutHighlights?: { icon: string; text: string }[]
 }
 
 export default function Template1({
@@ -72,6 +81,15 @@ export default function Template1({
   stat4Value = "24h",
   stat4Label = "Support",
   shopSlug,
+  navLogo,
+  navLinks: navLinksProp,
+  ctaEmail,
+  ctaPhone,
+  ctaAddress,
+  aboutTitle,
+  aboutBody,
+  aboutImage,
+  aboutHighlights,
 }: Template1Props) {
   const stats = [
     { value: stat1Value, label: stat1Label },
@@ -79,12 +97,21 @@ export default function Template1({
     { value: stat3Value, label: stat3Label },
     { value: stat4Value, label: stat4Label },
   ]
+  const navLinks = navLinksProp ?? [
+    { label: 'Home', href: '#' },
+    { label: 'Products', href: '#' },
+    { label: 'About', href: '#' },
+    { label: 'Contact', href: '#' },
+  ]
 
   return (
     <div className="bg-[#0a0a0f] font-sans text-white">
       {/* Nav */}
       <nav className="sticky top-0 z-50 flex items-center justify-between border-b border-white/10 bg-[#0a0a0f] px-10 py-5">
-        <span className="text-xl font-black tracking-tight">{storeName}</span>
+        <div className="flex items-center gap-2">
+          {navLogo && <img src={navLogo} alt={storeName} className="h-14 w-auto rounded-xl object-contain" />}
+          <span className="text-xl font-black tracking-tight">{storeName}</span>
+        </div>
         <div className="hidden items-center gap-8 text-sm text-white/50 md:flex">
           <span className="cursor-pointer transition hover:text-white">Home</span>
           <span className="cursor-pointer transition hover:text-white">Products</span>
@@ -159,6 +186,33 @@ export default function Template1({
         </motion.div>
       </section>
 
+      {/* About */}
+      {(aboutTitle || aboutBody) && (
+        <section className="px-10 py-20">
+          <div className={`mx-auto grid max-w-6xl items-center gap-12 ${aboutImage ? 'md:grid-cols-2' : ''}`}>
+            {aboutImage && (
+              <motion.div {...REVEAL} className="overflow-hidden rounded-2xl">
+                <img src={aboutImage} alt={aboutTitle ?? storeName} className="w-full object-cover" style={{ maxHeight: 420 }} />
+              </motion.div>
+            )}
+            <motion.div {...REVEAL}>
+              {aboutTitle && <h2 className="text-3xl font-black">{aboutTitle}</h2>}
+              {aboutBody && <p className="mt-4 leading-relaxed text-white/60">{aboutBody}</p>}
+              {Array.isArray(aboutHighlights) && aboutHighlights.length > 0 && (
+                <ul className="mt-6 space-y-2">
+                  {aboutHighlights.map((h, i) => (
+                    <li key={h?.text ?? i} className="flex items-center gap-3 text-sm text-white/70">
+                      <span style={{ color: primaryColor }}>{h?.icon}</span>
+                      {h?.text}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </motion.div>
+          </div>
+        </section>
+      )}
+
       {/* Features */}
       <section className="px-10 py-20">
         <div className="mx-auto max-w-6xl">
@@ -205,12 +259,36 @@ export default function Template1({
       </motion.section>
 
       {/* Footer */}
-      <motion.footer
-        className="border-t border-white/10 px-10 py-8 text-center text-xs text-white/30"
-        {...REVEAL}
-      >
-        © {new Date().getFullYear()} {storeName} · Powered by Apsara Home
-      </motion.footer>
+      <footer className="border-t border-white/10 px-10 py-10">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 md:grid-cols-3">
+          <div>
+            <div className="mb-2 flex items-center gap-2">
+              {navLogo && <img src={navLogo} alt={storeName} className="h-9 w-auto rounded-lg object-contain" />}
+              <span className="font-black text-white">{storeName}</span>
+            </div>
+            {tagline && <p className="mt-1 text-xs text-white/40">{tagline}</p>}
+          </div>
+          <div>
+            <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-white/30">Quick Links</p>
+            <div className="flex flex-col gap-2 text-sm text-white/60">
+              {navLinks.map((l) => (
+                <a key={l.label} href={l.href} className="transition hover:text-white">{l.label}</a>
+              ))}
+            </div>
+          </div>
+          {(ctaEmail || ctaPhone || ctaAddress) && (
+            <div>
+              <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-white/30">Contact</p>
+              <div className="flex flex-col gap-1 text-sm text-white/60">
+                {ctaEmail && <span>{ctaEmail}</span>}
+                {ctaPhone && <span>{ctaPhone}</span>}
+                {ctaAddress && <span className="text-xs">{ctaAddress}</span>}
+              </div>
+            </div>
+          )}
+        </div>
+        <p className="mt-8 text-center text-xs text-white/20">© {new Date().getFullYear()} {storeName} · Powered by Apsara Home</p>
+      </footer>
     </div>
   )
 }

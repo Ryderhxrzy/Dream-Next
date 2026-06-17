@@ -81,6 +81,10 @@ export default async function PartnerLandingPage({ params }: PageProps) {
   const normalizedPartner = partner.trim().toLowerCase()
   const storefrontItem = await getPartnerStorefrontItemBySlug(normalizedPartner)
 
+  if (!storefrontItem) {
+    console.error(`[partner-landing] No storefront found for slug: "${normalizedPartner}" — check the slug field in the storefront studio`)
+  }
+
   return (
     <LandingPageView
       partnerSlug={normalizedPartner}

@@ -1,7 +1,7 @@
 import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
 import type { WebPageItem } from "@/store/api/webPagesApi"
+import { notFound } from "next/navigation"
 
-import LandingPage from "@/components/landing-page/LandingPage"
 import Template1Component from "@/components/partner/templates/template1"
 import Template2Component from "@/components/partner/templates/template2"
 import Template3Component from "@/components/partner/templates/template3"
@@ -189,7 +189,7 @@ export default function PartnerLandingPageView({
   const content = mapCommonContent(blocks)
 
   if (!config) {
-    return <LandingPage partnerSlug={partnerSlug} />
+    notFound()
   }
 
   if (templateId === "template1") {
@@ -217,6 +217,15 @@ export default function PartnerLandingPageView({
           stat4Value={content.stat4Value}
           stat4Label={content.stat4Label}
           shopSlug={config.slug}
+          navLogo={content.navLogo}
+          navLinks={content.navLinks}
+          ctaEmail={content.ctaEmail}
+          ctaPhone={content.ctaPhone}
+          ctaAddress={content.ctaAddress}
+          aboutTitle={content.aboutTitle}
+          aboutBody={content.aboutBody}
+          aboutImage={content.aboutImage}
+          aboutHighlights={content.aboutHighlights}
         />
       </div>
     )
@@ -248,6 +257,15 @@ export default function PartnerLandingPageView({
           stat4Value={content.stat4Value}
           stat4Label={content.stat4Label}
           shopSlug={config.slug}
+          navLogo={content.navLogo}
+          navLinks={content.navLinks}
+          ctaEmail={content.ctaEmail}
+          ctaPhone={content.ctaPhone}
+          ctaAddress={content.ctaAddress}
+          aboutTitle={content.aboutTitle}
+          aboutBody={content.aboutBody}
+          aboutImage={content.aboutImage}
+          aboutHighlights={content.aboutHighlights}
         />
       </div>
     )
@@ -279,6 +297,15 @@ export default function PartnerLandingPageView({
           stat4Value={content.stat4Value}
           stat4Label={content.stat4Label}
           shopSlug={config.slug}
+          navLogo={content.navLogo}
+          navLinks={content.navLinks}
+          ctaEmail={content.ctaEmail}
+          ctaPhone={content.ctaPhone}
+          ctaAddress={content.ctaAddress}
+          aboutTitle={content.aboutTitle}
+          aboutBody={content.aboutBody}
+          aboutImage={content.aboutImage}
+          aboutHighlights={content.aboutHighlights}
         />
       </div>
     )
