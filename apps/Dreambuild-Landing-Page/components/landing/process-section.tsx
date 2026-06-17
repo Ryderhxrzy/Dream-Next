@@ -109,11 +109,7 @@ export function ProcessSection({
 
         {/* Bottom strip */}
         <FadeUp delay={0.2}>
-          <div className="mt-20 flex flex-col items-start justify-between gap-6 border-t border-white/10 pt-12 sm:flex-row sm:items-center lg:mt-28">
-            <p className="text-sm text-neutral-400">
-              Most projects move from discovery to delivery in{" "}
-              <span className="font-medium text-white">4–6 weeks.</span>
-            </p>
+          <div className="mt-20 flex flex-col items-start justify-end gap-6 border-t border-white/10 pt-12 sm:flex-row sm:items-center lg:mt-28">
             <a
               href="#contact"
               className="inline-flex items-center gap-2 rounded-full border border-white/20 px-6 py-3 text-sm font-medium text-white transition-all hover:border-white hover:bg-white hover:text-[var(--dark)]"

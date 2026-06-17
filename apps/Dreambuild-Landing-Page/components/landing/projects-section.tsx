@@ -39,7 +39,7 @@ export function ProjectsSection({
               Featured Projects
             </p>
             <h2 className="mt-4 text-3xl font-medium tracking-tight text-[var(--foreground)] sm:text-4xl lg:text-5xl">
-              Spaces we took from bare to beautiful.
+              Spaces we&apos;ve shaped and styled.
             </h2>
           </div>
           <Link
@@ -47,7 +47,7 @@ export function ProjectsSection({
             className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[var(--border)] px-6 py-3 text-sm font-medium text-[var(--foreground)] transition-all hover:border-[var(--dark)] hover:bg-[var(--dark)] hover:text-white"
           >
             View All Projects
-            <span>→</span>
+            <span>-&gt;</span>
           </Link>
         </FadeUp>
 
@@ -58,7 +58,7 @@ export function ProjectsSection({
 
             return (
             <motion.div
-              key={project.title}
+              key={project.id}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-80px" }}
@@ -127,7 +127,7 @@ export function ProjectsSection({
                       className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-white/80"
                     >
                       View Project
-                      <span>→</span>
+                      <span>-&gt;</span>
                     </motion.div>
                   </div>
                 </div>
@@ -153,7 +153,7 @@ export function ProjectsSection({
             href="/projects"
             className="text-sm font-medium text-[var(--foreground)] underline underline-offset-4 transition-opacity hover:opacity-60"
           >
-            See full portfolio →
+            See full portfolio -&gt;
           </Link>
         </FadeUp>
       </div>

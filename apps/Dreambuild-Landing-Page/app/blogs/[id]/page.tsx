@@ -16,8 +16,6 @@ type BlogPostPageProps = {
   params: Promise<{ id: string }>
 }
 
-export const dynamic = "force-dynamic"
-
 const fallbackImages = [
   "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200&q=80",
   "https://images.unsplash.com/photo-1631679706909-1844bbd07221?w=900&q=80",

@@ -12,8 +12,6 @@ import {
 } from "@/components/ui/motion"
 import { Header } from "@/components/shared/header"
 
-export const dynamic = "force-dynamic"
-
 export default async function BlogsPage() {
   const { blogPosts } = await getDreamBuildContent()
   const featuredPost = blogPosts[0]

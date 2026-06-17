@@ -11,6 +11,7 @@ import {
   type WebPageType,
 } from '@/store/api/webPagesApi'
 import { showErrorToast, showSuccessToast } from '@/libs/toast'
+import { revalidateDreamBuild } from '@/libs/revalidateDreamBuild'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
@@ -146,7 +147,7 @@ const sections: DreamBuildSection[] = [
     label: 'Process',
     dot: 'bg-sky-400',
     itemLabel: 'Process step',
-    helper: 'Steps like Discover, Shape, and Deliver.',
+    helper: 'Process steps shown from CMS records only.',
     fields: [
       { key: 'step_number', label: 'Step number (01, 02…)' },
     ],
@@ -227,11 +228,7 @@ const STATIC_DEFAULTS: Record<string, WebPageItem[]> = {
     { id: -2, type: 'dreambuild-testimonials', key: 'daniel-r', sort_order: 1, is_active: true, title: 'Daniel R.', subtitle: null, body: 'They translated our vague ideas into something polished and cohesive. The material palette alone changed the whole mood.', image_url: null, link_url: null, button_text: null, payload: { client_name: 'Daniel R.', client_role: 'Condo Client' } },
   ],
   'dreambuild-gallery': [],
-  'dreambuild-process': [
-    { id: -1, type: 'dreambuild-process', key: 'discover', sort_order: 0, is_active: true, title: 'Discover', subtitle: null, body: 'We collect references, understand how the client lives, and define the emotional tone the home should carry.', image_url: null, link_url: null, button_text: null, payload: { step_number: '01' } },
-    { id: -2, type: 'dreambuild-process', key: 'shape', sort_order: 1, is_active: true, title: 'Shape', subtitle: null, body: 'Layouts, materials, finishes, and furniture language are refined into one coherent interior direction.', image_url: null, link_url: null, button_text: null, payload: { step_number: '02' } },
-    { id: -3, type: 'dreambuild-process', key: 'deliver', sort_order: 2, is_active: true, title: 'Deliver', subtitle: null, body: 'Selections are organized into a presentation-ready design system that supports implementation with clarity.', image_url: null, link_url: null, button_text: null, payload: { step_number: '03' } },
-  ],
+  'dreambuild-process': [],
   'dreambuild-contact': [
     { id: -1, type: 'dreambuild-contact', key: 'contact-main', sort_order: 0, is_active: true, title: "Let's design your home together", subtitle: null, body: 'Reach out to start a conversation about your space. We work with homeowners across Metro Manila.', image_url: null, link_url: null, button_text: null, payload: { email: 'hello@dreambuild.ph', phone: '+63 912 345 6789', address: 'Metro Manila, Philippines' } },
   ],
@@ -476,7 +473,7 @@ function CanvasItem({
     <div
       onClick={() => onSelect(item)}
       title={isStatic ? 'Click to create a CMS version of this content' : undefined}
-      className={`group relative cursor-pointer rounded-3xl transition-all duration-150 ${
+      className={`group relative h-full cursor-pointer rounded-3xl transition-all duration-150 ${
         isStatic
           ? 'opacity-80 ring-2 ring-dashed ring-amber-300 hover:opacity-100 hover:ring-amber-400'
           : isSelected
@@ -834,8 +831,21 @@ function ServicesCanvas({ items, selected, onSelect, onAddNew, isLoading, onFiel
 
 function ProjectsCanvas({ items, selected, onSelect, onAddNew, isLoading, onFieldFocus, focusedField }: CanvasProps) {
   const displayItems = [...items].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.id - b.id)
+  const bentoClass = [
+    'lg:col-span-1 lg:row-span-2',
+    'lg:col-span-1 lg:row-span-1',
+    'lg:col-span-1 lg:row-span-2',
+    'lg:col-span-1 lg:row-span-1',
+  ]
+  const aspectClass = [
+    'aspect-[3/4] lg:aspect-auto lg:h-full',
+    'aspect-[4/3]',
+    'aspect-[3/4] lg:aspect-auto lg:h-full',
+    'aspect-[4/3]',
+  ]
+
   return (
-    <div className="mx-auto max-w-4xl p-8">
+    <div className="mx-auto max-w-5xl p-8">
       {isLoading && <ProgressBar />}
       <div className="mb-8 flex items-end justify-between gap-6 border-b border-stone-200 pb-6">
         <div>
@@ -844,7 +854,7 @@ function ProjectsCanvas({ items, selected, onSelect, onAddNew, isLoading, onFiel
             Featured Projects
           </p>
           <h2 className="mt-3 max-w-xl text-3xl font-semibold tracking-tight text-stone-950">
-            Spaces we took from bare to beautiful.
+            Spaces we&apos;ve shaped and styled.
           </h2>
         </div>
         <button
@@ -872,12 +882,9 @@ function ProjectsCanvas({ items, selected, onSelect, onAddNew, isLoading, onFiel
           </button>
         </div>
       ) : (
-      <div className="grid grid-cols-2 gap-4">
-        {displayItems.map(item => {
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:grid-rows-2 lg:gap-4">
+        {displayItems.map((item, index) => {
           const p = (item.payload ?? {}) as Record<string, string>
-          const scope = (p.scope_items ?? p.scope_label ?? p.scope ?? '').split('\n').map(scopeItem => scopeItem.trim()).filter(Boolean)
-          const scopeLabel = scope.join(' + ')
-          const meta = [p.city_area, scopeLabel, p.timeline].filter(Boolean).join(' - ')
           const isThisSelected = selected?.id === item.id
           const fz = (fieldKey: string, label: string) => ({
             fieldKey,
@@ -885,41 +892,36 @@ function ProjectsCanvas({ items, selected, onSelect, onAddNew, isLoading, onFiel
             onFocus: (key: string) => onFieldFocus?.(item, key),
             isActive: isThisSelected && focusedField === fieldKey,
           })
+          const layoutIndex = index % bentoClass.length
           return (
-            <CanvasItem key={item.id} item={item} selected={selected} onSelect={onSelect}>
-              <div className="overflow-hidden rounded-3xl bg-white shadow-sm">
-                <FieldZone {...fz('image_url', 'Image')}>
-                  <div className={`overflow-hidden bg-stone-100 ${p.card_size === 'tall' ? 'aspect-[3/4]' : 'aspect-video'}`}>
-                    {item.image_url
-                      // eslint-disable-next-line @next/next/no-img-element
-                      ? <img src={item.image_url} alt="" className="h-full w-full object-cover" />
-                      : <div className="flex h-full items-center justify-center bg-gradient-to-br from-stone-100 to-stone-200"><p className="text-xs text-stone-400">No image</p></div>
-                    }
-                  </div>
-                </FieldZone>
-                <div className="p-4">
-                  <FieldZone {...fz('tag', 'Tag')}>
-                    {p.tag && <p className="text-[10px] font-medium uppercase tracking-widest text-stone-400">{p.tag}</p>}
-                  </FieldZone>
-                  <FieldZone {...fz('title', 'Title')}>
-                    <h3 className="mt-1 text-sm font-semibold text-stone-900">{item.title}</h3>
-                  </FieldZone>
-                  <FieldZone {...fz('project_meta', 'Detail meta')}>
-                    {meta && <p className="mt-1 text-[11px] leading-relaxed text-stone-400">{meta}</p>}
-                  </FieldZone>
-                  <FieldZone {...fz('scope', 'Scope')}>
-                    {scope.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {scope.map((s, i) => <span key={i} className="rounded-full bg-stone-50 px-2 py-0.5 text-[10px] text-stone-500">{s}</span>)}
+            <div key={item.id} className={bentoClass[layoutIndex]}>
+              <CanvasItem item={item} selected={selected} onSelect={onSelect}>
+                <div className="group relative h-full overflow-hidden rounded-2xl bg-stone-200 shadow-sm">
+                  <FieldZone {...fz('image_url', 'Image')}>
+                    <div className={`relative w-full overflow-hidden ${aspectClass[layoutIndex]}`}>
+                      {item.image_url
+                        // eslint-disable-next-line @next/next/no-img-element
+                        ? <img src={item.image_url} alt="" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                        : <div className="flex h-full min-h-56 items-center justify-center bg-gradient-to-br from-stone-100 to-stone-200"><p className="text-xs text-stone-400">No image</p></div>
+                      }
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent" />
+                      <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/20" />
+                      <div className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full border border-white/35 bg-white/20 backdrop-blur-sm">
+                        <span className="text-xs font-bold text-white">{String(index + 1).padStart(2, '0')}</span>
                       </div>
-                    )}
-                  </FieldZone>
-                  <FieldZone {...fz('body', 'Detail story')}>
-                    {item.body && <p className="mt-3 line-clamp-3 text-xs leading-relaxed text-stone-500">{item.body}</p>}
+                      <div className="absolute inset-x-0 bottom-0 p-5">
+                        <FieldZone {...fz('tag', 'Tag')}>
+                          {p.tag && <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-white/70">{p.tag}</p>}
+                        </FieldZone>
+                        <FieldZone {...fz('title', 'Title')}>
+                          <h3 className="text-base font-semibold leading-snug text-white">{item.title || 'Untitled project'}</h3>
+                        </FieldZone>
+                      </div>
+                    </div>
                   </FieldZone>
                 </div>
-              </div>
-            </CanvasItem>
+              </CanvasItem>
+            </div>
           )
         })}
       </div>
@@ -1094,16 +1096,14 @@ function GalleryCanvasOld({ items, selected, onSelect, onAddNew, isLoading, onFi
 }
 
 function ProcessCanvas({ items, selected, onSelect, onAddNew, isLoading, onFieldFocus, focusedField }: CanvasProps) {
-  const isStatic = items.length === 0
-  const displayItems = isStatic ? (STATIC_DEFAULTS['dreambuild-process'] ?? []) : items
+  const displayItems = items
   return (
     <div className="mx-auto max-w-4xl p-8">
       {isLoading && <ProgressBar />}
-      {isStatic && <StaticBanner />}
       <div className="grid gap-4 md:grid-cols-3">
         {displayItems.map((item, idx) => {
           const p = (item.payload ?? {}) as Record<string, string>
-          const isThisSelected = !isStatic && selected?.id === item.id
+          const isThisSelected = selected?.id === item.id
           const fz = (fieldKey: string, label: string) => ({
             fieldKey,
             label,
@@ -1111,7 +1111,7 @@ function ProcessCanvas({ items, selected, onSelect, onAddNew, isLoading, onField
             isActive: isThisSelected && focusedField === fieldKey,
           })
           return (
-            <CanvasItem key={item.id} item={item} selected={selected} onSelect={onSelect} isStatic={isStatic}>
+            <CanvasItem key={item.id} item={item} selected={selected} onSelect={onSelect} isStatic={false}>
               <div className="rounded-3xl bg-white p-6 shadow-sm">
                 <FieldZone {...fz('step_number', 'Step #')}>
                   <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-stone-900">
@@ -1129,7 +1129,7 @@ function ProcessCanvas({ items, selected, onSelect, onAddNew, isLoading, onField
           )
         })}
       </div>
-      <AddNewButton onClick={onAddNew} label={isStatic ? '+ Add CMS step (will replace static)' : 'Add process step'} />
+      <AddNewButton onClick={onAddNew} label="Add process step" />
     </div>
   )
 }
@@ -2155,16 +2155,6 @@ function EditPanel({
           </div>
         )}
 
-        {section.id !== 'dreambuild-services' && !isGallery && section.id !== 'dreambuild-projects' && (
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Sort order" fieldKey="sort_order" focusedField={focusedField}>
-              <input data-field="sort_order" type="number" min={0} value={form.sort_order} onChange={e => setForm(p => ({ ...p, sort_order: e.target.value }))} className={inputClass} />
-            </Field>
-            <Field label="Key (auto)" fieldKey="key" focusedField={focusedField}>
-              <input data-field="key" value={form.key} onChange={e => setForm(p => ({ ...p, key: e.target.value }))} placeholder="Auto from title" className={inputClass} />
-            </Field>
-          </div>
-        )}
       </div>
 
       <div className="shrink-0 space-y-2 border-t border-slate-100 p-4 dark:border-slate-800">
@@ -2362,17 +2352,6 @@ function BlogEditPanel({
           </div>
         </div>
 
-        <div className="rounded-3xl border border-stone-200 bg-white p-4">
-          <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-stone-500">Publishing</p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Sort order" fieldKey="sort_order" focusedField={focusedField}>
-              <input data-field="sort_order" type="number" min={0} value={form.sort_order} onChange={e => setForm(p => ({ ...p, sort_order: e.target.value }))} className={baseInput} />
-            </Field>
-            <Field label="Key (auto)" fieldKey="key" focusedField={focusedField}>
-              <input data-field="key" value={form.key} onChange={e => setForm(p => ({ ...p, key: e.target.value }))} placeholder="Auto from title" className={baseInput} />
-            </Field>
-          </div>
-        </div>
       </div>
 
       <div className="shrink-0 space-y-2 border-t border-slate-100 bg-white p-4 dark:border-slate-800">
@@ -2480,7 +2459,7 @@ function ProcessEditPanel({
                 data-field="title"
                 value={form.title}
                 onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
-                placeholder="Discover"
+                placeholder="Step title"
                 className={inputClass}
               />
             </Field>
@@ -2497,17 +2476,6 @@ function ProcessEditPanel({
           </div>
         </div>
 
-        <div className="rounded-3xl border border-stone-200 bg-white p-4">
-          <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-stone-500">Publishing</p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Sort order" fieldKey="sort_order" focusedField={focusedField}>
-              <input data-field="sort_order" type="number" min={0} value={form.sort_order} onChange={e => setForm(p => ({ ...p, sort_order: e.target.value }))} className={inputClass} />
-            </Field>
-            <Field label="Key (auto)" fieldKey="key" focusedField={focusedField}>
-              <input data-field="key" value={form.key} onChange={e => setForm(p => ({ ...p, key: e.target.value }))} placeholder="Auto from title" className={inputClass} />
-            </Field>
-          </div>
-        </div>
       </div>
 
       <div className="shrink-0 space-y-2 border-t border-slate-100 bg-white p-4 dark:border-slate-800">
@@ -2610,7 +2578,7 @@ export default function DreamBuildContentManager() {
     const visibleSaved = selectedSection.id === 'dreambuild-gallery'
       ? merged.filter(item => Boolean(item.image_url))
       : selectedSection.id === 'dreambuild-projects'
-        ? merged.filter(item => Boolean(item.title) && Boolean(item.image_url))
+        ? merged.filter(item => Boolean(item.image_url))
         : merged
 
     if (!editTarget || saved.some(item => item.id === editTarget.id)) return visibleSaved
@@ -2806,10 +2774,12 @@ export default function DreamBuildContentManager() {
       if (editTarget && editTarget.id > 0) {
         const response = await updateItem({ type: selectedSection.id, id: editTarget.id, data: toPayload(form, selectedSection) }).unwrap()
         keepSavedItemOpen(response.item)
+        void revalidateDreamBuild()
         showSuccessToast(`${selectedSection.itemLabel} updated.`)
       } else {
         const response = await createItem({ type: selectedSection.id, data: toPayload(form, selectedSection) }).unwrap()
         keepSavedItemOpen(response.item)
+        void revalidateDreamBuild()
         showSuccessToast(`${selectedSection.itemLabel} created.`)
       }
     } catch (err: unknown) {
@@ -2832,6 +2802,7 @@ export default function DreamBuildContentManager() {
     if (!deleteTarget || deleteTarget.id < 0) return
     try {
       await deleteItem({ type: selectedSection.id, id: deleteTarget.id }).unwrap()
+      void revalidateDreamBuild()
       showSuccessToast(`${selectedSection.itemLabel} deleted.`)
       if (editTarget?.id === deleteTarget.id) {
         resetForm()

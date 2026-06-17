@@ -184,6 +184,9 @@ const contentTypes = [
   "dreambuild-contact",
 ] as const;
 
+export const DREAMBUILD_CONTENT_TAG = "dreambuild-content";
+const DREAMBUILD_CONTENT_REVALIDATE_SECONDS = 300;
+
 const text = (value: unknown, fallback: string) =>
   typeof value === "string" && value.trim() ? value.trim() : fallback;
 
@@ -235,7 +238,10 @@ const getApiBase = () => {
 async function fetchCmsItems(type: (typeof contentTypes)[number]): Promise<CmsItem[]> {
   try {
     const response = await fetch(`${getApiBase()}/api/web-pages/${type}`, {
-      cache: "no-store",
+      next: {
+        revalidate: DREAMBUILD_CONTENT_REVALIDATE_SECONDS,
+        tags: [DREAMBUILD_CONTENT_TAG, `dreambuild-content:${type}`],
+      },
     });
 
     if (!response.ok) return [];
@@ -275,7 +281,7 @@ const mapGalleryItems = (items: CmsItem[]): GalleryContent[] =>
 
 const mapProjects = (items: CmsItem[]): DreamBuildProject[] =>
   items
-    .filter((item) => item.is_active && text(item.title, "") && text(item.image_url, ""))
+    .filter((item) => item.is_active && text(item.image_url, ""))
     .sort((a, b) => a.sort_order - b.sort_order || a.id - b.id)
     .map((item, index) => {
       const payload = item.payload ?? {};
