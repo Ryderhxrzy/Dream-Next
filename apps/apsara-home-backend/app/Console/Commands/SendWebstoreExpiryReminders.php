@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Mail\Webstore\WebstoreExpiryReminderMail;
+use App\Models\Customer;
 use App\Models\WebPageContent;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -29,7 +30,7 @@ class SendWebstoreExpiryReminders extends Command
                 continue;
             }
 
-            $email = trim((string) ($sub['admin_email'] ?? ''));
+            $email = trim((string) ($sub['recipient_email'] ?? ''));
             if ($email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 continue;
             }
@@ -150,15 +151,17 @@ class SendWebstoreExpiryReminders extends Command
 
             $current = $latestByStorefrontId[$storefrontId] ?? null;
             if (! is_array($current) || ! ($current['approved_at'] instanceof Carbon) || $approvedAt->greaterThan($current['approved_at'])) {
-                $adminId = (int) ($initialDetails->first()->td_eid ?? 0);
+                $memberId = (int) ($ticket->t_eid ?? 0);
                 $latestByStorefrontId[$storefrontId] = [
                     'storefront_id'  => $storefrontId,
                     'approved_at'    => $approvedAt,
                     'end_date'       => $endDate,
-                    'admin_id'       => $adminId,
+                    'admin_id'       => (int) ($initialDetails->first()->td_eid ?? 0),
+                    'member_id'      => $memberId,
                     'display_name'   => trim((string) ($initialPayload['display_name'] ?? $slug)),
                     'plan'           => $plan,
                     'billing_option' => $billingOption,
+                    'recipient_email'=> trim((string) ($initialPayload['email'] ?? '')),
                 ];
             }
         }
@@ -167,8 +170,10 @@ class SendWebstoreExpiryReminders extends Command
             return [];
         }
 
-        $adminIds = array_unique(array_filter(array_column($latestByStorefrontId, 'admin_id')));
+        $memberIds = array_unique(array_filter(array_column($latestByStorefrontId, 'member_id')));
         $admins = collect();
+        $members = collect();
+        $adminIds = array_unique(array_filter(array_column($latestByStorefrontId, 'admin_id')));
         if (! empty($adminIds)) {
             $admins = DB::table('tbl_admin')
                 ->whereIn('id', $adminIds)
@@ -176,11 +181,25 @@ class SendWebstoreExpiryReminders extends Command
                 ->keyBy('id');
         }
 
-        return array_values(array_map(function (array $sub) use ($admins) {
+        if (! empty($memberIds)) {
+            $members = Customer::query()
+                ->whereIn('c_userid', $memberIds)
+                ->get(['c_userid', 'c_email', 'c_fname', 'c_username'])
+                ->keyBy('c_userid');
+        }
+
+        return array_values(array_map(function (array $sub) use ($admins, $members) {
             $admin = $admins->get($sub['admin_id']);
+            $member = $members->get($sub['member_id']);
+            $recipientEmail = trim((string) ($sub['recipient_email'] ?? ''));
+            if ($recipientEmail === '') {
+                $recipientEmail = trim((string) ($member->c_email ?? ''));
+            }
 
             return array_merge($sub, [
+                'recipient_email' => $recipientEmail,
                 'admin_email' => (string) ($admin->user_email ?? ''),
+                'member_email' => (string) ($member->c_email ?? ''),
                 'admin_name'  => (string) ($admin->fname ?? 'Partner'),
             ]);
         }, $latestByStorefrontId));

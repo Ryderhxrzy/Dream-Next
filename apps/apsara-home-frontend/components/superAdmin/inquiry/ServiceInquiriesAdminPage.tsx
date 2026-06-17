@@ -87,6 +87,14 @@ export default function ServiceInquiriesAdminPage() {
     { status: "new", per_page: 500 },
     { refetchOnMountOrArgChange: true }
   )
+  const { data: allRespondedData } = useGetAdminServiceInquiriesQuery(
+    { status: "responded", per_page: 500 },
+    { refetchOnMountOrArgChange: true }
+  )
+  const { data: allClosedData } = useGetAdminServiceInquiriesQuery(
+    { status: "closed", per_page: 500 },
+    { refetchOnMountOrArgChange: true }
+  )
 
   const [updateStatus, { isLoading: isUpdating }] =
     useUpdateAdminServiceInquiryStatusMutation()
@@ -125,6 +133,9 @@ export default function ServiceInquiriesAdminPage() {
       ).length,
     [allNewData]
   )
+  const completeCount =
+    (allRespondedData?.inquiries?.length ?? 0) +
+    (allClosedData?.inquiries?.length ?? 0)
 
   const handleStatusChange = async (
     id: number,
@@ -222,7 +233,7 @@ export default function ServiceInquiriesAdminPage() {
     {
       key: "complete",
       label: "Complete",
-      count: counts?.closed ?? 0,
+      count: completeCount,
       filterVal: "closed" as FilterStatus,
       icon: (
         <svg

@@ -498,6 +498,10 @@ export async function proxy(req: NextRequest) {
   }
 
   if (isSupplierRoute) {
+    if (isSupplierPublicPage) {
+      return NextResponse.next();
+    }
+
     if (!supplierToken) {
       const loginUrl = new URL("/supplier/login", req.url);
       loginUrl.searchParams.set("callback", pathname);
