@@ -15,6 +15,7 @@ export type SupplierChatMessage = {
   sender_type: "admin" | "supplier"
   sender_admin_id: number | null
   sender_supplier_user_id: number | null
+  sender_name: string | null
   message: string
   attachment_url: string | null
   attachment_type: "image" | "video" | "file" | null
@@ -210,13 +211,14 @@ type AttachmentPayload = {
 export async function sendAdminSupplierChatMessage(
   conversationId: number,
   message: string,
-  attachment?: AttachmentPayload
+  attachment?: AttachmentPayload,
+  senderName?: string
 ) {
   const response = await adminSupplierChatRequest<{
     data: SupplierChatMessage
   }>(`/api/admin/supplier-chat/conversations/${conversationId}/messages`, {
     method: "POST",
-    body: JSON.stringify({ message: message || undefined, ...attachment }),
+    body: JSON.stringify({ message: message || undefined, sender_name: senderName || undefined, ...attachment }),
   })
   return response.data
 }

@@ -347,6 +347,11 @@ export default function SupplierChatPage() {
   const currentSupplierUserId = Number(
     (session?.user as { id?: number | string } | undefined)?.id ?? 0
   )
+  const myDisplayName =
+    (session?.user as { name?: string | null } | undefined)?.name?.trim() ||
+    (session?.user as { supplierName?: string | null } | undefined)?.supplierName?.trim() ||
+    "You"
+
   const [mediaModal, setMediaModal] = useState<{
     open: boolean
     url: string | null
@@ -568,8 +573,8 @@ export default function SupplierChatPage() {
           }
         : prev
     )
-    setConversations((prev) =>
-      prev.map((c) =>
+    setConversations((prev) => {
+      const updated = prev.map((c) =>
         c.id === activeId
           ? {
               ...c,
@@ -587,7 +592,12 @@ export default function SupplierChatPage() {
             }
           : c
       )
-    )
+      return [...updated].sort((a, b) => {
+        const aTime = a.last_message_at ?? a.updated_at
+        const bTime = b.last_message_at ?? b.updated_at
+        return new Date(bTime).getTime() - new Date(aTime).getTime()
+      })
+    })
   }
 
   const handleSendMessage = async () => {
@@ -611,14 +621,14 @@ export default function SupplierChatPage() {
         // Upload and send each attachment as its own message
         for (const attachment of pendingAttachments) {
           const uploaded = await uploadSupplierChatAttachment(attachment.file)
-          const sent = await sendSupplierChatMessage(activeId, "", uploaded)
-          appendSentMessage(sent)
+          const sent = await sendSupplierChatMessage(activeId, "", uploaded, myDisplayName)
+          appendSentMessage({ ...sent, sender_name: sent.sender_name ?? myDisplayName, sender_supplier_user_id: sent.sender_supplier_user_id ?? currentSupplierUserId })
         }
         // Send text message if present
         const pendingReply = replyTo
         if (trimmed) {
-          const sent = await sendSupplierChatMessage(activeId, trimmed)
-          appendSentMessage(sent)
+          const sent = await sendSupplierChatMessage(activeId, trimmed, undefined, myDisplayName)
+          appendSentMessage({ ...sent, sender_name: sent.sender_name ?? myDisplayName, sender_supplier_user_id: sent.sender_supplier_user_id ?? currentSupplierUserId })
           if (pendingReply)
             setLocalReplyMap((prev) => ({ ...prev, [sent.id]: pendingReply }))
         }
@@ -1091,6 +1101,14 @@ export default function SupplierChatPage() {
                                 />
                               )}
                               <div>
+                                <p className={`mb-0.5 text-[11px] font-semibold ${mine ? "text-right text-indigo-500" : "text-left text-slate-600 dark:text-slate-400"}`}>
+                                  {item.messages[0].sender_name ??
+                                    (item.messages[0].sender_type === "admin"
+                                      ? chatAdminName
+                                      : item.messages[0].sender_supplier_user_id === currentSupplierUserId
+                                        ? myDisplayName
+                                        : (activeConversation?.supplier_user?.name ?? "Supplier"))}
+                                </p>
                                 {/* Card stack — extra bottom padding clears rotated card overflow */}
                                 <div
                                   className="relative"
@@ -1239,6 +1257,15 @@ export default function SupplierChatPage() {
                                   <Reply className="h-3.5 w-3.5" />
                                 </button>
                               </div>
+                              {/* Sender name */}
+                              <p className={`mb-0.5 text-[11px] font-semibold ${mine ? "text-right text-indigo-500" : "text-left text-slate-600 dark:text-slate-400"}`}>
+                                {message.sender_name ??
+                                  (message.sender_type === "admin"
+                                    ? chatAdminName
+                                    : message.sender_supplier_user_id === currentSupplierUserId
+                                      ? myDisplayName
+                                      : (activeConversation?.supplier_user?.name ?? "Supplier"))}
+                              </p>
                               {/* Reply quote */}
                               {replySource && (
                                 <div
