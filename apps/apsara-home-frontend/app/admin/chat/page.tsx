@@ -39,6 +39,7 @@ import { useSession } from "next-auth/react"
 
 import EmojiPicker from "@/components/ui/EmojiPicker"
 import LinkPreview from "@/components/ui/LinkPreview"
+import { useGetSupplierUsersQuery } from "@/store/api/suppliersApi"
 
 function LogoCircle({
   src,
@@ -461,6 +462,16 @@ export default function AdminChatPage() {
   const currentAdminId = Number(
     (session?.user as { id?: number | string } | undefined)?.id ?? 0
   )
+  const adminDisplayName =
+    (session?.user as { name?: string | null } | undefined)?.name?.trim() ||
+    "Admin"
+  const { data: supplierUsersData } = useGetSupplierUsersQuery()
+  const supplierUserNames = useMemo(() => {
+    const map: Record<number, string> = {}
+    supplierUsersData?.users?.forEach((u) => { map[u.id] = u.fullname })
+    return map
+  }, [supplierUsersData])
+
 
   const [mediaModal, setMediaModal] = useState<{
     open: boolean
@@ -708,12 +719,26 @@ export default function AdminChatPage() {
           if (newLen !== prevLen || prevSeen !== newSeen) return full
           return prev
         })
-        // Also update the conversation list entry so the sidebar dot reflects the new status
-        setConversations((prev) =>
-          prev.map((c) =>
-            c.id === full.id ? { ...c, supplier_user: full.supplier_user } : c
+        // Also update the conversation list entry so the sidebar reflects new messages and status
+        setConversations((prev) => {
+          const updated = prev.map((c) =>
+            c.id === full.id
+              ? {
+                  ...c,
+                  supplier_user: full.supplier_user,
+                  last_message: full.last_message ?? c.last_message,
+                  last_message_at: full.last_message_at ?? c.last_message_at,
+                  message_count: full.message_count,
+                  unread_count: full.unread_count,
+                }
+              : c
           )
-        )
+          return [...updated].sort((a, b) => {
+            const aTime = a.last_message_at ?? a.updated_at
+            const bTime = b.last_message_at ?? b.updated_at
+            return new Date(bTime).getTime() - new Date(aTime).getTime()
+          })
+        })
       } catch {
         /* silent */
       }
@@ -750,8 +775,8 @@ export default function AdminChatPage() {
           }
         : prev
     )
-    setConversations((prev) =>
-      prev.map((c) =>
+    setConversations((prev) => {
+      const updated = prev.map((c) =>
         c.id === activeId
           ? {
               ...c,
@@ -767,7 +792,12 @@ export default function AdminChatPage() {
             }
           : c
       )
-    )
+      return [...updated].sort((a, b) => {
+        const aTime = a.last_message_at ?? a.updated_at
+        const bTime = b.last_message_at ?? b.updated_at
+        return new Date(bTime).getTime() - new Date(aTime).getTime()
+      })
+    })
   }
 
   const handleSendMessage = async () => {
@@ -783,13 +813,13 @@ export default function AdminChatPage() {
     try {
       for (const attachment of pendingAttachments) {
         const uploaded = await uploadAdminChatAttachment(attachment.file)
-        const sent = await sendAdminSupplierChatMessage(activeId, "", uploaded)
-        appendSentMessage(sent)
+        const sent = await sendAdminSupplierChatMessage(activeId, "", uploaded, adminDisplayName)
+        appendSentMessage({ ...sent, sender_name: sent.sender_name ?? adminDisplayName })
       }
       const pendingReply = replyTo
       if (trimmed) {
-        const sent = await sendAdminSupplierChatMessage(activeId, trimmed)
-        appendSentMessage(sent)
+        const sent = await sendAdminSupplierChatMessage(activeId, trimmed, undefined, adminDisplayName)
+        appendSentMessage({ ...sent, sender_name: sent.sender_name ?? adminDisplayName })
         if (pendingReply)
           setLocalReplyMap((prev) => ({ ...prev, [sent.id]: pendingReply }))
       }
@@ -1482,6 +1512,11 @@ export default function AdminChatPage() {
                                     />
                                   )}
                                   <div>
+                                    <p className={`mb-0.5 text-[11px] font-semibold ${mine ? "text-right text-indigo-500" : "text-left text-slate-600 dark:text-slate-400"}`}>
+                                      {mine
+                                        ? adminDisplayName
+                                        : (item.messages[0].sender_name ?? supplierUserNames[item.messages[0].sender_supplier_user_id ?? -1] ?? activeConversationTitle)}
+                                    </p>
                                     {/* Card stack — extra bottom margin clears rotated card overflow */}
                                     <div
                                       className="relative"
@@ -1628,6 +1663,12 @@ export default function AdminChatPage() {
                                       <Reply className="h-3.5 w-3.5" />
                                     </button>
                                   </div>
+                                  {/* Sender name */}
+                                  <p className={`mb-0.5 text-[11px] font-semibold ${mine ? "text-right text-indigo-500" : "text-left text-slate-600 dark:text-slate-400"}`}>
+                                    {mine
+                                      ? adminDisplayName
+                                      : (message.sender_name ?? supplierUserNames[message.sender_supplier_user_id ?? -1] ?? activeConversationTitle)}
+                                  </p>
                                   {/* Reply quote */}
                                   {replySource && (
                                     <div
