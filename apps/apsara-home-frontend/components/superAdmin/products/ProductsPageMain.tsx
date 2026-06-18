@@ -3651,6 +3651,7 @@ export default function ProductsPageMain({
               }
               tableMode={zqInlineActive ? "zq" : "local"}
               isServicesView={isServicesView}
+              isSupplierPortal={isSupplierPortal}
             />
           </DataTableShell>
         </div>
@@ -3669,6 +3670,7 @@ export default function ProductsPageMain({
         onSaved={handleProductsSaved}
         isSupplierPortal={isSupplierPortal}
         isServicesView={isServicesView}
+        supplierBrandType={isSupplierPortal ? (brandType ?? 0) : undefined}
       />
       <ProductActivityLogsModal
         isOpen={showActivityLogs}

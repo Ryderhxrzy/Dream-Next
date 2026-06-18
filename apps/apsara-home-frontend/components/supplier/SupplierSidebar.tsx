@@ -35,7 +35,7 @@ import { usePathname, useRouter } from "next/navigation"
 
 const mainItems = [
   { label: "Dashboard", href: "/supplier/dashboard", icon: BarChart3 },
-  { label: "Chats", href: "/supplier/chat", icon: MessageSquare },
+  { label: "Chats Support", href: "/supplier/chat", icon: MessageSquare },
   { label: "Products", href: "/supplier/products", icon: Package },
   { label: "Vouchers", href: "/supplier/vouchers", icon: TicketPercent },
   { label: "Orders", href: "/supplier/orders", icon: ClipboardList },
@@ -45,7 +45,7 @@ const mainItems = [
 
 const servicesMainItems = [
   { label: "Dashboard", href: "/supplier/dashboard", icon: BarChart3 },
-  { label: "Chats", href: "/supplier/chat", icon: MessageSquare },
+  { label: "Chats Support", href: "/supplier/chat", icon: MessageSquare },
   { label: "Inquiry", href: "/supplier/orders", icon: Inbox },
   { label: "Services", href: "/supplier/products", icon: Package },
 ]
@@ -95,7 +95,7 @@ function getInitials(name: string) {
 }
 
 const formatRole = (isMainSupplier: boolean) => {
-  return isMainSupplier ? "Main Supplier" : "Sub Supplier"
+  return isMainSupplier ? "Main Merchant" : "Sub Merchant"
 }
 
 export default function SupplierSidebar({
@@ -202,7 +202,7 @@ export default function SupplierSidebar({
             AF Home
           </p>
           <p className="mt-0.5 text-xs text-teal-600 dark:text-teal-400">
-            Supplier
+            Merchant Portal
           </p>
         </div>
         <button
