@@ -38,6 +38,7 @@ interface AddProductModalProps {
   onSaved?: (createdProduct?: Product) => void
   isSupplierPortal?: boolean
   isServicesView?: boolean
+  supplierBrandType?: number
 }
 
 interface FormState {
@@ -1298,7 +1299,12 @@ export default function AddProductModal({
   onSaved,
   isSupplierPortal = false,
   isServicesView = false,
+  supplierBrandType,
 }: AddProductModalProps) {
+  const draftKey = isSupplierPortal
+    ? "afhome:add-product-draft:supplier"
+    : ADD_PRODUCT_DRAFT_KEY
+
   const [entryMode, setEntryMode] = useState<"manual" | "csv" | "api">("manual")
   const [form, setForm] = useState<FormState>(defaultForm)
   const [errors, setErrors] = useState<Errors>({})
@@ -1412,6 +1418,14 @@ export default function AddProductModal({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, isServicesView, categories, draftRestored])
 
+  // Pre-select the supplier's brand and keep it locked in supplier portal.
+  // draftRestored ensures this runs after draft restoration overwrites pd_brand_type.
+  useEffect(() => {
+    if (!isOpen || !isSupplierPortal || !supplierBrandType || supplierBrandType <= 0) return
+    setForm((prev) => ({ ...prev, pd_brand_type: String(supplierBrandType) }))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, isSupplierPortal, supplierBrandType, draftRestored])
+
   const selectedBrand = useMemo(
     () => brands.find((brand) => String(brand.id) === form.pd_brand_type),
     [brands, form.pd_brand_type]
@@ -1500,7 +1514,7 @@ export default function AddProductModal({
   useEffect(() => {
     if (!isOpen || typeof window === "undefined") return
 
-    const savedDraft = window.localStorage.getItem(ADD_PRODUCT_DRAFT_KEY)
+    const savedDraft = window.localStorage.getItem(draftKey)
     if (!savedDraft) {
       setDraftRestored(false)
       return
@@ -1561,7 +1575,7 @@ export default function AddProductModal({
       setNewStyleInputs({})
       setDraftRestored(true)
     } catch {
-      window.localStorage.removeItem(ADD_PRODUCT_DRAFT_KEY)
+      window.localStorage.removeItem(draftKey)
       setDraftRestored(false)
     }
   }, [isOpen])
@@ -1596,9 +1610,9 @@ export default function AddProductModal({
     }
 
     if (hasAddDraftContent(draft)) {
-      window.localStorage.setItem(ADD_PRODUCT_DRAFT_KEY, JSON.stringify(draft))
+      window.localStorage.setItem(draftKey, JSON.stringify(draft))
     } else {
-      window.localStorage.removeItem(ADD_PRODUCT_DRAFT_KEY)
+      window.localStorage.removeItem(draftKey)
     }
   }, [
     form,
@@ -2120,6 +2134,7 @@ export default function AddProductModal({
         for (const file of imageFiles) {
           const fd = new FormData()
           fd.append("file", file)
+          if (isSupplierPortal) fd.append("folder", "merchant-catalogues")
           const res = await fetch("/api/admin/upload", {
             method: "POST",
             body: fd,
@@ -2214,7 +2229,7 @@ export default function AddProductModal({
         : undefined
       showSuccessToast("Product added successfully.")
       if (typeof window !== "undefined") {
-        window.localStorage.removeItem(ADD_PRODUCT_DRAFT_KEY)
+        window.localStorage.removeItem(draftKey)
       }
       onSaved?.(createdProduct)
       resetModalState()
@@ -3361,7 +3376,9 @@ export default function AddProductModal({
                                   value={form.pd_brand_type}
                                   searchable
                                   searchPlaceholder="Search brands..."
+                                  disabled={isSupplierPortal}
                                   onChange={(value) => {
+                                    if (isSupplierPortal) return
                                     set(
                                       "pd_brand_type",
                                       value === EMPTY_SELECT_KEYS.brand
@@ -3387,9 +3404,11 @@ export default function AddProductModal({
                                 <div className="mt-2">
                                   <input
                                     type="text"
-                                    list="brand-options-add"
+                                    list={isSupplierPortal ? undefined : "brand-options-add"}
                                     value={brandText}
+                                    disabled={isSupplierPortal}
                                     onChange={(event) => {
+                                      if (isSupplierPortal) return
                                       const next = event.target.value
                                       setBrandText(next)
                                       const matchId = resolveBrandIdByName(next)
@@ -3408,7 +3427,7 @@ export default function AddProductModal({
                                       }
                                     }}
                                     onBlur={() => {
-                                      if (!brandText.trim()) return
+                                      if (isSupplierPortal || !brandText.trim()) return
                                       const matchId =
                                         resolveBrandIdByName(brandText)
                                       if (!matchId) {
@@ -3420,7 +3439,7 @@ export default function AddProductModal({
                                       }
                                     }}
                                     placeholder="Type brand name"
-                                    className={inputCls(!!errors.pd_brand_type)}
+                                    className={`${inputCls(!!errors.pd_brand_type)} ${isSupplierPortal ? "cursor-not-allowed bg-slate-50 text-slate-600" : ""}`}
                                   />
                                   <datalist id="brand-options-add">
                                     {brands.map((brand) => (
@@ -3601,26 +3620,28 @@ export default function AddProductModal({
                         {/* -- Section: Pricing -- */}
                         <SectionLabel>Pricing</SectionLabel>
                         <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
-                          <Field label="PV Pricing Tier">
-                            <div className="space-y-1">
-                              <ModalSelectField
-                                ariaLabel="Select pricing tier"
-                                value={form.pd_pricing_tier}
-                                onChange={(value) =>
-                                  set("pd_pricing_tier", value)
-                                }
-                                options={PRICING_TIER_OPTIONS.map((option) => ({
-                                  value: option.value,
-                                  label: option.label,
-                                }))}
-                              />
-                              <p className="text-[11px] text-slate-500">
-                                Low-End is active for the current formula.
-                                High-End will follow once its formula is
-                                finalized.
-                              </p>
-                            </div>
-                          </Field>
+                          {!isSupplierPortal && (
+                            <Field label="PV Pricing Tier">
+                              <div className="space-y-1">
+                                <ModalSelectField
+                                  ariaLabel="Select pricing tier"
+                                  value={form.pd_pricing_tier}
+                                  onChange={(value) =>
+                                    set("pd_pricing_tier", value)
+                                  }
+                                  options={PRICING_TIER_OPTIONS.map((option) => ({
+                                    value: option.value,
+                                    label: option.label,
+                                  }))}
+                                />
+                                <p className="text-[11px] text-slate-500">
+                                  Low-End is active for the current formula.
+                                  High-End will follow once its formula is
+                                  finalized.
+                                </p>
+                              </div>
+                            </Field>
+                          )}
                           <Field
                             label="SRP Price (₱)"
                             required
@@ -3677,48 +3698,54 @@ export default function AddProductModal({
                               </p>
                             </div>
                           </Field>
-                          <Field label="PV Product">
-                            <div className="space-y-1">
-                              <input
-                                type="number"
-                                value={computedMainPvDisplay}
-                                placeholder="0.00"
-                                disabled
-                                className={`${inputCls()} cursor-not-allowed bg-slate-50 text-slate-600`}
-                              />
-                              <p className="text-[11px] text-slate-500">
-                                Auto-computed from Dealer Price x Reversed PV
-                                Multiplier.
-                              </p>
-                            </div>
-                          </Field>
-                          <Field
-                            label="Reversed PV Multiplier"
-                            error={errors.pd_prodpv}
-                          >
-                            <div className="space-y-1">
-                              <input
-                                type="number"
-                                value={form.pd_reversed_pv_multiplier}
-                                onChange={(e) =>
-                                  set(
-                                    "pd_reversed_pv_multiplier",
-                                    e.target.value
-                                  )
-                                }
-                                placeholder="e.g. 0.2"
-                                className={inputCls(!!errors.pd_prodpv)}
-                              />
-                              <p className="text-[11px] text-slate-500">
-                                Formula: PV = Transfer Price x Multiplier.
-                              </p>
-                            </div>
-                          </Field>
+                          {!isSupplierPortal && (
+                            <Field label="PV Product">
+                              <div className="space-y-1">
+                                <input
+                                  type="number"
+                                  value={computedMainPvDisplay}
+                                  placeholder="0.00"
+                                  disabled
+                                  className={`${inputCls()} cursor-not-allowed bg-slate-50 text-slate-600`}
+                                />
+                                <p className="text-[11px] text-slate-500">
+                                  Auto-computed from Dealer Price x Reversed PV
+                                  Multiplier.
+                                </p>
+                              </div>
+                            </Field>
+                          )}
+                          {!isSupplierPortal && (
+                            <Field
+                              label="Reversed PV Multiplier"
+                              error={errors.pd_prodpv}
+                            >
+                              <div className="space-y-1">
+                                <input
+                                  type="number"
+                                  value={form.pd_reversed_pv_multiplier}
+                                  onChange={(e) =>
+                                    set(
+                                      "pd_reversed_pv_multiplier",
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="e.g. 0.2"
+                                  className={inputCls(!!errors.pd_prodpv)}
+                                />
+                                <p className="text-[11px] text-slate-500">
+                                  Formula: PV = Transfer Price x Multiplier.
+                                </p>
+                              </div>
+                            </Field>
+                          )}
                         </div>
-                        <PricingSummaryPanel
-                          summary={mainPricingSummary}
-                          memberFallbackToSrp={!form.pd_price_member.trim()}
-                        />
+                        {!isSupplierPortal && (
+                          <PricingSummaryPanel
+                            summary={mainPricingSummary}
+                            memberFallbackToSrp={!form.pd_price_member.trim()}
+                          />
+                        )}
 
                         {/* -- Section: Stock & Shipping -- */}
                         <SectionLabel>Stock & Shipping</SectionLabel>

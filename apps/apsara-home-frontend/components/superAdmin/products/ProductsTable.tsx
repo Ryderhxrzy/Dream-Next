@@ -33,6 +33,7 @@ interface ProductsTableProps {
   isLoading?: boolean
   tableMode?: "local" | "zq"
   isServicesView?: boolean
+  isSupplierPortal?: boolean
 }
 
 type SortableProductColumn =
@@ -464,6 +465,7 @@ export default function ProductsTable({
   isLoading = false,
   tableMode = "local",
   isServicesView = false,
+  isSupplierPortal = false,
 }: ProductsTableProps) {
   const [confirmId, setConfirmId] = useState<number | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -674,7 +676,7 @@ export default function ProductsTable({
                     {renderSortableHeader("Dealer", "priceDp", "right")}
                   </th>
                 ) : null}
-                {!isZqMode ? (
+                {!isZqMode && !isSupplierPortal ? (
                   <th className="min-w-[110px] border-b border-slate-200 px-4 py-4 text-right text-xs font-semibold tracking-wide text-slate-500 uppercase dark:border-slate-800 dark:text-slate-400">
                     {renderSortableHeader("Member", "priceMember", "right")}
                   </th>
@@ -1027,7 +1029,7 @@ export default function ProductsTable({
                         {formatPrice(product.priceDp)}
                       </td>
                     ) : null}
-                    {!isZqMode ? (
+                    {!isZqMode && !isSupplierPortal ? (
                       <td className="border-b border-slate-100 px-4 py-4 text-right whitespace-nowrap text-slate-500 dark:border-slate-800/70 dark:text-slate-400">
                         {formatPrice(product.priceMember ?? 0)}
                       </td>

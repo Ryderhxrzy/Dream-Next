@@ -276,7 +276,7 @@ export default function SupplierLayoutShell({
                     {supplierName}
                   </h1>
                   <span className="inline-flex items-center rounded-full border border-slate-200/80 bg-white/80 px-2 py-0.5 text-[9px] font-semibold tracking-wide text-slate-600 uppercase dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
-                    {isMainSupplier ? "Main Supplier" : "Sub Supplier"}
+                    {isMainSupplier ? "Main Merchant" : "Sub Merchant"}
                   </span>
                 </div>
               </div>
