@@ -1644,6 +1644,196 @@ function CarouselImagesField({
 
 // ─── Edit panel ─────────────────────────────────────────────────────────────────
 
+function RepeatableTextListField({
+  value,
+  onChange,
+  dataField,
+  addLabel,
+  placeholder,
+}: {
+  value: string
+  onChange: (value: string) => void
+  dataField: string
+  addLabel: string
+  placeholder: string
+}) {
+  const [slots, setSlots] = useState<string[]>(() => {
+    const parsed = (value ?? '').split('\n').filter(Boolean)
+    return parsed.length > 0 ? parsed : ['']
+  })
+  const lastWritten = useRef((value ?? '').split('\n').filter(Boolean).join('\n'))
+
+  useEffect(() => {
+    const incoming = (value ?? '').split('\n').filter(Boolean).join('\n')
+    if (incoming === lastWritten.current) return
+    lastWritten.current = incoming
+    const parsed = incoming.split('\n').filter(Boolean)
+    setSlots(parsed.length > 0 ? parsed : [''])
+  }, [value])
+
+  const commit = (next: string[]) => {
+    setSlots(next)
+    const serialized = next.map(item => item.trim()).filter(Boolean).join('\n')
+    lastWritten.current = serialized
+    onChange(serialized)
+  }
+
+  return (
+    <div data-field={dataField} className="space-y-2">
+      {slots.map((item, idx) => (
+        <div key={idx} className="flex items-start gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-2">
+          <span className="mt-2 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-[10px] font-bold text-slate-400">
+            {idx + 1}
+          </span>
+          <textarea
+            value={item}
+            onChange={e => {
+              const next = [...slots]
+              next[idx] = e.target.value
+              commit(next)
+            }}
+            rows={2}
+            placeholder={placeholder}
+            className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-cyan-300 focus:ring-1 focus:ring-cyan-100"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              const next = slots.filter((_, i) => i !== idx)
+              commit(next.length > 0 ? next : [''])
+            }}
+            className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-red-100 bg-red-50 text-red-400 transition hover:bg-red-100"
+            title="Remove item"
+          >
+            x
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => commit([...slots, ''])}
+        className="flex w-full items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-slate-300 py-2.5 text-xs font-semibold text-slate-400 transition hover:border-slate-400 hover:text-slate-600"
+      >
+        <span className="text-base leading-none">+</span>
+        {addLabel}
+      </button>
+    </div>
+  )
+}
+
+type ArticleSectionRow = {
+  heading: string
+  body: string
+}
+
+const parseArticleSectionRows = (value: string): ArticleSectionRow[] => {
+  const rows = (value ?? '')
+    .split('\n')
+    .filter(Boolean)
+    .map(line => {
+      const divider = line.indexOf('|')
+      if (divider === -1) return { heading: line.trim(), body: '' }
+      return {
+        heading: line.slice(0, divider).trim(),
+        body: line.slice(divider + 1).trim(),
+      }
+    })
+
+  return rows.length > 0 ? rows : [{ heading: '', body: '' }]
+}
+
+function RepeatableArticleSectionsField({
+  value,
+  onChange,
+}: {
+  value: string
+  onChange: (value: string) => void
+}) {
+  const [rows, setRows] = useState<ArticleSectionRow[]>(() => parseArticleSectionRows(value))
+  const lastWritten = useRef(
+    parseArticleSectionRows(value)
+      .filter(row => row.heading || row.body)
+      .map(row => `${row.heading}|${row.body}`)
+      .join('\n'),
+  )
+
+  useEffect(() => {
+    const incoming = parseArticleSectionRows(value)
+      .filter(row => row.heading || row.body)
+      .map(row => `${row.heading}|${row.body}`)
+      .join('\n')
+    if (incoming === lastWritten.current) return
+    lastWritten.current = incoming
+    setRows(parseArticleSectionRows(value))
+  }, [value])
+
+  const commit = (next: ArticleSectionRow[]) => {
+    setRows(next)
+    const serialized = next
+      .map(row => ({ heading: row.heading.trim(), body: row.body.trim() }))
+      .filter(row => row.heading || row.body)
+      .map(row => `${row.heading}|${row.body}`)
+      .join('\n')
+    lastWritten.current = serialized
+    onChange(serialized)
+  }
+
+  return (
+    <div data-field="sections" className="space-y-2">
+      {rows.map((row, idx) => (
+        <div key={idx} className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              Section {idx + 1}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                const next = rows.filter((_, i) => i !== idx)
+                commit(next.length > 0 ? next : [{ heading: '', body: '' }])
+              }}
+              className="rounded-full border border-red-100 bg-red-50 px-2.5 py-1 text-[10px] font-bold text-red-500 transition hover:bg-red-100"
+            >
+              Remove
+            </button>
+          </div>
+          <div className="space-y-2">
+            <input
+              value={row.heading}
+              onChange={e => {
+                const next = [...rows]
+                next[idx] = { ...next[idx], heading: e.target.value }
+                commit(next)
+              }}
+              placeholder="Section heading"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-cyan-300 focus:ring-1 focus:ring-cyan-100"
+            />
+            <textarea
+              value={row.body}
+              onChange={e => {
+                const next = [...rows]
+                next[idx] = { ...next[idx], body: e.target.value }
+                commit(next)
+              }}
+              rows={3}
+              placeholder="Section body"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-cyan-300 focus:ring-1 focus:ring-cyan-100"
+            />
+          </div>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => commit([...rows, { heading: '', body: '' }])}
+        className="flex w-full items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-slate-300 py-2.5 text-xs font-semibold text-slate-400 transition hover:border-slate-400 hover:text-slate-600"
+      >
+        <span className="text-base leading-none">+</span>
+        Add section
+      </button>
+    </div>
+  )
+}
+
 function EditPanel({
   section, form, setForm, editTarget, isBusy, onSubmit, onDelete, onCancel,
   focusedField, onUploadImage, isUploadingImage, serviceItems, onServiceTabSelect, isSaveDisabled,
@@ -2327,11 +2517,20 @@ function BlogEditPanel({
               <textarea data-field="body" value={form.body} onChange={e => setForm(p => ({ ...p, body: e.target.value }))} rows={3} placeholder="Used if design brief is empty, or as supporting article copy." className={baseInput} />
             </Field>
             <Field label="Key takeaways" fieldKey="takeaways" focusedField={focusedField}>
-              <textarea data-field="takeaways" value={form.payload.takeaways ?? ''} onChange={e => updatePayload('takeaways', e.target.value)} rows={4} placeholder={'One takeaway per line\nExample: Start with a calm base palette'} className={baseInput} />
+              <RepeatableTextListField
+                value={form.payload.takeaways ?? ''}
+                onChange={value => updatePayload('takeaways', value)}
+                dataField="takeaways"
+                addLabel="Add takeaway"
+                placeholder="Example: Start with a calm base palette"
+              />
               <p className="mt-1 text-[11px] text-slate-400">{takeaways.length} takeaway{takeaways.length === 1 ? '' : 's'} will show on the article page.</p>
             </Field>
             <Field label="Article sections" fieldKey="sections" focusedField={focusedField}>
-              <textarea data-field="sections" value={form.payload.sections ?? ''} onChange={e => updatePayload('sections', e.target.value)} rows={6} placeholder={'Format: Heading|Body, one section per line\nExample: Start With The Anchor|Choose one dominant material story first.'} className={baseInput} />
+              <RepeatableArticleSectionsField
+                value={form.payload.sections ?? ''}
+                onChange={value => updatePayload('sections', value)}
+              />
               <p className="mt-1 text-[11px] text-slate-400">{articleSections.length} section{articleSections.length === 1 ? '' : 's'} will generate the table of contents.</p>
             </Field>
           </div>
