@@ -2,12 +2,12 @@ import SuppliersTabsWrapper from "@/components/superAdmin/suppliers/SuppliersTab
 import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
-  title: "Admin Suppliers",
-  description: "Browse the Admin Suppliers page on AF Home.",
-  path: "/admin/suppliers",
+  title: "Admin Merchants",
+  description: "Browse the Admin Merchants page on AF Home.",
+  path: "/admin/merchants",
   noIndex: true,
 })
 
-export default function AdminSuppliersPage() {
+export default function AdminMerchantsPage() {
   return <SuppliersTabsWrapper />
 }

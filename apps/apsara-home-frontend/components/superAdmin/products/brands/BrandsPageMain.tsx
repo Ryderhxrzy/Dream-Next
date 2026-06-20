@@ -12,6 +12,7 @@ import {
 import { AnimatePresence, motion } from "framer-motion"
 import Image from "next/image"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 const getRequestErrorMessage = (err: unknown, fallback: string) => {
   const data = (
@@ -471,6 +472,7 @@ export default function BrandsPageMain() {
   const [createBrand] = useCreateProductBrandMutation()
   const [updateBrand] = useUpdateProductBrandMutation()
   const [deleteBrand] = useDeleteProductBrandMutation()
+  const router = useRouter()
 
   const brands = useMemo(() => data?.brands ?? [], [data?.brands])
   const totalCount = data?.total ?? 0
@@ -528,9 +530,11 @@ export default function BrandsPageMain() {
     pb_image?: string | null
     pb_status: number
   }) => {
-    await createBrand(payload).unwrap()
-    showSuccessToast("Brand added successfully.")
+    const res = await createBrand(payload).unwrap()
+    showSuccessToast("Brand created — now add the merchant for this brand.")
     setShowAddModal(false)
+    // Brand-first flow: jump to the merchant form with this brand pre-selected.
+    router.push(`/admin/merchants?brand=${res.brand.id}`)
   }
 
   const handleUpdateBrand = async (payload: {

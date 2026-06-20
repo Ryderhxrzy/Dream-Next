@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment, useMemo, useState } from "react"
+import { Fragment, useEffect, useMemo, useState } from "react"
 import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
 import {
   InviteSupplierUserResponse,
@@ -15,6 +15,10 @@ import {
   useUpdateSupplierMutation,
   useUpdateSupplierUserMutation,
 } from "@/store/api/suppliersApi"
+import {
+  useCreateProductBrandMutation,
+  useGetProductBrandsQuery,
+} from "@/store/api/productBrandsApi"
 import {
   AtSign,
   Building2,
@@ -41,6 +45,7 @@ type SupplierCompanyForm = {
   contact: string
   address: string
   status: "1" | "0"
+  brand_id: string
 }
 
 type SupplierInviteForm = {
@@ -57,6 +62,7 @@ const defaultSupplierCompanyForm: SupplierCompanyForm = {
   contact: "",
   address: "",
   status: "1",
+  brand_id: "",
 }
 
 const defaultSupplierInviteForm: SupplierInviteForm = {
@@ -86,6 +92,13 @@ export default function SuppliersPageMain() {
     useInviteSupplierUserMutation()
   const [updateSupplierCategories, { isLoading: isSavingSupplierCategories }] =
     useUpdateSupplierCategoriesMutation()
+  const { data: brandsData } = useGetProductBrandsQuery()
+  const [createProductBrand, { isLoading: isCreatingBrand }] =
+    useCreateProductBrandMutation()
+  const brands = useMemo(() => brandsData?.brands ?? [], [brandsData?.brands])
+  const [isBrandModalOpen, setIsBrandModalOpen] = useState(false)
+  const [brandModalName, setBrandModalName] = useState("")
+  const [brandModalError, setBrandModalError] = useState("")
   const [companyForm, setCompanyForm] = useState<SupplierCompanyForm>(
     defaultSupplierCompanyForm
   )
@@ -127,6 +140,19 @@ export default function SuppliersPageMain() {
     company: string
     name: string
   } | null>(null)
+
+  // Support a redirect-based flow: /admin/merchants?brand=<id> lands with the
+  // brand pre-selected in the create form (e.g. after creating a brand elsewhere).
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const params = new URLSearchParams(window.location.search)
+    const brandParam = params.get("brand") ?? params.get("brand_id")
+    if (brandParam) {
+      setCompanyForm((prev) =>
+        prev.brand_id ? prev : { ...prev, brand_id: brandParam }
+      )
+    }
+  }, [])
 
   const sortedSuppliers = useMemo(
     () =>
@@ -222,9 +248,47 @@ export default function SuppliersPageMain() {
       setInviteForm((prev) => ({ ...prev, [field]: event.target.value }))
     }
 
+  const handleQuickCreateBrand = async (event: React.FormEvent) => {
+    event.preventDefault()
+    setBrandModalError("")
+
+    const name = brandModalName.trim()
+    if (!name) {
+      setBrandModalError("Brand name is required.")
+      return
+    }
+
+    try {
+      const res = await createProductBrand({
+        pb_name: name,
+        pb_status: 0,
+      }).unwrap()
+
+      setBrandModalName("")
+      setIsBrandModalOpen(false)
+      setCompanyForm((prev) => ({ ...prev, brand_id: String(res.brand.id) }))
+      setCompanyFeedback({
+        type: "success",
+        message: `Brand "${res.brand.name}" created and attached. Complete the merchant details below.`,
+      })
+    } catch (error) {
+      setBrandModalError(getErrorMessage(error, "Unable to create brand."))
+    }
+  }
+
   const handleCreateSupplier = async (event: React.FormEvent) => {
     event.preventDefault()
     setCompanyFeedback(null)
+
+    const brandId = Number(companyForm.brand_id)
+    if (!brandId) {
+      setCompanyFeedback({
+        type: "error",
+        message:
+          "Please select a brand first — a brand is required to create a merchant.",
+      })
+      return
+    }
 
     try {
       const created = await createSupplier({
@@ -234,6 +298,7 @@ export default function SuppliersPageMain() {
         contact: companyForm.contact.trim(),
         address: companyForm.address.trim(),
         status: Number(companyForm.status),
+        brand_id: brandId,
       }).unwrap()
 
       setCompanyFeedback({ type: "success", message: created.message })
@@ -252,7 +317,7 @@ export default function SuppliersPageMain() {
     } catch (error) {
       setCompanyFeedback({
         type: "error",
-        message: getErrorMessage(error, "Unable to create supplier company."),
+        message: getErrorMessage(error, "Unable to create merchant."),
       })
     }
   }
@@ -273,6 +338,9 @@ export default function SuppliersPageMain() {
           contact: companyForm.contact.trim(),
           address: companyForm.address.trim(),
           status: Number(companyForm.status),
+          brand_id: companyForm.brand_id
+            ? Number(companyForm.brand_id)
+            : undefined,
         },
       }).unwrap()
 
@@ -287,7 +355,7 @@ export default function SuppliersPageMain() {
     } catch (error) {
       setCompanyFeedback({
         type: "error",
-        message: getErrorMessage(error, "Unable to update supplier company."),
+        message: getErrorMessage(error, "Unable to update merchant."),
       })
     }
   }
@@ -300,7 +368,7 @@ export default function SuppliersPageMain() {
     if (!selectedInviteSupplier) {
       setInviteFeedback({
         type: "error",
-        message: "Please select a valid supplier company first.",
+        message: "Please select a valid merchant first.",
       })
       return
     }
@@ -325,7 +393,7 @@ export default function SuppliersPageMain() {
     } catch (error) {
       setInviteFeedback({
         type: "error",
-        message: getErrorMessage(error, "Unable to create supplier invite."),
+        message: getErrorMessage(error, "Unable to create merchant invite."),
       })
     }
   }
@@ -363,7 +431,7 @@ export default function SuppliersPageMain() {
         type: "error",
         message: getErrorMessage(
           error,
-          "Unable to update supplier category access."
+          "Unable to update merchant category access."
         ),
       })
     }
@@ -377,6 +445,7 @@ export default function SuppliersPageMain() {
     contact: string
     address: string
     status: number
+    brand_id?: number | null
   }) => {
     setEditingSupplierId(supplier.id)
     setCompanyFeedback(null)
@@ -387,6 +456,7 @@ export default function SuppliersPageMain() {
       contact: supplier.contact || "",
       address: supplier.address || "",
       status: supplier.status === 1 ? "1" : "0",
+      brand_id: supplier.brand_id ? String(supplier.brand_id) : "",
     })
     setIsEditModalOpen(true)
   }
@@ -420,7 +490,7 @@ export default function SuppliersPageMain() {
     } catch (error) {
       setCompanyFeedback({
         type: "error",
-        message: getErrorMessage(error, "Unable to delete supplier company."),
+        message: getErrorMessage(error, "Unable to delete merchant."),
       })
     }
   }
@@ -668,13 +738,13 @@ export default function SuppliersPageMain() {
                 </p>
                 <h2 className="mt-0.5 text-lg font-bold text-slate-900 dark:text-slate-100">
                   {isMainSupplier
-                    ? "Invite Sub-Supplier User"
-                    : "Supplier Access"}
+                    ? "Invite Sub-Merchant User"
+                    : "Merchant Access"}
                 </h2>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                   {isMainSupplier
-                    ? "Give your staff their own supplier portal login. Email is optional, and you can copy the setup link manually after creating the invite."
-                    : "This account is a sub-supplier account. Only the main supplier owner can invite additional supplier users."}
+                    ? "Give your staff their own merchant portal login. Email is optional, and you can copy the setup link manually after creating the invite."
+                    : "This account is a sub-merchant account. Only the main merchant owner can invite additional merchant users."}
                 </p>
               </div>
             </div>
@@ -746,7 +816,7 @@ export default function SuppliersPageMain() {
                   <Send className="h-4 w-4" />
                   {isInvitingSupplierUser
                     ? "Creating invite…"
-                    : "Create Supplier Invite Link"}
+                    : "Create Merchant Invite Link"}
                 </button>
 
                 <p className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400 dark:text-slate-500">
@@ -769,30 +839,57 @@ export default function SuppliersPageMain() {
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-          Suppliers
+          Merchants
         </h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Create supplier companies here, then invite each company&apos;s login
-          so they can use the separate supplier portal.
+          Pick or create a brand, then add the merchant linked to it. You can
+          invite the merchant&apos;s login afterwards.
         </p>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
           <div className="mb-5">
-            <p className="text-xs font-bold tracking-[0.24em] text-slate-400 uppercase dark:text-slate-500">
-              Step 1
-            </p>
-            <h2 className="mt-2 text-lg font-bold text-slate-900 dark:text-slate-100">
-              Add Supplier Company
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+              Add Merchant
             </h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Create the supplier company profile first before you invite its
-              users.
+              Pick (or create) the brand this merchant belongs to, then fill in
+              the merchant details. A brand is required.
             </p>
           </div>
 
           <form onSubmit={handleCreateSupplier} className="space-y-4">
+            <FormField label="Brand">
+              <div className="flex gap-2">
+                <select
+                  value={companyForm.brand_id}
+                  onChange={handleCompanyInput("brand_id")}
+                  required
+                  className={inputClassName}
+                >
+                  <option value="">Select a brand…</option>
+                  {brands.map((brand) => (
+                    <option key={brand.id} value={brand.id}>
+                      {brand.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBrandModalError("")
+                    setBrandModalName("")
+                    setIsBrandModalOpen(true)
+                  }}
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                >
+                  <Tag className="h-4 w-4" />
+                  Add Brand
+                </button>
+              </div>
+            </FormField>
+
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField label="Display Name">
                 <input
@@ -859,36 +956,31 @@ export default function SuppliersPageMain() {
               disabled={isCreatingSupplier}
               className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-600 dark:hover:bg-cyan-500"
             >
-              {isCreatingSupplier
-                ? "Creating supplier..."
-                : "Create Supplier Company"}
+              {isCreatingSupplier ? "Creating merchant..." : "Create Merchant"}
             </button>
           </form>
         </section>
 
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
           <div className="mb-5">
-            <p className="text-xs font-bold tracking-[0.24em] text-slate-400 uppercase dark:text-slate-500">
-              Step 2
-            </p>
-            <h2 className="mt-2 text-lg font-bold text-slate-900 dark:text-slate-100">
-              Invite Supplier Login
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+              Invite Merchant Login
             </h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Create the main supplier owner account here. That owner can later
-              invite their own sub-supplier users from the supplier portal.
+              Optional: create the main merchant owner account here. That owner
+              can later invite their own sub-users from the merchant portal.
             </p>
           </div>
 
           <form onSubmit={handleInviteSupplier} className="space-y-4">
-            <FormField label="Supplier Company">
+            <FormField label="Merchant">
               <select
                 value={supplierInviteForm.supplier_id}
                 onChange={handleInviteInput("supplier_id")}
                 required
                 className={inputClassName}
               >
-                <option value="">Select supplier</option>
+                <option value="">Select merchant</option>
                 {sortedSuppliers.map((supplier) => (
                   <option key={supplier.id} value={supplier.id}>
                     {supplier.company || supplier.name}
@@ -947,7 +1039,7 @@ export default function SuppliersPageMain() {
             >
               {isInvitingSupplierUser
                 ? "Creating invite..."
-                : "Create Main Supplier Invite Link"}
+                : "Create Main Merchant Invite Link"}
             </button>
           </form>
         </section>
@@ -959,12 +1051,12 @@ export default function SuppliersPageMain() {
             <div className="min-w-0">
               <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200/80 bg-white/80 px-3 py-1 text-[11px] font-bold tracking-[0.22em] text-cyan-700 uppercase shadow-sm dark:border-cyan-500/20 dark:bg-cyan-500/10 dark:text-cyan-200">
                 <span className="h-2 w-2 rounded-full bg-cyan-500 shadow-[0_0_14px_rgba(6,182,212,0.8)]" />
-                Supplier Directory
+                Merchant Directory
               </div>
               <div className="mt-3 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                 <div>
                   <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-                    Manage supplier companies in one workspace
+                    Manage merchants in one workspace
                   </h3>
                   <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
                     Search faster, inspect account status instantly, and jump
@@ -1003,7 +1095,7 @@ export default function SuppliersPageMain() {
                   setSupplierSearch(event.target.value)
                   setSupplierPage(1)
                 }}
-                placeholder="Search supplier, email, or contact..."
+                placeholder="Search merchant, email, or contact..."
                 className="w-full rounded-[20px] border border-white/70 bg-white/80 py-3.5 pr-4 pl-11 text-sm text-slate-800 shadow-sm transition-all duration-300 outline-none placeholder:text-slate-400 focus:-translate-y-0.5 focus:border-cyan-300 focus:shadow-[0_14px_35px_rgba(6,182,212,0.12)] focus:ring-4 focus:ring-cyan-100 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-cyan-400/40 dark:focus:shadow-[0_14px_35px_rgba(8,145,178,0.2)] dark:focus:ring-cyan-500/10"
               />
             </div>
@@ -1053,8 +1145,8 @@ export default function SuppliersPageMain() {
                       </div>
                       <p className="mt-4 text-sm font-semibold text-slate-700 dark:text-slate-200">
                         {supplierSearch.trim()
-                          ? `No suppliers found for "${supplierSearch.trim()}".`
-                          : "No suppliers found."}
+                          ? `No merchants found for "${supplierSearch.trim()}".`
+                          : "No merchants found."}
                       </p>
                       <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                         Try a different keyword or clear the current search.
@@ -1305,7 +1397,7 @@ export default function SuppliersPageMain() {
                 Edit Supplier
               </p>
               <h3 className="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100">
-                Update Supplier Company
+                Update Merchant
               </h3>
             </div>
             <button
@@ -1318,6 +1410,20 @@ export default function SuppliersPageMain() {
           </div>
 
           <form onSubmit={handleEditSupplier} className="mt-5 space-y-4">
+            <FormField label="Brand">
+              <select
+                value={companyForm.brand_id}
+                onChange={handleCompanyInput("brand_id")}
+                className={inputClassName}
+              >
+                <option value="">No brand</option>
+                {brands.map((brand) => (
+                  <option key={brand.id} value={brand.id}>
+                    {brand.name}
+                  </option>
+                ))}
+              </select>
+            </FormField>
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField label="Display Name">
                 <input
@@ -1397,7 +1503,7 @@ export default function SuppliersPageMain() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-xs font-bold tracking-[0.22em] text-red-500 uppercase">
-                Delete Supplier
+                Delete Merchant
               </p>
               <h3 className="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100">
                 Confirm Delete
@@ -1417,8 +1523,8 @@ export default function SuppliersPageMain() {
             <span className="font-semibold">
               {deleteTarget.company || deleteTarget.name}
             </span>
-            ? This will remove linked supplier accounts and unassign products
-            from this company.
+            ? This will remove linked merchant accounts and unassign products
+            from this merchant.
           </div>
 
           <div className="mt-6 flex justify-end gap-3">
@@ -1435,9 +1541,69 @@ export default function SuppliersPageMain() {
               disabled={isDeletingSupplier}
               className="rounded-2xl bg-red-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isDeletingSupplier ? "Deleting..." : "Delete Supplier"}
+              {isDeletingSupplier ? "Deleting..." : "Delete Merchant"}
             </button>
           </div>
+        </ModalShell>
+      ) : null}
+
+      {isBrandModalOpen ? (
+        <ModalShell onClose={() => setIsBrandModalOpen(false)}>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold tracking-[0.22em] text-cyan-600 uppercase dark:text-cyan-300">
+                New Brand
+              </p>
+              <h3 className="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100">
+                Add Brand
+              </h3>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                Create the brand first — it will be attached to the merchant
+                you&apos;re adding.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsBrandModalOpen(false)}
+              className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+            >
+              Close
+            </button>
+          </div>
+
+          <form onSubmit={handleQuickCreateBrand} className="mt-5 space-y-4">
+            <FormField label="Brand Name">
+              <input
+                value={brandModalName}
+                onChange={(e) => setBrandModalName(e.target.value)}
+                required
+                autoFocus
+                className={inputClassName}
+                placeholder="e.g. Acme Living"
+              />
+            </FormField>
+
+            {brandModalError ? (
+              <FeedbackBanner type="error" message={brandModalError} />
+            ) : null}
+
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIsBrandModalOpen(false)}
+                className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isCreatingBrand}
+                className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-600 dark:hover:bg-cyan-500"
+              >
+                {isCreatingBrand ? "Creating brand..." : "Create & Attach Brand"}
+              </button>
+            </div>
+          </form>
         </ModalShell>
       ) : null}
     </div>
@@ -1528,7 +1694,7 @@ function SupplierUsersTree({ supplierId }: { supplierId: number }) {
     } catch (err) {
       setFeedback({
         type: "error",
-        message: getErrorMessage(err, "Unable to update supplier user."),
+        message: getErrorMessage(err, "Unable to update merchant user."),
       })
     }
   }
@@ -1557,7 +1723,7 @@ function SupplierUsersTree({ supplierId }: { supplierId: number }) {
     } catch (err) {
       setFeedback({
         type: "error",
-        message: getErrorMessage(err, "Unable to remove supplier user."),
+        message: getErrorMessage(err, "Unable to remove merchant user."),
       })
     }
   }
@@ -1573,7 +1739,7 @@ function SupplierUsersTree({ supplierId }: { supplierId: number }) {
   if (isError) {
     return (
       <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-200">
-        <p>{getErrorMessage(error, "Failed to load supplier users.")}</p>
+        <p>{getErrorMessage(error, "Failed to load merchant users.")}</p>
         <button
           type="button"
           onClick={() => refetch()}
@@ -1626,7 +1792,7 @@ function SupplierUsersTree({ supplierId }: { supplierId: number }) {
                   }`}
                 >
                   {user.role_label ||
-                    (user.is_main_supplier ? "Main Supplier" : "Sub Supplier")}
+                    (user.is_main_supplier ? "Main Merchant" : "Sub Merchant")}
                 </span>
               </div>
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -1899,7 +2065,7 @@ function SetupLinkCard({
       <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
         {delivery === "email_and_link"
           ? "An email was sent, and you can also copy the setup link below."
-          : "No email was sent. Copy this setup link and send it manually to your supplier user."}
+          : "No email was sent. Copy this setup link and send it manually to your merchant user."}
       </p>
       <div className="mt-3 rounded-2xl border border-cyan-100 bg-white px-4 py-3 text-sm break-all text-slate-700 dark:border-cyan-500/20 dark:bg-slate-950 dark:text-slate-200">
         {displayUrl}
