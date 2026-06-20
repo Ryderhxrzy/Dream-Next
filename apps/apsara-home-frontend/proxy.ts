@@ -54,7 +54,7 @@ const ADMIN_PERMISSION_PREFIXES: Record<string, string[]> = {
   interior_requests: ["/admin/interior-requests"],
   products: ["/admin/products"],
   shipping: ["/admin/shipping"],
-  suppliers: ["/admin/suppliers"],
+  suppliers: ["/admin/merchants"],
   web_content: ["/admin/webpages"],
   settings_users: ["/admin/settings/users"],
 };
@@ -67,7 +67,7 @@ const MERCHANT_ALLOWED_PREFIXES = [
 const ADMIN_SUPPLIER_ALLOWED_PREFIXES = [
   "/admin/dashboard",
   "/admin/products",
-  "/admin/suppliers",
+  "/admin/merchants",
 ];
 
 const AUTH_REQUIRED_PREFIXES = ["/profile", "/orders"]

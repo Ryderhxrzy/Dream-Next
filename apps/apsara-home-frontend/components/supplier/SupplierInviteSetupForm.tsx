@@ -148,18 +148,18 @@ export default function SupplierInviteSetupForm({ token }: Props) {
           (data as { errors?: unknown } | null)?.errors
         )
         throw new Error(
-          firstError || data?.message || "Unable to complete supplier setup."
+          firstError || data?.message || "Unable to complete merchant setup."
         )
       }
 
-      setSuccess(data?.message || "Your supplier account is now active.")
+      setSuccess(data?.message || "Your merchant account is now active.")
       setPassword("")
       setConfirmPassword("")
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
-          : "Unable to complete supplier setup."
+          : "Unable to complete merchant setup."
       )
     } finally {
       setIsSubmitting(false)
@@ -172,14 +172,14 @@ export default function SupplierInviteSetupForm({ token }: Props) {
         <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-8 shadow-2xl shadow-black/30">
           <div className="mb-8">
             <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-xs font-semibold tracking-[0.18em] text-cyan-300 uppercase">
-              Supplier Setup
+              Merchant Setup
             </div>
             <h1 className="mt-5 text-3xl font-bold tracking-tight text-white">
-              Finish your supplier account setup
+              Finish your merchant account setup
             </h1>
             <p className="mt-3 text-sm leading-7 text-slate-400">
-              Set your password to activate supplier access. Once completed, you
-              can sign in to the separate supplier portal.
+              Set your password to activate merchant access. Once completed, you
+              can sign in to the separate merchant portal.
             </p>
           </div>
 
@@ -204,7 +204,7 @@ export default function SupplierInviteSetupForm({ token }: Props) {
                 </div>
                 <div>
                   <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
-                    Supplier Company
+                    Merchant
                   </p>
                   <p className="mt-1 text-sm font-medium text-white">
                     {invite.supplier_name}
@@ -291,7 +291,7 @@ export default function SupplierInviteSetupForm({ token }: Props) {
                     href="/supplier/login"
                     className="font-semibold underline"
                   >
-                    Go to supplier login
+                    Go to merchant login
                   </Link>
                 </div>
               )}
@@ -303,7 +303,7 @@ export default function SupplierInviteSetupForm({ token }: Props) {
               >
                 {isSubmitting
                   ? "Activating account..."
-                  : "Activate Supplier Account"}
+                  : "Activate Merchant Account"}
               </button>
             </form>
           ) : null}

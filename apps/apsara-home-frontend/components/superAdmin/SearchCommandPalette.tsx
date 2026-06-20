@@ -44,9 +44,9 @@ const ADMIN_PAGES: Page[] = [
     breadcrumbs: ["Admin", "Shipping", "Rates"],
   },
   {
-    title: "Suppliers",
-    href: "/admin/suppliers",
-    breadcrumbs: ["Admin", "Suppliers"],
+    title: "Merchants",
+    href: "/admin/merchants",
+    breadcrumbs: ["Admin", "Merchants"],
   },
   {
     title: "Inquiry",

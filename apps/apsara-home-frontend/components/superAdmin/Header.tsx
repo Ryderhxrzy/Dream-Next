@@ -232,7 +232,7 @@ const permissionForAdminHref = (href?: string | null) => {
   )
     return "products"
   if (normalized.startsWith("/admin/shipping")) return "shipping"
-  if (normalized.startsWith("/admin/suppliers")) return "suppliers"
+  if (normalized.startsWith("/admin/merchants")) return "suppliers"
   if (
     normalized.startsWith("/admin/webpages") ||
     normalized.startsWith("/admin/web-pages")
