@@ -9,6 +9,7 @@ import { signOut, useSession } from 'next-auth/react'
 import { useGetAdminMeQuery, useLogoutMutation } from '@/store/api/authApi'
 import { useGetAdminOrdersQuery } from '@/store/api/adminOrdersApi'
 import { useGetUsernameChangeRequestsQuery, useGetWebstoreRequestsQuery } from '@/store/api/adminInquiriesApi'
+import { useGetAdminBrandRequestsQuery } from '@/store/api/brandRequestsApi'
 import { membersApi, useGetMembersStatsQuery } from '@/store/api/membersApi'
 import { baseApi, clearAccessTokenCache } from '@/store/api/baseApi'
 import { useAppDispatch } from '@/store/hooks'
@@ -154,8 +155,12 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    id: 'suppliers', label: 'Suppliers', path: '/admin/suppliers',
+    id: 'suppliers', label: 'Merchants', path: '/admin/merchants',
     icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>,
+  },
+  {
+    id: 'brand-requests', label: 'Brand Requests', path: '/admin/brand-requests',
+    icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>,
   },
   {
     id: 'inquiry', label: 'Inquiry', path: '/admin/inquiry', sectionLabel: 'System',
@@ -300,6 +305,7 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
   }
   const { data: usernameChangeRequests } = useGetUsernameChangeRequestsQuery(undefined, inquiryQueryOptions)
   const { data: webstoreRequests } = useGetWebstoreRequestsQuery(undefined, inquiryQueryOptions)
+  const { data: brandRequestsData } = useGetAdminBrandRequestsQuery(undefined, inquiryQueryOptions)
   const rawEffectivePermissions = ((resolvedAdminMe?.admin_permissions ?? rawSessionPermissions) as string[])
     .filter((permission): permission is string => typeof permission === 'string')
   const effectiveAdminPermissions = normalizeAdminPermissions(rawEffectivePermissions)
@@ -326,6 +332,7 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
     const webstorePending = webstoreRequests?.requests?.filter((request) => request.status === 'pending_review').length ?? 0
     return usernamePending + webstorePending
   }, [usernameChangeRequests?.requests, webstoreRequests?.requests])
+  const pendingBrandRequestCount = brandRequestsData?.counts?.pending ?? 0
 
   useEffect(() => {
     if (!adminMe || !isAdminPortalRole) return
@@ -429,6 +436,13 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
         }
       }
 
+      if (item.id === 'brand-requests') {
+        return {
+          ...item,
+          badge: pendingBrandRequestCount > 0 ? pendingBrandRequestCount : undefined,
+        }
+      }
+
       if (item.id === 'settings') {
         const settingsChildren = (item.children ?? []).filter((child) => {
           if (child.path === '/admin/settings/users') {
@@ -483,7 +497,7 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
       ? [
           '/admin/dashboard',
           '/admin/products',
-          '/admin/suppliers',
+          '/admin/merchants',
         ]
       : isMerchantAdmin
         ? [

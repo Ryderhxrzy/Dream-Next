@@ -422,8 +422,8 @@ class SupplierUserController extends Controller
 
         return [
             'message' => $email !== ''
-                ? 'Supplier invite sent successfully.'
-                : 'Supplier invite link created successfully.',
+                ? 'Merchant invite sent successfully.'
+                : 'Merchant invite link created successfully.',
             'setup_url' => $setupUrl,
             'delivery' => $email !== '' ? 'email_and_link' : 'link_only',
             'invite' => [

@@ -264,6 +264,7 @@ export const baseApi = createApi({
     "ShippingRates",
     "WebstoreRequests",
     "ServiceInquiries",
+    "BrandRequests",
   ],
   endpoints: () => ({}),
 })

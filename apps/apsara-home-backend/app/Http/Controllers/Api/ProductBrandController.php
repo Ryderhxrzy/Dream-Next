@@ -35,8 +35,8 @@ class ProductBrandController extends Controller
             ->when($hasSupplierColumn && $supplierId, function ($query) use ($supplierId) {
                 $query->where('pb_supplier_id', $supplierId);
             })
-            ->when($activeOnly, function ($q) {
-                $q->where('pb_status', 0);
+            ->when($activeOnly, function ($query) {
+                $query->where('pb_status', 0);
             })
             ->when($search !== '', function ($q) use ($search) {
                 $q->where('pb_name', 'ilike', '%' . $search . '%');
