@@ -62,7 +62,7 @@ class SupplierChatController extends Controller
                 'messages as admin_unread_count'    => fn ($q) => $q->whereNull('read_at')->where('sender_type', 'admin'),
                 'messages as supplier_unread_count' => fn ($q) => $q->whereNull('read_at')->where('sender_type', 'supplier'),
             ])
-            ->orderByDesc('last_message_at')
+            ->orderByDesc(\DB::raw('COALESCE(last_message_at, \'1970-01-01 00:00:00\')'))
             ->orderByDesc('updated_at')
             ->paginate((int) $request->query('per_page', 25));
 
@@ -206,6 +206,7 @@ class SupplierChatController extends Controller
             'attachment_url'  => 'nullable|url|max:2048',
             'attachment_type' => 'nullable|in:image,video,file',
             'attachment_name' => 'nullable|string|max:255',
+            'sender_name'     => 'nullable|string|max:255',
         ]);
 
         $messageText    = trim((string) ($validated['message'] ?? ''));
@@ -223,6 +224,7 @@ class SupplierChatController extends Controller
             attachmentUrl: $attachmentUrl ?: null,
             attachmentType: $attachmentUrl ? (trim((string) ($validated['attachment_type'] ?? '')) ?: null) : null,
             attachmentName: $attachmentUrl ? (trim((string) ($validated['attachment_name'] ?? '')) ?: null) : null,
+            senderName: trim((string) ($validated['sender_name'] ?? '')) ?: null,
         );
 
         return response()->json([
@@ -432,10 +434,12 @@ class SupplierChatController extends Controller
         ?string $attachmentUrl = null,
         ?string $attachmentType = null,
         ?string $attachmentName = null,
+        ?string $senderName = null,
     ): SupplierChatMessage {
         $payload = [
             'conversation_id' => (int) $conversation->id,
             'sender_type'     => $actorType,
+            'sender_name'     => $senderName,
             'message'         => trim($message),
             'attachment_url'  => $attachmentUrl,
             'attachment_type' => $attachmentType,
@@ -568,6 +572,7 @@ class SupplierChatController extends Controller
             'sender_type'             => (string) $message->sender_type,
             'sender_admin_id'         => $message->sender_admin_id ? (int) $message->sender_admin_id : null,
             'sender_supplier_user_id' => $message->sender_supplier_user_id ? (int) $message->sender_supplier_user_id : null,
+            'sender_name'             => $message->sender_name ? (string) $message->sender_name : null,
             'message'                 => (string) $message->message,
             'attachment_url'          => $message->attachment_url ? (string) $message->attachment_url : null,
             'attachment_type'         => $message->attachment_type ? (string) $message->attachment_type : null,
