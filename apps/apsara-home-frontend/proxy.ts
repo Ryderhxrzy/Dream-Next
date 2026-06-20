@@ -74,6 +74,7 @@ const AUTH_REQUIRED_PREFIXES = ["/profile", "/orders"]
 const SUPPLIER_ALLOWED_PREFIXES = [
   "/supplier/dashboard",
   "/supplier/catalogue",
+  "/supplier/brands",
   "/supplier/chat",
   "/supplier/products",
   "/supplier/vouchers",

@@ -9,10 +9,10 @@ import {
   useGetProductBrandsQuery,
   useUpdateProductBrandMutation,
 } from "@/store/api/productBrandsApi"
+import { useGetSuppliersQuery } from "@/store/api/suppliersApi"
 import { AnimatePresence, motion } from "framer-motion"
 import Image from "next/image"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 
 const getRequestErrorMessage = (err: unknown, fallback: string) => {
   const data = (
@@ -42,6 +42,7 @@ interface BrandModalProps {
     pb_name: string
     pb_image?: string | null
     pb_status: number
+    supplier_id?: number
   }) => Promise<void>
 }
 
@@ -54,6 +55,11 @@ function BrandModal({
   const [name, setName] = useState(initialBrand?.name ?? "")
   const [image, setImage] = useState(initialBrand?.image ?? "")
   const [status, setStatus] = useState(String(initialBrand?.status ?? 0))
+  const [supplierId, setSupplierId] = useState(
+    initialBrand?.supplier_id ? String(initialBrand.supplier_id) : ""
+  )
+  const { data: suppliersData } = useGetSuppliersQuery()
+  const merchants = suppliersData?.suppliers ?? []
   const [error, setError] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
@@ -100,6 +106,10 @@ function BrandModal({
       setError("Brand name is required.")
       return
     }
+    if (!supplierId) {
+      setError("Please choose the merchant that owns this brand.")
+      return
+    }
 
     setIsSaving(true)
     setError("")
@@ -108,6 +118,7 @@ function BrandModal({
         pb_name: trimmedName,
         pb_image: image || null,
         pb_status: Number(status),
+        supplier_id: Number(supplierId),
       })
     } catch (err) {
       setError(getRequestErrorMessage(err, "Failed to save brand."))
@@ -191,6 +202,31 @@ function BrandModal({
                 className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-700 transition outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20"
                 placeholder="e.g. AF Appliance"
               />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-600">
+                Merchant <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={supplierId}
+                onChange={(e) => {
+                  setSupplierId(e.target.value)
+                  setError("")
+                }}
+                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-700 transition outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20"
+              >
+                <option value="">Select a merchant…</option>
+                {merchants.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.company || m.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-[11px] text-slate-400">
+                The company that owns this brand (e.g. Xiaomi → POCO, Black
+                Shark).
+              </p>
             </div>
 
             <div className="space-y-1.5">
@@ -466,13 +502,13 @@ export default function BrandsPageMain() {
   const [deletingBrand, setDeletingBrand] = useState<ProductBrand | null>(null)
   const [isDeletingId, setIsDeletingId] = useState<number | null>(null)
 
-  const { data, isLoading, isFetching } = useGetProductBrandsQuery({
-    search: search.trim() || undefined,
-  })
+  // Load all brands once; filtering/search is done client-side below. The list
+  // isn't server-paginated, so the client already holds every brand — this makes
+  // search instant and immune to query-param caching / service-worker issues.
+  const { data, isLoading, isFetching } = useGetProductBrandsQuery(undefined)
   const [createBrand] = useCreateProductBrandMutation()
   const [updateBrand] = useUpdateProductBrandMutation()
   const [deleteBrand] = useDeleteProductBrandMutation()
-  const router = useRouter()
 
   const brands = useMemo(() => data?.brands ?? [], [data?.brands])
   const totalCount = data?.total ?? 0
@@ -489,6 +525,15 @@ export default function BrandsPageMain() {
   const filteredBrands = useMemo(() => {
     let result = [...brands]
 
+    const keyword = search.trim().toLowerCase()
+    if (keyword) {
+      result = result.filter(
+        (b) =>
+          b.name.toLowerCase().includes(keyword) ||
+          (b.supplier_name ?? "").toLowerCase().includes(keyword)
+      )
+    }
+
     if (statusFilter === "active") result = result.filter((b) => b.status === 0)
     else if (statusFilter === "disabled")
       result = result.filter((b) => b.status === 1)
@@ -502,7 +547,7 @@ export default function BrandsPageMain() {
     })
 
     return result
-  }, [brands, statusFilter, sortBy])
+  }, [brands, statusFilter, sortBy, search])
 
   // Pagination
   const totalPages = Math.max(1, Math.ceil(filteredBrands.length / PAGE_SIZE))
@@ -529,18 +574,18 @@ export default function BrandsPageMain() {
     pb_name: string
     pb_image?: string | null
     pb_status: number
+    supplier_id?: number
   }) => {
-    const res = await createBrand(payload).unwrap()
-    showSuccessToast("Brand created — now add the merchant for this brand.")
+    await createBrand(payload).unwrap()
+    showSuccessToast("Brand added successfully.")
     setShowAddModal(false)
-    // Brand-first flow: jump to the merchant form with this brand pre-selected.
-    router.push(`/admin/merchants?brand=${res.brand.id}`)
   }
 
   const handleUpdateBrand = async (payload: {
     pb_name: string
     pb_image?: string | null
     pb_status: number
+    supplier_id?: number
   }) => {
     if (!editingBrand) return
     await updateBrand({ id: editingBrand.id, data: payload }).unwrap()
@@ -895,8 +940,23 @@ export default function BrandsPageMain() {
                     className="group transition hover:bg-slate-50/60"
                   >
                     <td className="px-5 py-4">
-                      <div className="font-semibold text-slate-800">
+                      <Link
+                        href={`/admin/products/brands/${brand.id}`}
+                        className="font-semibold text-slate-800 transition hover:text-teal-600 hover:underline dark:text-slate-100"
+                      >
                         {brand.name}
+                      </Link>
+                      <div className="mt-0.5 text-xs">
+                        {brand.supplier_name ? (
+                          <span className="text-slate-500">
+                            <span className="text-slate-400">Merchant:</span>{" "}
+                            {brand.supplier_name}
+                          </span>
+                        ) : (
+                          <span className="font-medium text-amber-500">
+                            No merchant assigned
+                          </span>
+                        )}
                       </div>
                       <div className="mt-0.5 text-xs text-slate-400">
                         ID #{brand.id}

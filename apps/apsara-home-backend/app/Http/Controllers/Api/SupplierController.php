@@ -88,7 +88,7 @@ class SupplierController extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        $query = Supplier::query()->with('brand')->orderBy('s_company')->orderBy('s_name');
+        $query = Supplier::query()->orderBy('s_company')->orderBy('s_name');
 
         if ($supplierUser) {
             $query->where('s_id', (int) $supplierUser->su_supplier);
@@ -185,7 +185,6 @@ class SupplierController extends Controller
             'contact' => 'nullable|string|max:255',
             'address' => 'nullable|string|max:255',
             'status' => 'nullable|integer|in:0,1',
-            'brand_id' => 'required|integer|exists:tbl_product_brand,pb_id',
         ]);
 
         $supplier = Supplier::query()->create([
@@ -194,7 +193,6 @@ class SupplierController extends Controller
             's_email' => trim((string) ($validated['email'] ?? '')),
             's_contact' => trim((string) ($validated['contact'] ?? '')),
             's_address' => trim((string) ($validated['address'] ?? '')),
-            's_brand_id' => (int) $validated['brand_id'],
             's_status' => (int) ($validated['status'] ?? 1),
         ]);
 
@@ -232,7 +230,6 @@ class SupplierController extends Controller
             'contact' => 'nullable|string|max:255',
             'address' => 'nullable|string|max:255',
             'status' => 'nullable|integer|in:0,1',
-            'brand_id' => 'nullable|integer|exists:tbl_product_brand,pb_id',
         ]);
 
         $supplier->fill([
@@ -243,10 +240,6 @@ class SupplierController extends Controller
             's_address' => trim((string) ($validated['address'] ?? '')),
             's_status' => (int) ($validated['status'] ?? 1),
         ]);
-
-        if (array_key_exists('brand_id', $validated) && $validated['brand_id'] !== null) {
-            $supplier->s_brand_id = (int) $validated['brand_id'];
-        }
         $supplier->save();
 
         return response()->json([
@@ -383,8 +376,6 @@ class SupplierController extends Controller
             'contact' => (string) ($supplier->s_contact ?? ''),
             'address' => (string) ($supplier->s_address ?? ''),
             'status' => (int) ($supplier->s_status ?? 0),
-            'brand_id' => $supplier->s_brand_id !== null ? (int) $supplier->s_brand_id : null,
-            'brand' => $supplier->brand?->pb_name,
             'assigned_categories' => $this->assignedCategories((int) $supplier->s_id),
         ];
     }

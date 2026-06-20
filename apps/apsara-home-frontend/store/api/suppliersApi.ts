@@ -8,8 +8,6 @@ export interface SupplierItem {
   contact: string
   address: string
   status: number
-  brand_id?: number | null
-  brand?: string | null
   assigned_categories?: Array<{
     id: number
     name: string
@@ -24,8 +22,6 @@ export interface CreateSupplierPayload {
   contact?: string
   address?: string
   status?: number
-  // Required when creating a merchant (one brand per merchant); optional on update.
-  brand_id?: number
 }
 
 export interface InviteSupplierUserPayload {

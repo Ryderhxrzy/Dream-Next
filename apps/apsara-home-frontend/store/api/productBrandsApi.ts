@@ -5,6 +5,9 @@ export interface ProductBrand {
   name: string
   image?: string | null
   status: number
+  // Owning merchant (tbl_supplier). A brand belongs to exactly one merchant.
+  supplier_id?: number | null
+  supplier_name?: string | null
 }
 
 interface ProductBrandsResponse {
@@ -12,10 +15,32 @@ interface ProductBrandsResponse {
   total: number
 }
 
+export interface BrandProduct {
+  id: number
+  name: string
+  image?: string | null
+  price?: number | null
+  status: number
+  supplier_name?: string | null
+}
+
+export interface BrandProductsResponse {
+  brand: { id: number; name: string }
+  products: BrandProduct[]
+  meta: {
+    current_page: number
+    last_page: number
+    per_page: number
+    total: number
+  }
+}
+
 interface ProductBrandPayload {
   pb_name: string
   pb_image?: string | null
   pb_status?: number
+  // The merchant that owns this brand (required when creating).
+  supplier_id?: number
 }
 
 export const productBrandsApi = baseApi.injectEndpoints({
@@ -79,6 +104,17 @@ export const productBrandsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Brands"],
     }),
+    getBrandProducts: builder.query<
+      BrandProductsResponse,
+      { id: number; page?: number; q?: string; per_page?: number }
+    >({
+      query: ({ id, page, q, per_page }) => ({
+        url: `/api/admin/product-brands/${id}/products`,
+        method: "GET",
+        params: { page, q: q || undefined, per_page },
+      }),
+      providesTags: ["Brands", "Products"],
+    }),
   }),
 })
 
@@ -88,4 +124,5 @@ export const {
   useCreateProductBrandMutation,
   useUpdateProductBrandMutation,
   useDeleteProductBrandMutation,
+  useGetBrandProductsQuery,
 } = productBrandsApi
