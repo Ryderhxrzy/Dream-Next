@@ -38,12 +38,13 @@ return new class extends Migration
                 . ' WHERE s.ctid = f.ctid'
             );
 
-            DB::statement(
-                "SELECT setval("
-                . "pg_get_serial_sequence('tbl_supplier_user', 'su_id'),"
-                . " (SELECT MAX(su_id) FROM tbl_supplier_user)"
-                . ")"
-            );
+            // Resync the identity sequence ONLY if the column has one. Some
+            // environments (e.g. production) manage su_id manually with no
+            // sequence, where setval(NULL, ...) would error.
+            $seq = DB::selectOne("SELECT pg_get_serial_sequence('tbl_supplier_user', 'su_id') AS s");
+            if ($seq && $seq->s) {
+                DB::statement('SELECT setval(?, (SELECT MAX(su_id) FROM tbl_supplier_user))', [$seq->s]);
+            }
         });
 
         $hasUnique = DB::selectOne(

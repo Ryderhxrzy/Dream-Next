@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment, useEffect, useMemo, useState } from "react"
+import { Fragment, useMemo, useState } from "react"
 import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
 import {
   InviteSupplierUserResponse,
@@ -15,10 +15,6 @@ import {
   useUpdateSupplierMutation,
   useUpdateSupplierUserMutation,
 } from "@/store/api/suppliersApi"
-import {
-  useCreateProductBrandMutation,
-  useGetProductBrandsQuery,
-} from "@/store/api/productBrandsApi"
 import {
   AtSign,
   Building2,
@@ -45,7 +41,6 @@ type SupplierCompanyForm = {
   contact: string
   address: string
   status: "1" | "0"
-  brand_id: string
 }
 
 type SupplierInviteForm = {
@@ -62,7 +57,6 @@ const defaultSupplierCompanyForm: SupplierCompanyForm = {
   contact: "",
   address: "",
   status: "1",
-  brand_id: "",
 }
 
 const defaultSupplierInviteForm: SupplierInviteForm = {
@@ -92,13 +86,6 @@ export default function SuppliersPageMain() {
     useInviteSupplierUserMutation()
   const [updateSupplierCategories, { isLoading: isSavingSupplierCategories }] =
     useUpdateSupplierCategoriesMutation()
-  const { data: brandsData } = useGetProductBrandsQuery()
-  const [createProductBrand, { isLoading: isCreatingBrand }] =
-    useCreateProductBrandMutation()
-  const brands = useMemo(() => brandsData?.brands ?? [], [brandsData?.brands])
-  const [isBrandModalOpen, setIsBrandModalOpen] = useState(false)
-  const [brandModalName, setBrandModalName] = useState("")
-  const [brandModalError, setBrandModalError] = useState("")
   const [companyForm, setCompanyForm] = useState<SupplierCompanyForm>(
     defaultSupplierCompanyForm
   )
@@ -140,19 +127,6 @@ export default function SuppliersPageMain() {
     company: string
     name: string
   } | null>(null)
-
-  // Support a redirect-based flow: /admin/merchants?brand=<id> lands with the
-  // brand pre-selected in the create form (e.g. after creating a brand elsewhere).
-  useEffect(() => {
-    if (typeof window === "undefined") return
-    const params = new URLSearchParams(window.location.search)
-    const brandParam = params.get("brand") ?? params.get("brand_id")
-    if (brandParam) {
-      setCompanyForm((prev) =>
-        prev.brand_id ? prev : { ...prev, brand_id: brandParam }
-      )
-    }
-  }, [])
 
   const sortedSuppliers = useMemo(
     () =>
@@ -248,47 +222,9 @@ export default function SuppliersPageMain() {
       setInviteForm((prev) => ({ ...prev, [field]: event.target.value }))
     }
 
-  const handleQuickCreateBrand = async (event: React.FormEvent) => {
-    event.preventDefault()
-    setBrandModalError("")
-
-    const name = brandModalName.trim()
-    if (!name) {
-      setBrandModalError("Brand name is required.")
-      return
-    }
-
-    try {
-      const res = await createProductBrand({
-        pb_name: name,
-        pb_status: 0,
-      }).unwrap()
-
-      setBrandModalName("")
-      setIsBrandModalOpen(false)
-      setCompanyForm((prev) => ({ ...prev, brand_id: String(res.brand.id) }))
-      setCompanyFeedback({
-        type: "success",
-        message: `Brand "${res.brand.name}" created and attached. Complete the merchant details below.`,
-      })
-    } catch (error) {
-      setBrandModalError(getErrorMessage(error, "Unable to create brand."))
-    }
-  }
-
   const handleCreateSupplier = async (event: React.FormEvent) => {
     event.preventDefault()
     setCompanyFeedback(null)
-
-    const brandId = Number(companyForm.brand_id)
-    if (!brandId) {
-      setCompanyFeedback({
-        type: "error",
-        message:
-          "Please select a brand first — a brand is required to create a merchant.",
-      })
-      return
-    }
 
     try {
       const created = await createSupplier({
@@ -298,7 +234,6 @@ export default function SuppliersPageMain() {
         contact: companyForm.contact.trim(),
         address: companyForm.address.trim(),
         status: Number(companyForm.status),
-        brand_id: brandId,
       }).unwrap()
 
       setCompanyFeedback({ type: "success", message: created.message })
@@ -338,9 +273,6 @@ export default function SuppliersPageMain() {
           contact: companyForm.contact.trim(),
           address: companyForm.address.trim(),
           status: Number(companyForm.status),
-          brand_id: companyForm.brand_id
-            ? Number(companyForm.brand_id)
-            : undefined,
         },
       }).unwrap()
 
@@ -445,7 +377,6 @@ export default function SuppliersPageMain() {
     contact: string
     address: string
     status: number
-    brand_id?: number | null
   }) => {
     setEditingSupplierId(supplier.id)
     setCompanyFeedback(null)
@@ -456,7 +387,6 @@ export default function SuppliersPageMain() {
       contact: supplier.contact || "",
       address: supplier.address || "",
       status: supplier.status === 1 ? "1" : "0",
-      brand_id: supplier.brand_id ? String(supplier.brand_id) : "",
     })
     setIsEditModalOpen(true)
   }
@@ -860,36 +790,6 @@ export default function SuppliersPageMain() {
           </div>
 
           <form onSubmit={handleCreateSupplier} className="space-y-4">
-            <FormField label="Brand">
-              <div className="flex gap-2">
-                <select
-                  value={companyForm.brand_id}
-                  onChange={handleCompanyInput("brand_id")}
-                  required
-                  className={inputClassName}
-                >
-                  <option value="">Select a brand…</option>
-                  {brands.map((brand) => (
-                    <option key={brand.id} value={brand.id}>
-                      {brand.name}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setBrandModalError("")
-                    setBrandModalName("")
-                    setIsBrandModalOpen(true)
-                  }}
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-                >
-                  <Tag className="h-4 w-4" />
-                  Add Brand
-                </button>
-              </div>
-            </FormField>
-
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField label="Display Name">
                 <input
@@ -1410,20 +1310,6 @@ export default function SuppliersPageMain() {
           </div>
 
           <form onSubmit={handleEditSupplier} className="mt-5 space-y-4">
-            <FormField label="Brand">
-              <select
-                value={companyForm.brand_id}
-                onChange={handleCompanyInput("brand_id")}
-                className={inputClassName}
-              >
-                <option value="">No brand</option>
-                {brands.map((brand) => (
-                  <option key={brand.id} value={brand.id}>
-                    {brand.name}
-                  </option>
-                ))}
-              </select>
-            </FormField>
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField label="Display Name">
                 <input
@@ -1544,66 +1430,6 @@ export default function SuppliersPageMain() {
               {isDeletingSupplier ? "Deleting..." : "Delete Merchant"}
             </button>
           </div>
-        </ModalShell>
-      ) : null}
-
-      {isBrandModalOpen ? (
-        <ModalShell onClose={() => setIsBrandModalOpen(false)}>
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-bold tracking-[0.22em] text-cyan-600 uppercase dark:text-cyan-300">
-                New Brand
-              </p>
-              <h3 className="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100">
-                Add Brand
-              </h3>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                Create the brand first — it will be attached to the merchant
-                you&apos;re adding.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsBrandModalOpen(false)}
-              className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-            >
-              Close
-            </button>
-          </div>
-
-          <form onSubmit={handleQuickCreateBrand} className="mt-5 space-y-4">
-            <FormField label="Brand Name">
-              <input
-                value={brandModalName}
-                onChange={(e) => setBrandModalName(e.target.value)}
-                required
-                autoFocus
-                className={inputClassName}
-                placeholder="e.g. Acme Living"
-              />
-            </FormField>
-
-            {brandModalError ? (
-              <FeedbackBanner type="error" message={brandModalError} />
-            ) : null}
-
-            <div className="flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setIsBrandModalOpen(false)}
-                className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isCreatingBrand}
-                className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-600 dark:hover:bg-cyan-500"
-              >
-                {isCreatingBrand ? "Creating brand..." : "Create & Attach Brand"}
-              </button>
-            </div>
-          </form>
         </ModalShell>
       ) : null}
     </div>

@@ -8,6 +8,7 @@ import {
   useGetSupplierMeQuery,
   useUpdateSupplierLogoMutation,
 } from "@/store/api/suppliersApi"
+import { useGetMyBrandRequestsQuery } from "@/store/api/brandRequestsApi"
 import { AnimatePresence, motion } from "framer-motion"
 import {
   BarChart3,
@@ -24,6 +25,7 @@ import {
   MessageSquare,
   Package,
   Smartphone,
+  Tag,
   TicketPercent,
   Users,
   Warehouse,
@@ -41,6 +43,7 @@ const mainItems = [
   { label: "Orders", href: "/supplier/orders", icon: ClipboardList },
   { label: "Inventory", href: "/supplier/inventory", icon: Warehouse },
   { label: "Catalogue", href: "/supplier/catalogue", icon: BookOpen },
+  { label: "My Brands", href: "/supplier/brands", icon: Tag },
 ]
 
 const servicesMainItems = [
@@ -132,6 +135,16 @@ export default function SupplierSidebar({
   const isServicesView = (supplierCategoriesData?.categories ?? []).some(
     (c) => c.name.toLowerCase() === "services"
   )
+
+  // Badge the "My Brands" nav when an admin has decided on a request the
+  // merchant hasn't viewed yet.
+  const { data: brandRequestsData } = useGetMyBrandRequestsQuery(undefined, {
+    skip: !session,
+    pollingInterval: 30_000,
+  })
+  const brandDecisionCount = (brandRequestsData?.requests ?? []).filter(
+    (r) => !r.seen && r.status !== "pending"
+  ).length
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -351,6 +364,12 @@ export default function SupplierSidebar({
                     <Icon className="h-5 w-5" />
                   </span>
                   <span className="flex-1 font-medium">{item.label}</span>
+                  {item.href === "/supplier/brands" &&
+                  brandDecisionCount > 0 ? (
+                    <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[11px] font-bold text-white">
+                      {brandDecisionCount}
+                    </span>
+                  ) : null}
                 </Link>
               )
             })}
@@ -524,6 +543,12 @@ export default function SupplierSidebar({
                     </span>
                   )}
                   <span className="flex-1 font-medium">{item.label}</span>
+                  {item.href === "/supplier/brands" &&
+                  brandDecisionCount > 0 ? (
+                    <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[11px] font-bold text-white">
+                      {brandDecisionCount}
+                    </span>
+                  ) : null}
                 </Link>
               )
             })}

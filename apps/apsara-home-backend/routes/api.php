@@ -50,6 +50,7 @@ use App\Http\Controllers\Api\PasskeyAuthController;
 use App\Http\Controllers\Api\ProductViewerController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\ServiceInquiryController;
+use App\Http\Controllers\Api\BrandRequestController;
 use App\Http\Controllers\Api\TotpController;
 use App\Http\Controllers\Api\GeminiController;
 use App\Http\Controllers\MeilisearchController;
@@ -403,6 +404,8 @@ Route::middleware(['auth:sanctum', 'admin.role:super_admin,admin,csr'])->group(f
     Route::patch('/admin/members/kyc/{id}/reject', [AdminMemberKycController::class, 'reject']);
     Route::get('/admin/service-inquiries', [ServiceInquiryController::class, 'adminIndex']);
     Route::patch('/admin/service-inquiries/{id}', [ServiceInquiryController::class, 'adminUpdateStatus']);
+    Route::get('/admin/brand-requests', [BrandRequestController::class, 'adminIndex']);
+    Route::patch('/admin/brand-requests/{id}', [BrandRequestController::class, 'adminDecide']);
     Route::get('/admin/inquiries/username-changes', [AdminInquiryController::class, 'usernameChangeRequests']);
     Route::patch('/admin/inquiries/username-changes/{id}/approve', [AdminInquiryController::class, 'approveUsernameChange']);
     Route::patch('/admin/inquiries/username-changes/{id}/reject', [AdminInquiryController::class, 'rejectUsernameChange']);
@@ -467,6 +470,7 @@ Route::get('/admin/webpages/adds-content', [AddsContentController::class, 'index
     Route::put('/admin/products/{id}', [ProductController::class, 'update']);
     Route::delete('/admin/products/{id}', [ProductController::class, 'destroy']);
     Route::get('/admin/product-brands', [ProductBrandController::class, 'index']);
+    Route::get('/admin/product-brands/{id}/products', [ProductBrandController::class, 'brandProducts']);
     Route::get('/admin/suppliers/stats', [SupplierController::class, 'stats']);
     Route::get('/admin/suppliers', [SupplierController::class, 'index']);
     Route::get('/admin/suppliers/{id}/categories', [SupplierController::class, 'categories']);
@@ -658,6 +662,11 @@ Route::middleware(['auth:sanctum', 'supplier.actor'])->prefix('supplier/auth')->
 });
 
 Route::middleware(['auth:sanctum', 'supplier.actor'])->group(function () {
+    Route::get('/supplier/brands', [BrandRequestController::class, 'myBrands']);
+    Route::get('/supplier/brands/{id}/products', [BrandRequestController::class, 'myBrandProducts']);
+    Route::get('/supplier/brand-requests', [BrandRequestController::class, 'index']);
+    Route::post('/supplier/brand-requests', [BrandRequestController::class, 'store']);
+    Route::post('/supplier/brand-requests/seen', [BrandRequestController::class, 'markSeen']);
     Route::get('/supplier/warehouse', [SupplierWarehouseController::class, 'index']);
     Route::post('/supplier/warehouse', [SupplierWarehouseController::class, 'store']);
     Route::put('/supplier/warehouse/{warehouse}', [SupplierWarehouseController::class, 'update']);
