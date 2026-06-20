@@ -3342,7 +3342,7 @@ export default function AddProductModal({
                                       value: EMPTY_SELECT_KEYS.category,
                                       label: "Select category...",
                                     },
-                                    ...categories.map((cat) => ({
+                                    ...topLevelCategories.map((cat) => ({
                                       value: String(cat.id),
                                       label: cat.name,
                                     })),
