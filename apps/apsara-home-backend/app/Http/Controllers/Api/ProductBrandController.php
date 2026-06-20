@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductBrand;
 use App\Models\ProductPhoto;
+use App\Models\Supplier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,15 +18,22 @@ class ProductBrandController extends Controller
     private function buildBrandsResponse(string $search = '', bool $activeOnly = false, ?int $supplierId = null): JsonResponse
     {
         $hasBrandImageColumn = $this->hasBrandImageColumn();
-        $columns = ['pb_id', 'pb_name', 'pb_status', 'pb_supplier_id'];
+        $hasSupplierColumn = $this->hasBrandSupplierColumn();
+        $columns = ['pb_id', 'pb_name', 'pb_status'];
         if ($hasBrandImageColumn) {
             $columns[] = 'pb_image';
+        }
+        if ($hasSupplierColumn) {
+            $columns[] = 'pb_supplier_id';
         }
 
         $brands = ProductBrand::query()
             ->select($columns)
-            ->when($supplierId !== null, function ($q) use ($supplierId) {
-                $q->where('pb_supplier_id', $supplierId);
+            ->when($hasSupplierColumn, function ($query) {
+                $query->with('supplier:s_id,s_company,s_name');
+            })
+            ->when($hasSupplierColumn && $supplierId, function ($query) use ($supplierId) {
+                $query->where('pb_supplier_id', $supplierId);
             })
             ->when($activeOnly, function ($q) {
                 $q->where('pb_status', 0);
@@ -35,13 +43,16 @@ class ProductBrandController extends Controller
             })
             ->orderBy('pb_name')
             ->get()
-            ->map(function (ProductBrand $brand) use ($hasBrandImageColumn) {
+            ->map(function (ProductBrand $brand) use ($hasBrandImageColumn, $hasSupplierColumn) {
+                $merchant = $hasSupplierColumn ? $brand->supplier : null;
+
                 return [
                     'id' => (int) $brand->pb_id,
                     'name' => (string) ($brand->pb_name ?? ''),
                     'image' => $hasBrandImageColumn && $brand->pb_image ? (string) $brand->pb_image : null,
                     'status' => (int) ($brand->pb_status ?? 0),
-                    'supplier_id' => $brand->pb_supplier_id !== null ? (int) $brand->pb_supplier_id : null,
+                    'supplier_id' => $hasSupplierColumn && $brand->pb_supplier_id ? (int) $brand->pb_supplier_id : null,
+                    'supplier_name' => $merchant ? (string) ($merchant->s_company ?: $merchant->s_name) : null,
                 ];
             })
             ->values();
@@ -57,6 +68,11 @@ class ProductBrandController extends Controller
         return Schema::hasColumn('tbl_product_brand', 'pb_image');
     }
 
+    private function hasBrandSupplierColumn(): bool
+    {
+        return Schema::hasColumn('tbl_product_brand', 'pb_supplier_id');
+    }
+
     public function publicIndex(Request $request): JsonResponse
     {
         $search = trim((string) $request->query('q', ''));
@@ -67,19 +83,81 @@ class ProductBrandController extends Controller
     public function index(Request $request): JsonResponse
     {
         $search = trim((string) $request->query('q', ''));
-        $supplierId = $request->query('supplier_id') !== null ? (int) $request->query('supplier_id') : null;
+        $supplierId = (int) $request->query('supplier_id', 0) ?: null;
 
         return $this->buildBrandsResponse($search, false, $supplierId);
+    }
+
+    /**
+     * All products that belong to a brand (paginated), for the admin
+     * brand-detail page (/admin/products/brands/{id}).
+     */
+    public function brandProducts(Request $request, int $id): JsonResponse
+    {
+        $brand = ProductBrand::query()->find($id);
+        if (! $brand) {
+            return response()->json(['message' => 'Brand not found.'], 404);
+        }
+
+        $search = trim((string) $request->query('q', ''));
+        $perPage = min(max((int) $request->query('per_page', 24), 1), 100);
+
+        $paginated = Product::query()
+            ->where('pd_brand_type', $id)
+            ->when($search !== '', fn ($q) => $q->where('pd_name', 'ilike', '%' . $search . '%'))
+            ->orderBy('pd_name')
+            ->paginate($perPage);
+
+        $supplierIds = collect($paginated->items())
+            ->pluck('pd_supplier')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+        $suppliers = $supplierIds
+            ? Supplier::query()->whereIn('s_id', $supplierIds)->get()->keyBy('s_id')
+            : collect();
+
+        $products = collect($paginated->items())->map(function (Product $p) use ($suppliers) {
+            $supplier = $suppliers->get($p->pd_supplier);
+
+            return [
+                'id' => (int) $p->pd_id,
+                'name' => (string) ($p->pd_name ?? ''),
+                'image' => $p->pd_image ? (string) $p->pd_image : null,
+                'price' => $p->pd_price_srp !== null ? (float) $p->pd_price_srp : null,
+                'status' => (int) ($p->pd_status ?? 0),
+                'supplier_name' => $supplier ? (string) ($supplier->s_company ?: $supplier->s_name) : null,
+            ];
+        })->values();
+
+        return response()->json([
+            'brand' => ['id' => (int) $brand->pb_id, 'name' => (string) $brand->pb_name],
+            'products' => $products,
+            'meta' => [
+                'current_page' => $paginated->currentPage(),
+                'last_page' => $paginated->lastPage(),
+                'per_page' => $paginated->perPage(),
+                'total' => $paginated->total(),
+            ],
+        ]);
     }
 
     public function store(Request $request): JsonResponse
     {
         $hasBrandImageColumn = $this->hasBrandImageColumn();
-        $validator = Validator::make($request->all(), [
+        $hasSupplierColumn = $this->hasBrandSupplierColumn();
+
+        $rules = [
             'pb_name' => 'required|string|max:105',
             'pb_image' => 'nullable|string|max:1000',
             'pb_status' => 'nullable|integer|in:0,1',
-        ]);
+        ];
+        if ($hasSupplierColumn) {
+            // Strict ownership: every brand belongs to a merchant.
+            $rules['supplier_id'] = 'required|integer|exists:tbl_supplier,s_id';
+        }
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return response()->json([
@@ -112,7 +190,15 @@ class ProductBrandController extends Controller
             $payload['pb_image'] = $request->filled('pb_image') ? (string) $request->input('pb_image') : null;
         }
 
+        if ($hasSupplierColumn) {
+            $payload['pb_supplier_id'] = (int) $request->input('supplier_id');
+        }
+
         $brand = ProductBrand::create($payload);
+
+        if ($hasSupplierColumn) {
+            $brand->load('supplier:s_id,s_company,s_name');
+        }
 
         return response()->json([
             'message' => 'Brand created successfully.',
@@ -121,6 +207,10 @@ class ProductBrandController extends Controller
                 'name' => (string) $brand->pb_name,
                 'image' => $hasBrandImageColumn && $brand->pb_image ? (string) $brand->pb_image : null,
                 'status' => (int) $brand->pb_status,
+                'supplier_id' => $hasSupplierColumn && $brand->pb_supplier_id ? (int) $brand->pb_supplier_id : null,
+                'supplier_name' => ($hasSupplierColumn && $brand->supplier)
+                    ? (string) ($brand->supplier->s_company ?: $brand->supplier->s_name)
+                    : null,
             ],
         ], 201);
     }
@@ -138,6 +228,7 @@ class ProductBrandController extends Controller
             'pb_name' => 'sometimes|required|string|max:105',
             'pb_image' => 'nullable|string|max:1000',
             'pb_status' => 'nullable|integer|in:0,1',
+            'supplier_id' => 'sometimes|nullable|integer|exists:tbl_supplier,s_id',
         ]);
 
         if ($validator->fails()) {
@@ -172,6 +263,10 @@ class ProductBrandController extends Controller
 
         if ($request->has('pb_status')) {
             $brand->pb_status = (int) $request->input('pb_status', 0);
+        }
+
+        if ($this->hasBrandSupplierColumn() && $request->has('supplier_id')) {
+            $brand->pb_supplier_id = (int) $request->input('supplier_id') ?: null;
         }
 
         $brand->save();
