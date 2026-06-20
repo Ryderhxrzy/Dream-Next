@@ -6,6 +6,7 @@ import { motion } from "framer-motion"
 import { SlideInLeft, SlideInRight } from "@/components/ui/motion"
 
 const projectTypes = [
+  "Full Solution - Design to Installation",
   "Interior Design",
   "Sourcing & Supply",
   "Installation & Finishing",
@@ -18,13 +19,18 @@ type ContactContent = {
   email: string
   phone?: string
   address: string
+  responseTime: string
+  statusBadge: string
 }
 
 const defaultContact: ContactContent = {
   title: "Ready to build something remarkable?",
   body: "Tell us about your space and what you're looking for. We'll get back to you within 24 hours to set up a free consultation.",
   email: "hello@dreambuild.studio",
+  phone: "+63 997 875 3004",
   address: "Metro Manila, Philippines",
+  responseTime: "Within 24 hours",
+  statusBadge: "Currently accepting new projects",
 }
 
 export function ContactSection({
@@ -47,9 +53,9 @@ export function ContactSection({
   }
   const contactDetails = [
     { label: "Email", value: contact.email },
-    ...(contact.phone ? [{ label: "Phone", value: contact.phone }] : []),
+    ...(contact.phone ? [{ label: "Phone / Viber", value: contact.phone }] : []),
     { label: "Location", value: contact.address },
-    { label: "Response Time", value: "Within 24 hours" },
+    { label: "Response Time", value: contact.responseTime },
   ]
 
   return (
@@ -101,7 +107,7 @@ export function ContactSection({
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
                 </span>
                 <p className="text-xs font-medium text-[var(--foreground)]">
-                  Currently accepting new projects
+                  {contact.statusBadge}
                 </p>
               </div>
             </div>
@@ -169,7 +175,7 @@ export function ContactSection({
                   {/* Project Type */}
                   <div>
                     <label className="mb-2 block text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
-                      Project Type
+                      What do you need?
                     </label>
                     <div className="grid grid-cols-2 gap-2">
                       {projectTypes.map((type) => (
@@ -179,7 +185,7 @@ export function ContactSection({
                           onClick={() =>
                             setFormData({ ...formData, projectType: type })
                           }
-                          className={`rounded-xl border px-4 py-2.5 text-left text-xs font-medium transition-all ${
+                          className={`min-h-10 rounded-xl border px-4 py-2.5 text-left text-xs font-medium leading-snug transition-all ${
                             formData.projectType === type
                               ? "border-[var(--foreground)] bg-[var(--foreground)] text-white"
                               : "border-[var(--border)] bg-[var(--background)] text-[var(--muted)] hover:border-[var(--foreground)] hover:text-[var(--foreground)]"

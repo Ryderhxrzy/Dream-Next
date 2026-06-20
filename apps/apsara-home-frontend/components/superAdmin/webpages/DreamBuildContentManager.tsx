@@ -57,9 +57,7 @@ const sections: DreamBuildSection[] = [
     fields: [
       { key: 'eyebrow', label: 'Eyebrow text' },
       { key: 'primary_button_text', label: 'Primary button text' },
-      { key: 'primary_button_url', label: 'Primary button link' },
       { key: 'secondary_button_text', label: 'Secondary button text' },
-      { key: 'secondary_button_url', label: 'Secondary button link' },
       { key: 'stat_1_value', label: 'Stat 1 value' },
       { key: 'stat_1_label', label: 'Stat 1 label' },
       { key: 'stat_2_value', label: 'Stat 2 value' },
@@ -80,6 +78,8 @@ const sections: DreamBuildSection[] = [
       { key: 'section_eyebrow', label: 'Section eyebrow' },
       { key: 'section_title', label: 'Section title' },
       { key: 'section_description', label: 'Section description', kind: 'textarea' },
+      { key: 'cta_text', label: 'CTA text' },
+      { key: 'cta_button_text', label: 'CTA button text' },
       { key: 'service_label', label: 'Service label' },
       { key: 'service_number', label: 'Service number (01, 02…)' },
       { key: 'bullets', label: 'Bullet points (one per line)', kind: 'textarea' },
@@ -109,7 +109,6 @@ const sections: DreamBuildSection[] = [
       { key: 'category', label: 'Category' },
       { key: 'date', label: 'Date label (e.g. March 15, 2024)' },
       { key: 'read_time', label: 'Read time (e.g. 5 min read)' },
-      { key: 'slug', label: 'URL slug' },
       { key: 'design_brief', label: 'Design brief / intro note', kind: 'textarea' },
       { key: 'takeaways', label: 'Key takeaways (one per line)', kind: 'textarea' },
       { key: 'sections', label: 'Article sections (Title|Body, one per line)', kind: 'textarea' },
@@ -160,8 +159,10 @@ const sections: DreamBuildSection[] = [
     helper: 'Contact info, footer notes, and CTA copy.',
     fields: [
       { key: 'email', label: 'Email address' },
-      { key: 'phone', label: 'Phone number' },
-      { key: 'address', label: 'Address', kind: 'textarea' },
+      { key: 'phone', label: 'Phone / Viber' },
+      { key: 'address', label: 'Location', kind: 'textarea' },
+      { key: 'response_time', label: 'Response Time' },
+      { key: 'status_badge', label: 'Status badge' },
     ],
   },
 ]
@@ -169,31 +170,7 @@ const sections: DreamBuildSection[] = [
 // ─── Static defaults (mirrors landing-data.ts — never changes unless updated) ──
 
 const STATIC_DEFAULTS: Record<string, WebPageItem[]> = {
-  'dreambuild-hero': [
-    {
-      id: -1, type: 'dreambuild-hero', key: 'hero-main', sort_order: 0, is_active: true,
-      title: 'Refined interiors for homes that seek clarity and character',
-      subtitle: null, button_text: null, link_url: null, image_url: null,
-      body: 'Dreambuild creates calm, polished interiors through thoughtful planning, clean material stories, and a modern design language that feels elevated without becoming cold.',
-      payload: {
-        eyebrow: 'Interior Design Studio',
-        primary_button_text: 'Explore Services',
-        primary_button_url: '#services',
-        secondary_button_text: 'View Projects',
-        secondary_button_url: '/projects',
-        stat_1_value: '150+', stat_1_label: 'interior concepts explored',
-        stat_2_value: '48',   stat_2_label: 'spaces designed and styled',
-        stat_3_value: '10',   stat_3_label: 'signature palette directions',
-        signature_label: 'Signature Style',
-        carousel_images: [
-          'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800&q=80',
-          'https://images.unsplash.com/photo-1631679706909-1844bbd07221?w=800&q=80',
-          'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80',
-          'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=800&q=80',
-        ].join('\n'),
-      },
-    },
-  ],
+  'dreambuild-hero': [],
   'dreambuild-services': [
     {
       id: -1, type: 'dreambuild-services', key: 'interior-design', sort_order: 0, is_active: true,
@@ -215,22 +192,12 @@ const STATIC_DEFAULTS: Record<string, WebPageItem[]> = {
     },
   ],
   'dreambuild-projects': [],
-  'dreambuild-blogs': [
-    { id: -1, type: 'dreambuild-blogs', key: 'warm-modern-living-room', sort_order: 0, is_active: true, title: 'How To Build A Warm Modern Living Room', subtitle: 'A practical guide to layering neutrals, textures, and statement pieces.', body: null, image_url: null, link_url: null, button_text: null, payload: { category: 'Styling Guide', date: 'March 15, 2024', read_time: '5 min read', slug: 'warm-modern-living-room', design_brief: 'Build the room around one warm anchor material, then balance it with breathable spacing, soft texture, and low-glare light.', takeaways: 'Start with a calm base palette\nRepeat wood or woven tones at least three times\nUse lighting layers instead of one bright ceiling source', sections: 'Start With The Anchor|Choose one dominant material story first: oak, walnut, rattan, linen, or warm stone. Repeating that story makes the space feel intentional instead of randomly decorated.\nLayer Texture Before Color|Warm modern rooms do not need many colors. They need matte, woven, brushed, and soft surfaces working together so neutral pieces still feel dimensional.\nKeep The Layout Conversational|Pull seating away from the walls when possible, keep paths clear, and let the coffee table connect the main pieces without crowding the center.' } },
-    { id: -2, type: 'dreambuild-blogs', key: 'small-spaces-premium', sort_order: 1, is_active: true, title: 'Interior Finishes That Make Small Spaces Feel Premium', subtitle: 'Simple finish decisions that elevate condos and compact homes.', body: null, image_url: null, link_url: null, button_text: null, payload: { category: 'Design Tips', date: 'March 8, 2024', read_time: '4 min read', slug: 'small-spaces-premium', design_brief: 'Compact homes feel elevated when the finishes are consistent, tactile, and edited down to a few strong decisions.', takeaways: 'Use fewer finishes with better repetition\nChoose vertical storage that looks built-in\nAvoid glossy overload in small rooms', sections: 'Edit The Finish Palette|Limit the room to two main finishes and one accent. This creates visual calm and helps inexpensive pieces feel more curated.\nUse Height For Storage|Tall cabinets, floating shelves, and vertical wall details draw the eye upward while keeping the floor open.\nMake Utility Look Intentional|Small spaces need hardworking pieces. Choose storage that has a clear design language so practical items do not look temporary.' } },
-    { id: -3, type: 'dreambuild-blogs', key: 'before-renovate', sort_order: 2, is_active: true, title: 'Before You Renovate: Design Decisions To Finalize Early', subtitle: 'The key layout, lighting, and material choices to settle before build-out.', body: null, image_url: null, link_url: null, button_text: null, payload: { category: 'Renovation', date: 'February 28, 2024', read_time: '6 min read', slug: 'before-renovate', design_brief: 'The best renovation work happens when the invisible decisions are settled before construction starts.', takeaways: 'Finalize traffic flow before buying furniture\nLock major lighting positions early\nDecide built-ins before wall and outlet work', sections: 'Plan The Daily Route|Map how people move through the space at busy hours. Door swings, dining clearance, and storage access matter more than a beautiful mood board.\nDecide Lighting Before Ceilings|Ambient, task, and accent lighting should be planned before ceiling work begins so the final space feels layered.\nResolve Built-Ins Early|Cabinets, wardrobes, media walls, and desks affect outlets, measurements, wall finishes, and budget timing.' } },
-    { id: -4, type: 'dreambuild-blogs', key: 'neutral-palette-guide', sort_order: 3, is_active: true, title: 'The Complete Guide to Neutral Color Palettes', subtitle: 'Understanding undertones, depth, and avoiding flat neutrals.', body: null, image_url: null, link_url: null, button_text: null, payload: { category: 'Color Theory', date: 'February 20, 2024', read_time: '7 min read', slug: 'neutral-palette-guide', design_brief: 'Neutral rooms need contrast, temperature control, and texture so they feel calm without feeling unfinished.', takeaways: 'Mix warm and cool neutrals carefully\nUse contrast to shape the room\nSample paint under real lighting', sections: 'Pick The Temperature|Every neutral has an undertone. Warm creams, cool grays, and pinkish beiges behave differently beside wood, metal, and daylight.\nCreate Depth With Contrast|A neutral room still needs dark, medium, and light values. Without value contrast, furniture and walls can visually disappear.\nUse Texture As Color|Boucle, linen, timber grain, stone, ribbed glass, and matte ceramics can make a simple palette feel rich.' } },
-    { id: -5, type: 'dreambuild-blogs', key: 'lighting-layers', sort_order: 4, is_active: true, title: 'Mastering Lighting Layers in Modern Homes', subtitle: 'Ambient, task, and accent lighting for a functional and atmospheric space.', body: null, image_url: null, link_url: null, button_text: null, payload: { category: 'Lighting Design', date: 'February 12, 2024', read_time: '5 min read', slug: 'lighting-layers', design_brief: 'Good lighting changes the way a room works at morning, afternoon, and night.', takeaways: 'Use at least three light types in main rooms\nPut warm lights on dimmers when possible\nLight walls and corners, not only the center', sections: 'Start With Ambient Light|Use soft general lighting as the base. It should make the room usable without making it feel flat.\nAdd Task Lighting|Reading corners, desks, counters, and vanities need focused light that supports real activities.\nFinish With Accent Light|Wall washers, lamps, and shelf lighting create depth and make the room feel designed after sunset.' } },
-    { id: -6, type: 'dreambuild-blogs', key: 'sustainable-materials', sort_order: 5, is_active: true, title: 'Sustainable Materials That Still Look Luxurious', subtitle: 'Eco-conscious choices that deliver on aesthetics without compromise.', body: null, image_url: null, link_url: null, button_text: null, payload: { category: 'Sustainability', date: 'February 5, 2024', read_time: '6 min read', slug: 'sustainable-materials', design_brief: 'Sustainable choices can still feel refined when material honesty, durability, and texture lead the design.', takeaways: 'Choose long-life materials over trendy finishes\nUse natural texture for quiet luxury\nCheck maintenance before final selection', sections: 'Prioritize Durability|The most sustainable finish is often the one that lasts longer, repairs cleanly, and still looks good after daily use.\nLet Natural Texture Show|Bamboo, reclaimed wood, stone offcuts, linen, cork, and recycled surfaces can bring depth without visual noise.\nDesign For Maintenance|Beautiful materials still need realistic care. Choose finishes that match how the household actually lives.' } },
-  ],
-  'dreambuild-testimonials': [
-    { id: -1, type: 'dreambuild-testimonials', key: 'angela-m', sort_order: 0, is_active: true, title: 'Angela M.', subtitle: null, body: 'The space finally feels elevated but still personal. Every corner looks calm, intentional, and easy to live in.', image_url: null, link_url: null, button_text: null, payload: { client_name: 'Angela M.', client_role: 'Homeowner' } },
-    { id: -2, type: 'dreambuild-testimonials', key: 'daniel-r', sort_order: 1, is_active: true, title: 'Daniel R.', subtitle: null, body: 'They translated our vague ideas into something polished and cohesive. The material palette alone changed the whole mood.', image_url: null, link_url: null, button_text: null, payload: { client_name: 'Daniel R.', client_role: 'Condo Client' } },
-  ],
+  'dreambuild-blogs': [],
+  'dreambuild-testimonials': [],
   'dreambuild-gallery': [],
   'dreambuild-process': [],
   'dreambuild-contact': [
-    { id: -1, type: 'dreambuild-contact', key: 'contact-main', sort_order: 0, is_active: true, title: "Let's design your home together", subtitle: null, body: 'Reach out to start a conversation about your space. We work with homeowners across Metro Manila.', image_url: null, link_url: null, button_text: null, payload: { email: 'hello@dreambuild.ph', phone: '+63 912 345 6789', address: 'Metro Manila, Philippines' } },
+    { id: -1, type: 'dreambuild-contact', key: 'contact-main', sort_order: 0, is_active: true, title: "Let's design your home together", subtitle: null, body: 'Reach out to start a conversation about your space. We work with homeowners across Metro Manila.', image_url: null, link_url: null, button_text: null, payload: { email: 'hello@dreambuild.ph', phone: '+63 997 875 3004', address: 'Metro Manila, Philippines', response_time: 'Within 24 hours', status_badge: 'Currently accepting new projects' } },
   ],
 }
 
@@ -250,6 +217,73 @@ const SUBTITLE_LIMIT = 255
 
 const slugify = (v: string) =>
   v.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+
+const MONTH_NAMES = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+]
+
+const dateLabelToInputValue = (value: string) => {
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return ''
+
+  const year = parsed.getFullYear()
+  const month = String(parsed.getMonth() + 1).padStart(2, '0')
+  const day = String(parsed.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const inputValueToDateLabel = (value: string) => {
+  const [year, month, day] = value.split('-').map(Number)
+  if (!year || !month || !day) return ''
+
+  return `${MONTH_NAMES[month - 1]} ${day}, ${year}`
+}
+
+const isLegacyDreamBuildBlogPlaceholder = (item: WebPageItem) => {
+  const title = String(item.title ?? '').trim().toLowerCase()
+  const key = String(item.key ?? '').trim().toLowerCase()
+  const slug = String((item.payload as Record<string, unknown> | null)?.slug ?? '').trim().toLowerCase()
+
+  return (
+    title.startsWith('19 blog examples') ||
+    title === 'test blogs post' ||
+    key.startsWith('19-blog-examples') ||
+    key === 'test-blogs-post' ||
+    slug.startsWith('19-blog-examples') ||
+    slug === 'test-blogs-post'
+  )
+}
+
+const isLegacyDreamBuildTestimonialPlaceholder = (item: WebPageItem) => {
+  const title = String(item.title ?? '').trim().toLowerCase()
+  const key = String(item.key ?? '').trim().toLowerCase()
+
+  return (
+    key === 'testimonial-collection-instructions' ||
+    title === 'what clients say.'
+  )
+}
+
+const isLegacyDreamBuildHeroPlaceholder = (item: WebPageItem) => {
+  const title = String(item.title ?? '').trim().toLowerCase()
+  const key = String(item.key ?? '').trim().toLowerCase()
+
+  return (
+    key === 'hero-main' &&
+    title === 'one team for your entire interior - design, supply, and installation'
+  )
+}
 
 const toForm = (item: WebPageItem, section: DreamBuildSection): FormState => {
   const p = (item.payload ?? {}) as Record<string, unknown>
@@ -296,18 +330,21 @@ const toPayload = (form: FormState, section: DreamBuildSection) => {
   const payload = Object.fromEntries(
     Object.entries(form.payload).map(([k, v]) => [k, v.trim()]).filter(([, v]) => v !== ''),
   )
+  const title = section.id === 'dreambuild-testimonials'
+    ? payload.client_name || form.title.trim()
+    : form.title.trim()
 
-  if (section.id === 'dreambuild-blogs' && !payload.slug) {
-    payload.slug = slugify(form.title)
+  if (section.id === 'dreambuild-blogs') {
+    payload.slug = slugify(title)
   }
 
-  const subtitle = section.id === 'dreambuild-services'
+  const subtitle = section.id === 'dreambuild-services' || section.id === 'dreambuild-testimonials' || section.id === 'dreambuild-hero'
     ? null
     : form.subtitle.trim().slice(0, SUBTITLE_LIMIT) || undefined
-  const linkUrl = section.id === 'dreambuild-services' || section.id === 'dreambuild-gallery' || section.id === 'dreambuild-projects'
+  const linkUrl = section.id === 'dreambuild-services' || section.id === 'dreambuild-gallery' || section.id === 'dreambuild-projects' || section.id === 'dreambuild-testimonials'
     ? null
     : form.link_url.trim() || undefined
-  const buttonText = section.id === 'dreambuild-services' || section.id === 'dreambuild-projects'
+  const buttonText = section.id === 'dreambuild-services' || section.id === 'dreambuild-projects' || section.id === 'dreambuild-testimonials'
     ? null
     : form.button_text.trim() || undefined
   const serviceNumberOrder = section.id === 'dreambuild-services'
@@ -318,8 +355,8 @@ const toPayload = (form: FormState, section: DreamBuildSection) => {
     : Number.parseInt(form.sort_order, 10) || 0
 
   return {
-    key: form.key.trim() || slugify(form.title) || section.id,
-    title: form.title.trim() || undefined,
+    key: form.key.trim() || slugify(title) || section.id,
+    title: title || undefined,
     subtitle,
     body: form.body.trim() || undefined,
     image_url: form.image_url.trim() || undefined,
@@ -557,8 +594,8 @@ function HeroCanvas({ items, selected, onSelect, onAddNew, isLoading, onFieldFoc
                     </h2>
                   </FieldZone>
                   <FieldZone {...fz('body')} label="Body">
-                    {(item.subtitle ?? item.body) ? (
-                      <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-stone-500">{item.subtitle ?? item.body}</p>
+                    {item.body ? (
+                      <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-stone-500">{item.body}</p>
                     ) : null}
                   </FieldZone>
                   <FieldZone {...fz('primary_button_text')} label="Primary CTA">
@@ -614,13 +651,18 @@ function ServicesCanvas({ items, selected, onSelect, onAddNew, isLoading, onFiel
   const isStatic = items.length === 0
   const displayItems = [...(isStatic ? (STATIC_DEFAULTS['dreambuild-services'] ?? []) : items)]
     .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.id - b.id)
-  const ctaText = SERVICES_CTA_DEFAULTS.text
-  const ctaButtonText = SERVICES_CTA_DEFAULTS.buttonText
   const headerItem = displayItems[0]
   const headerPayload = (headerItem?.payload ?? {}) as Record<string, string>
   const sectionEyebrow = headerPayload.section_eyebrow || SERVICES_HEADER_DEFAULTS.eyebrow
   const sectionTitle = headerPayload.section_title || SERVICES_HEADER_DEFAULTS.title
   const sectionDescription = headerPayload.section_description || SERVICES_HEADER_DEFAULTS.description
+  const ctaSourcePayload = (displayItems.find(item => {
+    const payload = (item.payload ?? {}) as Record<string, string>
+    return Boolean(payload.cta_text || payload.cta_button_text || item.button_text)
+  })?.payload ?? {}) as Record<string, string>
+  const ctaButtonSource = displayItems.find(item => item.button_text)?.button_text
+  const ctaText = ctaSourcePayload.cta_text || SERVICES_CTA_DEFAULTS.text
+  const ctaButtonText = ctaSourcePayload.cta_button_text || ctaButtonSource || SERVICES_CTA_DEFAULTS.buttonText
   const sharedServiceLabel =
     displayItems
       .map(item => ((item.payload ?? {}) as Record<string, string>).service_label)
@@ -633,6 +675,8 @@ function ServicesCanvas({ items, selected, onSelect, onAddNew, isLoading, onFiel
         section_eyebrow: sectionEyebrow,
         section_title: sectionTitle,
         section_description: sectionDescription,
+        cta_text: ctaText,
+        cta_button_text: ctaButtonText,
       },
     }
     : null
@@ -811,12 +855,16 @@ function ServicesCanvas({ items, selected, onSelect, onAddNew, isLoading, onFiel
 
       {/* Bottom CTA — mirrors landing page */}
       <div className="mt-16 flex flex-col items-center gap-4 border-t border-stone-200 pt-12 text-center">
-        <p className="text-base font-medium text-stone-900">
-          {ctaText}
-        </p>
-        <span className="inline-flex items-center gap-2 rounded-full bg-stone-900 px-8 py-3.5 text-sm font-medium text-white">
-          {ctaButtonText} -&gt;
-        </span>
+        <FieldZone {...headerField('cta_text', 'CTA text')}>
+          <p className="text-base font-medium text-stone-900">
+            {ctaText}
+          </p>
+        </FieldZone>
+        <FieldZone {...headerField('cta_button_text', 'CTA button text')}>
+          <span className="inline-flex items-center gap-2 rounded-full bg-stone-900 px-8 py-3.5 text-sm font-medium text-white">
+            {ctaButtonText} -&gt;
+          </span>
+        </FieldZone>
       </div>
 
       {!isStatic && <AddNewButton onClick={onAddNew} label="Add service" />}
@@ -988,17 +1036,15 @@ function BlogsCanvasOld({ items, selected, onSelect, onAddNew, isLoading, onFiel
 }
 
 function TestimonialsCanvas({ items, selected, onSelect, onAddNew, isLoading, onFieldFocus, focusedField }: CanvasProps) {
-  const isStatic = items.length === 0
-  const displayItems = isStatic ? (STATIC_DEFAULTS['dreambuild-testimonials'] ?? []) : items
+  const displayItems = items
   return (
     <div className="mx-auto max-w-4xl p-8">
       {isLoading && <ProgressBar />}
-      {isStatic && <StaticBanner />}
       <div className="grid gap-4 md:grid-cols-2">
         {displayItems.map(item => {
           const p = (item.payload ?? {}) as Record<string, string>
           const name = p.client_name || item.title
-          const isThisSelected = !isStatic && selected?.id === item.id
+          const isThisSelected = selected?.id === item.id
           const fz = (fieldKey: string, label: string) => ({
             fieldKey,
             label,
@@ -1006,7 +1052,7 @@ function TestimonialsCanvas({ items, selected, onSelect, onAddNew, isLoading, on
             isActive: isThisSelected && focusedField === fieldKey,
           })
           return (
-            <CanvasItem key={item.id} item={item} selected={selected} onSelect={onSelect} isStatic={isStatic}>
+            <CanvasItem key={item.id} item={item} selected={selected} onSelect={onSelect} isStatic={false}>
               <div className="rounded-3xl bg-white p-6 shadow-sm">
                 <p className="text-3xl leading-none text-stone-200">&quot;</p>
                 <FieldZone {...fz('body', 'Quote')}>
@@ -1036,7 +1082,7 @@ function TestimonialsCanvas({ items, selected, onSelect, onAddNew, isLoading, on
           )
         })}
       </div>
-      <AddNewButton onClick={onAddNew} label={isStatic ? '+ Add CMS testimonial (will replace static)' : 'Add testimonial'} />
+      <AddNewButton onClick={onAddNew} label="Add testimonial" />
     </div>
   )
 }
@@ -1161,7 +1207,7 @@ function ContactCanvas({ items, selected, onSelect, onAddNew, isLoading, onField
                   <p className="mt-2 text-sm text-stone-500">{item.body ?? item.subtitle}</p>
                 ) : null}
               </FieldZone>
-              <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <FieldZone {...fz('email', 'Email')}>
                   {p.email && (
                     <div className="rounded-xl bg-stone-50 px-4 py-3">
@@ -1170,19 +1216,35 @@ function ContactCanvas({ items, selected, onSelect, onAddNew, isLoading, onField
                     </div>
                   )}
                 </FieldZone>
-                <FieldZone {...fz('phone', 'Phone')}>
+                <FieldZone {...fz('phone', 'Phone / Viber')}>
                   {p.phone && (
                     <div className="rounded-xl bg-stone-50 px-4 py-3">
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-stone-400">Phone</p>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-stone-400">Phone / Viber</p>
                       <p className="mt-1 text-sm text-stone-700">{p.phone}</p>
                     </div>
                   )}
                 </FieldZone>
-                <FieldZone {...fz('address', 'Address')}>
+                <FieldZone {...fz('address', 'Location')}>
                   {p.address && (
                     <div className="rounded-xl bg-stone-50 px-4 py-3">
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-stone-400">Address</p>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-stone-400">Location</p>
                       <p className="mt-1 whitespace-pre-line text-sm text-stone-700">{p.address}</p>
+                    </div>
+                  )}
+                </FieldZone>
+                <FieldZone {...fz('response_time', 'Response Time')}>
+                  {p.response_time && (
+                    <div className="rounded-xl bg-stone-50 px-4 py-3">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-stone-400">Response Time</p>
+                      <p className="mt-1 text-sm text-stone-700">{p.response_time}</p>
+                    </div>
+                  )}
+                </FieldZone>
+                <FieldZone {...fz('status_badge', 'Status badge')}>
+                  {p.status_badge && (
+                    <div className="rounded-xl bg-stone-50 px-4 py-3">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-stone-400">Status badge</p>
+                      <p className="mt-1 text-sm text-stone-700">{p.status_badge}</p>
                     </div>
                   )}
                 </FieldZone>
@@ -1563,16 +1625,16 @@ function CarouselImagesField({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {slots.map((url, idx) => (
-        <div key={idx} className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+        <div key={idx} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           {/* Preview */}
           {url ? (
-            <div className="relative h-20 overflow-hidden bg-stone-100">
+            <div className="relative h-32 overflow-hidden bg-stone-100">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={url} alt="" className="h-full w-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
-              <span className="absolute left-2 top-2 rounded bg-black/50 px-1.5 py-0.5 text-[9px] font-bold text-white">
-                {idx + 1}
+              <span className="absolute left-3 top-3 rounded-full bg-black/60 px-2 py-1 text-[10px] font-bold text-white">
+                Image {idx + 1}
               </span>
             </div>
           ) : (
@@ -1581,15 +1643,15 @@ function CarouselImagesField({
             </div>
           )}
           {/* Controls row */}
-          <div className="flex items-center gap-1.5 p-2">
+          <div className="flex flex-wrap items-center gap-2 p-3">
             <input
               value={url}
               onChange={e => updateUrl(idx, e.target.value)}
               placeholder="https://..."
-              className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-cyan-300 focus:ring-1 focus:ring-cyan-100"
+              className="min-w-[220px] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-cyan-300 focus:ring-1 focus:ring-cyan-100"
             />
             {/* Upload */}
-            <label className={`flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-xl border transition ${
+            <label className={`inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition ${
               uploadingIdx === idx
                 ? 'cursor-wait border-cyan-200 bg-cyan-50 text-cyan-400'
                 : 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-white'
@@ -1603,6 +1665,7 @@ function CarouselImagesField({
                   <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
                 </svg>
               )}
+              <span>{uploadingIdx === idx ? 'Uploading...' : url ? 'Replace' : 'Upload'}</span>
               <input
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/gif"
@@ -1619,13 +1682,14 @@ function CarouselImagesField({
             <button
               type="button"
               onClick={() => removeUrl(idx)}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-red-100 bg-red-50 text-red-400 transition hover:bg-red-100"
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs font-semibold text-red-500 transition hover:bg-red-100"
               title="Remove image"
             >
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
+              <span>Remove</span>
             </button>
           </div>
         </div>
@@ -1712,7 +1776,7 @@ function RepeatableTextListField({
       <button
         type="button"
         onClick={() => commit([...slots, ''])}
-        className="flex w-full items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-slate-300 py-2.5 text-xs font-semibold text-slate-400 transition hover:border-slate-400 hover:text-slate-600"
+        className="flex w-full items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-slate-300 py-3 text-xs font-semibold text-slate-400 transition hover:border-slate-400 hover:text-slate-600"
       >
         <span className="text-base leading-none">+</span>
         {addLabel}
@@ -1857,6 +1921,22 @@ function EditPanel({
   const isServices = section.id === 'dreambuild-services'
   const isGallery = section.id === 'dreambuild-gallery'
   const scrollAreaRef = useRef<HTMLDivElement | null>(null)
+  const heroCtaFields = ['primary_button_text', 'secondary_button_text']
+  const isHeroStatsFocus = section.id === 'dreambuild-hero' && Boolean(focusedField?.startsWith('stat_'))
+  const isHeroCtaFocus = section.id === 'dreambuild-hero' && Boolean(focusedField && heroCtaFields.includes(focusedField))
+  const shouldShowField = (fieldKey: string) => {
+    if (!focusedField) return true
+
+    if (isHeroStatsFocus) return fieldKey.startsWith('stat_')
+    if (isHeroCtaFocus) return heroCtaFields.includes(fieldKey)
+
+    return fieldKey === focusedField
+  }
+  const focusedFieldLabel = isHeroStatsFocus
+    ? 'stats'
+    : isHeroCtaFocus
+      ? 'buttons'
+      : focusedField?.replace(/_/g, ' ')
 
   useEffect(() => {
     if (!focusedField || !scrollAreaRef.current) return
@@ -2122,6 +2202,12 @@ function EditPanel({
             <Field label="Intro text" fieldKey="section_description" focusedField={focusedField}>
               <textarea data-field="section_description" value={form.payload.section_description ?? ''} onChange={e => updatePayloadField('section_description', e.target.value)} rows={3} placeholder="Short copy shown beside the heading" className={inputClass} />
             </Field>
+            <Field label="CTA text" fieldKey="cta_text" focusedField={focusedField}>
+              <input data-field="cta_text" value={form.payload.cta_text ?? ''} onChange={e => updatePayloadField('cta_text', e.target.value)} placeholder="Not sure which service fits your project?" className={inputClass} />
+            </Field>
+            <Field label="CTA button text" fieldKey="cta_button_text" focusedField={focusedField}>
+              <input data-field="cta_button_text" value={form.payload.cta_button_text ?? ''} onChange={e => updatePayloadField('cta_button_text', e.target.value)} placeholder="Book a Free Consult" className={inputClass} />
+            </Field>
           </div>
         </div>
       )}
@@ -2225,7 +2311,7 @@ function EditPanel({
           <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-cyan-50 px-2.5 py-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
             <p className="text-[10px] font-semibold text-cyan-600">
-              Editing: <span className="font-bold">{focusedField.replace(/_/g, ' ')}</span>
+              Editing: <span className="font-bold">{focusedFieldLabel}</span>
             </p>
           </div>
         )}
@@ -2235,24 +2321,24 @@ function EditPanel({
         {isGallery && renderGalleryFields()}
         {isServices && renderServicesFields()}
 
-        {!isServices && !isGallery && (
+        {!isServices && !isGallery && section.id !== 'dreambuild-testimonials' && shouldShowField('title') && (
           <Field label={section.id === 'dreambuild-projects' ? 'Project title' : 'Title'} fieldKey="title" focusedField={focusedField}>
             <input data-field="title" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="Main title" className={inputClass} />
           </Field>
         )}
-        {section.id !== 'dreambuild-services' && !isGallery && section.id !== 'dreambuild-projects' && (
+        {section.id !== 'dreambuild-services' && section.id !== 'dreambuild-hero' && !isGallery && section.id !== 'dreambuild-projects' && section.id !== 'dreambuild-testimonials' && shouldShowField('subtitle') && (
           <Field label="Subtitle" fieldKey="subtitle" focusedField={focusedField}>
             <input data-field="subtitle" value={form.subtitle} onChange={e => setForm(p => ({ ...p, subtitle: e.target.value }))} placeholder="Short support text" className={inputClass} />
           </Field>
         )}
-        {!isGallery && !isServices && (
+        {!isGallery && !isServices && shouldShowField('body') && (
           <Field label={section.id === 'dreambuild-projects' ? 'Detail-page story' : 'Body / description'} fieldKey="body" focusedField={focusedField}>
             <textarea data-field="body" value={form.body} onChange={e => setForm(p => ({ ...p, body: e.target.value }))} rows={section.id === 'dreambuild-projects' ? 6 : 3} placeholder={section.id === 'dreambuild-projects' ? 'The brief, design direction, supply/install notes, and final result.' : 'Longer copy, quote, or description'} className={inputClass} />
           </Field>
         )}
 
         {/* Image field with upload */}
-        {!isServices && !isGallery && (
+        {!isServices && !isGallery && shouldShowField('image_url') && (
         <Field label={section.id === 'dreambuild-projects' ? 'Project image' : 'Image'} fieldKey="image_url" focusedField={focusedField}>
           <input
             data-field="image_url"
@@ -2291,24 +2377,28 @@ function EditPanel({
         </Field>
         )}
 
-        {section.id !== 'dreambuild-services' && !isGallery && section.id !== 'dreambuild-projects' && (
+        {section.id !== 'dreambuild-services' && !isGallery && section.id !== 'dreambuild-projects' && section.id !== 'dreambuild-testimonials' && (shouldShowField('link_url') || shouldShowField('button_text')) && (
           <>
-            <Field label="Link URL" fieldKey="link_url" focusedField={focusedField}>
-              <input data-field="link_url" value={form.link_url} onChange={e => setForm(p => ({ ...p, link_url: e.target.value }))} placeholder="/projects or https://..." className={inputClass} />
-            </Field>
-            <Field label="Button text" fieldKey="button_text" focusedField={focusedField}>
-              <input data-field="button_text" value={form.button_text} onChange={e => setForm(p => ({ ...p, button_text: e.target.value }))} placeholder="e.g. View Project" className={inputClass} />
-            </Field>
+            {shouldShowField('link_url') && (
+              <Field label="Link URL" fieldKey="link_url" focusedField={focusedField}>
+                <input data-field="link_url" value={form.link_url} onChange={e => setForm(p => ({ ...p, link_url: e.target.value }))} placeholder="/projects or https://..." className={inputClass} />
+              </Field>
+            )}
+            {shouldShowField('button_text') && (
+              <Field label="Button text" fieldKey="button_text" focusedField={focusedField}>
+                <input data-field="button_text" value={form.button_text} onChange={e => setForm(p => ({ ...p, button_text: e.target.value }))} placeholder="e.g. View Project" className={inputClass} />
+              </Field>
+            )}
           </>
         )}
 
-        {!isServices && !isGallery && section.fields.length > 0 && (
+        {!isServices && !isGallery && section.fields.filter(field => shouldShowField(field.key)).length > 0 && (
           <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4 dark:border-cyan-900/30">
             <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-cyan-700 dark:text-cyan-400">
               {section.label} fields
             </p>
             <div className="space-y-3">
-              {section.fields.map(field => (
+              {section.fields.filter(field => shouldShowField(field.key)).map(field => (
                 <Field key={field.key} label={field.label} fieldKey={field.key} focusedField={focusedField}>
                   {field.kind === 'image-list' ? (
                     <div data-field={field.key}>
@@ -2386,7 +2476,7 @@ function BlogEditPanel({
   isUploadingImage?: boolean
 }) {
   const scrollAreaRef = useRef<HTMLDivElement | null>(null)
-  const slugValue = form.payload.slug || slugify(form.title)
+  const slugValue = slugify(form.title)
   const takeaways = (form.payload.takeaways ?? '').split('\n').map(v => v.trim()).filter(Boolean)
   const articleSections = (form.payload.sections ?? '').split('\n').map(v => v.trim()).filter(Boolean)
   const faqs = (form.payload.faq ?? '').split('\n').map(v => v.trim()).filter(Boolean)
@@ -2477,17 +2567,20 @@ function BlogEditPanel({
                 </span>
               </div>
             </Field>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3">
               <Field label="Category" fieldKey="category" focusedField={focusedField}>
                 <input data-field="category" value={form.payload.category ?? ''} onChange={e => updatePayload('category', e.target.value)} placeholder="Styling Guide" className={baseInput} />
-              </Field>
-              <Field label="URL slug" fieldKey="slug" focusedField={focusedField}>
-                <input data-field="slug" value={form.payload.slug ?? ''} onChange={e => updatePayload('slug', e.target.value)} placeholder={slugify(form.title) || 'article-slug'} className={baseInput} />
               </Field>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Date label" fieldKey="date" focusedField={focusedField}>
-                <input data-field="date" value={form.payload.date ?? ''} onChange={e => updatePayload('date', e.target.value)} placeholder="March 15, 2024" className={baseInput} />
+                <input
+                  data-field="date"
+                  type="date"
+                  value={dateLabelToInputValue(form.payload.date ?? '')}
+                  onChange={e => updatePayload('date', inputValueToDateLabel(e.target.value))}
+                  className={baseInput}
+                />
               </Field>
               <Field label="Read time" fieldKey="read_time" focusedField={focusedField}>
                 <input data-field="read_time" value={form.payload.read_time ?? ''} onChange={e => updatePayload('read_time', e.target.value)} placeholder="5 min read" className={baseInput} />
@@ -2495,14 +2588,25 @@ function BlogEditPanel({
             </div>
             <Field label="Featured image" fieldKey="image_url" focusedField={focusedField}>
               <input data-field="image_url" value={form.image_url} onChange={e => setForm(p => ({ ...p, image_url: e.target.value }))} placeholder="Paste URL or upload below" className={baseInput} />
-              <label className={`mt-1.5 inline-flex cursor-pointer items-center gap-2 rounded-2xl border px-3.5 py-2 text-xs font-semibold transition ${isUploadingImage ? 'cursor-wait border-emerald-200 bg-emerald-50 text-emerald-500' : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-white'}`}>
-                <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" disabled={isUploadingImage} onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (file) void onUploadImage?.(file)
-                  e.currentTarget.value = ''
-                }} />
-                {isUploadingImage ? 'Uploading...' : 'Upload featured image'}
-              </label>
+              <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                <label className={`inline-flex cursor-pointer items-center gap-2 rounded-2xl border px-3.5 py-2 text-xs font-semibold transition ${isUploadingImage ? 'cursor-wait border-emerald-200 bg-emerald-50 text-emerald-500' : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-white'}`}>
+                  <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" disabled={isUploadingImage} onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) void onUploadImage?.(file)
+                    e.currentTarget.value = ''
+                  }} />
+                  {isUploadingImage ? 'Uploading...' : 'Upload featured image'}
+                </label>
+                {form.image_url ? (
+                  <button
+                    type="button"
+                    onClick={() => setForm(p => ({ ...p, image_url: '' }))}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-3.5 py-2 text-xs font-semibold text-rose-600 transition hover:bg-white"
+                  >
+                    Remove photo
+                  </button>
+                ) : null}
+              </div>
             </Field>
           </div>
         </div>
@@ -2769,7 +2873,18 @@ export default function DreamBuildContentManager() {
 
   // Real-time canvas: merge draft state into items for live preview
   const displayItems = useMemo(() => {
-    const saved = data?.items ?? []
+    const saved = (data?.items ?? []).filter(item => {
+      if (selectedSection.id === 'dreambuild-blogs') {
+        return !isLegacyDreamBuildBlogPlaceholder(item)
+      }
+      if (selectedSection.id === 'dreambuild-testimonials') {
+        return !isLegacyDreamBuildTestimonialPlaceholder(item)
+      }
+      if (selectedSection.id === 'dreambuild-hero') {
+        return !isLegacyDreamBuildHeroPlaceholder(item)
+      }
+      return true
+    })
     const merged = saved.map(item => {
       const draft = draftForms[draftKeyFor(selectedSection.id, item.id)]
       return draft ? mergeItem(item, draft) : item
@@ -2781,6 +2896,9 @@ export default function DreamBuildContentManager() {
         : merged
 
     if (!editTarget || saved.some(item => item.id === editTarget.id)) return visibleSaved
+    if (selectedSection.id === 'dreambuild-blogs' && isLegacyDreamBuildBlogPlaceholder(editTarget)) return visibleSaved
+    if (selectedSection.id === 'dreambuild-testimonials' && isLegacyDreamBuildTestimonialPlaceholder(editTarget)) return visibleSaved
+    if (selectedSection.id === 'dreambuild-hero' && isLegacyDreamBuildHeroPlaceholder(editTarget)) return visibleSaved
 
     const draft = draftForms[draftKeyFor(selectedSection.id, editTarget.id)] ?? form
     if (selectedSection.id === 'dreambuild-projects' && (!draft.title.trim() || !draft.image_url.trim())) {
@@ -2920,13 +3038,7 @@ export default function DreamBuildContentManager() {
     setForm(selectedSection.id === 'dreambuild-blogs'
       ? {
         ...emptyForm,
-        payload: {
-          category: 'Styling Guide',
-          read_time: '5 min read',
-          takeaways: 'Start with a clear room purpose\nRepeat materials for cohesion\nUse lighting to shape mood',
-          sections: 'Start With The Foundation|Define the main material, layout, and furniture direction before adding decorative layers.\nLayer Texture And Light|Use tactile surfaces and multiple light sources to make the room feel finished.\nEdit The Final Composition|Remove pieces that do not support the room purpose and let the strongest details breathe.',
-          faq: 'Can this article be customized from admin?|Yes. The title, excerpt, image, design brief, takeaways, sections, gallery, and FAQ fields all map to the DreamBuild blog page.',
-        },
+        payload: {},
       }
       : selectedSection.id === 'dreambuild-process'
         ? {
@@ -2940,6 +3052,11 @@ export default function DreamBuildContentManager() {
         ? {
           ...emptyForm,
           sort_order: String(displayItems.length),
+          payload: {
+            service_label: 'Solution',
+            service_number: nextStepNumber,
+            bullets: '',
+          },
         }
       : emptyForm)
     setPanelOpen(true)
@@ -2973,12 +3090,12 @@ export default function DreamBuildContentManager() {
       if (editTarget && editTarget.id > 0) {
         const response = await updateItem({ type: selectedSection.id, id: editTarget.id, data: toPayload(form, selectedSection) }).unwrap()
         keepSavedItemOpen(response.item)
-        void revalidateDreamBuild()
+        await revalidateDreamBuild()
         showSuccessToast(`${selectedSection.itemLabel} updated.`)
       } else {
         const response = await createItem({ type: selectedSection.id, data: toPayload(form, selectedSection) }).unwrap()
         keepSavedItemOpen(response.item)
-        void revalidateDreamBuild()
+        await revalidateDreamBuild()
         showSuccessToast(`${selectedSection.itemLabel} created.`)
       }
     } catch (err: unknown) {
@@ -3001,7 +3118,7 @@ export default function DreamBuildContentManager() {
     if (!deleteTarget || deleteTarget.id < 0) return
     try {
       await deleteItem({ type: selectedSection.id, id: deleteTarget.id }).unwrap()
-      void revalidateDreamBuild()
+      await revalidateDreamBuild()
       showSuccessToast(`${selectedSection.itemLabel} deleted.`)
       if (editTarget?.id === deleteTarget.id) {
         resetForm()

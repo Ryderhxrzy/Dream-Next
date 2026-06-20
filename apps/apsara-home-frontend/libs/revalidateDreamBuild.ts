@@ -1,11 +1,11 @@
-import { revalidateTag } from "next/cache"
-
 export async function revalidateDreamBuild() {
   try {
-    await fetch("/api/revalidate/dreambuild", {
+    const response = await fetch("/api/revalidate/dreambuild", {
       method: "POST",
     })
+
+    return response.ok
   } catch {
-    // Best-effort cache refresh only.
+    return false
   }
 }

@@ -56,9 +56,18 @@ export function TestimonialsSection({
                 {/* Avatar */}
                 <div className="flex items-center gap-4">
                   <div className="relative h-16 w-16 overflow-hidden rounded-full bg-gradient-to-br from-[#d4c8b8] to-[#b8a898]">
-                    <span className="absolute inset-0 flex items-center justify-center text-lg font-medium text-white">
-                      {active.name.charAt(0)}
-                    </span>
+                    {"image" in active && active.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={active.image}
+                        alt={active.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span className="absolute inset-0 flex items-center justify-center text-lg font-medium text-white">
+                        {active.name.charAt(0)}
+                      </span>
+                    )}
                   </div>
                   <div>
                     <p className="font-medium text-[var(--foreground)]">

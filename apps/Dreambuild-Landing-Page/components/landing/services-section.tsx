@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { services as defaultServices } from "@/lib/landing-data";
-import type { ServicesCtaContent, ServicesHeaderContent } from "@/lib/dreambuild-cms";
+import type { ServiceContent as DreamBuildServiceContent, ServicesCtaContent, ServicesHeaderContent } from "@/lib/dreambuild-cms";
 import { FadeUp, SlideInLeft, SlideInRight, StaggerContainer, StaggerItem } from "@/components/ui/motion";
 import { motion } from "framer-motion";
 
@@ -30,7 +30,7 @@ export function ServicesSection({
   header = defaultHeader,
   cta = defaultCta,
 }: {
-  services?: typeof defaultServices;
+  services?: DreamBuildServiceContent[];
   header?: ServicesHeaderContent;
   cta?: ServicesCtaContent;
 }) {
@@ -80,13 +80,13 @@ export function ServicesSection({
                         <ServiceContent service={service} />
                       </SlideInLeft>
                       <SlideInRight delay={0.15} className="lg:order-2">
-                        <ServiceImage src={serviceImages[index] ?? serviceImages[index % serviceImages.length]} alt={service.title} id={service.id} />
+                        <ServiceImage src={service.image || serviceImages[index] || serviceImages[index % serviceImages.length]} alt={service.title} id={service.id} />
                       </SlideInRight>
                     </>
                   ) : (
                     <>
                       <SlideInLeft className="lg:order-1">
-                        <ServiceImage src={serviceImages[index] ?? serviceImages[index % serviceImages.length]} alt={service.title} id={service.id} />
+                        <ServiceImage src={service.image || serviceImages[index] || serviceImages[index % serviceImages.length]} alt={service.title} id={service.id} />
                       </SlideInLeft>
                       <SlideInRight delay={0.15} className="flex flex-col justify-center lg:order-2">
                         <ServiceContent service={service} />
@@ -142,7 +142,7 @@ function ServiceImage({ src, alt, id }: { src: string; alt: string; id: string }
   );
 }
 
-function ServiceContent({ service }: { service: typeof defaultServices[number] }) {
+function ServiceContent({ service }: { service: DreamBuildServiceContent }) {
   return (
     <div>
       <p className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">

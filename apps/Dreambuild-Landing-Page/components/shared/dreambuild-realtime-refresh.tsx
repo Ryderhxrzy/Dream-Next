@@ -14,6 +14,7 @@ type DreamBuildContentEvent = {
 export function DreamBuildRealtimeRefresh() {
   const router = useRouter()
   const refreshTimerRef = useRef<number | null>(null)
+  const followUpTimerRef = useRef<number | null>(null)
 
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_PUSHER_KEY
@@ -31,10 +32,16 @@ export function DreamBuildRealtimeRefresh() {
       if (refreshTimerRef.current) {
         window.clearTimeout(refreshTimerRef.current)
       }
+      if (followUpTimerRef.current) {
+        window.clearTimeout(followUpTimerRef.current)
+      }
 
       refreshTimerRef.current = window.setTimeout(() => {
         router.refresh()
       }, 250)
+      followUpTimerRef.current = window.setTimeout(() => {
+        router.refresh()
+      }, 1500)
     }
 
     channel.bind("content.updated", refresh)
@@ -42,6 +49,9 @@ export function DreamBuildRealtimeRefresh() {
     return () => {
       if (refreshTimerRef.current) {
         window.clearTimeout(refreshTimerRef.current)
+      }
+      if (followUpTimerRef.current) {
+        window.clearTimeout(followUpTimerRef.current)
       }
       channel.unbind("content.updated", refresh)
       pusher.unsubscribe("dreambuild-content")

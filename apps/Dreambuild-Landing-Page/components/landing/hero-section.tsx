@@ -8,39 +8,16 @@ import Link from "next/link"
 import type { HeroContent } from "@/lib/dreambuild-cms"
 import { FadeUp, StaggerContainer, StaggerItem } from "@/components/ui/motion"
 
-const defaultCarouselSlides = [
-  {
-    src: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800&q=80",
-    alt: "Modern living room with warm neutrals",
-    label: "Living Room",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1631679706909-1844bbd07221?w=800&q=80",
-    alt: "Minimalist bedroom interior",
-    label: "Bedroom",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80",
-    alt: "Clean kitchen design",
-    label: "Kitchen",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=800&q=80",
-    alt: "Elegant dining area",
-    label: "Dining",
-  },
-]
-
 export function HeroSection({ content }: { content: HeroContent }) {
-  const carouselSlides = content.carouselSlides.length
-    ? content.carouselSlides
-    : defaultCarouselSlides
+  const carouselSlides = content.carouselSlides
   const [currentSlide, setCurrentSlide] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const safeCurrentSlide = carouselSlides[currentSlide] ? currentSlide : 0
 
   const startTimer = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current)
+    if (carouselSlides.length <= 1) return
     timerRef.current = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % carouselSlides.length)
     }, 4000)
@@ -54,16 +31,18 @@ export function HeroSection({ content }: { content: HeroContent }) {
   }, [startTimer])
 
   const goTo = (index: number) => {
+    if (!carouselSlides.length) return
     setCurrentSlide(index)
     startTimer()
   }
 
   const handleDragEnd = (_: unknown, info: { offset: { x: number } }) => {
     setIsDragging(false)
+    if (carouselSlides.length <= 1) return
     if (info.offset.x < -50) {
-      goTo((currentSlide + 1) % carouselSlides.length)
+      goTo((safeCurrentSlide + 1) % carouselSlides.length)
     } else if (info.offset.x > 50) {
-      goTo((currentSlide - 1 + carouselSlides.length) % carouselSlides.length)
+      goTo((safeCurrentSlide - 1 + carouselSlides.length) % carouselSlides.length)
     }
   }
 
@@ -94,37 +73,43 @@ export function HeroSection({ content }: { content: HeroContent }) {
 
             <FadeUp delay={0.5}>
               <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
-                <Link
-                  href={content.primaryButtonUrl}
-                  className="inline-flex items-center justify-center rounded-full bg-[var(--dark)] px-6 py-3.5 text-sm font-medium text-white transition-all hover:scale-105 hover:bg-[var(--dark-muted)]"
-                >
-                  {content.primaryButtonText}
-                </Link>
-                <Link
-                  href={content.secondaryButtonUrl}
-                  className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-white px-6 py-3.5 text-sm font-medium text-[var(--foreground)] transition-all hover:scale-105 hover:border-[var(--foreground)]"
-                >
-                  {content.secondaryButtonText}
-                </Link>
+                {content.primaryButtonText && (
+                  <Link
+                    href={content.primaryButtonUrl}
+                    className="inline-flex items-center justify-center rounded-full bg-[var(--dark)] px-6 py-3.5 text-sm font-medium text-white transition-all hover:scale-105 hover:bg-[var(--dark-muted)]"
+                  >
+                    {content.primaryButtonText}
+                  </Link>
+                )}
+                {content.secondaryButtonText && (
+                  <Link
+                    href={content.secondaryButtonUrl}
+                    className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-white px-6 py-3.5 text-sm font-medium text-[var(--foreground)] transition-all hover:scale-105 hover:border-[var(--foreground)]"
+                  >
+                    {content.secondaryButtonText}
+                  </Link>
+                )}
               </div>
             </FadeUp>
 
             {/* Stats */}
-            <StaggerContainer
-              className="mt-16 grid grid-cols-3 gap-8"
-              staggerDelay={0.15}
-            >
-              {content.stats.map((item) => (
-                <StaggerItem key={item.label}>
-                  <p className="text-3xl font-medium tracking-tight text-[var(--foreground)] lg:text-4xl">
-                    {item.value}
-                  </p>
-                  <p className="mt-2 text-sm text-[var(--muted)]">
-                    {item.label}
-                  </p>
-                </StaggerItem>
-              ))}
-            </StaggerContainer>
+            {content.stats.length > 0 && (
+              <StaggerContainer
+                className="mt-16 grid grid-cols-3 gap-8"
+                staggerDelay={0.15}
+              >
+                {content.stats.map((item) => (
+                  <StaggerItem key={`${item.value}-${item.label}`}>
+                    <p className="text-3xl font-medium tracking-tight text-[var(--foreground)] lg:text-4xl">
+                      {item.value}
+                    </p>
+                    <p className="mt-2 text-sm text-[var(--muted)]">
+                      {item.label}
+                    </p>
+                  </StaggerItem>
+                ))}
+              </StaggerContainer>
+            )}
           </div>
 
           {/* Right Column - Carousel */}
@@ -148,77 +133,87 @@ export function HeroSection({ content }: { content: HeroContent }) {
                 isDragging ? "cursor-grabbing" : "cursor-grab"
               }`}
             >
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentSlide}
-                  initial={{ opacity: 0, scale: 1.05 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                  transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
-                  className="pointer-events-none absolute inset-0"
-                >
-                  <Image
-                    src={carouselSlides[currentSlide].src}
-                    alt={carouselSlides[currentSlide].alt}
-                    fill
-                    className="object-cover"
-                    priority={currentSlide === 0}
-                    draggable={false}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-                </motion.div>
-              </AnimatePresence>
+              {carouselSlides.length > 0 ? (
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={safeCurrentSlide}
+                    initial={{ opacity: 0, scale: 1.05 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.98 }}
+                    transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
+                    className="pointer-events-none absolute inset-0"
+                  >
+                    <Image
+                      src={carouselSlides[safeCurrentSlide].src}
+                      alt={carouselSlides[safeCurrentSlide].alt}
+                      fill
+                      className="object-cover"
+                      priority={safeCurrentSlide === 0}
+                      draggable={false}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                  </motion.div>
+                </AnimatePresence>
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center bg-neutral-100 text-sm text-[var(--muted)]">
+                  Add hero carousel images in the admin
+                </div>
+              )}
 
               {/* Slide label + dots */}
-              <div className="pointer-events-none absolute right-6 bottom-6 left-6 flex items-end justify-between">
-                <AnimatePresence mode="wait">
-                  <motion.p
-                    key={`label-${currentSlide}`}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.4 }}
-                    className="text-xs font-medium tracking-widest text-white/80 uppercase"
-                  >
-                    {carouselSlides[currentSlide].label}
-                  </motion.p>
-                </AnimatePresence>
-
-                <div className="pointer-events-auto flex items-center gap-2">
-                  {carouselSlides.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => goTo(index)}
-                      aria-label={`Go to slide ${index + 1}`}
+              {carouselSlides.length > 0 && (
+                <div className="pointer-events-none absolute right-6 bottom-6 left-6 flex items-end justify-between">
+                  <AnimatePresence mode="wait">
+                    <motion.p
+                      key={`label-${safeCurrentSlide}`}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.4 }}
+                      className="text-xs font-medium tracking-widest text-white/80 uppercase"
                     >
-                      <motion.span
-                        animate={{
-                          width: index === currentSlide ? 20 : 6,
-                          opacity: index === currentSlide ? 1 : 0.5,
-                        }}
-                        transition={{ duration: 0.3 }}
-                        className="block h-1.5 rounded-full bg-white"
-                      />
-                    </button>
-                  ))}
+                      {carouselSlides[safeCurrentSlide].label}
+                    </motion.p>
+                  </AnimatePresence>
+
+                  <div className="pointer-events-auto flex items-center gap-2">
+                    {carouselSlides.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => goTo(index)}
+                        aria-label={`Go to slide ${index + 1}`}
+                      >
+                        <motion.span
+                          animate={{
+                            width: index === safeCurrentSlide ? 20 : 6,
+                            opacity: index === safeCurrentSlide ? 1 : 0.5,
+                          }}
+                          transition={{ duration: 0.3 }}
+                          className="block h-1.5 rounded-full bg-white"
+                        />
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </motion.div>
 
             {/* Floating card */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 1 }}
-              className="absolute top-10 -left-6 rounded-2xl border border-[var(--border)] bg-white p-5 shadow-xl"
-            >
-              <p className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
-                Signature Style
-              </p>
-              <p className="mt-2 text-sm font-medium text-[var(--foreground)]">
-                {content.signatureLabel}
-              </p>
-            </motion.div>
+            {content.signatureLabel && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 1 }}
+                className="absolute top-10 -left-6 rounded-2xl border border-[var(--border)] bg-white p-5 shadow-xl"
+              >
+                <p className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
+                  Signature Style
+                </p>
+                <p className="mt-2 text-sm font-medium text-[var(--foreground)]">
+                  {content.signatureLabel}
+                </p>
+              </motion.div>
+            )}
           </motion.div>
         </div>
       </div>

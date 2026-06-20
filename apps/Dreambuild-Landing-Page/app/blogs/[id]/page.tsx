@@ -11,6 +11,7 @@ import {
   StaggerItem,
 } from "@/components/ui/motion"
 import { Header } from "@/components/shared/header"
+import { BlogFaqAccordion } from "@/components/landing/blog-faq-accordion"
 
 type BlogPostPageProps = {
   params: Promise<{ id: string }>
@@ -264,21 +265,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                 <p className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
                   FAQ
                 </p>
-                <div className="mt-5 divide-y divide-[#e4d8ca] rounded-[1.5rem] border border-[#e4d8ca] bg-white">
-                  {faqs.map((item) => (
-                    <details
-                      key={item.question}
-                      className="group p-5 open:bg-[#fbf8f3]"
-                    >
-                      <summary className="cursor-pointer list-none text-base font-medium text-[var(--foreground)]">
-                        {item.question}
-                      </summary>
-                      <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
-                        {item.answer}
-                      </p>
-                    </details>
-                  ))}
-                </div>
+                <BlogFaqAccordion items={faqs} />
               </section>
             </FadeUp>
           </div>
