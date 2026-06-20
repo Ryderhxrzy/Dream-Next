@@ -3671,6 +3671,7 @@ export default function ProductsPageMain({
         isSupplierPortal={isSupplierPortal}
         isServicesView={isServicesView}
         supplierBrandType={isSupplierPortal ? (brandType ?? 0) : undefined}
+        supplierCompanyName={isSupplierPortal ? (supplierRecord?.company || supplierRecord?.name || supplierName || undefined) : undefined}
       />
       <ProductActivityLogsModal
         isOpen={showActivityLogs}

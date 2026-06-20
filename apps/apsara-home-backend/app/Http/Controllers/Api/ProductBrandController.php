@@ -38,8 +38,8 @@ class ProductBrandController extends Controller
             ->when($activeOnly, function ($query) {
                 $query->where('pb_status', 0);
             })
-            ->when($search !== '', function ($query) use ($search) {
-                $query->where('pb_name', 'ilike', '%' . $search . '%');
+            ->when($search !== '', function ($q) use ($search) {
+                $q->where('pb_name', 'ilike', '%' . $search . '%');
             })
             ->orderBy('pb_name')
             ->get()

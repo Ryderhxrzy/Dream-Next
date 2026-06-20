@@ -8,6 +8,7 @@ import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import { useGetAdminMeQuery } from "@/store/api/authApi"
 import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
 import { useGetProductBrandsQuery } from "@/store/api/productBrandsApi"
+import { useGetSuppliersQuery } from "@/store/api/suppliersApi"
 import {
   CreateProductPayload,
   normalizeProduct,
@@ -39,6 +40,7 @@ interface AddProductModalProps {
   isSupplierPortal?: boolean
   isServicesView?: boolean
   supplierBrandType?: number
+  supplierCompanyName?: string
 }
 
 interface FormState {
@@ -1300,6 +1302,7 @@ export default function AddProductModal({
   isSupplierPortal = false,
   isServicesView = false,
   supplierBrandType,
+  supplierCompanyName,
 }: AddProductModalProps) {
   const draftKey = isSupplierPortal
     ? "afhome:add-product-draft:supplier"
@@ -1332,6 +1335,7 @@ export default function AddProductModal({
   )
   const [roomTouched, setRoomTouched] = useState(false)
   const [brandText, setBrandText] = useState("")
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>("")
   const [serviceTypes, setServiceTypes] = useState<string[]>([])
   const [serviceTypeInput, setServiceTypeInput] = useState("")
   const [draftRestored, setDraftRestored] = useState(false)
@@ -1390,6 +1394,19 @@ export default function AddProductModal({
   const brands = useMemo(
     () => (brandsData?.brands ?? []).filter((brand) => brand.status === 0),
     [brandsData?.brands]
+  )
+  const { data: suppliersData } = useGetSuppliersQuery(undefined, { skip: isSupplierPortal })
+  const companies = useMemo(
+    () => suppliersData?.suppliers ?? [],
+    [suppliersData?.suppliers]
+  )
+  const { data: companyBrandsData } = useGetProductBrandsQuery(
+    selectedCompanyId ? { supplier_id: Number(selectedCompanyId) } : undefined,
+    { skip: !selectedCompanyId || isSupplierPortal }
+  )
+  const filteredBrands = useMemo(
+    () => (companyBrandsData?.brands ?? []).filter((b) => b.status === 0),
+    [companyBrandsData?.brands]
   )
   const generatedParentSku = useMemo(
     () => generateSkuFromName(form.pd_name),
@@ -1515,6 +1532,7 @@ export default function AddProductModal({
     setNewColorInputs({})
     setNewStyleInputs({})
     setRoomTouched(false)
+    setSelectedCompanyId("")
     setDraftRestored(false)
     setActiveImageAdjustIndex(null)
     setServiceTypes([])
@@ -3418,89 +3436,56 @@ export default function AddProductModal({
                                 </div>
                               </Field>
 
-                              <Field label="Brand" error={errors.pd_brand_type}>
-                                <ModalSelectField
-                                  ariaLabel="Select brand"
-                                  value={form.pd_brand_type}
-                                  searchable
-                                  searchPlaceholder="Search brands..."
-                                  isDisabled={isSupplierPortal}
-                                  onChange={(value) => {
-                                    if (isSupplierPortal) return
-                                    set(
-                                      "pd_brand_type",
-                                      value === EMPTY_SELECT_KEYS.brand
-                                        ? ""
-                                        : value
-                                    )
-                                    setErrors((prev) => ({
-                                      ...prev,
-                                      pd_brand_type: undefined,
-                                    }))
-                                  }}
-                                  options={[
-                                    {
-                                      value: EMPTY_SELECT_KEYS.brand,
-                                      label: "Not assigned",
-                                    },
-                                    ...brands.map((brand) => ({
-                                      value: String(brand.id),
-                                      label: brand.name,
-                                    })),
-                                  ]}
-                                />
-                                <div className="mt-2">
-                                  <input
-                                    type="text"
-                                    list={isSupplierPortal ? undefined : "brand-options-add"}
-                                    value={brandText}
-                                    disabled={isSupplierPortal}
-                                    onChange={(event) => {
-                                      if (isSupplierPortal) return
-                                      const next = event.target.value
-                                      setBrandText(next)
-                                      const matchId = resolveBrandIdByName(next)
-                                      if (matchId) {
-                                        set("pd_brand_type", matchId)
-                                        setErrors((prev) => ({
-                                          ...prev,
-                                          pd_brand_type: undefined,
-                                        }))
-                                      } else if (!next.trim()) {
+                              <Field label="Company" error={errors.pd_brand_type}>
+                                {isSupplierPortal ? (
+                                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
+                                    {supplierCompanyName || "—"}
+                                  </div>
+                                ) : (
+                                  <div className="space-y-2">
+                                    <ModalSelectField
+                                      ariaLabel="Select company"
+                                      value={selectedCompanyId}
+                                      searchable
+                                      searchPlaceholder="Search companies..."
+                                      onChange={(value) => {
+                                        const next = value === EMPTY_SELECT_KEYS.brand ? "" : value
+                                        setSelectedCompanyId(next)
                                         set("pd_brand_type", "")
-                                        setErrors((prev) => ({
-                                          ...prev,
-                                          pd_brand_type: undefined,
-                                        }))
-                                      }
-                                    }}
-                                    onBlur={() => {
-                                      if (isSupplierPortal || !brandText.trim()) return
-                                      const matchId =
-                                        resolveBrandIdByName(brandText)
-                                      if (!matchId) {
-                                        setErrors((prev) => ({
-                                          ...prev,
-                                          pd_brand_type:
-                                            "Brand not found. Add it in Brands first.",
-                                        }))
-                                      }
-                                    }}
-                                    placeholder="Type brand name"
-                                    className={`${inputCls(!!errors.pd_brand_type)} ${isSupplierPortal ? "cursor-not-allowed bg-slate-50 text-slate-600" : ""}`}
-                                  />
-                                  <datalist id="brand-options-add">
-                                    {brands.map((brand) => (
-                                      <option
-                                        key={brand.id}
-                                        value={brand.name}
+                                        setErrors((prev) => ({ ...prev, pd_brand_type: undefined }))
+                                      }}
+                                      options={[
+                                        { value: EMPTY_SELECT_KEYS.brand, label: "Select company..." },
+                                        ...companies.map((c) => ({
+                                          value: String(c.id),
+                                          label: c.company?.trim() || c.name?.trim() || `Company #${c.id}`,
+                                        })),
+                                      ]}
+                                    />
+                                    {selectedCompanyId && (
+                                      <ModalSelectField
+                                        ariaLabel="Select brand"
+                                        value={form.pd_brand_type}
+                                        searchable
+                                        searchPlaceholder="Search brands..."
+                                        onChange={(value) => {
+                                          set(
+                                            "pd_brand_type",
+                                            value === EMPTY_SELECT_KEYS.brand ? "" : value
+                                          )
+                                          setErrors((prev) => ({ ...prev, pd_brand_type: undefined }))
+                                        }}
+                                        options={[
+                                          { value: EMPTY_SELECT_KEYS.brand, label: "Select brand..." },
+                                          ...filteredBrands.map((b) => ({
+                                            value: String(b.id),
+                                            label: b.name,
+                                          })),
+                                        ]}
                                       />
-                                    ))}
-                                  </datalist>
-                                  <p className="mt-1 text-[11px] text-slate-500">
-                                    You can type a brand name to auto-match.
-                                  </p>
-                                </div>
+                                    )}
+                                  </div>
+                                )}
                               </Field>
 
                               <Field label="SKU">
