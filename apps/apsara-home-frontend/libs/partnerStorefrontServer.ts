@@ -1,3 +1,5 @@
+import { cache } from "react"
+
 import {
   getPartnerStorefrontConfig,
   normalizeStorefrontHost,
@@ -18,8 +20,8 @@ type StorefrontFetchOptions = {
   fresh?: boolean
 }
 
-const REQUEST_TIMEOUT_MS = 10000
-const MAX_RETRIES = 2
+const REQUEST_TIMEOUT_MS = 30000
+const MAX_RETRIES = 3
 const STOREFRONT_REVALIDATE_SECONDS = 120
 
 async function fetchWithTimeout(
@@ -42,8 +44,10 @@ async function fetchWithTimeout(
 async function fetchPartnerStorefrontItems(
   options: StorefrontFetchOptions = { fresh: true }
 ): Promise<WebPageItem[] | null> {
-  const apiUrl =
-    process.env.LARAVEL_API_URL ?? process.env.NEXT_PUBLIC_LARAVEL_API_URL
+  // Prefer 127.0.0.1 over localhost to avoid IPv6 resolution issues on Windows.
+  const apiUrl = (
+    process.env.LARAVEL_API_URL ?? process.env.NEXT_PUBLIC_LARAVEL_API_URL ?? ""
+  ).replace(/^http:\/\/localhost\b/, "http://127.0.0.1")
   if (!apiUrl) return null
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt += 1) {
@@ -63,17 +67,26 @@ async function fetchPartnerStorefrontItems(
               }),
         }
       )
-      if (!response.ok) continue
+      if (!response.ok) {
+        console.error(`[partnerStorefront] fetch attempt ${attempt + 1} non-OK: ${response.status} ${response.statusText}`)
+        continue
+      }
 
       const json = (await response.json()) as PublicWebPageItemsResponse
+      console.error(`[partnerStorefront] fetched ${json.items?.length ?? 0} items`)
       return json.items ?? []
-    } catch {
-      // Retry transient network/timeout failures before treating as unavailable.
+    } catch (err) {
+      console.error(`[partnerStorefront] fetch attempt ${attempt + 1} threw:`, err)
     }
   }
 
   return null
 }
+
+const fetchPartnerStorefrontItemsCached = cache(
+  async (fresh: boolean): Promise<WebPageItem[] | null> =>
+    fetchPartnerStorefrontItems({ fresh })
+)
 
 export async function getPartnerStorefrontBySlug(
   partnerSlug: string,
@@ -95,7 +108,7 @@ export async function getPartnerStorefrontRecordBySlug(
     .toLowerCase()
   if (!normalized) return null
 
-  const items = await fetchPartnerStorefrontItems(options)
+  const items = await fetchPartnerStorefrontItemsCached(options.fresh ?? true)
   if (!items) return null
 
   const storefrontItem = items.find((item) => {
@@ -120,7 +133,7 @@ export async function getPartnerStorefrontItemBySlug(
     .toLowerCase()
   if (!normalized) return null
 
-  const items = await fetchPartnerStorefrontItems(options)
+  const items = await fetchPartnerStorefrontItemsCached(options.fresh ?? true)
   if (!items) return null
 
   return (

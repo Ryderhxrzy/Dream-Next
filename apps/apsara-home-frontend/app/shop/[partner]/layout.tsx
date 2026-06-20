@@ -3,12 +3,11 @@ import { partnerAuthOptions } from "@/libs/partnerAuth"
 import {
   getPartnerStorefrontBySlug,
   getPartnerStorefrontRecordBySlug,
-  isStorefrontSubscriptionExpired,
 } from "@/libs/partnerStorefrontServer"
 import type { Metadata } from "next"
 import { getServerSession } from "next-auth"
 import { headers } from "next/headers"
-import { notFound, redirect } from "next/navigation"
+import { redirect } from "next/navigation"
 
 type LayoutProps = {
   children: React.ReactNode
@@ -66,15 +65,9 @@ export default async function PartnerShopLayout({
     return children
   }
 
-  // Block everyone when the subscription is expired — admin sessions do not bypass this.
-  const [record, expired] = await Promise.all([
-    getPartnerStorefrontRecordBySlug(normalizedPartner, { fresh: true }),
-    isStorefrontSubscriptionExpired(normalizedPartner),
-  ])
-
-  if (expired) {
-    notFound()
-  }
+  const record = await getPartnerStorefrontRecordBySlug(normalizedPartner, {
+    fresh: true,
+  })
 
   const adminSession = await getServerSession(adminAuthOptions)
   if (adminSession?.user) {
@@ -110,7 +103,7 @@ export default async function PartnerShopLayout({
         .filter((id) => Number.isFinite(id))
 
       if (disabledStorefrontIds.includes(record.id)) {
-        notFound()
+        return redirect("/partner/webpages/partner-storefronts")
       }
     }
   }

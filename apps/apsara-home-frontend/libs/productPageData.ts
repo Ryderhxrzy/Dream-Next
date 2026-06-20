@@ -399,8 +399,9 @@ const getCategorySlugFromProduct = (
 export async function getProductPageData(
   slug: string
 ): Promise<ProductPageData | null> {
-  const apiUrl =
-    process.env.LARAVEL_API_URL ?? process.env.NEXT_PUBLIC_LARAVEL_API_URL
+  const apiUrl = (
+    process.env.LARAVEL_API_URL ?? process.env.NEXT_PUBLIC_LARAVEL_API_URL ?? ""
+  ).replace(/^http:\/\/localhost\b/, "http://127.0.0.1")
   if (!apiUrl) return null
   const { slugOnly, id } = parseSlugAndId(slug)
 

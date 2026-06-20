@@ -52,6 +52,7 @@ type NavLink = {
   href: string
   dropdown?: string[]
   mega?: Record<string, string[]>
+  subcategories?: Array<{ label: string; href: string }>
 }
 
 type CustomerRealtimeNotificationEvent = Partial<CustomerNotificationItem> & {
@@ -309,6 +310,7 @@ const highlightText = (
 
 type NavbarProps = {
   initialCategories?: Category[]
+  allowedCategoryIds?: number[]
   logoSrc?: string
   logoAlt?: string
   logoHref?: string
@@ -322,6 +324,7 @@ type NavbarProps = {
 
 function NavbarInner({
   initialCategories = [],
+  allowedCategoryIds,
   logoSrc = "/Images/af_home_logo.png",
   logoAlt = "AF Home",
   logoHref = "/shop",
@@ -985,25 +988,41 @@ function NavbarInner({
     }, 150)
   }
 
-  const activeLink = useMemo(() => {
-    const links = categoryOnlyNav
-      ? [
-          {
-            label: "Shop Category",
-            href: "/category",
-            dropdown: [] as string[],
-          },
-        ]
-      : navLinks
-    return links.find((l) => l.label === activeDropdown)
-  }, [activeDropdown, categoryOnlyNav])
+  // activeLink is defined after displayNavLinks so it can search the full link list
   const shopCategoryItems = useMemo(() => {
-    const scopedItems = initialCategories.map((category) => {
+    const allowedSet = allowedCategoryIds?.length
+      ? new Set(allowedCategoryIds.map(Number))
+      : null
+
+    const topLevelCats = initialCategories.filter(
+      (cat) => !cat.parent_id && (allowedSet ? allowedSet.has(Number(cat.id)) : true)
+    )
+    const allowedParentIds = new Set(topLevelCats.map((cat) => Number(cat.id)))
+    const subCats = initialCategories.filter(
+      (cat) => cat.parent_id && allowedParentIds.has(Number(cat.parent_id))
+    )
+
+    const subcatMap = new Map<number, Array<{ label: string; href: string }>>()
+    subCats.forEach((cat) => {
+      const parentId = Number(cat.parent_id)
+      const urlPart = normalizeCategorySlug(cat.url, cat.name)
+      const href = partnerSlug
+        ? `/${partnerSlug}/${urlPart}`
+        : `/category/${urlPart}`
+      if (!subcatMap.has(parentId)) subcatMap.set(parentId, [])
+      subcatMap.get(parentId)!.push({ label: cat.name, href })
+    })
+
+    const scopedItems = topLevelCats.map((category) => {
       const urlPart = normalizeCategorySlug(category.url, category.name)
       const href = partnerSlug
         ? `/${partnerSlug}/${urlPart}`
         : `/category/${urlPart}`
-      return { label: category.name, href }
+      return {
+        label: category.name,
+        href,
+        subcategories: subcatMap.get(Number(category.id)) ?? [],
+      }
     })
     if (partnerSlug) {
       const interiorLabel = "Interior Services"
@@ -1015,25 +1034,30 @@ function NavbarInner({
       )
       const orderedScopedItems = [
         ...nonInteriorItems,
-        { label: interiorLabel, href: interiorHref },
+        { label: interiorLabel, href: interiorHref, subcategories: [] },
       ]
       return [
-        { label: "Home", href: `/${partnerSlug}` },
-        { label: "All Category", href: `/${partnerSlug}/product` },
+        { label: "Home", href: `/${partnerSlug}`, subcategories: [] },
+        { label: "All Category", href: `/${partnerSlug}/product`, subcategories: [] },
         ...orderedScopedItems,
       ]
     }
     return scopedItems
-  }, [initialCategories, partnerSlug])
+  }, [initialCategories, partnerSlug, allowedCategoryIds])
   const displayNavLinks = useMemo<NavLink[]>(() => {
     if (categoryOnlyNav) {
       return shopCategoryItems.map((item) => ({
         label: item.label,
         href: item.href,
+        subcategories: item.subcategories?.length ? item.subcategories : undefined,
       }))
     }
     return navLinks
   }, [categoryOnlyNav, shopCategoryItems])
+  const activeLink = useMemo(
+    () => displayNavLinks.find((l) => l.label === activeDropdown) ?? null,
+    [activeDropdown, displayNavLinks]
+  )
   const { data: publicBrandsData } = useGetPublicProductBrandsQuery()
   const shopBrandItems = useMemo(() => {
     return (publicBrandsData?.brands ?? [])
@@ -2156,7 +2180,7 @@ function NavbarInner({
               <div className="container mx-auto px-4">
                 <nav className="flex h-11 items-center">
                   {displayNavLinks.map((link, index) => {
-                    const hasDropdown = link.dropdown || link.mega
+                    const hasDropdown = link.dropdown || link.mega || link.subcategories?.length
                     return (
                       <div
                         key={link.label}
@@ -2230,7 +2254,7 @@ function NavbarInner({
 
         {/* Desktop dropdown panels */}
         <AnimatePresence>
-          {!hideNavLinks && activeLink?.dropdown && (
+          {!hideNavLinks && (activeLink?.dropdown || activeLink?.subcategories?.length) && (
             <motion.div
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
@@ -2241,7 +2265,29 @@ function NavbarInner({
               onMouseLeave={close}
             >
               <div className="container mx-auto !bg-white px-4 py-4 dark:!bg-gray-900">
-                {activeLink.label === "Shop By Brand" ? (
+                {activeLink.subcategories?.length ? (
+                  <div className="flex flex-wrap gap-1">
+                    {activeLink.subcategories.map((sub) => {
+                      const isActive =
+                        pathname === sub.href ||
+                        pathname.startsWith(sub.href + "/")
+                      return (
+                        <Link
+                          key={sub.label}
+                          href={sub.href}
+                          onClick={close}
+                          className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors duration-200 ${
+                            isActive
+                              ? "bg-sky-50 text-sky-600 dark:bg-sky-950/30 dark:text-sky-400"
+                              : "text-gray-700 hover:bg-sky-50 hover:text-sky-600 dark:text-gray-300 dark:hover:bg-sky-950/20 dark:hover:text-sky-400"
+                          }`}
+                        >
+                          {sub.label}
+                        </Link>
+                      )
+                    })}
+                  </div>
+                ) : activeLink.label === "Shop By Brand" ? (
                   <div className="flex flex-col gap-3">
                     <div className="grid grid-cols-4 gap-1 lg:grid-cols-8">
                       {navbarBrandItems.length > 0 ? (
@@ -2705,23 +2751,25 @@ function NavbarInner({
                 )}
                 {!hideNavLinks &&
                   displayNavLinks.map((link) => {
-                    const hasChildren = link.dropdown || link.mega
+                    const hasChildren = link.dropdown || link.mega || link.subcategories?.length
                     const isExpanded = mobileExpanded === link.label
 
-                    const subItems = link.dropdown
-                      ? link.label === "Shop Category"
-                        ? shopCategoryItems.length > 0
-                          ? shopCategoryItems
-                          : [{ label: "No categories found", href: "#" }]
-                        : link.label === "Shop By Brand"
-                          ? navbarBrandItems.length > 0
-                            ? navbarBrandItems
-                            : [{ label: "No brands found", href: "/by-brand" }]
-                          : link.dropdown.map((item) => ({
-                              label: item,
-                              href: `${link.href}/${item.toLowerCase().replace(/\s+/g, "-")}`,
-                            }))
-                      : []
+                    const subItems = link.subcategories?.length
+                      ? link.subcategories
+                      : link.dropdown
+                        ? link.label === "Shop Category"
+                          ? shopCategoryItems.length > 0
+                            ? shopCategoryItems
+                            : [{ label: "No categories found", href: "#" }]
+                          : link.label === "Shop By Brand"
+                            ? navbarBrandItems.length > 0
+                              ? navbarBrandItems
+                              : [{ label: "No brands found", href: "/by-brand" }]
+                            : link.dropdown.map((item) => ({
+                                label: item,
+                                href: `${link.href}/${item.toLowerCase().replace(/\s+/g, "-")}`,
+                              }))
+                        : []
 
                     return (
                       <div key={link.label}>
@@ -3714,6 +3762,7 @@ function NavbarInner({
 
 export default function Navbar({
   initialCategories = [],
+  allowedCategoryIds,
   logoSrc = "/Images/af_home_logo.png",
   logoAlt = "AF Home",
   logoHref = "/shop",
@@ -3726,6 +3775,7 @@ export default function Navbar({
   return (
     <NavbarInner
       initialCategories={initialCategories}
+      allowedCategoryIds={allowedCategoryIds}
       logoSrc={logoSrc}
       logoAlt={logoAlt}
       logoHref={logoHref}

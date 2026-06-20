@@ -896,7 +896,7 @@ function PricingSummaryPanel({
         </div>
       </div>
 
-      <div className="divide-y divide-slate-100 bg-gradient-to-br from-slate-50 to-blue-50/60 dark:divide-slate-800/70">
+      <div className="divide-y divide-slate-100 bg-linear-to-br from-slate-50 to-blue-50/60 dark:divide-slate-800/70">
         {/* -- Section 1: PV Computation (hero) -- */}
         <div className="px-4 py-3">
           <p className="mb-2 text-[9px] font-bold tracking-widest text-slate-400 uppercase md:text-[11px]">
@@ -1397,6 +1397,17 @@ export default function AddProductModal({
   )
   const selectedCategory = useMemo(
     () => categories.find((category) => String(category.id) === form.pd_catid),
+    [categories, form.pd_catid]
+  )
+  const topLevelCategories = useMemo(
+    () => categories.filter((cat) => !cat.parent_id),
+    [categories]
+  )
+  const subcategories = useMemo(
+    () =>
+      form.pd_catid && form.pd_catid !== EMPTY_SELECT_KEYS.category
+        ? categories.filter((cat) => cat.parent_id === Number(form.pd_catid))
+        : [],
     [categories, form.pd_catid]
   )
   const isServicesCategory = useMemo(
@@ -3133,7 +3144,7 @@ export default function AddProductModal({
                                     value: EMPTY_SELECT_KEYS.category,
                                     label: "Select category...",
                                   },
-                                  ...categories.map((cat) => ({
+                                  ...topLevelCategories.map((cat) => ({
                                     value: String(cat.id),
                                     label: cat.name,
                                   })),
@@ -3311,6 +3322,7 @@ export default function AddProductModal({
                                   searchPlaceholder="Search categories..."
                                   onChange={(value) => {
                                     set("pd_catid", value)
+                                    set("pd_catsubid", "")
                                     if (!roomTouched) {
                                       const cat = categories.find(
                                         (c) => String(c.id) === value
@@ -3336,6 +3348,42 @@ export default function AddProductModal({
                                     })),
                                   ]}
                                 />
+                              </Field>
+
+                              <Field label="Subcategory">
+                                {subcategories.length > 0 ? (
+                                  <ModalSelectField
+                                    ariaLabel="Select subcategory"
+                                    value={form.pd_catsubid}
+                                    onChange={(value) =>
+                                      set(
+                                        "pd_catsubid",
+                                        value === "__empty_subcategory__"
+                                          ? ""
+                                          : value
+                                      )
+                                    }
+                                    options={[
+                                      {
+                                        value: "__empty_subcategory__",
+                                        label: "No subcategory",
+                                      },
+                                      ...subcategories.map((cat) => ({
+                                        value: String(cat.id),
+                                        label: cat.name,
+                                      })),
+                                    ]}
+                                  />
+                                ) : (
+                                  <div
+                                    className={`${inputCls()} flex cursor-not-allowed items-center opacity-60`}
+                                  >
+                                    {form.pd_catid &&
+                                    form.pd_catid !== EMPTY_SELECT_KEYS.category
+                                      ? "No subcategories available"
+                                      : "Select a category first"}
+                                  </div>
+                                )}
                               </Field>
 
                               <Field label="Shop By Room">
@@ -3376,7 +3424,7 @@ export default function AddProductModal({
                                   value={form.pd_brand_type}
                                   searchable
                                   searchPlaceholder="Search brands..."
-                                  disabled={isSupplierPortal}
+                                  isDisabled={isSupplierPortal}
                                   onChange={(value) => {
                                     if (isSupplierPortal) return
                                     set(
@@ -3453,19 +3501,6 @@ export default function AddProductModal({
                                     You can type a brand name to auto-match.
                                   </p>
                                 </div>
-                              </Field>
-
-                              <Field label="Subcategory ID">
-                                <input
-                                  type="number"
-                                  min="0"
-                                  value={form.pd_catsubid}
-                                  onChange={(e) =>
-                                    set("pd_catsubid", e.target.value)
-                                  }
-                                  placeholder="Numeric subcategory ID (optional)"
-                                  className={inputCls()}
-                                />
                               </Field>
 
                               <Field label="SKU">
@@ -4044,7 +4079,7 @@ export default function AddProductModal({
                       <>
                         <SectionLabel>Variants</SectionLabel>
                         <div className="space-y-3">
-                          <div className="rounded-2xl border border-teal-100 bg-gradient-to-br from-teal-50 to-cyan-50 p-4">
+                          <div className="rounded-2xl border border-teal-100 bg-linear-to-br from-teal-50 to-cyan-50 p-4">
                             <div className="flex items-start justify-between gap-3">
                               <div>
                                 <p className="text-sm font-bold text-slate-800 dark:text-slate-100">

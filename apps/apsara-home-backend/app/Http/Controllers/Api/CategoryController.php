@@ -57,7 +57,7 @@ class CategoryController extends Controller
 
         $categories = Category::select([
                 'cat_id', 'cat_name', 'cat_description',
-                'cat_url', 'cat_image', 'cat_order',
+                'cat_url', 'cat_image', 'cat_order', 'parent_id',
             ])
             ->when($usedOnly && $supplierId > 0, function ($query) use ($productCounts) {
                 $categoryIds = collect($productCounts)->keys()->map(fn ($id) => (int) $id)->all();
@@ -84,8 +84,9 @@ class CategoryController extends Controller
                 'url'         => (string) ($c->cat_url ?? ''),
                 'image'       => $this->normalizeCategoryImage($c->cat_image),
                 'images'      => $productImages[(int) $c->cat_id] ?? [],
-                'order'       => (int)    $c->cat_order,
-                'product_count' => (int) ($productCounts[(int) $c->cat_id] ?? 0),
+                'order'         => (int)    $c->cat_order,
+                'product_count' => (int)   ($productCounts[(int) $c->cat_id] ?? 0),
+                'parent_id'     => $c->parent_id ? (int) $c->parent_id : null,
             ])
             ->values();
 
@@ -136,6 +137,7 @@ class CategoryController extends Controller
             'cat_description' => 'nullable|string|max:200',
             'cat_url'         => 'nullable|string|max:40',
             'cat_order'       => 'nullable|integer|min:0',
+            'parent_id'       => 'nullable|integer|exists:tbl_category,cat_id',
         ]);
 
         if ($validator->fails()) {
@@ -152,6 +154,7 @@ class CategoryController extends Controller
             'cat_url'         => $slug,
             'cat_image'       => '0',
             'cat_order'       => (int) ($request->cat_order ?? 0),
+            'parent_id'       => $request->parent_id ? (int) $request->parent_id : null,
         ]);
 
         return response()->json([
