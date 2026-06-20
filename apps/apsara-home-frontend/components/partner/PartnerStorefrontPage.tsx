@@ -182,10 +182,10 @@ export default function PartnerStorefrontPage({
                 </Link>
               ) : null}
               <Link
-                href={`${partnerShopPath}/product`}
+                href={`/shop/${partner.slug}/product`}
                 className="inline-flex items-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700"
               >
-                Products
+                View products
               </Link>
             </div>
           </div>

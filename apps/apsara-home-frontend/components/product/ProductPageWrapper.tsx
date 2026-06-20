@@ -8,6 +8,7 @@ import TopBar from "@/components/layout/TopBar"
 interface ProductPageWrapperProps {
   children: React.ReactNode
   initialCategories?: Category[]
+  allowedCategoryIds?: number[]
   hideTopBar?: boolean
   logoSrc?: string
   logoAlt?: string
@@ -22,6 +23,7 @@ interface ProductPageWrapperProps {
 export default function ProductPageWrapper({
   children,
   initialCategories = [],
+  allowedCategoryIds,
   hideTopBar = false,
   logoSrc = "/Images/af_home_logo.png",
   logoAlt = "AF Home",
@@ -38,6 +40,7 @@ export default function ProductPageWrapper({
         {!hideTopBar && <TopBar />}
         <Navbar
           initialCategories={initialCategories}
+          allowedCategoryIds={allowedCategoryIds}
           logoSrc={logoSrc}
           logoAlt={logoAlt}
           logoHref={logoHref}

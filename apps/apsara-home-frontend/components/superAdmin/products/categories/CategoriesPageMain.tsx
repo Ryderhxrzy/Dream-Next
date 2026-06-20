@@ -1,8 +1,9 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import {
   Category,
+  useCreateCategoryMutation,
   useDeleteCategoryMutation,
   useGetCategoriesQuery,
 } from "@/store/api/categoriesApi"
@@ -74,6 +75,218 @@ type SortKey =
   | "newest"
   | "oldest"
 
+const toSlug = (value: string) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+
+function SubcategoryPanel({
+  category,
+  subcategories,
+  colorIndex,
+  onEdit,
+  onDelete,
+  isDeleting,
+  onAdd,
+}: {
+  category: Category
+  subcategories: Category[]
+  colorIndex: number
+  onEdit: (c: Category) => void
+  onDelete: (id: number) => void
+  isDeleting: Set<number>
+  onAdd: (parentId: number, name: string, url: string) => Promise<void>
+}) {
+  const [open, setOpen] = useState(false)
+  const [adding, setAdding] = useState(false)
+  const [subName, setSubName] = useState("")
+  const [subUrl, setSubUrl] = useState("")
+  const [slugLocked, setSlugLocked] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const color = CARD_COLORS[colorIndex % CARD_COLORS.length]
+
+  const handleNameChange = (v: string) => {
+    setSubName(v)
+    if (!slugLocked) setSubUrl(toSlug(v))
+  }
+
+  const handleUrlChange = (v: string) => {
+    setSlugLocked(true)
+    setSubUrl(toSlug(v))
+  }
+
+  const handleSave = async () => {
+    if (!subName.trim()) return
+    setSaving(true)
+    await onAdd(category.id, subName.trim(), subUrl || toSlug(subName))
+    setSubName("")
+    setSubUrl("")
+    setSlugLocked(false)
+    setAdding(false)
+    setSaving(false)
+  }
+
+  const handleStartAdding = () => {
+    setOpen(true)
+    setAdding(true)
+    setTimeout(() => inputRef.current?.focus(), 50)
+  }
+
+  return (
+    <div className="border-t border-slate-100">
+      {/* Toggle header */}
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center gap-2 px-5 py-3 text-left transition-colors hover:bg-slate-50"
+      >
+        <svg className="h-4 w-4 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14-7H5m14 14H5" />
+        </svg>
+        <span className="text-sm font-semibold text-slate-700">Subcategories</span>
+        {subcategories.length > 0 && (
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-500">
+            {subcategories.length}
+          </span>
+        )}
+        <svg
+          className={`ml-1 h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          fill="none" stroke="currentColor" viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); handleStartAdding() }}
+          className="ml-auto flex items-center gap-1.5 rounded-xl bg-violet-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm shadow-violet-500/30 transition-colors hover:bg-violet-700"
+        >
+          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+          </svg>
+          Add Subcategory
+        </button>
+      </button>
+
+      {/* Collapsible content */}
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+      <div className="space-y-2 px-5 pb-4">
+        {subcategories.length === 0 && !adding && (
+          <p className="py-1 text-xs text-slate-400 italic">No subcategories yet</p>
+        )}
+        {subcategories.map((sub) => (
+          <div
+            key={sub.id}
+            className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5"
+          >
+            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${color.bg} bg-opacity-15`}>
+              <span className={`text-sm font-bold ${color.text}`}>{sub.name.charAt(0).toUpperCase()}</span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-bold text-slate-800">{sub.name}</p>
+              {sub.url && sub.url !== "0" && (
+                <p className="font-mono text-xs text-slate-400">/{sub.url}</p>
+              )}
+            </div>
+            <button
+              onClick={() => onEdit(sub)}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+            <button
+              onClick={() => onDelete(sub.id)}
+              disabled={isDeleting.has(sub.id)}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-500 disabled:opacity-40"
+            >
+              {isDeleting.has(sub.id) ? (
+                <svg className="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              )}
+            </button>
+          </div>
+        ))}
+
+        {/* Inline add form */}
+        <AnimatePresence>
+          {adding && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.15 }}
+              className="space-y-2 rounded-xl border border-violet-200 bg-violet-50/60 p-3"
+            >
+              <input
+                ref={inputRef}
+                type="text"
+                value={subName}
+                onChange={(e) => handleNameChange(e.target.value)}
+                placeholder="Subcategory name"
+                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-violet-400 focus:ring-1 focus:ring-violet-400/30 focus:outline-none"
+              />
+              <div className="flex items-center gap-1.5">
+                <span className="font-mono text-sm text-slate-400">/</span>
+                <input
+                  type="text"
+                  value={subUrl}
+                  onChange={(e) => handleUrlChange(e.target.value)}
+                  placeholder="url-slug"
+                  className="flex-1 rounded-lg border border-slate-200 bg-white px-2 py-2 font-mono text-sm text-slate-700 placeholder-slate-400 focus:border-violet-400 focus:ring-1 focus:ring-violet-400/30 focus:outline-none"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setAdding(false); setSubName(""); setSubUrl(""); setSlugLocked(false) }}
+                  className="flex-1 rounded-lg bg-slate-100 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={!subName.trim() || saving}
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-violet-600 py-2 text-sm font-semibold text-white transition-colors hover:bg-violet-700 disabled:opacity-50"
+                >
+                  {saving ? (
+                    <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                  ) : "Save"}
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
 function CategoryCard({
   category,
   colorIndex,
@@ -83,6 +296,8 @@ function CategoryCard({
   isSelected,
   onToggleSelect,
   anySelected,
+  subcategories,
+  onAddSubcategory,
 }: {
   category: Category
   colorIndex: number
@@ -92,17 +307,13 @@ function CategoryCard({
   isSelected: boolean
   onToggleSelect: (id: number) => void
   anySelected: boolean
+  subcategories: Category[]
+  onAddSubcategory: (parentId: number, name: string, url: string) => Promise<void>
 }) {
   const [confirming, setConfirming] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const color = CARD_COLORS[colorIndex % CARD_COLORS.length]
   const isThisDeleting = isDeleting.has(category.id)
-
-  const handleDeleteClick = () => setConfirming(true)
-  const handleConfirm = () => {
-    onDelete(category.id)
-    setConfirming(false)
-  }
-  const handleCancel = () => setConfirming(false)
 
   return (
     <motion.div
@@ -113,244 +324,189 @@ function CategoryCard({
       transition={{ duration: 0.2 }}
       className={`group relative overflow-hidden rounded-2xl border bg-white shadow-sm transition-all duration-200 hover:shadow-md ${isSelected ? "border-violet-400 ring-2 ring-violet-300/50" : "border-slate-100 hover:border-slate-200"}`}
     >
-      {/* Checkbox overlay */}
-      <div
-        onClick={() => onToggleSelect(category.id)}
-        className={`absolute top-3 left-3 z-10 cursor-pointer transition-opacity duration-150 ${anySelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
-      >
-        <div
-          className={`flex h-5 w-5 items-center justify-center rounded-md border-2 transition-all ${isSelected ? "border-violet-600 bg-violet-600" : "border-slate-300 bg-white hover:border-violet-400"}`}
-        >
-          {isSelected && (
-            <svg
-              className="h-3 w-3 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={3}
-                d="M5 13l4 4L19 7"
-              />
+      {/* Main content */}
+      <div className="p-5">
+        <div className="flex items-start gap-4">
+          {/* Checkbox */}
+          <div
+            onClick={() => onToggleSelect(category.id)}
+            className={`mt-1 shrink-0 cursor-pointer transition-opacity duration-150 ${anySelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
+          >
+            <div className={`flex h-5 w-5 items-center justify-center rounded-md border-2 transition-all ${isSelected ? "border-violet-600 bg-violet-600" : "border-slate-300 bg-white hover:border-violet-400"}`}>
+              {isSelected && (
+                <svg className="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </div>
+          </div>
+
+          {/* Icon */}
+          <div className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl ${color.bg} flex items-center justify-center shadow-sm`}>
+            {category.image ? (
+              <Image src={category.image} alt={category.name} fill className="object-cover" unoptimized />
+            ) : (
+              <span className="text-2xl font-bold text-white uppercase">{category.name.charAt(0)}</span>
+            )}
+          </div>
+
+          {/* Info */}
+          <div className="min-w-0 flex-1">
+            <h3 className="text-base font-bold leading-tight text-slate-800">{category.name}</h3>
+            {category.url && category.url !== "0" && (
+              <p className={`mt-0.5 font-mono text-sm font-medium ${color.text}`}>/{category.url}</p>
+            )}
+            <p className="mt-1 text-sm text-slate-400 italic">
+              {category.description || "No description"}
+            </p>
+          </div>
+
+          {/* Product count badge */}
+          <div className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold ${color.badge}`}>
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
             </svg>
-          )}
+            {category.product_count ?? 0} Products
+          </div>
+
+          {/* Three-dot menu */}
+          <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setMenuOpen((v) => !v)}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+            >
+              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                <circle cx="12" cy="5" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="12" cy="19" r="1.5" />
+              </svg>
+            </button>
+            <AnimatePresence>
+              {menuOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                    transition={{ duration: 0.1 }}
+                    className="absolute top-9 right-0 z-20 min-w-32.5 overflow-hidden rounded-xl border border-slate-100 bg-white shadow-lg"
+                  >
+                    <button
+                      onClick={() => { setMenuOpen(false); onEdit(category) }}
+                      className="flex w-full items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                    >
+                      <svg className="h-3.5 w-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => { setMenuOpen(false); setConfirming(true) }}
+                      className="flex w-full items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+                    >
+                      <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Delete
+                    </button>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
 
-      <div className={`p-5 transition-all ${anySelected ? "pl-11" : ""}`}>
-        <div className="flex items-start gap-4">
-          {/* Icon / image block */}
-          <div
-            className={`h-12 w-12 rounded-xl ${color.bg} relative flex shrink-0 items-center justify-center overflow-hidden shadow-sm`}
-          >
-            {category.image ? (
-              <Image
-                src={category.image}
-                alt={category.name}
-                fill
-                className="object-cover"
-                unoptimized
-              />
-            ) : (
-              <span className="text-lg font-bold text-white uppercase">
-                {category.name.charAt(0)}
-              </span>
-            )}
-          </div>
-          {/* Content */}
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-sm leading-tight font-bold text-slate-800">
-                {category.name}
-              </h3>
-              <span
-                className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-bold ${color.badge}`}
-              >
-                {category.product_count ?? 0} product
-                {(category.product_count ?? 0) === 1 ? "" : "s"}
-              </span>
-            </div>
-            {category.url && category.url !== "0" && (
-              <p className={`mt-1 font-mono text-xs ${color.text} opacity-80`}>
-                /{category.url}
-              </p>
-            )}
-            {category.description ? (
-              <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-slate-500">
-                {category.description}
-              </p>
-            ) : (
-              <p className="mt-2 text-xs text-slate-300 italic">
-                No description
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* Subcategory panel */}
+      <SubcategoryPanel
+        category={category}
+        subcategories={subcategories}
+        colorIndex={colorIndex}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        isDeleting={isDeleting}
+        onAdd={onAddSubcategory}
+      />
 
       {/* Footer */}
-      <div className="flex items-center justify-between border-t border-slate-50 bg-slate-50/60 px-5 py-3">
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400">ID #{category.id}</span>
+      <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-slate-400">ID #{category.id}</span>
           {category.url && category.url !== "0" && (
             <a
               href={`/${category.url}`}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-400 transition-colors hover:text-violet-600"
-              title="View in store"
+              className="flex items-center gap-1.5 text-sm font-semibold text-violet-600 transition-colors hover:text-violet-700"
             >
-              <svg
-                className="h-3 w-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                />
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
               </svg>
               View
             </a>
           )}
         </div>
 
-        <div
-          className="flex items-center gap-1"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Edit — hide while confirming */}
-          {!confirming && (
-            <button
-              onClick={() => onEdit(category)}
-              className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-500 transition-colors hover:bg-blue-50 hover:text-blue-600"
+        <AnimatePresence mode="wait">
+          {confirming ? (
+            <motion.div
+              key="confirm"
+              initial={{ opacity: 0, x: 8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 8 }}
+              transition={{ duration: 0.12 }}
+              className="flex items-center gap-2"
             >
-              <svg
-                className="h-3.5 w-3.5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+              <button
+                onClick={() => setConfirming(false)}
+                className="rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-50"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                />
-              </svg>
-              Edit
-            </button>
-          )}
-
-          <AnimatePresence mode="wait">
-            {confirming ? (
-              // Confirm + Cancel side-by-side
-              <motion.div
-                key="confirm-row"
-                initial={{ opacity: 0, x: 8 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 8 }}
-                transition={{ duration: 0.12 }}
-                className="flex items-center gap-1"
-              >
-                <button
-                  onClick={handleCancel}
-                  className="flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1.5 text-xs font-semibold text-slate-500 transition-colors hover:bg-slate-200"
-                >
-                  <svg
-                    className="h-3.5 w-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2.5}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                  Cancel
-                </button>
-                <button
-                  onClick={handleConfirm}
-                  disabled={isThisDeleting}
-                  className="flex items-center gap-1.5 rounded-lg bg-red-500 px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-red-600 disabled:opacity-60"
-                >
-                  {isThisDeleting ? (
-                    <svg
-                      className="h-3.5 w-3.5 animate-spin"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                      />
-                    </svg>
-                  ) : (
-                    <svg
-                      className="h-3.5 w-3.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
-                  )}
-                  Delete
-                </button>
-              </motion.div>
-            ) : (
-              // Initial delete button
-              <motion.button
-                key="delete-btn"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.12 }}
-                onClick={handleDeleteClick}
+                Cancel
+              </button>
+              <button
+                onClick={() => { onDelete(category.id); setConfirming(false) }}
                 disabled={isThisDeleting}
-                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-60"
+                className="flex items-center gap-1.5 rounded-xl bg-red-500 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-red-600 disabled:opacity-60"
               >
-                <svg
-                  className="h-3.5 w-3.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                  />
+                {isThisDeleting && (
+                  <svg className="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                )}
+                Confirm Delete
+              </button>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="actions"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex items-center gap-2"
+            >
+              <button
+                onClick={() => onEdit(category)}
+                className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3.5 py-1.5 text-sm font-semibold text-slate-600 transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
+              >
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Edit
+              </button>
+              <button
+                onClick={() => setConfirming(true)}
+                disabled={isThisDeleting}
+                className="flex items-center gap-1.5 rounded-xl border border-red-200 px-3.5 py-1.5 text-sm font-semibold text-red-500 transition-colors hover:bg-red-50 disabled:opacity-60"
+              >
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
                 Delete
-              </motion.button>
-            )}
-          </AnimatePresence>
-        </div>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.div>
   )
@@ -403,14 +559,34 @@ export default function CategoriesPageMain() {
   )
 
   const [deleteCategory] = useDeleteCategoryMutation()
+  const [createCategory] = useCreateCategoryMutation()
 
   const rawCategories = data?.categories ?? []
   const total = data?.total ?? 0
 
+  const { topLevel, subMap } = useMemo(() => {
+    const top = rawCategories.filter((c) => !c.parent_id)
+    const map = new Map<number, Category[]>()
+    rawCategories
+      .filter((c) => c.parent_id)
+      .forEach((c) => {
+        const arr = map.get(c.parent_id!) ?? []
+        arr.push(c)
+        map.set(c.parent_id!, arr)
+      })
+    return { topLevel: top, subMap: map }
+  }, [rawCategories])
+
   const categories = useMemo(
-    () => sortCategories(rawCategories, sort),
-    [rawCategories, sort]
+    () => sortCategories(topLevel, sort),
+    [topLevel, sort]
   )
+
+  const handleAddSubcategory = async (parentId: number, name: string, url: string) => {
+    try {
+      await createCategory({ cat_name: name, cat_url: url, parent_id: parentId }).unwrap()
+    } catch { /* silent */ }
+  }
 
   // — single delete —
   const handleDelete = async (id: number) => {
@@ -464,15 +640,6 @@ export default function CategoriesPageMain() {
     })
     setSelectedIds(new Set())
     setIsBulkDeleting(false)
-  }
-
-  const sortLabel: Record<SortKey, string> = {
-    "order-asc": "Order ↑",
-    "order-desc": "Order ↓",
-    "name-asc": "Name A→Z",
-    "name-desc": "Name Z→A",
-    newest: "Newest",
-    oldest: "Oldest",
   }
 
   return (
@@ -881,21 +1048,35 @@ export default function CategoriesPageMain() {
         </div>
       ) : isLoading ? (
         <div className="grid animate-pulse grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              className="rounded-2xl border border-slate-100 bg-white p-5"
-            >
-              <div className="flex items-start gap-4">
-                <div className="h-12 w-12 shrink-0 rounded-xl bg-slate-200" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-3.5 w-3/4 rounded bg-slate-200" />
-                  <div className="h-2.5 w-1/3 rounded bg-slate-100" />
-                  <div className="h-2.5 w-full rounded bg-slate-100" />
-                  <div className="h-2.5 w-2/3 rounded bg-slate-100" />
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-2xl border border-slate-100 bg-white">
+              {/* Header */}
+              <div className="flex items-start gap-4 p-5">
+                <div className="h-5 w-5 shrink-0 rounded-md bg-slate-100 mt-1" />
+                <div className="h-16 w-16 shrink-0 rounded-2xl bg-slate-200" />
+                <div className="flex-1 space-y-2 pt-1">
+                  <div className="h-4 w-2/3 rounded bg-slate-200" />
+                  <div className="h-3 w-1/3 rounded bg-slate-100" />
+                  <div className="h-3 w-1/2 rounded bg-slate-100" />
+                </div>
+                <div className="h-8 w-28 rounded-full bg-slate-100 shrink-0" />
+              </div>
+              {/* Subcategory section */}
+              <div className="border-t border-slate-100 px-5 py-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-4 w-32 rounded bg-slate-100" />
+                  <div className="ml-auto h-8 w-36 rounded-xl bg-slate-100" />
+                </div>
+                <div className="h-12 w-full rounded-xl bg-slate-50" />
+              </div>
+              {/* Footer */}
+              <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3">
+                <div className="h-3.5 w-20 rounded bg-slate-100" />
+                <div className="flex gap-2">
+                  <div className="h-8 w-16 rounded-xl bg-slate-100" />
+                  <div className="h-8 w-16 rounded-xl bg-slate-100" />
                 </div>
               </div>
-              <div className="mt-4 h-8 rounded border-t border-slate-50 bg-slate-50 pt-3" />
             </div>
           ))}
         </div>
@@ -941,6 +1122,8 @@ export default function CategoriesPageMain() {
                 isSelected={selectedIds.has(cat.id)}
                 onToggleSelect={toggleSelect}
                 anySelected={someSelected}
+                subcategories={subMap.get(cat.id) ?? []}
+                onAddSubcategory={handleAddSubcategory}
               />
             ))}
           </div>

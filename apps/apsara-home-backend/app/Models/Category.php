@@ -17,9 +17,11 @@ class Category extends Model
         'cat_url',
         'cat_image',
         'cat_order',
+        'parent_id',
     ];
 
     protected $casts = [
-        'cat_order' => 'integer',
+        'cat_order'  => 'integer',
+        'parent_id'  => 'integer',
     ];
 }

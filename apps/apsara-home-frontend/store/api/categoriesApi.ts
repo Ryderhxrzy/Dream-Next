@@ -8,6 +8,7 @@ export interface Category {
   image: string | null
   order: number
   product_count?: number
+  parent_id?: number | null
 }
 
 export interface CategoriesResponse {
@@ -28,6 +29,7 @@ export interface CreateCategoryPayload {
   cat_description?: string
   cat_url?: string
   cat_order?: number
+  parent_id?: number
 }
 
 const normalizeCategoryText = (value: string) => {
