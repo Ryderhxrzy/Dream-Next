@@ -39,13 +39,14 @@ export const productBrandsApi = baseApi.injectEndpoints({
     }),
     getProductBrands: builder.query<
       ProductBrandsResponse,
-      { search?: string } | void
+      { search?: string; supplier_id?: number } | void
     >({
       query: (params) => ({
         url: "/api/admin/product-brands",
         method: "GET",
         params: {
           q: params?.search,
+          supplier_id: params?.supplier_id,
         },
       }),
       providesTags: ["Brands"],

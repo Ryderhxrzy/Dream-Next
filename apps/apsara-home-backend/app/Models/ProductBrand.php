@@ -14,6 +14,7 @@ class ProductBrand extends Model
         'pb_name',
         'pb_image',
         'pb_status',
+        'pb_supplier_id',
     ];
 
     protected $casts = [

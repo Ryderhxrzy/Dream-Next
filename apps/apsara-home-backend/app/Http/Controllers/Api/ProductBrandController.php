@@ -14,21 +14,24 @@ use Illuminate\Support\Facades\Validator;
 
 class ProductBrandController extends Controller
 {
-    private function buildBrandsResponse(string $search = '', bool $activeOnly = false): JsonResponse
+    private function buildBrandsResponse(string $search = '', bool $activeOnly = false, ?int $supplierId = null): JsonResponse
     {
         $hasBrandImageColumn = $this->hasBrandImageColumn();
-        $columns = ['pb_id', 'pb_name', 'pb_status'];
+        $columns = ['pb_id', 'pb_name', 'pb_status', 'pb_supplier_id'];
         if ($hasBrandImageColumn) {
             $columns[] = 'pb_image';
         }
 
         $brands = ProductBrand::query()
             ->select($columns)
-            ->when($activeOnly, function ($query) {
-                $query->where('pb_status', 0);
+            ->when($supplierId !== null, function ($q) use ($supplierId) {
+                $q->where('pb_supplier_id', $supplierId);
             })
-            ->when($search !== '', function ($query) use ($search) {
-                $query->where('pb_name', 'ilike', '%' . $search . '%');
+            ->when($activeOnly, function ($q) {
+                $q->where('pb_status', 0);
+            })
+            ->when($search !== '', function ($q) use ($search) {
+                $q->where('pb_name', 'ilike', '%' . $search . '%');
             })
             ->orderBy('pb_name')
             ->get()
@@ -38,6 +41,7 @@ class ProductBrandController extends Controller
                     'name' => (string) ($brand->pb_name ?? ''),
                     'image' => $hasBrandImageColumn && $brand->pb_image ? (string) $brand->pb_image : null,
                     'status' => (int) ($brand->pb_status ?? 0),
+                    'supplier_id' => $brand->pb_supplier_id !== null ? (int) $brand->pb_supplier_id : null,
                 ];
             })
             ->values();
@@ -63,8 +67,9 @@ class ProductBrandController extends Controller
     public function index(Request $request): JsonResponse
     {
         $search = trim((string) $request->query('q', ''));
+        $supplierId = $request->query('supplier_id') !== null ? (int) $request->query('supplier_id') : null;
 
-        return $this->buildBrandsResponse($search);
+        return $this->buildBrandsResponse($search, false, $supplierId);
     }
 
     public function store(Request $request): JsonResponse
