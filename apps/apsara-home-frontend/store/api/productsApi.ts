@@ -1682,6 +1682,13 @@ export const productsApi = baseApi.injectEndpoints({
         { type: "Products" as const, id: `zqvp-${externalId}` },
       ],
     }),
+    getPendingProductCount: builder.query<{ pending: number }, void>({
+      query: () => ({
+        url: "/api/admin/products/pending-count",
+        method: "GET",
+      }),
+      providesTags: ["Products"],
+    }),
   }),
 })
 
@@ -1722,4 +1729,5 @@ export const {
   useGetZqVariantPricingQuery,
   useLazyGetZqVariantPricingQuery,
   useUpdateZqVariantPricingMutation,
+  useGetPendingProductCountQuery,
 } = productsApi

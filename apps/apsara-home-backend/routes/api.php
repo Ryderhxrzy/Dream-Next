@@ -447,6 +447,7 @@ Route::middleware(['auth:sanctum', 'admin.or_supplier'])->group(function () {
     Route::get('/admin/products', [ProductController::class, 'index']);
     Route::get('/admin/products/export', [ProductController::class, 'exportCsv']);
     Route::get('/admin/products/activity-logs', [ProductController::class, 'activityLogs']);
+    Route::get('/admin/products/pending-count', [ProductController::class, 'pendingCount']);
     Route::post('/admin/products', [ProductController::class, 'store']);
     Route::post('/admin/products/import', [ProductController::class, 'import']);
     Route::post('/admin/products/zq/fetch-preview', [ProductController::class, 'fetchZqImportPreview']);
