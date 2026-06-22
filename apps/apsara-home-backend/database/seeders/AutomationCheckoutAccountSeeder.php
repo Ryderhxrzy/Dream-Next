@@ -112,7 +112,7 @@ class AutomationCheckoutAccountSeeder extends Seeder
 
             return $isNullable === 'YES' ? null : 0;
         }
-
+        
         return null;
     }
 }
