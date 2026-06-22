@@ -425,19 +425,214 @@ class SupplierController extends Controller
             return [];
         }
 
+        $assignedIds = SupplierCategoryAccess::query()
+            ->where('supplier_id', $supplierId)
+            ->pluck('category_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        if (empty($assignedIds)) {
+            return [];
+        }
+
         return Category::query()
-            ->select(['tbl_category.cat_id', 'tbl_category.cat_name', 'tbl_category.cat_url'])
-            ->join('tbl_supplier_category_access', 'tbl_supplier_category_access.category_id', '=', 'tbl_category.cat_id')
-            ->where('tbl_supplier_category_access.supplier_id', $supplierId)
-            ->orderBy('tbl_category.cat_order')
-            ->orderBy('tbl_category.cat_name')
+            ->select(['cat_id', 'cat_name', 'cat_url', 'parent_id'])
+            ->where(function ($q) use ($assignedIds) {
+                $q->whereIn('cat_id', $assignedIds)
+                  ->orWhereIn('parent_id', $assignedIds);
+            })
+            ->orderBy('cat_order')
+            ->orderBy('cat_name')
             ->get()
             ->map(fn (Category $category) => [
-                'id' => (int) $category->cat_id,
-                'name' => (string) ($category->cat_name ?? ''),
-                'url' => (string) ($category->cat_url ?? ''),
+                'id'        => (int) $category->cat_id,
+                'name'      => (string) ($category->cat_name ?? ''),
+                'url'       => (string) ($category->cat_url ?? ''),
+                'parent_id' => $category->parent_id ? (int) $category->parent_id : null,
             ])
             ->values()
             ->all();
+    }
+
+    public function createCategory(Request $request): JsonResponse
+    {
+        $supplierUser = $this->resolveSupplierUser($request);
+        if (! $supplierUser) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $supplierId = (int) $supplierUser->su_supplier;
+        if ($supplierId <= 0) {
+            return response()->json(['message' => 'Supplier account not linked.'], 422);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'url'  => 'nullable|string|max:255|regex:/^[a-z0-9\-]+$/',
+        ]);
+
+        $url = $validated['url'] ?? preg_replace('/[^a-z0-9]+/', '-', strtolower($validated['name']));
+        $url = trim($url, '-');
+
+        $category = DB::transaction(function () use ($validated, $url, $supplierId) {
+            $cat = Category::query()->create([
+                'cat_name'  => $validated['name'],
+                'cat_url'   => $url,
+                'parent_id' => null,
+                'cat_order' => 0,
+            ]);
+
+            SupplierCategoryAccess::query()->create([
+                'supplier_id' => $supplierId,
+                'category_id' => (int) $cat->cat_id,
+                'created_at'  => now(),
+            ]);
+
+            return $cat;
+        });
+
+        return response()->json([
+            'message'  => 'Category created successfully.',
+            'category' => [
+                'id'        => (int) $category->cat_id,
+                'name'      => (string) $category->cat_name,
+                'url'       => (string) $category->cat_url,
+                'parent_id' => null,
+            ],
+        ], 201);
+    }
+
+    public function updateCategory(Request $request, int $id): JsonResponse
+    {
+        $supplierUser = $this->resolveSupplierUser($request);
+        if (! $supplierUser) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $supplierId = (int) $supplierUser->su_supplier;
+        $category = Category::query()->find($id);
+        if (! $category) {
+            return response()->json(['message' => 'Category not found.'], 404);
+        }
+
+        // Verify supplier owns this category (directly or via parent)
+        $ownerId = $category->parent_id ? (int) $category->parent_id : (int) $category->cat_id;
+        $isAssigned = SupplierCategoryAccess::query()
+            ->where('supplier_id', $supplierId)
+            ->where('category_id', $ownerId)
+            ->exists();
+
+        if (! $isAssigned) {
+            return response()->json(['message' => 'Access denied.'], 403);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'url'  => 'nullable|string|max:255|regex:/^[a-z0-9\-]+$/',
+        ]);
+
+        $url = $validated['url'] ?? preg_replace('/[^a-z0-9]+/', '-', strtolower($validated['name']));
+        $url = trim($url, '-');
+
+        $category->cat_name = $validated['name'];
+        $category->cat_url  = $url;
+        $category->save();
+
+        return response()->json([
+            'message'  => 'Category updated successfully.',
+            'category' => [
+                'id'        => (int) $category->cat_id,
+                'name'      => (string) $category->cat_name,
+                'url'       => (string) $category->cat_url,
+                'parent_id' => $category->parent_id ? (int) $category->parent_id : null,
+            ],
+        ]);
+    }
+
+    public function deleteSubCategory(Request $request, int $id): JsonResponse
+    {
+        $supplierUser = $this->resolveSupplierUser($request);
+        if (! $supplierUser) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $supplierId = (int) $supplierUser->su_supplier;
+        $category = Category::query()->find($id);
+        if (! $category) {
+            return response()->json(['message' => 'Category not found.'], 404);
+        }
+
+        if (! $category->parent_id) {
+            return response()->json(['message' => 'Cannot delete a parent category.'], 422);
+        }
+
+        $isAssigned = SupplierCategoryAccess::query()
+            ->where('supplier_id', $supplierId)
+            ->where('category_id', (int) $category->parent_id)
+            ->exists();
+
+        if (! $isAssigned) {
+            return response()->json(['message' => 'Access denied.'], 403);
+        }
+
+        $category->delete();
+
+        return response()->json(['message' => 'Sub-category deleted successfully.']);
+    }
+
+    public function createSubCategory(Request $request, int $parentId): JsonResponse
+    {
+        $supplierUser = $this->resolveSupplierUser($request);
+        if (! $supplierUser) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $supplierId = (int) $supplierUser->su_supplier;
+        if ($supplierId <= 0) {
+            return response()->json(['message' => 'Supplier account not linked.'], 422);
+        }
+
+        $isAssigned = SupplierCategoryAccess::query()
+            ->where('supplier_id', $supplierId)
+            ->where('category_id', $parentId)
+            ->exists();
+
+        if (! $isAssigned) {
+            return response()->json(['message' => 'Parent category not assigned to your account.'], 403);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'url'  => 'nullable|string|max:255|regex:/^[a-z0-9\-]+$/',
+        ]);
+
+        $url = $validated['url'] ?? preg_replace('/[^a-z0-9]+/', '-', strtolower($validated['name']));
+        $url = trim($url, '-');
+
+        $duplicate = Category::query()
+            ->where('parent_id', $parentId)
+            ->whereRaw('LOWER(TRIM(cat_name)) = ?', [mb_strtolower(trim($validated['name']))])
+            ->exists();
+
+        if ($duplicate) {
+            return response()->json(['message' => 'A sub-category with this name already exists.'], 422);
+        }
+
+        $category = Category::query()->create([
+            'cat_name'  => $validated['name'],
+            'cat_url'   => $url,
+            'parent_id' => $parentId,
+            'cat_order' => 0,
+        ]);
+
+        return response()->json([
+            'message'  => 'Sub-category created successfully.',
+            'category' => [
+                'id'        => (int) $category->cat_id,
+                'name'      => (string) $category->cat_name,
+                'url'       => (string) $category->cat_url,
+                'parent_id' => $parentId,
+            ],
+        ], 201);
     }
 }

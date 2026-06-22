@@ -531,7 +531,9 @@ Route::middleware(['auth:sanctum', 'admin.role:super_admin,admin'])->group(funct
 
 Route::middleware(['auth:sanctum', 'admin.role:super_admin,admin,csr,merchant_admin,web_content'])->group(function () {
     Route::get('/admin/orders', [AdminOrderController::class, 'index']);
+    Route::post('/admin/orders', [AdminOrderController::class, 'createAdminOrder']);
     Route::get('/admin/orders/counts', [AdminOrderController::class, 'counts']);
+    Route::get('/admin/orders/product-search', [AdminOrderController::class, 'productSearch']);
     Route::delete('/admin/orders/{id}', [AdminOrderController::class, 'destroy']);
 });
 
@@ -707,6 +709,12 @@ Route::middleware(['auth:sanctum', 'supplier.actor'])->group(function () {
     Route::post('/supplier/push-notifications/send', [SupplierPushNotificationController::class, 'send']);
     Route::get('/supplier/push-notifications/history', [SupplierPushNotificationController::class, 'getHistory']);
     Route::get('/supplier/push-notifications/available-customers', [SupplierPushNotificationController::class, 'getAvailableCustomers']);
+
+    // Categories (supplier-owned)
+    Route::post('/supplier/categories', [SupplierController::class, 'createCategory']);
+    Route::post('/supplier/categories/{parentId}/sub', [SupplierController::class, 'createSubCategory']);
+    Route::put('/supplier/categories/{id}', [SupplierController::class, 'updateCategory']);
+    Route::delete('/supplier/categories/{id}', [SupplierController::class, 'deleteSubCategory']);
 
     // Service Inquiries
     Route::get('/supplier/service-inquiries', [ServiceInquiryController::class, 'index']);

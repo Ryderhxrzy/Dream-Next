@@ -1468,6 +1468,134 @@ class AdminOrderController extends Controller
         return null;
     }
 
+    public function productSearch(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $admin = $this->resolveAdmin($request);
+        if (!$admin) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $q = trim((string) $request->query('q', ''));
+        if ($q === '') {
+            return response()->json(['products' => []]);
+        }
+
+        $like = '%' . $q . '%';
+
+        $products = Product::query()
+            ->select([
+                'pd_id', 'pd_name', 'pd_parent_sku', 'pd_image',
+                'pd_price_srp', 'pd_price_dp', 'pd_price_member', 'pd_prodpv', 'pd_status',
+            ])
+            ->with(['variants:pv_id,pv_pdid,pv_sku,pv_name,pv_color,pv_size,pv_style,pv_price_srp,pv_price_dp,pv_price_member,pv_prodpv,pv_status,pv_qty'])
+            ->where(function ($inner) use ($like) {
+                $inner->where('pd_name', 'like', $like)
+                    ->orWhere('pd_parent_sku', 'like', $like)
+                    ->orWhereHas('variants', fn ($v) => $v->where('pv_sku', 'like', $like));
+            })
+            ->orderByDesc('pd_id')
+            ->limit(15)
+            ->get()
+            ->map(fn (Product $p) => [
+                'id'           => $p->pd_id,
+                'name'         => $p->pd_name,
+                'sku'          => $p->pd_parent_sku,
+                'image'        => $p->pd_image,
+                'priceSrp'     => $p->pd_price_srp,
+                'priceDp'      => $p->pd_price_dp,
+                'priceMember'  => $p->pd_price_member,
+                'prodpv'       => $p->pd_prodpv,
+                'status'       => $p->pd_status,
+                'variants'     => $p->variants->map(fn ($v) => [
+                    'id'          => $v->pv_id,
+                    'sku'         => $v->pv_sku,
+                    'name'        => $v->pv_name,
+                    'color'       => $v->pv_color,
+                    'size'        => $v->pv_size,
+                    'style'       => $v->pv_style,
+                    'priceSrp'    => $v->pv_price_srp,
+                    'priceDp'     => $v->pv_price_dp,
+                    'priceMember' => $v->pv_price_member,
+                    'prodpv'      => $v->pv_prodpv,
+                    'status'      => $v->pv_status,
+                    'qty'         => $v->pv_qty,
+                ])->values(),
+            ]);
+
+        return response()->json(['products' => $products]);
+    }
+
+    public function createAdminOrder(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $admin = $this->resolveAdmin($request);
+        if (!$admin) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $validated = $request->validate([
+            'member_id'              => 'required|integer|exists:tbl_customer,c_userid',
+            'customer_name'          => 'nullable|string|max:255',
+            'customer_email'         => 'nullable|string|max:255',
+            'customer_phone'         => 'nullable|string|max:50',
+            'items'                  => 'required|array|min:1',
+            'items.*.product_id'     => 'required|integer',
+            'items.*.product_name'   => 'required|string|max:255',
+            'items.*.product_sku'    => 'nullable|string|max:100',
+            'items.*.product_image'  => 'nullable|string|max:500',
+            'items.*.product_pv'     => 'nullable|numeric|min:0',
+            'items.*.unit_price'     => 'required|numeric|min:0',
+            'items.*.quantity'       => 'required|integer|min:1',
+            'items.*.variant_color'  => 'nullable|string|max:100',
+            'items.*.variant_size'   => 'nullable|string|max:100',
+            'items.*.variant_type'   => 'nullable|string|max:100',
+            'shipping_fee'           => 'nullable|numeric|min:0',
+            'shipping_address'       => 'required|string|max:500',
+            'payment_method'         => 'required|string|max:50',
+            'notes'                  => 'nullable|string|max:500',
+        ]);
+
+        $checkoutId = 'cs_' . bin2hex(random_bytes(12));
+        $shippingFee = (float) ($validated['shipping_fee'] ?? 0);
+        $now = now();
+        $createdIds = [];
+
+        foreach ($validated['items'] as $item) {
+            $lineTotal = round((float) $item['unit_price'] * (int) $item['quantity'], 2);
+            $row = CheckoutHistory::create([
+                'ch_customer_id'        => (int) $validated['member_id'],
+                'ch_customer_name'      => $validated['customer_name'] ?? '',
+                'ch_customer_email'     => $validated['customer_email'] ?? '',
+                'ch_customer_phone'     => $validated['customer_phone'] ?? '',
+                'ch_customer_address'   => $validated['shipping_address'],
+                'ch_checkout_id'        => $checkoutId,
+                'ch_product_id'         => (int) $item['product_id'],
+                'ch_product_name'       => $item['product_name'],
+                'ch_product_sku'        => $item['product_sku'] ?? null,
+                'ch_product_image'      => $item['product_image'] ?? null,
+                'ch_product_pv'         => (float) ($item['product_pv'] ?? 0),
+                'ch_amount'             => $lineTotal,
+                'ch_shipping_fee'       => $shippingFee,
+                'ch_quantity'           => (int) $item['quantity'],
+                'ch_selected_color'     => $item['variant_color'] ?? null,
+                'ch_selected_size'      => $item['variant_size'] ?? null,
+                'ch_selected_type'      => $item['variant_type'] ?? null,
+                'ch_payment_method'     => $validated['payment_method'],
+                'ch_status'             => 'paid',
+                'ch_approval_status'    => 'pending_approval',
+                'ch_fulfillment_status' => 'pending',
+                'ch_source_label'       => 'Admin Order',
+                'ch_paid_at'            => $now,
+            ]);
+            $createdIds[] = (int) $row->ch_id;
+        }
+
+        return response()->json([
+            'message'     => 'Order created successfully.',
+            'checkout_id' => $checkoutId,
+            'item_ids'    => $createdIds,
+        ], 201);
+    }
+
     private function resolveAdmin(Request $request): ?Admin
     {
         $user = $request->user();

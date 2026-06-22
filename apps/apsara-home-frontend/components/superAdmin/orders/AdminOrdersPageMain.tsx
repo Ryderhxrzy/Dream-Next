@@ -608,6 +608,15 @@ export default function AdminOrdersPageMain({
   const [stableData, setStableData] = useState<AdminOrdersResponse | null>(
     initialData
   )
+  const [forceRefetch, setForceRefetch] = useState(false)
+
+  const patchOrder = (id: number, patch: Partial<AdminOrderItem>) => {
+    setStableData((prev) =>
+      prev
+        ? { ...prev, orders: prev.orders.map((o) => (o.id === id ? { ...o, ...patch } : o)) }
+        : prev
+    )
+  }
   const tableScrollRef = useRef<HTMLDivElement>(null)
   const tableDragState = useRef({ isDragging: false, startX: 0, scrollLeft: 0 })
   const [isTableDragging, setIsTableDragging] = useState(false)
@@ -705,7 +714,7 @@ export default function AdminOrdersPageMain({
       perPage: 20,
     },
     {
-      skip: Boolean(
+      skip: !forceRefetch && Boolean(
         initialData &&
         effectiveFilter === "all" &&
         page === 1 &&
@@ -717,6 +726,7 @@ export default function AdminOrdersPageMain({
   useEffect(() => {
     if (data) {
       setStableData(data)
+      setForceRefetch(false)
     }
   }, [data])
 
@@ -837,6 +847,8 @@ export default function AdminOrdersPageMain({
     setBusyId(id)
     try {
       await approveOrder({ id }).unwrap()
+      patchOrder(id, { approval_status: "approved", fulfillment_status: "processing" })
+      setForceRefetch(true)
       showSuccessToast("Order approved successfully.")
     } catch (err: unknown) {
       showErrorToast(
@@ -852,6 +864,8 @@ export default function AdminOrdersPageMain({
     setBusyId(id)
     try {
       await rejectOrder({ id }).unwrap()
+      patchOrder(id, { approval_status: "rejected" })
+      setForceRefetch(true)
       showSuccessToast("Order rejected successfully.")
     } catch (err: unknown) {
       showErrorToast(
@@ -876,6 +890,12 @@ export default function AdminOrdersPageMain({
         courier: options?.courier,
         clear_courier: options?.clearCourier,
       }).unwrap()
+      patchOrder(id, {
+        shipment_status: shipmentStatus,
+        ...(options?.courier ? { courier: options.courier } : {}),
+        ...(options?.clearCourier ? { courier: null } : {}),
+      })
+      setForceRefetch(true)
       showSuccessToast(
         `Shipment status updated to ${shipmentStatus.replace(/_/g, " ")}.`
       )
