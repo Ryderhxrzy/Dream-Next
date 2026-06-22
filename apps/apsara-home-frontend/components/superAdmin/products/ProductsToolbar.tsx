@@ -3,6 +3,7 @@
 import { useMemo } from "react"
 import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
 import { useGetProductBrandsQuery } from "@/store/api/productBrandsApi"
+import { useGetPendingProductCountQuery } from "@/store/api/productsApi"
 import { Button } from "@heroui/react/button"
 import { Card } from "@heroui/react/card"
 import { Chip } from "@heroui/react/chip"
@@ -130,6 +131,10 @@ export default function ProductsToolbar({
   const { data: brandsData } = useGetProductBrandsQuery(undefined, {
     skip: !showBrandFilter,
   })
+  const { data: pendingCountData } = useGetPendingProductCountQuery(undefined, {
+    pollingInterval: 30_000,
+  })
+  const pendingCount = pendingCountData?.pending ?? 0
 
   const categories = useMemo(() => {
     const seen = new Set<number>()
@@ -188,6 +193,11 @@ export default function ProductsToolbar({
                   }
                 >
                   {tab.label}
+                  {tab.value === "3" && pendingCount > 0 ? (
+                    <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white">
+                      {pendingCount}
+                    </span>
+                  ) : null}
                 </Button>
               ))}
 

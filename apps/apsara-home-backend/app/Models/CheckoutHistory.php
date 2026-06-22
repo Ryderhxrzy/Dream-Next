@@ -2,12 +2,24 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class CheckoutHistory extends Model
 {
     protected $table = 'tbl_checkout_history';
     protected $primaryKey = 'ch_id';
+
+    /**
+     * ch_status values for a checkout that was started but not yet paid and is
+     * still recoverable (a payment may still complete). Excludes terminal
+     * states such as paid / failed / cancelled / expired / abandoned.
+     */
+    public const OPEN_UNPAID_STATUSES = ['pending', 'active', 'unpaid'];
+
+    /** Terminal status for a checkout that was never paid within the window. */
+    public const STATUS_ABANDONED = 'abandoned';
 
     protected $fillable = [
         'ch_customer_id',
@@ -63,6 +75,10 @@ class CheckoutHistory extends Model
         'ch_zq_response',
         'ch_zq_synced_at',
         'ch_paid_at',
+        'ch_checkout_url',
+        'ch_abandoned_at',
+        'ch_reminder_count',
+        'ch_last_reminder_at',
     ];
 
     protected $casts = [
@@ -83,5 +99,33 @@ class CheckoutHistory extends Model
         'ch_zq_payload' => 'array',
         'ch_zq_response' => 'array',
         'ch_zq_synced_at' => 'datetime',
+        'ch_reminder_count' => 'integer',
+        'ch_abandoned_at' => 'datetime',
+        'ch_last_reminder_at' => 'datetime',
     ];
+
+    /**
+     * Scope to checkouts that were started but never paid and have aged past
+     * the grace period — i.e. abandoned (including ones already marked
+     * terminally abandoned). Offline payment methods (e.g. COD) are excluded.
+     */
+    public function scopeAbandoned(Builder $query): Builder
+    {
+        $grace = (int) config('checkout.abandoned.grace_minutes', 60);
+
+        $query->whereNull('ch_paid_at')
+            ->whereIn('ch_status', array_merge(self::OPEN_UNPAID_STATUSES, [self::STATUS_ABANDONED]))
+            ->where('created_at', '<=', now()->subMinutes($grace));
+
+        $offline = array_values(array_filter(array_map(
+            'strtolower',
+            (array) config('checkout.abandoned.offline_payment_methods', [])
+        )));
+
+        if (!empty($offline)) {
+            $query->whereNotIn(DB::raw('LOWER(ch_payment_method)'), $offline);
+        }
+
+        return $query;
+    }
 }

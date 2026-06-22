@@ -32,7 +32,16 @@ import { SearchField } from "@heroui/react/search-field"
 import { Select } from "@heroui/react/select"
 import { motion } from "framer-motion"
 import { useSession } from "next-auth/react"
+import Image from "next/image"
+import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
+
+import {
+  fulfillmentStatusTone,
+  paymentStatusTone,
+  ShippingAddressCard,
+  StatusPill,
+} from "./orderUi"
 
 /* ─── constants ────────────────────────────────────────────── */
 
@@ -49,6 +58,7 @@ const FILTER_LABELS: Record<string, string> = {
   refunded: "Refunded",
   returned_refunded: "Returned / Refunded",
   failed_payments: "Failed Payments",
+  abandoned: "Abandoned Checkouts",
   order_history: "Order History",
   completed: "Completed",
 }
@@ -62,6 +72,7 @@ const ORDER_FILTER_OPTIONS: Array<{ value: string; label: string }> = [
   { value: "completed", label: "Completed" },
   { value: "returned_refunded", label: "Returns / Refunds" },
   { value: "failed_payments", label: "Issues (Failed/Cancelled)" },
+  { value: "abandoned", label: "Abandoned (Unpaid)" },
 ]
 
 const SHIPMENT_STATUS_OPTIONS: Array<{
@@ -591,9 +602,19 @@ export default function AdminOrdersPageMain({
   const [sortBy, setSortBy] = useState<
     "default" | "customer_az" | "amount_low_high"
   >("default")
-  const [highlightedOrderId, setHighlightedOrderId] = useState<number | null>(
+  const [clearedHighlightId, setClearedHighlightId] = useState<number | null>(
     null
   )
+  const [pageFilter, setPageFilter] = useState<string | null>(null)
+  const [seededOrders, setSeededOrders] = useState<
+    AdminOrderItem[] | undefined
+  >(undefined)
+  const [thumbPreview, setThumbPreview] = useState<{
+    src: string
+    alt: string
+    top: number
+    left: number
+  } | null>(null)
   const [payloadPreview, setPayloadPreview] = useState<{
     checkoutId: string
     payload: Record<string, unknown> | Array<unknown> | null
@@ -620,6 +641,7 @@ export default function AdminOrdersPageMain({
   const tableScrollRef = useRef<HTMLDivElement>(null)
   const tableDragState = useRef({ isDragging: false, startX: 0, scrollLeft: 0 })
   const [isTableDragging, setIsTableDragging] = useState(false)
+  const [viewMode, setViewMode] = useState<"compact" | "detailed">("compact")
 
   const onTableMouseDown = useCallback((e: React.MouseEvent) => {
     const target = e.target as HTMLElement
@@ -732,9 +754,11 @@ export default function AdminOrdersPageMain({
 
   const effectiveData = data ?? stableData ?? initialData ?? null
 
-  useEffect(() => {
+  // Reset pagination whenever the active filter changes.
+  if (effectiveFilter !== pageFilter) {
+    setPageFilter(effectiveFilter)
     setPage(1)
-  }, [effectiveFilter])
+  }
 
   const [approveOrder] = useApproveAdminOrderMutation()
   const [rejectOrder] = useRejectAdminOrderMutation()
@@ -779,12 +803,20 @@ export default function AdminOrdersPageMain({
     })
   }, [effectiveData?.orders, overdueFirst, sortBy])
 
-  useEffect(() => {
-    if (!effectiveData?.orders?.length) return
+  // Seed the per-order courier + fulfillment-mode UI defaults once per loaded
+  // batch of orders. The guard (orders reference changed) keeps this from
+  // re-running every render, replacing the previous effect-based seeding.
+  const ordersForSeeding = effectiveData?.orders
+  if (
+    ordersForSeeding &&
+    ordersForSeeding.length &&
+    ordersForSeeding !== seededOrders
+  ) {
+    setSeededOrders(ordersForSeeding)
 
     setCourierByOrder((prev) => {
       const next = { ...prev }
-      for (const order of effectiveData.orders) {
+      for (const order of ordersForSeeding) {
         const courier = (
           (order.courier ?? "").toLowerCase() === "xde" ? "xde" : "jnt"
         ) as AdminCourier
@@ -794,14 +826,10 @@ export default function AdminOrdersPageMain({
       }
       return next
     })
-  }, [effectiveData?.orders])
-
-  useEffect(() => {
-    if (!effectiveData?.orders?.length) return
 
     setFulfillmentModeByOrder((prev) => {
       const next = { ...prev }
-      for (const order of effectiveData.orders) {
+      for (const order of ordersForSeeding) {
         const hasExistingZqFlow = Boolean(
           order.zq_platform_order_id || order.zq_order_id || order.zq_status
         )
@@ -817,23 +845,29 @@ export default function AdminOrdersPageMain({
       }
       return next
     })
-  }, [effectiveData?.orders])
+  }
+
+  // Derive the highlighted order straight from the URL. The 8s auto-dismiss
+  // sets state inside a timer callback (allowed) rather than synchronously in
+  // the effect body.
+  const highlightParamRaw = searchParams.get("highlightOrderId")
+  const highlightParam = highlightParamRaw ? Number(highlightParamRaw) : NaN
+  const highlightFromUrl = Number.isFinite(highlightParam)
+    ? highlightParam
+    : null
+  const highlightedOrderId =
+    highlightFromUrl != null && highlightFromUrl !== clearedHighlightId
+      ? highlightFromUrl
+      : null
 
   useEffect(() => {
-    const raw = searchParams.get("highlightOrderId")
-    if (!raw) {
-      return
-    }
-
-    const parsed = Number(raw)
-    if (!Number.isFinite(parsed)) {
-      return
-    }
-
-    setHighlightedOrderId(parsed)
-    const timeout = window.setTimeout(() => setHighlightedOrderId(null), 8000)
+    if (highlightFromUrl == null) return
+    const timeout = window.setTimeout(
+      () => setClearedHighlightId(highlightFromUrl),
+      8000
+    )
     return () => window.clearTimeout(timeout)
-  }, [searchParams])
+  }, [highlightFromUrl])
 
   useEffect(() => {
     if (!highlightedOrderId) return
@@ -1402,7 +1436,7 @@ export default function AdminOrdersPageMain({
               />
             </div>
 
-            <div className="min-w-[190px]">
+            <div className="min-w-47.5">
               <AdminOrderSelect
                 ariaLabel="Sort admin orders"
                 value={sortBy}
@@ -1489,981 +1523,1217 @@ export default function AdminOrdersPageMain({
           {isFetching && <div className="google-loading-bar" />}
 
           <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
+            <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
               <h2 className="text-sm font-bold text-slate-800 dark:text-white">
                 Order Queue
               </h2>
-              <Chip
-                size="sm"
-                variant="soft"
-                className="border border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
-              >
-                {visibleOrders.length} orders
-              </Chip>
+              <div className="flex items-center gap-3">
+                <div className="inline-flex items-center rounded-xl border border-slate-200 bg-white p-0.5 dark:border-slate-700 dark:bg-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("compact")}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                      viewMode === "compact"
+                        ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+                        : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                    }`}
+                  >
+                    Compact
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("detailed")}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                      viewMode === "detailed"
+                        ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+                        : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                    }`}
+                  >
+                    Detailed
+                  </button>
+                </div>
+                <Chip
+                  size="sm"
+                  variant="soft"
+                  className="border border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+                >
+                  {visibleOrders.length} orders
+                </Chip>
+              </div>
             </div>
 
-            <div
-              ref={tableScrollRef}
-              className={`overflow-x-auto overflow-y-visible ${isTableDragging ? "cursor-grabbing select-none" : "cursor-grab"}`}
-              onMouseDown={onTableMouseDown}
-              onMouseMove={onTableMouseMove}
-              onMouseUp={stopTableDrag}
-              onMouseLeave={stopTableDrag}
-            >
-              <table
-                aria-label="Admin orders table"
-                className="min-w-full text-sm"
-              >
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/40">
-                    <th className="min-w-[220px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
-                      Product
-                    </th>
-                    <th className="min-w-[150px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
-                      Checkout
-                    </th>
-                    <th className="min-w-[150px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
-                      Source
-                    </th>
-                    <th className="min-w-[140px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
-                      Date
-                    </th>
-                    {effectiveFilter !== "returned_refunded" ? (
-                      <th className="min-w-[260px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
-                        Customer / Delivery
-                      </th>
-                    ) : null}
-                    <th className="min-w-[120px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
-                      Amount
-                    </th>
-                    {effectiveFilter === "returned_refunded" ? (
-                      <th className="min-w-[260px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
-                        Intent
-                      </th>
-                    ) : null}
-                    {effectiveFilter !== "returned_refunded" ? (
-                      <th className="min-w-[140px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
-                        Approval
-                      </th>
-                    ) : null}
-                    {effectiveFilter !== "returned_refunded" ? (
-                      <th className="min-w-[140px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
-                        SLA
-                      </th>
-                    ) : null}
-                    {effectiveFilter !== "returned_refunded" ? (
-                      <th className="min-w-[340px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
-                        Tracking
-                      </th>
-                    ) : null}
-                    <th className="min-w-[200px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70">
-                  {visibleOrders.length ? (
-                    visibleOrders.map((order) => {
-                      const isBusy = busyId === order.id
-                      const canApproveThisOrder =
-                        canApprove &&
-                        order.approval_status === "pending_approval"
-                      const isDelivered =
-                        order.fulfillment_status === "delivered"
-                      const isCancelled =
-                        order.fulfillment_status === "cancelled"
-                      const isRefunded = order.fulfillment_status === "refunded"
-                      const isRefundQueue =
-                        effectiveFilter === "returned_refunded" || isRefunded
-                      const refundImageUrls = Array.isArray(
-                        order.refund_image_urls
-                      )
-                        ? order.refund_image_urls.filter(Boolean)
-                        : []
-                      const refundVideoUrls = Array.isArray(
-                        order.refund_video_urls
-                      )
-                        ? order.refund_video_urls.filter(Boolean)
-                        : []
-                      const canReviewRefund = isRefundQueue
-                      const canTrackThisOrder =
-                        canTrack &&
-                        order.approval_status === "approved" &&
-                        !isDelivered &&
-                        !isCancelled &&
-                        !isRefunded
-                      const approval =
-                        APPROVAL_CONFIG[order.approval_status] ??
-                        APPROVAL_CONFIG.pending
-                      const sla = order.sla?.state
-                        ? SLA_CONFIG[order.sla.state as keyof typeof SLA_CONFIG]
-                        : null
-                      const isCourierBooked = Boolean(
-                        order.courier && order.tracking_no
-                      )
-                      const rawCourierStatus = extractCourierStatus(
-                        order.shipment_payload
-                      )
-                      const zqStatusKey = String(order.zq_status ?? "")
-                        .trim()
-                        .toLowerCase()
-                      const zqBadgeClass =
-                        ZQ_STATUS_STYLES[zqStatusKey] ??
-                        "bg-slate-50 text-slate-600 border-slate-200"
-                      const hasZqOrder = Boolean(
-                        order.zq_platform_order_id ||
-                        order.zq_order_id ||
-                        zqStatusKey
-                      )
-                      const canUseGlobalSupplierFlow =
-                        hasZqSourceMetadata(order) || hasZqOrder
-                      const availableFulfillmentModeOptions =
-                        canUseGlobalSupplierFlow
-                          ? baseFulfillmentModeOptions
-                          : baseFulfillmentModeOptions.filter(
-                              (option) => option.value !== "zq"
-                            )
-                      const selectedFulfillmentMode =
-                        fulfillmentModeByOrder[order.id] ??
-                        (order.fulfillment_mode as
-                          | FulfillmentMode
-                          | undefined) ??
-                        (hasZqOrder ? "zq" : "manual")
-                      const effectiveFulfillmentMode =
-                        selectedFulfillmentMode === "zq" &&
-                        !canUseGlobalSupplierFlow
-                          ? "manual"
-                          : selectedFulfillmentMode
-                      const isManualMode = effectiveFulfillmentMode === "manual"
-                      const isLocalCourierMode =
-                        effectiveFulfillmentMode === "local_courier"
-                      const isZqMode = effectiveFulfillmentMode === "zq"
-                      const fulfillmentModeLabel =
-                        FULFILLMENT_MODE_OPTIONS.find(
-                          (option) => option.value === effectiveFulfillmentMode
-                        )?.label ?? "Manual"
-                      const isFulfillmentModeLocked =
-                        effectiveFilter === "shipped" ||
-                        order.fulfillment_status === "shipped" ||
-                        order.fulfillment_status === "out_for_delivery" ||
-                        order.fulfillment_status === "delivered"
-                      const canPushZq =
-                        canTrackThisOrder &&
-                        isZqMode &&
-                        canUseGlobalSupplierFlow &&
-                        !hasZqOrder
-                      const canUseZqLookup =
-                        canTrackThisOrder && isZqMode && hasZqOrder
-                      const canUseCourierFlow =
-                        canTrackThisOrder && isLocalCourierMode && !hasZqOrder
-                      const canUseManualFlow =
-                        canTrackThisOrder && isManualMode && !hasZqOrder
-                      const showNewBadge = isNewOrder(order.created_at)
-                      const createdDate = formatDateOnly(order.created_at)
-                      const createdTime = formatTimeOnly(order.created_at)
-                      const paidDate = order.paid_at
-                        ? formatDateOnly(order.paid_at)
-                        : null
-                      const isCourierCancelled =
-                        order.shipment_status === "cancelled" ||
-                        rawCourierStatus === "package_cancelled" ||
-                        rawCourierStatus === "package cancelled"
+            {viewMode === "compact" ? (
+              visibleOrders.length ? (
+                <div>
+                  {/* Column header */}
+                  <div className="hidden items-center gap-4 border-b border-slate-100 bg-slate-50/70 px-5 py-2.5 text-[10px] font-bold tracking-wide text-slate-400 uppercase sm:flex dark:border-slate-800 dark:bg-slate-800/30 dark:text-slate-500">
+                    <div className="h-10 w-10 shrink-0" />
+                    <div className="w-[150px] shrink-0">Order</div>
+                    <div className="w-[120px] shrink-0">Date</div>
+                    <div className="min-w-0 flex-1">Customer</div>
+                    <div className="w-[120px] shrink-0">Payment</div>
+                    <div className="hidden w-[120px] shrink-0 md:block">
+                      Fulfillment
+                    </div>
+                    <div className="hidden w-[60px] shrink-0 text-right lg:block">
+                      Items
+                    </div>
+                    <div className="w-[110px] shrink-0 text-right">Total</div>
+                    <div className="h-4 w-4 shrink-0" />
+                  </div>
 
+                  <div className="divide-y divide-slate-100 dark:divide-slate-800/70">
+                    {visibleOrders.map((order) => {
+                      const showNewBadge = isNewOrder(order.created_at)
+                      const itemLabel = order.quantity > 1 ? "items" : "item"
                       return (
-                        <tr
-                          id={`admin-order-row-${order.id}`}
+                        <Link
                           key={order.id}
-                          className={`group border-b border-slate-100 transition-colors dark:border-slate-800 ${
+                          id={`admin-order-row-${order.id}`}
+                          href={`/admin/orders/view/${encodeURIComponent(
+                            order.checkout_id
+                          )}`}
+                          className={`group flex w-full items-center gap-4 px-4 py-3 text-left transition-colors sm:px-5 ${
                             highlightedOrderId === order.id
-                              ? "animate-pulse bg-teal-50/80 ring-1 ring-teal-200 ring-inset dark:bg-teal-500/10 dark:ring-teal-500/30"
-                              : "bg-white hover:bg-slate-50/60 dark:bg-slate-900 dark:hover:bg-slate-800/50"
+                              ? "bg-teal-50/80 ring-1 ring-teal-200 ring-inset dark:bg-teal-500/10 dark:ring-teal-500/30"
+                              : "hover:bg-slate-50/70 dark:hover:bg-slate-800/50"
                           }`}
                         >
-                          {/* Product */}
-                          <td className="px-5 py-3.5 align-middle">
-                            <div className="flex items-center gap-3">
-                              <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 dark:border-[#31405f] dark:bg-[#1b2640]">
-                                {order.product_image ? (
-                                  // eslint-disable-next-line @next/next/no-img-element
-                                  <img
-                                    src={order.product_image}
-                                    alt={order.product_name}
-                                    className="h-full w-full object-cover"
-                                  />
-                                ) : (
-                                  <div className="flex h-full w-full items-center justify-center">
-                                    <svg
-                                      className="h-5 w-5 text-slate-300"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={1.5}
-                                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                      />
-                                    </svg>
-                                  </div>
-                                )}
-                              </div>
-                              <div className="min-w-0 space-y-1">
-                                <div className="flex items-center gap-1.5">
-                                  <p className="line-clamp-1 text-[15px] leading-5 font-semibold text-slate-800 dark:text-slate-100">
-                                    {order.product_name}
-                                  </p>
-                                  {showNewBadge ? (
-                                    <Chip
-                                      size="sm"
-                                      variant="soft"
-                                      className="shrink-0 border border-sky-200 bg-sky-50 text-[10px] font-bold tracking-wide text-sky-700 uppercase"
-                                    >
-                                      New
-                                    </Chip>
-                                  ) : null}
-                                </div>
-                                <p className="text-[12px] leading-4 text-slate-400 dark:text-slate-500">
-                                  Qty {order.quantity}
-                                </p>
-                              </div>
-                            </div>
-                          </td>
-
-                          {/* Checkout */}
-                          <td className="px-5 py-3.5 align-middle">
-                            <p className="font-mono text-xs font-medium text-slate-800 dark:text-slate-100">
-                              {order.checkout_id}
-                            </p>
-                            <p className="mt-0.5 text-[11px] tracking-wide text-slate-400 uppercase dark:text-slate-500">
-                              {order.payment_status}
-                            </p>
-                          </td>
-
-                          {/* Source */}
-                          <td className="px-5 py-3.5 align-middle">
-                            {order.source_label ? (
-                              <div className="space-y-1">
-                                <p className="text-[12px] font-semibold text-sky-600 dark:text-sky-400">
-                                  {order.source_label}
-                                </p>
-                                {order.source_host ? (
-                                  <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                                    {order.source_host}
-                                  </p>
-                                ) : null}
-                              </div>
+                          {/* Product thumbnail */}
+                          <div
+                            className="h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 transition hover:ring-2 hover:ring-sky-300 dark:border-slate-700 dark:bg-slate-800"
+                            onMouseEnter={(e) => {
+                              if (!order.product_image) return
+                              const rect =
+                                e.currentTarget.getBoundingClientRect()
+                              setThumbPreview({
+                                src: order.product_image,
+                                alt: order.product_name,
+                                top: rect.top + rect.height / 2,
+                                left: rect.left,
+                              })
+                            }}
+                            onMouseLeave={() => setThumbPreview(null)}
+                          >
+                            {order.product_image ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={order.product_image}
+                                alt={order.product_name}
+                                className="h-full w-full object-cover"
+                              />
                             ) : (
-                              <span className="text-[11px] text-slate-300 dark:text-slate-600">
-                                -
-                              </span>
+                              <div className="flex h-full w-full items-center justify-center">
+                                <svg
+                                  className="h-4 w-4 text-slate-300"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={1.5}
+                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                  />
+                                </svg>
+                              </div>
                             )}
-                          </td>
+                          </div>
+
+                          {/* Order ID + payment method */}
+                          <div className="flex w-32.5 shrink-0 flex-col gap-1 sm:w-37.5">
+                            <span className="inline-flex items-center gap-1.5">
+                              <span className="truncate font-mono text-[13px] font-semibold text-sky-600 group-hover:underline dark:text-sky-400">
+                                {order.checkout_id}
+                              </span>
+                              {showNewBadge ? (
+                                <Chip
+                                  size="sm"
+                                  variant="soft"
+                                  className="shrink-0 border border-sky-200 bg-sky-50 text-[9px] font-bold tracking-wide text-sky-700 uppercase"
+                                >
+                                  New
+                                </Chip>
+                              ) : null}
+                            </span>
+                            <span className="truncate text-[11px] font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">
+                              {order.payment_method || "—"}
+                            </span>
+                          </div>
 
                           {/* Date */}
-                          <td className="px-5 py-3.5 align-middle whitespace-nowrap">
+                          <div className="hidden w-[120px] shrink-0 sm:block">
                             <p className="text-[12px] font-medium text-slate-700 dark:text-slate-200">
-                              {createdDate}
+                              {formatDateOnly(order.created_at)}
                             </p>
-                            <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-400">
-                              {createdTime} PH
+                            <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                              {formatTimeOnly(order.created_at)} PH
                             </p>
-                            {order.paid_at && (
-                              <div className="mt-1.5 border-t border-slate-100 pt-1.5 dark:border-slate-700/60">
-                                <p className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
-                                  Paid · {paidDate}
-                                </p>
-                              </div>
-                            )}
-                          </td>
+                          </div>
 
-                          {/* Customer */}
-                          {effectiveFilter !== "returned_refunded" ? (
-                            <td className="px-5 py-3.5 align-middle">
-                              <div className="flex items-center gap-3">
-                                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-teal-400 to-teal-600 text-[10px] font-bold text-white">
-                                  {getInitials(order.customer_name)}
-                                </div>
-                                <div className="min-w-0 space-y-1">
-                                  <p className="line-clamp-1 text-[15px] leading-5 font-semibold text-slate-800 dark:text-slate-100">
-                                    {order.customer_name || "N/A"}
-                                  </p>
-                                  <p className="line-clamp-1 text-[12px] leading-4 text-slate-400 dark:text-slate-500">
-                                    {order.customer_email ||
-                                      "No email provided"}
-                                  </p>
-                                  <p className="line-clamp-1 text-[12px] leading-4 text-slate-500 dark:text-slate-400">
-                                    {order.customer_phone ||
-                                      "No phone provided"}
-                                  </p>
-                                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/70">
-                                    <p className="text-[10px] font-bold tracking-wide text-slate-400 uppercase dark:text-slate-500">
-                                      Delivery Address
-                                    </p>
-                                    <p className="mt-1 line-clamp-3 text-[12px] leading-5 text-slate-600 dark:text-slate-300">
-                                      {order.customer_address ||
-                                        "No delivery address provided"}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            </td>
-                          ) : null}
+                          {/* Customer + product */}
+                          <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-teal-400 to-teal-600 text-[10px] font-bold text-white">
+                              {getInitials(order.customer_name)}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+                                {order.customer_name || "N/A"}
+                              </p>
+                              <p className="truncate text-[11px] text-slate-400 dark:text-slate-500">
+                                {order.customer_email || order.product_name}
+                              </p>
+                            </div>
+                          </div>
 
-                          {/* Amount */}
-                          <td className="px-5 py-3.5 align-middle">
-                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                          {/* Payment status */}
+                          <div className="hidden w-[120px] shrink-0 sm:block">
+                            <StatusPill
+                              label={order.payment_status}
+                              tone={paymentStatusTone(order.payment_status)}
+                              dot
+                            />
+                          </div>
+
+                          {/* Fulfillment status */}
+                          <div className="hidden w-[120px] shrink-0 md:block">
+                            <StatusPill
+                              label={order.fulfillment_status.replace(
+                                /_/g,
+                                " "
+                              )}
+                              tone={fulfillmentStatusTone(
+                                order.fulfillment_status
+                              )}
+                            />
+                          </div>
+
+                          {/* Items */}
+                          <div className="hidden w-[60px] shrink-0 text-right text-[12px] font-medium text-slate-500 lg:block dark:text-slate-400">
+                            {order.quantity} {itemLabel}
+                          </div>
+
+                          {/* Total */}
+                          <div className="w-[96px] shrink-0 text-right sm:w-[110px]">
+                            <p className="text-sm font-bold text-slate-800 dark:text-slate-100">
                               {formatMoney(order.amount)}
                             </p>
-                            {canReviewRefund ? (
-                              <p className="mt-0.5 text-[11px] font-semibold text-amber-600">
-                                Pending refund request
-                              </p>
-                            ) : null}
-                            <p className="mt-0.5 text-[11px] tracking-wide text-slate-400 uppercase dark:text-slate-500">
-                              {order.payment_method || "-"}
+                            <p className="text-[11px] text-slate-400 lg:hidden dark:text-slate-500">
+                              {order.quantity} {itemLabel}
                             </p>
-                          </td>
+                          </div>
 
-                          {effectiveFilter === "returned_refunded" ? (
+                          {/* Chevron */}
+                          <svg
+                            className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-slate-400 dark:text-slate-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 5l7 7-7 7"
+                            />
+                          </svg>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <EmptyOrdersState />
+              )
+            ) : (
+              <div
+                ref={tableScrollRef}
+                className={`overflow-x-auto overflow-y-visible ${isTableDragging ? "cursor-grabbing select-none" : "cursor-grab"}`}
+                onMouseDown={onTableMouseDown}
+                onMouseMove={onTableMouseMove}
+                onMouseUp={stopTableDrag}
+                onMouseLeave={stopTableDrag}
+              >
+                <table
+                  aria-label="Admin orders table"
+                  className="min-w-full text-sm"
+                >
+                  <thead>
+                    <tr className="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/40">
+                      <th className="min-w-[220px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
+                        Product
+                      </th>
+                      <th className="min-w-[150px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
+                        Checkout
+                      </th>
+                      <th className="min-w-[150px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
+                        Source
+                      </th>
+                      <th className="min-w-[140px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
+                        Date
+                      </th>
+                      {effectiveFilter !== "returned_refunded" ? (
+                        <th className="min-w-[260px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
+                          Customer / Delivery
+                        </th>
+                      ) : null}
+                      <th className="min-w-[120px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
+                        Amount
+                      </th>
+                      {effectiveFilter === "returned_refunded" ? (
+                        <th className="min-w-[260px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
+                          Intent
+                        </th>
+                      ) : null}
+                      {effectiveFilter !== "returned_refunded" ? (
+                        <th className="min-w-[140px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
+                          Approval
+                        </th>
+                      ) : null}
+                      {effectiveFilter !== "returned_refunded" ? (
+                        <th className="min-w-[140px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
+                          SLA
+                        </th>
+                      ) : null}
+                      {effectiveFilter !== "returned_refunded" ? (
+                        <th className="min-w-[340px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
+                          Tracking
+                        </th>
+                      ) : null}
+                      <th className="min-w-[200px] px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70">
+                    {visibleOrders.length ? (
+                      visibleOrders.map((order) => {
+                        const isBusy = busyId === order.id
+                        const canApproveThisOrder =
+                          canApprove &&
+                          order.approval_status === "pending_approval"
+                        const isDelivered =
+                          order.fulfillment_status === "delivered"
+                        const isCancelled =
+                          order.fulfillment_status === "cancelled"
+                        const isRefunded =
+                          order.fulfillment_status === "refunded"
+                        const isRefundQueue =
+                          effectiveFilter === "returned_refunded" || isRefunded
+                        const refundImageUrls = Array.isArray(
+                          order.refund_image_urls
+                        )
+                          ? order.refund_image_urls.filter(Boolean)
+                          : []
+                        const refundVideoUrls = Array.isArray(
+                          order.refund_video_urls
+                        )
+                          ? order.refund_video_urls.filter(Boolean)
+                          : []
+                        const canReviewRefund = isRefundQueue
+                        const canTrackThisOrder =
+                          canTrack &&
+                          order.approval_status === "approved" &&
+                          !isDelivered &&
+                          !isCancelled &&
+                          !isRefunded
+                        const approval =
+                          APPROVAL_CONFIG[order.approval_status] ??
+                          APPROVAL_CONFIG.pending
+                        const sla = order.sla?.state
+                          ? SLA_CONFIG[
+                              order.sla.state as keyof typeof SLA_CONFIG
+                            ]
+                          : null
+                        const isCourierBooked = Boolean(
+                          order.courier && order.tracking_no
+                        )
+                        const rawCourierStatus = extractCourierStatus(
+                          order.shipment_payload
+                        )
+                        const zqStatusKey = String(order.zq_status ?? "")
+                          .trim()
+                          .toLowerCase()
+                        const zqBadgeClass =
+                          ZQ_STATUS_STYLES[zqStatusKey] ??
+                          "bg-slate-50 text-slate-600 border-slate-200"
+                        const hasZqOrder = Boolean(
+                          order.zq_platform_order_id ||
+                          order.zq_order_id ||
+                          zqStatusKey
+                        )
+                        const canUseGlobalSupplierFlow =
+                          hasZqSourceMetadata(order) || hasZqOrder
+                        const availableFulfillmentModeOptions =
+                          canUseGlobalSupplierFlow
+                            ? baseFulfillmentModeOptions
+                            : baseFulfillmentModeOptions.filter(
+                                (option) => option.value !== "zq"
+                              )
+                        const selectedFulfillmentMode =
+                          fulfillmentModeByOrder[order.id] ??
+                          (order.fulfillment_mode as
+                            | FulfillmentMode
+                            | undefined) ??
+                          (hasZqOrder ? "zq" : "manual")
+                        const effectiveFulfillmentMode =
+                          selectedFulfillmentMode === "zq" &&
+                          !canUseGlobalSupplierFlow
+                            ? "manual"
+                            : selectedFulfillmentMode
+                        const isManualMode =
+                          effectiveFulfillmentMode === "manual"
+                        const isLocalCourierMode =
+                          effectiveFulfillmentMode === "local_courier"
+                        const isZqMode = effectiveFulfillmentMode === "zq"
+                        const fulfillmentModeLabel =
+                          FULFILLMENT_MODE_OPTIONS.find(
+                            (option) =>
+                              option.value === effectiveFulfillmentMode
+                          )?.label ?? "Manual"
+                        const isFulfillmentModeLocked =
+                          effectiveFilter === "shipped" ||
+                          order.fulfillment_status === "shipped" ||
+                          order.fulfillment_status === "out_for_delivery" ||
+                          order.fulfillment_status === "delivered"
+                        const canPushZq =
+                          canTrackThisOrder &&
+                          isZqMode &&
+                          canUseGlobalSupplierFlow &&
+                          !hasZqOrder
+                        const canUseZqLookup =
+                          canTrackThisOrder && isZqMode && hasZqOrder
+                        const canUseCourierFlow =
+                          canTrackThisOrder && isLocalCourierMode && !hasZqOrder
+                        const canUseManualFlow =
+                          canTrackThisOrder && isManualMode && !hasZqOrder
+                        const showNewBadge = isNewOrder(order.created_at)
+                        const createdDate = formatDateOnly(order.created_at)
+                        const createdTime = formatTimeOnly(order.created_at)
+                        const paidDate = order.paid_at
+                          ? formatDateOnly(order.paid_at)
+                          : null
+                        const isCourierCancelled =
+                          order.shipment_status === "cancelled" ||
+                          rawCourierStatus === "package_cancelled" ||
+                          rawCourierStatus === "package cancelled"
+
+                        return (
+                          <tr
+                            id={`admin-order-row-${order.id}`}
+                            key={order.id}
+                            className={`group border-b border-slate-100 transition-colors dark:border-slate-800 ${
+                              highlightedOrderId === order.id
+                                ? "animate-pulse bg-teal-50/80 ring-1 ring-teal-200 ring-inset dark:bg-teal-500/10 dark:ring-teal-500/30"
+                                : "bg-white hover:bg-slate-50/60 dark:bg-slate-900 dark:hover:bg-slate-800/50"
+                            }`}
+                          >
+                            {/* Product */}
                             <td className="px-5 py-3.5 align-middle">
-                              <p className="line-clamp-3 text-[12px] leading-5 text-slate-600 dark:text-slate-300">
-                                {order.refund_reason || "No reason provided."}
+                              <div className="flex items-center gap-3">
+                                <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 dark:border-[#31405f] dark:bg-[#1b2640]">
+                                  {order.product_image ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      src={order.product_image}
+                                      alt={order.product_name}
+                                      className="h-full w-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="flex h-full w-full items-center justify-center">
+                                      <svg
+                                        className="h-5 w-5 text-slate-300"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={1.5}
+                                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                        />
+                                      </svg>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="min-w-0 space-y-1">
+                                  <div className="flex items-center gap-1.5">
+                                    <p className="line-clamp-1 text-[15px] leading-5 font-semibold text-slate-800 dark:text-slate-100">
+                                      {order.product_name}
+                                    </p>
+                                    {showNewBadge ? (
+                                      <Chip
+                                        size="sm"
+                                        variant="soft"
+                                        className="shrink-0 border border-sky-200 bg-sky-50 text-[10px] font-bold tracking-wide text-sky-700 uppercase"
+                                      >
+                                        New
+                                      </Chip>
+                                    ) : null}
+                                  </div>
+                                  <p className="text-[12px] leading-4 text-slate-400 dark:text-slate-500">
+                                    Qty {order.quantity}
+                                  </p>
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* Checkout */}
+                            <td className="px-5 py-3.5 align-middle">
+                              <p className="font-mono text-xs font-medium text-slate-800 dark:text-slate-100">
+                                {order.checkout_id}
+                              </p>
+                              <p className="mt-0.5 text-[11px] tracking-wide text-slate-400 uppercase dark:text-slate-500">
+                                {order.payment_status}
                               </p>
                             </td>
-                          ) : null}
 
-                          {/* Approval badge */}
-                          {effectiveFilter !== "returned_refunded" ? (
-                            <td className="min-w-[140px] px-5 py-3.5 align-middle">
-                              <Chip
-                                size="sm"
-                                variant="soft"
-                                className={`inline-flex min-w-[92px] items-center justify-center border text-[11px] font-semibold whitespace-nowrap ${approval.badge}`}
-                              >
-                                <span
-                                  className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${approval.dot}`}
-                                />
-                                {approval.label}
-                              </Chip>
-                            </td>
-                          ) : null}
-
-                          {/* SLA */}
-                          {effectiveFilter !== "returned_refunded" ? (
-                            <td className="min-w-[140px] px-5 py-3.5 align-middle">
-                              {sla ? (
+                            {/* Source */}
+                            <td className="px-5 py-3.5 align-middle">
+                              {order.source_label ? (
                                 <div className="space-y-1">
-                                  <Chip
-                                    size="sm"
-                                    variant="soft"
-                                    className={`inline-flex min-w-[92px] items-center justify-center border text-[11px] font-semibold whitespace-nowrap ${sla.badge}`}
-                                  >
-                                    <span
-                                      className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${sla.dot}`}
-                                    />
-                                    {sla.label}
-                                  </Chip>
-                                  {order.sla?.state === "overdue" && (
-                                    <p className="text-[11px] text-red-500">
-                                      +
-                                      {formatDuration(
-                                        order.sla?.overdue_minutes
-                                      )}
-                                    </p>
-                                  )}
-                                  {order.sla?.state === "due_soon" && (
-                                    <p className="text-[11px] text-amber-600">
-                                      Left:{" "}
-                                      {formatDuration(
-                                        order.sla?.remaining_minutes
-                                      )}
-                                    </p>
-                                  )}
-                                  {order.sla?.state === "on_track" && (
+                                  <p className="text-[12px] font-semibold text-sky-600 dark:text-sky-400">
+                                    {order.source_label}
+                                  </p>
+                                  {order.source_host ? (
                                     <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                                      Elapsed:{" "}
-                                      {formatDuration(
-                                        order.sla?.elapsed_minutes
-                                      )}
+                                      {order.source_host}
                                     </p>
-                                  )}
+                                  ) : null}
                                 </div>
                               ) : (
                                 <span className="text-[11px] text-slate-300 dark:text-slate-600">
-                                  —
+                                  -
                                 </span>
                               )}
                             </td>
-                          ) : null}
 
-                          {/* Tracking select */}
-                          {effectiveFilter !== "returned_refunded" ? (
-                            <td className="px-5 py-3.5 align-middle">
-                              <div className="space-y-1.5">
-                                {isFulfillmentModeLocked ? (
-                                  <AdminOrderStaticValue
-                                    label={fulfillmentModeLabel}
-                                  />
-                                ) : (
-                                  <AdminOrderSelect
-                                    ariaLabel={`Fulfillment mode for order ${order.checkout_id}`}
-                                    value={effectiveFulfillmentMode}
-                                    options={availableFulfillmentModeOptions}
-                                    isDisabled={
-                                      isBusy ||
-                                      order.approval_status !== "approved" ||
-                                      hasZqOrder
-                                    }
-                                    onChange={(value) =>
-                                      handleFulfillmentModeChange(
-                                        order.id,
-                                        value as FulfillmentMode
-                                      )
-                                    }
-                                  />
-                                )}
-
-                                {isZqMode ? (
-                                  <div className="rounded-2xl border border-violet-200 bg-violet-50 p-3 dark:border-violet-500/30 dark:bg-violet-500/10">
-                                    <div className="flex items-center justify-between gap-2">
-                                      <p className="text-[10px] font-bold tracking-wide text-violet-700 uppercase">
-                                        Global Supplier Flow
-                                      </p>
-                                      <span
-                                        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${zqBadgeClass}`}
-                                      >
-                                        {order.zq_status ?? "Not sent"}
-                                      </span>
-                                    </div>
-                                    <p className="mt-2 text-[11px] leading-relaxed text-violet-700">
-                                      {hasZqOrder
-                                        ? "Global Supplier handoff is active for this order. Use Global Supplier detail and tracking below."
-                                        : order.approval_status === "approved"
-                                          ? "Push this order to Global Supplier first to unlock detail and tracking."
-                                          : "Approve the order first before pushing it to Global Supplier."}
-                                    </p>
-                                    {order.zq_platform_order_id ? (
-                                      <p className="mt-2 text-[11px] font-semibold break-all text-slate-800 dark:text-slate-100">
-                                        Platform ID:{" "}
-                                        {order.zq_platform_order_id}
-                                      </p>
-                                    ) : null}
-                                    {order.zq_order_id ? (
-                                      <p className="mt-1 text-[11px] break-all text-slate-600 dark:text-slate-300">
-                                        Global Supplier Order:{" "}
-                                        {order.zq_order_id}
-                                      </p>
-                                    ) : null}
-                                  </div>
-                                ) : isManualMode ? (
-                                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-[#31405f] dark:bg-[#1b2640]">
-                                    <div className="flex items-center justify-between gap-2">
-                                      <p className="text-[10px] font-bold tracking-wide text-slate-500 uppercase dark:text-slate-400">
-                                        Manual Flow
-                                      </p>
-                                      <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:border-[#3a4b6d] dark:bg-[#121a2b] dark:text-slate-300">
-                                        Internal
-                                      </span>
-                                    </div>
-                                    <p className="mt-2 text-[11px] leading-relaxed text-slate-600 dark:text-slate-400">
-                                      This order is managed manually. No courier
-                                      booking or Global Supplier handoff will be
-                                      used.
-                                    </p>
-                                    <AdminOrderSelect
-                                      ariaLabel={`Manual shipment status for order ${order.checkout_id}`}
-                                      value={
-                                        (order.shipment_status as
-                                          | AdminShipmentStatus
-                                          | undefined) ?? "for_pickup"
-                                      }
-                                      options={SHIPMENT_STATUS_OPTIONS}
-                                      selectedTone="shipment"
-                                      isDisabled={isBusy || !canUseManualFlow}
-                                      onChange={(value) =>
-                                        handleShipmentStatusChange(
-                                          order.id,
-                                          value as AdminShipmentStatus,
-                                          { clearCourier: true }
-                                        )
-                                      }
-                                    />
-                                  </div>
-                                ) : (
-                                  <>
-                                    <AdminOrderSelect
-                                      ariaLabel={`Courier for order ${order.checkout_id}`}
-                                      value={
-                                        courierByOrder[order.id] ??
-                                        (((
-                                          order.courier ?? ""
-                                        ).toLowerCase() === "xde"
-                                          ? "xde"
-                                          : "jnt") as AdminCourier)
-                                      }
-                                      options={COURIER_OPTIONS}
-                                      isDisabled={isBusy || !canUseCourierFlow}
-                                      onChange={(value) =>
-                                        setCourierByOrder((prev) => ({
-                                          ...prev,
-                                          [order.id]: value as AdminCourier,
-                                        }))
-                                      }
-                                    />
-                                    <AdminOrderSelect
-                                      ariaLabel={`Shipment status for order ${order.checkout_id}`}
-                                      value={
-                                        (order.shipment_status as
-                                          | AdminShipmentStatus
-                                          | undefined) ?? "for_pickup"
-                                      }
-                                      options={SHIPMENT_STATUS_OPTIONS}
-                                      selectedTone="shipment"
-                                      isDisabled={
-                                        isBusy ||
-                                        !canUseCourierFlow ||
-                                        isCourierBooked
-                                      }
-                                      onChange={(value) =>
-                                        handleShipmentStatusChange(
-                                          order.id,
-                                          value as AdminShipmentStatus,
-                                          {
-                                            courier:
-                                              courierByOrder[order.id] ?? "jnt",
-                                          }
-                                        )
-                                      }
-                                    />
-                                    <div className="grid grid-cols-2 gap-1">
-                                      <Button
-                                        size="sm"
-                                        variant="tertiary"
-                                        isDisabled={
-                                          isBusy ||
-                                          !canUseCourierFlow ||
-                                          isCourierCancelled
-                                        }
-                                        onPress={() =>
-                                          handleBookCourier(order.id)
-                                        }
-                                        className="border border-teal-200 bg-teal-50 px-2 py-1.5 text-[11px] font-semibold text-teal-700 transition hover:bg-teal-100"
-                                      >
-                                        Book
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="tertiary"
-                                        isDisabled={
-                                          isBusy ||
-                                          !canUseCourierFlow ||
-                                          !order.tracking_no ||
-                                          isCourierCancelled
-                                        }
-                                        onPress={() =>
-                                          handleTrackCourier(order.id)
-                                        }
-                                        className="border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-[#31405f] dark:bg-[#1b2640] dark:text-slate-200 dark:hover:bg-[#22304b]"
-                                      >
-                                        Track
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="tertiary"
-                                        isDisabled={
-                                          isBusy ||
-                                          !canUseCourierFlow ||
-                                          courierByOrder[order.id] !== "xde" ||
-                                          !order.tracking_no ||
-                                          isCourierCancelled
-                                        }
-                                        onPress={() =>
-                                          handleOpenWaybill(order.id)
-                                        }
-                                        className="border border-blue-200 bg-blue-50 px-2 py-1.5 text-[11px] font-semibold text-blue-700 transition hover:bg-blue-100"
-                                      >
-                                        Waybill
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="tertiary"
-                                        isDisabled={
-                                          isBusy ||
-                                          !canUseCourierFlow ||
-                                          courierByOrder[order.id] !== "xde" ||
-                                          !order.tracking_no ||
-                                          order.shipment_status !== "delivered"
-                                        }
-                                        onPress={() => handleOpenEpod(order.id)}
-                                        className="border border-amber-200 bg-amber-50 px-2 py-1.5 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-100"
-                                      >
-                                        EPOD
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="tertiary"
-                                        isDisabled={
-                                          isBusy ||
-                                          !canUseCourierFlow ||
-                                          courierByOrder[order.id] !== "xde" ||
-                                          !order.tracking_no ||
-                                          isCourierCancelled
-                                        }
-                                        onPress={() =>
-                                          handleCancelCourier(order.id)
-                                        }
-                                        className="col-span-2 border border-red-200 bg-red-50 px-2 py-1.5 text-[11px] font-semibold text-red-700 transition hover:bg-red-100"
-                                      >
-                                        Cancel
-                                      </Button>
-                                    </div>
-                                    <p className="text-[11px] text-teal-600">
-                                      Local courier mode is active. Use J&T/XDE
-                                      booking and tracking controls here.
-                                    </p>
-                                  </>
-                                )}
-
-                                {(isDelivered || isCancelled || isRefunded) && (
-                                  <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                                    {isDelivered
-                                      ? "Delivered orders are locked."
-                                      : "Tracking is disabled for this status."}
+                            {/* Date */}
+                            <td className="px-5 py-3.5 align-middle whitespace-nowrap">
+                              <p className="text-[12px] font-medium text-slate-700 dark:text-slate-200">
+                                {createdDate}
+                              </p>
+                              <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-400">
+                                {createdTime} PH
+                              </p>
+                              {order.paid_at && (
+                                <div className="mt-1.5 border-t border-slate-100 pt-1.5 dark:border-slate-700/60">
+                                  <p className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                                    Paid · {paidDate}
                                   </p>
-                                )}
-                                {order.courier ||
-                                order.tracking_no ||
-                                order.shipment_status ? (
-                                  <div className="space-y-2 text-[11px] leading-relaxed text-slate-500 dark:text-slate-300">
-                                    {order.zq_platform_order_id ||
-                                    order.zq_status ? (
-                                      <div className="rounded-xl border border-violet-200 bg-violet-50 p-2.5 dark:border-violet-500/30 dark:bg-violet-500/10">
-                                        <div className="flex items-center justify-between gap-2">
-                                          <p className="text-[10px] font-bold tracking-wide text-violet-700 uppercase">
-                                            Global Supplier
-                                          </p>
-                                          <span
-                                            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${zqBadgeClass}`}
-                                          >
-                                            {order.zq_status ?? "Not sent"}
-                                          </span>
-                                        </div>
-                                        {order.zq_platform_order_id ? (
-                                          <p className="mt-1 text-[11px] font-semibold break-all text-slate-800 dark:text-slate-100">
-                                            Platform ID:{" "}
-                                            {order.zq_platform_order_id}
-                                          </p>
-                                        ) : null}
-                                        {order.zq_order_id ? (
-                                          <p className="mt-1 text-[11px] break-all text-slate-600 dark:text-slate-300">
-                                            Global Supplier Order:{" "}
-                                            {order.zq_order_id}
-                                          </p>
-                                        ) : null}
-                                      </div>
-                                    ) : null}
-                                    {order.courier ? (
-                                      <p className="tracking-wide uppercase dark:text-slate-400">
-                                        Courier:{" "}
-                                        {formatCourierLabel(order.courier)}
+                                </div>
+                              )}
+                            </td>
+
+                            {/* Customer */}
+                            {effectiveFilter !== "returned_refunded" ? (
+                              <td className="px-5 py-3.5 align-middle">
+                                <div className="flex items-center gap-3">
+                                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-teal-400 to-teal-600 text-[10px] font-bold text-white">
+                                    {getInitials(order.customer_name)}
+                                  </div>
+                                  <div className="min-w-0 space-y-1">
+                                    <p className="line-clamp-1 text-[15px] leading-5 font-semibold text-slate-800 dark:text-slate-100">
+                                      {order.customer_name || "N/A"}
+                                    </p>
+                                    <p className="line-clamp-1 text-[12px] leading-4 text-slate-400 dark:text-slate-500">
+                                      {order.customer_email ||
+                                        "No email provided"}
+                                    </p>
+                                    <p className="line-clamp-1 text-[12px] leading-4 text-slate-500 dark:text-slate-400">
+                                      {order.customer_phone ||
+                                        "No phone provided"}
+                                    </p>
+                                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/70">
+                                      <p className="text-[10px] font-bold tracking-wide text-slate-400 uppercase dark:text-slate-500">
+                                        Delivery Address
                                       </p>
-                                    ) : null}
-                                    {rawCourierStatus ? (
-                                      <p className="capitalize dark:text-slate-400">
-                                        Courier Status:{" "}
-                                        {rawCourierStatus.replace(/_/g, " ")}
+                                      <p className="mt-1 line-clamp-3 text-[12px] leading-5 text-slate-600 dark:text-slate-300">
+                                        {order.customer_address ||
+                                          "No delivery address provided"}
                                       </p>
-                                    ) : null}
-                                    {order.tracking_no ? (
-                                      <div className="rounded-xl border border-teal-200 bg-teal-50 p-2 dark:border-teal-500/25 dark:bg-[#1b2640]">
-                                        <p className="text-[10px] font-bold tracking-wide text-teal-700 uppercase">
-                                          Tracking Number
-                                        </p>
-                                        <div className="mt-1 flex items-center gap-2">
-                                          <p className="min-w-0 flex-1 text-sm font-bold break-all text-slate-900 dark:text-white">
-                                            {order.tracking_no}
-                                          </p>
-                                          <Button
-                                            size="sm"
-                                            variant="tertiary"
-                                            onPress={async () => {
-                                              try {
-                                                await copyText(
-                                                  order.tracking_no as string
-                                                )
-                                                showSuccessToast(
-                                                  "Tracking number copied."
-                                                )
-                                              } catch (error) {
-                                                const message =
-                                                  error instanceof Error
-                                                    ? error.message
-                                                    : "Failed to copy tracking number."
-                                                showErrorToast(message)
-                                              }
-                                            }}
-                                            className="shrink-0 border border-teal-200 bg-white px-2 py-1 text-[10px] font-semibold text-teal-700 transition hover:bg-teal-100 dark:border-teal-500/25 dark:bg-[#121a2b] dark:text-teal-300 dark:hover:bg-[#22304b]"
-                                          >
-                                            Copy
-                                          </Button>
-                                        </div>
-                                      </div>
-                                    ) : null}
-                                    {order.shipment_status ? (
-                                      <p className="capitalize dark:text-slate-400">
-                                        Shipment:{" "}
-                                        {order.shipment_status.replace(
-                                          /_/g,
-                                          " "
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                            ) : null}
+
+                            {/* Amount */}
+                            <td className="px-5 py-3.5 align-middle">
+                              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                                {formatMoney(order.amount)}
+                              </p>
+                              {canReviewRefund ? (
+                                <p className="mt-0.5 text-[11px] font-semibold text-amber-600">
+                                  Pending refund request
+                                </p>
+                              ) : null}
+                              <p className="mt-0.5 text-[11px] tracking-wide text-slate-400 uppercase dark:text-slate-500">
+                                {order.payment_method || "-"}
+                              </p>
+                            </td>
+
+                            {effectiveFilter === "returned_refunded" ? (
+                              <td className="px-5 py-3.5 align-middle">
+                                <p className="line-clamp-3 text-[12px] leading-5 text-slate-600 dark:text-slate-300">
+                                  {order.refund_reason || "No reason provided."}
+                                </p>
+                              </td>
+                            ) : null}
+
+                            {/* Approval badge */}
+                            {effectiveFilter !== "returned_refunded" ? (
+                              <td className="min-w-[140px] px-5 py-3.5 align-middle">
+                                <Chip
+                                  size="sm"
+                                  variant="soft"
+                                  className={`inline-flex min-w-[92px] items-center justify-center border text-[11px] font-semibold whitespace-nowrap ${approval.badge}`}
+                                >
+                                  <span
+                                    className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${approval.dot}`}
+                                  />
+                                  {approval.label}
+                                </Chip>
+                              </td>
+                            ) : null}
+
+                            {/* SLA */}
+                            {effectiveFilter !== "returned_refunded" ? (
+                              <td className="min-w-[140px] px-5 py-3.5 align-middle">
+                                {sla ? (
+                                  <div className="space-y-1">
+                                    <Chip
+                                      size="sm"
+                                      variant="soft"
+                                      className={`inline-flex min-w-[92px] items-center justify-center border text-[11px] font-semibold whitespace-nowrap ${sla.badge}`}
+                                    >
+                                      <span
+                                        className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${sla.dot}`}
+                                      />
+                                      {sla.label}
+                                    </Chip>
+                                    {order.sla?.state === "overdue" && (
+                                      <p className="text-[11px] text-red-500">
+                                        +
+                                        {formatDuration(
+                                          order.sla?.overdue_minutes
                                         )}
                                       </p>
-                                    ) : null}
-                                    <Button
-                                      size="sm"
-                                      variant="tertiary"
-                                      onPress={() =>
-                                        setPayloadPreview({
-                                          checkoutId: order.checkout_id,
-                                          payload:
-                                            order.shipment_payload ?? null,
-                                        })
-                                      }
-                                      className="border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-[#31405f] dark:bg-[#1b2640] dark:text-slate-200 dark:hover:bg-[#22304b]"
-                                    >
-                                      {order.shipment_payload
-                                        ? "View Payload"
-                                        : "No Payload Yet"}
-                                    </Button>
+                                    )}
+                                    {order.sla?.state === "due_soon" && (
+                                      <p className="text-[11px] text-amber-600">
+                                        Left:{" "}
+                                        {formatDuration(
+                                          order.sla?.remaining_minutes
+                                        )}
+                                      </p>
+                                    )}
+                                    {order.sla?.state === "on_track" && (
+                                      <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                                        Elapsed:{" "}
+                                        {formatDuration(
+                                          order.sla?.elapsed_minutes
+                                        )}
+                                      </p>
+                                    )}
                                   </div>
                                 ) : (
-                                  <p className="text-[11px] text-slate-300 dark:text-slate-400">
-                                    {order.approval_status === "approved"
-                                      ? "No shipment info yet"
-                                      : "Awaiting approval"}
-                                  </p>
+                                  <span className="text-[11px] text-slate-300 dark:text-slate-600">
+                                    —
+                                  </span>
                                 )}
-                              </div>
-                            </td>
-                          ) : null}
+                              </td>
+                            ) : null}
 
-                          {/* Actions */}
-                          <td className="px-5 py-3.5 align-middle">
-                            <div className="flex w-40 flex-col gap-1.5">
-                              <Button
-                                size="sm"
-                                variant="tertiary"
-                                onPress={() => setOrderDetailPreview(order)}
-                                className="w-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 transition hover:bg-sky-100 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-300 dark:hover:bg-sky-500/20"
-                              >
-                                View Details
-                              </Button>
+                            {/* Tracking select */}
+                            {effectiveFilter !== "returned_refunded" ? (
+                              <td className="px-5 py-3.5 align-middle">
+                                <div className="space-y-1.5">
+                                  {isFulfillmentModeLocked ? (
+                                    <AdminOrderStaticValue
+                                      label={fulfillmentModeLabel}
+                                    />
+                                  ) : (
+                                    <AdminOrderSelect
+                                      ariaLabel={`Fulfillment mode for order ${order.checkout_id}`}
+                                      value={effectiveFulfillmentMode}
+                                      options={availableFulfillmentModeOptions}
+                                      isDisabled={
+                                        isBusy ||
+                                        order.approval_status !== "approved" ||
+                                        hasZqOrder
+                                      }
+                                      onChange={(value) =>
+                                        handleFulfillmentModeChange(
+                                          order.id,
+                                          value as FulfillmentMode
+                                        )
+                                      }
+                                    />
+                                  )}
 
-                              {canReviewRefund ? (
-                                <div className="flex flex-col gap-1.5 rounded-xl border border-amber-200 bg-amber-50/60 p-2 dark:border-amber-500/30 dark:bg-amber-500/10">
-                                  <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-300">
-                                    Refund request
-                                  </p>
-                                  {order.refund_requested_at ? (
-                                    <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                                      Requested:{" "}
-                                      {formatDateOnly(
-                                        order.refund_requested_at
-                                      )}{" "}
-                                      {formatTimeOnly(
-                                        order.refund_requested_at
-                                      )}{" "}
-                                      PH
-                                    </p>
-                                  ) : null}
-                                  <div className="grid grid-cols-2 gap-1">
-                                    <Button
-                                      size="sm"
-                                      variant="tertiary"
-                                      isDisabled={isBusy}
-                                      onPress={() => handleApprove(order.id)}
-                                      className="border border-emerald-200 bg-emerald-50 px-2 py-1.5 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100"
-                                    >
-                                      Approve
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="tertiary"
-                                      isDisabled={isBusy}
-                                      onPress={() => handleReject(order.id)}
-                                      className="border border-red-200 bg-red-50 px-2 py-1.5 text-[11px] font-semibold text-red-600 transition hover:bg-red-100"
-                                    >
-                                      Reject
-                                    </Button>
-                                  </div>
-                                  <div className="grid grid-cols-2 gap-1">
-                                    {refundImageUrls.length > 0 ? (
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          setRefundMediaPreview({
-                                            checkoutId: order.checkout_id,
-                                            kind: "image",
-                                            urls: refundImageUrls,
-                                          })
-                                        }
-                                        className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-[#31405f] dark:bg-[#1b2640] dark:text-slate-200 dark:hover:bg-[#22304b]"
-                                      >
-                                        View Image
-                                      </button>
-                                    ) : (
-                                      <span className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-semibold text-slate-400 dark:border-[#31405f] dark:bg-[#1b2640] dark:text-slate-500">
-                                        No Image
-                                      </span>
-                                    )}
-                                    {refundVideoUrls.length > 0 ? (
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          setRefundMediaPreview({
-                                            checkoutId: order.checkout_id,
-                                            kind: "video",
-                                            urls: refundVideoUrls,
-                                          })
-                                        }
-                                        className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-[#31405f] dark:bg-[#1b2640] dark:text-slate-200 dark:hover:bg-[#22304b]"
-                                      >
-                                        View Video
-                                      </button>
-                                    ) : (
-                                      <span className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-semibold text-slate-400 dark:border-[#31405f] dark:bg-[#1b2640] dark:text-slate-500">
-                                        No Video
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              ) : canApproveThisOrder ? (
-                                <div className="flex flex-col gap-1.5">
-                                  <div className="grid grid-cols-2 gap-1">
-                                    <Button
-                                      size="sm"
-                                      variant="tertiary"
-                                      isDisabled={isBusy}
-                                      onPress={() => handleApprove(order.id)}
-                                      className="border border-emerald-200 bg-emerald-50 px-2 py-1.5 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100"
-                                    >
-                                      Approve
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="tertiary"
-                                      isDisabled={isBusy}
-                                      onPress={() => handleReject(order.id)}
-                                      className="border border-red-200 bg-red-50 px-2 py-1.5 text-[11px] font-semibold text-red-600 transition hover:bg-red-100"
-                                    >
-                                      Reject
-                                    </Button>
-                                  </div>
-                                  <p className="text-[11px] text-slate-400 dark:text-slate-300">
-                                    Approve first before fulfillment actions.
-                                  </p>
-                                </div>
-                              ) : order.approval_status === "approved" ? (
-                                <div className="flex flex-col gap-1.5">
                                   {isZqMode ? (
-                                    <>
-                                      <Button
-                                        size="sm"
-                                        variant="tertiary"
-                                        isDisabled={isBusy || !canPushZq}
-                                        onPress={() => handlePushToZq(order.id)}
-                                        className={`w-full border px-3 py-1.5 text-xs font-semibold transition ${canPushZq ? "border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100" : "border-slate-200 bg-slate-50 text-slate-400"}`}
-                                      >
+                                    <div className="rounded-2xl border border-violet-200 bg-violet-50 p-3 dark:border-violet-500/30 dark:bg-violet-500/10">
+                                      <div className="flex items-center justify-between gap-2">
+                                        <p className="text-[10px] font-bold tracking-wide text-violet-700 uppercase">
+                                          Global Supplier Flow
+                                        </p>
+                                        <span
+                                          className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${zqBadgeClass}`}
+                                        >
+                                          {order.zq_status ?? "Not sent"}
+                                        </span>
+                                      </div>
+                                      <p className="mt-2 text-[11px] leading-relaxed text-violet-700">
                                         {hasZqOrder
-                                          ? "Global Supplier Pushed"
-                                          : "Push Global Supplier"}
-                                      </Button>
+                                          ? "Global Supplier handoff is active for this order. Use Global Supplier detail and tracking below."
+                                          : order.approval_status === "approved"
+                                            ? "Push this order to Global Supplier first to unlock detail and tracking."
+                                            : "Approve the order first before pushing it to Global Supplier."}
+                                      </p>
+                                      {order.zq_platform_order_id ? (
+                                        <p className="mt-2 text-[11px] font-semibold break-all text-slate-800 dark:text-slate-100">
+                                          Platform ID:{" "}
+                                          {order.zq_platform_order_id}
+                                        </p>
+                                      ) : null}
+                                      {order.zq_order_id ? (
+                                        <p className="mt-1 text-[11px] break-all text-slate-600 dark:text-slate-300">
+                                          Global Supplier Order:{" "}
+                                          {order.zq_order_id}
+                                        </p>
+                                      ) : null}
+                                    </div>
+                                  ) : isManualMode ? (
+                                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-[#31405f] dark:bg-[#1b2640]">
+                                      <div className="flex items-center justify-between gap-2">
+                                        <p className="text-[10px] font-bold tracking-wide text-slate-500 uppercase dark:text-slate-400">
+                                          Manual Flow
+                                        </p>
+                                        <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:border-[#3a4b6d] dark:bg-[#121a2b] dark:text-slate-300">
+                                          Internal
+                                        </span>
+                                      </div>
+                                      <p className="mt-2 text-[11px] leading-relaxed text-slate-600 dark:text-slate-400">
+                                        This order is managed manually. No
+                                        courier booking or Global Supplier
+                                        handoff will be used.
+                                      </p>
+                                      <AdminOrderSelect
+                                        ariaLabel={`Manual shipment status for order ${order.checkout_id}`}
+                                        value={
+                                          (order.shipment_status as
+                                            | AdminShipmentStatus
+                                            | undefined) ?? "for_pickup"
+                                        }
+                                        options={SHIPMENT_STATUS_OPTIONS}
+                                        selectedTone="shipment"
+                                        isDisabled={isBusy || !canUseManualFlow}
+                                        onChange={(value) =>
+                                          handleShipmentStatusChange(
+                                            order.id,
+                                            value as AdminShipmentStatus,
+                                            { clearCourier: true }
+                                          )
+                                        }
+                                      />
+                                    </div>
+                                  ) : (
+                                    <>
+                                      <AdminOrderSelect
+                                        ariaLabel={`Courier for order ${order.checkout_id}`}
+                                        value={
+                                          courierByOrder[order.id] ??
+                                          (((
+                                            order.courier ?? ""
+                                          ).toLowerCase() === "xde"
+                                            ? "xde"
+                                            : "jnt") as AdminCourier)
+                                        }
+                                        options={COURIER_OPTIONS}
+                                        isDisabled={
+                                          isBusy || !canUseCourierFlow
+                                        }
+                                        onChange={(value) =>
+                                          setCourierByOrder((prev) => ({
+                                            ...prev,
+                                            [order.id]: value as AdminCourier,
+                                          }))
+                                        }
+                                      />
+                                      <AdminOrderSelect
+                                        ariaLabel={`Shipment status for order ${order.checkout_id}`}
+                                        value={
+                                          (order.shipment_status as
+                                            | AdminShipmentStatus
+                                            | undefined) ?? "for_pickup"
+                                        }
+                                        options={SHIPMENT_STATUS_OPTIONS}
+                                        selectedTone="shipment"
+                                        isDisabled={
+                                          isBusy ||
+                                          !canUseCourierFlow ||
+                                          isCourierBooked
+                                        }
+                                        onChange={(value) =>
+                                          handleShipmentStatusChange(
+                                            order.id,
+                                            value as AdminShipmentStatus,
+                                            {
+                                              courier:
+                                                courierByOrder[order.id] ??
+                                                "jnt",
+                                            }
+                                          )
+                                        }
+                                      />
                                       <div className="grid grid-cols-2 gap-1">
                                         <Button
                                           size="sm"
                                           variant="tertiary"
-                                          isDisabled={isBusy || !canUseZqLookup}
-                                          onPress={() =>
-                                            handleFetchZqDetail(order.id)
+                                          isDisabled={
+                                            isBusy ||
+                                            !canUseCourierFlow ||
+                                            isCourierCancelled
                                           }
-                                          className={`border px-2 py-1.5 text-[11px] font-semibold transition ${canUseZqLookup ? "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700" : "border-slate-200 bg-slate-50 text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500"}`}
+                                          onPress={() =>
+                                            handleBookCourier(order.id)
+                                          }
+                                          className="border border-teal-200 bg-teal-50 px-2 py-1.5 text-[11px] font-semibold text-teal-700 transition hover:bg-teal-100"
                                         >
-                                          Global Supplier Detail
+                                          Book
                                         </Button>
                                         <Button
                                           size="sm"
                                           variant="tertiary"
-                                          isDisabled={isBusy || !canUseZqLookup}
-                                          onPress={() =>
-                                            handleSyncZqTracking(order.id)
+                                          isDisabled={
+                                            isBusy ||
+                                            !canUseCourierFlow ||
+                                            !order.tracking_no ||
+                                            isCourierCancelled
                                           }
-                                          className={`border px-2 py-1.5 text-[11px] font-semibold transition ${canUseZqLookup ? "border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100" : "border-slate-200 bg-slate-50 text-slate-400"}`}
+                                          onPress={() =>
+                                            handleTrackCourier(order.id)
+                                          }
+                                          className="border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-[#31405f] dark:bg-[#1b2640] dark:text-slate-200 dark:hover:bg-[#22304b]"
                                         >
-                                          Global Supplier Track
+                                          Track
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="tertiary"
+                                          isDisabled={
+                                            isBusy ||
+                                            !canUseCourierFlow ||
+                                            courierByOrder[order.id] !==
+                                              "xde" ||
+                                            !order.tracking_no ||
+                                            isCourierCancelled
+                                          }
+                                          onPress={() =>
+                                            handleOpenWaybill(order.id)
+                                          }
+                                          className="border border-blue-200 bg-blue-50 px-2 py-1.5 text-[11px] font-semibold text-blue-700 transition hover:bg-blue-100"
+                                        >
+                                          Waybill
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="tertiary"
+                                          isDisabled={
+                                            isBusy ||
+                                            !canUseCourierFlow ||
+                                            courierByOrder[order.id] !==
+                                              "xde" ||
+                                            !order.tracking_no ||
+                                            order.shipment_status !==
+                                              "delivered"
+                                          }
+                                          onPress={() =>
+                                            handleOpenEpod(order.id)
+                                          }
+                                          className="border border-amber-200 bg-amber-50 px-2 py-1.5 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-100"
+                                        >
+                                          EPOD
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="tertiary"
+                                          isDisabled={
+                                            isBusy ||
+                                            !canUseCourierFlow ||
+                                            courierByOrder[order.id] !==
+                                              "xde" ||
+                                            !order.tracking_no ||
+                                            isCourierCancelled
+                                          }
+                                          onPress={() =>
+                                            handleCancelCourier(order.id)
+                                          }
+                                          className="col-span-2 border border-red-200 bg-red-50 px-2 py-1.5 text-[11px] font-semibold text-red-700 transition hover:bg-red-100"
+                                        >
+                                          Cancel
                                         </Button>
                                       </div>
+                                      <p className="text-[11px] text-teal-600">
+                                        Local courier mode is active. Use
+                                        J&T/XDE booking and tracking controls
+                                        here.
+                                      </p>
                                     </>
-                                  ) : (
-                                    <Chip
-                                      size="sm"
-                                      variant="soft"
-                                      className={`border text-[11px] font-semibold ${isManualMode ? "border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" : "border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-300"}`}
-                                    >
-                                      {isManualMode
-                                        ? "Manual Flow"
-                                        : "Local Courier Flow"}
-                                    </Chip>
                                   )}
-                                  {isZqMode ? (
-                                    !hasZqOrder ? (
-                                      <p className="text-[11px] text-slate-400 dark:text-slate-300">
-                                        Push to Global Supplier first to unlock
-                                        detail and tracking.
-                                      </p>
-                                    ) : (
-                                      <p className="text-[11px] text-violet-600">
-                                        Global Supplier lookup is now available
-                                        for this order.
-                                      </p>
-                                    )
+
+                                  {(isDelivered ||
+                                    isCancelled ||
+                                    isRefunded) && (
+                                    <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                                      {isDelivered
+                                        ? "Delivered orders are locked."
+                                        : "Tracking is disabled for this status."}
+                                    </p>
+                                  )}
+                                  {order.courier ||
+                                  order.tracking_no ||
+                                  order.shipment_status ? (
+                                    <div className="space-y-2 text-[11px] leading-relaxed text-slate-500 dark:text-slate-300">
+                                      {order.zq_platform_order_id ||
+                                      order.zq_status ? (
+                                        <div className="rounded-xl border border-violet-200 bg-violet-50 p-2.5 dark:border-violet-500/30 dark:bg-violet-500/10">
+                                          <div className="flex items-center justify-between gap-2">
+                                            <p className="text-[10px] font-bold tracking-wide text-violet-700 uppercase">
+                                              Global Supplier
+                                            </p>
+                                            <span
+                                              className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${zqBadgeClass}`}
+                                            >
+                                              {order.zq_status ?? "Not sent"}
+                                            </span>
+                                          </div>
+                                          {order.zq_platform_order_id ? (
+                                            <p className="mt-1 text-[11px] font-semibold break-all text-slate-800 dark:text-slate-100">
+                                              Platform ID:{" "}
+                                              {order.zq_platform_order_id}
+                                            </p>
+                                          ) : null}
+                                          {order.zq_order_id ? (
+                                            <p className="mt-1 text-[11px] break-all text-slate-600 dark:text-slate-300">
+                                              Global Supplier Order:{" "}
+                                              {order.zq_order_id}
+                                            </p>
+                                          ) : null}
+                                        </div>
+                                      ) : null}
+                                      {order.courier ? (
+                                        <p className="tracking-wide uppercase dark:text-slate-400">
+                                          Courier:{" "}
+                                          {formatCourierLabel(order.courier)}
+                                        </p>
+                                      ) : null}
+                                      {rawCourierStatus ? (
+                                        <p className="capitalize dark:text-slate-400">
+                                          Courier Status:{" "}
+                                          {rawCourierStatus.replace(/_/g, " ")}
+                                        </p>
+                                      ) : null}
+                                      {order.tracking_no ? (
+                                        <div className="rounded-xl border border-teal-200 bg-teal-50 p-2 dark:border-teal-500/25 dark:bg-[#1b2640]">
+                                          <p className="text-[10px] font-bold tracking-wide text-teal-700 uppercase">
+                                            Tracking Number
+                                          </p>
+                                          <div className="mt-1 flex items-center gap-2">
+                                            <p className="min-w-0 flex-1 text-sm font-bold break-all text-slate-900 dark:text-white">
+                                              {order.tracking_no}
+                                            </p>
+                                            <Button
+                                              size="sm"
+                                              variant="tertiary"
+                                              onPress={async () => {
+                                                try {
+                                                  await copyText(
+                                                    order.tracking_no as string
+                                                  )
+                                                  showSuccessToast(
+                                                    "Tracking number copied."
+                                                  )
+                                                } catch (error) {
+                                                  const message =
+                                                    error instanceof Error
+                                                      ? error.message
+                                                      : "Failed to copy tracking number."
+                                                  showErrorToast(message)
+                                                }
+                                              }}
+                                              className="shrink-0 border border-teal-200 bg-white px-2 py-1 text-[10px] font-semibold text-teal-700 transition hover:bg-teal-100 dark:border-teal-500/25 dark:bg-[#121a2b] dark:text-teal-300 dark:hover:bg-[#22304b]"
+                                            >
+                                              Copy
+                                            </Button>
+                                          </div>
+                                        </div>
+                                      ) : null}
+                                      {order.shipment_status ? (
+                                        <p className="capitalize dark:text-slate-400">
+                                          Shipment:{" "}
+                                          {order.shipment_status.replace(
+                                            /_/g,
+                                            " "
+                                          )}
+                                        </p>
+                                      ) : null}
+                                      <Button
+                                        size="sm"
+                                        variant="tertiary"
+                                        onPress={() =>
+                                          setPayloadPreview({
+                                            checkoutId: order.checkout_id,
+                                            payload:
+                                              order.shipment_payload ?? null,
+                                          })
+                                        }
+                                        className="border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-[#31405f] dark:bg-[#1b2640] dark:text-slate-200 dark:hover:bg-[#22304b]"
+                                      >
+                                        {order.shipment_payload
+                                          ? "View Payload"
+                                          : "No Payload Yet"}
+                                      </Button>
+                                    </div>
                                   ) : (
-                                    <p className="text-[11px] text-slate-400 dark:text-slate-300">
-                                      {isManualMode
-                                        ? "Use the tracking column for manual shipment status updates only."
-                                        : "Use the courier controls in the tracking column for local fulfillment."}
+                                    <p className="text-[11px] text-slate-300 dark:text-slate-400">
+                                      {order.approval_status === "approved"
+                                        ? "No shipment info yet"
+                                        : "Awaiting approval"}
                                     </p>
                                   )}
                                 </div>
-                              ) : (
-                                <Chip
+                              </td>
+                            ) : null}
+
+                            {/* Actions */}
+                            <td className="px-5 py-3.5 align-middle">
+                              <div className="flex w-40 flex-col gap-1.5">
+                                <Button
                                   size="sm"
-                                  variant="soft"
-                                  className="border border-slate-200 bg-slate-50 text-[11px] font-semibold text-slate-500 dark:border-[#31405f] dark:bg-[#1b2640] dark:text-slate-300"
+                                  variant="tertiary"
+                                  onPress={() => setOrderDetailPreview(order)}
+                                  className="w-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 transition hover:bg-sky-100 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-300 dark:hover:bg-sky-500/20"
                                 >
-                                  {order.approval_status === "pending_approval"
-                                    ? "Awaiting approval"
-                                    : "No actions"}
-                                </Chip>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    })
-                  ) : (
-                    <tr key="empty" className="bg-white dark:bg-[#121a2b]">
-                      <td
-                        colSpan={
-                          effectiveFilter === "returned_refunded" ? 7 : 10
-                        }
-                      >
-                        <EmptyOrdersState />
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                                  View Details
+                                </Button>
+
+                                {canReviewRefund ? (
+                                  <div className="flex flex-col gap-1.5 rounded-xl border border-amber-200 bg-amber-50/60 p-2 dark:border-amber-500/30 dark:bg-amber-500/10">
+                                    <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-300">
+                                      Refund request
+                                    </p>
+                                    {order.refund_requested_at ? (
+                                      <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                                        Requested:{" "}
+                                        {formatDateOnly(
+                                          order.refund_requested_at
+                                        )}{" "}
+                                        {formatTimeOnly(
+                                          order.refund_requested_at
+                                        )}{" "}
+                                        PH
+                                      </p>
+                                    ) : null}
+                                    <div className="grid grid-cols-2 gap-1">
+                                      <Button
+                                        size="sm"
+                                        variant="tertiary"
+                                        isDisabled={isBusy}
+                                        onPress={() => handleApprove(order.id)}
+                                        className="border border-emerald-200 bg-emerald-50 px-2 py-1.5 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                                      >
+                                        Approve
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="tertiary"
+                                        isDisabled={isBusy}
+                                        onPress={() => handleReject(order.id)}
+                                        className="border border-red-200 bg-red-50 px-2 py-1.5 text-[11px] font-semibold text-red-600 transition hover:bg-red-100"
+                                      >
+                                        Reject
+                                      </Button>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-1">
+                                      {refundImageUrls.length > 0 ? (
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            setRefundMediaPreview({
+                                              checkoutId: order.checkout_id,
+                                              kind: "image",
+                                              urls: refundImageUrls,
+                                            })
+                                          }
+                                          className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-[#31405f] dark:bg-[#1b2640] dark:text-slate-200 dark:hover:bg-[#22304b]"
+                                        >
+                                          View Image
+                                        </button>
+                                      ) : (
+                                        <span className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-semibold text-slate-400 dark:border-[#31405f] dark:bg-[#1b2640] dark:text-slate-500">
+                                          No Image
+                                        </span>
+                                      )}
+                                      {refundVideoUrls.length > 0 ? (
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            setRefundMediaPreview({
+                                              checkoutId: order.checkout_id,
+                                              kind: "video",
+                                              urls: refundVideoUrls,
+                                            })
+                                          }
+                                          className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-[#31405f] dark:bg-[#1b2640] dark:text-slate-200 dark:hover:bg-[#22304b]"
+                                        >
+                                          View Video
+                                        </button>
+                                      ) : (
+                                        <span className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-semibold text-slate-400 dark:border-[#31405f] dark:bg-[#1b2640] dark:text-slate-500">
+                                          No Video
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                ) : canApproveThisOrder ? (
+                                  <div className="flex flex-col gap-1.5">
+                                    <div className="grid grid-cols-2 gap-1">
+                                      <Button
+                                        size="sm"
+                                        variant="tertiary"
+                                        isDisabled={isBusy}
+                                        onPress={() => handleApprove(order.id)}
+                                        className="border border-emerald-200 bg-emerald-50 px-2 py-1.5 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                                      >
+                                        Approve
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="tertiary"
+                                        isDisabled={isBusy}
+                                        onPress={() => handleReject(order.id)}
+                                        className="border border-red-200 bg-red-50 px-2 py-1.5 text-[11px] font-semibold text-red-600 transition hover:bg-red-100"
+                                      >
+                                        Reject
+                                      </Button>
+                                    </div>
+                                    <p className="text-[11px] text-slate-400 dark:text-slate-300">
+                                      Approve first before fulfillment actions.
+                                    </p>
+                                  </div>
+                                ) : order.approval_status === "approved" ? (
+                                  <div className="flex flex-col gap-1.5">
+                                    {isZqMode ? (
+                                      <>
+                                        <Button
+                                          size="sm"
+                                          variant="tertiary"
+                                          isDisabled={isBusy || !canPushZq}
+                                          onPress={() =>
+                                            handlePushToZq(order.id)
+                                          }
+                                          className={`w-full border px-3 py-1.5 text-xs font-semibold transition ${canPushZq ? "border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100" : "border-slate-200 bg-slate-50 text-slate-400"}`}
+                                        >
+                                          {hasZqOrder
+                                            ? "Global Supplier Pushed"
+                                            : "Push Global Supplier"}
+                                        </Button>
+                                        <div className="grid grid-cols-2 gap-1">
+                                          <Button
+                                            size="sm"
+                                            variant="tertiary"
+                                            isDisabled={
+                                              isBusy || !canUseZqLookup
+                                            }
+                                            onPress={() =>
+                                              handleFetchZqDetail(order.id)
+                                            }
+                                            className={`border px-2 py-1.5 text-[11px] font-semibold transition ${canUseZqLookup ? "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700" : "border-slate-200 bg-slate-50 text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500"}`}
+                                          >
+                                            Global Supplier Detail
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="tertiary"
+                                            isDisabled={
+                                              isBusy || !canUseZqLookup
+                                            }
+                                            onPress={() =>
+                                              handleSyncZqTracking(order.id)
+                                            }
+                                            className={`border px-2 py-1.5 text-[11px] font-semibold transition ${canUseZqLookup ? "border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100" : "border-slate-200 bg-slate-50 text-slate-400"}`}
+                                          >
+                                            Global Supplier Track
+                                          </Button>
+                                        </div>
+                                      </>
+                                    ) : (
+                                      <Chip
+                                        size="sm"
+                                        variant="soft"
+                                        className={`border text-[11px] font-semibold ${isManualMode ? "border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" : "border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-300"}`}
+                                      >
+                                        {isManualMode
+                                          ? "Manual Flow"
+                                          : "Local Courier Flow"}
+                                      </Chip>
+                                    )}
+                                    {isZqMode ? (
+                                      !hasZqOrder ? (
+                                        <p className="text-[11px] text-slate-400 dark:text-slate-300">
+                                          Push to Global Supplier first to
+                                          unlock detail and tracking.
+                                        </p>
+                                      ) : (
+                                        <p className="text-[11px] text-violet-600">
+                                          Global Supplier lookup is now
+                                          available for this order.
+                                        </p>
+                                      )
+                                    ) : (
+                                      <p className="text-[11px] text-slate-400 dark:text-slate-300">
+                                        {isManualMode
+                                          ? "Use the tracking column for manual shipment status updates only."
+                                          : "Use the courier controls in the tracking column for local fulfillment."}
+                                      </p>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <Chip
+                                    size="sm"
+                                    variant="soft"
+                                    className="border border-slate-200 bg-slate-50 text-[11px] font-semibold text-slate-500 dark:border-[#31405f] dark:bg-[#1b2640] dark:text-slate-300"
+                                  >
+                                    {order.approval_status ===
+                                    "pending_approval"
+                                      ? "Awaiting approval"
+                                      : "No actions"}
+                                  </Chip>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })
+                    ) : (
+                      <tr key="empty" className="bg-white dark:bg-[#121a2b]">
+                        <td
+                          colSpan={
+                            effectiveFilter === "returned_refunded" ? 7 : 10
+                          }
+                        >
+                          <EmptyOrdersState />
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
             {totalPages > 1 && (
               <div className="flex flex-col gap-3 border-t border-slate-100 px-4 py-4 md:flex-row md:items-center md:justify-between dark:border-slate-800">
@@ -2521,6 +2791,7 @@ export default function AdminOrdersPageMain({
                               {pageNumber}
                             </Pagination.Link>
                           </Pagination.Item>
+                          ``
                         </span>
                       )
                     })}
@@ -2543,6 +2814,25 @@ export default function AdminOrdersPageMain({
           </div>
         </motion.div>
       )}
+
+      {/* Instant hover preview — pops to the left of the hovered thumbnail */}
+      {thumbPreview ? (
+        <div
+          className="pointer-events-none fixed z-[100] rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl dark:border-slate-700 dark:bg-slate-900"
+          style={{
+            top: thumbPreview.top,
+            left: thumbPreview.left,
+            transform: "translate(calc(-100% - 10px), -50%)",
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={thumbPreview.src}
+            alt={thumbPreview.alt}
+            className="h-44 w-44 rounded-xl bg-slate-50 object-contain dark:bg-slate-800"
+          />
+        </div>
+      ) : null}
 
       {orderDetailPreview
         ? (() => {
@@ -2589,7 +2879,7 @@ export default function AdminOrdersPageMain({
                         <div className="mt-4 flex gap-4">
                           <div className="h-24 w-24 shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
                             {orderDetailPreview.product_image ? (
-                              <img
+                              <Image
                                 src={orderDetailPreview.product_image}
                                 alt={orderDetailPreview.product_name}
                                 className="h-full w-full object-cover"
@@ -2657,15 +2947,11 @@ export default function AdminOrdersPageMain({
                               {orderDetailPreview.customer_phone || "No phone"}
                             </p>
                           </div>
-                          <div className="rounded-2xl border border-slate-100 p-3 dark:border-slate-800">
-                            <p className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
-                              Delivery Address
-                            </p>
-                            <p className="mt-1 text-slate-700 dark:text-slate-300">
-                              {orderDetailPreview.customer_address ||
-                                "No address provided"}
-                            </p>
-                          </div>
+                          <ShippingAddressCard
+                            name={orderDetailPreview.customer_name}
+                            phone={orderDetailPreview.customer_phone}
+                            address={orderDetailPreview.customer_address}
+                          />
                         </div>
                       </div>
                     </div>

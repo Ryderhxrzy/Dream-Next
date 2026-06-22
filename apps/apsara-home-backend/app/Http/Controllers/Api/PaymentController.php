@@ -612,6 +612,14 @@ class PaymentController extends Controller
                 $this->persistCheckoutHistoryIfNeeded($checkoutId, [
                     'status' => 'pending',
                 ]);
+
+                // Store the resumable PayMongo checkout URL so abandoned-checkout
+                // reminders can link the customer straight back to payment.
+                $checkoutUrl = $data['attributes']['checkout_url'] ?? null;
+                if (is_string($checkoutUrl) && $checkoutUrl !== '') {
+                    CheckoutHistory::where('ch_checkout_id', $checkoutId)
+                        ->update(['ch_checkout_url' => $checkoutUrl]);
+                }
             } catch (\Throwable $e) {
                 Log::warning('Failed to persist pending checkout history after session creation.', [
                     'checkout_id' => $checkoutId,
@@ -1452,6 +1460,11 @@ class PaymentController extends Controller
             $fulfillmentStatus = $firstItem->ch_fulfillment_status ?: 'pending';
             $status = $fulfillmentStatus !== 'pending' ? $fulfillmentStatus : $paymentStatus;
 
+            // Unpaid = checkout started but never settled and not a terminal
+            // failure. These get a "Pay now" affordance on the storefront.
+            $isUnpaid = $fulfillmentStatus === 'pending'
+                && !in_array(strtolower((string) $firstItem->ch_status), ['paid', 'succeeded', 'success', 'failed', 'cancelled', 'expired'], true);
+
             // Build items array from all records with same checkout_id
             $items = $itemsGroup->map(function (CheckoutHistory $order) use ($itemsGroup) {
                 $quantity = max(1, (int) $order->ch_quantity);
@@ -1476,6 +1489,8 @@ class PaymentController extends Controller
                 'status' => $status,
                 'payment_status' => $paymentStatus,
                 'fulfillment_status' => $fulfillmentStatus,
+                'is_unpaid' => $isUnpaid,
+                'resume_url' => $isUnpaid ? ($firstItem->ch_checkout_url ?: null) : null,
                 'items' => $items,
                 'total_amount' => (float) $itemsGroup->sum('ch_amount'),
                 'shipping_fee' => (float) ($firstItem->ch_shipping_fee ?? 0),

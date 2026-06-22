@@ -520,6 +520,10 @@ class AdminOrderController extends Controller
                 'source_host' => $order->ch_source_host ?: null,
                 'source_url' => $order->ch_source_url ?: null,
                 'paid_at' => optional($order->ch_paid_at)->toDateTimeString(),
+                'checkout_url' => $order->ch_checkout_url ?: null,
+                'abandoned_at' => optional($order->ch_abandoned_at)->toDateTimeString(),
+                'reminder_count' => (int) ($order->ch_reminder_count ?? 0),
+                'last_reminder_at' => optional($order->ch_last_reminder_at)->toDateTimeString(),
                 'created_at' => optional($order->created_at)->toDateTimeString(),
                 'updated_at' => optional($order->updated_at)->toDateTimeString(),
                 'sla' => $sla,
@@ -1684,6 +1688,11 @@ class AdminOrderController extends Controller
             return;
         }
 
+        if ($filter === 'abandoned') {
+            $query->abandoned();
+            return;
+        }
+
         if ($filter === 'order_history' || $filter === 'completed') {
             $query->whereIn('ch_fulfillment_status', ['delivered', 'cancelled', 'refunded']);
             return;
@@ -1828,7 +1837,143 @@ class AdminOrderController extends Controller
             'cancelled' => (int) (clone $base)->whereIn('ch_fulfillment_status', ['cancelled', 'refunded'])->count(),
             'completed' => (int) (clone $base)->where('ch_fulfillment_status', 'delivered')->count(),
             'paid' => (int) (clone $base)->whereIn('ch_status', ['paid', 'succeeded', 'success'])->count(),
+            'abandoned' => (int) (clone $base)->abandoned()->count(),
         ]);
+    }
+
+    /**
+     * Shopify-style abandoned checkouts list — grouped by checkout, one row per
+     * cart, with a "recovered / not recovered" status and a resumable pay link.
+     */
+    public function abandonedCheckouts(Request $request)
+    {
+        $admin = $this->resolveAdmin($request);
+        if (!$admin) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $validated = $request->validate([
+            'q' => 'nullable|string|max:120',
+            'recovery' => 'nullable|string|max:20',
+            'page' => 'nullable|integer|min:1',
+            'per_page' => 'nullable|integer|min:1|max:100',
+        ]);
+
+        $search = trim((string) ($validated['q'] ?? ''));
+        $recovery = strtolower(trim((string) ($validated['recovery'] ?? 'all')));
+        $perPage = (int) ($validated['per_page'] ?? 50);
+        $page = (int) ($validated['page'] ?? 1);
+
+        $grace = (int) config('checkout.abandoned.grace_minutes', 60);
+        $graceCutoff = now()->subMinutes($grace);
+        $openStatuses = array_merge(CheckoutHistory::OPEN_UNPAID_STATUSES, [CheckoutHistory::STATUS_ABANDONED]);
+
+        $base = CheckoutHistory::query()
+            ->whereNotNull('ch_checkout_id')
+            ->where('ch_checkout_id', '!=', '')
+            ->where(function ($q) use ($graceCutoff, $openStatuses) {
+                // Not recovered: started, never settled, aged past the grace window.
+                $q->where(function ($inner) use ($graceCutoff, $openStatuses) {
+                    $inner->whereNull('ch_paid_at')
+                        ->whereIn('ch_status', $openStatuses)
+                        ->where('created_at', '<=', $graceCutoff);
+                })
+                // Recovered: eventually paid, but only after a recovery effort.
+                ->orWhere(function ($inner) {
+                    $inner->whereNotNull('ch_paid_at')
+                        ->where(function ($r) {
+                            $r->where('ch_reminder_count', '>', 0)
+                                ->orWhereNotNull('ch_abandoned_at');
+                        });
+                });
+            });
+
+        $this->applyStorefrontScope($base, $admin);
+
+        $offline = array_values(array_filter(array_map(
+            'strtolower',
+            (array) config('checkout.abandoned.offline_payment_methods', [])
+        )));
+        if (!empty($offline)) {
+            $base->whereNotIn(DB::raw('LOWER(ch_payment_method)'), $offline);
+        }
+
+        if ($recovery === 'recovered') {
+            $base->whereNotNull('ch_paid_at');
+        } elseif ($recovery === 'not_recovered') {
+            $base->whereNull('ch_paid_at');
+        }
+
+        if ($search !== '') {
+            $likeOperator = DB::connection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
+            $pattern = '%' . $search . '%';
+            $base->where(function ($q) use ($likeOperator, $pattern) {
+                $q->where('ch_checkout_id', $likeOperator, $pattern)
+                    ->orWhere('ch_customer_name', $likeOperator, $pattern)
+                    ->orWhere('ch_customer_email', $likeOperator, $pattern)
+                    ->orWhere('ch_customer_phone', $likeOperator, $pattern);
+            });
+        }
+
+        $paginated = $base
+            ->groupBy('ch_checkout_id')
+            ->selectRaw('ch_checkout_id, MIN(ch_id) as rep_id, MAX(created_at) as last_created, SUM(ch_amount) as items_total, MAX(COALESCE(ch_shipping_fee, 0)) as shipping_fee, COUNT(*) as item_count')
+            ->orderByDesc('last_created')
+            ->paginate($perPage, ['*'], 'page', $page);
+
+        $repIds = collect($paginated->items())->pluck('rep_id')->filter()->all();
+        $reps = CheckoutHistory::query()->whereIn('ch_id', $repIds)->get()->keyBy('ch_id');
+
+        $checkouts = collect($paginated->items())->map(function ($row) use ($reps) {
+            $rep = $reps[$row->rep_id] ?? null;
+            $isRecovered = $rep && $rep->ch_paid_at !== null;
+            $total = (float) $row->items_total + (float) $row->shipping_fee;
+            $name = trim((string) ($rep->ch_customer_name ?? ''));
+            if ($name === '') {
+                $name = trim((string) ($rep->ch_customer_email ?? '')) ?: trim((string) ($rep->ch_customer_phone ?? '')) ?: 'Guest';
+            }
+
+            return [
+                'checkout_id' => $row->ch_checkout_id,
+                'created_at' => optional($rep?->created_at)->toDateTimeString(),
+                'customer_name' => $name,
+                'customer_email' => $rep->ch_customer_email ?? null,
+                'region' => $this->resolveCheckoutRegion($rep),
+                'recovery_status' => $isRecovered ? 'recovered' : 'not_recovered',
+                'total_price' => round($total, 2),
+                'item_count' => (int) $row->item_count,
+                'reminder_count' => (int) ($rep->ch_reminder_count ?? 0),
+                'resume_url' => $rep->ch_checkout_url ?? null,
+                'abandoned_at' => optional($rep?->ch_abandoned_at)->toDateTimeString(),
+                'paid_at' => optional($rep?->ch_paid_at)->toDateTimeString(),
+            ];
+        })->values();
+
+        return response()->json([
+            'checkouts' => $checkouts,
+            'meta' => [
+                'current_page' => $paginated->currentPage(),
+                'last_page' => $paginated->lastPage(),
+                'per_page' => $paginated->perPage(),
+                'total' => $paginated->total(),
+                'from' => $paginated->firstItem(),
+                'to' => $paginated->lastItem(),
+            ],
+        ]);
+    }
+
+    /**
+     * Best-effort region for a checkout. The store is Philippines-only, so we
+     * surface the country when an address exists; replace with structured
+     * region data if/when checkout captures it.
+     */
+    private function resolveCheckoutRegion(?CheckoutHistory $order): string
+    {
+        if (!$order) {
+            return '—';
+        }
+        $address = trim((string) ($order->ch_customer_address ?? ''));
+        return $address !== '' ? 'Philippines' : '—';
     }
 
     private function computeSla(CheckoutHistory $order): array

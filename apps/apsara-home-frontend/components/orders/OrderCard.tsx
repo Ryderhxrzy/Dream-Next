@@ -40,6 +40,8 @@ type Order = {
   id: number
   order_number: string
   status: OrderStatus
+  is_unpaid?: boolean
+  resume_url?: string | null
   items: OrderItem[]
   total: number
   shipping_fee: number
@@ -179,6 +181,8 @@ const OrderCard = ({ order }: OrderCardProps) => {
   const [confirmOrder, { isLoading: isConfirming }] = useConfirmOrderMutation()
   const [refundOrder, { isLoading: isRefunding }] = useRefundOrderMutation()
   const cfg = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.pending
+  const isUnpaid = Boolean(order.is_unpaid)
+  const resumeUrl = (order.resume_url ?? "").trim()
   const previewItems = order.items.slice(0, 3)
   const extraCount = order.items.length - 3
   const isActive = !["cancelled", "refunded", "delivered"].includes(
@@ -239,12 +243,19 @@ const OrderCard = ({ order }: OrderCardProps) => {
           </div>
         </div>
         <div className="flex items-center gap-2.5">
-          <span
-            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${cfg.badge}`}
-          >
-            <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
-            {cfg.label}
-          </span>
+          {isUnpaid ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-400 dark:bg-amber-500" />
+              Awaiting Payment
+            </span>
+          ) : (
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${cfg.badge}`}
+            >
+              <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
+              {cfg.label}
+            </span>
+          )}
           {isShipmentCancelled && (
             <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400">
               <span className="h-1.5 w-1.5 rounded-full bg-red-400 dark:bg-red-500" />
@@ -354,6 +365,16 @@ const OrderCard = ({ order }: OrderCardProps) => {
 
         {/* Action buttons */}
         <div className="mt-4 flex flex-wrap items-center gap-2">
+          {isUnpaid && resumeUrl && (
+            <a
+              href={resumeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500 px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-700"
+            >
+              <Icon.CreditCard className="h-3.5 w-3.5" /> Pay Now
+            </a>
+          )}
           {order.status === "delivered" && (
             <button
               type="button"

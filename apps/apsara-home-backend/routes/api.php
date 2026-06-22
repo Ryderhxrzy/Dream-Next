@@ -447,6 +447,7 @@ Route::middleware(['auth:sanctum', 'admin.or_supplier'])->group(function () {
     Route::get('/admin/products', [ProductController::class, 'index']);
     Route::get('/admin/products/export', [ProductController::class, 'exportCsv']);
     Route::get('/admin/products/activity-logs', [ProductController::class, 'activityLogs']);
+    Route::get('/admin/products/pending-count', [ProductController::class, 'pendingCount']);
     Route::post('/admin/products', [ProductController::class, 'store']);
     Route::post('/admin/products/import', [ProductController::class, 'import']);
     Route::post('/admin/products/zq/fetch-preview', [ProductController::class, 'fetchZqImportPreview']);
@@ -534,6 +535,7 @@ Route::middleware(['auth:sanctum', 'admin.role:super_admin,admin,csr,merchant_ad
     Route::post('/admin/orders', [AdminOrderController::class, 'createAdminOrder']);
     Route::get('/admin/orders/counts', [AdminOrderController::class, 'counts']);
     Route::get('/admin/orders/product-search', [AdminOrderController::class, 'productSearch']);
+    Route::get('/admin/abandoned-checkouts', [AdminOrderController::class, 'abandonedCheckouts']);
     Route::delete('/admin/orders/{id}', [AdminOrderController::class, 'destroy']);
 });
 
