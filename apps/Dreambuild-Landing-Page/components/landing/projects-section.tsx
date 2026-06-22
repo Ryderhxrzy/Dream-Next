@@ -4,7 +4,7 @@ import Image from "next/image"
 import Link from "next/link"
 
 import { FadeUp, motion } from "@/components/ui/motion"
-import type { DreamBuildProject } from "@/lib/dreambuild-cms"
+import type { DreamBuildProject, ProjectsHeaderContent } from "@/lib/dreambuild-cms"
 
 // Bento layout config per card index
 const bentoConfig = [
@@ -23,11 +23,11 @@ const aspectConfig = [
 
 export function ProjectsSection({
   projects = [],
+  header,
 }: {
   projects?: DreamBuildProject[]
+  header: ProjectsHeaderContent
 }) {
-  if (projects.length === 0) return null
-
   return (
     <section id="projects" className="bg-white py-24 lg:py-36">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -36,10 +36,10 @@ export function ProjectsSection({
           <div>
             <p className="inline-flex items-center gap-2 text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
               <span className="h-px w-8 bg-[var(--muted)]" />
-              Featured Projects
+              {header.eyebrow}
             </p>
             <h2 className="mt-4 text-3xl font-medium tracking-tight text-[var(--foreground)] sm:text-4xl lg:text-5xl">
-              Spaces we&apos;ve shaped and styled.
+              {header.title}
             </h2>
           </div>
           <Link
@@ -52,6 +52,7 @@ export function ProjectsSection({
         </FadeUp>
 
         {/* Bento Grid */}
+        {projects.length > 0 ? (
         <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:mt-14 lg:grid-cols-3 lg:grid-rows-2 lg:gap-4">
           {projects.map((project, index) => {
             const projectHref = `/projects/${project.id}`
@@ -79,12 +80,18 @@ export function ProjectsSection({
                 <div
                   className={`relative w-full overflow-hidden ${aspectConfig[index] ?? aspectConfig[index % aspectConfig.length]}`}
                 >
-                  <Image
-                    src={project.image}
-                    alt={project.title}
-                    fill
-                    className="object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
+                  {project.image ? (
+                    <Image
+                      src={project.image}
+                      alt={project.title}
+                      fill
+                      className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="flex h-full min-h-64 flex-col items-center justify-center bg-neutral-100 text-center text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
+                      Image pending
+                    </div>
+                  )}
 
                   {/* Default dark overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
@@ -136,8 +143,22 @@ export function ProjectsSection({
             )
           })}
         </div>
+        ) : (
+          <FadeUp
+            delay={0.1}
+            className="mt-10 rounded-2xl border border-dashed border-[var(--border)] bg-[var(--background)] px-6 py-12 text-center lg:mt-14"
+          >
+            <p className="text-sm font-medium text-[var(--foreground)]">
+              No featured projects yet.
+            </p>
+            <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-[var(--muted)]">
+              Published project case studies from the DreamBuild CMS will appear here.
+            </p>
+          </FadeUp>
+        )}
 
         {/* Bottom strip */}
+        {projects.length > 0 && (
         <FadeUp
           delay={0.2}
           className="mt-10 flex items-center justify-between border-t border-[var(--border)] pt-8"
@@ -156,6 +177,7 @@ export function ProjectsSection({
             See full portfolio -&gt;
           </Link>
         </FadeUp>
+        )}
       </div>
     </section>
   )

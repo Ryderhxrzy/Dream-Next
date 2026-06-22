@@ -3,13 +3,13 @@
 import { useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 
-import { testimonials as defaultTestimonials } from "@/lib/landing-data"
+import type { TestimonialContent } from "@/lib/dreambuild-cms"
 import { FadeUp } from "@/components/ui/motion"
 
 export function TestimonialsSection({
-  testimonials = defaultTestimonials,
+  testimonials = [],
 }: {
-  testimonials?: typeof defaultTestimonials
+  testimonials?: TestimonialContent[]
 }) {
   const [current, setCurrent] = useState(0)
 

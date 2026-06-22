@@ -3,7 +3,6 @@
 import { motion } from "framer-motion"
 
 import type { ProcessStepContent } from "@/lib/dreambuild-cms"
-import { processSteps as defaultProcessSteps } from "@/lib/landing-data"
 import {
   FadeUp,
   SlideInLeft,
@@ -12,7 +11,7 @@ import {
 } from "@/components/ui/motion"
 
 export function ProcessSection({
-  processSteps = defaultProcessSteps,
+  processSteps = [],
 }: {
   processSteps?: ProcessStepContent[]
 }) {

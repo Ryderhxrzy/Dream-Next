@@ -11,7 +11,7 @@ import {
 import { Header } from "@/components/shared/header"
 
 export default async function ProjectsPage() {
-  const { projects } = await getDreamBuildContent()
+  const { projects, projectsHeader } = await getDreamBuildContent()
 
   return (
     <main className="min-h-screen bg-[var(--background)]">
@@ -23,12 +23,12 @@ export default async function ProjectsPage() {
           <div className="max-w-3xl">
             <FadeUp>
               <p className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
-                Our Portfolio
+                {projectsHeader.eyebrow}
               </p>
             </FadeUp>
             <FadeUp delay={0.1}>
               <h1 className="mt-4 text-4xl font-medium tracking-tight text-balance text-[var(--foreground)] sm:text-5xl lg:text-6xl">
-                Spaces we have shaped and styled
+                {projectsHeader.title}
               </h1>
             </FadeUp>
             <FadeUp delay={0.2}>
@@ -65,14 +65,20 @@ export default async function ProjectsPage() {
                   <Link href={`/projects/${project.id}`} className="block">
                     <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-white transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-lg">
                       <div className="relative aspect-[4/3] overflow-hidden">
-                        <Image
-                          src={project.image}
-                          alt={project.title}
-                          fill
-                          sizes="(min-width: 768px) 50vw, 100vw"
-                          priority={index < 2}
-                          className="object-cover transition-transform duration-700 group-hover:scale-105"
-                        />
+                        {project.image ? (
+                          <Image
+                            src={project.image}
+                            alt={project.title}
+                            fill
+                            sizes="(min-width: 768px) 50vw, 100vw"
+                            priority={index < 2}
+                            className="object-cover transition-transform duration-700 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="flex h-full min-h-64 flex-col items-center justify-center bg-neutral-100 text-center text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
+                            Image pending
+                          </div>
+                        )}
                       </div>
                       <div className="p-6 lg:p-8">
                         <div className="flex flex-wrap items-center gap-3">

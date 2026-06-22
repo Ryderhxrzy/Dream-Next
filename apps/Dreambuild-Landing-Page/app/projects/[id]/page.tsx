@@ -31,6 +31,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   const nextProject = projects[(projectIndex + 1) % projects.length]
   const prevProject = projects[(projectIndex - 1 + projects.length) % projects.length]
   const metaItems = [project.location, project.scopeLabel, project.timeline].filter(Boolean)
+  const hasProjectDetails = project.scopeItems.length > 0 || project.location || project.timeline || project.story
 
   return (
     <main className="min-h-screen bg-[var(--background)]">
@@ -50,12 +51,14 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
           <FadeUp delay={0.1}>
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              <span className="text-xs font-medium tracking-widest text-[var(--accent)] uppercase">
-                {project.tag}
-              </span>
-              {metaItems.map((item) => (
+              {project.tag && (
+                <span className="text-xs font-medium tracking-widest text-[var(--accent)] uppercase">
+                  {project.tag}
+                </span>
+              )}
+              {metaItems.map((item, index) => (
                 <span key={item} className="contents">
-                  <span className="h-1 w-1 rounded-full bg-[var(--border)]" />
+                  {(project.tag || index > 0) && <span className="h-1 w-1 rounded-full bg-[var(--border)]" />}
                   <span className="text-xs text-[var(--muted)]">{item}</span>
                 </span>
               ))}
@@ -68,11 +71,13 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             </h1>
           </FadeUp>
 
-          <FadeUp delay={0.3}>
-            <p className="mt-6 max-w-3xl text-lg leading-relaxed text-[var(--muted)]">
-              {project.description}
-            </p>
-          </FadeUp>
+          {project.description && (
+            <FadeUp delay={0.3}>
+              <p className="mt-6 max-w-3xl text-lg leading-relaxed text-[var(--muted)]">
+                {project.description}
+              </p>
+            </FadeUp>
+          )}
         </div>
       </section>
 
@@ -81,74 +86,88 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
           <ScaleUp>
             <div className="overflow-hidden rounded-2xl">
               <div className="relative aspect-[16/9]">
-                <Image
-                  src={project.image}
-                  alt={project.title}
-                  fill
-                  priority
-                  sizes="100vw"
-                  className="object-cover"
-                />
+                {project.image ? (
+                  <Image
+                    src={project.image}
+                    alt={project.title}
+                    fill
+                    priority
+                    sizes="100vw"
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full min-h-80 flex-col items-center justify-center bg-neutral-100 text-center text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
+                    Image pending
+                  </div>
+                )}
               </div>
             </div>
           </ScaleUp>
         </div>
       </section>
 
-      <section className="pb-20 lg:pb-32">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <StaggerContainer className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
-            <StaggerItem>
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
-                    Project Scope
-                  </h3>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {project.scopeItems.map((item) => (
-                      <span
-                        key={item}
-                        className="rounded-full border border-[var(--border)] bg-white px-3 py-1 text-sm text-[var(--foreground)]"
-                      >
-                        {item}
-                      </span>
-                    ))}
-                  </div>
+      {hasProjectDetails && (
+        <section className="pb-20 lg:pb-32">
+          <div className="mx-auto max-w-7xl px-6 lg:px-8">
+            <StaggerContainer className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
+              <StaggerItem>
+                <div className="space-y-6">
+                  {project.scopeItems.length > 0 && (
+                    <div>
+                      <h3 className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
+                        Project Scope
+                      </h3>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {project.scopeItems.map((item) => (
+                          <span
+                            key={item}
+                            className="rounded-full border border-[var(--border)] bg-white px-3 py-1 text-sm text-[var(--foreground)]"
+                          >
+                            {item}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {project.location && (
+                    <div>
+                      <h3 className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
+                        City / Area
+                      </h3>
+                      <p className="mt-3 text-base text-[var(--foreground)]">
+                        {project.location}
+                      </p>
+                    </div>
+                  )}
+                  {project.timeline && (
+                    <div>
+                      <h3 className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
+                        Timeline
+                      </h3>
+                      <p className="mt-3 text-base text-[var(--foreground)]">
+                        {project.timeline}
+                      </p>
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <h3 className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
-                    City / Area
-                  </h3>
-                  <p className="mt-3 text-base text-[var(--foreground)]">
-                    {project.location}
-                  </p>
-                </div>
-                {project.timeline && (
-                  <div>
-                    <h3 className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
-                      Timeline
-                    </h3>
-                    <p className="mt-3 text-base text-[var(--foreground)]">
-                      {project.timeline}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </StaggerItem>
+              </StaggerItem>
 
-            <StaggerItem>
-              <article className="border-l border-[var(--border)] pl-6 lg:pl-10">
-                <h2 className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
-                  Detail-page story
-                </h2>
-                <p className="mt-4 whitespace-pre-line text-lg leading-relaxed text-[var(--foreground)]">
-                  {project.story}
-                </p>
-              </article>
-            </StaggerItem>
-          </StaggerContainer>
-        </div>
-      </section>
+              {project.story && (
+                <StaggerItem>
+                  <article className="border-l border-[var(--border)] pl-6 lg:pl-10">
+                    <h2 className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
+                      Detail-page story
+                    </h2>
+                    <p className="mt-4 whitespace-pre-line text-lg leading-relaxed text-[var(--foreground)]">
+                      {project.story}
+                    </p>
+                  </article>
+                </StaggerItem>
+              )}
+            </StaggerContainer>
+          </div>
+        </section>
+      )}
 
       {projects.length > 1 && (
         <section className="border-t border-[var(--border)] bg-white py-16 lg:py-24">
@@ -165,9 +184,11 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                   <h3 className="mt-3 text-xl font-medium text-[var(--foreground)] transition-colors group-hover:text-[var(--accent)] lg:text-2xl">
                     {prevProject.title}
                   </h3>
-                  <p className="mt-2 text-sm text-[var(--muted)]">
-                    {prevProject.tag}
-                  </p>
+                  {prevProject.tag && (
+                    <p className="mt-2 text-sm text-[var(--muted)]">
+                      {prevProject.tag}
+                    </p>
+                  )}
                 </Link>
               </SlideInLeft>
 
@@ -182,9 +203,11 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                   <h3 className="mt-3 text-xl font-medium text-[var(--foreground)] transition-colors group-hover:text-[var(--accent)] lg:text-2xl">
                     {nextProject.title}
                   </h3>
-                  <p className="mt-2 text-sm text-[var(--muted)]">
-                    {nextProject.tag}
-                  </p>
+                  {nextProject.tag && (
+                    <p className="mt-2 text-sm text-[var(--muted)]">
+                      {nextProject.tag}
+                    </p>
+                  )}
                 </Link>
               </SlideInRight>
             </div>

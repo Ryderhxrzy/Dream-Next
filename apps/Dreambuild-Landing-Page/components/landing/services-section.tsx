@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { services as defaultServices } from "@/lib/landing-data";
 import type { ServiceContent as DreamBuildServiceContent, ServicesCtaContent, ServicesHeaderContent } from "@/lib/dreambuild-cms";
 import { FadeUp, SlideInLeft, SlideInRight, StaggerContainer, StaggerItem } from "@/components/ui/motion";
 import { motion } from "framer-motion";
@@ -26,7 +25,7 @@ const defaultHeader: ServicesHeaderContent = {
 };
 
 export function ServicesSection({
-  services = defaultServices,
+  services = [],
   header = defaultHeader,
   cta = defaultCta,
 }: {

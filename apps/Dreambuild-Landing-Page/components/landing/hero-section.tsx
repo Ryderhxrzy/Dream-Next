@@ -10,6 +10,15 @@ import { FadeUp, StaggerContainer, StaggerItem } from "@/components/ui/motion"
 
 export function HeroSection({ content }: { content: HeroContent }) {
   const carouselSlides = content.carouselSlides
+  const hasHeroContent = Boolean(
+    content.eyebrow ||
+      content.title ||
+      content.body ||
+      content.primaryButtonText ||
+      content.secondaryButtonText ||
+      content.stats.length ||
+      carouselSlides.length,
+  )
   const [currentSlide, setCurrentSlide] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -46,11 +55,13 @@ export function HeroSection({ content }: { content: HeroContent }) {
     }
   }
 
+  if (!hasHeroContent) return null
+
   return (
     <section className="relative min-h-screen">
       {/* Hero Content */}
       <div className="mx-auto max-w-7xl px-6 pt-32 pb-20 lg:px-8 lg:pt-40 lg:pb-32">
-        <div className="grid gap-16 lg:grid-cols-2 lg:items-center lg:gap-20">
+        <div className={`grid gap-16 lg:items-center lg:gap-20 ${carouselSlides.length > 0 ? "lg:grid-cols-2" : ""}`}>
           {/* Left Column */}
           <div className="max-w-2xl">
             <FadeUp delay={0.2}>
@@ -113,6 +124,7 @@ export function HeroSection({ content }: { content: HeroContent }) {
           </div>
 
           {/* Right Column - Carousel */}
+          {carouselSlides.length > 0 && (
           <motion.div
             initial={{ opacity: 0, x: 60 }}
             animate={{ opacity: 1, x: 0 }}
@@ -133,32 +145,26 @@ export function HeroSection({ content }: { content: HeroContent }) {
                 isDragging ? "cursor-grabbing" : "cursor-grab"
               }`}
             >
-              {carouselSlides.length > 0 ? (
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={safeCurrentSlide}
-                    initial={{ opacity: 0, scale: 1.05 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.98 }}
-                    transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
-                    className="pointer-events-none absolute inset-0"
-                  >
-                    <Image
-                      src={carouselSlides[safeCurrentSlide].src}
-                      alt={carouselSlides[safeCurrentSlide].alt}
-                      fill
-                      className="object-cover"
-                      priority={safeCurrentSlide === 0}
-                      draggable={false}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-                  </motion.div>
-                </AnimatePresence>
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center bg-neutral-100 text-sm text-[var(--muted)]">
-                  Add hero carousel images in the admin
-                </div>
-              )}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={safeCurrentSlide}
+                  initial={{ opacity: 0, scale: 1.05 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.98 }}
+                  transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
+                  className="pointer-events-none absolute inset-0"
+                >
+                  <Image
+                    src={carouselSlides[safeCurrentSlide].src}
+                    alt={carouselSlides[safeCurrentSlide].alt}
+                    fill
+                    className="object-cover"
+                    priority={safeCurrentSlide === 0}
+                    draggable={false}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                </motion.div>
+              </AnimatePresence>
 
               {/* Slide label + dots */}
               {carouselSlides.length > 0 && (
@@ -215,6 +221,7 @@ export function HeroSection({ content }: { content: HeroContent }) {
               </motion.div>
             )}
           </motion.div>
+          )}
         </div>
       </div>
     </section>
