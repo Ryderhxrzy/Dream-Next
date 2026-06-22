@@ -726,6 +726,22 @@ Schedule::command('payments:sync-pending --limit=25')
     ->everyFiveMinutes()
     ->withoutOverlapping();
 
+// Recover abandoned checkouts (started but never paid) via email/SMS/push.
+Schedule::command('checkouts:send-abandoned-reminders --limit=100')
+    ->hourly()
+    ->withoutOverlapping()
+    ->onFailure(function () {
+        Log::error('Abandoned checkout reminder job failed.');
+    });
+
+// Mark unpaid checkouts past the expiry window as terminally abandoned.
+Schedule::command('checkouts:expire-abandoned --limit=200')
+    ->hourly()
+    ->withoutOverlapping()
+    ->onFailure(function () {
+        Log::error('Abandoned checkout expiry job failed.');
+    });
+
 Schedule::command('zq:sync-tracking --limit=25')
     ->everyFiveMinutes()
     ->withoutOverlapping();

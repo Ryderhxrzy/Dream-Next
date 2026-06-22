@@ -140,6 +140,8 @@ export interface CustomerOrder {
   id: number
   order_number: string
   status: CustomerOrderStatus
+  is_unpaid?: boolean
+  resume_url?: string | null
   items: CustomerOrderItem[]
   total: number
   total_amount?: number
