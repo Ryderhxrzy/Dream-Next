@@ -3369,11 +3369,40 @@ class ProductController extends Controller
         ]);
     }
 
+    /**
+     * Count of products awaiting admin review (pd_status = 3). Scoped to the
+     * acting supplier when the caller is a supplier/merchant. Powers the
+     * "Pending" badge on the products toolbar.
+     */
+    public function pendingCount(Request $request): JsonResponse
+    {
+        $admin = $this->resolveAdmin($request);
+        $supplierUser = $this->resolveSupplierUser($request);
+        if (! $admin && ! $supplierUser) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $query = Product::query()->where('pd_status', 3);
+
+        if ($supplierUser) {
+            $query->where('pd_supplier', (int) $supplierUser->su_supplier);
+        } elseif ($admin && $this->roleFromLevel((int) $admin->user_level_id) === 'supplier_admin') {
+            $query->where('pd_supplier', (int) ($admin->supplier_id ?? 0));
+        }
+
+        return response()->json(['pending' => (int) $query->count()]);
+    }
+
     public function store(Request $request): JsonResponse
     {
         $admin = $this->resolveAdmin($request);
         $supplierUser = $this->resolveSupplierUser($request);
         $actorSupplierId = $this->actorSupplierId($admin, $supplierUser);
+        // A submission counts as a supplier/merchant submission when made by a
+        // supplier-portal user OR by a supplier_admin. These ALWAYS start as
+        // Pending (3) so an admin must review them before they go live.
+        $isSupplierSubmission = $supplierUser !== null
+            || ($admin !== null && $this->roleFromLevel((int) $admin->user_level_id) === 'supplier_admin');
         if ($admin && $this->roleFromLevel((int) $admin->user_level_id) === 'supplier_admin' && ! $admin->supplier_id) {
             $this->recordFailedProductActivity('created', $admin, $supplierUser, null, (string) $request->input('pd_name', ''), (string) $request->input('pd_parent_sku', ''));
             return response()->json([
@@ -3513,8 +3542,10 @@ class ProductController extends Controller
                     'pd_date'        => $now,
                     'pd_last_update' => $now,
                     // Public storefront visibility expects active products to be status 1/2.
-                    // Default new products to active when status is omitted by a client.
-                    'pd_status'      => (int) $request->input('pd_status', 1),
+                    // Supplier/merchant submissions ALWAYS start Pending (3) for admin
+                    // review — never trust the client's status for them. Full admins set
+                    // the status directly (defaulting to active when omitted).
+                    'pd_status'      => $isSupplierSubmission ? 3 : (int) $request->input('pd_status', 1),
                     'pd_image'       => $images[0] ?? ($request->pd_image ?? null),
                 ]);
             } catch (\Throwable $e) {
