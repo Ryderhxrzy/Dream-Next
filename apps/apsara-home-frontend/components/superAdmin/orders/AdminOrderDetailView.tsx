@@ -1,22 +1,22 @@
 "use client"
 
 import { useState } from "react"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import {
-  type AdminCourier,
   useApproveAdminOrderMutation,
   useGetAdminOrdersQuery,
   useRejectAdminOrderMutation,
   useTrackAdminOrderCourierMutation,
+  type AdminCourier,
 } from "@/store/api/adminOrdersApi"
-import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
 
 import {
-  ShippingAddressCard,
-  StatusPill,
   fulfillmentStatusTone,
   paymentStatusTone,
+  ShippingAddressCard,
+  StatusPill,
 } from "./orderUi"
 
 /* ─── helpers ──────────────────────────────────────────────── */
@@ -142,11 +142,7 @@ function DetailRow({
 
 /* ─── main ─────────────────────────────────────────────────── */
 
-export default function AdminOrderDetailView({
-  orderId,
-}: {
-  orderId: string
-}) {
+export default function AdminOrderDetailView({ orderId }: { orderId: string }) {
   const { data: session } = useSession()
   const { data, isLoading, isError, isFetching } = useGetAdminOrdersQuery({
     filter: "all",
@@ -224,6 +220,15 @@ export default function AdminOrderDetailView({
   const courierForTrack: AdminCourier =
     (order.courier ?? "").toLowerCase() === "xde" ? "xde" : "jnt"
   const hasCourier = Boolean(order.courier)
+
+  /* ── abandoned / unpaid checkout ── */
+  const isUnpaid =
+    !order.paid_at &&
+    !["paid", "succeeded", "success", "failed", "cancelled", "expired"].includes(
+      (order.payment_status ?? "").toLowerCase()
+    )
+  const reminderCount = Number(order.reminder_count ?? 0)
+  const resumeUrl = (order.checkout_url ?? "").trim()
 
   /* ── tracking logs (defensive — payload shape varies by courier) ── */
   const rawPayload = order.shipment_payload as unknown
@@ -325,6 +330,25 @@ export default function AdminOrderDetailView({
               label={order.fulfillment_status.replace(/_/g, " ")}
               tone={fulfillmentStatusTone(order.fulfillment_status)}
             />
+            {isUnpaid ? (
+              <StatusPill
+                label="Abandoned / Unpaid"
+                tone={paymentStatusTone("unpaid")}
+                dot
+              />
+            ) : null}
+            {reminderCount > 0 ? (
+              <span
+                title={
+                  order.last_reminder_at
+                    ? `Last reminder: ${formatDateTime(order.last_reminder_at)}`
+                    : undefined
+                }
+                className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              >
+                Reminded {reminderCount}×
+              </span>
+            ) : null}
           </div>
           <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
             Placed {formatDateTime(order.created_at)}
@@ -334,6 +358,30 @@ export default function AdminOrderDetailView({
 
         {/* Action buttons */}
         <div className="flex flex-wrap items-center gap-2">
+          {isUnpaid && resumeUrl ? (
+            <a
+              href={resumeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-amber-600"
+            >
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M14 5l7 7m0 0l-7 7m7-7H3"
+                />
+              </svg>
+              Resume payment
+            </a>
+          ) : null}
+
           {canTrack && hasCourier ? (
             <button
               type="button"
@@ -634,7 +682,10 @@ export default function AdminOrderDetailView({
                 </span>
               }
             />
-            <DetailRow label="Placed" value={formatDateTime(order.created_at)} />
+            <DetailRow
+              label="Placed"
+              value={formatDateTime(order.created_at)}
+            />
             <DetailRow label="Paid" value={formatDateTime(order.paid_at)} />
           </SectionCard>
         </div>

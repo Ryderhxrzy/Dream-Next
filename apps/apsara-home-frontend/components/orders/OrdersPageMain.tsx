@@ -114,11 +114,15 @@ const OrdersPageMain = ({
   const filtered = useMemo(() => {
     let list = orders
     if (activeTab !== "all")
-      list = list.filter(
-        (o) =>
+      list = list.filter((o) => {
+        if (activeTab === "unpaid") return Boolean(o.is_unpaid)
+        // Unpaid orders only surface under the dedicated "Unpaid" tab.
+        if (o.is_unpaid) return false
+        return (
           o.status === activeTab ||
           (activeTab === "shipped" && o.status === "out_for_delivery")
-      )
+        )
+      })
     if (search.trim())
       list = list.filter(
         (o) =>
@@ -147,6 +151,10 @@ const OrdersPageMain = ({
       all: orders.length,
     }
     orders.forEach((o) => {
+      if (o.is_unpaid) {
+        counts.unpaid = (counts.unpaid ?? 0) + 1
+        return
+      }
       const key = o.status === "out_for_delivery" ? "shipped" : o.status
       counts[key] = (counts[key] ?? 0) + 1
     })

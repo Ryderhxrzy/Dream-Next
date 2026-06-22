@@ -58,6 +58,7 @@ const FILTER_LABELS: Record<string, string> = {
   refunded: "Refunded",
   returned_refunded: "Returned / Refunded",
   failed_payments: "Failed Payments",
+  abandoned: "Abandoned Checkouts",
   order_history: "Order History",
   completed: "Completed",
 }
@@ -71,6 +72,7 @@ const ORDER_FILTER_OPTIONS: Array<{ value: string; label: string }> = [
   { value: "completed", label: "Completed" },
   { value: "returned_refunded", label: "Returns / Refunds" },
   { value: "failed_payments", label: "Issues (Failed/Cancelled)" },
+  { value: "abandoned", label: "Abandoned (Unpaid)" },
 ]
 
 const SHIPMENT_STATUS_OPTIONS: Array<{

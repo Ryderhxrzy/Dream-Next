@@ -73,6 +73,10 @@ export interface AdminOrder {
   source_host?: string | null
   source_url?: string | null
   paid_at?: string | null
+  checkout_url?: string | null
+  abandoned_at?: string | null
+  reminder_count?: number
+  last_reminder_at?: string | null
   created_at?: string | null
   updated_at?: string | null
   sla?: {
@@ -101,12 +105,49 @@ export interface AdminOrdersResponse {
     processing: number
     cancelled: number
     completed: number
+    abandoned?: number
   }
 }
 
 interface AdminOrdersQuery {
   filter?: string
   search?: string
+  page?: number
+  perPage?: number
+}
+
+export type RecoveryStatus = "recovered" | "not_recovered"
+
+export interface AbandonedCheckout {
+  checkout_id: string
+  created_at?: string | null
+  customer_name?: string | null
+  customer_email?: string | null
+  region?: string | null
+  recovery_status: RecoveryStatus
+  total_price: number
+  item_count?: number
+  reminder_count?: number
+  resume_url?: string | null
+  abandoned_at?: string | null
+  paid_at?: string | null
+}
+
+export interface AbandonedCheckoutsResponse {
+  checkouts: AbandonedCheckout[]
+  meta: {
+    current_page: number
+    last_page: number
+    per_page: number
+    total: number
+    from: number | null
+    to: number | null
+  }
+}
+
+interface AbandonedCheckoutsQuery {
+  q?: string
+  recovery?: "all" | RecoveryStatus
   page?: number
   perPage?: number
 }
@@ -140,6 +181,22 @@ export const adminOrdersApi = baseApi.injectEndpoints({
           q: params?.search,
           page: params?.page ?? 1,
           per_page: params?.perPage ?? 20,
+        },
+      }),
+      providesTags: ["Orders"],
+    }),
+    getAbandonedCheckouts: builder.query<
+      AbandonedCheckoutsResponse,
+      AbandonedCheckoutsQuery | void
+    >({
+      query: (params) => ({
+        url: "/api/admin/abandoned-checkouts",
+        method: "GET",
+        params: {
+          q: params?.q,
+          recovery: params?.recovery ?? "all",
+          page: params?.page ?? 1,
+          per_page: params?.perPage ?? 50,
         },
       }),
       providesTags: ["Orders"],
@@ -312,6 +369,7 @@ export const adminOrdersApi = baseApi.injectEndpoints({
 export const {
   useGetAdminOrdersQuery,
   useGetPartnerStorefrontOrdersQuery,
+  useGetAbandonedCheckoutsQuery,
   useApproveAdminOrderMutation,
   useRejectAdminOrderMutation,
   useUpdateAdminOrderStatusMutation,

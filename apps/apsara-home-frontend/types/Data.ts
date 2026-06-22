@@ -95,6 +95,7 @@ export const TRACK_STEPS = [
 
 export const TABS = [
   { key: "all", label: "All Orders" },
+  { key: "unpaid", label: "Unpaid" },
   { key: "pending", label: "Pending" },
   { key: "processing", label: "Processing" },
   { key: "shipped", label: "Shipped" },
