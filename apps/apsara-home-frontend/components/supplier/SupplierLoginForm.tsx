@@ -213,7 +213,7 @@ export default function SupplierLoginForm() {
               />
             </div>
             <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-              Supplier Portal
+              Merchant Portal
             </h1>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
               Sign in to manage your company products

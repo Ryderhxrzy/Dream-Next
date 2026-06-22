@@ -109,9 +109,9 @@ class PaymongoPaymentSyncService
             ->where('ch_id', '!=', $order->ch_id)
             ->update([
                 'ch_status' => $status,
-                'ch_payment_intent_id' => data_get($attrs, 'payment_intent.id') ?: \Illuminate\Database\Query\Expression::raw('ch_payment_intent_id'),
+                'ch_payment_intent_id' => data_get($attrs, 'payment_intent.id') ?: \DB::raw('ch_payment_intent_id'),
                 'ch_payment_id' => data_get($attrs, 'payments.0.id') ?: data_get($attrs, 'payment_id'),
-                'ch_paid_at' => $isNowPaid && !$order->ch_paid_at ? now() : \Illuminate\Database\Query\Expression::raw('ch_paid_at'),
+                'ch_paid_at' => $isNowPaid && !$order->ch_paid_at ? now() : \DB::raw('ch_paid_at'),
             ]);
 
         // Only update notification if status actually changed

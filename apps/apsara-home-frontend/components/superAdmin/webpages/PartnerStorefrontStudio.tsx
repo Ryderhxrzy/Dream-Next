@@ -1579,16 +1579,16 @@ export default function PartnerStorefrontStudio() {
                   className={`cursor-pointer p-4 transition ${active ? "bg-emerald-50 dark:bg-emerald-950/30" : "hover:bg-slate-50 dark:hover:bg-slate-800/40"}`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800">
                       {config.logoUrl ? (
                         <img
                           src={config.logoUrl}
                           alt=""
-                          className="h-full w-full object-contain"
+                          className="h-full w-full object-cover"
                         />
                       ) : (
                         <span
-                          className={`text-sm font-bold ${active ? "text-emerald-600 dark:text-emerald-300" : "text-slate-400"}`}
+                          className={`text-base font-bold ${active ? "text-emerald-600 dark:text-emerald-300" : "text-slate-400"}`}
                         >
                           {(config.displayName[0] ?? "?").toUpperCase()}
                         </span>
