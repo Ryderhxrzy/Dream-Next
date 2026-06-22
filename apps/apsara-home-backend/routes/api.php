@@ -533,6 +533,7 @@ Route::middleware(['auth:sanctum', 'admin.role:super_admin,admin'])->group(funct
 Route::middleware(['auth:sanctum', 'admin.role:super_admin,admin,csr,merchant_admin,web_content'])->group(function () {
     Route::get('/admin/orders', [AdminOrderController::class, 'index']);
     Route::get('/admin/orders/counts', [AdminOrderController::class, 'counts']);
+    Route::get('/admin/abandoned-checkouts', [AdminOrderController::class, 'abandonedCheckouts']);
     Route::delete('/admin/orders/{id}', [AdminOrderController::class, 'destroy']);
 });
 
