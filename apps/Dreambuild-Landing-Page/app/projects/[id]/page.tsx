@@ -1,9 +1,8 @@
-"use client"
-
+import Image from "next/image"
 import Link from "next/link"
-import { notFound, useParams } from "next/navigation"
+import { notFound } from "next/navigation"
 
-import { allProjects } from "@/lib/landing-data"
+import { getDreamBuildContent } from "@/lib/dreambuild-cms"
 import {
   FadeIn,
   FadeUp,
@@ -15,25 +14,29 @@ import {
 } from "@/components/ui/motion"
 import { Header } from "@/components/shared/header"
 
-export default function ProjectPage() {
-  const params = useParams()
-  const id = params.id as string
-  const project = allProjects.find((p) => p.id === id)
+type ProjectPageProps = {
+  params: Promise<{ id: string }>
+}
+
+export default async function ProjectPage({ params }: ProjectPageProps) {
+  const { id } = await params
+  const { projects } = await getDreamBuildContent()
+  const project = projects.find((item) => item.id === id)
 
   if (!project) {
     notFound()
   }
 
-  const projectIndex = allProjects.findIndex((p) => p.id === id)
-  const nextProject = allProjects[(projectIndex + 1) % allProjects.length]
-  const prevProject =
-    allProjects[(projectIndex - 1 + allProjects.length) % allProjects.length]
+  const projectIndex = projects.findIndex((item) => item.id === id)
+  const nextProject = projects[(projectIndex + 1) % projects.length]
+  const prevProject = projects[(projectIndex - 1 + projects.length) % projects.length]
+  const metaItems = [project.location, project.scopeLabel, project.timeline].filter(Boolean)
+  const hasProjectDetails = project.scopeItems.length > 0 || project.location || project.timeline || project.story
 
   return (
     <main className="min-h-screen bg-[var(--background)]">
       <Header />
 
-      {/* Hero Section */}
       <section className="pt-32 pb-12 lg:pt-40 lg:pb-16">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <FadeUp>
@@ -41,36 +44,24 @@ export default function ProjectPage() {
               href="/projects"
               className="inline-flex items-center gap-2 text-sm text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
             >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 16l-4-4m0 0l4-4m-4 4h18"
-                />
-              </svg>
+              <span aria-hidden="true">←</span>
               Back to Projects
             </Link>
           </FadeUp>
 
           <FadeUp delay={0.1}>
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              <span className="text-xs font-medium tracking-widest text-[var(--accent)] uppercase">
-                {project.tag}
-              </span>
-              <span className="h-1 w-1 rounded-full bg-[var(--border)]" />
-              <span className="text-xs text-[var(--muted)]">
-                {project.location}
-              </span>
-              <span className="h-1 w-1 rounded-full bg-[var(--border)]" />
-              <span className="text-xs text-[var(--muted)]">
-                {project.year}
-              </span>
+              {project.tag && (
+                <span className="text-xs font-medium tracking-widest text-[var(--accent)] uppercase">
+                  {project.tag}
+                </span>
+              )}
+              {metaItems.map((item, index) => (
+                <span key={item} className="contents">
+                  {(project.tag || index > 0) && <span className="h-1 w-1 rounded-full bg-[var(--border)]" />}
+                  <span className="text-xs text-[var(--muted)]">{item}</span>
+                </span>
+              ))}
             </div>
           </FadeUp>
 
@@ -80,157 +71,156 @@ export default function ProjectPage() {
             </h1>
           </FadeUp>
 
-          <FadeUp delay={0.3}>
-            <p className="mt-6 max-w-3xl text-lg leading-relaxed text-[var(--muted)]">
-              {project.description}
-            </p>
-          </FadeUp>
+          {project.description && (
+            <FadeUp delay={0.3}>
+              <p className="mt-6 max-w-3xl text-lg leading-relaxed text-[var(--muted)]">
+                {project.description}
+              </p>
+            </FadeUp>
+          )}
         </div>
       </section>
 
-      {/* Main Image */}
       <section className="pb-16 lg:pb-24">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <ScaleUp>
             <div className="overflow-hidden rounded-2xl">
-              <div className="aspect-[16/9] bg-gradient-to-br from-[#e8e0d4] via-[#d4c8b8] to-[#c0b0a0]" />
+              <div className="relative aspect-[16/9]">
+                {project.image ? (
+                  <Image
+                    src={project.image}
+                    alt={project.title}
+                    fill
+                    priority
+                    sizes="100vw"
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full min-h-80 flex-col items-center justify-center bg-neutral-100 text-center text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
+                    Image pending
+                  </div>
+                )}
+              </div>
             </div>
           </ScaleUp>
         </div>
       </section>
 
-      {/* Project Details */}
-      <section className="pb-16 lg:pb-24">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <StaggerContainer className="grid gap-12 lg:grid-cols-3">
-            {/* Scope */}
-            <StaggerItem>
-              <div>
-                <h3 className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
-                  Project Scope
-                </h3>
-                <ul className="mt-4 space-y-2">
-                  {project.scope.map((item) => (
-                    <li
-                      key={item}
-                      className="text-base text-[var(--foreground)]"
-                    >
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </StaggerItem>
+      {hasProjectDetails && (
+        <section className="pb-20 lg:pb-32">
+          <div className="mx-auto max-w-7xl px-6 lg:px-8">
+            <StaggerContainer className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
+              <StaggerItem>
+                <div className="space-y-6">
+                  {project.scopeItems.length > 0 && (
+                    <div>
+                      <h3 className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
+                        Project Scope
+                      </h3>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {project.scopeItems.map((item) => (
+                          <span
+                            key={item}
+                            className="rounded-full border border-[var(--border)] bg-white px-3 py-1 text-sm text-[var(--foreground)]"
+                          >
+                            {item}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {project.location && (
+                    <div>
+                      <h3 className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
+                        City / Area
+                      </h3>
+                      <p className="mt-3 text-base text-[var(--foreground)]">
+                        {project.location}
+                      </p>
+                    </div>
+                  )}
+                  {project.timeline && (
+                    <div>
+                      <h3 className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
+                        Timeline
+                      </h3>
+                      <p className="mt-3 text-base text-[var(--foreground)]">
+                        {project.timeline}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </StaggerItem>
 
-            {/* Location */}
-            <StaggerItem>
-              <div>
-                <h3 className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
-                  Location
-                </h3>
-                <p className="mt-4 text-base text-[var(--foreground)]">
-                  {project.location}
-                </p>
-              </div>
-            </StaggerItem>
-
-            {/* Year */}
-            <StaggerItem>
-              <div>
-                <h3 className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
-                  Year Completed
-                </h3>
-                <p className="mt-4 text-base text-[var(--foreground)]">
-                  {project.year}
-                </p>
-              </div>
-            </StaggerItem>
-          </StaggerContainer>
-        </div>
-      </section>
-
-      {/* Gallery Grid */}
-      <section className="pb-20 lg:pb-32">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <StaggerContainer className="grid gap-6 sm:grid-cols-2">
-            <StaggerItem>
-              <div className="group overflow-hidden rounded-2xl">
-                <div className="aspect-[4/5] bg-gradient-to-br from-[#d8cec0] via-[#e8e0d4] to-[#ccc0b0] transition-transform duration-500 group-hover:scale-105" />
-              </div>
-            </StaggerItem>
-            <StaggerItem>
-              <div className="group overflow-hidden rounded-2xl">
-                <div className="aspect-[4/5] bg-gradient-to-br from-[#f0ebe3] via-[#e4dcd0] to-[#d0c4b4] transition-transform duration-500 group-hover:scale-105" />
-              </div>
-            </StaggerItem>
-            <StaggerItem className="sm:col-span-2">
-              <div className="group overflow-hidden rounded-2xl">
-                <div className="aspect-[21/9] bg-gradient-to-br from-[#e0d8cc] via-[#d0c4b4] to-[#c4b8a8] transition-transform duration-500 group-hover:scale-105" />
-              </div>
-            </StaggerItem>
-            <StaggerItem>
-              <div className="group overflow-hidden rounded-2xl">
-                <div className="aspect-square bg-gradient-to-br from-[#e8e0d4] via-[#d4c8b8] to-[#c0b0a0] transition-transform duration-500 group-hover:scale-105" />
-              </div>
-            </StaggerItem>
-            <StaggerItem>
-              <div className="group overflow-hidden rounded-2xl">
-                <div className="aspect-square bg-gradient-to-br from-[#d8cec0] via-[#e8e0d4] to-[#ccc0b0] transition-transform duration-500 group-hover:scale-105" />
-              </div>
-            </StaggerItem>
-          </StaggerContainer>
-        </div>
-      </section>
-
-      {/* Project Navigation */}
-      <section className="border-t border-[var(--border)] bg-white py-16 lg:py-24">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="grid gap-8 md:grid-cols-2">
-            <SlideInLeft>
-              <Link
-                href={`/projects/${prevProject.id}`}
-                className="group rounded-2xl border border-[var(--border)] p-6 transition-all hover:border-[var(--foreground)] hover:shadow-lg lg:p-8"
-              >
-                <span className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
-                  Previous Project
-                </span>
-                <h3 className="mt-3 text-xl font-medium text-[var(--foreground)] transition-colors group-hover:text-[var(--accent)] lg:text-2xl">
-                  {prevProject.title}
-                </h3>
-                <p className="mt-2 text-sm text-[var(--muted)]">
-                  {prevProject.tag}
-                </p>
-              </Link>
-            </SlideInLeft>
-
-            <SlideInRight>
-              <Link
-                href={`/projects/${nextProject.id}`}
-                className="group rounded-2xl border border-[var(--border)] p-6 text-right transition-all hover:border-[var(--foreground)] hover:shadow-lg lg:p-8"
-              >
-                <span className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
-                  Next Project
-                </span>
-                <h3 className="mt-3 text-xl font-medium text-[var(--foreground)] transition-colors group-hover:text-[var(--accent)] lg:text-2xl">
-                  {nextProject.title}
-                </h3>
-                <p className="mt-2 text-sm text-[var(--muted)]">
-                  {nextProject.tag}
-                </p>
-              </Link>
-            </SlideInRight>
+              {project.story && (
+                <StaggerItem>
+                  <article className="border-l border-[var(--border)] pl-6 lg:pl-10">
+                    <h2 className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
+                      Detail-page story
+                    </h2>
+                    <p className="mt-4 whitespace-pre-line text-lg leading-relaxed text-[var(--foreground)]">
+                      {project.story}
+                    </p>
+                  </article>
+                </StaggerItem>
+              )}
+            </StaggerContainer>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* Footer */}
+      {projects.length > 1 && (
+        <section className="border-t border-[var(--border)] bg-white py-16 lg:py-24">
+          <div className="mx-auto max-w-7xl px-6 lg:px-8">
+            <div className="grid gap-8 md:grid-cols-2">
+              <SlideInLeft>
+                <Link
+                  href={`/projects/${prevProject.id}`}
+                  className="group block rounded-2xl border border-[var(--border)] p-6 transition-all hover:border-[var(--foreground)] hover:shadow-lg lg:p-8"
+                >
+                  <span className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
+                    Previous Project
+                  </span>
+                  <h3 className="mt-3 text-xl font-medium text-[var(--foreground)] transition-colors group-hover:text-[var(--accent)] lg:text-2xl">
+                    {prevProject.title}
+                  </h3>
+                  {prevProject.tag && (
+                    <p className="mt-2 text-sm text-[var(--muted)]">
+                      {prevProject.tag}
+                    </p>
+                  )}
+                </Link>
+              </SlideInLeft>
+
+              <SlideInRight>
+                <Link
+                  href={`/projects/${nextProject.id}`}
+                  className="group block rounded-2xl border border-[var(--border)] p-6 text-right transition-all hover:border-[var(--foreground)] hover:shadow-lg lg:p-8"
+                >
+                  <span className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
+                    Next Project
+                  </span>
+                  <h3 className="mt-3 text-xl font-medium text-[var(--foreground)] transition-colors group-hover:text-[var(--accent)] lg:text-2xl">
+                    {nextProject.title}
+                  </h3>
+                  {nextProject.tag && (
+                    <p className="mt-2 text-sm text-[var(--muted)]">
+                      {nextProject.tag}
+                    </p>
+                  )}
+                </Link>
+              </SlideInRight>
+            </div>
+          </div>
+        </section>
+      )}
+
       <FadeIn>
         <footer className="border-t border-[var(--border)] bg-[var(--background)] py-8">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
               <p className="text-sm text-[var(--muted)]">
-                &copy; {new Date().getFullYear()} Dreambuild Design Studio. All
-                rights reserved.
+                &copy; {new Date().getFullYear()} Dreambuild Design Studio. All rights reserved.
               </p>
               <Link
                 href="/"

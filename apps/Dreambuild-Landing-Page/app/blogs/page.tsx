@@ -12,17 +12,10 @@ import {
 } from "@/components/ui/motion"
 import { Header } from "@/components/shared/header"
 
-export const dynamic = "force-dynamic"
-
 export default async function BlogsPage() {
   const { blogPosts } = await getDreamBuildContent()
   const featuredPost = blogPosts[0]
   const otherPosts = blogPosts.slice(1)
-  const fallbackImages = [
-    "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=900&q=80",
-    "https://images.unsplash.com/photo-1631679706909-1844bbd07221?w=600&q=80",
-    "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&q=80",
-  ]
 
   return (
     <main className="min-h-screen bg-[var(--background)]">
@@ -54,6 +47,7 @@ export default async function BlogsPage() {
       </section>
 
       {/* Featured Post */}
+      {featuredPost && (
       <section className="pb-16 lg:pb-24">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <article className="group">
@@ -61,12 +55,20 @@ export default async function BlogsPage() {
               <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
                 <SlideInLeft>
                   <div className="relative aspect-[4/3] overflow-hidden rounded-2xl">
-                    <Image
-                      src={featuredPost.image || fallbackImages[0]}
-                      alt={featuredPost.title}
-                      fill
-                      className="object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
+                    {featuredPost.image ? (
+                      <Image
+                        src={featuredPost.image}
+                        alt={featuredPost.title}
+                        fill
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#efeae3] to-[#d8cfc4]">
+                        <span className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
+                          {featuredPost.category || "Dreambuild"}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </SlideInLeft>
                 <SlideInRight className="flex flex-col justify-center">
@@ -112,6 +114,7 @@ export default async function BlogsPage() {
           </article>
         </div>
       </section>
+      )}
 
       {/* Blog Grid */}
       <section className="pb-20 lg:pb-32">
@@ -127,15 +130,20 @@ export default async function BlogsPage() {
                 <article className="group">
                   <Link href={`/blogs/${post.id}`} className="block">
                     <div className="relative aspect-[16/10] overflow-hidden rounded-2xl">
-                      <Image
-                        src={
-                          post.image ||
-                          fallbackImages[(index + 1) % fallbackImages.length]
-                        }
-                        alt={post.title}
-                        fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
+                      {post.image ? (
+                        <Image
+                          src={post.image}
+                          alt={post.title}
+                          fill
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#efeae3] to-[#d8cfc4]">
+                          <span className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
+                            {post.category || "Dreambuild"}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <div className="mt-5">
                       <div className="flex items-center gap-3">

@@ -11,19 +11,11 @@ import {
   StaggerItem,
 } from "@/components/ui/motion"
 import { Header } from "@/components/shared/header"
+import { BlogFaqAccordion } from "@/components/landing/blog-faq-accordion"
 
 type BlogPostPageProps = {
   params: Promise<{ id: string }>
 }
-
-export const dynamic = "force-dynamic"
-
-const fallbackImages = [
-  "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200&q=80",
-  "https://images.unsplash.com/photo-1631679706909-1844bbd07221?w=900&q=80",
-  "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=900&q=80",
-  "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=900&q=80",
-]
 
 const defaultSections = [
   {
@@ -65,9 +57,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         "Repeat materials for cohesion",
         "Use lighting to shape mood",
       ]
-  const galleryImages = post.galleryImages?.length
-    ? post.galleryImages
-    : fallbackImages.slice(1, 4)
+  const galleryImages = post.galleryImages ?? []
   const faqs = post.faq?.length
     ? post.faq
     : [
@@ -131,13 +121,15 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
             <ScaleUp delay={0.35}>
               <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] bg-[#e7ded3] shadow-[0_24px_80px_rgba(64,48,36,0.10)]">
-                <Image
-                  src={post.image || fallbackImages[0]}
-                  alt={post.title}
-                  fill
-                  className="object-cover"
-                  priority
-                />
+                {post.image && (
+                  <Image
+                    src={post.image}
+                    alt={post.title}
+                    fill
+                    className="object-cover"
+                    priority
+                  />
+                )}
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent p-6">
                   <p className="max-w-md text-sm leading-relaxed text-white/88">
                     {post.designBrief ||
@@ -217,7 +209,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                     <p className="mt-5 text-base leading-8 text-[var(--muted)]">
                       {section.body}
                     </p>
-                    {index === 1 && (
+                    {index === 1 && galleryImages.length > 0 && (
                       <div className="mt-8 grid gap-4 sm:grid-cols-2">
                         {galleryImages.slice(0, 2).map((src, imageIndex) => (
                           <div
@@ -266,21 +258,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                 <p className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
                   FAQ
                 </p>
-                <div className="mt-5 divide-y divide-[#e4d8ca] rounded-[1.5rem] border border-[#e4d8ca] bg-white">
-                  {faqs.map((item) => (
-                    <details
-                      key={item.question}
-                      className="group p-5 open:bg-[#fbf8f3]"
-                    >
-                      <summary className="cursor-pointer list-none text-base font-medium text-[var(--foreground)]">
-                        {item.question}
-                      </summary>
-                      <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
-                        {item.answer}
-                      </p>
-                    </details>
-                  ))}
-                </div>
+                <BlogFaqAccordion items={faqs} />
               </section>
             </FadeUp>
           </div>
@@ -339,23 +317,28 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             className="mt-8 grid gap-6 md:grid-cols-3"
             staggerDelay={0.1}
           >
-            {relatedPosts.map((relatedPost, index) => (
+            {relatedPosts.map((relatedPost) => (
               <StaggerItem key={relatedPost.id}>
                 <article className="group h-full overflow-hidden rounded-[1.5rem] border border-[#e4d8ca] bg-[#f8f5f0]">
                   <Link
                     href={`/blogs/${relatedPost.id}`}
                     className="block h-full"
                   >
-                    <div className="relative aspect-[16/10] overflow-hidden">
-                      <Image
-                        src={
-                          relatedPost.image ||
-                          fallbackImages[(index + 1) % fallbackImages.length]
-                        }
-                        alt={relatedPost.title}
-                        fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
+                    <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-[#efeae3] to-[#d8cfc4]">
+                      {relatedPost.image ? (
+                        <Image
+                          src={relatedPost.image}
+                          alt={relatedPost.title}
+                          fill
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center">
+                          <span className="text-xs font-medium tracking-widest text-[var(--muted)] uppercase">
+                            {relatedPost.category || "Dreambuild"}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <div className="p-5">
                       <p className="text-xs font-medium tracking-widest text-[var(--accent)] uppercase">

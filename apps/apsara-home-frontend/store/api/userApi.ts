@@ -526,7 +526,7 @@ export const userApi = baseApi.injectEndpoints({
       SendUsernameChangeOtpPayload
     >({
       query: (body) => ({
-        url: "/api/auth/username-change/send-otp",
+        url: "/api/username-change/send-otp",
         method: "POST",
         body,
       }),
@@ -537,7 +537,7 @@ export const userApi = baseApi.injectEndpoints({
       SubmitUsernameChangePayload
     >({
       query: (body) => ({
-        url: "/api/auth/username-change/submit",
+        url: "/api/username-change/submit",
         method: "POST",
         body,
       }),
@@ -599,7 +599,7 @@ export const userApi = baseApi.injectEndpoints({
       void
     >({
       query: () => ({
-        url: "/api/auth/username-change/latest",
+        url: "/api/username-change/latest",
         method: "GET",
       }),
       providesTags: ["User"],

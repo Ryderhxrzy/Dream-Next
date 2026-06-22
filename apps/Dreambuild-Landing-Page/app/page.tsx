@@ -21,7 +21,7 @@ export default async function Home() {
       <HeroSection content={content.hero} />
       <ServicesSection services={content.services} header={content.servicesHeader} cta={content.servicesCta} />
       <GallerySection galleryItems={content.galleryItems} header={content.galleryHeader} />
-      <ProjectsSection projects={content.projects} />
+      <ProjectsSection projects={content.projects} header={content.projectsHeader} />
       <BlogsSection blogPosts={content.blogPosts} />
       <ProcessSection processSteps={content.processSteps} />
       <TestimonialsSection testimonials={content.testimonials} />
