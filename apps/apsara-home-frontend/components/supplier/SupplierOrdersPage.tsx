@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { RefreshCw } from 'lucide-react'
 import { showErrorToast, showSuccessToast } from '@/libs/toast'
@@ -375,6 +376,8 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
   const [debouncedSearch, setDebounced] = useState('')
   const [filter, setFilter]           = useState('all')
   const [busyId, setBusyId]           = useState<number | null>(null)
+  const [viewMode, setViewMode]       = useState<'compact' | 'detailed'>('compact')
+  const [thumbPreview, setThumbPreview] = useState<{ src: string; alt: string; top: number; left: number } | null>(null)
   const [fulfillDrafts, setFulfillDrafts] = useState<Record<number, SupplierFulfillmentStatus>>({})
   const [expandedId, setExpandedId]   = useState<number | null>(null)
   const [filterOpen, setFilterOpen]   = useState(false)
@@ -1139,6 +1142,33 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
           </div>
 
           <div className="flex items-center gap-2">
+            {/* View mode toggle (orders only) */}
+            {!isServicesView && (
+              <div className="inline-flex items-center rounded-xl border border-slate-200 bg-white p-0.5 dark:border-slate-700 dark:bg-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('compact')}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                    viewMode === 'compact'
+                      ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
+                      : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                  }`}
+                >
+                  Compact
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('detailed')}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                    viewMode === 'detailed'
+                      ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
+                      : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                  }`}
+                >
+                  Detailed
+                </button>
+              </div>
+            )}
             {/* Search */}
             <div className="relative">
               <svg className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -1213,6 +1243,109 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
             <div>
               <p className="text-sm font-semibold text-slate-700">{isServicesView ? 'No inquiries found' : 'No orders found'}</p>
               <p className="mt-0.5 text-xs text-slate-400">Try adjusting your search or filter.</p>
+            </div>
+          </div>
+        ) : !isServicesView && viewMode === 'compact' ? (
+          /* ── Compact order queue — clickable rows + hover image card ── */
+          <div>
+            <div className="hidden items-center gap-4 border-y border-slate-100 bg-slate-50/60 px-6 py-2.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 sm:flex dark:border-slate-800 dark:bg-slate-800/40">
+              <div className="h-10 w-10 shrink-0" />
+              <div className="w-[150px] shrink-0">Order</div>
+              <div className="hidden w-[120px] shrink-0 sm:block">Date</div>
+              <div className="min-w-0 flex-1">Customer</div>
+              <div className="hidden w-[150px] shrink-0 md:block">Status</div>
+              <div className="w-[110px] shrink-0 text-right">Total</div>
+              <div className="h-4 w-4 shrink-0" />
+            </div>
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+              {orders.map((order) => {
+                const newOrder  = isNew(order.created_at)
+                const itemLabel = order.quantity > 1 ? 'items' : 'item'
+                return (
+                  <Link
+                    key={order.id}
+                    href={`/supplier/orders/${encodeURIComponent(order.checkout_id || String(order.id))}`}
+                    className="group flex w-full items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-slate-50/70 sm:px-6 dark:hover:bg-slate-800/50"
+                  >
+                    {/* Thumbnail — hover shows enlarged preview */}
+                    <div
+                      className="h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 transition hover:ring-2 hover:ring-indigo-300 dark:border-slate-700 dark:bg-slate-800"
+                      onMouseEnter={(e) => {
+                        if (!order.product_image) return
+                        const rect = e.currentTarget.getBoundingClientRect()
+                        setThumbPreview({
+                          src: order.product_image,
+                          alt: order.product_name,
+                          top: rect.top + rect.height / 2,
+                          left: rect.left,
+                        })
+                      }}
+                      onMouseLeave={() => setThumbPreview(null)}
+                    >
+                      {order.product_image ? (
+                        <img src={order.product_image} alt={order.product_name} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center">
+                          <svg className="h-4 w-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Order ref + payment method */}
+                    <div className="flex w-[150px] shrink-0 flex-col gap-1">
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="truncate font-mono text-[13px] font-semibold text-indigo-600 group-hover:underline dark:text-indigo-400">
+                          {order.checkout_id ? `#${order.checkout_id.slice(-8)}` : `#${order.id}`}
+                        </span>
+                        {newOrder && (
+                          <span className="shrink-0 rounded-full border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-indigo-600 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-300">
+                            New
+                          </span>
+                        )}
+                      </span>
+                      <span className="truncate text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                        {order.payment_method || '—'}
+                      </span>
+                    </div>
+
+                    {/* Date */}
+                    <div className="hidden w-[120px] shrink-0 sm:block">
+                      <p className="text-[12px] font-medium text-slate-700 dark:text-slate-200">{fmtDate(order.created_at)}</p>
+                      <p className="text-[11px] text-slate-400">{fmtTime(order.created_at)}</p>
+                    </div>
+
+                    {/* Customer */}
+                    <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-violet-500 to-indigo-500 text-[10px] font-bold text-white">
+                        {getInitials(order.customer_name)}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{order.customer_name || '—'}</p>
+                        <p className="truncate text-[11px] text-slate-400">{order.customer_email || order.product_name}</p>
+                      </div>
+                    </div>
+
+                    {/* Status */}
+                    <div className="hidden w-[150px] shrink-0 flex-col items-start gap-1 md:flex">
+                      <ApprovalChip status={order.approval_status ?? 'pending_approval'} />
+                      <FulfillmentChip status={order.fulfillment_status ?? 'pending'} />
+                    </div>
+
+                    {/* Total */}
+                    <div className="w-[110px] shrink-0 text-right">
+                      <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{formatMoney(order.amount)}</p>
+                      <p className="text-[11px] text-slate-400">{order.quantity} {itemLabel}</p>
+                    </div>
+
+                    {/* Chevron */}
+                    <svg className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-slate-400 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                )
+              })}
             </div>
           </div>
         ) : (
@@ -1480,6 +1613,24 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
           </div>
         )}
       </div>
+
+      {/* ── Hover image preview — pops to the left of the hovered thumbnail ── */}
+      {thumbPreview ? (
+        <div
+          className="pointer-events-none fixed z-[100] rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl dark:border-slate-700 dark:bg-slate-900"
+          style={{
+            top: thumbPreview.top,
+            left: thumbPreview.left,
+            transform: 'translate(calc(-100% - 10px), -50%)',
+          }}
+        >
+          <img
+            src={thumbPreview.src}
+            alt={thumbPreview.alt}
+            className="h-44 w-44 rounded-xl bg-slate-50 object-contain dark:bg-slate-800"
+          />
+        </div>
+      ) : null}
     </div>
   )
 }

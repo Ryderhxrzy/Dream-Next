@@ -12,6 +12,8 @@ import {
 import { useSession } from "next-auth/react"
 import Link from "next/link"
 
+import { OrderStatusTimeline } from "@/components/orders/OrderStatusTimeline"
+
 import { ShippingAddressCard } from "./orderUi"
 
 /* ─── helpers ──────────────────────────────────────────────── */
@@ -131,65 +133,6 @@ function DetailRow({
       <span className="text-right text-sm font-semibold text-slate-700 dark:text-slate-200">
         {value}
       </span>
-    </div>
-  )
-}
-
-/* ─── status field (labeled, high-contrast) ───────────────── */
-
-const STATUS_TONES = {
-  emerald: {
-    pill: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300",
-    dot: "bg-emerald-500",
-  },
-  amber: {
-    pill: "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300",
-    dot: "bg-amber-500",
-  },
-  sky: {
-    pill: "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-300",
-    dot: "bg-sky-500",
-  },
-  red: {
-    pill: "border-red-200 bg-red-50 text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300",
-    dot: "bg-red-500",
-  },
-  slate: {
-    pill: "border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300",
-    dot: "bg-slate-400",
-  },
-} as const
-
-type ToneKey = keyof typeof STATUS_TONES
-
-function StatusField({
-  label,
-  tone,
-  value,
-  hint,
-}: {
-  label: string
-  tone: ToneKey
-  value: string
-  hint?: string
-}) {
-  const t = STATUS_TONES[tone]
-  return (
-    <div className="flex min-w-30 flex-col gap-1.5">
-      <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
-        {label}
-      </span>
-      <span
-        className={`inline-flex w-fit items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-semibold capitalize ${t.pill}`}
-      >
-        <span className={`h-2 w-2 rounded-full ${t.dot}`} />
-        {value}
-      </span>
-      {hint ? (
-        <span className="text-[11px] text-slate-400 dark:text-slate-500">
-          {hint}
-        </span>
-      ) : null}
     </div>
   )
 }
@@ -408,15 +351,8 @@ export default function AdminOrderDetailView({ orderId }: { orderId: string }) {
   const reminderCount = Number(order.reminder_count ?? 0)
   const resumeUrl = (order.checkout_url ?? "").trim()
 
-  /* ── status tones + friendly labels for the status strip ── */
+  /* ── friendly payment label for the status card ── */
   const paymentLower = (order.payment_status ?? "").toLowerCase()
-  const paymentToneKey: ToneKey = isUnpaid
-    ? "amber"
-    : ["paid", "succeeded", "success"].includes(paymentLower)
-      ? "emerald"
-      : ["failed", "cancelled", "expired"].includes(paymentLower)
-        ? "red"
-        : "amber"
   const paymentLabel = isUnpaid
     ? order.abandoned_at
       ? "Abandoned · Unpaid"
@@ -424,23 +360,6 @@ export default function AdminOrderDetailView({ orderId }: { orderId: string }) {
     : ["paid", "succeeded", "success"].includes(paymentLower)
       ? "Paid"
       : order.payment_status || "—"
-
-  const fulfillmentLower = order.fulfillment_status.toLowerCase()
-  const fulfillmentToneKey: ToneKey =
-    fulfillmentLower.includes("deliver") || fulfillmentLower.includes("complete")
-      ? "emerald"
-      : /ship|transit|pack|process|out_for/.test(fulfillmentLower)
-        ? "sky"
-        : /cancel|refund|fail|return/.test(fulfillmentLower)
-          ? "red"
-          : "amber"
-
-  const approvalToneKey: ToneKey =
-    order.approval_status === "approved"
-      ? "emerald"
-      : order.approval_status === "rejected"
-        ? "red"
-        : "amber"
 
   /* ── tracking logs (defensive — payload shape varies by courier) ── */
   const rawPayload = order.shipment_payload as unknown
@@ -611,37 +530,35 @@ export default function AdminOrderDetailView({ orderId }: { orderId: string }) {
         </div>
       </div>
 
-      {/* ── Status strip ── */}
-      <div className="flex flex-wrap items-start gap-x-8 gap-y-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 dark:border-slate-800 dark:bg-slate-900/60">
-        <StatusField
-          label="Payment"
-          tone={paymentToneKey}
-          value={paymentLabel}
-          hint={isUnpaid ? "Customer hasn't paid yet" : undefined}
-        />
-        <StatusField
-          label="Fulfillment"
-          tone={fulfillmentToneKey}
-          value={order.fulfillment_status.replace(/_/g, " ")}
-        />
-        <StatusField
-          label="Approval"
-          tone={approvalToneKey}
-          value={order.approval_status.replace(/_/g, " ")}
-        />
-        {reminderCount > 0 ? (
-          <StatusField
-            label="Recovery"
-            tone="slate"
-            value={`Reminded ${reminderCount}×`}
-            hint={
-              order.last_reminder_at
-                ? `Last: ${formatDateTime(order.last_reminder_at)}`
-                : undefined
-            }
-          />
-        ) : null}
-      </div>
+      {/* ── Order status timeline ── */}
+      <OrderStatusTimeline
+        paymentStatus={order.payment_status}
+        paymentLabel={paymentLabel}
+        approvalStatus={order.approval_status}
+        fulfillmentStatus={order.fulfillment_status}
+        shipmentStatus={order.shipment_status}
+        extra={
+          reminderCount > 0 ? (
+            <div>
+              <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
+                Recovery
+              </p>
+              <div className="mt-1.5">
+                <span
+                  className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                  title={
+                    order.last_reminder_at
+                      ? `Last: ${formatDateTime(order.last_reminder_at)}`
+                      : undefined
+                  }
+                >
+                  Reminded {reminderCount}×
+                </span>
+              </div>
+            </div>
+          ) : null
+        }
+      />
 
       {/* ── Stat cards ── */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
