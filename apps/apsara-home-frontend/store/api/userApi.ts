@@ -321,6 +321,8 @@ export interface VerifyWebstorePaymentSessionResponse {
   is_paid?: boolean
   payment_mode?: "test" | "live" | null
   payment_method?: string | null
+  plan?: string | null
+  billing_option?: string | null
   proof_url?: string | null
   payment_intent_id?: string | null
   payment_reference?: string | null

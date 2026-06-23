@@ -8,7 +8,7 @@ import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import { useGetAdminMeQuery } from "@/store/api/authApi"
 import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
 import { useGetProductBrandsQuery } from "@/store/api/productBrandsApi"
-import { useGetSuppliersQuery } from "@/store/api/suppliersApi"
+import { useGetSuppliersQuery, useGetSupplierCategoriesQuery } from "@/store/api/suppliersApi"
 import {
   CreateProductPayload,
   normalizeProduct,
@@ -47,6 +47,8 @@ interface FormState {
   pd_name: string
   pd_catid: string
   pd_catsubid: string
+  pd_merchant_catid: string
+  pd_merchant_subcatid: string
   pd_room_type: string
   pd_brand_type: string
   pd_manual_checkout_enabled: boolean
@@ -120,6 +122,8 @@ const defaultForm: FormState = {
   pd_name: "",
   pd_catid: "",
   pd_catsubid: "",
+  pd_merchant_catid: "",
+  pd_merchant_subcatid: "",
   pd_room_type: "",
   pd_brand_type: "",
   pd_manual_checkout_enabled: false,
@@ -1390,6 +1394,26 @@ export default function AddProductModal({
     () => categoriesData?.categories ?? [],
     [categoriesData?.categories]
   )
+  const { data: supplierCatsData } = useGetSupplierCategoriesQuery(
+    linkedSupplierId,
+    { skip: !isSupplierPortal || linkedSupplierId <= 0 }
+  )
+  const merchantCategories = useMemo(
+    () =>
+      (supplierCatsData?.categories ?? []).filter(
+        (c) => c.parent_id === null && c.is_supplier_created
+      ),
+    [supplierCatsData?.categories]
+  )
+  const merchantSubcategories = useMemo(
+    () =>
+      form.pd_merchant_catid && form.pd_merchant_catid !== "__empty_merchant_cat__"
+        ? (supplierCatsData?.categories ?? []).filter(
+            (c) => c.parent_id === Number(form.pd_merchant_catid)
+          )
+        : [],
+    [supplierCatsData?.categories, form.pd_merchant_catid]
+  )
   const { data: brandsData } = useGetProductBrandsQuery()
   const brands = useMemo(
     () => (brandsData?.brands ?? []).filter((brand) => brand.status === 0),
@@ -2204,6 +2228,14 @@ export default function AddProductModal({
       pd_catsubid: form.pd_catsubid.trim()
         ? Number(form.pd_catsubid)
         : undefined,
+      pd_merchant_catid:
+        isSupplierPortal && form.pd_merchant_catid.trim()
+          ? Number(form.pd_merchant_catid)
+          : undefined,
+      pd_merchant_subcatid:
+        isSupplierPortal && form.pd_merchant_subcatid.trim()
+          ? Number(form.pd_merchant_subcatid)
+          : undefined,
       pd_room_type: form.pd_room_type.trim()
         ? Number(form.pd_room_type)
         : undefined,
@@ -3403,6 +3435,75 @@ export default function AddProductModal({
                                   </div>
                                 )}
                               </Field>
+
+                              {isSupplierPortal && (
+                                <Field label="Merchant Category">
+                                  {merchantCategories.length > 0 ? (
+                                    <ModalSelectField
+                                      ariaLabel="Select merchant category"
+                                      value={form.pd_merchant_catid}
+                                      searchable
+                                      searchPlaceholder="Search merchant categories..."
+                                      onChange={(value) => {
+                                        set(
+                                          "pd_merchant_catid",
+                                          value === "__empty_merchant_cat__" ? "" : value
+                                        )
+                                        set("pd_merchant_subcatid", "")
+                                      }}
+                                      options={[
+                                        {
+                                          value: "__empty_merchant_cat__",
+                                          label: "None",
+                                        },
+                                        ...merchantCategories.map((cat) => ({
+                                          value: String(cat.id),
+                                          label: cat.name,
+                                        })),
+                                      ]}
+                                    />
+                                  ) : (
+                                    <div
+                                      className={`${inputCls()} flex cursor-not-allowed items-center opacity-60`}
+                                    >
+                                      No merchant categories yet
+                                    </div>
+                                  )}
+                                </Field>
+                              )}
+
+                              {isSupplierPortal && form.pd_merchant_catid && form.pd_merchant_catid !== "__empty_merchant_cat__" && (
+                                <Field label="Merchant Subcategory">
+                                  {merchantSubcategories.length > 0 ? (
+                                    <ModalSelectField
+                                      ariaLabel="Select merchant subcategory"
+                                      value={form.pd_merchant_subcatid}
+                                      onChange={(value) =>
+                                        set(
+                                          "pd_merchant_subcatid",
+                                          value === "__empty_merchant_subcat__" ? "" : value
+                                        )
+                                      }
+                                      options={[
+                                        {
+                                          value: "__empty_merchant_subcat__",
+                                          label: "No subcategory",
+                                        },
+                                        ...merchantSubcategories.map((cat) => ({
+                                          value: String(cat.id),
+                                          label: cat.name,
+                                        })),
+                                      ]}
+                                    />
+                                  ) : (
+                                    <div
+                                      className={`${inputCls()} flex cursor-not-allowed items-center opacity-60`}
+                                    >
+                                      No subcategories available
+                                    </div>
+                                  )}
+                                </Field>
+                              )}
 
                               <Field label="Shop By Room">
                                 <div className="space-y-1">

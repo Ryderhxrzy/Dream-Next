@@ -489,11 +489,6 @@ export default function PartnerStorefrontRenewalPage() {
           draft = null
         }
 
-        const effectivePlan = draft?.selectedPlan ?? selectedPlan
-        const effectiveBillingOption =
-          draft?.selectedBillingOption ?? selectedBillingOption
-        const effectivePaymentMethod =
-          draft?.selectedPaymentMethod ?? selectedPaymentMethod
         const effectiveRenewalEnabled =
           typeof draft?.renewalEnabled === "boolean"
             ? draft.renewalEnabled
@@ -521,6 +516,26 @@ export default function PartnerStorefrontRenewalPage() {
             "Payment has not been completed. Please complete the payment before proceeding."
           )
         }
+
+        const validPlanKeys: PlanKey[] = ["test", "quarterly", "semiAnnual", "annual"]
+        const verifiedPlanRaw = String(verified.plan ?? "").trim()
+        const verifiedPlanKey = verifiedPlanRaw === "semi_annual" ? "semiAnnual" : verifiedPlanRaw
+        const effectivePlan: PlanKey =
+          validPlanKeys.includes(verifiedPlanKey as PlanKey)
+            ? (verifiedPlanKey as PlanKey)
+            : (draft?.selectedPlan ?? selectedPlan)
+
+        const verifiedBilling = String(verified.billing_option ?? "").trim()
+        const effectiveBillingOption: BillingOption =
+          verifiedBilling === "full" || verifiedBilling === "monthly"
+            ? (verifiedBilling as BillingOption)
+            : (draft?.selectedBillingOption ?? selectedBillingOption)
+
+        const verifiedMethod = String(verified.payment_method ?? "").trim()
+        const effectivePaymentMethod: PaymentMethod =
+          ["gcash", "grab_pay", "maya", "card"].includes(verifiedMethod)
+            ? (verifiedMethod as PaymentMethod)
+            : (draft?.selectedPaymentMethod ?? selectedPaymentMethod)
 
         const proofUrl = String(verified?.proof_url ?? "").trim()
         if (!proofUrl) {
@@ -761,7 +776,6 @@ export default function PartnerStorefrontRenewalPage() {
     setIsReuploadModalOpen(false)
     setReuploadFiles([])
     setIsDraggingReupload(false)
-    setHiddenPreviousUrls(new Set())
     setReuploadSource(null)
   }
 

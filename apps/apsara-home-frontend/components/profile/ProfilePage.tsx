@@ -1421,7 +1421,7 @@ const ProfilePage = ({
   const { data, refetch: refetchMe } = useMeQuery(undefined, {
     skip: !isCustomerSession,
   })
-  const { data: accountSnapshot, refetch: refetchAccountSnapshot } =
+  const { data: accountSnapshot, isLoading: isSnapshotLoading, refetch: refetchAccountSnapshot } =
     useAccountSnapshotQuery(undefined, {
       skip: !isCustomerSession,
     })
@@ -1430,7 +1430,7 @@ const ProfilePage = ({
     isLoading: isReferralTreeLoading,
     refetch: refetchReferralTree,
   } = useReferralTreeQuery(undefined, {
-    skip: !isCustomerSession || !isReferralTab,
+    skip: !isCustomerSession,
     refetchOnMountOrArgChange: false,
     refetchOnFocus: false,
     refetchOnReconnect: false,
@@ -1607,6 +1607,10 @@ const ProfilePage = ({
     useState<WebstorePaymentMethod | null>(null)
   const [webstorePaymentMethodSnapshot, setWebstorePaymentMethodSnapshot] =
     useState<WebstorePaymentMethod | null>(null)
+  const [webstorePaymentPlanSnapshot, setWebstorePaymentPlanSnapshot] =
+    useState<string | null>(null)
+  const [webstorePaymentBillingSnapshot, setWebstorePaymentBillingSnapshot] =
+    useState<string | null>(null)
   const [webstorePaymentProofUrl, setWebstorePaymentProofUrl] = useState<
     string | null
   >(null)
@@ -3952,6 +3956,8 @@ const ProfilePage = ({
         payment_intent_id?: string | null
         checkout_id?: string | null
         proof_url?: string | null
+        plan?: string | null
+        billing_option?: string | null
       }
       receiptUrls: string[]
       showPaymentSuccessModal?: boolean
@@ -4078,15 +4084,33 @@ const ProfilePage = ({
           ""
         ).trim(),
       }
-      const draftPlan =
+      const verifiedPlanRaw = String(verified.plan ?? "").trim()
+      const verifiedPlanKey = verifiedPlanRaw === "semi_annual" ? "semiAnnual" : verifiedPlanRaw
+      const validPlanKeys = ["test", "quarterly", "semiAnnual", "annual"]
+      const draftPlan = (
+        validPlanKeys.includes(verifiedPlanKey)
+          ? verifiedPlanKey
+          : null
+      ) as "test" | "quarterly" | "semiAnnual" | "annual" | null ??
         storedDraft?.selectedWebstorePlan ??
         submissionSnapshot.selectedWebstorePlan ??
         null
-      const draftBilling =
+
+      const verifiedBilling = String(verified.billing_option ?? "").trim()
+      const draftBilling = (
+        verifiedBilling === "full" || verifiedBilling === "monthly"
+          ? verifiedBilling
+          : null
+      ) as "full" | "monthly" | null ??
         storedDraft?.selectedBillingOption ??
         submissionSnapshot.selectedBillingOption ??
         null
+
+      const verifiedMethod = String(verified.payment_method ?? "").trim()
       const draftPaymentMethod =
+        normalizeWebstorePaymentMethod(
+          ["gcash", "grab_pay", "maya", "card"].includes(verifiedMethod) ? verifiedMethod : null
+        ) ??
         normalizeWebstorePaymentMethod(storedDraft?.selectedPaymentMethod) ??
         submissionSnapshot.selectedPaymentMethod ??
         "gcash"
@@ -4430,6 +4454,8 @@ const ProfilePage = ({
         setWebstorePaymentProofUrl(proofUrl)
         setWebstorePaymentIntentId(verified.payment_intent_id || null)
         setWebstorePaymentCheckoutId(verified.checkout_id || resolvedCheckoutId)
+        setWebstorePaymentPlanSnapshot(String(verified.plan ?? "").trim() || null)
+        setWebstorePaymentBillingSnapshot(String(verified.billing_option ?? "").trim() || null)
 
         if (isContinuationPayment) {
           setWebstoreSuccessModalOpen(true)
@@ -5125,6 +5151,8 @@ const ProfilePage = ({
             ? existingCheckoutId
             : webstorePaymentCheckoutId || webstoreCheckoutId || null,
           proof_url: webstorePaymentProofUrl,
+          plan: isWebstoreReceiptRejected ? null : webstorePaymentPlanSnapshot,
+          billing_option: isWebstoreReceiptRejected ? null : webstorePaymentBillingSnapshot,
         },
         receiptUrls: uploadedReceiptUrls,
         showPaymentSuccessModal: false,
@@ -9522,6 +9550,7 @@ const ProfilePage = ({
                               {
                                 label: "Direct Referrals",
                                 value: referralSummary.directCount,
+                                loading: isSnapshotLoading && !accountSnapshot,
                                 border: "border-sky-200 dark:border-sky-800",
                                 text: "text-sky-600 dark:text-sky-400",
                                 dbg: "dark:bg-sky-900/30",
@@ -9530,6 +9559,7 @@ const ProfilePage = ({
                               {
                                 label: "Level 2",
                                 value: referralSummary.secondLevelCount,
+                                loading: isReferralTreeLoading && !referralTree,
                                 border: "border-sky-200 dark:border-sky-800",
                                 text: "text-sky-600 dark:text-sky-400",
                                 dbg: "dark:bg-sky-900/30",
@@ -9538,6 +9568,7 @@ const ProfilePage = ({
                               {
                                 label: "Total Network",
                                 value: referralSummary.totalNetwork,
+                                loading: isReferralTreeLoading && !referralTree,
                                 border:
                                   "border-emerald-200 dark:border-emerald-800",
                                 text: "text-emerald-600 dark:text-emerald-400",
@@ -9547,6 +9578,7 @@ const ProfilePage = ({
                               {
                                 label: "Total PV Earned",
                                 value: referralSummary.totalPv,
+                                loading: isSnapshotLoading && !accountSnapshot,
                                 border: "border-sky-200 dark:border-sky-800",
                                 text: "text-sky-600 dark:text-sky-400",
                                 dbg: "dark:bg-sky-900/30",
@@ -9562,9 +9594,13 @@ const ProfilePage = ({
                                 >
                                   {stat.label}
                                 </p>
-                                <p className={`text-xl font-bold ${stat.val}`}>
-                                  {stat.value.toLocaleString()}
-                                </p>
+                                {stat.loading ? (
+                                  <div className="mt-1 h-6 w-16 animate-pulse rounded-md bg-slate-200 dark:bg-slate-700" />
+                                ) : (
+                                  <p className={`text-xl font-bold ${stat.val}`}>
+                                    {stat.value.toLocaleString()}
+                                  </p>
+                                )}
                               </div>
                             ))}
                           </div>

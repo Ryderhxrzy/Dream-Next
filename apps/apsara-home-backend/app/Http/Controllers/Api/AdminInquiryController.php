@@ -1422,6 +1422,9 @@ class AdminInquiryController extends Controller
             'is_paid'           => $isPaid,
             'payment_mode'      => $paymongo['mode'],
             'payment_method'    => (string) data_get($data, 'data.attributes.metadata.payment_method', ''),
+            'plan'              => (string) data_get($data, 'data.attributes.metadata.plan', ''),
+            'billing_option'    => (string) data_get($data, 'data.attributes.metadata.billing_option', ''),
+            'slug_name'         => (string) data_get($data, 'data.attributes.metadata.slug_name', ''),
             'proof_url'         => (string) data_get($data, 'data.attributes.checkout_url', ''),
             'payment_intent_id' => (string) data_get($data, 'data.attributes.payments.0.attributes.payment_intent_id', ''),
             'payment_reference' => (string) (

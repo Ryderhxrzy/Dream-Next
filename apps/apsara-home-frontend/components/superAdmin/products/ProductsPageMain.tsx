@@ -3309,6 +3309,11 @@ export default function ProductsPageMain({
             !isSupplierPortal ? handleSupplierFilterId : undefined
           }
           supplierOptions={!isSupplierPortal ? supplierOptions : undefined}
+          merchantCategories={
+            isSupplierPortal && linkedSupplierId > 0
+              ? (supplierCategoriesData?.categories ?? [])
+              : undefined
+          }
           selectedCount={selectedIds.length}
           onViewSelected={() => openManualSelectionModal(selectedProducts)}
           isDuplicateFilterActive={

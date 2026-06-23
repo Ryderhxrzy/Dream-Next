@@ -436,7 +436,7 @@ class SupplierController extends Controller
         }
 
         return Category::query()
-            ->select(['cat_id', 'cat_name', 'cat_url', 'parent_id'])
+            ->select(['cat_id', 'cat_name', 'cat_url', 'parent_id', 'is_supplier_created'])
             ->where(function ($q) use ($assignedIds) {
                 $q->whereIn('cat_id', $assignedIds)
                   ->orWhereIn('parent_id', $assignedIds);
@@ -445,10 +445,11 @@ class SupplierController extends Controller
             ->orderBy('cat_name')
             ->get()
             ->map(fn (Category $category) => [
-                'id'        => (int) $category->cat_id,
-                'name'      => (string) ($category->cat_name ?? ''),
-                'url'       => (string) ($category->cat_url ?? ''),
-                'parent_id' => $category->parent_id ? (int) $category->parent_id : null,
+                'id'                  => (int) $category->cat_id,
+                'name'                => (string) ($category->cat_name ?? ''),
+                'url'                 => (string) ($category->cat_url ?? ''),
+                'parent_id'           => $category->parent_id ? (int) $category->parent_id : null,
+                'is_supplier_created' => (bool) $category->is_supplier_created,
             ])
             ->values()
             ->all();
@@ -476,16 +477,18 @@ class SupplierController extends Controller
 
         $category = DB::transaction(function () use ($validated, $url, $supplierId) {
             $cat = Category::query()->create([
-                'cat_name'  => $validated['name'],
-                'cat_url'   => $url,
-                'parent_id' => null,
-                'cat_order' => 0,
+                'cat_name'           => $validated['name'],
+                'cat_url'            => $url,
+                'parent_id'          => null,
+                'cat_order'          => 0,
+                'is_supplier_created' => true,
             ]);
 
             SupplierCategoryAccess::query()->create([
-                'supplier_id' => $supplierId,
-                'category_id' => (int) $cat->cat_id,
-                'created_at'  => now(),
+                'supplier_id'        => $supplierId,
+                'category_id'        => (int) $cat->cat_id,
+                'is_supplier_created' => true,
+                'created_at'         => now(),
             ]);
 
             return $cat;
@@ -578,6 +581,51 @@ class SupplierController extends Controller
         $category->delete();
 
         return response()->json(['message' => 'Sub-category deleted successfully.']);
+    }
+
+    public function deleteCategory(Request $request, int $id): JsonResponse
+    {
+        $supplierUser = $this->resolveSupplierUser($request);
+        if (! $supplierUser) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $supplierId = (int) $supplierUser->su_supplier;
+        $category = Category::query()->find($id);
+        if (! $category) {
+            return response()->json(['message' => 'Category not found.'], 404);
+        }
+
+        if ($category->parent_id !== null) {
+            return response()->json(['message' => 'Use the sub-category delete endpoint for sub-categories.'], 422);
+        }
+
+        // Only allow deletion of categories the supplier created themselves
+        $isOwned = SupplierCategoryAccess::query()
+            ->where('supplier_id', $supplierId)
+            ->where('category_id', $id)
+            ->where('is_supplier_created', true)
+            ->exists();
+
+        if (! $isOwned) {
+            return response()->json(['message' => 'Access denied. You can only delete categories you created.'], 403);
+        }
+
+        DB::transaction(function () use ($id, $supplierId) {
+            // Delete all sub-categories
+            Category::query()->where('parent_id', $id)->delete();
+
+            // Remove the access record
+            SupplierCategoryAccess::query()
+                ->where('supplier_id', $supplierId)
+                ->where('category_id', $id)
+                ->delete();
+
+            // Delete the parent category
+            Category::query()->where('cat_id', $id)->delete();
+        });
+
+        return response()->json(['message' => 'Category deleted successfully.']);
     }
 
     public function createSubCategory(Request $request, int $parentId): JsonResponse

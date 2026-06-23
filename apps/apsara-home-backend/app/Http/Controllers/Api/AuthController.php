@@ -1737,7 +1737,7 @@ class AuthController extends Controller
             return $count;
         };
 
-        $totalNetwork = $countNodes($children->all());
+        $totalNetwork = Customer::query()->where('c_userid', '!=', $customerId)->count();
 
         $networkIds = collect($children)
             ->flatMap(function (array $node) {
@@ -2712,6 +2712,8 @@ class AuthController extends Controller
             'is_paid' => $isPaid,
             'payment_mode' => $paymongo['mode'],
             'payment_method' => (string) data_get($data, 'data.attributes.metadata.payment_method', ''),
+            'plan' => (string) data_get($data, 'data.attributes.metadata.plan', ''),
+            'billing_option' => (string) data_get($data, 'data.attributes.metadata.billing_option', ''),
             'proof_url' => $checkoutUrl,
             'payment_intent_id' => (string) data_get($data, 'data.attributes.payments.0.attributes.payment_intent_id', ''),
             'payment_reference' => (string) (
