@@ -4,7 +4,6 @@ import Image from "next/image"
 import Link from "next/link"
 
 import type { DreamBuildBlogPost } from "@/lib/dreambuild-cms"
-import { blogPosts as defaultBlogPosts } from "@/lib/landing-data"
 import {
   FadeUp,
   motion,
@@ -13,15 +12,8 @@ import {
   StaggerItem,
 } from "@/components/ui/motion"
 
-const blogImages = [
-  "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=900&q=80",
-  "https://images.unsplash.com/photo-1631679706909-1844bbd07221?w=700&q=80",
-  "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=700&q=80",
-  "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=700&q=80",
-]
-
 export function BlogsSection({
-  blogPosts = defaultBlogPosts,
+  blogPosts = [],
 }: {
   blogPosts?: DreamBuildBlogPost[]
 }) {
@@ -63,13 +55,15 @@ export function BlogsSection({
               transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
               className="grid overflow-hidden rounded-[2rem] border border-[#e4d8ca] bg-white shadow-[0_24px_80px_rgba(64,48,36,0.08)] lg:grid-cols-[1.15fr_0.85fr]"
             >
-              <div className="relative aspect-[16/10] overflow-hidden lg:aspect-auto">
-                <Image
-                  src={featured.image || blogImages[0]}
-                  alt={featured.title}
-                  fill
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
-                />
+              <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-[#efeae3] to-[#d8cfc4] lg:aspect-auto">
+                {featured.image && (
+                  <Image
+                    src={featured.image}
+                    alt={featured.title}
+                    fill
+                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-transparent" />
                 <div className="absolute top-5 left-5">
                   <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-medium tracking-widest text-[var(--foreground)] uppercase backdrop-blur-sm">
@@ -126,7 +120,7 @@ export function BlogsSection({
           className="mt-5 grid gap-5 md:grid-cols-3"
           staggerDelay={0.12}
         >
-          {rest.map((post, i) => (
+          {rest.map((post) => (
             <StaggerItem key={post.id}>
               <Link href={`/blogs/${post.id}`} className="group block h-full">
                 <motion.article
@@ -134,13 +128,15 @@ export function BlogsSection({
                   transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
                   className="flex h-full flex-col overflow-hidden rounded-[1.5rem] border border-[#e4d8ca] bg-white"
                 >
-                  <div className="relative aspect-[16/9] overflow-hidden">
-                    <Image
-                      src={post.image || blogImages[i + 1]}
-                      alt={post.title}
-                      fill
-                      className="object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
+                  <div className="relative aspect-[16/9] overflow-hidden bg-gradient-to-br from-[#efeae3] to-[#d8cfc4]">
+                    {post.image && (
+                      <Image
+                        src={post.image}
+                        alt={post.title}
+                        fill
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
                     <div className="absolute top-4 left-4">
                       <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-medium tracking-widest text-[var(--foreground)] uppercase backdrop-blur-sm">

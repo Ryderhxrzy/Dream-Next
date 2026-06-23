@@ -651,10 +651,10 @@ class ProductController extends Controller
         $like = '%' . $search . '%';
 
         $query->where(function ($inner) use ($like) {
-            $inner->where('pd_name', 'ilike', $like)
-                ->orWhere('pd_parent_sku', 'ilike', $like)
+            $inner->where('pd_name', 'like', $like)
+                ->orWhere('pd_parent_sku', 'like', $like)
                 ->orWhereHas('variants', function ($variantQuery) use ($like) {
-                    $variantQuery->where('pv_sku', 'ilike', $like);
+                    $variantQuery->where('pv_sku', 'like', $like);
                 });
         });
     }

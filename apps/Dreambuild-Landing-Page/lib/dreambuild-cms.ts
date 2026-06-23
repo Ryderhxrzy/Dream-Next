@@ -1,13 +1,3 @@
-import {
-  blogPosts,
-  galleryItems,
-  processSteps,
-  projects,
-  services,
-  stats,
-  testimonials,
-} from "@/lib/landing-data";
-
 export type CmsItem = {
   id: number;
   type: string;
@@ -21,6 +11,8 @@ export type CmsItem = {
   payload?: Record<string, unknown> | null;
   sort_order: number;
   is_active: boolean;
+  created_at?: string | null;
+  updated_at?: string | null;
 };
 
 export type HeroContent = {
@@ -32,15 +24,39 @@ export type HeroContent = {
   secondaryButtonText: string;
   secondaryButtonUrl: string;
   signatureLabel: string;
-  stats: typeof stats;
+  stats: Array<{ value: string; label: string }>;
   carouselSlides: Array<{ src: string; alt: string; label: string }>;
 };
 
-export type ProcessStepContent = (typeof processSteps)[number] & {
+export type ProcessStepContent = {
+  title: string;
+  description: string;
   stepNumber?: string;
 };
 
-export type DreamBuildBlogPost = (typeof blogPosts)[number] & {
+export type ServiceContent = {
+  id: string;
+  serviceLabel: string;
+  title: string;
+  description: string;
+  bullets: string[];
+  image?: string;
+};
+
+export type TestimonialContent = {
+  name: string;
+  role: string;
+  quote: string;
+  image?: string;
+};
+
+export type DreamBuildBlogPost = {
+  id: string;
+  title: string;
+  category: string;
+  excerpt: string;
+  date: string;
+  readTime: string;
   image?: string;
   body?: string;
   designBrief?: string;
@@ -62,9 +78,27 @@ export type ServicesHeaderContent = {
   description: string;
 };
 
-export type GalleryContent = (typeof galleryItems)[number] & {
+export type GalleryContent = {
+  title: string;
+  tone?: string;
   image?: string;
   alt?: string;
+  description?: string;
+  address?: string;
+};
+
+export type DreamBuildProject = {
+  id: string;
+  title: string;
+  tag: string;
+  size: "short" | "tall";
+  image?: string;
+  location: string;
+  scopeLabel: string;
+  scopeItems: string[];
+  timeline: string;
+  description: string;
+  story: string;
 };
 
 export type GalleryHeaderContent = {
@@ -74,16 +108,22 @@ export type GalleryHeaderContent = {
   ctaUrl: string;
 };
 
+export type ProjectsHeaderContent = {
+  eyebrow: string;
+  title: string;
+};
+
 export type DreamBuildContent = {
   hero: HeroContent;
-  services: typeof services;
+  services: ServiceContent[];
   servicesHeader: ServicesHeaderContent;
   servicesCta: ServicesCtaContent;
-  projects: typeof projects;
+  projects: DreamBuildProject[];
+  projectsHeader: ProjectsHeaderContent;
   galleryItems: GalleryContent[];
   galleryHeader: GalleryHeaderContent;
   processSteps: ProcessStepContent[];
-  testimonials: typeof testimonials;
+  testimonials: TestimonialContent[];
   blogPosts: DreamBuildBlogPost[];
   contact: {
     title: string;
@@ -91,44 +131,22 @@ export type DreamBuildContent = {
     email: string;
     phone?: string;
     address: string;
+    responseTime: string;
+    statusBadge: string;
   };
 };
 
-const defaultHeroSlides = [
-  {
-    src: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800&q=80",
-    alt: "Modern living room with warm neutrals",
-    label: "Living Room",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1631679706909-1844bbd07221?w=800&q=80",
-    alt: "Minimalist bedroom interior",
-    label: "Bedroom",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80",
-    alt: "Clean kitchen design",
-    label: "Kitchen",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=800&q=80",
-    alt: "Elegant dining area",
-    label: "Dining",
-  },
-];
-
-const defaultHero: HeroContent = {
-  eyebrow: "Interior Design Studio",
-  title: "Refined interiors for homes that seek clarity and character",
-  body:
-    "Dreambuild creates calm, polished interiors through thoughtful planning, clean material stories, and a modern design language that feels elevated without becoming cold.",
-  primaryButtonText: "Explore Services",
+const emptyHero: HeroContent = {
+  eyebrow: "",
+  title: "",
+  body: "",
+  primaryButtonText: "",
   primaryButtonUrl: "#services",
-  secondaryButtonText: "View Projects",
+  secondaryButtonText: "",
   secondaryButtonUrl: "/projects",
-  signatureLabel: "Warm neutrals with refined, modern polish",
-  stats,
-  carouselSlides: defaultHeroSlides,
+  signatureLabel: "",
+  stats: [],
+  carouselSlides: [],
 };
 
 const defaultContact = {
@@ -136,7 +154,10 @@ const defaultContact = {
   body:
     "Tell us about your space and what you're looking for. We'll get back to you within 24 hours to set up a free consultation.",
   email: "hello@dreambuild.studio",
+  phone: "+63 997 875 3004",
   address: "Metro Manila, Philippines",
+  responseTime: "Within 24 hours",
+  statusBadge: "Currently accepting new projects",
 };
 
 const defaultServicesCta: ServicesCtaContent = {
@@ -158,6 +179,11 @@ const defaultGalleryHeader: GalleryHeaderContent = {
   ctaUrl: "/projects",
 };
 
+const defaultProjectsHeader: ProjectsHeaderContent = {
+  eyebrow: "Featured Projects",
+  title: "Spaces we've shaped and styled.",
+};
+
 const contentTypes = [
   "dreambuild-hero",
   "dreambuild-services",
@@ -169,8 +195,16 @@ const contentTypes = [
   "dreambuild-contact",
 ] as const;
 
+export const DREAMBUILD_CONTENT_TAG = "dreambuild-content";
 const text = (value: unknown, fallback: string) =>
   typeof value === "string" && value.trim() ? value.trim() : fallback;
+
+const slugify = (value: string) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 
 const textList = (value: unknown, fallback: string[]) => {
   if (Array.isArray(value)) {
@@ -179,7 +213,23 @@ const textList = (value: unknown, fallback: string[]) => {
   }
 
   if (typeof value === "string" && value.trim()) {
-    const items = value.split(/\r?\n/).map((item) => item.trim()).filter(Boolean);
+    const normalized = value.trim().replace(/\\r?\\n/g, "\n");
+
+    if (normalized.startsWith("[") && normalized.endsWith("]")) {
+      try {
+        const parsed = JSON.parse(normalized);
+        if (Array.isArray(parsed)) {
+          const items = parsed
+            .filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+            .map((item) => item.trim());
+          return items.length ? items : fallback;
+        }
+      } catch {
+        // Fall back to line parsing for older CMS values that only look like JSON.
+      }
+    }
+
+    const items = normalized.split(/\r?\n/).map((item) => item.trim()).filter(Boolean);
     return items.length ? items : fallback;
   }
 
@@ -200,6 +250,16 @@ const pairsList = (value: unknown, fallback: Array<{ title: string; body: string
 
   return items.length ? items : fallback;
 };
+
+const legacyHeroImageMarkers = [
+  "images.unsplash.com/photo-1618221195710",
+  "images.unsplash.com/photo-1631679706909",
+  "images.unsplash.com/photo-1556909114",
+  "images.unsplash.com/photo-1600585154526",
+];
+
+const isLegacyHeroImageUrl = (value: string) =>
+  legacyHeroImageMarkers.some((marker) => value.includes(marker));
 
 const getApiBase = () => {
   const raw =
@@ -224,65 +284,124 @@ async function fetchCmsItems(type: (typeof contentTypes)[number]): Promise<CmsIt
   }
 }
 
-const byIndex = <T>(items: CmsItem[], defaults: readonly T[], mapper: (item: CmsItem, fallback: T, index: number) => T): T[] => {
-  if (!items.length) return [...defaults];
-  return defaults.map((fallback, index) => {
-    const item = items[index];
-    return item ? mapper(item, fallback, index) : fallback;
-  });
-};
+const sortByOrder = (a: CmsItem, b: CmsItem) =>
+  a.sort_order - b.sort_order || a.id - b.id;
 
-const mapServices = (items: CmsItem[]): typeof services => {
-  const seen = new Set<string>();
-  const activeItems = items
-    .filter((item) => item.is_active)
-    .sort((a, b) => a.sort_order - b.sort_order || a.id - b.id)
-    .filter((item, index) => {
-      const key = text(item.payload?.service_number, "") || item.key || `index:${index}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
+const mapGalleryItems = (items: CmsItem[]): GalleryContent[] =>
+  items
+    .filter((item) => item.is_active && text(item.image_url, ""))
+    .sort(sortByOrder)
+    .map((item, index) => {
+      const payload = item.payload ?? {};
+
+      return {
+        title: text(item.title, `Gallery image ${index + 1}`),
+        image: text(item.image_url, ""),
+        alt: text(payload.alt, item.title || `Gallery image ${index + 1}`),
+        description: text(payload.description, ""),
+        address: text(payload.address, ""),
+        tone: text(payload.tone, ""),
+      };
     });
 
-  if (!activeItems.length) return [...services];
+const legacyProjectSampleKeys = new Set([
+  "warm-minimalist-residence",
+  "soft-luxe-condo-suite",
+  "contemporary-family-home",
+]);
+
+const legacyProjectSampleIds = new Set([105, 106, 107]);
+
+const isLegacyProjectSample = (item: CmsItem) => {
+  const key = text(item.key, "").toLowerCase();
+  const createdAt = text(item.created_at, "");
+  const updatedAt = text(item.updated_at, "");
+  // Hide only pristine seeded samples. Once an admin edits one, updated_at moves
+  // past the seed date and it must render on the site like any other project.
+  const isPristineSeed =
+    createdAt.startsWith("2026-06-15") && updatedAt.startsWith("2026-06-15");
+
+  return (
+    isPristineSeed &&
+    (legacyProjectSampleIds.has(item.id) || legacyProjectSampleKeys.has(key))
+  );
+};
+
+const mapProjects = (items: CmsItem[]): DreamBuildProject[] =>
+  items
+    .filter((item) => {
+      // Only the dedicated projects-header record carries the section heading.
+      // Don't exclude real projects just because they still hold stale
+      // section_eyebrow/section_title keys from an earlier save.
+      return (
+        item.is_active &&
+        item.key !== "projects-header" &&
+        !isLegacyProjectSample(item)
+      );
+    })
+    .sort((a, b) => a.sort_order - b.sort_order || a.id - b.id)
+    .map((item, index) => {
+      const payload = item.payload ?? {};
+      const title = text(item.title, `Featured project ${index + 1}`);
+      const baseId = slugify(text(item.key, "") || title) || "project";
+      const id = `${baseId}-${item.id}`;
+      const scopeItems = textList(
+        payload.scope_items,
+        textList(payload.scope, textList(payload.scope_label, [])),
+      );
+      const scopeLabel = scopeItems.join(" + ");
+
+      return {
+        id,
+        title,
+        tag: text(payload.tag, ""),
+        size: text(payload.card_size, index % 2 === 0 ? "tall" : "short") === "tall" ? "tall" : "short",
+        image: text(item.image_url, ""),
+        location: text(payload.city_area, text(payload.location, "")),
+        scopeLabel,
+        scopeItems,
+        timeline: text(payload.timeline, ""),
+        description: text(item.subtitle, text(item.body, "")),
+        story: text(item.body, ""),
+      };
+    });
+
+const mapServices = (items: CmsItem[]): ServiceContent[] => {
+  const activeItems = items
+    .filter((item) => item.is_active)
+    .sort(sortByOrder);
 
   const sharedServiceLabel =
     activeItems
       .map((item) => text(item.payload?.service_label, ""))
-      .find(Boolean) || services[0].serviceLabel;
+      .find(Boolean) || "Solution";
 
   return activeItems.map((item, index) => {
-    const fallback = services[index] ?? services[services.length - 1];
     const payload = item.payload ?? {};
     return {
-      ...fallback,
       id: String(index + 1).padStart(2, "0"),
       serviceLabel: text(payload.service_label, sharedServiceLabel),
-      title: text(item.title, fallback.title),
-      description: text(item.body, fallback.description),
-      bullets: textList(payload.bullets, fallback.bullets),
+      title: text(item.title, ""),
+      description: text(item.body, ""),
+      bullets: textList(payload.bullets, []),
+      image: text(item.image_url, ""),
     };
-  }) as typeof services;
+  });
 };
 
-const mapProcessSteps = (items: CmsItem[]): ProcessStepContent[] => {
-  if (!items.length) return [...processSteps];
-
-  return items
+const mapProcessSteps = (items: CmsItem[]): ProcessStepContent[] =>
+  items
     .filter((item) => item.is_active)
     .sort((a, b) => a.sort_order - b.sort_order)
     .map((item, index) => {
-      const fallback = processSteps[index] ?? processSteps[processSteps.length - 1];
       const payload = item.payload ?? {};
 
       return {
-        ...fallback,
         stepNumber: text(payload.step_number, String(index + 1).padStart(2, "0")),
-        title: text(item.title, fallback.title),
-        description: text(item.body, fallback.description),
+        title: text(item.title, ""),
+        description: text(item.body, ""),
       };
     });
-};
 
 export async function getDreamBuildContent(): Promise<DreamBuildContent> {
   const [
@@ -296,39 +415,55 @@ export async function getDreamBuildContent(): Promise<DreamBuildContent> {
     contactItems,
   ] = await Promise.all(contentTypes.map((type) => fetchCmsItems(type)));
 
-  const heroItem = heroItems[0];
+  const heroItem = heroItems
+    .filter((item) => item.is_active)
+    .sort((a, b) => a.sort_order - b.sort_order || b.id - a.id)[0];
   const heroPayload = heroItem?.payload ?? {};
   const servicesHeaderItem =
-    serviceItems.find((item) => item.payload?.section_eyebrow || item.payload?.section_title || item.payload?.section_description) ??
+    serviceItems.find((item) => item.payload?.section_eyebrow || item.payload?.section_title || item.payload?.section_description || item.payload?.cta_text || item.payload?.cta_button_text || item.button_text) ??
     serviceItems[0];
   const servicesHeaderPayload = servicesHeaderItem?.payload ?? {};
+  const projectsHeaderItem =
+    projectItems.find((item) => item.key === "projects-header" || item.payload?.section_eyebrow || item.payload?.section_title) ??
+    projectItems[0];
+  const projectsHeaderPayload = projectsHeaderItem?.payload ?? {};
   const galleryHeaderItem =
     galleryCmsItems.find((item) => item.payload?.section_eyebrow || item.payload?.section_title || item.payload?.cta_text || item.payload?.cta_url) ??
     galleryCmsItems[0];
   const galleryHeaderPayload = galleryHeaderItem?.payload ?? {};
-  const carouselUrls = textList(heroPayload.carousel_images, []).filter(Boolean);
+  const carouselUrls = [
+    ...textList(heroPayload.carousel_images, []),
+    ...textList(heroPayload.carouselImages, []),
+    ...textList(heroPayload.images, []),
+    ...textList(heroPayload.image_urls, []),
+    text(heroItem?.image_url, ""),
+    text(heroPayload.image_url, ""),
+  ]
+    .filter(Boolean)
+    .filter((url) => !isLegacyHeroImageUrl(url))
+    .filter((url, index, urls) => urls.indexOf(url) === index);
   const hero: HeroContent = heroItem
     ? {
-        eyebrow: text(heroPayload.eyebrow, defaultHero.eyebrow),
-        title: text(heroItem.title, defaultHero.title),
-        body: text(heroItem.body, defaultHero.body),
-        primaryButtonText: text(heroPayload.primary_button_text, defaultHero.primaryButtonText),
-        primaryButtonUrl: text(heroPayload.primary_button_url, defaultHero.primaryButtonUrl),
-        secondaryButtonText: text(heroPayload.secondary_button_text, defaultHero.secondaryButtonText),
-        secondaryButtonUrl: text(heroPayload.secondary_button_url, defaultHero.secondaryButtonUrl),
-        signatureLabel: text(heroPayload.signature_label, defaultHero.signatureLabel),
+        eyebrow: text(heroPayload.eyebrow, ""),
+        title: text(heroItem.title, ""),
+        body: text(heroItem.body, ""),
+        primaryButtonText: text(heroPayload.primary_button_text, ""),
+        primaryButtonUrl: "#services",
+        secondaryButtonText: text(heroPayload.secondary_button_text, ""),
+        secondaryButtonUrl: "/projects",
+        signatureLabel: text(heroPayload.signature_label, ""),
         stats: [
-          { value: text(heroPayload.stat_1_value, defaultHero.stats[0].value), label: text(heroPayload.stat_1_label, defaultHero.stats[0].label) },
-          { value: text(heroPayload.stat_2_value, defaultHero.stats[1].value), label: text(heroPayload.stat_2_label, defaultHero.stats[1].label) },
-          { value: text(heroPayload.stat_3_value, defaultHero.stats[2].value), label: text(heroPayload.stat_3_label, defaultHero.stats[2].label) },
-        ],
-        carouselSlides: defaultHeroSlides.map((slide, index) => ({
-          ...slide,
-          src: carouselUrls[index] || slide.src,
-          label: text((heroPayload as Record<string, unknown>)[`slide_${index + 1}_label`], slide.label),
+          { value: text(heroPayload.stat_1_value, ""), label: text(heroPayload.stat_1_label, "") },
+          { value: text(heroPayload.stat_2_value, ""), label: text(heroPayload.stat_2_label, "") },
+          { value: text(heroPayload.stat_3_value, ""), label: text(heroPayload.stat_3_label, "") },
+        ].filter((item) => item.value || item.label),
+        carouselSlides: carouselUrls.map((src, index) => ({
+          src,
+          alt: text((heroPayload as Record<string, unknown>)[`slide_${index + 1}_alt`], heroItem.title || `DreamBuild hero image ${index + 1}`),
+          label: text((heroPayload as Record<string, unknown>)[`slide_${index + 1}_label`], ""),
         })),
       }
-    : defaultHero;
+    : emptyHero;
 
   return {
     hero,
@@ -338,60 +473,57 @@ export async function getDreamBuildContent(): Promise<DreamBuildContent> {
       title: text(servicesHeaderPayload.section_title, defaultServicesHeader.title),
       description: text(servicesHeaderPayload.section_description, defaultServicesHeader.description),
     },
-    servicesCta: defaultServicesCta,
-    projects: byIndex(projectItems, projects, (item, fallback) => {
-      const payload = item.payload ?? {};
-      return {
-        ...fallback,
-        title: text(item.title, fallback.title),
-        tag: text(payload.tag, fallback.tag),
-        size: text(payload.card_size, fallback.size) as typeof fallback.size,
-      };
-    }),
-    blogPosts: byIndex(blogItems, blogPosts, (item, fallback) => {
-      const payload = item.payload ?? {};
-      const sections = pairsList(payload.sections, []);
-      const faq = pairsList(payload.faq, []).map((item) => ({
-        question: item.title,
-        answer: item.body,
-      }));
+    servicesCta: {
+      text: text(servicesHeaderPayload.cta_text, defaultServicesCta.text),
+      buttonText: text(servicesHeaderPayload.cta_button_text, text(servicesHeaderItem?.button_text, defaultServicesCta.buttonText)),
+      buttonUrl: "#contact",
+    },
+    projects: mapProjects(projectItems),
+    projectsHeader: {
+      eyebrow: text(projectsHeaderPayload.section_eyebrow, defaultProjectsHeader.eyebrow),
+      title: text(projectsHeaderPayload.section_title, defaultProjectsHeader.title),
+    },
+    blogPosts: blogItems
+      .filter((item) => item.is_active)
+      .sort(sortByOrder)
+      .map((item) => {
+        const payload = item.payload ?? {};
+        const sections = pairsList(payload.sections, []);
+        const faq = pairsList(payload.faq, []).map((entry) => ({
+          question: entry.title,
+          answer: entry.body,
+        }));
+        const title = text(item.title, "");
 
-      return {
-        ...fallback,
-        id: text(payload.slug, fallback.id),
-        title: text(item.title, fallback.title),
-        category: text(payload.category, fallback.category),
-        excerpt: text(item.subtitle, fallback.excerpt),
-        body: text(item.body, ""),
-        image: text(item.image_url, ""),
-        date: text(payload.date, fallback.date),
-        readTime: text(payload.read_time, fallback.readTime),
-        designBrief: text(payload.design_brief, ""),
-        takeaways: textList(payload.takeaways, []),
-        sections,
-        galleryImages: textList(payload.gallery_images, []),
-        faq,
-      };
-    }),
-    testimonials: byIndex(testimonialItems, testimonials, (item, fallback) => {
-      const payload = item.payload ?? {};
-      return {
-        ...fallback,
-        name: text(payload.client_name, item.title || fallback.name),
-        role: text(payload.client_role, fallback.role),
-        quote: text(item.body, fallback.quote),
-      };
-    }),
-    galleryItems: byIndex(galleryCmsItems, galleryItems, (item, fallback) => {
-      const payload = item.payload ?? {};
-      return {
-        ...fallback,
-        title: text(item.title, fallback.title),
-        image: text(item.image_url, ""),
-        alt: text(payload.alt, item.title || fallback.title),
-        tone: text(payload.tone, fallback.tone) as typeof fallback.tone,
-      };
-    }),
+        return {
+          id: text(payload.slug, slugify(title) || String(item.id)),
+          title,
+          category: text(payload.category, ""),
+          excerpt: text(item.subtitle, ""),
+          body: text(item.body, ""),
+          image: text(item.image_url, ""),
+          date: text(payload.date, ""),
+          readTime: text(payload.read_time, ""),
+          designBrief: text(payload.design_brief, ""),
+          takeaways: textList(payload.takeaways, []),
+          sections,
+          galleryImages: textList(payload.gallery_images, []),
+          faq,
+        };
+      }),
+    testimonials: testimonialItems
+      .filter((item) => item.is_active)
+      .sort(sortByOrder)
+      .map((item) => {
+        const payload = item.payload ?? {};
+        return {
+          name: text(payload.client_name, text(item.title, "")),
+          role: text(payload.client_role, ""),
+          quote: text(item.body, ""),
+          image: text(item.image_url, ""),
+        };
+      }),
+    galleryItems: mapGalleryItems(galleryCmsItems),
     galleryHeader: {
       eyebrow: text(galleryHeaderPayload.section_eyebrow, defaultGalleryHeader.eyebrow),
       title: text(galleryHeaderPayload.section_title, defaultGalleryHeader.title),
@@ -404,8 +536,10 @@ export async function getDreamBuildContent(): Promise<DreamBuildContent> {
           title: text(contactItems[0].title, defaultContact.title),
           body: text(contactItems[0].body, defaultContact.body),
           email: text(contactItems[0].payload?.email, defaultContact.email),
-          phone: text(contactItems[0].payload?.phone, ""),
+          phone: text(contactItems[0].payload?.phone, defaultContact.phone),
           address: text(contactItems[0].payload?.address, defaultContact.address),
+          responseTime: text(contactItems[0].payload?.response_time, defaultContact.responseTime),
+          statusBadge: text(contactItems[0].payload?.status_badge, defaultContact.statusBadge),
         }
       : defaultContact,
   };

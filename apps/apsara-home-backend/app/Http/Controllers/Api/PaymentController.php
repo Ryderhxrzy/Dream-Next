@@ -1499,6 +1499,7 @@ class PaymentController extends Controller
                 'shipment_status' => $firstItem->ch_shipment_status ?: null,
                 'tracking_no' => $trackingNo,
                 'tracking_number' => $trackingNo,
+                'shipping_address' => (string) ($firstItem->ch_customer_address ?? ''),
                 'refund_reason' => $firstItem->ch_refund_reason ?: null,
                 'refund_image_urls' => is_array($firstItem->ch_refund_image_urls) ? array_values($firstItem->ch_refund_image_urls) : [],
                 'refund_video_urls' => is_array($firstItem->ch_refund_video_urls) ? array_values($firstItem->ch_refund_video_urls) : [],

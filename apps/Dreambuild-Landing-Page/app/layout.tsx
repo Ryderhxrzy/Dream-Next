@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 
 import "./globals.css"
 
+import { DreamBuildRealtimeRefresh } from "@/components/shared/dreambuild-realtime-refresh"
 import { SplashWrapper } from "@/components/shared/splash-wrapper"
 
 export const metadata: Metadata = {
@@ -29,6 +30,7 @@ export default function RootLayout({
       className="h-full antialiased"
     >
       <body className="flex min-h-full flex-col">
+        <DreamBuildRealtimeRefresh />
         <SplashWrapper />
         {children}
       </body>

@@ -11,11 +11,16 @@ export function SplashWrapper() {
   useEffect(() => {
     const seen = sessionStorage.getItem("dreambuild_splash_seen")
     if (!seen) {
-      setShow(true)
       sessionStorage.setItem("dreambuild_splash_seen", "1")
+      const startTimer = window.setTimeout(() => {
+        setShow(true)
+      }, 0)
       // Hide after animation completes (~5.6s) + fade out duration (0.7s)
-      const timer = setTimeout(() => setShow(false), 5600)
-      return () => clearTimeout(timer)
+      const hideTimer = window.setTimeout(() => setShow(false), 5600)
+      return () => {
+        window.clearTimeout(startTimer)
+        window.clearTimeout(hideTimer)
+      }
     }
   }, [])
 

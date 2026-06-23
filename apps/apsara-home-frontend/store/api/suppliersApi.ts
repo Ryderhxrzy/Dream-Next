@@ -47,13 +47,55 @@ export interface InviteSupplierUserResponse {
   }
 }
 
+export interface SupplierCategoryItem {
+  id: number
+  name: string
+  url: string
+  parent_id: number | null
+}
+
 export interface SupplierCategoriesResponse {
   supplier_id: number
-  categories: Array<{
-    id: number
-    name: string
-    url: string
-  }>
+  categories: SupplierCategoryItem[]
+}
+
+export interface AddSubCategoryPayload {
+  parentId: number
+  name: string
+  url?: string
+}
+
+export interface AddSubCategoryResponse {
+  message: string
+  category: SupplierCategoryItem
+}
+
+export interface UpdateCategoryPayload {
+  supplierId: number
+  id: number
+  name: string
+  url?: string
+}
+
+export interface UpdateCategoryResponse {
+  message: string
+  category: SupplierCategoryItem
+}
+
+export interface DeleteSubCategoryPayload {
+  supplierId: number
+  id: number
+}
+
+export interface AddCategoryPayload {
+  supplierId: number
+  name: string
+  url?: string
+}
+
+export interface AddCategoryResponse {
+  message: string
+  category: SupplierCategoryItem
 }
 
 export interface SupplierPortalUser {
@@ -232,6 +274,99 @@ export const suppliersApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Suppliers"],
     }),
+    addSupplierCategory: builder.mutation<
+      AddCategoryResponse,
+      AddCategoryPayload
+    >({
+      query: ({ name, url }) => ({
+        url: `/api/supplier/categories`,
+        method: "POST",
+        body: { name, url },
+      }),
+      async onQueryStarted({ supplierId, name, url }, { dispatch, queryFulfilled }) {
+        const tempId = -Date.now()
+        const patch = dispatch(
+          suppliersApi.util.updateQueryData("getSupplierCategories", supplierId, (draft) => {
+            draft.categories.push({ id: tempId, name, url: url ?? "", parent_id: null })
+          })
+        )
+        try {
+          const { data } = await queryFulfilled
+          dispatch(
+            suppliersApi.util.updateQueryData("getSupplierCategories", supplierId, (draft) => {
+              const idx = draft.categories.findIndex((c) => c.id === tempId)
+              if (idx !== -1) draft.categories[idx] = data.category
+            })
+          )
+        } catch {
+          patch.undo()
+        }
+      },
+      invalidatesTags: ["Suppliers", "Categories"],
+    }),
+    addSupplierSubCategory: builder.mutation<
+      AddSubCategoryResponse,
+      AddSubCategoryPayload
+    >({
+      query: ({ parentId, name, url }) => ({
+        url: `/api/supplier/categories/${parentId}/sub`,
+        method: "POST",
+        body: { name, url },
+      }),
+      invalidatesTags: ["Suppliers", "Categories"],
+    }),
+    updateSupplierCategory: builder.mutation<
+      UpdateCategoryResponse,
+      UpdateCategoryPayload
+    >({
+      query: ({ id, name, url }) => ({
+        url: `/api/supplier/categories/${id}`,
+        method: "PUT",
+        body: { name, url },
+      }),
+      async onQueryStarted({ supplierId, id, name, url }, { dispatch, queryFulfilled }) {
+        const patch = dispatch(
+          suppliersApi.util.updateQueryData("getSupplierCategories", supplierId, (draft) => {
+            const cat = draft.categories.find((c) => c.id === id)
+            if (cat) { cat.name = name; cat.url = url ?? cat.url }
+          })
+        )
+        try {
+          const { data } = await queryFulfilled
+          dispatch(
+            suppliersApi.util.updateQueryData("getSupplierCategories", supplierId, (draft) => {
+              const idx = draft.categories.findIndex((c) => c.id === id)
+              if (idx !== -1) draft.categories[idx] = data.category
+            })
+          )
+        } catch {
+          patch.undo()
+        }
+      },
+      invalidatesTags: ["Categories"],
+    }),
+    deleteSupplierSubCategory: builder.mutation<
+      { message: string },
+      DeleteSubCategoryPayload
+    >({
+      query: ({ id }) => ({
+        url: `/api/supplier/categories/${id}`,
+        method: "DELETE",
+      }),
+      async onQueryStarted({ supplierId, id }, { dispatch, queryFulfilled }) {
+        const patch = dispatch(
+          suppliersApi.util.updateQueryData("getSupplierCategories", supplierId, (draft) => {
+            draft.categories = draft.categories.filter((c) => c.id !== id)
+          })
+        )
+        try {
+          await queryFulfilled
+        } catch {
+          patch.undo()
+        }
+      },
+      invalidatesTags: ["Categories"],
+    }),
   }),
 })
 
@@ -249,4 +384,8 @@ export const {
   useUpdateSupplierCategoriesMutation,
   useDeleteSupplierUserMutation,
   useUpdateSupplierLogoMutation,
+  useAddSupplierSubCategoryMutation,
+  useAddSupplierCategoryMutation,
+  useUpdateSupplierCategoryMutation,
+  useDeleteSupplierSubCategoryMutation,
 } = suppliersApi

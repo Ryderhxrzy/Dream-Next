@@ -269,7 +269,7 @@ export default function SupplierLayoutShell({
 
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase dark:text-slate-500">
-                  AF Home / Supplier
+                  AF Home / Merchant
                 </div>
                 <div className="mt-1 flex min-w-0 flex-wrap items-center gap-2">
                   <h1 className="truncate text-sm font-bold text-slate-900 dark:text-white">

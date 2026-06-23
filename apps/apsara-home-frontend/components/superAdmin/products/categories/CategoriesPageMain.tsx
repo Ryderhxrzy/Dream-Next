@@ -91,6 +91,8 @@ function SubcategoryPanel({
   onDelete,
   isDeleting,
   onAdd,
+  forceClose,
+  onOpen,
 }: {
   category: Category
   subcategories: Category[]
@@ -99,8 +101,14 @@ function SubcategoryPanel({
   onDelete: (id: number) => void
   isDeleting: Set<number>
   onAdd: (parentId: number, name: string, url: string) => Promise<void>
+  forceClose: boolean
+  onOpen: (id: number) => void
 }) {
   const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    if (forceClose) setOpen(false)
+  }, [forceClose])
   const [adding, setAdding] = useState(false)
   const [subName, setSubName] = useState("")
   const [subUrl, setSubUrl] = useState("")
@@ -119,8 +127,12 @@ function SubcategoryPanel({
     setSubUrl(toSlug(v))
   }
 
+  const isDuplicate = subcategories.some(
+    (s) => s.name.trim().toLowerCase() === subName.trim().toLowerCase()
+  )
+
   const handleSave = async () => {
-    if (!subName.trim()) return
+    if (!subName.trim() || isDuplicate) return
     setSaving(true)
     await onAdd(category.id, subName.trim(), subUrl || toSlug(subName))
     setSubName("")
@@ -131,7 +143,7 @@ function SubcategoryPanel({
   }
 
   const handleStartAdding = () => {
-    setOpen(true)
+    if (!open) { setOpen(true); onOpen(category.id) }
     setAdding(true)
     setTimeout(() => inputRef.current?.focus(), 50)
   }
@@ -141,7 +153,7 @@ function SubcategoryPanel({
       {/* Toggle header */}
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => { const next = !open; setOpen(next); if (next) onOpen(category.id) }}
         className="flex w-full items-center gap-2 px-5 py-3 text-left transition-colors hover:bg-slate-50"
       >
         <svg className="h-4 w-4 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -242,8 +254,13 @@ function SubcategoryPanel({
                 value={subName}
                 onChange={(e) => handleNameChange(e.target.value)}
                 placeholder="Subcategory name"
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-violet-400 focus:ring-1 focus:ring-violet-400/30 focus:outline-none"
+                className={`w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:ring-1 focus:outline-none ${isDuplicate ? "border-red-300 focus:border-red-400 focus:ring-red-400/30" : "border-slate-200 focus:border-violet-400 focus:ring-violet-400/30"}`}
               />
+              {isDuplicate && (
+                <p className="text-xs text-red-500">
+                  &quot;{subName.trim()}&quot; already exists in this category.
+                </p>
+              )}
               <div className="flex items-center gap-1.5">
                 <span className="font-mono text-sm text-slate-400">/</span>
                 <input
@@ -265,7 +282,7 @@ function SubcategoryPanel({
                 <button
                   type="button"
                   onClick={handleSave}
-                  disabled={!subName.trim() || saving}
+                  disabled={!subName.trim() || saving || isDuplicate}
                   className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-violet-600 py-2 text-sm font-semibold text-white transition-colors hover:bg-violet-700 disabled:opacity-50"
                 >
                   {saving ? (
@@ -298,6 +315,8 @@ function CategoryCard({
   anySelected,
   subcategories,
   onAddSubcategory,
+  forceClose,
+  onOpen,
 }: {
   category: Category
   colorIndex: number
@@ -309,6 +328,8 @@ function CategoryCard({
   anySelected: boolean
   subcategories: Category[]
   onAddSubcategory: (parentId: number, name: string, url: string) => Promise<void>
+  forceClose: boolean
+  onOpen: (id: number) => void
 }) {
   const [confirming, setConfirming] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -425,6 +446,8 @@ function CategoryCard({
         onDelete={onDelete}
         isDeleting={isDeleting}
         onAdd={onAddSubcategory}
+        forceClose={forceClose}
+        onOpen={onOpen}
       />
 
       {/* Footer */}
@@ -538,6 +561,7 @@ export default function CategoriesPageMain() {
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [sort, setSort] = useState<SortKey>("order-asc")
+  const [expandedCategoryId, setExpandedCategoryId] = useState<number | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
   const [editCategory, setEditCategory] = useState<Category | null>(null)
   const [deletingIds, setDeletingIds] = useState<Set<number>>(new Set())
@@ -1124,6 +1148,8 @@ export default function CategoriesPageMain() {
                 anySelected={someSelected}
                 subcategories={subMap.get(cat.id) ?? []}
                 onAddSubcategory={handleAddSubcategory}
+                forceClose={expandedCategoryId !== null && expandedCategoryId !== cat.id}
+                onOpen={(id) => setExpandedCategoryId(id)}
               />
             ))}
           </div>

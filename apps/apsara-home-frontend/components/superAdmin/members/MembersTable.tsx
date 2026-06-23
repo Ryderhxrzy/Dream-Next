@@ -8,6 +8,7 @@ import {
   useLazyGetMembersQuery,
   useUpdateMemberMutation,
 } from "@/store/api/membersApi"
+import { useCreateAdminOrderMutation, useLazySearchOrderProductsQuery } from "@/store/api/ordersApi"
 import { Button } from "@heroui/react/button"
 import { Card } from "@heroui/react/card"
 import { Chip } from "@heroui/react/chip"
@@ -1111,6 +1112,423 @@ function MemberDetailsModal({
   )
 }
 
+/* -- Create Order Modal ----------------------------------- */
+
+interface CartItem {
+  product_id: number
+  product_name: string
+  product_sku: string
+  product_image: string | null
+  product_pv: number
+  unit_price: number
+  quantity: number
+}
+
+function CreateOrderModal({
+  member,
+  onClose,
+}: {
+  member: Member
+  onClose: () => void
+}) {
+  const [createOrder, { isLoading: isSubmitting }] = useCreateAdminOrderMutation()
+  const [searchProducts, { isFetching: isSearching }] = useLazySearchOrderProductsQuery()
+
+  const [productSearch, setProductSearch] = useState("")
+  const [searchResults, setSearchResults] = useState<import("@/store/api/ordersApi").OrderProductResult[]>([])
+  const [showResults, setShowResults] = useState(false)
+  const [isPending, setIsPending] = useState(false)
+  const [cart, setCart] = useState<CartItem[]>([])
+  const [shippingAddress, setShippingAddress] = useState(member.fullAddress ?? "")
+  const [paymentMethod, setPaymentMethod] = useState("cod")
+  const [shippingFee, setShippingFee] = useState(0)
+  const [notes, setNotes] = useState("")
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null)
+  const searchRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (searchRef.current) clearTimeout(searchRef.current)
+    const q = productSearch.trim()
+    if (!q) { setSearchResults([]); setShowResults(false); setIsPending(false); return }
+    setIsPending(true)
+    searchRef.current = setTimeout(async () => {
+      try {
+        const res = await searchProducts(q).unwrap()
+        setSearchResults(res.products ?? [])
+        setShowResults(true)
+      } catch (err) {
+        console.error('[CreateOrder] product search failed:', err)
+        setSearchResults([])
+        setShowResults(false)
+      } finally { setIsPending(false) }
+    }, 150)
+    return () => { if (searchRef.current) clearTimeout(searchRef.current) }
+  }, [productSearch, searchProducts])
+
+  const addToCart = (product: import("@/store/api/ordersApi").OrderProductResult) => {
+    setCart((prev) => {
+      const idx = prev.findIndex((c) => c.product_id === product.id)
+      if (idx !== -1) {
+        return prev.map((c, i) => i === idx ? { ...c, quantity: c.quantity + 1 } : c)
+      }
+      return [...prev, {
+        product_id: product.id,
+        product_name: product.name,
+        product_sku: product.sku ?? "",
+        product_image: product.image ?? null,
+        product_pv: product.prodpv ?? 0,
+        unit_price: product.priceMember ?? product.priceDp ?? product.priceSrp ?? 0,
+        quantity: 1,
+      }]
+    })
+    setProductSearch("")
+    setShowResults(false)
+  }
+
+  const updateQty = (productId: number, qty: number) => {
+    if (qty < 1) return
+    setCart((prev) => prev.map((c) => c.product_id === productId ? { ...c, quantity: qty } : c))
+  }
+
+  const removeItem = (productId: number) => {
+    setCart((prev) => prev.filter((c) => c.product_id !== productId))
+  }
+
+  const itemsTotal = cart.reduce((sum, c) => sum + c.unit_price * c.quantity, 0)
+  const grandTotal = itemsTotal + shippingFee
+
+  const handleSubmit = async () => {
+    setFeedback(null)
+    if (cart.length === 0) { setFeedback({ type: "error", text: "Add at least one product to the order." }); return }
+    if (!shippingAddress.trim()) { setFeedback({ type: "error", text: "Shipping address is required." }); return }
+    try {
+      const res = await createOrder({
+        member_id: member.id,
+        customer_name: member.name,
+        customer_email: member.email,
+        customer_phone: member.contactNumber ?? "",
+        items: cart.map((c) => ({
+          product_id: c.product_id,
+          product_name: c.product_name,
+          product_sku: c.product_sku,
+          product_image: c.product_image ?? undefined,
+          product_pv: c.product_pv,
+          unit_price: c.unit_price,
+          quantity: c.quantity,
+        })),
+        shipping_fee: shippingFee,
+        shipping_address: shippingAddress.trim(),
+        payment_method: paymentMethod,
+        notes: notes.trim() || undefined,
+      }).unwrap()
+      setFeedback({ type: "success", text: `Order ${res.checkout_id} created successfully.` })
+      setTimeout(onClose, 1800)
+    } catch (err: unknown) {
+      const apiErr = err as { data?: { message?: string } }
+      setFeedback({ type: "error", text: apiErr?.data?.message ?? "Failed to create order." })
+    }
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto bg-black/40 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 16, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 10, scale: 0.97 }}
+        transition={{ duration: 0.2 }}
+        className="my-6 w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-slate-900"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="relative px-6 pt-6 pb-5">
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-teal-50 dark:bg-teal-500/10">
+              <svg className="h-6 w-6 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-[11px] font-bold tracking-[0.18em] text-teal-600 uppercase dark:text-teal-400">Create Order</p>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{member.name}</h3>
+              <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5">
+                <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                  {member.email}
+                </span>
+                {member.contactNumber && member.contactNumber !== "0" && (
+                  <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                    <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                    {member.contactNumber}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-4 px-6 pb-2">
+          {feedback && (
+            <div className={`rounded-2xl border px-4 py-3 text-sm ${feedback.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300" : "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300"}`}>
+              {feedback.text}
+            </div>
+          )}
+
+          {/* Product search */}
+          <div>
+            <p className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">Add Products</p>
+            <div className="relative">
+              <svg className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                value={productSearch}
+                onChange={(e) => setProductSearch(e.target.value)}
+                onFocus={() => searchResults.length > 0 && setShowResults(true)}
+                placeholder="Search products by name or SKU…"
+                className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 pl-10 pr-10 text-sm text-slate-700 outline-none transition focus:border-teal-400 focus:bg-white focus:ring-2 focus:ring-teal-500/15 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-900"
+              />
+              <div className="absolute top-1/2 right-3.5 -translate-y-1/2">
+                {(isPending || isSearching) ? (
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
+                ) : (
+                  <svg className="h-4 w-4 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                  </svg>
+                )}
+              </div>
+              {showResults && searchResults.length > 0 && (
+                <div className="absolute top-full left-0 z-20 mt-1.5 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
+                  {searchResults.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => addToCart(p)}
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-teal-50 dark:hover:bg-teal-500/10"
+                    >
+                      {p.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={p.image} alt={p.name} className="h-10 w-10 shrink-0 rounded-xl object-cover" />
+                      ) : (
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
+                          <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
+                          </svg>
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{p.name}</p>
+                        <p className="text-xs text-slate-400">{p.sku} · PHP {Number(p.priceMember ?? p.priceDp ?? p.priceSrp ?? 0).toLocaleString()}</p>
+                      </div>
+                      <span className="shrink-0 rounded-lg bg-teal-50 px-2 py-1 text-xs font-semibold text-teal-600 dark:bg-teal-500/10 dark:text-teal-400">+ Add</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Cart */}
+          <div>
+            <p className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+              Order Items {cart.length > 0 && <span className="font-normal text-slate-400">({cart.length})</span>}
+            </p>
+            {cart.length > 0 ? (
+              <div className="space-y-2">
+                {cart.map((item) => (
+                  <div key={item.product_id} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800/50">
+                    {item.product_image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={item.product_image} alt={item.product_name} className="h-11 w-11 shrink-0 rounded-xl object-cover" />
+                    ) : (
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-700">
+                        <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
+                        </svg>
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{item.product_name}</p>
+                      <p className="text-xs text-slate-400">PHP {Number(item.unit_price).toLocaleString()} each</p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => updateQty(item.product_id, item.quantity - 1)}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 dark:border-slate-600 dark:text-slate-400"
+                      >−</button>
+                      <input
+                        type="number"
+                        min={1}
+                        value={item.quantity}
+                        onChange={(e) => updateQty(item.product_id, Math.max(1, parseInt(e.target.value) || 1))}
+                        className="h-7 w-11 rounded-lg border border-slate-200 bg-white text-center text-sm font-bold text-slate-800 outline-none focus:border-teal-400 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => updateQty(item.product_id, item.quantity + 1)}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 dark:border-slate-600 dark:text-slate-400"
+                      >+</button>
+                    </div>
+                    <p className="w-20 shrink-0 text-right text-sm font-bold text-slate-800 dark:text-slate-100">
+                      PHP {Number(item.unit_price * item.quantity).toLocaleString()}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => removeItem(item.product_id)}
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-300 transition hover:bg-rose-50 hover:text-rose-500 dark:text-slate-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
+                    >
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 py-8 dark:border-slate-700">
+                <svg className="mb-2 h-8 w-8 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <p className="text-sm text-slate-400">No products added yet</p>
+              </div>
+            )}
+          </div>
+
+          {/* Shipping address */}
+          <div>
+            <p className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">Shipping Address</p>
+            <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800/50">
+              <svg className="mt-0.5 h-4 w-4 shrink-0 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <textarea
+                value={shippingAddress}
+                onChange={(e) => setShippingAddress(e.target.value)}
+                rows={2}
+                className="min-h-0 flex-1 resize-none bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400 dark:text-slate-200"
+                placeholder="Enter shipping address…"
+              />
+              <svg className="mt-0.5 h-4 w-4 shrink-0 text-teal-500 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+            </div>
+          </div>
+
+          {/* Payment method + shipping fee */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <p className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">Payment Method</p>
+              <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 dark:border-slate-700 dark:bg-slate-800/50">
+                <svg className="h-4 w-4 shrink-0 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+                <select
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="h-11 flex-1 bg-transparent text-sm text-slate-700 outline-none dark:text-slate-100"
+                >
+                  <option value="cod">Cash on Delivery</option>
+                  <option value="bank_transfer">Bank Transfer</option>
+                  <option value="gcash">GCash</option>
+                  <option value="manual">Manual / Other</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <p className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">Shipping Fee (PHP)</p>
+              <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 dark:border-slate-700 dark:bg-slate-800/50">
+                <svg className="h-4 w-4 shrink-0 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                </svg>
+                <input
+                  type="number"
+                  min={0}
+                  value={shippingFee}
+                  onChange={(e) => setShippingFee(Math.max(0, Number(e.target.value)))}
+                  className="h-11 flex-1 bg-transparent text-sm text-slate-700 outline-none dark:text-slate-100"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div>
+            <p className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">Notes (Optional)</p>
+            <div className="flex items-start gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800/50">
+              <svg className="mt-1 h-4 w-4 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={2}
+                placeholder="Internal notes about this order…"
+                className="flex-1 resize-none bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400 dark:text-slate-200"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-4 border-t border-slate-100 bg-white px-6 py-4 dark:border-slate-800 dark:bg-slate-900">
+          {cart.length > 0 && (
+            <div className="mb-4 space-y-1.5">
+              <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+                <span>Subtotal ({cart.reduce((n, c) => n + c.quantity, 0)} item{cart.reduce((n, c) => n + c.quantity, 0) !== 1 ? "s" : ""})</span>
+                <span>PHP {Number(itemsTotal).toLocaleString()}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+                <span>Shipping fee</span>
+                <span>PHP {Number(shippingFee).toLocaleString()}</span>
+              </div>
+              <div className="flex items-center justify-between border-t border-slate-100 pt-2 dark:border-slate-800">
+                <span className="text-base font-bold text-slate-800 dark:text-slate-100">Total</span>
+                <span className="text-xl font-bold text-teal-600 dark:text-teal-400">PHP {Number(grandTotal).toLocaleString()}</span>
+              </div>
+            </div>
+          )}
+          <div className="flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-2xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleSubmit()}
+              disabled={isSubmitting || cart.length === 0}
+              className="flex items-center gap-2 rounded-2xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-500 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              {isSubmitting ? "Creating…" : "Create Order"}
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  )
+}
+
 /* -- Portal dropdown --------------------------------------- */
 
 function MemberMenuPortal({
@@ -1121,6 +1539,7 @@ function MemberMenuPortal({
   onBanToggle,
   onCopy,
   onQuickStatus,
+  onCreateOrder,
 }: {
   member: Member
   isUpdating: boolean
@@ -1129,6 +1548,7 @@ function MemberMenuPortal({
   onBanToggle: () => void
   onCopy: (value: string, label: string) => void
   onQuickStatus: (status: MemberStatus) => void
+  onCreateOrder: () => void
 }) {
   const btnRef = useRef<HTMLButtonElement>(null)
   const [pos, setPos] = useState<{ top: number; right: number } | null>(null)
@@ -1233,6 +1653,18 @@ function MemberMenuPortal({
                 }}
                 className="w-72 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-300/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/40"
               >
+                <button
+                  onClick={() => {
+                    onCreateOrder()
+                    closeMenu()
+                  }}
+                  className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm text-teal-700 hover:bg-teal-50 dark:text-teal-300 dark:hover:bg-teal-500/10"
+                >
+                  <span>Create order for member</span>
+                  <span className="text-xs text-teal-500 dark:text-teal-400">
+                    Order
+                  </span>
+                </button>
                 <button
                   onClick={() => {
                     onView()
@@ -1384,6 +1816,7 @@ const MembersTable = ({
 }: MembersTableProps) => {
   const [selectedMember, setSelectedMember] = useState<Member | null>(null)
   const [editingMember, setEditingMember] = useState<Member | null>(null)
+  const [orderTarget, setOrderTarget] = useState<Member | null>(null)
   const [banTarget, setBanTarget] = useState<Member | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Member | null>(null)
   const [quickMessage, setQuickMessage] = useState<string | null>(null)
@@ -1806,6 +2239,7 @@ const MembersTable = ({
                         onQuickStatus={(status) =>
                           handleQuickStatus(member, status)
                         }
+                        onCreateOrder={() => setOrderTarget(member)}
                       />
                     </div>
                   </td>
@@ -1815,6 +2249,15 @@ const MembersTable = ({
           </motion.tbody>
         </AnimatePresence>
       </table>
+
+      <AnimatePresence>
+        {orderTarget && (
+          <CreateOrderModal
+            member={orderTarget}
+            onClose={() => setOrderTarget(null)}
+          />
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {selectedMember && (

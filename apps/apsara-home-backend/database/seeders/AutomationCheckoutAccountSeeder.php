@@ -21,41 +21,20 @@ class AutomationCheckoutAccountSeeder extends Seeder
         }
 
         DB::transaction(function (): void {
-            $upline = $this->upsertCustomer([
-                'c_fname' => 'Automation',
-                'c_lname' => 'Upline',
-                'c_username' => 'autoupline',
-                'c_email' => 'automation.upline@example.test',
+            $this->upsertCustomer([
+                'c_fname' => 'Affiliate',
+                'c_lname' => 'Hub',
+                'c_username' => 'affiliatehub',
+                'c_email' => 'affiliate.hub@example.test',
                 'c_mobile' => '09000000001',
                 'c_sponsor' => $this->emptySponsorValue(),
-                'c_partner_slug' => 'autoupline',
-            ]);
-
-            $this->upsertCustomer([
-                'c_fname' => 'Automation',
-                'c_lname' => 'Direct One',
-                'c_username' => 'autodirect1',
-                'c_email' => 'automation.direct1@example.test',
-                'c_mobile' => '09000000002',
-                'c_sponsor' => (int) $upline->c_userid,
-                'c_partner_slug' => 'autodirect1',
-            ]);
-
-            $this->upsertCustomer([
-                'c_fname' => 'Automation',
-                'c_lname' => 'Direct Two',
-                'c_username' => 'autodirect2',
-                'c_email' => 'automation.direct2@example.test',
-                'c_mobile' => '09000000003',
-                'c_sponsor' => (int) $upline->c_userid,
-                'c_partner_slug' => 'autodirect2',
+                'c_partner_slug' => 'affiliatehub',
             ]);
         });
 
-        $this->command?->info('Automation checkout accounts are ready.');
-        $this->command?->line('Password for all accounts: ' . self::PASSWORD);
-        $this->command?->line('Upline: autoupline (no sponsor)');
-        $this->command?->line('Directs: autodirect1, autodirect2');
+        $this->command?->info('Affiliate Hub account is ready.');
+        $this->command?->line('Password: ' . self::PASSWORD);
+        $this->command?->line('Account: affiliatehub (no sponsor)');
     }
 
     private function upsertCustomer(array $attributes): Customer
@@ -133,7 +112,7 @@ class AutomationCheckoutAccountSeeder extends Seeder
 
             return $isNullable === 'YES' ? null : 0;
         }
-
+        
         return null;
     }
 }

@@ -34,6 +34,17 @@ import {
 } from "lucide-react"
 import { useSession } from "next-auth/react"
 
+const CAT_COLORS = [
+  { bg: "bg-indigo-100 dark:bg-indigo-500/15", icon: "text-indigo-500 dark:text-indigo-400" },
+  { bg: "bg-rose-100 dark:bg-rose-500/15",    icon: "text-rose-500 dark:text-rose-400" },
+  { bg: "bg-amber-100 dark:bg-amber-500/15",  icon: "text-amber-600 dark:text-amber-400" },
+  { bg: "bg-emerald-100 dark:bg-emerald-500/15", icon: "text-emerald-600 dark:text-emerald-400" },
+  { bg: "bg-violet-100 dark:bg-violet-500/15", icon: "text-violet-500 dark:text-violet-400" },
+  { bg: "bg-sky-100 dark:bg-sky-500/15",      icon: "text-sky-500 dark:text-sky-400" },
+  { bg: "bg-orange-100 dark:bg-orange-500/15", icon: "text-orange-500 dark:text-orange-400" },
+  { bg: "bg-teal-100 dark:bg-teal-500/15",    icon: "text-teal-600 dark:text-teal-400" },
+]
+
 type SupplierCompanyForm = {
   name: string
   company: string
@@ -118,6 +129,7 @@ export default function SuppliersPageMain() {
     null
   )
   const [categorySelection, setCategorySelection] = useState<number[]>([])
+  const [categorySearch, setCategorySearch] = useState("")
   const [categoryFeedback, setCategoryFeedback] = useState<{
     type: "success" | "error"
     message: string
@@ -149,9 +161,36 @@ export default function SuppliersPageMain() {
     per_page: 500,
   })
   const allCategories = useMemo(
-    () => allCategoriesData?.categories ?? [],
+    () => (allCategoriesData?.categories ?? []).filter((c) => !c.parent_id),
     [allCategoriesData?.categories]
   )
+  const subCountMap = useMemo(() => {
+    const map = new Map<number, number>()
+    ;(allCategoriesData?.categories ?? []).forEach((c) => {
+      if (c.parent_id) map.set(c.parent_id, (map.get(c.parent_id) ?? 0) + 1)
+    })
+    return map
+  }, [allCategoriesData?.categories])
+  const subListMap = useMemo(() => {
+    const map = new Map<number, { id: number; name: string; url: string }[]>()
+    ;(allCategoriesData?.categories ?? []).forEach((c) => {
+      if (c.parent_id) {
+        const list = map.get(c.parent_id) ?? []
+        list.push({ id: c.id, name: c.name, url: c.url ?? "" })
+        map.set(c.parent_id, list)
+      }
+    })
+    return map
+  }, [allCategoriesData?.categories])
+  const filteredCategories = useMemo(() => {
+    const q = categorySearch.trim().toLowerCase()
+    if (!q) return allCategories
+    return allCategories.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        (c.url ?? "").toLowerCase().includes(q)
+    )
+  }, [allCategories, categorySearch])
   const supplierInviteForm = useMemo(
     () =>
       isSupplierAdmin && linkedSupplierId > 0
@@ -1192,98 +1231,172 @@ export default function SuppliersPageMain() {
       </section>
 
       {categoryTarget ? (
-        <ModalShell onClose={() => setCategoryTarget(null)}>
+        <ModalShell onClose={() => { setCategoryTarget(null); setCategorySearch("") }}>
+          {/* Header */}
           <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-bold tracking-[0.22em] text-cyan-700 uppercase dark:text-cyan-300">
-                Supplier Categories
-              </p>
-              <h3 className="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100">
-                Assign Allowed Categories
-              </h3>
-              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                {categoryTarget.company || categoryTarget.name} will only be
-                able to use the categories you enable here.
-              </p>
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-500/15">
+                <FolderOpen className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+              </div>
+              <div>
+                <p className="text-xs font-bold tracking-[0.18em] text-indigo-600 uppercase dark:text-indigo-400">
+                  Supplier Categories
+                </p>
+                <h3 className="mt-0.5 text-xl font-bold text-slate-900 dark:text-slate-100">
+                  Assign Allowed Categories
+                </h3>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  {categoryTarget.company || categoryTarget.name} will only be able to use the categories you enable here.
+                </p>
+              </div>
             </div>
             <button
               type="button"
-              onClick={() => setCategoryTarget(null)}
-              className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              onClick={() => { setCategoryTarget(null); setCategorySearch("") }}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
             >
-              Close
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
           </div>
 
-          <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/70">
+          {/* Search + selected badge */}
+          <div className="mt-4 flex items-center gap-3">
+            <div className="relative flex-1">
+              <svg className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                value={categorySearch}
+                onChange={(e) => setCategorySearch(e.target.value)}
+                placeholder="Search categories..."
+                className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pr-4 pl-9 text-sm text-slate-700 placeholder-slate-400 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
+              />
+            </div>
+            {categorySelection.length > 0 && (
+              <span className="flex shrink-0 items-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-300">
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+                {categorySelection.length} selected
+              </span>
+            )}
+          </div>
+
+          {/* Category grid */}
+          <div className="mt-3 max-h-[400px] overflow-y-auto pr-0.5">
             {allCategories.length === 0 ? (
-              <p className="text-sm text-amber-700 dark:text-amber-200">
-                Create master categories first before assigning them to
-                suppliers.
+              <p className="py-8 text-center text-sm text-amber-700 dark:text-amber-200">
+                Create master categories first before assigning them to suppliers.
+              </p>
+            ) : filteredCategories.length === 0 ? (
+              <p className="py-8 text-center text-sm text-slate-400">
+                No categories match &ldquo;{categorySearch}&rdquo;
               </p>
             ) : (
-              <div className="grid gap-3 sm:grid-cols-2">
-                {allCategories.map((category) => {
+              <div className="grid gap-2.5 sm:grid-cols-2">
+                {filteredCategories.map((category, idx) => {
                   const checked = categorySelection.includes(category.id)
-
+                  const color = CAT_COLORS[idx % CAT_COLORS.length]
+                  const subs = subListMap.get(category.id) ?? []
                   return (
-                    <label
-                      key={category.id}
-                      className={`flex cursor-pointer items-start gap-3 rounded-2xl border px-4 py-3 transition ${
-                        checked
-                          ? "border-cyan-300 bg-cyan-50 dark:border-cyan-500/30 dark:bg-cyan-500/10"
-                          : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-950 dark:hover:border-slate-600"
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => toggleCategorySelection(category.id)}
-                        className="mt-1 h-4 w-4 accent-cyan-600"
-                      />
-                      <div>
-                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                          {category.name}
-                        </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          /{category.url || "no-slug"}
-                        </p>
-                      </div>
-                    </label>
+                    <div key={category.id} className="group/cat relative">
+                      <label
+                        className={`flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 transition ${
+                          checked
+                            ? "border-indigo-300 bg-indigo-50 dark:border-indigo-500/40 dark:bg-indigo-500/10"
+                            : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-950 dark:hover:border-slate-600"
+                        }`}
+                      >
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${color.bg}`}>
+                          <Tag className={`h-4 w-4 ${color.icon}`} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+                            {category.name}
+                          </p>
+                          <div className="mt-0.5 flex items-center gap-2">
+                            <p className="text-xs text-slate-400 dark:text-slate-500">
+                              /{category.url || "no-slug"}
+                            </p>
+                            {subs.length > 0 && (
+                              <span className="inline-flex items-center gap-0.5 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                                {subs.length} sub
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleCategorySelection(category.id)}
+                          className="h-4 w-4 shrink-0 accent-indigo-600"
+                        />
+                      </label>
+
+                      {subs.length > 0 && (
+                        <div className="pointer-events-none absolute bottom-full left-0 z-30 mb-2 w-56 opacity-0 transition-opacity duration-150 group-hover/cat:opacity-100">
+                          <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-xl dark:border-slate-700 dark:bg-slate-900">
+                            <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                              Subcategories
+                            </p>
+                            <ul className="space-y-1.5">
+                              {subs.map((sub) => (
+                                <li key={sub.id} className="flex items-center gap-2">
+                                  <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-400" />
+                                  <span className="truncate text-xs font-medium text-slate-700 dark:text-slate-200">
+                                    {sub.name}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                          {/* arrow */}
+                          <div className="ml-5 h-2 w-2 rotate-45 border-b border-r border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900 -mt-1" />
+                        </div>
+                      )}
+                    </div>
                   )
                 })}
               </div>
             )}
           </div>
 
-          {categoryFeedback ? (
-            <div className="mt-4">
-              <FeedbackBanner
-                type={categoryFeedback.type}
-                message={categoryFeedback.message}
-              />
-            </div>
-          ) : null}
+          {/* Info footer */}
+          <div className="mt-4 flex items-center gap-2 rounded-xl bg-slate-50 px-4 py-2.5 dark:bg-slate-800/60">
+            <svg className="h-4 w-4 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Only selected categories will be accessible to this supplier.
+            </p>
+          </div>
 
-          <div className="mt-6 flex justify-end gap-3">
+          {categoryFeedback && (
+            <div className="mt-3">
+              <FeedbackBanner type={categoryFeedback.type} message={categoryFeedback.message} />
+            </div>
+          )}
+
+          <div className="mt-5 flex justify-end gap-3">
             <button
               type="button"
-              onClick={() => setCategoryTarget(null)}
-              className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              onClick={() => { setCategoryTarget(null); setCategorySearch("") }}
+              className="rounded-2xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={() => void handleSaveSupplierCategories()}
-              disabled={
-                isSavingSupplierCategories || allCategories.length === 0
-              }
-              className="rounded-2xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isSavingSupplierCategories || allCategories.length === 0}
+              className="flex items-center gap-2 rounded-2xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isSavingSupplierCategories
-                ? "Saving access..."
-                : "Save Category Access"}
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              {isSavingSupplierCategories ? "Saving access..." : "Save Category Access"}
             </button>
           </div>
         </ModalShell>
