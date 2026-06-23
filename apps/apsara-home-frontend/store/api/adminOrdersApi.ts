@@ -123,6 +123,8 @@ export interface AbandonedCheckout {
   created_at?: string | null
   customer_name?: string | null
   customer_email?: string | null
+  product_name?: string | null
+  image?: string | null
   region?: string | null
   recovery_status: RecoveryStatus
   total_price: number
@@ -200,6 +202,17 @@ export const adminOrdersApi = baseApi.injectEndpoints({
         },
       }),
       providesTags: ["Orders"],
+    }),
+    remindAbandonedCheckout: builder.mutation<
+      { message: string; channels?: string[]; reminder_count?: number },
+      { checkoutId: string; note?: string }
+    >({
+      query: ({ checkoutId, note }) => ({
+        url: `/api/admin/abandoned-checkouts/${encodeURIComponent(checkoutId)}/remind`,
+        method: "POST",
+        body: { note: note?.trim() || undefined },
+      }),
+      invalidatesTags: ["Orders"],
     }),
     approveAdminOrder: builder.mutation<
       { message: string },
@@ -370,6 +383,7 @@ export const {
   useGetAdminOrdersQuery,
   useGetPartnerStorefrontOrdersQuery,
   useGetAbandonedCheckoutsQuery,
+  useRemindAbandonedCheckoutMutation,
   useApproveAdminOrderMutation,
   useRejectAdminOrderMutation,
   useUpdateAdminOrderStatusMutation,

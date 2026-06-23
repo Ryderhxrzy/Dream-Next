@@ -3636,6 +3636,155 @@ class ProductController extends Controller
         ], 201);
     }
 
+    /**
+     * Admin: fetch one product (any status) with its variants for the
+     * dedicated /admin/products/:id detail page.
+     */
+    public function adminShow(int $id): JsonResponse
+    {
+        $product = Product::query()
+            ->with([
+                'photos:pp_id,pp_pdid,pp_filename,pp_varone,pp_date',
+                'brand:pb_id,pb_name,pb_status',
+                'variants:pv_id,pv_pdid,pv_sku,pv_name,pv_color,pv_color_hex,pv_size,pv_style,pv_width,pv_dimension,pv_height,pv_price_srp,pv_price_dp,pv_price_member,pv_prodpv,pv_qty,pv_status,pv_date',
+                'variants.photos:pvp_id,pvp_pvid,pvp_filename,pvp_sort,pvp_date',
+            ])
+            ->find($id);
+
+        if (! $product) {
+            return response()->json(['message' => 'Product not found.'], 404);
+        }
+
+        return response()->json(['product' => $this->mapProduct($product)]);
+    }
+
+    /**
+     * Admin: partial update of a single product's own fields (inline autosave).
+     * Deliberately does NOT sync variants — variants are edited one at a time
+     * via updateVariant(), so this never risks deleting variant rows.
+     */
+    public function patchProduct(Request $request, int $id): JsonResponse
+    {
+        $product = Product::query()->find($id);
+        if (! $product) {
+            return response()->json(['message' => 'Product not found.'], 404);
+        }
+
+        $validated = $request->validate([
+            'pd_name'              => 'sometimes|required|string|max:255',
+            'pd_parent_sku'        => 'sometimes|nullable|string|max:50',
+            'pd_price_srp'         => 'sometimes|nullable|numeric|min:0',
+            'pd_price_dp'          => 'sometimes|nullable|numeric|min:0',
+            'pd_price_member'      => 'sometimes|nullable|numeric|min:0',
+            'pd_prodpv'            => 'sometimes|nullable|numeric|min:0',
+            'pd_qty'               => 'sometimes|nullable|numeric|min:0',
+            'pd_weight'            => 'sometimes|nullable|numeric|min:0',
+            'pd_psweight'          => 'sometimes|nullable|numeric|min:0',
+            'pd_pswidth'           => 'sometimes|nullable|numeric|min:0',
+            'pd_pslenght'          => 'sometimes|nullable|numeric|min:0',
+            'pd_psheight'          => 'sometimes|nullable|numeric|min:0',
+            'pd_description'       => 'sometimes|nullable|string',
+            'pd_specifications'    => 'sometimes|nullable|string',
+            'pd_material'          => 'sometimes|nullable|string|max:255',
+            'pd_warranty'          => 'sometimes|nullable|string|max:255',
+            'pd_assembly_required' => 'sometimes|boolean',
+            'pd_musthave'          => 'sometimes|boolean',
+            'pd_bestseller'        => 'sometimes|boolean',
+            'pd_salespromo'        => 'sometimes|boolean',
+            'pd_status'            => 'sometimes|integer|in:0,1,2,3',
+        ]);
+
+        if (empty($validated)) {
+            return response()->json(['message' => 'No changes provided.'], 422);
+        }
+
+        foreach ($validated as $key => $value) {
+            $product->{$key} = $value;
+        }
+        $product->pd_last_update = now();
+        $product->save();
+
+        $product->load([
+            'photos:pp_id,pp_pdid,pp_filename,pp_varone,pp_date',
+            'brand:pb_id,pb_name,pb_status',
+            'variants:pv_id,pv_pdid,pv_sku,pv_name,pv_color,pv_color_hex,pv_size,pv_style,pv_width,pv_dimension,pv_height,pv_price_srp,pv_price_dp,pv_price_member,pv_prodpv,pv_qty,pv_status,pv_date',
+            'variants.photos:pvp_id,pvp_pvid,pvp_filename,pvp_sort,pvp_date',
+        ]);
+
+        return response()->json([
+            'message' => 'Product updated.',
+            'product' => $this->mapProduct($product),
+        ]);
+    }
+
+    /**
+     * Admin: partial update of a single variant (by id) without touching its
+     * siblings — safe for per-variant inline autosave.
+     */
+    public function updateVariant(Request $request, int $id, int $variantId): JsonResponse
+    {
+        $variant = ProductVariant::query()
+            ->where('pv_id', $variantId)
+            ->where('pv_pdid', $id)
+            ->first();
+
+        if (! $variant) {
+            return response()->json(['message' => 'Variant not found.'], 404);
+        }
+
+        $validated = $request->validate([
+            'pv_sku'          => 'sometimes|nullable|string|max:80',
+            'pv_name'         => 'sometimes|nullable|string|max:120',
+            'pv_color'        => 'sometimes|nullable|string|max:80',
+            'pv_color_hex'    => 'sometimes|nullable|string|max:16',
+            'pv_size'         => 'sometimes|nullable|string|max:40',
+            'pv_style'        => 'sometimes|nullable|string|max:80',
+            'pv_width'        => 'sometimes|nullable|numeric|min:0',
+            'pv_dimension'    => 'sometimes|nullable|numeric|min:0',
+            'pv_height'       => 'sometimes|nullable|numeric|min:0',
+            'pv_price_srp'    => 'sometimes|nullable|numeric|min:0',
+            'pv_price_dp'     => 'sometimes|nullable|numeric|min:0',
+            'pv_price_member' => 'sometimes|nullable|numeric|min:0',
+            'pv_prodpv'       => 'sometimes|nullable|numeric|min:0',
+            'pv_qty'          => 'sometimes|nullable|numeric|min:0',
+            'pv_status'       => 'sometimes|integer|in:0,1',
+        ]);
+
+        if (empty($validated)) {
+            return response()->json(['message' => 'No changes provided.'], 422);
+        }
+
+        $variant->fill($validated)->save();
+        $variant->load('photos:pvp_id,pvp_pvid,pvp_filename,pvp_sort,pvp_date');
+
+        return response()->json([
+            'message' => 'Variant updated.',
+            'variant' => [
+                'id'          => (int) $variant->pv_id,
+                'sku'         => (string) ($variant->pv_sku ?? ''),
+                'name'        => (string) ($variant->pv_name ?? ''),
+                'color'       => (string) ($variant->pv_color ?? ''),
+                'colorHex'    => (string) ($variant->pv_color_hex ?? ''),
+                'size'        => (string) ($variant->pv_size ?? ''),
+                'style'       => (string) ($variant->pv_style ?? ''),
+                'width'       => $this->toOptionalNumber($variant->pv_width),
+                'dimension'   => $this->toOptionalNumber($variant->pv_dimension),
+                'height'      => $this->toOptionalNumber($variant->pv_height),
+                'priceSrp'    => $this->toOptionalNumber($variant->pv_price_srp),
+                'priceDp'     => $this->toOptionalNumber($variant->pv_price_dp),
+                'priceMember' => $this->toOptionalNumber($variant->pv_price_member),
+                'prodpv'      => $this->toOptionalNumber($variant->pv_prodpv),
+                'qty'         => $this->toOptionalNumber($variant->pv_qty),
+                'status'      => (int) ($variant->pv_status ?? 1),
+                'images'      => $variant->photos
+                    ->map(fn (ProductVariantPhoto $photo) => trim((string) $photo->pvp_filename))
+                    ->filter(fn (string $url) => $url !== '')
+                    ->values()
+                    ->all(),
+            ],
+        ]);
+    }
+
     public function update(Request $request, int $id): JsonResponse
     {
         $admin = $this->resolveAdmin($request);

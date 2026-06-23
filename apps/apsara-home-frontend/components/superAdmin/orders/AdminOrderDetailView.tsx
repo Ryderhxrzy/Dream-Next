@@ -12,12 +12,7 @@ import {
 import { useSession } from "next-auth/react"
 import Link from "next/link"
 
-import {
-  fulfillmentStatusTone,
-  paymentStatusTone,
-  ShippingAddressCard,
-  StatusPill,
-} from "./orderUi"
+import { ShippingAddressCard } from "./orderUi"
 
 /* ─── helpers ──────────────────────────────────────────────── */
 
@@ -140,6 +135,198 @@ function DetailRow({
   )
 }
 
+/* ─── status field (labeled, high-contrast) ───────────────── */
+
+const STATUS_TONES = {
+  emerald: {
+    pill: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300",
+    dot: "bg-emerald-500",
+  },
+  amber: {
+    pill: "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300",
+    dot: "bg-amber-500",
+  },
+  sky: {
+    pill: "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-300",
+    dot: "bg-sky-500",
+  },
+  red: {
+    pill: "border-red-200 bg-red-50 text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300",
+    dot: "bg-red-500",
+  },
+  slate: {
+    pill: "border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300",
+    dot: "bg-slate-400",
+  },
+} as const
+
+type ToneKey = keyof typeof STATUS_TONES
+
+function StatusField({
+  label,
+  tone,
+  value,
+  hint,
+}: {
+  label: string
+  tone: ToneKey
+  value: string
+  hint?: string
+}) {
+  const t = STATUS_TONES[tone]
+  return (
+    <div className="flex min-w-30 flex-col gap-1.5">
+      <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
+        {label}
+      </span>
+      <span
+        className={`inline-flex w-fit items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-semibold capitalize ${t.pill}`}
+      >
+        <span className={`h-2 w-2 rounded-full ${t.dot}`} />
+        {value}
+      </span>
+      {hint ? (
+        <span className="text-[11px] text-slate-400 dark:text-slate-500">
+          {hint}
+        </span>
+      ) : null}
+    </div>
+  )
+}
+
+/* ─── loading skeleton (mirrors the loaded layout) ────────── */
+
+function SkeletonBar({ className }: { className: string }) {
+  return (
+    <div
+      className={`animate-pulse rounded bg-slate-100 dark:bg-slate-800 ${className}`}
+    />
+  )
+}
+
+function SkeletonDetailRows({ labels }: { labels: string[] }) {
+  return (
+    <div>
+      {labels.map((label) => (
+        <div
+          key={label}
+          className="flex items-center justify-between gap-3 py-1.5"
+        >
+          <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+            {label}
+          </span>
+          <SkeletonBar className="h-3.5 w-24" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function OrderDetailSkeleton() {
+  return (
+    <div className="space-y-5" aria-busy="true" aria-live="polite">
+      <BackLink />
+
+      {/* Header */}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="space-y-2">
+          <p className="text-xs font-semibold tracking-[0.2em] text-sky-500 uppercase">
+            Order Details
+          </p>
+          <SkeletonBar className="h-7 w-72 max-w-full" />
+          <SkeletonBar className="h-4 w-48" />
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <SkeletonBar className="h-9 w-24 rounded-xl" />
+          <SkeletonBar className="h-9 w-32 rounded-xl" />
+        </div>
+      </div>
+
+      {/* Status strip */}
+      <div className="flex flex-wrap items-start gap-x-8 gap-y-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 dark:border-slate-800 dark:bg-slate-900/60">
+        {["Payment", "Fulfillment", "Approval"].map((label) => (
+          <div key={label} className="flex min-w-30 flex-col gap-1.5">
+            <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
+              {label}
+            </span>
+            <SkeletonBar className="h-7 w-28 rounded-lg" />
+          </div>
+        ))}
+      </div>
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {["Order total", "Items", "Payment", "Fulfillment"].map((label) => (
+          <div
+            key={label}
+            className="rounded-2xl border border-slate-200 bg-white px-5 py-4 dark:border-slate-800 dark:bg-slate-900/60"
+          >
+            <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
+              {label}
+            </p>
+            <SkeletonBar className="mt-2.5 h-5 w-24" />
+          </div>
+        ))}
+      </div>
+
+      {/* Main grid */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        {/* Left column */}
+        <div className="space-y-4 lg:col-span-2">
+          <SectionCard title="Items">
+            <div className="flex gap-4">
+              <SkeletonBar className="h-24 w-24 shrink-0 rounded-2xl" />
+              <div className="flex-1 space-y-2">
+                <SkeletonBar className="h-5 w-1/2" />
+                <SkeletonBar className="h-4 w-24" />
+                <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-800">
+                  <SkeletonBar className="h-4 w-12" />
+                  <SkeletonBar className="h-4 w-20" />
+                </div>
+              </div>
+            </div>
+          </SectionCard>
+
+          <SectionCard title="Tracking">
+            <SkeletonDetailRows
+              labels={["Courier", "Tracking no.", "Shipment status"]}
+            />
+          </SectionCard>
+        </div>
+
+        {/* Right column */}
+        <div className="space-y-4">
+          <SectionCard title="Customer">
+            <div className="space-y-2">
+              <SkeletonBar className="h-4 w-32" />
+              <SkeletonBar className="h-4 w-40" />
+              <SkeletonBar className="h-4 w-28" />
+            </div>
+          </SectionCard>
+
+          <div className="rounded-2xl border border-slate-100 p-3 dark:border-slate-800">
+            <p className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
+              Shipping Address
+            </p>
+            <div className="mt-2 space-y-1.5">
+              <SkeletonBar className="h-4 w-32" />
+              <SkeletonBar className="h-4 w-full" />
+              <SkeletonBar className="h-4 w-3/4" />
+              <SkeletonBar className="h-4 w-1/2" />
+            </div>
+          </div>
+
+          <SectionCard title="Workflow">
+            <SkeletonDetailRows
+              labels={["Approval", "Fulfillment mode", "Placed", "Paid"]}
+            />
+          </SectionCard>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /* ─── main ─────────────────────────────────────────────────── */
 
 export default function AdminOrderDetailView({ orderId }: { orderId: string }) {
@@ -159,16 +346,7 @@ export default function AdminOrderDetailView({ orderId }: { orderId: string }) {
     data?.orders?.find((entry) => entry.checkout_id === orderId) ?? null
 
   if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <BackLink />
-        <div className="h-8 w-48 animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800" />
-        <div className="grid gap-4 lg:grid-cols-3">
-          <div className="h-64 animate-pulse rounded-3xl bg-slate-100 lg:col-span-2 dark:bg-slate-800" />
-          <div className="h-64 animate-pulse rounded-3xl bg-slate-100 dark:bg-slate-800" />
-        </div>
-      </div>
-    )
+    return <OrderDetailSkeleton />
   }
 
   if (isError || !order) {
@@ -229,6 +407,40 @@ export default function AdminOrderDetailView({ orderId }: { orderId: string }) {
     )
   const reminderCount = Number(order.reminder_count ?? 0)
   const resumeUrl = (order.checkout_url ?? "").trim()
+
+  /* ── status tones + friendly labels for the status strip ── */
+  const paymentLower = (order.payment_status ?? "").toLowerCase()
+  const paymentToneKey: ToneKey = isUnpaid
+    ? "amber"
+    : ["paid", "succeeded", "success"].includes(paymentLower)
+      ? "emerald"
+      : ["failed", "cancelled", "expired"].includes(paymentLower)
+        ? "red"
+        : "amber"
+  const paymentLabel = isUnpaid
+    ? order.abandoned_at
+      ? "Abandoned · Unpaid"
+      : "Unpaid"
+    : ["paid", "succeeded", "success"].includes(paymentLower)
+      ? "Paid"
+      : order.payment_status || "—"
+
+  const fulfillmentLower = order.fulfillment_status.toLowerCase()
+  const fulfillmentToneKey: ToneKey =
+    fulfillmentLower.includes("deliver") || fulfillmentLower.includes("complete")
+      ? "emerald"
+      : /ship|transit|pack|process|out_for/.test(fulfillmentLower)
+        ? "sky"
+        : /cancel|refund|fail|return/.test(fulfillmentLower)
+          ? "red"
+          : "amber"
+
+  const approvalToneKey: ToneKey =
+    order.approval_status === "approved"
+      ? "emerald"
+      : order.approval_status === "rejected"
+        ? "red"
+        : "amber"
 
   /* ── tracking logs (defensive — payload shape varies by courier) ── */
   const rawPayload = order.shipment_payload as unknown
@@ -317,39 +529,9 @@ export default function AdminOrderDetailView({ orderId }: { orderId: string }) {
           <p className="text-xs font-semibold tracking-[0.2em] text-sky-500 uppercase">
             Order Details
           </p>
-          <div className="mt-1 flex flex-wrap items-center gap-3">
-            <h1 className="font-mono text-2xl font-bold text-slate-900 dark:text-white">
-              {order.checkout_id}
-            </h1>
-            <StatusPill
-              label={order.payment_status}
-              tone={paymentStatusTone(order.payment_status)}
-              dot
-            />
-            <StatusPill
-              label={order.fulfillment_status.replace(/_/g, " ")}
-              tone={fulfillmentStatusTone(order.fulfillment_status)}
-            />
-            {isUnpaid ? (
-              <StatusPill
-                label="Abandoned / Unpaid"
-                tone={paymentStatusTone("unpaid")}
-                dot
-              />
-            ) : null}
-            {reminderCount > 0 ? (
-              <span
-                title={
-                  order.last_reminder_at
-                    ? `Last reminder: ${formatDateTime(order.last_reminder_at)}`
-                    : undefined
-                }
-                className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-              >
-                Reminded {reminderCount}×
-              </span>
-            ) : null}
-          </div>
+          <h1 className="mt-1 font-mono text-2xl font-bold break-all text-slate-900 dark:text-white">
+            {order.checkout_id}
+          </h1>
           <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
             Placed {formatDateTime(order.created_at)}
             {order.source_label ? ` · via ${order.source_label}` : ""}
@@ -425,19 +607,40 @@ export default function AdminOrderDetailView({ orderId }: { orderId: string }) {
                 {busy === "approve" ? "Approving…" : "Approve order"}
               </button>
             </>
-          ) : (
-            <StatusPill
-              label={order.approval_status.replace(/_/g, " ")}
-              tone={
-                order.approval_status === "approved"
-                  ? fulfillmentStatusTone("delivered")
-                  : order.approval_status === "rejected"
-                    ? paymentStatusTone("failed")
-                    : paymentStatusTone("pending")
-              }
-            />
-          )}
+          ) : null}
         </div>
+      </div>
+
+      {/* ── Status strip ── */}
+      <div className="flex flex-wrap items-start gap-x-8 gap-y-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 dark:border-slate-800 dark:bg-slate-900/60">
+        <StatusField
+          label="Payment"
+          tone={paymentToneKey}
+          value={paymentLabel}
+          hint={isUnpaid ? "Customer hasn't paid yet" : undefined}
+        />
+        <StatusField
+          label="Fulfillment"
+          tone={fulfillmentToneKey}
+          value={order.fulfillment_status.replace(/_/g, " ")}
+        />
+        <StatusField
+          label="Approval"
+          tone={approvalToneKey}
+          value={order.approval_status.replace(/_/g, " ")}
+        />
+        {reminderCount > 0 ? (
+          <StatusField
+            label="Recovery"
+            tone="slate"
+            value={`Reminded ${reminderCount}×`}
+            hint={
+              order.last_reminder_at
+                ? `Last: ${formatDateTime(order.last_reminder_at)}`
+                : undefined
+            }
+          />
+        ) : null}
       </div>
 
       {/* ── Stat cards ── */}

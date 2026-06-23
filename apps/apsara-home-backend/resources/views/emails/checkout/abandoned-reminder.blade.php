@@ -4,6 +4,7 @@
     $currency = (string) ($payload['currency'] ?? 'PHP');
     $total = (float) ($payload['total'] ?? 0);
     $resumeUrl = (string) ($payload['resume_url'] ?? '#');
+    $note = trim((string) ($payload['note'] ?? ''));
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -25,6 +26,12 @@
                     Your order is reserved but not paid yet. Complete your payment to secure your items
                     before they sell out.
                 </p>
+
+                @if ($note !== '')
+                    <div style="margin:0 0 20px;padding:12px 14px;border-left:3px solid #0284c7;background:#f0f9ff;border-radius:6px;">
+                        <p style="margin:0;font-size:13px;line-height:1.6;color:#0c4a6e;white-space:pre-line;">{{ $note }}</p>
+                    </div>
+                @endif
 
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:20px;">
                     @foreach ($items as $item)

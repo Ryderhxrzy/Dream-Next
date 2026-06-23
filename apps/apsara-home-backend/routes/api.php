@@ -468,6 +468,9 @@ Route::get('/admin/webpages/adds-content', [AddsContentController::class, 'index
     Route::patch('/admin/webpages/adds-content/{id}', [AddsContentController::class, 'update']);
     Route::patch('/admin/webpages/adds-content/{id}/status', [AddsContentController::class, 'updateStatus']);
     Route::delete('/admin/webpages/adds-content/{id}', [AddsContentController::class, 'destroy']);
+    Route::get('/admin/products/{id}', [ProductController::class, 'adminShow']);
+    Route::patch('/admin/products/{id}/variants/{variantId}', [ProductController::class, 'updateVariant']);
+    Route::patch('/admin/products/{id}', [ProductController::class, 'patchProduct']);
     Route::put('/admin/products/{id}', [ProductController::class, 'update']);
     Route::delete('/admin/products/{id}', [ProductController::class, 'destroy']);
     Route::get('/admin/product-brands', [ProductBrandController::class, 'index']);
@@ -534,6 +537,7 @@ Route::middleware(['auth:sanctum', 'admin.role:super_admin,admin,csr,merchant_ad
     Route::get('/admin/orders', [AdminOrderController::class, 'index']);
     Route::get('/admin/orders/counts', [AdminOrderController::class, 'counts']);
     Route::get('/admin/abandoned-checkouts', [AdminOrderController::class, 'abandonedCheckouts']);
+    Route::post('/admin/abandoned-checkouts/{checkout}/remind', [AdminOrderController::class, 'remindAbandonedCheckout']);
     Route::delete('/admin/orders/{id}', [AdminOrderController::class, 'destroy']);
 });
 

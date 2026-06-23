@@ -41,6 +41,8 @@ interface AddProductModalProps {
   isServicesView?: boolean
   supplierBrandType?: number
   supplierCompanyName?: string
+  /** Render inline as a full page (no modal overlay) — used by /admin/products/add. */
+  asPage?: boolean
 }
 
 interface FormState {
@@ -1072,12 +1074,12 @@ const hasAddDraftContent = (draft: AddProductDraft) => {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-2.5 pt-2">
-      <div className="h-4 w-0.5 shrink-0 rounded-full bg-teal-400" />
-      <span className="text-[10px] font-bold tracking-[0.22em] whitespace-nowrap text-slate-500 uppercase">
+    <div className="flex items-center gap-2.5">
+      <span className="h-3.5 w-1 shrink-0 rounded-full bg-teal-500" />
+      <span className="text-xs font-bold tracking-[0.14em] whitespace-nowrap text-slate-700 uppercase dark:text-slate-200">
         {children}
       </span>
-      <div className="h-px flex-1 bg-gradient-to-r from-slate-200 via-slate-100 to-transparent" />
+      <span className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
     </div>
   )
 }
@@ -1250,7 +1252,7 @@ function ModalSelectField({
 }
 
 const sectionCardCls =
-  "overflow-hidden rounded-[28px] border border-slate-200/80 bg-white/95 shadow-[0_22px_60px_-36px_rgba(15,23,42,0.35)] dark:border-slate-800 dark:bg-slate-900/95 dark:shadow-black/30"
+  "overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md dark:border-slate-800 dark:bg-slate-900/60 dark:shadow-black/20"
 const sectionCardBodyCls = "px-4 py-4 sm:px-5 sm:py-5"
 const EMPTY_SELECT_KEYS = {
   category: "__empty_category__",
@@ -1303,12 +1305,14 @@ export default function AddProductModal({
   isServicesView = false,
   supplierBrandType,
   supplierCompanyName,
+  asPage = false,
 }: AddProductModalProps) {
   const draftKey = isSupplierPortal
     ? "afhome:add-product-draft:supplier"
     : ADD_PRODUCT_DRAFT_KEY
 
   const [entryMode, setEntryMode] = useState<"manual" | "csv" | "api">("manual")
+  const [showPvBreakdown, setShowPvBreakdown] = useState(false)
   const [form, setForm] = useState<FormState>(defaultForm)
   const [errors, setErrors] = useState<Errors>({})
   const [serverError, setServerError] = useState("")
@@ -2360,27 +2364,45 @@ export default function AddProductModal({
     <AnimatePresence>
       {isOpen && (
         <React.Fragment key="add-product-modal-content">
-          <motion.div
-            key="add-product-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={handleClose}
-            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
-          />
+          {!asPage && (
+            <motion.div
+              key="add-product-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={handleClose}
+              className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+            />
+          )}
 
-          <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-5">
+          <div
+            className={
+              asPage
+                ? "w-full"
+                : "fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-5"
+            }
+          >
             <motion.div
               key="add-product-modal"
-              initial={{ opacity: 0, scale: 0.95, y: 12 }}
+              initial={{ opacity: 0, scale: asPage ? 1 : 0.95, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 12 }}
+              exit={{ opacity: 0, scale: asPage ? 1 : 0.95, y: 12 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              onClick={(e) => e.stopPropagation()}
-              className="flex h-[100dvh] w-full max-w-none flex-col overflow-hidden rounded-none border-0 bg-white shadow-2xl sm:h-[94vh] sm:max-w-6xl sm:rounded-2xl sm:border sm:border-slate-100 dark:bg-slate-950 sm:dark:border-slate-800"
+              onClick={asPage ? undefined : (e) => e.stopPropagation()}
+              className={
+                asPage
+                  ? "flex w-full flex-col rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950"
+                  : "flex h-[100dvh] w-full max-w-none flex-col overflow-hidden rounded-none border-0 bg-white shadow-2xl sm:h-[94vh] sm:max-w-6xl sm:rounded-2xl sm:border sm:border-slate-100 dark:bg-slate-950 sm:dark:border-slate-800"
+              }
             >
               {/* -- Header -- */}
-              <div className="shrink-0 border-b border-slate-100 px-4 py-4 sm:px-6 sm:py-5 dark:border-slate-800 dark:bg-slate-950">
+              <div
+                className={`shrink-0 border-b border-slate-100 px-4 py-4 sm:px-6 sm:py-5 dark:border-slate-800 dark:bg-slate-950 ${
+                  asPage
+                    ? "sticky top-0 z-20 rounded-t-2xl bg-white"
+                    : ""
+                }`}
+              >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                   <div className="flex items-start gap-3 sm:items-center">
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-500 shadow-md shadow-teal-500/30 sm:h-10 sm:w-10">
@@ -3576,6 +3598,16 @@ export default function AddProductModal({
 
                     {!isServicesCategory && (
                       <>
+                        <div
+                          className={
+                            asPage ? "grid gap-6 lg:grid-cols-3" : "space-y-6"
+                          }
+                        >
+                          <div
+                            className={
+                              asPage ? "space-y-6 lg:col-span-2" : "space-y-6"
+                            }
+                          >
                         {/* -- Section: Product Details -- */}
                         <SectionLabel>Product Details</SectionLabel>
                         <div className="grid grid-cols-2 gap-3">
@@ -3760,11 +3792,98 @@ export default function AddProductModal({
                             </Field>
                           )}
                         </div>
-                        {!isSupplierPortal && (
-                          <PricingSummaryPanel
-                            summary={mainPricingSummary}
-                            memberFallbackToSrp={!form.pd_price_member.trim()}
-                          />
+                        {!isSupplierPortal &&
+                          (asPage ? (
+                            <button
+                              type="button"
+                              onClick={() => setShowPvBreakdown(true)}
+                              className="flex w-full items-center justify-between gap-3 rounded-xl border border-teal-200 bg-teal-50/70 px-4 py-3 text-left transition hover:bg-teal-50 dark:border-teal-500/30 dark:bg-teal-500/10 dark:hover:bg-teal-500/15"
+                            >
+                              <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5">
+                                <span className="text-[10px] font-bold tracking-widest text-teal-600 uppercase dark:text-teal-300">
+                                  PV Summary
+                                </span>
+                                <span className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                                  {mainPricingSummary.computedPv.toLocaleString(
+                                    "en-PH",
+                                    {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    }
+                                  )}{" "}
+                                  PV
+                                </span>
+                                <span className="text-xs text-slate-500 dark:text-slate-400">
+                                  ₱
+                                  {mainPricingSummary.effectiveMemberPrice.toLocaleString(
+                                    "en-PH",
+                                    {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    }
+                                  )}{" "}
+                                  member price
+                                </span>
+                              </span>
+                              <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-teal-700 dark:text-teal-300">
+                                View breakdown
+                                <svg
+                                  className="h-3.5 w-3.5"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M9 5l7 7-7 7"
+                                  />
+                                </svg>
+                              </span>
+                            </button>
+                          ) : (
+                            <PricingSummaryPanel
+                              summary={mainPricingSummary}
+                              memberFallbackToSrp={!form.pd_price_member.trim()}
+                            />
+                          ))}
+
+                        {asPage && showPvBreakdown && (
+                          <div
+                            className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-4"
+                            onClick={() => setShowPvBreakdown(false)}
+                          >
+                            <div
+                              className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => setShowPvBreakdown(false)}
+                                className="absolute top-3 right-3 z-10 flex h-7 w-7 items-center justify-center rounded-lg bg-white/80 text-slate-500 shadow-sm transition hover:bg-white hover:text-slate-800 dark:bg-slate-800/80 dark:text-slate-300"
+                                aria-label="Close PV summary"
+                              >
+                                <svg
+                                  className="h-4 w-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2.5}
+                                    d="M6 18L18 6M6 6l12 12"
+                                  />
+                                </svg>
+                              </button>
+                              <PricingSummaryPanel
+                                summary={mainPricingSummary}
+                                memberFallbackToSrp={!form.pd_price_member.trim()}
+                              />
+                            </div>
+                          </div>
                         )}
 
                         {/* -- Section: Stock & Shipping -- */}
@@ -3850,9 +3969,15 @@ export default function AddProductModal({
                           </Field>
                         </div>
 
+                          </div>
+                          <div className="space-y-6">
                         {/* -- Section: Settings -- */}
                         <SectionLabel>Settings</SectionLabel>
-                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                        <div
+                          className={`grid gap-3 ${
+                            asPage ? "grid-cols-1" : "grid-cols-2 sm:grid-cols-3"
+                          }`}
+                        >
                           {/* Status */}
                           <Field label="Status">
                             {isSupplierPortal ? (
@@ -4005,7 +4130,11 @@ export default function AddProductModal({
 
                         {/* -- Section: Product Badges -- */}
                         <SectionLabel>Product Badges</SectionLabel>
-                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                        <div
+                          className={`grid gap-2 ${
+                            asPage ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-4"
+                          }`}
+                        >
                           {FLAG_CARDS.map((flag) => {
                             const isActive = form[flag.key] as boolean
                             return (
@@ -4055,6 +4184,8 @@ export default function AddProductModal({
                               </button>
                             )
                           })}
+                        </div>
+                          </div>
                         </div>
                       </>
                     )}
@@ -5236,7 +5367,11 @@ export default function AddProductModal({
 
                 {/* Sticky footer */}
                 {entryMode === "manual" && (
-                  <div className="flex shrink-0 items-center gap-3 border-t border-slate-100 bg-white px-5 py-3.5 sm:px-6 dark:border-slate-800 dark:bg-slate-950">
+                  <div
+                    className={`flex shrink-0 items-center gap-3 border-t border-slate-100 bg-white px-5 py-3.5 sm:px-6 dark:border-slate-800 dark:bg-slate-950 ${
+                      asPage ? "sticky bottom-0 z-20 rounded-b-2xl" : ""
+                    }`}
+                  >
                     <p className="flex-1 text-xs text-slate-400">
                       Fields marked{" "}
                       <span className="font-semibold text-red-400">*</span> are

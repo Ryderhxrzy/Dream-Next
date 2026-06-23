@@ -157,6 +157,12 @@ return [
         'base_url' => env('ZQ_API_BASE_URL', 'https://system.zqdropshipping.com/api/v2/openapi'),
         'api_key' => env('ZQ_API_KEY'),
         'timeout' => (int) env('ZQ_TIMEOUT', 30),
+        // CA bundle used to verify ZQ's HTTPS certificate. Defaults to a
+        // local (gitignored) bundle at storage/certs/cacert.pem if present —
+        // drop a Mozilla+local-AV-root bundle there when an antivirus
+        // (e.g. Norton) MITM-intercepts TLS. When the file is absent the ZQ
+        // client falls back to the system trust store. Verification stays ON.
+        'ca_bundle' => env('ZQ_CA_BUNDLE', storage_path('certs/cacert.pem')),
     ],
 
     'turnstile' => [
