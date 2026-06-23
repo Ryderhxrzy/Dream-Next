@@ -1,3 +1,5 @@
+"use client"
+
 import { motion } from "framer-motion"
 import { Check, Heart, Home, Smartphone, TrendingUp, User } from "lucide-react"
 

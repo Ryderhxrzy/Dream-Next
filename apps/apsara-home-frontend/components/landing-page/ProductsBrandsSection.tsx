@@ -1,3 +1,5 @@
+"use client"
+
 import { motion } from "framer-motion"
 import { Armchair, Box, Hammer, Home, Star } from "lucide-react"
 
