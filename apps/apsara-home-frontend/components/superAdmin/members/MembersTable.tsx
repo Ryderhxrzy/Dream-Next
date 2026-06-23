@@ -14,6 +14,8 @@ import { Card } from "@heroui/react/card"
 import { Chip } from "@heroui/react/chip"
 import { AnimatePresence, motion } from "framer-motion"
 import { createPortal } from "react-dom"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 import { Member, MemberStatus, MemberTier } from "@/types/members/types"
 import TierBadge from "@/components/ui/TierBadge"
@@ -805,9 +807,20 @@ function MemberDetailsModal({
               {member.name}
             </h3>
           </div>
-          <Button onPress={onClose} variant="secondary" className="rounded-xl">
-            Close
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/admin/members/info/${member.id}`}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-teal-200 bg-teal-50 px-3 py-2 text-sm font-semibold text-teal-700 transition hover:bg-teal-100 dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-300"
+            >
+              View full profile
+              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+            <Button onPress={onClose} variant="secondary" className="rounded-xl">
+              Close
+            </Button>
+          </div>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
@@ -1822,6 +1835,7 @@ const MembersTable = ({
   const [quickMessage, setQuickMessage] = useState<string | null>(null)
   const [updateMember, { isLoading: isUpdating }] = useUpdateMemberMutation()
   const [deleteMember, { isLoading: isDeleting }] = useDeleteMemberMutation()
+  const router = useRouter()
 
   useEffect(() => {
     if (!quickMessage) return
@@ -1972,37 +1986,37 @@ const MembersTable = ({
       <table className="min-w-full text-sm">
         <thead className="sticky top-0 z-10">
           <tr className="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/70">
-            <th className="px-5 py-3.5 text-left text-xs font-semibold tracking-[0.16em] text-slate-500 uppercase dark:text-slate-300">
+            <th className="px-4 py-1.5 text-left text-xs font-semibold tracking-[0.16em] text-slate-500 uppercase dark:text-slate-300">
               Member
             </th>
-            <th className="px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
+            <th className="px-4 py-1.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
               Status
             </th>
-            <th className="hidden px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase sm:table-cell dark:text-slate-300">
+            <th className="hidden px-4 py-1.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase sm:table-cell dark:text-slate-300">
               Tier
             </th>
-            <th className="hidden px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase md:table-cell dark:text-slate-300">
+            <th className="hidden px-4 py-1.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase md:table-cell dark:text-slate-300">
               Orders
             </th>
-            <th className="hidden px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase 2xl:table-cell dark:text-slate-300">
+            <th className="hidden px-4 py-1.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase 2xl:table-cell dark:text-slate-300">
               Address
             </th>
-            <th className="hidden px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase md:table-cell dark:text-slate-300">
+            <th className="hidden px-4 py-1.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase md:table-cell dark:text-slate-300">
               Total Spent
             </th>
-            <th className="hidden px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase lg:table-cell dark:text-slate-300">
+            <th className="hidden px-4 py-1.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase lg:table-cell dark:text-slate-300">
               Earnings
             </th>
-            <th className="hidden px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase xl:table-cell dark:text-slate-300">
+            <th className="hidden px-4 py-1.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase xl:table-cell dark:text-slate-300">
               Wallet Credits
             </th>
-            <th className="hidden px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase lg:table-cell dark:text-slate-300">
+            <th className="hidden px-4 py-1.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase lg:table-cell dark:text-slate-300">
               Referrals
             </th>
-            <th className="hidden px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase xl:table-cell dark:text-slate-300">
+            <th className="hidden px-4 py-1.5 text-left text-xs font-semibold tracking-wide text-slate-400 uppercase xl:table-cell dark:text-slate-300">
               Joined
             </th>
-            <th className="px-5 py-3.5 text-right text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
+            <th className="px-4 py-1.5 text-right text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-300">
               Actions
             </th>
           </tr>
@@ -2020,98 +2034,91 @@ const MembersTable = ({
               const recentMeta = getRecentMemberMeta(member.joinedAt)
               const registeredAt = resolveMemberRegisteredAt(member)
               const registeredDate = formatMemberRegisteredDate(registeredAt)
-              const registeredTime = formatMemberRegisteredTime(registeredAt)
 
               return (
                 <motion.tr
                   key={member.id}
                   variants={rowVariants}
+                  onClick={() => router.push(`/admin/members/info/${member.id}`)}
                   className="group cursor-pointer border-b border-slate-100 transition-colors hover:bg-sky-50/50 dark:border-slate-800 dark:hover:bg-slate-800/40"
                 >
                   {/* Member */}
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-3">
+                  <td className="px-4 py-1.5">
+                    <div className="flex items-center gap-2.5">
                       <MemberAvatar
                         member={member}
-                        className="h-10 w-10 shrink-0 rounded-full shadow-sm ring-2 ring-white dark:ring-slate-800"
-                        initialsClassName="text-white font-bold text-xs"
+                        className="h-8 w-8 shrink-0 rounded-full shadow-sm ring-2 ring-white dark:ring-slate-800"
+                        initialsClassName="text-white font-bold text-[10px]"
                       />
-                      <div className="min-w-0 space-y-1">
-                        <div className="flex items-center gap-2">
-                          <p className="truncate text-[15px] leading-5 font-semibold text-slate-800 dark:text-slate-100">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <Link
+                            href={`/admin/members/info/${member.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="truncate text-[13px] leading-5 font-semibold text-slate-800 transition-colors hover:text-sky-600 hover:underline dark:text-slate-100 dark:hover:text-sky-400"
+                          >
                             {member.name}
-                          </p>
+                          </Link>
                           {recentMeta.isRecent && (
                             <Chip
                               size="sm"
                               variant="soft"
-                              className="h-5 border border-blue-100 bg-blue-50 px-2 text-[10px] font-semibold tracking-[0.16em] text-blue-700 uppercase"
+                              className="h-4 shrink-0 border border-blue-100 bg-blue-50 px-1.5 text-[9px] font-semibold tracking-[0.14em] text-blue-700 uppercase"
                             >
                               New
                             </Chip>
                           )}
                         </div>
-                        <p className="truncate text-[12px] leading-4 text-slate-300 dark:text-slate-300">
+                        <p className="truncate text-[11px] leading-4 text-slate-400 dark:text-slate-400">
                           {member.email}
+                          {member.contactNumber && member.contactNumber !== "0"
+                            ? ` · ${member.contactNumber}`
+                            : ""}
                         </p>
-                        {member.referredByName && (
-                          <p className="truncate text-[12px] leading-4 text-teal-400">
-                            Referred by {member.referredByName}
-                            {member.referredByUsername
-                              ? ` (@${member.referredByUsername})`
-                              : ""}
-                          </p>
-                        )}
-                        {member.contactNumber &&
-                          member.contactNumber !== "0" && (
-                            <p className="truncate text-[12px] leading-4 text-slate-400 dark:text-slate-400">
-                              {member.contactNumber}
-                            </p>
-                          )}
                       </div>
                     </div>
                   </td>
 
                   {/* Status */}
-                  <td className="relative min-w-[120px] px-5 py-3.5">
+                  <td className="relative min-w-[120px] px-4 py-1.5">
                     <MembersStatusBadge status={member.status} />
                   </td>
 
                   {/* Tier */}
-                  <td className="hidden px-5 py-3.5 sm:table-cell">
+                  <td className="hidden px-4 py-1.5 sm:table-cell">
                     <TierBadge tier={member.tier} />
                   </td>
 
                   {/* Orders */}
-                  <td className="hidden px-5 py-3.5 md:table-cell">
+                  <td className="hidden px-4 py-1.5 md:table-cell">
                     <span className="font-medium text-slate-700 dark:text-slate-200">
                       {member.orders}
                     </span>
                   </td>
 
                   {/* Address */}
-                  <td className="hidden px-5 py-3.5 2xl:table-cell">
+                  <td className="hidden px-4 py-1.5 2xl:table-cell">
                     <span className="block max-w-xs truncate text-[12px] leading-5 text-slate-400 dark:text-slate-300">
                       {member.fullAddress || "No address provided"}
                     </span>
                   </td>
 
                   {/* Total Spent */}
-                  <td className="hidden px-5 py-3.5 md:table-cell">
+                  <td className="hidden px-4 py-1.5 md:table-cell">
                     <span className="font-semibold text-slate-800">
                       {formatPhp(member.totalSpent)}
                     </span>
                   </td>
 
                   {/* Earnings */}
-                  <td className="hidden px-5 py-3.5 lg:table-cell">
+                  <td className="hidden px-4 py-1.5 lg:table-cell">
                     <span className="font-semibold text-teal-700">
                       {formatPhp(member.earnings)}
                     </span>
                   </td>
 
                   {/* Wallet Credits */}
-                  <td className="hidden px-5 py-3.5 xl:table-cell">
+                  <td className="hidden px-4 py-1.5 xl:table-cell">
                     <div className="flex flex-col gap-0.5 leading-tight">
                       <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
@@ -2127,7 +2134,7 @@ const MembersTable = ({
                   </td>
 
                   {/* Referrals */}
-                  <td className="hidden px-5 py-3.5 lg:table-cell">
+                  <td className="hidden px-4 py-1.5 lg:table-cell">
                     <div className="flex items-center gap-1.5">
                       <span className="font-medium text-slate-700 dark:text-slate-200">
                         {member.referrals}
@@ -2139,27 +2146,18 @@ const MembersTable = ({
                   </td>
 
                   {/* Joined */}
-                  <td className="hidden px-5 py-3.5 xl:table-cell">
-                    <div className="flex flex-col">
-                      <span className="text-[12px] font-medium text-slate-300 dark:text-slate-200">
-                        {registeredDate}
-                      </span>
-                      <span className="text-[11px] text-slate-400 dark:text-slate-400">
-                        {registeredTime} PH
-                      </span>
-                      {recentMeta.isRecent && recentMeta.daysAgo !== null && (
-                        <span className="text-[11px] font-medium text-blue-600">
-                          {recentMeta.daysAgo === 0
-                            ? "Registered today"
-                            : `${recentMeta.daysAgo} day${recentMeta.daysAgo === 1 ? "" : "s"} ago`}
-                        </span>
-                      )}
-                    </div>
+                  <td className="hidden px-4 py-1.5 xl:table-cell">
+                    <span className="text-[12px] font-medium text-slate-500 dark:text-slate-300">
+                      {registeredDate}
+                    </span>
                   </td>
 
                   {/* Actions */}
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center justify-end gap-1">
+                  <td className="px-4 py-1.5">
+                    <div
+                      className="flex items-center justify-end gap-1"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <Button
                         isIconOnly
                         size="sm"
