@@ -1,3 +1,5 @@
+"use client"
+
 import { motion } from "framer-motion"
 import { Share2, UserPlus, Wallet } from "lucide-react"
 

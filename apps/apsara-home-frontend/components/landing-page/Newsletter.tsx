@@ -1,3 +1,5 @@
+"use client"
+
 import { useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { Check, Send, Sparkles } from "lucide-react"

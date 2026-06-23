@@ -1,3 +1,5 @@
+"use client"
+
 import { motion } from "framer-motion"
 import { CheckCircle2, Coins, Home, Tag } from "lucide-react"
 
