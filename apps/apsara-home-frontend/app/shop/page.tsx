@@ -106,17 +106,17 @@ async function getShopBuilderData(): Promise<ShopBuilderApiResponse | null> {
       serverFetch(`${apiUrl}/api/web-pages/shop-builder`, {
         method: "GET",
         headers: { Accept: "application/json" },
-        cache: "no-store",
+        next: { revalidate: 300, tags: ["storefront:shop-builder"] },
       }),
       serverFetch(`${apiUrl}/api/categories?page=1&per_page=100&used_only=1`, {
         method: "GET",
         headers: { Accept: "application/json" },
-        cache: "no-store",
+        next: { revalidate: 300, tags: ["storefront:categories"] },
       }),
       serverFetch(`${apiUrl}/api/products?page=1&per_page=200&status=1`, {
         method: "GET",
         headers: { Accept: "application/json" },
-        cache: "no-store",
+        next: { revalidate: 60, tags: ["storefront:products"] },
       }),
     ])
 
@@ -147,8 +147,10 @@ const ShopPage = async () => {
     redirect(`/shop/${storefront.config.slug}`)
   }
 
-  const shopBuilderData = await getShopBuilderData()
-  const navbarCategories = await getNavbarCategories()
+  const [shopBuilderData, navbarCategories] = await Promise.all([
+    getShopBuilderData(),
+    getNavbarCategories(),
+  ])
   const shopHeader = getShopHeaderConfig(shopBuilderData?.items ?? [])
 
   return (

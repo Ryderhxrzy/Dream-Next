@@ -8,7 +8,9 @@ export const metadata = buildPageMetadata({
   description: "Browse the Blog page on AF Home.",
   path: "/blog",
 })
-export const dynamic = "force-dynamic"
+// Public content page (only cached navbar data on the server); blog items are
+// fetched client-side. Cache the shell instead of forcing dynamic rendering.
+export const revalidate = 600
 
 export default async function BlogPage() {
   const initialCategories = await getNavbarCategories()

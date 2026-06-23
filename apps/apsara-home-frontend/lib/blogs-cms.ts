@@ -114,7 +114,9 @@ const getApiBase = () => {
 async function fetchBlogItems(): Promise<BlogPost[]> {
   try {
     const response = await fetch(`${getApiBase()}/api/web-pages/home-blogs`, {
-      cache: "no-store",
+      // Public CMS content that changes rarely — cache and refresh via the
+      // cms:blogs tag (also invalidated by revalidateStorefrontAction).
+      next: { revalidate: 600, tags: ["cms:blogs"] },
     })
 
     if (!response.ok) return []

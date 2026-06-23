@@ -16,7 +16,9 @@ export async function getNavbarCategories(): Promise<Category[]> {
       {
         method: "GET",
         headers: { Accept: "application/json" },
-        cache: "no-store",
+        // Public, shared navbar data — cache and refresh via the
+        // storefront:categories tag (see /api/revalidate/storefront).
+        next: { revalidate: 300, tags: ["storefront:categories"] },
       }
     )
 
