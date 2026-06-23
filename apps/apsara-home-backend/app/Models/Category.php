@@ -18,10 +18,12 @@ class Category extends Model
         'cat_image',
         'cat_order',
         'parent_id',
+        'is_supplier_created',
     ];
 
     protected $casts = [
-        'cat_order'  => 'integer',
-        'parent_id'  => 'integer',
+        'cat_order'           => 'integer',
+        'parent_id'           => 'integer',
+        'is_supplier_created' => 'boolean',
     ];
 }

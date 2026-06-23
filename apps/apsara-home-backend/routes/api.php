@@ -720,6 +720,7 @@ Route::middleware(['auth:sanctum', 'supplier.actor'])->group(function () {
     Route::post('/supplier/categories', [SupplierController::class, 'createCategory']);
     Route::post('/supplier/categories/{parentId}/sub', [SupplierController::class, 'createSubCategory']);
     Route::put('/supplier/categories/{id}', [SupplierController::class, 'updateCategory']);
+    Route::delete('/supplier/categories/{id}/parent', [SupplierController::class, 'deleteCategory']);
     Route::delete('/supplier/categories/{id}', [SupplierController::class, 'deleteSubCategory']);
 
     // Service Inquiries

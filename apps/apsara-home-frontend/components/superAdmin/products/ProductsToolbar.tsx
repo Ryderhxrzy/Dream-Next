@@ -36,6 +36,7 @@ interface ProductsToolbarProps {
   manualCheckoutCount?: number
   onViewManualCheckout?: () => void
   isServicesView?: boolean
+  merchantCategories?: Array<{ id: number; name: string }>
 }
 
 const STATUS_TABS = [
@@ -62,13 +63,13 @@ function ToolbarSelect({
 }: {
   ariaLabel: string
   value: string
-  options: Array<{ value: string; label: string }>
+  options: Array<{ value: string; label: string; isGroupLabel?: boolean }>
   isDisabled?: boolean
   onChange: (value: string) => void
 }) {
   const selectedLabel =
-    options.find((option) => option.value === value)?.label ??
-    options[0]?.label ??
+    options.find((option) => !option.isGroupLabel && option.value === value)?.label ??
+    options.find((option) => !option.isGroupLabel)?.label ??
     "Select"
 
   return (
@@ -85,15 +86,26 @@ function ToolbarSelect({
       </Select.Trigger>
       <Select.Popover className="min-w-[var(--trigger-width)] rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         <ListBox className="p-1 text-slate-700 dark:text-slate-100">
-          {options.map((option) => (
-            <ListBoxItem
-              id={option.value}
-              key={`${option.value}-${option.label}`}
-              className="rounded-xl text-slate-700 transition-colors hover:bg-slate-100 focus:bg-slate-100 data-[selected=true]:bg-sky-50 data-[selected=true]:text-sky-700 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:bg-slate-800 dark:data-[selected=true]:bg-sky-900/30 dark:data-[selected=true]:text-sky-200"
-            >
-              {option.label}
-            </ListBoxItem>
-          ))}
+          {options.map((option) =>
+            option.isGroupLabel ? (
+              <ListBoxItem
+                id={option.value}
+                key={option.value}
+                isDisabled
+                className="cursor-default select-none px-3 pb-0.5 pt-2 text-[10px] font-bold tracking-widest text-slate-400 uppercase dark:text-slate-500"
+              >
+                {option.label}
+              </ListBoxItem>
+            ) : (
+              <ListBoxItem
+                id={option.value}
+                key={`${option.value}-${option.label}`}
+                className="rounded-xl text-slate-700 transition-colors hover:bg-slate-100 focus:bg-slate-100 data-[selected=true]:bg-sky-50 data-[selected=true]:text-sky-700 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus:bg-slate-800 dark:data-[selected=true]:bg-sky-900/30 dark:data-[selected=true]:text-sky-200"
+              >
+                {option.label}
+              </ListBoxItem>
+            )
+          )}
         </ListBox>
       </Select.Popover>
     </Select>
@@ -123,6 +135,7 @@ export default function ProductsToolbar({
   manualCheckoutCount = 0,
   onViewManualCheckout,
   isServicesView = false,
+  merchantCategories,
 }: ProductsToolbarProps) {
   const activeTabs = isServicesView ? SERVICES_STATUS_TABS : STATUS_TABS
   const { data: categoriesData } = useGetCategoriesQuery(
@@ -165,6 +178,28 @@ export default function ProductsToolbar({
 
   const hasSupplierScopedCategories =
     !supplierId || supplierId <= 0 || categories.length > 0
+
+  const hasMerchantCategories =
+    merchantCategories !== undefined && merchantCategories.length > 0
+
+  const categoryOptions: Array<{ value: string; label: string; isGroupLabel?: boolean }> =
+    hasMerchantCategories
+      ? [
+          { value: "", label: "All Categories" },
+          { value: "__general__", label: "General Categories", isGroupLabel: true },
+          ...categories.map((c) => ({ value: String(c.id), label: c.name })),
+          { value: "__merchant__", label: "Merchant Categories", isGroupLabel: true },
+          ...merchantCategories!.map((c) => ({ value: String(c.id), label: c.name })),
+        ]
+      : [
+          {
+            value: "",
+            label: hasSupplierScopedCategories
+              ? "All Categories"
+              : "No categories assigned",
+          },
+          ...categories.map((c) => ({ value: String(c.id), label: c.name })),
+        ]
   const hasFilter =
     search !== "" ||
     status !== "" ||
@@ -299,18 +334,7 @@ export default function ProductsToolbar({
             onChange={(value) =>
               onCatId(value === "" ? undefined : Number(value))
             }
-            options={[
-              {
-                value: "",
-                label: hasSupplierScopedCategories
-                  ? "All Categories"
-                  : "No categories assigned",
-              },
-              ...categories.map((category) => ({
-                value: String(category.id),
-                label: category.name,
-              })),
-            ]}
+            options={categoryOptions}
           />
 
           {showBrandFilter ? (

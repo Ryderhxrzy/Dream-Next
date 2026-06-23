@@ -11,6 +11,7 @@ import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import { useGetAdminMeQuery } from "@/store/api/authApi"
 import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
 import { useGetProductBrandsQuery } from "@/store/api/productBrandsApi"
+import { useGetSupplierCategoriesQuery } from "@/store/api/suppliersApi"
 import {
   CreateProductPayload,
   normalizeProduct,
@@ -1685,9 +1686,24 @@ export default function EditProductModal({
     },
     undefined
   )
-  const categories = useMemo(
+  const generalCategories = useMemo(
     () => categoriesData?.categories ?? [],
     [categoriesData?.categories]
+  )
+  const { data: supplierCatsData } = useGetSupplierCategoriesQuery(
+    linkedSupplierId,
+    { skip: !isSupplierScopedActor || linkedSupplierId <= 0 }
+  )
+  const merchantCategories = useMemo(() => {
+    if (!isSupplierScopedActor || linkedSupplierId <= 0) return []
+    const generalIds = new Set(generalCategories.map((c) => c.id))
+    return (supplierCatsData?.categories ?? []).filter(
+      (c) => c.parent_id === null && !generalIds.has(c.id)
+    )
+  }, [isSupplierScopedActor, linkedSupplierId, generalCategories, supplierCatsData?.categories])
+  const categories = useMemo(
+    () => [...generalCategories, ...merchantCategories],
+    [generalCategories, merchantCategories]
   )
   const { data: brandsData } = useGetProductBrandsQuery()
   const brands = useMemo(
@@ -3562,26 +3578,28 @@ export default function EditProductModal({
                       {/* ── Section: Pricing ── */}
                       <SectionLabel>Pricing</SectionLabel>
                       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-                        <Field label="PV Pricing Tier">
-                          <div className="space-y-1">
-                            <ModalSelectField
-                              ariaLabel="Select pricing tier"
-                              value={form.pd_pricing_tier}
-                              onChange={(value) =>
-                                set("pd_pricing_tier", value)
-                              }
-                              options={PRICING_TIER_OPTIONS.map((option) => ({
-                                value: option.value,
-                                label: option.label,
-                              }))}
-                            />
-                            <p className="text-[11px] text-slate-500">
-                              Low-End is active for the current formula.
-                              High-End will follow once its formula is
-                              finalized.
-                            </p>
-                          </div>
-                        </Field>
+                        {!isSupplierScopedActor && (
+                          <Field label="PV Pricing Tier">
+                            <div className="space-y-1">
+                              <ModalSelectField
+                                ariaLabel="Select pricing tier"
+                                value={form.pd_pricing_tier}
+                                onChange={(value) =>
+                                  set("pd_pricing_tier", value)
+                                }
+                                options={PRICING_TIER_OPTIONS.map((option) => ({
+                                  value: option.value,
+                                  label: option.label,
+                                }))}
+                              />
+                              <p className="text-[11px] text-slate-500">
+                                Low-End is active for the current formula.
+                                High-End will follow once its formula is
+                                finalized.
+                              </p>
+                            </div>
+                          </Field>
+                        )}
                         <Field
                           label="SRP Price (₱)"
                           required
@@ -3638,45 +3656,51 @@ export default function EditProductModal({
                             </p>
                           </div>
                         </Field>
-                        <Field label="PV Product">
-                          <div className="space-y-1">
-                            <input
-                              type="number"
-                              value={computedMainPvDisplay}
-                              placeholder="0.00"
-                              disabled
-                              className={`${inputCls()} cursor-not-allowed bg-slate-50 text-slate-600`}
-                            />
-                            <p className="text-[11px] text-slate-500">
-                              Auto-computed from Dealer Price × Reversed PV
-                              Multiplier.
-                            </p>
-                          </div>
-                        </Field>
-                        <Field
-                          label="Reversed PV Multiplier"
-                          error={errors.pd_prodpv}
-                        >
-                          <div className="space-y-1">
-                            <input
-                              type="number"
-                              value={form.pd_reversed_pv_multiplier}
-                              onChange={(e) =>
-                                set("pd_reversed_pv_multiplier", e.target.value)
-                              }
-                              placeholder="e.g. 0.2"
-                              className={inputCls(!!errors.pd_prodpv)}
-                            />
-                            <p className="text-[11px] text-slate-500">
-                              Formula: PV = Transfer Price × Multiplier.
-                            </p>
-                          </div>
-                        </Field>
+                        {!isSupplierScopedActor && (
+                          <Field label="PV Product">
+                            <div className="space-y-1">
+                              <input
+                                type="number"
+                                value={computedMainPvDisplay}
+                                placeholder="0.00"
+                                disabled
+                                className={`${inputCls()} cursor-not-allowed bg-slate-50 text-slate-600`}
+                              />
+                              <p className="text-[11px] text-slate-500">
+                                Auto-computed from Dealer Price × Reversed PV
+                                Multiplier.
+                              </p>
+                            </div>
+                          </Field>
+                        )}
+                        {!isSupplierScopedActor && (
+                          <Field
+                            label="Reversed PV Multiplier"
+                            error={errors.pd_prodpv}
+                          >
+                            <div className="space-y-1">
+                              <input
+                                type="number"
+                                value={form.pd_reversed_pv_multiplier}
+                                onChange={(e) =>
+                                  set("pd_reversed_pv_multiplier", e.target.value)
+                                }
+                                placeholder="e.g. 0.2"
+                                className={inputCls(!!errors.pd_prodpv)}
+                              />
+                              <p className="text-[11px] text-slate-500">
+                                Formula: PV = Transfer Price × Multiplier.
+                              </p>
+                            </div>
+                          </Field>
+                        )}
                       </div>
-                      <PricingSummaryPanel
-                        summary={mainPricingSummary}
-                        memberFallbackToSrp={!form.pd_price_member.trim()}
-                      />
+                      {!isSupplierScopedActor && (
+                        <PricingSummaryPanel
+                          summary={mainPricingSummary}
+                          memberFallbackToSrp={!form.pd_price_member.trim()}
+                        />
+                      )}
 
                       {/* ── Section: Stock & Shipping ── */}
                       <SectionLabel>Stock & Shipping</SectionLabel>
@@ -4780,47 +4804,51 @@ export default function EditProductModal({
                                               className={variantInputCls}
                                             />
                                           </div>
-                                          <div className="space-y-1">
-                                            <label className="block text-[11px] font-semibold text-slate-500">
-                                              Reversed PV Multiplier
-                                            </label>
-                                            <input
-                                              type="number"
-                                              value={
-                                                variant.pv_reversed_pv_multiplier
-                                              }
-                                              onChange={(e) =>
-                                                setVariant(
-                                                  index,
-                                                  "pv_reversed_pv_multiplier",
-                                                  e.target.value
-                                                )
-                                              }
-                                              placeholder="Inherit"
-                                              className={variantInputCls}
-                                            />
-                                          </div>
+                                          {!isSupplierScopedActor && (
+                                            <div className="space-y-1">
+                                              <label className="block text-[11px] font-semibold text-slate-500">
+                                                Reversed PV Multiplier
+                                              </label>
+                                              <input
+                                                type="number"
+                                                value={
+                                                  variant.pv_reversed_pv_multiplier
+                                                }
+                                                onChange={(e) =>
+                                                  setVariant(
+                                                    index,
+                                                    "pv_reversed_pv_multiplier",
+                                                    e.target.value
+                                                  )
+                                                }
+                                                placeholder="Inherit"
+                                                className={variantInputCls}
+                                              />
+                                            </div>
+                                          )}
                                         </div>
                                         <div className="grid grid-cols-2 gap-3">
-                                          <div className="space-y-1">
-                                            <label className="block text-[11px] font-semibold text-slate-500">
-                                              PV Product
-                                            </label>
-                                            <input
-                                              type="number"
-                                              value={getComputedPvDisplay({
-                                                transfer:
-                                                  variant.pv_price_dp ||
-                                                  form.pd_price_dp,
-                                                multiplier:
-                                                  variant.pv_reversed_pv_multiplier ||
-                                                  form.pd_reversed_pv_multiplier,
-                                              })}
-                                              placeholder="0.00"
-                                              disabled
-                                              className={`${variantInputCls} cursor-not-allowed bg-slate-50 text-slate-600`}
-                                            />
-                                          </div>
+                                          {!isSupplierScopedActor && (
+                                            <div className="space-y-1">
+                                              <label className="block text-[11px] font-semibold text-slate-500">
+                                                PV Product
+                                              </label>
+                                              <input
+                                                type="number"
+                                                value={getComputedPvDisplay({
+                                                  transfer:
+                                                    variant.pv_price_dp ||
+                                                    form.pd_price_dp,
+                                                  multiplier:
+                                                    variant.pv_reversed_pv_multiplier ||
+                                                    form.pd_reversed_pv_multiplier,
+                                                })}
+                                                placeholder="0.00"
+                                                disabled
+                                                className={`${variantInputCls} cursor-not-allowed bg-slate-50 text-slate-600`}
+                                              />
+                                            </div>
+                                          )}
                                           <div className="space-y-1">
                                             <label className="block text-[11px] font-semibold text-slate-500">
                                               Retail Profit
@@ -4851,32 +4879,36 @@ export default function EditProductModal({
                                             />
                                           </div>
                                         </div>
-                                        <p className="text-[11px] text-slate-400">
-                                          Leave Transfer, Member, or Multiplier
-                                          blank to inherit the main product
-                                          setup. PV Product is auto-computed.
-                                        </p>
-                                        <PricingSummaryPanel
-                                          title="Variant PV Summary"
-                                          summary={buildPricingSummary({
-                                            pricingTier: form.pd_pricing_tier,
-                                            srp: variant.pv_price_srp,
-                                            dealer: variant.pv_price_dp,
-                                            member:
-                                              variant.pv_price_member ||
-                                              form.pd_price_member,
-                                            pv: variant.pv_prodpv,
-                                            multiplier:
-                                              variant.pv_reversed_pv_multiplier ||
-                                              form.pd_reversed_pv_multiplier,
-                                          })}
-                                          memberFallbackToSrp={
-                                            !(
-                                              variant.pv_price_member ||
-                                              form.pd_price_member
-                                            ).trim()
-                                          }
-                                        />
+                                        {!isSupplierScopedActor && (
+                                          <>
+                                            <p className="text-[11px] text-slate-400">
+                                              Leave Transfer, Member, or Multiplier
+                                              blank to inherit the main product
+                                              setup. PV Product is auto-computed.
+                                            </p>
+                                            <PricingSummaryPanel
+                                              title="Variant PV Summary"
+                                              summary={buildPricingSummary({
+                                                pricingTier: form.pd_pricing_tier,
+                                                srp: variant.pv_price_srp,
+                                                dealer: variant.pv_price_dp,
+                                                member:
+                                                  variant.pv_price_member ||
+                                                  form.pd_price_member,
+                                                pv: variant.pv_prodpv,
+                                                multiplier:
+                                                  variant.pv_reversed_pv_multiplier ||
+                                                  form.pd_reversed_pv_multiplier,
+                                              })}
+                                              memberFallbackToSrp={
+                                                !(
+                                                  variant.pv_price_member ||
+                                                  form.pd_price_member
+                                                ).trim()
+                                              }
+                                            />
+                                          </>
+                                        )}
                                       </div>
 
                                       {/* ── Inventory & Status ── */}

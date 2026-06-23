@@ -52,6 +52,7 @@ export interface SupplierCategoryItem {
   name: string
   url: string
   parent_id: number | null
+  is_supplier_created: boolean
 }
 
 export interface SupplierCategoriesResponse {
@@ -287,7 +288,7 @@ export const suppliersApi = baseApi.injectEndpoints({
         const tempId = -Date.now()
         const patch = dispatch(
           suppliersApi.util.updateQueryData("getSupplierCategories", supplierId, (draft) => {
-            draft.categories.push({ id: tempId, name, url: url ?? "", parent_id: null })
+            draft.categories.push({ id: tempId, name, url: url ?? "", parent_id: null, is_supplier_created: true })
           })
         )
         try {
@@ -345,6 +346,30 @@ export const suppliersApi = baseApi.injectEndpoints({
       },
       invalidatesTags: ["Categories"],
     }),
+    deleteSupplierCategory: builder.mutation<
+      { message: string },
+      { supplierId: number; id: number }
+    >({
+      query: ({ id }) => ({
+        url: `/api/supplier/categories/${id}/parent`,
+        method: "DELETE",
+      }),
+      async onQueryStarted({ supplierId, id }, { dispatch, queryFulfilled }) {
+        const patch = dispatch(
+          suppliersApi.util.updateQueryData("getSupplierCategories", supplierId, (draft) => {
+            draft.categories = draft.categories.filter(
+              (c) => c.id !== id && c.parent_id !== id
+            )
+          })
+        )
+        try {
+          await queryFulfilled
+        } catch {
+          patch.undo()
+        }
+      },
+      invalidatesTags: ["Suppliers", "Categories"],
+    }),
     deleteSupplierSubCategory: builder.mutation<
       { message: string },
       DeleteSubCategoryPayload
@@ -388,4 +413,5 @@ export const {
   useAddSupplierCategoryMutation,
   useUpdateSupplierCategoryMutation,
   useDeleteSupplierSubCategoryMutation,
+  useDeleteSupplierCategoryMutation,
 } = suppliersApi

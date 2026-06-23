@@ -13,11 +13,13 @@ class SupplierCategoryAccess extends Model
     protected $fillable = [
         'supplier_id',
         'category_id',
+        'is_supplier_created',
         'created_at',
     ];
 
     protected $casts = [
-        'supplier_id' => 'integer',
-        'category_id' => 'integer',
+        'supplier_id'        => 'integer',
+        'category_id'        => 'integer',
+        'is_supplier_created' => 'boolean',
     ];
 }

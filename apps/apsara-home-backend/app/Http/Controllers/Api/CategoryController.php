@@ -21,6 +21,10 @@ class CategoryController extends Controller
         $assignedCategoryIds = $supplierId > 0
             ? SupplierCategoryAccess::query()
                 ->where('supplier_id', $supplierId)
+                ->where(function ($q) {
+                    $q->whereNull('is_supplier_created')
+                      ->orWhere('is_supplier_created', false);
+                })
                 ->pluck('category_id')
                 ->map(fn ($id) => (int) $id)
                 ->all()
@@ -64,7 +68,18 @@ class CategoryController extends Controller
                 $query->whereIn('cat_id', !empty($categoryIds) ? $categoryIds : [-1]);
             })
             ->when($supplierId > 0, function ($query) use ($assignedCategoryIds) {
-                $query->whereIn('cat_id', !empty($assignedCategoryIds) ? $assignedCategoryIds : [-1]);
+                $ids = !empty($assignedCategoryIds) ? $assignedCategoryIds : [-1];
+                $query->where(function ($q) use ($ids) {
+                    $q->whereIn('cat_id', $ids)
+                      ->orWhereIn('parent_id', $ids);
+                });
+            })
+            ->when($supplierId <= 0, function ($query) {
+                // Global list: never expose supplier-created categories to admin assign modal
+                $query->where(function ($q) {
+                    $q->whereNull('is_supplier_created')
+                      ->orWhere('is_supplier_created', false);
+                });
             })
             ->when($search !== '', function ($q) use ($search) {
                 $like = '%' . $search . '%';

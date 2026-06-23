@@ -626,6 +626,8 @@ export interface CreateProductPayload {
   pd_room_type?: number | null
   pd_brand_type?: number | null
   pd_catsubid?: number
+  pd_merchant_catid?: number | null
+  pd_merchant_subcatid?: number | null
   pd_price_srp: number
   pd_price_dp?: number
   pd_price_member?: number

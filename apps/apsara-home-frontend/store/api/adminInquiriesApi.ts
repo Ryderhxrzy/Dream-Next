@@ -242,6 +242,9 @@ export const adminInquiriesApi = baseApi.injectEndpoints({
         is_paid: boolean
         payment_mode: string
         payment_method: string
+        plan: string
+        billing_option: string
+        slug_name: string
         proof_url: string
         payment_intent_id: string
         payment_reference: string

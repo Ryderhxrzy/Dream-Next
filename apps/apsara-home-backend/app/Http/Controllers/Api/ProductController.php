@@ -1212,6 +1212,12 @@ class ProductController extends Controller
         if (!$partialUpdate || $has('pd_catsubid')) {
             $fields['pd_catsubid'] = (int) ($row['pd_catsubid'] ?? 0);
         }
+        if ($has('pd_merchant_catid')) {
+            $fields['pd_merchant_catid'] = ($row['pd_merchant_catid'] ?? null) ? (int) $row['pd_merchant_catid'] : null;
+        }
+        if ($has('pd_merchant_subcatid')) {
+            $fields['pd_merchant_subcatid'] = ($row['pd_merchant_subcatid'] ?? null) ? (int) $row['pd_merchant_subcatid'] : null;
+        }
         if (!$partialUpdate || $has('pd_description')) {
             $fields['pd_description'] = isset($row['pd_description']) ? (string) $row['pd_description'] : null;
         }
