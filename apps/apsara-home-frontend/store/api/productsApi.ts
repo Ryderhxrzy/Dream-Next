@@ -1630,6 +1630,47 @@ export const productsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Products"],
     }),
+    getAdminProduct: builder.query<Product, number>({
+      query: (id) => ({
+        url: `/api/admin/products/${id}`,
+        method: "GET",
+      }),
+      transformResponse: (response: {
+        product: Product & Record<string, unknown>
+      }) => normalizeProduct(response.product),
+      providesTags: ["Products"],
+    }),
+    // Partial product-field update for inline autosave (does NOT touch variants).
+    patchProductFields: builder.mutation<
+      { message: string; product?: Product },
+      { id: number; data: Record<string, unknown> }
+    >({
+      query: ({ id, data }) => ({
+        url: `/api/admin/products/${id}`,
+        method: "PATCH",
+        body: data,
+      }),
+      transformResponse: (response: {
+        message: string
+        product?: Product & Record<string, unknown>
+      }) => ({
+        ...response,
+        product: response.product
+          ? normalizeProduct(response.product)
+          : undefined,
+      }),
+    }),
+    // Per-variant partial update for inline autosave (one variant, by id).
+    updateProductVariant: builder.mutation<
+      { message: string; variant: ProductVariant },
+      { id: number; variantId: number; data: Record<string, unknown> }
+    >({
+      query: ({ id, variantId, data }) => ({
+        url: `/api/admin/products/${id}/variants/${variantId}`,
+        method: "PATCH",
+        body: data,
+      }),
+    }),
     deleteProduct: builder.mutation<{ message: string }, number>({
       query: (id) => ({
         url: `/api/admin/products/${id}`,
@@ -1723,6 +1764,9 @@ export const {
   useGetZqCategoryMappingsQuery,
   useUpsertZqCategoryMappingMutation,
   useUpdateProductMutation,
+  useGetAdminProductQuery,
+  usePatchProductFieldsMutation,
+  useUpdateProductVariantMutation,
   useDeleteProductMutation,
   useUpdateZqProductPricingMutation,
   useBulkUpdateZqPricingMutation,

@@ -63,6 +63,14 @@ class ZqApiService
                 'Content-Type' => 'application/json',
             ]);
 
+        // Verify ZQ's TLS cert against an explicit CA bundle. Avoids cURL
+        // error 60 ("unable to get local issuer certificate") on hosts whose
+        // php.ini curl.cainfo is unset or stale. Verification stays ON.
+        $caBundle = trim((string) config('services.zq.ca_bundle', ''));
+        if ($caBundle !== '' && is_file($caBundle)) {
+            $client = $client->withOptions(['verify' => $caBundle]);
+        }
+
         $response = $method === 'get'
             ? $client->get($url)
             : $client->post($url, $payload ?? []);

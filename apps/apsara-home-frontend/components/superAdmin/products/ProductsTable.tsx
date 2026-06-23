@@ -780,9 +780,13 @@ export default function ProductsTable({
                       </td>
                       {/* Company Name */}
                       <td className="border-b border-slate-100 px-4 py-4 dark:border-slate-800/70">
-                        <p className="line-clamp-1 font-medium text-slate-800 dark:text-slate-100">
+                        <button
+                          type="button"
+                          onClick={() => onEdit(product)}
+                          className="line-clamp-1 text-left font-medium text-slate-800 transition hover:text-sky-600 hover:underline dark:text-slate-100 dark:hover:text-sky-400"
+                        >
                           {product.name || "—"}
-                        </p>
+                        </button>
                         <p className="mt-0.5 font-mono text-[10px] text-slate-400">
                           #{product.id}
                         </p>
@@ -938,9 +942,13 @@ export default function ProductsTable({
 
                     <td className="border-b border-slate-100 px-4 py-4 dark:border-slate-800/70">
                       <div className="min-w-0">
-                        <p className="line-clamp-1 leading-snug font-medium text-slate-800 dark:text-slate-100">
+                        <button
+                          type="button"
+                          onClick={() => onEdit(product)}
+                          className="line-clamp-1 text-left leading-snug font-medium text-slate-800 transition hover:text-sky-600 hover:underline dark:text-slate-100 dark:hover:text-sky-400"
+                        >
                           {product.name || "N/A"}
-                        </p>
+                        </button>
                         <div className="mt-1 flex flex-wrap items-center gap-2">
                           {isZqMode ? (
                             <>

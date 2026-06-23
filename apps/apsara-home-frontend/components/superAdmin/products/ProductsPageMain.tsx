@@ -3079,7 +3079,11 @@ export default function ProductsPageMain({
             </button>
           )}
           <button
-            onClick={() => setShowAddModal(true)}
+            onClick={() =>
+              isSupplierPortal
+                ? setShowAddModal(true)
+                : router.push("/admin/products/add")
+            }
             className="flex shrink-0 items-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-700"
           >
             <svg
@@ -3604,7 +3608,11 @@ export default function ProductsPageMain({
               from={visibleMeta?.from ?? null}
               to={visibleMeta?.to ?? null}
               onPageChange={setPage}
-              onEdit={setEditProduct}
+              onEdit={(product) =>
+                isSupplierPortal
+                  ? setEditProduct(product)
+                  : router.push(`/admin/products/${product.id}`)
+              }
               onEditPricing={(product) => {
                 const externalId = product.sku ?? ""
                 const cached = zqCachedData?.products.find(
