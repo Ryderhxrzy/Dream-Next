@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import TextAlign from "@tiptap/extension-text-align"
 import Underline from "@tiptap/extension-underline"
 import { EditorContent, useEditor } from "@tiptap/react"
@@ -302,6 +302,13 @@ export default function RichTextEditor({
   editorClassName,
 }: RichTextEditorProps) {
   const [isEmpty, setIsEmpty] = useState(!value)
+  // Ref to the live editor so memoized callbacks never capture a stale instance.
+  const editorRef = useRef<ReturnType<typeof useEditor>>(null)
+  // Always call the latest onChange without putting it in the editor options.
+  const onChangeRef = useRef(onChange)
+  useEffect(() => {
+    onChangeRef.current = onChange
+  })
 
   const escapeHtml = (text: string) =>
     text
@@ -311,41 +318,74 @@ export default function RichTextEditor({
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;")
 
-  const editor = useEditor({
-    immediatelyRender: false,
-    extensions: [
+  // IMPORTANT: keep these editor options referentially STABLE across renders.
+  // TipTap's useEditor compares options each render and, when they differ, calls
+  // editor.setOptions(...), which reconfigures the editor and resets the document
+  // & selection to the start (jumping the caret onto the bold header) and drops
+  // focus. compareOptions checks `extensions` by reference and `content`/
+  // `editorProps` by identity — so building them fresh every render (e.g. inline
+  // `TextAlign.configure(...)` or a new editorProps object) triggers that reset on
+  // every keystroke. Freezing the initial content and memoizing extensions /
+  // editorProps stops it; external value changes still flow through the sync
+  // effect below.
+  const [initialContent] = useState(() => normalizeIncomingContent(value || ""))
+  const extensions = useMemo(
+    () => [
       StarterKit,
       Underline,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
     ],
-    content: normalizeIncomingContent(value || ""),
-    onUpdate({ editor }) {
-      const html = editor.getHTML()
-      const empty = editor.isEmpty
-      setIsEmpty(empty)
-      onChange(html === "<p></p>" ? "" : html)
-    },
-    editorProps: {
+    []
+  )
+  const editorProps = useMemo(
+    () => ({
       attributes: {
         class:
           `rich-content min-h-[100px] max-h-[220px] overflow-y-auto px-3.5 py-2.5 text-sm text-slate-700 focus:outline-none [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-1 ${editorClassName ?? ""}`.trim(),
       },
-      handleKeyDown: (_view, event) => {
+      handleKeyDown: (_view: unknown, event: KeyboardEvent) => {
+        const ed = editorRef.current
+        if (!ed) return false
         if (event.key !== "Enter" || !event.shiftKey) return false
-        if (!editor.isActive("bulletList") && !editor.isActive("orderedList"))
+        if (!ed.isActive("bulletList") && !ed.isActive("orderedList"))
           return false
 
         event.preventDefault()
-        return editor.commands.splitListItem("listItem")
+        return ed.commands.splitListItem("listItem")
       },
+    }),
+    [editorClassName]
+  )
+
+  const editor = useEditor({
+    immediatelyRender: false,
+    extensions,
+    content: initialContent,
+    onUpdate({ editor }) {
+      setIsEmpty(editor.isEmpty)
+      const html = editor.getHTML()
+      onChangeRef.current(html === "<p></p>" ? "" : html)
     },
+    editorProps,
   })
 
-  // Sync external value changes (e.g. when modal resets)
   useEffect(() => {
-    if (!editor) return
-    const current = editor.getHTML()
+    editorRef.current = editor
+  }, [editor])
+
+  // Sync external value changes (e.g. when a modal resets or a new record
+  // loads). Never re-sync while the user is actively typing — calling
+  // setContent() snaps the caret back to the document start (the bold header).
+  // External value changes still apply once the editor loses focus.
+  useEffect(() => {
+    if (!editor || editor.isFocused) return
+    // Normalize BOTH sides: the editor's getHTML() and the incoming value are
+    // serialized differently (attribute order / whitespace / entities), so a
+    // raw compare reports "different" for identical content and re-applies it —
+    // snapping the caret to the start. Comparing normalized forms makes an echo
+    // of the editor's own content a no-op; only genuine external changes sync.
     const incoming = normalizeIncomingContent(value || "")
+    const current = normalizeIncomingContent(editor.getHTML())
     if (current !== incoming) {
       editor.commands.setContent(incoming, { emitUpdate: false })
       queueMicrotask(() => setIsEmpty(!incoming || incoming === "<p></p>"))

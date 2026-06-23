@@ -1,0 +1,5 @@
+# Local CA bundles are machine-specific (may include antivirus TLS-scanning
+# roots) — never commit them. Keep this folder + its README in the repo.
+*
+!.gitignore
+!README.md

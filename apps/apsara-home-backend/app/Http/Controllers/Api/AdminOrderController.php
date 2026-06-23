@@ -1938,6 +1938,8 @@ class AdminOrderController extends Controller
                 'created_at' => optional($rep?->created_at)->toDateTimeString(),
                 'customer_name' => $name,
                 'customer_email' => $rep->ch_customer_email ?? null,
+                'product_name' => $rep->ch_product_name ?? null,
+                'image' => $rep->ch_product_image ?: null,
                 'region' => $this->resolveCheckoutRegion($rep),
                 'recovery_status' => $isRecovered ? 'recovered' : 'not_recovered',
                 'total_price' => round($total, 2),
@@ -1974,6 +1976,57 @@ class AdminOrderController extends Controller
         }
         $address = trim((string) ($order->ch_customer_address ?? ''));
         return $address !== '' ? 'Philippines' : '—';
+    }
+
+    /**
+     * Manually send a recovery reminder (email + optional note, plus SMS/push
+     * per config) for a single abandoned checkout.
+     */
+    public function remindAbandonedCheckout(Request $request, string $checkout)
+    {
+        $admin = $this->resolveAdmin($request);
+        if (!$admin) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $validated = $request->validate([
+            'note' => 'nullable|string|max:500',
+        ]);
+
+        $checkoutId = trim($checkout);
+        if ($checkoutId === '') {
+            return response()->json(['message' => 'Checkout id is required.'], 422);
+        }
+
+        $rep = CheckoutHistory::query()->where('ch_checkout_id', $checkoutId)->first();
+        if (!$rep) {
+            return response()->json(['message' => 'Checkout not found.'], 404);
+        }
+
+        if ($rep->ch_paid_at !== null || in_array(strtolower((string) $rep->ch_status), ['paid', 'succeeded', 'success'], true)) {
+            return response()->json(['message' => 'This checkout has already been paid.'], 422);
+        }
+
+        $result = app(\App\Services\Checkout\AbandonedCheckoutReminderService::class)
+            ->remindByCheckoutId($checkoutId, [
+                'note' => $validated['note'] ?? null,
+                // Manual send always attempts email; SMS/push follow config.
+                'channels' => ['email' => true],
+            ]);
+
+        if (!($result['reachable'] ?? false)) {
+            return response()->json(['message' => 'No email, phone, or device on file for this customer.'], 422);
+        }
+
+        if (!($result['delivered'] ?? false)) {
+            return response()->json(['message' => 'Reminder could not be delivered. Check mail/SMS configuration.'], 502);
+        }
+
+        return response()->json([
+            'message' => 'Reminder sent to the customer.',
+            'channels' => $result['channels'],
+            'reminder_count' => $result['reminder_count'],
+        ]);
     }
 
     private function computeSla(CheckoutHistory $order): array
