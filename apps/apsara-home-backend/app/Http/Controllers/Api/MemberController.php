@@ -1644,6 +1644,201 @@ class MemberController extends Controller
         });
     }
 
+    /**
+     * Full profile for a single member: the same JSON shape the list returns,
+     * plus the member's most recent order (with line items) and recent orders.
+     */
+    public function show(int $id): JsonResponse
+    {
+        $customer = Customer::query()
+            ->select([
+                'c_userid', 'c_username', 'c_fname', 'c_mname', 'c_lname',
+                'c_email', 'c_mobile', 'c_address', 'c_barangay', 'c_city',
+                'c_province', 'c_region', 'c_zipcode', 'c_avatar_url',
+                'c_lockstatus', 'c_accnt_status', 'c_rank', 'c_totalpair',
+                'c_gpv', 'c_totalincome', 'c_sponsor', 'c_date_started',
+                'c_last_logindate',
+            ])
+            ->where('c_userid', $id)
+            ->first();
+
+        if (! $customer) {
+            return response()->json(['message' => 'Member not found.'], 404);
+        }
+
+        $referralCount = (int) Customer::query()
+            ->where('c_sponsor', (int) $customer->c_userid)
+            ->count();
+
+        $sponsor = ((int) ($customer->c_sponsor ?? 0)) > 0
+            ? Customer::query()
+                ->select(['c_userid', 'c_username', 'c_fname', 'c_mname', 'c_lname'])
+                ->where('c_userid', (int) $customer->c_sponsor)
+                ->first()
+            : null;
+
+        $walletCredits = ['cash' => 0.0, 'pv' => 0.0];
+        if (Schema::hasTable('tbl_customer_wallet_ledger')) {
+            $walletRows = CustomerWalletLedger::query()
+                ->selectRaw('wl_wallet_type, SUM(wl_amount) as total_amount')
+                ->where('wl_customer_id', (int) $customer->c_userid)
+                ->where('wl_entry_type', 'credit')
+                ->whereIn('wl_wallet_type', ['cash', 'pv'])
+                ->groupBy('wl_wallet_type')
+                ->get();
+            $walletCredits = [
+                'cash' => (float) (optional($walletRows->firstWhere('wl_wallet_type', 'cash'))->total_amount ?? 0),
+                'pv' => (float) (optional($walletRows->firstWhere('wl_wallet_type', 'pv'))->total_amount ?? 0),
+            ];
+        }
+
+        $joinedAt = $this->formatDate($customer->c_date_started);
+        $registeredAt = $this->formatDateTime($customer->c_date_started);
+        $addressParts = array_filter([
+            (string) ($customer->c_address ?? ''),
+            (string) ($customer->c_barangay ?? ''),
+            (string) ($customer->c_city ?? ''),
+            (string) ($customer->c_province ?? ''),
+            (string) ($customer->c_region ?? ''),
+            (string) ($customer->c_zipcode ?? ''),
+        ], fn ($value) => trim((string) $value) !== '');
+
+        $member = [
+            'id' => (int) $customer->c_userid,
+            'name' => $this->displayName($customer),
+            'username' => (string) ($customer->c_username ?? ''),
+            'email' => (string) ($customer->c_email ?: ''),
+            'referredByName' => $sponsor instanceof Customer ? $this->displayName($sponsor) : '',
+            'referredByUsername' => $sponsor instanceof Customer ? (string) ($sponsor->c_username ?? '') : '',
+            'contactNumber' => (string) ($customer->c_mobile ?: ''),
+            'avatar' => (string) ($customer->c_avatar_url ?: ''),
+            'verificationStatus' => $this->mapVerificationStatus((int) $customer->c_lockstatus, (int) $customer->c_accnt_status),
+            'status' => $this->mapStatus((int) $customer->c_lockstatus, (int) $customer->c_accnt_status),
+            'tier' => $this->mapTier((int) $customer->c_rank),
+            'orders' => (int) $customer->c_totalpair,
+            'totalSpent' => (float) $customer->c_gpv,
+            'earnings' => (float) $customer->c_totalincome,
+            'walletCashBalance' => (float) ($customer->c_totalincome ?? 0),
+            'walletPvBalance' => (float) ($customer->c_gpv ?? 0),
+            'walletCashCredits' => (float) ($walletCredits['cash'] ?? 0),
+            'walletPvCredits' => (float) ($walletCredits['pv'] ?? 0),
+            'referrals' => $referralCount,
+            'joinedAt' => $joinedAt,
+            'createdAt' => $registeredAt,
+            'created_at' => $registeredAt,
+            'lastActiveAt' => $this->formatDate($customer->c_last_logindate) ?: $joinedAt,
+            'addressLine' => (string) ($customer->c_address ?? ''),
+            'barangay' => (string) ($customer->c_barangay ?? ''),
+            'city' => (string) ($customer->c_city ?? ''),
+            'province' => (string) ($customer->c_province ?? ''),
+            'region' => (string) ($customer->c_region ?? ''),
+            'zipCode' => (string) ($customer->c_zipcode ?? ''),
+            'fullAddress' => ! empty($addressParts) ? implode(', ', $addressParts) : '',
+        ];
+
+        // Most recent checkout for this member (any status) + all its line items.
+        $latest = \App\Models\CheckoutHistory::query()
+            ->where('ch_customer_id', (int) $customer->c_userid)
+            ->orderByDesc('created_at')
+            ->orderByDesc('ch_id')
+            ->first(['ch_checkout_id', 'created_at']);
+
+        $lastOrder = null;
+        if ($latest && $latest->ch_checkout_id) {
+            $rows = \App\Models\CheckoutHistory::query()
+                ->where('ch_customer_id', (int) $customer->c_userid)
+                ->where('ch_checkout_id', $latest->ch_checkout_id)
+                ->orderBy('ch_id')
+                ->get();
+            $first = $rows->first();
+            $itemsTotal = (float) $rows->sum(fn ($r) => (float) ($r->ch_amount ?? 0) * (int) ($r->ch_quantity ?? 1));
+            $shippingFee = (float) ($first->ch_shipping_fee ?? 0);
+
+            // Fall back to the product's stored image when the checkout snapshot
+            // (ch_product_image) is empty — common for legacy / manual orders.
+            $productImageIds = $rows
+                ->pluck('ch_product_id')
+                ->filter(fn ($value) => (int) $value > 0)
+                ->map(fn ($value) => (int) $value)
+                ->unique()
+                ->values()
+                ->all();
+            $productImages = empty($productImageIds)
+                ? collect()
+                : \App\Models\Product::query()
+                    ->whereIn('pd_id', $productImageIds)
+                    ->pluck('pd_image', 'pd_id');
+
+            $lastOrder = [
+                'checkoutId' => (string) $latest->ch_checkout_id,
+                'paymentStatus' => (string) ($first->ch_status ?? ''),
+                'fulfillmentStatus' => (string) ($first->ch_fulfillment_status ?? ''),
+                'approvalStatus' => (string) ($first->ch_approval_status ?? ''),
+                'paymentMethod' => (string) ($first->ch_payment_method ?? ''),
+                'itemsTotal' => $itemsTotal,
+                'shippingFee' => $shippingFee,
+                'amount' => $itemsTotal + $shippingFee,
+                'createdAt' => $this->formatDateTime($latest->created_at ? (string) $latest->created_at : null),
+                'paidAt' => $this->formatDateTime($first->ch_paid_at ? (string) $first->ch_paid_at : null),
+                'items' => $rows->map(fn ($r) => [
+                    'productName' => (string) ($r->ch_product_name ?? ''),
+                    'productId' => (int) ($r->ch_product_id ?? 0),
+                    'image' => (string) ($r->ch_product_image ?: ($productImages[(int) ($r->ch_product_id ?? 0)] ?? '')),
+                    'sku' => (string) ($r->ch_product_sku ?? ''),
+                    'quantity' => (int) ($r->ch_quantity ?? 1),
+                    'unitPrice' => (float) ($r->ch_amount ?? 0),
+                    'lineTotal' => (float) ($r->ch_amount ?? 0) * (int) ($r->ch_quantity ?? 1),
+                    'color' => (string) ($r->ch_selected_color ?? ''),
+                    'size' => (string) ($r->ch_selected_size ?? ''),
+                    'type' => (string) ($r->ch_selected_type ?? ''),
+                ])->values(),
+            ];
+        }
+
+        // Recent orders (grouped by checkout, latest first, up to 10).
+        $recentRows = \App\Models\CheckoutHistory::query()
+            ->where('ch_customer_id', (int) $customer->c_userid)
+            ->orderByDesc('created_at')
+            ->orderByDesc('ch_id')
+            ->get(['ch_checkout_id', 'ch_status', 'ch_fulfillment_status', 'ch_amount', 'ch_quantity', 'ch_product_id', 'ch_product_image', 'created_at']);
+
+        $recentProductIds = $recentRows
+            ->pluck('ch_product_id')
+            ->filter(fn ($value) => (int) $value > 0)
+            ->map(fn ($value) => (int) $value)
+            ->unique()
+            ->values()
+            ->all();
+        $recentProductImages = empty($recentProductIds)
+            ? collect()
+            : \App\Models\Product::query()
+                ->whereIn('pd_id', $recentProductIds)
+                ->pluck('pd_image', 'pd_id');
+
+        $recentOrders = $recentRows
+            ->groupBy('ch_checkout_id')
+            ->map(function ($rows) use ($recentProductImages) {
+                $first = $rows->first();
+                return [
+                    'checkoutId' => (string) $first->ch_checkout_id,
+                    'paymentStatus' => (string) ($first->ch_status ?? ''),
+                    'fulfillmentStatus' => (string) ($first->ch_fulfillment_status ?? ''),
+                    'amount' => (float) $rows->sum(fn ($r) => (float) ($r->ch_amount ?? 0) * (int) ($r->ch_quantity ?? 1)),
+                    'itemCount' => (int) $rows->sum(fn ($r) => (int) ($r->ch_quantity ?? 1)),
+                    'image' => (string) ($first->ch_product_image ?: ($recentProductImages[(int) ($first->ch_product_id ?? 0)] ?? '')),
+                    'createdAt' => $this->formatDateTime($first->created_at ? (string) $first->created_at : null),
+                ];
+            })
+            ->values()
+            ->take(50);
+
+        return response()->json([
+            'member' => $member,
+            'lastOrder' => $lastOrder,
+            'recentOrders' => $recentOrders,
+        ]);
+    }
+
     private function displayName(Customer $customer): string
     {
         $fullName = trim(implode(' ', array_filter([

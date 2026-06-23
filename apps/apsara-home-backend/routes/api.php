@@ -400,6 +400,8 @@ Route::middleware(['auth:sanctum', 'admin.role:super_admin,admin,csr'])->group(f
     Route::get('/admin/members/orphaned', [MemberController::class, 'orphanedMembers']);
     Route::patch('/admin/members/{id}/assign-sponsor', [MemberController::class, 'assignSponsor']);
     Route::get('/admin/members/kyc', [AdminMemberKycController::class, 'index']);
+    // Single member full profile — registered after all literal member GET routes so {id} never shadows them.
+    Route::get('/admin/members/{id}', [MemberController::class, 'show']);
     Route::patch('/admin/members/kyc/{id}/approve', [AdminMemberKycController::class, 'approve']);
     Route::patch('/admin/members/kyc/{id}/reject', [AdminMemberKycController::class, 'reject']);
     Route::get('/admin/service-inquiries', [ServiceInquiryController::class, 'adminIndex']);

@@ -16,6 +16,49 @@ export interface MembersResponse {
   meta: MembersMeta
 }
 
+export interface MemberOrderLineItem {
+  productName: string
+  productId: number
+  image: string
+  sku: string
+  quantity: number
+  unitPrice: number
+  lineTotal: number
+  color: string
+  size: string
+  type: string
+}
+
+export interface MemberLastOrder {
+  checkoutId: string
+  paymentStatus: string
+  fulfillmentStatus: string
+  approvalStatus: string
+  paymentMethod: string
+  itemsTotal: number
+  shippingFee: number
+  amount: number
+  createdAt: string | null
+  paidAt: string | null
+  items: MemberOrderLineItem[]
+}
+
+export interface MemberRecentOrder {
+  checkoutId: string
+  paymentStatus: string
+  fulfillmentStatus: string
+  amount: number
+  itemCount: number
+  image: string
+  createdAt: string | null
+}
+
+export interface MemberDetailResponse {
+  member: Member
+  lastOrder: MemberLastOrder | null
+  recentOrders: MemberRecentOrder[]
+}
+
 export interface MembersStatsResponse {
   total: number
   active: number
@@ -242,6 +285,14 @@ interface MemberKycQueryParams {
 
 export const membersApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
+    getMember: builder.query<MemberDetailResponse, number>({
+      query: (id) => ({
+        url: `/api/admin/members/${id}`,
+        method: "GET",
+      }),
+      keepUnusedDataFor: 120,
+      providesTags: ["Members"],
+    }),
     getMembers: builder.query<MembersResponse, MembersQueryParams | void>({
       query: (params) => ({
         url: "/api/admin/members",
@@ -414,6 +465,7 @@ export const membersApi = baseApi.injectEndpoints({
 })
 
 export const {
+  useGetMemberQuery,
   useGetMembersQuery,
   useGetPartnerMembersQuery,
   useLazyGetMembersQuery,
