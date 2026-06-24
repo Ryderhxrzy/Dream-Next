@@ -18,6 +18,7 @@ class CategoryController extends Controller
         $search = trim((string) $request->query('q', ''));
         $supplierId = (int) $request->query('supplier_id', 0);
         $usedOnly = $request->boolean('used_only', false);
+        $brandType = (int) $request->query('brand_type', 0);
         $assignedCategoryIds = $supplierId > 0
             ? SupplierCategoryAccess::query()
                 ->where('supplier_id', $supplierId)
@@ -67,6 +68,26 @@ class CategoryController extends Controller
                 $categoryIds = collect($productCounts)->keys()->map(fn ($id) => (int) $id)->all();
                 $query->whereIn('cat_id', !empty($categoryIds) ? $categoryIds : [-1]);
             })
+            ->when($brandType > 0, function ($query) use ($brandType) {
+                $brandProducts = DB::table('tbl_product')
+                    ->where('pd_brand_type', $brandType)
+                    ->whereIn('pd_status', [1, 2])
+                    ->get(['pd_catid', 'pd_merchant_catid']);
+
+                $fromCatId = $brandProducts->pluck('pd_catid')
+                    ->map(fn ($id) => (int) $id)
+                    ->filter(fn ($id) => $id > 0)
+                    ->values()->all();
+
+                $fromMerchantCatId = $brandProducts->pluck('pd_merchant_catid')
+                    ->filter(fn ($id) => $id !== null)
+                    ->map(fn ($id) => (int) $id)
+                    ->filter(fn ($id) => $id > 0)
+                    ->values()->all();
+
+                $allCategoryIds = array_values(array_unique(array_merge($fromCatId, $fromMerchantCatId)));
+                $query->whereIn('cat_id', !empty($allCategoryIds) ? $allCategoryIds : [-1]);
+            })
             ->when($supplierId > 0, function ($query) use ($assignedCategoryIds) {
                 $ids = !empty($assignedCategoryIds) ? $assignedCategoryIds : [-1];
                 $query->where(function ($q) use ($ids) {
@@ -74,8 +95,9 @@ class CategoryController extends Controller
                       ->orWhereIn('parent_id', $ids);
                 });
             })
-            ->when($supplierId <= 0, function ($query) {
-                // Global list: never expose supplier-created categories to admin assign modal
+            ->when($supplierId <= 0 && $brandType <= 0, function ($query) {
+                // Global list: never expose supplier-created categories to admin assign modal.
+                // When filtering by brand, include all categories (supplier-created or not).
                 $query->where(function ($q) {
                     $q->whereNull('is_supplier_created')
                       ->orWhere('is_supplier_created', false);

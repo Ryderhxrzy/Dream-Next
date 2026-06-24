@@ -22,6 +22,7 @@ export interface GetCategoriesParams {
   per_page?: number
   supplier_id?: number
   used_only?: boolean
+  brand_type?: number
 }
 
 export interface CreateCategoryPayload {
@@ -72,6 +73,7 @@ export const categoriesApi = baseApi.injectEndpoints({
           per_page: params?.per_page,
           supplier_id: params?.supplier_id,
           used_only: params?.used_only,
+          brand_type: params?.brand_type,
         },
       }),
       transformResponse: (response: CategoriesResponse) =>
