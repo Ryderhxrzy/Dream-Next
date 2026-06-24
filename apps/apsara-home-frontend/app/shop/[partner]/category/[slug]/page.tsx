@@ -12,7 +12,10 @@ import { notFound, redirect } from "next/navigation"
 import CategoryListProductMain from "@/components/category/CategoryListProductMain"
 import { buildPageMetadata } from "@/app/seo"
 
-export const dynamic = "force-dynamic"
+// Cache the storefront data fetches (revalidate + tags). The route stays dynamic
+// via headers() for custom-domain links, but force-dynamic would suppress the
+// fetch cache, so we drop it to keep category navigation fast.
+export const revalidate = 60
 
 type PageProps = {
   params: Promise<{
@@ -206,7 +209,7 @@ async function getPartnerCategoryPageData(
       fetch(`${apiUrl}/api/categories?used_only=1`, {
         method: "GET",
         headers: { Accept: "application/json" },
-        cache: "no-store",
+        next: { revalidate: 300, tags: ["storefront:categories"] },
       }),
     ])
 
@@ -257,7 +260,7 @@ async function getPartnerCategoryPageData(
       {
         method: "GET",
         headers: { Accept: "application/json" },
-        cache: "no-store",
+        next: { revalidate: 60, tags: ["storefront:products"] },
       }
     )
 
@@ -288,7 +291,7 @@ async function getPartnerCategoryPageData(
               {
                 method: "GET",
                 headers: { Accept: "application/json" },
-                cache: "no-store",
+                next: { revalidate: 60, tags: ["storefront:products"] },
               }
             )
             if (!response.ok) return null

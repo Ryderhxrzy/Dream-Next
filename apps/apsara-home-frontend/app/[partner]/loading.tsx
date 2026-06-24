@@ -53,13 +53,19 @@ export default function PartnerLoading() {
       .join(" ")
   }, [partnerSlug])
   const [logoSrc, setLogoSrc] = useState<string | null>(null)
+  // Splash only on the storefront ROOT (/<slug>), never on sub-pages like
+  // /<slug>/wishlist or /<slug>/orders — those just get a subtle bar.
+  const isStorefrontRoot = useMemo(
+    () => pathname.split("/").filter(Boolean).length === 1,
+    [pathname]
+  )
   // Show the branded partner splash only once per session per storefront — like
   // the AF Home home splash. On later navigations within the same storefront we
   // render only a subtle top bar so it does not flash on every page.
   const [splashAllowed, setSplashAllowed] = useState(false)
 
   useEffect(() => {
-    if (!partnerSlug) return
+    if (!partnerSlug || !isStorefrontRoot) return
     let alreadyShown = false
     try {
       alreadyShown =
@@ -70,33 +76,20 @@ export default function PartnerLoading() {
       return
     }
     if (alreadyShown) return
+    // Mark shown immediately so the splash reliably appears only on the first
+    // storefront entry per session — never on later navigations (pages load
+    // fast via SSR, so the fallback may mount only briefly).
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSplashAllowed(true)
-  }, [partnerSlug])
-
-  // Mark the splash as "shown" only AFTER the partner logo has displayed (or a
-  // short fallback for logo-less storefronts). Otherwise the once-per-session
-  // splash fires on the first load — before the logo finishes fetching — so the
-  // brand logo would never appear.
-  useEffect(() => {
-    if (!partnerSlug || !splashAllowed) return
-    const markShown = () => {
-      try {
-        window.sessionStorage.setItem(
-          `afhome:partner-splash-shown:${partnerSlug}`,
-          "1"
-        )
-      } catch {
-        // best-effort only
-      }
+    try {
+      window.sessionStorage.setItem(
+        `afhome:partner-splash-shown:${partnerSlug}`,
+        "1"
+      )
+    } catch {
+      // best-effort only
     }
-    if (logoSrc) {
-      markShown()
-      return
-    }
-    const timer = window.setTimeout(markShown, 3000)
-    return () => window.clearTimeout(timer)
-  }, [partnerSlug, splashAllowed, logoSrc])
+  }, [partnerSlug, isStorefrontRoot])
 
   useEffect(() => {
     if (!partnerSlug) return
