@@ -1,7 +1,7 @@
 "use client"
 
 /* eslint-disable react-hooks/set-state-in-effect */
-import { useEffect, useState } from "react"
+import { Fragment, useEffect, useState } from "react"
 import { normalizeCategorySlug } from "@/libs/partnerStorefront"
 import { ROOM_OPTIONS } from "@/libs/roomConfig"
 import type { Category } from "@/store/api/categoriesApi"
@@ -352,53 +352,59 @@ export default function ProductFilter({
             >
               All Category
             </button>
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => {
-                  if (onCategorySelect) onCategorySelect(category)
-                  else router.push(getCategoryPath(category))
-                }}
-                className={`cursor-pointer rounded-full px-2 py-1 text-xs font-medium transition-colors sm:px-3 sm:text-sm ${
-                  currentCategory === category.name ||
-                  propSearch === category.name
-                    ? "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
-                    : "bg-gray-100 text-gray-600 hover:bg-sky-100 hover:text-sky-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-sky-900/30 dark:hover:text-sky-400"
-                }`}
-              >
-                {category.name}
-              </button>
-            ))}
+            {categories.map((category) => {
+              const isSelected = currentCategory === category.name || propSearch === category.name
+              const showSubs = isSelected && onSubCategorySelect && subCategories.length > 0
+              return (
+                <Fragment key={category.id}>
+                  <button
+                    onClick={() => {
+                      if (onCategorySelect) onCategorySelect(category)
+                      else router.push(getCategoryPath(category))
+                    }}
+                    className={`cursor-pointer rounded-full px-2 py-1 text-xs font-medium transition-colors sm:px-3 sm:text-sm ${
+                      isSelected
+                        ? "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
+                        : "bg-gray-100 text-gray-600 hover:bg-sky-100 hover:text-sky-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-sky-900/30 dark:hover:text-sky-400"
+                    }`}
+                  >
+                    {category.name}
+                  </button>
+                  {showSubs && (
+                    <>
+                      <div className="basis-full" />
+                      <div className="flex w-full flex-wrap gap-1.5 border-l-2 border-sky-200 pl-3 dark:border-sky-700">
+                        <button
+                          onClick={() => onSubCategorySelect(null)}
+                          className={`cursor-pointer rounded-full px-2 py-0.5 text-xs font-medium transition-colors ${
+                            !currentSubCategory
+                              ? "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
+                              : "bg-gray-100 text-gray-500 hover:bg-sky-50 hover:text-sky-500 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-sky-900/20 dark:hover:text-sky-400"
+                          }`}
+                        >
+                          All
+                        </button>
+                        {subCategories.map((sub) => (
+                          <button
+                            key={sub.id}
+                            onClick={() => onSubCategorySelect(sub)}
+                            className={`cursor-pointer rounded-full px-2 py-0.5 text-xs font-medium transition-colors ${
+                              currentSubCategory === sub.name
+                                ? "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
+                                : "bg-gray-100 text-gray-500 hover:bg-sky-50 hover:text-sky-500 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-sky-900/20 dark:hover:text-sky-400"
+                            }`}
+                          >
+                            {sub.name}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="basis-full" />
+                    </>
+                  )}
+                </Fragment>
+              )
+            })}
           </div>
-
-          {/* Subcategory tree row */}
-          {onSubCategorySelect && subCategories.length > 0 && (
-            <div className="mt-2 ml-3 flex flex-wrap gap-1.5 border-l-2 border-sky-200 pl-3 dark:border-sky-700">
-              <button
-                onClick={() => onSubCategorySelect(null)}
-                className={`cursor-pointer rounded-full px-2 py-0.5 text-xs font-medium transition-colors ${
-                  !currentSubCategory
-                    ? "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
-                    : "bg-gray-100 text-gray-500 hover:bg-sky-50 hover:text-sky-500 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-sky-900/20 dark:hover:text-sky-400"
-                }`}
-              >
-                All
-              </button>
-              {subCategories.map((sub) => (
-                <button
-                  key={sub.id}
-                  onClick={() => onSubCategorySelect(sub)}
-                  className={`cursor-pointer rounded-full px-2 py-0.5 text-xs font-medium transition-colors ${
-                    currentSubCategory === sub.name
-                      ? "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
-                      : "bg-gray-100 text-gray-500 hover:bg-sky-50 hover:text-sky-500 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-sky-900/20 dark:hover:text-sky-400"
-                  }`}
-                >
-                  {sub.name}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
       )}
 

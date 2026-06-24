@@ -1585,6 +1585,8 @@ class ProductController extends Controller
             'warranty'          => $p->pd_warranty ?? null,
             'catid'             => (int)   $p->pd_catid,
             'catsubid'          => (int)   $p->pd_catsubid,
+            'merchant_catid'    => $p->pd_merchant_catid ? (int) $p->pd_merchant_catid : null,
+            'merchant_subcatid' => $p->pd_merchant_subcatid ? (int) $p->pd_merchant_subcatid : null,
             'roomType'          => (int)   ($p->pd_room_type ?? 0),
             'brandType'         => (int)   ($p->pd_brand_type ?? 0),
             'brand'             => $p->brand?->pb_name ? (string) $p->brand->pb_name : null,
@@ -1632,6 +1634,7 @@ class ProductController extends Controller
             ->select([
                 'pd_id', 'pd_name', 'pd_description', 'pd_specifications', 'pd_material', 'pd_warranty',
                 'pd_catid', 'pd_catsubid', 'pd_room_type', 'pd_brand_type', 'pd_supplier',
+                'pd_merchant_catid', 'pd_merchant_subcatid',
                 'pd_price_srp', 'pd_price_dp', 'pd_price_member', 'pd_qty',
                 'pd_prodpv',
                 'pd_weight', 'pd_psweight', 'pd_pswidth', 'pd_pslenght', 'pd_psheight',
@@ -1665,6 +1668,7 @@ class ProductController extends Controller
             ->select([
                 'pd_id', 'pd_name', 'pd_description', 'pd_specifications', 'pd_material', 'pd_warranty',
                 'pd_catid', 'pd_catsubid', 'pd_room_type', 'pd_brand_type', 'pd_supplier',
+                'pd_merchant_catid', 'pd_merchant_subcatid',
                 'pd_price_srp', 'pd_price_dp', 'pd_price_member', 'pd_qty',
                 'pd_prodpv',
                 'pd_weight', 'pd_psweight', 'pd_pswidth', 'pd_pslenght', 'pd_psheight',
@@ -2103,6 +2107,7 @@ class ProductController extends Controller
                 ->select([
                     'pd_id', 'pd_name', 'pd_description', 'pd_specifications', 'pd_material', 'pd_warranty',
                     'pd_catid', 'pd_catsubid', 'pd_room_type', 'pd_brand_type', 'pd_supplier',
+                    'pd_merchant_catid', 'pd_merchant_subcatid',
                     'pd_price_srp', 'pd_price_dp', 'pd_price_member', 'pd_qty',
                     'pd_prodpv',
                     'pd_weight', 'pd_psweight', 'pd_pswidth', 'pd_pslenght', 'pd_psheight',
@@ -3621,6 +3626,7 @@ class ProductController extends Controller
             ->select([
                 'pd_id', 'pd_name', 'pd_description', 'pd_specifications', 'pd_material', 'pd_warranty',
                 'pd_catid', 'pd_catsubid', 'pd_room_type', 'pd_brand_type', 'pd_supplier',
+                'pd_merchant_catid', 'pd_merchant_subcatid',
                 'pd_price_srp', 'pd_price_dp', 'pd_price_member', 'pd_qty',
                 'pd_prodpv',
                 'pd_weight', 'pd_psweight', 'pd_pswidth', 'pd_pslenght', 'pd_psheight',
@@ -3939,6 +3945,12 @@ class ProductController extends Controller
                 }
                 if ($request->has('pd_manual_checkout_enabled')) {
                     $product->pd_manual_checkout_enabled = $request->boolean('pd_manual_checkout_enabled') ? 1 : 0;
+                }
+                if ($request->has('pd_merchant_catid')) {
+                    $product->pd_merchant_catid = $request->filled('pd_merchant_catid') ? (int) $request->pd_merchant_catid : null;
+                }
+                if ($request->has('pd_merchant_subcatid')) {
+                    $product->pd_merchant_subcatid = $request->filled('pd_merchant_subcatid') ? (int) $request->pd_merchant_subcatid : null;
                 }
 
                 try {
