@@ -45,6 +45,10 @@ interface ProductFilterProps {
   currentBrand?: string
   isRoomPage?: boolean
   currentRoom?: string
+  onCategorySelect?: (category: Category | null) => void
+  subCategories?: Category[]
+  currentSubCategory?: string
+  onSubCategorySelect?: (category: Category | null) => void
 }
 
 export default function ProductFilter({
@@ -60,6 +64,10 @@ export default function ProductFilter({
   currentBrand,
   isRoomPage = false,
   currentRoom,
+  onCategorySelect,
+  subCategories = [],
+  currentSubCategory,
+  onSubCategorySelect,
 }: ProductFilterProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -333,7 +341,8 @@ export default function ProductFilter({
             )}
             <button
               onClick={() => {
-                router.push(getAllCategoryPath())
+                if (onCategorySelect) onCategorySelect(null)
+                else router.push(getAllCategoryPath())
               }}
               className={`cursor-pointer rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                 hasAllCategorySelected && !propSearch
@@ -347,7 +356,8 @@ export default function ProductFilter({
               <button
                 key={category.id}
                 onClick={() => {
-                  router.push(getCategoryPath(category))
+                  if (onCategorySelect) onCategorySelect(category)
+                  else router.push(getCategoryPath(category))
                 }}
                 className={`cursor-pointer rounded-full px-2 py-1 text-xs font-medium transition-colors sm:px-3 sm:text-sm ${
                   currentCategory === category.name ||
@@ -360,6 +370,35 @@ export default function ProductFilter({
               </button>
             ))}
           </div>
+
+          {/* Subcategory tree row */}
+          {onSubCategorySelect && subCategories.length > 0 && (
+            <div className="mt-2 ml-3 flex flex-wrap gap-1.5 border-l-2 border-sky-200 pl-3 dark:border-sky-700">
+              <button
+                onClick={() => onSubCategorySelect(null)}
+                className={`cursor-pointer rounded-full px-2 py-0.5 text-xs font-medium transition-colors ${
+                  !currentSubCategory
+                    ? "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
+                    : "bg-gray-100 text-gray-500 hover:bg-sky-50 hover:text-sky-500 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-sky-900/20 dark:hover:text-sky-400"
+                }`}
+              >
+                All
+              </button>
+              {subCategories.map((sub) => (
+                <button
+                  key={sub.id}
+                  onClick={() => onSubCategorySelect(sub)}
+                  className={`cursor-pointer rounded-full px-2 py-0.5 text-xs font-medium transition-colors ${
+                    currentSubCategory === sub.name
+                      ? "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
+                      : "bg-gray-100 text-gray-500 hover:bg-sky-50 hover:text-sky-500 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-sky-900/20 dark:hover:text-sky-400"
+                  }`}
+                >
+                  {sub.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

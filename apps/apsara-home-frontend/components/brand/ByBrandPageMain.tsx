@@ -516,7 +516,25 @@ export default function ByBrandPageMain() {
   }
 
   const { data, isFetching } = useGetPublicProductBrandsQuery()
-  const { data: categoriesData } = useGetCategoriesQuery({ page: 1, per_page: 100, used_only: true })
+  const selectedBrandId = useMemo(
+    () => {
+      if (!selectedBrand) return 0
+      const found = (data?.brands ?? []).find((b) => b.name && toSlug(b.name) === selectedBrand)
+      return found?.id ?? 0
+    },
+    [data?.brands, selectedBrand]
+  )
+  const { data: categoriesData } = useGetCategoriesQuery({
+    page: 1,
+    per_page: 100,
+    used_only: true,
+    brand_type: selectedBrandId > 0 ? selectedBrandId : undefined,
+  })
+
+  const topLevelCategories = useMemo(
+    () => (categoriesData?.categories ?? []).filter((c) => !c.parent_id),
+    [categoriesData?.categories],
+  )
 
   const allBrands = useMemo(
     () => (data?.brands ?? []).filter((brand) => brand.name && brand.name.trim().length > 0),
@@ -546,6 +564,19 @@ export default function ByBrandPageMain() {
   }, [allBrands, selectedBrand, letterFilter, searchQuery, sortBy])
 
   const [productPage, setProductPage] = useState(1)
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null)
+  const [selectedCategoryName, setSelectedCategoryName] = useState<string>('')
+  const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<number | null>(null)
+  const [selectedSubCategoryName, setSelectedSubCategoryName] = useState<string>('')
+
+  const activeSubCategories = useMemo(
+    () =>
+      selectedCategoryId
+        ? (categoriesData?.categories ?? []).filter((c) => c.parent_id === selectedCategoryId)
+        : [],
+    [categoriesData?.categories, selectedCategoryId],
+  )
+
   const perPage = showNumber === 'all' ? 500 : (typeof showNumber === 'number' ? showNumber : 12)
 
   const selectedBrandItem = useMemo(() => {
@@ -566,6 +597,10 @@ export default function ByBrandPageMain() {
     if (prevBrand.current !== selectedBrand) {
       prevBrand.current = selectedBrand
       setProductPage(1)
+      setSelectedCategoryId(null)
+      setSelectedCategoryName('')
+      setSelectedSubCategoryId(null)
+      setSelectedSubCategoryName('')
     }
     if (JSON.stringify(prevFilters.current) !== JSON.stringify(filters)) {
       prevFilters.current = filters
@@ -589,7 +624,7 @@ export default function ByBrandPageMain() {
 
   const { data: brandProductsData, isFetching: isFetchingProducts, isLoading: isLoadingProducts } = useGetPublicProductsQuery(
     selectedBrandItem
-      ? { page: productPage, perPage: perPage, brandType: selectedBrandItem.id, includeAll: perPage >= 50 }
+      ? { page: productPage, perPage: perPage, brandType: selectedBrandItem.id, includeAll: perPage >= 50, catId: selectedSubCategoryId ?? selectedCategoryId ?? undefined }
       : undefined,
     { skip: !selectedBrandItem },
   )
@@ -1164,9 +1199,25 @@ export default function ByBrandPageMain() {
                   onFilterChange={setFilters}
                   pvRange={filters.pvRange}
                   search={filters.search}
-                  isBrandPage={true}
-                  brands={allBrands}
+                  isBrandPage={!selectedBrandItem}
+                  brands={selectedBrandItem ? [] : allBrands}
+                  categories={selectedBrandItem ? topLevelCategories : []}
                   currentBrand={selectedBrandItem?.name}
+                  currentCategory={selectedCategoryName || 'All Category'}
+                  onCategorySelect={(cat) => {
+                    setSelectedCategoryId(cat ? cat.id : null)
+                    setSelectedCategoryName(cat ? cat.name : '')
+                    setSelectedSubCategoryId(null)
+                    setSelectedSubCategoryName('')
+                    setProductPage(1)
+                  }}
+                  subCategories={activeSubCategories}
+                  currentSubCategory={selectedSubCategoryName}
+                  onSubCategorySelect={(sub) => {
+                    setSelectedSubCategoryId(sub ? sub.id : null)
+                    setSelectedSubCategoryName(sub ? sub.name : '')
+                    setProductPage(1)
+                  }}
                 />
               )}
               {renderAdBlock()}
@@ -1581,9 +1632,27 @@ export default function ByBrandPageMain() {
                 onFilterChange={setFilters}
                 pvRange={filters.pvRange}
                 search={filters.search}
-                isBrandPage={true}
-                brands={allBrands}
+                isBrandPage={!selectedBrandItem}
+                brands={selectedBrandItem ? [] : allBrands}
+                categories={selectedBrandItem ? topLevelCategories : []}
                 currentBrand={selectedBrandItem?.name}
+                currentCategory={selectedCategoryName || 'All Category'}
+                onCategorySelect={(cat) => {
+                  setSelectedCategoryId(cat ? cat.id : null)
+                  setSelectedCategoryName(cat ? cat.name : '')
+                  setSelectedSubCategoryId(null)
+                  setSelectedSubCategoryName('')
+                  setProductPage(1)
+                  setIsFilterDrawerOpen(false)
+                }}
+                subCategories={activeSubCategories}
+                currentSubCategory={selectedSubCategoryName}
+                onSubCategorySelect={(sub) => {
+                  setSelectedSubCategoryId(sub ? sub.id : null)
+                  setSelectedSubCategoryName(sub ? sub.name : '')
+                  setProductPage(1)
+                  setIsFilterDrawerOpen(false)
+                }}
               />
             </div>
             {/* Footer */}

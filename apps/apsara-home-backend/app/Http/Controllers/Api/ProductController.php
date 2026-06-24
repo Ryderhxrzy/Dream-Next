@@ -3507,7 +3507,7 @@ class ProductController extends Controller
         }
 
         try {
-        $product = DB::transaction(function () use ($request, $now, $images, $admin, $supplierUser, $brandType) {
+        $product = DB::transaction(function () use ($request, $now, $images, $admin, $supplierUser, $brandType, $isSupplierSubmission) {
             try {
                 $supplierId = $this->actorSupplierId($admin, $supplierUser);
                 $product = Product::create([
@@ -3516,6 +3516,8 @@ class ProductController extends Controller
                     'pd_room_type'   => $this->resolveRoomType($request),
                     'pd_brand_type'  => $brandType ?: 0,
                     'pd_catsubid'    => $request->pd_catsubid ?? 0,
+                    'pd_merchant_catid'    => $request->filled('pd_merchant_catid') ? (int) $request->pd_merchant_catid : null,
+                    'pd_merchant_subcatid' => $request->filled('pd_merchant_subcatid') ? (int) $request->pd_merchant_subcatid : null,
                     'pd_catsubid2'   => 0,
                     'pd_shopid'      => 0,
                     'pd_description'       => $request->pd_description ?? '',

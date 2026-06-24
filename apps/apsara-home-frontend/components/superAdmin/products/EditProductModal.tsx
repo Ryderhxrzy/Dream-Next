@@ -44,6 +44,8 @@ interface EditProductModalProps {
 interface FormState {
   pd_name: string
   pd_catid: string
+  pd_merchant_catid: string
+  pd_merchant_subcatid: string
   pd_room_type: string
   pd_brand_type: string
   pd_description: string
@@ -1591,6 +1593,8 @@ export default function EditProductModal({
   const [form, setForm] = useState<FormState>({
     pd_name: "",
     pd_catid: "",
+    pd_merchant_catid: "",
+    pd_merchant_subcatid: "",
     pd_room_type: "",
     pd_brand_type: "",
     pd_description: "",
@@ -1701,6 +1705,15 @@ export default function EditProductModal({
       (c) => c.parent_id === null && !generalIds.has(c.id)
     )
   }, [isSupplierScopedActor, linkedSupplierId, generalCategories, supplierCatsData?.categories])
+  const merchantSubcategories = useMemo(
+    () =>
+      form.pd_merchant_catid && form.pd_merchant_catid !== "__empty_merchant_cat__"
+        ? (supplierCatsData?.categories ?? []).filter(
+            (c) => c.parent_id === Number(form.pd_merchant_catid)
+          )
+        : [],
+    [supplierCatsData?.categories, form.pd_merchant_catid]
+  )
   const categories = useMemo(
     () => [...generalCategories, ...merchantCategories],
     [generalCategories, merchantCategories]
@@ -1798,6 +1811,8 @@ export default function EditProductModal({
     const nextForm = {
       pd_name: openedProduct.name ?? "",
       pd_catid: String(openedProduct.catid ?? ""),
+      pd_merchant_catid: String(row.pd_merchant_catid ?? row.merchant_catid ?? ""),
+      pd_merchant_subcatid: String(row.pd_merchant_subcatid ?? row.merchant_subcatid ?? ""),
       pd_room_type: openedProduct.roomType
         ? String(openedProduct.roomType)
         : "",
@@ -2584,6 +2599,14 @@ export default function EditProductModal({
     const payload: Partial<CreateProductPayload> = {
       pd_name: form.pd_name.trim(),
       pd_catid: Number(form.pd_catid),
+      pd_merchant_catid:
+        isSupplierScopedActor && form.pd_merchant_catid.trim() && form.pd_merchant_catid !== "__empty_merchant_cat__"
+          ? Number(form.pd_merchant_catid)
+          : undefined,
+      pd_merchant_subcatid:
+        isSupplierScopedActor && form.pd_merchant_subcatid.trim() && form.pd_merchant_subcatid !== "__empty_merchant_subcat__"
+          ? Number(form.pd_merchant_subcatid)
+          : undefined,
       pd_room_type: form.pd_room_type.trim()
         ? Number(form.pd_room_type)
         : undefined,
@@ -3348,6 +3371,67 @@ export default function EditProductModal({
                               </p>
                             </div>
                           </Field>
+                        )}
+
+                        {isSupplierScopedActor && (
+                          <div className="col-span-2 grid grid-cols-2 gap-3">
+                            <Field label="Merchant Category">
+                              {merchantCategories.length > 0 ? (
+                                <ModalSelectField
+                                  ariaLabel="Select merchant category"
+                                  value={form.pd_merchant_catid}
+                                  searchable
+                                  searchPlaceholder="Search merchant categories..."
+                                  onChange={(value) => {
+                                    set(
+                                      "pd_merchant_catid",
+                                      value === "__empty_merchant_cat__" ? "" : value
+                                    )
+                                    set("pd_merchant_subcatid", "")
+                                  }}
+                                  options={[
+                                    { value: "__empty_merchant_cat__", label: "None" },
+                                    ...merchantCategories.map((cat) => ({
+                                      value: String(cat.id),
+                                      label: cat.name,
+                                    })),
+                                  ]}
+                                />
+                              ) : (
+                                <div className={`${inputCls()} flex cursor-not-allowed items-center opacity-60`}>
+                                  No merchant categories yet
+                                </div>
+                              )}
+                            </Field>
+
+                            {form.pd_merchant_catid && form.pd_merchant_catid !== "__empty_merchant_cat__" && (
+                              <Field label="Merchant Subcategory">
+                                {merchantSubcategories.length > 0 ? (
+                                  <ModalSelectField
+                                    ariaLabel="Select merchant subcategory"
+                                    value={form.pd_merchant_subcatid}
+                                    onChange={(value) =>
+                                      set(
+                                        "pd_merchant_subcatid",
+                                        value === "__empty_merchant_subcat__" ? "" : value
+                                      )
+                                    }
+                                    options={[
+                                      { value: "__empty_merchant_subcat__", label: "No subcategory" },
+                                      ...merchantSubcategories.map((cat) => ({
+                                        value: String(cat.id),
+                                        label: cat.name,
+                                      })),
+                                    ]}
+                                  />
+                                ) : (
+                                  <div className={`${inputCls()} flex cursor-not-allowed items-center opacity-60`}>
+                                    No subcategories available
+                                  </div>
+                                )}
+                              </Field>
+                            )}
+                          </div>
                         )}
 
                         {!isServicesView && (

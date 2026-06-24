@@ -1571,6 +1571,8 @@ export default function AddProductModal({
   useEffect(() => {
     if (!isOpen || typeof window === "undefined") return
 
+    setServerError("")
+
     const savedDraft = window.localStorage.getItem(draftKey)
     if (!savedDraft) {
       setDraftRestored(false)
@@ -2233,11 +2235,11 @@ export default function AddProductModal({
         ? Number(form.pd_catsubid)
         : undefined,
       pd_merchant_catid:
-        isSupplierPortal && form.pd_merchant_catid.trim()
+        isSupplierPortal && form.pd_merchant_catid.trim() && form.pd_merchant_catid !== "__empty_merchant_cat__"
           ? Number(form.pd_merchant_catid)
           : undefined,
       pd_merchant_subcatid:
-        isSupplierPortal && form.pd_merchant_subcatid.trim()
+        isSupplierPortal && form.pd_merchant_subcatid.trim() && form.pd_merchant_subcatid !== "__empty_merchant_subcat__"
           ? Number(form.pd_merchant_subcatid)
           : undefined,
       pd_room_type: form.pd_room_type.trim()
