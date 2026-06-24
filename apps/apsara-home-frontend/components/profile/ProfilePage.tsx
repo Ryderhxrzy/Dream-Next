@@ -1804,25 +1804,30 @@ const ProfilePage = ({
     const snapshotDirectReferrals =
       accountSnapshot?.loyalty?.direct_referrals ?? []
     const referralTreeChildren = referralTree?.children ?? []
+    const hasReferralTree = referralTreeChildren.length > 0
     const referralTreeCount = countNodes(referralTreeChildren)
     const snapshotTreeCount = countNodes(snapshotDirectReferrals)
 
-    const directCount = Math.max(
-      referralTree?.summary?.direct_count ?? 0,
-      accountSnapshot?.loyalty?.referral_count ?? 0,
-      snapshotDirectReferrals.length
-    )
-    const secondLevelCount = Math.max(
-      referralTree?.summary?.second_level_count ?? 0,
-      countSecondLevel(referralTreeChildren),
-      countSecondLevel(snapshotDirectReferrals)
-    )
-    const totalNetwork = Math.max(
-      referralTree?.summary?.total_network ?? 0,
-      directCount + secondLevelCount,
-      referralTreeCount,
-      snapshotTreeCount
-    )
+    const directCount = hasReferralTree
+      ? referralTreeChildren.length
+      : Math.max(
+          referralTree?.summary?.direct_count ?? 0,
+          accountSnapshot?.loyalty?.referral_count ?? 0,
+          snapshotDirectReferrals.length
+        )
+    const secondLevelCount = hasReferralTree
+      ? countSecondLevel(referralTreeChildren)
+      : Math.max(
+          referralTree?.summary?.second_level_count ?? 0,
+          countSecondLevel(snapshotDirectReferrals)
+        )
+    const totalNetwork = hasReferralTree
+      ? referralTreeCount
+      : Math.max(
+          referralTree?.summary?.total_network ?? 0,
+          directCount + secondLevelCount,
+          snapshotTreeCount
+        )
     const networkPv =
       (referralTree?.summary as { total_pv?: number } | undefined)?.total_pv ??
       0

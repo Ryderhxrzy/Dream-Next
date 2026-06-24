@@ -1652,34 +1652,15 @@ class AuthController extends Controller
             'c_sponsor',
         ];
 
-        $inferredDirectIds = $this->inferredDirectReferralIdsFromCheckouts($customerId);
-
         // Load only this member's network subtree (descendants reachable via
-        // c_sponsor from the member, plus any checkout-inferred direct referrals
-        // and their subtrees) instead of the entire customer table. Produces the
-        // same tree/counts but a far lighter query that no longer times out.
+        // c_sponsor from the member) instead of the entire customer table.
+        // Shopping-link checkout attribution is intentionally excluded here:
+        // a purchaser can use someone's shopping link without belonging to
+        // their affiliate network.
         $descendants = collect();
         $seenDescendantIds = [$customerId => true];
 
-        if (! empty($inferredDirectIds)) {
-            $inferredRoots = Customer::query()
-                ->select($customerColumns)
-                ->whereIn('c_userid', $inferredDirectIds)
-                ->get();
-            foreach ($inferredRoots as $member) {
-                $memberId = (int) $member->c_userid;
-                if (isset($seenDescendantIds[$memberId])) {
-                    continue;
-                }
-                $seenDescendantIds[$memberId] = true;
-                $descendants->push($member);
-            }
-        }
-
-        $frontier = array_values(array_unique(array_merge(
-            [$customerId],
-            array_map('intval', $inferredDirectIds)
-        )));
+        $frontier = [$customerId];
         $depthGuard = 0;
         while (! empty($frontier) && $depthGuard++ < 100) {
             $batch = Customer::query()
@@ -4626,30 +4607,6 @@ class AuthController extends Controller
         }
 
         return $trimmed;
-    }
-
-    private function inferredDirectReferralIdsFromCheckouts(int $customerId): array
-    {
-        if (
-            $customerId <= 0
-            || !Schema::hasTable('tbl_checkout_history')
-            || !Schema::hasColumn('tbl_checkout_history', 'ch_referrer_customer_id')
-            || !Schema::hasColumn('tbl_checkout_history', 'ch_customer_id')
-        ) {
-            return [];
-        }
-
-        return DB::table('tbl_checkout_history')
-            ->where('ch_referrer_customer_id', $customerId)
-            ->whereNotNull('ch_customer_id')
-            ->where('ch_customer_id', '<>', 0)
-            ->where('ch_customer_id', '<>', $customerId)
-            ->distinct()
-            ->pluck('ch_customer_id')
-            ->map(fn ($id): int => (int) $id)
-            ->filter(fn (int $id): bool => $id > 0)
-            ->values()
-            ->all();
     }
 
     // ========================
