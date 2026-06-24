@@ -206,7 +206,7 @@ async function getPartnerCategoryPageData(
       fetch(`${apiUrl}/api/categories?used_only=1`, {
         method: "GET",
         headers: { Accept: "application/json" },
-        cache: "no-store",
+        next: { revalidate: 300, tags: ["storefront:categories"] },
       }),
     ])
 
@@ -257,7 +257,7 @@ async function getPartnerCategoryPageData(
       {
         method: "GET",
         headers: { Accept: "application/json" },
-        cache: "no-store",
+        next: { revalidate: 60, tags: ["storefront:products"] },
       }
     )
 
@@ -288,7 +288,7 @@ async function getPartnerCategoryPageData(
               {
                 method: "GET",
                 headers: { Accept: "application/json" },
-                cache: "no-store",
+                next: { revalidate: 60, tags: ["storefront:products"] },
               }
             )
             if (!response.ok) return null
