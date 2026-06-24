@@ -1634,24 +1634,73 @@ class AuthController extends Controller
         /** @var Customer $customer */
         $customer = $request->user();
 
-        $descendants = Customer::query()
-            ->select([
-                'c_userid',
-                'c_username',
-                'c_fname',
-                'c_mname',
-                'c_lname',
-                'c_email',
-                'c_avatar_url',
-                'c_accnt_status',
-                'c_lockstatus',
-                'c_totalincome',
-                'c_gpv',
-                'c_date_started',
-                'c_sponsor',
-            ])
-            ->orderBy('c_userid')
-            ->get();
+        $customerId = (int) $customer->c_userid;
+
+        $customerColumns = [
+            'c_userid',
+            'c_username',
+            'c_fname',
+            'c_mname',
+            'c_lname',
+            'c_email',
+            'c_avatar_url',
+            'c_accnt_status',
+            'c_lockstatus',
+            'c_totalincome',
+            'c_gpv',
+            'c_date_started',
+            'c_sponsor',
+        ];
+
+        $inferredDirectIds = $this->inferredDirectReferralIdsFromCheckouts($customerId);
+
+        // Load only this member's network subtree (descendants reachable via
+        // c_sponsor from the member, plus any checkout-inferred direct referrals
+        // and their subtrees) instead of the entire customer table. Produces the
+        // same tree/counts but a far lighter query that no longer times out.
+        $descendants = collect();
+        $seenDescendantIds = [$customerId => true];
+
+        if (! empty($inferredDirectIds)) {
+            $inferredRoots = Customer::query()
+                ->select($customerColumns)
+                ->whereIn('c_userid', $inferredDirectIds)
+                ->get();
+            foreach ($inferredRoots as $member) {
+                $memberId = (int) $member->c_userid;
+                if (isset($seenDescendantIds[$memberId])) {
+                    continue;
+                }
+                $seenDescendantIds[$memberId] = true;
+                $descendants->push($member);
+            }
+        }
+
+        $frontier = array_values(array_unique(array_merge(
+            [$customerId],
+            array_map('intval', $inferredDirectIds)
+        )));
+        $depthGuard = 0;
+        while (! empty($frontier) && $depthGuard++ < 100) {
+            $batch = Customer::query()
+                ->select($customerColumns)
+                ->whereIn('c_sponsor', $frontier)
+                ->get();
+
+            $nextFrontier = [];
+            foreach ($batch as $member) {
+                $memberId = (int) $member->c_userid;
+                if (isset($seenDescendantIds[$memberId])) {
+                    continue;
+                }
+                $seenDescendantIds[$memberId] = true;
+                $descendants->push($member);
+                $nextFrontier[] = $memberId;
+            }
+            $frontier = $nextFrontier;
+        }
+
+        $descendants = $descendants->sortBy('c_userid')->values();
 
         $descendantsBySponsor = $descendants
             ->filter(fn (Customer $member) => (int) ($member->c_sponsor ?? 0) > 0)
@@ -1673,31 +1722,12 @@ class AuthController extends Controller
             return $node;
         };
 
-        $customerId = (int) $customer->c_userid;
-
-        $customerColumns = [
-            'c_userid',
-            'c_username',
-            'c_fname',
-            'c_mname',
-            'c_lname',
-            'c_email',
-            'c_avatar_url',
-            'c_accnt_status',
-            'c_lockstatus',
-            'c_totalincome',
-            'c_gpv',
-            'c_date_started',
-            'c_sponsor',
-        ];
-
         $levelOneMembers = Customer::query()
             ->select($customerColumns)
             ->where('c_sponsor', $customerId)
             ->orderByDesc('c_userid')
             ->get();
 
-        $inferredDirectIds = $this->inferredDirectReferralIdsFromCheckouts($customerId);
         if (! empty($inferredDirectIds)) {
             $inferredMembers = Customer::query()
                 ->select($customerColumns)

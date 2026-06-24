@@ -484,7 +484,10 @@ export const userApi = baseApi.injectEndpoints({
 
     referralTree: builder.query<ReferralTreeResponse, number | string | void>({
       query: () => ({
-        url: "/api/auth/referral-tree",
+        // Backend route is /api/referral-tree (no /auth segment). The old
+        // /api/auth/referral-tree 404'd, so the tree never loaded and Total
+        // Network fell back to the direct-referral count.
+        url: "/api/referral-tree",
         method: "GET",
       }),
       providesTags: ["User"],

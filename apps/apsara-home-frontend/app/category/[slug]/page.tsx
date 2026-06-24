@@ -12,7 +12,10 @@ export const metadata = buildPageMetadata({
   description: "Browse the Category Details page on AF Home.",
   path: "/category/[slug]",
 })
-export const dynamic = "force-dynamic"
+// Public catalog page (no cookies/headers): cache and refresh via the
+// storefront:categories / storefront:products tags instead of forcing dynamic
+// rendering on every request.
+export const revalidate = 60
 
 interface ApiCategoriesResponse {
   categories?: Category[]
@@ -308,7 +311,7 @@ async function getCategoryProducts(slug: string): Promise<{
     const categoriesRes = await serverFetch(`${apiUrl}/api/categories`, {
       method: "GET",
       headers: { Accept: "application/json" },
-      cache: "no-store",
+      next: { revalidate: 300, tags: ["storefront:categories"] },
     })
 
     if (!categoriesRes.ok) {
@@ -369,7 +372,7 @@ async function getCategoryProducts(slug: string): Promise<{
         const productsRes = await serverFetch(productsUrl.toString(), {
           method: "GET",
           headers: { Accept: "application/json" },
-          cache: "no-store",
+          next: { revalidate: 60, tags: ["storefront:products"] },
         })
 
         if (!productsRes.ok) {

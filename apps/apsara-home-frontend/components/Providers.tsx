@@ -15,8 +15,12 @@ import { Provider as ReduxProvider } from "react-redux"
 import { useAccountDeletedListener } from "@/hooks/useAccountDeletedListener"
 import { useEchoSetup } from "@/hooks/useEchoSetup"
 import CartDrawer from "@/components/ui/CartDrawer"
+import LoadingScreen from "@/components/ui/LoadingScreen"
 import WishlistDrawer from "@/components/ui/WishlistDrawer"
 import AdsPopup from "@/components/shop/AdsPopup"
+
+const HOME_SPLASH_KEY = "afhome:splash-shown"
+const HOME_SPLASH_DURATION_MS = 1600
 
 function CustomerSessionGuard() {
   const { data: session, status } = useSession()
@@ -178,6 +182,44 @@ function CustomerDeletedOverlay() {
   )
 }
 
+function HomeSplashOverlay() {
+  const pathname = usePathname()
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    // Splash is a one-time-per-session intro for the home route only. It must
+    // not flash on internal navigation (categories, products, shop, etc.).
+    if (pathname !== "/") return
+
+    let alreadyShown = false
+    try {
+      alreadyShown = window.sessionStorage.getItem(HOME_SPLASH_KEY) === "1"
+    } catch {
+      // sessionStorage may be unavailable (private mode); skip the splash.
+      return
+    }
+    if (alreadyShown) return
+
+    // Intentional client-only reveal on mount: server and first client render
+    // both produce null (no hydration mismatch), then the splash appears.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setVisible(true)
+    const timer = window.setTimeout(() => {
+      setVisible(false)
+      try {
+        window.sessionStorage.setItem(HOME_SPLASH_KEY, "1")
+      } catch {
+        // best-effort only
+      }
+    }, HOME_SPLASH_DURATION_MS)
+
+    return () => window.clearTimeout(timer)
+  }, [pathname])
+
+  if (!visible) return null
+  return <LoadingScreen />
+}
+
 function CustomerProviderTree({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
 
@@ -198,6 +240,7 @@ function CustomerProviderTree({ children }: { children: React.ReactNode }) {
           <AccountDeletedListener />
           <CustomerBannedOverlay />
           <CustomerDeletedOverlay />
+          <HomeSplashOverlay />
           {children}
           <AdsPopup />
           <CartDrawer />

@@ -396,17 +396,30 @@ const getCategorySlugFromProduct = (
   return ""
 }
 
-export async function getProductPageData(
-  slug: string
-): Promise<ProductPageData | null> {
+export type ProductCoreData = Omit<ProductPageData, "relatedProducts">
+
+function resolveApiUrl(): string | null {
   const apiUrl = (
     process.env.LARAVEL_API_URL ?? process.env.NEXT_PUBLIC_LARAVEL_API_URL ?? ""
   ).replace(/^http:\/\/localhost\b/, "http://127.0.0.1")
+  return apiUrl || null
+}
+
+/**
+ * Core product data needed to render the main product view immediately:
+ * the single product + categories + reviews. Excludes related products — those
+ * are fetched separately via getRelatedProducts and streamed with <Suspense>,
+ * so the heavy 300-product listing never blocks the main product render.
+ */
+export async function getProductCore(
+  slug: string
+): Promise<ProductCoreData | null> {
+  const apiUrl = resolveApiUrl()
   if (!apiUrl) return null
   const { slugOnly, id } = parseSlugAndId(slug)
 
   try {
-    const [categoriesRes, productRes, productsRes] = await Promise.allSettled([
+    const [categoriesRes, productRes] = await Promise.allSettled([
       fetchWithRetry(`${apiUrl}/api/categories?page=1&per_page=100`, {
         method: "GET",
         headers: { Accept: "application/json" },
@@ -428,32 +441,16 @@ export async function getProductPageData(
           },
         }
       ),
-      fetchWithRetry(`${apiUrl}/api/products?page=1&per_page=300&status=1`, {
-        method: "GET",
-        headers: { Accept: "application/json" },
-        next: {
-          revalidate: PRODUCT_PAGE_REVALIDATE_SECONDS,
-          tags: ["storefront:products"],
-        },
-      }),
     ])
 
     const categoriesResponse =
       categoriesRes.status === "fulfilled" ? categoriesRes.value : null
     const productResponse =
       productRes.status === "fulfilled" ? productRes.value : null
-    const productsResponse =
-      productsRes.status === "fulfilled" ? productsRes.value : null
 
     const categories =
       categoriesResponse && categoriesResponse.ok
         ? extractCategories(await categoriesResponse.json())
-        : []
-    const products =
-      productsResponse && productsResponse.ok
-        ? extractProducts(await productsResponse.json()).map((p) =>
-            toLooseRecord(p)
-          )
         : []
 
     let target: LooseRecord | null = null
@@ -482,21 +479,8 @@ export async function getProductPageData(
           target = slugJson.product ? toLooseRecord(slugJson.product) : null
         }
       } catch {
-        // Keep other fallback paths below.
+        // Keep fallback empty if the direct lookups fail.
       }
-    }
-
-    if (!target && id && products.length > 0) {
-      target =
-        products.find((row) => toNumber(row.id ?? row.pd_id ?? 0) === id) ??
-        null
-    }
-
-    if (!target && products.length > 0) {
-      target =
-        products.find(
-          (row) => slugify(String(row.name ?? row.pd_name ?? "")) === slugOnly
-        ) ?? null
     }
 
     if (!target) return null
@@ -508,18 +492,6 @@ export async function getProductPageData(
     const categoryId = matchedCategory?.id ?? 0
     const categoryLabel =
       matchedCategory?.name ?? categoryMeta[categorySlug]?.label ?? "Category"
-
-    const relatedProducts = products
-      .filter((row) => {
-        const rowId = toNumber(row.id ?? row.pd_id ?? 0)
-        if (id && rowId === id) return false
-        const rowSlug = slugify(String(row.name ?? row.pd_name ?? ""))
-        if (rowSlug === slugOnly) return false
-        const rowCategorySlug = getCategorySlugFromProduct(row, categories)
-        return rowCategorySlug === categorySlug
-      })
-      .slice(0, 4)
-      .map((row) => toCategoryProduct(row, apiUrl))
 
     const resolvedProduct = toCategoryProduct(target, apiUrl)
     const reviewId = resolvedProduct.id ?? id ?? 0
@@ -556,11 +528,84 @@ export async function getProductPageData(
       categorySlug,
       categoryId,
       categoryLabel,
-      relatedProducts,
       reviewSummary,
       reviews,
     }
   } catch {
     return null
   }
+}
+
+/**
+ * Related products for a product/category. Issues the heavy 300-product
+ * listing fetch, so it is loaded on its own and streamed via <Suspense> on the
+ * product page instead of blocking the main render.
+ */
+export async function getRelatedProducts(
+  slug: string,
+  categorySlug: string
+): Promise<CategoryProduct[]> {
+  const apiUrl = resolveApiUrl()
+  if (!apiUrl) return []
+  const { slugOnly, id } = parseSlugAndId(slug)
+
+  try {
+    const [categoriesRes, productsRes] = await Promise.allSettled([
+      fetchWithRetry(`${apiUrl}/api/categories?page=1&per_page=100`, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        next: {
+          revalidate: PRODUCT_PAGE_REVALIDATE_SECONDS,
+          tags: ["storefront:categories"],
+        },
+      }),
+      fetchWithRetry(`${apiUrl}/api/products?page=1&per_page=300&status=1`, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        next: {
+          revalidate: PRODUCT_PAGE_REVALIDATE_SECONDS,
+          tags: ["storefront:products"],
+        },
+      }),
+    ])
+
+    const categoriesResponse =
+      categoriesRes.status === "fulfilled" ? categoriesRes.value : null
+    const productsResponse =
+      productsRes.status === "fulfilled" ? productsRes.value : null
+
+    const categories =
+      categoriesResponse && categoriesResponse.ok
+        ? extractCategories(await categoriesResponse.json())
+        : []
+    const products =
+      productsResponse && productsResponse.ok
+        ? extractProducts(await productsResponse.json()).map((p) =>
+            toLooseRecord(p)
+          )
+        : []
+
+    return products
+      .filter((row) => {
+        const rowId = toNumber(row.id ?? row.pd_id ?? 0)
+        if (id && rowId === id) return false
+        const rowSlug = slugify(String(row.name ?? row.pd_name ?? ""))
+        if (rowSlug === slugOnly) return false
+        const rowCategorySlug = getCategorySlugFromProduct(row, categories)
+        return rowCategorySlug === categorySlug
+      })
+      .slice(0, 4)
+      .map((row) => toCategoryProduct(row, apiUrl))
+  } catch {
+    return []
+  }
+}
+
+export async function getProductPageData(
+  slug: string
+): Promise<ProductPageData | null> {
+  const core = await getProductCore(slug)
+  if (!core) return null
+  const relatedProducts = await getRelatedProducts(slug, core.categorySlug)
+  return { ...core, relatedProducts }
 }

@@ -11,8 +11,9 @@ export const metadata = buildPageMetadata({
   path: "/assembly",
   noIndex: true,
 })
+// Public page: filesystem PDF listing + cached navbar only (nothing request-
+// specific), so ISR-cache it rather than forcing dynamic rendering.
 export const revalidate = 600
-export const dynamic = "force-dynamic"
 
 type LocalAssemblyGuide = {
   id: string
