@@ -202,6 +202,18 @@ export async function fetchAdminSupplierChatConversation(
   return response.data
 }
 
+// Scope the list to a single supplier user's threads (per-merchant chat drawer).
+export async function fetchAdminSupplierChatConversationsForSupplierUser(
+  supplierUserId: number
+) {
+  const response = await adminSupplierChatRequest<{
+    data: SupplierChatConversation[]
+  }>(
+    `/api/admin/supplier-chat/conversations?supplier_user_id=${supplierUserId}`
+  )
+  return response.data ?? []
+}
+
 type AttachmentPayload = {
   attachment_url: string
   attachment_type: "image" | "video" | "file"

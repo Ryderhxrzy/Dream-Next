@@ -30,8 +30,14 @@ class AdminConversationController extends Controller
         $status = $request->query('status'); // open, pending, resolved
         $assignedToMe = $request->boolean('assigned_to_me', false);
         $search = $request->query('search'); // Search by customer name or subject
+        $customerId = (int) $request->query('customer_id', 0); // List one customer's threads
 
         $query = Conversation::query();
+
+        // Scope to a single customer (used by the per-customer chat drawer).
+        if ($customerId > 0) {
+            $query->where('user_id', $customerId);
+        }
 
         if ($status) {
             $query->where('status', $status);
@@ -232,7 +238,7 @@ class AdminConversationController extends Controller
 
             return response()->json([
                 'message' => 'Message sent successfully.',
-                'data' => $this->formatMessage($message),
+                'data' => $this->formatMessage($message, $conversation),
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
@@ -265,7 +271,7 @@ class AdminConversationController extends Controller
         $messages = $query->paginate($perPage);
 
         return response()->json([
-            'data' => $messages->map(fn (Message $msg) => $this->formatMessage($msg))->values(),
+            'data' => $messages->map(fn (Message $msg) => $this->formatMessage($msg, $conversation))->values(),
             'meta' => [
                 'current_page' => $messages->currentPage(),
                 'last_page' => $messages->lastPage(),
@@ -423,6 +429,9 @@ class AdminConversationController extends Controller
                 'message' => $latestMessage->message,
                 'sent_at' => $latestMessage->created_at->toDateTimeString(),
                 'sender_id' => (int) $latestMessage->sender_id,
+                'sender_type' => ((int) $latestMessage->sender_id === (int) $conversation->user_id)
+                    ? 'customer'
+                    : 'admin',
                 'is_internal' => (bool) $latestMessage->is_internal,
             ] : null,
             'message_count' => $conversation->messages()->count(),
@@ -445,7 +454,7 @@ class AdminConversationController extends Controller
             'messages' => $conversation->messages()
                 ->orderBy('created_at')
                 ->get()
-                ->map(fn (Message $msg) => $this->formatMessage($msg))
+                ->map(fn (Message $msg) => $this->formatMessage($msg, $conversation))
                 ->values(),
         ]);
     }
@@ -453,12 +462,18 @@ class AdminConversationController extends Controller
     /**
      * Format message for response
      */
-    private function formatMessage(Message $message): array
+    private function formatMessage(Message $message, Conversation $conversation): array
     {
+        // Within a conversation the customer is always `user_id`; anyone else is staff.
+        $senderType = ((int) $message->sender_id === (int) $conversation->user_id)
+            ? 'customer'
+            : 'admin';
+
         return [
             'id' => (int) $message->id,
             'conversation_id' => (int) $message->conversation_id,
             'sender_id' => (int) $message->sender_id,
+            'sender_type' => $senderType,
             'message' => (string) $message->message,
             'is_internal' => (bool) $message->is_internal,
             'attachment_url' => $message->attachment_url,

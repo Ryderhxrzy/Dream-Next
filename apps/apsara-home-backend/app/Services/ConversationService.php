@@ -305,6 +305,14 @@ class ConversationService
             return;
         }
 
+        // The customer shares the private-conversation-{id} channel, so internal
+        // (admin-only) notes must never be broadcast there. The posting admin already
+        // sees their note via the optimistic UI update. If admin-to-admin live internal
+        // notes are needed later, emit them on a separate admin-only channel instead.
+        if ($message->is_internal) {
+            return;
+        }
+
         try {
             $pusher = new Pusher(
                 $key,
@@ -322,6 +330,9 @@ class ConversationService
                 'id' => (int) $message->id,
                 'conversation_id' => (int) $message->conversation_id,
                 'sender_id' => (int) $message->sender_id,
+                'sender_type' => ((int) $message->sender_id === (int) $conversation->user_id)
+                    ? 'customer'
+                    : 'admin',
                 'message' => (string) $message->message,
                 'is_internal' => (bool) $message->is_internal,
                 'attachment_url' => $message->attachment_url,

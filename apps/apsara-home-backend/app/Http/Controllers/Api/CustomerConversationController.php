@@ -159,7 +159,7 @@ class CustomerConversationController extends Controller
 
             return response()->json([
                 'message' => 'Message sent successfully.',
-                'data' => $this->formatMessage($message),
+                'data' => $this->formatMessage($message, $conversation),
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
@@ -188,10 +188,14 @@ class CustomerConversationController extends Controller
         }
 
         $perPage = (int) $request->query('per_page', 50);
-        $messages = $conversation->messages()->paginate($perPage);
+
+        // Internal notes are admin-only — never expose them on the customer endpoint.
+        $messages = $conversation->messages()
+            ->where('is_internal', false)
+            ->paginate($perPage);
 
         return response()->json([
-            'data' => $messages->map(fn (Message $msg) => $this->formatMessage($msg))->values(),
+            'data' => $messages->map(fn (Message $msg) => $this->formatMessage($msg, $conversation))->values(),
             'meta' => [
                 'current_page' => $messages->currentPage(),
                 'last_page' => $messages->lastPage(),
@@ -336,7 +340,11 @@ class CustomerConversationController extends Controller
      */
     private function formatConversation(Conversation $conversation): array
     {
-        $latestMessage = $conversation->messages()->latest()->first();
+        // Customer-facing summary must ignore internal (admin-only) notes.
+        $latestMessage = $conversation->messages()
+            ->where('is_internal', false)
+            ->latest()
+            ->first();
 
         return [
             'id' => (int) $conversation->id,
@@ -353,9 +361,13 @@ class CustomerConversationController extends Controller
                 'message' => $latestMessage->message,
                 'sent_at' => $latestMessage->created_at->toDateTimeString(),
                 'sender_id' => (int) $latestMessage->sender_id,
+                'sender_type' => ((int) $latestMessage->sender_id === (int) $conversation->user_id)
+                    ? 'customer'
+                    : 'admin',
             ] : null,
-            'message_count' => $conversation->messages()->count(),
+            'message_count' => $conversation->messages()->where('is_internal', false)->count(),
             'unread_count' => $conversation->messages()
+                ->where('is_internal', false)
                 ->where('sender_id', '!=', auth()->id())
                 ->whereNull('read_at')
                 ->count(),
@@ -387,12 +399,20 @@ class CustomerConversationController extends Controller
     /**
      * Format message for response
      */
-    private function formatMessage(Message $message): array
+    private function formatMessage(Message $message, Conversation $conversation): array
     {
+        // Within a conversation the customer is always `user_id`; anyone else is staff.
+        // This is collision-proof (it doesn't compare IDs across different tables) so the
+        // client can decide bubble side from `sender_type` without guessing.
+        $senderType = ((int) $message->sender_id === (int) $conversation->user_id)
+            ? 'customer'
+            : 'admin';
+
         return [
             'id' => (int) $message->id,
             'conversation_id' => (int) $message->conversation_id,
             'sender_id' => (int) $message->sender_id,
+            'sender_type' => $senderType,
             'message' => (string) $message->message,
             'is_internal' => (bool) $message->is_internal,
             'attachment_url' => $message->attachment_url,

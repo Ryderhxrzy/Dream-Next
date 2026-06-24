@@ -14,6 +14,7 @@ export interface CustomerConversation {
     message: string
     sent_at: string
     sender_id: number
+    sender_type: "customer" | "admin"
   } | null
   message_count: number
   unread_count: number

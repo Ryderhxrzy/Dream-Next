@@ -82,13 +82,85 @@ const generateVariantSku = (
 const DEFAULT_HEX = "#94a3b8"
 const isHex = (value: string) => /^#[0-9a-fA-F]{6}$/.test(value)
 
+/* ─── status (matches the admin-wide convention: 1/2 = Active, 3 = Pending, else Inactive) ── */
+
+type StatusMeta = { label: string; dot: string; badge: string }
+
+const statusMeta = (raw: string | number | null | undefined): StatusMeta => {
+  const v = Number(raw)
+  if (v === 1 || v === 2)
+    return {
+      label: "Active",
+      dot: "bg-emerald-500",
+      badge:
+        "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300",
+    }
+  if (v === 3)
+    return {
+      label: "Pending",
+      dot: "bg-amber-500",
+      badge:
+        "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300",
+    }
+  return {
+    label: "Inactive",
+    dot: "bg-slate-400",
+    badge:
+      "border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300",
+  }
+}
+
+const STATUS_OPTIONS = [
+  { value: "1", label: "Active" },
+  { value: "3", label: "Pending" },
+  { value: "0", label: "Inactive" },
+]
+
 type Scope = { kind: "product" } | { kind: "variant"; id: number }
 type SaveState = "idle" | "saving" | "saved" | "error"
+
+/* ─── icons ────────────────────────────────────────────────── */
+
+const ICON_PATHS: Record<string, string> = {
+  box: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4",
+  cash: "M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z",
+  truck:
+    "M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0",
+  clipboard:
+    "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2",
+  sparkles:
+    "M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z",
+  swatch:
+    "M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01",
+  info: "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
+  chevron: "M19 9l-7 7-7-7",
+  photo:
+    "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z",
+}
+
+function Icon({ name, className = "h-4 w-4" }: { name: string; className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d={ICON_PATHS[name] ?? ICON_PATHS.box}
+      />
+    </svg>
+  )
+}
 
 /* ─── small UI ─────────────────────────────────────────────── */
 
 const inputCls =
-  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm transition focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20 focus:outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+  "w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:hover:border-slate-600"
 
 function FieldShell({
   label,
@@ -101,7 +173,7 @@ function FieldShell({
 }) {
   return (
     <div className="block">
-      <span className="mb-1 block text-xs font-semibold text-slate-500 dark:text-slate-400">
+      <span className="mb-1.5 block text-xs font-medium text-slate-500 dark:text-slate-400">
         {label}
       </span>
       {children}
@@ -114,33 +186,196 @@ function FieldShell({
 
 function SectionCard({
   title,
+  subtitle,
+  icon,
   children,
 }: {
   title: string
+  subtitle?: string
+  icon?: string
   children: React.ReactNode
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/60">
-      <p className="mb-4 text-xs font-bold tracking-[0.16em] text-slate-500 uppercase dark:text-slate-400">
-        {title}
+    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+      <header className="flex items-center gap-3 border-b border-slate-100 px-5 py-3.5 dark:border-slate-800/80">
+        {icon ? (
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+            <Icon name={icon} className="h-4.5 w-4.5" />
+          </span>
+        ) : null}
+        <div className="min-w-0">
+          <h3 className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+            {title}
+          </h3>
+          {subtitle ? (
+            <p className="truncate text-xs text-slate-400">{subtitle}</p>
+          ) : null}
+        </div>
+      </header>
+      <div className="space-y-4 p-5">{children}</div>
+    </section>
+  )
+}
+
+function StatusBadge({ value }: { value: string | number | null | undefined }) {
+  const m = statusMeta(value)
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${m.badge}`}
+    >
+      <span className={`h-1.5 w-1.5 rounded-full ${m.dot}`} />
+      {m.label}
+    </span>
+  )
+}
+
+function Stat({
+  label,
+  value,
+  accent,
+}: {
+  label: string
+  value: string
+  accent?: boolean
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+      <p className="text-[11px] font-medium tracking-wide text-slate-400 uppercase">
+        {label}
       </p>
-      <div className="space-y-4">{children}</div>
+      <p
+        className={`mt-1 truncate text-base font-bold ${
+          accent ? "text-teal-600 dark:text-teal-400" : "text-slate-800 dark:text-slate-100"
+        }`}
+      >
+        {value}
+      </p>
     </div>
   )
 }
 
 function SaveBadge({ state }: { state: SaveState }) {
   if (state === "idle") return null
-  const map: Record<Exclude<SaveState, "idle">, { text: string; cls: string }> = {
-    saving: { text: "Saving…", cls: "text-slate-400" },
-    saved: {
-      text: "✓ Saved",
-      cls: "text-emerald-600 dark:text-emerald-400",
-    },
-    error: { text: "Save failed", cls: "text-red-500" },
-  }
-  const m = map[state]
-  return <span className={`text-xs font-semibold ${m.cls}`}>{m.text}</span>
+  if (state === "saving")
+    return (
+      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+        <span className="h-3 w-3 animate-spin rounded-full border-2 border-slate-300 border-t-teal-500" />
+        Saving…
+      </span>
+    )
+  if (state === "saved")
+    return (
+      <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+        <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+        Saved
+      </span>
+    )
+  return (
+    <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-500">
+      <Icon name="info" className="h-3.5 w-3.5" />
+      Save failed
+    </span>
+  )
+}
+
+/* ─── collapsible read-only description (see more / see less) ─── */
+
+function CollapsibleHtml({ html }: { html: string }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [expanded, setExpanded] = useState(false)
+  const [overflowing, setOverflowing] = useState(false)
+  const COLLAPSED = 260
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const check = () => setOverflowing(el.scrollHeight > COLLAPSED + 8)
+    check()
+    const ro = new ResizeObserver(check)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [html])
+
+  const clamp = overflowing && !expanded
+
+  return (
+    <div>
+      <div className="relative">
+        <div
+          ref={ref}
+          className="prose prose-sm max-w-none text-slate-700 dark:prose-invert dark:text-slate-300"
+          style={
+            clamp
+              ? { maxHeight: COLLAPSED, overflow: "hidden" }
+              : undefined
+          }
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+        {clamp ? (
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-linear-to-t from-white to-transparent dark:from-slate-900" />
+        ) : null}
+      </div>
+      {overflowing ? (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-teal-600 transition hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300"
+        >
+          {expanded ? "See less" : "See more"}
+          <svg
+            className={`h-3.5 w-3.5 transition-transform ${expanded ? "rotate-180" : ""}`}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d={ICON_PATHS.chevron} />
+          </svg>
+        </button>
+      ) : null}
+    </div>
+  )
+}
+
+/* ─── image gallery (read-only main preview + thumbnails) ───── */
+
+function ImageGallery({ images, alt }: { images: string[]; alt: string }) {
+  const [active, setActive] = useState(0)
+  if (!images.length) return null
+  const safe = Math.min(active, images.length - 1)
+  return (
+    <div className="space-y-3">
+      <div className="flex h-56 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-2 sm:h-64 dark:border-slate-700 dark:bg-slate-800">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={images[safe]}
+          alt={alt}
+          className="max-h-full max-w-full object-contain"
+        />
+      </div>
+      {images.length > 1 ? (
+        <div className="flex flex-wrap gap-1.5">
+          {images.map((src, i) => (
+            <button
+              key={`${src}-${i}`}
+              type="button"
+              onClick={() => setActive(i)}
+              className={`h-11 w-11 shrink-0 overflow-hidden rounded-lg border-2 transition ${
+                i === safe
+                  ? "border-teal-500"
+                  : "border-transparent ring-1 ring-slate-200 hover:ring-slate-300 dark:ring-slate-700 dark:hover:ring-slate-600"
+              }`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={src} alt="" className="h-full w-full object-cover" />
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  )
 }
 
 /* ─── skeleton ─────────────────────────────────────────────── */
@@ -157,16 +392,19 @@ function SkField() {
   return (
     <div className="space-y-1.5">
       <SkBar className="h-3 w-20" />
-      <SkBar className="h-9 w-full rounded-lg" />
+      <SkBar className="h-10 w-full rounded-xl" />
     </div>
   )
 }
 
 function SkSection({ rows = 2 }: { rows?: number }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/60">
-      <SkBar className="mb-4 h-3 w-24" />
-      <div className="grid gap-4 sm:grid-cols-2">
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60">
+      <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-3.5 dark:border-slate-800/80">
+        <SkBar className="h-9 w-9 rounded-lg" />
+        <SkBar className="h-3 w-24" />
+      </div>
+      <div className="grid gap-4 p-5 sm:grid-cols-2">
         {Array.from({ length: rows * 2 }).map((_, i) => (
           <SkField key={i} />
         ))}
@@ -178,33 +416,32 @@ function SkSection({ rows = 2 }: { rows?: number }) {
 function DetailSkeleton() {
   return (
     <div className="space-y-5" aria-busy="true" aria-live="polite">
-      {/* Back link */}
       <SkBar className="h-4 w-20" />
 
-      {/* Header (image · title/meta · edit button) */}
-      <div className="flex flex-wrap items-center gap-4">
-        <SkBar className="h-16 w-16 shrink-0 rounded-xl" />
+      {/* Header */}
+      <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+        <SkBar className="h-20 w-20 shrink-0 rounded-xl" />
         <div className="min-w-0 flex-1 space-y-2">
           <SkBar className="h-6 w-64 max-w-full" />
           <SkBar className="h-3 w-40" />
         </div>
-        <SkBar className="h-9 w-24 rounded-xl" />
+        <SkBar className="h-10 w-24 rounded-xl" />
+      </div>
+
+      {/* Summary strip */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <SkBar key={i} className="h-16 w-full rounded-xl" />
+        ))}
       </div>
 
       {/* Two-pane grid */}
       <div className="grid gap-4 lg:grid-cols-3">
-        {/* Left: product entry + variant list */}
         <div className="space-y-3 lg:col-span-1">
-          <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
-            <SkBar className="h-10 w-10 shrink-0 rounded-lg" />
-            <div className="min-w-0 flex-1 space-y-1.5">
-              <SkBar className="h-4 w-28" />
-              <SkBar className="h-3 w-36" />
-            </div>
-          </div>
+          <SkBar className="h-16 w-full rounded-2xl" />
           <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60">
             <div className="border-b border-slate-100 p-2 dark:border-slate-800">
-              <SkBar className="h-8 w-full rounded-lg" />
+              <SkBar className="h-9 w-full rounded-lg" />
             </div>
             <div className="space-y-3 p-3">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -216,8 +453,6 @@ function DetailSkeleton() {
             </div>
           </div>
         </div>
-
-        {/* Right: editor section cards */}
         <div className="space-y-4 lg:col-span-2">
           <SkSection rows={2} />
           <SkSection rows={2} />
@@ -441,7 +676,7 @@ export default function ProductDetailPageMain({
         <p
           className={`text-sm ${opts?.textarea ? "whitespace-pre-line" : ""} ${
             String(getVal(key)).trim()
-              ? "text-slate-800 dark:text-slate-100"
+              ? "font-medium text-slate-800 dark:text-slate-100"
               : "text-slate-400"
           }`}
         >
@@ -473,7 +708,7 @@ export default function ProductDetailPageMain({
       <FieldShell label={label}>
         {!editMode ? (
           <p
-            className={`text-sm font-medium ${
+            className={`text-sm font-semibold ${
               raw.trim() ? "text-slate-800 dark:text-slate-100" : "text-slate-400"
             }`}
           >
@@ -482,7 +717,7 @@ export default function ProductDetailPageMain({
         ) : (
           <div className="relative">
             {prefix ? (
-              <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-slate-400">
+              <span className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-sm font-medium text-slate-400">
                 {prefix}
               </span>
             ) : null}
@@ -493,7 +728,7 @@ export default function ProductDetailPageMain({
               value={raw}
               onChange={(e) => setVal(key, e.target.value)}
               onBlur={() => save(key, getVal(key), true)}
-              className={`${inputCls} ${prefix ? "pl-7" : ""}`}
+              className={`${inputCls} ${prefix ? "pl-8" : ""}`}
             />
           </div>
         )}
@@ -505,15 +740,20 @@ export default function ProductDetailPageMain({
     const checked = Boolean(getVal(key))
     if (!editMode) {
       return (
-        <div className="flex w-full items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700">
-          <span className="text-slate-700 dark:text-slate-200">{label}</span>
+        <div className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-800/40">
+          <span className="font-medium text-slate-700 dark:text-slate-200">{label}</span>
           <span
-            className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${
+            className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold ${
               checked
                 ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
                 : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
             }`}
           >
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                checked ? "bg-emerald-500" : "bg-slate-400"
+              }`}
+            />
             {checked ? "Yes" : "No"}
           </span>
         </div>
@@ -527,7 +767,7 @@ export default function ProductDetailPageMain({
           setVal(key, next)
           save(key, next, false)
         }}
-        className="flex w-full items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 transition hover:border-slate-300 dark:border-slate-700 dark:text-slate-200"
+        className="flex w-full items-center justify-between rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm font-medium text-slate-700 transition hover:border-teal-300 dark:border-slate-700 dark:text-slate-200 dark:hover:border-teal-500/40"
       >
         <span>{label}</span>
         <span
@@ -536,7 +776,7 @@ export default function ProductDetailPageMain({
           }`}
         >
           <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
               checked ? "translate-x-4" : "translate-x-0.5"
             }`}
           />
@@ -550,27 +790,32 @@ export default function ProductDetailPageMain({
     return (
       <FieldShell label="Status">
         {!editMode ? (
-          <span
-            className={`inline-flex w-fit items-center rounded-md border px-2 py-0.5 text-[11px] font-semibold ${
-              value === "1"
-                ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300"
-                : "border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-            }`}
-          >
-            {value === "1" ? "Active" : "Draft"}
-          </span>
+          <StatusBadge value={value} />
         ) : (
-          <select
-            value={value}
-            onChange={(e) => {
-              setVal(key, e.target.value)
-              save(key, e.target.value, false)
-            }}
-            className={inputCls}
-          >
-            <option value="1">Active</option>
-            <option value="0">Draft</option>
-          </select>
+          <div className="inline-flex w-full items-center gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800/60">
+            {STATUS_OPTIONS.map((opt) => {
+              const active = value === opt.value
+              const m = statusMeta(opt.value)
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    setVal(key, opt.value)
+                    save(key, opt.value, false)
+                  }}
+                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold transition ${
+                    active
+                      ? "bg-white text-slate-800 shadow-sm dark:bg-slate-950 dark:text-white"
+                      : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                  }`}
+                >
+                  <span className={`h-1.5 w-1.5 rounded-full ${m.dot}`} />
+                  {opt.label}
+                </button>
+              )
+            })}
+          </div>
         )}
       </FieldShell>
     )
@@ -579,7 +824,7 @@ export default function ProductDetailPageMain({
   const skuField = (label: string, key: string, onRegenerate: () => void) => (
     <FieldShell label={label}>
       {!editMode ? (
-        <p className="font-mono text-sm text-slate-800 dark:text-slate-100">
+        <p className="inline-flex rounded-md bg-slate-100 px-2 py-1 font-mono text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-200">
           {String(getVal(key)).trim() || "—"}
         </p>
       ) : (
@@ -595,7 +840,7 @@ export default function ProductDetailPageMain({
             type="button"
             onClick={onRegenerate}
             title="Generate a new SKU"
-            className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 transition hover:border-teal-300 hover:text-teal-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-teal-500/40 dark:hover:text-teal-300"
+            className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 transition hover:border-teal-300 hover:text-teal-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-teal-500/40 dark:hover:text-teal-300"
           >
             <svg
               className="h-3.5 w-3.5"
@@ -630,7 +875,7 @@ export default function ProductDetailPageMain({
               style={{ backgroundColor: name || isHex(hexRaw) ? hex : "transparent" }}
             />
             <span
-              className={`text-sm ${name ? "text-slate-800 dark:text-slate-100" : "text-slate-400"}`}
+              className={`text-sm ${name ? "font-medium text-slate-800 dark:text-slate-100" : "text-slate-400"}`}
             >
               {name || "—"}
             </span>
@@ -653,7 +898,7 @@ export default function ProductDetailPageMain({
                 save("pv_color", auto, false)
               }
             }}
-            className="h-9 w-11 shrink-0 cursor-pointer rounded-lg border border-slate-300 bg-white p-1 dark:border-slate-700 dark:bg-slate-950"
+            className="h-10 w-12 shrink-0 cursor-pointer rounded-xl border border-slate-300 bg-white p-1 dark:border-slate-700 dark:bg-slate-950"
           />
           <input
             type="text"
@@ -696,6 +941,23 @@ export default function ProductDetailPageMain({
   const hasVariants = variants.length > 0
   const selectedVariant =
     scope.kind === "variant" ? variants.find((v) => v.id === scope.id) : undefined
+  const cleanImages = (arr?: string[] | null) =>
+    (arr ?? []).filter((src): src is string => typeof src === "string" && src.trim() !== "")
+  const productImages = (() => {
+    const imgs = cleanImages(product.images)
+    if (imgs.length) return imgs
+    return product.image ? [product.image] : []
+  })()
+  // Only a variant's own photos are shown when a variant is selected — no
+  // fallback to the product gallery.
+  const variantImages = cleanImages(selectedVariant?.images)
+  const liveStatus = String(productDraft.pd_status ?? product.status ?? 1)
+  const totalStock = hasVariants
+    ? variants.reduce((sum, v) => {
+        const d = v.id != null ? variantDrafts[v.id] : undefined
+        return sum + (numOrNull(toStr(d?.pv_qty ?? v.qty)) ?? 0)
+      }, 0)
+    : numOrNull(String(productDraft.pd_qty ?? "")) ?? 0
 
   return (
     <div className="space-y-5">
@@ -710,49 +972,41 @@ export default function ProductDetailPageMain({
         Products
       </Link>
 
-      {/* Header */}
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
+      {/* Header card */}
+      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 sm:flex-row sm:items-center">
+        <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50 ring-1 ring-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:ring-slate-800">
           {product.image ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
-          ) : null}
+          ) : (
+            <Icon name="box" className="h-7 w-7 text-slate-300 dark:text-slate-600" />
+          )}
         </div>
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-xl font-bold text-slate-900 dark:text-white">
             {String(productDraft.pd_name ?? product.name)}
           </h1>
-          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
-            <span
-              className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 font-semibold ${
-                String(productDraft.pd_status ?? product.status) === "1"
-                  ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300"
-                  : "border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-              }`}
-            >
-              {String(productDraft.pd_status ?? product.status) === "1" ? "Active" : "Draft"}
-            </span>
-            <span className="text-slate-400">·</span>
-            <span className="text-slate-500 dark:text-slate-400">
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+            <StatusBadge value={liveStatus} />
+            <span className="text-slate-400 dark:text-slate-500">
               {hasVariants ? `${variants.length} variants` : "No variants"}
             </span>
             {product.sku ? (
-              <>
-                <span className="text-slate-400">·</span>
-                <span className="font-mono text-slate-500 dark:text-slate-400">{product.sku}</span>
-              </>
+              <span className="inline-flex rounded-md bg-slate-100 px-2 py-0.5 font-mono text-[11px] text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                {product.sku}
+              </span>
             ) : null}
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 sm:flex-col sm:items-end md:flex-row md:items-center">
           <SaveBadge state={saveState} />
           <button
             type="button"
             onClick={toggleEditMode}
-            className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold transition ${
+            className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm transition ${
               editMode
                 ? "bg-teal-600 text-white hover:bg-teal-700"
-                : "border border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                : "border border-slate-200 bg-white text-slate-700 hover:border-teal-300 hover:text-teal-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-teal-500/40"
             }`}
           >
             {editMode ? (
@@ -794,6 +1048,25 @@ export default function ProductDetailPageMain({
         </div>
       </div>
 
+      {/* Edit-mode helper bar */}
+      {editMode ? (
+        <div className="flex items-center gap-2 rounded-xl border border-teal-200 bg-teal-50/70 px-4 py-2.5 text-xs font-medium text-teal-700 dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-300">
+          <Icon name="info" className="h-4 w-4 shrink-0" />
+          Editing is on — each field saves automatically when you finish typing or switch fields.
+        </div>
+      ) : null}
+
+      {/* Summary strip (product scope) */}
+      {scope.kind === "product" ? (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <Stat label="Retail (SRP)" value={peso(Number(productDraft.pd_price_srp ?? 0))} accent />
+          <Stat label="Dealer" value={peso(Number(productDraft.pd_price_dp ?? 0))} />
+          <Stat label="Member" value={peso(Number(productDraft.pd_price_member ?? 0))} />
+          <Stat label="Product PV" value={String(productDraft.pd_prodpv ?? "0") || "0"} />
+          <Stat label="In stock" value={`${totalStock}`} />
+        </div>
+      ) : null}
+
       {/* Two-pane */}
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Left: product + variant list */}
@@ -803,15 +1076,17 @@ export default function ProductDetailPageMain({
             onClick={() => setScope({ kind: "product" })}
             className={`flex w-full items-center gap-3 rounded-2xl border p-3 text-left transition ${
               scope.kind === "product"
-                ? "border-teal-300 bg-teal-50/60 dark:border-teal-500/40 dark:bg-teal-500/10"
+                ? "border-teal-300 bg-teal-50/60 ring-1 ring-teal-200 dark:border-teal-500/40 dark:bg-teal-500/10 dark:ring-teal-500/20"
                 : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/60"
             }`}
           >
-            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
               {product.image ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={product.image} alt="" className="h-full w-full object-cover" />
-              ) : null}
+              ) : (
+                <Icon name="box" className="h-4 w-4 text-slate-300 dark:text-slate-600" />
+              )}
             </div>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
@@ -824,14 +1099,25 @@ export default function ProductDetailPageMain({
           </button>
 
           {hasVariants ? (
-            <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60">
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
               <div className="border-b border-slate-100 p-2 dark:border-slate-800">
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search variants…"
-                  className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm focus:border-teal-300 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                />
+                <div className="relative">
+                  <svg
+                    className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
+                  </svg>
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search variants…"
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pr-3 pl-9 text-sm focus:border-teal-300 focus:bg-white focus:ring-4 focus:ring-teal-500/10 focus:outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                  />
+                </div>
               </div>
               <div className="max-h-[60vh] overflow-y-auto p-1.5">
                 <p className="px-2 py-1 text-[11px] font-bold tracking-widest text-slate-400 uppercase">
@@ -847,7 +1133,12 @@ export default function ProductDetailPageMain({
                   })
                   const active = scope.kind === "variant" && scope.id === v.id
                   const price = numOrNull(toStr(d?.pv_price_srp ?? v.priceSrp))
-                  const qty = numOrNull(toStr(d?.pv_qty ?? v.qty))
+                  const qty = numOrNull(toStr(d?.pv_qty ?? v.qty)) ?? 0
+                  const hexRaw = toStr(d?.pv_color_hex ?? v.colorHex)
+                  const swatch = isHex(hexRaw) ? hexRaw : null
+                  const thumb = v.images?.find(
+                    (src) => typeof src === "string" && src.trim() !== ""
+                  )
                   return (
                     <button
                       key={v.id}
@@ -855,17 +1146,42 @@ export default function ProductDetailPageMain({
                       onClick={() => v.id != null && setScope({ kind: "variant", id: v.id })}
                       className={`flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition ${
                         active
-                          ? "bg-teal-50 dark:bg-teal-500/10"
+                          ? "bg-teal-50 ring-1 ring-teal-200 dark:bg-teal-500/10 dark:ring-teal-500/20"
                           : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
                       }`}
                     >
+                      <span
+                        className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-200 dark:border-slate-700"
+                        style={{ backgroundColor: thumb ? undefined : swatch ?? "transparent" }}
+                      >
+                        {thumb ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={thumb} alt="" className="h-full w-full object-cover" />
+                        ) : swatch ? null : (
+                          <Icon name="swatch" className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600" />
+                        )}
+                      </span>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
                           {title}
                         </p>
-                        <p className="truncate text-[11px] text-slate-400">
-                          {peso(price)} · {qty ?? 0} in stock
+                        <p className="truncate font-mono text-[11px] text-slate-400">
+                          {toStr(d?.pv_sku ?? v.sku) || "—"}
                         </p>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                          {peso(price)}
+                        </p>
+                        <span
+                          className={`mt-0.5 inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold ${
+                            qty > 0
+                              ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300"
+                              : "bg-red-50 text-red-500 dark:bg-red-500/10 dark:text-red-300"
+                          }`}
+                        >
+                          {qty > 0 ? `${qty} in stock` : "Out of stock"}
+                        </span>
                       </div>
                     </button>
                   )
@@ -884,7 +1200,25 @@ export default function ProductDetailPageMain({
         <div className="space-y-4 lg:col-span-2">
           {scope.kind === "product" ? (
             <>
-              <SectionCard title="Product">
+              {productImages.length > 1 ? (
+                <SectionCard
+                  title="Images"
+                  subtitle={`${productImages.length} product images`}
+                  icon="photo"
+                >
+                  <ImageGallery
+                    key="product"
+                    images={productImages}
+                    alt={String(productDraft.pd_name ?? product.name)}
+                  />
+                </SectionCard>
+              ) : null}
+
+              <SectionCard
+                title="Product"
+                subtitle="Name, identifier, status and description"
+                icon="box"
+              >
                 {textField("Product name", "pd_name")}
                 <div className="grid gap-4 sm:grid-cols-2">
                   {skuField("Parent SKU", "pd_parent_sku", () => {
@@ -904,19 +1238,14 @@ export default function ProductDetailPageMain({
                       placeholder="Describe this product — features, materials, warranty…"
                     />
                   ) : String(productDraft.pd_description ?? "").trim() ? (
-                    <div
-                      className="prose prose-sm max-w-none text-slate-700 dark:prose-invert dark:text-slate-300"
-                      dangerouslySetInnerHTML={{
-                        __html: String(productDraft.pd_description ?? ""),
-                      }}
-                    />
+                    <CollapsibleHtml html={String(productDraft.pd_description ?? "")} />
                   ) : (
                     <p className="text-sm text-slate-400">No description</p>
                   )}
                 </FieldShell>
               </SectionCard>
 
-              <SectionCard title="Pricing">
+              <SectionCard title="Pricing" subtitle="Retail, dealer, member and PV" icon="cash">
                 <div className="grid gap-4 sm:grid-cols-2">
                   {numberField("Retail price (SRP)", "pd_price_srp", "₱")}
                   {numberField("Dealer price", "pd_price_dp", "₱")}
@@ -926,12 +1255,12 @@ export default function ProductDetailPageMain({
               </SectionCard>
 
               {!hasVariants ? (
-                <SectionCard title="Inventory">
+                <SectionCard title="Inventory" subtitle="Stock on hand" icon="box">
                   {numberField("Stock quantity", "pd_qty")}
                 </SectionCard>
               ) : null}
 
-              <SectionCard title="Shipping">
+              <SectionCard title="Shipping" subtitle="Weight and package dimensions" icon="truck">
                 <div className="grid gap-4 sm:grid-cols-2">
                   {numberField("Weight (kg)", "pd_weight")}
                   {numberField("Package weight (kg)", "pd_psweight")}
@@ -941,14 +1270,14 @@ export default function ProductDetailPageMain({
                 </div>
               </SectionCard>
 
-              <SectionCard title="Details">
+              <SectionCard title="Details" subtitle="Material and warranty" icon="clipboard">
                 <div className="grid gap-4 sm:grid-cols-2">
                   {textField("Material", "pd_material")}
                   {textField("Warranty", "pd_warranty")}
                 </div>
               </SectionCard>
 
-              <SectionCard title="Merchandising">
+              <SectionCard title="Merchandising" subtitle="Storefront highlights" icon="sparkles">
                 <div className="grid gap-2 sm:grid-cols-3">
                   {toggleField("Must-have", "pd_musthave")}
                   {toggleField("Bestseller", "pd_bestseller")}
@@ -958,12 +1287,37 @@ export default function ProductDetailPageMain({
             </>
           ) : selectedVariant ? (
             <>
-              <SectionCard title={`Variant · ${variantTitle({
-                name: toStr(getVal("pv_name")),
-                size: toStr(getVal("pv_size")),
-                color: toStr(getVal("pv_color")),
-                style: toStr(getVal("pv_style")),
-              })}`}>
+              {variantImages.length > 0 ? (
+                <SectionCard
+                  title="Images"
+                  subtitle={`${variantImages.length} image${
+                    variantImages.length > 1 ? "s" : ""
+                  } for this variant`}
+                  icon="photo"
+                >
+                  <ImageGallery
+                    key={`variant-${scope.kind === "variant" ? scope.id : "x"}`}
+                    images={variantImages}
+                    alt={variantTitle({
+                      name: toStr(getVal("pv_name")),
+                      size: toStr(getVal("pv_size")),
+                      color: toStr(getVal("pv_color")),
+                      style: toStr(getVal("pv_style")),
+                    })}
+                  />
+                </SectionCard>
+              ) : null}
+
+              <SectionCard
+                title={`Variant · ${variantTitle({
+                  name: toStr(getVal("pv_name")),
+                  size: toStr(getVal("pv_size")),
+                  color: toStr(getVal("pv_color")),
+                  style: toStr(getVal("pv_style")),
+                })}`}
+                subtitle="Identifier, attributes and status"
+                icon="swatch"
+              >
                 {textField("Variant name", "pv_name")}
                 <div className="grid gap-4 sm:grid-cols-2">
                   {skuField("SKU", "pv_sku", () => {
@@ -987,7 +1341,7 @@ export default function ProductDetailPageMain({
                 </div>
               </SectionCard>
 
-              <SectionCard title="Pricing">
+              <SectionCard title="Pricing" subtitle="Variant-level prices and PV" icon="cash">
                 <div className="grid gap-4 sm:grid-cols-2">
                   {numberField("Retail price (SRP)", "pv_price_srp", "₱")}
                   {numberField("Dealer price", "pv_price_dp", "₱")}
@@ -996,7 +1350,7 @@ export default function ProductDetailPageMain({
                 </div>
               </SectionCard>
 
-              <SectionCard title="Inventory">
+              <SectionCard title="Inventory" subtitle="Stock on hand" icon="box">
                 {numberField("Stock quantity", "pv_qty")}
               </SectionCard>
             </>
