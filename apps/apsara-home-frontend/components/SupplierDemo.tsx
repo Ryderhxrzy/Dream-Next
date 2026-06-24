@@ -176,8 +176,8 @@ const FEATURES = [
 const HOW_IT_WORKS = [
   {
     n: "01",
-    label: "Register as Merchant",
-    desc: "Apply and get approved as an AF Home merchant partner.",
+    label: "Coordinate with AF Home",
+    desc: "Connect with the AF Home team for merchant onboarding and pilot alignment.",
   },
   {
     n: "02",
@@ -1625,8 +1625,8 @@ export default function SupplierDemo() {
                 transition={{ delay: 0.5 }}
                 className="mb-10 text-lg text-white/40"
               >
-                Join early merchant partners preparing to manage their business
-                through the AF Home platform.
+                Coordinate with AF Home to review merchant onboarding, pilot
+                requirements, and platform readiness.
               </motion.p>
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
@@ -1635,7 +1635,7 @@ export default function SupplierDemo() {
                 className="flex flex-wrap items-center justify-center gap-4"
               >
                 <button className="group flex items-center gap-2 rounded-2xl bg-gradient-to-r from-sky-400 to-blue-500 px-8 py-4 font-bold text-white shadow-[0_0_40px_rgba(56,189,248,0.3)] transition-all hover:from-sky-300 hover:to-blue-400 hover:shadow-[0_0_60px_rgba(56,189,248,0.5)]">
-                  Register as Merchant{" "}
+                  Coordinate with AF Home{" "}
                   <ArrowRight
                     size={16}
                     className="transition-transform group-hover:translate-x-1"
@@ -1691,7 +1691,7 @@ export default function SupplierDemo() {
             {scene === "analytics" && "Analytics & Reports"}
             {scene === "features" && "Platform Features"}
             {scene === "howItWorks" && "Getting Started"}
-            {scene === "cta" && "Join as Merchant"}
+            {scene === "cta" && "Coordinate with AF Home"}
           </span>
         </div>
       </div>
