@@ -154,6 +154,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+
   webpack: (config, { dev }) => {
     // Windows often blocks atomic renames inside webpack's persistent cache packs (EPERM).
     // Disabling the persistent cache for production builds avoids intermittent build failures.

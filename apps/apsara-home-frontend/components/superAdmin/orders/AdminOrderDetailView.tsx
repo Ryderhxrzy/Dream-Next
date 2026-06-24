@@ -13,6 +13,7 @@ import { useSession } from "next-auth/react"
 import Link from "next/link"
 
 import { OrderStatusTimeline } from "@/components/orders/OrderStatusTimeline"
+import AdminCustomerChatDrawer from "@/components/superAdmin/chat/AdminCustomerChatDrawer"
 
 import { ShippingAddressCard } from "./orderUi"
 
@@ -284,6 +285,7 @@ export default function AdminOrderDetailView({ orderId }: { orderId: string }) {
   const [rejectOrder] = useRejectAdminOrderMutation()
   const [trackCourier] = useTrackAdminOrderCourierMutation()
   const [busy, setBusy] = useState<null | "approve" | "reject" | "track">(null)
+  const [chatOpen, setChatOpen] = useState(false)
 
   const order =
     data?.orders?.find((entry) => entry.checkout_id === orderId) ?? null
@@ -459,6 +461,18 @@ export default function AdminOrderDetailView({ orderId }: { orderId: string }) {
 
         {/* Action buttons */}
         <div className="flex flex-wrap items-center gap-2">
+          {order.customer_id > 0 ? (
+            <button
+              type="button"
+              onClick={() => setChatOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-sky-600 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-sky-700"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l1.3-3.9A7.96 7.96 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              Chat customer
+            </button>
+          ) : null}
           {isUnpaid && resumeUrl ? (
             <a
               href={resumeUrl}
@@ -816,6 +830,14 @@ export default function AdminOrderDetailView({ orderId }: { orderId: string }) {
           Refreshing…
         </p>
       ) : null}
+
+      <AdminCustomerChatDrawer
+        open={chatOpen}
+        onClose={() => setChatOpen(false)}
+        customerId={order.customer_id}
+        customerName={order.customer_name}
+        subject={`Order ${order.checkout_id}`}
+      />
     </div>
   )
 }
