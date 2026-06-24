@@ -155,6 +155,37 @@ export const adminConversationsApi = baseApi.injectEndpoints({
         }
       },
     }),
+
+    // Close (resolved) / reopen (open) a conversation.
+    updateConversationStatus: builder.mutation<
+      AdminConversationResponse,
+      { conversationId: number; status: string }
+    >({
+      query: ({ conversationId, status }) => ({
+        url: `/api/admin/conversations/${conversationId}/status`,
+        method: "PATCH",
+        body: { status },
+      }),
+      async onQueryStarted(
+        { conversationId, status },
+        { dispatch, queryFulfilled }
+      ) {
+        const patch = dispatch(
+          adminConversationsApi.util.updateQueryData(
+            "getAdminConversation",
+            conversationId,
+            (draft) => {
+              if (draft?.data) draft.data.status = status
+            }
+          )
+        )
+        try {
+          await queryFulfilled
+        } catch {
+          patch.undo()
+        }
+      },
+    }),
   }),
 })
 
@@ -163,4 +194,5 @@ export const {
   useGetAdminConversationsQuery,
   useGetAdminConversationQuery,
   useSendAdminMessageMutation,
+  useUpdateConversationStatusMutation,
 } = adminConversationsApi

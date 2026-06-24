@@ -7,6 +7,7 @@ import {
 } from "@/store/api/adminConversationsApi"
 import { AnimatePresence, motion } from "framer-motion"
 
+import CloseConversationButton from "./CloseConversationButton"
 import ConversationThread from "./ConversationThread"
 
 interface Props {
@@ -109,6 +110,12 @@ export default function AdminCustomerChatDrawer({
                 </p>
                 <p className="truncate text-[11px] text-slate-400">{headerEmail}</p>
               </div>
+              {conversationId ? (
+                <CloseConversationButton
+                  conversationId={conversationId}
+                  status={convData?.data?.status}
+                />
+              ) : null}
               <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                 Live
