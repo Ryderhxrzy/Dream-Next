@@ -10,6 +10,8 @@ import {
 } from "@/components/orders/OrderStatusTimeline"
 import TierBadge from "@/components/ui/TierBadge"
 
+import AdminCustomerChatDrawer from "@/components/superAdmin/chat/AdminCustomerChatDrawer"
+
 import MembersStatusBadge from "./MembersStatusBadge"
 
 /* ─── helpers ──────────────────────────────────────────────── */
@@ -169,6 +171,7 @@ export default function MemberInfoView({ memberId }: { memberId: number }) {
     left: number
   } | null>(null)
   const [recentPage, setRecentPage] = useState(0)
+  const [chatOpen, setChatOpen] = useState(false)
 
   if (isLoading) {
     return (
@@ -236,6 +239,16 @@ export default function MemberInfoView({ memberId }: { memberId: number }) {
             <TierBadge tier={member.tier} />
             <MembersStatusBadge status={member.status} />
           </div>
+          <button
+            type="button"
+            onClick={() => setChatOpen(true)}
+            className="ml-auto inline-flex items-center gap-1.5 rounded-xl bg-sky-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l1.3-3.9A7.96 7.96 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            Chat customer
+          </button>
         </div>
       </div>
 
@@ -527,6 +540,14 @@ export default function MemberInfoView({ memberId }: { memberId: number }) {
           </p>
         </div>
       ) : null}
+
+      <AdminCustomerChatDrawer
+        open={chatOpen}
+        onClose={() => setChatOpen(false)}
+        customerId={member.id}
+        customerName={member.name}
+        subject="Member support"
+      />
     </div>
   )
 }

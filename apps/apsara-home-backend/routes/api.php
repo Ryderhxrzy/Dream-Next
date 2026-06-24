@@ -420,6 +420,7 @@ Route::middleware(['auth:sanctum', 'admin.role:super_admin,admin,csr'])->group(f
 
     // Admin: Customer Service / Conversations
     Route::get('/admin/conversations', [AdminConversationController::class, 'index']);
+    Route::post('/admin/conversations/with-customer', [AdminConversationController::class, 'createWithCustomer']);
     Route::get('/admin/conversations/open', [AdminConversationController::class, 'openConversations']);
     Route::get('/admin/conversations/statistics', [AdminConversationController::class, 'statistics']);
     Route::get('/admin/conversations/{id}', [AdminConversationController::class, 'show']);

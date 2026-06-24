@@ -71,6 +71,54 @@ class AdminConversationController extends Controller
     }
 
     /**
+     * Find-or-create a conversation with a specific customer and (when unassigned)
+     * assign the acting admin. Used to start a support chat from an order or
+     * member context. Returns the conversation detail with all messages.
+     */
+    public function createWithCustomer(Request $request): JsonResponse
+    {
+        $admin = $request->user();
+        if (!$admin instanceof Admin) {
+            return response()->json(['message' => 'Only admins can start conversations.'], 403);
+        }
+
+        $validated = $request->validate([
+            'customer_id' => 'required|integer|exists:tbl_customer,c_userid',
+            'subject' => 'nullable|string|max:255',
+        ]);
+
+        $customer = Customer::where('c_userid', (int) $validated['customer_id'])->first();
+        if (!$customer) {
+            return response()->json(['message' => 'Customer not found.'], 404);
+        }
+
+        // Reuse the customer's most recent unresolved conversation, otherwise start one.
+        $conversation = Conversation::where('user_id', (int) $customer->c_userid)
+            ->where('status', '!=', 'resolved')
+            ->orderByDesc('updated_at')
+            ->first();
+
+        if (!$conversation) {
+            $subject = trim((string) ($validated['subject'] ?? '')) ?: 'Support chat';
+            $conversation = $this->conversationService->createConversation($customer, $subject, null);
+        }
+
+        // Assign the acting admin when nobody owns it yet (also grants channel access).
+        if (!$conversation->assigned_agent_id) {
+            try {
+                $this->conversationService->assignAgent($conversation, $admin);
+                $conversation = $conversation->fresh() ?? $conversation;
+            } catch (\Exception $e) {
+                // Non-fatal: the conversation is still usable without assignment.
+            }
+        }
+
+        return response()->json([
+            'data' => $this->formatConversationDetailForAdmin($conversation),
+        ], 201);
+    }
+
+    /**
      * Get a specific conversation
      */
     public function show(int $id): JsonResponse
