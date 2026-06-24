@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import {
   AlertCircle,
@@ -13,22 +13,24 @@ import {
   ChevronRight,
   ClipboardList,
   Clock,
-  Layers,
   LayoutDashboard,
   Megaphone,
   Package,
+  Pause,
+  Play,
   ShoppingCart,
+  SkipBack,
+  SkipForward,
   Sparkles,
   Star,
   Tag,
   TrendingUp,
   Truck,
   Upload,
-  Users,
 } from "lucide-react"
 
 /* ─── Data ──────────────────────────────────────────────────── */
-const SUPPLIER_STATS = {
+const MERCHANT_STATS = {
   totalProducts: "1,248",
   pendingOrders: "34",
   deliveredThisMonth: "312",
@@ -174,8 +176,8 @@ const FEATURES = [
 const HOW_IT_WORKS = [
   {
     n: "01",
-    label: "Register as Supplier",
-    desc: "Apply and get approved as an AF Home supplier partner.",
+    label: "Register as Merchant",
+    desc: "Apply and get approved as an AF Home merchant partner.",
   },
   {
     n: "02",
@@ -358,6 +360,59 @@ function SceneNav({ scene, goTo }: { scene: Scene; goTo: (s: Scene) => void }) {
   )
 }
 
+function SceneControls({
+  playing,
+  canPrevious,
+  canNext,
+  onPrevious,
+  onNext,
+  onToggle,
+}: {
+  playing: boolean
+  canPrevious: boolean
+  canNext: boolean
+  onPrevious: () => void
+  onNext: () => void
+  onToggle: () => void
+}) {
+  const buttonBase =
+    "flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70 backdrop-blur-md transition hover:border-sky-300/40 hover:bg-sky-400/15 hover:text-sky-100 disabled:pointer-events-none disabled:opacity-30"
+
+  return (
+    <div className="fixed right-4 bottom-14 z-50 flex items-center gap-2 sm:right-6">
+      <button
+        type="button"
+        aria-label="Previous slide"
+        title="Previous"
+        onClick={onPrevious}
+        disabled={!canPrevious}
+        className={buttonBase}
+      >
+        <SkipBack size={18} />
+      </button>
+      <button
+        type="button"
+        aria-label={playing ? "Pause slideshow" : "Play slideshow"}
+        title={playing ? "Pause" : "Play"}
+        onClick={onToggle}
+        className="flex h-12 w-12 items-center justify-center rounded-full border border-sky-300/30 bg-sky-400/15 text-sky-100 shadow-[0_0_24px_rgba(56,189,248,0.18)] backdrop-blur-md transition hover:bg-sky-400/25"
+      >
+        {playing ? <Pause size={18} /> : <Play size={18} />}
+      </button>
+      <button
+        type="button"
+        aria-label="Next slide"
+        title="Next"
+        onClick={onNext}
+        disabled={!canNext}
+        className={buttonBase}
+      >
+        <SkipForward size={18} />
+      </button>
+    </div>
+  )
+}
+
 /* ─── Highlight Scene ───────────────────────────────────────── */
 function HighlightScene() {
   return (
@@ -406,7 +461,7 @@ function HighlightScene() {
           transition={{ delay: 0.1 }}
           className="mb-5 text-xs font-semibold tracking-[0.2em] text-sky-400 uppercase"
         >
-          Supplier Dashboard
+          Merchant Dashboard
         </motion.p>
         <div className="overflow-hidden">
           <motion.h1
@@ -456,7 +511,7 @@ function HighlightScene() {
           transition={{ delay: 1.2 }}
           className="mx-auto mt-5 max-w-xs text-base leading-relaxed text-white/30"
         >
-          Manage products, orders, and revenue from a single powerful supplier
+          Manage products, orders, and revenue from a single powerful merchant
           hub.
         </motion.p>
       </div>
@@ -470,42 +525,42 @@ function DashboardScene() {
     {
       icon: Package,
       label: "Total Products",
-      value: SUPPLIER_STATS.totalProducts,
+      value: MERCHANT_STATS.totalProducts,
       color: "#38bdf8",
       bg: "rgba(56,189,248,0.08)",
     },
     {
       icon: Clock,
       label: "Pending Orders",
-      value: SUPPLIER_STATS.pendingOrders,
+      value: MERCHANT_STATS.pendingOrders,
       color: "#f59e0b",
       bg: "rgba(245,158,11,0.08)",
     },
     {
       icon: Truck,
       label: "Delivered This Month",
-      value: SUPPLIER_STATS.deliveredThisMonth,
+      value: MERCHANT_STATS.deliveredThisMonth,
       color: "#10b981",
       bg: "rgba(16,185,129,0.08)",
     },
     {
       icon: TrendingUp,
       label: "Monthly Revenue",
-      value: SUPPLIER_STATS.revenue,
+      value: MERCHANT_STATS.revenue,
       color: "#a78bfa",
       bg: "rgba(167,139,250,0.08)",
     },
     {
       icon: Star,
       label: "Avg Rating",
-      value: SUPPLIER_STATS.avgRating,
+      value: MERCHANT_STATS.avgRating,
       color: "#fb7185",
       bg: "rgba(251,113,133,0.08)",
     },
     {
       icon: Tag,
       label: "Active Categories",
-      value: SUPPLIER_STATS.activeCategories,
+      value: MERCHANT_STATS.activeCategories,
       color: "#34d399",
       bg: "rgba(52,211,153,0.08)",
     },
@@ -527,7 +582,7 @@ function DashboardScene() {
           Your Business at a Glance
         </h2>
         <p className="mt-3 text-sm text-white/35">
-          Real-time metrics across your entire supplier operation — all in one
+          Real-time metrics across your entire merchant operation — all in one
           place.
         </p>
       </div>
@@ -552,7 +607,7 @@ function DashboardScene() {
           </div>
           <div className="flex flex-1 items-center gap-2 rounded-md bg-white/5 px-3 py-1.5 font-mono text-xs text-white/25">
             <div className="h-2 w-2 rounded-full bg-sky-400/60" />
-            afhome.ph/supplier/dashboard
+            afhome.ph/merchant/dashboard
           </div>
           <div className="flex items-center gap-1.5 rounded-lg border border-sky-400/20 bg-sky-400/10 px-2.5 py-1">
             <Bell size={10} className="text-sky-400" />
@@ -915,6 +970,23 @@ function OrdersScene() {
 /* ─── Analytics Scene ───────────────────────────────────────── */
 function AnalyticsScene() {
   const max = Math.max(...MONTHLY_REVENUE.map((r) => r.value))
+  const chartWidth = 640
+  const chartHeight = 220
+  const paddingX = 42
+  const paddingY = 24
+  const innerWidth = chartWidth - paddingX * 2
+  const innerHeight = chartHeight - paddingY * 2
+  const step = innerWidth / (MONTHLY_REVENUE.length - 1)
+  const points = MONTHLY_REVENUE.map((r, i) => ({
+    ...r,
+    x: paddingX + i * step,
+    y: paddingY + innerHeight - (r.value / max) * innerHeight,
+  }))
+  const linePath = points
+    .map((point, i) => `${i === 0 ? "M" : "L"} ${point.x} ${point.y}`)
+    .join(" ")
+  const areaPath = `${linePath} L ${points[points.length - 1].x} ${chartHeight - paddingY} L ${points[0].x} ${chartHeight - paddingY} Z`
+  const barWidth = Math.max(16, step * 0.46)
 
   return (
     <motion.div
@@ -960,31 +1032,114 @@ function AnalyticsScene() {
             </div>
           </div>
 
-          <div className="flex h-36 items-end gap-1.5">
-            {MONTHLY_REVENUE.map((r, i) => (
-              <div
-                key={r.month}
-                className="flex flex-1 flex-col items-center gap-1"
-              >
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: `${(r.value / max) * 100}%`, opacity: 1 }}
-                  transition={{
-                    delay: 0.4 + i * 0.06,
-                    duration: 0.5,
-                    ease: "easeOut",
-                  }}
-                  className="w-full rounded-t-md"
-                  style={{
-                    background:
-                      r.month === "Dec"
-                        ? "linear-gradient(180deg, #38bdf8, #0ea5e9)"
-                        : "rgba(56,189,248,0.25)",
-                  }}
-                />
-                <span className="text-[8px] text-white/20">{r.month}</span>
-              </div>
-            ))}
+          <div className="relative overflow-hidden rounded-xl border border-white/5 bg-black/20 px-2 pt-3 pb-1">
+            <svg
+              viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+              role="img"
+              aria-label="Monthly revenue trend graph"
+              className="h-52 w-full"
+            >
+              <defs>
+                <linearGradient id="revenueArea" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.28" />
+                  <stop offset="100%" stopColor="#38bdf8" stopOpacity="0" />
+                </linearGradient>
+                <linearGradient id="revenueBar" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor="#67e8f9" stopOpacity="0.95" />
+                  <stop offset="100%" stopColor="#0284c7" stopOpacity="0.55" />
+                </linearGradient>
+              </defs>
+
+              {[0, 0.25, 0.5, 0.75, 1].map((tick) => {
+                const y = paddingY + innerHeight - tick * innerHeight
+                return (
+                  <g key={tick}>
+                    <line
+                      x1={paddingX}
+                      x2={chartWidth - paddingX}
+                      y1={y}
+                      y2={y}
+                      stroke="rgba(255,255,255,0.08)"
+                    />
+                    <text
+                      x={paddingX - 10}
+                      y={y + 4}
+                      textAnchor="end"
+                      className="fill-white/25 text-[10px]"
+                    >
+                      {Math.round((max * tick) / 100) / 10}M
+                    </text>
+                  </g>
+                )
+              })}
+
+              {points.map((point, i) => {
+                const barHeight = chartHeight - paddingY - point.y
+                return (
+                  <motion.rect
+                    key={point.month}
+                    x={point.x - barWidth / 2}
+                    y={chartHeight - paddingY}
+                    width={barWidth}
+                    height={0}
+                    rx={5}
+                    initial={{ y: chartHeight - paddingY, height: 0 }}
+                    animate={{ y: point.y, height: barHeight }}
+                    transition={{
+                      delay: 0.42 + i * 0.05,
+                      duration: 0.55,
+                      ease: "easeOut",
+                    }}
+                    fill={
+                      point.month === "Dec"
+                        ? "url(#revenueBar)"
+                        : "rgba(56,189,248,0.28)"
+                    }
+                  />
+                )
+              })}
+
+              <motion.path
+                d={areaPath}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.85, duration: 0.5 }}
+                fill="url(#revenueArea)"
+              />
+              <motion.path
+                d={linePath}
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ delay: 0.75, duration: 1, ease: "easeOut" }}
+                fill="none"
+                stroke="#38bdf8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="4"
+              />
+              {points.map((point, i) => (
+                <g key={`${point.month}-label`}>
+                  <motion.circle
+                    cx={point.x}
+                    cy={point.y}
+                    r={0}
+                    animate={{ r: point.month === "Dec" ? 6 : 4 }}
+                    transition={{ delay: 1 + i * 0.04, duration: 0.25 }}
+                    fill={point.month === "Dec" ? "#e0f2fe" : "#38bdf8"}
+                    stroke="#082f49"
+                    strokeWidth="2"
+                  />
+                  <text
+                    x={point.x}
+                    y={chartHeight - 6}
+                    textAnchor="middle"
+                    className="fill-white/30 text-[10px] font-semibold"
+                  >
+                    {point.month}
+                  </text>
+                </g>
+              ))}
+            </svg>
           </div>
         </motion.div>
 
@@ -1073,7 +1228,7 @@ function FeaturesScene() {
           Platform Features
         </p>
         <h2 className="bg-gradient-to-b from-white to-white/60 bg-clip-text text-5xl font-black text-transparent">
-          Built for Suppliers
+          Built for Merchants
         </h2>
         <p className="mt-3 text-sm text-white/30">
           Everything you need to run your business through AF Home.
@@ -1119,7 +1274,7 @@ function HowItWorksScene() {
     >
       <div className="mb-12 text-center">
         <p className="mb-3 text-xs font-semibold tracking-widest text-sky-400 uppercase">
-          Supplier Onboarding
+          Merchant Onboarding
         </p>
         <h2 className="bg-gradient-to-b from-white to-white/60 bg-clip-text text-5xl font-black text-transparent">
           Getting Started
@@ -1169,13 +1324,50 @@ function HowItWorksScene() {
 export default function SupplierDemo() {
   const [scene, setScene] = useState<Scene>("intro")
   const [playing, setPlaying] = useState(true)
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [progressPct, setProgressPct] = useState(0)
+  const frame = useRef<number | null>(null)
+  const elapsedBeforePause = useRef(0)
+  const progressStartedAt = useRef<number | null>(null)
+  const progressScene = useRef<Scene>("intro")
   const sceneIdx = SCENES.indexOf(scene)
 
+  const stopProgressFrame = useCallback(() => {
+    if (frame.current !== null) {
+      cancelAnimationFrame(frame.current)
+      frame.current = null
+    }
+  }, [])
+
+  const resetProgress = useCallback((nextScene: Scene) => {
+    stopProgressFrame()
+    elapsedBeforePause.current = 0
+    progressStartedAt.current = null
+    progressScene.current = nextScene
+    setProgressPct(0)
+  }, [stopProgressFrame])
+
   const goTo = (s: Scene) => {
-    if (timer.current) clearTimeout(timer.current)
+    resetProgress(s)
     setScene(s)
     setPlaying(true)
+  }
+
+  const goPrevious = () => {
+    const previous = SCENES[sceneIdx - 1]
+    if (previous) {
+      resetProgress(previous)
+      setScene(previous)
+      setPlaying(true)
+    }
+  }
+
+  const goNext = () => {
+    const next = SCENES[sceneIdx + 1]
+    if (next) {
+      resetProgress(next)
+      setScene(next)
+      setPlaying(true)
+    }
   }
 
   useEffect(() => {
@@ -1190,15 +1382,55 @@ export default function SupplierDemo() {
   }, [])
 
   useEffect(() => {
-    if (!playing) return
-    timer.current = setTimeout(() => {
-      const next = SCENES[sceneIdx + 1]
-      if (next) setScene(next)
-    }, DURATIONS[scene])
-    return () => {
-      if (timer.current) clearTimeout(timer.current)
+    stopProgressFrame()
+
+    if (progressScene.current !== scene) {
+      elapsedBeforePause.current = 0
+      progressStartedAt.current = null
+      progressScene.current = scene
+      setProgressPct(0)
     }
-  }, [scene, playing, sceneIdx])
+
+    if (!playing) {
+      progressStartedAt.current = null
+      return
+    }
+
+    progressStartedAt.current = performance.now()
+    const duration = DURATIONS[scene]
+
+    const tick = (now: number) => {
+      const startedAt = progressStartedAt.current ?? now
+      const elapsed = elapsedBeforePause.current + now - startedAt
+      const nextProgress = Math.min(100, (elapsed / duration) * 100)
+
+      setProgressPct(nextProgress)
+
+      if (elapsed >= duration) {
+        const next = SCENES[sceneIdx + 1]
+        if (next) {
+          resetProgress(next)
+          setScene(next)
+        } else {
+          setPlaying(false)
+        }
+        return
+      }
+
+      frame.current = requestAnimationFrame(tick)
+    }
+
+    frame.current = requestAnimationFrame(tick)
+
+    return () => {
+      stopProgressFrame()
+      if (progressStartedAt.current !== null) {
+        elapsedBeforePause.current +=
+          performance.now() - progressStartedAt.current
+        progressStartedAt.current = null
+      }
+    }
+  }, [scene, playing, sceneIdx, resetProgress, stopProgressFrame])
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#030609] text-white">
@@ -1215,6 +1447,14 @@ export default function SupplierDemo() {
       />
 
       <SceneNav scene={scene} goTo={goTo} />
+      <SceneControls
+        playing={playing}
+        canPrevious={sceneIdx > 0}
+        canNext={sceneIdx < SCENES.length - 1}
+        onPrevious={goPrevious}
+        onNext={goNext}
+        onToggle={() => setPlaying((current) => !current)}
+      />
 
       {!playing && (
         <motion.div
@@ -1261,7 +1501,7 @@ export default function SupplierDemo() {
                 transition={{ delay: 0.5 }}
                 className="mt-3 mb-4 bg-gradient-to-b from-white to-white/60 bg-clip-text text-6xl leading-tight font-black text-transparent"
               >
-                Supplier Dashboard
+                Merchant Dashboard
               </motion.h1>
               <motion.p
                 initial={{ opacity: 0 }}
@@ -1325,7 +1565,7 @@ export default function SupplierDemo() {
                 transition={{ delay: 1 }}
                 className="inline-flex items-center gap-2 rounded-full border border-sky-400/20 bg-sky-400/10 px-5 py-2.5 text-sm font-medium text-sky-300"
               >
-                <Sparkles size={14} /> AF Home Supplier Dashboard solves this
+                <Sparkles size={14} /> AF Home Merchant Dashboard solves this
               </motion.div>
             </motion.div>
           )}
@@ -1385,7 +1625,7 @@ export default function SupplierDemo() {
                 transition={{ delay: 0.5 }}
                 className="mb-10 text-lg text-white/40"
               >
-                Join hundreds of suppliers already managing their business
+                Join early merchant partners preparing to manage their business
                 through the AF Home platform.
               </motion.p>
               <motion.div
@@ -1395,7 +1635,7 @@ export default function SupplierDemo() {
                 className="flex flex-wrap items-center justify-center gap-4"
               >
                 <button className="group flex items-center gap-2 rounded-2xl bg-gradient-to-r from-sky-400 to-blue-500 px-8 py-4 font-bold text-white shadow-[0_0_40px_rgba(56,189,248,0.3)] transition-all hover:from-sky-300 hover:to-blue-400 hover:shadow-[0_0_60px_rgba(56,189,248,0.5)]">
-                  Register as Supplier{" "}
+                  Register as Merchant{" "}
                   <ArrowRight
                     size={16}
                     className="transition-transform group-hover:translate-x-1"
@@ -1435,12 +1675,9 @@ export default function SupplierDemo() {
       {/* Progress bar */}
       <div className="fixed right-0 bottom-0 left-0 z-50">
         <div className="h-px bg-white/5">
-          <motion.div
-            key={scene}
+          <div
             className="h-full bg-gradient-to-r from-sky-400 to-blue-500"
-            initial={{ width: "0%" }}
-            animate={{ width: "100%" }}
-            transition={{ duration: DURATIONS[scene] / 1000, ease: "linear" }}
+            style={{ width: `${progressPct}%` }}
           />
         </div>
         <div className="flex justify-center pt-2 pb-3">
@@ -1454,7 +1691,7 @@ export default function SupplierDemo() {
             {scene === "analytics" && "Analytics & Reports"}
             {scene === "features" && "Platform Features"}
             {scene === "howItWorks" && "Getting Started"}
-            {scene === "cta" && "Join as Supplier"}
+            {scene === "cta" && "Join as Merchant"}
           </span>
         </div>
       </div>

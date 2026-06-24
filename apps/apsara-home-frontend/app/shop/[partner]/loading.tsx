@@ -6,6 +6,7 @@ import type { WebPageItem } from "@/store/api/webPagesApi"
 import { usePathname } from "next/navigation"
 
 import LoadingScreen from "@/components/ui/LoadingScreen"
+import RouteProgressBar from "@/components/ui/RouteProgressBar"
 
 type PartnerStorefrontApiResponse = {
   items?: WebPageItem[]
@@ -52,6 +53,44 @@ export default function PartnerShopLoading() {
   )
   const displayName = useMemo(() => (slug ? titleCase(slug) : "Shop"), [slug])
   const [logoSrc, setLogoSrc] = useState<string | null>(null)
+  // Branded partner splash shows only once per session per storefront (same
+  // session key as /[partner]); later navigations get only a subtle top bar.
+  const [splashAllowed, setSplashAllowed] = useState(false)
+
+  useEffect(() => {
+    if (!slug) return
+    let alreadyShown = false
+    try {
+      alreadyShown =
+        window.sessionStorage.getItem(`afhome:partner-splash-shown:${slug}`) ===
+        "1"
+    } catch {
+      return
+    }
+    if (alreadyShown) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSplashAllowed(true)
+  }, [slug])
+
+  // Mark "shown" only AFTER the partner logo displays (or a short fallback for
+  // logo-less storefronts), so the brand logo reliably appears on the first
+  // splash before it is suppressed on later navigations.
+  useEffect(() => {
+    if (!slug || !splashAllowed) return
+    const markShown = () => {
+      try {
+        window.sessionStorage.setItem(`afhome:partner-splash-shown:${slug}`, "1")
+      } catch {
+        // best-effort only
+      }
+    }
+    if (logoSrc) {
+      markShown()
+      return
+    }
+    const timer = window.setTimeout(markShown, 3000)
+    return () => window.clearTimeout(timer)
+  }, [slug, splashAllowed, logoSrc])
 
   // Set favicon/tab icon immediately during loading (before partner page data finishes).
   useEffect(() => {
@@ -84,6 +123,7 @@ export default function PartnerShopLoading() {
         "/Images/af_home_logo.png"
       )
       if (!isDefaultAfHome) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setLogoSrc(normalizedCachedIcon)
         setIcon("icon", normalizedCachedIcon)
         setIcon("apple-touch-icon", normalizedCachedIcon)
@@ -205,6 +245,11 @@ export default function PartnerShopLoading() {
 
     loadAndSetLogo()
   }, [slug])
+
+  // Subtle bar on repeat navigations within the storefront (no full splash).
+  if (!splashAllowed) {
+    return <RouteProgressBar />
+  }
 
   return (
     <LoadingScreen

@@ -6,6 +6,7 @@ import type { WebPageItem } from "@/store/api/webPagesApi"
 import { usePathname } from "next/navigation"
 
 import LoadingScreen from "@/components/ui/LoadingScreen"
+import RouteProgressBar from "@/components/ui/RouteProgressBar"
 
 type PartnerStorefrontApiResponse = {
   items?: WebPageItem[]
@@ -52,6 +53,50 @@ export default function PartnerLoading() {
       .join(" ")
   }, [partnerSlug])
   const [logoSrc, setLogoSrc] = useState<string | null>(null)
+  // Show the branded partner splash only once per session per storefront — like
+  // the AF Home home splash. On later navigations within the same storefront we
+  // render only a subtle top bar so it does not flash on every page.
+  const [splashAllowed, setSplashAllowed] = useState(false)
+
+  useEffect(() => {
+    if (!partnerSlug) return
+    let alreadyShown = false
+    try {
+      alreadyShown =
+        window.sessionStorage.getItem(
+          `afhome:partner-splash-shown:${partnerSlug}`
+        ) === "1"
+    } catch {
+      return
+    }
+    if (alreadyShown) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSplashAllowed(true)
+  }, [partnerSlug])
+
+  // Mark the splash as "shown" only AFTER the partner logo has displayed (or a
+  // short fallback for logo-less storefronts). Otherwise the once-per-session
+  // splash fires on the first load — before the logo finishes fetching — so the
+  // brand logo would never appear.
+  useEffect(() => {
+    if (!partnerSlug || !splashAllowed) return
+    const markShown = () => {
+      try {
+        window.sessionStorage.setItem(
+          `afhome:partner-splash-shown:${partnerSlug}`,
+          "1"
+        )
+      } catch {
+        // best-effort only
+      }
+    }
+    if (logoSrc) {
+      markShown()
+      return
+    }
+    const timer = window.setTimeout(markShown, 3000)
+    return () => window.clearTimeout(timer)
+  }, [partnerSlug, splashAllowed, logoSrc])
 
   useEffect(() => {
     if (!partnerSlug) return
@@ -83,6 +128,7 @@ export default function PartnerLoading() {
           "/Images/af_home_logo.png"
         )
         if (!isDefaultAfHome) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           setLogoSrc(normalizedCachedLoadingLogo)
         }
       }
@@ -212,6 +258,11 @@ export default function PartnerLoading() {
 
     loadStorefrontLogo()
   }, [brandText, partnerSlug])
+
+  // Subtle bar on repeat navigations within the storefront (no full splash).
+  if (!splashAllowed) {
+    return <RouteProgressBar />
+  }
 
   return (
     <LoadingScreen
