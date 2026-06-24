@@ -63,27 +63,32 @@ class CustomerConversationController extends Controller
         }
 
         $validated = $request->validate([
-            'subject' => 'required|string|min:3|max:255',
+            'subject' => 'nullable|string|max:255',
             'description' => 'nullable|string|max:2000',
         ]);
 
-        try {
+        // Reuse the customer's existing open conversation instead of spawning a
+        // new thread each time — lets the customer start a chat to describe their
+        // issue, but prevents duplicate/spam conversations. Once support resolves
+        // (closes) it, the next start opens a fresh thread.
+        $conversation = Conversation::where('user_id', $customer->c_userid)
+            ->where('status', '!=', 'resolved')
+            ->orderByDesc('updated_at')
+            ->first();
+
+        if (!$conversation) {
+            $subject = trim((string) ($validated['subject'] ?? '')) ?: 'Support';
             $conversation = $this->conversationService->createConversation(
                 $customer,
-                $validated['subject'],
+                $subject,
                 $validated['description'] ?? null
             );
-
-            return response()->json([
-                'message' => 'Conversation created successfully.',
-                'data' => $this->formatConversation($conversation),
-            ], 201);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Failed to create conversation.',
-                'error' => $e->getMessage(),
-            ], 422);
         }
+
+        return response()->json([
+            'message' => 'Conversation ready.',
+            'data' => $this->formatConversation($conversation),
+        ], 201);
     }
 
     /**
@@ -128,6 +133,12 @@ class CustomerConversationController extends Controller
 
         if (!$conversation) {
             return response()->json(['message' => 'Conversation not found.'], 404);
+        }
+
+        if ($conversation->status === 'resolved') {
+            return response()->json([
+                'message' => 'This conversation has been closed.',
+            ], 422);
         }
 
         $validated = $request->validate([

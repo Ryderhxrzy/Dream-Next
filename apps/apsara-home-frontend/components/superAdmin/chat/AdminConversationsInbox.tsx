@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { useGetAdminConversationsQuery } from "@/store/api/adminConversationsApi"
 
+import CloseConversationButton from "./CloseConversationButton"
 import ConversationThread from "./ConversationThread"
 
 const STATUS_TABS: Array<{ value: string; label: string }> = [
@@ -249,6 +250,10 @@ export default function AdminConversationsInbox() {
                     {selected.status}
                   </span>
                 ) : null}
+                <CloseConversationButton
+                  conversationId={selectedId}
+                  status={selected?.status}
+                />
               </div>
               <ConversationThread key={selectedId} conversationId={selectedId} />
             </>
