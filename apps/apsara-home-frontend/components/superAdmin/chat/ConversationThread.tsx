@@ -44,11 +44,20 @@ export default function ConversationThread({
   const accessToken = (session?.user as { accessToken?: string } | undefined)
     ?.accessToken
 
-  const [text, setText] = useState("")
+  // Per-conversation drafts so switching threads never loses what you're typing.
+  const [drafts, setDrafts] = useState<Record<number, string>>({})
+  const text = drafts[conversationId] ?? ""
+  const setDraft = (value: string) =>
+    setDrafts((d) => ({ ...d, [conversationId]: value }))
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const [sendMessage, { isLoading: sending }] = useSendAdminMessageMutation()
-  const { data: convData, isLoading } = useGetAdminConversationQuery(conversationId)
+  // Poll as a realtime fallback so the latest messages always show even if the
+  // Pusher channel isn't delivering (useConversationRealtime below stays primary).
+  const { data: convData, isLoading } = useGetAdminConversationQuery(
+    conversationId,
+    { pollingInterval: 5000 }
+  )
 
   useConversationRealtime({ conversationId, accessToken })
 
@@ -60,16 +69,16 @@ export default function ConversationThread({
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
-  }, [messages.length])
+  }, [messages.length, conversationId])
 
   const handleSend = async () => {
     const body = text.trim()
     if (!body || sending) return
-    setText("")
+    setDraft("")
     try {
       await sendMessage({ conversationId, message: body }).unwrap()
     } catch {
-      setText(body)
+      setDraft(body)
     }
   }
 
@@ -125,7 +134,7 @@ export default function ConversationThread({
         <div className="flex items-end gap-2">
           <textarea
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault()

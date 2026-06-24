@@ -4,6 +4,9 @@ export interface ConversationMessage {
   id: number
   conversation_id: number
   sender_id: number
+  // "customer" = the conversation owner, "admin" = support/agent. Decides bubble side
+  // without comparing IDs across tables. Realtime payloads include it too.
+  sender_type: "customer" | "admin"
   message: string
   is_internal: boolean
   attachment_url: string | null
@@ -34,6 +37,7 @@ export interface AdminConversation {
     message: string
     sent_at: string
     sender_id: number
+    sender_type: "customer" | "admin"
     is_internal: boolean
   } | null
   message_count: number
@@ -63,6 +67,8 @@ export interface AdminConversationsQuery {
   assigned_to_me?: boolean
   search?: string
   per_page?: number
+  // Scope the list to a single customer's threads (per-customer chat drawer).
+  customer_id?: number
 }
 
 export const adminConversationsApi = baseApi.injectEndpoints({
@@ -145,6 +151,7 @@ export const adminConversationsApi = baseApi.injectEndpoints({
                   message: msg.message,
                   sent_at: msg.created_at,
                   sender_id: msg.sender_id,
+                  sender_type: msg.sender_type,
                   is_internal: msg.is_internal,
                 }
               }

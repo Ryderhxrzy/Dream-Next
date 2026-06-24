@@ -56,6 +56,9 @@ export function useConversationRealtime({ conversationId, accessToken }: Options
         id: Number(data.id),
         conversation_id: Number(data.conversation_id ?? conversationId),
         sender_id: Number(data.sender_id ?? 0),
+        // Backend now includes sender_type in the broadcast; default to "customer"
+        // since an admin's own message is deduped via the send mutation's cache.
+        sender_type: data.sender_type ?? "customer",
         message: String(data.message ?? ""),
         is_internal: Boolean(data.is_internal),
         attachment_url: data.attachment_url ?? null,
@@ -79,6 +82,7 @@ export function useConversationRealtime({ conversationId, accessToken }: Options
               message: message.message,
               sent_at: message.created_at,
               sender_id: message.sender_id,
+              sender_type: message.sender_type,
               is_internal: message.is_internal,
             }
           }

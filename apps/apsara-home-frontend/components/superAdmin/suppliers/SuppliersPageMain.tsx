@@ -34,6 +34,8 @@ import {
 } from "lucide-react"
 import { useSession } from "next-auth/react"
 
+import AdminMerchantChatDrawer from "@/components/superAdmin/chat/AdminMerchantChatDrawer"
+
 const CAT_COLORS = [
   { bg: "bg-indigo-100 dark:bg-indigo-500/15", icon: "text-indigo-500 dark:text-indigo-400" },
   { bg: "bg-rose-100 dark:bg-rose-500/15",    icon: "text-rose-500 dark:text-rose-400" },
@@ -87,6 +89,7 @@ export default function SuppliersPageMain() {
     isSupplierPortal ||
     (session?.user?.userLevelId ?? 0) === 8
   const { data, isLoading, isError } = useGetSuppliersQuery()
+  const [chatTarget, setChatTarget] = useState<SupplierItem | null>(null)
   const [createSupplier, { isLoading: isCreatingSupplier }] =
     useCreateSupplierMutation()
   const [updateSupplier, { isLoading: isUpdatingSupplier }] =
@@ -1138,6 +1141,13 @@ export default function SuppliersPageMain() {
                       <div className="flex flex-wrap items-center gap-2">
                         <button
                           type="button"
+                          onClick={() => setChatTarget(supplier)}
+                          className="rounded-full border border-amber-200/90 bg-amber-50/80 px-3.5 py-2 text-xs font-semibold text-amber-700 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-amber-100 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200 dark:hover:bg-amber-500/15"
+                        >
+                          Chat
+                        </button>
+                        <button
+                          type="button"
                           onClick={() =>
                             setExpandedSupplierTreeId((prev) =>
                               prev === supplier.id ? null : supplier.id
@@ -1229,6 +1239,13 @@ export default function SuppliersPageMain() {
           </div>
         </div>
       </section>
+
+      <AdminMerchantChatDrawer
+        open={!!chatTarget}
+        onClose={() => setChatTarget(null)}
+        supplierId={chatTarget?.id}
+        merchantName={chatTarget?.company || chatTarget?.name}
+      />
 
       {categoryTarget ? (
         <ModalShell onClose={() => { setCategoryTarget(null); setCategorySearch("") }}>
