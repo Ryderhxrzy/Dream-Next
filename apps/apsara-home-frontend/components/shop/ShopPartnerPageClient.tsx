@@ -30,14 +30,25 @@ const titleCase = (value: string) =>
 
 type ShopPartnerPageClientProps = {
   partnerSlug: string
+  initialPartner?: PartnerStorefrontConfig | null
+  initialShopData?: ShopBuilderApiResponse | null
 }
 
 export default function ShopPartnerPageClient({
   partnerSlug,
+  initialPartner = null,
+  initialShopData = null,
 }: ShopPartnerPageClientProps) {
-  const [partner, setPartner] = useState<PartnerStorefrontConfig | null>(null)
-  const [shopData, setShopData] = useState<ShopBuilderApiResponse | null>(null)
-  const [loading, setLoading] = useState(true)
+  const hasInitialData = Boolean(initialPartner && initialShopData)
+  const [partner, setPartner] = useState<PartnerStorefrontConfig | null>(
+    initialPartner
+  )
+  const [shopData, setShopData] = useState<ShopBuilderApiResponse | null>(
+    initialShopData
+  )
+  // When the server already provided the storefront data, render it instantly —
+  // no client-side loading screen flashing on every navigation.
+  const [loading, setLoading] = useState(!hasInitialData)
   const [error, setError] = useState<string | null>(null)
 
   const displayName = useMemo(
@@ -46,6 +57,11 @@ export default function ShopPartnerPageClient({
   )
 
   useEffect(() => {
+    // SSR already supplied the storefront — skip the client fetch so there is no
+    // loading flash. Freshness is handled by the cached server fetch on each
+    // navigation.
+    if (initialPartner && initialShopData) return
+
     const controller = new AbortController()
     const apiBase = (process.env.NEXT_PUBLIC_LARAVEL_API_URL ?? "").replace(
       /\/+$/,
@@ -141,11 +157,12 @@ export default function ShopPartnerPageClient({
     return () => {
       controller.abort()
     }
-  }, [partnerSlug])
+  }, [partnerSlug, initialPartner, initialShopData])
 
   if (loading) {
     return (
       <LoadingScreen
+        logoSrc={partner?.logoUrl ?? partner?.tabLogoUrl ?? null}
         brandText={displayName}
         tagline="Partner Storefront"
         useDefaultLogoFallback={false}

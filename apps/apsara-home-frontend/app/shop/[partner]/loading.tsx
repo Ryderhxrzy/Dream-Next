@@ -52,13 +52,19 @@ export default function PartnerShopLoading() {
     [pathname]
   )
   const displayName = useMemo(() => (slug ? titleCase(slug) : "Shop"), [slug])
+  // Splash only on the storefront ROOT (/shop/<slug>), never on sub-pages like
+  // /shop/<slug>/product or /category — those just get a subtle bar.
+  const isStorefrontRoot = useMemo(
+    () => pathname.split("/").filter(Boolean).length === 2,
+    [pathname]
+  )
   const [logoSrc, setLogoSrc] = useState<string | null>(null)
   // Branded partner splash shows only once per session per storefront (same
   // session key as /[partner]); later navigations get only a subtle top bar.
   const [splashAllowed, setSplashAllowed] = useState(false)
 
   useEffect(() => {
-    if (!slug) return
+    if (!slug || !isStorefrontRoot) return
     let alreadyShown = false
     try {
       alreadyShown =
@@ -68,29 +74,17 @@ export default function PartnerShopLoading() {
       return
     }
     if (alreadyShown) return
+    // Mark shown immediately so the splash reliably appears only on the first
+    // storefront entry per session — never on later navigations (the page now
+    // loads fast via SSR, so the fallback may mount only briefly).
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSplashAllowed(true)
-  }, [slug])
-
-  // Mark "shown" only AFTER the partner logo displays (or a short fallback for
-  // logo-less storefronts), so the brand logo reliably appears on the first
-  // splash before it is suppressed on later navigations.
-  useEffect(() => {
-    if (!slug || !splashAllowed) return
-    const markShown = () => {
-      try {
-        window.sessionStorage.setItem(`afhome:partner-splash-shown:${slug}`, "1")
-      } catch {
-        // best-effort only
-      }
+    try {
+      window.sessionStorage.setItem(`afhome:partner-splash-shown:${slug}`, "1")
+    } catch {
+      // best-effort only
     }
-    if (logoSrc) {
-      markShown()
-      return
-    }
-    const timer = window.setTimeout(markShown, 3000)
-    return () => window.clearTimeout(timer)
-  }, [slug, splashAllowed, logoSrc])
+  }, [slug, isStorefrontRoot])
 
   // Set favicon/tab icon immediately during loading (before partner page data finishes).
   useEffect(() => {

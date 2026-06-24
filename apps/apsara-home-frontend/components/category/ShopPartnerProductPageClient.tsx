@@ -33,6 +33,9 @@ type ApiProductsResponse = {
 
 type ShopPartnerProductPageClientProps = {
   partnerSlug: string
+  initialPartner?: PartnerStorefrontConfig | null
+  initialCategories?: Category[] | null
+  initialProducts?: Product[] | null
 }
 
 const titleCase = (value: string) =>
@@ -163,11 +166,43 @@ const mapProduct = (product: Product, apiUrl?: string): CategoryProduct => ({
 
 export default function ShopPartnerProductPageClient({
   partnerSlug,
+  initialPartner = null,
+  initialCategories = null,
+  initialProducts = null,
 }: ShopPartnerProductPageClientProps) {
-  const [partner, setPartner] = useState<PartnerStorefrontConfig | null>(null)
-  const [categories, setCategories] = useState<Category[]>([])
-  const [products, setProducts] = useState<CategoryProduct[]>([])
-  const [loading, setLoading] = useState(true)
+  // Process server-provided raw data once so the page renders instantly with the
+  // partner's products — no client-side loading screen on every navigation.
+  const initialProcessed = useMemo(() => {
+    if (!initialPartner) return null
+    const apiBase = (process.env.NEXT_PUBLIC_LARAVEL_API_URL ?? "").replace(
+      /\/+$/,
+      ""
+    )
+    const allowed = filterPartnerCategories(
+      initialCategories ?? [],
+      initialPartner
+    )
+    const visible = expandCategoriesWithChildren(
+      initialCategories ?? [],
+      allowed.map((category) => Number(category.id))
+    )
+    const allowedSet = new Set(visible.map((category) => Number(category.id)))
+    const mapped = (initialProducts ?? [])
+      .filter((product) => allowedSet.has(toNumber(product.catid)))
+      .map((product) => mapProduct(product, apiBase))
+    return { categories: visible, products: mapped }
+  }, [initialPartner, initialCategories, initialProducts])
+
+  const [partner, setPartner] = useState<PartnerStorefrontConfig | null>(
+    initialPartner
+  )
+  const [categories, setCategories] = useState<Category[]>(
+    initialProcessed?.categories ?? []
+  )
+  const [products, setProducts] = useState<CategoryProduct[]>(
+    initialProcessed?.products ?? []
+  )
+  const [loading, setLoading] = useState(!initialPartner)
   const [error, setError] = useState<string | null>(null)
 
   const displayName = useMemo(
@@ -176,6 +211,10 @@ export default function ShopPartnerProductPageClient({
   )
 
   useEffect(() => {
+    // SSR already supplied the storefront/products — skip the client fetch so
+    // there is no loading flash on navigation.
+    if (initialPartner) return
+
     const controller = new AbortController()
     const apiBase = (process.env.NEXT_PUBLIC_LARAVEL_API_URL ?? "").replace(
       /\/+$/,
@@ -270,11 +309,12 @@ export default function ShopPartnerProductPageClient({
     return () => {
       controller.abort()
     }
-  }, [partnerSlug])
+  }, [partnerSlug, initialPartner])
 
   if (loading) {
     return (
       <LoadingScreen
+        logoSrc={partner?.logoUrl ?? partner?.tabLogoUrl ?? null}
         brandText={displayName}
         tagline="Product Listing"
         useDefaultLogoFallback={false}
