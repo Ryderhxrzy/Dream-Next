@@ -9,6 +9,8 @@ export interface Product {
   specifications?: string | null
   catid: number
   catsubid: number
+  merchant_catid?: number | null
+  merchant_subcatid?: number | null
   priceSrp: number
   priceDp: number
   priceMember?: number
@@ -1630,7 +1632,7 @@ export const productsApi = baseApi.injectEndpoints({
             )
           : undefined,
       }),
-      invalidatesTags: ["Products"],
+      invalidatesTags: ["Products", "Categories"],
     }),
     getAdminProduct: builder.query<Product, number>({
       query: (id) => ({

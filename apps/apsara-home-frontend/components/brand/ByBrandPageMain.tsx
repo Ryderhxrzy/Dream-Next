@@ -531,10 +531,12 @@ export default function ByBrandPageMain() {
     brand_type: selectedBrandId > 0 ? selectedBrandId : undefined,
   })
 
-  const topLevelCategories = useMemo(
-    () => (categoriesData?.categories ?? []).filter((c) => !c.parent_id),
-    [categoriesData?.categories],
-  )
+  const topLevelCategories = useMemo(() => {
+    const allCats = categoriesData?.categories ?? []
+    const catIdSet = new Set(allCats.map((c) => c.id))
+    // A category is top-level if it has no parent, or its parent is not in this result set
+    return allCats.filter((c) => !c.parent_id || !catIdSet.has(c.parent_id))
+  }, [categoriesData?.categories])
 
   const allBrands = useMemo(
     () => (data?.brands ?? []).filter((brand) => brand.name && brand.name.trim().length > 0),

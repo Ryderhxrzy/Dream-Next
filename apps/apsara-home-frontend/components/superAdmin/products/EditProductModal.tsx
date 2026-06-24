@@ -1275,6 +1275,12 @@ const hasEditDraftContent = (
 const normalizeFormForComparison = (form: FormState) => ({
   pd_name: form.pd_name.trim(),
   pd_catid: Number(form.pd_catid),
+  pd_merchant_catid: form.pd_merchant_catid.trim() && form.pd_merchant_catid !== "__empty_merchant_cat__"
+    ? Number(form.pd_merchant_catid)
+    : null,
+  pd_merchant_subcatid: form.pd_merchant_subcatid.trim() && form.pd_merchant_subcatid !== "__empty_merchant_subcat__"
+    ? Number(form.pd_merchant_subcatid)
+    : null,
   pd_room_type: form.pd_room_type.trim() ? Number(form.pd_room_type) : null,
   pd_brand_type: form.pd_brand_type.trim() ? Number(form.pd_brand_type) : null,
   pd_description: normalizeTextField(form.pd_description),
@@ -2666,6 +2672,12 @@ export default function EditProductModal({
           )
         : normalizeProduct({
             ...product,
+            ...(isSupplierScopedActor ? {
+              merchant_catid:
+                form.pd_merchant_catid.trim() && form.pd_merchant_catid !== "__empty_merchant_cat__"
+                  ? Number(form.pd_merchant_catid)
+                  : null,
+            } : {}),
             name: form.pd_name.trim(),
             catid: Number(form.pd_catid),
             roomType: form.pd_room_type ? Number(form.pd_room_type) : undefined,
@@ -2706,6 +2718,7 @@ export default function EditProductModal({
               ? expandedVariants.map(mapExpandedVariantToProductVariant)
               : [],
           } as Product & Record<string, unknown>)
+      openedProductRef.current = updatedProduct
       showSuccessToast("Product updated successfully.")
       if (typeof window !== "undefined") {
         window.localStorage.removeItem(getEditProductDraftKey(product.id))
