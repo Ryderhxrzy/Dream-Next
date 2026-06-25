@@ -25,11 +25,24 @@ export interface ConversationCustomer {
   mobile: string
 }
 
+// Present when a conversation is tied to an order (subject "Order {reference}").
+// Looked up from the order record so the chat header can show name/price/status.
+export interface ConversationOrder {
+  reference: string
+  product_name: string | null
+  amount: number | null
+  quantity: number | null
+  payment_status: string | null
+  approval_status: string | null
+  fulfillment_status: string | null
+}
+
 export interface AdminConversation {
   id: number
   customer: ConversationCustomer
   subject: string
   description: string | null
+  order: ConversationOrder | null
   status: string
   assigned_agent_id: number | null
   assigned_agent: { id: number; name: string; email: string } | null

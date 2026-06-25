@@ -69,6 +69,25 @@ const STATUS_PILL: Record<string, string> = {
   resolved: "bg-slate-100 text-slate-400 dark:bg-slate-700 dark:text-slate-300",
 }
 
+const LIST_SKELETON_ROWS = ["r1", "r2", "r3", "r4", "r5"]
+
+// Placeholder rows shown while a member's conversation list loads.
+function ConversationRowsSkeleton() {
+  return (
+    <ul className="space-y-1">
+      {LIST_SKELETON_ROWS.map((id) => (
+        <li key={id} className="flex items-start gap-2.5 px-3 py-3">
+          <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-slate-200 dark:bg-slate-700" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="h-3 w-1/2 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
+            <div className="h-2.5 w-4/5 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
+          </div>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 interface MemberGroup {
   customer: ConversationCustomer
   conversations: AdminConversation[]
@@ -142,11 +161,15 @@ export default function AdminConversationsInbox() {
   }, [conversations])
 
   // Selected member's full thread list (independent of the status filter).
-  const { data: memberData, isLoading: memberLoading } =
-    useGetAdminConversationsQuery(
-      { customer_id: activeCustomer?.id ?? 0, per_page: 50 },
-      { skip: !activeCustomer, pollingInterval: 12000 }
-    )
+  // Use currentData (not data): when switching members RTK keeps the PREVIOUS
+  // customer's list under `data` until the new one arrives — currentData is
+  // undefined during that transition, so we show a skeleton instead of the wrong
+  // customer's threads.
+  const { currentData: memberData } = useGetAdminConversationsQuery(
+    { customer_id: activeCustomer?.id ?? 0, per_page: 50 },
+    { skip: !activeCustomer, pollingInterval: 12000 }
+  )
+  const memberLoading = !!activeCustomer && memberData === undefined
   const memberConversations = useMemo(() => {
     const list = memberData?.data ?? []
     return [...list].sort(
@@ -163,7 +186,7 @@ export default function AdminConversationsInbox() {
   // message shows in the left list instantly, not just on the next poll.
   const { data: activeDetail } = useGetAdminConversationQuery(
     selectedConversationId ?? 0,
-    { skip: !selectedConversationId }
+    { skip: !selectedConversationId, refetchOnMountOrArgChange: true }
   )
   const activeLatest = useMemo(() => {
     const msgs = activeDetail?.data?.messages ?? []
@@ -387,14 +410,15 @@ export default function AdminConversationsInbox() {
                         {activeCustomer.name}
                       </p>
                       <p className="truncate text-[11px] text-slate-400">
-                        {memberConversations.length} conversation
-                        {memberConversations.length === 1 ? "" : "s"}
+                        {memberLoading
+                          ? "Loading…"
+                          : `${memberConversations.length} conversation${memberConversations.length === 1 ? "" : "s"}`}
                       </p>
                     </div>
                   </div>
                   <div className="flex-1 overflow-y-auto">
-                    {memberLoading && memberConversations.length === 0 ? (
-                      <p className="py-10 text-center text-sm text-slate-400">Loading…</p>
+                    {memberLoading ? (
+                      <ConversationRowsSkeleton />
                     ) : memberConversations.length === 0 ? (
                       <p className="py-10 text-center text-sm text-slate-400">
                         No conversations.
@@ -403,14 +427,20 @@ export default function AdminConversationsInbox() {
                       <ul className="divide-y divide-slate-100 dark:divide-slate-800">
                         {memberConversations.map((c) => {
                           const active = c.id === selectedConversationId
-                          // For the open thread, prefer the live latest message.
-                          const liveLast = active ? activeLatest : null
+                          // For the open thread, prefer the live latest message —
+                          // but only when it's genuinely NEWER than the list's
+                          // last_message, so a stale detail cache can't make the
+                          // preview jump back to an older message.
+                          const listWhen = c.last_message?.sent_at ?? c.updated_at
+                          const liveLast =
+                            active &&
+                            activeLatest &&
+                            toTime(activeLatest.created_at) > toTime(listWhen)
+                              ? activeLatest
+                              : null
                           const previewMsg =
                             liveLast?.message ?? c.last_message?.message
-                          const previewWhen =
-                            liveLast?.created_at ??
-                            c.last_message?.sent_at ??
-                            c.updated_at
+                          const previewWhen = liveLast?.created_at ?? listWhen
                           const rowUnread = active ? 0 : c.unread_count
                           return (
                             <li key={c.id}>

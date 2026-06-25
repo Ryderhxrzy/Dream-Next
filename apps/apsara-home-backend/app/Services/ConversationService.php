@@ -49,7 +49,8 @@ class ConversationService
         string $messageText,
         bool $isInternal = false,
         ?string $attachmentUrl = null,
-        ?string $attachmentFilename = null
+        ?string $attachmentFilename = null,
+        string $senderType = 'customer'
     ): Message {
         // Ensure sender is a participant
         $conversation->addParticipant($senderId);
@@ -57,6 +58,9 @@ class ConversationService
         $message = Message::create([
             'conversation_id' => $conversation->id,
             'sender_id' => $senderId,
+            // Role is decided by the caller (customer vs admin endpoint) and stored
+            // so we never have to guess from ids later.
+            'sender_type' => $senderType,
             'message' => $messageText,
             'is_internal' => $isInternal,
             'attachment_url' => $attachmentUrl,
@@ -330,9 +334,8 @@ class ConversationService
                 'id' => (int) $message->id,
                 'conversation_id' => (int) $message->conversation_id,
                 'sender_id' => (int) $message->sender_id,
-                'sender_type' => ((int) $message->sender_id === (int) $conversation->user_id)
-                    ? 'customer'
-                    : 'admin',
+                'sender_type' => $message->sender_type
+                    ?: (((int) $message->sender_id === (int) $conversation->user_id) ? 'customer' : 'admin'),
                 'message' => (string) $message->message,
                 'is_internal' => (bool) $message->is_internal,
                 'attachment_url' => $message->attachment_url,

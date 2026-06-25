@@ -5,6 +5,7 @@ import {
   useCreateConversationWithCustomerMutation,
   useGetAdminConversationQuery,
   useGetAdminConversationsQuery,
+  useSendAdminMessageMutation,
 } from "@/store/api/adminConversationsApi"
 import { AnimatePresence, motion } from "framer-motion"
 
@@ -62,10 +63,14 @@ export default function AdminCustomerChatDrawer({
   customerName,
   subject,
 }: Props) {
-  const [view, setView] = useState<"list" | "thread">("list")
   const [conversationId, setConversationId] = useState<number | null>(null)
+  // Compose mode: a blank thread whose conversation isn't created until the
+  // admin sends the first message (so empty threads never appear in the list).
+  const [composing, setComposing] = useState(false)
+  const [draft, setDraft] = useState("")
 
   const validCustomer = !!customerId && customerId > 0
+  const subjectToUse = subject?.trim() || "Support chat"
 
   // All of this customer's threads (open + closed history).
   const {
@@ -80,6 +85,7 @@ export default function AdminCustomerChatDrawer({
 
   const [createConv, { isLoading: creating, isError: createError }] =
     useCreateConversationWithCustomerMutation()
+  const [sendMessage, { isLoading: sending }] = useSendAdminMessageMutation()
 
   // Thread header detail (customer name + status for the close button).
   const { data: convData } = useGetAdminConversationQuery(conversationId ?? 0, {
@@ -92,38 +98,64 @@ export default function AdminCustomerChatDrawer({
     setPrevOpen(open)
     if (!open) {
       setConversationId(null)
-      setView("list")
+      setComposing(false)
+      setDraft("")
     }
   }
 
   const openThread = (id: number) => {
+    setComposing(false)
     setConversationId(id)
-    setView("thread")
   }
 
   const backToList = () => {
-    setView("list")
+    setConversationId(null)
+    setComposing(false)
+    setDraft("")
     refetchList()
   }
 
-  // Find-or-create (reuses the latest open thread) then jump into it.
-  const handleNewChat = async () => {
+  // Open the existing thread for this subject if one is live; otherwise enter
+  // compose mode WITHOUT creating anything yet.
+  const handleNewChat = () => {
     if (!validCustomer) return
+    const existing = conversations.find(
+      (c) => c.subject === subjectToUse && c.status !== "resolved"
+    )
+    if (existing) {
+      openThread(existing.id)
+      return
+    }
+    setConversationId(null)
+    setDraft("")
+    setComposing(true)
+  }
+
+  // First message in compose mode → create the conversation, then send.
+  const handleComposeSend = async () => {
+    const body = draft.trim()
+    if (!body || creating || sending || !validCustomer) return
+    setDraft("")
     try {
       const res = await createConv({ customer_id: customerId!, subject }).unwrap()
-      if (res?.data?.id) {
-        openThread(res.data.id)
-        refetchList()
+      const id = res?.data?.id
+      if (!id) {
+        setDraft(body)
+        return
       }
+      await sendMessage({ conversationId: id, message: body }).unwrap()
+      setComposing(false)
+      setConversationId(id)
+      refetchList()
     } catch {
-      // surfaced via createError below
+      setDraft(body) // restore so the admin doesn't lose their text
     }
   }
 
   const headerName =
     convData?.data?.customer?.name || customerName || "Customer"
   const headerEmail = convData?.data?.customer?.email || "Support conversation"
-  const inThread = view === "thread" && !!conversationId
+  const inThreadView = !!conversationId || composing
 
   return (
     <AnimatePresence>
@@ -146,7 +178,7 @@ export default function AdminCustomerChatDrawer({
           >
             {/* Header */}
             <div className="flex items-center gap-2.5 border-b border-slate-200 px-3 py-3 dark:border-slate-800">
-              {inThread ? (
+              {inThreadView ? (
                 <button
                   type="button"
                   onClick={backToList}
@@ -166,12 +198,16 @@ export default function AdminCustomerChatDrawer({
                   {headerName}
                 </p>
                 <p className="truncate text-[11px] text-slate-400">
-                  {inThread ? headerEmail : `${conversations.length} conversation${conversations.length === 1 ? "" : "s"}`}
+                  {conversationId
+                    ? headerEmail
+                    : composing
+                      ? "New message"
+                      : `${conversations.length} conversation${conversations.length === 1 ? "" : "s"}`}
                 </p>
               </div>
-              {inThread ? (
+              {conversationId ? (
                 <CloseConversationButton
-                  conversationId={conversationId!}
+                  conversationId={conversationId}
                   status={convData?.data?.status}
                 />
               ) : null}
@@ -193,8 +229,63 @@ export default function AdminCustomerChatDrawer({
 
             {/* Body */}
             <div className="flex min-h-0 flex-1 flex-col">
-              {inThread ? (
-                <ConversationThread conversationId={conversationId!} />
+              {conversationId ? (
+                <ConversationThread conversationId={conversationId} />
+              ) : composing ? (
+                /* Compose mode — conversation is created on first send. */
+                <div className="flex h-full min-h-0 flex-col">
+                  <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center text-slate-400">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-teal-500 dark:bg-teal-500/10 dark:text-teal-300">
+                      <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l1.3-3.9A7.96 7.96 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                    </div>
+                    <p className="text-sm font-medium text-slate-500 dark:text-slate-300">
+                      Start a new conversation
+                    </p>
+                    <p className="text-xs">
+                      Send the first message — the chat is created (and added to the
+                      list) only once you hit send.
+                    </p>
+                  </div>
+                  <div className="border-t border-slate-200 px-3 py-3 dark:border-slate-800">
+                    <div className="flex items-end gap-2">
+                      <textarea
+                        value={draft}
+                        onChange={(e) => setDraft(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault()
+                            handleComposeSend()
+                          }
+                        }}
+                        rows={1}
+                        placeholder="Type a message…"
+                        className="max-h-32 min-h-[40px] flex-1 resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-teal-400 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleComposeSend}
+                        disabled={!draft.trim() || creating || sending}
+                        aria-label="Send message"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-teal-500 to-teal-600 text-white transition hover:from-teal-600 hover:to-teal-700 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        {creating || sending ? (
+                          <Spinner />
+                        ) : (
+                          <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                    {createError ? (
+                      <p className="mt-1.5 text-center text-[11px] text-rose-500">
+                        Couldn&apos;t start the conversation. Please try again.
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
               ) : (
                 <>
                   {/* New chat action */}
@@ -202,23 +293,13 @@ export default function AdminCustomerChatDrawer({
                     <button
                       type="button"
                       onClick={handleNewChat}
-                      disabled={creating}
-                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-linear-to-r from-teal-500 to-teal-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:from-teal-600 hover:to-teal-700 disabled:opacity-50"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-linear-to-r from-teal-500 to-teal-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:from-teal-600 hover:to-teal-700"
                     >
-                      {creating ? (
-                        <Spinner />
-                      ) : (
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                        </svg>
-                      )}
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                      </svg>
                       Start / open chat
                     </button>
-                    {createError ? (
-                      <p className="mt-1.5 text-center text-[11px] text-rose-500">
-                        Couldn&apos;t start the conversation. Please try again.
-                      </p>
-                    ) : null}
                   </div>
 
                   {/* Conversation list */}
