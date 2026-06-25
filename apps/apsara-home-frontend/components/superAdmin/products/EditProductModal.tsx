@@ -11,6 +11,7 @@ import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import { useGetAdminMeQuery } from "@/store/api/authApi"
 import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
 import { useGetProductBrandsQuery } from "@/store/api/productBrandsApi"
+import { useGetMyBrandsQuery } from "@/store/api/brandRequestsApi"
 import { useGetSupplierCategoriesQuery } from "@/store/api/suppliersApi"
 import {
   CreateProductPayload,
@@ -39,6 +40,8 @@ interface EditProductModalProps {
   onClose: () => void
   onSaved?: (updatedProduct?: Product) => void
   isServicesView?: boolean
+  isSupplierPortal?: boolean
+  supplierCompanyName?: string
 }
 
 interface FormState {
@@ -1593,6 +1596,8 @@ export default function EditProductModal({
   onClose,
   onSaved,
   isServicesView = false,
+  isSupplierPortal = false,
+  supplierCompanyName,
 }: EditProductModalProps) {
   const isOpen = product !== null
 
@@ -1732,6 +1737,14 @@ export default function EditProductModal({
           brand.status === 0 || brand.id === Number(form.pd_brand_type || 0)
       ),
     [brandsData?.brands, form.pd_brand_type]
+  )
+  const { data: myBrandsData } = useGetMyBrandsQuery(undefined, { skip: !isSupplierPortal })
+  const supplierOwnedBrands = useMemo(
+    () =>
+      (myBrandsData?.brands ?? []).filter(
+        (b) => b.status === 0 || b.id === Number(form.pd_brand_type || 0)
+      ),
+    [myBrandsData?.brands, form.pd_brand_type]
   )
   const selectedCategory = useMemo(
     () => categories.find((category) => String(category.id) === form.pd_catid),
@@ -3448,74 +3461,106 @@ export default function EditProductModal({
                         )}
 
                         {!isServicesView && (
-                          <Field label="Brand" error={errors.pd_brand_type}>
-                            <ModalSelectField
-                              ariaLabel="Select brand"
-                              value={form.pd_brand_type}
-                              searchable
-                              searchPlaceholder="Search brands..."
-                              onChange={(value) => {
-                                set("pd_brand_type", value)
-                                setErrors((prev) => ({
-                                  ...prev,
-                                  pd_brand_type: undefined,
-                                }))
-                              }}
-                              options={[
-                                { value: "", label: "Not assigned" },
-                                ...brands.map((brand) => ({
-                                  value: String(brand.id),
-                                  label: brand.name,
-                                })),
-                              ]}
-                            />
-                            <div className="mt-2">
-                              <input
-                                type="text"
-                                list="brand-options-edit"
-                                value={brandText}
-                                onChange={(event) => {
-                                  const next = event.target.value
-                                  setBrandText(next)
-                                  const matchId = resolveBrandIdByName(next)
-                                  if (matchId) {
-                                    set("pd_brand_type", matchId)
+                          <Field label={isSupplierPortal ? "Company" : "Brand"} error={errors.pd_brand_type}>
+                            {isSupplierPortal ? (
+                              <div className="space-y-2">
+                                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
+                                  {supplierCompanyName || "—"}
+                                </div>
+                                {supplierOwnedBrands.length > 0 && (
+                                  <ModalSelectField
+                                    ariaLabel="Select brand"
+                                    value={form.pd_brand_type}
+                                    searchable
+                                    searchPlaceholder="Search brands..."
+                                    onChange={(value) => {
+                                      set("pd_brand_type", value)
+                                      setErrors((prev) => ({
+                                        ...prev,
+                                        pd_brand_type: undefined,
+                                      }))
+                                    }}
+                                    options={[
+                                      { value: "", label: "Select brand..." },
+                                      ...supplierOwnedBrands.map((brand) => ({
+                                        value: String(brand.id),
+                                        label: brand.name,
+                                      })),
+                                    ]}
+                                  />
+                                )}
+                              </div>
+                            ) : (
+                              <div className="space-y-2">
+                                <ModalSelectField
+                                  ariaLabel="Select brand"
+                                  value={form.pd_brand_type}
+                                  searchable
+                                  searchPlaceholder="Search brands..."
+                                  onChange={(value) => {
+                                    set("pd_brand_type", value)
                                     setErrors((prev) => ({
                                       ...prev,
                                       pd_brand_type: undefined,
                                     }))
-                                  } else if (!next.trim()) {
-                                    set("pd_brand_type", "")
-                                    setErrors((prev) => ({
-                                      ...prev,
-                                      pd_brand_type: undefined,
-                                    }))
-                                  }
-                                }}
-                                onBlur={() => {
-                                  if (!brandText.trim()) return
-                                  const matchId =
-                                    resolveBrandIdByName(brandText)
-                                  if (!matchId) {
-                                    setErrors((prev) => ({
-                                      ...prev,
-                                      pd_brand_type:
-                                        "Brand not found. Add it in Brands first.",
-                                    }))
-                                  }
-                                }}
-                                placeholder="Type brand name"
-                                className={inputCls(!!errors.pd_brand_type)}
-                              />
-                              <datalist id="brand-options-edit">
-                                {brands.map((brand) => (
-                                  <option key={brand.id} value={brand.name} />
-                                ))}
-                              </datalist>
-                              <p className="mt-1 text-[11px] text-slate-500">
-                                You can type a brand name to auto-match.
-                              </p>
-                            </div>
+                                  }}
+                                  options={[
+                                    { value: "", label: "Not assigned" },
+                                    ...brands.map((brand) => ({
+                                      value: String(brand.id),
+                                      label: brand.name,
+                                    })),
+                                  ]}
+                                />
+                                <div>
+                                  <input
+                                    type="text"
+                                    list="brand-options-edit"
+                                    value={brandText}
+                                    onChange={(event) => {
+                                      const next = event.target.value
+                                      setBrandText(next)
+                                      const matchId = resolveBrandIdByName(next)
+                                      if (matchId) {
+                                        set("pd_brand_type", matchId)
+                                        setErrors((prev) => ({
+                                          ...prev,
+                                          pd_brand_type: undefined,
+                                        }))
+                                      } else if (!next.trim()) {
+                                        set("pd_brand_type", "")
+                                        setErrors((prev) => ({
+                                          ...prev,
+                                          pd_brand_type: undefined,
+                                        }))
+                                      }
+                                    }}
+                                    onBlur={() => {
+                                      if (!brandText.trim()) return
+                                      const matchId =
+                                        resolveBrandIdByName(brandText)
+                                      if (!matchId) {
+                                        setErrors((prev) => ({
+                                          ...prev,
+                                          pd_brand_type:
+                                            "Brand not found. Add it in Brands first.",
+                                        }))
+                                      }
+                                    }}
+                                    placeholder="Type brand name"
+                                    className={inputCls(!!errors.pd_brand_type)}
+                                  />
+                                  <datalist id="brand-options-edit">
+                                    {brands.map((brand) => (
+                                      <option key={brand.id} value={brand.name} />
+                                    ))}
+                                  </datalist>
+                                  <p className="mt-1 text-[11px] text-slate-500">
+                                    You can type a brand name to auto-match.
+                                  </p>
+                                </div>
+                              </div>
+                            )}
                           </Field>
                         )}
 

@@ -875,6 +875,7 @@ export default function ByBrandPageMain() {
                         <span className={`inline-block w-2 h-2 rounded-full ${(selectedBrandItem.status ?? 0) === 0 ? 'bg-green-500' : 'bg-gray-400'}`} />
                         {(selectedBrandItem.status ?? 0) === 0 ? 'Online' : 'Offline'}
                     </span>
+                    <BrandCatalogueFlipbook brand={selectedBrandItem} />
                   </div>
                   <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 text-center sm:text-left">
                     Browse all products from this brand
@@ -909,9 +910,6 @@ export default function ByBrandPageMain() {
                       </svg>
                       <span>Joined: {brandInfo?.joinedDate ? new Date(brandInfo.joinedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Jan 2024'}</span>
                     </div>
-                  </div>
-                  <div className="mt-3 flex justify-center sm:justify-start">
-                    <BrandCatalogueFlipbook brand={selectedBrandItem} />
                   </div>
                 </div>
                 <div className="hidden sm:flex items-center gap-2 shrink-0">

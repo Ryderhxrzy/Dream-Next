@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
+import { matchesProductSearch } from "@/libs/productSearch"
 import { useGetPublicProductsQuery } from "@/store/api/productsApi"
 import type { Product } from "@/store/api/productsApi"
 import { useSession } from "next-auth/react"
@@ -252,31 +253,23 @@ export default function SearchPage() {
   const { data: productsData, isLoading } = useGetPublicProductsQuery(
     {
       page: 1,
-      perPage: 100,
-      search: debouncedQuery,
+      perPage: 500,
       status: "1",
+      includeAll: true,
     },
     {
       skip: !debouncedQuery || debouncedQuery.length < 2,
     }
   )
+  const products = productsData?.products ?? []
 
   // Filter products based on search query and filter state
   const filteredProducts = useMemo(() => {
-    if (!debouncedQuery.trim() || !productsData?.products) return []
+    if (!debouncedQuery.trim() || products.length === 0) return []
 
-    const searchTerm = debouncedQuery.toLowerCase().trim()
-    const searchWords = searchTerm.split(/\s+/).filter(Boolean)
-
-    let results = (productsData.products || []).filter((product) => {
-      const productName = (product.name || "").toLowerCase()
-      const productBrand = (product.brand || "").toLowerCase()
-
-      // Match if any search word is found in the product name or brand
-      return searchWords.some(
-        (word) => productName.includes(word) || productBrand.includes(word)
-      )
-    })
+    let results = products.filter((product) =>
+      matchesProductSearch(product, debouncedQuery)
+    )
 
     // Apply price range filter
     if (filterState.priceRange[0] > 0 || filterState.priceRange[1] < 10000) {
@@ -329,7 +322,7 @@ export default function SearchPage() {
     }
 
     return results
-  }, [debouncedQuery, productsData?.products, filterState])
+  }, [debouncedQuery, filterState, products])
 
   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / showCount))
   const boundedCurrentPage = Math.min(currentPage, totalPages)

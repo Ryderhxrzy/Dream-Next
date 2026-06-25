@@ -85,23 +85,7 @@ class CategoryController extends Controller
                     ->filter(fn ($id) => $id > 0)
                     ->values()->all();
 
-                // Include all supplier-created merchant categories for suppliers who sell this brand
-                $supplierIds = $brandProducts->pluck('pd_supplier')
-                    ->filter(fn ($id) => $id !== null && (int) $id > 0)
-                    ->map(fn ($id) => (int) $id)
-                    ->unique()->values()->all();
-
-                $supplierMerchantCatIds = !empty($supplierIds)
-                    ? DB::table('tbl_supplier_category_access as sca')
-                        ->join('tbl_category as c', 'sca.category_id', '=', 'c.cat_id')
-                        ->whereIn('sca.supplier_id', $supplierIds)
-                        ->where('c.is_supplier_created', true)
-                        ->pluck('sca.category_id')
-                        ->map(fn ($id) => (int) $id)
-                        ->all()
-                    : [];
-
-                $directIds = array_values(array_unique(array_merge($fromCatId, $fromMerchantCatId, $supplierMerchantCatIds)));
+                $directIds = array_values(array_unique(array_merge($fromCatId, $fromMerchantCatId)));
 
                 // Also include child categories of any matched parent categories
                 $childIds = !empty($directIds)

@@ -3694,6 +3694,8 @@ export default function ProductsPageMain({
         product={editProduct}
         onClose={() => setEditProduct(null)}
         onSaved={handleProductsSaved}
+        isSupplierPortal={isSupplierPortal}
+        supplierCompanyName={isSupplierPortal ? (supplierRecord?.company || supplierRecord?.name || supplierName || undefined) : undefined}
         isServicesView={
           isSupplierServicesPortal ||
           (editProduct !== null &&
