@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class Conversation extends Model
 {
@@ -49,7 +50,9 @@ class Conversation extends Model
      */
     public function messages(): HasMany
     {
-        return $this->hasMany(Message::class, 'conversation_id')->orderBy('created_at');
+        return $this->hasMany(Message::class, 'conversation_id')
+            ->orderBy('created_at')
+            ->orderBy('id');
     }
 
     /**
@@ -57,7 +60,42 @@ class Conversation extends Model
      */
     public function latestMessage(): HasMany
     {
-        return $this->messages()->latest();
+        // reorder() clears the ASC order from messages(); otherwise ->latest()
+        // would conflict and resolve to the oldest message.
+        return $this->messages()
+            ->reorder()
+            ->orderByDesc('created_at')
+            ->orderByDesc('id');
+    }
+
+    /**
+     * If this is an order thread (subject = "Order {checkout_id}"), resolve the
+     * linked order so the chat header can show its name, price and status.
+     * Subject-based — no extra column needed. Returns null for non-order threads.
+     */
+    public function orderInfo(): ?array
+    {
+        $subject = (string) $this->subject;
+        if (!Str::startsWith($subject, 'Order ')) {
+            return null;
+        }
+
+        $reference = trim(Str::after($subject, 'Order '));
+        if ($reference === '') {
+            return null;
+        }
+
+        $order = CheckoutHistory::where('ch_checkout_id', $reference)->first();
+
+        return [
+            'reference' => $reference,
+            'product_name' => $order?->ch_product_name ?? $order?->ch_description,
+            'amount' => ($order && $order->ch_amount !== null) ? (float) $order->ch_amount : null,
+            'quantity' => $order ? (int) $order->ch_quantity : null,
+            'payment_status' => $order?->ch_status,
+            'approval_status' => $order?->ch_approval_status,
+            'fulfillment_status' => $order?->ch_fulfillment_status,
+        ];
     }
 
     /**

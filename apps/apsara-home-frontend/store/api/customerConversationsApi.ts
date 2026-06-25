@@ -1,12 +1,16 @@
 import { baseApi } from "./baseApi"
-import type { ConversationMessage } from "./adminConversationsApi"
+import type {
+  ConversationMessage,
+  ConversationOrder,
+} from "./adminConversationsApi"
 
-export type { ConversationMessage }
+export type { ConversationMessage, ConversationOrder }
 
 export interface CustomerConversation {
   id: number
   subject: string
   description: string | null
+  order: ConversationOrder | null
   status: string
   assigned_agent_id: number | null
   assigned_agent: { id: number; name: string; email: string } | null
@@ -47,7 +51,9 @@ export const customerConversationsApi = baseApi.injectEndpoints({
       query: (id) => ({
         url: `/api/conversations/${id}/messages`,
         method: "GET",
-        params: { per_page: 100 },
+        // Fetch a large page: messages are oldest-first, so a small page would
+        // hide the newest on reload of a long thread. Server caps this at 200.
+        params: { per_page: 200 },
       }),
     }),
 
