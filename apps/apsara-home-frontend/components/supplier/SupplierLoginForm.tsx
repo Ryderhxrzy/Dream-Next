@@ -5,12 +5,12 @@ import { clearAccessTokenCache } from "@/store/api/baseApi"
 import { motion } from "framer-motion"
 import { MoonStar, SunMedium } from "lucide-react"
 import { signIn, signOut } from "next-auth/react"
-import { useTheme } from "next-themes"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
 import Loading from "@/components/Loading"
+import { useTheme } from "@/components/theme/AppThemeProvider"
 
 const REMEMBER_SUPPLIER_LOGIN_KEY = "afhome_supplier_login"
 const TWO_FACTOR_PREFIX = "2FA_REQUIRED|"

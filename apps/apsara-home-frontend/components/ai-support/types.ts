@@ -4,45 +4,25 @@ export interface TextMessage {
   text: string
 }
 
-export interface ProductCardData {
-  name: string
-  image: string
-  price: string
-  description: string
-  url: string
-}
-
-export interface BrandCardData {
-  name: string
-  count: number
-  url: string
-}
-
-export interface CategoryCardData {
-  name: string
-  count: number
-  url: string
-}
-
 export interface StepImageData {
   url: string
   caption?: string
 }
 
+export interface ProductCardData {
+  id: number
+  name: string
+  image?: string | null
+  price: string
+  description?: string | null
+  url: string
+  brand?: string | null
+  stock?: number | null
+}
+
 export interface ProductCardsMessage {
-  kind: "cards"
+  kind: "product_cards"
   cards: ProductCardData[]
-}
-
-export interface BrandCardsMessage {
-  kind: "brand_cards"
-  cards: BrandCardData[]
-  viewAllUrl: string
-}
-
-export interface CategoryCardsMessage {
-  kind: "category_cards"
-  cards: CategoryCardData[]
 }
 
 export interface StepImagesMessage {
@@ -60,17 +40,12 @@ export type ChatMessage =
   | TextMessage
   | ImageMessage
   | ProductCardsMessage
-  | BrandCardsMessage
-  | CategoryCardsMessage
   | StepImagesMessage
 
 export interface ApiResponse {
   status: "ok" | "error"
   reply?: string
-  product_cards?: ProductCardData[]
-  brand_cards?: BrandCardData[]
-  category_cards?: CategoryCardData[]
-  brand_view_all_url?: string
-  step_images?: StepImageData[]
   quick_replies?: string[]
+  product_cards?: ProductCardData[]
+  step_images?: StepImageData[]
 }

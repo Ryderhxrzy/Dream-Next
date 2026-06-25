@@ -7,13 +7,6 @@ import { AiSupportPanel } from "./AiSupportPanel"
 import { AiSupportToggle } from "./AiSupportToggle"
 import { useAiSupport } from "./hooks/useAiSupport"
 
-const API_BASE = (process.env.NEXT_PUBLIC_LARAVEL_API_URL ?? "").replace(
-  /\/+$/,
-  ""
-)
-const LOGO_SRC = `${API_BASE}/Image/af.png`
-const ROBOT_SRC = `${API_BASE}/Image/sir.png`
-
 const DISABLED_PREFIXES = [
   "/admin",
   "/supplier",
@@ -78,8 +71,6 @@ export function AiSupport() {
       <AiSupportToggle
         onClick={toggle}
         isOpen={isOpen}
-        robotSrc={ROBOT_SRC}
-        logoSrc={LOGO_SRC}
       />
       <AiSupportPanel
         isOpen={isOpen}
@@ -87,7 +78,6 @@ export function AiSupport() {
         quickReplies={quickReplies}
         inputValue={inputValue}
         isLoading={isLoading}
-        logoSrc={LOGO_SRC}
         onClose={close}
         onInputChange={setInputValue}
         onSend={send}

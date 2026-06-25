@@ -14,7 +14,6 @@ interface Props {
   quickReplies: string[]
   inputValue: string
   isLoading: boolean
-  logoSrc: string
   onClose: () => void
   onInputChange: (v: string) => void
   onSend: (text: string) => void
@@ -29,7 +28,6 @@ export function AiSupportPanel({
   quickReplies,
   inputValue,
   isLoading,
-  logoSrc,
   onClose,
   onInputChange,
   onSend,
@@ -59,7 +57,7 @@ export function AiSupportPanel({
             fontFamily: '"Inter", system-ui, -apple-system, sans-serif',
           }}
         >
-          <AiSupportHeader onClose={onClose} logoSrc={logoSrc} />
+          <AiSupportHeader onClose={onClose} />
           <AiSupportBody messages={messages} isLoading={isLoading} />
           <AiSupportQuickReplies items={quickReplies} onSelect={onSend} />
           <AiSupportFooter
