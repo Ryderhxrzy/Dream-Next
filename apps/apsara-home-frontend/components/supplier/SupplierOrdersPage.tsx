@@ -442,14 +442,14 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
     else if (filter === 'to_receive') source = source.filter(i => i.status === 'responded')
     else if (filter === 'completed')  source = source.filter(i => i.status === 'closed')
     if (dateFrom) {
-      const from = new Date(dateFrom)
+      const from = new Date(dateFrom!)
       from.setHours(0, 0, 0, 0)
-      source = source.filter(i => new Date(i.created_at) >= from)
+      source = source.filter(i => (i.created_at ? new Date(i.created_at) >= from : false))
     }
     if (dateTo) {
-      const to = new Date(dateTo)
+      const to = new Date(dateTo!)
       to.setHours(23, 59, 59, 999)
-      source = source.filter(i => new Date(i.created_at) <= to)
+      source = source.filter(i => (i.created_at ? new Date(i.created_at) <= to : false))
     }
     const q = debouncedSearch.trim().toLowerCase()
     if (q) {
@@ -598,7 +598,9 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                 type="button"
                 onClick={() => setFilter(card.filterVal)}
                 className={`rounded-2xl border bg-white p-4 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:bg-slate-900 ${
-                  active ? `border-2 ${card.activeBorder} -translate-y-0.5 shadow-md` : 'border-slate-200 dark:border-slate-800'
+                  active
+                    ? `border-2 ${card.activeBorder} -translate-y-0.5 shadow-md`
+                    : 'border-slate-200 dark:border-slate-800'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -708,8 +710,8 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
               <Spinner /><span className="text-sm">Loading inquiries...</span>
             </div>
           ) : inquiryError ? (
-            <div className="flex flex-col items-center gap-2 py-20 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-50">
+        <div className="flex flex-col items-center gap-2 py-20 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-500/10">
                 <svg className="h-6 w-6 text-rose-500" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9.303 3.376c.866 1.5-.217 3.374-1.948 3.374H4.645c-1.73 0-2.813-1.874-1.948-3.374l7.5-13c.866-1.5 3.032-1.5 3.898 0l7.206 12.374zM12 15.75h.007v.008H12v-.008z" />
                 </svg>
@@ -1022,21 +1024,23 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
           ]).map((stat) => {
             const active = filter === stat.filterVal
             return (
-              <button
-                key={stat.key}
-                type="button"
-                onClick={() => setFilter(stat.filterVal)}
-                className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white p-5 text-left shadow-sm ring-1 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
-                  active ? 'ring-2 ring-indigo-400 shadow-md -translate-y-0.5' : 'ring-slate-100 hover:ring-slate-200'
-                }`}
-              >
+                <button
+                  key={stat.key}
+                  type="button"
+                  onClick={() => setFilter(stat.filterVal)}
+                  className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white p-5 text-left shadow-sm ring-1 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:bg-slate-900 ${
+                    active
+                      ? 'ring-2 ring-indigo-400 shadow-md -translate-y-0.5 dark:ring-indigo-500/60'
+                      : 'ring-slate-100 hover:ring-slate-200 dark:ring-slate-800 dark:hover:ring-slate-700'
+                  }`}
+                >
                 <div className="flex items-start justify-between">
                   <div>
                     <div className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${stat.iconBg} ${stat.iconColor} mb-3`}>
                       {stat.icon}
                     </div>
-                    <p className="text-sm font-medium text-slate-500">{stat.label}</p>
-                    <p className="mt-0.5 text-3xl font-bold text-slate-900">{stat.count}</p>
+                    <p className="text-sm font-medium text-slate-500 dark:text-slate-300">{stat.label}</p>
+                    <p className="mt-0.5 text-3xl font-bold text-slate-900 dark:text-white">{stat.count}</p>
                   </div>
                   <Sparkline path={SPARKLINES[stat.sparkKey]} color={stat.lineColor} />
                 </div>
@@ -1059,8 +1063,10 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                   key={stat.key}
                   type="button"
                   onClick={() => setFilter(stat.filterVal)}
-                  className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white p-5 text-left shadow-sm ring-1 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
-                    active ? 'ring-2 ring-indigo-400 shadow-md -translate-y-0.5' : 'ring-slate-100 hover:ring-slate-200'
+                  className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white p-5 text-left shadow-sm ring-1 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:bg-slate-900 ${
+                    active
+                      ? 'ring-2 ring-indigo-400 shadow-md -translate-y-0.5 dark:ring-indigo-500/60'
+                      : 'ring-slate-100 hover:ring-slate-200 dark:ring-slate-800 dark:hover:ring-slate-700'
                   }`}
                 >
                   <div className="flex items-start justify-between">
@@ -1068,14 +1074,14 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                       <div className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${stat.iconBg} ${stat.iconColor} mb-3`}>
                         {stat.icon}
                       </div>
-                      <p className="text-sm font-medium text-slate-500">{stat.label}</p>
-                      <p className="mt-0.5 text-3xl font-bold text-slate-900">{count}</p>
+                      <p className="text-sm font-medium text-slate-500 dark:text-slate-300">{stat.label}</p>
+                      <p className="mt-0.5 text-3xl font-bold text-slate-900 dark:text-white">{count}</p>
                     </div>
                     <Sparkline path={SPARKLINES[stat.key]} color={stat.lineColor} />
                   </div>
                   <div className="mt-4 flex items-center gap-1.5">
                     <ChangePill value={count > 0 ? 100 : 0} />
-                    <span className="text-[11px] text-slate-400">vs yesterday</span>
+                    <span className="text-[11px] text-slate-400 dark:text-slate-300">vs yesterday</span>
                   </div>
                 </button>
               )
@@ -1091,8 +1097,10 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                   key={stat.key}
                   type="button"
                   onClick={() => setFilter(stat.filterVal)}
-                  className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white p-5 text-left shadow-sm ring-1 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
-                    active ? 'ring-2 ring-indigo-400 shadow-md -translate-y-0.5' : 'ring-slate-100 hover:ring-slate-200'
+                  className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white p-5 text-left shadow-sm ring-1 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:bg-slate-900 ${
+                    active
+                      ? 'ring-2 ring-indigo-400 shadow-md -translate-y-0.5 dark:ring-indigo-500/60'
+                      : 'ring-slate-100 hover:ring-slate-200 dark:ring-slate-800 dark:hover:ring-slate-700'
                   }`}
                 >
                   <div className="flex items-start justify-between">
@@ -1117,7 +1125,7 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
       )}
 
       {/* ── Order Fulfillment Panel ── */}
-      <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
+      <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 dark:bg-slate-900 dark:ring-slate-800">
 
         {/* Panel header */}
         <div className="flex flex-col gap-3 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
@@ -1231,18 +1239,18 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9.303 3.376c.866 1.5-.217 3.374-1.948 3.374H4.645c-1.73 0-2.813-1.874-1.948-3.374l7.5-13c.866-1.5 3.032-1.5 3.898 0l7.206 12.374zM12 15.75h.007v.008H12v-.008z" />
               </svg>
             </div>
-            <p className="text-sm font-semibold text-slate-700">{isServicesView ? 'Failed to load inquiries' : 'Failed to load orders'}</p>
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{isServicesView ? 'Failed to load inquiries' : 'Failed to load orders'}</p>
           </div>
         ) : orders.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 border-t border-slate-100 py-20 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
+          <div className="flex flex-col items-center gap-3 border-t border-slate-100 py-20 text-center dark:border-slate-800">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800">
               <svg className="h-7 w-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-700">{isServicesView ? 'No inquiries found' : 'No orders found'}</p>
-              <p className="mt-0.5 text-xs text-slate-400">Try adjusting your search or filter.</p>
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{isServicesView ? 'No inquiries found' : 'No orders found'}</p>
+              <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-400">Try adjusting your search or filter.</p>
             </div>
           </div>
         ) : !isServicesView && viewMode === 'compact' ? (
@@ -1352,7 +1360,7 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="border-y border-slate-100 bg-slate-50/60">
+                <tr className="border-y border-slate-100 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-800/50">
                   {(isServicesView
                     ? ['Inquiry', 'Date', 'Client', 'Amount', 'Status', 'Actions']
                     : ['Order', 'Date', 'Supplier', 'Amount', 'Status', 'Actions']
@@ -1363,7 +1371,7 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {orders.map((order, idx) => {
                   const busy           = busyId === order.id
                   const canManage      = order.approval_status === 'approved'
@@ -1377,7 +1385,7 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                     <>
                       <tr
                         key={order.id}
-                        className="group transition-colors hover:bg-slate-50/60"
+                        className="group transition-colors hover:bg-slate-50/60 dark:hover:bg-slate-800/40"
                       >
                         {/* Order / Product */}
                         <td className="px-6 py-4">
@@ -1498,7 +1506,7 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                             <button
                               type="button"
                               onClick={() => setExpandedId(isExpanded ? null : order.id)}
-                              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition-all hover:border-slate-300 hover:bg-slate-50 hover:text-slate-600"
+                              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition-all hover:border-slate-300 hover:bg-slate-50 hover:text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:border-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                             >
                               <svg className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -1511,12 +1519,12 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                       {/* Expanded row */}
                       {isExpanded && (
                         <tr key={`${order.id}-expanded`}>
-                          <td colSpan={6} className="border-t border-slate-100 bg-slate-50/70 px-6 py-5">
+                          <td colSpan={6} className="border-t border-slate-100 bg-slate-50/70 px-6 py-5 dark:border-slate-800 dark:bg-slate-800/40">
                             <div className="grid gap-6 sm:grid-cols-3">
 
                               {/* Inquiry / Order details */}
                               <div>
-                                <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">{isServicesView ? 'Inquiry Details' : 'Order Details'}</p>
+                              <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-300">{isServicesView ? 'Inquiry Details' : 'Order Details'}</p>
                                 <dl className="space-y-2">
                                   {((): Array<[string, string]> => {
                                     const rows: Array<[string, string]> = [
@@ -1529,7 +1537,7 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                                   })().map(([label, value]) => (
                                     <div key={label} className="flex justify-between gap-4">
                                       <dt className="text-[11px] text-slate-400">{label}</dt>
-                                      <dd className="text-[11px] font-semibold text-slate-700 text-right">{value}</dd>
+                                      <dd className="text-[11px] font-semibold text-slate-700 dark:text-slate-200 text-right">{value}</dd>
                                     </div>
                                   ))}
                                 </dl>
@@ -1549,7 +1557,7 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                                   </div>
                                 </div>
                                 {order.customer_address && (
-                                  <p className="mt-3 rounded-xl bg-white px-3 py-2 text-[11px] text-slate-500 ring-1 ring-slate-200">
+                                  <p className="mt-3 rounded-xl bg-white px-3 py-2 text-[11px] text-slate-500 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-700">
                                     {order.customer_address}
                                   </p>
                                 )}
@@ -1557,7 +1565,7 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
 
                               {/* Status Update / Fulfillment */}
                               <div>
-                                <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">{isServicesView ? 'Status Update' : 'Fulfillment'}</p>
+                                <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-300">{isServicesView ? 'Status Update' : 'Fulfillment'}</p>
                                 {canManage ? (
                                   <div className="space-y-2.5">
                                     <div className="relative">
@@ -1565,7 +1573,7 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                                         value={fulfillDrafts[order.id] ?? 'processing'}
                                         disabled={busy}
                                         onChange={e => setFulfillDrafts(cur => ({ ...cur, [order.id]: e.target.value as SupplierFulfillmentStatus }))}
-                                        className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-3 pr-8 text-sm font-medium text-slate-700 outline-none transition-all focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 disabled:opacity-60"
+                                        className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-3 pr-8 text-sm font-medium text-slate-700 outline-none transition-all focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                                       >
                                         {activeFulfillOptions.map(o => (
                                           <option key={o.value} value={o.value}>{o.label}</option>
@@ -1585,10 +1593,10 @@ export default function SupplierOrdersPage({ initialData }: { initialData?: Supp
                                       {isServicesView ? 'Update Status' : 'Save Status'}
                                     </button>
                                     {!isServicesView && order.tracking_no && (
-                                      <div className="rounded-xl bg-white p-3 ring-1 ring-slate-200">
-                                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Tracking</p>
-                                        <p className="mt-1 font-mono text-[12px] font-semibold text-slate-800">{order.tracking_no}</p>
-                                        {order.courier && <p className="text-[11px] capitalize text-slate-400">{order.courier}</p>}
+                                      <div className="rounded-xl bg-white p-3 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700">
+                                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-300">Tracking</p>
+                                        <p className="mt-1 font-mono text-[12px] font-semibold text-slate-800 dark:text-slate-100">{order.tracking_no}</p>
+                                        {order.courier && <p className="text-[11px] capitalize text-slate-400 dark:text-slate-400">{order.courier}</p>}
                                       </div>
                                     )}
                                   </div>

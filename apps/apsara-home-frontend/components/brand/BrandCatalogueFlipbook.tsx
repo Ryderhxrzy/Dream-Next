@@ -362,10 +362,10 @@ export default function BrandCatalogueFlipbook({ brand }: { brand: ProductBrand 
     <>
       <button
         onClick={() => setViewerOpen(true)}
-        className="inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700 transition hover:bg-violet-100 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-300 dark:hover:bg-violet-500/20"
+        className="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-violet-600 to-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-violet-200 transition-all hover:from-violet-700 hover:to-purple-700 hover:shadow-lg hover:shadow-violet-300 active:scale-95 dark:shadow-violet-900/40 dark:hover:shadow-violet-900/60"
       >
-        <BookOpen className="h-3.5 w-3.5" />
-        {isCatalogue ? 'View Catalogue' : 'View Products'}
+        <BookOpen className="h-4 w-4" />
+        View Digital Catalogue
       </button>
 
       <AnimatePresence>

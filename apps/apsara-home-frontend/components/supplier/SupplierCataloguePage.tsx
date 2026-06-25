@@ -415,15 +415,15 @@ function ProductsPanel({ brand, productSearch, setProductSearch, productsLoading
 
   return (
     <>
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800/50">
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="font-bold text-slate-900">Brand Products</h3>
+            <h3 className="font-bold text-slate-900 dark:text-white">Brand Products</h3>
             <p className="mt-0.5 text-xs text-slate-400">
               All products catalogued under{' '}
-              <span className="font-semibold text-slate-600">{brand.name}</span>
+              <span className="font-semibold text-slate-600 dark:text-slate-300">{brand.name}</span>
               {productsTotal > 0 && (
-                <span className="ml-1.5 inline-flex items-center rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-600">
+                <span className="ml-1.5 inline-flex items-center rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-600 dark:bg-violet-500/20 dark:text-violet-400">
                   {productsTotal}
                 </span>
               )}
@@ -448,7 +448,7 @@ function ProductsPanel({ brand, productSearch, setProductSearch, productsLoading
                 value={productSearch}
                 onChange={e => setProductSearch(e.target.value)}
                 placeholder="Search products…"
-                className="h-10 w-52 rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-400"
+                className="h-10 w-52 rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-400 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:placeholder:text-slate-500"
               />
             </div>
           </div>
@@ -460,20 +460,20 @@ function ProductsPanel({ brand, productSearch, setProductSearch, productsLoading
             <span className="text-sm">Loading products…</span>
           </div>
         ) : brandProducts.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-200 py-20">
-            <Package className="h-10 w-10 text-slate-300" />
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-200 py-20 dark:border-slate-700">
+            <Package className="h-10 w-10 text-slate-300 dark:text-slate-600" />
             <p className="text-sm text-slate-400">{productSearch ? 'No products match your search' : 'No products found for this brand'}</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
             {brandProducts.map(product => (
-              <div key={product.id} className="group overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 transition hover:shadow-md">
-                <div className="relative aspect-square overflow-hidden bg-white">
+              <div key={product.id} className="group overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 transition hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
+                <div className="relative aspect-square overflow-hidden bg-white dark:bg-slate-700">
                   {product.image ? (
                     <img src={product.image} alt={product.name} className="h-full w-full object-contain p-2 transition group-hover:scale-105" draggable={false} />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center">
-                      <Package className="h-10 w-10 text-slate-300" />
+                      <Package className="h-10 w-10 text-slate-300 dark:text-slate-600" />
                     </div>
                   )}
                   {product.status === 0 && (
@@ -484,11 +484,11 @@ function ProductsPanel({ brand, productSearch, setProductSearch, productsLoading
                   )}
                 </div>
                 <div className="p-3">
-                  <p className="line-clamp-2 text-xs font-semibold text-slate-800">{product.name}</p>
+                  <p className="line-clamp-2 text-xs font-semibold text-slate-800 dark:text-slate-200">{product.name}</p>
                   <p className="mt-0.5 text-[10px] text-slate-400">SKU: {product.sku || '—'}</p>
                   <div className="mt-2 flex items-center justify-between">
-                    <span className="text-xs font-bold text-violet-600">₱{product.priceSrp?.toLocaleString('en-PH') ?? '—'}</span>
-                    <span className={`text-[10px] font-medium ${product.qty > 0 ? 'text-emerald-600' : 'text-rose-400'}`}>
+                    <span className="text-xs font-bold text-violet-600 dark:text-violet-400">₱{product.priceSrp?.toLocaleString('en-PH') ?? '—'}</span>
+                    <span className={`text-[10px] font-medium ${product.qty > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-400'}`}>
                       {product.qty > 0 ? `${product.qty} in stock` : 'Out of stock'}
                     </span>
                   </div>
@@ -683,23 +683,23 @@ export default function SupplierCataloguePage() {
   if (!brand) {
     return (
       <div className="space-y-5">
-        <div className="relative overflow-hidden rounded-3xl px-8 py-8" style={{ background: 'linear-gradient(135deg, #ede9fe 0%, #f5f3ff 40%, #ede9fe 100%)' }}>
-          <div className="pointer-events-none absolute bottom-0 right-64 h-32 w-32 rounded-full bg-violet-200/50" />
+        <div className="relative overflow-hidden rounded-3xl px-8 py-8 [background:linear-gradient(135deg,#ede9fe_0%,#f5f3ff_40%,#ede9fe_100%)] dark:[background:linear-gradient(135deg,#2e1065_0%,#1e1b2e_40%,#2e1065_100%)]">
+          <div className="pointer-events-none absolute bottom-0 right-64 h-32 w-32 rounded-full bg-violet-200/50 dark:bg-violet-500/10" />
           <div className="pointer-events-none absolute right-52 top-5 h-3 w-3 rotate-45 bg-violet-400" />
           <div className="relative max-w-[60%]">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-600 px-3 py-1 text-xs font-semibold text-white shadow-sm">
               <BookOpen className="h-3 w-3" /> My Catalogue
             </span>
-            <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-900">Product Catalogue</h1>
-            <p className="mt-1.5 text-sm text-slate-500">Upload and manage your brand catalogue pages.</p>
+            <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-900 dark:text-white">Product Catalogue</h1>
+            <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">Upload and manage your brand catalogue pages.</p>
           </div>
         </div>
-        <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-slate-200 py-24">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
+        <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-slate-200 py-24 dark:border-slate-700">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800">
             <BookOpen className="h-8 w-8 text-slate-400" />
           </div>
           <div className="text-center">
-            <p className="font-semibold text-slate-600">No brand linked to your account</p>
+            <p className="font-semibold text-slate-600 dark:text-slate-300">No brand linked to your account</p>
             <p className="mt-1 text-sm text-slate-400">Ask an admin to create a product brand matching your supplier name.</p>
           </div>
         </div>
@@ -711,12 +711,12 @@ export default function SupplierCataloguePage() {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="relative overflow-hidden rounded-3xl px-8 py-8" style={{ background: 'linear-gradient(135deg, #ede9fe 0%, #f5f3ff 40%, #ede9fe 100%)' }}>
-        <div className="pointer-events-none absolute bottom-0 right-64 h-32 w-32 rounded-full bg-violet-200/50" />
-        <div className="pointer-events-none absolute -bottom-6 right-56 h-20 w-20 rounded-full bg-violet-200/40" />
+      <div className="relative overflow-hidden rounded-3xl px-8 py-8 [background:linear-gradient(135deg,#ede9fe_0%,#f5f3ff_40%,#ede9fe_100%)] dark:[background:linear-gradient(135deg,#2e1065_0%,#1e1b2e_40%,#2e1065_100%)]">
+        <div className="pointer-events-none absolute bottom-0 right-64 h-32 w-32 rounded-full bg-violet-200/50 dark:bg-violet-500/10" />
+        <div className="pointer-events-none absolute -bottom-6 right-56 h-20 w-20 rounded-full bg-violet-200/40 dark:bg-violet-500/10" />
         <div className="pointer-events-none absolute right-52 top-5 h-3 w-3 rotate-45 bg-violet-400" />
         <div className="pointer-events-none absolute bottom-6 right-36 h-2 w-2 rotate-45 bg-pink-400" />
-        <button className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-2xl bg-white shadow-md ring-1 ring-violet-100 transition hover:bg-violet-50">
+        <button className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-2xl bg-white shadow-md ring-1 ring-violet-100 transition hover:bg-violet-50 dark:bg-slate-800 dark:ring-violet-900/40 dark:hover:bg-slate-700">
           <BookOpen className="h-5 w-5 text-violet-500" />
         </button>
         <div className="pointer-events-none absolute right-10 top-1/2 -translate-y-1/2 select-none">
@@ -731,7 +731,7 @@ export default function SupplierCataloguePage() {
               <div className="h-9 rounded-xl bg-white/30" />
             </div>
             <div className="w-2.5 bg-violet-700 shadow-inner" />
-            <div className="flex w-24 flex-col justify-between rounded-r-2xl bg-violet-100 px-4 py-4 shadow-lg">
+            <div className="flex w-24 flex-col justify-between rounded-r-2xl bg-violet-100 dark:bg-violet-900/60 px-4 py-4 shadow-lg">
               <div className="space-y-2.5">
                 <div className="h-2 rounded-full bg-violet-300/70" />
                 <div className="h-2 rounded-full bg-violet-300/70" />
@@ -745,15 +745,15 @@ export default function SupplierCataloguePage() {
           <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-600 px-3 py-1 text-xs font-semibold text-white shadow-sm">
             <BookOpen className="h-3 w-3" /> My Catalogue
           </span>
-          <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-900">Product Catalogue</h1>
-          <p className="mt-1.5 text-sm text-slate-500">
-            Upload catalogue pages or videos for <span className="font-semibold text-slate-700">{brand.name}</span> and view them as an interactive flipbook.
+          <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-900 dark:text-white">Product Catalogue</h1>
+          <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
+            Upload catalogue pages or videos for <span className="font-semibold text-slate-700 dark:text-slate-200">{brand.name}</span> and view them as an interactive flipbook.
           </p>
         </div>
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-1 rounded-2xl border border-slate-200 bg-slate-50 p-1 shadow-sm">
+      <div className="flex gap-1 rounded-2xl border border-slate-200 bg-slate-50 p-1 shadow-sm dark:border-slate-700 dark:bg-slate-800">
         {([
           { key: 'pages', label: 'Catalogue Pages', icon: <BookOpen className="h-4 w-4" /> },
           { key: 'products', label: 'Brand Products', icon: <Package className="h-4 w-4" /> },
@@ -764,13 +764,13 @@ export default function SupplierCataloguePage() {
             onClick={() => setActiveTab(tab.key)}
             className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-all ${
               activeTab === tab.key
-                ? 'bg-white text-violet-700 shadow-sm ring-1 ring-slate-200'
-                : 'text-slate-500 hover:text-slate-700'
+                ? 'bg-white text-violet-700 shadow-sm ring-1 ring-slate-200 dark:bg-slate-700 dark:text-violet-400 dark:ring-slate-600'
+                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
             }`}
           >
             {tab.icon}{tab.label}
             {tab.key === 'products' && productsData && (
-              <span className="ml-1 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-600">
+              <span className="ml-1 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-600 dark:bg-violet-500/20 dark:text-violet-400">
                 {productsData.meta?.total ?? brandProducts.length}
               </span>
             )}
@@ -794,22 +794,22 @@ export default function SupplierCataloguePage() {
       {activeTab === 'pages' && <div className="grid gap-5 lg:grid-cols-[1fr_280px]">
 
         {/* ── Left: pages manager ── */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800/50">
           <div className="mb-5 flex items-center justify-between gap-3">
             <div>
-              <h3 className="font-bold text-slate-900">Catalogue Pages</h3>
+              <h3 className="font-bold text-slate-900 dark:text-white">Catalogue Pages</h3>
               <p className="mt-0.5 text-xs text-slate-400">
                 {isLoadingContent ? 'Loading…' : `${localPages.length} page${localPages.length !== 1 ? 's' : ''} · ${totalSpreads} spread${totalSpreads !== 1 ? 's' : ''}`}
               </p>
             </div>
             <div className="flex items-center gap-2">
               {saving && (
-                <span className="inline-flex items-center gap-1.5 rounded-xl bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-600">
+                <span className="inline-flex items-center gap-1.5 rounded-xl bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-600 dark:bg-violet-500/10 dark:text-violet-400">
                   <Loader2 className="h-3 w-3 animate-spin" /> Saving…
                 </span>
               )}
               {isDirty && !saving && (
-                <span className="inline-flex items-center gap-1.5 rounded-xl bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-600">
+                <span className="inline-flex items-center gap-1.5 rounded-xl bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-600 dark:bg-amber-500/10 dark:text-amber-400">
                   Unsaved changes
                 </span>
               )}
@@ -831,20 +831,20 @@ export default function SupplierCataloguePage() {
             onDragLeave={() => setIsDragging(false)}
             onDrop={handleDrop}
             onClick={() => !uploading && fileInputRef.current?.click()}
-            className={`mb-5 cursor-pointer rounded-2xl border-2 border-dashed p-8 text-center transition-all select-none ${isDragging ? 'border-violet-400 bg-violet-50' : 'border-slate-200 bg-slate-50/60 hover:border-violet-300 hover:bg-violet-50/40'} ${uploading ? 'pointer-events-none' : ''}`}
+            className={`mb-5 cursor-pointer rounded-2xl border-2 border-dashed p-8 text-center transition-all select-none ${isDragging ? 'border-violet-400 bg-violet-50 dark:bg-violet-500/10' : 'border-slate-200 bg-slate-50/60 hover:border-violet-300 hover:bg-violet-50/40 dark:border-slate-600 dark:bg-slate-700/40 dark:hover:border-violet-500 dark:hover:bg-violet-500/10'} ${uploading ? 'pointer-events-none' : ''}`}
           >
             <input ref={fileInputRef} type="file" multiple accept="image/*,video/*" className="hidden" onChange={handleFileInput} />
             {uploading ? (
               <div className="flex flex-col items-center gap-2">
                 <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
-                <p className="text-sm font-medium text-slate-500">Uploading {uploadProgress.done} / {uploadProgress.total}…</p>
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Uploading {uploadProgress.done} / {uploadProgress.total}…</p>
               </div>
             ) : (
               <>
-                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100">
-                  <Upload className="h-5 w-5 text-violet-600" />
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 dark:bg-violet-500/20">
+                  <Upload className="h-5 w-5 text-violet-600 dark:text-violet-400" />
                 </div>
-                <p className="font-semibold text-slate-700">Upload catalogue pages</p>
+                <p className="font-semibold text-slate-700 dark:text-slate-200">Upload catalogue pages</p>
                 <p className="mt-1 text-xs text-slate-400">
                   Click or drag and drop · Images (PNG, JPG, WEBP ≤ 10 MB)<br />or Videos (MP4, MOV ≤ 25 MB)
                 </p>
@@ -860,9 +860,9 @@ export default function SupplierCataloguePage() {
           ) : localPages.length > 0 ? (
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6">
               {localPages.map((page, i) => (
-                <div key={`${page.url}-${i}`} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                  <div className="flex items-center justify-between border-b border-slate-100 bg-emerald-50 px-2 py-1">
-                    <span className="flex items-center gap-1 text-[9px] font-semibold text-emerald-600">
+                <div key={`${page.url}-${i}`} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                  <div className="flex items-center justify-between border-b border-slate-100 bg-emerald-50 px-2 py-1 dark:border-slate-700 dark:bg-emerald-500/10">
+                    <span className="flex items-center gap-1 text-[9px] font-semibold text-emerald-600 dark:text-emerald-400">
                       <CheckCircle2 className="h-3 w-3" /> Uploaded
                     </span>
                     <button
@@ -873,7 +873,7 @@ export default function SupplierCataloguePage() {
                       <X className="h-2.5 w-2.5" />
                     </button>
                   </div>
-                  <div className="relative aspect-3/4 bg-slate-100">
+                  <div className="relative aspect-3/4 bg-slate-100 dark:bg-slate-700">
                     {page.type === 'video' ? (
                       <>
                         <video src={page.url} className="h-full w-full object-cover" preload="metadata" muted />
@@ -892,8 +892,8 @@ export default function SupplierCataloguePage() {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-200 py-14">
-              <ImageIcon className="h-10 w-10 text-slate-300" />
+            <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-200 py-14 dark:border-slate-700">
+              <ImageIcon className="h-10 w-10 text-slate-300 dark:text-slate-600" />
               <p className="text-sm text-slate-400">No pages yet — upload images or videos above</p>
             </div>
           )}
@@ -901,31 +901,31 @@ export default function SupplierCataloguePage() {
 
         {/* ── Right: sidebar ── */}
         <div className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800/50">
             <p className="mb-3 text-[9px] font-bold uppercase tracking-widest text-slate-400">Your Brand</p>
             <div className="flex items-center gap-3">
               {brand.image ? (
-                <img src={brand.image} alt={brand.name} className="h-14 w-14 rounded-2xl object-contain ring-1 ring-slate-200" />
+                <img src={brand.image} alt={brand.name} className="h-14 w-14 rounded-2xl object-contain ring-1 ring-slate-200 dark:ring-slate-700" />
               ) : (
                 <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-orange-400 text-xl font-black text-white">
                   {brand.name[0]?.toUpperCase()}
                 </div>
               )}
               <div className="min-w-0">
-                <p className="truncate font-bold text-slate-900">{brand.name}</p>
+                <p className="truncate font-bold text-slate-900 dark:text-white">{brand.name}</p>
                 <p className="text-xs text-slate-400">ID #{brand.id}</p>
               </div>
             </div>
 
-            <div className="mt-4 divide-y divide-slate-100">
+            <div className="mt-4 divide-y divide-slate-100 dark:divide-slate-700">
               {[
                 { icon: <FileText className="h-4 w-4 text-slate-400" />, label: 'Pages', value: localPages.length },
                 { icon: <Grid2x2 className="h-4 w-4 text-slate-400" />, label: 'Spreads', value: totalSpreads },
                 { icon: <Video className="h-4 w-4 text-slate-400" />, label: 'Videos', value: localPages.filter(p => p.type === 'video').length },
               ].map(({ icon, label, value }) => (
                 <div key={label} className="flex items-center justify-between py-2.5">
-                  <span className="flex items-center gap-2 text-sm text-slate-500">{icon}{label}</span>
-                  <span className="text-sm font-bold text-slate-900">{value}</span>
+                  <span className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">{icon}{label}</span>
+                  <span className="text-sm font-bold text-slate-900 dark:text-white">{value}</span>
                 </div>
               ))}
             </div>
@@ -941,7 +941,7 @@ export default function SupplierCataloguePage() {
               <button
                 onClick={() => void handleSave()}
                 disabled={saving || uploading || !isDirty || localPages.length === 0}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 Save Catalogue
@@ -949,7 +949,7 @@ export default function SupplierCataloguePage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-violet-100 bg-violet-50/60 p-5">
+          <div className="rounded-2xl border border-violet-100 bg-violet-50/60 p-5 dark:border-violet-900/40 dark:bg-violet-500/5">
             <p className="mb-3 text-[9px] font-bold uppercase tracking-widest text-violet-500">Tips</p>
             <ul className="space-y-2">
               {[
@@ -959,7 +959,7 @@ export default function SupplierCataloguePage() {
                 'Videos auto-play in the flipbook viewer',
                 'Use ← → arrow keys to flip pages',
               ].map(tip => (
-                <li key={tip} className="flex items-start gap-2 text-xs text-slate-600">
+                <li key={tip} className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-400">
                   <CheckCircle2 className="mt-px h-3.5 w-3.5 shrink-0 text-violet-400" />
                   {tip}
                 </li>
