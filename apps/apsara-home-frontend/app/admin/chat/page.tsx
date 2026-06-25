@@ -1426,7 +1426,7 @@ export default function AdminChatPage() {
               {/* Messages */}
               <div
                 ref={messagesContainerRef}
-                className="relative flex-1 scrollbar-none overflow-y-auto [&::-webkit-scrollbar]:hidden"
+                className="relative flex-1 scrollbar-none overflow-x-hidden overflow-y-auto [&::-webkit-scrollbar]:hidden"
               >
                 <div className="px-5 py-5">
                   {isLoadingMessages ? (
@@ -1869,7 +1869,7 @@ export default function AdminChatPage() {
                                           className={`relative ${activeReactions.length > 0 ? "mb-4" : ""}`}
                                         >
                                           <div
-                                            className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed break-words whitespace-pre-wrap ${
+                                            className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed [overflow-wrap:anywhere] whitespace-pre-wrap ${
                                               mine
                                                 ? "rounded-br-md bg-indigo-600 text-white"
                                                 : "rounded-bl-md border border-slate-200 bg-white text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
