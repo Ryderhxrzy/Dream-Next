@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { useTheme } from "next-themes"
 import { createPortal } from "react-dom"
+
+import { useTheme } from "@/components/theme/AppThemeProvider"
 
 /* ── Types ─────────────────────────────────────────────────────── */
 export type IslandStatus = "loading" | "success" | "error"
@@ -163,7 +164,7 @@ export function DynamicIslandToast() {
   const { resolvedTheme } = useTheme()
 
   useEffect(() => {
-    setMounted(true)
+    const frame = window.requestAnimationFrame(() => setMounted(true))
 
     _dispatch = (next) => {
       setState(next)
@@ -179,6 +180,7 @@ export function DynamicIslandToast() {
     }
 
     return () => {
+      window.cancelAnimationFrame(frame)
       _dispatch = null
       if (timer.current) clearTimeout(timer.current)
     }

@@ -9,14 +9,14 @@ import {
 } from "@/store/api/supplierOrdersApi"
 import { useGetSupplierMeQuery } from "@/store/api/suppliersApi"
 import { AnimatePresence, motion } from "framer-motion"
-import { Bell, LogOut, Menu, MoonStar, Sparkles, SunMedium } from "lucide-react"
+import { Bell, LogOut, Menu, MoonStar, SunMedium } from "lucide-react"
 import { signOut, useSession } from "next-auth/react"
-import { useTheme } from "next-themes"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { createPortal } from "react-dom"
 
 import { useSupplierRealtimeOrders } from "@/hooks/useSupplierRealtimeOrders"
+import { useTheme } from "@/components/theme/AppThemeProvider"
 
 import SupplierSidebar from "./SupplierSidebar"
 

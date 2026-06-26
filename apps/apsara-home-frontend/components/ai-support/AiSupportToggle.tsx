@@ -2,19 +2,18 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { motion } from "framer-motion"
+import { AiSupportAvatar } from "./AiSupportAvatar"
 
 interface Props {
   isOpen: boolean
   onClick: () => void
-  robotSrc: string
-  logoSrc: string
 }
 
 const BUTTON_SIZE = 90
 const PEEK_VISIBLE = 26 // px visible when peeked at edge
 const EDGE_SNAP_ZONE = 72 // px from edge that triggers snap-to-peek
 
-export function AiSupportToggle({ isOpen, onClick, robotSrc, logoSrc }: Props) {
+export function AiSupportToggle({ isOpen, onClick }: Props) {
   const prompts = useMemo(
     () => [
       "How can I help you today?",
@@ -58,13 +57,17 @@ export function AiSupportToggle({ isOpen, onClick, robotSrc, logoSrc }: Props) {
   // When chat opens, always un-peek
   useEffect(() => {
     if (isOpen && isPeeked) {
-      setIsPeeked(false)
-      const vw = window.innerWidth
-      updatePos({
-        x: peekSide === "left" ? 20 : vw - BUTTON_SIZE - 20,
-        y: posRef.current.y,
-      })
+      const timeout = window.setTimeout(() => {
+        setIsPeeked(false)
+        const vw = window.innerWidth
+        updatePos({
+          x: peekSide === "left" ? 20 : vw - BUTTON_SIZE - 20,
+          y: posRef.current.y,
+        })
+      }, 0)
+      return () => window.clearTimeout(timeout)
     }
+    return undefined
   }, [isOpen, isPeeked, peekSide, updatePos])
 
   const handlePointerDown = useCallback(
@@ -229,11 +232,9 @@ export function AiSupportToggle({ isOpen, onClick, robotSrc, logoSrc }: Props) {
               </div>
             )}
 
-            {/* Robot image */}
-            <motion.img
-              src={robotSrc}
-              alt="AI Support"
-              className="relative z-10 block h-[82px] w-[70px] object-contain"
+            {/* AI avatar */}
+            <motion.div
+              className="relative z-10"
               animate={{ rotate: [0, -13, 12, -10, 8, 0, 0, 0] }}
               transition={{
                 duration: 1.9,
@@ -242,17 +243,16 @@ export function AiSupportToggle({ isOpen, onClick, robotSrc, logoSrc }: Props) {
                 times: [0, 0.08, 0.16, 0.24, 0.32, 0.4, 0.7, 1],
               }}
               style={{ transformOrigin: "60% 78%", pointerEvents: "none" }}
-            />
+            >
+              <AiSupportAvatar size="lg" className="shadow-lg shadow-sky-100" />
+            </motion.div>
 
             {/* Logo bubble */}
             <div className="pointer-events-none absolute -top-2.5 -right-1.5 z-20">
               <div className="relative flex items-center justify-center rounded-2xl border-2 border-indigo-200 bg-white px-1.5 py-1 shadow-lg shadow-indigo-100">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={logoSrc}
-                  alt="AF"
-                  className="h-5 w-7 object-contain"
-                />
+                <span className="text-[10px] font-bold tracking-tight text-sky-600">
+                  AI
+                </span>
                 <div className="absolute -bottom-[7px] left-2.5 h-2.5 w-2.5 rotate-45 border-r-2 border-b-2 border-indigo-200 bg-white" />
               </div>
             </div>

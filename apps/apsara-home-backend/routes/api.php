@@ -53,6 +53,7 @@ use App\Http\Controllers\Api\ServiceInquiryController;
 use App\Http\Controllers\Api\BrandRequestController;
 use App\Http\Controllers\Api\TotpController;
 use App\Http\Controllers\Api\GeminiController;
+use App\Http\Controllers\Api\KnowledgeBaseController;
 use App\Http\Controllers\MeilisearchController;
 use App\Http\Controllers\Api\MobilePaymentController;
 use App\Http\Controllers\Api\FollowerController;
@@ -156,6 +157,7 @@ Route::prefix('auth')->group(function () {
 
 // Checkout and payment initiation: 20 requests/min per IP
 Route::middleware('throttle:checkout')->group(function () {
+    Route::get('/payments/methods', [PaymentController::class, 'paymentMethods']);
     Route::post('/payments/checkout-session', [PaymentController::class, 'createCheckoutSession']);
     Route::post('/payments/validate-voucher', [PaymentController::class, 'validateVoucher']);
     Route::post('/payments/validate-cashback', [PaymentController::class, 'validateCashback']);
@@ -166,8 +168,8 @@ Route::middleware('throttle:checkout')->group(function () {
     Route::get('/orders/track', [PaymentController::class, 'trackGuestOrder']);
 });
 
-// AI support is expensive â€” same strict limit as auth
-Route::middleware('throttle:auth')->post('/ai-support', [\App\Http\Controllers\Api\AiSupportController::class, 'handle']);
+// AI support generation runs through the Next.js AI SDK route; Laravel provides RAG context.
+Route::middleware('throttle:auth')->post('/ai-support/rag-search', [KnowledgeBaseController::class, 'search']);
 
 // Gemini Chat API - for mobile app chatbot with custom training data
 Route::middleware('throttle:public')->group(function () {
@@ -189,6 +191,7 @@ Route::middleware('throttle:webhooks')->group(function () {
 Route::get('/rooms', [ProductController::class, 'rooms']);
 Route::get('/products/zq/cached', [ProductController::class, 'publicCachedZqProducts']);
 Route::get('/products/zq/cached/{id}', [ProductController::class, 'publicCachedZqProduct']);
+Route::post('/products/similar-by-image', [ProductController::class, 'similarByImage'])->middleware('throttle:auth');
 Route::get('/products/slug/{slug}', [ProductController::class, 'showBySlug']);
 Route::get('/products/cards', [ProductController::class, 'indexCards']);
 Route::get('/products/{id}/reviews', [ProductController::class, 'reviews']);
@@ -501,6 +504,13 @@ Route::middleware(['auth:sanctum', 'admin.role:super_admin,admin,merchant_admin,
 });
 
 Route::middleware(['auth:sanctum', 'admin.role:super_admin,admin'])->group(function () {
+    Route::get('/admin/knowledge-documents', [KnowledgeBaseController::class, 'index']);
+    Route::post('/admin/knowledge-documents', [KnowledgeBaseController::class, 'store'])->middleware('throttle:admin-write');
+    Route::post('/admin/knowledge-documents/upload-preview', [KnowledgeBaseController::class, 'uploadPreview'])->middleware('throttle:admin-write');
+    Route::put('/admin/knowledge-documents/{id}', [KnowledgeBaseController::class, 'update'])->middleware('throttle:admin-write');
+    Route::delete('/admin/knowledge-documents/{id}', [KnowledgeBaseController::class, 'destroy'])->middleware('throttle:admin-write');
+    Route::post('/admin/knowledge-documents/{id}/reindex', [KnowledgeBaseController::class, 'reindex'])->middleware('throttle:admin-write');
+
     Route::get('/admin/shipping/rates', [ShippingRateController::class, 'adminIndex']);
     Route::post('/admin/shipping/rates', [ShippingRateController::class, 'store']);
     Route::delete('/admin/shipping/rates', [ShippingRateController::class, 'bulkDestroy']);
@@ -774,5 +784,3 @@ Route::prefix('meilisearch')->group(function () {
         Route::post('/clear-index', [MeilisearchController::class, 'clearIndex']);
     });
 });
-
-
