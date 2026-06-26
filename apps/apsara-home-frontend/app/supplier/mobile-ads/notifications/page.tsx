@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import {
-  useGetAvailableCustomersQuery,
+  useGetRecipientsForNotificationQuery,
   useGetCloudinarySignatureMutation,
   useGetPushNotificationsHistoryQuery,
   useSendPushNotificationMutation,
@@ -43,8 +43,8 @@ export default function PushNotificationsPage() {
   const [monthDay, setMonthDay] = useState(1)
 
   // RTK Query hooks
-  const { data: customersData, isLoading: isLoadingCustomers } =
-    useGetAvailableCustomersQuery()
+  const { data: recipientsData, isLoading: isLoadingRecipients } =
+    useGetRecipientsForNotificationQuery()
   const { data: historyData } = useGetPushNotificationsHistoryQuery()
   const [sendNotification, { isLoading: isSending }] =
     useSendPushNotificationMutation()
@@ -165,8 +165,8 @@ export default function PushNotificationsPage() {
   const supplierLogo =
     (session?.user as { supplierLogo?: string | null } | undefined)
       ?.supplierLogo || null
-  const availableCustomers = customersData?.customer_ids || []
-  const deviceList = customersData?.devices || []
+  const recipientsList = recipientsData?.data || []
+  const availableCustomerIds = recipientsList.map(r => r.c_userid) || []
 
   const getInitials = (name: string) => {
     return name
@@ -188,7 +188,7 @@ export default function PushNotificationsPage() {
   }
 
   const selectAll = () => {
-    setSelectedCustomers(new Set(availableCustomers))
+    setSelectedCustomers(new Set(availableCustomerIds))
   }
 
   const deselectAll = () => {
@@ -797,16 +797,16 @@ export default function PushNotificationsPage() {
 
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-600 dark:text-slate-400">
-                  {selectedCustomers.size} of {availableCustomers.length}{" "}
+                  {selectedCustomers.size} of {availableCustomerIds.length}{" "}
                   selected
                 </span>
               </div>
 
-              {isLoadingCustomers ? (
+              {isLoadingRecipients ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader className="h-5 w-5 animate-spin text-sky-600" />
                 </div>
-              ) : availableCustomers.length > 0 ? (
+              ) : recipientsList.length > 0 ? (
                 <>
                   <div className="flex gap-2">
                     <button
@@ -824,23 +824,31 @@ export default function PushNotificationsPage() {
                   </div>
 
                   <div className="max-h-80 space-y-2 overflow-y-auto rounded-md border border-slate-200 p-4 dark:border-slate-700">
-                    {deviceList.map((device) => (
+                    {recipientsList.map((recipient) => (
                       <label
-                        key={`${device.customer_id}-${device.device_name}`}
+                        key={recipient.c_userid}
                         className="flex cursor-pointer items-center gap-3 rounded p-2 hover:bg-slate-50 dark:hover:bg-slate-800"
                       >
                         <input
                           type="checkbox"
-                          checked={selectedCustomers.has(device.customer_id)}
-                          onChange={() => toggleCustomer(device.customer_id)}
+                          checked={selectedCustomers.has(recipient.c_userid)}
+                          onChange={() => toggleCustomer(recipient.c_userid)}
                           className="h-4 w-4 rounded border-slate-300 text-sky-600 dark:border-slate-600"
                         />
                         <div className="flex-1">
                           <div className="text-sm font-medium text-slate-900 dark:text-white">
-                            {device.device_name}
+                            {recipient.c_fullname}
                           </div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400">
-                            Customer ID: {device.customer_id}
+                          <div className="flex gap-2 text-xs text-slate-500 dark:text-slate-400">
+                            <span>📱 {recipient.device_count} device{recipient.device_count !== 1 ? 's' : ''}</span>
+                            <span>•</span>
+                            <span>🛍️ {recipient.purchase_count} purchase{recipient.purchase_count !== 1 ? 's' : ''}</span>
+                            {recipient.last_purchase_date && (
+                              <>
+                                <span>•</span>
+                                <span>Last: {new Date(recipient.last_purchase_date).toLocaleDateString()}</span>
+                              </>
+                            )}
                           </div>
                         </div>
                       </label>
