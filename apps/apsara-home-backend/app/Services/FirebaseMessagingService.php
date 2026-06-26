@@ -17,7 +17,15 @@ class FirebaseMessagingService
             $credentialsPath = config('services.firebase.credentials');
             $rawJsonCredentials = env('FIREBASE_CREDENTIALS_JSON');
 
+            Log::debug('Firebase initialization', [
+                'configured_path' => $credentialsPath,
+                'has_env_json' => !empty($rawJsonCredentials),
+                'base_path' => base_path(),
+                'storage_path' => storage_path(),
+            ]);
+
             if (is_string($rawJsonCredentials) && trim($rawJsonCredentials) !== '') {
+                Log::debug('Using FIREBASE_CREDENTIALS_JSON from env var');
                 $resolvedCredentialsPath = $credentialsPath;
                 if (!str_starts_with($resolvedCredentialsPath, DIRECTORY_SEPARATOR)) {
                     $resolvedCredentialsPath = base_path($resolvedCredentialsPath);
@@ -37,17 +45,29 @@ class FirebaseMessagingService
 
             if (!file_exists($credentialsPath)) {
                 $credentialsPath = base_path($credentialsPath);
+                Log::debug('Credentials file not found at configured path, trying base_path', [
+                    'new_path' => $credentialsPath,
+                ]);
             }
 
             if (!file_exists($credentialsPath)) {
-                Log::warning('Firebase credentials file not found', ['path' => $credentialsPath]);
+                Log::error('Firebase credentials file not found', [
+                    'path' => $credentialsPath,
+                    'file_exists' => file_exists($credentialsPath),
+                    'is_readable' => is_readable($credentialsPath) ?? false,
+                    'working_dir' => getcwd(),
+                ]);
                 return;
             }
 
+            Log::debug('Firebase credentials file found', ['path' => $credentialsPath]);
             $credentialsJson = json_decode(file_get_contents($credentialsPath), true);
 
             if (!$credentialsJson || !is_array($credentialsJson)) {
-                Log::error('Invalid Firebase credentials JSON');
+                Log::error('Invalid Firebase credentials JSON', [
+                    'path' => $credentialsPath,
+                    'json_error' => json_last_error_msg(),
+                ]);
                 return;
             }
 
@@ -113,8 +133,15 @@ class FirebaseMessagingService
                 'notification_title' => $notification['title'] ?? 'N/A',
             ]);
 
+            // Get access token once and reuse for all sends
+            $accessToken = $this->getAccessToken();
+            if (!$accessToken) {
+                Log::error('FCM: Failed to get access token');
+                return ['sent' => 0, 'failed' => count($tokens)];
+            }
+
             foreach ($tokens as $token) {
-                if ($this->sendToToken($token, $notification)) {
+                if ($this->sendToTokenWithAccessToken($token, $notification, $accessToken)) {
                     $sent++;
                 } else {
                     $failed++;
@@ -138,6 +165,16 @@ class FirebaseMessagingService
     }
 
     public function sendToToken(string $token, array $notification): bool
+    {
+        $accessToken = $this->getAccessToken();
+        if (!$accessToken) {
+            Log::error('FCM: Failed to get access token for token: ' . substr($token, 0, 20) . '...');
+            return false;
+        }
+        return $this->sendToTokenWithAccessToken($token, $notification, $accessToken);
+    }
+
+    private function sendToTokenWithAccessToken(string $token, array $notification, string $accessToken): bool
     {
         try {
             if (!$this->projectId) {
@@ -174,8 +211,6 @@ class FirebaseMessagingService
                 'message' => [
                     'token' => $token,
                     'data' => $dataPayload,
-                    // Send as data-first Android message.
-                    // App-side native service builds the notification for consistent custom UI.
                     'android' => [
                         'priority' => 'HIGH',
                         'ttl' => '3600s',
@@ -199,22 +234,6 @@ class FirebaseMessagingService
                 ],
             ];
 
-            $accessToken = $this->getAccessToken();
-            if (!$accessToken) {
-                Log::error('FCM: Failed to get access token for token: ' . substr($token, 0, 20) . '...');
-                return false;
-            }
-
-            Log::info('FCM: Sending message', [
-                'token' => substr($token, 0, 20) . '...',
-                'title' => $title,
-                'body' => $body,
-                'has_image' => !empty($image),
-                'image_url_full' => $image ?: 'NONE',
-                'deeplink' => $deeplink,
-                'data_keys' => array_keys($dataPayload),
-            ]);
-
             $response = Http::withToken($accessToken)
                 ->post(
                     "https://fcm.googleapis.com/v1/projects/{$this->projectId}/messages:send",
@@ -222,9 +241,8 @@ class FirebaseMessagingService
                 );
 
             if ($response->successful()) {
-                Log::info('FCM: Message sent successfully', [
+                Log::debug('FCM: Message sent', [
                     'token' => substr($token, 0, 20) . '...',
-                    'response' => $response->body(),
                 ]);
                 return true;
             } else {
