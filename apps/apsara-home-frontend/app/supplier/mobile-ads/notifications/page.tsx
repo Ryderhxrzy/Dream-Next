@@ -8,7 +8,7 @@ import {
   useSendPushNotificationMutation,
 } from "@/store/api/supplierPushNotificationsApi"
 import { Card } from "@heroui/react/card"
-import { ChevronDown, Loader, Send, Upload } from "lucide-react"
+import { ChevronDown, Copy, Loader, Send, Upload } from "lucide-react"
 import { useSession } from "next-auth/react"
 import Image from "next/image"
 
@@ -24,18 +24,15 @@ export default function PushNotificationsPage() {
     buttonText: "Shop Now",
   })
   const [previewImage, setPreviewImage] = useState<string | null>(null)
-  const [isNotificationExpanded, setIsNotificationExpanded] = useState(false)
   const [selectedCustomers, setSelectedCustomers] = useState<Set<number>>(
     new Set()
   )
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [isButtonEnabled, setIsButtonEnabled] = useState(true)
-  const [activeTab, setActiveTab] = useState<
-    "details" | "image" | "recipients" | "schedule" | "review"
-  >("details")
   const [isScheduled, setIsScheduled] = useState(false)
   const [scheduledDateTime, setScheduledDateTime] = useState("")
+  const [isNotificationExpanded, setIsNotificationExpanded] = useState(false)
 
   // RTK Query hooks
   const { data: customersData, isLoading: isLoadingCustomers } =
@@ -46,6 +43,15 @@ export default function PushNotificationsPage() {
   const [getCloudinarySignature] = useGetCloudinarySignatureMutation()
 
   const [isUploading, setIsUploading] = useState(false)
+
+  const handleCopyImageLink = () => {
+    if (formData.image) {
+      navigator.clipboard.writeText(formData.image)
+      // Optional: Show a toast notification
+      setSuccess("Image link copied to clipboard!")
+      setTimeout(() => setSuccess(null), 2000)
+    }
+  }
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -345,78 +351,103 @@ export default function PushNotificationsPage() {
           <div id="image" className="grid grid-cols-2 gap-4 scroll-mt-24">
             {/* Section 3: Add Image */}
             <Card className="border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900 rounded-md">
-              <Card.Content className="p-6">
-                <h2 className="mb-4 text-base font-bold text-slate-900 dark:text-white">
+              <Card.Content className="space-y-4 p-6">
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">
                   Add Image
                 </h2>
-                <label className="mb-3 block text-sm font-semibold text-slate-900 dark:text-white">
-                  Notification Image (Optional)
-                </label>
-                <div className="rounded-md border-2 border-dashed border-slate-200 p-4 text-center dark:border-slate-700">
-                  {previewImage ? (
-                    <div>
-                      <div className="relative mb-3 h-32 w-full overflow-hidden rounded-md">
-                        <Image
-                          src={previewImage}
-                          alt="Preview"
-                          fill
-                          className="object-contain"
-                        />
-                      </div>
-                      <button
-                        onClick={() => {
-                          setPreviewImage(null)
-                          setFormData((prev) => ({ ...prev, image: "" }))
-                        }}
-                        className="text-sm text-sky-600 hover:underline dark:text-sky-400"
-                      >
-                        Change Image
-                      </button>
-                      {formData.image && (
-                        <div className="mt-3 rounded-md bg-slate-100 p-2 break-all dark:bg-slate-800">
-                          <p className="mb-1 text-xs font-semibold text-slate-600 dark:text-slate-400">
-                            Image URL:
-                          </p>
-                          <p className="truncate font-mono text-xs text-slate-700 dark:text-slate-300">
-                            {formData.image}
-                          </p>
+
+                {/* Upload Section */}
+                <div>
+                  <label className="mb-3 block text-sm font-semibold text-slate-900 dark:text-white">
+                    Upload Image
+                  </label>
+                  <div className="rounded-md border-2 border-dashed border-slate-200 p-4 text-center dark:border-slate-700">
+                    {previewImage ? (
+                      <div>
+                        <div className="relative mb-3 h-32 w-full overflow-hidden rounded-md">
+                          <Image
+                            src={previewImage}
+                            alt="Preview"
+                            fill
+                            className="object-contain"
+                          />
                         </div>
-                      )}
-                    </div>
-                  ) : (
-                    <label className="flex cursor-pointer flex-col items-center gap-3">
-                      <div className="flex flex-col items-center gap-1">
-                        <Upload className="h-6 w-6 text-slate-400 dark:text-slate-500" />
-                        <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                          Click to upload
-                        </span>
+                        <button
+                          onClick={() => {
+                            setPreviewImage(null)
+                            setFormData((prev) => ({ ...prev, image: "" }))
+                          }}
+                          className="text-sm text-sky-600 hover:underline dark:text-sky-400"
+                        >
+                          Change Image
+                        </button>
                       </div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageChange}
-                        disabled={isUploading}
-                        className="hidden"
-                      />
+                    ) : (
+                      <label className="flex cursor-pointer flex-col items-center gap-3">
+                        <div className="flex flex-col items-center gap-1">
+                          <Upload className="h-6 w-6 text-slate-400 dark:text-slate-500" />
+                          <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                            Click to upload
+                          </span>
+                        </div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          disabled={isUploading}
+                          className="hidden"
+                        />
+                        <button
+                          type="button"
+                          disabled={isUploading}
+                          className="inline-flex items-center gap-1 rounded-md bg-sky-600 px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-sky-500/20 transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {isUploading ? (
+                            <>
+                              <Loader className="h-3 w-3 animate-spin" />
+                              Uploading…
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="h-3 w-3" />
+                              Upload
+                            </>
+                          )}
+                        </button>
+                      </label>
+                    )}
+                  </div>
+                </div>
+
+                {/* Image Link Field */}
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-900 dark:text-white">
+                    Image URL {formData.image && <span className="text-green-600 dark:text-green-400">✓</span>}
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Paste image link here or upload above"
+                      value={formData.image}
+                      onChange={(e) => {
+                        setFormData((prev) => ({ ...prev, image: e.target.value }))
+                        if (e.target.value) {
+                          setPreviewImage(e.target.value)
+                        }
+                      }}
+                      className="flex-1 rounded-md border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 transition outline-none focus:border-sky-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400/60"
+                    />
+                    {formData.image && (
                       <button
-                        type="button"
-                        disabled={isUploading}
-                        className="inline-flex items-center gap-1 rounded-md bg-sky-600 px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-sky-500/20 transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        onClick={handleCopyImageLink}
+                        className="flex items-center gap-2 rounded-md bg-slate-100 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                        title="Copy image link"
                       >
-                        {isUploading ? (
-                          <>
-                            <Loader className="h-3 w-3 animate-spin" />
-                            Uploading…
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="h-3 w-3" />
-                            Upload
-                          </>
-                        )}
+                        <Copy className="h-4 w-4" />
+                        <span className="hidden sm:inline">Copy</span>
                       </button>
-                    </label>
-                  )}
+                    )}
+                  </div>
                 </div>
               </Card.Content>
             </Card>
@@ -580,117 +611,100 @@ export default function PushNotificationsPage() {
           {/* Notification Preview */}
           <Card className="sticky top-6 border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900 rounded-md">
             <Card.Content className="p-6">
-              <h3 className="mb-4 text-base font-bold text-slate-900 dark:text-white">
-                Preview
+              <h3 className="mb-6 text-base font-bold text-slate-900 dark:text-white">
+                Phone Preview
               </h3>
 
               {/* Phone Mockup Frame */}
               <div className="mx-auto w-full max-w-xs">
-                <div className="relative rounded-md bg-slate-900 p-2 dark:bg-slate-950">
-                  <div className="overflow-hidden rounded-md bg-slate-100 dark:bg-slate-800">
-                    {!isNotificationExpanded ? (
-                      /* Collapsed - notification with title and description inside phone */
-                      <button
-                        onClick={() => setIsNotificationExpanded(true)}
-                        className="flex w-full cursor-pointer items-center gap-2.5 rounded-md bg-white px-4 py-3 text-left transition-colors hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700"
-                      >
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-500">
-                          <Image
-                            src="/af_home_logo.png"
-                            alt="AF Home"
-                            width={16}
-                            height={16}
-                            className="h-4 w-4"
-                            style={{ filter: "brightness(0) invert(1)" }}
-                          />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-xs font-semibold text-slate-900 dark:text-white">
-                            {formData.title || "Title"}
-                          </p>
-                          <p className="mt-0.5 truncate text-[10px] text-slate-500 dark:text-slate-400">
-                            {formData.description || "Description"}
-                          </p>
-                        </div>
-                        {formData.image && (
-                          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md">
+                {/* Phone Bezel & Screen */}
+                <div className="relative overflow-hidden rounded-md bg-black" style={{ aspectRatio: '9/16', boxShadow: '0 0 0 12px #1f2937, 0 0 0 13px #000' }}>
+                  {/* Phone Screen */}
+                  <div className="relative h-full w-full overflow-hidden bg-slate-900">
+                    {/* Status Bar */}
+                    <div className="flex items-center justify-between px-4 py-2 bg-slate-950 text-white text-xs font-medium">
+                      <span>9:41</span>
+                      <div className="flex gap-1">
+                        <span>📶</span>
+                        <span>📡</span>
+                        <span>🔋</span>
+                      </div>
+                    </div>
+
+                    {/* Notch */}
+                    <div className="absolute top-2 left-1/2 -translate-x-1/2 w-32 h-6 bg-black rounded-b-2xl z-10" />
+
+                    {/* Screen Content */}
+                    <div className="h-full w-full bg-gradient-to-b from-slate-800 to-slate-900 p-3 pt-4 flex flex-col">
+                      {/* Notification Pop-up */}
+                      <div className="rounded-md bg-white dark:bg-slate-800 shadow-lg overflow-hidden border border-slate-200 dark:border-slate-700">
+                        {/* Notification Header with Expand/Collapse */}
+                        <div className="flex p-3 items-start gap-2">
+                          {/* App Icon - Circular */}
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-500 flex-shrink-0 mt-0.5">
                             <Image
-                              src={formData.image}
-                              alt="Notification"
-                              fill
-                              className="object-cover"
+                              src="/af_home_logo.png"
+                              alt="AF Home"
+                              width={20}
+                              height={20}
+                              className="h-5 w-5"
+                              style={{ filter: "brightness(0) invert(1)" }}
                             />
                           </div>
-                        )}
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-600">
-                          <ChevronDown className="h-4 w-4 text-slate-600 dark:text-slate-200" />
-                        </div>
-                      </button>
-                    ) : (
-                      /* Expanded - Full notification inside phone */
-                      <div className="overflow-hidden rounded-md bg-white dark:bg-slate-800">
-                        <div className="flex items-center justify-between gap-3 px-4 py-2">
-                          <div className="flex min-w-0 flex-1 items-center gap-2.5">
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-500">
-                              <Image
-                                src="/af_home_logo.png"
-                                alt="AF Home"
-                                width={16}
-                                height={16}
-                                className="h-4 w-4"
-                                style={{ filter: "brightness(0) invert(1)" }}
-                              />
-                            </div>
-                            <div className="flex min-w-0 flex-1 items-center gap-2">
-                              <p className="text-xs font-semibold whitespace-nowrap text-slate-900 dark:text-white">
-                                AF Home
-                              </p>
-                              <p className="text-[10px] whitespace-nowrap text-slate-500 dark:text-slate-400">
-                                Just now
-                              </p>
-                            </div>
+
+                          {/* Notification Content */}
+                          <div className="flex-1 min-w-0 py-0.5">
+                            <p className="text-xs font-semibold text-slate-900 dark:text-white">
+                              {formData.title || "AF Home"}
+                            </p>
+                            <p className={`text-xs text-slate-600 dark:text-slate-400 mt-0.5 leading-tight ${
+                              isNotificationExpanded ? "" : "line-clamp-1"
+                            }`}>
+                              {formData.description || "New notification"}
+                            </p>
                           </div>
+
+                          {/* Expand/Collapse Button */}
                           <button
-                            onClick={() => setIsNotificationExpanded(false)}
-                            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-200 transition hover:bg-slate-300 dark:bg-slate-600 dark:hover:bg-slate-500"
+                            onClick={() => setIsNotificationExpanded(!isNotificationExpanded)}
+                            className="flex h-6 w-6 shrink-0 items-center justify-center text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-400 transition mt-0.5"
                           >
-                            <ChevronDown className="h-4 w-4 rotate-180 text-slate-600 dark:text-slate-200" />
+                            <ChevronDown className={`h-4 w-4 transition-transform ${isNotificationExpanded ? "rotate-180" : ""}`} />
                           </button>
                         </div>
 
-                        <div className="space-y-2 px-4 py-2">
-                          <p className="text-sm leading-snug font-bold text-slate-900 dark:text-white">
-                            {formData.title || "Title"}
-                          </p>
-                          <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
-                            {formData.description || "Description"}
-                          </p>
+                        {/* Expanded Content */}
+                        {isNotificationExpanded && (
+                          <>
+                            {/* Image */}
+                            {formData.image && (
+                              <div className="px-3 pt-2 pb-1">
+                                <div className="relative h-20 w-full overflow-hidden rounded-md">
+                                  <Image
+                                    src={formData.image}
+                                    alt="Notification"
+                                    fill
+                                    className="object-cover"
+                                  />
+                                </div>
+                              </div>
+                            )}
 
-                          {formData.image && (
-                            <div className="relative mt-3 h-32 w-full overflow-hidden rounded-md bg-slate-100 dark:bg-slate-700">
-                              <Image
-                                src={formData.image}
-                                alt="Notification"
-                                fill
-                                className="object-cover"
-                              />
-                            </div>
-                          )}
-                        </div>
-
-                        {isButtonEnabled && (
-                          <div className="px-4 py-2">
-                            <button className="w-full rounded-md bg-cyan-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-cyan-700">
-                              {formData.buttonText || "Shop Now"}
-                            </button>
-                          </div>
+                            {/* Button */}
+                            {isButtonEnabled && (
+                              <div className="px-3 pt-1 pb-3">
+                                <button className="w-full rounded-md bg-sky-500 py-1.5 text-xs font-semibold text-white text-center hover:bg-sky-600 transition">
+                                  {formData.buttonText || "Shop Now"}
+                                </button>
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
-                    )}
-                  </div>
+                    </div>
 
-                  <div className="absolute right-0 bottom-0 left-0 flex h-5 items-center justify-center">
-                    <div className="h-1 w-32 rounded-full bg-slate-900 dark:bg-slate-700" />
+                    {/* Home Indicator */}
+                    <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-24 h-1 bg-slate-700 rounded-full" />
                   </div>
                 </div>
               </div>
