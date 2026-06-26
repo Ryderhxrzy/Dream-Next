@@ -1,7 +1,6 @@
 ﻿"use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { colorNameToHex, hexToColorName } from "@/libs/colorUtils"
 import { showErrorToast } from "@/libs/toast"
 import {
   useGetAdminProductQuery,
@@ -996,12 +995,8 @@ export default function ProductDetailPageMain({
             value={hex}
             onChange={(e) => setVal("pv_color_hex", e.target.value)}
             onBlur={() => {
+              // Save the picked hex only. Color name is set manually — no auto-mapping.
               save("pv_color_hex", getVal("pv_color_hex"), false)
-              if (!String(getVal("pv_color")).trim()) {
-                const auto = hexToColorName(String(getVal("pv_color_hex")) || DEFAULT_HEX)
-                setVal("pv_color", auto)
-                save("pv_color", auto, false)
-              }
             }}
             className="h-10 w-12 shrink-0 cursor-pointer rounded-xl border border-slate-300 bg-white p-1 dark:border-slate-700 dark:bg-slate-950"
           />
@@ -1010,12 +1005,8 @@ export default function ProductDetailPageMain({
             value={name}
             onChange={(e) => setVal("pv_color", e.target.value)}
             onBlur={() => {
+              // Save the typed color name only. Hex is set manually — no auto-mapping.
               save("pv_color", getVal("pv_color"), false)
-              const mapped = colorNameToHex(String(getVal("pv_color")))
-              if (mapped) {
-                setVal("pv_color_hex", mapped)
-                save("pv_color_hex", mapped, false)
-              }
             }}
             placeholder="e.g. White"
             className={inputCls}

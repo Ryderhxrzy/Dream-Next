@@ -10,6 +10,10 @@ import { useSession } from 'next-auth/react'
 import { useGetPublicProductBrandsQuery } from '@/store/api/productBrandsApi'
 import { useGetPublicProductsQuery, useGetProductBrandQuery, useGetPublicZqProductsQuery, type ZqCachedProduct } from '@/store/api/productsApi'
 import { useAddToCartMutation } from '@/store/api/cartApi'
+import {
+  useFollowBrandMutation,
+  useUnfollowBrandMutation,
+} from '@/store/api/followersApi'
 import { useGetCategoriesQuery } from '@/store/api/categoriesApi'
 import { Skeleton } from '@heroui/react/skeleton'
 import OutlineButton from '@/components/ui/buttons/OutlineButton'
@@ -626,6 +630,42 @@ export default function ByBrandPageMain() {
     skip: !selectedBrandItem,
   })
 
+  // ---- Brand follow ----
+  // Follow state + count come straight from the (optionally authenticated)
+  // public brand GET — see useGetPublicProductBrandsQuery above. Following a
+  // brand invalidates the "Brands" cache, so these refresh automatically.
+  const [followBrand, { isLoading: isFollowPending }] = useFollowBrandMutation()
+  const [unfollowBrand, { isLoading: isUnfollowPending }] = useUnfollowBrandMutation()
+
+  const followerCount = selectedBrandItem?.followers_count ?? 0
+  const isFollowing = Boolean(selectedBrandItem?.is_followed)
+  const isFollowBusy = isFollowPending || isUnfollowPending
+
+  const handleToggleFollow = async () => {
+    if (!selectedBrandItem) return
+
+    if (!isLoggedIn) {
+      const callbackPath = typeof window !== 'undefined'
+        ? `${window.location.pathname}${window.location.search}`
+        : pathname || '/by-brand'
+      router.push(`/login?callback=${encodeURIComponent(callbackPath)}`)
+      return
+    }
+
+    try {
+      if (isFollowing) {
+        await unfollowBrand(selectedBrandItem.id).unwrap()
+        toast.success(`Unfollowed ${selectedBrandItem.name}`)
+      } else {
+        await followBrand(selectedBrandItem.id).unwrap()
+        toast.success(`You're now following ${selectedBrandItem.name}`)
+      }
+    } catch (error) {
+      console.error('Error toggling brand follow:', error)
+      toast.error('Something went wrong. Please try again.')
+    }
+  }
+
   const { data: brandProductsData, isFetching: isFetchingProducts, isLoading: isLoadingProducts } = useGetPublicProductsQuery(
     selectedBrandItem
       ? { page: productPage, perPage: perPage, brandType: selectedBrandItem.id, includeAll: perPage >= 50, catId: selectedSubCategoryId ?? selectedCategoryId ?? undefined }
@@ -877,6 +917,29 @@ export default function ByBrandPageMain() {
                         <span className={`inline-block w-2 h-2 rounded-full ${(selectedBrandItem.status ?? 0) === 0 ? 'bg-green-500' : 'bg-gray-400'}`} />
                         {(selectedBrandItem.status ?? 0) === 0 ? 'Online' : 'Offline'}
                     </span>
+                    <button
+                      type="button"
+                      onClick={handleToggleFollow}
+                      disabled={isFollowBusy}
+                      aria-pressed={isFollowing}
+                      className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed ${
+                        isFollowing
+                          ? 'border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+                          : 'bg-sky-500 text-white hover:bg-sky-600'
+                      }`}
+                    >
+                      {isFollowing ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <line x1="12" y1="5" x2="12" y2="19" />
+                          <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                      )}
+                      {isFollowing ? 'Following' : 'Follow'}
+                    </button>
                     <BrandCatalogueFlipbook brand={selectedBrandItem} />
                   </div>
                   <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 text-center sm:text-left">
@@ -902,6 +965,15 @@ export default function ByBrandPageMain() {
                         <path d="M16 10a4 4 0 0 1-8 0" />
                       </svg>
                       <span>Total Products: {productTotalCount}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                      </svg>
+                      <span>{followerCount.toLocaleString()} {followerCount === 1 ? 'Follower' : 'Followers'}</span>
                     </div>
                     <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
