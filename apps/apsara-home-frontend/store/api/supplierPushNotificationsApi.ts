@@ -35,6 +35,22 @@ export interface Device {
   device_name: string
 }
 
+export interface Recipient {
+  c_userid: number
+  c_fullname: string
+  device_count: number
+  purchase_count: number
+  last_purchase_date: string | null
+}
+
+export interface RecipientsForNotificationResponse {
+  data: Recipient[]
+  current_page: number
+  last_page: number
+  per_page: number
+  total: number
+}
+
 export interface AvailableCustomersResponse {
   total_customers_with_devices: number
   customer_ids: number[]
@@ -92,6 +108,13 @@ export interface CloudinarySignResponse {
 export const supplierPushNotificationsApi = baseApi.injectEndpoints({
   overrideExisting: true,
   endpoints: (builder) => ({
+    getRecipientsForNotification: builder.query<RecipientsForNotificationResponse, void>({
+      query: () => ({
+        url: "/api/supplier/push-notifications/recipients",
+        method: "GET",
+      }),
+      keepUnusedDataFor: 300,
+    }),
     getAvailableCustomers: builder.query<AvailableCustomersResponse, void>({
       query: () => ({
         url: "/api/supplier/push-notifications/available-customers",
@@ -135,6 +158,7 @@ export const supplierPushNotificationsApi = baseApi.injectEndpoints({
 })
 
 export const {
+  useGetRecipientsForNotificationQuery,
   useGetAvailableCustomersQuery,
   useGetPushNotificationsHistoryQuery,
   useSendPushNotificationMutation,
