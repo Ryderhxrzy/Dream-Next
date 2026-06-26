@@ -4,6 +4,7 @@ WORKDIR /app
 
 RUN apk add --no-cache \
     bash \
+    ca-certificates \
     curl \
     git \
     icu-dev \
