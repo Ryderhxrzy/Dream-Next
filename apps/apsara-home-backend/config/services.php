@@ -202,7 +202,8 @@ return [
     ],
 
     'gemini' => [
-        'api_key' => env('GEMINI_API_KEY'),
+        'api_key' => env('GEMINI_API_KEY', env('GOOGLE_GENERATIVE_AI_API_KEY', env('GOOGLE_API_KEY'))),
+        'embedding_model' => env('GEMINI_EMBEDDING_MODEL', 'gemini-embedding-2'),
     ],
 
     'onesignal' => [

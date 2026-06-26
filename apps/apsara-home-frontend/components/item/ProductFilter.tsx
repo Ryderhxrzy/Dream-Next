@@ -1,7 +1,7 @@
 "use client"
 
 /* eslint-disable react-hooks/set-state-in-effect */
-import { Fragment, useEffect, useState } from "react"
+import { Fragment, useEffect, useMemo, useState } from "react"
 import { normalizeCategorySlug } from "@/libs/partnerStorefront"
 import { ROOM_OPTIONS } from "@/libs/roomConfig"
 import type { Category } from "@/store/api/categoriesApi"
@@ -82,6 +82,30 @@ export default function ProductFilter({
   const [showAllBrands, setShowAllBrands] = useState(false)
   const [brandSearch, setBrandSearch] = useState("")
   const [selectedBrand, setSelectedBrand] = useState(currentBrand ?? "")
+  const [expandedId, setExpandedId] = useState<number | null>(null)
+
+  const parentCategories = useMemo(
+    () =>
+      categories.filter(
+        (c) => c.parent_id === null || c.parent_id === undefined
+      ),
+    [categories]
+  )
+  const childrenByParentId = useMemo(() => {
+    const map: Record<number, Category[]> = {}
+    for (const c of categories) {
+      if (c.parent_id) {
+        if (!map[c.parent_id]) map[c.parent_id] = []
+        map[c.parent_id].push(c)
+      }
+    }
+    return map
+  }, [categories])
+  const currentParentId = useMemo(() => {
+    const matched = categories.find((c) => c.name === currentCategory)
+    return matched?.parent_id ?? null
+  }, [categories, currentCategory])
+
   const shopPathMatch = pathname.match(
     /^\/shop\/([^/]+)\/(?:product|category(?:\/[^/]+)?)\/?$/i
   )
@@ -352,13 +376,28 @@ export default function ProductFilter({
             >
               All Category
             </button>
-            {categories.map((category) => {
-              const isSelected = currentCategory === category.name || propSearch === category.name
-              const showSubs = isSelected && onSubCategorySelect && subCategories.length > 0
+            {parentCategories.map((category) => {
+              const children = childrenByParentId[category.id] ?? []
+              const hasChildren = children.length > 0
+              const isExpanded =
+                expandedId === category.id ||
+                currentParentId === category.id ||
+                (currentCategory === category.name && hasChildren)
+              const isSelected =
+                currentCategory === category.name ||
+                propSearch === category.name ||
+                currentParentId === category.id
               return (
                 <Fragment key={category.id}>
                   <button
                     onClick={() => {
+                      if (hasChildren) {
+                        setExpandedId((prev) =>
+                          prev === category.id ? null : category.id
+                        )
+                        // Don't navigate when toggling a parent — state would reset
+                        return
+                      }
                       if (onCategorySelect) onCategorySelect(category)
                       else router.push(getCategoryPath(category))
                     }}
@@ -368,7 +407,7 @@ export default function ProductFilter({
                         : "text-gray-600 hover:bg-sky-50 hover:text-sky-600 dark:text-gray-300 dark:hover:bg-sky-900/20 dark:hover:text-sky-400"
                     }`}
                   >
-                    {onSubCategorySelect && (
+                    {hasChildren && (
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="12"
@@ -377,33 +416,51 @@ export default function ProductFilter({
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="2.5"
-                        className={`shrink-0 transition-transform ${showSubs ? "rotate-90" : ""}`}
+                        className={`shrink-0 transition-transform ${isExpanded ? "rotate-90" : ""}`}
                       >
                         <polyline points="9 18 15 12 9 6" />
                       </svg>
                     )}
                     {category.name}
                   </button>
-                  {showSubs && (
+                  {isExpanded && hasChildren && (
                     <div className="ml-3 flex flex-col border-l-2 border-sky-200 dark:border-sky-700">
-                      {([{ id: null, name: "All" } as { id: null | number; name: string }, ...subCategories]).map((sub) => {
-                        const isSelected = sub.id === null ? !currentSubCategory : currentSubCategory === sub.name
+                      {/* "All [parent]" navigates to the parent category page */}
+                      <div className="flex items-center">
+                        <div className="h-px w-3 shrink-0 bg-sky-200 dark:bg-sky-700" />
+                        <button
+                          onClick={() => {
+                            if (onCategorySelect) onCategorySelect(category)
+                            else router.push(getCategoryPath(category))
+                          }}
+                          className={`my-0.5 flex flex-1 cursor-pointer items-center rounded-lg px-2 py-1 text-left text-xs font-medium transition-colors ${
+                            currentCategory === category.name
+                              ? "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
+                              : "text-gray-500 hover:bg-sky-50 hover:text-sky-500 dark:text-gray-400 dark:hover:bg-sky-900/20 dark:hover:text-sky-400"
+                          }`}
+                        >
+                          All {category.name}
+                        </button>
+                      </div>
+                      {children.map((child) => {
+                        const isChildSelected =
+                          currentCategory === child.name ||
+                          propSearch === child.name
                         return (
-                          <div key={sub.id ?? "all"} className="flex items-center">
+                          <div key={child.id} className="flex items-center">
                             <div className="h-px w-3 shrink-0 bg-sky-200 dark:bg-sky-700" />
                             <button
-                              onClick={() =>
-                                sub.id === null
-                                  ? onSubCategorySelect(null)
-                                  : onSubCategorySelect(sub as Category)
-                              }
+                              onClick={() => {
+                                if (onCategorySelect) onCategorySelect(child)
+                                else router.push(getCategoryPath(child))
+                              }}
                               className={`my-0.5 flex flex-1 cursor-pointer items-center rounded-lg px-2 py-1 text-left text-xs font-medium transition-colors ${
-                                isSelected
+                                isChildSelected
                                   ? "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
                                   : "text-gray-500 hover:bg-sky-50 hover:text-sky-500 dark:text-gray-400 dark:hover:bg-sky-900/20 dark:hover:text-sky-400"
                               }`}
                             >
-                              {sub.name}
+                              {child.name}
                             </button>
                           </div>
                         )

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { SendHorizonal, X } from "lucide-react"
+import { ImagePlus, SendHorizonal, X } from "lucide-react"
 
 interface Props {
   value: string
@@ -16,7 +16,6 @@ export function AiSupportFooter({
   value,
   onChange,
   onSend,
-  images,
   onImageChange,
   hasImage,
   maxImages = 4,
@@ -25,6 +24,7 @@ export function AiSupportFooter({
   const [previews, setPreviews] = useState<
     Array<{ url: string; name: string; dataUrl: string }>
   >([])
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
   useEffect(() => {
@@ -66,6 +66,42 @@ export function AiSupportFooter({
     }
   }
 
+  const readFileAsDataUrl = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(String(reader.result ?? ""))
+      reader.onerror = () => reject(reader.error)
+      reader.readAsDataURL(file)
+    })
+
+  const handleImageSelect = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = Array.from(event.target.files ?? [])
+      .filter((file) => file.type.startsWith("image/"))
+      .slice(0, Math.max(0, maxImages - previews.length))
+
+    if (!files.length) {
+      event.target.value = ""
+      return
+    }
+
+    const nextPreviews = await Promise.all(
+      files.map(async (file) => ({
+        url: URL.createObjectURL(file),
+        name: file.name,
+        dataUrl: await readFileAsDataUrl(file),
+      }))
+    )
+
+    setPreviews((prev) => {
+      const next = [...prev, ...nextPreviews].slice(0, maxImages)
+      onImageChange(next.map((item) => item.dataUrl))
+      return next
+    })
+    event.target.value = ""
+  }
+
   return (
     <div className="relative flex flex-shrink-0 items-end gap-2 border-t border-slate-100 bg-white px-3 py-2.5">
       <textarea
@@ -83,6 +119,23 @@ export function AiSupportFooter({
         rows={1}
         className="max-h-[140px] flex-1 resize-none [scrollbar-width:none] overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-[13.5px] text-slate-800 transition-all duration-150 outline-none placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100 [&::-webkit-scrollbar]:hidden"
       />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={handleImageSelect}
+      />
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={disabled || previews.length >= maxImages}
+        aria-label="Attach image"
+        className="flex h-10 w-10 flex-shrink-0 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 transition-all duration-150 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        <ImagePlus size={17} strokeWidth={2.2} />
+      </button>
       <button
         type="button"
         onClick={handleSend}
@@ -97,6 +150,7 @@ export function AiSupportFooter({
           <div className="flex flex-wrap gap-2">
             {previews.map((preview, idx) => (
               <div key={`${preview.url}-${idx}`} className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element -- Local object URLs are short-lived upload previews. */}
                 <img
                   src={preview.url}
                   alt={preview.name || "Selected upload"}

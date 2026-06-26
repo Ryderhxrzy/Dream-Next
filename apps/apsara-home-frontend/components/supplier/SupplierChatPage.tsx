@@ -751,7 +751,7 @@ export default function SupplierChatPage() {
     }
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
-  }, [mediaModal.open])
+  }, [mediaModal])
 
   // Auto-resize textarea
   useEffect(() => {

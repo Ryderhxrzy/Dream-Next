@@ -518,23 +518,35 @@ export default function PartnerMembersPage() {
                 <ChevronLeft className="h-4 w-4" />
               </button>
 
-              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                const p = i + 1
-                return (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setPage(p)}
-                    className={`flex h-8 w-8 items-center justify-center rounded-lg text-sm font-semibold transition ${
-                      page === p
-                        ? "bg-indigo-600 text-white shadow-md shadow-indigo-200 dark:shadow-indigo-900/40"
-                        : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                    }`}
-                  >
-                    {p}
-                  </button>
+              {(() => {
+                const btnClass = (active: boolean) =>
+                  `flex h-8 w-8 items-center justify-center rounded-lg text-sm font-semibold transition ${
+                    active
+                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-200 dark:shadow-indigo-900/40"
+                      : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                  }`
+                const pages: (number | "...")[] = []
+                if (totalPages <= 7) {
+                  for (let i = 1; i <= totalPages; i++) pages.push(i)
+                } else if (page <= 4) {
+                  pages.push(1, 2, 3, 4, 5, "...", totalPages)
+                } else if (page >= totalPages - 3) {
+                  pages.push(1, "...", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages)
+                } else {
+                  pages.push(1, "...", page - 1, page, page + 1, "...", totalPages)
+                }
+                return pages.map((p, i) =>
+                  p === "..." ? (
+                    <span key={`ellipsis-${i}`} className="flex h-8 items-center justify-center px-1 text-sm text-slate-400">
+                      …
+                    </span>
+                  ) : (
+                    <button key={p} type="button" onClick={() => setPage(p)} className={btnClass(page === p)}>
+                      {p}
+                    </button>
+                  )
                 )
-              })}
+              })()}
 
               <button
                 type="button"

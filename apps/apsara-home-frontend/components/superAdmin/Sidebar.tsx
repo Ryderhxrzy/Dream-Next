@@ -63,6 +63,7 @@ const navItems: NavItem[] = [
     children: [
       { label: 'Member Chats', path: '/admin/conversations' },
       { label: 'Merchant Chats', path: '/admin/chat' },
+      { label: 'AI Knowledge Base', path: '/admin/chat/knowledge-base' },
     ],
   },
   {

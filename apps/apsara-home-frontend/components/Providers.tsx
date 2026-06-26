@@ -7,17 +7,18 @@ import { useMeQuery } from "@/store/api/userApi"
 import { store } from "@/store/store"
 import { AnimatePresence, motion } from "framer-motion"
 import { SessionProvider, signOut, useSession } from "next-auth/react"
-import { ThemeProvider } from "next-themes"
 import { usePathname } from "next/navigation"
 import { Toaster } from "react-hot-toast"
 import { Provider as ReduxProvider } from "react-redux"
 
 import { useAccountDeletedListener } from "@/hooks/useAccountDeletedListener"
 import { useEchoSetup } from "@/hooks/useEchoSetup"
+import ShopAiSupportGate from "@/components/ai-support/ShopAiSupportGate"
+import AdsPopup from "@/components/shop/AdsPopup"
+import { AppThemeProvider } from "@/components/theme/AppThemeProvider"
 import CartDrawer from "@/components/ui/CartDrawer"
 import LoadingScreen from "@/components/ui/LoadingScreen"
 import WishlistDrawer from "@/components/ui/WishlistDrawer"
-import AdsPopup from "@/components/shop/AdsPopup"
 
 const HOME_SPLASH_KEY = "afhome:splash-shown"
 const HOME_SPLASH_DURATION_MS = 1600
@@ -220,7 +221,11 @@ function HomeSplashOverlay() {
   return <LoadingScreen />
 }
 
-function CustomerProviderTree({ children }: { children: React.ReactNode }) {
+function CustomerSessionProviderBoundary({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   const pathname = usePathname()
 
   // Supplier routes have their own SessionProvider with a different basePath.
@@ -231,51 +236,62 @@ function CustomerProviderTree({ children }: { children: React.ReactNode }) {
     return <>{children}</>
   }
 
+  return <SessionProvider>{children}</SessionProvider>
+}
+
+function CustomerProviderTree({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+
+  if (pathname?.startsWith("/supplier")) {
+    return <>{children}</>
+  }
+
   return (
-    <SessionProvider>
-      <CartProvider>
-        <WishlistProvider>
-          <EchoInitializer />
-          <CustomerSessionGuard />
-          <AccountDeletedListener />
-          <CustomerBannedOverlay />
-          <CustomerDeletedOverlay />
-          <HomeSplashOverlay />
-          {children}
-          <AdsPopup />
-          <CartDrawer />
-          <WishlistDrawer />
-          <Toaster
-            position="top-center"
-            toastOptions={{
-              duration: 3000,
-              style: {
-                borderRadius: "12px",
-                background: "#ffffff",
-                color: "#1f2937",
-                border: "1px solid #fed7aa",
-                boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
-                fontSize: "14px",
-              },
-            }}
-          />
-        </WishlistProvider>
-      </CartProvider>
-    </SessionProvider>
+    <CartProvider>
+      <WishlistProvider>
+        <EchoInitializer />
+        <CustomerSessionGuard />
+        <AccountDeletedListener />
+        <CustomerBannedOverlay />
+        <CustomerDeletedOverlay />
+        <HomeSplashOverlay />
+        {children}
+        <ShopAiSupportGate />
+        <AdsPopup />
+        <CartDrawer />
+        <WishlistDrawer />
+        <Toaster
+          position="top-center"
+          toastOptions={{
+            duration: 3000,
+            style: {
+              borderRadius: "12px",
+              background: "#ffffff",
+              color: "#1f2937",
+              border: "1px solid #fed7aa",
+              boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
+              fontSize: "14px",
+            },
+          }}
+        />
+      </WishlistProvider>
+    </CartProvider>
   )
 }
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider
+    <AppThemeProvider
       attribute="class"
       defaultTheme="light"
       enableSystem={false}
       disableTransitionOnChange
     >
       <ReduxProvider store={store}>
-        <CustomerProviderTree>{children}</CustomerProviderTree>
+        <CustomerSessionProviderBoundary>
+          <CustomerProviderTree>{children}</CustomerProviderTree>
+        </CustomerSessionProviderBoundary>
       </ReduxProvider>
-    </ThemeProvider>
+    </AppThemeProvider>
   )
 }

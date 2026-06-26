@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next"
 
-// import Script from "next/script";
 import "./globals.css"
 
 import { DynamicNotifyToaster } from "@/components/ui/DynamicNotify/DynamicNotify"
@@ -32,10 +31,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const apiBase = (process.env.NEXT_PUBLIC_LARAVEL_API_URL ?? "").replace(
-    /\/+$/,
-    ""
-  )
   const fontVars = {
     "--font-poppins":
       '"Plus Jakarta Sans", "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif',
@@ -44,18 +39,11 @@ export default function RootLayout({
   return (
     <html lang="en" style={fontVars} suppressHydrationWarning>
       <head>
-        {/* Preload AI support images so they're ready when the component hydrates */}
-        <link rel="preload" as="image" href={`${apiBase}/Image/sir.png`} />
-        <link rel="preload" as="image" href={`${apiBase}/Image/af.png`} />
+        <link rel="preload" as="image" href="/sir.png" />
       </head>
       <body className="bg-white antialiased dark:bg-gray-900">
         <Providers>{children}</Providers>
         <DynamicNotifyToaster />
-        {/* <Script
-          id="af-ai-support-base"
-          strategy="afterInteractive"
-        >{`window.appBaseUrl = ${JSON.stringify(apiBase)}; window.afAiApiBase = '';`}</Script>
-        <Script src="/ai-support.js" strategy="afterInteractive" /> */}
       </body>
     </html>
   )

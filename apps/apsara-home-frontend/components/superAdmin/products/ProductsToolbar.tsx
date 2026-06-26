@@ -182,8 +182,10 @@ export default function ProductsToolbar({
   const hasMerchantCategories =
     merchantCategories !== undefined && merchantCategories.length > 0
 
-  const categoryOptions: Array<{ value: string; label: string; isGroupLabel?: boolean }> =
-    hasMerchantCategories
+  const categoryOptions = useMemo<
+    Array<{ value: string; label: string; isGroupLabel?: boolean }>
+  >(() => {
+    const rawOptions = hasMerchantCategories
       ? [
           { value: "", label: "All Categories" },
           { value: "__general__", label: "General Categories", isGroupLabel: true },
@@ -200,6 +202,30 @@ export default function ProductsToolbar({
           },
           ...categories.map((c) => ({ value: String(c.id), label: c.name })),
         ]
+
+    // The same category id can appear in both the general and merchant groups,
+    // which would render duplicate React keys (`${value}-${label}`) and
+    // duplicate react-aria ids. Keep the first occurrence of each category, then
+    // drop any group header left without options.
+    const seenValues = new Set<string>()
+    const uniqueOptions = rawOptions.filter((option) => {
+      if (option.isGroupLabel) return true
+      if (seenValues.has(option.value)) return false
+      seenValues.add(option.value)
+      return true
+    })
+
+    return uniqueOptions.filter((option, index) => {
+      if (!option.isGroupLabel) return true
+      const next = uniqueOptions[index + 1]
+      return next !== undefined && !next.isGroupLabel
+    })
+  }, [
+    hasMerchantCategories,
+    categories,
+    merchantCategories,
+    hasSupplierScopedCategories,
+  ])
   const hasFilter =
     search !== "" ||
     status !== "" ||

@@ -36,6 +36,38 @@ use RuntimeException;
 class PaymentController extends Controller
 {
     private const LOCAL_PAYMENT_HOSTS = ['localhost', '127.0.0.1', '::1'];
+    private const CHECKOUT_PAYMENT_METHODS = [
+        'gcash' => [
+            'label' => 'GCash',
+            'aliases' => ['gcash'],
+            'provider_types' => ['gcash'],
+        ],
+        'maya' => [
+            'label' => 'Maya',
+            'aliases' => ['maya', 'paymaya'],
+            'provider_types' => ['paymaya'],
+        ],
+        'card' => [
+            'label' => 'Visa/Mastercard credit or debit card',
+            'aliases' => ['card', 'credit card', 'debit card', 'visa', 'mastercard'],
+            'provider_types' => ['card'],
+        ],
+        'online_banking' => [
+            'label' => 'Online Banking',
+            'aliases' => ['online banking', 'bank payment'],
+            'provider_types' => ['dob'],
+        ],
+    ];
+    private const ONLINE_BANKING_PROVIDERS = [
+        'dob' => [
+            'label' => 'BDO online banking through PayMongo',
+            'aliases' => ['bdo', 'dob', 'bdo online banking'],
+        ],
+        'ubp' => [
+            'label' => 'UnionBank online banking through PayMongo',
+            'aliases' => ['unionbank', 'union bank', 'ubp'],
+        ],
+    ];
 
     private function isLocalPaymentEnvironment(): bool
     {
@@ -173,11 +205,9 @@ class PaymentController extends Controller
     private function mapMethods(string $method, ?string $onlineBankingProvider = null, ?string $paymentMode = null): array
     {
         return match ($method) {
-            'card' => ['card'],
-            'gcash' => ['gcash'],
-            'maya' => ['paymaya'],
+            'card', 'gcash', 'maya' => self::CHECKOUT_PAYMENT_METHODS[$method]['provider_types'],
             'online_banking' => $this->resolveOnlineBankingMethods($onlineBankingProvider, $paymentMode),
-            default => ['gcash'],
+            default => self::CHECKOUT_PAYMENT_METHODS['gcash']['provider_types'],
         };
     }
 
@@ -194,7 +224,42 @@ class PaymentController extends Controller
     private function resolveOnlineBankingProvider(?string $provider = null): string
     {
         $provider = strtolower(trim((string) $provider));
-        return in_array($provider, ['dob', 'ubp'], true) ? $provider : 'dob';
+        return array_key_exists($provider, self::ONLINE_BANKING_PROVIDERS) ? $provider : 'dob';
+    }
+
+    public function paymentMethods(Request $request)
+    {
+        $paymentMode = strtolower(trim((string) $request->query('payment_mode', '')));
+        $activeOnlineBankingProviders = $paymentMode === 'test'
+            ? array_keys(self::ONLINE_BANKING_PROVIDERS)
+            : ['dob'];
+
+        $methods = [];
+        foreach (self::CHECKOUT_PAYMENT_METHODS as $key => $method) {
+            $entry = [
+                'key' => $key,
+                'label' => $method['label'],
+                'aliases' => $method['aliases'],
+            ];
+
+            if ($key === 'online_banking') {
+                $entry['providers'] = array_values(array_map(
+                    fn (string $providerKey): array => [
+                        'key' => $providerKey,
+                        'label' => self::ONLINE_BANKING_PROVIDERS[$providerKey]['label'],
+                        'aliases' => self::ONLINE_BANKING_PROVIDERS[$providerKey]['aliases'],
+                    ],
+                    $activeOnlineBankingProviders
+                ));
+            }
+
+            $methods[] = $entry;
+        }
+
+        return response()->json([
+            'methods' => $methods,
+            'payment_mode' => $paymentMode === 'test' ? 'test' : 'live',
+        ]);
     }
 
     private function paymongoApiUrl(string $path, ?string $requestedMode = null): string
@@ -253,9 +318,9 @@ class PaymentController extends Controller
         $validated = $request->validate([
             'amount' => 'required|numeric|min:1',
             'description' => 'required|string|max:255',
-            'payment_method' => 'required|in:online_banking,card,gcash,maya',
+            'payment_method' => 'required|in:' . implode(',', array_keys(self::CHECKOUT_PAYMENT_METHODS)),
             'payment_mode' => 'nullable|in:test,live',
-            'online_banking_provider' => 'nullable|in:dob,ubp',
+            'online_banking_provider' => 'nullable|in:' . implode(',', array_keys(self::ONLINE_BANKING_PROVIDERS)),
             'voucher_code' => 'nullable|string|max:80',
             'cashback_amount' => 'nullable|numeric|min:0',
             'egc_amount' => 'nullable|numeric|min:0',

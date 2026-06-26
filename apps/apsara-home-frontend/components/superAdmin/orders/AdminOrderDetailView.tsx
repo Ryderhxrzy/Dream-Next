@@ -4,11 +4,27 @@ import { useState } from "react"
 import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import {
   useApproveAdminOrderMutation,
+  useBookAdminOrderCourierMutation,
+  useCancelAdminOrderCourierMutation,
+  useFetchAdminOrderZqDetailMutation,
+  useGetAdminOrderCourierEpodMutation,
+  useGetAdminOrderCourierWaybillMutation,
   useGetAdminOrdersQuery,
+  usePushAdminOrderToZqMutation,
   useRejectAdminOrderMutation,
+  useSyncAdminOrderZqTrackingMutation,
   useTrackAdminOrderCourierMutation,
+  useUpdateAdminOrderFulfillmentModeMutation,
+  useUpdateAdminOrderShipmentStatusMutation,
   type AdminCourier,
+  type AdminOrdersResponse,
+  type AdminShipmentStatus,
 } from "@/store/api/adminOrdersApi"
+import { useGetAdminGeneralSettingsQuery } from "@/store/api/adminSettingsApi"
+import { Button } from "@heroui/react/button"
+import { ListBox } from "@heroui/react/list-box"
+import { ListBoxItem } from "@heroui/react/list-box-item"
+import { Select } from "@heroui/react/select"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
 
@@ -16,6 +32,22 @@ import { OrderStatusTimeline } from "@/components/orders/OrderStatusTimeline"
 import AdminCustomerChatDrawer from "@/components/superAdmin/chat/AdminCustomerChatDrawer"
 
 import { ShippingAddressCard } from "./orderUi"
+
+type AdminOrderItem = AdminOrdersResponse["orders"][number]
+type FulfillmentMode = "manual" | "local_courier" | "zq"
+type BusyAction =
+  | "approve"
+  | "reject"
+  | "track"
+  | "mode"
+  | "status"
+  | "book"
+  | "cancel"
+  | "waybill"
+  | "epod"
+  | "push_zq"
+  | "zq_detail"
+  | "zq_sync"
 
 /* ─── helpers ──────────────────────────────────────────────── */
 
@@ -58,6 +90,242 @@ const formatCourierLabel = (courier?: string | null) => {
 const extractApiError = (err: unknown, fallback: string) => {
   const data = (err as { data?: { message?: string; error?: string } })?.data
   return data?.error || data?.message || fallback
+}
+
+const copyText = async (value: string) => {
+  if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
+    throw new Error("Clipboard is not available in this browser.")
+  }
+  await navigator.clipboard.writeText(value)
+}
+
+const isLocalCourier = (courier?: string | null) => {
+  const normalized = String(courier ?? "")
+    .trim()
+    .toLowerCase()
+  return normalized === "jnt" || normalized === "xde"
+}
+
+const hasZqSourceMetadata = (order: AdminOrderItem) => {
+  const payload = order.zq_payload ?? {}
+  return (
+    String(payload.source_type ?? "")
+      .trim()
+      .toLowerCase() === "zq" ||
+    String(payload.zq_external_id ?? "").trim() !== "" ||
+    String(payload.zq_product_id ?? "").trim() !== "" ||
+    String(payload.zq_offer_id ?? "").trim() !== ""
+  )
+}
+
+const extractCourierStatus = (
+  payload: Record<string, unknown> | Array<unknown> | null | undefined
+): string | null => {
+  if (!payload) return null
+
+  if (Array.isArray(payload)) {
+    const latestEntry = [...payload]
+      .filter(
+        (entry): entry is Record<string, unknown> =>
+          typeof entry === "object" && entry !== null && !Array.isArray(entry)
+      )
+      .sort((a, b) =>
+        String(b.created_at ?? "").localeCompare(String(a.created_at ?? ""))
+      )[0]
+
+    const listStatus = latestEntry?.status
+    return typeof listStatus === "string" && listStatus.trim() !== ""
+      ? listStatus.trim()
+      : null
+  }
+
+  const candidates = [
+    payload.status,
+    payload.code,
+    payload.shipment_status,
+    payload.message,
+    (payload.data as Record<string, unknown> | undefined)?.status,
+    (payload.data as Record<string, unknown> | undefined)?.shipment_status,
+    (payload.result as Record<string, unknown> | undefined)?.status,
+    (payload.result as Record<string, unknown> | undefined)?.shipment_status,
+  ]
+
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.trim() !== "") {
+      return candidate.trim()
+    }
+  }
+
+  return null
+}
+
+const FULFILLMENT_MODE_OPTIONS: Array<{ value: FulfillmentMode; label: string }> =
+  [
+    { value: "manual", label: "Manual" },
+    { value: "local_courier", label: "Local Courier" },
+    { value: "zq", label: "AF HOME GLOBAL SUPPLIER" },
+  ]
+
+const SHIPMENT_STATUS_OPTIONS: Array<{
+  value: AdminShipmentStatus
+  label: string
+}> = [
+  { value: "for_pickup", label: "For Pickup" },
+  { value: "picked_up", label: "Picked Up" },
+  { value: "in_transit", label: "In Transit" },
+  { value: "out_for_delivery", label: "Out for Delivery" },
+  { value: "delivered", label: "Delivered" },
+  { value: "failed_delivery", label: "Failed Delivery" },
+  { value: "cancelled", label: "Cancelled" },
+  { value: "returned_to_sender", label: "Returned to Sender" },
+]
+
+const COURIER_OPTIONS: Array<{ value: AdminCourier; label: string }> = [
+  { value: "jnt", label: "J&T Express" },
+  { value: "xde", label: "XDE" },
+]
+
+const ZQ_STATUS_STYLES: Record<string, string> = {
+  submitted:
+    "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:border-sky-500/30",
+  processing:
+    "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/30",
+  unfulfilled:
+    "bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-700/40 dark:text-slate-300 dark:border-slate-600/40",
+  paid: "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-300 dark:border-indigo-500/30",
+  success:
+    "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/30",
+  close:
+    "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-300 dark:border-rose-500/30",
+}
+
+/* ─── fulfillment selects (mirrors the orders queue detailed mode) ─ */
+
+function AdminOrderSelect({
+  ariaLabel,
+  value,
+  options,
+  isDisabled,
+  selectedTone = "default",
+  onChange,
+}: {
+  ariaLabel: string
+  value: string
+  options: Array<{ value: string; label: string }>
+  isDisabled?: boolean
+  selectedTone?: "default" | "shipment"
+  onChange: (value: string) => void
+}) {
+  const selectedLabel =
+    options.find((option) => option.value === value)?.label ??
+    options[0]?.label ??
+    "Select"
+  const triggerClassName =
+    selectedTone === "shipment"
+      ? "flex min-h-10 w-full items-center justify-between rounded-xl border border-teal-200 bg-teal-50 px-3 text-left text-xs font-semibold text-teal-700 transition-all duration-200 hover:bg-teal-100 focus:border-teal-300 focus:bg-white disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400 disabled:opacity-100 dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-300 dark:hover:bg-teal-500/15 dark:focus:bg-slate-800 dark:disabled:border-white/10 dark:disabled:bg-slate-800 dark:disabled:text-slate-500"
+      : "flex min-h-10 w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 text-left text-xs text-slate-700 transition-all duration-200 hover:bg-white focus:border-teal-300 focus:bg-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-200 dark:hover:bg-slate-800 dark:focus:bg-slate-800"
+
+  return (
+    <Select
+      aria-label={ariaLabel}
+      selectedKey={value}
+      onSelectionChange={(key) => {
+        if (key == null) return
+        const nextValue = String(key)
+        if (nextValue === value) return
+        onChange(nextValue)
+      }}
+      isDisabled={isDisabled}
+      className="w-full"
+    >
+      <Select.Trigger className={triggerClassName}>
+        <span className="truncate">{selectedLabel}</span>
+        <Select.Indicator className="h-4 w-4 text-slate-400" />
+      </Select.Trigger>
+      <Select.Popover className="min-w-[var(--trigger-width)] dark:border-slate-700 dark:bg-slate-900">
+        <ListBox className="p-1">
+          {options.map((option) => (
+            <ListBoxItem
+              id={option.value}
+              key={option.value}
+              className={
+                option.value === value
+                  ? "rounded-lg border border-teal-200 bg-teal-50 text-teal-700 opacity-100 dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-300"
+                  : "rounded-lg text-slate-700 dark:text-slate-200"
+              }
+            >
+              {option.label}
+            </ListBoxItem>
+          ))}
+        </ListBox>
+      </Select.Popover>
+    </Select>
+  )
+}
+
+function AdminOrderStaticValue({
+  label,
+  tone = "default",
+}: {
+  label: string
+  tone?: "default" | "shipment"
+}) {
+  const className =
+    tone === "shipment"
+      ? "flex min-h-10 w-full items-center justify-between rounded-xl border border-teal-200 bg-teal-50 px-3 text-left text-xs font-semibold text-teal-700 dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-300"
+      : "flex min-h-10 w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 text-left text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-200"
+
+  return (
+    <div className={className}>
+      <span className="truncate">{label}</span>
+      <span className="text-[10px] font-bold tracking-wide text-slate-400 uppercase dark:text-slate-500">
+        Locked
+      </span>
+    </div>
+  )
+}
+
+function PayloadPreviewModal({
+  checkoutId,
+  payload,
+  onClose,
+}: {
+  checkoutId: string
+  payload: Record<string, unknown> | Array<unknown> | null
+  onClose: () => void
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="flex max-h-[80vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+          <div>
+            <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
+              Raw payload
+            </p>
+            <p className="font-mono text-sm font-semibold break-all text-slate-800 dark:text-slate-100">
+              {checkoutId}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            Close
+          </button>
+        </div>
+        <pre className="overflow-auto px-5 py-4 text-[11px] leading-relaxed text-slate-700 dark:text-slate-200">
+          {JSON.stringify(payload ?? {}, null, 2)}
+        </pre>
+      </div>
+    </div>
+  )
 }
 
 function BackLink() {
@@ -281,11 +549,29 @@ export default function AdminOrderDetailView({ orderId }: { orderId: string }) {
     page: 1,
     perPage: 20,
   })
+  const { data: adminGeneralSettingsData } = useGetAdminGeneralSettingsQuery()
   const [approveOrder] = useApproveAdminOrderMutation()
   const [rejectOrder] = useRejectAdminOrderMutation()
   const [trackCourier] = useTrackAdminOrderCourierMutation()
-  const [busy, setBusy] = useState<null | "approve" | "reject" | "track">(null)
+  const [bookCourier] = useBookAdminOrderCourierMutation()
+  const [cancelCourier] = useCancelAdminOrderCourierMutation()
+  const [getCourierWaybill] = useGetAdminOrderCourierWaybillMutation()
+  const [getCourierEpod] = useGetAdminOrderCourierEpodMutation()
+  const [updateFulfillmentMode] = useUpdateAdminOrderFulfillmentModeMutation()
+  const [updateShipmentStatus] = useUpdateAdminOrderShipmentStatusMutation()
+  const [pushToZq] = usePushAdminOrderToZqMutation()
+  const [fetchZqDetail] = useFetchAdminOrderZqDetailMutation()
+  const [syncZqTracking] = useSyncAdminOrderZqTrackingMutation()
+  const [busy, setBusy] = useState<BusyAction | null>(null)
   const [chatOpen, setChatOpen] = useState(false)
+  const [selectedCourier, setSelectedCourier] = useState<AdminCourier | null>(
+    null
+  )
+  const [selectedMode, setSelectedMode] = useState<FulfillmentMode | null>(null)
+  const [payloadPreview, setPayloadPreview] = useState<{
+    checkoutId: string
+    payload: Record<string, unknown> | Array<unknown> | null
+  } | null>(null)
 
   const order =
     data?.orders?.find((entry) => entry.checkout_id === orderId) ?? null
@@ -340,9 +626,74 @@ export default function AdminOrderDetailView({ orderId }: { orderId: string }) {
   const canTrack = canApprove || role === "csr" || userLevelId === 3
 
   const isPendingApproval = order.approval_status === "pending_approval"
-  const courierForTrack: AdminCourier =
-    (order.courier ?? "").toLowerCase() === "xde" ? "xde" : "jnt"
   const hasCourier = Boolean(order.courier)
+
+  /* ── fulfillment flow (mirrors the orders queue detailed mode) ── */
+  const isBusy = busy !== null
+  const isDelivered = order.fulfillment_status === "delivered"
+  const isCancelled = order.fulfillment_status === "cancelled"
+  const isRefunded = order.fulfillment_status === "refunded"
+  const canTrackThisOrder =
+    canTrack &&
+    order.approval_status === "approved" &&
+    !isDelivered &&
+    !isCancelled &&
+    !isRefunded
+  const courierSelection: AdminCourier =
+    selectedCourier ??
+    ((order.courier ?? "").toLowerCase() === "xde" ? "xde" : "jnt")
+  const isCourierBooked = Boolean(order.courier && order.tracking_no)
+  const rawCourierStatus = extractCourierStatus(order.shipment_payload)
+  const zqStatusKey = String(order.zq_status ?? "")
+    .trim()
+    .toLowerCase()
+  const zqBadgeClass =
+    ZQ_STATUS_STYLES[zqStatusKey] ??
+    "bg-slate-50 text-slate-600 border-slate-200"
+  const hasZqOrder = Boolean(
+    order.zq_platform_order_id || order.zq_order_id || zqStatusKey
+  )
+  const canUseGlobalSupplierFlow = hasZqSourceMetadata(order) || hasZqOrder
+  const manualCheckoutModeEnabled = Boolean(
+    adminGeneralSettingsData?.settings?.enable_manual_checkout_mode
+  )
+  const baseFulfillmentModeOptions = manualCheckoutModeEnabled
+    ? FULFILLMENT_MODE_OPTIONS.filter((option) => option.value === "manual")
+    : FULFILLMENT_MODE_OPTIONS
+  const availableFulfillmentModeOptions = canUseGlobalSupplierFlow
+    ? baseFulfillmentModeOptions
+    : baseFulfillmentModeOptions.filter((option) => option.value !== "zq")
+  const selectedFulfillmentMode =
+    selectedMode ??
+    (order.fulfillment_mode as FulfillmentMode | undefined) ??
+    (hasZqOrder ? "zq" : "manual")
+  const effectiveFulfillmentMode =
+    selectedFulfillmentMode === "zq" && !canUseGlobalSupplierFlow
+      ? "manual"
+      : selectedFulfillmentMode
+  const isManualMode = effectiveFulfillmentMode === "manual"
+  const isLocalCourierMode = effectiveFulfillmentMode === "local_courier"
+  const isZqMode = effectiveFulfillmentMode === "zq"
+  const fulfillmentModeLabel =
+    FULFILLMENT_MODE_OPTIONS.find(
+      (option) => option.value === effectiveFulfillmentMode
+    )?.label ?? "Manual"
+  const isFulfillmentModeLocked =
+    order.fulfillment_status === "shipped" ||
+    order.fulfillment_status === "out_for_delivery" ||
+    order.fulfillment_status === "delivered"
+  const canPushZq =
+    canTrackThisOrder && isZqMode && canUseGlobalSupplierFlow && !hasZqOrder
+  const canUseZqLookup = canTrackThisOrder && isZqMode && hasZqOrder
+  const canUseCourierFlow =
+    canTrackThisOrder && isLocalCourierMode && !hasZqOrder
+  const canUseManualFlow = canTrackThisOrder && isManualMode && !hasZqOrder
+  const isCourierCancelled =
+    order.shipment_status === "cancelled" ||
+    rawCourierStatus === "package_cancelled" ||
+    rawCourierStatus === "package cancelled"
+  const showFulfillmentSection =
+    canTrack && !isRefunded && order.approval_status !== "rejected"
 
   /* ── abandoned / unpaid checkout ── */
   const isUnpaid =
@@ -426,8 +777,14 @@ export default function AdminOrderDetailView({ orderId }: { orderId: string }) {
     try {
       const result = await trackCourier({
         id: order.id,
-        courier: courierForTrack,
+        courier: courierSelection,
       }).unwrap()
+      if (result.payload && !result.shipment_status) {
+        setPayloadPreview({
+          checkoutId: order.checkout_id,
+          payload: result.payload,
+        })
+      }
       showSuccessToast(
         result.shipment_status
           ? `Latest status: ${result.shipment_status.replace(/_/g, " ")}`
@@ -435,6 +792,191 @@ export default function AdminOrderDetailView({ orderId }: { orderId: string }) {
       )
     } catch (err) {
       showErrorToast(extractApiError(err, "Failed to refresh tracking."))
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const handleFulfillmentModeChange = async (mode: FulfillmentMode) => {
+    setBusy("mode")
+    try {
+      await updateFulfillmentMode({ id: order.id, mode }).unwrap()
+      setSelectedMode(mode)
+      showSuccessToast(`Fulfillment mode locked to ${mode.replace(/_/g, " ")}.`)
+    } catch (err) {
+      showErrorToast(extractApiError(err, "Failed to update fulfillment mode."))
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const handleShipmentStatusChange = async (
+    shipmentStatus: AdminShipmentStatus,
+    options?: { courier?: AdminCourier; clearCourier?: boolean }
+  ) => {
+    setBusy("status")
+    try {
+      await updateShipmentStatus({
+        id: order.id,
+        shipment_status: shipmentStatus,
+        courier: options?.courier,
+        clear_courier: options?.clearCourier,
+      }).unwrap()
+      showSuccessToast(
+        `Shipment status updated to ${shipmentStatus.replace(/_/g, " ")}.`
+      )
+    } catch (err) {
+      showErrorToast(extractApiError(err, "Failed to update shipment status."))
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const handleBookCourier = async () => {
+    setBusy("book")
+    try {
+      const result = await bookCourier({
+        id: order.id,
+        courier: courierSelection,
+      }).unwrap()
+      if (result.payload && !result.tracking_no) {
+        setPayloadPreview({
+          checkoutId: order.checkout_id,
+          payload: result.payload,
+        })
+      }
+      showSuccessToast(
+        result.tracking_no
+          ? result.message || `${courierSelection.toUpperCase()} shipment booked.`
+          : `${courierSelection.toUpperCase()} booking returned no tracking number yet.`
+      )
+    } catch (err) {
+      showErrorToast(extractApiError(err, "Failed to book courier shipment."))
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const handleOpenWaybill = async () => {
+    setBusy("waybill")
+    try {
+      const blob = await getCourierWaybill({
+        id: order.id,
+        courier: courierSelection,
+      }).unwrap()
+      const blobUrl = URL.createObjectURL(blob)
+      window.open(blobUrl, "_blank", "noopener,noreferrer")
+      window.setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000)
+      showSuccessToast(
+        `${courierSelection.toUpperCase()} waybill opened in a new tab.`
+      )
+    } catch (err) {
+      showErrorToast(extractApiError(err, "Failed to open courier waybill."))
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const handleCancelCourier = async () => {
+    setBusy("cancel")
+    try {
+      const result = await cancelCourier({
+        id: order.id,
+        courier: courierSelection,
+      }).unwrap()
+      if (result.payload) {
+        setPayloadPreview({
+          checkoutId: order.checkout_id,
+          payload: result.payload,
+        })
+      }
+      showSuccessToast(
+        result.message ||
+          `${courierSelection.toUpperCase()} shipment cancellation submitted.`
+      )
+    } catch (err) {
+      showErrorToast(extractApiError(err, "Failed to cancel courier shipment."))
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const handleOpenEpod = async () => {
+    if (order.shipment_status !== "delivered") {
+      showErrorToast("EPOD is only available after successful delivery.")
+      return
+    }
+    setBusy("epod")
+    try {
+      const blob = await getCourierEpod({
+        id: order.id,
+        courier: courierSelection,
+      }).unwrap()
+      const blobUrl = URL.createObjectURL(blob)
+      window.open(blobUrl, "_blank", "noopener,noreferrer")
+      window.setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000)
+      showSuccessToast(
+        `${courierSelection.toUpperCase()} EPOD opened in a new tab.`
+      )
+    } catch (err) {
+      showErrorToast(extractApiError(err, "Failed to open courier EPOD."))
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const handlePushToZq = async () => {
+    setBusy("push_zq")
+    try {
+      const result = await pushToZq({ id: order.id }).unwrap()
+      if (result.zq) {
+        setPayloadPreview({ checkoutId: order.checkout_id, payload: result.zq })
+      }
+      showSuccessToast(
+        result.message || "Order pushed to Global Supplier successfully."
+      )
+    } catch (err) {
+      showErrorToast(
+        extractApiError(err, "Failed to push order to Global Supplier.")
+      )
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const handleFetchZqDetail = async () => {
+    setBusy("zq_detail")
+    try {
+      const result = await fetchZqDetail({ id: order.id }).unwrap()
+      if (result.zq) {
+        setPayloadPreview({ checkoutId: order.checkout_id, payload: result.zq })
+      }
+      showSuccessToast(
+        result.message || "Global Supplier order detail fetched successfully."
+      )
+    } catch (err) {
+      showErrorToast(
+        extractApiError(err, "Failed to fetch Global Supplier detail.")
+      )
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const handleSyncZqTracking = async () => {
+    setBusy("zq_sync")
+    try {
+      const result = await syncZqTracking({ id: order.id }).unwrap()
+      if (result.zq) {
+        setPayloadPreview({ checkoutId: order.checkout_id, payload: result.zq })
+      }
+      showSuccessToast(
+        result.message || "Global Supplier tracking synced successfully."
+      )
+    } catch (err) {
+      showErrorToast(
+        extractApiError(err, "Failed to sync Global Supplier tracking.")
+      )
     } finally {
       setBusy(null)
     }
@@ -799,6 +1341,320 @@ export default function AdminOrderDetailView({ orderId }: { orderId: string }) {
             address={order.customer_address}
           />
 
+          {showFulfillmentSection ? (
+            <SectionCard title="Fulfillment">
+              <div className="space-y-3">
+                {/* Fulfillment mode */}
+                {isFulfillmentModeLocked ? (
+                  <AdminOrderStaticValue label={fulfillmentModeLabel} />
+                ) : (
+                  <AdminOrderSelect
+                    ariaLabel={`Fulfillment mode for order ${order.checkout_id}`}
+                    value={effectiveFulfillmentMode}
+                    options={availableFulfillmentModeOptions}
+                    isDisabled={
+                      isBusy ||
+                      order.approval_status !== "approved" ||
+                      hasZqOrder
+                    }
+                    onChange={(value) =>
+                      handleFulfillmentModeChange(value as FulfillmentMode)
+                    }
+                  />
+                )}
+
+                {isZqMode ? (
+                  <div className="rounded-2xl border border-violet-200 bg-violet-50 p-3 dark:border-violet-500/30 dark:bg-violet-500/10">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[10px] font-bold tracking-wide text-violet-700 uppercase">
+                        Global Supplier Flow
+                      </p>
+                      <span
+                        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${zqBadgeClass}`}
+                      >
+                        {order.zq_status ?? "Not sent"}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-[11px] leading-relaxed text-violet-700">
+                      {hasZqOrder
+                        ? "Global Supplier handoff is active for this order. Use Global Supplier detail and tracking below."
+                        : order.approval_status === "approved"
+                          ? "Push this order to Global Supplier first to unlock detail and tracking."
+                          : "Approve the order first before pushing it to Global Supplier."}
+                    </p>
+                    {order.zq_platform_order_id ? (
+                      <p className="mt-2 text-[11px] font-semibold break-all text-slate-800 dark:text-slate-100">
+                        Platform ID: {order.zq_platform_order_id}
+                      </p>
+                    ) : null}
+                    {order.zq_order_id ? (
+                      <p className="mt-1 text-[11px] break-all text-slate-600 dark:text-slate-300">
+                        Global Supplier Order: {order.zq_order_id}
+                      </p>
+                    ) : null}
+                    <div className="mt-3 space-y-1.5">
+                      <Button
+                        size="sm"
+                        variant="tertiary"
+                        isDisabled={isBusy || !canPushZq}
+                        onPress={handlePushToZq}
+                        className={`w-full border px-3 py-1.5 text-xs font-semibold transition ${canPushZq ? "border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100" : "border-slate-200 bg-slate-50 text-slate-400"}`}
+                      >
+                        {busy === "push_zq"
+                          ? "Pushing…"
+                          : hasZqOrder
+                            ? "Global Supplier Pushed"
+                            : "Push Global Supplier"}
+                      </Button>
+                      <div className="grid grid-cols-2 gap-1">
+                        <Button
+                          size="sm"
+                          variant="tertiary"
+                          isDisabled={isBusy || !canUseZqLookup}
+                          onPress={handleFetchZqDetail}
+                          className={`border px-2 py-1.5 text-[11px] font-semibold transition ${canUseZqLookup ? "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700" : "border-slate-200 bg-slate-50 text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500"}`}
+                        >
+                          {busy === "zq_detail"
+                            ? "Fetching…"
+                            : "Global Supplier Detail"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="tertiary"
+                          isDisabled={isBusy || !canUseZqLookup}
+                          onPress={handleSyncZqTracking}
+                          className={`border px-2 py-1.5 text-[11px] font-semibold transition ${canUseZqLookup ? "border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100" : "border-slate-200 bg-slate-50 text-slate-400"}`}
+                        >
+                          {busy === "zq_sync"
+                            ? "Syncing…"
+                            : "Global Supplier Track"}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ) : isManualMode ? (
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-[#31405f] dark:bg-[#1b2640]">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[10px] font-bold tracking-wide text-slate-500 uppercase dark:text-slate-400">
+                        Manual Flow
+                      </p>
+                      <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:border-[#3a4b6d] dark:bg-[#121a2b] dark:text-slate-300">
+                        Internal
+                      </span>
+                    </div>
+                    <p className="mt-2 text-[11px] leading-relaxed text-slate-600 dark:text-slate-400">
+                      This order is managed manually. No courier booking or
+                      Global Supplier handoff will be used.
+                    </p>
+                    <div className="mt-2">
+                      <AdminOrderSelect
+                        ariaLabel={`Manual shipment status for order ${order.checkout_id}`}
+                        value={
+                          (order.shipment_status as
+                            | AdminShipmentStatus
+                            | undefined) ?? "for_pickup"
+                        }
+                        options={SHIPMENT_STATUS_OPTIONS}
+                        selectedTone="shipment"
+                        isDisabled={isBusy || !canUseManualFlow}
+                        onChange={(value) =>
+                          handleShipmentStatusChange(
+                            value as AdminShipmentStatus,
+                            { clearCourier: true }
+                          )
+                        }
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <AdminOrderSelect
+                      ariaLabel={`Courier for order ${order.checkout_id}`}
+                      value={courierSelection}
+                      options={COURIER_OPTIONS}
+                      isDisabled={isBusy || !canUseCourierFlow}
+                      onChange={(value) =>
+                        setSelectedCourier(value as AdminCourier)
+                      }
+                    />
+                    <AdminOrderSelect
+                      ariaLabel={`Shipment status for order ${order.checkout_id}`}
+                      value={
+                        (order.shipment_status as
+                          | AdminShipmentStatus
+                          | undefined) ?? "for_pickup"
+                      }
+                      options={SHIPMENT_STATUS_OPTIONS}
+                      selectedTone="shipment"
+                      isDisabled={
+                        isBusy || !canUseCourierFlow || isCourierBooked
+                      }
+                      onChange={(value) =>
+                        handleShipmentStatusChange(
+                          value as AdminShipmentStatus,
+                          { courier: courierSelection }
+                        )
+                      }
+                    />
+                    <div className="grid grid-cols-2 gap-1">
+                      <Button
+                        size="sm"
+                        variant="tertiary"
+                        isDisabled={
+                          isBusy || !canUseCourierFlow || isCourierCancelled
+                        }
+                        onPress={handleBookCourier}
+                        className="border border-teal-200 bg-teal-50 px-2 py-1.5 text-[11px] font-semibold text-teal-700 transition hover:bg-teal-100"
+                      >
+                        {busy === "book" ? "Booking…" : "Book"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="tertiary"
+                        isDisabled={
+                          isBusy ||
+                          !canUseCourierFlow ||
+                          !order.tracking_no ||
+                          isCourierCancelled
+                        }
+                        onPress={handleTrack}
+                        className="border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-[#31405f] dark:bg-[#1b2640] dark:text-slate-200 dark:hover:bg-[#22304b]"
+                      >
+                        {busy === "track" ? "Tracking…" : "Track"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="tertiary"
+                        isDisabled={
+                          isBusy ||
+                          !canUseCourierFlow ||
+                          courierSelection !== "xde" ||
+                          !order.tracking_no ||
+                          isCourierCancelled
+                        }
+                        onPress={handleOpenWaybill}
+                        className="border border-blue-200 bg-blue-50 px-2 py-1.5 text-[11px] font-semibold text-blue-700 transition hover:bg-blue-100"
+                      >
+                        {busy === "waybill" ? "Opening…" : "Waybill"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="tertiary"
+                        isDisabled={
+                          isBusy ||
+                          !canUseCourierFlow ||
+                          courierSelection !== "xde" ||
+                          !order.tracking_no ||
+                          order.shipment_status !== "delivered"
+                        }
+                        onPress={handleOpenEpod}
+                        className="border border-amber-200 bg-amber-50 px-2 py-1.5 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-100"
+                      >
+                        {busy === "epod" ? "Opening…" : "EPOD"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="tertiary"
+                        isDisabled={
+                          isBusy ||
+                          !canUseCourierFlow ||
+                          courierSelection !== "xde" ||
+                          !order.tracking_no ||
+                          isCourierCancelled
+                        }
+                        onPress={handleCancelCourier}
+                        className="col-span-2 border border-red-200 bg-red-50 px-2 py-1.5 text-[11px] font-semibold text-red-700 transition hover:bg-red-100"
+                      >
+                        {busy === "cancel" ? "Cancelling…" : "Cancel"}
+                      </Button>
+                    </div>
+                    <p className="text-[11px] text-teal-600">
+                      Local courier mode is active. Use J&T/XDE booking and
+                      tracking controls here.
+                    </p>
+                  </>
+                )}
+
+                {isDelivered || isCancelled || isRefunded ? (
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                    {isDelivered
+                      ? "Delivered orders are locked."
+                      : "Tracking is disabled for this status."}
+                  </p>
+                ) : null}
+
+                {order.courier ||
+                order.tracking_no ||
+                order.shipment_status ? (
+                  <div className="space-y-2 border-t border-slate-100 pt-3 text-[11px] leading-relaxed text-slate-500 dark:border-slate-800 dark:text-slate-300">
+                    {order.courier ? (
+                      <p className="tracking-wide uppercase dark:text-slate-400">
+                        Courier: {formatCourierLabel(order.courier)}
+                      </p>
+                    ) : null}
+                    {rawCourierStatus ? (
+                      <p className="capitalize dark:text-slate-400">
+                        Courier Status: {rawCourierStatus.replace(/_/g, " ")}
+                      </p>
+                    ) : null}
+                    {order.tracking_no ? (
+                      <div className="rounded-xl border border-teal-200 bg-teal-50 p-2 dark:border-teal-500/25 dark:bg-[#1b2640]">
+                        <p className="text-[10px] font-bold tracking-wide text-teal-700 uppercase">
+                          Tracking Number
+                        </p>
+                        <div className="mt-1 flex items-center gap-2">
+                          <p className="min-w-0 flex-1 text-sm font-bold break-all text-slate-900 dark:text-white">
+                            {order.tracking_no}
+                          </p>
+                          <Button
+                            size="sm"
+                            variant="tertiary"
+                            onPress={async () => {
+                              try {
+                                await copyText(order.tracking_no as string)
+                                showSuccessToast("Tracking number copied.")
+                              } catch (error) {
+                                showErrorToast(
+                                  error instanceof Error
+                                    ? error.message
+                                    : "Failed to copy tracking number."
+                                )
+                              }
+                            }}
+                            className="shrink-0 border border-teal-200 bg-white px-2 py-1 text-[10px] font-semibold text-teal-700 transition hover:bg-teal-100 dark:border-teal-500/25 dark:bg-[#121a2b] dark:text-teal-300 dark:hover:bg-[#22304b]"
+                          >
+                            Copy
+                          </Button>
+                        </div>
+                      </div>
+                    ) : null}
+                    {order.shipment_payload ? (
+                      <Button
+                        size="sm"
+                        variant="tertiary"
+                        onPress={() =>
+                          setPayloadPreview({
+                            checkoutId: order.checkout_id,
+                            payload: order.shipment_payload ?? null,
+                          })
+                        }
+                        className="border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-[#31405f] dark:bg-[#1b2640] dark:text-slate-200 dark:hover:bg-[#22304b]"
+                      >
+                        View Payload
+                      </Button>
+                    ) : null}
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-slate-300 dark:text-slate-400">
+                    {order.approval_status === "approved"
+                      ? "No shipment info yet"
+                      : "Awaiting approval"}
+                  </p>
+                )}
+              </div>
+            </SectionCard>
+          ) : null}
+
           <SectionCard title="Workflow">
             <DetailRow
               label="Approval"
@@ -838,6 +1694,14 @@ export default function AdminOrderDetailView({ orderId }: { orderId: string }) {
         customerName={order.customer_name}
         subject={`Order ${order.checkout_id}`}
       />
+
+      {payloadPreview ? (
+        <PayloadPreviewModal
+          checkoutId={payloadPreview.checkoutId}
+          payload={payloadPreview.payload}
+          onClose={() => setPayloadPreview(null)}
+        />
+      ) : null}
     </div>
   )
 }

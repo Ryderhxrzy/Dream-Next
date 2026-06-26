@@ -147,8 +147,6 @@ const INQUIRY_FULFILLMENT_OPTIONS: Array<{ value: SupplierFulfillmentStatus; lab
   { value: 'returned',         label: 'Rejected' },
 ]
 
-const SERVICES_STAT_LABELS = ['Total Inquiries', 'Total New', 'In Progress', 'Awaiting', 'Completed', 'Cancelled', 'Rejected']
-const SERVICES_VISIBLE_KEYS = ['total', 'toPay', 'completed']
 
 const SERVICE_INQUIRY_FILTER_MAP: Record<string, ServiceInquiryStatus | undefined> = {
   all: undefined,

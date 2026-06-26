@@ -1,11 +1,11 @@
 import { X } from "lucide-react"
+import { AiSupportAvatar } from "./AiSupportAvatar"
 
 interface Props {
   onClose: () => void
-  logoSrc: string
 }
 
-export function AiSupportHeader({ onClose, logoSrc }: Props) {
+export function AiSupportHeader({ onClose }: Props) {
   return (
     <div className="relative flex flex-shrink-0 items-center justify-between overflow-hidden bg-gradient-to-r from-indigo-700 via-indigo-600 to-indigo-500 px-4 py-3.5">
       {/* decorative blobs */}
@@ -13,14 +13,7 @@ export function AiSupportHeader({ onClose, logoSrc }: Props) {
       <div className="pointer-events-none absolute -bottom-6 left-10 h-16 w-16 rounded-full bg-white/[.05]" />
 
       <div className="relative z-10 flex min-w-0 items-center gap-3">
-        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-white/25 bg-white/15 shadow-lg backdrop-blur-sm">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={logoSrc}
-            alt="AF"
-            className="h-6 w-6 rounded-md object-contain"
-          />
-        </div>
+        <AiSupportAvatar size="sm" className="border-white/25" />
         <div className="flex flex-col gap-0.5">
           <span className="text-sm leading-tight font-bold tracking-tight text-white">
             <span className="text-amber-300">A</span>

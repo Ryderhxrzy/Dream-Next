@@ -1,4 +1,4 @@
-import SuppliersPageMain from "@/components/superAdmin/suppliers/SuppliersPageMain"
+import SupplierCompanyPage from "@/components/supplier/SupplierCompanyPage"
 import { buildPageMetadata } from "@/app/seo"
 
 export const metadata = buildPageMetadata({
@@ -8,6 +8,6 @@ export const metadata = buildPageMetadata({
   noIndex: true,
 })
 
-export default function SupplierCompanyPage() {
-  return <SuppliersPageMain />
+export default function SupplierCompanyRoute() {
+  return <SupplierCompanyPage />
 }
