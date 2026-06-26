@@ -14,9 +14,11 @@ interface Props {
   quickReplies: string[]
   inputValue: string
   isLoading: boolean
+  isCreatingSupportRequest: boolean
   onClose: () => void
   onInputChange: (v: string) => void
   onSend: (text: string) => void
+  onSupportHandoff: (message: Extract<ChatMessage, { kind: "support_handoff" }>) => void
   images: string[]
   onImageChange: (dataUrls: string[]) => void
   hasImage: boolean
@@ -28,9 +30,11 @@ export function AiSupportPanel({
   quickReplies,
   inputValue,
   isLoading,
+  isCreatingSupportRequest,
   onClose,
   onInputChange,
   onSend,
+  onSupportHandoff,
   images,
   onImageChange,
   hasImage,
@@ -58,7 +62,12 @@ export function AiSupportPanel({
           }}
         >
           <AiSupportHeader onClose={onClose} />
-          <AiSupportBody messages={messages} isLoading={isLoading} />
+          <AiSupportBody
+            messages={messages}
+            isLoading={isLoading}
+            isCreatingSupportRequest={isCreatingSupportRequest}
+            onSupportHandoff={onSupportHandoff}
+          />
           <AiSupportQuickReplies items={quickReplies} onSelect={onSend} />
           <AiSupportFooter
             value={inputValue}

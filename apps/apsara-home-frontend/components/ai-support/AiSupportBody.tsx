@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react"
 import { ImageMessage } from "./messages/ImageMessage"
 import { ProductCards } from "./messages/ProductCards"
 import { StepImages } from "./messages/StepImages"
+import { SupportHandoff } from "./messages/SupportHandoff"
 import { TextMessage } from "./messages/TextMessage"
 import { AiSupportAvatar } from "./AiSupportAvatar"
 import type { ChatMessage } from "./types"
@@ -12,9 +13,16 @@ import type { ChatMessage } from "./types"
 interface Props {
   messages: ChatMessage[]
   isLoading: boolean
+  isCreatingSupportRequest: boolean
+  onSupportHandoff: (message: Extract<ChatMessage, { kind: "support_handoff" }>) => void
 }
 
-export function AiSupportBody({ messages, isLoading }: Props) {
+export function AiSupportBody({
+  messages,
+  isLoading,
+  isCreatingSupportRequest,
+  onSupportHandoff,
+}: Props) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -30,6 +38,15 @@ export function AiSupportBody({ messages, isLoading }: Props) {
           return <ProductCards key={i} message={msg} />
         if (msg.kind === "step_images")
           return <StepImages key={i} message={msg} />
+        if (msg.kind === "support_handoff")
+          return (
+            <SupportHandoff
+              key={i}
+              message={msg}
+              isLoading={isCreatingSupportRequest}
+              onContact={onSupportHandoff}
+            />
+          )
         return null
       })}
 

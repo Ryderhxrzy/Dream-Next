@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react"
 
-import type { ApiResponse, ChatMessage } from "../types"
+import type { ApiResponse, ChatMessage, SupportHandoffMessage } from "../types"
 
 const STORAGE_KEY = "af_ai_support_history_v1"
 
@@ -13,7 +13,7 @@ interface UiState {
 
 function sanitizeMessages(messages: ChatMessage[]) {
   return messages.filter((message) =>
-    ["text", "image", "product_cards", "step_images"].includes(message.kind)
+    ["text", "image", "product_cards", "step_images", "support_handoff"].includes(message.kind)
   )
 }
 
@@ -51,6 +51,7 @@ export function useAiSupport() {
   const [inputValue, setInputValue] = useState("")
   const [imageDataUrls, setImageDataUrls] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isCreatingSupportRequest, setIsCreatingSupportRequest] = useState(false)
   const initialized = useRef(false)
 
   const open = useCallback(() => {
@@ -135,6 +136,12 @@ export function useAiSupport() {
                 kind: "step_images",
                 images: data.step_images.slice(0, 10),
               })
+            if (data.support_handoff?.recommended) {
+              next.push({
+                kind: "support_handoff",
+                handoff: data.support_handoff,
+              })
+            }
           } else {
             next.push({
               kind: "text",
@@ -169,6 +176,59 @@ export function useAiSupport() {
     [imageDataUrls, isLoading, quickReplies]
   )
 
+  const contactSupport = useCallback(
+    async (message: SupportHandoffMessage) => {
+      if (isCreatingSupportRequest) return
+
+      setIsCreatingSupportRequest(true)
+      try {
+        const res = await fetch("/api/ai-support/handoff", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(message.handoff),
+        })
+        const data = (await res.json().catch(() => ({}))) as {
+          message?: string
+          conversation?: { id?: number }
+        }
+
+        setMessages((prev) => {
+          const next: ChatMessage[] = [
+            ...sanitizeMessages(prev).filter((item) =>
+              res.ok ? item.kind !== "support_handoff" : true
+            ),
+            {
+              kind: "text",
+              role: "bot",
+              text: res.ok
+                ? `Customer service request created${data.conversation?.id ? ` (#${data.conversation.id})` : ""}. A support agent will review it soon.`
+                : data.message ||
+                  "Please log in first so we can create a customer service request for your account.",
+            },
+          ]
+          persist({ messages: next, quickReplies })
+          return next
+        })
+      } catch {
+        setMessages((prev) => {
+          const next: ChatMessage[] = [
+            ...sanitizeMessages(prev),
+            {
+              kind: "text",
+              role: "bot",
+              text: "I could not create the customer service request right now. Please try again in a moment.",
+            },
+          ]
+          persist({ messages: next, quickReplies })
+          return next
+        })
+      } finally {
+        setIsCreatingSupportRequest(false)
+      }
+    },
+    [isCreatingSupportRequest, quickReplies]
+  )
+
   return {
     isOpen,
     open,
@@ -182,5 +242,7 @@ export function useAiSupport() {
     setImageDataUrls,
     send,
     isLoading,
+    isCreatingSupportRequest,
+    contactSupport,
   }
 }

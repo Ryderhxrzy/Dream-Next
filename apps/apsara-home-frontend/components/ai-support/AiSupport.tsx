@@ -62,6 +62,8 @@ export function AiSupport() {
     setImageDataUrls,
     send,
     isLoading,
+    isCreatingSupportRequest,
+    contactSupport,
   } = useAiSupport()
 
   if (!allowed || isLoadingScreenVisible) return null
@@ -78,9 +80,11 @@ export function AiSupport() {
         quickReplies={quickReplies}
         inputValue={inputValue}
         isLoading={isLoading}
+        isCreatingSupportRequest={isCreatingSupportRequest}
         onClose={close}
         onInputChange={setInputValue}
         onSend={send}
+        onSupportHandoff={contactSupport}
         images={imageDataUrls}
         onImageChange={setImageDataUrls}
         hasImage={imageDataUrls.length > 0}

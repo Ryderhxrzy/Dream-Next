@@ -99,6 +99,14 @@ type AiSupportPayload = {
   images: string[]
 }
 
+type SupportHandoff = {
+  recommended: boolean
+  reason: string
+  button_text: string
+  subject: string
+  summary: string
+}
+
 type AiSupportError = {
   message?: string
   statusCode?: number
@@ -376,6 +384,18 @@ const supportPolicyIntentRe =
 const imageProductIntentRe =
   /\b(this|similar|same|product|products|item|items|have|available|find|look|match|kaparehas|kamukha|meron|may)\b/i
 
+const afHomeAllowedTopicRe =
+  /\b(af\s*home|afhome|shop|shopping|store|product|products|item|items|furniture|appliance|decor|home|sofa|chair|table|bed|cabinet|shelf|aircon|air conditioner|order|orders|track|tracking|delivery|deliver|shipping|ship|courier|return|refund|replacement|exchange|damaged|defective|wrong item|payment|pay|checkout|cod|cash on delivery|gcash|maya|card|bank|warranty|account|login|register|registration|signup|sign up|password|otp|verification|profile|support|customer service|contact|help|affiliate|referral|referrer|member|membership|benefit|benefits|commission|commissions|bonus|bonuses|voucher|wallet|encashment|payout|tier|rank|pv|points|supplier|partner|storefront|webstore|interior|dreambuild|design|installation|installation service|service)\b/i
+
+const tagalogAllowedTopicRe =
+  /\b(order ko|bayad|bayaran|padala|delivery|deliver|refund|return|palit|sira|defective|mali ang item|nasaan|kailan darating|magregister|mag register|mag-signup|mag signup|referral|affiliate|miyembro|member|benepisyo|komisyon|bonus|voucher|wallet|encashment|payout|support|customer service|tulong|produkto|item|bili|checkout|warranty|garantiya|login|password|account)\b/i
+
+const offTopicRe =
+  /\b(homework|assignment|essay|poem|joke|recipe|cook|coding|programming|math|calculus|algebra|president|capital of|weather|news|movie|song|lyrics|game|crypto|stock|bitcoin|translate|summarize this article|write a story)\b/i
+
+const heavySupportIntentRe =
+  /\b(commission|commissions|encashment|payout|withdraw|wallet|bonus|voucher|pv|referral earning|not credited|missing credit|hindi pumasok|hindi na-credit|rejected|declined|failed payment|payment failed|double charge|refund overdue|where is my refund|account locked|cannot login|can't login|hindi makalogin|legal|complaint|escalate|dispute|damaged|defective|wrong item|refund status|order status|track my order|nasaan.*order|delayed.*delivery|delivery delay|not delivered|hindi dumating|verification failed)\b/i
+
 const requestedBudget = (question: string) => {
   const match = question.match(/(?:under|below|less than|<=?|\u20b1|php)\s*([0-9][0-9,]*)/i)
   if (!match?.[1]) return null
@@ -454,6 +474,47 @@ const isSpecificProductQuery = (question: string) =>
   !supportPolicyIntentRe.test(question) &&
   productIntentRe.test(question) &&
   (productSearchTerms(question).length > 0 || requestedBudget(question) !== null)
+
+const isOffTopicQuestion = (question: string) => {
+  const normalized = question.trim()
+  if (!normalized) return false
+  if (afHomeAllowedTopicRe.test(normalized) || tagalogAllowedTopicRe.test(normalized)) {
+    return false
+  }
+  return offTopicRe.test(normalized) || normalized.split(/\s+/).length >= 3
+}
+
+const supportReasonFor = (question: string) => {
+  const normalized = normalizeText(question)
+  if (/\b(encashment|payout|withdraw|wallet)\b/i.test(question)) return "encashment_verification"
+  if (/\b(commission|bonus|voucher|pv|referral earning|not credited|missing credit)\b/i.test(question)) return "affiliate_record_verification"
+  if (/\b(refund|return|damaged|defective|wrong item|exchange)\b/i.test(question)) return "return_refund_verification"
+  if (/\b(order|track|tracking|delivery|delayed|not delivered)\b/i.test(question) || normalized.includes("order ko")) return "order_verification"
+  if (/\b(payment|double charge|declined|failed)\b/i.test(question)) return "payment_verification"
+  if (/\b(account|login|password|otp|verification)\b/i.test(question)) return "account_verification"
+  return "customer_service_verification"
+}
+
+const makeSupportHandoff = (question: string): SupportHandoff => {
+  const reason = supportReasonFor(question)
+  const subjectByReason: Record<string, string> = {
+    encashment_verification: "Encashment support request",
+    affiliate_record_verification: "Affiliate record support request",
+    return_refund_verification: "Return or refund support request",
+    order_verification: "Order support request",
+    payment_verification: "Payment support request",
+    account_verification: "Account support request",
+    customer_service_verification: "Customer service support request",
+  }
+
+  return {
+    recommended: true,
+    reason,
+    button_text: "Contact customer service",
+    subject: subjectByReason[reason] ?? "Customer service support request",
+    summary: `AI Support recommended human verification for this customer message: ${truncate(question, 600)}`,
+  }
+}
 
 const parsePayload = async (request: Request): Promise<AiSupportPayload> => {
   const contentType = request.headers.get("content-type") ?? ""
@@ -738,6 +799,29 @@ export async function POST(request: Request) {
       getPaymentMethods(apiBase),
       getSystemSettings(apiBase),
     ])
+    if (isOffTopicQuestion(question)) {
+      return NextResponse.json({
+        status: "ok",
+        reply:
+          "I can only help with AF Home products, orders, payment, shipping, returns, member benefits, referrals, affiliate questions, and customer support. How can I help you with AF Home?",
+        quick_replies: [],
+        step_images: [],
+      })
+    }
+
+    if (heavySupportIntentRe.test(question)) {
+      const handoff = makeSupportHandoff(question)
+      return NextResponse.json({
+        status: "ok",
+        reply:
+          "This needs customer service verification because it may involve account, order, payment, affiliate, or support records. Would you like to contact AF Home customer service?",
+        quick_replies: [],
+        product_cards: [],
+        step_images: [],
+        support_handoff: handoff,
+      })
+    }
+
     const paymentAnswer = getPaymentMethodAnswer(question, paymentMethods)
     if (paymentAnswer) {
       return NextResponse.json({
@@ -851,6 +935,7 @@ export async function POST(request: Request) {
       model: google(geminiModel),
       system: `You are AF Home AI Support. Be concise, friendly, and practical.
 Use only the backend context and policies provided. Do not invent prices, stock, discounts, warranties, or shipping commitments.
+Only answer questions related to AF Home products, orders, payment, shipping, returns, member benefits, referrals, affiliates, account help, and customer support. Do not answer general knowledge, entertainment, school, coding, politics, news, recipes, or other off-topic questions.
 If the answer is not in context, say support can verify it.
 The user is ${isMember ? "a signed-in member" : "a guest"}.
 ${partnerSlug ? `The current partner storefront slug is ${partnerSlug}. Only recommend products visible in this storefront context.` : "The user is browsing the public AF Home storefront."}
