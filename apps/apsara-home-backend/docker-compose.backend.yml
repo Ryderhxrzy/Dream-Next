@@ -18,6 +18,44 @@ services:
     depends_on:
       - redis
 
+  queue-worker:
+    build:
+      context: ..
+      dockerfile: Apsara-Home-Backend/Dockerfile
+    container_name: afhome-queue-worker
+    restart: unless-stopped
+    working_dir: /app
+    env_file:
+      - ./.env.docker
+    environment:
+      - WORKER_MODE=true
+    volumes:
+      - ./:/app
+      - /app/vendor
+      - /app/node_modules
+    command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600
+    depends_on:
+      - redis
+
+  scheduler:
+    build:
+      context: ..
+      dockerfile: Apsara-Home-Backend/Dockerfile
+    container_name: afhome-scheduler
+    restart: unless-stopped
+    working_dir: /app
+    env_file:
+      - ./.env.docker
+    environment:
+      - WORKER_MODE=true
+    volumes:
+      - ./:/app
+      - /app/vendor
+      - /app/node_modules
+    command: sh -c "while true; do php artisan schedule:run --verbose; sleep 60; done"
+    depends_on:
+      - redis
+
   redis:
     build:
       context: ../..

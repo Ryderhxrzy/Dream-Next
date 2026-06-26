@@ -120,6 +120,9 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Next 16 uses Turbopack by default for `next dev`. The `webpack` config below
+  // only runs for production builds (`!dev`), so an empty turbopack config here
+  // silences the "webpack config and no turbopack config" error in dev.
   turbopack: {},
   experimental: {
     // Controls worker count used during "Collecting page data...". Set `NEXT_BUILD_CPUS=1` to avoid spawn EPERM on Windows.
@@ -131,27 +134,11 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "images.unsplash.com",
+        hostname: "**",
       },
       {
-        protocol: "https",
-        hostname: "res.cloudinary.com",
-      },
-      {
-        protocol: "https",
-        hostname: "1000logos.net",
-      },
-      {
-        protocol: "https",
-        hostname: "encrypted-tbn0.gstatic.com",
-      },
-      {
-        protocol: "https",
-        hostname: "cdn.simpleicons.org",
-      },
-      {
-        protocol: "https",
-        hostname: "download.logo.wine",
+        protocol: "http",
+        hostname: "**",
       },
     ],
   },

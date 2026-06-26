@@ -41,6 +41,9 @@ class SupplierPushNotificationController extends Controller
             'recipients.*' => 'integer|min:1',
             'buttonText' => 'nullable|string|max:255',
             'scheduled_at' => 'nullable|date_format:Y-m-d\TH:i|after:now',
+            'schedule_type' => 'nullable|in:once,daily,weekly,monthly',
+            'schedule_config' => 'nullable|array',
+            'timezone' => 'nullable|string',
         ]);
 
         try {
@@ -50,6 +53,9 @@ class SupplierPushNotificationController extends Controller
             $image = $this->transformCloudinaryImage($rawImage);
             $recipientCustomerIds = $validated['recipients'];
             $scheduledAt = isset($validated['scheduled_at']) ? \Carbon\Carbon::parse($validated['scheduled_at']) : null;
+            $scheduleType = $validated['schedule_type'] ?? 'once';
+            $scheduleConfig = $validated['schedule_config'] ?? null;
+            $timezone = $validated['timezone'] ?? 'UTC';
 
             Log::info('Supplier push notification send initiated', [
                 'supplier_id' => $supplierId,
@@ -60,8 +66,15 @@ class SupplierPushNotificationController extends Controller
                 'image_transformed' => $image ? substr($image, 0, 80) : 'NONE',
             ]);
 
-            // If scheduled, save and dispatch job with delay
-            if ($scheduledAt) {
+            // If scheduled (smart scheduling or one-time), save and dispatch job
+            if ($scheduleType !== 'once' || $scheduledAt) {
+                $nextScheduledAt = $scheduledAt;
+
+                // For recurring schedules, calculate next send time
+                if ($scheduleType !== 'once') {
+                    $nextScheduledAt = $this->calculateNextScheduledTime($scheduleType, $scheduleConfig, $timezone);
+                }
+
                 $notificationRecord = SupplierPushNotification::create([
                     'spn_supplier_id' => $supplierId,
                     'spn_title' => $title,
@@ -71,27 +84,36 @@ class SupplierPushNotificationController extends Controller
                     'spn_recipients' => $recipientCustomerIds,
                     'spn_sent_count' => 0,
                     'spn_failed_count' => 0,
-                    'spn_scheduled_at' => $scheduledAt,
-                    'spn_status' => 'scheduled',
+                    'spn_schedule_type' => $scheduleType,
+                    'spn_schedule_config' => $scheduleConfig ? json_encode($scheduleConfig) : null,
+                    'spn_timezone' => $timezone,
+                    'spn_next_scheduled_at' => $nextScheduledAt,
+                    'spn_send_limit' => $scheduleConfig['send_limit'] ?? null,
+                    'spn_send_count' => 0,
+                    'spn_status' => 'active',
                     'spn_created_at' => now(),
                     'spn_updated_at' => now(),
                 ]);
 
-                // Dispatch job to queue with delay - will execute automatically at scheduled time
-                SendScheduledPushNotificationJob::dispatch($notificationRecord->spn_id)
-                    ->delay($scheduledAt);
+                // Dispatch job to queue with delay
+                if ($nextScheduledAt) {
+                    SendScheduledPushNotificationJob::dispatch($notificationRecord->spn_id)
+                        ->delay($nextScheduledAt);
+                }
 
-                Log::info('Supplier push notification scheduled with delayed job', [
+                Log::info('Supplier push notification scheduled', [
                     'notification_id' => $notificationRecord->spn_id,
                     'supplier_id' => $supplierId,
-                    'scheduled_for' => $scheduledAt,
+                    'schedule_type' => $scheduleType,
+                    'next_scheduled_for' => $nextScheduledAt,
+                    'timezone' => $timezone,
                 ]);
 
                 return response()->json([
                     'message' => 'Notification scheduled successfully.',
                     'notification_id' => $notificationRecord->spn_id,
-                    'scheduled_at' => $scheduledAt,
-                    'status' => 'scheduled',
+                    'scheduled_at' => $nextScheduledAt,
+                    'status' => 'active',
                 ], 200);
             }
 
@@ -145,8 +167,11 @@ class SupplierPushNotificationController extends Controller
                 'spn_recipients' => $recipientCustomerIds,
                 'spn_sent_count' => $result['sent'],
                 'spn_failed_count' => $result['failed'],
+                'spn_schedule_type' => 'once',
+                'spn_timezone' => $timezone,
                 'spn_sent_at' => now(),
                 'spn_status' => 'sent',
+                'spn_send_count' => 1,
                 'spn_created_at' => now(),
                 'spn_updated_at' => now(),
             ]);
@@ -228,6 +253,34 @@ class SupplierPushNotificationController extends Controller
             'devices' => $devices,
             'customer_ids' => $uniqueCustomers,
         ]);
+    }
+
+    private function calculateNextScheduledTime(string $scheduleType, ?array $config, string $timezone): ?\Carbon\Carbon
+    {
+        $time = $config['time'] ?? '09:00';
+        list($hour, $minute) = explode(':', $time);
+
+        $now = \Carbon\Carbon::now($timezone);
+        $next = $now->clone()->setTime((int)$hour, (int)$minute, 0);
+
+        // If scheduled time has passed today, move to next occurrence
+        if ($next <= $now) {
+            switch ($scheduleType) {
+                case 'daily':
+                    $interval = $config['interval'] ?? 1;
+                    $next->addDays($interval);
+                    break;
+                case 'weekly':
+                    $next->addWeek();
+                    break;
+                case 'monthly':
+                    $day = $config['month_day'] ?? 1;
+                    $next->addMonth()->setDay($day);
+                    break;
+            }
+        }
+
+        return $next;
     }
 
     private function transformCloudinaryImage(?string $imageUrl): ?string

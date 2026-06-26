@@ -8,7 +8,7 @@ import {
   useSendPushNotificationMutation,
 } from "@/store/api/supplierPushNotificationsApi"
 import { Card } from "@heroui/react/card"
-import { ChevronDown, Loader, Send, Upload } from "lucide-react"
+import { ChevronDown, Copy, Loader, Send, Upload } from "lucide-react"
 import { useSession } from "next-auth/react"
 import Image from "next/image"
 
@@ -24,18 +24,23 @@ export default function PushNotificationsPage() {
     buttonText: "Shop Now",
   })
   const [previewImage, setPreviewImage] = useState<string | null>(null)
-  const [isNotificationExpanded, setIsNotificationExpanded] = useState(false)
   const [selectedCustomers, setSelectedCustomers] = useState<Set<number>>(
     new Set()
   )
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [isButtonEnabled, setIsButtonEnabled] = useState(true)
-  const [activeTab, setActiveTab] = useState<
-    "details" | "image" | "recipients" | "schedule" | "review"
-  >("details")
   const [isScheduled, setIsScheduled] = useState(false)
   const [scheduledDateTime, setScheduledDateTime] = useState("")
+  const [isNotificationExpanded, setIsNotificationExpanded] = useState(false)
+  const [scheduleType, setScheduleType] = useState<"once" | "daily" | "weekly" | "monthly">("once")
+  const [scheduleTime, setScheduleTime] = useState("09:00")
+  const [scheduleDays, setScheduleDays] = useState<number[]>([])
+  const [scheduleEndDate, setScheduleEndDate] = useState("")
+  const [timezone, setTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone)
+  const [dailyInterval, setDailyInterval] = useState(1)
+  const [sendLimit, setSendLimit] = useState<number | null>(null)
+  const [monthDay, setMonthDay] = useState(1)
 
   // RTK Query hooks
   const { data: customersData, isLoading: isLoadingCustomers } =
@@ -46,6 +51,59 @@ export default function PushNotificationsPage() {
   const [getCloudinarySignature] = useGetCloudinarySignatureMutation()
 
   const [isUploading, setIsUploading] = useState(false)
+
+  const validateImageUrl = (url: string): boolean => {
+    try {
+      // Check if URL is valid
+      const urlObj = new URL(url)
+
+      // Only allow http and https protocols
+      if (!["http:", "https:"].includes(urlObj.protocol)) {
+        setError("Invalid URL protocol. Only HTTP and HTTPS are allowed.")
+        return false
+      }
+
+      // Check for common image extensions or data URIs
+      const pathname = urlObj.pathname.toLowerCase()
+      const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp", ".ico"]
+      const hasImageExtension = imageExtensions.some(ext => pathname.endsWith(ext))
+
+      // Allow URLs without extensions (APIs that return images) but warn about potentially invalid URLs
+      if (!hasImageExtension && !pathname.includes("/")) {
+        // Very basic domain-only URL, might not be an image
+        console.warn("URL might not be a valid image")
+      }
+
+      // Check for suspicious patterns
+      const suspiciousPatterns = [
+        "javascript:",
+        "data:text/html",
+        "<script",
+        "onclick",
+        "onerror",
+        "onload",
+      ]
+
+      if (suspiciousPatterns.some(pattern => url.toLowerCase().includes(pattern))) {
+        setError("Invalid URL. Contains suspicious content.")
+        return false
+      }
+
+      setError(null)
+      return true
+    } catch (err) {
+      setError("Invalid URL format")
+      return false
+    }
+  }
+
+  const handleCopyImageLink = () => {
+    if (formData.image) {
+      navigator.clipboard.writeText(formData.image)
+      setSuccess("Image link copied to clipboard!")
+      setTimeout(() => setSuccess(null), 2000)
+    }
+  }
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -148,9 +206,15 @@ export default function PushNotificationsPage() {
       return
     }
 
-    if (isScheduled && !scheduledDateTime) {
-      setError("Please select a date and time for scheduling")
-      return
+    if (isScheduled) {
+      if (scheduleType === "once" && !scheduledDateTime) {
+        setError("Please select a date and time for one-time scheduling")
+        return
+      }
+      if (scheduleType === "weekly" && scheduleDays.length === 0) {
+        setError("Please select at least one day for weekly scheduling")
+        return
+      }
     }
 
     try {
@@ -164,12 +228,41 @@ export default function PushNotificationsPage() {
         recipients: Array.from(selectedCustomers),
       }
 
-      if (isButtonEnabled) {
+      if (formData.buttonText) {
         payload.buttonText = formData.buttonText
       }
 
-      if (isScheduled && scheduledDateTime) {
-        payload.scheduled_at = scheduledDateTime
+      if (isScheduled) {
+        payload.schedule_type = scheduleType
+        payload.timezone = timezone
+        payload.schedule_config = {
+          time: scheduleTime,
+        }
+
+        if (scheduleType === "daily") {
+          payload.schedule_config.interval = dailyInterval
+        }
+
+        if (scheduleType === "weekly") {
+          payload.schedule_config.days = scheduleDays
+        }
+
+        if (scheduleType === "monthly") {
+          payload.schedule_config.month_day = monthDay
+        }
+
+        if (scheduleType !== "once") {
+          if (scheduleEndDate) {
+            payload.schedule_config.end_date = scheduleEndDate
+          }
+          if (sendLimit) {
+            payload.schedule_config.send_limit = sendLimit
+          }
+        }
+
+        if (scheduleType === "once") {
+          payload.scheduled_at = scheduledDateTime
+        }
       }
 
       const result = await sendNotification(payload).unwrap()
@@ -201,24 +294,24 @@ export default function PushNotificationsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-          Push Notifications
-        </h1>
-        <p className="mt-1 text-slate-500 dark:text-slate-400">
-          Create and manage push notifications for your customers
-        </p>
-      </div>
+        {/* Page Header */}
+        <div className="border-b border-slate-200 pb-6 dark:border-slate-800">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+            Push Notifications
+          </h1>
+          <p className="mt-1 text-slate-500 dark:text-slate-400">
+            Create and manage push notifications for your customers
+          </p>
+        </div>
 
       {/* Error/Success Messages */}
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+        <div className="rounded-md border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
           <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
         </div>
       )}
       {success && (
-        <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
+        <div className="rounded-md border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
           <p className="text-sm text-green-700 dark:text-green-300">
             {success}
           </p>
@@ -229,9 +322,9 @@ export default function PushNotificationsPage() {
         {/* Left Column - Form Sections */}
         <div className="space-y-4 lg:col-span-2">
           {/* Section 1 & 2: Details and Customize Button - 2-Column Grid */}
-          <div className="grid grid-cols-2 gap-4">
+          <div id="details" className="grid grid-cols-2 gap-4 scroll-mt-24">
             {/* Section 1: Notification Details */}
-            <Card className="border border-slate-200/80 bg-white/95 shadow-none dark:border-slate-700/50 dark:bg-slate-900">
+            <Card className="border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900 rounded-md">
               <Card.Content className="space-y-4 p-6">
                 <h2 className="text-base font-bold text-slate-900 dark:text-white">
                   Notification Details
@@ -253,7 +346,7 @@ export default function PushNotificationsPage() {
                       }))
                     }
                     maxLength={50}
-                    className="w-full rounded-lg border border-slate-200/80 bg-white/95 px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 transition outline-none focus:border-sky-400 dark:border-slate-700/50 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400/60"
+                    className="w-full rounded-md border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 transition outline-none focus:border-sky-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400/60"
                   />
                   <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
                     {formData.title.length}/50 characters
@@ -276,7 +369,7 @@ export default function PushNotificationsPage() {
                     }
                     maxLength={150}
                     rows={4}
-                    className="w-full resize-none rounded-lg border border-slate-200/80 bg-white/95 px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 transition outline-none focus:border-sky-400 dark:border-slate-700/50 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400/60"
+                    className="w-full resize-none rounded-md border border-slate-200/80 bg-white/95 px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 transition outline-none focus:border-sky-400 dark:border-slate-700/50 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400/60"
                   />
                   <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
                     {formData.description.length}/150 characters
@@ -286,7 +379,7 @@ export default function PushNotificationsPage() {
             </Card>
 
             {/* Section 2: Customize Button */}
-            <Card className="border border-slate-200/80 bg-white/95 shadow-none dark:border-slate-700/50 dark:bg-slate-900">
+            <Card className="border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900 rounded-md">
               <Card.Content className="space-y-4 p-6">
                 <h2 className="text-base font-bold text-slate-900 dark:text-white">
                   Customize Button
@@ -330,7 +423,7 @@ export default function PushNotificationsPage() {
                         }))
                       }
                       maxLength={30}
-                      className="w-full rounded-lg border border-slate-200/80 bg-white/95 px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 transition outline-none focus:border-sky-400 dark:border-slate-700/50 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400/60"
+                      className="w-full rounded-md border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 transition outline-none focus:border-sky-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400/60"
                     />
                     <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
                       {formData.buttonText.length}/30 characters
@@ -342,90 +435,122 @@ export default function PushNotificationsPage() {
           </div>
 
           {/* Section 3 & 5: Add Image and Schedule Notification - 2-Column Grid */}
-          <div className="grid grid-cols-2 gap-4">
+          <div id="image" className="grid grid-cols-2 gap-4 scroll-mt-24">
             {/* Section 3: Add Image */}
-            <Card className="border border-slate-200/80 bg-white/95 shadow-none dark:border-slate-700/50 dark:bg-slate-900">
-              <Card.Content className="p-6">
-                <h2 className="mb-4 text-base font-bold text-slate-900 dark:text-white">
+            <Card className="border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900 rounded-md">
+              <Card.Content className="space-y-4 p-6">
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">
                   Add Image
                 </h2>
-                <label className="mb-3 block text-sm font-semibold text-slate-900 dark:text-white">
-                  Notification Image (Optional)
-                </label>
-                <div className="rounded-lg border-2 border-dashed border-slate-200/80 p-4 text-center dark:border-slate-700/50">
-                  {previewImage ? (
-                    <div>
-                      <div className="relative mb-3 h-32 w-full overflow-hidden rounded-lg">
-                        <Image
-                          src={previewImage}
-                          alt="Preview"
-                          fill
-                          className="object-contain"
-                        />
-                      </div>
-                      <button
-                        onClick={() => {
-                          setPreviewImage(null)
-                          setFormData((prev) => ({ ...prev, image: "" }))
-                        }}
-                        className="text-sm text-sky-600 hover:underline dark:text-sky-400"
-                      >
-                        Change Image
-                      </button>
-                      {formData.image && (
-                        <div className="mt-3 rounded-lg bg-slate-100 p-2 break-all dark:bg-slate-800">
-                          <p className="mb-1 text-xs font-semibold text-slate-600 dark:text-slate-400">
-                            Image URL:
-                          </p>
-                          <p className="truncate font-mono text-xs text-slate-700 dark:text-slate-300">
-                            {formData.image}
-                          </p>
+
+                {/* Upload Section */}
+                <div>
+                  <label className="mb-3 block text-sm font-semibold text-slate-900 dark:text-white">
+                    Upload Image
+                  </label>
+                  <div className="rounded-md border-2 border-dashed border-slate-200 p-4 text-center dark:border-slate-700">
+                    {previewImage ? (
+                      <div>
+                        <div className="relative mb-3 h-32 w-full overflow-hidden rounded-md">
+                          <Image
+                            src={previewImage}
+                            alt="Preview"
+                            fill
+                            className="object-contain"
+                          />
                         </div>
-                      )}
-                    </div>
-                  ) : (
-                    <label className="flex cursor-pointer flex-col items-center gap-3">
-                      <div className="flex flex-col items-center gap-1">
-                        <Upload className="h-6 w-6 text-slate-400 dark:text-slate-500" />
-                        <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                          Click to upload
-                        </span>
+                        <button
+                          onClick={() => {
+                            setPreviewImage(null)
+                            setFormData((prev) => ({ ...prev, image: "" }))
+                          }}
+                          className="text-sm text-sky-600 hover:underline dark:text-sky-400"
+                        >
+                          Change Image
+                        </button>
                       </div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageChange}
-                        disabled={isUploading}
-                        className="hidden"
-                      />
+                    ) : (
+                      <label className="flex cursor-pointer flex-col items-center gap-3">
+                        <div className="flex flex-col items-center gap-1">
+                          <Upload className="h-6 w-6 text-slate-400 dark:text-slate-500" />
+                          <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                            Click to upload
+                          </span>
+                        </div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          disabled={isUploading}
+                          className="hidden"
+                        />
+                        <button
+                          type="button"
+                          disabled={isUploading}
+                          className="inline-flex items-center gap-1 rounded-md bg-sky-600 px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-sky-500/20 transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {isUploading ? (
+                            <>
+                              <Loader className="h-3 w-3 animate-spin" />
+                              Uploading…
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="h-3 w-3" />
+                              Upload
+                            </>
+                          )}
+                        </button>
+                      </label>
+                    )}
+                  </div>
+                </div>
+
+                {/* Image Link Field */}
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-900 dark:text-white">
+                    Image URL {formData.image && <span className="text-green-600 dark:text-green-400">✓</span>}
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Paste image link here or upload above"
+                      value={formData.image}
+                      onChange={(e) => {
+                        const url = e.target.value
+                        setFormData((prev) => ({ ...prev, image: url }))
+                        if (url) {
+                          if (validateImageUrl(url)) {
+                            setPreviewImage(url)
+                          } else {
+                            setPreviewImage(null)
+                          }
+                        } else {
+                          setPreviewImage(null)
+                        }
+                      }}
+                      className="flex-1 rounded-md border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 transition outline-none focus:border-sky-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400/60"
+                    />
+                    {formData.image && (
                       <button
-                        type="button"
-                        disabled={isUploading}
-                        className="inline-flex items-center gap-1 rounded-lg bg-sky-600 px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-sky-500/20 transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        onClick={handleCopyImageLink}
+                        className="flex items-center gap-2 rounded-md bg-slate-100 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                        title="Copy image link"
                       >
-                        {isUploading ? (
-                          <>
-                            <Loader className="h-3 w-3 animate-spin" />
-                            Uploading…
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="h-3 w-3" />
-                            Upload
-                          </>
-                        )}
+                        <Copy className="h-4 w-4" />
+                        <span className="hidden sm:inline">Copy</span>
                       </button>
-                    </label>
-                  )}
+                    )}
+                  </div>
                 </div>
               </Card.Content>
             </Card>
 
             {/* Section 5: Schedule Notification */}
-            <Card className="border border-slate-200/80 bg-white/95 shadow-none dark:border-slate-700/50 dark:bg-slate-900">
+            <Card className="border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900 rounded-md">
               <Card.Content className="space-y-4 p-6">
                 <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                  Schedule Notification
+                  Smart Schedule
                 </h2>
 
                 {/* Schedule Toggle */}
@@ -445,33 +570,218 @@ export default function PushNotificationsPage() {
                     />
                   </button>
                   <label className="text-sm font-semibold text-slate-900 dark:text-white">
-                    Schedule for later
+                    Enable scheduling
                   </label>
                 </div>
 
-                {/* Date/Time Input */}
                 {isScheduled && (
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold text-slate-900 dark:text-white">
-                      Send at *
-                    </label>
-                    <input
-                      type="datetime-local"
-                      value={scheduledDateTime}
-                      onChange={(e) => setScheduledDateTime(e.target.value)}
-                      min={new Date().toISOString().slice(0, 16)}
-                      className="w-full rounded-lg border border-slate-200/80 bg-white/95 px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 transition outline-none focus:border-sky-400 dark:border-slate-700/50 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400/60"
-                    />
-                    <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-                      {scheduledDateTime &&
-                        new Date(scheduledDateTime).toLocaleString()}
-                    </p>
-                  </div>
+                  <>
+                    {/* Timezone Selection */}
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold text-slate-900 dark:text-white">
+                        Timezone
+                      </label>
+                      <select
+                        value={timezone}
+                        onChange={(e) => setTimezone(e.target.value)}
+                        className="w-full rounded-md border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 transition outline-none focus:border-sky-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400/60"
+                      >
+                        <option value="UTC">UTC (GMT)</option>
+                        <option value="Asia/Manila">Manila (PHT)</option>
+                        <option value="Asia/Bangkok">Bangkok (ICT)</option>
+                        <option value="Asia/Singapore">Singapore (SGT)</option>
+                        <option value="Asia/Hong_Kong">Hong Kong (HKT)</option>
+                        <option value="Asia/Tokyo">Tokyo (JST)</option>
+                        <option value="America/New_York">New York (EST/EDT)</option>
+                        <option value="America/Los_Angeles">Los Angeles (PST/PDT)</option>
+                        <option value="America/Chicago">Chicago (CST/CDT)</option>
+                        <option value="Europe/London">London (GMT/BST)</option>
+                        <option value="Europe/Paris">Paris (CET/CEST)</option>
+                        <option value="Australia/Sydney">Sydney (AEDT/AEST)</option>
+                      </select>
+                    </div>
+
+                    {/* Schedule Type Selection */}
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold text-slate-900 dark:text-white">
+                        Schedule Type
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {(["once", "daily", "weekly", "monthly"] as const).map((type) => (
+                          <button
+                            key={type}
+                            onClick={() => {
+                              setScheduleType(type)
+                              // Reset relevant fields
+                              if (type === "daily") setDailyInterval(1)
+                              if (type === "weekly") setScheduleDays([])
+                              if (type === "monthly") setMonthDay(1)
+                            }}
+                            className={`rounded-md px-3 py-2 text-xs font-medium transition ${
+                              scheduleType === type
+                                ? "bg-sky-600 text-white"
+                                : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                            }`}
+                          >
+                            {type === "once" && "Once"}
+                            {type === "daily" && "Daily"}
+                            {type === "weekly" && "Weekly"}
+                            {type === "monthly" && "Monthly"}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Time Input */}
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold text-slate-900 dark:text-white">
+                        Send Time
+                      </label>
+                      <input
+                        type="time"
+                        value={scheduleTime}
+                        onChange={(e) => setScheduleTime(e.target.value)}
+                        className="w-full rounded-md border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 transition outline-none focus:border-sky-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400/60"
+                      />
+                    </div>
+
+                    {/* Daily Frequency Selection */}
+                    {scheduleType === "daily" && (
+                      <div>
+                        <label className="mb-2 block text-sm font-semibold text-slate-900 dark:text-white">
+                          Frequency
+                        </label>
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm text-slate-600 dark:text-slate-400">Every</span>
+                          <input
+                            type="number"
+                            min="1"
+                            max="30"
+                            value={dailyInterval}
+                            onChange={(e) => setDailyInterval(Math.max(1, parseInt(e.target.value) || 1))}
+                            className="w-20 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 transition outline-none focus:border-sky-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400/60"
+                          />
+                          <span className="text-sm text-slate-600 dark:text-slate-400">day(s)</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Weekly Days Selection */}
+                    {scheduleType === "weekly" && (
+                      <div>
+                        <label className="mb-2 block text-sm font-semibold text-slate-900 dark:text-white">
+                          Send on these days
+                        </label>
+                        <div className="grid grid-cols-4 gap-2">
+                          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => {
+                                const newDays = scheduleDays.includes(idx)
+                                  ? scheduleDays.filter(d => d !== idx)
+                                  : [...scheduleDays, idx]
+                                setScheduleDays(newDays)
+                              }}
+                              className={`rounded-md py-2 text-xs font-medium transition ${
+                                scheduleDays.includes(idx)
+                                  ? "bg-sky-600 text-white"
+                                  : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                              }`}
+                            >
+                              {day}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Monthly Day Selection */}
+                    {scheduleType === "monthly" && (
+                      <div>
+                        <label className="mb-2 block text-sm font-semibold text-slate-900 dark:text-white">
+                          Send on day
+                        </label>
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="number"
+                            min="1"
+                            max="31"
+                            value={monthDay}
+                            onChange={(e) => setMonthDay(Math.max(1, Math.min(31, parseInt(e.target.value) || 1)))}
+                            className="w-24 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 transition outline-none focus:border-sky-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400/60"
+                          />
+                          <span className="text-sm text-slate-600 dark:text-slate-400">of each month (1-31)</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Send Limit */}
+                    {scheduleType !== "once" && (
+                      <div>
+                        <label className="mb-2 block text-sm font-semibold text-slate-900 dark:text-white">
+                          Maximum sends (Optional)
+                        </label>
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="number"
+                            min="1"
+                            placeholder="Leave empty for unlimited"
+                            value={sendLimit || ""}
+                            onChange={(e) => setSendLimit(e.target.value ? parseInt(e.target.value) : null)}
+                            className="flex-1 rounded-md border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 transition outline-none focus:border-sky-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400/60"
+                          />
+                          <span className="text-sm text-slate-600 dark:text-slate-400">sends</span>
+                        </div>
+                        <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                          Stop after sending this many times
+                        </p>
+                      </div>
+                    )}
+
+                    {/* End Date for Recurring */}
+                    {scheduleType !== "once" && (
+                      <div>
+                        <label className="mb-2 block text-sm font-semibold text-slate-900 dark:text-white">
+                          Stop sending after date (Optional)
+                        </label>
+                        <input
+                          type="date"
+                          value={scheduleEndDate}
+                          onChange={(e) => setScheduleEndDate(e.target.value)}
+                          min={new Date().toISOString().split("T")[0]}
+                          className="w-full rounded-md border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 transition outline-none focus:border-sky-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400/60"
+                        />
+                        <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                          Leave empty to continue indefinitely
+                        </p>
+                      </div>
+                    )}
+
+                    {/* One-time Schedule */}
+                    {scheduleType === "once" && (
+                      <div>
+                        <label className="mb-2 block text-sm font-semibold text-slate-900 dark:text-white">
+                          Send Date & Time *
+                        </label>
+                        <input
+                          type="datetime-local"
+                          value={scheduledDateTime}
+                          onChange={(e) => setScheduledDateTime(e.target.value)}
+                          min={new Date().toISOString().slice(0, 16)}
+                          className="w-full rounded-md border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 transition outline-none focus:border-sky-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-400/60"
+                        />
+                        <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                          {scheduledDateTime &&
+                            new Date(scheduledDateTime).toLocaleString()}
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}
 
                 {!isScheduled && (
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Toggle to schedule this notification for a later time
+                    Send immediately when you click send, or enable scheduling for smart recurring options
                   </p>
                 )}
               </Card.Content>
@@ -479,7 +789,7 @@ export default function PushNotificationsPage() {
           </div>
 
           {/* Section 4: Select Recipients - Full Width */}
-          <Card className="border border-slate-200/80 bg-white/95 shadow-none dark:border-slate-700/50 dark:bg-slate-900">
+          <Card id="recipients" className="border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900 rounded-md scroll-mt-24">
             <Card.Content className="space-y-4 p-6">
               <h2 className="text-base font-bold text-slate-900 dark:text-white">
                 Select Recipients
@@ -501,19 +811,19 @@ export default function PushNotificationsPage() {
                   <div className="flex gap-2">
                     <button
                       onClick={selectAll}
-                      className="flex-1 rounded-lg bg-sky-50 px-4 py-2 text-sm font-medium text-sky-600 transition hover:bg-sky-100 dark:bg-sky-900/20 dark:hover:bg-sky-900/30"
+                      className="flex-1 rounded-md bg-sky-50 px-4 py-2 text-sm font-medium text-sky-600 transition hover:bg-sky-100 dark:bg-sky-900/20 dark:hover:bg-sky-900/30"
                     >
                       Select All
                     </button>
                     <button
                       onClick={deselectAll}
-                      className="flex-1 rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                      className="flex-1 rounded-md bg-slate-100 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                     >
                       Deselect All
                     </button>
                   </div>
 
-                  <div className="max-h-80 space-y-2 overflow-y-auto rounded-lg border border-slate-200/80 p-4 dark:border-slate-700/50">
+                  <div className="max-h-80 space-y-2 overflow-y-auto rounded-md border border-slate-200 p-4 dark:border-slate-700">
                     {deviceList.map((device) => (
                       <label
                         key={`${device.customer_id}-${device.device_name}`}
@@ -546,16 +856,17 @@ export default function PushNotificationsPage() {
           </Card>
 
           {/* Section 6: Send Button - Full Width */}
-          <Card className="border border-slate-200/80 bg-white/95 shadow-none dark:border-slate-700/50 dark:bg-slate-900">
+          <Card id="send" className="border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900 rounded-md scroll-mt-24">
             <Card.Content className="p-6">
               <button
                 onClick={handleSendNotification}
                 disabled={
                   isSending ||
                   selectedCustomers.size === 0 ||
-                  (isScheduled && !scheduledDateTime)
+                  (isScheduled && scheduleType === "once" && !scheduledDateTime) ||
+                  (isScheduled && scheduleType === "weekly" && scheduleDays.length === 0)
                 }
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-sky-600 px-6 py-3 font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-2 rounded-md bg-sky-600 px-6 py-3 font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isSending ? (
                   <>
@@ -573,124 +884,184 @@ export default function PushNotificationsPage() {
               </button>
             </Card.Content>
           </Card>
+
+          {/* Section 7: Scheduled Notifications Management */}
+          {historyData?.data && historyData.data.length > 0 && (
+            <Card className="border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900 rounded-md">
+              <Card.Content className="space-y-3 p-6">
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                  Manage Scheduled
+                </h2>
+
+                {historyData.data
+                  .filter(notif => notif.spn_status && notif.spn_status !== 'completed')
+                  .slice(0, 3)
+                  .map((notif) => {
+                    const scheduleType = notif.spn_schedule_type || 'once'
+                    const status = notif.spn_status || 'pending'
+                    const scheduleConfig = notif.spn_schedule_config
+
+                    let scheduleLabel = 'Pending'
+                    if (scheduleType === 'once' && notif.spn_next_scheduled_at) {
+                      scheduleLabel = `Once on ${new Date(notif.spn_next_scheduled_at).toLocaleDateString()}`
+                    } else if (scheduleType === 'daily') {
+                      const interval = scheduleConfig?.interval || 1
+                      scheduleLabel = interval === 1
+                        ? `Daily at ${scheduleConfig?.time || '--:--'}`
+                        : `Every ${interval} days at ${scheduleConfig?.time || '--:--'}`
+                    } else if (scheduleType === 'weekly') {
+                      scheduleLabel = `Weekly at ${scheduleConfig?.time || '--:--'}`
+                    } else if (scheduleType === 'monthly') {
+                      scheduleLabel = `Monthly (Day ${scheduleConfig?.month_day || '?'}) at ${scheduleConfig?.time || '--:--'}`
+                    }
+
+                    return (
+                      <div key={notif.spn_id} className="rounded-md border border-slate-200 p-3 dark:border-slate-700">
+                        <div className="mb-2 flex items-start justify-between">
+                          <div className="flex-1">
+                            <p className="text-xs font-semibold text-slate-900 dark:text-white">
+                              {notif.spn_title || 'Untitled'}
+                            </p>
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                              {scheduleLabel}
+                            </p>
+                          </div>
+                          <span className={`inline-block rounded-md px-2 py-1 text-xs font-medium ${
+                            status === 'active'
+                              ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+                              : status === 'paused'
+                              ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400'
+                              : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400'
+                          }`}>
+                            {status.charAt(0).toUpperCase() + status.slice(1)}
+                          </span>
+                        </div>
+                        <div className="flex gap-2">
+                          {status === 'active' && (
+                            <button className="flex-1 rounded-md bg-yellow-50 px-2 py-1.5 text-xs font-medium text-yellow-700 transition hover:bg-yellow-100 dark:bg-yellow-900/20 dark:text-yellow-400 dark:hover:bg-yellow-900/30">
+                              Pause
+                            </button>
+                          )}
+                          {status === 'paused' && (
+                            <button className="flex-1 rounded-md bg-green-50 px-2 py-1.5 text-xs font-medium text-green-700 transition hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30">
+                              Resume
+                            </button>
+                          )}
+                          <button className="flex-1 rounded-md bg-red-50 px-2 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30">
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+
+                {historyData.data.filter(notif => notif.spn_status && notif.spn_status !== 'completed').length === 0 && (
+                  <p className="text-xs text-slate-500 dark:text-slate-400">No active scheduled notifications</p>
+                )}
+              </Card.Content>
+            </Card>
+          )}
         </div>
 
         {/* Right Column - Sticky Notification Preview & Recent Notifications */}
         <div className="flex flex-col gap-6">
           {/* Notification Preview */}
-          <Card className="sticky top-6 border border-slate-200/80 bg-white/95 shadow-none dark:border-slate-700/50 dark:bg-slate-900">
+          <Card className="sticky top-6 border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900 rounded-md">
             <Card.Content className="p-6">
-              <h3 className="mb-4 text-base font-bold text-slate-900 dark:text-white">
-                Preview
+              <h3 className="mb-6 text-base font-bold text-slate-900 dark:text-white">
+                Phone Preview
               </h3>
 
               {/* Phone Mockup Frame */}
               <div className="mx-auto w-full max-w-xs">
-                <div className="relative rounded-2xl bg-slate-900 p-2 dark:bg-slate-950">
-                  <div className="overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800">
-                    {!isNotificationExpanded ? (
-                      /* Collapsed - notification with title and description inside phone */
-                      <button
-                        onClick={() => setIsNotificationExpanded(true)}
-                        className="flex w-full cursor-pointer items-center gap-2.5 rounded-2xl bg-white px-4 py-3 text-left transition-colors hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700"
-                      >
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-500">
-                          <Image
-                            src="/af_home_logo.png"
-                            alt="AF Home"
-                            width={16}
-                            height={16}
-                            className="h-4 w-4"
-                            style={{ filter: "brightness(0) invert(1)" }}
-                          />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-xs font-semibold text-slate-900 dark:text-white">
-                            {formData.title || "Title"}
-                          </p>
-                          <p className="mt-0.5 truncate text-[10px] text-slate-500 dark:text-slate-400">
-                            {formData.description || "Description"}
-                          </p>
-                        </div>
-                        {formData.image && (
-                          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg">
+                {/* Phone Bezel & Screen */}
+                <div className="relative overflow-hidden rounded-md bg-black" style={{ aspectRatio: '9/16', boxShadow: '0 0 0 12px #1f2937, 0 0 0 13px #000' }}>
+                  {/* Phone Screen */}
+                  <div className="relative h-full w-full overflow-hidden bg-slate-900">
+                    {/* Status Bar */}
+                    <div className="flex items-center justify-between px-4 py-2 bg-slate-950 text-white text-xs font-medium">
+                      <span>9:41</span>
+                      <div className="flex gap-1">
+                        <span>📶</span>
+                        <span>📡</span>
+                        <span>🔋</span>
+                      </div>
+                    </div>
+
+                    {/* Notch */}
+                    <div className="absolute top-2 left-1/2 -translate-x-1/2 w-32 h-6 bg-black rounded-b-2xl z-10" />
+
+                    {/* Screen Content */}
+                    <div className="h-full w-full bg-gradient-to-b from-slate-800 to-slate-900 p-3 pt-4 flex flex-col">
+                      {/* Notification Pop-up */}
+                      <div className="rounded-md bg-white dark:bg-slate-800 shadow-lg overflow-hidden border border-slate-200 dark:border-slate-700">
+                        {/* Notification Header with Expand/Collapse */}
+                        <div className="flex p-3 items-start gap-2">
+                          {/* App Icon - Circular */}
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-500 flex-shrink-0 mt-0.5">
                             <Image
-                              src={formData.image}
-                              alt="Notification"
-                              fill
-                              className="object-cover"
+                              src="/af_home_logo.png"
+                              alt="AF Home"
+                              width={20}
+                              height={20}
+                              className="h-5 w-5"
+                              style={{ filter: "brightness(0) invert(1)" }}
                             />
                           </div>
-                        )}
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-600">
-                          <ChevronDown className="h-4 w-4 text-slate-600 dark:text-slate-200" />
-                        </div>
-                      </button>
-                    ) : (
-                      /* Expanded - Full notification inside phone */
-                      <div className="overflow-hidden rounded-2xl bg-white dark:bg-slate-800">
-                        <div className="flex items-center justify-between gap-3 px-4 py-2">
-                          <div className="flex min-w-0 flex-1 items-center gap-2.5">
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-500">
-                              <Image
-                                src="/af_home_logo.png"
-                                alt="AF Home"
-                                width={16}
-                                height={16}
-                                className="h-4 w-4"
-                                style={{ filter: "brightness(0) invert(1)" }}
-                              />
-                            </div>
-                            <div className="flex min-w-0 flex-1 items-center gap-2">
-                              <p className="text-xs font-semibold whitespace-nowrap text-slate-900 dark:text-white">
-                                AF Home
-                              </p>
-                              <p className="text-[10px] whitespace-nowrap text-slate-500 dark:text-slate-400">
-                                Just now
-                              </p>
-                            </div>
+
+                          {/* Notification Content */}
+                          <div className="flex-1 min-w-0 py-0.5">
+                            <p className="text-xs font-semibold text-slate-900 dark:text-white">
+                              {formData.title || "AF Home"}
+                            </p>
+                            <p className={`text-xs text-slate-600 dark:text-slate-400 mt-0.5 leading-tight ${
+                              isNotificationExpanded ? "" : "line-clamp-1"
+                            }`}>
+                              {formData.description || "New notification"}
+                            </p>
                           </div>
+
+                          {/* Expand/Collapse Button */}
                           <button
-                            onClick={() => setIsNotificationExpanded(false)}
-                            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-200 transition hover:bg-slate-300 dark:bg-slate-600 dark:hover:bg-slate-500"
+                            onClick={() => setIsNotificationExpanded(!isNotificationExpanded)}
+                            className="flex h-6 w-6 shrink-0 items-center justify-center text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-400 transition mt-0.5"
                           >
-                            <ChevronDown className="h-4 w-4 rotate-180 text-slate-600 dark:text-slate-200" />
+                            <ChevronDown className={`h-4 w-4 transition-transform ${isNotificationExpanded ? "rotate-180" : ""}`} />
                           </button>
                         </div>
 
-                        <div className="space-y-2 px-4 py-2">
-                          <p className="text-sm leading-snug font-bold text-slate-900 dark:text-white">
-                            {formData.title || "Title"}
-                          </p>
-                          <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
-                            {formData.description || "Description"}
-                          </p>
+                        {/* Expanded Content */}
+                        {isNotificationExpanded && (
+                          <>
+                            {/* Image */}
+                            {formData.image && (
+                              <div className="px-3 pt-2 pb-1">
+                                <div className="relative h-20 w-full overflow-hidden rounded-md">
+                                  <Image
+                                    src={formData.image}
+                                    alt="Notification"
+                                    fill
+                                    className="object-cover"
+                                  />
+                                </div>
+                              </div>
+                            )}
 
-                          {formData.image && (
-                            <div className="relative mt-3 h-32 w-full overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-700">
-                              <Image
-                                src={formData.image}
-                                alt="Notification"
-                                fill
-                                className="object-cover"
-                              />
-                            </div>
-                          )}
-                        </div>
-
-                        {isButtonEnabled && (
-                          <div className="px-4 py-2">
-                            <button className="w-full rounded-lg bg-cyan-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-cyan-700">
-                              {formData.buttonText || "Shop Now"}
-                            </button>
-                          </div>
+                            {/* Button */}
+                            {isButtonEnabled && (
+                              <div className="px-3 pt-1 pb-3">
+                                <button className="w-full rounded-md bg-sky-500 py-1.5 text-xs font-semibold text-white text-center hover:bg-sky-600 transition">
+                                  {formData.buttonText || "Shop Now"}
+                                </button>
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
-                    )}
-                  </div>
+                    </div>
 
-                  <div className="absolute right-0 bottom-0 left-0 flex h-5 items-center justify-center">
-                    <div className="h-1 w-32 rounded-full bg-slate-900 dark:bg-slate-700" />
+                    {/* Home Indicator */}
+                    <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-24 h-1 bg-slate-700 rounded-full" />
                   </div>
                 </div>
               </div>
