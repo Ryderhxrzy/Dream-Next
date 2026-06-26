@@ -718,6 +718,7 @@ Route::middleware(['auth:sanctum', 'supplier.actor'])->group(function () {
     Route::post('/supplier/push-notifications/send', [SupplierPushNotificationController::class, 'send']);
     Route::get('/supplier/push-notifications/history', [SupplierPushNotificationController::class, 'getHistory']);
     Route::get('/supplier/push-notifications/available-customers', [SupplierPushNotificationController::class, 'getAvailableCustomers']);
+    Route::get('/supplier/push-notifications/recipients', [SupplierPushNotificationController::class, 'getRecipientsForNotification']);
 
     // Categories (supplier-owned)
     Route::post('/supplier/categories', [SupplierController::class, 'createCategory']);
