@@ -6,6 +6,7 @@ import {
   MembersResponse,
   MembersStatsPeriod,
   MembersStatsResponse,
+  useCreateMemberMutation,
   useGetMembersQuery,
   useGetMembersStatsQuery,
   useLazyGetMembersQuery,
@@ -156,6 +157,9 @@ const MembersPageMain = ({
   >("default")
   const [statsPeriod, setStatsPeriod] = useState<MembersStatsPeriod>("7d")
   const [showModal, setShowModal] = useState(false)
+  const [addMemberError, setAddMemberError] = useState<string | null>(null)
+  const [createMember, { isLoading: isAddingMember }] =
+    useCreateMemberMutation()
   const [selectedStatCard, setSelectedStatCard] =
     useState<MembersStatCardKey | null>(null)
   const [statModalMembers, setStatModalMembers] = useState<ModalMember[]>([])
@@ -603,15 +607,19 @@ const MembersPageMain = ({
         isOpen={showModal}
         onClose={() => {
           setShowModal(false)
+          setAddMemberError(null)
           if (
             (searchParams.get("modal") ?? "").toLowerCase() === "add-member"
           ) {
             router.replace(pathname)
           }
         }}
-        onSubmit={(data) => {
-          console.log("New member data: ", data)
+        onSubmit={async (data) => {
+          setAddMemberError(null)
+          await createMember(data).unwrap()
         }}
+        isLoading={isAddingMember}
+        serverError={addMemberError}
       />
 
       {selectedStatCard && (

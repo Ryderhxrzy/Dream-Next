@@ -198,7 +198,7 @@ function DetailModal({
             <div>
               <h2 className="text-sm font-bold text-slate-800">{name}</h2>
               <p className="text-xs text-slate-400">
-                {item.reference_no} ?? {email}
+                {item.reference_no} · {email}
               </p>
             </div>
           </div>
@@ -611,6 +611,47 @@ export default function KycVerificationPageMain() {
   const rows = useMemo(() => data?.requests ?? [], [data?.requests])
   const counts = data?.counts
 
+  const handleExportCSV = () => {
+    if (!rows.length) return
+    const esc = (v: string) => `"${String(v ?? "").replace(/"/g, '""')}"`
+    const headers = [
+      "Reference No",
+      "Status",
+      "Full Name",
+      "Account Email",
+      "ID Type",
+      "ID Number",
+      "Contact Number",
+      "City",
+      "Province",
+      "Submitted At",
+      "Reviewed At",
+    ]
+    const csvRows = rows.map((r) => [
+      r.reference_no,
+      r.status,
+      r.full_name,
+      r.customer.email ?? "",
+      r.id_type,
+      r.id_number ?? "",
+      r.contact_number ?? "",
+      r.city ?? "",
+      r.province ?? "",
+      r.created_at ? new Date(r.created_at).toLocaleDateString("en-PH") : "",
+      r.reviewed_at
+        ? new Date(r.reviewed_at).toLocaleDateString("en-PH")
+        : "",
+    ])
+    const csv = [headers, ...csvRows].map((row) => row.map(esc).join(",")).join("\r\n")
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `kyc-verifications-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const openActionModal = (action: ActionType, id: number) =>
     setActionModal({ open: true, action, id, notes: "" })
 
@@ -661,7 +702,11 @@ export default function KycVerificationPageMain() {
             Review identity submissions before account activation
           </p>
         </div>
-        <button className="flex items-center gap-2 rounded-[18px] border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all hover:border-slate-400 dark:border-white/18 dark:bg-white/12 dark:text-slate-200">
+        <button
+          onClick={handleExportCSV}
+          disabled={!rows.length}
+          className="flex items-center gap-2 rounded-[18px] border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all hover:border-slate-400 disabled:opacity-40 dark:border-white/18 dark:bg-white/12 dark:text-slate-200"
+        >
           <svg
             className="h-4 w-4 text-teal-600"
             fill="none"

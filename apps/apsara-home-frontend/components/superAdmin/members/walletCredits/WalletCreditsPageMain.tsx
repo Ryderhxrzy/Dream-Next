@@ -1,7 +1,11 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { useGetMembersQuery } from "@/store/api/membersApi"
+import { showErrorToast, showSuccessToast } from "@/libs/toast"
+import {
+  useAdjustMemberWalletMutation,
+  useGetMembersQuery,
+} from "@/store/api/membersApi"
 import { motion } from "framer-motion"
 
 import type { MemberStatus, MemberTier } from "@/types/members/types"
@@ -62,6 +66,7 @@ export default function WalletCreditsPageMain() {
     null
   )
   const [page, setPage] = useState(1)
+  const [adjustWallet] = useAdjustMemberWalletMutation()
 
   const queryTier =
     tierFilter === "All Tiers" ? undefined : (tierFilter as MemberTier)
@@ -116,21 +121,56 @@ export default function WalletCreditsPageMain() {
     return list
   }, [sortKey, walletRows])
 
-  const handleAdjustSubmit = (
+  const handleAdjustSubmit = async (
     memberId: number,
     walletType: "cash" | "pv",
     adjustType: "credit" | "debit",
     amount: number,
     note: string
   ) => {
-    // TODO: call API — PATCH /api/admin/wallets/:memberId/adjust
-    console.log("Adjust wallet:", {
-      memberId,
-      walletType,
-      adjustType,
-      amount,
-      note,
-    })
+    try {
+      await adjustWallet({ memberId, walletType, adjustType, amount, note }).unwrap()
+      showSuccessToast("Wallet adjusted successfully.")
+      refetch()
+    } catch (err: unknown) {
+      const apiErr = err as { data?: { message?: string } }
+      showErrorToast(apiErr?.data?.message || "Failed to adjust wallet.")
+    }
+  }
+
+  const handleExportCSV = () => {
+    if (!filtered.length) return
+    const esc = (v: string) => `"${String(v ?? "").replace(/"/g, '""')}"`
+    const headers = [
+      "Name",
+      "Email",
+      "Tier",
+      "Status",
+      "Cash Balance (PHP)",
+      "PV Balance",
+      "Available Amount (PHP)",
+      "Last Transaction",
+    ]
+    const csvRows = filtered.map((w) => [
+      w.name,
+      w.email,
+      w.tier,
+      w.status,
+      String(w.cashBalance),
+      String(w.pvBalance),
+      String(w.availableAmount),
+      w.lastTransaction
+        ? new Date(w.lastTransaction).toLocaleDateString("en-PH")
+        : "",
+    ])
+    const csv = [headers, ...csvRows].map((row) => row.map(esc).join(",")).join("\r\n")
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `wallet-credits-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   return (
@@ -147,7 +187,11 @@ export default function WalletCreditsPageMain() {
             Manage member cash and PV wallet balances
           </p>
         </div>
-        <button className="flex items-center gap-2 rounded-[18px] border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all hover:border-slate-400 dark:border-white/18 dark:bg-white/12 dark:text-slate-200">
+        <button
+          onClick={handleExportCSV}
+          disabled={!filtered.length}
+          className="flex items-center gap-2 rounded-[18px] border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all hover:border-slate-400 disabled:opacity-40 dark:border-white/18 dark:bg-white/12 dark:text-slate-200"
+        >
           <svg
             className="h-4 w-4 text-teal-600"
             fill="none"

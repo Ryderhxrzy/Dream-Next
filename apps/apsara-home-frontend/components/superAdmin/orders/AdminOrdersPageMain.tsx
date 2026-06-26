@@ -1196,7 +1196,36 @@ export default function AdminOrdersPageMain({
           <Button
             size="sm"
             variant="secondary"
-            className="rounded-[18px] border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all hover:border-slate-400 dark:border-white/18 dark:bg-white/12 dark:text-slate-200"
+            isDisabled={!visibleOrders.length}
+            onPress={() => {
+              if (!visibleOrders.length) return
+              const esc = (v: string) => `"${String(v ?? "").replace(/"/g, '""')}"`
+              const headers = ["Checkout ID", "Date", "Customer", "Email", "Phone", "Payment Method", "Payment Status", "Fulfillment Status", "Amount (PHP)", "Qty", "Product", "Courier", "Tracking No"]
+              const csvRows = visibleOrders.map((o) => [
+                o.checkout_id,
+                o.created_at ? new Date(o.created_at).toLocaleDateString("en-PH") : "",
+                o.customer_name ?? "",
+                o.customer_email ?? "",
+                o.customer_phone ?? "",
+                o.payment_method ?? "",
+                o.payment_status ?? "",
+                o.fulfillment_status ?? "",
+                String(o.amount ?? 0),
+                String(o.quantity ?? 0),
+                o.product_name ?? "",
+                o.courier ?? "",
+                o.tracking_no ?? "",
+              ])
+              const csv = [headers, ...csvRows].map((r) => r.map(esc).join(",")).join("\r\n")
+              const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" })
+              const url = URL.createObjectURL(blob)
+              const a = document.createElement("a")
+              a.href = url
+              a.download = `orders-${new Date().toISOString().slice(0, 10)}.csv`
+              a.click()
+              URL.revokeObjectURL(url)
+            }}
+            className="rounded-[18px] border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all hover:border-slate-400 disabled:opacity-40 dark:border-white/18 dark:bg-white/12 dark:text-slate-200"
           >
             <svg
               className="h-4 w-4 text-teal-600"
@@ -2791,7 +2820,6 @@ export default function AdminOrdersPageMain({
                               {pageNumber}
                             </Pagination.Link>
                           </Pagination.Item>
-                          ``
                         </span>
                       )
                     })}
