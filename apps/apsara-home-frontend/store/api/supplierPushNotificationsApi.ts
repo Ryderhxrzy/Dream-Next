@@ -6,10 +6,26 @@ export interface SupplierPushNotification {
   spn_title: string
   spn_body: string
   spn_image?: string | null
+  spn_button_text?: string | null
   spn_recipients: number[]
   spn_sent_count: number
   spn_failed_count: number
+  spn_schedule_type: 'once' | 'daily' | 'weekly' | 'monthly'
+  spn_schedule_config?: {
+    time?: string // HH:MM format
+    days?: number[] // 0-6 for weekly (0=Sunday)
+    interval?: number // days between sends (for daily frequency)
+    end_date?: string // when to stop recurring
+    month_day?: number // 1-31 for monthly
+    month_pattern?: 'first' | 'second' | 'third' | 'fourth' | 'last' // first Monday, etc
+  } | null
+  spn_timezone: string // e.g., 'UTC', 'Asia/Manila', 'America/New_York'
+  spn_status: 'active' | 'paused' | 'completed' | 'cancelled'
   spn_sent_at?: string | null
+  spn_next_scheduled_at?: string | null
+  spn_last_sent_at?: string | null
+  spn_send_limit?: number | null // max number of sends
+  spn_send_count: number // times already sent
   spn_created_at?: string | null
   spn_updated_at?: string | null
 }
@@ -31,6 +47,17 @@ export interface SendNotificationRequest {
   image?: string | null
   recipients: number[]
   buttonText?: string
+  schedule_type?: 'once' | 'daily' | 'weekly' | 'monthly'
+  schedule_config?: {
+    time?: string // HH:MM format
+    days?: number[] // 0-6 for weekly (0=Sunday)
+    interval?: number // days between sends (for daily)
+    end_date?: string // when to stop recurring
+    month_day?: number // 1-31 for monthly
+    month_pattern?: 'first' | 'second' | 'third' | 'fourth' | 'last'
+    send_limit?: number // max times to send
+  } | null
+  timezone?: string // e.g., 'UTC', 'Asia/Manila'
   scheduled_at?: string | null
 }
 
