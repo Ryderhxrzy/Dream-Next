@@ -90,7 +90,7 @@ class SupplierPushNotificationController extends Controller
                     'spn_next_scheduled_at' => $nextScheduledAt,
                     'spn_send_limit' => $scheduleConfig['send_limit'] ?? null,
                     'spn_send_count' => 0,
-                    'spn_status' => 'active',
+                    'spn_status' => 'scheduled',
                     'spn_created_at' => now(),
                     'spn_updated_at' => now(),
                 ]);
@@ -113,7 +113,7 @@ class SupplierPushNotificationController extends Controller
                     'message' => 'Notification scheduled successfully.',
                     'notification_id' => $notificationRecord->spn_id,
                     'scheduled_at' => $nextScheduledAt,
-                    'status' => 'active',
+                    'status' => 'scheduled',
                 ], 200);
             }
 
@@ -253,6 +253,43 @@ class SupplierPushNotificationController extends Controller
             'devices' => $devices,
             'customer_ids' => $uniqueCustomers,
         ]);
+    }
+
+    public function getRecipientsForNotification(Request $request)
+    {
+        $supplierUser = $this->resolveSupplierUser($request);
+
+        if (!$supplierUser) {
+            return response()->json(['message' => 'Only suppliers can access this.'], 403);
+        }
+
+        $supplierId = (int) $supplierUser->su_supplier;
+
+        $recipients = \DB::table('tbl_customer')
+            ->select(
+                'tbl_customer.c_userid',
+                \DB::raw("CONCAT(tbl_customer.c_fname, ' ', tbl_customer.c_lname) as c_fullname"),
+                \DB::raw('COUNT(DISTINCT tbl_fcm_device_tokens.fdt_id) as device_count'),
+                \DB::raw("COUNT(DISTINCT CASE WHEN tbl_product.pd_supplier = {$supplierId} THEN tbl_checkout_history.ch_id END) as purchase_count"),
+                \DB::raw("MAX(CASE WHEN tbl_product.pd_supplier = {$supplierId} THEN tbl_checkout_history.created_at END) as last_purchase_date")
+            )
+            ->join('tbl_fcm_device_tokens', function ($join) {
+                $join->on('tbl_customer.c_userid', '=', 'tbl_fcm_device_tokens.fdt_customer_id')
+                    ->where('tbl_fcm_device_tokens.fdt_is_active', true);
+            })
+            ->leftJoin('tbl_checkout_history', function ($join) {
+                $join->on('tbl_customer.c_userid', '=', 'tbl_checkout_history.ch_customer_id')
+                    ->where('tbl_checkout_history.ch_status', '=', 'paid');
+            })
+            ->leftJoin('tbl_product', function ($join) use ($supplierId) {
+                $join->on('tbl_checkout_history.ch_product_id', '=', 'tbl_product.pd_id');
+            })
+            ->groupBy('tbl_customer.c_userid', 'tbl_customer.c_fname', 'tbl_customer.c_lname')
+            ->orderByDesc('purchase_count')
+            ->orderBy('c_fullname')
+            ->paginate(50);
+
+        return response()->json($recipients);
     }
 
     private function calculateNextScheduledTime(string $scheduleType, ?array $config, string $timezone): ?\Carbon\Carbon
