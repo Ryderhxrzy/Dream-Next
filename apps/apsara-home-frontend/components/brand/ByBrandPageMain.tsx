@@ -114,7 +114,9 @@ function ZqBrandItemCard({ product, brandName, isLoggedIn = false }: { product: 
 
   // SRP = public price. Member price shown only to logged-in members. No synthetic min/max "discount".
   const srp = zqPrice(product)
-  const memberPrice = isLoggedIn ? Number(product.memberPrice ?? 0) / 100 : 0
+  // memberPrice is stored in cents (same unit as priceMinCents).
+  const memberPriceCents = isLoggedIn ? Number(product.memberPrice ?? 0) : 0
+  const memberPrice = memberPriceCents > 0 ? memberPriceCents / 100 : 0
   const showMemberPrice = memberPrice > 0 && memberPrice < srp
   const price = showMemberPrice ? memberPrice : srp
   const comparePrice = showMemberPrice ? srp : null
@@ -163,11 +165,11 @@ function ZqBrandItemCard({ product, brandName, isLoggedIn = false }: { product: 
 
         <Image src={image} alt={product.subject} fill className="object-cover" unoptimized />
 
-        <div className="absolute top-0 left-0 flex flex-col">
-          <div className={`text-white text-xs font-bold px-2 py-1 ${showMemberPrice ? 'bg-green-500' : 'bg-sky-500'}`}>
-            {showMemberPrice ? `Member price · ${discount}% off` : 'Register to get 6% discount'}
+        {showMemberPrice ? (
+          <div className="absolute top-0 left-0 text-white text-xs font-bold px-2 py-1 bg-green-500">
+            Member price · {discount}% off
           </div>
-        </div>
+        ) : null}
 
         <div className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-sky-500 text-white shadow-lg transition-all duration-300 hover:bg-sky-600 sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2 sm:text-sm sm:font-semibold sm:opacity-0 sm:translate-y-2 sm:group-hover:opacity-100 sm:group-hover:translate-y-0">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

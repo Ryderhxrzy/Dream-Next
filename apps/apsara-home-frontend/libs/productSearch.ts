@@ -7,7 +7,7 @@ const toSearchableNumber = (value: unknown) =>
   typeof value === "number" && Number.isFinite(value) ? String(value) : ""
 
 const compactSearchText = (value: string) =>
-  value.toLowerCase().replace(/[^a-z0-9]+/g, "").replace(/[aeiou]/g, "")
+  value.toLowerCase().replace(/[^a-z0-9]+/g, "")
 
 const tokenizeQuery = (query: string) =>
   query

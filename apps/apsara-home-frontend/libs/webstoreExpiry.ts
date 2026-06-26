@@ -17,6 +17,7 @@ export function computeEndDateRaw(
 
   const endDate = new Date(startDate)
   const normalizedBilling = String(billing ?? "").toLowerCase()
+  const normalizedPlan = String(plan ?? "").toLowerCase()
 
   if (normalizedBilling === "monthly") {
     const requestApproved =
@@ -34,8 +35,9 @@ export function computeEndDateRaw(
     return endDate
   }
 
-  // plan_term_months takes priority if present
-  if (planTermMonths && planTermMonths > 0) {
+  // plan_term_months takes priority if present, except for "test" which is
+  // always 2 days — the backend may return plan_term_months=1 for test plans.
+  if (planTermMonths && planTermMonths > 0 && normalizedPlan !== "test") {
     endDate.setMonth(endDate.getMonth() + planTermMonths)
     return endDate
   }
@@ -43,7 +45,6 @@ export function computeEndDateRaw(
   const raw = String(term ?? "").toLowerCase()
   const dayMatch = raw.match(/(\d+)\s*day/)
   const monthMatch = raw.match(/(\d+)\s*month/)
-  const normalizedPlan = String(plan ?? "").toLowerCase()
 
   let months = 0
   let days = 0

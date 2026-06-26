@@ -316,9 +316,16 @@ function StatusBadge({ status }: { status?: string | null }) {
       </span>
     )
   }
+  if (s === "rejected") {
+    return (
+      <span className="inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-3 py-0.5 text-xs font-semibold text-rose-600">
+        Rejected
+      </span>
+    )
+  }
   return (
-    <span className="inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-3 py-0.5 text-xs font-semibold text-rose-600">
-      Rejected
+    <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-0.5 text-xs font-semibold text-amber-600">
+      Pending
     </span>
   )
 }
@@ -720,7 +727,7 @@ export default function PartnerSubscriptionsPage() {
         acc.count += 1
         acc.totalPaid += Number(tx.total_paid_amount ?? 0)
         if (s === "approved") acc.approved += 1
-        else acc.rejected += 1
+        else if (s === "rejected") acc.rejected += 1
         return acc
       },
       { count: 0, approved: 0, rejected: 0, totalPaid: 0 }

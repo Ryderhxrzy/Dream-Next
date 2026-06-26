@@ -120,6 +120,7 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  turbopack: {},
   experimental: {
     // Controls worker count used during "Collecting page data...". Set `NEXT_BUILD_CPUS=1` to avoid spawn EPERM on Windows.
     cpus: buildCpus,
