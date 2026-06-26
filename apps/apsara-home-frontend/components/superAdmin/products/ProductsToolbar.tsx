@@ -154,7 +154,7 @@ export default function ProductsToolbar({
     return (categoriesData?.categories ?? []).filter((category) => {
       if (seen.has(category.id)) return false
       seen.add(category.id)
-      return true
+      return !category.parent_id
     })
   }, [categoriesData?.categories])
 

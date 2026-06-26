@@ -47,6 +47,7 @@ interface EditProductModalProps {
 interface FormState {
   pd_name: string
   pd_catid: string
+  pd_catsubid: string
   pd_merchant_catid: string
   pd_merchant_subcatid: string
   pd_room_type: string
@@ -1278,6 +1279,7 @@ const hasEditDraftContent = (
 const normalizeFormForComparison = (form: FormState) => ({
   pd_name: form.pd_name.trim(),
   pd_catid: Number(form.pd_catid),
+  pd_catsubid: form.pd_catsubid.trim() ? Number(form.pd_catsubid) : null,
   pd_merchant_catid: form.pd_merchant_catid.trim() && form.pd_merchant_catid !== "__empty_merchant_cat__"
     ? Number(form.pd_merchant_catid)
     : null,
@@ -1604,6 +1606,7 @@ export default function EditProductModal({
   const [form, setForm] = useState<FormState>({
     pd_name: "",
     pd_catid: "",
+    pd_catsubid: "",
     pd_merchant_catid: "",
     pd_merchant_subcatid: "",
     pd_room_type: "",
@@ -1702,7 +1705,7 @@ export default function EditProductModal({
     undefined
   )
   const generalCategories = useMemo(
-    () => categoriesData?.categories ?? [],
+    () => (categoriesData?.categories ?? []).filter((c) => !c.parent_id),
     [categoriesData?.categories]
   )
   const { data: supplierCatsData } = useGetSupplierCategoriesQuery(
@@ -1726,8 +1729,17 @@ export default function EditProductModal({
     [supplierCatsData?.categories, form.pd_merchant_catid]
   )
   const categories = useMemo(
-    () => [...generalCategories, ...merchantCategories],
-    [generalCategories, merchantCategories]
+    () => generalCategories,
+    [generalCategories]
+  )
+  const subcategories = useMemo(
+    () =>
+      form.pd_catid
+        ? (categoriesData?.categories ?? []).filter(
+            (c) => c.parent_id === Number(form.pd_catid)
+          )
+        : [],
+    [categoriesData?.categories, form.pd_catid]
   )
   const { data: brandsData } = useGetProductBrandsQuery()
   const brands = useMemo(
@@ -1830,6 +1842,7 @@ export default function EditProductModal({
     const nextForm = {
       pd_name: openedProduct.name ?? "",
       pd_catid: String(openedProduct.catid ?? ""),
+      pd_catsubid: String(openedProduct.catsubid ?? ""),
       pd_merchant_catid: String(row.pd_merchant_catid ?? row.merchant_catid ?? ""),
       pd_merchant_subcatid: String(row.pd_merchant_subcatid ?? row.merchant_subcatid ?? ""),
       pd_room_type: openedProduct.roomType
@@ -2618,6 +2631,7 @@ export default function EditProductModal({
     const payload: Partial<CreateProductPayload> = {
       pd_name: form.pd_name.trim(),
       pd_catid: Number(form.pd_catid),
+      pd_catsubid: form.pd_catsubid.trim() ? Number(form.pd_catsubid) : undefined,
       pd_merchant_catid:
         isSupplierScopedActor && form.pd_merchant_catid.trim() && form.pd_merchant_catid !== "__empty_merchant_cat__"
           ? Number(form.pd_merchant_catid)
@@ -3349,6 +3363,7 @@ export default function EditProductModal({
                             searchPlaceholder="Search categories..."
                             onChange={(value) => {
                               set("pd_catid", value)
+                              set("pd_catsubid", "")
                               if (!roomTouched) {
                                 const selectedCategory = categories.find(
                                   (category) => String(category.id) === value
@@ -3371,6 +3386,32 @@ export default function EditProductModal({
                               })),
                             ]}
                           />
+                        </Field>
+
+                        <Field label="Subcategory">
+                          {subcategories.length > 0 ? (
+                            <ModalSelectField
+                              ariaLabel="Select subcategory"
+                              value={form.pd_catsubid}
+                              onChange={(value) =>
+                                set(
+                                  "pd_catsubid",
+                                  value === "__empty_subcategory__" ? "" : value
+                                )
+                              }
+                              options={[
+                                { value: "__empty_subcategory__", label: "No subcategory" },
+                                ...subcategories.map((cat) => ({
+                                  value: String(cat.id),
+                                  label: cat.name,
+                                })),
+                              ]}
+                            />
+                          ) : (
+                            <div className={`${inputCls()} flex cursor-not-allowed items-center opacity-60`}>
+                              {form.pd_catid ? "No subcategories available" : "Select a category first"}
+                            </div>
+                          )}
                         </Field>
 
                         {!isServicesView && (
