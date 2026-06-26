@@ -13618,7 +13618,7 @@ const ProfilePage = ({
                                             X
                                           </button>
                                         ) : null}
-                                        {item.kind === "selected" ? (
+                                        {item.kind === "selected" && webstoreReceiptFiles.length > 1 ? (
                                           <button
                                             type="button"
                                             onClick={(event) => {

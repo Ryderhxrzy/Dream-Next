@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
 import { matchesProductSearch } from "@/libs/productSearch"
-import { useGetPublicProductsQuery } from "@/store/api/productsApi"
-import type { Product } from "@/store/api/productsApi"
+import { useGetPublicProductsQuery, useGetPublicZqProductsQuery } from "@/store/api/productsApi"
+import type { Product, ZqCachedProduct } from "@/store/api/productsApi"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -221,8 +221,65 @@ function SearchListViewProduct({
   )
 }
 
+function ZqSearchCard({ product, isLoggedIn }: { product: ZqCachedProduct; isLoggedIn: boolean }) {
+  const srp = Number(product.priceMinCents ?? 0) / 100
+  const memberPriceCents = isLoggedIn ? Number(product.memberPrice ?? 0) : 0
+  const memberPrice = memberPriceCents > 0 ? memberPriceCents / 100 : 0
+  const showMemberPrice = memberPrice > 0 && memberPrice < srp
+  const displayPrice = showMemberPrice ? memberPrice : srp
+  const discount = showMemberPrice ? Math.max(1, Math.round(((srp - memberPrice) / srp) * 100)) : 0
+
+  return (
+    <Link
+      href={`/global-product/${product.id}`}
+      className="group relative flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white transition-colors hover:border-sky-500 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-sky-400"
+    >
+      {showMemberPrice && (
+        <div className="absolute top-2 left-2 z-10 bg-green-500 px-2 py-1 text-xs font-bold text-white">
+          Member price · {discount}% off
+        </div>
+      )}
+      <div className="relative aspect-square w-full overflow-hidden bg-gray-100 dark:bg-gray-700">
+        {product.primaryImage ? (
+          <img
+            src={product.primaryImage}
+            alt={product.subject}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-gray-400 dark:text-gray-500">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <polyline points="21 15 16 10 5 21" />
+            </svg>
+          </div>
+        )}
+      </div>
+      <div className="flex flex-1 flex-col p-3">
+        <p className="mb-1 line-clamp-2 text-sm font-medium text-gray-800 group-hover:text-sky-600 dark:text-gray-200">
+          {product.subject}
+        </p>
+        <div className="mt-auto flex items-baseline gap-2">
+          <span className="text-base font-bold text-sky-500 dark:text-sky-400">
+            {"₱"}{displayPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </span>
+          {showMemberPrice && (
+            <span className="text-xs text-gray-400 line-through dark:text-gray-500">
+              {"₱"}{srp.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
+          )}
+        </div>
+        <span className="mt-1 inline-block rounded bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold text-sky-700 dark:bg-sky-900/30 dark:text-sky-300">
+          AF Home Global Brand
+        </span>
+      </div>
+    </Link>
+  )
+}
+
 export default function SearchPage() {
-  const router = useRouter()
+  const { data: session } = useSession()
   const searchParams = useSearchParams()
   const query = searchParams.get("q") || ""
   const listingTopRef = useRef<HTMLDivElement | null>(null)
@@ -262,6 +319,13 @@ export default function SearchPage() {
     }
   )
   const products = productsData?.products ?? []
+
+  // Fetch ZQ (AF Home Global Brand) products using server-side search
+  const { data: zqProductsData, isLoading: isZqLoading } = useGetPublicZqProductsQuery(
+    { page: 1, perPage: 100, search: debouncedQuery },
+    { skip: !debouncedQuery || debouncedQuery.length < 2 }
+  )
+  const zqProducts = zqProductsData?.products ?? []
 
   // Filter products based on search query and filter state
   const filteredProducts = useMemo(() => {
@@ -372,9 +436,9 @@ export default function SearchPage() {
                 Search Results
               </h1>
               <p className="mt-2 text-gray-600 dark:text-gray-400">
-                {isLoading ? (
+                {isLoading || isZqLoading ? (
                   "Searching..."
-                ) : filteredProducts.length === 0 ? (
+                ) : filteredProducts.length === 0 && zqProducts.length === 0 ? (
                   <>
                     No results found for "
                     <span className="font-semibold">{query}</span>"
@@ -383,9 +447,9 @@ export default function SearchPage() {
                   <>
                     Found{" "}
                     <span className="font-semibold">
-                      {filteredProducts.length}
+                      {filteredProducts.length + zqProducts.length}
                     </span>{" "}
-                    result{filteredProducts.length !== 1 ? "s" : ""} for "
+                    result{filteredProducts.length + zqProducts.length !== 1 ? "s" : ""} for "
                     <span className="font-semibold">{query}</span>"
                   </>
                 )}
@@ -394,11 +458,11 @@ export default function SearchPage() {
           </div>
 
           <div className="container mx-auto px-4 py-8">
-            {isLoading ? (
+            {isLoading || isZqLoading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-sky-500" />
               </div>
-            ) : filteredProducts.length === 0 ? (
+            ) : filteredProducts.length === 0 && zqProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700">
                   <svg
@@ -535,6 +599,24 @@ export default function SearchPage() {
                       >
                         Next
                       </button>
+                    </div>
+                  )}
+
+                  {/* AF Home Global Brand (ZQ) Products */}
+                  {zqProducts.length > 0 && (
+                    <div className="mt-10">
+                      <h2 className="mb-4 text-lg font-bold text-gray-800 dark:text-white">
+                        AF Home Global Brand
+                      </h2>
+                      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                        {zqProducts.map((zqProduct) => (
+                          <ZqSearchCard
+                            key={zqProduct.id}
+                            product={zqProduct}
+                            isLoggedIn={Boolean(session?.user)}
+                          />
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
