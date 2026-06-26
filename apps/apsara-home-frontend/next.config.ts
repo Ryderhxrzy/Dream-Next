@@ -120,6 +120,10 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Next 16 uses Turbopack by default for `next dev`. The `webpack` config below
+  // only runs for production builds (`!dev`), so an empty turbopack config here
+  // silences the "webpack config and no turbopack config" error in dev.
+  turbopack: {},
   experimental: {
     // Controls worker count used during "Collecting page data...". Set `NEXT_BUILD_CPUS=1` to avoid spawn EPERM on Windows.
     cpus: buildCpus,
