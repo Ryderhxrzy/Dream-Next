@@ -9,6 +9,7 @@ RUN apk add --no-cache \
     git \
     icu-dev \
     libpq-dev \
+    libzip-dev \
     linux-headers \
     nodejs \
     npm \
@@ -16,7 +17,7 @@ RUN apk add --no-cache \
     postgresql-client \
     unzip \
     zip \
-    && docker-php-ext-install intl mbstring pcntl pdo pdo_pgsql
+    && docker-php-ext-install intl mbstring pcntl pdo pdo_pgsql zip
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 

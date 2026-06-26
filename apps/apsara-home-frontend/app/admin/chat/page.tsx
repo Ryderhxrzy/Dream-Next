@@ -22,17 +22,13 @@ import {
   Link2,
   Mail,
   MessageSquare,
-  MoreVertical,
   Paperclip,
   Phone,
   Play,
   Reply,
   Search,
   Send,
-  Settings,
-  SlidersHorizontal,
   Smile,
-  SquarePen,
   X,
 } from "lucide-react"
 import { useSession } from "next-auth/react"
@@ -459,9 +455,6 @@ export default function AdminChatPage() {
   >({})
   const [hoveredMsgId, setHoveredMsgId] = useState<number | null>(null)
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const currentAdminId = Number(
-    (session?.user as { id?: number | string } | undefined)?.id ?? 0
-  )
   const adminDisplayName =
     (session?.user as { name?: string | null } | undefined)?.name?.trim() ||
     "Admin"
@@ -992,26 +985,16 @@ export default function AdminChatPage() {
           }`}
         >
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-4 dark:border-slate-800">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-              <span className="text-sm font-bold text-slate-800 dark:text-slate-100">
-                Messages
+          <div className="flex items-center gap-2 border-b border-slate-100 px-4 py-4 dark:border-slate-800">
+            <MessageSquare className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+            <span className="text-sm font-bold text-slate-800 dark:text-slate-100">
+              Messages
+            </span>
+            {totalUnread > 0 && (
+              <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300">
+                {totalUnread}
               </span>
-              {totalUnread > 0 && (
-                <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300">
-                  {totalUnread}
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-0.5">
-              <button className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300">
-                <SquarePen className="h-4 w-4" />
-              </button>
-              <button className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300">
-                <SlidersHorizontal className="h-4 w-4" />
-              </button>
-            </div>
+            )}
           </div>
 
           {/* Search */}
@@ -1205,14 +1188,11 @@ export default function AdminChatPage() {
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 dark:border-slate-800">
+          <div className="border-t border-slate-100 px-4 py-3 dark:border-slate-800">
             <span className="text-xs text-slate-400">
               {tabConversations.length}{" "}
               {tabConversations.length === 1 ? "conversation" : "conversations"}
             </span>
-            <button className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300">
-              <Settings className="h-4 w-4" />
-            </button>
           </div>
         </div>
 
@@ -1418,9 +1398,6 @@ export default function AdminChatPage() {
                         : lastActive}
                   </p>
                 </div>
-                <button className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 dark:hover:bg-slate-800">
-                  <MoreVertical className="h-4 w-4" />
-                </button>
               </div>
 
               {/* Messages */}

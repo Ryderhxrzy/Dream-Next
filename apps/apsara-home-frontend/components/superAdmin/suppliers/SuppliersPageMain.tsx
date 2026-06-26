@@ -1,6 +1,7 @@
 "use client"
 
 import { Fragment, useMemo, useState } from "react"
+import { createPortal } from "react-dom"
 import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
 import {
   InviteSupplierUserResponse,
@@ -2057,7 +2058,7 @@ function ModalShell({
   children: React.ReactNode
   onClose: () => void
 }) {
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-8">
       <button
         type="button"
@@ -2068,7 +2069,8 @@ function ModalShell({
       <div className="relative z-10 w-full max-w-2xl rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_30px_100px_rgba(15,23,42,0.18)] dark:border-slate-800 dark:bg-slate-950">
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 

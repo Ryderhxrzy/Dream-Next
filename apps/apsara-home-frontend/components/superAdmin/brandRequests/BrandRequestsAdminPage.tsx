@@ -22,7 +22,7 @@ const getErrorMessage = (err: unknown, fallback: string) => {
 
 export default function BrandRequestsAdminPage() {
   const [statusFilter, setStatusFilter] = useState<string>("pending")
-  const { data, isLoading } = useGetAdminBrandRequestsQuery(
+  const { data, isLoading, isError } = useGetAdminBrandRequestsQuery(
     statusFilter === "all" ? undefined : { status: statusFilter }
   )
   const [decide, { isLoading: deciding }] = useDecideBrandRequestMutation()
@@ -92,6 +92,8 @@ export default function BrandRequestsAdminPage() {
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         {isLoading ? (
           <p className="p-6 text-sm text-slate-400">Loading…</p>
+        ) : isError ? (
+          <p className="p-6 text-sm text-rose-500">Failed to load brand requests. Please try again.</p>
         ) : requests.length === 0 ? (
           <p className="p-6 text-sm text-slate-400">
             No {statusFilter === "all" ? "" : statusFilter} requests.

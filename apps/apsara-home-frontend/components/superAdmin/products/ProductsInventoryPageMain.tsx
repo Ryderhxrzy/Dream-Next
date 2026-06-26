@@ -186,6 +186,7 @@ export default function ProductsInventoryPageMain() {
   const [filter, setFilter] = useState<StockFilter>("all")
   const [brandFilter, setBrandFilter] = useState<string>("")
   const [search, setSearch] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
 
   const [isStockModalOpen, setIsStockModalOpen] = useState(false)
@@ -204,7 +205,11 @@ export default function ProductsInventoryPageMain() {
   const [summaryReloadKey, setSummaryReloadKey] = useState(0)
   const [fetchProductsSummary] = useLazyGetProductsQuery()
   const [updateProduct] = useUpdateProductMutation()
-  const searchQuery = search.trim()
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search.trim()), 300)
+    return () => clearTimeout(t)
+  }, [search])
 
   const { data: brandsData } = useGetProductBrandsQuery({ search: "" })
 
@@ -218,7 +223,7 @@ export default function ProductsInventoryPageMain() {
     {
       page: currentPage,
       perPage: PAGE_SIZE,
-      search: searchQuery || undefined,
+      search: debouncedSearch || undefined,
       // backend expects brandType id
       brandType: (() => {
         const normalizedBrand = brandFilter.trim().toLowerCase()
@@ -495,7 +500,7 @@ export default function ProductsInventoryPageMain() {
         name: product.name,
         sku: product.sku ?? "",
         qty,
-        threshold: qty,
+        threshold: LOW_STOCK_THRESHOLD,
         status: stockLabel[status],
         updated_at: product.updatedAt ?? product.createdAt ?? "",
       }

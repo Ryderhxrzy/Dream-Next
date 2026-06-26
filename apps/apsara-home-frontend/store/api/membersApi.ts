@@ -194,6 +194,7 @@ interface TopEarnersQueryParams {
   search?: string
   tier?: MemberTier | "All Tiers"
   sort?: "earnings" | "orders" | "referrals" | "total_spent"
+  period?: string
 }
 
 export interface UpdateMemberPayload {
@@ -384,6 +385,10 @@ export const membersApi = baseApi.injectEndpoints({
               ? params.tier
               : undefined,
           sort: params?.sort ?? "earnings",
+          period:
+            params?.period && params.period !== "All Time"
+              ? params.period
+              : undefined,
         },
       }),
       keepUnusedDataFor: 120,
@@ -461,6 +466,34 @@ export const membersApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Members"],
     }),
+    createMember: builder.mutation<
+      { message: string; member: Member },
+      { name: string; email: string; status: MemberStatus; tier: MemberTier }
+    >({
+      query: (body) => ({
+        url: "/api/admin/members",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Members"],
+    }),
+    adjustMemberWallet: builder.mutation<
+      { message: string },
+      {
+        memberId: number
+        walletType: "cash" | "pv"
+        adjustType: "credit" | "debit"
+        amount: number
+        note: string
+      }
+    >({
+      query: ({ memberId, ...body }) => ({
+        url: `/api/admin/members/${memberId}/wallet/adjust`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["Members"],
+    }),
   }),
 })
 
@@ -480,4 +513,6 @@ export const {
   useGenerateMemberTemporaryPasswordMutation,
   useApproveMemberKycMutation,
   useRejectMemberKycMutation,
+  useCreateMemberMutation,
+  useAdjustMemberWalletMutation,
 } = membersApi
