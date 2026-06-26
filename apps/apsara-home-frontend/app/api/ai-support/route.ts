@@ -394,7 +394,7 @@ const offTopicRe =
   /\b(homework|assignment|essay|poem|joke|recipe|cook|coding|programming|math|calculus|algebra|president|capital of|weather|news|movie|song|lyrics|game|crypto|stock|bitcoin|translate|summarize this article|write a story)\b/i
 
 const heavySupportIntentRe =
-  /\b(commission|commissions|encashment|payout|withdraw|wallet|bonus|voucher|pv|referral earning|not credited|missing credit|hindi pumasok|hindi na-credit|rejected|declined|failed payment|payment failed|double charge|refund overdue|where is my refund|account locked|cannot login|can't login|hindi makalogin|legal|complaint|escalate|dispute|damaged|defective|wrong item|refund status|order status|track my order|nasaan.*order|delayed.*delivery|delivery delay|not delivered|hindi dumating|verification failed)\b/i
+  /\b(commission|commissions|encashment|payout|withdraw|wallet|bonus|voucher|pv|referral earning|not credited|missing credit|hindi pumasok|hindi na-credit|rejected|declined|failed payment|payment failed|double charge|refund overdue|where is my refund|refund status|refund my money|request refund|want refund|need refund|how to refund|paano.*refund|paano.*marefund|pa-?refund|account locked|locked account|account is locked|locked out|cannot login|can't login|cant login|cannot log in|can't log in|cant log in|login issue|login problem|unable to login|unable to log in|hindi makalogin|hindi maka-?login|legal|complaint|escalate|dispute|damaged|defective|wrong item|order status|track my order|nasaan.*order|delayed.*delivery|delivery delay|not delivered|hindi dumating|verification failed)\b/i
 
 const requestedBudget = (question: string) => {
   const match = question.match(/(?:under|below|less than|<=?|\u20b1|php)\s*([0-9][0-9,]*)/i)
