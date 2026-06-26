@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
+import { downloadProductImportTemplate } from "@/libs/productImportTemplate"
 import { ROOM_OPTIONS } from "@/libs/roomConfig"
 import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
@@ -33,6 +34,7 @@ const VARIANT_REQUIRED_COLUMNS = ["pd_parent_sku", "pv_sku"]
 const OPTIONAL_COLUMNS = [
   "pd_parent_sku",
   "pd_brand_type",
+  "pd_catsubid",
   "pd_room_type",
   "pd_price_dp",
   "pd_price_member",
@@ -68,6 +70,12 @@ const HEADER_ALIASES: Record<string, string> = {
   "main product name": "pd_name",
   category: "pd_catid",
   "category id": "pd_catid",
+  subcategory: "pd_catsubid",
+  "sub category": "pd_catsubid",
+  "subcategory id": "pd_catsubid",
+  // "Company" is a helper column for filtering the Brand dropdown in the
+  // template; the product's supplier is derived from the brand, so it is not
+  // imported as its own field.
   "room type": "pd_room_type",
   brand: "pd_brand_type",
   "brand type": "pd_brand_type",
@@ -838,6 +846,11 @@ const VIEW_TEMPLATE_LOW_END_URL =
   "https://docs.google.com/spreadsheets/d/1bt9hMYtxIBvsNcdJ-Q7V7BKdcToa5_9FP942K0XzjCg/edit?gid=6170168#gid=6170168"
 const VIEW_TEMPLATE_HIGH_END_URL: string | null = null
 
+// Master Google Sheets template with cascading dropdowns (Category→Subcategory,
+// Company→Brand). Build it once from docs/google-sheets-product-template.gs, then
+// paste the share URL here so the team can "File → Make a copy" and fill it in.
+const GOOGLE_SHEETS_TEMPLATE_URL: string | null = null
+
 export default function BulkProductImportPanel({
   onClose,
   onImported,
@@ -848,6 +861,7 @@ export default function BulkProductImportPanel({
   const [isFetchingSheet, setIsFetchingSheet] = useState(false)
   const [fileName, setFileName] = useState("")
   const [csvText, setCsvText] = useState("")
+  const [isBuildingTemplate, setIsBuildingTemplate] = useState(false)
   const [importMode, setImportMode] = useState<
     "create_only" | "create_or_update"
   >("create_or_update")
@@ -967,9 +981,17 @@ export default function BulkProductImportPanel({
         normalized: normalizedBrand,
       })
 
+      // Subcategories live in the same category lookup (children carry a
+      // parent_id), so resolve the subcategory name to an id the same way.
+      const normalizedSubcat = normalizeLookupValue(
+        String(row.pd_catsubid ?? ""),
+        categoryLookup
+      )
+
       const normalizedRow: Record<string, unknown> = {
         ...row,
         pd_catid: normalizedCatid,
+        pd_catsubid: normalizedSubcat,
         pd_brand_type: normalizedBrand,
         pd_room_type: normalizeRoomType(String(row.pd_room_type ?? "")),
         pd_images: parseImageList(row.pd_images),
@@ -1278,17 +1300,62 @@ export default function BulkProductImportPanel({
     if (inputRef.current) inputRef.current.value = ""
   }
 
+  const handleDownloadTemplate = async () => {
+    setIsBuildingTemplate(true)
+    try {
+      if (categoryLookup.length === 0) {
+        showErrorToast("Categories haven't loaded yet — please wait a moment and try again.")
+        return
+      }
+      await downloadProductImportTemplate({
+        categories: categoryLookup,
+        brands: brandLookup,
+      })
+    } catch (error) {
+      console.error("[DEBUG] Template download failed:", error)
+      const message = error instanceof Error ? error.message : String(error)
+      showErrorToast(`Could not generate the Excel template: ${message}`)
+    } finally {
+      setIsBuildingTemplate(false)
+    }
+  }
+
   const handlePickFile = async (file?: File | null) => {
     if (!file) return
-    if (!file.name.toLowerCase().endsWith(".csv")) {
-      setFileError("Please upload a .csv file.")
-      return
-    }
 
+    const lowerName = file.name.toLowerCase()
     setFileError("")
-    const text = await file.text()
-    setFileName(file.name)
-    setCsvText(text)
+
+    try {
+      if (lowerName.endsWith(".csv")) {
+        const text = await file.text()
+        setFileName(file.name)
+        setCsvText(text)
+        return
+      }
+
+      if (lowerName.endsWith(".xlsx") || lowerName.endsWith(".xls")) {
+        const XLSX = await import("xlsx")
+        const buffer = await file.arrayBuffer()
+        const workbook = XLSX.read(buffer, { type: "array" })
+        // The template's first sheet is "Products"; the hidden "Lists" sheet
+        // only backs the dropdowns and is skipped by reading sheet index 0.
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
+        if (!firstSheet) {
+          setFileError("The spreadsheet has no readable sheet.")
+          return
+        }
+        const text = XLSX.utils.sheet_to_csv(firstSheet)
+        setFileName(file.name)
+        setCsvText(text)
+        return
+      }
+
+      setFileError("Please upload a .csv or .xlsx file.")
+    } catch (error) {
+      console.error("[DEBUG] File parse failed:", error)
+      setFileError("Could not read the file. Make sure it is a valid CSV or Excel file.")
+    }
   }
 
   const handleFetchSheet = async () => {
@@ -1385,9 +1452,14 @@ export default function BulkProductImportPanel({
         String(row.pd_brand_type ?? ""),
         brandLookup
       )
+      const normalizedSubcat = normalizeLookupValue(
+        String(row.pd_catsubid ?? ""),
+        categoryLookup
+      )
       const normalizedRow: Record<string, unknown> = {
         ...row,
         pd_catid: normalizedCatid,
+        pd_catsubid: normalizedSubcat,
         pd_brand_type: normalizedBrand,
         pd_room_type: normalizeRoomType(String(row.pd_room_type ?? "")),
         pd_images: parseImageList(row.pd_images),
@@ -1741,7 +1813,41 @@ export default function BulkProductImportPanel({
                     d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
                   />
                 </svg>
-                Select CSV File
+                Select CSV / Excel File
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleDownloadTemplate()}
+                disabled={isBuildingTemplate}
+                className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-60"
+              >
+                {isBuildingTemplate ? (
+                  <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8z"
+                    />
+                  </svg>
+                ) : (
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 10v6m0 0l-3-3m3 3l3-3M4 6a2 2 0 012-2h7l5 5v9a2 2 0 01-2 2H6a2 2 0 01-2-2V6z"
+                    />
+                  </svg>
+                )}
+                Download Excel Template
               </button>
               <a
                 href={VIEW_TEMPLATE_LOW_END_URL}
@@ -1765,10 +1871,27 @@ export default function BulkProductImportPanel({
                   View Template (High End)
                 </span>
               )}
+              {GOOGLE_SHEETS_TEMPLATE_URL ? (
+                <a
+                  href={GOOGLE_SHEETS_TEMPLATE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                >
+                  Google Sheets template (cascading)
+                </a>
+              ) : (
+                <span
+                  title="Set GOOGLE_SHEETS_TEMPLATE_URL in BulkProductImportPanel.tsx to the master sheet built from docs/google-sheets-product-template.gs"
+                  className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-300"
+                >
+                  Google Sheets template (setup needed)
+                </span>
+              )}
               <input
                 ref={inputRef}
                 type="file"
-                accept=".csv,text/csv"
+                accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 className="hidden"
                 onChange={(event) =>
                   void handlePickFile(event.target.files?.[0] ?? null)
@@ -1850,6 +1973,19 @@ export default function BulkProductImportPanel({
                     Template (High End)
                   </span>
                 )}
+                {GOOGLE_SHEETS_TEMPLATE_URL ? (
+                  <>
+                    <span className="text-slate-300">·</span>
+                    <a
+                      href={GOOGLE_SHEETS_TEMPLATE_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 underline underline-offset-2 hover:text-emerald-800"
+                    >
+                      Google Sheets template (cascading)
+                    </a>
+                  </>
+                ) : null}
               </div>
             </div>
           )}

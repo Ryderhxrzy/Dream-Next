@@ -226,6 +226,7 @@ Route::get('/home/shop/brands', [ProductBrandController::class, 'shopByBrands'])
 Route::get('/product-brands', [ProductBrandController::class, 'publicIndex']);
 Route::get('/product-brands/with-products', [ProductBrandController::class, 'showAllWithProducts']);
 Route::get('/product-brands/{id}/profile', [ProductBrandController::class, 'profile']);
+Route::get('/product-brands/{id}/followers/count', [FollowerController::class, 'count']);
 Route::middleware(['auth:sanctum', 'admin.actor'])->get('/product-brands/{id}/debug', [ProductBrandController::class, 'debugBrandImages']);
 
 Route::middleware('throttle:public')->group(function () {
