@@ -18,6 +18,7 @@ use App\Models\SupplierUser;
 use App\Models\SearchHistory;
 use App\Services\Zq\ZqApiService;
 use App\Services\Zq\ZqProductSyncService;
+use App\Services\VisionEmbeddingService;
 use App\Models\ZqCategoryMapping;
 use App\Models\ZqProduct;
 use App\Models\ZqVariantPricing;
@@ -45,6 +46,151 @@ class ProductController extends Controller
             'message' => 'Validation failed.',
             'errors' => $validator->errors(),
         ], 422);
+    }
+
+    public function similarByImage(Request $request, VisionEmbeddingService $embedder): JsonResponse
+    {
+        $image = trim((string) $request->input('image', ''));
+        if ($image === '') {
+            return response()->json([
+                'products' => [],
+                'message' => 'Image is required.',
+            ], 422);
+        }
+
+        if (!Schema::hasTable('tbl_product_image_embeddings')) {
+            return response()->json([
+                'products' => [],
+                'message' => 'Image similarity search is not available.',
+            ]);
+        }
+
+        $embedding = $embedder->embedImage($image);
+        if (!is_array($embedding) || empty($embedding)) {
+            return response()->json([
+                'products' => [],
+                'message' => 'The image could not be processed.',
+            ]);
+        }
+
+        $vectorLiteral = $this->formatEmbeddingVectorLiteral($embedding);
+        if ($vectorLiteral === '') {
+            return response()->json([
+                'products' => [],
+                'message' => 'The image embedding could not be processed.',
+            ]);
+        }
+
+        $limit = max(1, min((int) $request->input('limit', 6), 12));
+        $maxDistance = (float) $request->input('max_distance', env('IMAGE_SIMILARITY_MAX_DISTANCE', 0.35));
+        if ($maxDistance <= 0 || $maxDistance > 2) {
+            $maxDistance = 0.35;
+        }
+
+        $priceExpr = "MIN(CASE
+            WHEN v.pv_price_srp IS NOT NULL AND v.pv_price_srp > 0 THEN v.pv_price_srp
+            WHEN v.pv_price_member IS NOT NULL AND v.pv_price_member > 0 THEN v.pv_price_member
+            WHEN p.pd_price_srp IS NOT NULL AND p.pd_price_srp > 0 THEN p.pd_price_srp
+            WHEN p.pd_price_member IS NOT NULL AND p.pd_price_member > 0 THEN p.pd_price_member
+            ELSE 0 END)";
+
+        try {
+            $rows = DB::select(<<<SQL
+                SELECT p.pd_id,
+                       p.pd_name,
+                       {$priceExpr} AS min_price,
+                       MAX(p.pd_description) AS pd_description,
+                       MAX(p.pd_image) AS pd_image,
+                       MAX(p.pd_qty) AS pd_qty,
+                       MAX(pb.pb_name) AS brand_name,
+                       MAX(pie.pie_image_url) AS match_image,
+                       MIN(pie.pie_embedding <=> ?::vector) AS distance
+                FROM tbl_product_image_embeddings pie
+                JOIN tbl_product p ON p.pd_id = pie.pie_product_id
+                LEFT JOIN tbl_product_variant v ON v.pv_pdid = p.pd_id
+                LEFT JOIN tbl_product_brand pb ON pb.pb_id = p.pd_brand_type
+                WHERE p.pd_status IN (1, 2)
+                GROUP BY p.pd_id, p.pd_name
+                ORDER BY distance ASC
+                LIMIT ?
+            SQL, [$vectorLiteral, $limit * 3]);
+        } catch (\Throwable $e) {
+            Log::warning('Product image similarity search failed', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'products' => [],
+                'message' => 'Image similarity search failed.',
+            ]);
+        }
+
+        $products = collect($rows)
+            ->filter(fn ($row) => (float) ($row->distance ?? 99) <= $maxDistance)
+            ->take($limit)
+            ->map(fn ($row) => $this->mapSimilarImageProduct($row))
+            ->filter()
+            ->values()
+            ->all();
+
+        return response()->json([
+            'products' => $products,
+            'max_distance' => $maxDistance,
+        ]);
+    }
+
+    private function formatEmbeddingVectorLiteral(array $embedding): string
+    {
+        $values = [];
+        foreach ($embedding as $value) {
+            if (is_numeric($value)) {
+                $values[] = number_format((float) $value, 6, '.', '');
+            }
+        }
+
+        return empty($values) ? '' : '[' . implode(',', $values) . ']';
+    }
+
+    private function mapSimilarImageProduct(object $row): ?array
+    {
+        $id = (int) ($row->pd_id ?? 0);
+        $name = trim((string) ($row->pd_name ?? ''));
+        if ($id <= 0 || $name === '') {
+            return null;
+        }
+
+        $price = (float) ($row->min_price ?? 0);
+        $description = trim((string) strip_tags(html_entity_decode((string) ($row->pd_description ?? ''), ENT_QUOTES, 'UTF-8')));
+        if (strlen($description) > 120) {
+            $description = substr($description, 0, 117) . '...';
+        }
+
+        return [
+            'id' => $id,
+            'name' => html_entity_decode($name, ENT_QUOTES, 'UTF-8'),
+            'image' => $this->resolveSimilarProductImage((string) ($row->match_image ?? $row->pd_image ?? '')),
+            'price' => $price > 0 ? 'PHP ' . number_format($price, abs($price - floor($price)) < 0.00001 ? 0 : 2) : 'Price unavailable',
+            'description' => $description !== '' ? $description : null,
+            'url' => '/global-product/' . $id,
+            'brand' => trim((string) ($row->brand_name ?? '')) ?: null,
+            'stock' => (int) ($row->pd_qty ?? 0),
+            'similarity_distance' => round((float) ($row->distance ?? 0), 4),
+        ];
+    }
+
+    private function resolveSimilarProductImage(string $image): ?string
+    {
+        $image = trim($image);
+        if ($image === '') {
+            return null;
+        }
+
+        if (preg_match('#^(https?:)?//#i', $image) || str_starts_with($image, 'data:image/')) {
+            return str_starts_with($image, '//') ? 'https:' . $image : $image;
+        }
+
+        $base = rtrim((string) env('APP_URL', ''), '/');
+        return ($base !== '' ? $base : '') . '/product_img/' . rawurlencode($image);
     }
 
     private function applyPublicVisibility($query)

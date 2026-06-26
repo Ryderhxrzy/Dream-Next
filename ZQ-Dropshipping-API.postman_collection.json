@@ -1,0 +1,191 @@
+{
+  "info": {
+    "name": "ZQ Dropshipping API (AF Home)",
+    "description": "ZQ OpenAPI endpoints used by Dream-Next backend. Set the collection variables `baseUrl` and `apiKey` (Variables tab) before running. apiKey = value of ZQ_API_KEY in apps/apsara-home-backend/.env",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://system.zqdropshipping.com/api/v2/openapi",
+      "type": "string"
+    },
+    {
+      "key": "apiKey",
+      "value": "PASTE_ZQ_API_KEY_HERE",
+      "type": "string"
+    },
+    {
+      "key": "productId",
+      "value": "1001",
+      "type": "string"
+    },
+    {
+      "key": "sku",
+      "value": "SKU-001",
+      "type": "string"
+    },
+    {
+      "key": "platformOrderId",
+      "value": "PLAT-001",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Read-only (safe to test)",
+      "item": [
+        {
+          "name": "List import products",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cursor\": null,\n  \"size\": 20,\n  \"keyword\": \"\",\n  \"status\": \"PUBLISHED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/import_product/list",
+              "host": ["{{baseUrl}}"],
+              "path": ["import_product", "list"]
+            },
+            "description": "Cursor-paginated product list. Pass nextCursor from response back into `cursor` for the next page."
+          }
+        },
+        {
+          "name": "Import product detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/import_product/{{productId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["import_product", "{{productId}}"]
+            },
+            "description": "Full product detail incl. specs/SKUs. Set {{productId}} to a real id from the list call."
+          }
+        },
+        {
+          "name": "Inventory by SKU",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/order/inventory/{{sku}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["order", "inventory", "{{sku}}"]
+            },
+            "description": "Available / locked / on-transit stock per warehouse for a SKU."
+          }
+        },
+        {
+          "name": "Order detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/order/detail/{{platformOrderId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["order", "detail", "{{platformOrderId}}"]
+            }
+          }
+        },
+        {
+          "name": "Order tracking",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/order/tracking/{{platformOrderId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["order", "tracking", "{{platformOrderId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Has side effects (creates a REAL order)",
+      "item": [
+        {
+          "name": "Create order (DANGER: live)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"orderNumber\": \"ORD-TEST-001\",\n    \"countryCode\": \"PH\",\n    \"city\": \"Manila\",\n    \"province\": \"Metro Manila\",\n    \"postCode\": \"1000\",\n    \"consignee\": \"Juan Dela Cruz\",\n    \"addressDetail\": \"123 Sample St\",\n    \"phone1\": \"+639170000000\",\n    \"email\": \"test@example.com\",\n    \"amount\": 9900,\n    \"commodities\": [\n      {\n        \"sku\": \"SKU-001\",\n        \"productName\": \"Sample\",\n        \"variant\": \"Red / L\",\n        \"quantity\": 1,\n        \"amount\": 9900\n      }\n    ]\n  }\n]"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/order/create",
+              "host": ["{{baseUrl}}"],
+              "path": ["order", "create"]
+            },
+            "description": "Body is an ARRAY (batch). This creates a real order on ZQ. Do not run with the live API key unless you intend to place an order."
+          }
+        }
+      ]
+    },
+    {
+      "name": "New in v1.3.0 (not yet used by our system)",
+      "item": [
+        {
+          "name": "International shipping cost (air)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/international_shipping_cost/get",
+              "host": ["{{baseUrl}}"],
+              "path": ["international_shipping_cost", "get"]
+            }
+          }
+        },
+        {
+          "name": "Sea shipping - country code list",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/international_shipping_cost/sea_shipping/countryCodeList",
+              "host": ["{{baseUrl}}"],
+              "path": ["international_shipping_cost", "sea_shipping", "countryCodeList"]
+            }
+          }
+        },
+        {
+          "name": "Sea shipping - surcharges",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/international_shipping_cost/sea_shipping/surcharges",
+              "host": ["{{baseUrl}}"],
+              "path": ["international_shipping_cost", "sea_shipping", "surcharges"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

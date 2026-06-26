@@ -1,10 +1,5 @@
 import type { TextMessage as TextMessageType } from "../types"
-
-const API_BASE = (process.env.NEXT_PUBLIC_LARAVEL_API_URL ?? "").replace(
-  /\/+$/,
-  ""
-)
-const ROBOT_SRC = `${API_BASE}/Image/sir.png`
+import { AiSupportAvatar } from "../AiSupportAvatar"
 
 function Linkify({ text }: { text: string }) {
   const lines = text.split(/\r?\n/)
@@ -44,13 +39,7 @@ export function TextMessage({ message }: { message: TextMessageType }) {
       className={`flex items-end gap-2 ${isBot ? "justify-start" : "justify-end"}`}
     >
       {isBot && (
-        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-none">
-          <img
-            src={ROBOT_SRC}
-            alt="AI"
-            className="h-full w-full object-contain"
-          />
-        </div>
+        <AiSupportAvatar />
       )}
       <div
         className={`max-w-[80%] rounded-[18px] px-3.5 py-2.5 text-[13.5px] leading-relaxed break-words ${

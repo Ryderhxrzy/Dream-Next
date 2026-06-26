@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { useTheme } from "next-themes"
 import { createPortal } from "react-dom"
+
+import { useTheme } from "@/components/theme/AppThemeProvider"
 
 /* ── Types ─────────────────────────────────────────────────────────
    A standalone, general-purpose toast system inspired by Apple's
@@ -517,7 +518,7 @@ export function DynamicNotifyToaster({
   }
 
   useEffect(() => {
-    setMounted(true)
+    const frame = window.requestAnimationFrame(() => setMounted(true))
     const timersAtMount = timers.current
 
     _dispatch = {
@@ -538,6 +539,7 @@ export function DynamicNotifyToaster({
     }
 
     return () => {
+      window.cancelAnimationFrame(frame)
       _dispatch = null
       timersAtMount.forEach(clearTimeout)
       timersAtMount.clear()

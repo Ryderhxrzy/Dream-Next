@@ -24,7 +24,7 @@ import {
 import { useGetCustomerUnreadCountQuery } from "@/store/api/customerConversationsApi"
 import CustomerChatPanel from "@/components/chat/CustomerChatPanel"
 import { useGetPublicProductBrandsQuery } from "@/store/api/productBrandsApi"
-import { useGetPublicProductsQuery } from "@/store/api/productsApi"
+import { useGetPublicProductsQuery, useGetPublicZqProductsQuery } from "@/store/api/productsApi"
 import {
   useClearSearchHistoryMutation,
   useDeleteSearchHistoryItemMutation,
@@ -611,6 +611,17 @@ function NavbarInner({
         skip: activeSearchQuery.length < 2,
       }
     )
+  const { data: zqSearchedProductsData, isFetching: isSearchingZqProducts } =
+    useGetPublicZqProductsQuery(
+      { page: 1, perPage: 50, search: debouncedSearchQuery },
+      { skip: activeSearchQuery.length < 2 }
+    )
+
+  const searchedZqProducts = useMemo(() => {
+    if (!debouncedSearchQuery.trim()) return []
+    return zqSearchedProductsData?.products ?? []
+  }, [zqSearchedProductsData?.products, debouncedSearchQuery])
+
   const { data: partnerStorefrontData } = useGetPublicWebPageItemsQuery(
     "partner-storefront",
     {
@@ -720,9 +731,11 @@ function NavbarInner({
     searchModalOpen &&
     activeSearchQuery.length >= 2 &&
     !isSearchingProducts &&
-    searchedProducts.length === 0
+    !isSearchingZqProducts &&
+    searchedProducts.length === 0 &&
+    searchedZqProducts.length === 0
   const showSearchSearching =
-    searchModalOpen && activeSearchQuery.length >= 2 && isSearchingProducts
+    searchModalOpen && activeSearchQuery.length >= 2 && (isSearchingProducts || isSearchingZqProducts)
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 20)
@@ -3631,6 +3644,79 @@ function NavbarInner({
                               transition={{ staggerChildren: 0.05 }}
                               className="space-y-1.5"
                             >
+                              {searchedZqProducts.length > 0 && (
+                                <div className="mb-3">
+                                  <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500">
+                                    AF Home Global Brand
+                                  </p>
+                                  {searchedZqProducts.slice(0, 5).map((zqProduct, index) => {
+                                    const srp = Number(zqProduct.priceMinCents ?? 0) / 100
+                                    const memberPriceCents = status === "authenticated" ? Number(zqProduct.memberPrice ?? 0) : 0
+                                    const memberPrice = memberPriceCents > 0 ? memberPriceCents / 100 : 0
+                                    const showMember = memberPrice > 0 && memberPrice < srp
+                                    const displayPrice = showMember ? memberPrice : srp
+                                    return (
+                                      <motion.div
+                                        key={zqProduct.id}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: index * 0.03 }}
+                                      >
+                                        <Link
+                                          href={`/global-product/${zqProduct.id}`}
+                                          onClick={() => {
+                                            saveSearchToHistory(searchModalQuery)
+                                            setSearchModalQuery("")
+                                            setSearchModalOpen(false)
+                                            setMobileOpen(false)
+                                          }}
+                                          className="group relative mb-1.5 flex items-center gap-3 rounded-xl border border-slate-100 bg-white p-2.5 transition-all hover:border-sky-200 hover:bg-sky-50 sm:gap-4 sm:p-3 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-sky-500/40 dark:hover:bg-gray-700/80"
+                                        >
+                                          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-slate-100 sm:h-16 sm:w-16 dark:bg-gray-700">
+                                            {zqProduct.primaryImage ? (
+                                              // eslint-disable-next-line @next/next/no-img-element
+                                              <img
+                                                src={zqProduct.primaryImage}
+                                                alt={zqProduct.subject}
+                                                className="h-full w-full object-cover transition group-hover:scale-105"
+                                              />
+                                            ) : (
+                                              <span className="flex h-full w-full items-center justify-center text-xs font-bold text-slate-300 dark:text-gray-600">
+                                                AF
+                                              </span>
+                                            )}
+                                          </div>
+                                          <div className="min-w-0 flex-1">
+                                            <p className="truncate text-xs font-semibold text-slate-900 sm:text-sm dark:text-gray-100">
+                                              {zqProduct.subject}
+                                            </p>
+                                            <p className="mt-0.5 text-[10px] text-slate-400 sm:text-xs dark:text-gray-500">
+                                              AF Home Global Brand
+                                            </p>
+                                            {srp > 0 && (
+                                              <div className="mt-1 flex items-center gap-2">
+                                                <span className="text-xs font-bold text-sky-600 sm:text-sm dark:text-sky-400">
+                                                  {formatPrice(displayPrice)}
+                                                </span>
+                                                {showMember && (
+                                                  <span className="text-[10px] text-slate-400 line-through sm:text-xs dark:text-gray-500">
+                                                    {formatPrice(srp)}
+                                                  </span>
+                                                )}
+                                              </div>
+                                            )}
+                                          </div>
+                                        </Link>
+                                      </motion.div>
+                                    )
+                                  })}
+                                </div>
+                              )}
+                              {searchedProducts.length > 0 && searchedZqProducts.length > 0 && (
+                                <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500">
+                                  AF Home Products
+                                </p>
+                              )}
                               {searchedProducts.map((product, index) => (
                                 <motion.div
                                   key={product.id}

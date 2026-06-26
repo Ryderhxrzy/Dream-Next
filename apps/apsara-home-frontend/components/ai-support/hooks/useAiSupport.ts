@@ -2,71 +2,30 @@
 
 import { useCallback, useRef, useState } from "react"
 
-import type { ApiResponse, ChatMessage } from "../types"
+import type { ApiResponse, ChatMessage, SupportHandoffMessage } from "../types"
 
 const STORAGE_KEY = "af_ai_support_history_v1"
-
-const STARTER_QUESTIONS = [
-  "What products match a minimalist style?",
-  "Suggest items under PHP 5,000.",
-  "What is best for office setup at home?",
-  "What is the highest-rated product?",
-  "What items are low in stock?",
-  "Show me trending home decor.",
-  "What if I received the wrong item?",
-  "Do you accept GCash or online banking?",
-  "How can I track my order?",
-  "What happens if my item arrives damaged?",
-  "What courier do you use?",
-  "Can you recommend a sofa for small spaces?",
-  "What are your best-selling living room products?",
-  "Do you have items on sale right now?",
-]
-
-const NXT_ONLY_KEYWORDS = [
-  "electric bike",
-  "e-bike",
-  "e bike",
-  "e-cycle",
-  "ecycle",
-  "battery-powered bike",
-  "battery powered bike",
-  "motorcyle bike",
-  "motorcycle bike",
-]
-
-const normalizeQuery = (value: string) =>
-  value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim()
-
-const shouldRestrictToNxt = (value: string) => {
-  const normalized = normalizeQuery(value)
-  return NXT_ONLY_KEYWORDS.some((keyword) =>
-    normalized.includes(normalizeQuery(keyword))
-  )
-}
-
-function apiEndpoint(path: string) {
-  const base = (
-    (typeof window !== "undefined"
-      ? (window as Window & { afAiApiBase?: string }).afAiApiBase
-      : undefined) ??
-    process.env.NEXT_PUBLIC_AI_API_BASE ??
-    ""
-  ).replace(/\/+$/, "")
-  return base ? base + path : path
-}
 
 interface UiState {
   messages: ChatMessage[]
   quickReplies: string[]
 }
 
+function sanitizeMessages(messages: ChatMessage[]) {
+  return messages.filter((message) =>
+    ["text", "image", "product_cards", "step_images", "support_handoff"].includes(message.kind)
+  )
+}
+
 function persist(state: UiState) {
   try {
-    window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    window.sessionStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        messages: sanitizeMessages(state.messages),
+        quickReplies: [],
+      })
+    )
   } catch {}
 }
 
@@ -77,10 +36,8 @@ function loadState(): UiState | null {
     const parsed = JSON.parse(raw) as UiState
     if (!parsed || !Array.isArray(parsed.messages)) return null
     return {
-      messages: parsed.messages,
-      quickReplies: Array.isArray(parsed.quickReplies)
-        ? parsed.quickReplies
-        : [],
+      messages: sanitizeMessages(parsed.messages),
+      quickReplies: [],
     }
   } catch {
     return null
@@ -94,6 +51,7 @@ export function useAiSupport() {
   const [inputValue, setInputValue] = useState("")
   const [imageDataUrls, setImageDataUrls] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isCreatingSupportRequest, setIsCreatingSupportRequest] = useState(false)
   const initialized = useRef(false)
 
   const open = useCallback(() => {
@@ -112,8 +70,8 @@ export function useAiSupport() {
         text: "Hi! How can we help?",
       }
       setMessages([welcome])
-      setQuickReplies(STARTER_QUESTIONS)
-      persist({ messages: [welcome], quickReplies: STARTER_QUESTIONS })
+      setQuickReplies([])
+      persist({ messages: [welcome], quickReplies: [] })
     }
   }, [])
 
@@ -150,7 +108,7 @@ export function useAiSupport() {
       setIsLoading(true)
 
       try {
-        const res = await fetch(apiEndpoint("/api/ai-support"), {
+        const res = await fetch("/api/ai-support", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -159,43 +117,31 @@ export function useAiSupport() {
           }),
         })
         const data = (await res.json()) as ApiResponse
-        const restrictToNxt = shouldRestrictToNxt(msg)
-        const filteredProducts = restrictToNxt
-          ? (data.product_cards ?? []).filter((card) => {
-              const haystack = `${card.name} ${card.description}`.toLowerCase()
-              return haystack.includes("nxt")
-            })
-          : (data.product_cards ?? [])
-        const filteredBrands = restrictToNxt
-          ? (data.brand_cards ?? []).filter((card) =>
-              card.name.toLowerCase().includes("nxt")
-            )
-          : (data.brand_cards ?? [])
-        const newQRs = data.quick_replies?.slice(0, 14) ?? []
+        const newQRs = Array.isArray(data.quick_replies)
+          ? data.quick_replies
+          : []
 
         setMessages((prev) => {
-          const next: ChatMessage[] = [...prev]
+          const next: ChatMessage[] = sanitizeMessages(prev)
           if (data.status === "ok") {
             if (data.reply)
               next.push({ kind: "text", role: "bot", text: data.reply })
-            if (filteredProducts.length)
-              next.push({ kind: "cards", cards: filteredProducts })
-            if (filteredBrands.length)
+            if (data.product_cards?.length)
               next.push({
-                kind: "brand_cards",
-                cards: filteredBrands.slice(0, 10),
-                viewAllUrl: data.brand_view_all_url ?? "",
-              })
-            if (data.category_cards?.length)
-              next.push({
-                kind: "category_cards",
-                cards: data.category_cards.slice(0, 10),
+                kind: "product_cards",
+                cards: data.product_cards.slice(0, 6),
               })
             if (data.step_images?.length)
               next.push({
                 kind: "step_images",
                 images: data.step_images.slice(0, 10),
               })
+            if (data.support_handoff?.recommended) {
+              next.push({
+                kind: "support_handoff",
+                handoff: data.support_handoff,
+              })
+            }
           } else {
             next.push({
               kind: "text",
@@ -230,6 +176,59 @@ export function useAiSupport() {
     [imageDataUrls, isLoading, quickReplies]
   )
 
+  const contactSupport = useCallback(
+    async (message: SupportHandoffMessage) => {
+      if (isCreatingSupportRequest) return
+
+      setIsCreatingSupportRequest(true)
+      try {
+        const res = await fetch("/api/ai-support/handoff", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(message.handoff),
+        })
+        const data = (await res.json().catch(() => ({}))) as {
+          message?: string
+          conversation?: { id?: number }
+        }
+
+        setMessages((prev) => {
+          const next: ChatMessage[] = [
+            ...sanitizeMessages(prev).filter((item) =>
+              res.ok ? item.kind !== "support_handoff" : true
+            ),
+            {
+              kind: "text",
+              role: "bot",
+              text: res.ok
+                ? `Customer service request created${data.conversation?.id ? ` (#${data.conversation.id})` : ""}. A support agent will review it soon.`
+                : data.message ||
+                  "Please log in first so we can create a customer service request for your account.",
+            },
+          ]
+          persist({ messages: next, quickReplies })
+          return next
+        })
+      } catch {
+        setMessages((prev) => {
+          const next: ChatMessage[] = [
+            ...sanitizeMessages(prev),
+            {
+              kind: "text",
+              role: "bot",
+              text: "I could not create the customer service request right now. Please try again in a moment.",
+            },
+          ]
+          persist({ messages: next, quickReplies })
+          return next
+        })
+      } finally {
+        setIsCreatingSupportRequest(false)
+      }
+    },
+    [isCreatingSupportRequest, quickReplies]
+  )
+
   return {
     isOpen,
     open,
@@ -243,5 +242,7 @@ export function useAiSupport() {
     setImageDataUrls,
     send,
     isLoading,
+    isCreatingSupportRequest,
+    contactSupport,
   }
 }
