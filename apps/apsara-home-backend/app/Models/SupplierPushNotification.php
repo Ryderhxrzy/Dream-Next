@@ -22,14 +22,24 @@ class SupplierPushNotification extends Model
         'spn_sent_at',
         'spn_scheduled_at',
         'spn_status',
+        'spn_schedule_type',
+        'spn_schedule_config',
+        'spn_timezone',
+        'spn_next_scheduled_at',
+        'spn_last_sent_at',
+        'spn_send_limit',
+        'spn_send_count',
         'spn_created_at',
         'spn_updated_at',
     ];
 
     protected $casts = [
         'spn_recipients' => 'array',
+        'spn_schedule_config' => 'array',
         'spn_sent_at' => 'datetime',
         'spn_scheduled_at' => 'datetime',
+        'spn_next_scheduled_at' => 'datetime',
+        'spn_last_sent_at' => 'datetime',
         'spn_created_at' => 'datetime',
         'spn_updated_at' => 'datetime',
     ];
