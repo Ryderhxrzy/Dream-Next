@@ -5,7 +5,6 @@ import {
   useGetWalletOverviewQuery,
   WalletTypeFilter,
 } from "@/store/api/encashmentApi"
-import { motion } from "framer-motion"
 import { RefreshCw, UserCheck, Users, Zap } from "lucide-react"
 
 type PvHistoryItem = {
@@ -27,12 +26,12 @@ function PvProgressBar({ pct }: { pct: number }) {
     <div className="relative">
       {/* Track */}
       <div className="h-4 w-full overflow-hidden rounded-full bg-slate-200 shadow-inner dark:bg-slate-800">
-        <motion.div
-          className="h-full rounded-full bg-linear-to-r from-sky-400 via-cyan-400 to-teal-400 dark:from-sky-500 dark:via-cyan-400 dark:to-teal-400"
-          style={{ boxShadow: "0 0 12px 2px rgba(34,211,238,0.45)" }}
-          initial={{ width: 0 }}
-          animate={{ width: `${pct}%` }}
-          transition={{ duration: 1, ease: "easeOut" }}
+        <div
+          className="h-full rounded-full bg-linear-to-r from-sky-400 via-cyan-400 to-teal-400 transition-[width] duration-700 ease-out dark:from-sky-500 dark:via-cyan-400 dark:to-teal-400"
+          style={{
+            width: `${pct}%`,
+            boxShadow: "0 0 12px 2px rgba(34,211,238,0.45)",
+          }}
         />
       </div>
       {/* Milestone ticks */}
@@ -62,66 +61,6 @@ function PvProgressBar({ pct }: { pct: number }) {
           <div className="mx-auto mt-0.5 h-1.5 w-0.5 bg-sky-500" />
         </div>
       )}
-    </div>
-  )
-}
-
-/* ─── Stat bar row ─── */
-function StatBar({
-  label,
-  value,
-  max,
-  icon,
-  fromHex,
-  toHex,
-  glow,
-  lightBg,
-  lightText,
-}: {
-  label: string
-  value: number
-  max: number
-  icon: string
-  fromHex: string
-  toHex: string
-  glow: string
-  lightBg: string
-  lightText: string
-}) {
-  const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <span
-          className={`flex items-center gap-2 text-xs font-black tracking-widest uppercase ${lightText} dark:text-slate-300`}
-        >
-          <span
-            className={`flex h-6 w-6 items-center justify-center rounded-lg text-xs ${lightBg} dark:bg-slate-700/60`}
-          >
-            {icon}
-          </span>
-          {label}
-        </span>
-        <span className="text-sm font-black text-slate-800 tabular-nums dark:text-white">
-          {fmt(value)}
-        </span>
-      </div>
-      <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700/70">
-        <motion.div
-          className="h-full rounded-full"
-          style={{
-            background: `linear-gradient(90deg, ${fromHex}, ${toHex})`,
-            boxShadow: `0 0 8px 1px ${glow}`,
-          }}
-          initial={{ width: 0 }}
-          animate={{ width: `${pct}%` }}
-          transition={{ duration: 0.9, ease: "easeOut" }}
-        />
-      </div>
-      <div className="flex justify-between text-[10px] font-medium text-slate-400 tabular-nums dark:text-slate-500">
-        <span>0</span>
-        <span>{fmt(max)}</span>
-      </div>
     </div>
   )
 }
@@ -190,7 +129,11 @@ const PerformanceTab = () => {
   const current = Number(summary?.direct_referral_total_pv ?? 0)
   // Progress is measured inside the current 50,000 PV monthly tranche.
   const goalPv = Number(milestone?.next_milestone_pv ?? pvPerMilestone)
-  const rawTranchePv = current % pvPerMilestone
+  const moduloTranchePv = current % pvPerMilestone
+  const rawTranchePv =
+    current > 0 && Math.abs(moduloTranchePv) < 0.01
+      ? pvPerMilestone
+      : moduloTranchePv
   const tranchePv = Number(milestone?.current_cycle_pv ?? rawTranchePv)
   const progress = Math.min(
     100,
@@ -213,7 +156,6 @@ const PerformanceTab = () => {
   const totalReferrals = Number(summary?.referrals?.total ?? 0)
   const verifiedReferrals = Number(summary?.referrals?.verified ?? 0)
   const activeReferrals = Number(summary?.referrals?.active ?? 0)
-  const maxRef = Math.max(totalReferrals, 1)
 
   const pvHistory = useMemo<PvHistoryItem[]>(
     () =>
@@ -425,48 +367,6 @@ const PerformanceTab = () => {
             </p>
           </div>
         ))}
-      </div>
-
-      {/* ── Referral Stat Bars ── */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700/50 dark:bg-slate-900">
-        <p className="mb-5 text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase dark:text-slate-500">
-          ◈ Referral Breakdown
-        </p>
-        <div className="space-y-6">
-          <StatBar
-            label="Total Referrals"
-            value={totalReferrals}
-            max={maxRef}
-            icon="◈"
-            fromHex="#38bdf8"
-            toHex="#06b6d4"
-            glow="rgba(6,182,212,0.4)"
-            lightBg="bg-sky-100"
-            lightText="text-sky-700"
-          />
-          <StatBar
-            label="Verified Referrals"
-            value={verifiedReferrals}
-            max={maxRef}
-            icon="◆"
-            fromHex="#34d399"
-            toHex="#10b981"
-            glow="rgba(16,185,129,0.4)"
-            lightBg="bg-emerald-100"
-            lightText="text-emerald-700"
-          />
-          <StatBar
-            label="Active Referrals"
-            value={activeReferrals}
-            max={maxRef}
-            icon="◎"
-            fromHex="#a78bfa"
-            toHex="#8b5cf6"
-            glow="rgba(139,92,246,0.4)"
-            lightBg="bg-violet-100"
-            lightText="text-violet-700"
-          />
-        </div>
       </div>
 
       {/* ── PV Transaction History ── */}
