@@ -1,7 +1,6 @@
-"use client"
+﻿"use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { colorNameToHex, hexToColorName } from "@/libs/colorUtils"
 import { showErrorToast } from "@/libs/toast"
 import {
   useGetAdminProductQuery,
@@ -134,6 +133,8 @@ const ICON_PATHS: Record<string, string> = {
     "M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01",
   info: "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
   chevron: "M19 9l-7 7-7-7",
+  calendar: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z",
+  clock: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
   photo:
     "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z",
 }
@@ -229,27 +230,62 @@ function StatusBadge({ value }: { value: string | number | null | undefined }) {
   )
 }
 
+const STAT_META: Record<string, { iconPath: string; bg: string; text: string }> = {
+  srp: {
+    iconPath: "M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z",
+    bg: "bg-emerald-50 dark:bg-emerald-500/10",
+    text: "text-emerald-600 dark:text-emerald-400",
+  },
+  dealer: {
+    iconPath: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z",
+    bg: "bg-sky-50 dark:bg-sky-500/10",
+    text: "text-sky-600 dark:text-sky-400",
+  },
+  member: {
+    iconPath: "M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z",
+    bg: "bg-violet-50 dark:bg-violet-500/10",
+    text: "text-violet-600 dark:text-violet-400",
+  },
+  pv: {
+    iconPath: "M13 10V3L4 14h7v7l9-11h-7z",
+    bg: "bg-orange-50 dark:bg-orange-500/10",
+    text: "text-orange-500 dark:text-orange-400",
+  },
+  stock: {
+    iconPath: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4",
+    bg: "bg-teal-50 dark:bg-teal-500/10",
+    text: "text-teal-600 dark:text-teal-400",
+  },
+}
+
 function Stat({
   label,
   value,
-  accent,
+  statType,
 }: {
   label: string
   value: string
   accent?: boolean
+  statType?: keyof typeof STAT_META
 }) {
+  const meta = statType ? STAT_META[statType] : null
   return (
-    <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
-      <p className="text-[11px] font-medium tracking-wide text-slate-400 uppercase">
-        {label}
-      </p>
-      <p
-        className={`mt-1 truncate text-base font-bold ${
-          accent ? "text-teal-600 dark:text-teal-400" : "text-slate-800 dark:text-slate-100"
-        }`}
-      >
-        {value}
-      </p>
+    <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+      {meta ? (
+        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${meta.bg} ${meta.text}`}>
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d={meta.iconPath} />
+          </svg>
+        </span>
+      ) : null}
+      <div className="min-w-0">
+        <p className="text-[11px] font-medium tracking-wide text-slate-400 uppercase">
+          {label}
+        </p>
+        <p className={`mt-0.5 truncate text-base font-bold ${meta ? meta.text : "text-slate-800 dark:text-slate-100"}`}>
+          {value}
+        </p>
+      </div>
     </div>
   )
 }
@@ -277,6 +313,46 @@ function SaveBadge({ state }: { state: SaveState }) {
       <Icon name="info" className="h-3.5 w-3.5" />
       Save failed
     </span>
+  )
+}
+
+function MetaChip({
+  icon,
+  label,
+  value,
+  accent,
+}: {
+  icon: string
+  label: string
+  value: string
+  accent?: boolean
+}) {
+  return (
+    <div className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+      <span
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+          accent
+            ? "bg-teal-50 text-teal-600 dark:bg-teal-500/10 dark:text-teal-400"
+            : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+        }`}
+      >
+        <Icon name={icon} className="h-4 w-4" />
+      </span>
+      <div className="min-w-0">
+        <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+          {label}
+        </p>
+        <p
+          className={`truncate text-sm font-semibold ${
+            accent
+              ? "text-teal-600 dark:text-teal-400"
+              : "text-slate-700 dark:text-slate-200"
+          }`}
+        >
+          {value}
+        </p>
+      </div>
+    </div>
   )
 }
 
@@ -345,35 +421,63 @@ function ImageGallery({ images, alt }: { images: string[]; alt: string }) {
   const [active, setActive] = useState(0)
   if (!images.length) return null
   const safe = Math.min(active, images.length - 1)
+  const goPrev = () => setActive((p) => Math.max(0, p - 1))
+  const goNext = () => setActive((p) => Math.min(images.length - 1, p + 1))
   return (
-    <div className="space-y-3">
-      <div className="flex h-56 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-2 sm:h-64 dark:border-slate-700 dark:bg-slate-800">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={images[safe]}
-          alt={alt}
-          className="max-h-full max-w-full object-contain"
-        />
-      </div>
-      {images.length > 1 ? (
-        <div className="flex flex-wrap gap-1.5">
-          {images.map((src, i) => (
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+      <div className="flex min-h-65 sm:min-h-75">
+        {/* Main image with prev/next arrows */}
+        <div className="relative flex flex-1 items-center justify-center border-r border-slate-100 bg-slate-50/60 p-6 dark:border-slate-800 dark:bg-slate-800/20">
+          {images.length > 1 ? (
             <button
-              key={`${src}-${i}`}
               type="button"
-              onClick={() => setActive(i)}
-              className={`h-11 w-11 shrink-0 overflow-hidden rounded-lg border-2 transition ${
-                i === safe
-                  ? "border-teal-500"
-                  : "border-transparent ring-1 ring-slate-200 hover:ring-slate-300 dark:ring-slate-700 dark:hover:ring-slate-600"
-              }`}
+              onClick={goPrev}
+              disabled={safe === 0}
+              className="absolute left-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm transition hover:border-slate-300 disabled:opacity-30 dark:border-slate-700 dark:bg-slate-800"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt="" className="h-full w-full object-cover" />
+              <svg className="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
             </button>
-          ))}
+          ) : null}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={images[safe]} alt={alt} className="max-h-60 max-w-full object-contain sm:max-h-68" />
+          {images.length > 1 ? (
+            <button
+              type="button"
+              onClick={goNext}
+              disabled={safe === images.length - 1}
+              className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm transition hover:border-slate-300 disabled:opacity-30 dark:border-slate-700 dark:bg-slate-800"
+            >
+              <svg className="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          ) : null}
         </div>
-      ) : null}
+        {/* 3-column thumbnail grid */}
+        {images.length > 1 ? (
+          <div className="w-40 shrink-0 overflow-y-auto p-2 sm:w-48">
+            <div className="grid grid-cols-3 gap-1.5">
+              {images.map((src, i) => (
+                <button
+                  key={`${src}-${i}`}
+                  type="button"
+                  onClick={() => setActive(i)}
+                  className={`aspect-square overflow-hidden rounded-lg border-2 transition ${
+                    i === safe
+                      ? "border-teal-500"
+                      : "border-transparent ring-1 ring-slate-200 hover:ring-slate-300 dark:ring-slate-700 dark:hover:ring-slate-600"
+                  }`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={src} alt="" className="h-full w-full object-cover" />
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </div>
     </div>
   )
 }
@@ -891,12 +995,8 @@ export default function ProductDetailPageMain({
             value={hex}
             onChange={(e) => setVal("pv_color_hex", e.target.value)}
             onBlur={() => {
+              // Save the picked hex only. Color name is set manually — no auto-mapping.
               save("pv_color_hex", getVal("pv_color_hex"), false)
-              if (!String(getVal("pv_color")).trim()) {
-                const auto = hexToColorName(String(getVal("pv_color_hex")) || DEFAULT_HEX)
-                setVal("pv_color", auto)
-                save("pv_color", auto, false)
-              }
             }}
             className="h-10 w-12 shrink-0 cursor-pointer rounded-xl border border-slate-300 bg-white p-1 dark:border-slate-700 dark:bg-slate-950"
           />
@@ -905,12 +1005,8 @@ export default function ProductDetailPageMain({
             value={name}
             onChange={(e) => setVal("pv_color", e.target.value)}
             onBlur={() => {
+              // Save the typed color name only. Hex is set manually — no auto-mapping.
               save("pv_color", getVal("pv_color"), false)
-              const mapped = colorNameToHex(String(getVal("pv_color")))
-              if (mapped) {
-                setVal("pv_color_hex", mapped)
-                save("pv_color_hex", mapped, false)
-              }
             }}
             placeholder="e.g. White"
             className={inputCls}
@@ -959,46 +1055,38 @@ export default function ProductDetailPageMain({
       }, 0)
     : numOrNull(String(productDraft.pd_qty ?? "")) ?? 0
 
+  const productCreatedAt = String(
+    (product as Record<string, unknown>).createdAt ?? ""
+  )
+  const productUpdatedAt = String(
+    (product as Record<string, unknown>).updatedAt ?? ""
+  )
+  const fmtDate = (raw: string) => {
+    if (!raw) return "—"
+    const d = new Date(raw)
+    return isNaN(d.getTime())
+      ? raw
+      : d.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
+  }
+
   return (
     <div className="space-y-5">
-      {/* Back */}
-      <Link
-        href="/admin/products"
-        className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 transition hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-      >
-        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-        Products
-      </Link>
-
-      {/* Header card */}
-      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 sm:flex-row sm:items-center">
-        <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50 ring-1 ring-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:ring-slate-800">
-          {product.image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
-          ) : (
-            <Icon name="box" className="h-7 w-7 text-slate-300 dark:text-slate-600" />
-          )}
-        </div>
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate text-xl font-bold text-slate-900 dark:text-white">
-            {String(productDraft.pd_name ?? product.name)}
-          </h1>
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-            <StatusBadge value={liveStatus} />
-            <span className="text-slate-400 dark:text-slate-500">
-              {hasVariants ? `${variants.length} variants` : "No variants"}
-            </span>
-            {product.sku ? (
-              <span className="inline-flex rounded-md bg-slate-100 px-2 py-0.5 font-mono text-[11px] text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                {product.sku}
-              </span>
-            ) : null}
-          </div>
-        </div>
-        <div className="flex items-center gap-3 sm:flex-col sm:items-end md:flex-row md:items-center">
+      {/* ── Top nav bar ── */}
+      <div className="flex items-center justify-between">
+        <Link
+          href="/admin/products"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 transition hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+        >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Products
+        </Link>
+        <div className="flex items-center gap-3">
           <SaveBadge state={saveState} />
           <button
             type="button"
@@ -1011,44 +1099,24 @@ export default function ProductDetailPageMain({
           >
             {editMode ? (
               <>
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
                 Done
               </>
             ) : (
               <>
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                  />
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
-                Edit
+                Edit Product
               </>
             )}
           </button>
         </div>
       </div>
 
-      {/* Edit-mode helper bar */}
+      {/* ── Edit-mode helper bar ── */}
       {editMode ? (
         <div className="flex items-center gap-2 rounded-xl border border-teal-200 bg-teal-50/70 px-4 py-2.5 text-xs font-medium text-teal-700 dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-300">
           <Icon name="info" className="h-4 w-4 shrink-0" />
@@ -1056,311 +1124,312 @@ export default function ProductDetailPageMain({
         </div>
       ) : null}
 
-      {/* Summary strip (product scope) */}
-      {scope.kind === "product" ? (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          <Stat label="Retail (SRP)" value={peso(Number(productDraft.pd_price_srp ?? 0))} accent />
-          <Stat label="Dealer" value={peso(Number(productDraft.pd_price_dp ?? 0))} />
-          <Stat label="Member" value={peso(Number(productDraft.pd_price_member ?? 0))} />
-          <Stat label="Product PV" value={String(productDraft.pd_prodpv ?? "0") || "0"} />
-          <Stat label="In stock" value={`${totalStock}`} />
-        </div>
+      {/* ── Stat strip ── */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <Stat label="Retail (SRP)" value={peso(Number(productDraft.pd_price_srp ?? 0))} statType="srp" />
+        <Stat label="Dealer Price" value={peso(Number(productDraft.pd_price_dp ?? 0))} statType="dealer" />
+        <Stat label="Member Price" value={peso(Number(productDraft.pd_price_member ?? 0))} statType="member" />
+        <Stat label="Product PV" value={String(productDraft.pd_prodpv ?? "0") || "0"} statType="pv" />
+        <Stat label="In Stock" value={`${totalStock} units`} statType="stock" />
+      </div>
+
+      {/* ── Image gallery ── */}
+      {productImages.length > 0 ? (
+        <ImageGallery
+          key="product"
+          images={productImages}
+          alt={String(productDraft.pd_name ?? product.name)}
+        />
       ) : null}
 
-      {/* Two-pane */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        {/* Left: product + variant list */}
-        <div className="space-y-3 lg:col-span-1">
-          <button
-            type="button"
-            onClick={() => setScope({ kind: "product" })}
-            className={`flex w-full items-center gap-3 rounded-2xl border p-3 text-left transition ${
-              scope.kind === "product"
-                ? "border-teal-300 bg-teal-50/60 ring-1 ring-teal-200 dark:border-teal-500/40 dark:bg-teal-500/10 dark:ring-teal-500/20"
-                : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/60"
-            }`}
-          >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
-              {product.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={product.image} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <Icon name="box" className="h-4 w-4 text-slate-300 dark:text-slate-600" />
-              )}
-            </div>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
-                Product details
-              </p>
-              <p className="truncate text-xs text-slate-400">
-                Name, pricing, description
-              </p>
-            </div>
-          </button>
+      {/* ── Product name + badges ── */}
+      <div className="flex flex-wrap items-center gap-2.5">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+          {String(productDraft.pd_name ?? product.name)}
+        </h1>
+        <StatusBadge value={liveStatus} />
+        {hasVariants ? (
+          <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs font-medium text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+            {variants.length} variant{variants.length !== 1 ? "s" : ""}
+          </span>
+        ) : null}
+        {product.sku ? (
+          <span className="inline-flex rounded-md bg-slate-100 px-2 py-0.5 font-mono text-[11px] text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+            {product.sku}
+          </span>
+        ) : null}
+      </div>
 
-          {hasVariants ? (
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
-              <div className="border-b border-slate-100 p-2 dark:border-slate-800">
-                <div className="relative">
-                  <svg
-                    className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
-                  </svg>
-                  <input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search variants…"
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pr-3 pl-9 text-sm focus:border-teal-300 focus:bg-white focus:ring-4 focus:ring-teal-500/10 focus:outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                  />
-                </div>
-              </div>
-              <div className="max-h-[60vh] overflow-y-auto p-1.5">
-                <p className="px-2 py-1 text-[11px] font-bold tracking-widest text-slate-400 uppercase">
-                  {variants.length} variants
-                </p>
-                {filteredVariants.map((v) => {
-                  const d = v.id != null ? variantDrafts[v.id] : undefined
-                  const title = variantTitle({
-                    name: toStr(d?.pv_name ?? v.name),
-                    size: toStr(d?.pv_size ?? v.size),
-                    color: toStr(d?.pv_color ?? v.color),
-                    style: toStr(d?.pv_style ?? v.style),
-                  })
-                  const active = scope.kind === "variant" && scope.id === v.id
-                  const price = numOrNull(toStr(d?.pv_price_srp ?? v.priceSrp))
-                  const qty = numOrNull(toStr(d?.pv_qty ?? v.qty)) ?? 0
-                  const hexRaw = toStr(d?.pv_color_hex ?? v.colorHex)
-                  const swatch = isHex(hexRaw) ? hexRaw : null
-                  const thumb = v.images?.find(
-                    (src) => typeof src === "string" && src.trim() !== ""
-                  )
-                  return (
-                    <button
-                      key={v.id}
-                      type="button"
-                      onClick={() => v.id != null && setScope({ kind: "variant", id: v.id })}
-                      className={`flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition ${
-                        active
-                          ? "bg-teal-50 ring-1 ring-teal-200 dark:bg-teal-500/10 dark:ring-teal-500/20"
-                          : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                      }`}
-                    >
-                      <span
-                        className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-200 dark:border-slate-700"
-                        style={{ backgroundColor: thumb ? undefined : swatch ?? "transparent" }}
-                      >
-                        {thumb ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={thumb} alt="" className="h-full w-full object-cover" />
-                        ) : swatch ? null : (
-                          <Icon name="swatch" className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600" />
-                        )}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
-                          {title}
-                        </p>
-                        <p className="truncate font-mono text-[11px] text-slate-400">
-                          {toStr(d?.pv_sku ?? v.sku) || "—"}
-                        </p>
-                      </div>
-                      <div className="shrink-0 text-right">
-                        <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                          {peso(price)}
-                        </p>
-                        <span
-                          className={`mt-0.5 inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold ${
-                            qty > 0
-                              ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300"
-                              : "bg-red-50 text-red-500 dark:bg-red-500/10 dark:text-red-300"
-                          }`}
-                        >
-                          {qty > 0 ? `${qty} in stock` : "Out of stock"}
-                        </span>
-                      </div>
-                    </button>
-                  )
-                })}
-                {filteredVariants.length === 0 ? (
-                  <p className="px-2 py-4 text-center text-xs text-slate-400">
-                    No variants match “{search}”.
-                  </p>
-                ) : null}
-              </div>
+      {/* ── Main 2-column grid ── */}
+      <div className="grid gap-5 lg:grid-cols-2">
+        {/* Left column */}
+        <div className="space-y-5">
+          <SectionCard
+            title="Product Information"
+            subtitle="Name, identifier, status and description"
+            icon="clipboard"
+          >
+            {textField("Product name", "pd_name")}
+            <div className="grid gap-4 sm:grid-cols-2">
+              {skuField("Parent SKU", "pd_parent_sku", () => {
+                const sku = generateProductSku(
+                  String(getVal("pd_name")) || product.name
+                )
+                setVal("pd_parent_sku", sku)
+                save("pd_parent_sku", sku, false)
+              })}
+              {statusField("pd_status")}
             </div>
-          ) : null}
+            <FieldShell label="Description">
+              {editMode ? (
+                <RichTextEditor
+                  value={String(productDraft.pd_description ?? "")}
+                  onChange={onDescriptionChange}
+                  placeholder="Describe this product — features, materials, warranty…"
+                />
+              ) : String(productDraft.pd_description ?? "").trim() ? (
+                <CollapsibleHtml html={String(productDraft.pd_description ?? "")} />
+              ) : (
+                <p className="text-sm text-slate-400">No description</p>
+              )}
+            </FieldShell>
+          </SectionCard>
+
+          <SectionCard title="Details" subtitle="Material and warranty" icon="clipboard">
+            <div className="grid gap-4 sm:grid-cols-2">
+              {textField("Material", "pd_material")}
+              {textField("Warranty", "pd_warranty")}
+            </div>
+          </SectionCard>
         </div>
 
-        {/* Right: editor */}
-        <div className="space-y-4 lg:col-span-2">
-          {scope.kind === "product" ? (
-            <>
-              {productImages.length > 1 ? (
-                <SectionCard
-                  title="Images"
-                  subtitle={`${productImages.length} product images`}
-                  icon="photo"
-                >
-                  <ImageGallery
-                    key="product"
-                    images={productImages}
-                    alt={String(productDraft.pd_name ?? product.name)}
-                  />
-                </SectionCard>
-              ) : null}
+        {/* Right column */}
+        <div className="space-y-5">
+          <SectionCard title="Pricing" subtitle="Retail, dealer, member and PV" icon="cash">
+            {editMode ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {numberField("Retail price (SRP)", "pd_price_srp", "₱")}
+                {numberField("Dealer price", "pd_price_dp", "₱")}
+                {numberField("Member price", "pd_price_member", "₱")}
+                {numberField("Product PV", "pd_prodpv")}
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {(
+                  [
+                    { label: "Retail Price (SRP)", key: "pd_price_srp", prefix: "₱", accent: true },
+                    { label: "Dealer Price", key: "pd_price_dp", prefix: "₱", accent: true },
+                    { label: "Member Price", key: "pd_price_member", prefix: "₱", accent: true },
+                    { label: "Product PV", key: "pd_prodpv", prefix: "", accent: false },
+                  ] as const
+                ).map(({ label, key, prefix, accent }) => (
+                  <div key={key}>
+                    <p className="text-xs font-medium text-slate-400">{label}</p>
+                    <p className={`mt-0.5 text-xl font-bold ${accent ? "text-teal-600 dark:text-teal-400" : "text-slate-700 dark:text-slate-200"}`}>
+                      {prefix}{prefix ? Number(productDraft[key] ?? 0).toLocaleString("en-PH", { minimumFractionDigits: 2 }) : String(productDraft[key] ?? "0")}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </SectionCard>
 
-              <SectionCard
-                title="Product"
-                subtitle="Name, identifier, status and description"
-                icon="box"
-              >
-                {textField("Product name", "pd_name")}
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {skuField("Parent SKU", "pd_parent_sku", () => {
-                    const sku = generateProductSku(
-                      String(getVal("pd_name")) || product.name
-                    )
-                    setVal("pd_parent_sku", sku)
-                    save("pd_parent_sku", sku, false)
-                  })}
-                  {statusField("pd_status")}
-                </div>
-                <FieldShell label="Description">
-                  {editMode ? (
-                    <RichTextEditor
-                      value={String(productDraft.pd_description ?? "")}
-                      onChange={onDescriptionChange}
-                      placeholder="Describe this product — features, materials, warranty…"
-                    />
-                  ) : String(productDraft.pd_description ?? "").trim() ? (
-                    <CollapsibleHtml html={String(productDraft.pd_description ?? "")} />
-                  ) : (
-                    <p className="text-sm text-slate-400">No description</p>
-                  )}
-                </FieldShell>
-              </SectionCard>
-
-              <SectionCard title="Pricing" subtitle="Retail, dealer, member and PV" icon="cash">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {numberField("Retail price (SRP)", "pd_price_srp", "₱")}
-                  {numberField("Dealer price", "pd_price_dp", "₱")}
-                  {numberField("Member price", "pd_price_member", "₱")}
-                  {numberField("Product PV", "pd_prodpv")}
-                </div>
-              </SectionCard>
-
-              {!hasVariants ? (
-                <SectionCard title="Inventory" subtitle="Stock on hand" icon="box">
-                  {numberField("Stock quantity", "pd_qty")}
-                </SectionCard>
-              ) : null}
-
-              <SectionCard title="Shipping" subtitle="Weight and package dimensions" icon="truck">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {numberField("Weight (kg)", "pd_weight")}
-                  {numberField("Package weight (kg)", "pd_psweight")}
-                  {numberField("Width (cm)", "pd_pswidth")}
-                  {numberField("Length (cm)", "pd_pslenght")}
-                  {numberField("Height (cm)", "pd_psheight")}
-                </div>
-              </SectionCard>
-
-              <SectionCard title="Details" subtitle="Material and warranty" icon="clipboard">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {textField("Material", "pd_material")}
-                  {textField("Warranty", "pd_warranty")}
-                </div>
-              </SectionCard>
-
-              <SectionCard title="Merchandising" subtitle="Storefront highlights" icon="sparkles">
-                <div className="grid gap-2 sm:grid-cols-3">
-                  {toggleField("Must-have", "pd_musthave")}
-                  {toggleField("Bestseller", "pd_bestseller")}
-                  {toggleField("On sale", "pd_salespromo")}
-                </div>
-              </SectionCard>
-            </>
-          ) : selectedVariant ? (
-            <>
-              {variantImages.length > 0 ? (
-                <SectionCard
-                  title="Images"
-                  subtitle={`${variantImages.length} image${
-                    variantImages.length > 1 ? "s" : ""
-                  } for this variant`}
-                  icon="photo"
-                >
-                  <ImageGallery
-                    key={`variant-${scope.kind === "variant" ? scope.id : "x"}`}
-                    images={variantImages}
-                    alt={variantTitle({
-                      name: toStr(getVal("pv_name")),
-                      size: toStr(getVal("pv_size")),
-                      color: toStr(getVal("pv_color")),
-                      style: toStr(getVal("pv_style")),
-                    })}
-                  />
-                </SectionCard>
-              ) : null}
-
-              <SectionCard
-                title={`Variant · ${variantTitle({
-                  name: toStr(getVal("pv_name")),
-                  size: toStr(getVal("pv_size")),
-                  color: toStr(getVal("pv_color")),
-                  style: toStr(getVal("pv_style")),
-                })}`}
-                subtitle="Identifier, attributes and status"
-                icon="swatch"
-              >
-                {textField("Variant name", "pv_name")}
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {skuField("SKU", "pv_sku", () => {
-                    const parent =
-                      String(productDraft.pd_parent_sku ?? "") ||
-                      String(product.sku ?? "")
-                    const sku = generateVariantSku(parent, {
-                      color: String(getVal("pv_color")),
-                      size: String(getVal("pv_size")),
-                      style: String(getVal("pv_style")),
-                    })
-                    setVal("pv_sku", sku)
-                    save("pv_sku", sku, false)
-                  })}
-                  {statusField("pv_status")}
-                </div>
-                <div className="grid gap-4 sm:grid-cols-3">
-                  {colorField()}
-                  {textField("Size", "pv_size")}
-                  {textField("Style", "pv_style")}
-                </div>
-              </SectionCard>
-
-              <SectionCard title="Pricing" subtitle="Variant-level prices and PV" icon="cash">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {numberField("Retail price (SRP)", "pv_price_srp", "₱")}
-                  {numberField("Dealer price", "pv_price_dp", "₱")}
-                  {numberField("Member price", "pv_price_member", "₱")}
-                  {numberField("PV", "pv_prodpv")}
-                </div>
-              </SectionCard>
-
-              <SectionCard title="Inventory" subtitle="Stock on hand" icon="box">
-                {numberField("Stock quantity", "pv_qty")}
-              </SectionCard>
-            </>
-          ) : (
-            <div className="rounded-2xl border border-slate-200 bg-white py-16 text-center text-sm text-slate-400 dark:border-slate-800 dark:bg-slate-900">
-              Select a variant to edit.
+          <SectionCard title="Shipping" subtitle="Weight and package dimensions" icon="truck">
+            <div className="grid gap-4 sm:grid-cols-2">
+              {numberField("Weight (kg)", "pd_weight")}
+              {numberField("Package weight (kg)", "pd_psweight")}
+              {numberField("Width (cm)", "pd_pswidth")}
+              {numberField("Length (cm)", "pd_pslenght")}
+              {numberField("Height (cm)", "pd_psheight")}
             </div>
-          )}
+          </SectionCard>
+
+          {!hasVariants ? (
+            <SectionCard title="Inventory" subtitle="Stock on hand" icon="box">
+              {numberField("Stock quantity", "pd_qty")}
+            </SectionCard>
+          ) : null}
+
+          <SectionCard title="Merchandising" subtitle="Storefront highlights" icon="sparkles">
+            <div className="grid gap-2 sm:grid-cols-3">
+              {toggleField("Must-have", "pd_musthave")}
+              {toggleField("Bestseller", "pd_bestseller")}
+              {toggleField("On sale", "pd_salespromo")}
+            </div>
+          </SectionCard>
         </div>
       </div>
+
+      {/* ── Product Metadata ── */}
+      <SectionCard title="Product Metadata" subtitle="Stock and timestamps" icon="box">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+          <MetaChip icon="box" label="In Stock" value={`${totalStock} units`} accent />
+          <MetaChip icon="calendar" label="Created" value={fmtDate(productCreatedAt)} />
+          <MetaChip icon="clock" label="Last Updated" value={fmtDate(productUpdatedAt)} />
+        </div>
+      </SectionCard>
+
+      {/* ── Variants section ── */}
+      {hasVariants ? (
+        <SectionCard
+          title={`Variants (${variants.length})`}
+          subtitle="Select a variant to view or edit"
+          icon="swatch"
+        >
+          {/* Search */}
+          <div className="relative">
+            <svg
+              className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
+            </svg>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search variants…"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pr-3 pl-9 text-sm focus:border-teal-300 focus:bg-white focus:ring-4 focus:ring-teal-500/10 focus:outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+            />
+          </div>
+
+          {/* Variant rows */}
+          <div className="space-y-1">
+            {filteredVariants.map((v) => {
+              const d = v.id != null ? variantDrafts[v.id] : undefined
+              const title = variantTitle({
+                name: toStr(d?.pv_name ?? v.name),
+                size: toStr(d?.pv_size ?? v.size),
+                color: toStr(d?.pv_color ?? v.color),
+                style: toStr(d?.pv_style ?? v.style),
+              })
+              const isActive = scope.kind === "variant" && scope.id === v.id
+              const price = numOrNull(toStr(d?.pv_price_srp ?? v.priceSrp))
+              const qty = numOrNull(toStr(d?.pv_qty ?? v.qty)) ?? 0
+              const hexRaw = toStr(d?.pv_color_hex ?? v.colorHex)
+              const swatch = isHex(hexRaw) ? hexRaw : null
+              const thumb = v.images?.find(
+                (src) => typeof src === "string" && src.trim() !== ""
+              )
+              return (
+                <div key={v.id}>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      v.id != null &&
+                      setScope(
+                        isActive
+                          ? { kind: "product" }
+                          : { kind: "variant", id: v.id }
+                      )
+                    }
+                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${
+                      isActive
+                        ? "bg-teal-50 ring-1 ring-teal-200 dark:bg-teal-500/10 dark:ring-teal-500/20"
+                        : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                    }`}
+                  >
+                    <span
+                      className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700"
+                      style={{ backgroundColor: thumb ? undefined : swatch ?? "transparent" }}
+                    >
+                      {thumb ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={thumb} alt="" className="h-full w-full object-cover" />
+                      ) : swatch ? null : (
+                        <Icon name="swatch" className="h-4 w-4 text-slate-300 dark:text-slate-600" />
+                      )}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+                        {title}
+                      </p>
+                      <p className="truncate font-mono text-[11px] text-slate-400">
+                        {toStr(d?.pv_sku ?? v.sku) || "—"}
+                      </p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                        {peso(price)}
+                      </p>
+                      <span
+                        className={`mt-0.5 inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold ${
+                          qty > 0
+                            ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300"
+                            : "bg-red-50 text-red-500 dark:bg-red-500/10 dark:text-red-300"
+                        }`}
+                      >
+                        {qty > 0 ? `${qty} in stock` : "Out of stock"}
+                      </span>
+                    </div>
+                    <svg
+                      className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${isActive ? "rotate-180 text-teal-500" : ""}`}
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d={ICON_PATHS.chevron} />
+                    </svg>
+                  </button>
+
+                  {/* Inline variant editor */}
+                  {isActive ? (
+                    <div className="mt-1 space-y-4 rounded-xl border border-teal-100 bg-teal-50/30 p-4 dark:border-teal-500/20 dark:bg-teal-500/5">
+                      {variantImages.length > 0 ? (
+                        <ImageGallery
+                          key={`variant-${scope.kind === "variant" ? scope.id : "x"}`}
+                          images={variantImages}
+                          alt={title}
+                        />
+                      ) : null}
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-4">
+                          {textField("Variant name", "pv_name")}
+                          {skuField("SKU", "pv_sku", () => {
+                            const parent =
+                              String(productDraft.pd_parent_sku ?? "") ||
+                              String(product.sku ?? "")
+                            const sku = generateVariantSku(parent, {
+                              color: String(getVal("pv_color")),
+                              size: String(getVal("pv_size")),
+                              style: String(getVal("pv_style")),
+                            })
+                            setVal("pv_sku", sku)
+                            save("pv_sku", sku, false)
+                          })}
+                          {statusField("pv_status")}
+                          <div className="grid gap-3 sm:grid-cols-3">
+                            {colorField()}
+                            {textField("Size", "pv_size")}
+                            {textField("Style", "pv_style")}
+                          </div>
+                        </div>
+                        <div className="space-y-4">
+                          {numberField("Retail price (SRP)", "pv_price_srp", "₱")}
+                          {numberField("Dealer price", "pv_price_dp", "₱")}
+                          {numberField("Member price", "pv_price_member", "₱")}
+                          {numberField("PV", "pv_prodpv")}
+                          {numberField("Stock quantity", "pv_qty")}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              )
+            })}
+            {filteredVariants.length === 0 ? (
+              <p className="py-4 text-center text-xs text-slate-400">
+                No variants match &ldquo;{search}&rdquo;.
+              </p>
+            ) : null}
+          </div>
+        </SectionCard>
+      ) : null}
     </div>
   )
 }
+

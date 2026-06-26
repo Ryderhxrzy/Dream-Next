@@ -3,19 +3,22 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Customer;
+use App\Models\Follower;
 use App\Models\Product;
 use App\Models\ProductBrand;
 use App\Models\ProductPhoto;
 use App\Models\Supplier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 
 class ProductBrandController extends Controller
 {
-    private function buildBrandsResponse(string $search = '', bool $activeOnly = false, ?int $supplierId = null): JsonResponse
+    private function buildBrandsResponse(string $search = '', bool $activeOnly = false, ?int $supplierId = null, ?int $customerId = null): JsonResponse
     {
         $hasBrandImageColumn = $this->hasBrandImageColumn();
         $hasSupplierColumn = $this->hasBrandSupplierColumn();
@@ -42,17 +45,31 @@ class ProductBrandController extends Controller
                 $q->where('pb_name', 'ilike', '%' . $search . '%');
             })
             ->orderBy('pb_name')
-            ->get()
-            ->map(function (ProductBrand $brand) use ($hasBrandImageColumn, $hasSupplierColumn) {
+            ->get();
+
+        // Follower counts for every brand (one grouped query) + the set this
+        // customer actively follows. customerId is null for guests.
+        [$followerCounts, $followedSet] = $this->loadFollowState(
+            $brands->pluck('pb_id')->map(fn ($id) => (int) $id)->all(),
+            $customerId
+        );
+
+        $brands = $brands
+            ->map(function (ProductBrand $brand) use ($hasBrandImageColumn, $hasSupplierColumn, $followerCounts, $followedSet) {
                 $merchant = $hasSupplierColumn ? $brand->supplier : null;
+                $id = (int) $brand->pb_id;
 
                 return [
-                    'id' => (int) $brand->pb_id,
+                    'id' => $id,
                     'name' => (string) ($brand->pb_name ?? ''),
                     'image' => $hasBrandImageColumn && $brand->pb_image ? (string) $brand->pb_image : null,
                     'status' => (int) ($brand->pb_status ?? 0),
                     'supplier_id' => $hasSupplierColumn && $brand->pb_supplier_id ? (int) $brand->pb_supplier_id : null,
                     'supplier_name' => $merchant ? (string) ($merchant->s_company ?: $merchant->s_name) : null,
+                    'followers_count' => (int) ($followerCounts[$id] ?? 0),
+                    // Guests and authenticated-not-following => false;
+                    // authenticated-and-following => true.
+                    'is_followed' => isset($followedSet[$id]),
                 ];
             })
             ->values();
@@ -61,6 +78,56 @@ class ProductBrandController extends Controller
             'brands' => $brands,
             'total' => $brands->count(),
         ]);
+    }
+
+    /**
+     * Load follower counts (keyed by brand id) and the set of brand ids the given
+     * customer actively follows (array_flip for O(1) lookup). Both default to
+     * empty when there are no brands or the followers table is absent.
+     *
+     * @param  array<int>  $brandIds
+     * @return array{0: array<int,int>, 1: array<int,int>}
+     */
+    private function loadFollowState(array $brandIds, ?int $customerId): array
+    {
+        if (empty($brandIds) || ! Schema::hasTable('tbl_followers')) {
+            return [[], []];
+        }
+
+        $followerCounts = Follower::query()
+            ->whereIn('brand_id', $brandIds)
+            ->where('is_active', true)
+            ->selectRaw('brand_id, COUNT(*) as aggregate')
+            ->groupBy('brand_id')
+            ->pluck('aggregate', 'brand_id')
+            ->toArray();
+
+        $followedSet = [];
+        if ($customerId) {
+            $followedSet = array_flip(
+                Follower::query()
+                    ->where('user_id', $customerId)
+                    ->where('is_active', true)
+                    ->whereIn('brand_id', $brandIds)
+                    ->pluck('brand_id')
+                    ->map(fn ($id) => (int) $id)
+                    ->all()
+            );
+        }
+
+        return [$followerCounts, $followedSet];
+    }
+
+    /**
+     * Resolve the authenticated customer from an optional Sanctum bearer token.
+     * Returns null for guests or non-customer tokens, so public routes stay
+     * usable without auth while still surfacing follow state when signed in.
+     */
+    private function optionalCustomerId(): ?int
+    {
+        $user = Auth::guard('sanctum')->user();
+
+        return ($user instanceof Customer) ? (int) $user->c_userid : null;
     }
 
     private function hasBrandImageColumn(): bool
@@ -77,7 +144,9 @@ class ProductBrandController extends Controller
     {
         $search = trim((string) $request->query('q', ''));
 
-        return $this->buildBrandsResponse($search, true);
+        // Optional auth: route is public, but a valid customer bearer token
+        // surfaces their per-brand follow state. Guests get is_followed = false.
+        return $this->buildBrandsResponse($search, true, null, $this->optionalCustomerId());
     }
 
     public function index(Request $request): JsonResponse
@@ -470,6 +539,11 @@ class ProductBrandController extends Controller
         // Calculate chat performance (mock calculation - you may need to adjust based on your business logic)
         $chatPerformance = 95; // Default value, you can calculate this based on actual chat metrics
 
+        // Optional auth: follower count is public; is_followed reflects the
+        // signed-in customer (false for guests / not following).
+        $customerId = $this->optionalCustomerId();
+        [$followerCounts, $followedSet] = $this->loadFollowState([(int) $id], $customerId);
+
         $brandData = [
             'id' => (int) $brand->pb_id,
             'name' => (string) $brand->pb_name,
@@ -480,6 +554,8 @@ class ProductBrandController extends Controller
             'overall_rating' => $overallRating,
             'total_reviews' => $totalReviews,
             'total_products' => $totalProducts,
+            'followers_count' => (int) ($followerCounts[(int) $id] ?? 0),
+            'is_followed' => isset($followedSet[(int) $id]),
             'joined_date' => $supplierInfo?->joined_date ? $supplierInfo->joined_date : null,
             'supplier_name' => $supplierInfo?->supplier_name ? (string) $supplierInfo->supplier_name : null,
         ];

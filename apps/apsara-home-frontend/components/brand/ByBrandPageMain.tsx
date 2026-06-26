@@ -10,6 +10,10 @@ import { useSession } from 'next-auth/react'
 import { useGetPublicProductBrandsQuery } from '@/store/api/productBrandsApi'
 import { useGetPublicProductsQuery, useGetProductBrandQuery, useGetPublicZqProductsQuery, type ZqCachedProduct } from '@/store/api/productsApi'
 import { useAddToCartMutation } from '@/store/api/cartApi'
+import {
+  useFollowBrandMutation,
+  useUnfollowBrandMutation,
+} from '@/store/api/followersApi'
 import { useGetCategoriesQuery } from '@/store/api/categoriesApi'
 import { Skeleton } from '@heroui/react/skeleton'
 import OutlineButton from '@/components/ui/buttons/OutlineButton'
@@ -114,7 +118,9 @@ function ZqBrandItemCard({ product, brandName, isLoggedIn = false }: { product: 
 
   // SRP = public price. Member price shown only to logged-in members. No synthetic min/max "discount".
   const srp = zqPrice(product)
-  const memberPrice = isLoggedIn ? Number(product.memberPrice ?? 0) / 100 : 0
+  // memberPrice is stored in cents (same unit as priceMinCents).
+  const memberPriceCents = isLoggedIn ? Number(product.memberPrice ?? 0) : 0
+  const memberPrice = memberPriceCents > 0 ? memberPriceCents / 100 : 0
   const showMemberPrice = memberPrice > 0 && memberPrice < srp
   const price = showMemberPrice ? memberPrice : srp
   const comparePrice = showMemberPrice ? srp : null
@@ -163,11 +169,11 @@ function ZqBrandItemCard({ product, brandName, isLoggedIn = false }: { product: 
 
         <Image src={image} alt={product.subject} fill className="object-cover" unoptimized />
 
-        <div className="absolute top-0 left-0 flex flex-col">
-          <div className={`text-white text-xs font-bold px-2 py-1 ${showMemberPrice ? 'bg-green-500' : 'bg-sky-500'}`}>
-            {showMemberPrice ? `Member price · ${discount}% off` : 'Register to get 6% discount'}
+        {showMemberPrice ? (
+          <div className="absolute top-0 left-0 text-white text-xs font-bold px-2 py-1 bg-green-500">
+            Member price · {discount}% off
           </div>
-        </div>
+        ) : null}
 
         <div className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-sky-500 text-white shadow-lg transition-all duration-300 hover:bg-sky-600 sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2 sm:text-sm sm:font-semibold sm:opacity-0 sm:translate-y-2 sm:group-hover:opacity-100 sm:group-hover:translate-y-0">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -624,6 +630,42 @@ export default function ByBrandPageMain() {
     skip: !selectedBrandItem,
   })
 
+  // ---- Brand follow ----
+  // Follow state + count come straight from the (optionally authenticated)
+  // public brand GET — see useGetPublicProductBrandsQuery above. Following a
+  // brand invalidates the "Brands" cache, so these refresh automatically.
+  const [followBrand, { isLoading: isFollowPending }] = useFollowBrandMutation()
+  const [unfollowBrand, { isLoading: isUnfollowPending }] = useUnfollowBrandMutation()
+
+  const followerCount = selectedBrandItem?.followers_count ?? 0
+  const isFollowing = Boolean(selectedBrandItem?.is_followed)
+  const isFollowBusy = isFollowPending || isUnfollowPending
+
+  const handleToggleFollow = async () => {
+    if (!selectedBrandItem) return
+
+    if (!isLoggedIn) {
+      const callbackPath = typeof window !== 'undefined'
+        ? `${window.location.pathname}${window.location.search}`
+        : pathname || '/by-brand'
+      router.push(`/login?callback=${encodeURIComponent(callbackPath)}`)
+      return
+    }
+
+    try {
+      if (isFollowing) {
+        await unfollowBrand(selectedBrandItem.id).unwrap()
+        toast.success(`Unfollowed ${selectedBrandItem.name}`)
+      } else {
+        await followBrand(selectedBrandItem.id).unwrap()
+        toast.success(`You're now following ${selectedBrandItem.name}`)
+      }
+    } catch (error) {
+      console.error('Error toggling brand follow:', error)
+      toast.error('Something went wrong. Please try again.')
+    }
+  }
+
   const { data: brandProductsData, isFetching: isFetchingProducts, isLoading: isLoadingProducts } = useGetPublicProductsQuery(
     selectedBrandItem
       ? { page: productPage, perPage: perPage, brandType: selectedBrandItem.id, includeAll: perPage >= 50, catId: selectedSubCategoryId ?? selectedCategoryId ?? undefined }
@@ -875,6 +917,30 @@ export default function ByBrandPageMain() {
                         <span className={`inline-block w-2 h-2 rounded-full ${(selectedBrandItem.status ?? 0) === 0 ? 'bg-green-500' : 'bg-gray-400'}`} />
                         {(selectedBrandItem.status ?? 0) === 0 ? 'Online' : 'Offline'}
                     </span>
+                    <button
+                      type="button"
+                      onClick={handleToggleFollow}
+                      disabled={isFollowBusy}
+                      aria-pressed={isFollowing}
+                      className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed ${
+                        isFollowing
+                          ? 'border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+                          : 'bg-sky-500 text-white hover:bg-sky-600'
+                      }`}
+                    >
+                      {isFollowing ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <line x1="12" y1="5" x2="12" y2="19" />
+                          <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                      )}
+                      {isFollowing ? 'Following' : 'Follow'}
+                    </button>
+                    <BrandCatalogueFlipbook brand={selectedBrandItem} />
                   </div>
                   <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 text-center sm:text-left">
                     Browse all products from this brand
@@ -902,6 +968,15 @@ export default function ByBrandPageMain() {
                     </div>
                     <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                      </svg>
+                      <span>{followerCount.toLocaleString()} {followerCount === 1 ? 'Follower' : 'Followers'}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                         <line x1="16" y1="2" x2="16" y2="6" />
                         <line x1="8" y1="2" x2="8" y2="6" />
@@ -909,9 +984,6 @@ export default function ByBrandPageMain() {
                       </svg>
                       <span>Joined: {brandInfo?.joinedDate ? new Date(brandInfo.joinedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Jan 2024'}</span>
                     </div>
-                  </div>
-                  <div className="mt-3 flex justify-center sm:justify-start">
-                    <BrandCatalogueFlipbook brand={selectedBrandItem} />
                   </div>
                 </div>
                 <div className="hidden sm:flex items-center gap-2 shrink-0">

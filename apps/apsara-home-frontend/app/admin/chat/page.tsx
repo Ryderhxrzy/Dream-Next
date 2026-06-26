@@ -1218,13 +1218,9 @@ export default function AdminChatPage() {
 
         {/* ── Main chat area ── */}
         <div
-          className={`relative flex flex-1 flex-col ${
+          className={`relative flex flex-1 flex-col [background:linear-gradient(145deg,#eef2ff_0%,#f0f4ff_40%,#e8eeff_100%)] dark:[background:linear-gradient(145deg,#1e1b2e_0%,#1a1b2e_40%,#1e1b4b_100%)] ${
             !isMobileOpen && !activeConversation ? "hidden md:flex" : "flex"
           }`}
-          style={{
-            background:
-              "linear-gradient(145deg,#eef2ff 0%,#f0f4ff 40%,#e8eeff 100%)",
-          }}
         >
           {/* Fixed decorative background — sits behind scrollable content */}
           <div
@@ -1430,7 +1426,7 @@ export default function AdminChatPage() {
               {/* Messages */}
               <div
                 ref={messagesContainerRef}
-                className="relative flex-1 scrollbar-none overflow-y-auto [&::-webkit-scrollbar]:hidden"
+                className="relative flex-1 scrollbar-none overflow-x-hidden overflow-y-auto [&::-webkit-scrollbar]:hidden"
               >
                 <div className="px-5 py-5">
                   {isLoadingMessages ? (
@@ -1633,7 +1629,7 @@ export default function AdminChatPage() {
                                   />
                                 )}
                                 <div
-                                  className={`relative max-w-[72%] ${mine ? "" : "ml-0"}`}
+                                  className={`relative max-w-[72%] min-w-0 ${mine ? "" : "ml-0"}`}
                                   onMouseEnter={() => enterMsg(message.id)}
                                   onMouseLeave={leaveMsg}
                                 >
@@ -1873,10 +1869,10 @@ export default function AdminChatPage() {
                                           className={`relative ${activeReactions.length > 0 ? "mb-4" : ""}`}
                                         >
                                           <div
-                                            className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                                            className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed [overflow-wrap:anywhere] whitespace-pre-wrap ${
                                               mine
                                                 ? "rounded-br-md bg-indigo-600 text-white"
-                                                : "rounded-bl-md border border-slate-200 bg-white text-slate-800 shadow-sm"
+                                                : "rounded-bl-md border border-slate-200 bg-white text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                                             }`}
                                           >
                                             {message.message}

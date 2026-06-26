@@ -1,7 +1,7 @@
 "use client"
 
 /* eslint-disable react-hooks/set-state-in-effect */
-import { Fragment, useEffect, useState } from "react"
+import { Fragment, useEffect, useMemo, useState } from "react"
 import { normalizeCategorySlug } from "@/libs/partnerStorefront"
 import { ROOM_OPTIONS } from "@/libs/roomConfig"
 import type { Category } from "@/store/api/categoriesApi"
@@ -82,6 +82,30 @@ export default function ProductFilter({
   const [showAllBrands, setShowAllBrands] = useState(false)
   const [brandSearch, setBrandSearch] = useState("")
   const [selectedBrand, setSelectedBrand] = useState(currentBrand ?? "")
+  const [expandedId, setExpandedId] = useState<number | null>(null)
+
+  const parentCategories = useMemo(
+    () =>
+      categories.filter(
+        (c) => c.parent_id === null || c.parent_id === undefined
+      ),
+    [categories]
+  )
+  const childrenByParentId = useMemo(() => {
+    const map: Record<number, Category[]> = {}
+    for (const c of categories) {
+      if (c.parent_id) {
+        if (!map[c.parent_id]) map[c.parent_id] = []
+        map[c.parent_id].push(c)
+      }
+    }
+    return map
+  }, [categories])
+  const currentParentId = useMemo(() => {
+    const matched = categories.find((c) => c.name === currentCategory)
+    return matched?.parent_id ?? null
+  }, [categories, currentCategory])
+
   const shopPathMatch = pathname.match(
     /^\/shop\/([^/]+)\/(?:product|category(?:\/[^/]+)?)\/?$/i
   )
@@ -328,13 +352,13 @@ export default function ProductFilter({
           <h4 className="mb-2 text-xs font-semibold text-gray-900 sm:mb-3 sm:text-sm dark:text-gray-100">
             Shop Category
           </h4>
-          <div className="flex flex-wrap gap-1.5 sm:gap-2">
+          <div className="flex flex-col gap-0.5">
             {partnerSlugFromPath && (
               <button
                 onClick={() => {
                   router.push(getPartnerHomePath())
                 }}
-                className="cursor-pointer rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-600 transition-colors hover:bg-sky-100 hover:text-sky-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-sky-900/30 dark:hover:text-sky-400"
+                className="flex w-full cursor-pointer items-center rounded-lg px-2.5 py-1.5 text-left text-xs font-medium text-gray-600 transition-colors hover:bg-sky-50 hover:text-sky-600 sm:text-sm dark:text-gray-300 dark:hover:bg-sky-900/20 dark:hover:text-sky-400"
               >
                 Home
               </button>
@@ -344,62 +368,104 @@ export default function ProductFilter({
                 if (onCategorySelect) onCategorySelect(null)
                 else router.push(getAllCategoryPath())
               }}
-              className={`cursor-pointer rounded-full px-3 py-1 text-sm font-medium transition-colors ${
+              className={`flex w-full cursor-pointer items-center rounded-lg px-2.5 py-1.5 text-left text-xs font-medium transition-colors sm:text-sm ${
                 hasAllCategorySelected && !propSearch
                   ? "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
-                  : "bg-gray-100 text-gray-600 hover:bg-sky-100 hover:text-sky-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-sky-900/30 dark:hover:text-sky-400"
+                  : "text-gray-600 hover:bg-sky-50 hover:text-sky-600 dark:text-gray-300 dark:hover:bg-sky-900/20 dark:hover:text-sky-400"
               }`}
             >
               All Category
             </button>
-            {categories.map((category) => {
-              const isSelected = currentCategory === category.name || propSearch === category.name
-              const showSubs = isSelected && onSubCategorySelect && subCategories.length > 0
+            {parentCategories.map((category) => {
+              const children = childrenByParentId[category.id] ?? []
+              const hasChildren = children.length > 0
+              const isExpanded =
+                expandedId === category.id ||
+                currentParentId === category.id ||
+                (currentCategory === category.name && hasChildren)
+              const isSelected =
+                currentCategory === category.name ||
+                propSearch === category.name ||
+                currentParentId === category.id
               return (
                 <Fragment key={category.id}>
                   <button
                     onClick={() => {
+                      if (hasChildren) {
+                        setExpandedId((prev) =>
+                          prev === category.id ? null : category.id
+                        )
+                        // Don't navigate when toggling a parent — state would reset
+                        return
+                      }
                       if (onCategorySelect) onCategorySelect(category)
                       else router.push(getCategoryPath(category))
                     }}
-                    className={`cursor-pointer rounded-full px-2 py-1 text-xs font-medium transition-colors sm:px-3 sm:text-sm ${
+                    className={`flex w-full cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-left text-xs font-medium transition-colors sm:text-sm ${
                       isSelected
                         ? "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
-                        : "bg-gray-100 text-gray-600 hover:bg-sky-100 hover:text-sky-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-sky-900/30 dark:hover:text-sky-400"
+                        : "text-gray-600 hover:bg-sky-50 hover:text-sky-600 dark:text-gray-300 dark:hover:bg-sky-900/20 dark:hover:text-sky-400"
                     }`}
                   >
+                    {hasChildren && (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        className={`shrink-0 transition-transform ${isExpanded ? "rotate-90" : ""}`}
+                      >
+                        <polyline points="9 18 15 12 9 6" />
+                      </svg>
+                    )}
                     {category.name}
                   </button>
-                  {showSubs && (
-                    <>
-                      <div className="basis-full" />
-                      <div className="flex w-full flex-wrap gap-1.5 border-l-2 border-sky-200 pl-3 dark:border-sky-700">
+                  {isExpanded && hasChildren && (
+                    <div className="ml-3 flex flex-col border-l-2 border-sky-200 dark:border-sky-700">
+                      {/* "All [parent]" navigates to the parent category page */}
+                      <div className="flex items-center">
+                        <div className="h-px w-3 shrink-0 bg-sky-200 dark:bg-sky-700" />
                         <button
-                          onClick={() => onSubCategorySelect(null)}
-                          className={`cursor-pointer rounded-full px-2 py-0.5 text-xs font-medium transition-colors ${
-                            !currentSubCategory
+                          onClick={() => {
+                            if (onCategorySelect) onCategorySelect(category)
+                            else router.push(getCategoryPath(category))
+                          }}
+                          className={`my-0.5 flex flex-1 cursor-pointer items-center rounded-lg px-2 py-1 text-left text-xs font-medium transition-colors ${
+                            currentCategory === category.name
                               ? "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
-                              : "bg-gray-100 text-gray-500 hover:bg-sky-50 hover:text-sky-500 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-sky-900/20 dark:hover:text-sky-400"
+                              : "text-gray-500 hover:bg-sky-50 hover:text-sky-500 dark:text-gray-400 dark:hover:bg-sky-900/20 dark:hover:text-sky-400"
                           }`}
                         >
-                          All
+                          All {category.name}
                         </button>
-                        {subCategories.map((sub) => (
-                          <button
-                            key={sub.id}
-                            onClick={() => onSubCategorySelect(sub)}
-                            className={`cursor-pointer rounded-full px-2 py-0.5 text-xs font-medium transition-colors ${
-                              currentSubCategory === sub.name
-                                ? "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
-                                : "bg-gray-100 text-gray-500 hover:bg-sky-50 hover:text-sky-500 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-sky-900/20 dark:hover:text-sky-400"
-                            }`}
-                          >
-                            {sub.name}
-                          </button>
-                        ))}
                       </div>
-                      <div className="basis-full" />
-                    </>
+                      {children.map((child) => {
+                        const isChildSelected =
+                          currentCategory === child.name ||
+                          propSearch === child.name
+                        return (
+                          <div key={child.id} className="flex items-center">
+                            <div className="h-px w-3 shrink-0 bg-sky-200 dark:bg-sky-700" />
+                            <button
+                              onClick={() => {
+                                if (onCategorySelect) onCategorySelect(child)
+                                else router.push(getCategoryPath(child))
+                              }}
+                              className={`my-0.5 flex flex-1 cursor-pointer items-center rounded-lg px-2 py-1 text-left text-xs font-medium transition-colors ${
+                                isChildSelected
+                                  ? "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
+                                  : "text-gray-500 hover:bg-sky-50 hover:text-sky-500 dark:text-gray-400 dark:hover:bg-sky-900/20 dark:hover:text-sky-400"
+                              }`}
+                            >
+                              {child.name}
+                            </button>
+                          </div>
+                        )
+                      })}
+                    </div>
                   )}
                 </Fragment>
               )

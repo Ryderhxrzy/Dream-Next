@@ -751,7 +751,7 @@ export default function SupplierChatPage() {
     }
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
-  }, [mediaModal.open])
+  }, [mediaModal])
 
   // Auto-resize textarea
   useEffect(() => {
@@ -992,7 +992,7 @@ export default function SupplierChatPage() {
           {/* Messages area */}
           <div
             ref={messagesContainerRef}
-            className="relative flex-1 scrollbar-none overflow-y-auto [&::-webkit-scrollbar]:hidden"
+            className="relative flex-1 scrollbar-none overflow-x-hidden overflow-y-auto [&::-webkit-scrollbar]:hidden"
           >
             <div className="px-5 py-5">
               {isLoading ? (
@@ -1227,7 +1227,7 @@ export default function SupplierChatPage() {
                               />
                             )}
                             <div
-                              className={`relative max-w-[72%] ${mine ? "" : "ml-0"}`}
+                              className={`relative max-w-[72%] min-w-0 ${mine ? "" : "ml-0"}`}
                               onMouseEnter={() => enterMsg(message.id)}
                               onMouseLeave={leaveMsg}
                             >
@@ -1451,7 +1451,7 @@ export default function SupplierChatPage() {
                                       className={`relative ${activeReactions.length > 0 ? "mb-4" : ""}`}
                                     >
                                       <div
-                                        className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${mine ? "rounded-br-md bg-indigo-600 text-white" : "rounded-bl-md border border-slate-200 bg-white text-slate-800 shadow-sm"}`}
+                                        className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed [overflow-wrap:anywhere] whitespace-pre-wrap ${mine ? "rounded-br-md bg-indigo-600 text-white" : "rounded-bl-md border border-slate-200 bg-white text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"}`}
                                       >
                                         {message.message}
                                       </div>

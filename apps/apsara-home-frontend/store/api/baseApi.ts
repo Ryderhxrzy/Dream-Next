@@ -266,6 +266,7 @@ export const baseApi = createApi({
     "ServiceInquiries",
     "BrandRequests",
     "KnowledgeDocuments",
+    "Followers",
   ],
   endpoints: () => ({}),
 })

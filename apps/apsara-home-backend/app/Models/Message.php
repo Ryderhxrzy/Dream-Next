@@ -15,6 +15,7 @@ class Message extends Model
     protected $fillable = [
         'conversation_id',
         'sender_id',
+        'sender_type',
         'message',
         'is_internal',
         'attachment_url',

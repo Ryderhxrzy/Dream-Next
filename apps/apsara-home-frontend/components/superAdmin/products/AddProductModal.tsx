@@ -8,6 +8,7 @@ import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import { useGetAdminMeQuery } from "@/store/api/authApi"
 import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
 import { useGetProductBrandsQuery } from "@/store/api/productBrandsApi"
+import { useGetMyBrandsQuery } from "@/store/api/brandRequestsApi"
 import { useGetSuppliersQuery, useGetSupplierCategoriesQuery } from "@/store/api/suppliersApi"
 import {
   CreateProductPayload,
@@ -1422,6 +1423,11 @@ export default function AddProductModal({
   const brands = useMemo(
     () => (brandsData?.brands ?? []).filter((brand) => brand.status === 0),
     [brandsData?.brands]
+  )
+  const { data: myBrandsData } = useGetMyBrandsQuery(undefined, { skip: !isSupplierPortal })
+  const supplierOwnedBrands = useMemo(
+    () => (myBrandsData?.brands ?? []).filter((b) => b.status === 0),
+    [myBrandsData?.brands]
   )
   const { data: suppliersData } = useGetSuppliersQuery(undefined, { skip: isSupplierPortal })
   const companies = useMemo(
@@ -3563,8 +3569,32 @@ export default function AddProductModal({
 
                               <Field label="Company" error={errors.pd_brand_type}>
                                 {isSupplierPortal ? (
-                                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
-                                    {supplierCompanyName || "—"}
+                                  <div className="space-y-2">
+                                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
+                                      {supplierCompanyName || "—"}
+                                    </div>
+                                    {supplierOwnedBrands.length > 0 && (
+                                      <ModalSelectField
+                                        ariaLabel="Select brand"
+                                        value={form.pd_brand_type}
+                                        searchable
+                                        searchPlaceholder="Search brands..."
+                                        onChange={(value) => {
+                                          set(
+                                            "pd_brand_type",
+                                            value === EMPTY_SELECT_KEYS.brand ? "" : value
+                                          )
+                                          setErrors((prev) => ({ ...prev, pd_brand_type: undefined }))
+                                        }}
+                                        options={[
+                                          { value: EMPTY_SELECT_KEYS.brand, label: "Select brand..." },
+                                          ...supplierOwnedBrands.map((b) => ({
+                                            value: String(b.id),
+                                            label: b.name,
+                                          })),
+                                        ]}
+                                      />
+                                    )}
                                   </div>
                                 ) : (
                                   <div className="space-y-2">

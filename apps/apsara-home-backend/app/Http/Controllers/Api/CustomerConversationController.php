@@ -71,8 +71,11 @@ class CustomerConversationController extends Controller
         // new thread each time — lets the customer start a chat to describe their
         // issue, but prevents duplicate/spam conversations. Once support resolves
         // (closes) it, the next start opens a fresh thread.
+        // Exclude order threads ("Order {ref}") — those are scoped per order by the
+        // admin; the customer's generic chat must not hijack one.
         $conversation = Conversation::where('user_id', $customer->c_userid)
             ->where('status', '!=', 'resolved')
+            ->where('subject', 'not like', 'Order %')
             ->orderByDesc('updated_at')
             ->first();
 
@@ -154,7 +157,8 @@ class CustomerConversationController extends Controller
                 $validated['message'],
                 false,
                 $validated['attachment_url'] ?? null,
-                $validated['attachment_filename'] ?? null
+                $validated['attachment_filename'] ?? null,
+                'customer'
             );
 
             return response()->json([
@@ -187,7 +191,10 @@ class CustomerConversationController extends Controller
             return response()->json(['message' => 'Conversation not found.'], 404);
         }
 
-        $perPage = (int) $request->query('per_page', 50);
+        // High default: messages are oldest-first, so a small page 1 would return
+        // the OLDEST N and hide the newest on reload of a long thread. Support
+        // threads are short; capped at 200 to stay sane.
+        $perPage = min((int) $request->query('per_page', 200), 200);
 
         // Internal notes are admin-only — never expose them on the customer endpoint.
         $messages = $conversation->messages()
@@ -341,15 +348,20 @@ class CustomerConversationController extends Controller
     private function formatConversation(Conversation $conversation): array
     {
         // Customer-facing summary must ignore internal (admin-only) notes.
+        // reorder() clears the relation's created_at-ASC ordering — without it,
+        // chaining ->latest() conflicts and returns the OLDEST message instead.
         $latestMessage = $conversation->messages()
             ->where('is_internal', false)
-            ->latest()
+            ->reorder()
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->first();
 
         return [
             'id' => (int) $conversation->id,
             'subject' => (string) $conversation->subject,
             'description' => $conversation->description,
+            'order' => $conversation->orderInfo(),
             'status' => (string) $conversation->status,
             'assigned_agent_id' => $conversation->assigned_agent_id ? (int) $conversation->assigned_agent_id : null,
             'assigned_agent' => $conversation->assignedAgent ? [
@@ -401,12 +413,11 @@ class CustomerConversationController extends Controller
      */
     private function formatMessage(Message $message, Conversation $conversation): array
     {
-        // Within a conversation the customer is always `user_id`; anyone else is staff.
-        // This is collision-proof (it doesn't compare IDs across different tables) so the
-        // client can decide bubble side from `sender_type` without guessing.
-        $senderType = ((int) $message->sender_id === (int) $conversation->user_id)
-            ? 'customer'
-            : 'admin';
+        // Prefer the role persisted at write time (collision-proof — no cross-table
+        // id comparison). Fall back to the per-conversation rule only for legacy
+        // rows written before the sender_type column existed.
+        $senderType = $message->sender_type
+            ?: (((int) $message->sender_id === (int) $conversation->user_id) ? 'customer' : 'admin');
 
         return [
             'id' => (int) $message->id,

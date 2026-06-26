@@ -7,6 +7,8 @@ import formatPrice from "@/helpers/FormatPrice"
 import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
 import { getProfileCompletion } from "@/libs/profileCompletion"
 import { ROOM_OPTIONS } from "@/libs/roomConfig"
+import { matchesProductSearch, getProductMatchField } from "@/libs/productSearch"
+import type { SearchMatchField } from "@/libs/productSearch"
 import {
   buildStorefrontProductPath,
   extractPartnerSlugFromPath,
@@ -22,7 +24,7 @@ import {
 import { useGetCustomerUnreadCountQuery } from "@/store/api/customerConversationsApi"
 import CustomerChatPanel from "@/components/chat/CustomerChatPanel"
 import { useGetPublicProductBrandsQuery } from "@/store/api/productBrandsApi"
-import { useGetPublicProductsQuery } from "@/store/api/productsApi"
+import { useGetPublicProductsQuery, useGetPublicZqProductsQuery } from "@/store/api/productsApi"
 import {
   useClearSearchHistoryMutation,
   useDeleteSearchHistoryItemMutation,
@@ -601,13 +603,25 @@ function NavbarInner({
     useGetPublicProductsQuery(
       {
         page: 1,
-        perPage: 50,
-        search: debouncedSearchQuery,
+        perPage: 500,
+        status: "1",
+        includeAll: true,
       },
       {
-        skip: debouncedSearchQuery.length < 2,
+        skip: activeSearchQuery.length < 2,
       }
     )
+  const { data: zqSearchedProductsData, isFetching: isSearchingZqProducts } =
+    useGetPublicZqProductsQuery(
+      { page: 1, perPage: 50, search: debouncedSearchQuery },
+      { skip: activeSearchQuery.length < 2 }
+    )
+
+  const searchedZqProducts = useMemo(() => {
+    if (!debouncedSearchQuery.trim()) return []
+    return zqSearchedProductsData?.products ?? []
+  }, [zqSearchedProductsData?.products, debouncedSearchQuery])
+
   const { data: partnerStorefrontData } = useGetPublicWebPageItemsQuery(
     "partner-storefront",
     {
@@ -639,15 +653,12 @@ function NavbarInner({
 
   const searchedProducts = useMemo(() => {
     const rows = searchedProductsData?.products ?? []
-    const normalizedQuery = debouncedSearchQuery.trim().toLowerCase()
+    const normalizedQuery = debouncedSearchQuery.trim()
     return rows
+      .filter((product) => matchesProductSearch(product, normalizedQuery))
       .map((product) => {
         const name = String(product.name ?? "").trim()
         if (!name) return null
-        const nameLower = name.toLowerCase()
-        if (normalizedQuery) {
-          if (!nameLower.includes(normalizedQuery)) return null
-        }
         const imageFromArray = Array.isArray(product.images)
           ? product.images.find(
               (item) => typeof item === "string" && item.trim().length > 0
@@ -672,6 +683,9 @@ function NavbarInner({
           typeof product.priceSrp === "number" ? product.priceSrp : null
         const prodpv =
           typeof product.prodpv === "number" ? product.prodpv : null
+        const matchField = normalizedQuery
+          ? getProductMatchField(product, normalizedQuery)
+          : "name"
         return {
           id: id ?? slug,
           name,
@@ -681,6 +695,8 @@ function NavbarInner({
           priceDp,
           priceSrp,
           prodpv,
+          matchField,
+          brand: typeof product.brand === "string" ? product.brand : null,
         }
       })
       .filter(
@@ -695,8 +711,14 @@ function NavbarInner({
           priceDp: number | null
           priceSrp: number | null
           prodpv: number | null
+          matchField: SearchMatchField
+          brand: string | null
         } => Boolean(product)
       )
+      .sort((a, b) => {
+        const order: Record<SearchMatchField, number> = { name: 0, brand: 1, sku: 2, other: 3 }
+        return order[a.matchField] - order[b.matchField]
+      })
   }, [
     searchedProductsData?.products,
     debouncedSearchQuery,
@@ -709,9 +731,11 @@ function NavbarInner({
     searchModalOpen &&
     activeSearchQuery.length >= 2 &&
     !isSearchingProducts &&
-    searchedProducts.length === 0
+    !isSearchingZqProducts &&
+    searchedProducts.length === 0 &&
+    searchedZqProducts.length === 0
   const showSearchSearching =
-    searchModalOpen && activeSearchQuery.length >= 2 && isSearchingProducts
+    searchModalOpen && activeSearchQuery.length >= 2 && (isSearchingProducts || isSearchingZqProducts)
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 20)
@@ -1382,24 +1406,20 @@ function NavbarInner({
 
             {/* Search - Centered */}
             <div className="hidden max-w-lg flex-1 md:flex md:justify-center">
-              <SearchField aria-label="Open product search" className="w-full">
-                <Label className="sr-only">Search</Label>
-                <SearchField.Group
-                  className="flex h-10 cursor-pointer items-center gap-2.5 rounded-full border border-slate-200 bg-white px-4 shadow-sm transition-all duration-200 hover:border-slate-300 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600"
-                  onClick={() => setSearchModalOpen(true)}
-                >
-                  <SearchField.SearchIcon className="h-4 w-4 shrink-0 text-slate-400" />
-                  <SearchField.Input
-                    readOnly
-                    placeholder="Search products..."
-                    onFocus={() => setSearchModalOpen(true)}
-                    className="flex-1 cursor-pointer border-none bg-transparent p-0 text-sm text-slate-500 outline-none placeholder:text-slate-400 dark:text-gray-300 dark:placeholder:text-gray-500"
-                  />
-                  <kbd className="hidden items-center gap-0.5 rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-slate-400 shadow-sm lg:inline-flex dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400">
-                    Ctrl K
-                  </kbd>
-                </SearchField.Group>
-              </SearchField>
+              <button
+                type="button"
+                aria-label="Open product search"
+                onClick={() => setSearchModalOpen(true)}
+                className="flex h-10 w-full cursor-pointer items-center gap-2.5 rounded-full border border-slate-200 bg-white px-4 shadow-sm transition-all duration-200 hover:border-slate-300 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 shrink-0 text-slate-400">
+                  <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+                </svg>
+                <span className="flex-1 text-left text-sm text-slate-400 dark:text-gray-500">Search products...</span>
+                <kbd className="hidden items-center gap-0.5 rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-slate-400 shadow-sm lg:inline-flex dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400">
+                  Ctrl K
+                </kbd>
+              </button>
             </div>
 
             {/* Icons */}
@@ -2194,21 +2214,17 @@ function NavbarInner({
 
           {/* Mobile search */}
           <div className="pb-3 md:hidden">
-            <SearchField aria-label="Open product search" className="w-full">
-              <Label className="sr-only">Search</Label>
-              <SearchField.Group
-                className="flex h-10 cursor-pointer items-center gap-2.5 rounded-full border border-slate-200 bg-white px-4 shadow-sm transition-all duration-200 hover:border-slate-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600"
-                onClick={() => setSearchModalOpen(true)}
-              >
-                <SearchField.SearchIcon className="h-4 w-4 shrink-0 text-slate-400" />
-                <SearchField.Input
-                  readOnly
-                  placeholder="Search products..."
-                  onFocus={() => setSearchModalOpen(true)}
-                  className="flex-1 cursor-pointer border-none bg-transparent p-0 text-sm text-slate-500 outline-none placeholder:text-slate-400"
-                />
-              </SearchField.Group>
-            </SearchField>
+            <button
+              type="button"
+              aria-label="Open product search"
+              onClick={() => setSearchModalOpen(true)}
+              className="flex h-10 w-full cursor-pointer items-center gap-2.5 rounded-full border border-slate-200 bg-white px-4 shadow-sm transition-all duration-200 hover:border-slate-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 shrink-0 text-slate-400">
+                <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+              </svg>
+              <span className="flex-1 text-left text-sm text-slate-400 dark:text-gray-500">Search products...</span>
+            </button>
           </div>
         </div>
 
@@ -3291,20 +3307,20 @@ function NavbarInner({
                   setSearchModalQuery("")
                 }}
               >
-                <div className="flex min-h-screen items-start justify-center px-3 pt-12 sm:px-6 sm:pt-20 md:pt-24">
+                <div className="flex h-screen items-stretch justify-center px-3 pb-4 pt-12 sm:px-6 sm:pb-6 sm:pt-16 md:pt-20">
                   <motion.div
                     initial={{ opacity: 0, y: 20, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 16, scale: 0.95 }}
                     transition={{ duration: 0.2, ease: "easeOut" }}
-                    className="w-full max-w-2xl"
+                    className="flex w-full max-w-2xl flex-col"
                     onClick={(event) => event.stopPropagation()}
                   >
                     <Card
                       variant="default"
-                      className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-black/15 dark:border-gray-700 dark:bg-gray-800"
+                      className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-black/15 dark:border-gray-700 dark:bg-gray-800"
                     >
-                      <Card.Content className="space-y-0 px-0 py-0">
+                      <Card.Content className="flex flex-1 flex-col space-y-0 overflow-hidden px-0 py-0">
                         <form
                           className="border-b border-slate-200 px-6 py-5 dark:border-gray-700"
                           onSubmit={(event) => {
@@ -3390,7 +3406,7 @@ function NavbarInner({
                             </div>
                           </div>
                         </form>
-                        <div className="max-h-[calc(100vh-180px)] overflow-y-auto px-3 py-4 sm:px-4 sm:py-5">
+                        <div className="flex-1 overflow-y-auto px-3 py-4 sm:px-4 sm:py-5">
                           {/* Show recent searches when query is empty OR still loading search results */}
                           {debouncedSearchQuery.length < 2 ? (
                             <>
@@ -3626,8 +3642,81 @@ function NavbarInner({
                               initial={{ opacity: 0 }}
                               animate={{ opacity: 1 }}
                               transition={{ staggerChildren: 0.05 }}
-                              className="space-y-3"
+                              className="space-y-1.5"
                             >
+                              {searchedZqProducts.length > 0 && (
+                                <div className="mb-3">
+                                  <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500">
+                                    AF Home Global Brand
+                                  </p>
+                                  {searchedZqProducts.slice(0, 5).map((zqProduct, index) => {
+                                    const srp = Number(zqProduct.priceMinCents ?? 0) / 100
+                                    const memberPriceCents = status === "authenticated" ? Number(zqProduct.memberPrice ?? 0) : 0
+                                    const memberPrice = memberPriceCents > 0 ? memberPriceCents / 100 : 0
+                                    const showMember = memberPrice > 0 && memberPrice < srp
+                                    const displayPrice = showMember ? memberPrice : srp
+                                    return (
+                                      <motion.div
+                                        key={zqProduct.id}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: index * 0.03 }}
+                                      >
+                                        <Link
+                                          href={`/global-product/${zqProduct.id}`}
+                                          onClick={() => {
+                                            saveSearchToHistory(searchModalQuery)
+                                            setSearchModalQuery("")
+                                            setSearchModalOpen(false)
+                                            setMobileOpen(false)
+                                          }}
+                                          className="group relative mb-1.5 flex items-center gap-3 rounded-xl border border-slate-100 bg-white p-2.5 transition-all hover:border-sky-200 hover:bg-sky-50 sm:gap-4 sm:p-3 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-sky-500/40 dark:hover:bg-gray-700/80"
+                                        >
+                                          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-slate-100 sm:h-16 sm:w-16 dark:bg-gray-700">
+                                            {zqProduct.primaryImage ? (
+                                              // eslint-disable-next-line @next/next/no-img-element
+                                              <img
+                                                src={zqProduct.primaryImage}
+                                                alt={zqProduct.subject}
+                                                className="h-full w-full object-cover transition group-hover:scale-105"
+                                              />
+                                            ) : (
+                                              <span className="flex h-full w-full items-center justify-center text-xs font-bold text-slate-300 dark:text-gray-600">
+                                                AF
+                                              </span>
+                                            )}
+                                          </div>
+                                          <div className="min-w-0 flex-1">
+                                            <p className="truncate text-xs font-semibold text-slate-900 sm:text-sm dark:text-gray-100">
+                                              {zqProduct.subject}
+                                            </p>
+                                            <p className="mt-0.5 text-[10px] text-slate-400 sm:text-xs dark:text-gray-500">
+                                              AF Home Global Brand
+                                            </p>
+                                            {srp > 0 && (
+                                              <div className="mt-1 flex items-center gap-2">
+                                                <span className="text-xs font-bold text-sky-600 sm:text-sm dark:text-sky-400">
+                                                  {formatPrice(displayPrice)}
+                                                </span>
+                                                {showMember && (
+                                                  <span className="text-[10px] text-slate-400 line-through sm:text-xs dark:text-gray-500">
+                                                    {formatPrice(srp)}
+                                                  </span>
+                                                )}
+                                              </div>
+                                            )}
+                                          </div>
+                                        </Link>
+                                      </motion.div>
+                                    )
+                                  })}
+                                </div>
+                              )}
+                              {searchedProducts.length > 0 && searchedZqProducts.length > 0 && (
+                                <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500">
+                                  AF Home Products
+                                </p>
+                              )}
                               {searchedProducts.map((product, index) => (
                                 <motion.div
                                   key={product.id}
@@ -3643,24 +3732,24 @@ function NavbarInner({
                                       setSearchModalOpen(false)
                                       setMobileOpen(false)
                                     }}
-                                    className="group relative flex flex-col items-start gap-2 rounded-xl border border-slate-200 bg-white p-2 transition-all hover:border-sky-300 hover:bg-sky-50 sm:flex-row sm:items-center sm:gap-4 sm:p-3 dark:border-gray-700 dark:bg-gray-700/50 dark:hover:border-sky-500/50 dark:hover:bg-gray-700"
+                                    className="group relative flex items-center gap-3 rounded-xl border border-slate-100 bg-white p-2.5 transition-all hover:border-sky-200 hover:bg-sky-50 sm:gap-4 sm:p-3 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-sky-500/40 dark:hover:bg-gray-700/80"
                                   >
-                                    <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100 sm:h-20 sm:w-20 dark:bg-gray-700">
+                                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-slate-100 sm:h-16 sm:w-16 dark:bg-gray-700">
                                       {product.image ? (
                                         <Image
                                           src={product.image}
                                           alt={product.name}
                                           fill
-                                          className="object-cover transition group-hover:scale-110"
+                                          className="object-cover transition group-hover:scale-105"
                                         />
                                       ) : (
-                                        <span className="flex h-full w-full items-center justify-center text-xs font-bold text-slate-400 dark:text-gray-600">
+                                        <span className="flex h-full w-full items-center justify-center text-xs font-bold text-slate-300 dark:text-gray-600">
                                           AF
                                         </span>
                                       )}
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                      <p className="line-clamp-2 text-xs font-semibold text-slate-900 sm:truncate sm:text-sm dark:text-gray-100">
+                                      <p className="truncate text-xs font-semibold text-slate-900 sm:text-sm dark:text-gray-100">
                                         {highlightText(
                                           product.name,
                                           searchModalQuery
@@ -3668,7 +3757,7 @@ function NavbarInner({
                                           part.type === "highlight" ? (
                                             <span
                                               key={i}
-                                              className="rounded bg-yellow-200 px-0.5 dark:bg-yellow-700"
+                                              className="rounded bg-yellow-200 px-0.5 dark:bg-yellow-700/60"
                                             >
                                               {part.text}
                                             </span>
@@ -3677,10 +3766,15 @@ function NavbarInner({
                                           )
                                         )}
                                       </p>
-                                      <p className="mt-0.5 text-[10px] text-slate-500 sm:text-xs dark:text-gray-400">
-                                        Match for &quot;
-                                        {searchModalQuery.trim()}&quot;
-                                      </p>
+                                      {product.matchField !== "name" && (
+                                        <p className="mt-0.5 truncate text-[10px] text-slate-400 sm:text-xs dark:text-gray-500">
+                                          {product.matchField === "brand" && product.brand
+                                            ? `Brand: ${product.brand}`
+                                            : product.matchField === "sku"
+                                              ? "Matched by SKU"
+                                              : "Matched in description"}
+                                        </p>
+                                      )}
                                       {(product.priceMember !== null ||
                                         product.priceSrp !== null ||
                                         product.prodpv !== null) && (

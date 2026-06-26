@@ -797,10 +797,13 @@ class ProductController extends Controller
         $like = '%' . $search . '%';
 
         $query->where(function ($inner) use ($like) {
-            $inner->where('pd_name', 'like', $like)
-                ->orWhere('pd_parent_sku', 'like', $like)
+            $inner->where('pd_name', 'ilike', $like)
+                ->orWhere('pd_parent_sku', 'ilike', $like)
+                ->orWhereHas('brand', function ($brandQuery) use ($like) {
+                    $brandQuery->where('pb_name', 'ilike', $like);
+                })
                 ->orWhereHas('variants', function ($variantQuery) use ($like) {
-                    $variantQuery->where('pv_sku', 'like', $like);
+                    $variantQuery->where('pv_sku', 'ilike', $like);
                 });
         });
     }
@@ -2076,7 +2079,19 @@ class ProductController extends Controller
                 ->withCount('variants')
                 ->when(! $includeAll, fn ($q) => $this->applyPublicVisibility($q))
                 ->when($search !== '', fn ($q) => $this->applyKeywordSearch($q, $search))
-                ->when($catId !== '', fn ($q) => $q->where('pd_catid', (int) $catId))
+                ->when($catId !== '', function ($q) use ($catId) {
+                    $catIdInt = (int) $catId;
+                    $childIds = \App\Models\Category::where('parent_id', $catIdInt)
+                        ->pluck('cat_id')
+                        ->map(fn ($id) => (int) $id)
+                        ->all();
+                    $allCatIds = array_values(array_unique(array_merge([$catIdInt], $childIds)));
+                    $q->where(function ($inner) use ($allCatIds) {
+                        $inner->whereIn('pd_catid', $allCatIds)
+                              ->orWhereIn('pd_merchant_catid', $allCatIds)
+                              ->orWhereIn('pd_merchant_subcatid', $allCatIds);
+                    });
+                })
                 ->when($roomType !== '', fn ($q) => $q->where('pd_room_type', (int) $roomType))
                 ->when($brandType !== '', fn ($q) => $q->where('pd_brand_type', (int) $brandType))
                 ->orderByDesc('pd_id');
@@ -2286,7 +2301,17 @@ class ProductController extends Controller
                     $q->where('pd_status', $normalizedStatus);
                 })
                 ->when($catId !== '', function ($q) use ($catId) {
-                    $q->where('pd_catid', (int) $catId);
+                    $catIdInt = (int) $catId;
+                    $childIds = \App\Models\Category::where('parent_id', $catIdInt)
+                        ->pluck('cat_id')
+                        ->map(fn ($id) => (int) $id)
+                        ->all();
+                    $allCatIds = array_values(array_unique(array_merge([$catIdInt], $childIds)));
+                    $q->where(function ($inner) use ($allCatIds) {
+                        $inner->whereIn('pd_catid', $allCatIds)
+                              ->orWhereIn('pd_merchant_catid', $allCatIds)
+                              ->orWhereIn('pd_merchant_subcatid', $allCatIds);
+                    });
                 })
                 ->when($roomType !== '', function ($q) use ($roomType) {
                     $q->where('pd_room_type', (int) $roomType);
@@ -2305,7 +2330,7 @@ class ProductController extends Controller
                 });
 
             // Apply personalization only if no manual filters and user has behavior data
-            if (!empty($personalizedCatIds) && $catId === '' && $roomType === '' && $brandType === '') {
+            if (!empty($personalizedCatIds) && $status === '' && $search === '' && $catId === '' && $roomType === '' && $brandType === '') {
                 $query->whereIn('pd_catid', $personalizedCatIds);
                 // Sort by user visit frequency using behavior count (Redis cache + JOIN fallback)
                 $userId = auth('sanctum')->id();

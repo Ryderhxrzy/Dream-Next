@@ -8,6 +8,11 @@ export interface ProductBrand {
   // Owning merchant (tbl_supplier). A brand belongs to exactly one merchant.
   supplier_id?: number | null
   supplier_name?: string | null
+  // Active follower count for this brand (public).
+  followers_count?: number
+  // Whether the authenticated customer follows this brand. Always false for
+  // guests / unauthenticated requests (the brand GET is optionally authenticated).
+  is_followed?: boolean
 }
 
 interface ProductBrandsResponse {

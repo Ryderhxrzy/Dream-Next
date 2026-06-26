@@ -1548,6 +1548,7 @@ const ProfilePage = ({
   const [usernameOtpSentTo, setUsernameOtpSentTo] = useState<string | null>(
     null
   )
+  const [usernameOtpCountdown, setUsernameOtpCountdown] = useState(0)
   const [isUsernamePendingLocal, setIsUsernamePendingLocal] = useState(false)
   const [bio, setBio] = useState("")
   const [webstoreForm, setWebstoreForm] = useState<WebstoreRequestFormState>({
@@ -4701,6 +4702,12 @@ const ProfilePage = ({
     selectedWebstoreSubscriptionFee,
   ])
 
+  useEffect(() => {
+    if (usernameOtpCountdown <= 0) return
+    const timer = setTimeout(() => setUsernameOtpCountdown((c) => c - 1), 1000)
+    return () => clearTimeout(timer)
+  }, [usernameOtpCountdown])
+
   const handleSendUsernameOtp = async () => {
     setUsernameMsg(null)
     const nextUsername = usernameRequest.replace(/\s+/g, "").trim()
@@ -4741,6 +4748,7 @@ const ProfilePage = ({
       setUsernameOtpToken(response.verification_token)
       setUsernameOtpSentTo(response.email)
       setUsernameOtp("")
+      setUsernameOtpCountdown(180)
       setUsernameMsg({
         type: "success",
         text: "We sent a 4-digit OTP to your email. Enter it below to submit your request.",
@@ -10366,7 +10374,8 @@ const ProfilePage = ({
                                 onClick={handleSendUsernameOtp}
                                 disabled={
                                   hasPendingUsernameRequest ||
-                                  isSendingUsernameOtp
+                                  isSendingUsernameOtp ||
+                                  usernameOtpCountdown > 0
                                 }
                                 className="inline-flex items-center gap-2 rounded-xl bg-sky-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-sky-600 dark:hover:bg-sky-700"
                               >
@@ -10377,6 +10386,11 @@ const ProfilePage = ({
                                       className="border border-white/30 border-t-white"
                                     />
                                     Sending OTP...
+                                  </>
+                                ) : usernameOtpCountdown > 0 ? (
+                                  <>
+                                    <Icon.Edit className="h-4 w-4" />
+                                    Resend in {Math.floor(usernameOtpCountdown / 60)}:{String(usernameOtpCountdown % 60).padStart(2, "0")}
                                   </>
                                 ) : (
                                   <>
@@ -10394,12 +10408,21 @@ const ProfilePage = ({
                                   setUsernameOtp("")
                                   setUsernameOtpToken(null)
                                   setUsernameOtpSentTo(null)
+                                  setUsernameOtpCountdown(0)
                                 }}
                                 className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-gray-300 dark:hover:bg-gray-700"
                               >
                                 Reset
                               </button>
                             </div>
+                            {usernameOtpCountdown > 0 && (
+                              <p className="text-[11px] text-slate-500 dark:text-gray-400">
+                                You can request a new OTP in{" "}
+                                <span className="font-semibold text-sky-600 dark:text-sky-400">
+                                  {Math.floor(usernameOtpCountdown / 60)}:{String(usernameOtpCountdown % 60).padStart(2, "0")}
+                                </span>
+                              </p>
+                            )}
 
                             {usernameOtpToken && !hasPendingUsernameRequest && (
                               <div className="space-y-3 rounded-xl border border-sky-100 bg-sky-50/60 px-4 py-3 dark:border-sky-800 dark:bg-sky-900/20">
@@ -13595,7 +13618,7 @@ const ProfilePage = ({
                                             X
                                           </button>
                                         ) : null}
-                                        {item.kind === "selected" ? (
+                                        {item.kind === "selected" && webstoreReceiptFiles.length > 1 ? (
                                           <button
                                             type="button"
                                             onClick={(event) => {

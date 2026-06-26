@@ -98,14 +98,18 @@ class AdminConversationController extends Controller
             return response()->json(['message' => 'Customer not found.'], 404);
         }
 
-        // Reuse the customer's most recent unresolved conversation, otherwise start one.
+        // Scope find-or-create to this exact subject so each order ("Order {ref}")
+        // and the generic member-support thread get their OWN conversation, instead
+        // of reusing the customer's latest unrelated one.
+        $subject = trim((string) ($validated['subject'] ?? '')) ?: 'Support chat';
+
         $conversation = Conversation::where('user_id', (int) $customer->c_userid)
+            ->where('subject', $subject)
             ->where('status', '!=', 'resolved')
             ->orderByDesc('updated_at')
             ->first();
 
         if (!$conversation) {
-            $subject = trim((string) ($validated['subject'] ?? '')) ?: 'Support chat';
             $conversation = $this->conversationService->createConversation($customer, $subject, null);
         }
 
@@ -233,7 +237,8 @@ class AdminConversationController extends Controller
                 $validated['message'],
                 (bool) ($validated['is_internal'] ?? false),
                 $validated['attachment_url'] ?? null,
-                $validated['attachment_filename'] ?? null
+                $validated['attachment_filename'] ?? null,
+                'admin'
             );
 
             return response()->json([
@@ -259,7 +264,8 @@ class AdminConversationController extends Controller
             return response()->json(['message' => 'Conversation not found.'], 404);
         }
 
-        $perPage = (int) $request->query('per_page', 50);
+        // High default for the same reason as the customer endpoint (oldest-first).
+        $perPage = min((int) $request->query('per_page', 200), 200);
         $showInternal = $request->boolean('internal', false);
 
         $query = $conversation->messages();
@@ -401,7 +407,13 @@ class AdminConversationController extends Controller
      */
     private function formatConversationForAdmin(Conversation $conversation): array
     {
-        $latestMessage = $conversation->messages()->latest()->first();
+        // reorder() clears the relation's created_at-ASC ordering — without it,
+        // chaining ->latest() conflicts and returns the OLDEST message instead.
+        $latestMessage = $conversation->messages()
+            ->reorder()
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->first();
 
         return [
             'id' => (int) $conversation->id,
@@ -418,6 +430,7 @@ class AdminConversationController extends Controller
             ],
             'subject' => (string) $conversation->subject,
             'description' => $conversation->description,
+            'order' => $conversation->orderInfo(),
             'status' => (string) $conversation->status,
             'assigned_agent_id' => $conversation->assigned_agent_id ? (int) $conversation->assigned_agent_id : null,
             'assigned_agent' => $conversation->assignedAgent ? [
@@ -464,10 +477,10 @@ class AdminConversationController extends Controller
      */
     private function formatMessage(Message $message, Conversation $conversation): array
     {
-        // Within a conversation the customer is always `user_id`; anyone else is staff.
-        $senderType = ((int) $message->sender_id === (int) $conversation->user_id)
-            ? 'customer'
-            : 'admin';
+        // Prefer the role persisted at write time (collision-proof). Fall back to the
+        // per-conversation rule only for legacy rows without the column.
+        $senderType = $message->sender_type
+            ?: (((int) $message->sender_id === (int) $conversation->user_id) ? 'customer' : 'admin');
 
         return [
             'id' => (int) $message->id,
