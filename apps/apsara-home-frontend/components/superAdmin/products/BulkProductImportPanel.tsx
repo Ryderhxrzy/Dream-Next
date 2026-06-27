@@ -708,18 +708,7 @@ export const parseCsvText = (text: string): ParsedCsv => {
       })
       return normalizeRow(raw)
     })
-    .map((row) => {
-      const sku = (row.pd_parent_sku ?? "").trim()
-      if (sku) {
-        lastParentSku = sku
-        return row
-      }
       // Variant row with no parent SKU — inherit from the last seen product row
-      if ((row.pv_sku ?? "").trim() && lastParentSku) {
-        return { ...row, pd_parent_sku: lastParentSku }
-      }
-      return row
-    })
     .filter((row) => {
       // Skip rows that have no product info AND no variant SKU — these are truly blank rows
       const name = (row.pd_name ?? "").trim()
@@ -909,6 +898,7 @@ export default function BulkProductImportPanel({
   const [importResults, setImportResults] = useState<
     BulkImportProductsResponse["results"] | null
   >(null)
+  const [importProgress, setImportProgress] = useState<{ current: number; total: number } | null>(null)
   const [importErrorModal, setImportErrorModal] = useState<{
     title: string
     details: string
@@ -1680,17 +1670,17 @@ export default function BulkProductImportPanel({
       if (hasFailures) {
         setImportResults(results)
         showErrorToast(
-          `Import finished with errors: ${summary.created} created, ${summary.updated} updated, ${summary.failed} failed.`
+          `Import finished with errors: ${totalCreated} created, ${totalUpdated} updated, ${totalFailed} failed.`
         )
-        if (summary.created > 0 || summary.updated > 0) onImported?.()
-      } else if (summary.created === 0 && summary.updated === 0) {
+        if (totalCreated > 0 || totalUpdated > 0) onImported?.()
+      } else if (totalCreated === 0 && totalUpdated === 0) {
         showSuccessToast(
           "No changes detected — all rows already match the current database."
         )
         onClose()
       } else {
         showSuccessToast(
-          `Import finished: ${summary.created} created, ${summary.updated} updated.`
+          `Import finished: ${totalCreated} created, ${totalUpdated} updated.`
         )
         onImported?.()
         onClose()
