@@ -22,6 +22,9 @@ export interface SectionProduct {
   name: string
   image?: string | null
   price?: number | null
+  original_price?: number | null
+  member_price?: number | null
+  pv?: number | null
 }
 
 export interface ProductSectionContent {
@@ -95,7 +98,7 @@ export const supplierBrandHomeApi = baseApi.injectEndpoints({
 
     updateHomeSection: builder.mutation<
       { message: string; section: HomeSection },
-      { sectionId: number; body: Partial<CreateSectionPayload> & Record<string, unknown> }
+      { sectionId: number; body: CreateSectionPayload | { is_active: boolean } }
     >({
       query: ({ sectionId, body }) => ({
         url: `/api/supplier/home/sections/${sectionId}`,
