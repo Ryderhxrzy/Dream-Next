@@ -252,6 +252,7 @@ const ADMIN_PERMISSION_NAV_IDS: Record<string, string> = {
   web_content: 'webpages',
   inquiry: 'inquiry',
   settings_users: 'settings',
+  conversations: 'chat',
 }
 const MERCHANT_VISIBLE_NAV_IDS = new Set([
   'dashboard',

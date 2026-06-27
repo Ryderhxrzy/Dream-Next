@@ -630,7 +630,12 @@ export default function ItemCard({
               <span className="text-sm sm:text-base font-bold text-sky-500 dark:text-sky-400">
                 {'₱'}{displayPrice.toLocaleString()}
               </span>
-              {strikePrice > displayPrice && (
+              {shouldDisplayMemberPrice && srpPrice > memberPrice && (
+                <span className="text-xs sm:text-sm text-gray-400 dark:text-gray-500 line-through">
+                  {'₱'}{srpPrice.toLocaleString()}
+                </span>
+              )}
+              {!shouldDisplayMemberPrice && strikePrice > displayPrice && (
                 <span className="text-xs sm:text-sm text-gray-400 dark:text-gray-500 line-through">
                   {'₱'}{strikePrice.toLocaleString()}
                 </span>
