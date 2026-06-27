@@ -76,9 +76,15 @@ class BrandRequestController extends Controller
         $search = trim((string) $request->query('q', ''));
         $perPage = min(max((int) $request->query('per_page', 24), 1), 100);
 
+        // Source of truth is the brand link (pd_brand_type = pb_id). Brand ownership
+        // is already verified above (pb_supplier_id === supplierId), so every product
+        // under this brand belongs to the merchant. We deliberately do NOT also filter
+        // by pd_supplier: that column is unreliable on legacy products (often null or a
+        // stale/different supplier id), which would hide most — sometimes all — of a
+        // brand's catalog. e.g. brand "Affordahome" has 266 products but only 21 carry
+        // the matching pd_supplier; "Xiaomi" has 80 with zero matches.
         $paginated = Product::query()
             ->where('pd_brand_type', $id)
-            ->where('pd_supplier', $supplierId)
             ->when($search !== '', fn ($q) => $q->where('pd_name', 'ilike', '%' . $search . '%'))
             ->orderBy('pd_name')
             ->paginate($perPage);
@@ -87,7 +93,12 @@ class BrandRequestController extends Controller
             'id' => (int) $p->pd_id,
             'name' => (string) ($p->pd_name ?? ''),
             'image' => $p->pd_image ? (string) $p->pd_image : null,
+            // `price` kept for backwards-compat; original/member/pv mirror the
+            // mobile ItemCard so the builder + preview can show member-price-first.
             'price' => $p->pd_price_srp !== null ? (float) $p->pd_price_srp : null,
+            'original_price' => $p->pd_price_srp !== null ? (float) $p->pd_price_srp : null,
+            'member_price' => $p->pd_price_member !== null ? (float) $p->pd_price_member : null,
+            'pv' => $p->pd_prodpv !== null ? (float) $p->pd_prodpv : null,
             'status' => (int) ($p->pd_status ?? 0),
         ])->values();
 
