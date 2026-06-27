@@ -9,6 +9,7 @@ import {
   GalleryHorizontalEnd,
   GripVertical,
   Image as ImageIcon,
+  ImageUp,
   Loader,
   Pencil,
   Plus,
@@ -26,8 +27,10 @@ import {
 import {
   useCreateHomeSectionMutation,
   useDeleteHomeSectionMutation,
+  useGetBrandCoverQuery,
   useGetBrandHomeQuery,
   useReorderHomeSectionsMutation,
+  useSaveBrandCoverMutation,
   useUpdateHomeSectionMutation,
   type CreateSectionPayload,
   type HomeSection,
@@ -36,7 +39,7 @@ import {
 import ImageInput from "./ImageInput"
 import { getPriceInfo, peso } from "./productPrice"
 
-type Mode = "list" | "banner" | "carousel" | "products"
+type Mode = "list" | "banner" | "carousel" | "products" | "cover"
 
 // Inline feedback shown inside a section form after a save attempt.
 type Status = { type: "success" | "error"; text: string } | null
@@ -47,6 +50,7 @@ const SECTION_OPTIONS: {
   description: string
   icon: typeof ImageIcon
 }[] = [
+  { type: "cover", label: "Cover Photo", description: "A wide cover image for your brand profile header.", icon: ImageUp },
   { type: "banner", label: "Banner", description: "A single full-width promotional image.", icon: ImageIcon },
   { type: "carousel", label: "Carousel", description: "Multiple sliding banners customers can swipe.", icon: GalleryHorizontalEnd },
   { type: "products", label: "Section with Products", description: "A titled row of your products.", icon: ShoppingBag },
@@ -56,17 +60,37 @@ export default function SectionEditor({
   brandId,
   allowAdd = true,
   onSectionsChange,
+  onCoverChange,
 }: {
   brandId: number
   allowAdd?: boolean
   // Reports the live (locally-ordered) sections up, so a preview can mirror
   // reordering in realtime before it's saved.
   onSectionsChange?: (sections: HomeSection[]) => void
+  // Reports the brand cover photo up (saved value, or the live draft while the
+  // cover form is open), so the preview header can mirror it in realtime.
+  onCoverChange?: (url: string | null) => void
 }) {
   const [mode, setMode] = useState<Mode>("list")
 
   const { data, isLoading } = useGetBrandHomeQuery(brandId)
   const sections = useMemo(() => data?.sections ?? [], [data])
+
+  // ── Brand cover photo (a per-brand singleton, not a home section) ──
+  const { data: coverData } = useGetBrandCoverQuery(brandId)
+  const savedCover = coverData?.cover?.image_url ?? null
+  // Live draft while the cover form is open. undefined = no draft (use saved).
+  const [coverDraft, setCoverDraft] = useState<string | null | undefined>(undefined)
+
+  // Mirror the cover (draft when editing, else saved) up to the preview.
+  const onCoverChangeRef = useRef(onCoverChange)
+  useEffect(() => {
+    onCoverChangeRef.current = onCoverChange
+  }, [onCoverChange])
+  useEffect(() => {
+    const c = coverDraft !== undefined ? coverDraft : savedCover
+    onCoverChangeRef.current?.(c && c.trim() ? c : null)
+  }, [coverDraft, savedCover])
 
   const [createSection, { isLoading: isSaving }] = useCreateHomeSectionMutation()
   const [updateSection, { isLoading: isUpdating }] = useUpdateHomeSectionMutation()
@@ -216,6 +240,19 @@ export default function SectionEditor({
   }
 
   // ── Sub-form views ──
+  if (mode === "cover") {
+    return (
+      <CoverForm
+        // Remount when the saved cover resolves/changes so the field seeds correctly.
+        key={savedCover ?? "none"}
+        brandId={brandId}
+        initialImage={savedCover ?? ""}
+        onBack={() => setMode("list")}
+        onSaved={() => setMode("list")}
+        onPreview={setCoverDraft}
+      />
+    )
+  }
   if (mode === "banner") {
     return <BannerForm onBack={() => setMode("list")} onSave={handleSave} saving={isSaving} status={status} onPreview={setDraft} />
   }
@@ -290,7 +327,7 @@ export default function SectionEditor({
           <h4 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">
             Add to Home
           </h4>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {SECTION_OPTIONS.map((option) => {
               const Icon = option.icon
               return (
@@ -637,6 +674,72 @@ function BannerForm({
       submitLabel={submitLabel}
     >
       <ImageInput label="Banner image" value={image} onChange={setImage} />
+    </FormShell>
+  )
+}
+
+// ──────────────────────────────── Cover form ─────────────────────────────────
+
+// The brand profile cover photo. Unlike the section forms, this saves directly
+// to its own per-brand endpoint (it's a singleton, not a reorderable section).
+function CoverForm({
+  brandId,
+  initialImage,
+  onBack,
+  onSaved,
+  onPreview,
+}: {
+  brandId: number
+  initialImage: string
+  onBack: () => void
+  onSaved: () => void
+  // Mirrors the in-progress cover into the preview; undefined reverts to saved.
+  onPreview: (url: string | null | undefined) => void
+}) {
+  const [image, setImage] = useState(initialImage)
+  const [status, setStatus] = useState<Status>(null)
+  const [saveCover, { isLoading: saving }] = useSaveBrandCoverMutation()
+
+  // Mirror the in-progress cover into the preview in realtime.
+  useEffect(() => {
+    onPreview(image)
+  }, [image, onPreview])
+  useEffect(() => () => onPreview(undefined), [onPreview])
+
+  const handleSave = async () => {
+    setStatus(null)
+    try {
+      const res = await saveCover({ brandId, image_url: image }).unwrap()
+      setStatus({
+        type: "success",
+        text: res?.message || (image.trim() ? "Cover photo saved." : "Cover photo removed."),
+      })
+      setTimeout(() => {
+        setStatus(null)
+        onSaved()
+      }, 1000)
+    } catch (err) {
+      const e = err as { data?: { message?: string } }
+      setStatus({ type: "error", text: e?.data?.message || "Failed to save. Please try again." })
+    }
+  }
+
+  return (
+    <FormShell
+      title="Brand Cover Photo"
+      onBack={onBack}
+      onSave={handleSave}
+      saving={saving}
+      // Allow saving an existing cover away (clear + save removes it).
+      canSave={Boolean(image.trim()) || Boolean(initialImage)}
+      status={status}
+      submitLabel={image.trim() ? "Save Cover" : "Remove Cover"}
+    >
+      <p className="text-xs text-slate-500 dark:text-slate-400">
+        Shown as a wide banner behind your brand&apos;s profile header in the app.
+        A brand has one cover photo — saving replaces the current one.
+      </p>
+      <ImageInput label="Cover image" value={image} onChange={setImage} />
     </FormShell>
   )
 }
