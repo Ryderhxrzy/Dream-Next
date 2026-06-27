@@ -1470,7 +1470,7 @@ export default function ProductsPageMain({
   const searchPerPage = 500
   const perPage = debouncedSearch
     ? searchPerPage
-    : userPerPage === "all"
+    : showDuplicateOnly || userPerPage === "all"
       ? 10000
       : userPerPage
   const canShowZqSupplierSide = !isSupplierPortal || isZqSupplierAccount
@@ -1609,6 +1609,21 @@ export default function ProductsPageMain({
         ? linkedSupplierId
         : supplierFilterId,
   }
+
+  const duplicateDetectionQueryArgs = {
+    page: 1,
+    perPage: 10000,
+    supplierId:
+      isSupplierPortal && linkedSupplierId > 0
+        ? linkedSupplierId
+        : supplierFilterId,
+    brandType: isSupplierPortal ? undefined : brandType,
+  }
+
+  const { data: duplicateDetectionData } = useGetProductsQuery(
+    duplicateDetectionQueryArgs,
+    { refetchOnMountOrArgChange: true, skip: isSupplierServicesPortal }
+  )
 
   const {
     data: adminData,
@@ -1882,8 +1897,9 @@ export default function ProductsPageMain({
   ])
 
   const duplicateProductIds = useMemo(
-    () => getDuplicateProductIds(products),
-    [products]
+    () =>
+      getDuplicateProductIds(duplicateDetectionData?.products ?? products),
+    [duplicateDetectionData?.products, products]
   )
 
   const zqRows = useMemo(
