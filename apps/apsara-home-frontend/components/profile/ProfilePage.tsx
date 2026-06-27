@@ -15,7 +15,7 @@ import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
 import { getProfileCompletion } from "@/libs/profileCompletion"
 import { extractPartnerSlugFromPath } from "@/libs/storefrontRouting"
 import { showErrorToast, showSuccessToast } from "@/libs/toast"
-import { computeEndDateRaw } from "@/libs/webstoreExpiry"
+import { computeEndDateRaw, computePeriodEnd } from "@/libs/webstoreExpiry"
 import {
   AccountSnapshot,
   LinkedAccount,
@@ -881,7 +881,13 @@ const getWebstoreSubscriptionExpiry = (tx: {
 const getWebstoreHistoryRows = (
   requests: Array<WebstoreRequest | null | undefined>
 ) => {
-  const rows: Array<WebstoreRequest & { row_label?: string | null }> = []
+  const rows: Array<
+    WebstoreRequest & {
+      row_label?: string | null
+      row_period_start?: Date | null
+      row_period_end?: Date | null
+    }
+  > = []
   const seenRequestKeys = new Set<string>()
   const seenRowKeys = new Set<string>()
 
@@ -910,7 +916,33 @@ const getWebstoreHistoryRows = (
     const paymentAmount = getWebstoreHistoricalPaymentAmount(request)
     const subscriptionFee = Number(request.subscription_fee ?? 0)
 
+    // Subscription period starts at first receipt item's approval, falling back
+    // to the ticket's reviewed_at (set when the ticket itself is approved).
+    const subscriptionStartStr = (
+      receiptItems?.[0]?.approved_at ||
+      request.approved_at ||
+      request.reviewed_at ||
+      request.created_at ||
+      ""
+    ).trim()
+    const subscriptionStartDate = subscriptionStartStr
+      ? new Date(subscriptionStartStr)
+      : null
+    const validSubscriptionStart =
+      subscriptionStartDate && !isNaN(subscriptionStartDate.getTime())
+        ? subscriptionStartDate
+        : null
+
     if (!receiptItems) {
+      const rowPeriodEnd = validSubscriptionStart
+        ? computePeriodEnd(
+            validSubscriptionStart,
+            request.billing_option,
+            request.plan,
+            request.plan_term_months,
+            request.plan_term
+          )
+        : null
       rows.push({
         ...request,
         id: request.id,
@@ -930,12 +962,15 @@ const getWebstoreHistoryRows = (
                       Number(request.total_paid_amount ?? paymentAmount)
                   )
               ),
+        row_period_start: validSubscriptionStart,
+        row_period_end: rowPeriodEnd,
       })
       continue
     }
 
     let runningPaid = 0
     let runningRemaining = subscriptionFee
+    let runningPeriodEnd: Date | null = null
 
     receiptItems.forEach((item, index) => {
       const itemApproval = String(item.approval_status ?? "")
@@ -975,6 +1010,25 @@ const getWebstoreHistoryRows = (
         runningRemaining = Math.max(0, subscriptionFee - runningPaid)
       }
 
+      const periodBase = runningPeriodEnd ?? validSubscriptionStart
+      let rowPeriodStart: Date | null = null
+      let rowPeriodEnd: Date | null = null
+      if (periodBase) {
+        rowPeriodStart = new Date(periodBase)
+        const rowBilling =
+          (item.billing_option as string | null | undefined) ||
+          request.billing_option
+        const computed = computePeriodEnd(
+          new Date(periodBase),
+          rowBilling,
+          request.plan,
+          request.plan_term_months,
+          request.plan_term
+        )
+        rowPeriodEnd = computed
+        if (computed) runningPeriodEnd = computed
+      }
+
       rows.push({
         ...request,
         id: item.id,
@@ -1009,11 +1063,18 @@ const getWebstoreHistoryRows = (
         remaining_balance:
           rowStatus === "approved" ? runningRemaining : runningRemaining,
         row_label: item.label ?? `Receipt ${index + 1}`,
+        row_period_start: rowPeriodStart,
+        row_period_end: rowPeriodEnd,
       })
     })
   }
 
-  const dedupedRows: Array<WebstoreRequest & { row_label?: string | null }> = []
+  type ProfileHistoryRow = WebstoreRequest & {
+    row_label?: string | null
+    row_period_start?: Date | null
+    row_period_end?: Date | null
+  }
+  const dedupedRows: ProfileHistoryRow[] = []
   const seenFinalKeys = new Set<string>()
 
   for (const row of rows) {
@@ -1641,7 +1702,7 @@ const ProfilePage = ({
     useState(false)
   const [profileRewardModalOpen, setProfileRewardModalOpen] = useState(false)
   const [webstoreReceiptFiles, setWebstoreReceiptFiles] = useState<
-    Array<{ name: string; preview: string; file: File }>
+    Array<{ name: string; preview: string; file: File; locked?: boolean }>
   >([])
   const [webstoreReceiptPreview, setWebstoreReceiptPreview] = useState<{
     name: string
@@ -3498,6 +3559,7 @@ const ProfilePage = ({
       src: file.preview,
       kind: "selected" as const,
       fileIndex: index,
+      locked: file.locked ?? false,
     }))
     const hiddenRejected = new Set(dismissedRejectedReceiptKeys)
     return [...rejectedItems, ...selectedItems].filter(
@@ -5190,7 +5252,7 @@ const ProfilePage = ({
     }
   }
 
-  const processWebstoreReceiptFiles = (files: File[]) => {
+  const processWebstoreReceiptFiles = (files: File[], options?: { locked?: boolean }) => {
     if (files.length === 0) return
     const maxSizeBytes = 10 * 1024 * 1024
     const allowed = files.filter(
@@ -5208,6 +5270,7 @@ const ProfilePage = ({
         name: file.name,
         preview: URL.createObjectURL(file),
         file,
+        locked: options?.locked ?? false,
       })),
     ])
     if (webstoreReceiptInputRef.current) {
@@ -12006,56 +12069,34 @@ const ProfilePage = ({
                                         </td>
                                         {/* Start / End */}
                                         <td className="px-4 py-4">
-                                          {tx.created_at ? (
-                                            <>
-                                              {(() => {
-                                                const startRaw =
-                                                  tx.reviewed_at?.trim() ||
-                                                  tx.created_at
-                                                const expiry =
-                                                  computeEndDateRaw(
-                                                    startRaw ?? null,
-                                                    tx.billing_option ?? null,
-                                                    tx.plan ?? null,
-                                                    tx.plan_term ?? null,
-                                                    tx.status ?? null,
-                                                    null,
-                                                    tx.plan_term_months ?? null
-                                                  )
-                                                const startLabel = new Date(
-                                                  startRaw
-                                                ).toLocaleDateString("en-PH", {
+                                          {tx.row_period_start ? (
+                                            <p className="text-xs font-semibold text-[#0f1f44]">
+                                              {tx.row_period_start.toLocaleDateString(
+                                                "en-PH",
+                                                {
                                                   year: "numeric",
                                                   month: "short",
                                                   day: "numeric",
-                                                })
-                                                const endLabel = expiry
-                                                  ? expiry.toLocaleDateString(
+                                                }
+                                              )}
+                                              {tx.row_period_end ? (
+                                                <>
+                                                  <span className="mx-1 text-[#8a9ec0]">
+                                                    /
+                                                  </span>
+                                                  <span className="text-emerald-600">
+                                                    {tx.row_period_end.toLocaleDateString(
                                                       "en-PH",
                                                       {
                                                         month: "short",
                                                         day: "numeric",
                                                         year: "numeric",
                                                       }
-                                                    )
-                                                  : null
-                                                return endLabel ? (
-                                                  <p className="text-xs font-semibold text-[#0f1f44]">
-                                                    {startLabel}
-                                                    <span className="mx-1 text-[#8a9ec0]">
-                                                      /
-                                                    </span>
-                                                    <span className="text-emerald-600">
-                                                      {endLabel}
-                                                    </span>
-                                                  </p>
-                                                ) : (
-                                                  <p className="text-xs font-semibold text-[#0f1f44]">
-                                                    {startLabel}
-                                                  </p>
-                                                )
-                                              })()}
-                                            </>
+                                                    )}
+                                                  </span>
+                                                </>
+                                              ) : null}
+                                            </p>
                                           ) : (
                                             <span className="text-xs text-[#8a9ec0]">
                                               —
@@ -12144,20 +12185,8 @@ const ProfilePage = ({
                                           {(() => {
                                             const isApproved =
                                               tx.status === "approved"
-                                            const rowStart =
-                                              tx.reviewed_at?.trim() ||
-                                              tx.created_at?.trim() ||
-                                              null
                                             const expiry = isApproved
-                                              ? computeEndDateRaw(
-                                                  rowStart,
-                                                  tx.billing_option ?? null,
-                                                  tx.plan ?? null,
-                                                  tx.plan_term ?? null,
-                                                  tx.status ?? null,
-                                                  null,
-                                                  tx.plan_term_months ?? null
-                                                )
+                                              ? (tx.row_period_end ?? null)
                                               : null
                                             const isExpired =
                                               isApproved &&
@@ -13618,7 +13647,7 @@ const ProfilePage = ({
                                             X
                                           </button>
                                         ) : null}
-                                        {item.kind === "selected" && webstoreReceiptFiles.length > 1 ? (
+                                        {item.kind === "selected" && !item.locked && webstoreReceiptFiles.length > 1 ? (
                                           <button
                                             type="button"
                                             onClick={(event) => {
@@ -13945,7 +13974,7 @@ const ProfilePage = ({
                       const imageFile =
                         await handleDownloadWebstoreSuccessImage()
                       if (imageFile) {
-                        processWebstoreReceiptFiles([imageFile])
+                        processWebstoreReceiptFiles([imageFile], { locked: true })
                       }
                       setWebstoreSuccessModalOpen(false)
                       openWebstoreReceiptUpload()

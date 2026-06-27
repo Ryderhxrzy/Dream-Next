@@ -1676,6 +1676,16 @@ export const productsApi = baseApi.injectEndpoints({
         body: data,
       }),
     }),
+    deleteProductVariant: builder.mutation<
+      { message: string },
+      { id: number; variantId: number }
+    >({
+      query: ({ id, variantId }) => ({
+        url: `/api/admin/products/${id}/variants/${variantId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Products"],
+    }),
     deleteProduct: builder.mutation<{ message: string }, number>({
       query: (id) => ({
         url: `/api/admin/products/${id}`,
@@ -1772,6 +1782,7 @@ export const {
   useGetAdminProductQuery,
   usePatchProductFieldsMutation,
   useUpdateProductVariantMutation,
+  useDeleteProductVariantMutation,
   useDeleteProductMutation,
   useUpdateZqProductPricingMutation,
   useBulkUpdateZqPricingMutation,

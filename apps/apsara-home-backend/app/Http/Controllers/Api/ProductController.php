@@ -2317,16 +2317,7 @@ class ProductController extends Controller
                     $q->where('pd_room_type', (int) $roomType);
                 })
                 ->when($brandType !== '', function ($q) use ($brandType) {
-                    $brandTypeId = (int) $brandType;
-                    $supplierIds = $this->resolveSupplierIdsForBrandType($brandTypeId);
-
-                    $q->where(function ($brandQuery) use ($brandTypeId, $supplierIds) {
-                        $brandQuery->where('pd_brand_type', $brandTypeId);
-
-                        if (!empty($supplierIds)) {
-                            $brandQuery->orWhereIn('pd_supplier', $supplierIds);
-                        }
-                    });
+                    $q->where('pd_brand_type', (int) $brandType);
                 });
 
             // Apply personalization only if no manual filters and user has behavior data
@@ -3967,6 +3958,37 @@ class ProductController extends Controller
                     ->values()
                     ->all(),
             ],
+        ]);
+    }
+
+    /**
+     * Admin: delete a single variant (by id) without deleting the parent product.
+     */
+    public function destroyVariant(Request $request, int $id, int $variantId): JsonResponse
+    {
+        $variant = ProductVariant::query()
+            ->where('pv_id', $variantId)
+            ->where('pv_pdid', $id)
+            ->first();
+
+        if (! $variant) {
+            return response()->json(['message' => 'Variant not found.'], 404);
+        }
+
+        DB::transaction(function () use ($variant, $id): void {
+            ProductVariantPhoto::query()
+                ->where('pvp_pvid', $variant->pv_id)
+                ->delete();
+
+            $variant->delete();
+
+            Product::query()
+                ->where('pd_id', $id)
+                ->update(['pd_last_update' => now()]);
+        });
+
+        return response()->json([
+            'message' => 'Variant deleted.',
         ]);
     }
 
