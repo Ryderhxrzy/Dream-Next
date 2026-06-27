@@ -243,7 +243,7 @@ export default function PartnerStorefrontRenewalPage() {
     "success" | "rejection" | null
   >(null)
   const [reuploadFiles, setReuploadFiles] = useState<
-    Array<{ name: string; preview: string; file: File; isRejected?: boolean }>
+    Array<{ name: string; preview: string; file: File; isRejected?: boolean; locked?: boolean }>
   >([])
   const [isReuploadingReceipt, setIsReuploadingReceipt] = useState(false)
   const [isReuploadModalOpen, setIsReuploadModalOpen] = useState(false)
@@ -1604,6 +1604,7 @@ export default function PartnerStorefrontRenewalPage() {
                         name: imageFile.name,
                         preview: URL.createObjectURL(imageFile),
                         file: imageFile,
+                        locked: true,
                       },
                     ])
                   } else {
@@ -1734,20 +1735,22 @@ export default function PartnerStorefrontRenewalPage() {
                             alt={f.name}
                             className={`block h-24 w-24 rounded-xl object-cover ${f.isRejected ? "" : "border border-slate-200 dark:border-slate-600"}`}
                           />
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setReuploadFiles((prev) => {
-                                const removed = prev[idx]
-                                if (removed?.preview?.startsWith("blob:"))
-                                  URL.revokeObjectURL(removed.preview)
-                                return prev.filter((_, i) => i !== idx)
-                              })
-                            }
-                            className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-white shadow"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
+                          {!f.locked ? (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setReuploadFiles((prev) => {
+                                  const removed = prev[idx]
+                                  if (removed?.preview?.startsWith("blob:"))
+                                    URL.revokeObjectURL(removed.preview)
+                                  return prev.filter((_, i) => i !== idx)
+                                })
+                              }
+                              className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-white shadow"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          ) : null}
                         </div>
                       ))}
                       <button

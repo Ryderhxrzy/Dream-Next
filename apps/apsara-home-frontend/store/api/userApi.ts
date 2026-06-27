@@ -264,6 +264,7 @@ export interface WebstoreRequest {
   base_payment_intent_id?: string | null
   subscription_fee?: number | null
   effective_monthly?: number | null
+  approved_at?: string | null
   reviewed_at?: string | null
   created_at?: string | null
   payment_count?: number

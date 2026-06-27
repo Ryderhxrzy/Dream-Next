@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { getPartnerStorefrontConfig } from "@/libs/partnerStorefront"
+import { computePeriodEnd } from "@/libs/webstoreExpiry"
 import {
   useDeletePartnerWebstoreReceiptItemMutation,
   useGetPartnerWebstoreRequestsQuery,
@@ -96,36 +97,6 @@ const getHistoricalPaymentAmount = (request: AdminWebstoreRequest) => {
     : effectiveMonthly
 }
 
-const getSubscriptionEndDate = (tx: {
-  plan?: string | null
-  plan_term?: string | null
-  plan_term_months?: number | null
-  reviewed_at?: string | null
-  created_at?: string | null
-}) => {
-  const startStr = tx.reviewed_at?.trim() || tx.created_at?.trim() || ""
-  if (!startStr) return null
-  const date = new Date(startStr)
-  if (Number.isNaN(date.getTime())) return null
-  const plan = normalizeStatus(tx.plan)
-  const planTerm = normalizeStatus(tx.plan_term)
-  const planTermMonths = Number(tx.plan_term_months ?? 0)
-  if (plan === "test" || planTerm.includes("day")) {
-    const days = planTerm.match(/(\d+)\s*day/)?.[1]
-    date.setDate(date.getDate() + (days ? Number.parseInt(days, 10) : 2))
-  } else if (plan === "quarterly" || planTermMonths === 3) {
-    date.setMonth(date.getMonth() + 3)
-  } else if (plan === "semi_annual" || planTermMonths === 6) {
-    date.setMonth(date.getMonth() + 6)
-  } else if (plan === "annual" || planTermMonths === 12) {
-    date.setFullYear(date.getFullYear() + 1)
-  } else if (planTermMonths > 0) {
-    date.setMonth(date.getMonth() + planTermMonths)
-  } else {
-    return null
-  }
-  return date
-}
 
 type SubscriptionTransactionRow = AdminWebstoreRequest & {
   row_label?: string | null
@@ -136,6 +107,8 @@ type SubscriptionTransactionRow = AdminWebstoreRequest & {
   reviewed_at?: string | null
   total_paid_amount?: number | null
   remaining_balance?: number | null
+  row_period_start?: Date | null
+  row_period_end?: Date | null
 }
 
 const getWebstoreHistoryRows = (
@@ -169,7 +142,33 @@ const getWebstoreHistoryRows = (
     const paymentAmount = getHistoricalPaymentAmount(request)
     const subscriptionFee = Number(request.subscription_fee ?? 0)
 
+    // Subscription period starts at first receipt item's approval, falling back
+    // to the ticket's reviewed_at (set when the ticket itself is approved).
+    const subscriptionStartStr = (
+      receiptItems?.[0]?.approved_at ||
+      request.approved_at ||
+      request.reviewed_at ||
+      request.created_at ||
+      ""
+    ).trim()
+    const subscriptionStartDate = subscriptionStartStr
+      ? new Date(subscriptionStartStr)
+      : null
+    const validSubscriptionStart =
+      subscriptionStartDate && !isNaN(subscriptionStartDate.getTime())
+        ? subscriptionStartDate
+        : null
+
     if (!receiptItems) {
+      const rowPeriodEnd = validSubscriptionStart
+        ? computePeriodEnd(
+            validSubscriptionStart,
+            request.billing_option,
+            request.plan,
+            request.plan_term_months,
+            request.plan_term
+          )
+        : null
       rows.push({
         ...request,
         row_label: "Request",
@@ -191,12 +190,15 @@ const getWebstoreHistoryRows = (
                       Number(request.total_paid_amount ?? paymentAmount)
                   )
               ),
+        row_period_start: validSubscriptionStart,
+        row_period_end: rowPeriodEnd,
       })
       continue
     }
 
     let runningPaid = 0
     let runningRemaining = subscriptionFee
+    let runningPeriodEnd: Date | null = null
 
     receiptItems.forEach((item, index) => {
       const itemApproval = normalizeStatus(item.approval_status)
@@ -232,6 +234,24 @@ const getWebstoreHistoryRows = (
         runningRemaining = Math.max(0, subscriptionFee - runningPaid)
       }
 
+      // Chained period: each row starts where the previous ended
+      const periodBase = runningPeriodEnd ?? validSubscriptionStart
+      let rowPeriodStart: Date | null = null
+      let rowPeriodEnd: Date | null = null
+      if (periodBase) {
+        rowPeriodStart = new Date(periodBase)
+        const rowBilling = item.billing_option || request.billing_option
+        const computed = computePeriodEnd(
+          new Date(periodBase),
+          rowBilling,
+          request.plan,
+          request.plan_term_months,
+          request.plan_term
+        )
+        rowPeriodEnd = computed
+        if (computed) runningPeriodEnd = computed
+      }
+
       rows.push({
         ...request,
         id: item.id ?? request.id,
@@ -258,6 +278,8 @@ const getWebstoreHistoryRows = (
         total_paid_amount: paymentAmount,
         remaining_balance: runningRemaining,
         row_label: item.label ?? `Receipt ${index + 1}`,
+        row_period_start: rowPeriodStart,
+        row_period_end: rowPeriodEnd,
       })
     })
   }
@@ -1033,7 +1055,8 @@ export default function PartnerSubscriptionsPage() {
               <tbody>
                 {pageRows.map((tx, index) => {
                   const globalIndex = (page - 1) * PAGE_SIZE + index
-                  const endDate = getSubscriptionEndDate(tx)
+                  const startDate = tx.row_period_start ?? null
+                  const endDate = tx.row_period_end ?? null
                   const txDate = getTransactionDate(tx)
                   const receiptUrls = (
                     tx.receipt_urls ??
@@ -1061,6 +1084,11 @@ export default function PartnerSubscriptionsPage() {
                         <p className="text-xs text-slate-400">
                           {getTermLabel(tx)}
                         </p>
+                        {startDate && (
+                          <p className="mt-0.5 text-[11px] text-slate-400">
+                            From {dateOnly.format(startDate)}
+                          </p>
+                        )}
                         {endDate && (
                           <p className="mt-0.5 text-[11px] font-semibold text-indigo-500">
                             Ends {dateOnly.format(endDate)}

@@ -5,7 +5,6 @@ import SalesChart from "@/components/superAdmin/dashboard/SalesChart"
 import StatsGrid from "@/components/superAdmin/dashboard/StatsGrid"
 import type { StatsGridInitialData } from "@/components/superAdmin/dashboard/statsGridTypes"
 import TopProducts from "@/components/superAdmin/dashboard/TopProducts"
-
 type AdminDashboardHomeProps = {
   initialStatsData?: StatsGridInitialData
 }

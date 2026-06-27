@@ -78,6 +78,11 @@ export const ADMIN_PERMISSION_OPTIONS = [
     label: "Users & Roles",
     description: "Manage admin users, roles, and internal access settings.",
   },
+  {
+    id: "conversations",
+    label: "Support",
+    description: "Access the customer support chat inbox and conversations.",
+  },
 ] as const
 
 export type AdminPermissionId = (typeof ADMIN_PERMISSION_OPTIONS)[number]["id"]

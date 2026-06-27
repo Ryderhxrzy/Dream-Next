@@ -38,6 +38,7 @@ export default function TopEarnersPageMain() {
     search,
     tier: tierFilter as (typeof TIERS)[number],
     sort: apiSortKey,
+    period,
   })
 
   const sorted = useMemo(() => {

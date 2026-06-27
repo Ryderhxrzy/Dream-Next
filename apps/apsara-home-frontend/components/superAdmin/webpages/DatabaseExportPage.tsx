@@ -50,8 +50,11 @@ export default function DatabaseExportPage() {
   const PER_PAGE = 10
   const [currentPage, setCurrentPage] = useState(1)
   const { data, isFetching, refetch } = useListDatabaseExportsQuery({ page: currentPage, per_page: PER_PAGE })
-  const [exportDatabase, { isLoading }] = useExportDatabaseMutation()
+  const [exportDatabase] = useExportDatabaseMutation()
   const [downloadExport] = useDownloadDatabaseExportMutation()
+  const [isExporting, setIsExporting] = useState(false)
+  const [elapsedSeconds, setElapsedSeconds] = useState(0)
+  const [exportError, setExportError] = useState<string | null>(null)
   const [latestExportPreview, setLatestExportPreview] = useState<string>('')
   const [latestSummary, setLatestSummary] = useState<{ name: string; tables: number; rows: number; size: number; generatedAt: string; previewTable: string } | null>(null)
   const lastAutoDownloadedPath = useRef<string | null>(null)
@@ -65,6 +68,15 @@ export default function DatabaseExportPage() {
       setCurrentPage(lastPage)
     }
   }, [currentPage, exportMeta?.last_page])
+
+  useEffect(() => {
+    if (!isExporting) {
+      setElapsedSeconds(0)
+      return
+    }
+    const interval = setInterval(() => setElapsedSeconds((s) => s + 1), 1000)
+    return () => clearInterval(interval)
+  }, [isExporting])
 
   // Auto-download when the scheduled 5pm export appears while the page is open.
   useEffect(() => {
@@ -101,6 +113,8 @@ export default function DatabaseExportPage() {
   }, [downloadExport, refetch])
 
   const handleExport = async () => {
+    setIsExporting(true)
+    setExportError(null)
     try {
       const response = await exportDatabase().unwrap()
       const preview = response.export?.preview_csv ?? ''
@@ -133,7 +147,11 @@ export default function DatabaseExportPage() {
       await refetch()
     } catch (error: unknown) {
       const apiError = error as ApiErrorLike
-      showErrorToast(apiError?.data?.message || 'Failed to export database.')
+      const msg = apiError?.data?.message || 'Failed to export database. The server may have timed out — try again or contact support.'
+      setExportError(msg)
+      showErrorToast(msg)
+    } finally {
+      setIsExporting(false)
     }
   }
 
@@ -151,10 +169,16 @@ export default function DatabaseExportPage() {
           <button
             type="button"
             onClick={handleExport}
-            disabled={isLoading}
-            className="inline-flex items-center rounded-xl bg-cyan-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:opacity-60"
+            disabled={isExporting}
+            className="inline-flex items-center gap-2 rounded-xl bg-cyan-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:opacity-60"
           >
-            {isLoading ? 'Exporting...' : 'Export Database'}
+            {isExporting && (
+              <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+              </svg>
+            )}
+            {isExporting ? `Exporting… ${elapsedSeconds}s` : 'Export Database'}
           </button>
           <button
             type="button"
@@ -165,6 +189,18 @@ export default function DatabaseExportPage() {
             {isFetching ? 'Refreshing...' : 'Refresh List'}
           </button>
         </div>
+        {isExporting && (
+          <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+            Exporting the full database can take a minute or more depending on size. Please wait and do not close this page.
+          </p>
+        )}
+        {exportError && !isExporting && (
+          <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 dark:border-rose-500/30 dark:bg-rose-500/10">
+            <p className="text-xs font-bold uppercase tracking-wide text-rose-700 dark:text-rose-400">Export Failed</p>
+            <p className="mt-1 text-sm text-rose-800 dark:text-rose-300">{exportError}</p>
+            <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">Check the browser console (F12) for details, or try refreshing the page before exporting again.</p>
+          </div>
+        )}
       </div>
 
       {latestSummary && (

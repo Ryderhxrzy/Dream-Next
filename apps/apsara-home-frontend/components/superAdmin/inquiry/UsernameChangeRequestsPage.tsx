@@ -6,6 +6,7 @@ import {
   useGetUsernameChangeRequestsQuery,
   useRejectUsernameChangeMutation,
 } from "@/store/api/adminInquiriesApi"
+import { showErrorToast } from "@/libs/toast"
 
 type RequestStatus = "all" | "pending_review" | "approved" | "rejected"
 
@@ -98,8 +99,11 @@ export default function UsernameChangeRequestsPage() {
       }
 
       closeConfirm()
-    } catch {
-      // Keep modal open; the page already shows error state.
+    } catch (error) {
+      const apiErr = error as { data?: { message?: string }; message?: string }
+      showErrorToast(
+        apiErr?.data?.message || apiErr?.message || "Failed to process request."
+      )
     }
   }
 

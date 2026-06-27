@@ -1,11 +1,13 @@
 "use client"
 
 import { Fragment, useMemo, useState } from "react"
+import { createPortal } from "react-dom"
+import Link from "next/link"
 import { useGetCategoriesQuery } from "@/store/api/categoriesApi"
+import { useGetProductBrandsQuery } from "@/store/api/productBrandsApi"
 import {
   InviteSupplierUserResponse,
   SupplierItem,
-  useCreateSupplierMutation,
   useDeleteSupplierMutation,
   useDeleteSupplierUserMutation,
   useGetSuppliersQuery,
@@ -19,12 +21,16 @@ import {
   AtSign,
   Building2,
   CheckCircle2,
+  ChevronDown,
   Copy,
   FolderOpen,
+  ImageIcon,
   Lock,
   Mail,
   MapPin,
+  Package,
   Phone,
+  Plus,
   Send,
   ShieldCheck,
   Store,
@@ -90,8 +96,6 @@ export default function SuppliersPageMain() {
     (session?.user?.userLevelId ?? 0) === 8
   const { data, isLoading, isError } = useGetSuppliersQuery()
   const [chatTarget, setChatTarget] = useState<SupplierItem | null>(null)
-  const [createSupplier, { isLoading: isCreatingSupplier }] =
-    useCreateSupplierMutation()
   const [updateSupplier, { isLoading: isUpdatingSupplier }] =
     useUpdateSupplierMutation()
   const [deleteSupplier, { isLoading: isDeletingSupplier }] =
@@ -128,6 +132,7 @@ export default function SuppliersPageMain() {
   const [expandedSupplierTreeId, setExpandedSupplierTreeId] = useState<
     number | null
   >(null)
+  const [expandedBrandsId, setExpandedBrandsId] = useState<number | null>(null)
   const [categoryTarget, setCategoryTarget] = useState<SupplierItem | null>(
     null
   )
@@ -263,41 +268,6 @@ export default function SuppliersPageMain() {
     (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
       setInviteForm((prev) => ({ ...prev, [field]: event.target.value }))
     }
-
-  const handleCreateSupplier = async (event: React.FormEvent) => {
-    event.preventDefault()
-    setCompanyFeedback(null)
-
-    try {
-      const created = await createSupplier({
-        name: companyForm.name.trim(),
-        company: companyForm.company.trim(),
-        email: companyForm.email.trim(),
-        contact: companyForm.contact.trim(),
-        address: companyForm.address.trim(),
-        status: Number(companyForm.status),
-      }).unwrap()
-
-      setCompanyFeedback({ type: "success", message: created.message })
-      setSupplierOverrides((prev) => ({
-        ...prev,
-        [created.supplier.id]: created.supplier,
-      }))
-      setCompanyForm(defaultSupplierCompanyForm)
-      setLatestInvite(null)
-      setSupplierSearch("")
-      setSupplierPage(1)
-      setInviteForm((prev) => ({
-        ...prev,
-        supplier_id: String(created.supplier.id),
-      }))
-    } catch (error) {
-      setCompanyFeedback({
-        type: "error",
-        message: getErrorMessage(error, "Unable to create merchant."),
-      })
-    }
-  }
 
   const handleEditSupplier = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -468,11 +438,14 @@ export default function SuppliersPageMain() {
   }
 
   if (isLoading) {
-    return (
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400">
-        Loading supplier data...
-      </div>
-    )
+    if (isSupplierAdmin) {
+      return (
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400">
+          Loading supplier data...
+        </div>
+      )
+    }
+    return <MerchantsDirectorySkeleton />
   }
 
   if (isError) {
@@ -809,182 +782,29 @@ export default function SuppliersPageMain() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-          Merchants
-        </h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Pick or create a brand, then add the merchant linked to it. You can
-          invite the merchant&apos;s login afterwards.
-        </p>
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-2">
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
-          <div className="mb-5">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-              Add Merchant
-            </h2>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Pick (or create) the brand this merchant belongs to, then fill in
-              the merchant details. A brand is required.
+      {/* ── Page header ── */}
+      <div className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-linear-to-br from-white via-white to-cyan-50/40 p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-cyan-900/10">
+        <div className="flex items-start gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-white dark:bg-cyan-600">
+            <Store className="h-6 w-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+              Merchants
+            </h1>
+            <p className="mt-1 max-w-xl text-sm text-slate-500 dark:text-slate-400">
+              Manage your merchants and suppliers. Expand any merchant to view
+              the brands they own, their users, or assigned categories.
             </p>
           </div>
-
-          <form onSubmit={handleCreateSupplier} className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <FormField label="Display Name">
-                <input
-                  value={companyForm.name}
-                  onChange={handleCompanyInput("name")}
-                  required
-                  className={inputClassName}
-                />
-              </FormField>
-              <FormField label="Company Name">
-                <input
-                  value={companyForm.company}
-                  onChange={handleCompanyInput("company")}
-                  required
-                  className={inputClassName}
-                />
-              </FormField>
-              <FormField label="Email">
-                <input
-                  type="email"
-                  value={companyForm.email}
-                  onChange={handleCompanyInput("email")}
-                  className={inputClassName}
-                />
-              </FormField>
-              <FormField label="Contact">
-                <input
-                  value={companyForm.contact}
-                  onChange={handleCompanyInput("contact")}
-                  className={inputClassName}
-                />
-              </FormField>
-            </div>
-
-            <FormField label="Address">
-              <textarea
-                value={companyForm.address}
-                onChange={handleCompanyInput("address")}
-                rows={3}
-                className={textareaClassName}
-              />
-            </FormField>
-
-            <FormField label="Status">
-              <select
-                value={companyForm.status}
-                onChange={handleCompanyInput("status")}
-                className={inputClassName}
-              >
-                <option value="1">Active</option>
-                <option value="0">Inactive</option>
-              </select>
-            </FormField>
-
-            {companyFeedback ? (
-              <FeedbackBanner
-                type={companyFeedback.type}
-                message={companyFeedback.message}
-              />
-            ) : null}
-
-            <button
-              type="submit"
-              disabled={isCreatingSupplier}
-              className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-600 dark:hover:bg-cyan-500"
-            >
-              {isCreatingSupplier ? "Creating merchant..." : "Create Merchant"}
-            </button>
-          </form>
-        </section>
-
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
-          <div className="mb-5">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-              Invite Merchant Login
-            </h2>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Optional: create the main merchant owner account here. That owner
-              can later invite their own sub-users from the merchant portal.
-            </p>
-          </div>
-
-          <form onSubmit={handleInviteSupplier} className="space-y-4">
-            <FormField label="Merchant">
-              <select
-                value={supplierInviteForm.supplier_id}
-                onChange={handleInviteInput("supplier_id")}
-                required
-                className={inputClassName}
-              >
-                <option value="">Select merchant</option>
-                {sortedSuppliers.map((supplier) => (
-                  <option key={supplier.id} value={supplier.id}>
-                    {supplier.company || supplier.name}
-                  </option>
-                ))}
-              </select>
-            </FormField>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <FormField label="Full Name">
-                <input
-                  value={inviteForm.fullname}
-                  onChange={handleInviteInput("fullname")}
-                  required
-                  className={inputClassName}
-                />
-              </FormField>
-              <FormField label="Username">
-                <input
-                  value={inviteForm.username}
-                  onChange={handleInviteInput("username")}
-                  required
-                  className={inputClassName}
-                />
-              </FormField>
-            </div>
-
-            <FormField label="Email">
-              <input
-                type="email"
-                value={inviteForm.email}
-                onChange={handleInviteInput("email")}
-                className={inputClassName}
-                placeholder="Optional"
-              />
-            </FormField>
-
-            {inviteFeedback ? (
-              <FeedbackBanner
-                type={inviteFeedback.type}
-                message={inviteFeedback.message}
-              />
-            ) : null}
-
-            {latestInvite ? (
-              <SetupLinkCard
-                setupUrl={latestInvite.setup_url}
-                delivery={latestInvite.delivery}
-              />
-            ) : null}
-
-            <button
-              type="submit"
-              disabled={isInvitingSupplierUser}
-              className="rounded-2xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isInvitingSupplierUser
-                ? "Creating invite..."
-                : "Create Main Merchant Invite Link"}
-            </button>
-          </form>
-        </section>
+        </div>
+        <Link
+          href="/admin/merchants/add"
+          className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-700 sm:self-auto dark:bg-cyan-600 dark:hover:bg-cyan-500"
+        >
+          <Plus className="h-4 w-4" />
+          Add Merchant
+        </Link>
       </div>
 
       <section className="overflow-hidden rounded-[28px] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.98))] shadow-[0_24px_80px_rgba(15,23,42,0.08)] dark:border-white/8 dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.96),rgba(15,23,42,0.9))] dark:shadow-[0_24px_80px_rgba(2,6,23,0.45)]">
@@ -1104,14 +924,38 @@ export default function SuppliersPageMain() {
                     style={{ animationDelay: `${index * 45}ms` }}
                   >
                     <td className="px-5 py-4">
-                      <div className="min-w-0">
-                        <p className="truncate text-[15px] font-bold text-slate-900 transition-colors duration-300 group-hover:text-cyan-700 dark:text-slate-100 dark:group-hover:text-cyan-200">
-                          {supplier.company || supplier.name}
-                        </p>
-                        <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">
-                          {supplier.name}
-                        </p>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedBrandsId((prev) =>
+                            prev === supplier.id ? null : supplier.id
+                          )
+                        }
+                        className="flex w-full items-center gap-3 text-left"
+                        aria-expanded={expandedBrandsId === supplier.id}
+                      >
+                        <span
+                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border transition-all duration-300 ${
+                            expandedBrandsId === supplier.id
+                              ? "border-cyan-300 bg-cyan-50 text-cyan-600 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-300"
+                              : "border-slate-200 bg-white text-slate-400 group-hover:border-cyan-300 group-hover:text-cyan-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-500"
+                          }`}
+                        >
+                          <ChevronDown
+                            className={`h-4 w-4 transition-transform duration-300 ${
+                              expandedBrandsId === supplier.id ? "rotate-180" : ""
+                            }`}
+                          />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block truncate text-[15px] font-bold text-slate-900 transition-colors duration-300 group-hover:text-cyan-700 dark:text-slate-100 dark:group-hover:text-cyan-200">
+                            {supplier.company || supplier.name}
+                          </span>
+                          <span className="mt-1 block truncate text-xs text-slate-500 dark:text-slate-400">
+                            {supplier.name}
+                          </span>
+                        </span>
+                      </button>
                     </td>
                     <td className="px-5 py-4">
                       <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -1139,6 +983,20 @@ export default function SuppliersPageMain() {
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExpandedBrandsId((prev) =>
+                              prev === supplier.id ? null : supplier.id
+                            )
+                          }
+                          className="inline-flex items-center gap-1.5 rounded-full border border-violet-200/90 bg-violet-50/80 px-3.5 py-2 text-xs font-semibold text-violet-700 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-violet-100 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-200 dark:hover:bg-violet-500/15"
+                        >
+                          <Package className="h-3.5 w-3.5" />
+                          {expandedBrandsId === supplier.id
+                            ? "Hide Brands"
+                            : "Brands"}
+                        </button>
                         <button
                           type="button"
                           onClick={() => setChatTarget(supplier)}
@@ -1184,6 +1042,18 @@ export default function SuppliersPageMain() {
                       </div>
                     </td>
                   </tr>
+                  {expandedBrandsId === supplier.id ? (
+                    <tr className="animate-fade-up-in bg-violet-50/40 dark:bg-violet-900/10">
+                      <td colSpan={5} className="px-5 py-5">
+                        <div className="rounded-[22px] border border-violet-200/70 bg-white/80 p-4 shadow-inner dark:border-violet-500/15 dark:bg-slate-950/60">
+                          <SupplierBrandsTree
+                            supplierId={supplier.id}
+                            merchantName={supplier.company || supplier.name}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  ) : null}
                   {expandedSupplierTreeId === supplier.id ? (
                     <tr className="animate-fade-up-in bg-slate-50/70 dark:bg-slate-800/30">
                       <td colSpan={5} className="px-5 py-5">
@@ -1562,6 +1432,243 @@ export default function SuppliersPageMain() {
           </div>
         </ModalShell>
       ) : null}
+    </div>
+  )
+}
+
+function SkeletonBar({ className = "" }: { className?: string }) {
+  return (
+    <span
+      className={`block rounded-full bg-slate-200/80 dark:bg-slate-700/60 ${className}`}
+    />
+  )
+}
+
+function MerchantsDirectorySkeleton() {
+  const rows = Array.from({ length: 8 })
+
+  return (
+    <div className="space-y-6">
+      {/* ── Page header (matches the live header) ── */}
+      <div className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-linear-to-br from-white via-white to-cyan-50/40 p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-cyan-900/10">
+        <div className="flex items-start gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-white dark:bg-cyan-600">
+            <Store className="h-6 w-6 opacity-80" />
+          </div>
+          <div className="space-y-2 pt-1">
+            <SkeletonBar className="h-6 w-40" />
+            <SkeletonBar className="h-3.5 w-72 max-w-full" />
+            <SkeletonBar className="h-3.5 w-56 max-w-full" />
+          </div>
+        </div>
+        <SkeletonBar className="h-11 w-40 rounded-2xl" />
+      </div>
+
+      {/* ── Directory section (matches the live table) ── */}
+      <section className="overflow-hidden rounded-[28px] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.98))] shadow-[0_24px_80px_rgba(15,23,42,0.08)] dark:border-white/8 dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.96),rgba(15,23,42,0.9))] dark:shadow-[0_24px_80px_rgba(2,6,23,0.45)]">
+        <div className="border-b border-slate-200/80 bg-[linear-gradient(135deg,rgba(240,249,255,0.9),rgba(255,255,255,0.96)_42%,rgba(236,254,255,0.88))] px-5 py-5 dark:border-white/8 dark:bg-[linear-gradient(135deg,rgba(8,47,73,0.28),rgba(15,23,42,0.96)_42%,rgba(8,145,178,0.12))]">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+            <div className="min-w-0">
+              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200/80 bg-white/80 px-3 py-1 text-[11px] font-bold tracking-[0.22em] text-cyan-700 uppercase shadow-sm dark:border-cyan-500/20 dark:bg-cyan-500/10 dark:text-cyan-200">
+                <span className="h-2 w-2 rounded-full bg-cyan-500/70" />
+                Merchant Directory
+              </div>
+              <div className="mt-3 space-y-2">
+                <SkeletonBar className="h-5 w-64 max-w-full" />
+                <SkeletonBar className="h-3.5 w-80 max-w-full" />
+              </div>
+            </div>
+            <SkeletonBar className="h-12 w-full rounded-[20px] xl:max-w-md" />
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[980px] text-sm">
+            <thead className="bg-slate-50/90 dark:bg-slate-900/70">
+              <tr className="border-b border-slate-200/80 dark:border-white/8">
+                {["Company", "Contact", "Email", "Status", "Actions"].map(
+                  (label) => (
+                    <th
+                      key={label}
+                      className="px-5 py-4 text-left text-[11px] font-bold tracking-[0.2em] text-slate-400 uppercase dark:text-slate-500"
+                    >
+                      {label}
+                    </th>
+                  )
+                )}
+              </tr>
+            </thead>
+            <tbody className="animate-pulse divide-y divide-slate-100/90 dark:divide-white/[0.06]">
+              {rows.map((_, index) => (
+                <tr key={index}>
+                  {/* Company: chevron + name + subtext */}
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <span className="h-8 w-8 shrink-0 rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800" />
+                      <div className="space-y-1.5">
+                        <SkeletonBar className="h-3.5 w-36" />
+                        <SkeletonBar className="h-2.5 w-24" />
+                      </div>
+                    </div>
+                  </td>
+                  {/* Contact */}
+                  <td className="px-5 py-4">
+                    <SkeletonBar className="h-3.5 w-24" />
+                  </td>
+                  {/* Email */}
+                  <td className="px-5 py-4">
+                    <SkeletonBar className="h-3.5 w-40" />
+                  </td>
+                  {/* Status pill */}
+                  <td className="px-5 py-4">
+                    <SkeletonBar className="h-6 w-20 rounded-full" />
+                  </td>
+                  {/* Actions */}
+                  <td className="px-5 py-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <SkeletonBar className="h-8 w-16 rounded-full" />
+                      <SkeletonBar className="h-8 w-14 rounded-full" />
+                      <SkeletonBar className="h-8 w-14 rounded-full" />
+                      <SkeletonBar className="h-8 w-20 rounded-full" />
+                      <SkeletonBar className="h-8 w-14 rounded-full" />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination footer */}
+        <div className="flex flex-col gap-4 border-t border-slate-200/80 bg-slate-50/85 px-5 py-4 md:flex-row md:items-center md:justify-between dark:border-white/8 dark:bg-slate-900/70">
+          <div className="space-y-2">
+            <p className="text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase dark:text-slate-500">
+              Pagination
+            </p>
+            <SkeletonBar className="h-3.5 w-24" />
+          </div>
+          <div className="flex items-center gap-2">
+            <SkeletonBar className="h-9 w-24 rounded-full" />
+            <SkeletonBar className="h-9 w-20 rounded-full" />
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}
+
+function SupplierBrandsTree({
+  supplierId,
+  merchantName,
+}: {
+  supplierId: number
+  merchantName: string
+}) {
+  const { data, isLoading, isError, refetch } = useGetProductBrandsQuery({
+    supplier_id: supplierId,
+  })
+  const brands = data?.brands ?? []
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300">
+            <Package className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-xs font-bold tracking-[0.18em] text-violet-600 uppercase dark:text-violet-300">
+              Owned Brands
+            </p>
+            <h4 className="mt-0.5 text-sm font-bold text-slate-900 dark:text-slate-100">
+              Brands owned by {merchantName}
+            </h4>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-200">
+            {brands.length} {brands.length === 1 ? "brand" : "brands"}
+          </span>
+          <Link
+            href="/admin/products/brands"
+            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-violet-300 hover:text-violet-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-violet-500/30 dark:hover:text-violet-200"
+          >
+            Manage Brands
+          </Link>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Loading brands...
+        </p>
+      ) : isError ? (
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-200">
+          <p>Failed to load brands for this merchant.</p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="mt-3 rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-100 dark:border-red-500/20 dark:bg-slate-950 dark:text-red-200 dark:hover:bg-red-500/10"
+          >
+            Retry
+          </button>
+        </div>
+      ) : brands.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-violet-200 bg-violet-50/50 px-4 py-6 text-center dark:border-violet-500/20 dark:bg-violet-500/5">
+          <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            No brands yet
+          </p>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            This merchant has not been assigned any brands.
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {brands.map((brand) => (
+            <div
+              key={brand.id}
+              className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm transition hover:border-violet-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-violet-500/30"
+            >
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-100 bg-slate-50 dark:border-slate-700 dark:bg-slate-950">
+                {brand.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={brand.image}
+                    alt={brand.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <ImageIcon className="h-5 w-5 text-slate-300 dark:text-slate-600" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-bold text-slate-900 dark:text-slate-100">
+                  {brand.name}
+                </p>
+                <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                      brand.status === 1
+                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+                        : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                    }`}
+                  >
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full ${brand.status === 1 ? "bg-emerald-500" : "bg-slate-400"}`}
+                    />
+                    {brand.status === 1 ? "Active" : "Inactive"}
+                  </span>
+                  {typeof brand.followers_count === "number" ? (
+                    <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">
+                      {brand.followers_count} followers
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -2057,7 +2164,7 @@ function ModalShell({
   children: React.ReactNode
   onClose: () => void
 }) {
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-8">
       <button
         type="button"
@@ -2068,7 +2175,8 @@ function ModalShell({
       <div className="relative z-10 w-full max-w-2xl rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_30px_100px_rgba(15,23,42,0.18)] dark:border-slate-800 dark:bg-slate-950">
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 

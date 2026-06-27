@@ -189,7 +189,11 @@ class PerformanceMilestoneReward
         $totalPv = self::directReferralTotalPv($sponsorCustomerId);
         $milestonesReached = (int) floor($totalPv / self::PV_PER_MILESTONE);
         $tranchePv = fmod($totalPv, self::PV_PER_MILESTONE);
-        $pvToNext = self::PV_PER_MILESTONE - $tranchePv;
+        $isExactMilestone = $totalPv > 0
+            && $milestonesReached > 0
+            && abs($tranchePv) < 0.00001;
+        $displayTranchePv = $isExactMilestone ? self::PV_PER_MILESTONE : $tranchePv;
+        $pvToNext = $isExactMilestone ? 0.0 : self::PV_PER_MILESTONE - $tranchePv;
         $creditedMilestones = self::creditedMilestones($sponsorCustomerId);
 
         /** @var Customer|null $sponsor */
@@ -209,7 +213,7 @@ class PerformanceMilestoneReward
             'cash_earned' => round($creditedMilestones * self::CASH_PER_MILESTONE, 2),
             'potential_cash_earned' => round($milestonesReached * self::CASH_PER_MILESTONE, 2),
             'next_milestone_pv' => self::PV_PER_MILESTONE,
-            'current_cycle_pv' => round($tranchePv, 2),
+            'current_cycle_pv' => round($displayTranchePv, 2),
             'pv_to_next' => round(max(0, $pvToNext), 2),
             'is_qualified' => $isQualified,
             'activation_required_pv' => $activation ? (float) ($activation['threshold_pv'] ?? 0) : null,

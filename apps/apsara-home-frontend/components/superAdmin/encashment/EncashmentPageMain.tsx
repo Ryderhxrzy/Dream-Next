@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { showErrorToast, showSuccessToast } from "@/libs/toast"
 import {
   AdminEncashmentItem,
@@ -153,16 +153,6 @@ const formatDateShort = (v?: string | null) => {
     day: "numeric",
     year: "numeric",
   }).format(d)
-}
-
-const getInitials = (name?: string | null) => {
-  if (!name) return "?"
-  return name
-    .split(" ")
-    .map((p) => p[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase()
 }
 
 type PayoutMeta = {
@@ -860,6 +850,7 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
   const canRelease = role === "finance_officer" || role === "super_admin"
 
   const [search, setSearch] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
   const [page, setPage] = useState(1)
   const [busyId, setBusyId] = useState<number | null>(null)
   const [selectedRow, setSelectedRow] = useState<AdminEncashmentItem | null>(
@@ -884,6 +875,11 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
     proofFileName: "",
   })
 
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search.trim()), 300)
+    return () => clearTimeout(t)
+  }, [search])
+
   const effectiveFilter = useMemo(() => {
     const n = initialFilter
       .trim()
@@ -907,10 +903,14 @@ export default function EncashmentPageMain({ initialFilter = "all" }: Props) {
     return supported.includes(mapped) ? mapped : "all"
   }, [initialFilter])
 
+  useEffect(() => {
+    setPage(1)
+  }, [effectiveFilter])
+
   const { data, isLoading, isFetching, isError } =
     useGetAdminEncashmentRequestsQuery({
       filter: effectiveFilter,
-      search: search.trim() || undefined,
+      search: debouncedSearch || undefined,
       page,
       perPage: 20,
     })

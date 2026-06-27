@@ -478,6 +478,7 @@ Route::get('/admin/webpages/adds-content', [AddsContentController::class, 'index
     Route::delete('/admin/webpages/adds-content/{id}', [AddsContentController::class, 'destroy']);
     Route::get('/admin/products/{id}', [ProductController::class, 'adminShow']);
     Route::patch('/admin/products/{id}/variants/{variantId}', [ProductController::class, 'updateVariant']);
+    Route::delete('/admin/products/{id}/variants/{variantId}', [ProductController::class, 'destroyVariant']);
     Route::patch('/admin/products/{id}', [ProductController::class, 'patchProduct']);
     Route::put('/admin/products/{id}', [ProductController::class, 'update']);
     Route::delete('/admin/products/{id}', [ProductController::class, 'destroy']);
