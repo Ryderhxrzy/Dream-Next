@@ -244,10 +244,12 @@ class SupplierBrandHomeController extends Controller
             'sbhps_button_link' => $data['button_link'] ?? null,
         ]);
 
-        // Only allow products this merchant owns under this brand. Preserve the
+        // Only allow products under this brand. Brand ownership is already verified
+        // by the caller (ownsBrand), so the brand link (pd_brand_type) is the source
+        // of truth — we deliberately do NOT also filter by the unreliable pd_supplier
+        // column, which would drop most legitimately-owned products. Preserve the
         // submitted order, and skip duplicates / foreign products.
         $ownedIds = Product::query()
-            ->where('pd_supplier', $supplierId)
             ->where('pd_brand_type', $brandId)
             ->whereIn('pd_id', $data['product_ids'])
             ->pluck('pd_id')
@@ -314,6 +316,9 @@ class SupplierBrandHomeController extends Controller
                         'name' => $p ? (string) ($p->pd_name ?? '') : '',
                         'image' => $p && $p->pd_image ? (string) $p->pd_image : null,
                         'price' => $p && $p->pd_price_srp !== null ? (float) $p->pd_price_srp : null,
+                        'original_price' => $p && $p->pd_price_srp !== null ? (float) $p->pd_price_srp : null,
+                        'member_price' => $p && $p->pd_price_member !== null ? (float) $p->pd_price_member : null,
+                        'pv' => $p && $p->pd_prodpv !== null ? (float) $p->pd_prodpv : null,
                     ];
                 })->values(),
             ];
