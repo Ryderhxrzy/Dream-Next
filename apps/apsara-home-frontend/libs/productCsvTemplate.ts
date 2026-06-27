@@ -191,10 +191,20 @@ export const PRODUCT_CSV_FIELDS: FieldDefinition[] = [
   {
     name: "pd_warranty",
     label: "Warranty",
-    type: "text",
+    type: "choice",
     required: false,
-    description: "Warranty label or custom text",
-    example: "2 Years Manufacturing Defect",
+    description: "Warranty period (pick one of the ready-made options)",
+    example: "1 Year Warranty",
+    choices: [
+      "No Warranty",
+      "15 Days Warranty",
+      "1 Month Warranty",
+      "2 Months Warranty",
+      "3 Months Warranty",
+      "6 Months Warranty",
+      "9 Months Warranty",
+      "1 Year Warranty",
+    ],
   },
   {
     name: "pd_images",
@@ -273,6 +283,143 @@ export const PRODUCT_CSV_FIELDS: FieldDefinition[] = [
       "Allow product to go through manual checkout flow (1=yes, 0=no)",
     example: "0",
   },
+  // --- Variant columns (one row per variant) --------------------------------
+  // Use ONE ROW PER VARIANT: repeat the same pd_parent_sku on every variant
+  // row of a product, fill the product (pd_*) fields on the FIRST row only, and
+  // fill the variant (pv_*) fields on EACH row. Any row with a pv_sku is treated
+  // as a variant; a product with variants is set to "variable" automatically.
+  {
+    name: "pv_sku",
+    label: "Variant SKU",
+    type: "text",
+    required: false,
+    description:
+      "Unique SKU for this variant. A row with a Variant SKU is grouped under the product sharing its pd_parent_sku.",
+    example: "CHAIR-OFF-001-BLK",
+  },
+  {
+    name: "pv_name",
+    label: "Variant Name",
+    type: "text",
+    required: false,
+    description: "Display name for this variant",
+    example: "Black",
+  },
+  {
+    name: "pv_color",
+    label: "Color Name",
+    type: "text",
+    required: false,
+    description: "Color name of the variant",
+    example: "Black",
+  },
+  {
+    name: "pv_color_hex",
+    label: "Color Hex",
+    type: "text",
+    required: false,
+    description: "Hex color code for the variant swatch",
+    example: "#1A1A1A",
+  },
+  {
+    name: "pv_size",
+    label: "Variant Size",
+    type: "text",
+    required: false,
+    description: "Size label of the variant",
+    example: "Large",
+  },
+  {
+    name: "pv_style",
+    label: "Variant Style",
+    type: "text",
+    required: false,
+    description: "Style label of the variant",
+    example: "Modern",
+  },
+  {
+    name: "pv_width",
+    label: "Variant Width",
+    type: "number",
+    required: false,
+    description: "Width of the variant",
+    example: "60",
+  },
+  {
+    name: "pv_dimension",
+    label: "Variant Dimension",
+    type: "number",
+    required: false,
+    description: "Dimension of the variant",
+    example: "120",
+  },
+  {
+    name: "pv_height",
+    label: "Variant Height",
+    type: "number",
+    required: false,
+    description: "Height of the variant",
+    example: "90",
+  },
+  {
+    name: "pv_price_srp",
+    label: "Variant Price SRP",
+    type: "number",
+    required: false,
+    description: "SRP price for this variant",
+    example: "6999.00",
+  },
+  {
+    name: "pv_price_dp",
+    label: "Variant Price DP",
+    type: "number",
+    required: false,
+    description: "DP price for this variant",
+    example: "5599.00",
+  },
+  {
+    name: "pv_price_member",
+    label: "Variant Price Member",
+    type: "number",
+    required: false,
+    description: "Member price for this variant",
+    example: "4999.00",
+  },
+  {
+    name: "pv_prodpv",
+    label: "Variant PV",
+    type: "number",
+    required: false,
+    description:
+      "Point value for this variant. Leave blank to auto-compute from the variant DP price.",
+    example: "100",
+  },
+  {
+    name: "pv_qty",
+    label: "Variant Qty",
+    type: "number",
+    required: false,
+    description: "Stock quantity for this variant",
+    example: "15",
+  },
+  {
+    name: "pv_status",
+    label: "Variant Status",
+    type: "choice",
+    required: false,
+    description: "Active or Inactive (set on every variant row)",
+    example: "Active",
+    choices: ["Active", "Inactive"],
+  },
+  {
+    name: "pv_images",
+    label: "Variant Images",
+    type: "url",
+    required: false,
+    description: "Variant image URLs separated by pipe character (|)",
+    example:
+      "https://example.com/chair-black-001.jpg|https://example.com/chair-black-002.jpg",
+  },
 ]
 
 const SAMPLE_PRODUCTS = [
@@ -293,7 +440,7 @@ const SAMPLE_PRODUCTS = [
     pd_pslenght: 80,
     pd_psheight: 40,
     pd_material: "Premium Leather",
-    pd_warranty: "2 Years",
+    pd_warranty: "1 Year Warranty",
     pd_status: 1,
     pd_bestseller: 1,
     pd_assembly_required: 1,
@@ -315,7 +462,7 @@ const SAMPLE_PRODUCTS = [
     pd_pslenght: 100,
     pd_psheight: 80,
     pd_material: "Solid Mahogany",
-    pd_warranty: "3 Years",
+    pd_warranty: "6 Months Warranty",
     pd_status: 1,
     pd_musthave: 1,
   },
@@ -336,9 +483,46 @@ const SAMPLE_PRODUCTS = [
     pd_pslenght: 160,
     pd_psheight: 45,
     pd_material: "Steel + Wood",
-    pd_warranty: "5 Years",
+    pd_warranty: "1 Year Warranty",
     pd_status: 1,
     pd_assembly_required: 1,
+  },
+  // Variant product — first row carries the product fields + the first variant.
+  {
+    pd_name: "Ergonomic Office Chair",
+    pd_parent_sku: "CHAIR-OFF-001",
+    pd_catid: 25,
+    pd_room_type: 5,
+    pd_brand_type: 5,
+    pd_price_srp: 6999.0,
+    pd_price_dp: 5599.0,
+    pd_price_member: 4999.0,
+    pd_material: "Mesh + Aluminum",
+    pd_warranty: "1 Year Warranty",
+    pd_type: "variable",
+    pd_status: 1,
+    pv_sku: "CHAIR-OFF-001-BLK",
+    pv_name: "Black",
+    pv_color: "Black",
+    pv_color_hex: "#1A1A1A",
+    pv_price_srp: 6999.0,
+    pv_price_dp: 5599.0,
+    pv_price_member: 4999.0,
+    pv_qty: 15,
+    pv_status: "Active",
+  },
+  // Following variant rows repeat ONLY the parent SKU + the variant (pv_*) fields.
+  {
+    pd_parent_sku: "CHAIR-OFF-001",
+    pv_sku: "CHAIR-OFF-001-GRY",
+    pv_name: "Gray",
+    pv_color: "Gray",
+    pv_color_hex: "#808080",
+    pv_price_srp: 6999.0,
+    pv_price_dp: 5599.0,
+    pv_price_member: 4999.0,
+    pv_qty: 10,
+    pv_status: "Active",
   },
 ]
 
@@ -368,7 +552,21 @@ export function buildTemplateWithInstructions(): string {
   )
   lines.push("#    - Boolean fields use 1=yes, 0=no")
   lines.push("#")
-  lines.push("# 3. NOTES:")
+  lines.push("# 3. VARIANTS (one row per variant):")
+  lines.push(
+    "#    - Use ONE ROW PER VARIANT and repeat the SAME pd_parent_sku on every row of that product."
+  )
+  lines.push(
+    "#    - Fill the product (pd_*) fields on the FIRST variant row only; leave them blank on the following rows."
+  )
+  lines.push(
+    "#    - Fill the variant (pv_*) fields on EACH row. pv_sku + pv_status are required per variant."
+  )
+  lines.push(
+    "#    - Any row with a pv_sku is grouped as a variant; the product is set to pd_type=variable automatically."
+  )
+  lines.push("#")
+  lines.push("# 4. NOTES:")
   lines.push(
     '#    - Text with commas or special chars should be wrapped in quotes: "Text, with, commas"'
   )

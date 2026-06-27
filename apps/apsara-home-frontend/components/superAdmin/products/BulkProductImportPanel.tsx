@@ -21,7 +21,7 @@ interface BulkProductImportPanelProps {
   onImported?: () => void
 }
 
-type ParsedCsv = {
+export type ParsedCsv = {
   headers: string[]
   rows: BulkImportProductsRow[]
   isVariantSheet: boolean
@@ -73,7 +73,7 @@ const HEADER_ALIASES: Record<string, string> = {
   subcategory: "pd_catsubid",
   "sub category": "pd_catsubid",
   "subcategory id": "pd_catsubid",
-  // "Company" is a helper column for filtering the Brand dropdown in the
+  // "Merchant" is a helper column for filtering the Brand dropdown in the
   // template; the product's supplier is derived from the brand, so it is not
   // imported as its own field.
   "room type": "pd_room_type",
@@ -350,7 +350,7 @@ const normalizeProductType = (val: string): string => {
   return val
 }
 
-const normalizeRoomType = (val: string): string => {
+export const normalizeRoomType = (val: string): string => {
   const trimmed = val.trim()
   if (!trimmed || /^\d+$/.test(trimmed)) return trimmed
 
@@ -376,7 +376,7 @@ const normalizeRoomType = (val: string): string => {
   return partialMatch ? String(partialMatch.id) : trimmed
 }
 
-const normalizeLookupValue = (
+export const normalizeLookupValue = (
   val: string,
   lookup: Array<{ id: number; name: string }>
 ): string => {
@@ -437,7 +437,7 @@ const getFieldSummary = (row: Record<string, unknown>, fields: string[]) =>
       String(row[field]).trim() !== "",
   }))
 
-const parseImageList = (value: unknown): string[] => {
+export const parseImageList = (value: unknown): string[] => {
   if (Array.isArray(value)) {
     return value
       .filter(
@@ -530,7 +530,7 @@ const buildPayloadChecklist = (payload: BulkImportProductsPayload) => {
   ]
 }
 
-const compareField = (
+export const compareField = (
   csvVal: unknown,
   dbVal: unknown,
   isNumeric = false
@@ -657,7 +657,7 @@ const normalizeCsvValues = (headers: string[], values: string[]) => {
   return normalized
 }
 
-const parseCsvText = (text: string): ParsedCsv => {
+export const parseCsvText = (text: string): ParsedCsv => {
   const lines = text
     .replace(/^﻿/, "")
     .split(/\r?\n/)
@@ -752,7 +752,45 @@ const extractVariant = (
     : undefined,
 })
 
-const groupVariantRows = (
+// Split import rows into smaller batches so each POST stays small. A single
+// request carrying every product + variant can exceed the server's body-size /
+// execution-time limits, which surfaces in the browser as a network-level
+// "Failed to fetch" (FETCH_ERROR) with no HTTP response. We bound each batch by
+// both a product count and a total variant count so payload size stays bounded
+// regardless of how many variants each product has.
+const MAX_PRODUCTS_PER_BATCH = 15
+const MAX_VARIANTS_PER_BATCH = 250
+
+export const chunkImportRows = (
+  rows: BulkImportProductsRow[],
+  maxProducts: number = MAX_PRODUCTS_PER_BATCH,
+  maxVariants: number = MAX_VARIANTS_PER_BATCH
+): BulkImportProductsRow[][] => {
+  const batches: BulkImportProductsRow[][] = []
+  let current: BulkImportProductsRow[] = []
+  let currentVariants = 0
+
+  for (const row of rows) {
+    const variantCount = Math.max(1, row.pd_variants?.length ?? 0)
+    const wouldOverflow =
+      current.length >= maxProducts ||
+      (current.length > 0 && currentVariants + variantCount > maxVariants)
+
+    if (wouldOverflow) {
+      batches.push(current)
+      current = []
+      currentVariants = 0
+    }
+
+    current.push(row)
+    currentVariants += variantCount
+  }
+
+  if (current.length > 0) batches.push(current)
+  return batches
+}
+
+export const groupVariantRows = (
   rows: BulkImportProductsRow[]
 ): BulkImportProductsRow[] => {
   const skuMap = new Map<string, BulkImportProductsRow>()
@@ -833,7 +871,7 @@ const VIEW_TEMPLATE_LOW_END_URL =
 const VIEW_TEMPLATE_HIGH_END_URL: string | null = null
 
 // Master Google Sheets template with cascading dropdowns (Category→Subcategory,
-// Company→Brand). Build it once from docs/google-sheets-product-template.gs, then
+// Merchant→Brand). Build it once from docs/google-sheets-product-template.gs, then
 // paste the share URL here so the team can "File → Make a copy" and fill it in.
 const GOOGLE_SHEETS_TEMPLATE_URL: string | null = null
 
@@ -861,6 +899,10 @@ export default function BulkProductImportPanel({
     details: string
     payload?: BulkImportProductsPayload
     checklist?: Array<{ label: string; ok: boolean; detail: string }>
+  } | null>(null)
+  const [importProgress, setImportProgress] = useState<{
+    done: number
+    total: number
   } | null>(null)
   const { data: categoryData } = useGetCategoriesQuery({ per_page: 500 })
   const { data: brandData } = useGetProductBrandsQuery({ search: "" })
@@ -1262,8 +1304,8 @@ export default function BulkProductImportPanel({
           className={selectCls}
         >
           <option value="">—</option>
-          <option value="1">Yes</option>
-          <option value="0">No</option>
+          <option value="1">Active</option>
+          <option value="0">Inactive</option>
         </select>
       )
     }
@@ -1325,9 +1367,29 @@ export default function BulkProductImportPanel({
         const XLSX = await import("xlsx")
         const buffer = await file.arrayBuffer()
         const workbook = XLSX.read(buffer, { type: "array" })
-        // The template's first sheet is "Products"; the hidden "Lists" sheet
-        // only backs the dropdowns and is skipped by reading sheet index 0.
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
+        // Pick the product DATA sheet — NOT the hidden helper sheets that back
+        // the dropdowns. The template adds "Lists"/"CatSub"/"CompBrand" BEFORE
+        // "Products", so sheet index 0 is a helper sheet whose headers don't map
+        // to pd_*/pv_* (which surfaces as "Missing required column(s)"). Select
+        // the "Products" sheet by name, then fall back to the first non-helper
+        // sheet, then to index 0.
+        const HELPER_SHEETS = new Set([
+          "lists",
+          "catsub",
+          "compbrand",
+          "_catsub",
+          "_compbrand",
+          "hex color",
+        ])
+        const sheetName =
+          workbook.SheetNames.find(
+            (name) => name.trim().toLowerCase() === "products"
+          ) ??
+          workbook.SheetNames.find(
+            (name) => !HELPER_SHEETS.has(name.trim().toLowerCase())
+          ) ??
+          workbook.SheetNames[0]
+        const firstSheet = sheetName ? workbook.Sheets[sheetName] : undefined
         if (!firstSheet) {
           setFileError("The spreadsheet has no readable sheet.")
           return
@@ -1541,6 +1603,67 @@ export default function BulkProductImportPanel({
       return
     }
 
+    // Send the rows in smaller sequential batches. One giant request can blow
+    // past the server's body-size / execution-time limit and fail before any
+    // HTTP response comes back (FETCH_ERROR / "Failed to fetch").
+    const batches = chunkImportRows(rows)
+    const aggregatedSummary = { total: 0, created: 0, updated: 0, failed: 0 }
+    const aggregatedResults: BulkImportProductsResponse["results"] = []
+    let processedProducts = 0
+
+    setImportProgress({ done: 0, total: batches.length })
+
+    try {
+      for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+        const batchRows = batches[batchIndex]
+        const batchPayload: BulkImportProductsPayload = {
+          mode: importMode,
+          rows: batchRows,
+        }
+
+        let response: BulkImportProductsResponse
+        try {
+          response = await importProducts(batchPayload).unwrap()
+        } catch (error) {
+          // Re-throw with context about which batch failed and how much
+          // already succeeded, so the catch below can report it clearly.
+          const batchError = new Error("Batch import failed") as Error & {
+            __batchError: true
+            batchIndex: number
+            totalBatches: number
+            processedProducts: number
+            error: unknown
+            batchPayload: BulkImportProductsPayload
+          }
+          batchError.__batchError = true
+          batchError.batchIndex = batchIndex
+          batchError.totalBatches = batches.length
+          batchError.processedProducts = processedProducts
+          batchError.error = error
+          batchError.batchPayload = batchPayload
+          throw batchError
+        }
+
+        aggregatedSummary.total += response.summary.total
+        aggregatedSummary.created += response.summary.created
+        aggregatedSummary.updated += response.summary.updated
+        aggregatedSummary.failed += response.summary.failed
+        // Re-number per-batch row indices into the overall selection order.
+        response.results.forEach((r) =>
+          aggregatedResults.push({ ...r, row: processedProducts + r.row })
+        )
+
+        processedProducts += batchRows.length
+        setImportProgress({ done: batchIndex + 1, total: batches.length })
+      }
+
+      const summary = aggregatedSummary
+      const results = aggregatedResults
+      const failedRows = results.filter((r) => r.status === "failed")
+      const hasFailures = failedRows.length > 0 || summary.failed > 0
+
+      if (hasFailures) {
+        setImportResults(results)
     const CHUNK_SIZE = 50
     const chunks: BulkImportProductsRow[][] = []
     for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
@@ -1589,6 +1712,21 @@ export default function BulkProductImportPanel({
         onImported?.()
         onClose()
       }
+    } catch (thrown) {
+      console.error("[DEBUG] Import error:", thrown)
+
+      const batchInfo = thrown as {
+        __batchError?: boolean
+        batchIndex?: number
+        totalBatches?: number
+        processedProducts?: number
+        error?: unknown
+        batchPayload?: BulkImportProductsPayload
+      }
+      const rawError = batchInfo?.__batchError ? batchInfo.error : thrown
+      const errorData = rawError as {
+        status?: number | string
+        error?: string
     } catch (error) {
       setImportProgress(null)
       console.error("[DEBUG] Import error:", error)
@@ -1599,20 +1737,43 @@ export default function BulkProductImportPanel({
           status?: number
         }
       }
-      const message = errorData?.data?.message || "Bulk import failed."
+
+      const isFetchError =
+        errorData?.status === "FETCH_ERROR" ||
+        errorData?.status === "TIMEOUT_ERROR"
+
+      const message = isFetchError
+        ? "Could not reach the server (the request was dropped before a response). This batch was likely still too large or the request timed out. Try selecting fewer rows, or reduce the variants per product."
+        : errorData?.data?.message || "Bulk import failed."
+
       const errors = errorData?.data?.errors
         ? JSON.stringify(errorData.data.errors, null, 2)
         : "No additional error details"
-      const status = errorData?.data?.status
-        ? `HTTP ${errorData.data.status}`
-        : "Unknown status"
+      const status = isFetchError
+        ? `${errorData?.status}`
+        : errorData?.data?.status
+          ? `HTTP ${errorData.data.status}`
+          : "Unknown status"
+
+      const progressNote = batchInfo?.__batchError
+        ? `\n\nProgress: failed on batch ${(batchInfo.batchIndex ?? 0) + 1} of ${batchInfo.totalBatches}. ${batchInfo.processedProducts ?? 0} product(s) in earlier batches were already submitted successfully.`
+        : ""
+
+      // If earlier batches succeeded, reflect that in the table + refresh list.
+      if (aggregatedResults.length > 0) {
+        setImportResults(aggregatedResults)
+        if (aggregatedSummary.created > 0 || aggregatedSummary.updated > 0)
+          onImported?.()
+      }
 
       setImportErrorModal({
         title: "Bulk import failed",
-        details: `${message}\n\nStatus: ${status}\n\nError Details:\n${errors}\n\nRaw Error:\n${JSON.stringify(error, null, 2)}`,
-        payload,
-        checklist: buildPayloadChecklist(payload),
+        details: `${message}\n\nStatus: ${status}${progressNote}\n\nError Details:\n${errors}\n\nRaw Error:\n${JSON.stringify(rawError, null, 2)}`,
+        payload: batchInfo?.batchPayload ?? payload,
+        checklist: buildPayloadChecklist(batchInfo?.batchPayload ?? payload),
       })
+    } finally {
+      setImportProgress(null)
     }
   }
 
@@ -2660,18 +2821,21 @@ export default function BulkProductImportPanel({
           onClick={handleImport}
           disabled={
             isLoading ||
+            importProgress !== null ||
             !parsed ||
             parsed.rows.length === 0 ||
             selectedRowIndices.size === 0
           }
           className="rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm shadow-teal-500/30 transition hover:bg-teal-700 disabled:opacity-60"
         >
-          {isLoading
-            ? "Importing..."
-            : selectedRowIndices.size > 0 &&
-                selectedRowIndices.size < rawTableRowCount
-              ? `Import ${selectedRowIndices.size} Row${selectedRowIndices.size !== 1 ? "s" : ""}`
-              : "Import Products"}
+          {importProgress
+            ? `Importing batch ${Math.min(importProgress.done + 1, importProgress.total)} of ${importProgress.total}...`
+            : isLoading
+              ? "Importing..."
+              : selectedRowIndices.size > 0 &&
+                  selectedRowIndices.size < rawTableRowCount
+                ? `Import ${selectedRowIndices.size} Row${selectedRowIndices.size !== 1 ? "s" : ""}`
+                : "Import Products"}
         </button>
       </div>
     </div>
